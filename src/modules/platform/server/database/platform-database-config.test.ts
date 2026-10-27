@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 import {
   ACTIVE_TRADERLINK_PLATFORM_REPOSITORY_ROOT,
@@ -24,7 +25,7 @@ describe("platform database configuration", () => {
       "TRADERLINK_PLATFORM_DB_PATH_INVALID",
     );
     expect(() =>
-      validatePlatformDatabasePath("C:\\private\\development.db", {
+      validatePlatformDatabasePath(join(tmpdir(), "private", "development.db"), {
         forbiddenRepositoryRoots: [],
       }),
     ).toThrowError("TRADERLINK_PLATFORM_DB_PATH_INVALID");
@@ -36,18 +37,19 @@ describe("platform database configuration", () => {
   });
 
   it("accepts an absolute external sqlite path without a V3 fallback", () => {
+    const databasePath = join(tmpdir(), "private", "platform.sqlite");
     const configured = resolvePlatformDatabaseConfig({
-      environment: { NODE_ENV: "test", TRADERLINK_PLATFORM_DB_PATH: "C:\\private\\platform.sqlite" },
+      environment: { NODE_ENV: "test", TRADERLINK_PLATFORM_DB_PATH: databasePath },
       forbiddenRepositoryRoots: [],
     });
-    expect(configured.databasePath.toLowerCase()).toBe("c:\\private\\platform.sqlite");
+    expect(configured.databasePath).toBe(databasePath);
   });
 
   it("derives the active and moved repository boundaries without machine-specific roots", () => {
     expect(ACTIVE_TRADERLINK_PLATFORM_REPOSITORY_ROOT).toBe(process.cwd());
 
     const movedRepositoryRoot = join(
-      process.env.TEMP ?? "C:\\Temp",
+      tmpdir(),
       "moved-traderlink-platform",
     );
     expect(() =>

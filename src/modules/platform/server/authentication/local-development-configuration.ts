@@ -5,7 +5,7 @@ import {
   readFileSync,
   realpathSync,
 } from "node:fs";
-import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 type AuthoritySection = Readonly<{
   activeKeyVersion: string;
@@ -32,7 +32,7 @@ function fail(): never {
 
 function outsideRepository(repositoryRoot: string, candidate: string): boolean {
   const path = relative(repositoryRoot, candidate);
-  return path === ".." || path.startsWith(`..\\`) || isAbsolute(path);
+  return path === ".." || path.startsWith(`..${sep}`) || isAbsolute(path);
 }
 
 function requireDirectory(path: string): string {

@@ -15,8 +15,18 @@ describe("static platform migration file contract", () => {
       })),
     );
     expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
-      "0136_shared_trade_analyzer_owner_exemptions",
+      "0184_platform_watchlist_usage_user_recent",
     );
+  });
+
+  it("accepts either TypeScript string quote style without changing migration identity", () => {
+    const entry = platformMigrationFileEntries[0];
+    expect(verifyPlatformMigrationFileEntry(entry,
+      `moduleNamespace: '${entry.migration.moduleNamespace}', migrationId: '${entry.migration.migrationId}', executionOrder: ${entry.migration.executionOrder},`,
+    ).migrationId).toBe(entry.migration.migrationId);
+    expect(() => verifyPlatformMigrationFileEntry(entry,
+      `moduleNamespace: '${entry.migration.moduleNamespace}', migrationId: 'wrong', executionOrder: ${entry.migration.executionOrder},`,
+    )).toThrowError("TRADERLINK_MIGRATION_FILE_ID_MISMATCH");
   });
 
   it("rejects a filename that does not match the exported literal migration ID", () => {
