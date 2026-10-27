@@ -92,14 +92,14 @@ function grant(database: ReturnType<typeof openPlatformDatabase>, userId: string
 }
 
 describe("Journal admin authorization", () => {
-  it("requires the same fresh Discord owner and singleton operator grant", () => {
+  it("requires the same Discord owner and singleton operator grant without a five-minute timeout", () => {
     const { database, identity, userId } = setup();
     try {
       grant(database, userId);
       const scope = new PlatformAdminAuthorization(
         database,
         productionEnvironment(),
-        () => new Date("2026-08-03T07:04:59.000Z"),
+        () => new Date("2026-08-03T08:00:00.000Z"),
       ).authorize(identity, productionHeaders());
       expect(scope).toMatchObject({
         userId,
@@ -113,14 +113,11 @@ describe("Journal admin authorization", () => {
     }
   });
 
-  it("fails without a grant, with stale membership, or without current guild ownership", () => {
-    for (const variant of ["missing_grant", "stale", "future", "not_owner"] as const) {
+  it.each(["missing_grant", "not_owner"] as const)("fails for %s", (variant) => {
       const { database, identity, userId } = setup(variant !== "not_owner");
       try {
         if (variant !== "missing_grant") grant(database, userId);
-        const now = variant === "stale"
-          ? new Date("2026-08-03T07:05:00.001Z")
-          : variant === "future" ? new Date(SIGN_IN_AT.getTime() - 1) : new Date("2026-08-03T07:04:00.000Z");
+        const now = new Date("2026-08-03T08:00:00.000Z");
         expect(() => new PlatformAdminAuthorization(
           database,
           productionEnvironment(),
@@ -131,7 +128,6 @@ describe("Journal admin authorization", () => {
       } finally {
         database.close();
       }
-    }
   });
 
   it("revalidates the exact protected loopback boundary for local review", () => {

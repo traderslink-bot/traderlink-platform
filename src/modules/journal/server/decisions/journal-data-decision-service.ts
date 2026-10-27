@@ -200,7 +200,7 @@ function manualCoverageDate(
   }
   if (
     !Array.isArray(fields) ||
-    fields[0] !== "manual_execution_v1" ||
+    (fields[0] !== "manual_execution_v1" && fields[0] !== "manual_execution_v2") ||
     typeof fields[5] !== "string" ||
     typeof fields[6] !== "string"
   ) return null;

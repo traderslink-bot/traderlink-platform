@@ -28,8 +28,8 @@ export function verifyPlatformMigrationFileEntry(
 ): PlatformMigrationFileVerification {
   const filenameStem = basename(entry.sourcePath, ".ts");
   const expectedLiterals = [
-    new RegExp(`moduleNamespace\\s*:\\s*"${escapeRegularExpression(entry.migration.moduleNamespace)}"`, "u"),
-    new RegExp(`migrationId\\s*:\\s*"${escapeRegularExpression(entry.migration.migrationId)}"`, "u"),
+    new RegExp(`moduleNamespace\\s*:\\s*(["'])${escapeRegularExpression(entry.migration.moduleNamespace)}\\1`, "u"),
+    new RegExp(`migrationId\\s*:\\s*(["'])${escapeRegularExpression(entry.migration.migrationId)}\\1`, "u"),
     new RegExp(`executionOrder\\s*:\\s*${entry.migration.executionOrder}(?:\\s|,)`, "u"),
   ];
   if (

@@ -12,6 +12,7 @@ const query = Object.freeze({
   provenance: null,
   outcome: null,
   entryWeekday: null,
+  entrySession: null,
   entryTimeBucketMinutes: 30,
   entryTimeBucket: null,
   startDate: "2026-01-01",

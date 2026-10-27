@@ -31,7 +31,11 @@ function fixture(combined = false, sibling = false) {
         // VPS native driver. This is not a claim about the hosted DB's digest.
         expect(migrationResult.finalSchemaSha256).toBe("45e694d19e9349c2f92bf7f70c19804d3c4216373c0ee3e7179ac439a846165d");
       }
-      for (const sql of platformErasureRecoverySchemaStatements) template.exec(sql);
+      // Older manifests need fixture setup; released manifests install this
+      // schema through migration 0183 and must not execute its DDL twice.
+      if (!migrationResult.appliedMigrationIds.includes("0183_platform_account_erasure_recovery")) {
+        for (const sql of platformErasureRecoverySchemaStatements) template.exec(sql);
+      }
       templates.set(combined, template.serialize());
     } finally { template.close(); }
   }

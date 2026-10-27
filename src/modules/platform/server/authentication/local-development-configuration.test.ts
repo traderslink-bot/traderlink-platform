@@ -44,5 +44,14 @@ describe("local development configuration", () => {
     expect(environment.TRADERLINK_PLATFORM_JOURNAL_HMAC_ACTIVE_KEY_VERSION)
       .toBe("key2");
     expect(result.uploadStagingRoot).toContain("traderlink-platform-upload-staging");
+    // External sibling paths are accepted on each host, but repository-contained
+    // storage must remain forbidden after portable separator handling.
+    expect(() => loadTraderLinkPlatformLocalDevelopmentConfiguration({
+      repositoryRoot,
+      environment: {
+        NODE_ENV: "test",
+        TRADERLINK_PLATFORM_LOCAL_PRIVATE_DATA_ROOT: repositoryRoot,
+      },
+    })).toThrow("platform_local_configuration_invalid");
   });
 });

@@ -468,6 +468,19 @@ JOIN journal_execution_versions version
 WHERE execution.workspace_id = ?
   AND execution.account_id IN (${placeholders})
   AND execution.current_state IN ('accepted', 'needs_decision')
+  AND NOT EXISTS (
+    SELECT 1
+    FROM journal_execution_reconciliation_members reconciliation_member
+    JOIN journal_execution_reconciliation_sets reconciliation_set
+      ON reconciliation_set.workspace_id = reconciliation_member.workspace_id
+     AND reconciliation_set.account_id = reconciliation_member.account_id
+     AND reconciliation_set.reconciliation_set_id = reconciliation_member.reconciliation_set_id
+    WHERE reconciliation_member.workspace_id = execution.workspace_id
+      AND reconciliation_member.account_id = execution.account_id
+      AND reconciliation_member.execution_id = execution.execution_id
+      AND reconciliation_member.member_role = 'provisional_imported_execution'
+      AND reconciliation_set.state = 'pending'
+  )
   AND execution.current_version_id NOT IN (
     SELECT seeded_provenance.execution_version_id
     FROM journal_execution_provenance seeded_provenance

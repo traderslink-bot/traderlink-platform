@@ -12,6 +12,7 @@ import {
 } from "../database/platform-migration-contract";
 import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformUserRepository } from "../identity/platform-user-repository";
+import { PlatformAuthenticationRepository } from "../authentication/platform-authentication-repository";
 import { PlatformWorkspaceRepository } from "../identity/platform-workspace-repository";
 import { requireWorkspaceAccessScope } from "./require-workspace-access-scope";
 
@@ -55,6 +56,13 @@ function setup(): {
       displayName: role,
       createdAtUtc: now,
       updatedAtUtc: now,
+    });
+    new PlatformAuthenticationRepository(database).linkIdentity({
+      userId: userIds[role],
+      authProvider: "test",
+      authSubject: subjects[role],
+      linkedByUserId: userIds[role],
+      timestamp: now,
     });
   }
   const workspaceId = createCanonicalUuidV4();

@@ -225,7 +225,7 @@ describe("TradersLink AI Read parser", () => {
       },
     });
     expect(fadingTest.headline).toContain("0.68x");
-    expect(fadingTest.detail).toContain("tests the shallow pullback");
+    expect(fadingTest.detail).toContain("tests the pullback 1 area");
     expect(fadingTest.detail).toContain("published confirmation");
     expect(fadingTest.tone).toBe("constructive");
 

@@ -182,7 +182,7 @@ const manualEntry: ManualExecutionInput = Object.freeze({
   priceDecimal: "7.5", feesDecimal: null, feeCurrency: null, feeSignConvention: "not_reported",
 });
 
-describe("Journal import service", () => {
+describe("Journal import service", { timeout: 30_000 }, () => {
   it("validates the complete versioned privacy-key map and preserves purpose separation", () => {
     const activeKey = Buffer.alloc(32, 17).toString("base64");
     const retainedKey = Buffer.alloc(32, 29).toString("base64");

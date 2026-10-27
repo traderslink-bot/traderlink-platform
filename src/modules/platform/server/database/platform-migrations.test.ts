@@ -62,7 +62,8 @@ describe("TraderLink Platform migrations", () => {
                 : table === "coach_ai_review_budget_controls" ? 1
                   : table === "coach_ai_review_generation_contract_state" ? 1
                     : table === "coach_ai_review_dispatch_recovery_state" ? 1
-                      : table === "platform_dashboard_member_access_settings" ? 1 : 0,
+                      : table === "platform_dashboard_member_access_settings" ? 1
+                        : table === "platform_notification_default_on" ? 1 : 0,
         });
       }
     } finally {

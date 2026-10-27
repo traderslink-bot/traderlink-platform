@@ -74,12 +74,18 @@ WHERE halt_id = ? ORDER BY state`).all(firstHaltId)).toEqual([
         { state: "sending", notification_stage: "initial", notification_revision: 0 },
       ]);
       expect(database.prepare(`SELECT ticker, halt_date_et, first_halt_id, last_notified_quote_time_et, last_notified_trade_time_et
-FROM news_market_halt_ticker_day_alert_sequences`).all()).toEqual([{
+FROM news_market_halt_ticker_day_alert_sequences ORDER BY ticker`).all()).toEqual([{
         ticker: "FCUV",
         halt_date_et: "09/08/2026",
         first_halt_id: firstHaltId,
         last_notified_quote_time_et: "10:01:31",
         last_notified_trade_time_et: "10:06:31",
+      }, {
+        ticker: "NINI",
+        halt_date_et: "09/08/2026",
+        first_halt_id: "00000000-0000-4000-8000-000000000020",
+        last_notified_quote_time_et: null,
+        last_notified_trade_time_et: null,
       }]);
       const repository = new MarketHaltAlertRepository(database);
       const beforeUnchangedReconciliation = database.prepare(`SELECT count(*) AS count FROM news_market_halt_push_deliveries`).get() as { count: number };
@@ -101,9 +107,14 @@ WHERE halt_id = ? ORDER BY state`).all(firstHaltId)).toEqual([
         observedAtUtc: "2026-09-08T14:20:00.000Z",
         sourceUrl: "https://example.test",
       });
-      expect(repository.reconcileDeliveryLifecycle({ haltId: revised.haltId, observedAtUtc: "2026-09-08T14:20:00.000Z" })).toBe(1);
+      // All five active subscriptions receive the new revision, regardless of
+      // each subscription's earlier delivery state.
+      expect(repository.reconcileDeliveryLifecycle({ haltId: revised.haltId, observedAtUtc: "2026-09-08T14:20:00.000Z" })).toBe(5);
+      expect(database.prepare(`SELECT COUNT(*) AS count FROM news_market_halt_push_deliveries
+WHERE halt_id = ? AND notification_stage = 'trade_time' AND notification_revision = 1`).get(revised.haltId)).toEqual({ count: 5 });
       expect(database.prepare(`SELECT notification_stage, notification_revision FROM news_market_halt_push_deliveries
-WHERE halt_id = ? ORDER BY notification_stage, notification_revision`).all(revised.haltId)).toEqual([
+WHERE halt_id = ? AND subscription_id = '00000000-0000-4000-8000-000000000003'
+ORDER BY notification_stage, notification_revision`).all(revised.haltId)).toEqual([
         { notification_stage: "initial", notification_revision: 0 },
         { notification_stage: "trade_time", notification_revision: 1 },
       ]);

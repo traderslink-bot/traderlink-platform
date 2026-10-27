@@ -110,9 +110,9 @@ describe("durable Moomoo attention episodes", () => {
       f.authorize(0,"2026-10-26T02:00:00.000Z");f.repo.markReauthorizationRequired(f.scopes[0]!,"2026-10-26T02:00:00.000Z");
       expect(count(f.db,"platform_notification_remote_deliveries")).toBe(3);
       expect(count(f.db,"platform_web_push_deliveries")).toBe(3);
-      const readiness=readMoomooAlertReadiness(f.db,f.scopes[1]!,{});
+      const readiness=readMoomooAlertReadiness(f.db,f.scopes[1]!,{NODE_ENV:"test"});
       expect(readiness).toMatchObject({emailEnabled:false,emailConfirmed:true,emailConfigured:false,pushEnabled:false,pushRegistered:true,pushConfigured:false,providerDelivery:"unverified",phoneDisplay:"unknown"});
-      expect(readMoomooAlertReadiness(f.db,f.scopes[2]!,{})).toMatchObject({emailConfirmed:false,pushRegistered:false});
+      expect(readMoomooAlertReadiness(f.db,f.scopes[2]!,{NODE_ENV:"test"})).toMatchObject({emailConfirmed:false,pushRegistered:false});
     } finally {f.db.close();}
   });
   it("reconciles an existing attention episode without duplicating its legacy source alert", () => {

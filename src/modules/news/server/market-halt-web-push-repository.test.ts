@@ -195,6 +195,7 @@ describe("halt delivery membership recheck", () => {
     });
     try {
       database.exec("CREATE TABLE platform_membership_feature_policies (feature_key TEXT PRIMARY KEY, enforcement_mode TEXT NOT NULL)");
+      database.exec("INSERT INTO platform_membership_feature_policies VALUES ('notifications.market_halt', 'enforced')");
       const deliveryId = identifier(91);
       addDelivery({ deliveryId, haltId: identifier(92), subscriptionId: identifier(93) });
       const claimed = repository.claimNext(timestamp);

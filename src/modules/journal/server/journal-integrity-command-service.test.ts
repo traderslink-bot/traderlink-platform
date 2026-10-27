@@ -16,6 +16,8 @@ import { PlatformUserRepository } from "@/src/modules/platform/server/identity/p
 import { PlatformWorkspaceRepository } from "@/src/modules/platform/server/identity/platform-workspace-repository";
 import { JournalAccountRepository } from "./accounts/journal-account-repository";
 import { JournalAccountService } from "./accounts/journal-account-service";
+import { JournalAnalyticsFactSetRepository } from "./analytics/journal-analytics-fact-set-repository";
+import { JournalAnalyticsFactSetService } from "./analytics/journal-analytics-fact-set-service";
 import { JournalDataDecisionRepository } from "./decisions/journal-data-decision-repository";
 import { JournalDataDecisionService } from "./decisions/journal-data-decision-service";
 import { JournalExecutionRepository } from "./executions/journal-execution-repository";
@@ -271,6 +273,18 @@ describe("Journal integrity command service", () => {
         execution.sourceLabel === "Manual entry");
       expect(manualEvidence?.executionId).toBe(manualExecutionId);
       expect(broker.relatedDecisionIds).toContain(overlap?.decisionId);
+      // A provisional imported duplicate is deliberately withheld, not a
+      // missing allocation. Keep the manual facts available while it is pending.
+      const pendingFacts = new JournalAnalyticsFactSetService(
+        new JournalAnalyticsFactSetRepository(context.database),
+      ).getJournalAnalyticsFactSet(context.scope, {
+        accountIds: [context.accountScope.accountId],
+        closingDateRange: { kind: "all_available" },
+        currencySelection: { kind: "all_partitions" },
+      });
+      const pendingAllocations = pendingFacts.roundTrips.flatMap((trip) => trip.allocations);
+      expect(pendingAllocations.map((allocation) => allocation.executionId)).toEqual([manualExecutionId]);
+      expect(pendingAllocations[0]?.allocatedQuantityDecimal).toBe("50");
       const repeatedEvidence = commitBroker(context, statement({
         period: "January 1, 2026 - February 28, 2026",
         trades: [{

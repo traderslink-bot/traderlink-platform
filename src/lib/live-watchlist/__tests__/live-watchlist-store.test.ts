@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   applyPatch,
@@ -150,6 +150,7 @@ describe("LiveWatchlistStore", () => {
   const originalPath = process.env.LIVE_WATCHLIST_DB_PATH;
 
   afterEach(() => {
+    vi.restoreAllMocks();
     process.env.LIVE_WATCHLIST_STORAGE = originalStorage;
     process.env.LIVE_WATCHLIST_DB_PATH = originalPath;
     resetLiveWatchlistStoreForTests();
@@ -808,6 +809,7 @@ describe("LiveWatchlistStore", () => {
   });
 
   it("tracks the best observed live move from the posted price through pullbacks", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1000);
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
     const store = new LiveWatchlistStore();
@@ -817,6 +819,7 @@ describe("LiveWatchlistStore", () => {
       status: "live",
       updatedAt: 1000,
       firstPostedAt: 1000,
+      publicationPrice: 1,
       cards: {
         liveTraderRead: {
           title: "Live Trader Read",

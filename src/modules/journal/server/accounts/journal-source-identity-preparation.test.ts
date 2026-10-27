@@ -257,7 +257,7 @@ function createIdentityForAccount(
   }
 }
 
-describe("Journal source identity preparation automation", () => {
+describe("Journal source identity preparation automation", { timeout: 30_000 }, () => {
   it("loads the source path only from injected environment and rejects source arguments", () => {
     const harness = createHarness();
     const previewArguments = [

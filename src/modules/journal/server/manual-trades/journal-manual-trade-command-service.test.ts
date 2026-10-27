@@ -157,7 +157,7 @@ function setup() {
       afterJournalRebuild: (_scope, roundTripIds) => {
         const queued = Object.freeze([...roundTripIds]);
         queuedAnalysisRoundTripIds.push(queued);
-        return Object.freeze([]);
+        return queued;
       },
     },
   );
