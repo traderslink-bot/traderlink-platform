@@ -1,8 +1,9 @@
-import { analysisUpdateComparison, analysisUpdateContextFromReview, parseAnalysisUpdateContext, ANALYSIS_UPDATE_EXPLANATION, type AnalysisUpdateContext } from "./watchlist-analysis-update-copy";
+import { analysisUpdateContextFromReview, parseAnalysisUpdateContext, ANALYSIS_UPDATE_EXPLANATION, type AnalysisUpdateContext } from "./watchlist-analysis-update-copy";
 
 /** Shared wire contract for an explicitly approved, website-acknowledged post.
- * Only saved analysis reference prices are included; no analysis body, live
- * quote, email address or image belongs in this delivery contract.
+ * Saved update context remains available for compatibility, but its prices
+ * never enter notification text. No analysis body, live quote, email address
+ * or image belongs in this delivery contract.
  * Authentication and durable publication evidence are checked by the receiver.
  */
 export type WatchlistPublicationNotificationEvent = Readonly<{
@@ -111,13 +112,12 @@ export function watchlistPublicationNotificationCopy(ticker: string, kind: "list
   const analysisTitle = firstAnalysis ? `${ticker} Analysis published` : `${ticker} Analysis updated`;
   const analysisBody = firstAnalysis ? "The first analysis is now available. View the setups and levels in the app." : ANALYSIS_UPDATE_EXPLANATION;
   const attribution = ownerApproved ? ' by "This Guy"' : kind === "analysis" && !firstAnalysis && context?.automatic ? " — Auto updated by AI" : "";
-  const comparison = firstAnalysis ? null : analysisUpdateComparison(context);
   return Object.freeze({
     destinationPath: `/watchlist/${ticker}`,
     pushTitle: (kind === "analysis" ? analysisTitle : `${ticker} added to the Watchlist`) + attribution,
-    pushBody: kind === "analysis" ? [context?.categoryMoveNote,comparison ?? analysisBody].filter(Boolean).join("\n") : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
+    pushBody: kind === "analysis" ? [context?.categoryMoveNote, analysisBody].filter(Boolean).join("\n") : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
     emailTitle: (kind === "analysis" ? analysisTitle : `${ticker} added to the TradersLink Watchlist`) + attribution,
-    emailBody: kind === "analysis" ? [context?.categoryMoveNote,comparison, analysisBody].filter(Boolean).join("\n") : `A new Watchlist post for ${ticker} is ready.`,
+    emailBody: kind === "analysis" ? [context?.categoryMoveNote, analysisBody].filter(Boolean).join("\n") : `A new Watchlist post for ${ticker} is ready.`,
     emailTickerLabel: `View ${ticker}`,
     emailWatchlistLabel: "View Watchlist",
     emailWatchlistPath: "/watchlist",

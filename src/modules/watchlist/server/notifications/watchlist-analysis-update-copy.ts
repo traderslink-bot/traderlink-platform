@@ -58,13 +58,3 @@ export function parseAnalysisUpdateContext(value: unknown): AnalysisUpdateContex
 }
 
 export const ANALYSIS_UPDATE_EXPLANATION = "A follow-up to the original analysis, with updated levels and setups for those holding a position or watching the trade develop.";
-
-export function analysisUpdateComparison(context?: AnalysisUpdateContext): string | null {
-  const first = price(context?.firstAnalysisPrice), updated = price(context?.updatedAnalysisPrice);
-  if (first === null || updated === null) return null;
-  const percentage = (updated / first - 1) * 100;
-  if (!Number.isFinite(percentage)) return null;
-  const rounded = Math.round(percentage * 10) / 10;
-  const format = (value: number) => value.toFixed(value >= 1 ? 2 : 4);
-  return `Originally analyzed at $${format(first)}. Now $${format(updated)} (${rounded > 0 ? "+" : ""}${rounded.toFixed(1)}%).`;
-}
