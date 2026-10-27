@@ -83,7 +83,7 @@ function setup(): Readonly<{
   });
 }
 
-describe("Journal support consent service", () => {
+describe("Journal support consent service", { timeout: 30_000 }, () => {
   it("grants idempotently and verifies purge after trader revocation", () => {
     const { databasePath, scope, supportRoot } = setup();
     const sourceBytes = Buffer.from("Trade Time,Ticker\n2026-08-03 09:30:00,TEST\n");

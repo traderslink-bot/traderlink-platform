@@ -39,16 +39,12 @@ describe("PlatformAuthenticationRepository", () => {
         manifest: platformMigrationManifest.slice(0, 11),
         now: () => new Date(NOW),
       });
-      new PlatformUserRepository(database, {
-        allowedAuthProviders: ["development_local"],
-      }).createUser({
-        userId: USER_ID,
-        authProvider: "development_local",
-        authSubject: "initial_owner",
-        displayName: "Owner",
-        createdAtUtc: NOW,
-        updatedAtUtc: NOW,
-      });
+      // Seed the historical schema itself, not today's profile-aware repository
+      // against a database deliberately stopped before profile migrations.
+      database.prepare(`INSERT INTO platform_users
+        (user_id, auth_provider, auth_subject, display_name, status, created_at_utc, updated_at_utc)
+        VALUES (?, 'development_local', 'initial_owner', 'Owner', 'active', ?, ?)`)
+        .run(USER_ID, NOW, NOW);
       runPlatformMigrations(database, { now: () => new Date(NOW) });
       const repository = new PlatformAuthenticationRepository(database);
       expect(

@@ -166,7 +166,7 @@ function setup(): Readonly<{
 describe("Journal annotation service", () => {
   it("enforces cross-account tag and resumed-rule limits without deleting prior history", () => {
     const context = setup();
-    context.database.exec("DELETE FROM platform_membership_feature_policies WHERE feature_key IN ('journal.custom_tags','journal.rules','journal.custom_rules','journal.preset_rules')");
+    context.database.exec("UPDATE platform_membership_feature_policies SET enforcement_mode = 'enforced' WHERE feature_key IN ('journal.custom_tags','journal.rules','journal.custom_rules','journal.preset_rules')");
     const access = vi.spyOn(PlatformMembershipRepository.prototype, "readEffectiveAccess").mockReturnValue({
       userId, evaluatedAtUtc: at, booleanFeatures: ["journal.rules"], sources: [],
       limits: { "journal.custom_tags": 1, "journal.custom_rules": 1 },

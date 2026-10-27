@@ -115,6 +115,9 @@ describe("Day and Swing Trade Tracker mutation routes", () => {
       styledTradeCount: 1,
       affectedDates: Object.freeze(["2026-08-03"]),
       affectedPositionRefs: Object.freeze([positionRef]),
+      affectedTradeTargets: Object.freeze([{ roundTripId: "trade-id" }]),
+      analyzerQueueOutcome: "not_requested",
+      analyzerSelectionOutcomes: Object.freeze([]),
     });
     mocks.saveSwingNote.mockReturnValue({
       positionRef,
@@ -180,6 +183,7 @@ describe("Day and Swing Trade Tracker mutation routes", () => {
         quantityDecimal: "100",
         priceDecimal: "12.34",
         feesDecimal: "1.25",
+        manualFeeInputState: "entered",
       }],
     });
   });
@@ -214,6 +218,11 @@ describe("Day and Swing Trade Tracker mutation routes", () => {
         styledTradeCount: 1,
         affectedDates: ["2026-08-03"],
         affectedPositionRefs: [positionRef],
+        affectedTradeIds: ["trade-id"],
+        affectedTradeRefs: [positionRef],
+        analyzerQueueOutcome: "not_requested",
+        analyzerSelectionOutcomes: [],
+        savedTrades: [],
       },
     });
     expect(JSON.stringify(packet)).not.toContain("execution-id");
@@ -345,7 +354,8 @@ describe("Day and Swing Trade Tracker mutation routes", () => {
       "if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(sessionDate)) notFound();",
     );
     expect(DASHBOARD_NAVIGATION_HREFS).toContain("/trade-tracker");
-    expect(DASHBOARD_NAVIGATION_HREFS).toContain("/trade-tracker/swings");
+    expect(DASHBOARD_NAVIGATION_HREFS).toContain("/workspace");
+    expect(DASHBOARD_NAVIGATION_HREFS).not.toContain("/trade-tracker/swings");
     expect(DASHBOARD_NAVIGATION_HREFS).toContain("/trades/open");
 
     const nextConfig = readFileSync(join(root, "next.config.ts"), "utf8");

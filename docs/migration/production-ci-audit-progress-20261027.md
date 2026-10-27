@@ -87,4 +87,69 @@ three suites, not that their four failures are harmless or that all159 are old.
   Accept either matching quote style, keep exact ID/namespace/order comparisons.
   No applied migration source or checksum changed.
 
-Investigation remains in progress. No broad CI-green or no-live-impact claim.
+### Additional confirmed metadata defect
+
+The registry already implements `average_trade_return` and `median_trade_return`,
+but its declared capability inventory omitted both. Add only those existing IDs;
+the emitted metric definitions, formulas and approved UI remain unchanged.
+All four registry checks and the additive query contract checks pass. This is
+metadata consistency, not two new product metrics or evidence of wrong P/L.
+
+### Tests separated from runtime changes
+
+- Watchlist gain fixture now provides the actual publication price/time rather
+  than a removed card's price. Current numbered pullback and sign-in contracts
+  are asserted without editing the UI. All65 Watchlist checks pass.
+- Synthetic restricted-mode fixtures explicitly enforce their own commercial
+  policies; production's owner-controlled default-off rollout is untouched.
+  News push, Private Watchlist, Journal annotations and migration checks:33 pass.
+- Identity fixtures now create durable auth links. Historical11-migration
+  backfill fixtures seed the historical schema instead of invoking today's
+  profile-aware repository against missing tables. Auth/email/storage group:
+  19 pass. Account-scope group:4 pass, including member denial.
+- Analyzer route mocks now include logical lookup, events, profit protection and
+  written-review context. Current saved availability status remains unchanged.
+  Manual route mocks include affected trade targets, fee intent and current
+  response fields. A mock returning no queued IDs cannot promise one queued ID.
+- Halt migration test seeded two tickers but expected one anchor; five active
+  subscriptions correctly each receive the next revision. Assert both anchors,
+  per-subscription revisions and aggregate delivery count. Applied SQL unchanged.
+- Reverse-split0142 test now selects its exact0140 predecessor even after later
+  migrations exist, retains its exact checksum and tests current erasure's
+  pending-purge return contract rather than falsely claiming physical purge.
+- Native import matrix case times measured up to52.3s, including repeated
+  initialization/import/integrity checks. Preserve checks with bounded90s suite
+  budget; smaller source-identity fixture matrix has bounded30s budget.
+  Production request timeout and integrity validation are not changed.
+
+### Explicit residual boundaries
+
+The160-item Coordinator inventory is classified with per-case evidence. A
+classification is not a resolution or universal safety finding:
+
+-76 Coach/Membership items remain with their owner lanes and are excluded from
+  this release. Deliberate generation/cache guards and default-off rollout must
+  not be bypassed to make tests green. Source review also found stale provider,
+  wording, notification defaults and a217-day range that no longer exceeds the
+  current1500-day rule-result maximum.
+-7 legacy V3 architecture assertions need current Platform route/frame inventory
+  maintenance. Incomplete old audit coverage is not proof that new routes are
+  safe, nor proof of a runtime authorization defect. No broad route rewrite.
+-9 source/copy assertions remain test-maintenance debt: Trade Explorer's shared
+  detail editor/sort options/server-only import ordering, clean Light chart theme,
+  demo sx color props and capitalized unavailable-P/L wording. Do not restore
+  obsolete UI to satisfy these assertions.
+-All17 original default5000ms integration failures now completed their assertions
+  in bounded serial runs. Source-identity's12-case matrix passed at30s. The final
+  ten-case native check passed: smaller cases3.3–6.3s, large import/corruption
+  matrices29.7–62.7s within the90s suite budget. No assertion was removed.
+-Final login component group:9/9 passed after router/field/copy fixture repairs.
+
+Original-case disposition:68 failures addressed by verified corrections;76
+excluded owner-lane cases,7 legacy architecture inventory gaps and9 stale
+source/copy assertions remain explicit. This is not a claim of full CI green.
+
+No full-CI-green claim, no real-user deletion, no real notification/provider
+delivery, no hosted mutation. The live app reports ready148 during this audit.
+Full release build and fresh exact-target hosted/schema gates are still required
+before selecting any corrected source for production.

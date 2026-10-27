@@ -368,7 +368,10 @@ function verificationOptions(
   });
 }
 
-describe("private Journal source import and verification automation", () => {
+// The corruption matrix deliberately initializes/imports/verifies many isolated
+// databases per case. Measured serial cases take up to53s; keep a bounded local
+// test budget, never a production request-timeout or disabled integrity check.
+describe("private Journal source import and verification automation", { timeout: 90_000 }, () => {
   it("loads the source path only from environment and rejects source arguments", () => {
     const harness = createHarness();
     expect(() => runTraderLinkPlatformJournalSourceImport(

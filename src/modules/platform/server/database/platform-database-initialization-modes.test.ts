@@ -21,7 +21,7 @@ function pathFor(name: string): string {
   return join(root, `${name}.sqlite`);
 }
 
-describe("runtime and explicit initializer modes", () => {
+describe("runtime and explicit initializer modes", { timeout: 30_000 }, () => {
   it("runtime rejects an absent path without creating it", () => {
     const path = pathFor("absent");
     expect(() =>

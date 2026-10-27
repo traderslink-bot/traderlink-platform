@@ -65,7 +65,7 @@ describe("email HTTP route integration", () => {
     const signup = await POST(request({ action: "signup", email, password, name: "Trader" }));
     expect(signup.status).toBe(200);
     expect(await signup.json()).toEqual({
-      message: `We sent a confirmation link to ${email}. Please click the link in that email to verify your account.`, confirmationEmail: email,
+      message: `We sent a verification link to ${email}. Open that email to verify your email address.`, confirmationEmail: email,
     });
     expect(signup.headers.get("set-cookie")).toBeNull();
     const mail = claimLoginMail(db, secret)!;
@@ -143,7 +143,7 @@ describe("email HTTP route integration", () => {
     const linked = await POST(request({ action: "link-email", email, password, name: "Trader" }, cookie));
     expect(linked.status).toBe(200);
     expect(await linked.json()).toEqual({
-      message: `We sent a confirmation link to ${email}. Please click the link in that email to verify your account.`, confirmationEmail: email,
+      message: `We sent a verification link to ${email}. Open that email to verify your email address.`, confirmationEmail: email,
     });
     const mail = claimLoginMail(db, secret)!; expect(mail.mail.purpose).toBe("verify"); expect(mail.mail.verificationContext).toBe("add-email"); finishLoginMail(db, mail.id, true);
     expect((await POST(request({ action: "login", email, password }))).status).toBe(400);

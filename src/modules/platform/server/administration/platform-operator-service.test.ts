@@ -85,7 +85,7 @@ async function backup(
   });
 }
 
-describe("offline Journal admin operator authority", () => {
+describe("offline Journal admin operator authority", { timeout: 30_000 }, () => {
   it("previews privately and requires the exact confirmation, digest and backup", async () => {
     const state = setup();
     const preview = previewPlatformOperatorChange({

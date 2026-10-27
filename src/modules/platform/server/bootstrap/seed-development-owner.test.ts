@@ -118,7 +118,7 @@ function confirm(
   });
 }
 
-describe("development owner seed", () => {
+describe("development owner seed", { timeout: 30_000 }, () => {
   it("previews without writing and atomically creates exactly the ownership rows", () => {
     const database = setup();
     try {

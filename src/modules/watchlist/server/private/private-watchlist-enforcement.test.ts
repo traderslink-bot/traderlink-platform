@@ -17,6 +17,12 @@ function fixture(features:readonly {featureKey:string;limitValue:number|null}[]=
   for(const migration of [platformIdentityMigration,platformAuthenticationIdentitiesMigration,platformDiscordMembershipsMigration,platformMembershipPlatformMigration,platformMembershipGenerationAllowancesMigration,platformMemberPrivateWatchlistsMigration])for(const sql of migration.statements)db.exec(sql);
   const user=randomUUID(),other=randomUUID();for(const id of [user,other])db.prepare("INSERT INTO platform_users VALUES (?,'test',?,'QA','active',?,?)").run(id,id,at,at);
   const memberships=new PlatformMembershipRepository(db);memberships.synchronizeBuiltInFeatures(user,at);
+  // Restricted-mode tests explicitly opt this synthetic database into rollout;
+  // the production default intentionally remains off until the owner enables it.
+  db.prepare(`INSERT INTO platform_membership_feature_policies
+    (feature_key,enforcement_mode,updated_by_user_id,updated_at_utc)
+    SELECT feature_key,'enforced',?,? FROM platform_membership_feature_definitions
+    WHERE feature_key LIKE 'private_watchlist.%'`).run(user,at);
   if(features.length){const plan=memberships.createPlan({actorUserId:user,planKey:'qa-'+randomUUID(),name:'Private Watchlist QA',visibility:'unlisted',features,atUtc:at});memberships.publishPlanVersion({actorUserId:user,planVersionId:plan.planVersionId,atUtc:at});memberships.grantEntitlement({actorUserId:user,userId:user,planVersionId:plan.planVersionId,sourceType:'free_plan',sourceRef:'qa-private',startsAtUtc:at,endsAtUtc:null,atUtc:at});}
   return {db,user,other,repo:new PrivateWatchlistRepository(db)};
 }

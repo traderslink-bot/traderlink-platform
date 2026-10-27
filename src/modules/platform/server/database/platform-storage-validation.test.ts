@@ -5,6 +5,7 @@ import { join } from "node:path";
 import type Database from "better-sqlite3";
 
 import { PlatformUserRepository } from "../identity/platform-user-repository";
+import { PlatformAuthenticationRepository } from "../authentication/platform-authentication-repository";
 import {
   assertCanonicalUtcTimestamp,
   createCanonicalUuidV4,
@@ -75,6 +76,14 @@ describe("platform storage validation", () => {
         displayName: "Owner",
         createdAtUtc: "2026-08-01T12:00:00.000Z",
         updatedAtUtc: "2026-08-01T12:00:00.000Z",
+      });
+      expect(users.findActiveByAuthIdentity("discord", " Exact Subject ")).toBeNull();
+      new PlatformAuthenticationRepository(db).linkIdentity({
+        userId,
+        authProvider: "discord",
+        authSubject: " Exact Subject ",
+        linkedByUserId: userId,
+        timestamp: "2026-08-01T12:00:00.000Z",
       });
       expect(users.findActiveByAuthIdentity("discord", " Exact Subject ")?.userId).toBe(
         userId,

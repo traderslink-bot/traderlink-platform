@@ -31,8 +31,7 @@ describe("watchlist display contract", () => {
   it("keeps pullback state logic without rendering a visible state badge", () => {
     expect(clientSource).toContain("resolveTradersLinkAiPullbackScenarioState(scenario, livePrice)");
     expect(clientSource).toContain('data-scenario-state={state.toLowerCase().replaceAll(" ", "-")}');
-    expect(clientSource).toContain('heading="Pullback"');
-    expect(clientSource).toContain('heading={showShallow ? "Deeper pullback" : "Pullback"}');
+    expect(clientSource).toContain('heading={`Pullback ${index+1}`}');
     expect(clientSource).not.toContain("<span>{state}</span>");
   });
 
@@ -50,9 +49,10 @@ describe("watchlist display contract", () => {
   it("keeps the public preview and detail authentication actions explicit", () => {
     expect(accessPageSources[0]).toContain("<WatchlistPublicPreview");
     expect(publicPreviewSource).toContain("Already a member? Sign in");
-    expect(publicPreviewSource).toContain("/api/auth/discord/login?returnTo=");
+    expect(publicPreviewSource).toContain("/login?returnTo=");
     for (const source of accessPageSources.slice(1)) {
-      expect(source).toContain("Log in with Discord");
+      expect(source).toContain("Sign in");
+      expect(source).toContain("/login?returnTo=");
       expect(source).not.toContain("Refresh Discord access");
     }
   });

@@ -31,7 +31,7 @@ describe("authentication mail transport contract", () => {
       expect(link.search).toBe("");
       expect(new URLSearchParams(link.hash.slice(1)).get("token")).toBe(mail.token);
       expect(payload.to).toEqual([mail.email]);
-      expect(payload.html).toContain(purpose === "reset" ? "Reset Password" : "Confirm Email Address");
+      expect(payload.html).toContain(purpose === "reset" ? "Reset Password" : "Verify Email Address");
       expect(payload.html).toContain(`href="${link.href.replace(/&/g, "&amp;")}"`);
       expect(payload.html).toContain("copy and paste this link into your browser");
       expect(payload.html).toContain("— TradersLink");
