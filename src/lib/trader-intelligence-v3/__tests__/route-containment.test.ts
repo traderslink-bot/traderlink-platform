@@ -1,9 +1,11 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import { TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX } from "../contracts";
+import platformInventory from "../testing/platform-route-inventory-20261027.json";
+import { platformRouteInventoryFindings, type RouteInventoryEntry } from "../testing/platform-route-inventory";
 import {
   discoverTraderIntelligenceApiRoutes,
   scanTraderIntelligenceRouteContainment,
@@ -49,7 +51,7 @@ function intelligenceClientRecords() {
 }
 
 describe("Trader Intelligence route containment matrix", () => {
-  it("classifies every Intelligence page and discovered API exactly once", () => {
+  it("inventories current pages and discovered APIs once, with excluded owner lanes explicit", () => {
     const actualRoutes = [
       ...findFiles(
         join(process.cwd(), "app", "(dashboard)"),
@@ -59,28 +61,85 @@ describe("Trader Intelligence route containment matrix", () => {
         join(process.cwd(), "app", "intelligence"),
         (name) => name === "page.tsx",
       ),
+      // OAuth entry no longer appears in Journal client references, but remains a hosted route.
+      "app/api/auth/discord/login/route.ts",
       ...discoverTraderIntelligenceApiRoutes({
         routeRecords: allApiRouteRecords(),
         intelligenceClientRecords: intelligenceClientRecords(),
       }),
     ].sort();
-    const classifiedRoutes = TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX.map(
+    const retiredPerformancePage = "app/(dashboard)/analytics/performance/page.tsx";
+    expect(existsSync(retiredPerformancePage)).toBe(false);
+    expect(readFileSync("src/modules/platform/contracts/legacy-intelligence-route-disposition.ts", "utf8"))
+      .toContain('"/analytics/performance"');
+    const classifiedRoutes = [...TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX.filter(
+      entry => entry.modulePath !== retiredPerformancePage,
+    ).map(
       (entry) => entry.modulePath,
-    ).sort();
+    ), ...platformInventory.map(entry => entry.path)].sort();
 
     expect(new Set(classifiedRoutes).size).toBe(classifiedRoutes.length);
     expect(classifiedRoutes).toEqual(actualRoutes);
-    expect(classifiedRoutes).toHaveLength(136);
+    // This reviewed snapshot is explicit, not discovered-and-auto-approved at test time.
+    expect(platformInventory.filter(entry => entry.excludedOwnerLane)).toHaveLength(34);
+    for (const entry of platformInventory.filter(entry => entry.excludedOwnerLane)) {
+      expect(entry.path).toMatch(/app\/api\/(?:coach|billing)\/|app\/api\/cron\/ai-|app\/\(dashboard\)\/(?:ai-chat|ai-reviews|community)\//u);
+    }
   });
 
   it("uses AST inspection to require exact wrapper paths and complete method coverage", () => {
     expect(
       scanTraderIntelligenceRouteContainment({
-        routeRecords: allApiRouteRecords(),
+        routeRecords: allApiRouteRecords().filter(record =>
+          TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX.some(entry => entry.modulePath === record.path)),
         intelligenceClientRecords: intelligenceClientRecords(),
         matrix: TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX,
       }),
     ).toEqual([]);
+    for (const entry of platformInventory as readonly RouteInventoryEntry[]) {
+      if (entry.methods && !entry.excludedOwnerLane) expect(
+        platformRouteInventoryFindings(entry, readFileSync(entry.path, "utf8")), entry.path,
+      ).toEqual([]);
+    }
+  });
+
+  it("rejects a removed guard, unused import, wrong binding, dead helper, or unreviewed HTTP method", () => {
+    const entry: RouteInventoryEntry = {
+      path: "app/api/platform/journal/example/route.ts",
+      methods: { GET: [{ name: "requireTraderLinkPlatformRequestScope", module: "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope" }] },
+    };
+    const imported = 'import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";';
+    const good = `${imported} export function GET(request: Request) { return requireTraderLinkPlatformRequestScope(request.headers); }`;
+    expect(platformRouteInventoryFindings(entry, good)).toEqual([]);
+    for (const broken of [
+      `${imported} export function GET() { return Response.json({}); }`,
+      good.replace("return requireTraderLinkPlatformRequestScope(request.headers);", "function unused() { requireTraderLinkPlatformRequestScope(request.headers); } return Response.json({});"),
+      good.replace("@/src/modules/platform/server/authentication/require-platform-request-scope", "./untrusted"),
+      `${good} export function POST() { return Response.json({}); }`,
+    ]) expect(platformRouteInventoryFindings(entry, broken).length).toBeGreaterThan(0);
+  });
+
+  it("keeps local-only, cron and OAuth boundaries explicit rather than treating them as public bypasses", () => {
+    for (const path of ["app/api/platform/daily-trade-analyzer/run/route.ts", "app/api/platform/moomoo-execution-import/run/route.ts"]) {
+      const source = readFileSync(path, "utf8");
+      expect(source).toContain('process.env.NODE_ENV === "development"');
+      expect(source).toContain('process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_RUNTIME_ENV] === "1"');
+      expect(source).toContain("token.length > 0");
+      expect(source).toContain("if (!allowed(request))");
+      const entry = platformInventory.find(entry => entry.path === path)! as RouteInventoryEntry;
+      expect(platformRouteInventoryFindings(entry, source.replace("token.length > 0", "true"))).toContain("POST: local boundary changed allowed");
+    }
+    for (const path of ["app/api/cron/journal-ai-import-repair/route.ts", "app/api/cron/moomoo-execution-import/route.ts"]) {
+      const source = readFileSync(path, "utf8");
+      expect(source).toContain("if (!secret || !supplied) return false;");
+      expect(source).toContain("timingSafeEqual(");
+      expect(source).toContain("if (!authorized(request))");
+    }
+    const oauth = readFileSync("app/api/auth/discord/callback/route.ts", "utf8");
+    expect(oauth).toContain("if (!state || !expectedState || state !== expectedState)");
+    expect(oauth).toContain("await exchangeDiscordCode(");
+    expect(oauth.indexOf("if (!state || !expectedState || state !== expectedState)")).toBeLessThan(oauth.indexOf("await exchangeDiscordCode("));
+    expect(oauth).toContain('returnTo, "invalid-state"');
   });
 
   it("requires mutation classifications to include an unsafe HTTP method", () => {
@@ -189,7 +248,11 @@ describe("Trader Intelligence route containment matrix", () => {
     expect(layoutSource).toContain("requireTraderIntelligenceOwnerPageAccess");
     expect(dashboardLayoutSource).toContain('dynamic = "force-dynamic"');
     expect(dashboardLayoutSource).toContain('fetchCache = "force-no-store"');
-    expect(dashboardLayoutSource).toContain("requireTraderLinkPlatformPageIdentity");
+    expect(dashboardLayoutSource).toContain("<TraderLinkPlatformDashboardFrame>");
+    const frame = readFileSync("app/dashboard-layout-frame.tsx", "utf8");
+    expect(frame).toContain("requireTraderLinkPlatformServerComponentPageIdentity()");
+    expect(frame).toContain("requireTraderLinkPlatformAuthenticatedPageIdentity({");
+    expect(frame).toContain("requireTraderLinkPlatformBillingPageIdentity()");
     expect(nextConfigSource).toContain('"/intelligence/:path*"');
     expect(nextConfigSource).toContain('"/workspace/:path*"');
     expect(nextConfigSource).toContain('"/trades/:path*"');

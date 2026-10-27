@@ -1,0 +1,1755 @@
+[
+  {
+    "path": "app/(dashboard)/admin/demo-candle-exports/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/admin/watchlist/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/ai-chat/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/ai-reviews/benchmark-preview/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/ai-reviews/monthly/[reviewId]/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/ai-reviews/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/ai-reviews/weekly/[reviewId]/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analysis/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analyzer/day/candle-patterns/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analyzer/day/entry-exit/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analyzer/day/green-to-red/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analyzer/day/mfe-mae/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analyzer/day/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analyzer/day/scaling-out/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analyzer/day/trades/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-analyzer/day/trend-momentum/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-explorer/compare/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/analytics/trade-explorer/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/community/[userName]/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/community/[userName]/watchlists/[watchlistName]/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/community/watchlists/new/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/community/watchlists/page.tsx",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/(dashboard)/levels/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/market-data/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/market-news/week-ahead/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/press-releases/[[...channel]]/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/private-watchlist/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/quick-trade-entry/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/reverse-splits/help/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/reverse-splits/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/rules/results/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/scanner/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/trade-tracker/swings/[positionRef]/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/trade-tracker/swings/page.tsx"
+  },
+  {
+    "path": "app/(dashboard)/welcome/page.tsx"
+  },
+  {
+    "path": "app/api/admin/journal/audit/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/data-decisions/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/demo-daily-tracker-market-data/export/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "authorizeOwnerDailyTrackerMarketDataExport",
+          "module": "@/src/modules/journal/server/demo/daily-tracker-market-data-export-service#authorizeOwnerDailyTrackerMarketDataExport"
+        },
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/hosted-transfer/execute/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminScope",
+          "module": "@/src/modules/platform/server/administration/platform-admin-authorization#requireJournalAdminScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/imports/[importRef]/consented-source-download/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminPermission",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminPermission"
+        },
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../../../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/imports/[importRef]/detail-access/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminPermission",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminPermission"
+        },
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../../../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/imports/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/overview/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/statement-formats/[formatRef]/developer-package/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminPermission",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminPermission"
+        },
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../../../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/statement-formats/[formatRef]/merge/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminPermission",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminPermission"
+        },
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../../../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/statement-formats/[formatRef]/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/statement-formats/[formatRef]/transition/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminPermission",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminPermission"
+        },
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../../../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/statement-formats/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/system/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/users/[userRef]/account-control/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminPermission",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminPermission"
+        },
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../../../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/users/[userRef]/detail-access/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminPermission",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminPermission"
+        },
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../../../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/journal/users/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../admin-route-runtime#withJournalAdminRequest"
+        }
+      ],
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "requireJournalAdminPermission",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminPermission"
+        },
+        {
+          "name": "withJournalAdminRequest",
+          "module": "../admin-route-runtime#withJournalAdminRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/watchlist/console/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "authorized",
+          "localSha256": "9215be2ae91a53d7df7080c0eb9737c337a1119bfb16da992663c065f52e51df"
+        },
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/watchlist/daily-recaps/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ],
+      "POST": [
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/watchlist/gain-starting-point/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminDatabase",
+          "module": "@/src/modules/platform/server/administration/platform-admin-authorization#withJournalAdminDatabase"
+        }
+      ],
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "withJournalAdminDatabase",
+          "module": "@/src/modules/platform/server/administration/platform-admin-authorization#withJournalAdminDatabase"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/watchlist/indicator-audit/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/watchlist/potential-gain-post/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminDatabase",
+          "module": "@/src/modules/platform/server/administration/platform-admin-authorization#withJournalAdminDatabase"
+        }
+      ],
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "withJournalAdminDatabase",
+          "module": "@/src/modules/platform/server/administration/platform-admin-authorization#withJournalAdminDatabase"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/watchlist/setups/results/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminDatabase",
+          "module": "@/src/modules/platform/server/administration/platform-admin-authorization#withJournalAdminDatabase"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/watchlist/setups/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "withJournalAdminDatabase",
+          "module": "@/src/modules/platform/server/administration/platform-admin-authorization#withJournalAdminDatabase"
+        }
+      ],
+      "POST": [
+        {
+          "name": "requireJournalAdminMutationRequest",
+          "module": "@/src/modules/platform/server/administration/platform-admin-request-security#requireJournalAdminMutationRequest"
+        },
+        {
+          "name": "withJournalAdminDatabase",
+          "module": "@/src/modules/platform/server/administration/platform-admin-authorization#withJournalAdminDatabase"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/admin/watchlist/usage/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/auth/discord/callback/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "exchangeDiscordCode",
+          "module": "@/src/lib/academy/discord-oauth#exchangeDiscordCode"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/auth/logout-all/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "isSameOriginPlatformSignOutRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-sign-out-request-security#isSameOriginPlatformSignOutRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/auth/logout-session/[sessionId]/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "isSameOriginPlatformSignOutRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-sign-out-request-security#isSameOriginPlatformSignOutRequest"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/billing/whop/connect/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/action-drafts/[draftId]/confirm/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/action-drafts/[draftId]/reject/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/action-drafts/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/daily-companion-drafts/[interactionId]/confirm/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/daily-companion-drafts/[interactionId]/reject/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/daily-companion-drafts/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/manual-entry-drafts/[draftId]/commit/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/manual-entry-drafts/[draftId]/preview/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/manual-entry-drafts/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/messages/[assistantMessageId]/quality-feedback/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/messages/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/review-delivery-change-drafts/[draftId]/confirm/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/review-delivery-change-drafts/[draftId]/reject/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/review-delivery-change-drafts/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/[conversationId]/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/conversations/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/meet-links/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/memories/[memoryId]/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/memories/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/memories/settings/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/readiness/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/coach/chat/remember/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/connections/moomoo/callback/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/connections/moomoo/candle-diagnostic/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/connections/moomoo/imports/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/connections/moomoo/route.ts",
+    "methods": {
+      "DELETE": [
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/connections/moomoo/start/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/connections/moomoo/trading-accounts/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/cron/ai-review-calendar/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/cron/ai-reviews/route.ts",
+    "excludedOwnerLane": true
+  },
+  {
+    "path": "app/api/cron/journal-ai-import-repair/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "authorized",
+          "localSha256": "aa14d8bb0833692291c48691e12fd5c799514d63613dc8a5f4f7e21af95f7c11"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/cron/moomoo-execution-import/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "authorized",
+          "localSha256": "cc2ca97b9ce710625ed8e3fa9845df44065528d2339e8a6fd537cb167b9942e5"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/intelligence/rule-ideas/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/levels/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ],
+      "POST": [
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ],
+      "DELETE": [
+        {
+          "name": "hasWatchlistDashboardNavigationAccess",
+          "module": "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access#hasWatchlistDashboardNavigationAccess"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/account-erasure/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformAuthenticatedRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformAuthenticatedRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/daily-trade-analyzer/allowance/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/daily-trade-analyzer/execution-mismatches/[mismatchSetId]/confirm/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/daily-trade-analyzer/run/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "allowed",
+          "localSha256": "88619efc3020b22e53d93b63f20202af17b0988a30e49f1d2e63f92538eb57ac"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/analytics/trade-details/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/analytics/trade-explorer-report/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/calendar/ticker-details/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/calendar/workspace-panel/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/demo/activate/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/demo/ensure/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/imports/[importRef]/support-consent/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "DELETE": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/imports/ai-repair/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/manual-executions/[executionRef]/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "DELETE": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/manual-trades/commit/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/manual-trades/preview/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/manual-trades/status/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/rules/workspace-card-preference/route.ts",
+    "methods": {
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/rules/workspace-panel/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/swings/[positionRef]/notes/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/swings/[positionRef]/rule-reviews/route.ts",
+    "methods": {
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/swings/[positionRef]/tags/route.ts",
+    "methods": {
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/trade-details/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/trade-style/[positionRef]/plan/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/trade-style/[positionRef]/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/trading-days/[tradingDate]/review/route.ts",
+    "methods": {
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-top-tickers-card-preference/route.ts",
+    "methods": {
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-trades/[tradeDeleteRef]/edit/commit/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-trades/[tradeDeleteRef]/edit/merge/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "POST": [
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-trades/[tradeDeleteRef]/edit/preview/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-trades/[tradeDeleteRef]/edit/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-trades/[tradeDeleteRef]/route.ts",
+    "methods": {
+      "DELETE": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-trades/commit/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-trades/preview/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/journal/workspace-trades/status/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireJournalMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/journal-mutation-request-security#requireJournalMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/market-halts/status/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/moomoo-execution-import/run/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "allowed",
+          "localSha256": "88619efc3020b22e53d93b63f20202af17b0988a30e49f1d2e63f92538eb57ac"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/moomoo-market-data-access/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/news/workspace-scanner/card-preference/route.ts",
+    "methods": {
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/news/workspace-scanner/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/news/workspace-scanner/stream/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/notes/categorized/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/notes/current-focuses/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "PUT": [
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/notes/session-review/[sessionDate]/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/notes/session-reviews/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/notes/session-summary/[sessionDate]/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/notes/standard/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "PUT": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/notes/types/[noteTypeId]/route.ts",
+    "methods": {
+      "DELETE": [
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/notes/types/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ],
+      "POST": [
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/owner-market-data/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "authorized",
+          "localSha256": "1515500c5738d28acf57f6370c7425a7ba947af37e4fe7deaa0df3ca355463ab"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ],
+      "POST": [
+        {
+          "name": "authorized",
+          "localSha256": "1515500c5738d28acf57f6370c7425a7ba947af37e4fe7deaa0df3ca355463ab"
+        },
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/trade-analyzer/analyzed-trades/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/trade-analyzer/candle-patterns/occurrences/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/trade-analyzer/candle-patterns/replay/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/trade-analyzer/trade/request/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requirePlatformMutationRequest",
+          "module": "@/src/modules/platform/server/authentication/platform-mutation-request-security#requirePlatformMutationRequest"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/platform/trade-analyzer/trade/route.ts",
+    "methods": {
+      "GET": [
+        {
+          "name": "requireExpectedJournalAccountSelection",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireExpectedJournalAccountSelection"
+        },
+        {
+          "name": "requireTraderLinkPlatformRequestScope",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestScope"
+        }
+      ]
+    }
+  },
+  {
+    "path": "app/api/scanner/run/route.ts",
+    "methods": {
+      "POST": [
+        {
+          "name": "requireTraderLinkPlatformRequestIdentity",
+          "module": "@/src/modules/platform/server/authentication/require-platform-request-scope#requireTraderLinkPlatformRequestIdentity"
+        }
+      ]
+    }
+  }
+]

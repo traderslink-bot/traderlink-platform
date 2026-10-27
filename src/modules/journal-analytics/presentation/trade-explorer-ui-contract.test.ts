@@ -21,10 +21,10 @@ describe("Trade Explorer visible contract", () => {
   it("keeps the Next.js and account-scope boundary explicit", () => {
     expect(client.startsWith('"use client";')).toBe(true);
     expect(action.startsWith('"use server";')).toBe(true);
-    expect(service.startsWith('import "server-only";')).toBe(true);
+    expect(service).toMatch(/^import "server-only";$/mu);
     expect(client).not.toContain("export default async function TradeExplorerClient");
     expect(action).toMatch(/requireTraderLinkPlatformPageScope\(\{\s*membershipFeatures: \["analytics\.trade_explorer"\]/u);
-    expect(page).toContain('requireMembershipPageScope("analytics.trade_explorer")');
+    expect(page).toContain('requireMembershipPreviewPageScope("analytics.trade_explorer")');
     expect(service).toContain(
       "requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef)",
     );

@@ -49,10 +49,16 @@ describe("Trade Explorer ordering promises", () => {
       "Lowest return first": "return_percent:ascending",
       "Longest hold first": "holding_duration:descending",
       "Shortest hold first": "holding_duration:ascending",
-      "Most shares first": "entered_quantity:descending",
-      "Fewest shares first": "entered_quantity:ascending",
+      "Most shares entered first": "entered_quantity:descending",
+      "Fewest shares entered first": "entered_quantity:ascending",
       "Highest entry value first": "entry_notional:descending",
       "Lowest entry value first": "entry_notional:ascending",
+      "Most executions first": "execution_count:descending",
+      "Fewest executions first": "execution_count:ascending",
+      "Largest maximum position first": "maximum_position:descending",
+      "Smallest maximum position first": "maximum_position:ascending",
+      "Highest trading costs first": "trading_costs:descending",
+      "Lowest trading costs first": "trading_costs:ascending",
     });
     expect(new Set(TRADE_EXPLORER_TRADE_SORT_OPTIONS.map((option) => option.value)).size)
       .toBe(TRADE_EXPLORER_TRADE_SORT_OPTIONS.length);

@@ -209,7 +209,7 @@ describe("Journal preset rule evaluator", () => {
 
     expect(results).toEqual([expect.objectContaining({ status: "n/a" })]);
     expect(results[0]?.evidence.availabilityReason).toBe("missing_source_fact");
-    expect(results[0]?.evidence.limitation).toContain("trade P/L");
+    expect(results[0]?.evidence.limitation).toBe("Trade P/L was unavailable.");
   });
 
   it("checks only trades inside the exact active interval for a rule version", () => {

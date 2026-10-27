@@ -14,8 +14,8 @@ describe("Daily Trade Analyzer chart appearance contract", () => {
 
     expect(source).toContain('background: "#ffffff"');
     expect(source).toContain('text: "#172033"');
-    expect(source).toContain("const chartTheme = theme.palette.mode === \"dark\"");
-    expect(source).toContain("? DARK_ANALYZER_LIGHT_CHART_THEME");
+    expect(source).toContain("const chartTheme = LIGHT_CHART_THEME;");
+    expect(source).not.toContain("DARK_ANALYZER_LIGHT_CHART_THEME");
     expect(source).toContain('grid: theme.palette.mode === "dark" ? {');
     expect(source).toContain("horzLines: { visible: false }");
     expect(source).toContain("vertLines: { visible: false }");

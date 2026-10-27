@@ -154,7 +154,56 @@ delivery, no hosted mutation. The live app reports ready148 during this audit.
 Full release build and fresh exact-target hosted/schema gates are still required
 before selecting any corrected source for production.
 
-## Compiler qualification
+## Follow-up: remaining sixteen original failures — owner authorized
+
+Current production parent is `3115cb6fe60f8543f82b08c157d43d60be204d26`.
+The clean audit checkout was fast-forwarded to that exact published source;
+no active feature checkout or uncommitted owner work was changed.
+
+The eight-file baseline reproduced exactly 40 passed / 16 failed. All sixteen
+are stale test/inventory assumptions, not newly reproduced runtime defects:
+
+- Nine source/copy cases: cover all eighteen approved Trade Explorer sort
+  choices, the shared read-only Details drawer, retained editor locking and
+  shared tag picker, actual Help ownership, current server/account guard calls,
+  server-only import independent of first-line ordering, the Light chart with
+  Dark grid suppression, exact theme tokens in sx, and capitalized unavailable
+  P/L wording. Preserve financial availability/status assertions and all UI.
+- Seven architecture cases: cover dashboard layout → authenticated shared frame
+  → shared template; configured dynamic/catch-all destinations; Watchlist's
+  separately authenticated frame; current nineteen feature-panel Drawer files;
+  AST-based local-shell rejection (comments no longer false-positive); canonical
+  shared navigation/title exports; and the current route inventory.
+- The legacy runtime containment contract is not rewritten. An additive,
+  test-only explicit snapshot accounts for153 newer entries:93 in-scope API
+  files with per-method called boundary/import bindings,26 inherited dashboard
+  pages, and34 explicitly excluded Coaching/Community/Billing-owner entries.
+  Excluded entries are inventoried only, NOT declared feature-verified. The
+  retired Performance page is checked absent against the existing disposition;
+  OAuth login remains explicitly inventoried despite absent Journal references.
+- Negative fixtures reject missing/unused/wrong-import guards, an uncalled
+  nested helper, an unreviewed method, real local shell reconstruction, and
+  weakened local-worker token gates. Cron/local custom guard source hashes
+  require fresh review on changes. This is bounded structural regression
+  coverage, NOT a complete security/control-flow audit or runtime acceptance.
+
+Final focused result:59 passed /0 failed across the same eight files, including
+three added regression cases. Changed-file ESLint and diff checks passed.
+Full source TypeScript passed (command-local4GiB heap); the new JSON fixture's
+inferred heterogeneous union needed an explicit inventory-entry type assertion
+at one test lookup, corrected without changing runtime code. Final route-only
+recheck and lint also passed after strengthening the OAuth presence assertion.
+No runtime
+application module, Help content, route, migration, package, provider behavior,
+feature flag, hosted setting or account data changed. No full suite/build,
+browser, real send, production release or staging action selected. No temporary
+database was created. Small test reports are retained by the Coordinator only.
+
+The76 excluded original feature-lane failures remain with their owner chats.
+Do not claim full CI green. This test-only source should accompany a later
+approved application source release, not trigger a standalone app restart.
+
+### Earlier compiler qualification
 
 The default2GiB Node compiler heap exhausted during the full source check. A
 single-process4GiB invocation (VPS had10GiB available) completed and reported only
