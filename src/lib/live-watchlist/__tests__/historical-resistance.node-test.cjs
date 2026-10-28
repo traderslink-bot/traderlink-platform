@@ -25,6 +25,25 @@ function state() {
       dataQuality: { status: 'full', availableTimeframes: ['daily', '4h', '5m'], flags: ['daily_insufficient'] } },
     cards: { fullLadder: card, nearestSupportResistance: { ...card }, tradersLinkAiRead: { body: '{"simpleAnalysis":{"upside":[{"high":19.3}]}}', source: 'ai_read' }, traderNotes: { body: 'Owner text.' } } };
 }
+test('real LF and CRLF stored card bodies remove fabricated resistance without altering support or analysis', () => {
+  for (const separator of [String.fromCharCode(10), String.fromCharCode(13, 10)]) {
+    const s = state();
+    const body = ['Resistance:', '17.29 (moderate, intraday)', '21.00 (weak, extension)', '22.00 (weak, extension)', '23.00 (weak, extension)', '', 'Support:', '15.00 (moderate, daily structure)'].join(separator);
+    assert.equal(body.includes(String.fromCharCode(10)), true);
+    assert.equal(body.includes(String.fromCharCode(92, 110)), false);
+    for (const key of ['fullLadder', 'nearestSupportResistance']) s.cards[key] = { ...s.cards[key], body };
+    const before = JSON.stringify(s), result = view(s);
+    for (const key of ['fullLadder', 'nearestSupportResistance']) {
+      assert.doesNotMatch(result.cards[key].body, /21\.00|22\.00|23\.00/);
+      assert.match(result.cards[key].body, /17\.29/);
+      assert.match(result.cards[key].body, /Support:\n15\.00/);
+      assert.match(result.cards[key].body, /No higher historical resistance detected/);
+      assert.equal(result.cards[key].body.includes(String.fromCharCode(92, 110)), false);
+    }
+    assert.equal(result.cards.tradersLinkAiRead, s.cards.tradersLinkAiRead);
+    assert.equal(JSON.stringify(s), before);
+  }
+});
 test('recorded-style old extensions disappear from current view, both text cards and nearest/trade plan without changing raw state or analysis', () => {
   const original = state(), before = JSON.stringify(original), result = view(original);
   assert.deepEqual(Array.from(result.levelMap.resistanceLevels, row => row.price), [17.29, 18.5]);
@@ -41,6 +60,27 @@ test('recorded-style old extensions disappear from current view, both text cards
   assert.equal(result.updatedAt, original.updatedAt); assert.equal(result.firstPostedAt, original.firstPostedAt);
   assert.equal(JSON.stringify(original), before); assert.equal(JSON.stringify(view(result)), JSON.stringify(result));
 });
+test('legacy Full Ladder light extensions beyond the curated map are removed with actual saved LF formatting', () => {
+  const s = state();
+  s.levelMap.resistanceLevels = [level(16.7), level(17.29), level(18.5), level(18.99), level(19.622, { strengthLabel: 'weak' }), synthetic(21)];
+  s.cards.fullLadder = { ...s.cards.fullLadder, body: [
+    'Resistance:',
+    '16.70 (moderate, fresh intraday)', '17.29 (moderate, fresh intraday)',
+    '18.50 (moderate, premarket high)', '18.99 (moderate, opening range high)',
+    '19.62 (light, fresh intraday)', '21.00 (+30.4%, light, extension)',
+    '22.00 (+36.6%, light, extension)', '23.00 (+42.8%, light, extension)',
+    '', 'Support:', '15.00 (light, daily structure)',
+  ].join(String.fromCharCode(10)) };
+  const before = JSON.stringify(s), result = view(s);
+  assert.doesNotMatch(result.cards.fullLadder.body, /21\.00|22\.00|23\.00/);
+  for (const price of ['16.70', '17.29', '18.50', '18.99', '19.62']) assert.equal(result.cards.fullLadder.body.includes(price), true);
+  assert.match(result.cards.fullLadder.body, /Support:\n15\.00 \(light, daily structure\)/);
+  assert.match(result.cards.fullLadder.body, /No higher historical resistance detected/);
+  assert.equal(result.cards.tradersLinkAiRead, s.cards.tradersLinkAiRead);
+  assert.equal(result.publication, s.publication);
+  assert.equal(JSON.stringify(s), before);
+  assert.equal(JSON.stringify(view(result)), JSON.stringify(result));
+});
 test('genuine weak/round-number extensions survive with observed provenance, including full-ladder evidence beyond curated map', () => {
   const s = state(); s.levelMap.resistanceLevels.push(level(25, { sourceLabel: 'extension', strengthLabel: 'weak' }));
   s.cards.fullLadder.body = 'Resistance:\n25.00 (weak, extension)\n39.00 (weak, extension)\n\nSupport:\n15.00';
@@ -50,6 +90,13 @@ test('genuine weak/round-number extensions survive with observed provenance, inc
   assert.equal(result.levelMap.resistanceLevels.at(-1).price, 25);
   assert.equal(evidence.isSyntheticResistance(synthetic(21)), true);
   assert.equal(evidence.isSyntheticResistance({ ...synthetic(21), marketDataProvenance: { formedAt: 100 } }), false);
+  const legacy = state();
+  legacy.levelMap.resistanceLevels.push(level(25, { sourceLabel: 'extension', strengthLabel: 'weak' }));
+  legacy.cards.fullLadder = { ...legacy.cards.fullLadder, body: ['Resistance:', '21.00 (light, extension)', '25.00 (light, extension)', '39.00 (light, extension)', '', 'Support:', '15.00'].join(String.fromCharCode(10)), metadata: { resistanceEvidence: JSON.stringify([level(39, { sourceLabel: 'extension', strengthLabel: 'weak' })]) } };
+  const legacyView = view(legacy);
+  assert.doesNotMatch(legacyView.cards.fullLadder.body, /21\.00/);
+  assert.match(legacyView.cards.fullLadder.body, /25\.00 \(light, extension\)/);
+  assert.match(legacyView.cards.fullLadder.body, /39\.00 \(light, extension\)/);
 });
 test('missing legacy counts do not mean fabricated; explicit generator IDs/notes/status still identify projections', () => {
   for (const row of [{ sourceLabel: 'extension' }, { sourceLabel: 'intraday', touchCount: 0, sourceEvidenceCount: 0 }, { sourceLabel: 'daily structure' }]) assert.equal(evidence.isSyntheticResistance(row), false);
@@ -57,6 +104,8 @@ test('missing legacy counts do not mean fabricated; explicit generator IDs/notes
   const s = state(); s.levelMap.resistanceLevels = [level(24, { sourceLabel: 'extension', strengthLabel: 'weak', touchCount: undefined, sourceEvidenceCount: undefined })];
   s.cards.fullLadder.body = 'Resistance:\n24.00 (weak, extension)';
   assert.match(view(s).cards.fullLadder.body, /24\.00/);
+  s.cards.fullLadder.body = ['Resistance:', '24.00 (light, extension)'].join(String.fromCharCode(10));
+  assert.match(view(s).cards.fullLadder.body, /24\.00 \(light, extension\)/);
 });
 test('all-projection and unavailable-history states are truthful, with no all-time assertion or unrelated card edits', () => {
   const s = state(); s.levelMap.resistanceLevels = [synthetic(21)]; s.levelMap.dataQuality.status = 'unavailable';

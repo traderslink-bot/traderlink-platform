@@ -120,3 +120,26 @@ Local source/type/browser checks are complete. Freeze exact paths/hashes and
 hand off to Coordinator. Release requires actual deployed-source/readiness/single-volume
 proof for both services and a bounded existing-AIOK readback of the corrected
 view, without regenerating its analysis or sending notifications.
+
+## Hosted verification follow-up: legacy Light label
+
+Coordinator's existing-AIOK readback found a legacy text contract not represented
+by the first fixture: Full Ladder used `light, extension`, whereas the compact
+card used `weak, extension`. Synthetic outer rows outside the structured compact
+map therefore survived the weak-only text check. Both cards contained actual LF
+newlines; byte inspection and explicit LF/CRLF tests disproved the preliminary
+escaping diagnosis. No transport conversion was added.
+
+The narrow successor accepts the historical `light` synonym alongside `weak`
+only in the existing source-generated, uncorroborated extension rule. Observed
+light intraday levels, real extensions with retained structured/full-ladder
+evidence, ambiguous structured rows with absent counts, support, AI analysis,
+publication facts and raw storage remain unchanged.
+
+The original weak-only selector was reproduced leaving outer legacy 22/23 rows;
+the corrected selector removes those rows with the actual-LF fixture. Seven
+evidence/read tests plus fifteen Gain/Loss regressions passed (22 total).
+Explicit LF and CRLF tests verify normal newline outputs and unchanged inputs;
+the legacy fixture also proves idempotence and real Light evidence preservation.
+Targeted lint and whitespace checks passed. Successor source, regression test
+and this record are handed to Coordinator without worker Git/deploy actions.
