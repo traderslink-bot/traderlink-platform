@@ -29,7 +29,10 @@ if(marker.role==='recovery'){
  process.env.TRADERLINK_RECOVERY_SCHEMA_PREFIX=String(count);
  console.log(JSON.stringify({stage:'news_schema_compatible_recovery_start',migrationCount:count}));
  require(path.join(process.cwd(),'application-server.js'));
-}else if(control===undefined&&count===149){
+}else if(count===149){
+ // Restart retains deployment variables. The 148-only window control is inert
+ // after exact149 proof; clear it before normal app/workers, without a rebuild.
+ delete process.env.TRADERLINK_GENERAL_NEWS_MAINTENANCE_WINDOW;
  // Preserve the accepted normal149 gate; no maintenance or prefix bypass here.
  require(path.join(folder,'general-news-release-entrypoint-20261028.cjs'));
 }else{
