@@ -1,5 +1,6 @@
 import { prepareGain, observeGain, changeGainStart } from "./gain-starting-point";
 import { historicalResistanceView } from "./historical-resistance-view";
+import { parseAnalysisUpsideContext } from './watchlist-upside-coverage';
 import { isTopWatchesGroup } from "./top-watches-group";
 import { neon } from "@neondatabase/serverless";
 import type Database from "better-sqlite3";
@@ -655,6 +656,7 @@ export function applyPatch(
     firstPostedAt: nextFirstPostedAt,
     publication,
     indicatorPublicationIdentity,
+    analysisUpsideContext: isReactivation || restoredActivation ? undefined : baseExisting?.analysisUpsideContext,
     watchlistGroup:
       normalizeWatchlistGroup(patch.watchlistGroup) ??
       normalizeWatchlistGroup(baseExisting?.watchlistGroup),
@@ -770,6 +772,16 @@ function applyTickerDataPatch(
     firstPostedAt: existing?.firstPostedAt ?? null,
     publication: existing?.publication,
     indicatorPublicationIdentity: existing?.indicatorPublicationIdentity,
+    analysisUpsideContext: (() => {
+      const context=parseAnalysisUpsideContext(patch.analysisUpsideContext);
+      if(!context || context.coverage.symbol!==normalizeSymbol(patch.symbol) ||
+        context.coverage.dataAsOf>observedAt ||
+        existing?.analysisUpsideContext && context.coverage.dataAsOf<existing.analysisUpsideContext.coverage.dataAsOf ||
+        context.publicationIdentity && context.publicationIdentity!==existing?.indicatorPublicationIdentity) return existing?.analysisUpsideContext;
+      try {const read=JSON.parse(existing?.cards.tradersLinkAiRead?.body ?? 'null');
+        return read?.generatedAt===context.analysisGeneratedAt && read?.currentPrice===context.analysisReferencePrice ? context : existing?.analysisUpsideContext;
+      } catch {return existing?.analysisUpsideContext;}
+    })(),
     watchlistGroup:
       normalizeWatchlistGroup(patch.watchlistGroup) ??
       normalizeWatchlistGroup(existing?.watchlistGroup),

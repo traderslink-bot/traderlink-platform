@@ -86,6 +86,7 @@ export type LiveWatchlistHealthPatch = {
 };
 
 export type LiveWatchlistTickerDataPatch = {
+  analysisUpsideContext?: import('./watchlist-upside-coverage').AnalysisUpsideContext;
   type: "tickerData";
   symbol: string;
   status?: LiveWatchlistStatus;
@@ -318,6 +319,7 @@ export type TradersLinkAiReadListingContext = {
 };
 
 type TradersLinkAiReadPayloadBase = {
+  upsideCoverage?: import('./watchlist-upside-coverage').UpsideCoverage;
   analysisFormat?: "current" | "simple";
   simpleAnalysis?: import("./simple-analysis").SimpleAnalysis;
   ownerHiddenSections?: string[];
@@ -484,6 +486,7 @@ export type LiveWatchlistLevelMap = {
 };
 
 export type LiveWatchlistSymbolState = {
+  analysisUpsideContext?: import('./watchlist-upside-coverage').AnalysisUpsideContext;
   watchlistUpgradeLinks?: Partial<Record<"ticker" | "analysis" | "levels", string | null>>;
   premiumLevelsAllowed?: boolean;
   premiumAnalysisPricesAllowed?: boolean;

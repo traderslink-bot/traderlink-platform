@@ -143,3 +143,7 @@ Explicit LF and CRLF tests verify normal newline outputs and unchanged inputs;
 the legacy fixture also proves idempotence and real Light evidence preservation.
 Targeted lint and whitespace checks passed. Successor source, regression test
 and this record are handed to Coordinator without worker Git/deploy actions.
+
+The separate [price discovery and automatic refresh plan](watchlist-price-discovery-boundary-plan.md)
+addresses repeated upper-boundary AI requests after real resistance runs out.
+It is planning only and does not change the completed resistance-level release.
