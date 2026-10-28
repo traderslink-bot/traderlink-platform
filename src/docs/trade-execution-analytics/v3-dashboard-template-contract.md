@@ -65,6 +65,9 @@ shared News Scanner article reader, and the Workspace Rules tool panel. The
 News Scanner reader may show the selected article only; it must not duplicate
 scanner navigation. The Rules panel may contain rule-management views only; it
 must not duplicate application navigation.
+The General Market News personal-test list also has a reviewed local article
+Drawer (`app/(dashboard)/market-news/general/general-market-news-feed.tsx`),
+matching the existing Press Releases side-card pattern without application navigation.
 Adding another feature Drawer requires updating this contract and the explicit
 allowlist; importing Drawer must never be used to build another dashboard
 shell or sidebar.

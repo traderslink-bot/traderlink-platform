@@ -677,11 +677,8 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0185_news_general_market_news.ts", migration: newsGeneralMarketNewsMigration }),
   ]);
 
-// Recovery carrier ONLY: entrypoint proves exact ledger and physical schema first.
-const recoveryPrefix = process.env.TRADERLINK_RECOVERY_SCHEMA_PREFIX;
-if (recoveryPrefix !== undefined && !["148", "149"].includes(recoveryPrefix)) throw new Error("invalid_recovery_prefix");
 export const platformMigrationManifest = validatePlatformMigrationManifest(
-  platformMigrationFileEntries.map((entry) => entry.migration).slice(0, recoveryPrefix === undefined ? 149 : Number(recoveryPrefix)),
+  platformMigrationFileEntries.map((entry) => entry.migration),
 );
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =

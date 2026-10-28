@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { DiscordConnectionNotice } from "./discord-connection-notice";
 import { readMembershipDiscordConnection } from "@/src/modules/platform/server/membership/membership-discord-connection";
 import { hasOwnerMarketDataAccess } from "@/src/modules/level-analysis/server/owner-market-data-access";
+import { hasGeneralMarketNewsAccess } from "@/src/modules/news/server/general-market-news-access";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
@@ -177,6 +178,7 @@ async function TraderLinkPlatformDashboardFrameContent({
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
   const ownerMarketDataAccess = hasOwnerMarketDataAccess(identity);
+  const generalMarketNewsAccess = hasGeneralMarketNewsAccess(identity);
   const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
   timing.next("context");
@@ -234,6 +236,7 @@ async function TraderLinkPlatformDashboardFrameContent({
           scannerEarlyAccess={scannerEarlyAccess}
           watchlistMemberNavigationAccess
           ownerMarketDataAccess={ownerMarketDataAccess}
+          generalMarketNewsAccess={generalMarketNewsAccess}
         watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
         >
           {discordConnection && requestPath !== "/account/login" ? <DiscordConnectionNotice required={discordConnection.required} connected={discordConnection.connected} joined={discordConnection.joined} /> : null}
