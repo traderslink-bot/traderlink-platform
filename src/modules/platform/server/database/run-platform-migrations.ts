@@ -121,11 +121,15 @@ function verifyCompletedPlatformDatabaseUnmeasured(
   });
 }
 
+export const PLATFORM_MIGRATION_BOUNDARY_HOOK_VERSION = 1 as const;
+
 export function runPlatformMigrations(
   database: Database.Database,
   options: Readonly<{
     manifest?: readonly PlatformMigration[];
     now?: () => Date;
+    /** Trusted orchestration guard; throwing rolls back an active migration. */
+    beforeMigrationBoundary?: (phase: "begin" | "statements" | "commit") => void;
   }> = {},
 ): PlatformMigrationRunResult {
   const manifest = validatePlatformMigrationManifest(
@@ -158,9 +162,11 @@ export function runPlatformMigrations(
       migrationPhase = "foreign_keys";
       if (restoreForeignKeys) database.pragma("foreign_keys = OFF");
       migrationPhase = "begin";
+      options.beforeMigrationBoundary?.("begin");
       database.exec("BEGIN IMMEDIATE");
       migrationPhase = "registry";
       if (!platformMigrationRegistryExists(database)) createPlatformMigrationRegistry(database);
+      options.beforeMigrationBoundary?.("statements");
       for (const [statementIndex, statement] of migration.statements.entries()) {
         migrationPhase = `statement_${statementIndex + 1}`;
         database.exec(statement);
@@ -193,6 +199,7 @@ export function runPlatformMigrations(
           sqliteVersion,
       );
       migrationPhase = "commit";
+      options.beforeMigrationBoundary?.("commit");
       database.exec("COMMIT");
       if (restoreForeignKeys) database.pragma("foreign_keys = ON");
       appliedMigrationIds.push(migration.migrationId);
