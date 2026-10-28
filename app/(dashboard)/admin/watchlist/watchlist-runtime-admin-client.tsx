@@ -20,6 +20,7 @@ const IndicatorAuditPanel = dynamic(() => import("./watchlist-indicator-audit-pa
 const SetupAdminPanel = dynamic(() => import("./watchlist-setup-admin-panel"));
 const GainStartingPoint = dynamic(() => import("./watchlist-gain-starting-point").then(m => m.WatchlistGainStartingPoint));
 const PotentialGainPost = dynamic(() => import("./watchlist-potential-gain-post").then(module => module.WatchlistPotentialGainPost));
+const ManualLossPost = dynamic(() => import("./watchlist-manual-loss-post").then(module => module.WatchlistManualLossPost));
 const PreviousAnalyses = dynamic(() => import("./watchlist-analysis-history").then(module => module.WatchlistAnalysisHistory));
 const RUNTIME_SECTIONS = [
   ["watchlist", "Watchlist"], ["runtime", "Runtime"], ["market-data", "Market Data"],
@@ -51,6 +52,7 @@ export function WatchlistRuntimeAdminClient() {
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
   const [historyRequest, setHistoryRequest] = useState<{symbol:string;cycleId:string} | null>(null);
   const [gainPostSymbol, setGainPostSymbol] = useState<string | null>(null);
+  const [lossPostSymbol, setLossPostSymbol] = useState<string | null>(null);
   const [gainStartSymbol, setGainStartSymbol] = useState<string | null>(null);
   const [analysisPreview, setAnalysisPreview] = useState<{
     card: LiveWatchlistCardContent; dipBuyPlanVisible: boolean;
@@ -99,6 +101,7 @@ export function WatchlistRuntimeAdminClient() {
       if (message.type === "previous-analyses" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol) && typeof message.cycleId==="string" && message.cycleId.length>0 && message.cycleId.length<=200) { setHistoryRequest({symbol:message.symbol,cycleId:message.cycleId}); return; }
       if (message.type === "gain-starting-point" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainStartSymbol(message.symbol); return; }
       if (message.type === "post-potential-gain" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainPostSymbol(message.symbol); return; }
+      if (message.type === "post-manual-loss" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setLossPostSymbol(message.symbol); return; }
       if (message.type === "open-usage") { selectUsage(); return; }
       if (message.type === "open-recaps") { selectRecaps(); return; }
       if (message.type === "open-indicator-audit") { setAuditOpened(true); setSelectedSection("indicator-audit"); return; }
@@ -116,6 +119,7 @@ export function WatchlistRuntimeAdminClient() {
       {historyRequest && <PreviousAnalyses key={historyRequest.cycleId} symbol={historyRequest.symbol} expectedCycleId={historyRequest.cycleId} onClose={() => setHistoryRequest(null)} />}
       {gainStartSymbol && <GainStartingPoint key={gainStartSymbol} symbol={gainStartSymbol} onClose={() => setGainStartSymbol(null)} />}
       {gainPostSymbol && <PotentialGainPost key={gainPostSymbol} symbol={gainPostSymbol} onClose={() => setGainPostSymbol(null)} />}
+      {lossPostSymbol && <ManualLossPost key={lossPostSymbol} symbol={lossPostSymbol} onClose={() => setLossPostSymbol(null)} />}
       {editingSymbol && <WatchlistAnalysisEditor key={editingSymbol} symbol={editingSymbol} onClose={() => setEditingSymbol(null)} onSaved={() => frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-editor", type: "saved" }, window.location.origin)} />}
       <Dialog open={analysisPreview !== null} onClose={() => setAnalysisPreview(null)} fullWidth maxWidth="lg" aria-labelledby="analysis-preview-title">
         <DialogTitle id="analysis-preview-title">Website analysis preview</DialogTitle>

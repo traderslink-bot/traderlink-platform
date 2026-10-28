@@ -2,10 +2,15 @@
 
 Owner approved the per-ticker action, image preview, optional message and explicit send. Progress: [implementation record](watchlist-potential-gain-discord-progress.md).
 
+The separate [manual loss card plan](watchlist-manual-loss-card-plan.md) reuses
+the posting destination and image workflow. Owner's October 28 update removes
+the entire Gain footer beginning “Measured from” from the shared card and its
+newly captured posting images; saved facts and gain calculations stay unchanged.
+
 ## Complete scope
 
 1. Add **Post potential gain** to every ticker's Watchlist Admin controls, independent of AI generation/review mode.
-2. Owner-only dialog **SYMBOL — Post potential gain** loads the published ticker and reuses its actual PotentialGainCard. Preserve values, formatting, styles and tracking note. Add ticker identification and traderslink.pro outside the card for image context.
+2. Owner-only dialog **SYMBOL — Post potential gain** loads the published ticker and reuses its actual PotentialGainCard. Preserve values, formatting and styles. The entire measured-from tracking footer is removed by the owner's October 28 update. Add ticker identification and traderslink.pro outside the card for image context.
 3. Produce a fixed PNG in the browser from the rendered card, then show that exact image in the preview. No local/server browser process, AI request or live-price polling. The image freezes the values displayed when the preview is made.
 4. **Message (optional)**, **Send to Discord**, **Close**. Editing the message does not change the image. Explicit send only; no automatic posts or member email/push. Display success only after Discord acknowledges a message.
 5. Dedicated server-only webhook variable WATCHLIST_POTENTIAL_GAIN_DISCORD_WEBHOOK_URL, validate channel1433570741068234795. Never expose/commit/log credentials. Do not alter existing Watchlist or owner-review webhook configuration.
