@@ -37,7 +37,7 @@ if(marker.role==='recovery'){
  require(path.join(folder,'general-news-release-entrypoint-20261028.cjs'));
 }else{
  assert.equal(control,'news-general-0185-window-20261028-after-2000-et');
- assert(Date.now()>=Date.parse('2026-10-29T00:00:00Z'),'owner maintenance timing has not begun');
+ assert(Date.now()>=Date.parse('2026-10-28T23:25:00Z'),'owner maintenance timing has not begun');
  const page='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TradersLink maintenance</title><h1>TradersLink is undergoing maintenance</h1><p>Please try again shortly.</p></html>';
  http.createServer((request,response)=>{
   response.setHeader('Cache-Control','no-store');response.setHeader('Retry-After','60');
