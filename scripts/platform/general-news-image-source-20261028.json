@@ -1,0 +1,16 @@
+{
+  "role": "recovery",
+  "applicationSource": "0e63163c67afd5460434ab12b6b7233b154587ad",
+  "productionBase": "a5ead4e35a846ac0d82cd365688b831d36ece8ee",
+  "expectedMigrationCount": 149,
+  "migrationId": "0185_news_general_market_news",
+  "sourceRowsSha256": "8628e9824bbadde445c53b63427960a428b547f53b00dcd7dcf332b5dee183c6",
+  "activationRoute": "original_public_service_only",
+  "normalSchemaCounts": [
+    148,
+    149
+  ],
+  "maintenanceSchemaCounts": [],
+  "ownerMaintenanceNotBeforeUtc": "2026-10-29T00:00:00Z",
+  "sourceAcceptanceDoesNotAuthorizeMaintenance": true
+}

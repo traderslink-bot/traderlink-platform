@@ -15,6 +15,7 @@ RUN mkdir -p /app/bin \
     /tmp/integrity-cache-release.c -o /app/bin/traderlink-integrity-cache-release
 
 FROM base AS builder
+ENV NODE_OPTIONS=--max-old-space-size=4096
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
@@ -37,8 +38,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/erasure-worker ./workers
 # Normal application and workers start only after exact schema149 is proven.
 # Guarded migration and prepared148/149 recovery images are separate operations.
 RUN mv /app/server.js /app/application-server.js
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-release-entrypoint-20261028.cjs ./server.js
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-public-service-entrypoint-20261028.cjs ./server.js
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-release-entrypoint-20261028.cjs ./scripts/platform/general-news-release-entrypoint-20261028.cjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-release-manifest-20261028.json ./scripts/platform/general-news-release-manifest-20261028.json
+
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-image-source-20261028.json ./scripts/platform/general-news-image-source-20261028.json
 
 USER nextjs
 EXPOSE 3000
