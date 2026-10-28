@@ -379,6 +379,7 @@ export function DashboardShell({
   scannerEarlyAccess = false,
   watchlistMemberNavigationAccess = false,
   ownerMarketDataAccess = false,
+  generalMarketNewsAccess = false,
   watchlistAdminNavigationAccess = false,
 }: {
   children: ReactNode;
@@ -391,6 +392,7 @@ export function DashboardShell({
   scannerEarlyAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
   ownerMarketDataAccess?: boolean;
+  generalMarketNewsAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
 }) {
   const theme = useTheme();
@@ -486,7 +488,7 @@ export function DashboardShell({
     }
   }
   const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
-    section.group.id !== "stockTools"
+    section.group.id !== "stockTools" && section.group.id !== "pressReleases"
       ? section
       : Object.freeze({
         ...section,
@@ -495,6 +497,7 @@ export function DashboardShell({
           items: Object.freeze(section.group.items.filter((item) =>
             !isDashboardNavigationItem(item) || (
               (item.href !== "/scanner" || scannerEarlyAccess) &&
+              (item.href !== "/market-news/general" || generalMarketNewsAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&
               (item.href !== "/market-data" || ownerMarketDataAccess) &&
