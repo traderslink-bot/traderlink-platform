@@ -1,5 +1,6 @@
 import { AnalysisTraderNotes } from "./analysis-trader-notes";
 import { sortPullbacksByPrice } from "@/src/lib/live-watchlist/pullback-price-order";
+import { upsidePresentation, type AnalysisUpsideContext } from '@/src/lib/live-watchlist/watchlist-upside-coverage';
 import styles from "./analysis-layout.module.css";
 import type { ReactNode } from "react";
 import { AnalysisHistoryLines } from "./analysis-history-lines";
@@ -7,15 +8,17 @@ import type { AnalysisHistoryRow } from "@/src/lib/live-watchlist/analysis-publi
 import type { TradersLinkAiReadPayload } from "@/src/lib/live-watchlist/live-watchlist-types";
 
 /** Separate presentation selected by the saved read, never by today's setting. */
-export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, renderSectionEditor, historicalRows }: {
+export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, renderSectionEditor, historicalRows, upsideContext }: {
   read: TradersLinkAiReadPayload;
   traderNotes?: string | null;
   olderArticleDate?: string | null;
   renderSectionEditor?: (sections: readonly string[]) => ReactNode;
   historicalRows?: AnalysisHistoryRow[];
+  upsideContext?: AnalysisUpsideContext;
 }) {
   const simple = read.simpleAnalysis;
   if (!simple) return null;
+  const presentation = upsidePresentation(read,renderSectionEditor ? undefined : upsideContext);
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const price = (value:number) => "$"+value.toLocaleString("en-US",{maximumFractionDigits:4});
   const area = (low:number,high:number) => low === high ? price(low) : price(low)+"–"+price(high);
@@ -44,10 +47,10 @@ export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, render
     </section> : null}
     <div className={renderSectionEditor || (!hidden.has("catalystRealityCheck") && read.catalystRealityCheck.summary.trim() && read.catalystRealityCheck.sourceUrls.length > 0) || (!hidden.has("riskSummary") && read.riskSummary.some(risk=>risk.trim())) ? styles.row : styles.single}><div>
     {renderSectionEditor?.(["simpleUpside"])}
-    {!hidden.has("targets") && simple.upside.length ? <section className="watchlist-ai-read-section">
-      <h3>Potential Targets (Volume Dependent)</h3><ol className="watchlist-ai-read-targets">
+    {!hidden.has("targets") && (simple.upside.length || presentation.message) ? <section className="watchlist-ai-read-section">
+      <h3>Potential Targets (Volume Dependent)</h3>{presentation.message ? <><p>{presentation.message}</p>{presentation.current ? <small>Current market context — the original analysis is unchanged.</small> : null}</> : <ol className="watchlist-ai-read-targets">
         {simple.upside.map((level,index)=><li key={index}><strong>{area(level.low,level.high)}</strong><span>{level.explanation}</span></li>)}
-      </ol>
+      </ol>}
     </section> : null}
     </div><div className={styles.side}>
       {renderSectionEditor?.(["catalystRealityCheck"])}
