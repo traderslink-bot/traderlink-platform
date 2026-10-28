@@ -12,6 +12,7 @@ import type {
   LiveWatchlistSymbolState,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
 import { formatLevelMarketDataProvenance } from "@/src/lib/live-watchlist/live-watchlist-level-provenance";
+import { NO_HIGHER_RESISTANCE } from "@/src/lib/live-watchlist/resistance-evidence";
 import {
   buildWatchlistV2LevelRows,
   formatWatchlistV2LevelDistance,
@@ -90,10 +91,12 @@ function WatchlistV2LevelSection({
   title,
   side,
   levels,
+  unavailable = false,
 }: {
   title: string;
   side: "support" | "resistance";
   levels: WatchlistV2LevelRow[];
+  unavailable?: boolean;
 }) {
   return (
     <section className="watchlist-v2-level-section" data-side={side}>
@@ -108,7 +111,7 @@ function WatchlistV2LevelSection({
           ))}
         </ul>
       ) : (
-        <p className="watchlist-v2-level-empty">No curated {side} levels yet.</p>
+        <p className="watchlist-v2-level-empty">{side === "resistance" ? unavailable ? "Historical resistance data is unavailable." : NO_HIGHER_RESISTANCE : "No curated support levels yet."}</p>
       )}
     </section>
   );
@@ -285,8 +288,9 @@ export function WatchlistV2PotentialPathCard({
             {showNearestLevels ? <WatchlistV2NearestLevels levelMap={levelMap} /> : null}
             <div className="watchlist-v2-level-columns">
               <WatchlistV2LevelSection title="Support" side="support" levels={levelRows.support} />
-              <WatchlistV2LevelSection title="Resistance" side="resistance" levels={levelRows.resistance} />
+              <WatchlistV2LevelSection title="Resistance" side="resistance" levels={levelRows.resistance} unavailable={levelMap.dataQuality?.status === "unavailable"} />
             </div>
+            {levelRows.resistance.length > 0 && typeof symbol.cards.nearestSupportResistance?.metadata?.resistanceHistoryNotice === "string" ? <p className="watchlist-v2-level-empty">{symbol.cards.nearestSupportResistance.metadata.resistanceHistoryNotice}</p> : null}
           </>
         ) : (
           <WatchlistV2FallbackLevels symbol={symbol} />

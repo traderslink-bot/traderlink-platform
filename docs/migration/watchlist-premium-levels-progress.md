@@ -1,5 +1,7 @@
 # Premium-only support and resistance
 
+Current map evidence correction: [resistance evidence progress](watchlist-resistance-evidence-progress.md).
+
 Owner-approved scope: third independent per-ticker checkbox below existing Premium controls, labelled **Premium-only support & resistance**. Default off. Support, resistance and full ladder become blurred placeholder rows for free members, while Potential Path price/date/card remain visible. CTA: “These levels are reserved for Premium members. Access Premium” links to the existing Whop membership page.
 
 ## Implementation complete locally

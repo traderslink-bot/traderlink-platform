@@ -1,4 +1,5 @@
 import { prepareGain, observeGain, changeGainStart } from "./gain-starting-point";
+import { historicalResistanceView } from "./historical-resistance-view";
 import { isTopWatchesGroup } from "./top-watches-group";
 import { neon } from "@neondatabase/serverless";
 import type Database from "better-sqlite3";
@@ -1110,14 +1111,16 @@ export class LiveWatchlistStore {
         SELECT state_json FROM live_watchlist_symbols WHERE symbol = ${symbol} LIMIT 1
       `) as Array<{ state_json?: unknown }>;
       const raw = rows[0]?.state_json;
-      return typeof raw === "string" ? parseState(raw) : null;
+      const parsed = typeof raw === "string" ? parseState(raw) : null;
+      return parsed ? historicalResistanceView(parsed) : null;
     }
 
     const db = await getSqliteDatabase();
     const row = db.prepare("SELECT state_json FROM live_watchlist_symbols WHERE symbol = ?").get(symbol) as
       | { state_json?: unknown }
       | undefined;
-    return typeof row?.state_json === "string" ? parseState(row.state_json) : null;
+    const parsed = typeof row?.state_json === "string" ? parseState(row.state_json) : null;
+    return parsed ? historicalResistanceView(parsed) : null;
   }
 
   async listSymbols(): Promise<LiveWatchlistStatePayload> {
@@ -1146,7 +1149,7 @@ export class LiveWatchlistStore {
       generatedAt: Date.now(),
       marketDataStatus: health.marketDataStatus,
       marketDataUpdatedAt: health.marketDataUpdatedAt,
-      symbols,
+      symbols: symbols.map(historicalResistanceView),
     };
   }
 
