@@ -563,6 +563,54 @@ unchanged original bytes. Successor awaits freeze/preservation and a selected
 qualification slot. Production build, real IDs/keys/schema/service activation and
 both-account delivery/access remain unverified. No new owner UI approval needed.
 
+### Combined source acceptance — qualified successor
+
+Coordinator added six owned release paths: migration `0185` / News order `222`,
+Platform manifest, expected-last-migration assertion, Dockerfile, exact-149 NORMAL
+startup guard and immutable ledger JSON. Eight DDL strings/five new tables match
+the worker descriptor. Combined candidate `f2bd26aa854163e80e57af25d51fe9f87ed51619`
+was preserved with 31 pinned files, parent
+`0e63163c67afd5460434ab12b6b7233b154587ad`, serving base a5. Receipt:
+`operations/news-candidate2-source-20261028.json` in Coordinator lane. No worker
+edits to those six release files; no live schema/config/DB change implied.
+
+The first combined type pass had 42 diagnostics: one typed fixture environment
+needed `NODE_ENV: "test"`; 41 were still unresolved because dependency resolution
+followed the intermediate `admin-erasure-release/node_modules` alias and its
+relative `../vendor/levels-system-v2` symlink. This was not baseline debt. No
+conditional focused tests ran on that failed prerequisite.
+
+Coordinator selected exactly the one-line fixture repair and a second read-only
+mount of the **same verified vendor bytes** at the intermediate vendor path.
+No production code changed. All original 31 pins matched before repair; all 30
+other paths matched after acceptance before this permitted progress update.
+Fixture SHA-256 changed from `3b18017b61f97a6581f4df8ba6f32f7a35da4c68e2612d05724c87a349fad376`
+to `796ac9000c51ca90a282864ddaf0cbe3290424524736e6fa4e23699b7a395db4`.
+
+Actual final selected checks on that successor, serially in the agreed empty-root
+read-only/no-network/credential-free bwrap namespace:
+
+- Semantic TypeScript `--noEmit --incremental false --pretty false`, explicit
+  Node max old-space 4096 MiB / timeout 360 seconds: **PASS, exit 0, zero
+  diagnostics**, 39.60 seconds, peak child RSS 3,085,420 KiB. Complete diagnostics
+  were zero bytes (empty SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`).
+- Four News specs plus `platform-migration-file-contract.test.ts`, one fork
+  worker/no file parallelism/native config loader/cache disabled: **5 files,
+  17/17 tests PASS**, exit 0, 1.63 seconds. Only benign module-type warning.
+- Unchanged Python 7 and architecture bounded baseline checks were not rerun.
+- No source/dependency cache writes, package installs, real provider/identity
+  reads, hosted SQL, service/preview or Git actions by this worker.
+
+Coordinator separately reports isolated synthetic 148→149 migration preservation,
+backup/restore/native integrity/rollback/idempotency and exact startup-guard checks
+passed. These are Coordinator evidence, not worker-run or live migration claims.
+Coordinator also reports a bounded real user/news read 200 and private mapping of
+the owner subjects to two distinct active stable users, without exporting secret
+values/IDs/body. This establishes prerequisites, not collector delivery or browser
+access. Current production remains healthy schema 148 per Coordinator; clean
+image/build, actual guarded activation and two-account left-nav/list/drawer
+verification are still required. Release the worker's heavy acceptance slot now.
+
 ## First implementation batch — exact allocation request
 
 Coordinator is preparing reuse of the completed inactive `production-ci-audit`

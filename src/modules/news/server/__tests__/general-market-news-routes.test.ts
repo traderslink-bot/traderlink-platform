@@ -24,7 +24,7 @@ describe("personal-news route boundary", () => {
     generalMarketNewsSchema.statements.forEach(sql => db.exec(sql));
     let userId = first;
     const deps: GeneralNewsHttpDependencies = { identity: () => syntheticIdentity(userId), now: () => now,
-      environment: { TRADERLINK_GENERAL_NEWS_USER_IDS: `${first},${second}`, TRADERLINK_GENERAL_NEWS_INGEST_SECRET: secret },
+      environment: { NODE_ENV: "test", TRADERLINK_GENERAL_NEWS_USER_IDS: `${first},${second}`, TRADERLINK_GENERAL_NEWS_INGEST_SECRET: secret },
       read: operation => operation(db), write: operation => operation(db) };
     try {
       const timestamp = String(now.getTime() / 1000), id = "fixture-batch";
