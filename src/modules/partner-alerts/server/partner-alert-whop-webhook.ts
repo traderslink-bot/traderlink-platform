@@ -85,7 +85,12 @@ export function parsePartnerAlertWhopWebhook(input: Readonly<{
   } else if (["payment.succeeded", "payment.failed", "payment.pending", "payment.authorized",
     "payment.canceled", "payment.created", "payment.requires_action"].includes(event.type)) {
     resourceKind = "payment"; resourceId = data.id;
-  } else if (["refund.created", "refund.updated", "dispute.created", "dispute.updated", "dispute_alert.created",
+  } else if (["refund.created", "refund.updated"].includes(event.type)) {
+    // The pinned webhook uses RefundLegacy.payment, not REST Refund.payment_id.
+    resourceKind = "payment";
+    try { resourceId = partnerAlertRecord(data.payment, "refundPayment").id; }
+    catch { return invalid(); }
+  } else if (["dispute.created", "dispute.updated", "dispute_alert.created",
     "resolution_center_case.created", "resolution_center_case.updated", "resolution_center_case.decided"].includes(event.type)) {
     resourceKind = "payment"; resourceId = data.payment_id;
   } else if (event.type === "account.updated") {

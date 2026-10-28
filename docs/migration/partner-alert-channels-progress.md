@@ -2,12 +2,13 @@
 
 Controlling [implementation plan](partner-alert-channels-plan.md). Updated 2026-10-28.
 
-Current checkpoint25: actual private owner/community HTTP read composition is
-authored in `/home/traderlink/projects/partner-admin-auth`. Only the existing HTTP
-adapter and these2docs change; other38 TS, writer24/Auth/read-model/content/runtime
-remain frozen.39 owned TS paths total. This is unregistered method source, with
-no executable/fault/audit qualification or live endpoint. Auth/schema/config,
-actual route/runtime/native/privacy integration and final UI remain outstanding.
+Current checkpoint26: the existing signed Whop webhook decoder uses the pinned
+refund-event payment reference in `/home/traderlink/projects/partner-admin-auth`.
+Only that decoder and these2docs change; other38 TS, writer24/HTTP25/Auth/content/
+runtime remain frozen.39 owned TS paths total. This is source-only, with no
+executable verification, live receiver or access change. Paid-period proof,
+Auth/schema/config, actual route/runtime/native/privacy integration and final UI
+remain outstanding.
 
 ## Owner-directed plan consolidation — documentation successor only
 
@@ -412,6 +413,70 @@ remain HELD; final UI/Help review stays later. No dashboard/Help flow is activat
 or changed now; guide alignment belongs with eventual visible functionality.
 Immediate exact handoff goes to Coordinator and authorized PC relay before any
 review/allocation wait or run end.
+
+## Refund webhook correction26 — source only
+
+After a bounded public SDK contract review and read-only actual-source trace,
+PC manager selected the concrete mismatch and Coordinator allocated exactly ONE
+existing source plus these2docs. Assigned workspace:
+`/home/traderlink/projects/partner-admin-auth`, branch
+`codex/partner-admin-auth-parity-20261028`, parent checkpoint
+`e79e301b86df55604ef4ca4318108a3eee26c5e3`. The updated setup-only AGENTS prefix
+was read; it is not part of the feature allowlist and is not edited here.
+
+Exact three-path allowlist/preimages:
+
+- `src/modules/partner-alerts/server/partner-alert-whop-webhook.ts`:
+  `d40bb92f87f4d93b5385174b301f90eaabbd177514bb4253f5f59671dde9e560`.
+- `docs/migration/partner-alert-channels-plan.md`:
+  `f945997d74bd2b1f8f8ca84244725ef08fbf12a8ee755face5c03db06328979b`.
+- `docs/migration/partner-alert-channels-progress.md`:
+  `a1f1f741fdc613ce999e04e0d44c2b8432555daaa9198afdce72a3519ce207d6`.
+
+Official SDK commit `7c77a47de147bf17ea166635b8cbfe31ecd5c1a1`, package2.6.0,
+defaults to the existing selected API `2026-10-27-2`. Both refund hook payloads
+are `RefundLegacy`; their payment reference is nullable `data.payment.id`.
+The previous decoder grouped them with REST-shaped reversal references and read
+`data.payment_id`, rejecting valid signed refunds before the inbox. The exact
+[pinned contract links and scope](partner-alert-channels-plan.md#refund-webhook-correction26--pinned-payload-reference-source-only)
+are in the plan. Native REST Refund's field does not replace the webhook type.
+
+Implementation splits only `refund.created`/`refund.updated` into a dedicated
+branch, uses the existing record validator on `data.payment`, and passes its
+`id` through the unchanged final payment-ID guard. Record validation failure
+uses the existing generic webhook invalid path. No REST fallback or refund-ID
+substitution; no output/API/queue/schema/reversal or monetary-policy change.
+
+### Manual source paths — NOT executed tests
+
+| Case | Authored handling |
+| --- | --- |
+| Correctly signed/version/account-matched refund.created or refund.updated with nested payment ID | Selects nested ID, validates existing pay_ reference, returns the same minimal payment-target event shape |
+| Null, missing, array or non-object payment | Existing record validator rejects; webhook invalid path throws; no event, invented target or durable UNKNOWN observation |
+| Missing, malformed, empty or wrong-prefix nested ID | Unchanged final resource-ID guard rejects |
+| REST-shaped payment_id or refund.id without a usable nested payment | Neither supplies a fallback; unbound refund fails closed |
+| Bad signature, stale signing timestamp, wrong API date/account or future event timestamp | Existing guards reject before refund target selection |
+| Other supported events and unsupported event names | Existing resource selection/unsupported null behaviour preserved |
+| Refund status/amount changes or delayed/replayed notification | Payload supplies no direct reversal/payment/access fact; actual native reads, existing inbox fencing and reversal/money policy remain separate |
+| Missing paidCoverage or unqualified runtime | Existing UNKNOWN/HOLD and canApply:false/current_runtime_unbound boundaries remain |
+
+Unchanged downstream pins:
+
+- `partner-alert-whop-inbox.ts`:
+  `d4ae3c164fe1f2335b336f6e0327ef97320667a9f55a6bef948c1a4ce8c5bb62`.
+- `partner-alert-whop-reconciliation.ts`:
+  `df08cc9d856d3f875ef83ef5665cf81f5eb4c4845bcb72ecaf0d75bb5a47ad98`.
+- `partner-alert-whop-normalization.ts`:
+  `b4e55c6c3c67cd4237fc6b8ead76a8ed619e2555e58dace3660a8de8b6290e61`.
+
+Manual text/data-flow comparison and source hashes only; no tests/Vitest, lint,
+type checks, build, subject import/execution, SQL/DB, provider/credentials/OAuth/
+support/configuration, Git mutation, preview/runtime/route/activation or release.
+Other38 owned TS, Auth, proposal23, writer24, HTTP25 and content22 stay frozen.
+No dashboard/Help flow changed; guides remain due with eventual visible feature
+integration. No further coverage research or positive decoder is part of this
+allocation. Coordinator owns exact3-file preservation and further allocations;
+an immediate exact-hash handoff goes to Coordinator and PC manager before ending.
 
 ## Authority and baseline
 

@@ -1,15 +1,17 @@
 # Partner alert channels implementation plan
 
-Updated: 2026-10-28. Current checkpoint25: actual private owner/community HTTP
-read composition is authored, source-only and unverified at runtime. Prior22
-slices, immutable Auth proposal23 and writer24 remain preserved. There are39
-owned TS paths; this successor changes only the existing HTTP adapter.
+Updated: 2026-10-28. Current checkpoint26: the existing signed Whop webhook
+decoder uses the pinned refund-event payment reference. This is source-only and
+unverified at runtime. Prior22 slices, immutable Auth proposal23, writer24 and
+HTTP25 remain preserved. There are39 owned TS paths; this successor changes
+only the existing webhook decoder.
 [Progress and resume point](partner-alert-channels-progress.md).
 
 The active assigned workspace for this successor is
 `/home/traderlink/projects/partner-admin-auth`, branch
 `codex/partner-admin-auth-parity-20261028`, baseline
-`76be98a4ae03e25152c037b455f0146fa554aa6f` (parent
+`e79e301b86df55604ef4ca4318108a3eee26c5e3` (parent
+`76be98a4ae03e25152c037b455f0146fa554aa6f`, writer24 ancestor
 `4c0e6b39463aa39afabc93ab3ccb5fdf7f97512a`, Auth inspection ancestor
 `04cde1b49730b30e5ba23410029965e3e3ff24b3`, production-source ancestor
 `a5ead4e35a846ac0d82cd365688b831d36ece8ee`). Use this path explicitly;
@@ -20,15 +22,17 @@ allocations below do not authorize edits there for this successor.
 Actual isolated Auth postimage
 `383e73ab1cf60ec4539b32239db10cbe53e2d451e6040ea574b5023e3fe59340`
 is read-only and remains unqualified for runtime/canonical release. Only this
-plan, the existing progress record and existing HTTP adapter are assigned. Other38
-TS, immutable proposal, Auth, writer24, providers, runtime and schema remain frozen.
+plan, the existing progress record and existing Whop webhook decoder are assigned.
+Other38 TS, immutable proposal, Auth, writer24, HTTP25, provider clients, runtime
+and schema remain frozen.
 
 ## Owner review: agreed model, access solution and next decisions
 
 This overview consolidates the owner's request to coordinate Shared alerts and the
 PC relay, show the complete decisions and explain the Whop/Premium gate. The
 source record below includes the prior22 slices, proposal23 and current-baseline
-writer successor24 and HTTP composition25; it is not a completed or activated feature. The remaining-decisions table at the end distinguishes choices
+writer successor24, HTTP composition25 and refund-event correction26; it is not a
+completed or activated feature. The remaining-decisions table at the end distinguishes choices
 needed before affected activation from technical integration work; it does not
 require every commercial amount before further isolated implementation.
 
@@ -81,12 +85,62 @@ to both chats on 2026-10-28. Shared alerts confirmed no material conflict and no
 source/release action; its publisher and receiver controls remain unchanged.
 The PC relay response is separate from message delivery.
 
-Current next engineering work is actual request/read authority and admitted-writer
-binding on the selected current baseline, then separately allocated API/UI/native
-provider integration. Minimal Whop permissions, paid-period proof, Discord effective
+Current integration dependencies are executable Auth/writer/HTTP qualification,
+actual target schema/config/admission and separately allocated API/UI/native
+provider bindings. Minimal Whop permissions, paid-period proof, Discord effective
 permissions, erasure/retention and recovery all need real qualification. More dormant
 interfaces do not satisfy those dependencies. No live configuration, tests, runtime
 activation or release is authorised by this documentation refresh.
+
+## Refund webhook correction26 — pinned payload reference, source only
+
+Coordinator allocated only the existing
+`src/modules/partner-alerts/server/partner-alert-whop-webhook.ts` plus these2
+documents on baseline `e79e301b86df55604ef4ca4318108a3eee26c5e3`. The decoder
+preimage is SHA-256
+`d40bb92f87f4d93b5385174b301f90eaabbd177514bb4253f5f59671dde9e560`.
+No inbox, reconciliation, normalisation, coverage policy or runtime is assigned.
+
+The exact official SDK pin is
+[`whopio/whopsdk-typescript` commit `7c77a47de147bf17ea166635b8cbfe31ecd5c1a1`](https://github.com/whopio/whopsdk-typescript/tree/7c77a47de147bf17ea166635b8cbfe31ecd5c1a1),
+package `@whop/sdk` 2.6.0, generated default `Api-Version-Date: 2026-10-27-2`.
+Both [refund.created](https://github.com/whopio/whopsdk-typescript/blob/7c77a47de147bf17ea166635b8cbfe31ecd5c1a1/src/api/resources/refunds/types/PostRefundCreatedPayload.ts)
+and [refund.updated](https://github.com/whopio/whopsdk-typescript/blob/7c77a47de147bf17ea166635b8cbfe31ecd5c1a1/src/api/resources/refunds/types/PostRefundUpdatedPayload.ts)
+carry `data: RefundLegacy`. That type's
+[`payment` is nullable and its nested payment has an `id`](https://github.com/whopio/whopsdk-typescript/blob/7c77a47de147bf17ea166635b8cbfe31ecd5c1a1/src/api/types/RefundLegacy.ts#L19).
+Native REST `Refund.payment_id` is a different contract. These are public source
+references, not provider-response or runtime qualification.
+
+Previously both refund event types shared the other reversal events' selection
+of `data.payment_id`. A valid signed pinned refund with `data.payment.id` therefore
+failed the final payment-ID guard before it could reach the inbox. The correction
+separates only these2 event types and selects the validated nested payment ID.
+Missing/null/non-object payment fails through the existing webhook validation
+error; malformed/missing/wrong-prefix ID fails the existing final ID guard. There
+is no fallback to REST `payment_id`, the refund's own `id`, or an invented target.
+The unbound event is not acknowledged as a successfully applied refund, and no
+durable UNKNOWN/HOLD observation is claimed.
+
+Raw-byte HMAC/key handling, timestamp tolerance, envelope version/account checks,
+the final ID guard and minimal output are unchanged. All other event-type
+branches retain their prior behaviour. A verified event still only identifies a
+resource for fresh authoritative reads; it supplies no payment/refund amount,
+reversal fact, paid-period proof or role command. Existing native Payment reads,
+exact money normalisation and reversal policy remain frozen. Reconciliation
+still returns `canApply: false` / `current_runtime_unbound`, with no automatic
+receiver or drain activated by this source change.
+
+The separate receipt-to-paid-period relation remains externally unqualified in
+the inspected official contracts. Current membership dates can include free
+extensions, so no `paidCoverage` is inferred from timestamps/cadence or this fix.
+Missing proof remains UNKNOWN/HOLD under the existing access policy.
+
+Verification is manual source/data-flow comparison and hashes only; tests,
+lint/types/builds, module imports/execution, SQL, providers and runtime remain
+prohibited. No dashboard or Help flow changes; Help guide alignment remains with
+eventual visible integration. The next step is Coordinator review/preservation
+of the exact3 postimages, not activation.
+[Correction26 progress](partner-alert-channels-progress.md#refund-webhook-correction26--source-only).
 
 ## Private read HTTP composition25 — unregistered source
 
