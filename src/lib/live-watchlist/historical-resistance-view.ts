@@ -33,10 +33,11 @@ export function historicalResistanceView(state: LiveWatchlistSymbolState): LiveW
       if (!match) return true;
       const price = Number(match[1]);
       // Older text cards lost their per-row counts. Their explicit weak
-      // planning-extension signature needs observed corroboration, not trust
+      // planning-extension signature (legacy "light", current "weak") needs
+      // observed corroboration, not trust
       // in a rounded number. Preserve real extensions when evidence exists.
       const planningOnly = /\bcontinuation map\b/i.test(line) ||
-        (/\bweak\b/i.test(line) && /\bextension\b/i.test(line) && !retainedAt(price));
+        (/\b(?:weak|light)\b/i.test(line) && /\bextension\b/i.test(line) && !retainedAt(price));
       if (blockedAt(price) || planningOnly) { changed = true; return false; }
       return true;
     }).join("\n");
