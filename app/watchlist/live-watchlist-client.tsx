@@ -1507,10 +1507,6 @@ export function PotentialGainCard({ symbol }: { symbol: LiveWatchlistSymbolState
               <strong>{formatDateTime(gain.highPriceAt)}</strong>
             </div>
           </div>
-          <p className="watchlist-potential-gain-note">
-            {`Measured from ${formatDateTime(gain.postedAt)}.`}{" "}
-              Based on observed live prices after tracking began.
-          </p>
         </>
       ) : (
         <>

@@ -2,6 +2,7 @@ import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibilit
 import "server-only";
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
+import { calculateManualLoss, type ManualLossDraft } from "@/src/lib/live-watchlist/manual-loss-card";
 
 export const GAIN_CHANNEL = "1433570741068234795";
 export const GAIN_MAX_BYTES = 4 * 1024 * 1024;
@@ -24,22 +25,38 @@ type Receipt = { owner_user_id: string; payload_hash: string; state: string; ret
 const receiptResult = (state: string, retryAt = 0) => ({ state, retryAt,
   message: state === "sent" ? "Posted to Discord." : state === "retry" ? "Discord asked us to wait. Try Send to Discord again after the wait shown." : state === "failed" ? "Discord did not accept the post. Close and reopen to try again." : "Delivery could not be confirmed. Check Discord before posting again." });
 
-export async function sendPotentialGainPost(database: Database.Database, input: { ownerUserId: string; symbol: string; requestId: string; message: string; png: Uint8Array }, transport: typeof fetch = fetch, environment = process.env) {
+type CardPostInput = { ownerUserId: string; symbol: string; requestId: string; message: string; png: Uint8Array };
+export async function sendPotentialGainPost(database: Database.Database, input: CardPostInput, transport: typeof fetch = fetch, environment = process.env) {
+  return sendCardPost(database, input, transport, environment);
+}
+
+export async function sendManualLossPost(database: Database.Database, input: CardPostInput & ManualLossDraft, transport: typeof fetch = fetch, environment = process.env) {
+  const loss = calculateManualLoss(input);
+  return sendCardPost(database, input, transport, environment, { kind: "loss", payload: JSON.stringify(loss) });
+}
+
+async function sendCardPost(database: Database.Database, input: CardPostInput, transport: typeof fetch, environment: NodeJS.ProcessEnv, loss?: { kind: "loss"; payload: string }) {
   if(isPrivateWatchlistTicker(input.symbol))throw Error("Move this ticker out of Private before publishing.");
   validateGainPost(input);
-  const hash = createHash("sha256").update(input.symbol).update("\0").update(input.message).update("\0").update(input.png).digest("hex");
+  const digest = createHash("sha256").update(input.symbol).update("\0").update(input.message).update("\0").update(input.png);
+  // Preserve existing Gain receipt hashes exactly; Loss binds its distinct kind/manual facts too.
+  if (loss) digest.update("\0manual-loss\0").update(loss.payload);
+  const hash = digest.digest("hex");
+  const filename = `${input.symbol}-${loss ? "trade-loss" : "potential-gain"}.png`;
+  const description = `${input.symbol} ${loss ? "trade loss" : "potential gain"} card`;
+  const channelLabel = loss ? "gain/loss" : "potential gain";
   const existing = database.prepare<[string],Receipt>("SELECT * FROM platform_watchlist_potential_gain_posts WHERE request_id=?").get(input.requestId);
   if (existing) {
     if (existing.owner_user_id !== input.ownerUserId || existing.payload_hash !== hash) throw Error("This post request changed. Reopen the preview.");
     if (existing.state !== "retry" || existing.retry_at_ms > Date.now()) return receiptResult(existing.state, existing.retry_at_ms);
   }
   const webhook = potentialGainWebhook(environment);
-  if (!webhook) return { state: "unconfigured", message: "The potential gain Discord channel is not configured yet." };
+  if (!webhook) return { state: "unconfigured", message: `The ${channelLabel} Discord channel is not configured yet.` };
   // Validate destination before claiming any delivery. No owner content is sent here.
   try {
     const metadata = await transport(webhook, { signal: AbortSignal.timeout(8000), redirect: "error" });
-    if (!metadata.ok || (await metadata.json()).channel_id !== GAIN_CHANNEL) return { state: "configuration", message: "The configured webhook could not be verified for the potential gain channel." };
-  } catch { return { state: "configuration", message: "The potential gain Discord connection could not be verified. Try again." }; }
+    if (!metadata.ok || (await metadata.json()).channel_id !== GAIN_CHANNEL) return { state: "configuration", message: `The configured webhook could not be verified for the ${channelLabel} channel.` };
+  } catch { return { state: "configuration", message: `The ${channelLabel} Discord connection could not be verified. Try again.` }; }
   const claimed = database.transaction(() => {
     const previous = database.prepare<[string],Receipt>("SELECT * FROM platform_watchlist_potential_gain_posts WHERE request_id=?").get(input.requestId);
     if (previous) {
@@ -58,8 +75,8 @@ export async function sendPotentialGainPost(database: Database.Database, input: 
   try {
     webhook.searchParams.set("wait", "true");
     const form = new FormData();
-    form.set("payload_json", JSON.stringify({ content: input.message ? `${input.message}\n\n@everyone` : "@everyone", allowed_mentions: { parse: ["everyone"] }, attachments: [{ id: 0, filename: `${input.symbol}-potential-gain.png`, description: `${input.symbol} potential gain card` }] }));
-    form.set("files[0]", new Blob([new Uint8Array(input.png)], { type: "image/png" }), `${input.symbol}-potential-gain.png`);
+    form.set("payload_json", JSON.stringify({ content: input.message ? `${input.message}\n\n@everyone` : "@everyone", allowed_mentions: { parse: ["everyone"] }, attachments: [{ id: 0, filename, description }] }));
+    form.set("files[0]", new Blob([new Uint8Array(input.png)], { type: "image/png" }), filename);
     const response = await transport(webhook, { method: "POST", body: form, signal: AbortSignal.timeout(20000), redirect: "error" });
     if (response.ok) {
       const result = await response.json();
