@@ -1,3 +1,4 @@
+import { newsGeneralMarketNewsMigration } from "@/src/modules/news/server/database/migrations/0185_news_general_market_news";
 import { platformAccountErasureRecoveryMigration } from "./migrations/0183_platform_account_erasure_recovery";
 import { platformWatchlistUsageUserRecentMigration } from "./migrations/0184_platform_watchlist_usage_user_recent";
 import { platformDiscordIdentityReleaseMigration } from "./migrations/0176_platform_discord_identity_release";
@@ -673,6 +674,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0176_platform_discord_identity_release.ts", migration: platformDiscordIdentityReleaseMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0183_platform_account_erasure_recovery.ts", migration: platformAccountErasureRecoveryMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0184_platform_watchlist_usage_user_recent.ts", migration: platformWatchlistUsageUserRecentMigration }),
+    Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0185_news_general_market_news.ts", migration: newsGeneralMarketNewsMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -681,6 +683,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0185_news_general_market_news": Object.freeze(["news_general_articles", "news_general_symbols", "news_general_revisions", "news_general_deliveries", "news_general_status"]),
     "0183_platform_account_erasure_recovery": Object.freeze(["platform_erasure_operations", "platform_erasure_objects", "platform_erasure_history"]),
     "0175_platform_profile_name": Object.freeze(["platform_user_profile_names"]),
     "0176_platform_discord_identity_release": Object.freeze(["platform_discord_released_origins", "platform_discord_identity_releases"]),
