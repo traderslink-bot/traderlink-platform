@@ -2,14 +2,12 @@
 
 Controlling [implementation plan](partner-alert-channels-plan.md). Updated 2026-10-28.
 
-Current checkpoint24: the actual request-writer successor now uses the existing
-Auth frame in `/home/traderlink/projects/partner-admin-auth`. Source only; no
-runtime, executable or policy-parity acceptance is claimed.39 owned TS remain,
-with only the writer changed; other38 TS, Auth383e73ab and immutable proposal23
-are frozen. Original preserved writer21/content22 and archives remain intact.
-HTTP/runtime, native/schema/config/erasure qualification and final UI remain
-outstanding. Separate owner-approved Discord setup still does not activate any
-role backup, sync, paid access or delivery worker.
+Current checkpoint25: actual private owner/community HTTP read composition is
+authored in `/home/traderlink/projects/partner-admin-auth`. Only the existing HTTP
+adapter and these2docs change; other38 TS, writer24/Auth/read-model/content/runtime
+remain frozen.39 owned TS paths total. This is unregistered method source, with
+no executable/fault/audit qualification or live endpoint. Auth/schema/config,
+actual route/runtime/native/privacy integration and final UI remain outstanding.
 
 ## Owner-directed plan consolidation — documentation successor only
 
@@ -349,6 +347,71 @@ preview/runtime/activation/release. Help guides remain for eventual visible
 feature integration; this changes no dashboard UI or guide flow. Coordinator and
 PC relay receive exact hashes, unfinished work, responsibility and next safe
 step before end/wait; no new product approval is requested.
+
+## Private read HTTP composition25 — source only
+
+Coordinator cleared one concrete source slot after writer24 preservation, with no
+News/Watchlist/G7/shared collision identified. Work is explicitly in
+`/home/traderlink/projects/partner-admin-auth`, branch
+`codex/partner-admin-auth-parity-20261028`, parent checkpoint
+`76be98a4ae03e25152c037b455f0146fa554aa6f`. No original mixed checkout edits,
+replay/import/Git action, new worker or owner-product approval request.
+
+EXACT three-path allowlist/preimages:
+- `src/modules/partner-alerts/server/partner-alert-http.ts`:
+  `dd53b7af24c4c7ca8819d8a33a23e6a48ed473d437083b29a4c9fe5bb0c2475c`.
+- `docs/migration/partner-alert-channels-plan.md`:
+  `385e8462bf471456481c69778a858a378a5e5b9db70a10c9f55b07b50a3d03f4`.
+- `docs/migration/partner-alert-channels-progress.md`:
+  `aafd3e42bedbfddbb74cdecd08db96cee4fc2981618ab55557bc55985f2d951c`.
+
+Real implementation is GET-only `handlePrivateRead`, with a closed trusted target
+union, existing exact-key/UUID/limit validators, concrete actual writer argument,
+one real `writer.run` and the existing DTO projector inside its admitted scope.
+The Response is created after committed detached data returns. Actual existing
+owner/community read authorization remains in the writer/repository; HTTP adds no
+second authorize/rate call, mutation proof, reader callback port or payment proof.
+
+### Manual source paths — NOT executed tests
+
+| Case | Authored handling |
+| --- | --- |
+| Default-disabled adapter or absent/nonconcrete writer |503 before method/target/admission work; original constructor/default state unchanged |
+| Non-GET private method |405/Allow GET, no writer call; existing POST method uses default Allow POST |
+| Unknown target/subscriber kind, unexpected target keys, invalid UUID or noninteger/out-of-range limit | Staged existing validators return400 before protected read |
+| Operator community settings | Single admitted readPartner(id,owner), existing private projection inside scope, response after successful run |
+| Community-owner settings | Single admitted readPartner(id,partner), existing ownership isolation plus same private projection |
+| Operator review queue | Single bounded existing queue read and projection; existing ordering retained |
+| Body/query actor/audience/action values | Not parsed or used to select permissions; fixed trusted target only |
+| Actual session denial/operator denial/rate failure | Genuine typed codes map401/403/429 with static private responses, after writer/Auth outcome handling |
+| Authenticated missing Partner row | Actual repository unavailable error maps404 after repository's existing authorization |
+| Projection/stored-data/config/schema/audit/integrity or unknown admission error |503; no data or raw message/context/paths/native bodies; generic requestAuthority is not guessed to be a client/policy denial |
+| Session/identity/workspace/authority changes or capability/asynchronous output | Existing frozen writer/Auth guards apply; no HTTP retry, recapture or extra budget call |
+
+All responses use existing private/no-store/nosniff headers. No guessed Retry-After,
+raw rows, identity, role/admission ticket, audit payload or internal error details.
+The sole response helper change adds allowedMethod with default POST for405;
+constructor/disabled initialization and the complete POST method are byte-identical
+to the preimage. These are manual text/data-flow comparisons, not response tests.
+
+Actual dependency hashes/signatures are in the plan's
+[composition25 record](partner-alert-channels-plan.md#private-read-http-composition25--unregistered-source).
+Runtime569f8ebb remains unchanged/canActivate false; writeracc67e5d,
+Auth383e73ab, read-model835707d5 and contenta8189575 stay frozen. All other38
+owned TS hashes remain identical. Existing immutable proposal84e5c2c5 unchanged.
+No new file/route/runtime/factory/config/schema/Auth/native/52pin path, subscriber/
+public read, role grant or product policy change. HTTP import/statements are
+source only; no subject module execution or endpoint activation occurred.
+
+Baseline index before edits:
+`4abd1ca7bd77f36792367f2f1706e9a82e57e6c0e0a30e057532d9b1d4f32025`.
+Branch/HEAD/index are preserved. No tests/Vitest/lint/type/build/module execution,
+SQL/DB, Git mutation, dependency/provider/Discord, runtime/preview/release. Actual
+Auth/writer executable/fault/audit and schema/config/route/factory qualification
+remain HELD; final UI/Help review stays later. No dashboard/Help flow is activated
+or changed now; guide alignment belongs with eventual visible functionality.
+Immediate exact handoff goes to Coordinator and authorized PC relay before any
+review/allocation wait or run end.
 
 ## Authority and baseline
 

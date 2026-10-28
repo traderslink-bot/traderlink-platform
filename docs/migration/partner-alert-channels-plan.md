@@ -1,15 +1,16 @@
 # Partner alert channels implementation plan
 
-Updated: 2026-10-28. Current checkpoint24: actual request-writer integration with
-the isolated Auth frame is authored, source-only and unverified at runtime. The
-22 earlier source slices and immutable Auth proposal23 remain preserved. There
-are39 owned TS paths; this successor changes only the existing request-writer.
+Updated: 2026-10-28. Current checkpoint25: actual private owner/community HTTP
+read composition is authored, source-only and unverified at runtime. Prior22
+slices, immutable Auth proposal23 and writer24 remain preserved. There are39
+owned TS paths; this successor changes only the existing HTTP adapter.
 [Progress and resume point](partner-alert-channels-progress.md).
 
 The active assigned workspace for this successor is
 `/home/traderlink/projects/partner-admin-auth`, branch
 `codex/partner-admin-auth-parity-20261028`, baseline
-`4c0e6b39463aa39afabc93ab3ccb5fdf7f97512a` (parent
+`76be98a4ae03e25152c037b455f0146fa554aa6f` (parent
+`4c0e6b39463aa39afabc93ab3ccb5fdf7f97512a`, Auth inspection ancestor
 `04cde1b49730b30e5ba23410029965e3e3ff24b3`, production-source ancestor
 `a5ead4e35a846ac0d82cd365688b831d36ece8ee`). Use this path explicitly;
 the native saved project/default cwd was not retargeted. The original mixed
@@ -19,15 +20,15 @@ allocations below do not authorize edits there for this successor.
 Actual isolated Auth postimage
 `383e73ab1cf60ec4539b32239db10cbe53e2d451e6040ea574b5023e3fe59340`
 is read-only and remains unqualified for runtime/canonical release. Only this
-plan, the existing progress record and the existing writer are assigned. Other38
-TS, immutable proposal, Auth, providers, HTTP/runtime and schema remain frozen.
+plan, the existing progress record and existing HTTP adapter are assigned. Other38
+TS, immutable proposal, Auth, writer24, providers, runtime and schema remain frozen.
 
 ## Owner review: agreed model, access solution and next decisions
 
 This overview consolidates the owner's request to coordinate Shared alerts and the
 PC relay, show the complete decisions and explain the Whop/Premium gate. The
 source record below includes the prior22 slices, proposal23 and current-baseline
-writer successor24; it is not a completed or activated feature. The remaining-decisions table at the end distinguishes choices
+writer successor24 and HTTP composition25; it is not a completed or activated feature. The remaining-decisions table at the end distinguishes choices
 needed before affected activation from technical integration work; it does not
 require every commercial amount before further isolated implementation.
 
@@ -86,6 +87,70 @@ provider integration. Minimal Whop permissions, paid-period proof, Discord effec
 permissions, erasure/retention and recovery all need real qualification. More dormant
 interfaces do not satisfy those dependencies. No live configuration, tests, runtime
 activation or release is authorised by this documentation refresh.
+
+## Private read HTTP composition25 — unregistered source
+
+Coordinator cleared EXACTLY existing
+`src/modules/partner-alerts/server/partner-alert-http.ts`, preimage
+`dd53b7af24c4c7ca8819d8a33a23e6a48ed473d437083b29a4c9fe5bb0c2475c`,
+plus these2owned documents on the76be98a4 baseline. No runtime/factory/source
+route, schema/config/Auth/native/52pin path is assigned. Actual writer24, Auth,
+read-model and all other38 TS stay byte-identical. This uses real imported
+exports, not another reader callback port or qualification receipt.
+
+The existing adapter now has synchronous
+`handlePrivateRead(request, serverTarget, writer: PartnerAlertRequestWriter)`.
+It requires the actual concrete server-owned writer instance and the existing
+explicit server enable flag; the original constructor/default-disabled behavior
+and entire POST method remain byte-identical. No instance or endpoint is enabled
+by authoring this method. Inert construction and private response headers remain.
+
+The exact-key trusted target union contains only:
+- `operator_partner` plus valid community UUID -> existing `readPartner(id,"owner")`.
+- `community_partner` plus valid community UUID -> existing `readPartner(id,"partner")`.
+- `operator_review_requests` plus integer limit1..100 -> existing `listReviewRequests(limit)`.
+
+It accepts GET only. Target/audience/action never comes from request body/query
+permissions, and no mutation verified receipt, CSRF/idempotency command credential
+or second Auth/rate call is used for the read. The writer is called exactly once.
+Existing private DTO projection is INSIDE that admitted callback, so malformed
+stored data also fails within the actual rollback/audit scope. Only after the
+writer returns committed detached DTOs does the method construct JSON/Response.
+There is no raw-row/identity/ticket/audit/native-error spread or subscriber/public
+read. Stored latest agreement/quote remains a proposal/version view, not invented
+acceptance or payment proof. Existing queue order is preserved.
+
+All outcomes retain private/no-store/nosniff headers. Method mismatch has405 with
+Allow GET; shared response helper defaults to POST so existing POST405 behavior
+is unchanged. Staged target validation maps genuine validation failures to400.
+Real typed authentication/session errors map401; known authorization denials403;
+actual admin rate failure429; a missing Partner record after existing repository
+authorization404. Schema/audit/integrity/unexpected failures map503. Ambiguous
+`requestAuthority`/configuration/stored-data validation is also503 rather than an
+invented client or policy denial. No raw error text/context or guessed retry time
+is returned. The HTTP boundary runs after actual Auth outcome handling, without
+swallowing a genuine audit failure into successful data.
+
+Actual unchanged dependency exports/pins:
+- `partner-alert-request-writer.ts` run/request scope:
+  `acc67e5d8656d8c0bf8cb6967e4918ebea9001bc87562aed8995dfd0c22969db`.
+- `partner-alert-read-model.ts` both existing projection functions:
+  `835707d5b97697fb4e3ee18c65c06698ce9c8fdd7726cf81894faa105ebc34ef`.
+- `partner-alert-request-boundary.ts` existing private response headers:
+  `83e846997f5791aeea074632f61a7f9c9f4c0ca80fcdee04409624379556c982`.
+- `partner-alert-repository.ts` actual repository error class:
+  `3c9d8ebc161ea13bd8ae07fd1726747760afebb33a92959f1d7744667c7c6fdc`.
+- Platform migration contract actual `isTraderLinkPlatformError`:
+  `3aa54c8952b6fd2d9c1f4740e55414478b7bcd43fa33abfad150edaf82d0d990`.
+
+No export is missing for this source composition. Runtime remains unchanged at
+`569f8ebb58c79588a1aa0afb4c00f35ffa8683c8d07c021d253903b14379c0ab`, with
+canActivate false; actual application DB/schema/config qualification and exact
+route/factory ownership are still required before invocation. Auth/writer fault,
+audit and executable qualification remain HELD. No route/listener/provider,
+factory/config/schema/native capability, product policy, role/grant or live access
+is activated. Manual source/data-flow/hash review only; no executed checks.
+[Composition25 progress](partner-alert-channels-progress.md#private-read-http-composition25--source-only).
 
 ## Current-baseline writer successor24 — actual Auth API integration
 
