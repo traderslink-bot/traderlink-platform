@@ -11,6 +11,35 @@ Implementation and focused QA are complete locally. Coordinator owns Git,
 release serialization and final deployed-source/health verification. This
 record is the pre-release checkpoint, not a claim of live deployment.
 
+### Verified release receipt
+
+Coordinator subsequently verified the Runtime-only correction live on October
+27, 2026. Runtime commit `541ad7237d977a5724dc3fc27b58e3b02a568390`, parent
+`a541b8f2640ae6fbd028db69164483543f2e3667`, contains exactly the three Runtime
+paths allowlisted below. Railway deployment
+`c0c93964-c9e6-4ba0-8f01-6004fa6f9f8b` succeeded with image digest
+`6e4a2452cba260a9af3107a8dda7ec52c0c6272d199fb4ac9087bbd2981c642b`.
+Coordinator inspected the actual deployed compiled manager and confirmed the
+compact event forwards `analysisUpdateContextFromReview(review, event.revision)`.
+Runtime readiness returned HTTP 200, non-shadow, using its sole original volume.
+
+Platform production remains at `1e30afcb5207c0ca810a41856ccf060273bee5c1`;
+health returned HTTP 200, ready, at migration 148. Platform verification and this
+record were checkpointed separately at
+`96097a533d080346924d7a402b33f3cad329f6cc`, not deployed to Platform. This release
+addendum follows that checkpoint and is documentation only.
+
+An initial upload failed at DNS without creating a deployment. Candidate
+`1850beea-e918-4ba2-84a1-4e3cb746ee70` then failed at image export after successful
+compilation; Railway exposed no error detail or diagnosis. One identical-source
+retry succeeded. The old runtime remained healthy until replacement; no rollback
+was required. This receipt does not claim an independently measured uninterrupted
+cutover. No configuration/migration change, historical rewrite, replay, backfill,
+recipient re-enrollment, resend, test notification or BRAI regeneration occurred.
+Post Gain and the previous notification-price-copy correction remain preserved.
+Deployment/source/health assertions above are Coordinator-provided hosted
+receipts, not independent worker access to production.
+
 ## Recorded BRAI evidence
 
 Coordinator executed bounded read-only probes on Runtime deployment
