@@ -2,14 +2,14 @@
 
 Controlling [implementation plan](partner-alert-channels-plan.md). Updated 2026-10-28.
 
-Current checkpoint: twenty-two source slices,39 TS plus these2docs. Slice22 changes
-only the assigned existing content-filter source; all38 other TS remain byte-identical.
-Writer21 is frozen with two known Auth rate/audit defects, not policy-parity accepted.
-A separate immutable Auth API patch proposal is documented only; all39 TS stay
-unchanged by it. HTTP/runtime entrypoints remain unallocated and no positive runtime
-qualification is claimed. Separate PC/Coordinator Discord setup now has corrected
-30-entry verification. Earlier partial setup/packet records below are historical,
-not the current setup receipt. No permission sync or paid-role backup is active.
+Current checkpoint24: the actual request-writer successor now uses the existing
+Auth frame in `/home/traderlink/projects/partner-admin-auth`. Source only; no
+runtime, executable or policy-parity acceptance is claimed.39 owned TS remain,
+with only the writer changed; other38 TS, Auth383e73ab and immutable proposal23
+are frozen. Original preserved writer21/content22 and archives remain intact.
+HTTP/runtime, native/schema/config/erasure qualification and final UI remain
+outstanding. Separate owner-approved Discord setup still does not activate any
+role backup, sync, paid access or delivery worker.
 
 ## Owner-directed plan consolidation — documentation successor only
 
@@ -279,6 +279,76 @@ Coordinator independently preserved the preceding exact22 source/docs checkpoint
 `9317d57865ba23d62ab4f81277bd3af13c0de42efc1cef171a57473514b63814` (87,263bytes).
 That receipt covers exact3file hashes and narrow source review; it is not a whole-
 tree/executable verification claim. The independent archive remains unchanged.
+
+## Current-baseline writer successor24 — actual Auth frame
+
+Exact new assigned workspace: `/home/traderlink/projects/partner-admin-auth`.
+Coordinator's setup-only AGENTS prefix was read before work. Native saved-project
+association/default cwd is unchanged; every command/edit in this slice uses the
+new target explicitly. Original `/home/traderlink/projects/platform-pc-preserved`
+source/index/HEAD are not edited or reused as current Auth.
+
+Coordinator supplied baseline commit `4c0e6b39463aa39afabc93ab3ccb5fdf7f97512a`,
+branch `codex/partner-admin-auth-parity-20261028`, parent
+`04cde1b49730b30e5ba23410029965e3e3ff24b3`, production-source ancestor
+`a5ead4e35a846ac0d82cd365688b831d36ece8ee`. Exact39 owned TS +3docs were
+already imported byte-for-byte by Coordinator before this allocation. This
+worker performs no Git/import/replay action.
+
+EXACT three-path successor allowlist and preimages:
+- `src/modules/partner-alerts/server/partner-alert-request-writer.ts`:
+  `ed7c1a81ef86497409354b52af1b52027d4a65dcc32712e72bbadabc146b9fa8`.
+- `docs/migration/partner-alert-channels-plan.md`:
+  `d51a9745f87583ae5bf7fb3527cd1e7c359c56800896d8060ba718226549ddd9`.
+- `docs/migration/partner-alert-channels-progress.md`:
+  `08f238e6f2cec78ef96dd07ef99fff9643acb05cc5c1f9f1ae50330b592e0e33`.
+
+Actual read-only Auth source is
+`src/modules/platform/server/administration/platform-admin-authorization.ts`, SHA
+`383e73ab1cf60ec4539b32239db10cbe53e2d451e6040ea574b5023e3fe59340`.
+Its real `withRequestAuditFrame`, callback `authorize` and `revalidate` exports are
+used directly. Public Auth source, policy, scope issuers and audit machinery are
+not edited or replaced. Runtime qualification remains held.
+
+Implementation delegates native outer-transaction/savepoint/audit ownership to
+the actual Auth frame and preserves writer-private admission/capability checks.
+Initial operator calls use `frame.authorize` exactly once per existing repository
+access and retain the actual returned original scope. Final validation supplies
+that exact scope to `frame.revalidate` through the SAME Partner authority object,
+then checks actual actor deadlines. Original Auth/Partner timestamps stay intact;
+no recapture, forged grant or second rate/allow call. Community reads keep real
+community-owner validation with no new Journal-owner/Premium requirement.
+
+### Manual source/data-flow review — no executed checks
+
+| Case | Authored control flow |
+| --- | --- |
+| One successful operator settings/review read | One real frame.authorize call; original scope retained; final frame.revalidate and actual Partner freshness method, no duplicate public authorize |
+| Several real/nested operator reads | Each logical read issues its own genuine attempt; nested same-request scope reuses the same active frame; all original scopes revalidated at final phase |
+| Actual Auth denial, caught or uncaught | Writer failure stays sticky; exception escapes protected callback; actual Auth frame owns private rollback and genuine denial audit persistence |
+| Later session/workspace/freshness/abort failure | Byte-identical current verifier rejects; no result escapes; core frame handles rollback/real existing audit effects, with no synthetic denial or rate refund |
+| Expired original operator/Discord evidence | Same Partner authority evaluates original scope timestamps; final returned actor deadline must still exceed latest verifier time |
+| Revoked/changed operator policy | Auth-owned original-scope revalidation uses real current policy; no copied Partner policy or unqualified cached grant |
+| Saved read handle/nested request during final validation | Read scope is cleared before final phase; guarded/nested calls reject and poison the request |
+| Promise/capability/data getter result or stale/foreign connection | Existing detached-result/provenance/owned-map guards remain; no frame handle, DB or original Auth scope exposed |
+| Community-only request without operator read | No frame.authorize attempt is added; existing actual community-owner/Discord freshness checks apply |
+| Rollback/audit/outer commit failure or process loss | Prototype limitations retained; no response/durability/activation claim; no writer catch that commits failed work |
+
+Manual text comparison confirms the current same-connection verifier, initial
+identity/freshness block and cookie/result/helper code are byte-identical to
+writer21. Only frame integration, actual original-scope dispatch, final-handle
+closure/deadline checks and a private type alias changed. All38 other imported TS
+remain byte-identical. No new file, public export, injected port, role/native
+producer, callback API, HTTP/runtime, schema or Auth source change.
+
+Baseline index SHA before edits:
+`e1e9e810fc1f609059601466620076b9700f6c82b9127963356025bdfe2f2b5c`.
+Branch/HEAD/index and actual Auth source must remain exact in final handoff.
+No tests/Vitest/lint/type/build/module import/SQL/DB/Git/provider/Discord/dependency/
+preview/runtime/activation/release. Help guides remain for eventual visible
+feature integration; this changes no dashboard UI or guide flow. Coordinator and
+PC relay receive exact hashes, unfinished work, responsibility and next safe
+step before end/wait; no new product approval is requested.
 
 ## Authority and baseline
 

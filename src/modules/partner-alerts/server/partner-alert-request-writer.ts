@@ -28,6 +28,8 @@ export type PartnerAlertRequestWriterConfiguration = Readonly<{
  * Handles work only synchronously inside the owning run callback. */
 export type PartnerAlertPrivateRequestScope = Readonly<Pick<PartnerAlertRepository, "readPartner" | "listReviewRequests">>;
 
+type OperatorAuthorizationScope = ReturnType<PlatformAdminAuthorization["authorize"]>;
+
 type OwnedRequest = {
   owner: PartnerAlertRequestWriter;
   request: Request;
@@ -115,8 +117,9 @@ function withinScope<T>(state: OwnedRequest, operation: (scope: PartnerAlertPriv
   }
 }
 
-/** Actual bounded request-admission algorithm, not a runtime binding or a
- * Premium/erasure admission issuer. Imports/construction open/query/start nothing.
+/** Request admission inside the actual Auth-owned transaction/audit frame.
+ * Not a runtime binding or Premium/erasure admission issuer. Imports and
+ * construction open/query/start nothing.
  * The server supplies its selected application connection/configuration. The
  * callback must not perform network I/O or manually end the owned transaction.
  * HTTP/runtime wiring and schema/config/whole-erasure qualification are separate. */
@@ -173,14 +176,17 @@ export class PartnerAlertRequestWriter {
       if (!database.open || database.inTransaction || request.signal.aborted
         || headersKey(request.headers) !== originalHeadersKey) return rejected();
 
-      const execute = database.transaction(() => {
+      const admin = new PlatformAdminAuthorization(database, configuration.environment, () => new Date(clock()));
+      return admin.withRequestAuditFrame(request, frame => {
         const sessions = new PlatformSessionRepository(database);
         const identities = new PlatformAuthenticationRepository(database);
         const workspaces = new PlatformWorkspaceRepository(database);
         const discord = new PlatformDiscordMembershipRepository(database);
         let baseline: string | null = null;
         let identity: TraderLinkPlatformRequestIdentity | null = null;
-        let operatorUsed = false; const communityOwners = new Set<string>();
+        const operatorScopes: OperatorAuthorizationScope[] = [];
+        let revalidationScope: OperatorAuthorizationScope | null = null;
+        const communityOwners = new Set<string>();
         const assertOwned = (): void => {
           if (!state.active || state.failed || activeConnections.get(database) !== state
             || !database.open || !database.inTransaction || request.signal.aborted
@@ -245,7 +251,17 @@ export class PartnerAlertRequestWriter {
               return identity;
             },
             identityOptions,
-            admin: new PlatformAdminAuthorization(database, configuration.environment, () => new Date(verify())),
+            admin: { authorize: (currentIdentity: TraderLinkPlatformRequestIdentity, headers: Headers) => {
+              verify();
+              if (currentIdentity !== identity || headersKey(headers) !== originalHeadersKey) return rejected();
+              // Each repository access issues one genuine attempt. Only final
+              // validation may reuse its exact Auth-issued original scope.
+              const scope = revalidationScope === null ? frame.authorize(currentIdentity, headers)
+                : frame.revalidate(revalidationScope, currentIdentity, headers);
+              verify();
+              if (revalidationScope === null) operatorScopes.push(scope);
+              return scope;
+            } },
             communities: new TraderLinkCommunityRepository(database), discordMemberships: discord,
             nowUtc: verify, maximumActorAgeMs: configuration.maximumActorAgeMs,
             maximumDiscordEvidenceAgeMs: configuration.maximumDiscordEvidenceAgeMs,
@@ -255,25 +271,38 @@ export class PartnerAlertRequestWriter {
             destinationGuildId: configuration.destinationGuildId, nowUtc: verify, createId: configuration.createId,
           });
           const guarded = <R>(read: () => R): R => {
-            try { verify(); const result = read(); verify(); return result; }
+            try {
+              verify();
+              if (!state.scope) return rejected();
+              const result = read(); verify(); return result;
+            }
             catch (error) { state.failed = true; throw error; }
           };
           const scope: PartnerAlertPrivateRequestScope = Object.freeze({
             readPartner: (communityId: string, audience: "owner" | "partner") => guarded(() => {
               const result = repository.readPartner(communityId, audience);
-              if (audience === "owner") operatorUsed = true; else communityOwners.add(communityId);
+              if (audience === "partner") communityOwners.add(communityId);
               return result;
             }),
             listReviewRequests: (limit?: number) => guarded(() => {
-              const result = repository.listReviewRequests(limit); operatorUsed = true; return result;
+              return repository.listReviewRequests(limit);
             }),
           });
           capabilities.add(scope); state.scope = scope;
           const result = withinScope(state, operation);
-          // Re-run the actual authorization methods before release/commit. Their
-          // audit/rate-limit behavior stays inside this same admitted transaction.
-          if (operatorUsed) authority.requireOperator();
-          for (const communityId of communityOwners) authority.requireCommunityOwner(communityId);
+          // Close read handles before final validation. Keep the ORIGINAL Partner
+          // authority and Auth scopes so none of their timestamps are renewed.
+          state.scope = null;
+          for (const originalScope of operatorScopes) {
+            revalidationScope = originalScope;
+            const actor = authority.requireOperator();
+            if (actor.validUntilUtc <= verify()) return rejected();
+          }
+          revalidationScope = null;
+          for (const communityId of communityOwners) {
+            const actor = authority.requireCommunityOwner(communityId);
+            if (actor.validUntilUtc <= verify()) return rejected();
+          }
           verify();
           return result;
         } finally {
@@ -281,7 +310,6 @@ export class PartnerAlertRequestWriter {
           if (activeConnections.get(database) === state) activeConnections.delete(database);
         }
       });
-      return execute.immediate();
     } finally {
       resolvingConnections.delete(database);
     }

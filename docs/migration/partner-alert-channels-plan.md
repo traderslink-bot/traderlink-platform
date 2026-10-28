@@ -1,25 +1,33 @@
 # Partner alert channels implementation plan
 
-Updated: 2026-10-28. Status: twenty-two source slices authored, including concrete
-storage adapters, the scoped Whop-column correction and a dormant ordinary-channel
-permission planner/synchroniser, the actual Membership Premium consumer successor,
-the dormant Partner full-ticket/refresh-fanout successor and its blocked erasure
-payload catalog, the actual-V4 mapper contract successor and dormant command/HTTP
-adapters, a pure private read-model, explicit actual-V6/V2 gift consumer adoption,
-separation of existing read-auth requirements from mutation-only callbacks,
-an actual bounded private-request admission algorithm (frozen with two known Auth
-policy defects), and completion of bounded explicit URI/domain-obfuscation filtering.
-Shared-source writers are assigned; runtime bindings remain unqualified and the
-full feature incomplete. A separate exact-base Auth API patch proposal is now
-written in documentation only; no application source has been applied by that
-proposal. [Progress and resume point](partner-alert-channels-progress.md).
+Updated: 2026-10-28. Current checkpoint24: actual request-writer integration with
+the isolated Auth frame is authored, source-only and unverified at runtime. The
+22 earlier source slices and immutable Auth proposal23 remain preserved. There
+are39 owned TS paths; this successor changes only the existing request-writer.
+[Progress and resume point](partner-alert-channels-progress.md).
+
+The active assigned workspace for this successor is
+`/home/traderlink/projects/partner-admin-auth`, branch
+`codex/partner-admin-auth-parity-20261028`, baseline
+`4c0e6b39463aa39afabc93ab3ccb5fdf7f97512a` (parent
+`04cde1b49730b30e5ba23410029965e3e3ff24b3`, production-source ancestor
+`a5ead4e35a846ac0d82cd365688b831d36ece8ee`). Use this path explicitly;
+the native saved project/default cwd was not retargeted. The original mixed
+preserved checkout and its frozen writer21 remain intact. Historical paths and
+allocations below do not authorize edits there for this successor.
+
+Actual isolated Auth postimage
+`383e73ab1cf60ec4539b32239db10cbe53e2d451e6040ea574b5023e3fe59340`
+is read-only and remains unqualified for runtime/canonical release. Only this
+plan, the existing progress record and the existing writer are assigned. Other38
+TS, immutable proposal, Auth, providers, HTTP/runtime and schema remain frozen.
 
 ## Owner review: agreed model, access solution and next decisions
 
 This overview consolidates the owner's request to coordinate Shared alerts and the
 PC relay, show the complete decisions and explain the Whop/Premium gate. The
-source checkpoint below now includes twenty-two authored slices, not a completed or
-activated feature. The remaining-decisions table at the end distinguishes choices
+source record below includes the prior22 slices, proposal23 and current-baseline
+writer successor24; it is not a completed or activated feature. The remaining-decisions table at the end distinguishes choices
 needed before affected activation from technical integration work; it does not
 require every commercial amount before further isolated implementation.
 
@@ -79,7 +87,73 @@ permissions, erasure/retention and recovery all need real qualification. More do
 interfaces do not satisfy those dependencies. No live configuration, tests, runtime
 activation or release is authorised by this documentation refresh.
 
+## Current-baseline writer successor24 — actual Auth API integration
+
+Coordinator completed the Git/import prerequisite before this allocation: exact39
+owned TS and3docs were imported byte-for-byte onto the isolated current-source
+baseline above. This worker received ONLY
+`src/modules/partner-alerts/server/partner-alert-request-writer.ts`, preimage
+`ed7c1a81ef86497409354b52af1b52027d4a65dcc32712e72bbadabc146b9fa8`,
+and the two existing plan/progress docs. No application Auth implementation or
+other source is assigned to this worker. The new setup-only AGENTS prefix remains
+outside the feature allowlist and is not changed or staged.
+
+The actual writer now enters the actual existing
+`PlatformAdminAuthorization.withRequestAuditFrame(request, operation)` on the
+same provided application connection. It no longer opens its own competing
+IMMEDIATE transaction. Its real same-connection session/user/login/workspace/
+role/link verifier, initial signed-in policy, original cookie/header/abort and
+bounded monotonic freshness checks are preserved byte-for-byte. Initial resolver
+output remains insufficient alone; private writer ownership is admitted only
+inside the real Auth frame callback and checked around each protected read.
+
+For each real repository operator read, the existing Partner authority's admin
+binding delegates to `frame.authorize` and privately retains its genuine returned
+scope object. Final validation selects that exact original object and delegates
+to `frame.revalidate`, while calling the SAME existing Partner authority's
+`requireOperator`. Its original authenticated time, original Auth authorized time
+and Discord verification freshness are not recaptured or renewed. Actual returned
+actor deadlines are checked against the latest same-connection verification.
+Community-owner revalidation uses the same existing ownership method and checks
+its actual deadline; ordinary community reads gain no operator/Premium requirement.
+
+Read handles are closed before final validation. Saved callbacks/nested calls
+cannot start another access during that phase; failures remain sticky and escape
+the protected callback so the Auth frame can roll back private work. Capability
+revocation and private connection-map cleanup remain in finally. No frame handle,
+operator scope/actor, DB, identity or audit payload is exposed to the caller.
+Only the same existing guarded private reads and detached result data are available.
+
+Actual Auth owns savepoint rollback and genuine audit persistence. The writer
+contains no policy copy, rate-reset/refund, manual audit persistence/replay, denial
+swallowing, manual audit-only commit or fake receipt. The prototype's automatic
+final current-policy reads remain in addition to the writer's final original-
+scope/Partner-freshness validation; those do not create a second allow/rate call.
+These are source paths and expected control flow, not executed policy acceptance.
+Audit/rollback/commit failure and pre-commit process-loss limitations remain those
+of the unqualified Auth prototype; no stronger durability claim is made here.
+
+Current isolated exports were read directly: actual Auth postimage383e73ab above;
+request resolver `e845c22963a5fff9cdb8399e1060274c00715c36ca619efc0363ee63625318ed`,
+session repository `aa76ac103cd6ebfa9369bbe66fe7c897e12aa8bc7fec4c0eda7b4f241929c74c`,
+session service `3c106e1f1b8a7a09d49e4601f4a4380cdfc77a9bb46875d8ca3acbb1d525ceda`,
+workspace repository `8b592218c9c1b75e1b5c5efb18a46e98ed81a561fa190c1f038dfe2e7f8fbdfb`.
+The resolver here actually supports Discord/Google/email. The old preserved
+whole-file discrepancy remains historical; its source was not copied or edited.
+
+No new file/export/port, test/import execution, SQL/DB action, Git mutation,
+provider/Discord operation, dependency install, HTTP/runtime wiring, preview,
+activation or release. Actual Auth runtime qualification, selected schema/config,
+private GET entrypoint ownership, broader paid/native/privacy integration and
+final UI review remain outstanding. Coordinator must review/preserve this exact
+successor before allocating another path. PC relay receives immediate exact
+handoff before any review/allocation wait or end of run.
+[Successor24 progress](partner-alert-channels-progress.md#current-baseline-writer-successor24--actual-auth-frame).
+
 ## Authority and assigned source
+
+The allocations below are chronological history. The current successor uses only
+the explicitly assigned isolated workspace and allowlist above.
 
 The owner first requested planning, then explicitly replaced early mockup/UI
 approval with implementation first and UI review at the end. PC relay
