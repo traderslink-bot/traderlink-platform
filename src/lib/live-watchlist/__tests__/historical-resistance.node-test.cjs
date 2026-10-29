@@ -121,6 +121,7 @@ test('getSymbol and listSymbols project cached rows without a database UPDATE or
   const raw = JSON.stringify(state());
   db.prepare("INSERT INTO live_watchlist_symbols(symbol,status,updated_at,state_json) VALUES('SAMPLE','live',1000,?)").run(raw);
   const ports = {
+    './watchlist-upside-coverage': load('src/lib/live-watchlist/watchlist-upside-coverage.ts'),
     './historical-resistance-view': { historicalResistanceView: view },
     './gain-starting-point': { prepareGain: value => value },
     './top-watches-group': { isTopWatchesGroup: () => false }, '@neondatabase/serverless': {},

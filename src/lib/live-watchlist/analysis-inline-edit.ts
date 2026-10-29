@@ -1,4 +1,5 @@
 import { sortPullbacksByPrice } from "./pullback-price-order";
+import { ownerTargetCoverage } from './watchlist-upside-coverage';
 /** Only owner-editable fields cross the save boundary. Source evidence stays server-owned. */
 export const analysisEditSections = {
   currentRead: "Analysis", needsToHold: "Structure Weakens", cautionBelow: "Caution below",
@@ -62,6 +63,7 @@ export function mergeAnalysisEdit(original: Record<string, unknown>, patch: Edit
     if (key === "failureRecovery" && result[key]) result[key] = { ...editRecord(result[key]), evidenceIds: [] };
     if (key === "ownerPullbacks" && Array.isArray(result[key])) result[key]=(result[key] as EditValue[]).map(plan=>({ ...editRecord(plan),invalidationPrice:null,firstObjectivePrice:null,evidenceIds:[] }));
   }
+  if (typeof result.symbol==='string' && typeof result.currentPrice==='number') result.upsideCoverage=ownerTargetCoverage(original,result);
   return result;
 }
 

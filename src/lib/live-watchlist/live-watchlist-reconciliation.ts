@@ -1,4 +1,5 @@
 import type { LiveWatchlistSymbolState } from "./live-watchlist-types";
+import { parseAnalysisUpsideContext } from "./watchlist-upside-coverage";
 
 /**
  * The Server-Sent Event connection is a low-latency hint, not the source of
@@ -114,8 +115,22 @@ export function reconcileLiveWatchlistSymbolState(
       : currentAiStatusUpdatedAt;
   }
 
+  // A compact event can omit context, but it cannot carry the previous
+  // activation's context into a new publication or a different analysis.
+  let analysisUpsideContext: LiveWatchlistSymbolState["analysisUpsideContext"];
+  try {
+    const read = JSON.parse(reconciledAiRead?.body ?? "null");
+    analysisUpsideContext = [current.analysisUpsideContext, incoming.analysisUpsideContext]
+      .map(parseAnalysisUpsideContext)
+      .filter((context): context is NonNullable<typeof context> => Boolean(context &&
+        context.coverage.symbol === preferred.symbol &&
+        (!context.publicationIdentity || context.publicationIdentity === preferred.indicatorPublicationIdentity) &&
+        context.analysisGeneratedAt === read?.generatedAt && context.analysisReferencePrice === read?.currentPrice))
+      .sort((a,b) => b.coverage.dataAsOf-a.coverage.dataAsOf)[0];
+  } catch { /* No usable analysis means no current analysis overlay. */ }
   return {
     ...preferred,
+    analysisUpsideContext,
     updatedAt: Math.max(current.updatedAt, incoming.updatedAt),
     cards,
     tradersLinkAiReadStatus,

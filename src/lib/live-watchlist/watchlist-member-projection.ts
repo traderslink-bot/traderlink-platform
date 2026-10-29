@@ -27,6 +27,6 @@ export function watchlistDetailProjection(state: LiveWatchlistSymbolState, analy
       levelMap:state.levelMap ? {currentPrice:state.levelMap.currentPrice,rangeState:state.levelMap.rangeState,
         overnightReference:state.levelMap.overnightReference,nearestSupport:null,nearestResistance:null,nextStrongSupport:null,nextStrongResistance:null,supportLevels:[],resistanceLevels:[]} : null} : {}),
     premiumAnalysisPricesAllowed: pricesAllowed, premiumAnalysisPreview, membershipAnalysisAllowed: analysisAllowed,
-    ...(!analysisAllowed || !pricesAllowed || premiumAnalysisPreview ? { latestTraderReadHeadline: null, tradersLinkAiReadStatus: undefined,
+    ...(!analysisAllowed || !pricesAllowed || premiumAnalysisPreview ? { analysisUpsideContext:undefined, latestTraderReadHeadline: null, tradersLinkAiReadStatus: undefined,
       tradersLinkAiReadStatusUpdatedAt: undefined } : {}) };
 }
