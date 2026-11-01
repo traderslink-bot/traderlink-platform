@@ -23,4 +23,12 @@ describe("scanner universe alerts",()=>{
     await sendScannerUniverseAlert({kind:"recovered",tradingDate:"2026-11-03",sourceDate:"2026-11-03",count:1200,environment});
     expect(fetch).toHaveBeenCalledTimes(2);
   });
+  it("alerts when the first-ever universe upload is missing",async()=>{
+    vi.useFakeTimers();vi.setSystemTime(new Date("2026-11-04T08:15:00Z"));
+    const fetch=vi.fn(async()=>new Response("{}",{status:200}));vi.stubGlobal("fetch",fetch);
+    await sendScannerUniverseAlert({kind:"missing",tradingDate:"2026-11-04",sourceDate:null,count:0,
+      environment:{WATCHLIST_OWNER_REVIEW_DISCORD_WEBHOOK_URL:"https://discord.com/api/webhooks/123/synthetic_token"}});
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(String(fetch.mock.calls[0]?.[1]?.body)).toContain("No earlier stock list is available yet");
+  });
 });

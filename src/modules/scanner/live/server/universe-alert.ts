@@ -1,6 +1,6 @@
 import { easternClock } from "../sessions";
 
-type AlertInput = Readonly<{ kind:"missing"|"recovered"; tradingDate:string; sourceDate:string; count:number; environment:NodeJS.ProcessEnv }>;
+type AlertInput = Readonly<{ kind:"missing"|"recovered"; tradingDate:string; sourceDate:string|null; count:number; environment:NodeJS.ProcessEnv }>;
 const delivered = new Set<string>();
 const missingDates = new Set<string>();
 function webhook(environment:NodeJS.ProcessEnv): URL | null {
@@ -19,7 +19,9 @@ export async function sendScannerUniverseAlert(input:AlertInput):Promise<void>{
   if(delivered.has(key))return;
   const url=webhook(input.environment);if(!url)return;
   const content=input.kind==="missing"
-    ? `**Scanner universe refresh missing**\nNo ${input.tradingDate} list arrived by 3:15 AM ET. The Scanner is continuing with the ${input.sourceDate} list (${input.count.toLocaleString("en-US")} stocks).`
+    ? `**Scanner universe refresh missing**\nNo ${input.tradingDate} list arrived by 3:15 AM ET. ${input.sourceDate
+      ? `The Scanner is continuing with the ${input.sourceDate} list (${input.count.toLocaleString("en-US")} stocks).`
+      : "No earlier stock list is available yet, so the Scanner cannot start."}`
     : `**Scanner universe refresh recovered**\nThe ${input.tradingDate} stock list is available (${input.count.toLocaleString("en-US")} stocks).`;
   try{
     url.searchParams.set("wait","true");

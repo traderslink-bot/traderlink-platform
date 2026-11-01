@@ -43,7 +43,7 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): Readonly<{ feed: Liv
       const exact = await universe.read(date);
       if (exact) { await sendScannerUniverseAlert({ kind:"recovered",tradingDate:date,sourceDate:date,count:exact.stocks.length,environment }); return exact; }
       const retained = await universe.readLatestOnOrBefore(date);
-      if (!retained) return null;
+      if (!retained) { await sendScannerUniverseAlert({ kind:"missing",tradingDate:date,sourceDate:null,count:0,environment }); return null; }
       await sendScannerUniverseAlert({ kind:"missing",tradingDate:date,sourceDate:retained.tradingDate,count:retained.stocks.length,environment });
       return { ...retained,tradingDate:date,sourceTradingDate:retained.tradingDate };
     },
