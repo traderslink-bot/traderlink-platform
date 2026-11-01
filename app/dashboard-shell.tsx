@@ -499,6 +499,7 @@ export function DashboardShell({
               (item.href !== "/scanner" || scannerEarlyAccess) &&
               (item.href !== "/market-news/general" || generalMarketNewsAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
+              (item.href !== "/screeners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&
               (item.href !== "/admin/screeners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/market-data" || ownerMarketDataAccess) &&
