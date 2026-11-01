@@ -1,9 +1,9 @@
 import styles from "./news-dashboard-invitation.module.css";
 
 const benefits = [
-  { number: "01", title: "News by ticker", text: "Keep your research focused on the companies you’re following." },
-  { number: "02", title: "Press releases and filings", text: "Bring company announcements and SEC filings into your trading workflow." },
-  { number: "03", title: "Clear article summaries", text: "Review the key details, positives and risks before digging deeper." },
+  { number: "01", title: "Alerts to your devices", text: "Looking for news to catch the runners? Let the news look for you with push alerts." },
+  { number: "02", title: "Press releases and filings", text: "Daily PR from Nasdaq and NYSE listed companies including the SEC filings that matter." },
+  { number: "03", title: "Filtered by market cap", text: "Get the news you want for the way you trade. Example: news under 20 million market cap." },
 ] as const;
 
 /** PublicWebsiteChrome in the root layout supplies the public site's header and footer. */
@@ -15,7 +15,7 @@ export function NewsDashboardInvitation({ ticker }: Readonly<{ ticker?: string }
           <p className={styles.eyebrow}>TradersLink / Market News</p>
           {ticker ? <span className={styles.ticker}>${ticker}</span> : null}
           <h1 id="news-invitation-title">
-            {ticker ? <>Follow <span className={styles.symbol}>${ticker}</span> news in TraderLink.</> : <>Follow the news.<br />Find your next research opportunity.</>}
+            {ticker ? <>Follow <span className={styles.symbol}>${ticker}</span> news in TraderLink.</> : "Follow the news. Find your next small cap runner."}
           </h1>
         </div>
         <div className={styles.invitation}>
@@ -25,9 +25,8 @@ export function NewsDashboardInvitation({ ticker }: Readonly<{ ticker?: string }
           <h2>Your news. Inside your dashboard.</h2>
           <p>Explore the news feed alongside the tools you use to research and review your trades.</p>
           <a className={styles.action} href="https://app.traderslink.pro/dashboard-entry">
-            Open TraderLink <span aria-hidden="true">↗</span>
+            Open TradersLink <span aria-hidden="true">↗</span>
           </a>
-          <p className={styles.membership}>News access depends on your membership.</p>
         </div>
       </section>
       <section className={styles.benefits} aria-label="News in TraderLink">

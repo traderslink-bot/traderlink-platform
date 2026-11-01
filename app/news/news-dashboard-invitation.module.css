@@ -32,7 +32,7 @@
 .action:hover { background: #10366f; }
 .action:active { background: #082a5c; }
 .action:focus-visible { outline: 3px solid #2e6fbb; outline-offset: 4px; }
-.invitation .membership { color: var(--news-muted); font-size: 12px; line-height: 1.5; margin: 12px 0 0; }
+.action { text-transform: none; }
 .benefits { display: grid; gap: 28px; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 40px 4px 8px; }
 .benefit { border-top: 1px solid var(--news-border); padding-top: 20px; }
 .number { color: #617a9b; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
