@@ -70,11 +70,39 @@ describe("LiveScannerFeed", () => {
     const feed = new LiveScannerFeed(dependencies({ universe: async () => null }));
     expect((await feed.scanOnce()).status).toBe("universe_missing");
   });
+  it("prewarms today's float cache once before premarket without requesting snapshots", async () => {
+    let floatLoads = 0, snapshotPasses = 0;
+    const feed = new LiveScannerFeed(dependencies({
+      now: () => Date.parse("2026-10-30T07:00:00.000Z"),
+      floats: async () => { floatLoads += 1; return new Map(); },
+      snapshotPass: async () => { snapshotPasses += 1; return []; },
+    }));
+    expect((await feed.scanOnce()).status).toBe("closed");
+    expect((await feed.scanOnce()).status).toBe("closed");
+    expect(floatLoads).toBe(1);
+    expect(snapshotPasses).toBe(0);
+  });
+  it("does not prewarm floats after the extended-hours session closes", async () => {
+    let floatLoads = 0;
+    const feed = new LiveScannerFeed(dependencies({
+      now: () => Date.parse("2026-10-31T01:00:00.000Z"),
+      floats: async () => { floatLoads += 1; return new Map(); },
+    }));
+    expect((await feed.scanOnce()).status).toBe("closed");
+    expect(floatLoads).toBe(0);
+  });
   it("reports a complete fresh provider pass", async () => {
     const result = await new LiveScannerFeed(dependencies()).scanOnce();
     expect(result.status).toBe("ready");
     expect(result.receivedCount).toBe(1);
     expect(result.missingFloatCount).toBe(0);
+  });
+  it("reports the retained universe source date while scanning today's market data", async () => {
+    const result = await new LiveScannerFeed(dependencies({
+      universe: async () => ({ ...universe,tradingDate:"2026-10-30",sourceTradingDate:"2026-10-29" }),
+    })).scanOnce();
+    expect(result.universeSourceDate).toBe("2026-10-29");
+    expect(result.status).toBe("ready");
   });
   it("fails closed when session timestamp semantics are unqualified", async () => {
     const result = await new LiveScannerFeed(dependencies({ qualification: () => ({ sessionTimestampVerified: false,

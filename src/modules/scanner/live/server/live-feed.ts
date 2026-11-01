@@ -7,7 +7,7 @@ import { normalizeSnapshotBatch, snapshotBatches, type SnapshotQualification } f
 export const TRADERLINK_LIVE_SCREENERS_ENV = "TRADERLINK_LIVE_SCREENERS_ENABLED";
 const EMPTY_RESULTS = Object.freeze({ rows: [], focus: [], total: 0 });
 const empty = (status: ScannerReadModel["status"], date: string, issues: readonly string[] = []): ScannerReadModel => ({
-  status, tradingDate: date, session: null, updatedAtUtc: null, universeCount: 0, receivedCount: 0,
+  status, tradingDate: date, session: null, updatedAtUtc: null, universeSourceDate: null, universeCount: 0, receivedCount: 0,
   missingSymbols: [], missingFloatCount: 0, gainers: EMPTY_RESULTS, momentum: EMPTY_RESULTS, issues,
 });
 export type LiveFeedDependencies = Readonly<{
@@ -28,19 +28,34 @@ export class LiveScannerFeed {
   private readonly engine = new LiveScannerEngine();
   private model: ScannerReadModel = empty("disabled",easternClock(Date.now()).date);
   private running = false;
+  private floatPrewarmDate: string | null = null;
   constructor(private readonly dependencies: LiveFeedDependencies) {}
   read(): ScannerReadModel { return structuredClone(this.model); }
   async scanOnce(): Promise<ScannerReadModel> {
     if (this.running) return this.read();
     this.running = true;
     const now = (this.dependencies.now ?? Date.now)();
-    const date = easternClock(now).date;
+    const clock = easternClock(now);
+    const date = clock.date;
     try {
       const configuration = await this.dependencies.configuration();
       if (!configuration.enabled) return this.set(empty("disabled",date));
       const day = await this.dependencies.marketDay(date);
       const session = activeSession(day,now);
-      if (!session) return this.set(empty("closed",date));
+      if (!session) {
+        // The daily universe arrives at 3:00 AM Eastern. Warm the float cache
+        // once before premarket so Finnhub's required pacing does not delay the
+        // first live Moomoo snapshot pass at 4:00 AM.
+        if (day.open && clock.minute >= 3*60 && clock.minute < 4*60) {
+          const universe = await this.dependencies.universe(date);
+          if (universe && this.floatPrewarmDate !== date) {
+            this.floatPrewarmDate = date;
+            try { await this.dependencies.floats(date,universe.stocks.map(stock => stock.symbol)); }
+            catch { this.floatPrewarmDate = null; }
+          }
+        }
+        return this.set(empty("closed",date));
+      }
       const universe = await this.dependencies.universe(date);
       if (!universe) return this.set(empty("universe_missing",date));
       await this.dependencies.reserveScannerBudget(universe.stocks.length);
@@ -72,7 +87,8 @@ export class LiveScannerFeed {
         rows: results.rows.map(row => ({ ...row, news: news.get(row.symbol) ?? [] })),
         focus: results.focus.map(row => ({ ...row, news: news.get(row.symbol) ?? [] })) });
       const status = missing.length || issues.size ? "partial" : snapshots.length ? "ready" : "warming";
-      return this.set({ status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(), universeCount: symbols.length,
+      return this.set({ status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
+        universeSourceDate: universe.sourceTradingDate ?? universe.tradingDate, universeCount: symbols.length,
         receivedCount: snapshots.length, missingSymbols: Object.freeze([...new Set(missing)].sort()), missingFloatCount: evaluated.missingFloatCount,
         gainers: enrich(evaluated.gainers), momentum: enrich(evaluated.momentum), issues: Object.freeze([...issues].sort()) });
     } catch { return this.set(empty("unavailable",date,["live_feed_unavailable"])); }

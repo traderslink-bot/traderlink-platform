@@ -81,6 +81,12 @@ describe("authenticated bounded scanner import", () => {
 });
 
 describe("single-writer durable daily universe", () => {
+  it("retains the latest successful universe when a newer trading-day file is absent", async () => {
+    const directory = join(await temporary(),"lists"), store = new UniverseStore(directory);
+    await store.import(upload(),NOW);
+    expect((await store.readLatestOnOrBefore("2026-11-03"))?.tradingDate).toBe("2026-11-02");
+    expect(await store.readLatestOnOrBefore("2026-11-01")).toBeNull();
+  });
   it("serializes concurrent store instances without losing either qualifying member", async () => {
     const root = await temporary(), directory = join(root,"lists");
     await Promise.all([new UniverseStore(directory).import(upload(),NOW),new UniverseStore(directory).import(upload("symbol,exchange,market_cap\nBBB,NYSE,20000000"),NOW)]);

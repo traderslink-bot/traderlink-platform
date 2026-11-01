@@ -12,6 +12,7 @@ import { DailyFloatEnricher } from "./float-enrichment";
 import { LiveScannerFeed, startLiveScannerFeed } from "./live-feed";
 import { ScannerSettingsStore } from "./settings-store";
 import { UniverseStore } from "./universe-store";
+import { sendScannerUniverseAlert } from "./universe-alert";
 
 const SNAPSHOT_URL = "https://webapi.moomoo.com/api/v1.0/quote/snapshot";
 let runtime: Readonly<{ feed: LiveScannerFeed; settings: ScannerSettingsStore }> | null = null;
@@ -38,7 +39,14 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): Readonly<{ feed: Liv
   const settings = new ScannerSettingsStore(directory);
   const universe = new UniverseStore(directory);
   const feed = new LiveScannerFeed({
-    configuration: () => settings.configuration(), marketDay: async date => marketDay(date), universe: date => universe.read(date),
+    configuration: () => settings.configuration(), marketDay: async date => marketDay(date), universe: async date => {
+      const exact = await universe.read(date);
+      if (exact) { await sendScannerUniverseAlert({ kind:"recovered",tradingDate:date,sourceDate:date,count:exact.stocks.length,environment }); return exact; }
+      const retained = await universe.readLatestOnOrBefore(date);
+      if (!retained) return null;
+      await sendScannerUniverseAlert({ kind:"missing",tradingDate:date,sourceDate:retained.tradingDate,count:retained.stocks.length,environment });
+      return { ...retained,tradingDate:date,sourceTradingDate:retained.tradingDate };
+    },
     reserveScannerBudget: count => getMoomooSharedTransport(environment).reserveScanner(count),
     snapshotPass: batches => withWatchlistIndicatorMoomooAccess(async ({ token }) => {
       const results: Array<{ requestedSymbols: readonly string[]; payload: unknown; receivedAt: number }> = [];

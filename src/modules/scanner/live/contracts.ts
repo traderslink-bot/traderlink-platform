@@ -17,6 +17,7 @@ export type UniverseUpload = Readonly<{
 export type DailyUniverse = Readonly<{
   version: 1; tradingDate: string; acceptedAtUtc: string; lastCollectionAtUtc: string;
   latestUploadCount: number; sourceHashes: readonly string[]; stocks: readonly UniverseStock[];
+  sourceTradingDate?: string;
 }>;
 export type ScreenFilters = Readonly<{
   minimumPrice: number; maximumPrice: number | null; maximumMarketCap: number; maximumFloat: number | null;
@@ -57,7 +58,7 @@ export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;
 export type LiveScreenResults = Readonly<{ rows: readonly LiveScannerRow[]; focus: readonly FocusStock[]; total: number }>;
 export type ScannerReadModel = Readonly<{
   status: "disabled" | "universe_missing" | "closed" | "warming" | "ready" | "partial" | "unavailable";
-  tradingDate: string; session: ScannerSession | null; updatedAtUtc: string | null;
+  tradingDate: string; session: ScannerSession | null; updatedAtUtc: string | null; universeSourceDate?: string | null;
   universeCount: number; receivedCount: number; missingSymbols: readonly string[]; missingFloatCount: number;
   gainers: LiveScreenResults; momentum: LiveScreenResults; issues: readonly string[];
 }>;

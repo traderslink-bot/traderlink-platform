@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { lstat, mkdir, open, rename, unlink } from "node:fs/promises";
+import { lstat, mkdir, open, readdir, rename, unlink } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { DailyUniverse, UniverseUpload } from "../contracts";
@@ -85,6 +85,20 @@ export class UniverseStore {
     } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; }
     const value = await readJson(join(this.directory,`${tradingDate}.json`));
     return value === null ? null : decodeDaily(value,tradingDate);
+  }
+  async readLatestOnOrBefore(tradingDate: string): Promise<DailyUniverse | null> {
+    if (!validDate(tradingDate)) throw Error("scanner_universe_date_invalid");
+    try {
+      const info = await lstat(this.directory);
+      if (!info.isDirectory() || info.isSymbolicLink()) throw Error("scanner_universe_storage_path_invalid");
+    } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; }
+    const dates = (await readdir(this.directory)).filter(name => /^\d{4}-\d{2}-\d{2}\.json$/u.test(name))
+      .map(name => name.slice(0,10)).filter(date => date <= tradingDate).sort().reverse();
+    for (const date of dates) {
+      const value = await readJson(join(this.directory,`${date}.json`));
+      if (value !== null) return decodeDaily(value,date);
+    }
+    return null;
   }
   async import(value: unknown, now: number): Promise<Readonly<{ universe: DailyUniverse; idempotent: boolean }>> {
     const input = structuredClone(value);

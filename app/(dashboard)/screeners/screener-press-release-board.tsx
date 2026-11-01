@@ -19,7 +19,7 @@ const VISIBLE_ARTICLES=30;
 const number=new Intl.NumberFormat("en-US",{ maximumFractionDigits:1 });
 
 function floatValue(input:number|undefined):string {
-  if(input===undefined)return "N/A";
+  if(input===undefined)return "n/a";
   if(input>=1_000_000)return `${number.format(input/1_000_000)}M`;
   if(input>=1_000)return `${number.format(input/1_000)}K`;
   return number.format(input);
@@ -30,7 +30,7 @@ function ArticleButton({ article,float,onOpen }: { article:Headline; float:numbe
     sx={{ alignItems:"stretch",borderBottom:1,borderColor:"divider",borderRadius:0,display:"grid",gridTemplateColumns:"3.4rem minmax(0,1fr)",gridTemplateRows:"auto auto",minHeight:38,px:0.75,py:0.25,textAlign:"left",textTransform:"none",width:"100%",'&:last-child':{ borderBottom:0 } }}>
     <Box component="span" sx={{ alignItems:"center",alignSelf:"stretch",color:"warning.main",display:"flex",fontSize:"0.86rem",fontWeight:900,gridRow:"1 / 3",overflow:"hidden",pr:0.75,textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{article.ticker}</Box>
     <Box component="span" sx={{ alignItems:"center",display:"flex",gap:1,minWidth:0 }}>
-      <Box component="span" sx={{ color:"text.secondary",fontSize:"0.66rem",fontWeight:750,whiteSpace:"nowrap" }}>{article.marketCap?`Mkt Cap ${article.marketCap}`:"Mkt Cap N/A"}</Box>
+      <Box component="span" sx={{ color:"text.secondary",fontSize:"0.66rem",fontWeight:750,whiteSpace:"nowrap" }}>{article.marketCap?`Mkt Cap ${article.marketCap}`:"Mkt Cap n/a"}</Box>
       <Box component="span" sx={{ color:"text.secondary",fontSize:"0.66rem",fontWeight:750,whiteSpace:"nowrap" }}>Float {floatValue(float)}</Box>
     </Box>
     <Typography component="span" sx={{ display:"block",fontSize:"0.72rem",fontWeight:article.isRead?600:800,gridColumn:2,lineHeight:1.2,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{article.headline}</Typography>

@@ -37,10 +37,10 @@ const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", mome
 const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", regular: "Regular hours", after_hours: "After hours" };
 const number = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 2 });
 const compact = new Intl.NumberFormat("en-US",{ notation: "compact",maximumFractionDigits: 1 });
-function value(input: number | null | undefined, suffix = ""): string { return input == null ? "N/A" : `${number.format(input)}${suffix}`; }
-function time(input: string | null): string { return input ? new Date(input).toLocaleTimeString([],{ hour: "numeric",minute: "2-digit",second: "2-digit" }) : "N/A"; }
+function value(input: number | null | undefined, suffix = ""): string { return input == null ? "n/a" : `${number.format(input)}${suffix}`; }
+function time(input: string | null): string { return input ? new Date(input).toLocaleTimeString([],{ hour: "numeric",minute: "2-digit",second: "2-digit" }) : "n/a"; }
 function floatValue(input: number | null): string {
-  if (input === null) return "N/A";
+  if (input === null) return "n/a";
   if (input >= 1_000_000) return `${number.format(input/1_000_000)}M`;
   if (input >= 1_000) return `${number.format(input/1_000)}K`;
   return number.format(input);
@@ -101,11 +101,9 @@ function ChartButton({ expanded=false,row,onOpenChart }: { expanded?:boolean; ro
   </ButtonBase>;
 }
 
-function CompactStockTable({ rows,screen,onOpenChart }: { rows: readonly LiveScannerRow[]; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void }) {
-  const [expandedSymbol,setExpandedSymbol]=useState<string|null>(null);
+function usePriceMovement(rows: readonly LiveScannerRow[]): Readonly<Record<string,"up"|"down">> {
   const [movement,setMovement]=useState<Record<string,"up"|"down">>({});
   const previousPrices=useRef(new Map<string,number>());
-  const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
   useEffect(()=>{
     const next=new Map<string,number>(),changed:Record<string,"up"|"down">={};
     for(const row of rows){const previous=previousPrices.current.get(row.symbol);next.set(row.symbol,row.price);if(previous!==undefined&&row.price!==previous)changed[row.symbol]=row.price>previous?"up":"down";}
@@ -115,15 +113,31 @@ function CompactStockTable({ rows,screen,onOpenChart }: { rows: readonly LiveSca
     const startTimer=setTimeout(()=>{setMovement(changed);clearTimer=setTimeout(()=>setMovement({}),900);},0);
     return()=>{clearTimeout(startTimer);if(clearTimer)clearTimeout(clearTimer);};
   },[rows]);
+  return movement;
+}
+
+const movementTableSx={
+  '@keyframes scanner-price-up':{ from:{ backgroundColor:"rgba(46,125,50,0.22)" },to:{ backgroundColor:"transparent" } },
+  '@keyframes scanner-price-down':{ from:{ backgroundColor:"rgba(211,47,47,0.18)" },to:{ backgroundColor:"transparent" } },
+};
+function movementRowSx(direction:"up"|"down"|undefined) {
+  return { animation:direction?`scanner-price-${direction} 900ms ease-out`:"none",'@media (prefers-reduced-motion: reduce)':{ animation:"none" } };
+}
+
+function CompactStockTable({ rows,screen,onOpenChart }: { rows: readonly LiveScannerRow[]; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void }) {
+  const [expandedSymbol,setExpandedSymbol]=useState<string|null>(null);
+  const movement=usePriceMovement(rows);
+  const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
   const metric=(label:string,content:string)=><Box sx={{ minWidth:0 }}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.9rem",fontWeight:750,lineHeight:1.3,mt:0.45 }}>{content}</Typography></Box>;
   const headers=screen==="gainers"
     ? [{ label:"",width:"7%" },{ label:"Ticker",width:"17%" },{ label:"Price",width:"14%" },{ label:"Gain",width:"14%" },{ label:"Volume",width:"17%" },{ label:"Float",width:"15%" },{ label:"PR/SEC",width:"16%",right:true }]
     : [{ label:"",width:"7%" },{ label:"Ticker",width:"17%" },{ label:"Price",width:"13%" },{ label:"1m %",width:"12%" },{ label:"5m %",width:"12%" },{ label:"1m Vol",width:"15%" },{ label:"Float",width:"11%" },{ label:"News",width:"13%",right:true }];
   return <TableContainer sx={{ border:1,borderColor:"divider",borderRadius:1.5 }}>
-    <Table aria-label="Screener stocks" size="small" sx={{ tableLayout:"fixed",'@keyframes scanner-price-up':{ from:{ backgroundColor:"rgba(46,125,50,0.22)" },to:{ backgroundColor:"transparent" } },'@keyframes scanner-price-down':{ from:{ backgroundColor:"rgba(211,47,47,0.18)" },to:{ backgroundColor:"transparent" } },'& .MuiTableCell-root':{ px:0.65,py:0.38 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.68rem",fontWeight:750,lineHeight:1,pb:0.75,whiteSpace:"nowrap" } }}>
+    <Table aria-label="Screener stocks" size="small" sx={{ ...movementTableSx,tableLayout:"fixed",'& .MuiTableCell-root':{ px:0.65,py:0.38 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.68rem",fontWeight:750,lineHeight:1,pb:0.75,whiteSpace:"nowrap" } }}>
       <TableHead><TableRow>{headers.map((header,index)=><TableCell align={header.right?"right":"left"} aria-label={header.label||"Expand"} key={header.label||index} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
-        metric("HOD",`$${value(row.dayHigh)} · ${value(row.offHighPercent,"%")}`),
+        metric("HOD price",`$${value(row.dayHigh)}`),
+        metric("Below HOD",value(row.offHighPercent,"%")),
         metric("Session low",`$${value(row.dayLow)}`),
         row.relativeVolume==null?null:metric("RVOL",`${number.format(row.relativeVolume)}×`),
         traded==null?null:metric("Turnover",traded),
@@ -134,24 +148,25 @@ function CompactStockTable({ rows,screen,onOpenChart }: { rows: readonly LiveSca
         row.activity.volumeAcceleration===null?null:metric("1m Vol Spike",`${number.format(row.activity.volumeAcceleration)}×`),
         row.activity.fiveMinuteVolumeSpike==null?null:metric("5m Vol Spike",`${number.format(row.activity.fiveMinuteVolumeSpike)}×`),
         row.relativeVolume==null?null:metric("RVOL",`${number.format(row.relativeVolume)}×`),
-        metric("HOD",`$${value(row.dayHigh)} · ${value(row.offHighPercent,"%")}`),
+        metric("HOD price",`$${value(row.dayHigh)}`),
+        metric("Below HOD",value(row.offHighPercent,"%")),
         metric("Session low",`$${value(row.dayLow)}`),
         traded==null?null:metric("Turnover",traded),
         row.spreadPercent===null?null:metric("Spread",value(row.spreadPercent,"%")),
       ]).filter(Boolean);return <Fragment key={row.symbol}>
-        <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ animation:movement[row.symbol]?`scanner-price-${movement[row.symbol]} 900ms ease-out`:"none",cursor:"pointer",'@media (prefers-reduced-motion: reduce)':{ animation:"none" },'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
+        <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           <TableCell aria-hidden sx={{ pr:"0 !important",textAlign:"center" }}><Typography component="span" sx={{ color:"text.secondary",fontSize:"1.4rem",fontWeight:800,lineHeight:1 }}>{expanded?"−":"+"}</Typography></TableCell>
           <TableCell sx={{ pl:"0.7rem !important" }}><Typography noWrap component="span" sx={{ color:"warning.main",fontSize:"0.86rem",fontWeight:900,letterSpacing:"0.015em" }}>{row.symbol}</Typography></TableCell>
           <TableCell><Typography noWrap sx={{ fontSize:"0.79rem",fontWeight:700 }}>${value(row.price)}</Typography></TableCell>
           {screen==="gainers"?<>
             <TableCell><Typography noWrap sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontSize:"0.79rem",fontWeight:750 }}>{value(row.sessionGain,"%")}</Typography></TableCell>
-            <TableCell><Typography noWrap sx={{ fontSize:"0.77rem",fontWeight:650 }}>{row.volume===null?"N/A":compact.format(row.volume)}</Typography></TableCell>
+            <TableCell><Typography noWrap sx={{ fontSize:"0.77rem",fontWeight:650 }}>{row.volume===null?"n/a":compact.format(row.volume)}</Typography></TableCell>
             <TableCell><Typography noWrap sx={{ fontSize:"0.77rem",fontWeight:650 }}>{floatValue(row.float)}</Typography></TableCell>
             <TableCell align="right"><CompactNewsLink row={row}/></TableCell>
           </>:<>
             <TableCell><Typography noWrap sx={{ color:(row.activity.oneMinuteGain??0)>=0?"success.main":"error.main",fontSize:"0.79rem",fontWeight:750 }}>{value(row.activity.oneMinuteGain,"%")}</Typography></TableCell>
             <TableCell><Typography noWrap sx={{ color:(row.activity.fiveMinuteGain??0)>=0?"success.main":"error.main",fontSize:"0.79rem",fontWeight:750 }}>{value(row.activity.fiveMinuteGain,"%")}</Typography></TableCell>
-            <TableCell><Typography noWrap sx={{ fontSize:"0.77rem",fontWeight:650 }}>{row.activity.oneMinuteVolume==null?"N/A":compact.format(row.activity.oneMinuteVolume)}</Typography></TableCell>
+            <TableCell><Typography noWrap sx={{ fontSize:"0.77rem",fontWeight:650 }}>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</Typography></TableCell>
             <TableCell><Typography noWrap sx={{ fontSize:"0.77rem",fontWeight:650 }}>{floatValue(row.float)}</Typography></TableCell>
             <TableCell align="right"><CompactNewsLink row={row}/></TableCell>
           </>}
@@ -169,9 +184,10 @@ function CompactStockTable({ rows,screen,onOpenChart }: { rows: readonly LiveSca
 
 function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void }) {
   const [expandedDesktopSymbol,setExpandedDesktopSymbol]=useState<string|null>(null);
+  const movement=usePriceMovement(results.rows);
   if (!results.rows.length) return <Alert severity="info">No stocks currently qualify for this list.</Alert>;
   const desktopTableSx={
-    tableLayout:"fixed",
+    ...movementTableSx,tableLayout:"fixed",
     width:"100%",
     '& .MuiTableCell-root':{ overflow:"hidden",px:0.25,py:0.42,fontSize:"0.68rem",textOverflow:"ellipsis",whiteSpace:"nowrap" },
     '& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.85 },
@@ -181,12 +197,12 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
       {screen==="gainers"?<Table size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart" sx={{ px:"0 !important",width:24 }}/>
         {['Ticker','Price','Gain%','Volume','$ × Vol','Float','Turnover','RVOL','Below HOD','News'].map(label => <TableCell key={label}>{label}</TableCell>)}
-      </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol}>
+      </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
         <TableCell sx={{ px:"0 !important",width:24 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
         <TableCell sx={{ fontWeight:800,pl:"0.5rem !important" }}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography></TableCell>
         <TableCell>${value(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
-        <TableCell>{row.volume===null?"N/A":compact.format(row.volume)}</TableCell><TableCell>{row.dollarVolume===null?"N/A":`$${compact.format(row.dollarVolume)}`}</TableCell>
-        <TableCell>{floatValue(row.float)}</TableCell><TableCell>{floatTraded(row)??"N/A"}</TableCell><TableCell>{row.relativeVolume==null?"N/A":`${number.format(row.relativeVolume)}×`}</TableCell>
+        <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`}</TableCell>
+        <TableCell>{floatValue(row.float)}</TableCell><TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
         <TableCell>{value(row.offHighPercent,"%")}</TableCell><TableCell><NewsLinks row={row} /></TableCell>
       </TableRow>)}</TableBody></Table>:<Table size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Details" sx={{ px:"0 !important",width:22 }}/>
@@ -195,25 +211,25 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
       </TableRow></TableHead><TableBody>{results.rows.map(row=>{const expanded=expandedDesktopSymbol===row.symbol;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol)}
           onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}}}
-          sx={{ cursor:"pointer",'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
+          sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           <TableCell sx={{ px:"0 !important",width:22 }}><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} details`} onClick={event=>{event.stopPropagation();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}} sx={{ bgcolor:"rgba(255,193,7,0.14)",borderRadius:0.75,color:"warning.main",fontSize:"0.75rem",fontWeight:800,height:20,minWidth:20,'&:hover':{ bgcolor:"rgba(255,193,7,0.24)" },'&:focus-visible':{ outline:"2px solid",outlineColor:"warning.main",outlineOffset:1 } }}>{expanded?"−":"+"}</ButtonBase></TableCell>
           <TableCell sx={{ px:"0.125rem !important",width:26 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
           <TableCell sx={{ fontWeight:800,pl:"0.3rem !important" }}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography></TableCell>
           <TableCell>${value(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
           <TableCell>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
-          <TableCell>{row.activity.oneMinuteVolume==null?"N/A":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"N/A":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
-          <TableCell>{row.activity.volumeAcceleration==null?"N/A":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"N/A":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
+          <TableCell>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"n/a":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
+          <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
           <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell><TableCell onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}><NewsLinks row={row} /></TableCell>
         </TableRow>
         {expanded?<TableRow><TableCell colSpan={14} sx={{ bgcolor:"action.hover",py:"10px !important" }}>
           <Box sx={{ display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:2 }}>
             {[
-              ["$ × Vol",row.dollarVolume===null?"N/A":`$${compact.format(row.dollarVolume)}`],
-              ["RVOL",row.relativeVolume==null?"N/A":`${number.format(row.relativeVolume)}×`],
+              ["$ × Vol",row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`],
+              ["RVOL",row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`],
               ["HOD price",`$${value(row.dayHigh)}`],
               ["Below HOD",value(row.offHighPercent,"%")],
               ["Session low",`$${value(row.dayLow)}`],
-              ["Turnover",floatTraded(row)??"N/A"],
+              ["Turnover",floatTraded(row)??"n/a"],
             ].map(([label,content])=><Box key={label}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.86rem",fontWeight:750,mt:0.45 }}>{content}</Typography></Box>)}
           </Box>
         </TableCell></TableRow>:null}
@@ -294,6 +310,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         <Box sx={{ display:{ xs:"block",md:"none" } }}>{scannerTabs}</Box>
         {loadError?<Alert severity="error">The latest scanner update could not be loaded.</Alert>:null}
         {!model?<Skeleton height={180} variant="rounded"/>:statusMessage(model)?<Alert severity={model.status==='unavailable'?'error':'info'}>{statusMessage(model)}</Alert>:null}
+        {model?.universeSourceDate&&model.universeSourceDate!==model.tradingDate?<Alert severity="warning">Today’s universe refresh is missing. Scanning continues with the {model.universeSourceDate} list.</Alert>:null}
         {model&&model.status!=='disabled'?<Stack direction="row" sx={{ flexWrap:"wrap",gap:1 }}><Chip label={`${model.receivedCount}/${model.universeCount} quotes`} size="small"/><Chip label={`${model.missingFloatCount} missing float`} size="small"/>{model.missingSymbols.length?<Chip color="warning" label={`${model.missingSymbols.length} missing quotes`} size="small"/>:null}</Stack>:null}
       </Stack>
     </DashboardPanel>:<><Box sx={{ display:{ xs:"block",md:"none" } }}>{scannerTabs}</Box>{loadError?<Alert severity="error">The latest scanner update could not be loaded.</Alert>:null}{model&&statusMessage(model)?<Alert severity={model.status==='unavailable'?'error':'info'}>{statusMessage(model)}</Alert>:null}</>}

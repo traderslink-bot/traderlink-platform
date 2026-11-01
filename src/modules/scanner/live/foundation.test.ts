@@ -92,9 +92,9 @@ describe("session and snapshot evidence", () => {
     expect(snapshotBatches(symbols).map(rows => rows.length)).toEqual([400,400,400,51]);
     expect(snapshotBatches(symbols).flat()).toEqual(symbols);
   });
-  it("uses explicit session fields and the regular close as the after-hours baseline", () => {
+  it("uses explicit session fields and keeps the previous close as the after-hours daily baseline", () => {
     const row = batch([raw()],{ session: "after_hours" }).snapshots[0];
-    expect(row.price).toBe(1.4); expect(row.baseline).toBe(1); expect(row.volume).toBe(1000); expect(row.dayHigh).toBe(1.5); expect(row.dayLow).toBe(0.7);
+    expect(row.price).toBe(1.4); expect(row.baseline).toBe(0.9); expect(row.volume).toBe(1000); expect(row.dayHigh).toBe(1.5); expect(row.dayLow).toBe(0.7);
     const premarket = batch([raw()],{ session: "premarket" }).snapshots[0];
     expect(premarket.price).toBe(1.1); expect(premarket.dayHigh).toBe(1.2); expect(premarket.dayLow).toBe(0.9);
     expect(batch([raw()]).snapshots[0].dayHigh).toBe(1.3); expect(batch([raw()]).snapshots[0].dayLow).toBe(0.8);
@@ -113,7 +113,7 @@ describe("session and snapshot evidence", () => {
     for (const patch of [{ data_date: "2026-10-30" },{ update_time: NOW+3000 },{ update_time: NOW-31_000 }]) expect(batch([raw(patch)]).snapshots).toHaveLength(0);
     expect(batch([raw()],{ qualification: { ...qualification,sessionTimestampVerified: false } }).snapshots).toHaveLength(0);
     expect(batch([raw()],{ qualification: { ...qualification,sessionCountersVerified: false } }).snapshots[0].volume).toBeNull();
-    expect(batch([raw()],{ session: "after_hours",qualification: { ...qualification,afterHoursRegularCloseVerified: false } }).snapshots[0].baseline).toBeNull();
+    expect(batch([raw()],{ session: "after_hours",qualification: { ...qualification,afterHoursRegularCloseVerified: false } }).snapshots[0].baseline).toBe(0.9);
   });
 });
 

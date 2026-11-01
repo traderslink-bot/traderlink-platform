@@ -51,9 +51,10 @@ export function normalizeSnapshotBatch(input: Readonly<{
     const prefix = input.session === "premarket" ? "pre" : input.session === "after_hours" ? "after" : null;
     const price = positive(value[prefix ? `${prefix}_price` : "last_price"]);
     if (price === null) { issues.add("session_price_unavailable"); continue; }
-    const baseline = input.session === "after_hours"
-      ? input.qualification.afterHoursRegularCloseVerified ? positive(value.last_price) : null
-      : positive(value.prev_close_price);
+    // Gain% remains anchored to the previous regular-session close through
+    // premarket, regular trading and after-hours. Rolling observations supply
+    // the session-local momentum measurements separately.
+    const baseline = positive(value.prev_close_price);
     if (baseline === null) issues.add("session_baseline_unavailable");
     if (!input.qualification.sessionCountersVerified) issues.add("session_counters_unverified");
     const bid = positive(value.bid_price), ask = positive(value.ask_price);
