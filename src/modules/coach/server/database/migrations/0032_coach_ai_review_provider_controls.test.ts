@@ -32,6 +32,11 @@ INSERT INTO coach_monthly_review_requests VALUES ('${monthlyRequestId}', '${user
     minimum_reader_contract_version = 'insight_selection_v3', transition_generation = 2,
     transitioned_at_utc = strftime('%Y-%m-%dT%H:%M:%fZ', transitioned_at_utc, '+1 second')
     WHERE state_key = 'singleton';`);
+  // Enabling Review controls also requires an explicit rolling budget in this fixture.
+  database.exec(`UPDATE coach_ai_review_budget_controls SET
+    trailing_30_day_estimated_spend_cap_usd = '10',
+    updated_at_utc = strftime('%Y-%m-%dT%H:%M:%fZ', updated_at_utc, '+1 second')
+    WHERE control_key = 'ai_reviews';`);
   return database;
 }
 
@@ -85,6 +90,10 @@ describe("0032 Coach AI review provider controls", () => {
         cached_input_cost_usd_per_million_tokens = '1', cache_write_input_cost_usd_per_million_tokens = '1',
         output_cost_usd_per_million_tokens = '2', updated_at_utc = ? WHERE settings_key = 'coach_reviews'`).run(at);
       enablePlatformFeature(database, "weekly_reviews");
+      // This phase intentionally tests unpriced Chat, independent of migration defaults.
+      database.prepare(`UPDATE coach_ai_chat_provider_settings SET input_cost_usd_per_million_tokens = NULL,
+        cached_input_cost_usd_per_million_tokens = NULL, cache_write_input_cost_usd_per_million_tokens = NULL,
+        output_cost_usd_per_million_tokens = NULL WHERE settings_key = 'ai_chat'`).run();
       expect(() => enablePlatformFeature(database, "daily_companion")).toThrowError("coach_ai_feature_control_transition_invalid");
       expect(() => database.prepare(`UPDATE coach_ai_provider_settings SET input_cost_usd_per_million_tokens = NULL, output_cost_usd_per_million_tokens = NULL WHERE settings_key = 'coach_reviews'`).run()).toThrowError("coach_ai_review_provider_prices_required");
       database.prepare(`UPDATE coach_ai_chat_provider_settings SET input_cost_usd_per_million_tokens = '1',
