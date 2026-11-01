@@ -25,6 +25,13 @@ INSERT INTO platform_workspace_memberships VALUES ('${workspaceId}', '${userId}'
 INSERT INTO journal_accounts VALUES ('${accountId}', '${workspaceId}', 'Primary', 'USD', 'America/New_York', 'active', '${userId}', '${at}', '${at}');
 INSERT INTO coach_weekly_review_requests VALUES ('${weeklyRequestId}', '${userId}', '${workspaceId}', '${accountId}', '2026-08-03', '2026-08-07', 'traderlink_coach_weekly_ai_input_v1', '${"a".repeat(64)}', '{}', NULL, 'pending', NULL, NULL, '${at}', NULL);
 INSERT INTO coach_monthly_review_requests VALUES ('${monthlyRequestId}', '${userId}', '${workspaceId}', '${accountId}', '2026-08-01', '2026-08-31', 'complete_month', 'traderlink_coach_monthly_ai_input_v1', '${"b".repeat(64)}', '{}', NULL, 'pending', NULL, NULL, '${at}', NULL);`);
+  // The full current schema requires an explicit, guarded review-contract activation.
+  // Advance its persisted fixture clock rather than assuming SQLite's clock is mocked.
+  database.exec(`UPDATE coach_ai_review_generation_contract_state SET
+    active_generation_contract_version = 'insight_selection_v3',
+    minimum_reader_contract_version = 'insight_selection_v3', transition_generation = 2,
+    transitioned_at_utc = strftime('%Y-%m-%dT%H:%M:%fZ', transitioned_at_utc, '+1 second')
+    WHERE state_key = 'singleton';`);
   return database;
 }
 
@@ -78,9 +85,13 @@ describe("0032 Coach AI review provider controls", () => {
       enablePlatformFeature(database, "weekly_reviews");
       expect(() => enablePlatformFeature(database, "daily_companion")).toThrowError("coach_ai_feature_control_transition_invalid");
       expect(() => database.prepare(`UPDATE coach_ai_provider_settings SET input_cost_usd_per_million_tokens = NULL, output_cost_usd_per_million_tokens = NULL WHERE settings_key = 'coach_reviews'`).run()).toThrowError("coach_ai_review_provider_prices_required");
-      database.prepare(`UPDATE coach_ai_chat_provider_settings SET input_cost_usd_per_million_tokens = '1', output_cost_usd_per_million_tokens = '2', updated_at_utc = ? WHERE settings_key = 'ai_chat'`).run(at);
+      database.prepare(`UPDATE coach_ai_chat_provider_settings SET input_cost_usd_per_million_tokens = '1',
+        cached_input_cost_usd_per_million_tokens = '1', cache_write_input_cost_usd_per_million_tokens = '1',
+        output_cost_usd_per_million_tokens = '2', updated_at_utc = ? WHERE settings_key = 'ai_chat'`).run(at);
       enablePlatformFeature(database, "daily_companion");
-      expect(() => database.prepare(`UPDATE coach_ai_chat_provider_settings SET input_cost_usd_per_million_tokens = NULL, output_cost_usd_per_million_tokens = NULL WHERE settings_key = 'ai_chat'`).run()).toThrowError("coach_ai_chat_provider_prices_required");
+      expect(() => database.prepare(`UPDATE coach_ai_chat_provider_settings SET input_cost_usd_per_million_tokens = NULL,
+        cached_input_cost_usd_per_million_tokens = NULL, cache_write_input_cost_usd_per_million_tokens = NULL,
+        output_cost_usd_per_million_tokens = NULL WHERE settings_key = 'ai_chat'`).run()).toThrowError("coach_ai_chat_provider_prices_required");
     } finally {
       database.close();
     }
