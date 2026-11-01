@@ -99,7 +99,7 @@ describe("Custom-tag plan allowance", () => {
     db.exec("CREATE TABLE platform_operator_grants (user_id TEXT, authority_key TEXT, grant_state TEXT);");
     db.prepare("INSERT INTO platform_operator_grants VALUES ('member','journal_administration','active')").run();
     expect(() => assertMembershipCustomTagCreation(db, "member", "Custom tag")).not.toThrow();
-    db.exec("DELETE FROM platform_operator_grants; INSERT INTO platform_membership_feature_policies VALUES ('journal.custom_tags','off');");
+    db.exec("DELETE FROM platform_operator_grants; UPDATE platform_membership_feature_policies SET enforcement_mode='off' WHERE feature_key='journal.custom_tags';");
     expect(() => assertMembershipCustomTagCreation(db, "member", "Custom tag")).not.toThrow();
   });
   it("returns plain guidance when the allowance is exhausted", async () => {
