@@ -7,6 +7,7 @@ import { openPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
 import { TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV } from "./access/watchlist-dashboard-navigation-access";
+import { sharedMoomooFetch } from "@/src/modules/platform/server/broker-connections/moomoo-shared-transport";
 
 const MOOMOO_API_ORIGIN = "https://webapi.moomoo.com";
 const DISCORD_SNOWFLAKE_PATTERN = /^[0-9]{1,32}$/u;
@@ -96,7 +97,7 @@ function normalizeQuote(symbol: string, quote: MoomooStockQuote): WatchlistMoomo
 export async function fetchWatchlistMoomooQuotes(
   input: Readonly<{ symbols: readonly string[] }>,
   environment: NodeJS.ProcessEnv = process.env,
-  request: typeof fetch = fetch,
+  request: typeof fetch = (url, init) => sharedMoomooFetch(url,init,{ priority: "watchlist" }),
 ): Promise<WatchlistMoomooQuoteResult> {
   const symbols = normalizedSymbols(input.symbols);
   if (!symbols) return unavailable("request_invalid");

@@ -1,6 +1,7 @@
 import "server-only";
 
 import Decimal from "decimal.js";
+import { sharedMoomooFetch } from "@/src/modules/platform/server/broker-connections/moomoo-shared-transport";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
@@ -238,7 +239,7 @@ export class MoomooStockScreenService {
     const retrievedValues = retrieveValues(input.filters);
     let response: Response;
     try {
-      response = await fetch(`${MOOMOO_API_ORIGIN}/api/v1.0/quote/stock-screen`, { method: "POST", cache: "no-store", headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ limit: input.limit, retrieve_queries: retrievedValues.map((retrieved) => retrieved.query), screen_queries: screenQueries, sort: sort(input.sortBy) }) });
+      response = await sharedMoomooFetch(`${MOOMOO_API_ORIGIN}/api/v1.0/quote/stock-screen`, { method: "POST", cache: "no-store", headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ limit: input.limit, retrieve_queries: retrievedValues.map((retrieved) => retrieved.query), screen_queries: screenQueries, sort: sort(input.sortBy) }) }, { priority: "other" });
     } catch { throw new Error("scanner_provider_unavailable"); }
     let payload: MoomooScreenPayload;
     try { payload = await response.json() as MoomooScreenPayload; } catch { throw new Error("scanner_provider_unavailable"); }

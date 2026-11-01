@@ -23,7 +23,7 @@ export function TradingViewChart({
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasLoadError, setHasLoadError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [mobileChart, setMobileChart] = useState(false);
+  const [mobileChart, setMobileChart] = useState<boolean | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia(MOBILE_CHART_QUERY);
@@ -36,13 +36,11 @@ export function TradingViewChart({
   useEffect(() => {
     const chartContainer = chartContainerRef.current;
 
-    if (!chartContainer) {
+    if (!chartContainer || mobileChart === null) {
       return;
     }
 
     chartContainer.replaceChildren();
-    setHasLoaded(false);
-    setHasLoadError(false);
     const script = document.createElement("script");
     script.async = true;
     script.src = TRADING_VIEW_WIDGET_URL;
@@ -68,11 +66,19 @@ export function TradingViewChart({
       timezone: "America/New_York",
       withdateranges: true,
     });
+    const appendTimer=window.setTimeout(()=>{
+      if(!chartContainer.isConnected)return;
+      setHasLoaded(false);
+      setHasLoadError(false);
+      chartContainer.appendChild(script);
+    },0);
     script.onload = () => setHasLoaded(true);
     script.onerror = () => setHasLoadError(true);
-    chartContainer.appendChild(script);
 
     return () => {
+      window.clearTimeout(appendTimer);
+      script.onload=null;
+      script.onerror=null;
       chartContainer.replaceChildren();
     };
   }, [dark, loadAttempt, mobileChart, tradingViewSymbol]);

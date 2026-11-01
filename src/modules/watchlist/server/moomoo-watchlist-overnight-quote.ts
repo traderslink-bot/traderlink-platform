@@ -1,15 +1,16 @@
 import 'server-only';
 import { overnightResumeAfter, type OvernightLevelReference } from '@/src/lib/live-watchlist/overnight-level-reference';
 import { withWatchlistIndicatorMoomooAccess } from './moomoo-watchlist-candle-bridge';
+import { sharedMoomooFetch } from '@/src/modules/platform/server/broker-connections/moomoo-shared-transport';
 
 export async function fetchWatchlistOvernightQuote(symbol: string): Promise<OvernightLevelReference | null> {
   if (!/^[A-Z][A-Z0-9.-]{0,15}$/.test(symbol) || overnightResumeAfter(Date.now()) === null) return null;
   return withWatchlistIndicatorMoomooAccess(async ({ token }) => {
-    const response = await fetch('https://webapi.moomoo.com/api/v1.0/quote/stock-quote', {
+    const response = await sharedMoomooFetch('https://webapi.moomoo.com/api/v1.0/quote/stock-quote', {
       method: 'POST', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(8000),
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ code_list: [`US.${symbol}`] }),
-    });
+    }, { priority: 'watchlist' });
     if (!response.ok) return null;
     const payload = await response.json();
     if (payload.ret_code !== 0) return null;

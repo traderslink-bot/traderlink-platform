@@ -222,6 +222,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/reverse-splits", label: "Reverse Splits", icon: "compareArrows" as const }),
         Object.freeze({ href: "/levels", label: "Levels Generator", icon: "marketCharts" as const }),
         Object.freeze({ href: "/admin/watchlist", label: "Watchlist Admin", icon: "admin" as const }),
+        Object.freeze({ href: "/admin/screeners", label: "Screeners Admin", icon: "admin" as const }),
         Object.freeze({ href: "/market-data", label: "Market Data", icon: "marketCharts" as const }),
         Object.freeze({ href: "/charts", label: "Market Charts", icon: "marketCharts" as const }),
         DASHBOARD_MARKET_HALT_ALERTS_ITEM,
@@ -265,10 +266,12 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/scanner": "Scanner",
+    "/screeners": "Live Screeners",
     "/watchlist": "Watchlist",
     "/private-watchlist": "Private Watchlist",
     "/levels": "Stock Levels",
     "/admin/watchlist": "Watchlist Admin",
+    "/admin/screeners": "Screeners Admin",
     "/market-data": "Market Data",
     "/trade-tracker": "Session Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
@@ -327,6 +330,8 @@ export type DashboardHelpTarget = Readonly<{
 
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
+    Object.freeze({ route: "/admin/screeners", href: "/help/tools/live-screeners", label: "Screeners Admin" }),
+    Object.freeze({ route: "/screeners", href: "/help/tools/live-screeners", label: "Live Screeners" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),
     Object.freeze({ route: "/reverse-splits", href: "/reverse-splits/help", label: "Reverse Splits" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/trend-momentum", href: "/help/trade-analyzer/trend-momentum", label: "Trend & Momentum" }),

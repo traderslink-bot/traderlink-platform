@@ -1,4 +1,5 @@
 import type { IndicatorTimeframe } from "./indicator-engine";
+import { sharedMoomooFetch } from "@/src/modules/platform/server/broker-connections/moomoo-shared-transport";
 import type { IndicatorRequestCoordinator, IndicatorProvider, IndicatorRequestFailure,
   IndicatorTransportResult } from "./indicator-request-coordinator";
 
@@ -207,7 +208,10 @@ export async function requestIndicatorHistoryPage(input: Readonly<{
     if (!input.accessToken) return { ok: false, reason: "authentication", requestAccepted: false };
     headers.Authorization = `Bearer ${input.accessToken}`;
   }
-  const response = await (input.fetcher ?? fetch)(input.url, { headers, cache: "no-store", redirect: "error", signal: input.signal });
+  const request = input.fetcher ?? (input.provider === "moomoo"
+    ? ((url: string | URL | Request, init?: RequestInit) => sharedMoomooFetch(url,init,{ priority: "watchlist" }))
+    : fetch);
+  const response = await request(input.url, { headers, cache: "no-store", redirect: "error", signal: input.signal });
   if (!response.ok) {
     const reason: IndicatorRequestFailure = response.status === 429 ? "rate_limited" : response.status === 401 ? "authentication"
       : response.status === 403 ? "permission" : response.status >= 500 ? "provider_error" : "invalid_request";

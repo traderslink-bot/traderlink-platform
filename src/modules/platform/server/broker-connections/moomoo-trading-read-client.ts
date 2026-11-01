@@ -1,6 +1,7 @@
 import "server-only";
 
 import { platformFailure } from "../database/platform-migration-contract";
+import { sharedMoomooFetch } from "./moomoo-shared-transport";
 
 const MOOMOO_API_ORIGIN = "https://webapi.moomoo.com";
 const SAFE_TEXT = /^[^\u0000-\u001f\u007f]+$/u;
@@ -96,13 +97,13 @@ async function requestMoomoo(
 ): Promise<JsonRecord> {
   let response: Response;
   try {
-    response = await fetch(`${MOOMOO_API_ORIGIN}${path}`, {
+    response = await sharedMoomooFetch(`${MOOMOO_API_ORIGIN}${path}`, {
       cache: "no-store",
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-    });
+    }, { priority: "other" });
   } catch {
     platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", {
       stage: "provider_network",

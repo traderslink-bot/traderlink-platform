@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 
 import { platformFailure } from "../database/platform-migration-contract";
+import { sharedMoomooFetch } from "./moomoo-shared-transport";
 
 const MOOMOO_API_ORIGIN = "https://webapi.moomoo.com";
 const QUOTE_READ_SCOPE = "quote:read";
@@ -68,7 +69,7 @@ export async function exchangeMoomooCode(input: Readonly<{
 }>): Promise<Readonly<{ accessToken: string; refreshToken: string; expiresInSeconds: number; scopes: readonly string[] }>> {
   const body = new URLSearchParams({ grant_type: "authorization_code", code: input.code, client_id: input.config.clientId, redirect_uri: input.config.redirectUri, code_verifier: input.verifier });
   let response: Response;
-  try { response = await fetch(`${MOOMOO_API_ORIGIN}/oauth2/token`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body, cache: "no-store" }); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", { stage: "network" }); }
+  try { response = await sharedMoomooFetch(`${MOOMOO_API_ORIGIN}/oauth2/token`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body, cache: "no-store" }, { priority: "connection" }); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", { stage: "network" }); }
   let payload: unknown;
   try { payload = await response!.json(); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", { httpStatus: response!.status, stage: "response_json" }); }
   if (!response!.ok) {
@@ -117,13 +118,13 @@ export async function refreshMoomooAccessToken(input: Readonly<{
   });
   let response: Response;
   try {
-    response = await fetch(`${MOOMOO_API_ORIGIN}/oauth2/token`, {
+    response = await sharedMoomooFetch(`${MOOMOO_API_ORIGIN}/oauth2/token`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body,
       cache: "no-store",
       signal: AbortSignal.timeout(15_000),
-    });
+    }, { priority: "connection" });
   } catch {
     return { status: "unavailable" };
   }

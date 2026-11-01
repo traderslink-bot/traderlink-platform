@@ -158,6 +158,7 @@ export class PressReleaseDashboardRepository {
     return Object.freeze({
       sql: `SELECT
   article.id, article.ticker, article.headline,
+  CASE WHEN json_valid(article.metadata_json) THEN CAST(json_extract(article.metadata_json, '$.marketCap') AS TEXT) ELSE NULL END AS market_cap,
   ${input.includePublishedAt ? "article.published_at," : ""}
   CASE WHEN receipt.article_id IS NULL THEN 0 ELSE 1 END AS is_read
 FROM news_articles article
@@ -180,7 +181,7 @@ LIMIT ?`,
     includePublishedAt: boolean;
     onTiming?: (phase: "access" | "sql" | "mapping", elapsedMs: number) => void;
   }>): readonly Readonly<{
-    id: string; ticker: string; headline: string; isRead: boolean; publishedAt?: string;
+    id: string; ticker: string; headline: string; isRead: boolean; marketCap: string | null; publishedAt?: string;
   }>[] {
     const measure = <T>(phase: "access" | "sql" | "mapping", operation: () => T): T => {
       const started = performance.now();
@@ -201,6 +202,7 @@ LIMIT ?`,
     });
     const rows = measure("sql", () => this.database.prepare(`SELECT
   article.id, article.ticker, article.headline,
+  CASE WHEN json_valid(article.metadata_json) THEN CAST(json_extract(article.metadata_json, '$.marketCap') AS TEXT) ELSE NULL END AS market_cap,
   ${input.includePublishedAt ? "article.published_at," : ""}
   CASE WHEN receipt.article_id IS NULL THEN 0 ELSE 1 END AS is_read
 FROM news_articles article
@@ -211,10 +213,10 @@ WHERE article.route_tag IN (${placeholders(tags)})
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
 ORDER BY article.published_at DESC, article.id
 LIMIT ?`).all(input.scope.userId, ...tags, delaySeconds, delaySeconds, limit) as Readonly<{
-      id: string; ticker: string; headline: string; is_read: number; published_at?: string;
+      id: string; ticker: string; headline: string; is_read: number; market_cap: string | null; published_at?: string;
     }>[]);
     return measure("mapping", () => Object.freeze(rows.map(row => ({
-      id: row.id, ticker: row.ticker, headline: row.headline, isRead: row.is_read === 1,
+      id: row.id, ticker: row.ticker, headline: row.headline, isRead: row.is_read === 1, marketCap: row.market_cap,
       ...(input.includePublishedAt ? { publishedAt: row.published_at! } : {}),
     }))));
   }

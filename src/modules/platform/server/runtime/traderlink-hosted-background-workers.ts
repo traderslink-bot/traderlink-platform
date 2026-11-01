@@ -9,6 +9,7 @@ import { PlatformRemoteNotificationDeliveryService } from "../notifications/plat
 import { reconcileWatchlistNotificationApprovals } from "@/src/modules/watchlist/server/notifications/watchlist-notification-runtime";
 import { runWatchlistNotificationDelivery } from "@/src/modules/watchlist/server/notifications/watchlist-notification-delivery";
 import { startWatchlistSetupSharedFeed } from "@/src/modules/watchlist/server/setups/setup-shared-feed-runtime";
+import { startConfiguredLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
 
 let workersStarted = false;
 
@@ -21,6 +22,7 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
   workersStarted = true;
   startMoomooConnectionMonitor();
   startWatchlistSetupSharedFeed();
+  startConfiguredLiveScannerRuntime();
   startPlatformLoginMailWorker();
 
   let analyzerRunning = false;

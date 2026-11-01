@@ -125,7 +125,7 @@ export async function GET(request: Request): Promise<Response> {
         new PressReleaseDashboardRepository(database).headlineQueryPlan({ ...input, scope: current.scope })), "revalidation_open");
       if (JSON.stringify(currentPlan) !== JSON.stringify(plan)) throw new Error("scanner_temporarily_unavailable");
       const responseArticles = timing.measure("mapping", () => result.rows.map(row => ({
-        id: row.id, ticker: row.ticker, headline: row.headline, isRead: row.is_read === 1,
+        id: row.id, ticker: row.ticker, headline: row.headline, isRead: row.is_read === 1, marketCap: row.market_cap,
         ...(expanded ? { publishedAt: row.published_at! } : {}),
       })));
       return timing.measure("serialization", () => Response.json({ articles: responseArticles, status: "ready" }, { headers }));

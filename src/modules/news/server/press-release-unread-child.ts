@@ -7,7 +7,7 @@ import { PRESS_RELEASE_CHANNELS, type PressReleaseUnreadCounts } from "../contra
 
 type Plan = Readonly<{ sql: string; parameters: readonly (string | number)[] }>;
 type Result = Readonly<{ counts: PressReleaseUnreadCounts; durationMs: number; readBytes: number | null }>;
-type HeadlineRow = Readonly<{ id: string; ticker: string; headline: string; is_read: 0 | 1; published_at?: string }>;
+type HeadlineRow = Readonly<{ id: string; ticker: string; headline: string; is_read: 0 | 1; market_cap: string | null; published_at?: string }>;
 type HeadlineQueryResult = Readonly<{ rows: readonly HeadlineRow[]; durationMs: number; readBytes: number | null }>;
 type HeadlineResult = HeadlineQueryResult & Readonly<{ queueMs: number; childMs: number }>;
 type JobBase = { key: string; databasePath: string; plan: Plan; reject: (error: Error) => void;
@@ -64,11 +64,12 @@ function validHeadlineResult(value: unknown, job: HeadlineJob): value is Headlin
   const result = value as HeadlineQueryResult;
   const text = (item: unknown, maximum: number): item is string => typeof item === "string" &&
     item.length > 0 && item.length <= maximum * 2 && !item.includes("\0") && Array.from(item).length <= maximum;
-  const keys = job.includePublishedAt ? ["headline", "id", "is_read", "published_at", "ticker"] : ["headline", "id", "is_read", "ticker"];
+  const keys = job.includePublishedAt ? ["headline", "id", "is_read", "market_cap", "published_at", "ticker"] : ["headline", "id", "is_read", "market_cap", "ticker"];
   return Boolean(Array.isArray(result.rows) && result.rows.length <= job.limit && result.rows.every(row =>
     row && typeof row === "object" && !Array.isArray(row) &&
     JSON.stringify(Object.keys(row).sort()) === JSON.stringify(keys) &&
     text(row.id, 64) && text(row.ticker, 32) && text(row.headline, 1000) &&
+    (row.market_cap === null || text(row.market_cap, 80)) &&
     (row.is_read === 0 || row.is_read === 1) &&
     (!job.includePublishedAt || typeof row.published_at === "string" &&
       /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(row.published_at))) &&

@@ -8,9 +8,6 @@ const easternDateFormatter = new Intl.DateTimeFormat("en-CA", {
 });
 const closedDates = new Set(calendar.closedDates);
 const routeTags = ["default", "spike", "market_cap_under_30m", "market_cap_30m_to_50m", "market_cap_50m_to_100m"];
-const sourceFallbackModes = new Set([
-  "headline_only_fallback", "businesswire_headline_only", "sec_unreadable_fallback", "market_cap_stale_skip",
-]);
 
 export function easternSavedDate(value: string | Date): string {
   const parts = easternDateFormatter.formatToParts(typeof value === "string" ? new Date(value) : value);
@@ -46,14 +43,6 @@ function publicArticleOrigin(): string {
   return "https://app.traderslink.pro";
 }
 
-function safeSourceUrl(value: string | null): string | null {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    return ["https:", "http:"].includes(url.protocol) && !url.username && !url.password ? url.href : null;
-  } catch { return null; }
-}
-
 function articleTypeLabel(row: ArticleRow): string {
   const parsed: unknown = JSON.parse(row.metadata_json);
   const metadata = parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -78,14 +67,7 @@ function articleTypeLabel(row: ArticleRow): string {
   return "News";
 }
 
-function articleLink(row: ArticleRow): string | null {
-  const metadata = JSON.parse(row.metadata_json) as Record<string, unknown>;
-  const summary = row.summary?.trim() || "";
-  const unavailable = !summary || sourceFallbackModes.has(String(metadata.articleSourceMode || ""))
-    || row.event_type === "press_release_unreadable"
-    || summary.startsWith("Full article text is currently unavailable.")
-    || summary.startsWith("Summary could not be generated.");
-  if (unavailable) return safeSourceUrl(row.source_url);
+function articleLink(row: ArticleRow): string {
   return `${publicArticleOrigin()}/news/${encodeURIComponent(row.ticker)}/${encodeURIComponent(row.slug)}`;
 }
 

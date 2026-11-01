@@ -12,7 +12,11 @@ import { dashboardHelpTarget } from "./dashboard-navigation";
 const publicHelpOrigin = "https://traderslink.pro";
 
 export function DashboardPageHelpLink() {
-  const target = dashboardHelpTarget(usePathname());
+  const pathname = usePathname();
+  const target = dashboardHelpTarget(pathname);
+  if (pathname === "/screeners") {
+    return null;
+  }
   if (!target) {
     return null;
   }

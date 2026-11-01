@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import Decimal from "decimal.js";
+import { sharedMoomooFetch } from "@/src/modules/platform/server/broker-connections/moomoo-shared-transport";
 
 import type {
   MarketDataProvider,
@@ -132,7 +133,7 @@ function providerMetadata(items: readonly unknown[]): Readonly<{
 export class MoomooDailyTradeKlineMarketDataProvider implements MarketDataProvider {
   constructor(
     private readonly accessToken: () => Promise<string>,
-    private readonly request: typeof fetch = fetch,
+    private readonly request: typeof fetch = (url, init) => sharedMoomooFetch(url,init,{ priority: "other" }),
     private readonly options: Readonly<{ strictOwnerSession?: boolean; completeHistory?: boolean; availableThrough?: number; onDiagnostics?: (counts: Readonly<Record<string, number>>) => void }> = {},
   ) {}
 

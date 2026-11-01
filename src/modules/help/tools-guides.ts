@@ -2,6 +2,24 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const TOOLS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "live-screeners", title: "Live Screeners",
+    description: "Read Top Gainers, Momentum and the strongest current candidates.",
+    sections: Object.freeze([
+      Object.freeze({ id:"read-live-screeners",title:"Read the live screeners",summary:"Switch between Top Gainers and Momentum and review the current session.",keywords:Object.freeze(["live screeners","top gainers","momentum","premarket","after hours"]),blocks:Object.freeze([
+        Object.freeze({ kind:"paragraph",text:"During production testing, Live Screeners is available only through the Traderlink owner profile's Screeners Admin page. Top Gainers orders qualifying stocks by the current session gain. Momentum looks for recent price and volume activity, including stocks that are not yet near the top of the daily gainers list, and ranks them with recent price movement, volume acceleration, relative volume when available, recent dollar volume and spread quality. On desktop, select the colored candlestick button beside a ticker to open its TradingView chart. On mobile, expand a row and use View Chart at the bottom right. The current session, update time and available data coverage appear above the results." }),
+        Object.freeze({ kind:"paragraph",text:"PR Scanner shows up to 30 recent News Scanner articles below the stock tables. Each two-line row shows a larger ticker beside market cap and float, followed by an ellipsized article title. On desktop, the newest ten fill the first column, followed by the next ten in the second and the oldest ten in the third. A new article enters at the top and moves older articles through the columns. Select an article to open its full article drawer. Mobile shows the same articles as one newest-first list." }),
+        Object.freeze({ kind:"paragraph",text:"On desktop, Top Gainers and Momentum use different tables. Top Gainers emphasizes Gain%, session volume, price multiplied by volume, float turnover, relative volume and distance below today's high. Momentum keeps Gain%, rolling 1min and 5min price change, rolling one- and five-minute volume, one- and five-minute volume-spike ratios, float, spread and News visible. Expand a Momentum row for price multiplied by volume, RVOL, today's high and distance, session low and Turnover %. PR and SEC links appear in the News column." }),
+        Object.freeze({ kind:"paragraph",text:"Market cap comes from the daily Nasdaq and NYSE stock list. Float is required separately. A missing quote, float, spread or session fact can keep a stock out of the results; missing data is not treated as zero." }),
+      ])}),
+      Object.freeze({ id:"focus-stocks",title:"Review the upper section",summary:"Review the attached group meeting the scanner's stricter activity qualifications.",keywords:Object.freeze(["strongest candidates","focus stocks","volume acceleration","price acceleration"]),blocks:Object.freeze([
+        Object.freeze({ kind:"paragraph",text:"The unlabeled upper section belongs only to Momentum and contains stocks that met its stricter price movement, volume acceleration, dollar-volume and confirmation settings. Its main mobile row shows rolling one- and five-minute price change, rolling one-minute share volume and float. Expand a row to review day gain, session and five-minute volume, one- and five-minute volume-spike ratios, relative volume when available, today's high and session low, Turnover % and spread. Top Gainers keeps day gain, session volume, float and its PR/SEC link in the main row; its expanded view shows today's high, session low, relative volume and Turnover %. The Momentum upper section can be empty, and a stock leaves when its data becomes stale or it no longer qualifies. It ranks observed activity; it is not a trade recommendation or prediction." }),
+      ])}),
+      Object.freeze({ id:"news-and-filings",title:"Open news and filings",summary:"Use the labels attached to a visible ticker to open covered News, press releases or SEC filings.",keywords:Object.freeze(["news","press release","SEC filing","labels"]),blocks:Object.freeze([
+        Object.freeze({ kind:"paragraph",text:"PR and SEC links appear only when the existing TraderLink News coverage has a matching item for that ticker. Open the link to read that article on TraderLink. No link means no covered item was found; it does not prove that no external news exists." }),
+      ])}),
+    ]),
+  }),
+  Object.freeze({
     slug: "swing-trade-ideas", title: "Swing Trade Ideas",
     description: "Open Premium swing ideas and understand member access.",
     sections: Object.freeze([

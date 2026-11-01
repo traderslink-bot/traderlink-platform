@@ -500,6 +500,7 @@ export function DashboardShell({
               (item.href !== "/market-news/general" || generalMarketNewsAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&
+              (item.href !== "/admin/screeners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/market-data" || ownerMarketDataAccess) &&
               (item.href !== "/reverse-splits" || ownerMarketDataAccess)
             ))),

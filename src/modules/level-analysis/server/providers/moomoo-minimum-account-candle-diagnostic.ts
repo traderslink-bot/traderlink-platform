@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { sharedMoomooFetch } from "@/src/modules/platform/server/broker-connections/moomoo-shared-transport";
 
 import { newYorkExtendedSession } from "../daily-trade-analyzer-session";
 
@@ -390,7 +391,7 @@ export async function runMoomooMinimumAccountCandleDiagnostic(
     !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > MAX_PAGES_PER_SYMBOL ||
     !Number.isSafeInteger(delayMilliseconds) || delayMilliseconds < 250 || delayMilliseconds > 5_000
   ) throw new Error("moomoo_diagnostic_input_invalid");
-  const request = input.request ?? fetch;
+  const request: typeof fetch = input.request ?? ((url, init) => sharedMoomooFetch(url,init,{ priority: "other" }));
   const results: MoomooMinimumAccountSymbolResult[] = [];
   for (const [index, symbol] of symbols.entries()) {
     if (index > 0) await pause(delayMilliseconds);
