@@ -5,9 +5,10 @@ const fixture = vi.hoisted(() => ({ sources: [{ planVersionId: "base" }] }));
 vi.mock("./platform-membership-repository", () => ({ PlatformMembershipRepository: class { readEffectiveAccess() { return { sources: fixture.sources, limits: {}, booleanFeatures: [] }; } } }));
 import { delayedNewsAvailableAt, readMembershipNewsDelaySeconds } from "./membership-news-delay";
 let db: Database.Database;
-beforeEach(() => { fixture.sources = [{ planVersionId: "base" }]; db = new Database(":memory:"); db.exec(`CREATE TABLE platform_membership_feature_policies(feature_key,enforcement_mode); CREATE TABLE platform_operator_grants(user_id,authority_key,grant_state); CREATE TABLE platform_membership_plan_features(plan_version_id,feature_key,limit_value);`); });
+beforeEach(() => { fixture.sources = [{ planVersionId: "base" }]; db = new Database(":memory:"); db.exec(`CREATE TABLE platform_membership_feature_policies(feature_key,enforcement_mode); CREATE TABLE platform_operator_grants(user_id,authority_key,grant_state); CREATE TABLE platform_membership_plan_features(plan_version_id,feature_key,limit_value);
+  INSERT INTO platform_membership_feature_policies VALUES ('news.visibility_delay_seconds','enforced'),('news.notification_delay_seconds','enforced');`); });
 afterEach(() => db.close());
-it("enforces independent configured visibility and notification delays by default", () => {
+it("enforces independent visibility and notification delays when their policies are enabled", () => {
   db.prepare("INSERT INTO platform_membership_plan_features VALUES ('base',?,?)").run("news.visibility_delay_seconds",180);
   db.prepare("INSERT INTO platform_membership_plan_features VALUES ('base',?,?)").run("news.notification_delay_seconds",300);
   expect(readMembershipNewsDelaySeconds(db,"member","news.visibility_delay_seconds")).toBe(180);
@@ -19,7 +20,7 @@ it("uses the shortest explicitly granted delay and preserves an immediate grant"
   expect(readMembershipNewsDelaySeconds(db,"member","news.visibility_delay_seconds")).toBe(0);
 });
 it.each(["off","shadow"])("respects explicit %s delay rollout", mode => {
-  db.prepare("INSERT INTO platform_membership_feature_policies VALUES ('news.visibility_delay_seconds',?)").run(mode);
+  db.prepare("UPDATE platform_membership_feature_policies SET enforcement_mode=? WHERE feature_key='news.visibility_delay_seconds'").run(mode);
   db.exec("INSERT INTO platform_membership_plan_features VALUES ('base','news.visibility_delay_seconds',180)");
   expect(readMembershipNewsDelaySeconds(db,"member","news.visibility_delay_seconds")).toBe(0);
 });
