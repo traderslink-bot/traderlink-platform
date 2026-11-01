@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { publicNewsUrl } from "@/src/modules/news/contracts/public-news-url";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -20,17 +21,6 @@ export const dynamic = "force-dynamic";
 
 function jsonError(status: number, code: string, message: string): Response {
   return Response.json({ ok: false, code, message }, { status });
-}
-
-function requestOrigin(request: Request): string {
-  const configured = process.env.NEWS_PUBLIC_BASE_URL;
-
-  if (configured) {
-    return configured.replace(/\/+$/g, "");
-  }
-
-  const url = new URL(request.url);
-  return `${url.protocol}//${url.host}`;
 }
 
 type PublisherAuthorization = "authorized" | "unconfigured" | "unauthorized";
@@ -154,9 +144,9 @@ export async function POST(request: Request): Promise<Response> {
         contentSha256: article.contentSha256,
       },
       articlePath,
-      articleUrl: `${requestOrigin(request)}${articlePath}`,
+      articleUrl: publicNewsUrl(articlePath),
       freeArticlePath,
-      freeArticleUrl: `${requestOrigin(request)}${freeArticlePath}`,
+      freeArticleUrl: publicNewsUrl(freeArticlePath),
     });
   } catch (error) {
     console.error("News article publish rejected.", {

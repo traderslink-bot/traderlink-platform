@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { publicNewsUrl } from "@/src/modules/news/contracts/public-news-url";
 
 import {
   findNewsArticleForWatchlistAi,
@@ -33,11 +34,6 @@ function isAuthorizedWatchlistPublisher(request: Request): boolean | null {
 function normalizeTicker(value: string): string | null {
   const trimmed = value.trim();
   return /^[A-Za-z0-9.-]{1,32}$/.test(trimmed) ? trimmed.toUpperCase() : null;
-}
-
-function publicOrigin(request: Request): string {
-  const configured = process.env.NEWS_PUBLIC_BASE_URL?.trim();
-  return (configured ? configured : new URL(request.url).origin).replace(/\/+$/g, "");
 }
 
 export async function GET(
@@ -88,7 +84,7 @@ export async function GET(
         revision: selection.article.revision,
         contentSha256: selection.article.contentSha256,
         ticker: selection.article.ticker,
-        publicUrl: `${publicOrigin(request)}${articlePath}`,
+        publicUrl: publicNewsUrl(articlePath),
         headline: selection.article.headline,
         processedContent: selection.article.articleText,
         publishedAt: selection.article.publishedAt,

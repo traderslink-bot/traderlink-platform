@@ -65,6 +65,18 @@ export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   if (
+    (request.method === "GET" || request.method === "HEAD") &&
+    requestHostname(request) === dashboardHostname &&
+    (pathname === "/news" || pathname.startsWith("/news/"))
+  ) {
+    const destination = request.nextUrl.clone();
+    destination.protocol = "https:";
+    destination.host = publicHostname;
+    destination.port = "";
+    return NextResponse.redirect(destination, 308);
+  }
+
+  if (
     request.method === "GET" && pathname === "/" &&
     requestHostname(request) === dashboardHostname &&
     Boolean(request.cookies.get(process.env.NODE_ENV === "production" ? "__Host-tl_platform_session" : "tl_platform_session")?.value)

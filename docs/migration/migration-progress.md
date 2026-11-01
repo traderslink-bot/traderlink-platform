@@ -1,5 +1,13 @@
 # TraderLink Platform Migration Progress
 
+## 2026-11-01 Public News canonical URLs and dashboard invitation
+
+The [Public News progress record](public-news-canonical-and-ticker-hub-progress.md)
+tracks local app-host reader redirects and public-domain article links. Its
+linked plan now records owner-approved dashboard invitation pages replacing
+public index/ticker listings; the ticker hub was cancelled. Runtime checks,
+Coordinator Git integration and release remain pending.
+
 ## 2026-10-10 Journal Administration member directory
 
 The [member directory progress record](journal-admin-member-directory-progress.md)

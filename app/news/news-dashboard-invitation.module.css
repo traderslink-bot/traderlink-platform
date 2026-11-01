@@ -1,0 +1,45 @@
+.page {
+  --news-navy: #011e56;
+  --news-muted: #526682;
+  --news-border: #dbe4ef;
+  background: #fff;
+  color: var(--news-navy);
+  flex: 1;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: clamp(28px, 5vw, 72px) max(20px, calc((100% - 1200px) / 2));
+}
+.page *, .page *::before, .page *::after { box-sizing: border-box; }
+.hero {
+  align-items: center;
+  background: var(--news-navy);
+  border-radius: 24px;
+  color: #fff;
+  display: grid;
+  gap: clamp(28px, 5vw, 68px);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  padding: clamp(28px, 5vw, 64px);
+}
+.eyebrow { color: #b7ccef; font-size: 12px; font-weight: 700; letter-spacing: .12em; line-height: 1.6; margin: 0 0 28px; text-transform: uppercase; }
+.ticker { background: #18396a; border: 1px solid #46618e; border-radius: 6px; display: inline-block; font-size: 14px; font-weight: 700; margin-bottom: 18px; max-width: 100%; overflow-wrap: anywhere; padding: 7px 12px; }
+.introduction h1 { font-size: clamp(32px, 3.8vw, 52px); font-weight: 700; letter-spacing: -.045em; line-height: 1.12; margin: 0; overflow-wrap: anywhere; }
+.symbol { color: #bdd8ff; }
+.invitation { background: #fff; border: 1px solid var(--news-border); border-radius: 16px; color: var(--news-navy); min-width: 0; padding: clamp(24px, 3vw, 36px); }
+.invitationIcon { align-items: center; background: #eef4fc; border-radius: 12px; display: flex; height: 48px; justify-content: center; margin-bottom: 24px; width: 48px; }
+.invitationIcon svg { height: 25px; width: 25px; }
+.invitation h2 { font-size: 25px; letter-spacing: -.025em; line-height: 1.2; margin: 0 0 14px; }
+.invitation p { color: var(--news-muted); font-size: 15px; line-height: 1.65; margin: 0 0 24px; }
+.action { align-items: center; background: var(--news-navy); border: 1px solid var(--news-navy); border-radius: 8px; color: #fff; display: flex; font-size: 15px; font-weight: 700; gap: 16px; justify-content: space-between; min-height: 48px; padding: 12px 18px; text-decoration: none; }
+.action:hover { background: #10366f; }
+.action:active { background: #082a5c; }
+.action:focus-visible { outline: 3px solid #2e6fbb; outline-offset: 4px; }
+.invitation .membership { color: var(--news-muted); font-size: 12px; line-height: 1.5; margin: 12px 0 0; }
+.benefits { display: grid; gap: 28px; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 40px 4px 8px; }
+.benefit { border-top: 1px solid var(--news-border); padding-top: 20px; }
+.number { color: #617a9b; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.benefit h2 { font-size: 18px; line-height: 1.35; margin: 12px 0 8px; }
+.benefit p { color: var(--news-muted); font-size: 14px; line-height: 1.7; margin: 0; }
+@media (max-width: 760px) {
+  .hero { border-radius: 18px; grid-template-columns: minmax(0, 1fr); }
+  .eyebrow { margin-bottom: 22px; }
+  .benefits { gap: 24px; grid-template-columns: minmax(0, 1fr); padding-top: 30px; }
+}

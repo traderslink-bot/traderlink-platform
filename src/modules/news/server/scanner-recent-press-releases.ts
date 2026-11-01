@@ -2,6 +2,7 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 import calendar from "./scanner-news-calendar.json";
+import { publicNewsUrl } from "../contracts/public-news-url";
 
 const easternDateFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
@@ -33,16 +34,6 @@ type ArticleRow = {
   summary: string | null; source_url: string | null; event_type: string | null; metadata_json: string;
 };
 
-function publicArticleOrigin(): string {
-  const configured = process.env.NEWS_PUBLIC_BASE_URL?.trim();
-  if (configured) {
-    const url = new URL(configured);
-    if (url.protocol === "https:" && !url.username && !url.password && !url.port
-      && ["app.traderslink.pro", "traderslink.pro", "www.traderslink.pro"].includes(url.hostname)) return url.origin;
-  }
-  return "https://app.traderslink.pro";
-}
-
 function articleTypeLabel(row: ArticleRow): string {
   const parsed: unknown = JSON.parse(row.metadata_json);
   const metadata = parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -68,7 +59,7 @@ function articleTypeLabel(row: ArticleRow): string {
 }
 
 function articleLink(row: ArticleRow): string {
-  return `${publicArticleOrigin()}/news/${encodeURIComponent(row.ticker)}/${encodeURIComponent(row.slug)}`;
+  return publicNewsUrl(`/news/${encodeURIComponent(row.ticker)}/${encodeURIComponent(row.slug)}`);
 }
 
 export function listScannerRecentPressReleases(database: Database.Database, ticker: string, now = new Date()) {

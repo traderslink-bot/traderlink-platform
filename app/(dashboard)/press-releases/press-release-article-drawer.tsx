@@ -14,6 +14,7 @@ import Typography from "@mui/material/Typography";
 import NextLink from "next/link";
 
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
+import { publicNewsUrl } from "@/src/modules/news/contracts/public-news-url";
 
 export function pressReleaseEasternTime(value: string, includeDate = false): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -70,7 +71,7 @@ export function PressReleaseArticleDrawer({ article, onClose }: Readonly<{
       <DetailSection items={article.supportResistanceLevels} title="Support and resistance" />
       <Divider />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-        <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={article.summaryUnavailable && article.sourceUrl && /^https?:\/\//iu.test(article.sourceUrl) ? article.sourceUrl : article.publicPath} variant="contained">{article.summaryUnavailable ? "Open source article" : "Open article page"}</Button>
+        <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={article.summaryUnavailable && article.sourceUrl && /^https?:\/\//iu.test(article.sourceUrl) ? article.sourceUrl : publicNewsUrl(article.publicPath)} variant="contained">{article.summaryUnavailable ? "Open source article" : "Open article page"}</Button>
         <Button component={NextLink} href="/account/trading#pwa-app" variant="outlined">Set up the TradersLink app</Button>
       </Stack>
     </Stack> : null}
