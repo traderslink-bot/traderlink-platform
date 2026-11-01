@@ -81,7 +81,9 @@ describe("0032 Coach AI review provider controls", () => {
   it("keeps Chat and AI Review pricing controls separate and protects enabled features", () => {
     const database = setup();
     try {
-      database.prepare(`UPDATE coach_ai_provider_settings SET input_cost_usd_per_million_tokens = '1', output_cost_usd_per_million_tokens = '2', updated_at_utc = ? WHERE settings_key = 'coach_reviews'`).run(at);
+      database.prepare(`UPDATE coach_ai_provider_settings SET input_cost_usd_per_million_tokens = '1',
+        cached_input_cost_usd_per_million_tokens = '1', cache_write_input_cost_usd_per_million_tokens = '1',
+        output_cost_usd_per_million_tokens = '2', updated_at_utc = ? WHERE settings_key = 'coach_reviews'`).run(at);
       enablePlatformFeature(database, "weekly_reviews");
       expect(() => enablePlatformFeature(database, "daily_companion")).toThrowError("coach_ai_feature_control_transition_invalid");
       expect(() => database.prepare(`UPDATE coach_ai_provider_settings SET input_cost_usd_per_million_tokens = NULL, output_cost_usd_per_million_tokens = NULL WHERE settings_key = 'coach_reviews'`).run()).toThrowError("coach_ai_review_provider_prices_required");

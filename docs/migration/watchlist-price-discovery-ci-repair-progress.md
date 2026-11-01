@@ -144,7 +144,7 @@ Coordinator preserved the lifecycle/doc delta at `fb316989e873d27f5df7e0e8111c52
 
 ## Four additional test corrections
 
-The owner authorized these four small test-only corrections, and Coordinator allocated their exact paths after verifying each was clean and byte-identical to candidate `3a5e401f`. All four corrections are implemented. The diff check passes; the separate 58-case test run is pending the next finite shared-resource slot after Scanner's operation. These edits do not yet establish that the four original failures are resolved.
+The owner authorized these four small test-only corrections, and Coordinator allocated their exact paths after verifying each was clean and byte-identical to candidate `3a5e401f`. All four corrections are implemented. The diff check passes, and the separate four-file gate passed all 58 cases with no failures, skips or unhandled errors.
 
 | Test path | Recorded mismatch | Implemented test-only correction |
 | --- | --- | --- |
@@ -159,4 +159,16 @@ Frozen edited SHA256 values, in table order: `2bd6c1bd8a6b19efd661f352f2b9e6964b
 
 The four-file candidate-root gate has 83 static/config/package inputs, all checked against candidate bytes; sorted path/content manifest SHA256 is `908572ca344a746cf9a36d48e033208aa6a430efac26d55c18f84198d31fcd50`. Its prepared in-memory transform substitutes only these four frozen test modules, never product modules. The tests are pure or mocked units, with no provider, server, delivery or real database. Strict sort equality now enumerates all 18 choices; invalid-input, date, privacy, account-isolation and missing-data checks remain. The oversized date fixture now exceeds the actual 1,500-day limit rather than triggering a legitimate dashboard read. No member Help update is needed for test-only changes.
 
-The previously prepared three-file, nine-case gate remains separate and unchanged. Neither pending gate has run. The completed four-membership-file result remains 63 passing tests. No broader cleanup, product behavior change, CI waiver, push, preview update or deployment is included.
+Coordinator preserved the four test corrections and progress locally at `7fb2b646668be64ced74c1c5cb0f6136e2485d93`, parent `fb316989e873d27f5df7e0e8111c524c20f747ce`. The owner then explicitly authorized running the focused gates concurrently with Scanner's mobile check. This was a two-gate exception, not a general parallel-testing policy. Each gate used its own exclusive Watchlist lock without inspecting or changing Scanner's common lock, a 768 MiB hard cap, one CPU core, 256 MiB Node heap and 180-second ceiling. Both services proved `memory.max=805306368` and `cpu.max=100000 100000` from their active cgroups before imports.
+
+The three-file gate ran all nine cases: **two passed and seven failed**, no skips or unhandled errors, all three frozen test transforms applied, and the 216-input graph matched. The 0029 test passed. Six lifecycle cases failed at the added policy fixture's foreign key; the feature definition is not present at that insertion point. One 0032 case still failed the current feature-control transition guard. These fixture corrections are not accepted as complete. Vitest took 12.61 seconds; service `watchlist-ci-nine-1974278` took 13.535 seconds, exited one, became inactive with an empty cgroup and released its matching Watchlist lock. No timeout occurred.
+
+The separate four-file gate passed **58 of 58**, with zero failures/skips/unhandled errors, all four frozen transforms and the 83-input graph verified. Vitest took 3.78 seconds; service `watchlist-ci-four-1974381` took 4.587 seconds, exited zero, became inactive with an empty cgroup and released its matching lock. This resolves the four original expectation/fixture failures in that group. The earlier 63-case passing result was not rerun. The two completed groups resolve 45 of the original CI failures; this does not waive the remaining failures or claim a full CI pass.
+
+No broader cleanup, product behavior change, CI waiver, push, preview update or deployment is included.
+
+## Remaining fixture prerequisites
+
+The seven failures reduce to two fixture setup omissions. The lifecycle policy references `platform_membership_feature_definitions`, not just its synthetic actor; `writeMembershipPlanEditor()` seeds those definitions on the initial publish. The fixture now inserts its explicit policy immediately after that publish, with foreign keys still enabled and every assertion unchanged. Edited lifecycle SHA256 is `a49935d3ff68a0c341c3bcbe5eefb13c532fb238db61bffff0d8320c4e7110a1`.
+
+The 0032 fixture supplied Chat cache prices but still omitted the Review cache and cache-write rates. The current 0051 migration requires cache-write pricing before enabling platform Review controls. The fixture now supplies all four Review rates, retaining the guarded activation, negative assertions and current full manifest. Edited 0032 SHA256 is `e78a64443446c36ccd92a18e35277dd252ce1ba540fe9ce81fe60b44c39b9a90`. The 0029 source and the already passing 58-case group are unchanged. One further focused nine-case retest awaits separate resource admission; no additional test has run yet.
