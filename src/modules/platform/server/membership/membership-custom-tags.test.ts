@@ -17,10 +17,6 @@ describe("Custom-tag plan allowance", () => {
       CREATE TABLE journal_tags (created_by_user_id TEXT, account_id TEXT, current_name TEXT, lifecycle_state TEXT);
       CREATE TABLE journal_rules (created_by_user_id TEXT, account_id TEXT, source_kind TEXT, lifecycle_state TEXT);
       CREATE TABLE platform_membership_feature_policies (feature_key TEXT, enforcement_mode TEXT);`);
-    // Enforcement is an explicit owner rollout, not the product default.
-    for (const feature of ["journal.accounts", "journal.custom_tags", "journal.rules", "journal.preset_rules", "journal.custom_rules"]) {
-      db.prepare("INSERT INTO platform_membership_feature_policies VALUES (?, 'enforced')").run(feature);
-    }
     limit = 2;
     ruleLimit = 2;
     accountLimit = 2;
@@ -34,7 +30,7 @@ describe("Custom-tag plan allowance", () => {
   const tag = (name: string, account = "a", user = "member", state = "active") =>
     db.prepare("INSERT INTO journal_tags VALUES (?,?,?,?)").run(user, account, name, state);
 
-  it("enforces configured account capacity across workspaces and preserves existing rows", () => {
+  it("enforces account capacity by default across workspaces and preserves existing rows", () => {
     db.exec("INSERT INTO journal_accounts VALUES ('a','w1','member','active'),('b','w2','member','active');");
     expect(() => assertMembershipJournalAccountCreation(db, "member")).toThrow();
     expect(db.prepare("SELECT COUNT(*) count FROM journal_accounts").get()).toEqual({ count: 2 });
@@ -99,7 +95,7 @@ describe("Custom-tag plan allowance", () => {
     db.exec("CREATE TABLE platform_operator_grants (user_id TEXT, authority_key TEXT, grant_state TEXT);");
     db.prepare("INSERT INTO platform_operator_grants VALUES ('member','journal_administration','active')").run();
     expect(() => assertMembershipCustomTagCreation(db, "member", "Custom tag")).not.toThrow();
-    db.exec("DELETE FROM platform_operator_grants; UPDATE platform_membership_feature_policies SET enforcement_mode='off' WHERE feature_key='journal.custom_tags';");
+    db.exec("DELETE FROM platform_operator_grants; INSERT INTO platform_membership_feature_policies VALUES ('journal.custom_tags','off');");
     expect(() => assertMembershipCustomTagCreation(db, "member", "Custom tag")).not.toThrow();
   });
   it("returns plain guidance when the allowance is exhausted", async () => {

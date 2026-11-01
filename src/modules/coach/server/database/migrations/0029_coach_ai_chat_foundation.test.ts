@@ -173,10 +173,9 @@ WHERE coach_ai_chat_message_id = ?`).run(laterTimestamp, failedAssistantMessageI
   coach_ai_chat_conversation_id, user_id, workspace_id, account_id, provider_key,
   model_id, input_tokens, output_tokens, total_tokens,
   input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
-  estimated_cost_usd, recorded_at_utc, cached_input_tokens, cache_write_input_tokens,
-  cached_input_cost_usd_per_million_tokens, cache_write_input_cost_usd_per_million_tokens
+  estimated_cost_usd, recorded_at_utc
 ) VALUES ('00000000-0000-4000-8000-000000000015', ?, ?, ?, ?, ?, 'openai_direct',
-  'gpt-test', 10, 5, 15, '1', '2', '0.00002', ?, 0, 0, '1', '1')`).run(
+  'gpt-test', 10, 5, 15, '1', '2', '0.00002', ?)`).run(
         failedAssistantMessageId, conversationId, userId, workspaceId, accountId, laterTimestamp,
       );
       expect(database.prepare(`SELECT COUNT(*) AS count FROM coach_ai_chat_answer_snapshots

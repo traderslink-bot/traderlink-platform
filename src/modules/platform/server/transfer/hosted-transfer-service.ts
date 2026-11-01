@@ -398,26 +398,28 @@ export function executeHostedTransfer(input: Readonly<{
     databasePath: input.databasePath,
     now,
   });
-  const transferRunId = createCanonicalUuidV4();
-  const timestamp = createCanonicalUtcTimestamp(now);
-  for (const moduleName of ["academy", "watchlist", "news", "affiliate"] as const) {
-    executeModule(input.database, moduleName, input.prepared, transferRunId, timestamp);
-  }
-  const reconciled = prepareHostedTransfer(
-    input.database,
-    input.prepared.sources,
-    { protectedInitialOwnerAuthSubject: input.protectedInitialOwnerAuthSubject },
-  ).preview;
-  recordReconciliation(
-    input.database,
-    input.prepared.preview,
-    reconciled,
-    transferRunId,
-    timestamp,
-  );
-  return Object.freeze({
-    status: "executed_and_reconciled" as const,
-    previewSha256: input.prepared.preview.previewSha256,
-    reconciliationSha256: reconciled.previewSha256,
-  });
+  return input.database.transaction(() => {
+    const transferRunId = createCanonicalUuidV4();
+    const timestamp = createCanonicalUtcTimestamp(now);
+    for (const moduleName of ["academy", "watchlist", "news", "affiliate"] as const) {
+      executeModule(input.database, moduleName, input.prepared, transferRunId, timestamp);
+    }
+    const reconciled = prepareHostedTransfer(
+      input.database,
+      input.prepared.sources,
+      { protectedInitialOwnerAuthSubject: input.protectedInitialOwnerAuthSubject },
+    ).preview;
+    recordReconciliation(
+      input.database,
+      input.prepared.preview,
+      reconciled,
+      transferRunId,
+      timestamp,
+    );
+    return Object.freeze({
+      status: "executed_and_reconciled" as const,
+      previewSha256: input.prepared.preview.previewSha256,
+      reconciliationSha256: reconciled.previewSha256,
+    });
+  }).immediate();
 }

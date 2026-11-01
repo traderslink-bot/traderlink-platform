@@ -1,3 +1,4 @@
+import { readBoundedRequestJson, readBoundedJournalFormData, readBoundedStatementFile, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import {
   resolveJournalOpaqueReference,
 } from "@/src/modules/journal/server/administration/journal-opaque-reference-authority";
@@ -76,7 +77,7 @@ export async function POST(
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const { importRef } = await context.params;
     const resolved = resolveImportReference(scope, importRef);
-    const data = await request.formData();
+    const data = await readBoundedJournalFormData(request);
     requireExpectedJournalAccountSelection(
       scope,
       data.get("expectedAccountSelectionRef"),
@@ -96,7 +97,7 @@ export async function POST(
           reason: "support_source_invalid",
         });
       }
-      const sourceBytes = new Uint8Array(await file.arrayBuffer());
+      const sourceBytes = await readBoundedStatementFile(file);
       if (sourceBytes.byteLength < 1 || sourceBytes.byteLength > 25 * 1024 * 1024 ||
         sourceBytes.includes(0)) {
         platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
@@ -111,6 +112,7 @@ export async function POST(
     }
     return Response.json({ status: "ready", supportConsent: safeSummary(consent) });
   } catch (error) {
+    if (error instanceof RequestBodyLimitError) return Response.json({ status: "unavailable" }, { status: 413 });
     return unavailable(error);
   }
 }
@@ -124,7 +126,7 @@ export async function DELETE(
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const { importRef } = await context.params;
     const resolved = resolveImportReference(scope, importRef);
-    const body: unknown = await request.json();
+    const body: unknown = await readBoundedRequestJson(request, 8192);
     if (!body || Array.isArray(body) || typeof body !== "object") {
       platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
         reason: "support_consent_request",
@@ -158,6 +160,7 @@ export async function DELETE(
     });
     return Response.json({ status: "ready", supportConsent: safeSummary(consent) });
   } catch (error) {
+    if (error instanceof RequestBodyLimitError) return Response.json({ status: "unavailable" }, { status: 413 });
     return unavailable(error);
   }
 }

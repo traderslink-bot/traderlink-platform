@@ -1,3 +1,4 @@
+import { readBoundedRequestText } from "@/src/modules/platform/server/http/bounded-request-body";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS_ENV =
@@ -51,7 +52,9 @@ export async function readBoundedLevelAnalysisDeliveryPayload(
     }
   }
 
-  const raw = await request.text();
+  let raw: string;
+  try { raw = await readBoundedRequestText(request, maximumBytes); }
+  catch { platformFailure("TRADERLINK_LEVEL_ANALYSIS_DELIVERY_INVALID", { reason: "payload_too_large" }); }
   if (Buffer.byteLength(raw, "utf8") > maximumBytes) {
     platformFailure("TRADERLINK_LEVEL_ANALYSIS_DELIVERY_INVALID", {
       reason: "payload_too_large",

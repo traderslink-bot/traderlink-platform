@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { randomBytes } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -37,6 +38,11 @@ function isJournalAdminReturnTo(returnTo: string): boolean {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const origin = resolvePlatformPublicOrigin(request);
+  // Forwarded host is used only for canonical routing, never for link origins or authority.
+  const incomingHost = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.host).split(",")[0].trim().toLowerCase();
+  if (process.env.NODE_ENV === "production" && incomingHost !== new URL(origin).host) {
+    return NextResponse.redirect(new URL(request.nextUrl.pathname + request.nextUrl.search, origin));
+  }
   const returnTo = normalizeDiscordAuthReturnTo(
     request.nextUrl.searchParams.get("returnTo"),
   );
@@ -62,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const config = getDiscordOAuthConfig(origin);
-    const state = (request.nextUrl.searchParams.get("connect") === "1" && request.cookies.get("tl_provider_link_method")?.value === "discord" ? "link." : "") + randomBytes(24).toString("base64url");
+    const state = (request.nextUrl.searchParams.get("connect") === "1" && request.cookies.get(platformAuthCookieName("tl_provider_link_method"))?.value === "discord" ? "link." : "") + randomBytes(24).toString("base64url");
     const response = NextResponse.redirect(
       buildDiscordAuthorizeUrl({ config, prompt, state }),
     );

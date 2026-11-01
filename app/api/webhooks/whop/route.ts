@@ -1,3 +1,4 @@
+import { readBoundedRequestText, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { loadWhopAiReviewEntitlementConfiguration } from
@@ -17,7 +18,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const configuration = loadWhopAiReviewEntitlementConfiguration();
-    const rawBody = await request.text();
+    const rawBody = await readBoundedRequestText(request, 1_000_000);
     if (Buffer.byteLength(rawBody, "utf8") > 1_000_000) {
       return NextResponse.json({ ok: false }, { status: 413 });
     }
@@ -39,9 +40,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       status: result === "conflict" ? 202 : 200,
       headers: { "Cache-Control": "no-store" },
     });
-  } catch {
+  } catch (error) {
     return NextResponse.json({ ok: false }, {
-      status: 400,
+      status: error instanceof RequestBodyLimitError ? 413 : 400,
       headers: { "Cache-Control": "no-store" },
     });
   }

@@ -1,3 +1,4 @@
+import { WATCHLIST_CONSOLE_CSP } from "@/src/modules/watchlist/server/runtime/watchlist-console-sandbox";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import {
   readWatchlistRuntimeConsoleDocument,
@@ -40,6 +41,8 @@ export async function GET(
       "cache-control": "private, no-store, max-age=0",
       "content-type": result.contentType,
       "x-content-type-options": "nosniff",
+      "content-security-policy": WATCHLIST_CONSOLE_CSP,
+      "referrer-policy": "no-referrer",
     },
     status: result.status,
   });

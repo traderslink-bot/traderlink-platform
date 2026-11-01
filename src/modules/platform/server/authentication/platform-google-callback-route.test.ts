@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "./platform-auth-cookies";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 vi.mock("server-only", () => ({}));
@@ -18,7 +19,7 @@ describe("Google callback cookies", () => {
       vi.stubEnv("TRADERLINK_PLATFORM_PUBLIC_ORIGIN", origin);
       const transaction = encodeURIComponent(JSON.stringify({ linking: false, returnTo: "/account/login" }));
       const response = await GET(new NextRequest(origin + "/api/auth/google/callback?code=synthetic", {
-        headers: { cookie: `tl_google_oauth=${transaction}` },
+        headers: { cookie: `${platformAuthCookieName("tl_google_oauth")}=${transaction}` },
       }));
       expect(response.status).toBe(307);
       expect(response.headers.get("location")).toBe(origin + "/account/login");

@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
@@ -27,7 +28,7 @@ export async function POST(
   }
 
   const { sessionId } = await params;
-  const token = request.cookies.get(TRADERLINK_PLATFORM_SESSION_COOKIE)?.value;
+  const token = request.cookies.get(platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE))?.value;
   try {
     const result = withPlatformDatabase({ mode: "runtime" }, (database) => {
       const sessions = new PlatformSessionService(

@@ -1,3 +1,6 @@
+import { readHostedSourceBackupManifest } from "@/src/modules/platform/server/transfer/hosted-source-backup-manifest";
+import { loadJournalPrivacyHmacConfiguration } from "@/src/modules/journal/server/imports/journal-import-service";
+import { readBoundedRequestJson } from "@/src/modules/platform/server/http/bounded-request-body";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -174,7 +177,7 @@ function backupPaths(): Readonly<{ backupPath: string; restorePath: string }> {
 export async function POST(request: Request): Promise<Response> {
   try {
     requireJournalAdminMutationRequest(request);
-    const expectedPreview = expectedPreviewSha256(await request.json());
+    const expectedPreview = expectedPreviewSha256(await readBoundedRequestJson(request, 8192));
     const scope = requireJournalAdminScope(request.headers);
     consumeJournalAdminRateLimit({
       category: "sensitive",
@@ -200,6 +203,10 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
+    // Source timestamps must come from signed capture evidence, never the target backup.
+    const sourceBackupCompletedAtUtcByModule = readHostedSourceBackupManifest(
+      exportDirectory(), sources, loadJournalPrivacyHmacConfiguration(),
+    );
     const paths = backupPaths();
     const backup = await createAndRestoreVerifyPlatformDatabaseBackup({
       sourcePath: databasePath,
@@ -219,9 +226,6 @@ export async function POST(request: Request): Promise<Response> {
       }
       const sourceSnapshotSha256ByModule: Readonly<Record<HostedTransferModule, string>> = Object.freeze(Object.fromEntries(
         locked.preview.modules.map((module) => [module.module, module.sourceSnapshotSha256]),
-      ) as Record<HostedTransferModule, string>);
-      const sourceBackupCompletedAtUtcByModule: Readonly<Record<HostedTransferModule, string>> = Object.freeze(Object.fromEntries(
-        locked.preview.modules.map((module) => [module.module, backup.completedAtUtc]),
       ) as Record<HostedTransferModule, string>);
       const result = executeHostedTransfer({
         database,

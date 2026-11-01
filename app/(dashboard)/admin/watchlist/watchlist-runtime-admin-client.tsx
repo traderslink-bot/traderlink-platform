@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { readWatchlistConsoleRequest, sendWatchlistConsoleRequest, watchlistMutationDescription, type WatchlistConsoleRequest } from "@/src/lib/live-watchlist/watchlist-console-bridge";
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -32,7 +33,43 @@ const MINIMUM_FRAME_HEIGHT = 900;
 
 export function WatchlistRuntimeAdminClient() {
   const frameRef = useRef<HTMLIFrameElement>(null);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const relayControllers = useRef(new Map<string, AbortController>());
+  const relayEpoch = useRef(0);
+  const relayGeneration = useRef<string | null>(null);
+  const pendingMutationRef = useRef<WatchlistConsoleRequest | null>(null);
+  const [pendingMutation, setPendingMutation] = useState<WatchlistConsoleRequest | null>(null);
+  const [mutationBusy, setMutationBusy] = useState(false);
+  const clearRelay = useCallback(() => {
+    relayEpoch.current += 1;
+    for (const controller of relayControllers.current.values()) controller.abort();
+    relayControllers.current.clear(); pendingMutationRef.current = null;
+    setPendingMutation(null); setMutationBusy(false);
+  }, []);
+  const relayReply = useCallback((id: string, result: object) => {
+    frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-relay-response", id, ...result }, "*");
+  }, []);
+  const performRelay = useCallback(async (input: WatchlistConsoleRequest) => {
+    if (relayControllers.current.size >= 12 || relayControllers.current.has(input.id)) { relayReply(input.id, { error: "The console is busy. Try again." }); return; }
+    const epoch = relayEpoch.current;
+    const controller = new AbortController(); relayControllers.current.set(input.id, controller);
+    const timeout = setTimeout(() => controller.abort(), 180000);
+    try {
+      const result = await sendWatchlistConsoleRequest(input, controller.signal);
+      if (epoch === relayEpoch.current) relayReply(input.id, result);
+    } catch {
+      if (epoch === relayEpoch.current) relayReply(input.id, { error: "The request could not be completed." });
+    } finally {
+      clearTimeout(timeout); relayControllers.current.delete(input.id);
+      if (epoch === relayEpoch.current && pendingMutationRef.current?.id === input.id) {
+        pendingMutationRef.current = null; setPendingMutation(null); setMutationBusy(false);
+      }
+    }
+  }, [relayReply]);
+  const cancelMutation = useCallback(() => {
+    const input = pendingMutationRef.current;
+    if (input) { relayControllers.current.get(input.id)?.abort(); relayReply(input.id, { error: "Change cancelled." }); }
+    pendingMutationRef.current = null; setPendingMutation(null); setMutationBusy(false);
+  }, [relayReply]);
   const [height, setHeight] = useState(MINIMUM_FRAME_HEIGHT);
   const [selectedSection, setSelectedSection] = useState<"runtime" | "usage" | "recaps" | "indicator-audit" | "setups">("runtime");
   const [runtimeSection, setRuntimeSection] = useState<string>("watchlist");
@@ -44,10 +81,10 @@ export function WatchlistRuntimeAdminClient() {
   const selectRuntimeSection = useCallback((section: string) => {
     if (!RUNTIME_SECTIONS.some(([id]) => id === section)) return;
     runtimeSectionRef.current = section; setRuntimeSection(section); setSelectedSection("runtime");
-    frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section }, window.location.origin);
+    frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section }, "*");
   }, []);
   const syncNavigation = useCallback(() => {
-    frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section: runtimeSectionRef.current }, window.location.origin);
+    frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-admin-wrapper", type: "select-section", section: runtimeSectionRef.current }, "*");
   }, []);
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
   const [historyRequest, setHistoryRequest] = useState<{symbol:string;cycleId:string} | null>(null);
@@ -58,27 +95,9 @@ export function WatchlistRuntimeAdminClient() {
     card: LiveWatchlistCardContent; dipBuyPlanVisible: boolean;
   } | null>(null);
 
-  const resizeFrame = useCallback(() => {
-    const frameDocument = frameRef.current?.contentDocument;
-    if (!frameDocument) return;
-    setHeight(Math.max(
-      MINIMUM_FRAME_HEIGHT,
-      frameDocument.body?.scrollHeight ?? 0,
-      frameDocument.documentElement?.scrollHeight ?? 0,
-    ));
-  }, []);
-
   const handleLoad = useCallback(() => {
     syncNavigation();
-    resizeObserverRef.current?.disconnect();
-    resizeFrame();
-    const frameDocument = frameRef.current?.contentDocument;
-    if (!frameDocument) return;
-    const observer = new ResizeObserver(resizeFrame);
-    observer.observe(frameDocument.documentElement);
-    if (frameDocument.body) observer.observe(frameDocument.body);
-    resizeObserverRef.current = observer;
-  }, [resizeFrame, syncNavigation]);
+  }, [syncNavigation]);
 
   const selectUsage = useCallback(() => {
     setUsageOpened(true);
@@ -89,14 +108,37 @@ export function WatchlistRuntimeAdminClient() {
     });
   }, []);
 
-  useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
+  useEffect(() => {
+    const controllers = relayControllers.current;
+    return () => { relayEpoch.current += 1; for (const controller of controllers.values()) controller.abort(); controllers.clear(); };
+  }, []);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent<unknown>) => {
-      if (event.origin !== window.location.origin || event.source !== frameRef.current?.contentWindow) return;
+      if (event.origin !== "null" || event.source !== frameRef.current?.contentWindow) return;
       if (!event.data || typeof event.data !== "object") return;
-      const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown; cycleId?:unknown };
+      const relay = event.data as { source?: unknown; type?: unknown; id?: unknown; generation?: unknown };
+      if (relay.source === "traderslink-watchlist-relay") {
+        if (relay.type === "initialize" && typeof relay.generation === "string" && /^[a-f0-9-]{36}$/u.test(relay.generation)) {
+          clearRelay(); relayGeneration.current = relay.generation; return;
+        }
+        if (!relayGeneration.current || typeof relay.id !== "string" || !relay.id.startsWith(relayGeneration.current + "-")) return;
+        if (relay.type === "cancel" && typeof relay.id === "string") {
+          relayControllers.current.get(relay.id)?.abort();
+          if (pendingMutationRef.current?.id === relay.id) cancelMutation();
+          return;
+        }
+        const input = relay.type === "request" ? readWatchlistConsoleRequest(event.data, window.location.origin) : null;
+        if (!input) { if (typeof relay.id === "string" && relay.id.length <= 80) relayReply(relay.id, { error: "This console request is not allowed." }); return; }
+        if (input.method === "POST") {
+          if (pendingMutationRef.current) { relayReply(input.id, { error: "Review the pending change first." }); return; }
+          pendingMutationRef.current = input; setPendingMutation(input);
+        } else void performRelay(input);
+        return;
+      }
+      const message = event.data as { source?: unknown; type?: unknown; height?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown; cycleId?:unknown };
       if (message.source !== "traderslink-watchlist-admin") return;
+      if (message.type === "frame-height" && typeof message.height === "number" && Number.isFinite(message.height)) { setHeight(Math.min(20000, Math.max(MINIMUM_FRAME_HEIGHT, message.height))); return; }
       if (message.type === "navigation-ready") { syncNavigation(); return; }
       if (message.type === "previous-analyses" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol) && typeof message.cycleId==="string" && message.cycleId.length>0 && message.cycleId.length<=200) { setHistoryRequest({symbol:message.symbol,cycleId:message.cycleId}); return; }
       if (message.type === "gain-starting-point" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainStartSymbol(message.symbol); return; }
@@ -112,15 +154,27 @@ export function WatchlistRuntimeAdminClient() {
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [selectUsage, selectRecaps, syncNavigation]);
+  }, [selectUsage, selectRecaps, syncNavigation, cancelMutation, relayReply, performRelay, clearRelay]);
 
   return (
     <>
+      <Dialog open={pendingMutation !== null} onClose={mutationBusy ? undefined : cancelMutation} fullWidth maxWidth="sm" aria-labelledby="watchlist-confirm-change-title">
+        <DialogTitle id="watchlist-confirm-change-title">Confirm Watchlist change</DialogTitle>
+        <DialogContent>
+          <Box component="p">Review this change requested by the embedded Watchlist console before sending it.</Box>
+          <Box component="p" sx={{ fontWeight: 700 }}>{pendingMutation ? watchlistMutationDescription(pendingMutation) : ""}</Box>
+          <Box component="pre" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", maxHeight: 320, overflow: "auto", bgcolor: "background.default", p: 2, borderRadius: 1 }}>{pendingMutation?.body ?? "No additional values."}</Box>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={mutationBusy} onClick={cancelMutation}>Cancel</Button>
+          <Button variant="contained" disabled={mutationBusy || pendingMutation === null} onClick={() => { const input = pendingMutation; if (input && pendingMutationRef.current === input) { setMutationBusy(true); void performRelay(input); } }}>{mutationBusy ? "Sending…" : "Confirm change"}</Button>
+        </DialogActions>
+      </Dialog>
       {historyRequest && <PreviousAnalyses key={historyRequest.cycleId} symbol={historyRequest.symbol} expectedCycleId={historyRequest.cycleId} onClose={() => setHistoryRequest(null)} />}
       {gainStartSymbol && <GainStartingPoint key={gainStartSymbol} symbol={gainStartSymbol} onClose={() => setGainStartSymbol(null)} />}
       {gainPostSymbol && <PotentialGainPost key={gainPostSymbol} symbol={gainPostSymbol} onClose={() => setGainPostSymbol(null)} />}
       {lossPostSymbol && <ManualLossPost key={lossPostSymbol} symbol={lossPostSymbol} onClose={() => setLossPostSymbol(null)} />}
-      {editingSymbol && <WatchlistAnalysisEditor key={editingSymbol} symbol={editingSymbol} onClose={() => setEditingSymbol(null)} onSaved={() => frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-editor", type: "saved" }, window.location.origin)} />}
+      {editingSymbol && <WatchlistAnalysisEditor key={editingSymbol} symbol={editingSymbol} onClose={() => setEditingSymbol(null)} onSaved={() => frameRef.current?.contentWindow?.postMessage({ source: "traderslink-watchlist-editor", type: "saved" }, "*")} />}
       <Dialog open={analysisPreview !== null} onClose={() => setAnalysisPreview(null)} fullWidth maxWidth="lg" aria-labelledby="analysis-preview-title">
         <DialogTitle id="analysis-preview-title">Website analysis preview</DialogTitle>
         <DialogContent>
@@ -144,6 +198,8 @@ export function WatchlistRuntimeAdminClient() {
       <Box
         aria-hidden={selectedSection !== "runtime"}
         component="iframe"
+        sandbox="allow-scripts"
+        referrerPolicy="no-referrer"
         onLoad={handleLoad}
         ref={frameRef}
         src="/api/admin/watchlist/console"

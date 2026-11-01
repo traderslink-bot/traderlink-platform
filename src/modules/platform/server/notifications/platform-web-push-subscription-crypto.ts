@@ -97,7 +97,13 @@ export function normalizePlatformWebPushEndpoint(value: unknown): string {
   }
   if (
     endpoint.protocol !== "https:" || endpoint.username || endpoint.password ||
-    endpoint.hash || endpoint.href !== value
+    endpoint.hash || endpoint.port || endpoint.href !== value ||
+    !(
+      endpoint.hostname === "fcm.googleapis.com" ||
+      endpoint.hostname === "updates.push.services.mozilla.com" ||
+      /^[a-z0-9-]+\.push\.apple\.com$/u.test(endpoint.hostname) ||
+      /^[a-z0-9-]+\.notify\.windows\.com$/u.test(endpoint.hostname)
+    )
   ) {
     failure();
   }

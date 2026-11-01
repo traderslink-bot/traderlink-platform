@@ -18,12 +18,13 @@ export function resolvePlatformPublicOrigin(request: NextRequest): string {
   if (process.env.NODE_ENV !== "production") return request.nextUrl.origin;
   const configuredCallback = process.env.DISCORD_REDIRECT_URI;
   if (!configuredCallback) {
-    return request.nextUrl.origin;
+    throw new Error("Platform public origin is required in production");
   }
 
-  try {
-    return new URL(configuredCallback).origin;
-  } catch {
-    return request.nextUrl.origin;
+  const callback = new URL(configuredCallback);
+  if (callback.protocol !== "https:" || callback.username || callback.password ||
+      callback.pathname !== "/api/auth/discord/callback" || callback.search || callback.hash) {
+    throw new Error("Invalid Platform Discord callback origin");
   }
+  return callback.origin;
 }

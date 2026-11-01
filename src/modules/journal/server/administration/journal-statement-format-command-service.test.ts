@@ -174,15 +174,15 @@ describe("Journal statement format commands", () => {
       }).replayed).toBe(true);
       expect(database.prepare(`SELECT completed_download_count, revision
 FROM journal_statement_support_consents`).get()).toEqual({
-        completed_download_count: 1,
-        revision: 2,
+        completed_download_count: 2,
+        revision: 3,
       });
       expect(database.prepare(`SELECT COUNT(*) AS count
-FROM journal_statement_support_consent_events`).get()).toEqual({ count: 3 });
+FROM journal_statement_support_consent_events`).get()).toEqual({ count: 5 });
       expect(database.prepare(`SELECT COUNT(*) AS count
 FROM platform_admin_audit_events
 WHERE action = 'consented_source_downloaded' AND outcome = 'success'`).get())
-        .toEqual({ count: 1 });
+        .toEqual({ count: 2 });
     } finally {
       database.close();
     }
@@ -227,7 +227,7 @@ WHERE action = 'consented_source_downloaded' AND outcome = 'success'`).get())
       }).replayed).toBe(true);
       expect(database.prepare(`SELECT COUNT(*) AS count
 FROM platform_admin_audit_events
-WHERE action = 'developer_package_created'`).get()).toEqual({ count: 1 });
+WHERE action = 'developer_package_created'`).get()).toEqual({ count: 2 });
     } finally {
       database.close();
     }

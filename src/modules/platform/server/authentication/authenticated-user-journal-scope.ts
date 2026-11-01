@@ -32,7 +32,8 @@ FROM platform_workspaces WHERE workspace_id = ?`)
       check: "active_workspace",
     });
   }
-  const accounts = new JournalAccountRepository(database)
+  // Until per-account member grants exist, match the canonical role-aware scope.
+  const accounts = membership.role === "member" ? [] : new JournalAccountRepository(database)
     .listActiveAccounts(membership.workspaceId);
   if (accounts.length === 0) {
     return Object.freeze({

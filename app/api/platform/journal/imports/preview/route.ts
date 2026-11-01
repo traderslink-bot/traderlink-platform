@@ -1,3 +1,4 @@
+import { readBoundedJournalFormData, readBoundedStatementFile, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import {
   previewJournalGenericMappedUpload,
@@ -82,7 +83,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
     scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.imports"] });
-    const data = await request.formData();
+    const data = await readBoundedJournalFormData(request);
     const file = data.get("statement");
     const sourceTimezone = data.get("sourceTimezone");
     const brokerName = data.get("brokerName");
@@ -116,7 +117,7 @@ export async function POST(request: Request): Promise<Response> {
         { status: 415 },
       );
     }
-    const sourceBytes = new Uint8Array(await file.arrayBuffer());
+    const sourceBytes = await readBoundedStatementFile(file);
     if (
       sourceBytes.byteLength < 1 ||
       sourceBytes.byteLength > 25 * 1024 * 1024 ||
@@ -261,6 +262,7 @@ export async function POST(request: Request): Promise<Response> {
       }, { status: 422 });
     }
   } catch (error) {
+    if (error instanceof RequestBodyLimitError) return Response.json({ status: "unavailable" }, { status: 413 });
     if (scope && attemptContext) {
       try {
         failJournalImportAttempt(scope, attemptContext, "system_failure");

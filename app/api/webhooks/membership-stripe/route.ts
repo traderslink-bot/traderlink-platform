@@ -1,3 +1,4 @@
+import { readBoundedRequestText, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { recordMembershipWebhookFailure } from "@/src/modules/platform/server/membership/platform-membership-webhook-health";
 import { verifyMembershipStripeEvent, hydrateMembershipStripeEvent, applyMembershipStripeEvent } from "@/src/modules/platform/server/membership/platform-membership-stripe";
@@ -6,7 +7,9 @@ export const runtime = "nodejs";
 export async function POST(request: Request): Promise<Response> {
   const secret = process.env.STRIPE_MEMBERSHIP_WEBHOOK_SECRET;
   if (!secret) return Response.json({ ok: false }, { status: 503 });
-  const raw = await request.text();
+  let raw: string;
+  try { raw = await readBoundedRequestText(request, 1_000_000); }
+  catch (error) { return Response.json({ ok: false }, { status: error instanceof RequestBodyLimitError ? 413 : 400 }); }
   if (Buffer.byteLength(raw) > 1_000_000) return Response.json({ ok: false }, { status: 413 });
   let event: Record<string, unknown>;
   try { event = verifyMembershipStripeEvent(raw, request.headers.get("stripe-signature") ?? "", secret); }

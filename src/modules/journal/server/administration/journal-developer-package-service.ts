@@ -342,7 +342,8 @@ WHERE actor_user_id = ? AND action = 'developer_package_created'
         targetDigest(input.candidateId),
         input.correlationRefSha256,
       )?.found === 1;
-      if (!replay) {
+      {
+        // Reused correlation IDs must not suppress an actual package disclosure.
         new PlatformAdminAuditRepository(this.input.database).append({
           actorKind: "platform_user",
           actorUserId: this.input.scope.userId,

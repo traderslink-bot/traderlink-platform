@@ -1,3 +1,4 @@
+import { readBoundedRequestJson, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import type { CandleReviewRecord } from "@/src/modules/level-analysis/contracts/candle-review-contracts";
@@ -34,11 +35,14 @@ function responseFor(
 }
 
 export async function POST(request: Request): Promise<Response> {
+  let scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>;
+  try { scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] }); }
+  catch (error) { return membershipFeatureDeniedResponse(error) ?? unavailable("Sign in to continue.", 401); }
   let body: unknown;
   try {
-    body = await request.json();
-  } catch {
-    return unavailable("Choose a completed trade to analyze.", 400);
+    body = await readBoundedRequestJson(request, 8 * 1024);
+  } catch (error) {
+    return unavailable("Choose a completed trade to analyze.", error instanceof RequestBodyLimitError ? 413 : 400);
   }
   const value = body && typeof body === "object" && !Array.isArray(body)
     ? body as Record<string, unknown>
@@ -54,7 +58,6 @@ export async function POST(request: Request): Promise<Response> {
 
   let database: ReturnType<typeof openPlatformDatabase> | null = null;
   try {
-    const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.access"] });
     requireExpectedJournalAccountSelection(scope, expectedAccountSelectionRef);
     if (!scope.activeAccountId) return unavailable("Select a Journal account.", 409);
     const accountScope = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);

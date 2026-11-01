@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!isSameOriginPlatformSignOutRequest(request)) {
     return NextResponse.json({ error: "Sign-out request denied." }, { status: 403 });
   }
-  const token = request.cookies.get(TRADERLINK_PLATFORM_SESSION_COOKIE)?.value;
+  const token = request.cookies.get(platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE))?.value;
   try {
     withPlatformDatabase({ mode: "runtime" }, (database) => {
       const sessions = new PlatformSessionService(

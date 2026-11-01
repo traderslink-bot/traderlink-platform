@@ -1,3 +1,4 @@
+import { readBoundedRequestJson } from "@/src/modules/platform/server/http/bounded-request-body";
 import { JournalConsentedSourceDownloadService } from "@/src/modules/journal/server/administration/journal-consented-source-download-service";
 import { createJournalAdminReadContext, resolveJournalAdminInternalId } from "@/src/modules/journal/server/administration/journal-admin-read-helpers";
 import {
@@ -27,7 +28,7 @@ export async function POST(
 ): Promise<Response> {
   try {
     requireJournalAdminMutationRequest(request);
-    const [body, { importRef }] = await Promise.all([request.json(), context.params]);
+    const [body, { importRef }] = await Promise.all([readBoundedRequestJson(request, 8192), context.params]);
     if (!isRecord(body)) platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
     const reasonCode = parseJournalAdminSensitiveAccessReason(body.reasonCode);
     return withJournalAdminRequest(request, (database, scope) => {

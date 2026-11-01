@@ -1,3 +1,4 @@
+import { readBoundedJournalFormData, readBoundedStatementFile, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import {
   commitJournalGenericMappedUpload,
@@ -28,7 +29,7 @@ export async function POST(request: Request): Promise<Response> {
     requireJournalMutationRequest(request);
     const requestScope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.imports"] });
     scope = requestScope;
-    const data = await request.formData();
+    const data = await readBoundedJournalFormData(request);
     const file = data.get("statement");
     const sourceTimezone = data.get("sourceTimezone");
     const previewRef = data.get("previewRef");
@@ -75,7 +76,7 @@ export async function POST(request: Request): Promise<Response> {
       requestScope,
       attemptIdempotencyRef,
     );
-    const sourceBytes = new Uint8Array(await file.arrayBuffer());
+    const sourceBytes = await readBoundedStatementFile(file);
     if (
       sourceBytes.byteLength < 1 ||
       sourceBytes.byteLength > 25 * 1024 * 1024 ||
@@ -138,6 +139,7 @@ export async function POST(request: Request): Promise<Response> {
     }
     return Response.json({ status: "ready", result });
   } catch (error) {
+    if (error instanceof RequestBodyLimitError) return Response.json({ status: "unavailable" }, { status: 413 });
     const denied = membershipFeatureDeniedResponse(error);
     if (denied) return denied;
     if (scope && attemptIdempotencyRef) {

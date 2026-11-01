@@ -1,6 +1,7 @@
 import "server-only";
 
 import * as webPush from "web-push";
+import { normalizePlatformWebPushEndpoint } from "./platform-web-push-subscription-crypto";
 
 import { createCanonicalUtcTimestamp } from "../database/platform-migration-contract";
 import type { PlatformWebPushConfiguration } from "./platform-web-push-configuration";
@@ -62,7 +63,8 @@ export class PlatformWebPushDeliveryService {
     try {
       await webPush.sendNotification(
         {
-          endpoint: delivery.subscription.endpoint,
+          // Revalidate persisted subscriptions too, including pre-fix entries.
+          endpoint: normalizePlatformWebPushEndpoint(delivery.subscription.endpoint),
           expirationTime: delivery.subscription.expirationTime,
           keys: delivery.subscription.keys,
         },

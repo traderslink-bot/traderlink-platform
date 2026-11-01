@@ -169,7 +169,7 @@ describe("CoachAiChatAnnotationContextService", () => {
     expect(() => service.ruleResults(scope, accountId, {
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
       toolName: "get_trading_rule_results",
-      startDate: "2020-01-01",
+      startDate: "2026-01-01",
       endDate: "2026-08-05",
     })).toThrow();
     expect(() => service.listRules(scope,

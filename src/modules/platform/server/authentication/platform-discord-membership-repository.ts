@@ -182,6 +182,20 @@ WHERE user_id = ? AND guild_id = ?`)
     return row ? mapMembership(row) : null;
   }
 
+  /** Effective ordinary-session evidence; historical snapshots remain available separately. */
+  findEffective(userId: string, guildId: string, now: Date, maximumAgeMs: number): PlatformDiscordMembership | null {
+    const membership = this.findCurrent(userId, guildId);
+    if (!membership) return null;
+    const age = now.getTime() - Date.parse(membership.lastVerifiedAtUtc);
+    if (!Number.isFinite(age) || age < 0 || age > maximumAgeMs) return null;
+    const absent = this.database.prepare<[string, string, string], { found: number }>(`SELECT 1 AS found
+FROM platform_membership_audit_events
+WHERE subject_user_id=? AND target_type='discord_membership' AND target_id=?
+ AND action='discord.membership.absent' AND occurred_at_utc>=? LIMIT 1`)
+      .get(userId, guildId, membership.lastVerifiedAtUtc);
+    return absent ? null : membership;
+  }
+
   listCurrentForUser(userId: string): readonly PlatformDiscordMembership[] {
     assertCanonicalUuidV4(userId, "userId");
     return Object.freeze(

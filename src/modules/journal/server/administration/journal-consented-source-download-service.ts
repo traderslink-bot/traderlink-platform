@@ -318,7 +318,7 @@ WHERE actor_user_id = ? AND action = 'consented_source_downloaded'
         targetDigest(input.kind, input.internalId),
         input.correlationRefSha256,
       )?.found === 1;
-      if (replay) return true;
+      // Every release of private bytes is a distinct audited disclosure.
       const auditEventId = this.appendAudit({
         ...input,
         accessReason: input.reasonCode,
@@ -362,7 +362,7 @@ WHERE support_consent_id = ? AND user_id = ? AND workspace_id = ?
         reasonCode: input.reasonCode,
         timestamp: input.timestamp,
       });
-      return false;
+      return replay;
     };
     const replayed = this.input.database.inTransaction
       ? operation()

@@ -67,7 +67,7 @@ export function proxy(request: NextRequest): NextResponse {
   if (
     request.method === "GET" && pathname === "/" &&
     requestHostname(request) === dashboardHostname &&
-    Boolean(request.cookies.get("tl_platform_session")?.value)
+    Boolean(request.cookies.get(process.env.NODE_ENV === "production" ? "__Host-tl_platform_session" : "tl_platform_session")?.value)
   ) {
     const response = NextResponse.redirect(
       new URL("/dashboard-entry", `https://${dashboardHostname}`), 307,

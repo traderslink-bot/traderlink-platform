@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   finishGoogleLogin,
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   let response: NextResponse;
   try {
     const transaction = JSON.parse(
-      request.cookies.get("tl_google_oauth")?.value ?? "null",
+      request.cookies.get(platformAuthCookieName("tl_google_oauth"))?.value ?? "null",
     ) as GoogleLoginTransaction;
     const url = new URL(
       request.nextUrl.pathname + request.nextUrl.search,
@@ -32,8 +33,8 @@ export async function GET(request: NextRequest) {
     const facts = await finishGoogleLogin(url, transaction);
     const linkIntent =
       transaction.linking === true &&
-      request.cookies.get("tl_provider_link_method")?.value === "google"
-        ? request.cookies.get("tl_provider_link")?.value
+      request.cookies.get(platformAuthCookieName("tl_provider_link_method"))?.value === "google"
+        ? request.cookies.get(platformAuthCookieName("tl_provider_link"))?.value
         : null;
     if (transaction.linking && !linkIntent)
       throw new PlatformLoginError("invalid");

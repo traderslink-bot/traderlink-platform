@@ -1,5 +1,7 @@
 "use server";
 
+import { escapeDiscordAnnouncementTitle } from "@/src/modules/community/server/community-discord-text";
+
 import { revalidatePath } from "next/cache";
 
 import type { CreateCommunityWatchlistInput } from "@/src/modules/community/contracts/community-watchlist-contracts";
@@ -66,7 +68,7 @@ async function deliverDiscordAnnouncement(publicationId: string): Promise<boolea
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         allowed_mentions: { parse: [] },
-        content: `@${publication.profile_handle} shared a watchlist\n\n${publication.watchlist_title}\n${publication.symbol_count} symbols\n\nView watchlist -> ${origin}/community/${publication.profile_handle}/watchlists/${publication.watchlist_slug}`,
+        content: `@${publication.profile_handle} shared a watchlist\n\n${escapeDiscordAnnouncementTitle(publication.watchlist_title)}\n${publication.symbol_count} symbols\n\nView watchlist -> ${origin}/community/${publication.profile_handle}/watchlists/${publication.watchlist_slug}`,
       }),
     });
     if (!response.ok) throw new Error("discord_delivery_failed");

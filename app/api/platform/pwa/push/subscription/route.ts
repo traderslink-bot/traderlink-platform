@@ -1,3 +1,4 @@
+import { readBoundedRequestText } from "@/src/modules/platform/server/http/bounded-request-body";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -30,7 +31,7 @@ async function body(request: Request): Promise<SubscriptionMutation> {
   if (Number.isFinite(length) && length > 20_000) {
     throw new Error("push_request_too_large");
   }
-  const raw = await request.text();
+  const raw = await readBoundedRequestText(request, 20_000);
   if (raw.length < 2 || raw.length > 20_000) throw new Error("push_request_invalid");
   const parsed: unknown = JSON.parse(raw);
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("push_request_invalid");

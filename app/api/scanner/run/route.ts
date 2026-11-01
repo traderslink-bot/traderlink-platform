@@ -4,6 +4,7 @@ import { SCANNER_FILTER_IDS, type ScannerFilterId, type ScannerRunRequest, type 
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { readBoundedRequestJson, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,13 +15,13 @@ const sorts = new Set<ScannerSort>(["daily-change", "average-volume", "market-ca
 function parse(body: unknown): ScannerRunRequest | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   const value = body as Record<string, unknown>;
-  if (!Array.isArray(value.filters) || !sorts.has(value.sortBy as ScannerSort) || ![25, 50, 100].includes(value.limit as number)) return null;
+  if (!Array.isArray(value.filters) || value.filters.length > SCANNER_FILTER_IDS.length || !sorts.has(value.sortBy as ScannerSort) || ![25, 50, 100].includes(value.limit as number)) return null;
   const filters = value.filters.flatMap((candidate) => {
     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return [];
     const filter = candidate as Record<string, unknown>;
     if (!filterIds.has(filter.id as string)) return [];
     const strings = ["lower", "upper", "choice", "averageType", "averageLength", "period", "timeframe"] as const;
-    if (strings.some((key) => filter[key] !== undefined && typeof filter[key] !== "string") || ["lowerInclusive", "upperInclusive"].some((key) => filter[key] !== undefined && typeof filter[key] !== "boolean")) return [];
+    if (strings.some((key) => filter[key] !== undefined && (typeof filter[key] !== "string" || (filter[key] as string).length > 128)) || ["lowerInclusive", "upperInclusive"].some((key) => filter[key] !== undefined && typeof filter[key] !== "boolean")) return [];
     return [{
       id: filter.id as ScannerFilterId,
       lower: filter.lower as string | undefined,
@@ -39,19 +40,21 @@ function parse(body: unknown): ScannerRunRequest | null {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  let body: unknown;
-  try { body = await request.json(); } catch { return Response.json({ code: "invalid_request" }, { status: 400 }); }
-  const input = parse(body);
-  if (!input) return Response.json({ code: "invalid_request" }, { status: 400 });
-  const database = openPlatformDatabase({ mode: "runtime" });
+  let database: ReturnType<typeof openPlatformDatabase> | null = null;
   try {
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
     if (!hasScannerEarlyAccess(identity)) return Response.json({ code: "not_found" }, { status: 404 });
+    let body: unknown;
+    try { body = await readBoundedRequestJson(request, 32 * 1024); }
+    catch (error) { return Response.json({ code: "invalid_request" }, { status: error instanceof RequestBodyLimitError ? 413 : 400 }); }
+    const input = parse(body);
+    if (!input) return Response.json({ code: "invalid_request" }, { status: 400 });
+    database = openPlatformDatabase({ mode: "runtime" });
     const result = await new MoomooStockScreenService(new MoomooConnectionRepository(database)).run(identity.scope, input);
     return Response.json(result, { headers: { "cache-control": "private, no-store, max-age=0" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "scanner_provider_unavailable";
     const code = ["scanner_connection_required", "scanner_filter_limit"].includes(message) ? message : "scanner_provider_unavailable";
     return Response.json({ code }, { status: code === "scanner_connection_required" ? 409 : 503 });
-  } finally { database.close(); }
+  } finally { database?.close(); }
 }

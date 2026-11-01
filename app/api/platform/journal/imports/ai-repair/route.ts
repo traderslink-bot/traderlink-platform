@@ -1,3 +1,4 @@
+import { readBoundedJournalFormData, readBoundedStatementFile, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import { membershipFeatureDeniedResponse } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -18,14 +19,14 @@ export async function POST(request: Request): Promise<Response> {
   try {
     requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers, { membershipFeatures: ["journal.imports"] });
-    const data = await request.formData();
+    const data = await readBoundedJournalFormData(request);
     const importRef = data.get("importRef");
     const file = data.get("statement");
     const discordCompletionRequested = data.get("discordCompletionRequested") === "yes";
     if (!(file instanceof File) || typeof importRef !== "string") {
       return Response.json({ status: "unavailable" }, { status: 400 });
     }
-    const sourceBytes = new Uint8Array(await file.arrayBuffer());
+    const sourceBytes = await readBoundedStatementFile(file);
     const importAttemptId = resolveJournalOpaqueReference({
       configuration: loadJournalPrivacyHmacConfiguration(), scope,
       kind: "import_attempt", reference: importRef,
@@ -61,6 +62,7 @@ export async function POST(request: Request): Promise<Response> {
     }
     return Response.json({ status: "queued", repairJobRef: job.repairJobId });
   } catch (error) {
+    if (error instanceof RequestBodyLimitError) return Response.json({ status: "unavailable" }, { status: 413 });
     const denied = membershipFeatureDeniedResponse(error);
     if (denied) return denied;
     const code = isTraderLinkPlatformError(error)

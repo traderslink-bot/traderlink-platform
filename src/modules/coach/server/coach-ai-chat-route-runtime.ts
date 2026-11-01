@@ -1,3 +1,4 @@
+import { readBoundedRequestText } from "@/src/modules/platform/server/http/bounded-request-body";
 import { Buffer } from "node:buffer";
 import { isMembershipAccessDenied, MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { createHash } from "node:crypto";
@@ -185,7 +186,7 @@ export async function parseJsonBody(request: Request): Promise<Record<string, un
   }
   let text: string;
   try {
-    text = await request.text();
+    text = await readBoundedRequestText(request, MAX_JSON_BODY_BYTES);
   } catch {
     invalidRequest("body");
   }

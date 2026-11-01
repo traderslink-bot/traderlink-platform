@@ -130,3 +130,15 @@ describe("Journal mapping support package", () => {
     });
   });
 });
+
+describe("bounded statement structure inspection", () => {
+  it.each(["fields", "records", "field_size"])("withholds an oversized %s profile without exporting source values", (variant) => {
+    const text = variant === "fields" ? ",".repeat(4097) : variant === "records" ? "a,b\n".repeat(100001) : "Column,Value\n" + "x".repeat(1024 * 1024 + 1);
+    const result = createJournalMappingSupportPackage({ sourceBytes: Buffer.from(text), brokerName: "Example", failureCode: "none" });
+    expect(result.tables).toEqual([]); expect(result.failureCode).toBe("TRADERLINK_JOURNAL_MAPPING_INSPECTION_FAILED");
+  });
+  it("profiles section data with repeated headings boundedly", () => {
+    const result = createJournalMappingSupportPackage({ sourceBytes: Buffer.from("Trades,Header,Symbol,Price\nTrades,Data,ABCD,1\nTrades,Header,Symbol,Price"), brokerName: "Example", failureCode: "none" });
+    expect(result.tables[0].dataRowCount).toBe(1); expect(result.tables[0].columns[0].nonEmptyCount).toBe(1);
+  });
+});

@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "./platform-auth-cookies";
 import "server-only";
 
 import { headers as nextHeaders } from "next/headers";
@@ -21,6 +22,7 @@ import { PlatformSessionRepository } from "./platform-session-repository";
 import {
   PlatformSessionService,
   TRADERLINK_PLATFORM_SESSION_COOKIE,
+  TRADERLINK_PLATFORM_SESSION_TTL_MS,
 } from "./platform-session-service";
 import { hasPlatformDiscordPremiumAccess } from "../../../watchlist/server/access/platform-discord-watchlist-entitlement";
 import {
@@ -226,7 +228,7 @@ function resolveTraderLinkPlatformRequestIdentity(
   }
   const token = readSingleCookie(
     requestHeaders,
-    TRADERLINK_PLATFORM_SESSION_COOKIE,
+    platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE),
   );
   if (!token) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   timing.next("runtime_open");
@@ -244,9 +246,11 @@ function resolveTraderLinkPlatformRequestIdentity(
       timing.next("membership");
       const discordConnected = Boolean(database.prepare("SELECT 1 FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").get(session.userId));
       const membership = discordConnected ? new PlatformDiscordMembershipRepository(database)
-        .findCurrent(
+        .findEffective(
           session.userId,
           resolveTraderLinkDiscordGuildId(environment),
+          options.now?.() ?? new Date(),
+          TRADERLINK_PLATFORM_SESSION_TTL_MS,
         ) : null;
       const membershipDashboardAccess = hasPlatformMembershipFeature(
         database,

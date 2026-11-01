@@ -10,14 +10,8 @@ type CookieOptions = Readonly<{
   secure: boolean;
 }>;
 
-function cookieOptions(request: NextRequest, maxAge?: number): CookieOptions {
-  const hostname = new URL(resolvePlatformPublicOrigin(request)).hostname.toLowerCase();
-  const domain = hostname === "traderslink.pro" ||
-      hostname.endsWith(".traderslink.pro")
-    ? TRADERSLINK_COOKIE_DOMAIN
-    : undefined;
+function cookieOptions(maxAge?: number): CookieOptions {
   return Object.freeze({
-    ...(domain ? { domain } : {}),
     ...(maxAge === undefined ? {} : { maxAge }),
     secure: process.env.NODE_ENV === "production",
   });
@@ -47,14 +41,9 @@ export function setPlatformSessionAuthCookie(
   name: string,
   value: string,
 ): void {
-  const options = cookieOptions(request);
-  appendCookie(response, name, value, options);
-  if (options.domain) {
-    appendCookie(response, name, "", {
-      maxAge: 0,
-      secure: options.secure,
-    });
-  }
+  const options = cookieOptions();
+  appendCookie(response, platformAuthCookieName(name), value, options);
+  clearLegacyCookie(response, request, name, options.secure);
 }
 
 export function setPlatformAuthCookie(
@@ -64,14 +53,9 @@ export function setPlatformAuthCookie(
   value: string,
   maxAge: number,
 ): void {
-  const options = cookieOptions(request, maxAge);
-  appendCookie(response, name, value, options);
-  if (options.domain) {
-    appendCookie(response, name, "", {
-      maxAge: 0,
-      secure: options.secure,
-    });
-  }
+  const options = cookieOptions(maxAge);
+  appendCookie(response, platformAuthCookieName(name), value, options);
+  clearLegacyCookie(response, request, name, options.secure);
 }
 
 export function deletePlatformAuthCookie(
@@ -79,12 +63,21 @@ export function deletePlatformAuthCookie(
   request: NextRequest,
   name: string,
 ): void {
-  const options = cookieOptions(request, 0);
-  appendCookie(response, name, "", options);
-  if (options.domain) {
-    appendCookie(response, name, "", {
-      maxAge: 0,
-      secure: options.secure,
-    });
+  const options = cookieOptions(0);
+  appendCookie(response, platformAuthCookieName(name), "", options);
+  clearLegacyCookie(response, request, name, options.secure);
+}
+
+export function platformAuthCookieName(name: string): string {
+  return process.env.NODE_ENV === "production" && !name.startsWith("__Host-") ? `__Host-${name}` : name;
+}
+
+function clearLegacyCookie(response: NextResponse, request: NextRequest, name: string, secure: boolean): void {
+  if (process.env.NODE_ENV !== "production") return;
+  const legacy = name.replace(/^__Host-/u, "");
+  appendCookie(response, legacy, "", { maxAge: 0, secure });
+  const hostname = new URL(resolvePlatformPublicOrigin(request)).hostname.toLowerCase();
+  if (hostname === "traderslink.pro" || hostname.endsWith(".traderslink.pro")) {
+    appendCookie(response, legacy, "", { maxAge: 0, secure, domain: TRADERSLINK_COOKIE_DOMAIN });
   }
 }

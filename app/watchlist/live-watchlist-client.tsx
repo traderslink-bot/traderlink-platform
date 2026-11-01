@@ -1,5 +1,4 @@
 "use client";
-import { upsidePresentation } from '@/src/lib/live-watchlist/watchlist-upside-coverage';
 
 import { analysisPullbacks } from "@/src/lib/live-watchlist/owner-analysis-pullbacks";
 import { AnalysisTraderNotes } from "./analysis-trader-notes";
@@ -510,7 +509,7 @@ export function TradersLinkAiReadCard({
   traderNotes?: string | null;
   card: LiveWatchlistCardContent;
     symbol: Pick<LiveWatchlistSymbolState, "marketDataStatus"> &
-      Partial<Pick<LiveWatchlistSymbolState, "firstPostedAt" | "analysisUpsideContext">>;
+      Partial<Pick<LiveWatchlistSymbolState, "firstPostedAt">>;
   livePrice: number | null;
   liveVolumeContext?: LiveWatchlistVolumeContext | null;
   dipBuyPlanVisible?: boolean;
@@ -523,8 +522,7 @@ export function TradersLinkAiReadCard({
     return <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />;
   }
   const read = sanitizeTradersLinkAiReadForDisplay(parsedRead);
-  const targetPresentation = upsidePresentation(read,renderSectionEditor ? undefined : symbol.analysisUpsideContext);
-  if (read.analysisFormat === "simple") return <SimpleAnalysisCard read={read} upsideContext={symbol.analysisUpsideContext} traderNotes={traderNotes} olderArticleDate={olderTradersLinkArticlePublicationDate(read) ? formatArticleDate(olderTradersLinkArticlePublicationDate(read)!) : null} renderSectionEditor={renderSectionEditor} historicalRows={historicalRows} />;
+  if (read.analysisFormat === "simple") return <SimpleAnalysisCard read={read} traderNotes={traderNotes} olderArticleDate={olderTradersLinkArticlePublicationDate(read) ? formatArticleDate(olderTradersLinkArticlePublicationDate(read)!) : null} renderSectionEditor={renderSectionEditor} historicalRows={historicalRows} />;
   const hidden = new Set(read.ownerHiddenSections ?? []);
   const olderArticlePublishedAt = olderTradersLinkArticlePublicationDate(read);
   const downsideCheckpoints = hidden.has("downsideCheckpoints") ? [] : read.downsideCheckpoints ?? [];
@@ -595,7 +593,7 @@ export function TradersLinkAiReadCard({
       })()}
 
       {renderSectionEditor?.(["targets"])}
-      {!hidden.has('targets') && targetPresentation.message ? <section className="watchlist-ai-read-section"><h3>Potential Targets (Volume Dependent)</h3><p>{targetPresentation.message}</p>{targetPresentation.current ? <small>Current market context — the original analysis is unchanged.</small> : null}</section> : read.version === 4 && !hidden.has("targets") ? (
+      {read.version === 4 && !hidden.has("targets") ? (
         <section className="watchlist-ai-read-section">
           <h3>Potential Targets (Volume Dependent)</h3>
           <p>Conditional day-trade paths, not predictions. Each farther branch requires the prior area to hold.</p>
@@ -1949,7 +1947,6 @@ export function LiveWatchlistDetailClient({
           if(next.premiumLevelsAllowed !== false) { next.levelMap=payload.symbol.levelMap; next.nearestSupport=payload.symbol.nearestSupport; next.nearestResistance=payload.symbol.nearestResistance; next.nearestSupportLabel=payload.symbol.nearestSupportLabel; next.nearestResistanceLabel=payload.symbol.nearestResistanceLabel; for(const kind of ["levelMap","nearestSupportResistance","fullLadder"] as const) { if(payload.symbol.cards[kind]) next.cards[kind]=payload.symbol.cards[kind]; else delete next.cards[kind]; } }
           next.premiumAnalysisPricesAllowed = payload.symbol.premiumAnalysisPricesAllowed;
           next.premiumAnalysisPreview = payload.symbol.premiumAnalysisPreview ?? null;
-          next.analysisUpsideContext = payload.symbol.analysisUpsideContext;
           if (next.premiumAnalysisPricesAllowed === false) {
             delete next.cards.tradersLinkAiRead;
             delete next.cards.liveTraderRead;

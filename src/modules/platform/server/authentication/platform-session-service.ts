@@ -11,7 +11,8 @@ import {
   type ResolvedPlatformSession,
 } from "./platform-session-repository";
 
-export const TRADERLINK_PLATFORM_SESSION_COOKIE = "tl_platform_session";
+export const TRADERLINK_PLATFORM_SESSION_COOKIE = process.env.NODE_ENV === "production"
+  ? "__Host-tl_platform_session" : "tl_platform_session";
 export const TRADERLINK_PLATFORM_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1_000;
 const TRADERLINK_PLATFORM_SESSION_TOUCH_INTERVAL_MS = 5 * 60 * 1_000;
 

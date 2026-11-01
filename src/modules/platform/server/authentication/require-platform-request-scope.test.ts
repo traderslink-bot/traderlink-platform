@@ -14,6 +14,8 @@ import { PlatformMembershipRepository } from "../membership/platform-membership-
 import {
   deriveJournalAccountSelectionRef,
 } from "../../contracts/journal-account-selection";
+import { deriveAuthenticatedUserJournalScope } from "./authenticated-user-journal-scope";
+import { PlatformDiscordMembershipRepository } from "./platform-discord-membership-repository";
 import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "./platform-session-service";
 import {
   requireExpectedJournalAccountSelection,
@@ -239,5 +241,29 @@ describe("unified Platform request scope", () => {
       forbiddenRepositoryRoots: [],
       now: () => new Date("2026-08-02T12:20:00.000Z"),
     })).toThrowError("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+  });
+});
+
+describe("security: effective membership and account authorization", () => {
+  it("keeps historical Discord evidence but excludes absence and stale snapshots; members get no account authority", () => {
+    const root = mkdtempSync(join(tmpdir(), "security-effective-scope-")); roots.push(root);
+    const db = openPlatformDatabase({ mode: "initializer", databasePath: join(root, "test.sqlite"), forbiddenRepositoryRoots: [] });
+    const at = new Date("2026-10-31T12:00:00.000Z");
+    try {
+      runPlatformMigrations(db, { now: () => at });
+      const owner = new PlatformDiscordSignInService(db, { now: () => at }).signIn({ authSubject: SUBJECT, username: "owner", globalDisplayName: null, avatarHash: null, guildId: GUILD, roleIds: ["5"], guildOwner: true, joinedAtUtc: null });
+      const memberships = new PlatformDiscordMembershipRepository(db);
+      expect(memberships.findEffective(owner.userId, GUILD, at, 1000)).not.toBeNull();
+      expect(memberships.findEffective(owner.userId, GUILD, new Date(at.getTime() + 1001), 1000)).toBeNull();
+      db.prepare(`INSERT INTO platform_membership_audit_events(audit_event_id,subject_user_id,action,target_type,target_id,occurred_at_utc) VALUES ('synthetic-absence',?,'discord.membership.absent','discord_membership',?,?)`).run(owner.userId, GUILD, at.toISOString());
+      expect(memberships.findCurrent(owner.userId, GUILD)).not.toBeNull();
+      expect(memberships.findEffective(owner.userId, GUILD, at, 1000)).toBeNull();
+      db.prepare("UPDATE platform_discord_memberships SET last_verified_at_utc=? WHERE user_id=? AND guild_id=?").run(new Date(at.getTime()+1).toISOString(), owner.userId, GUILD);
+      expect(memberships.findEffective(owner.userId, GUILD, new Date(at.getTime()+1), 1000)).not.toBeNull();
+      expect(deriveAuthenticatedUserJournalScope(db, owner.userId).allowedAccountIds.length).toBeGreaterThan(0);
+      db.prepare("UPDATE platform_workspace_memberships SET role='member' WHERE user_id=?").run(owner.userId);
+      const memberScope = deriveAuthenticatedUserJournalScope(db, owner.userId);
+      expect(memberScope.allowedAccountIds).toEqual([]); expect(memberScope.activeAccountId).toBeNull();
+    } finally { db.close(); }
   });
 });

@@ -36,6 +36,7 @@ export function levelAnalysisErrorResponse(error: unknown): Response {
           message: "Level Analysis delivery support is not configured." }, { status: 503 });
       case "TRADERLINK_ACCOUNT_ACCESS_DENIED":
       case "TRADERLINK_WORKSPACE_ACCESS_DENIED":
+      case "TRADERLINK_JOURNAL_ADMIN_ACCESS_DENIED":
         return Response.json({ ok: false, code: error.code,
           message: "Level Analysis access is unavailable." }, { status: 403 });
       default:

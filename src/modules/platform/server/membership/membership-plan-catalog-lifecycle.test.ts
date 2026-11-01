@@ -38,11 +38,6 @@ function fixture() {
   const publish = (doc: typeof document, draftId: string | null = null, revision: number | null = null) => writeMembershipPlanEditor(db, actor,
     { requestId: randomUUID(), draftId, revision, document: doc, intent: "publish", applyToMembers: false }, at);
   publish(document);
-  // Publishing seeds feature definitions before this foreign-key-backed policy.
-  // Plan-usage scenarios explicitly opt in; the product rollout remains off by default.
-  db.prepare(`INSERT INTO platform_membership_feature_policies
-    (feature_key, enforcement_mode, updated_by_user_id, updated_at_utc)
-    VALUES ('trade_analyzer.analyses', 'enforced', ?, ?)`).run(actor, at);
   const planId = readMembershipPlanList(db)[0].planId!;
   return { db, actor, planId, publish, store: new MembershipPlanEditorDrafts(db), catalog: new PlatformMembershipCatalogRepository(db) };
 }

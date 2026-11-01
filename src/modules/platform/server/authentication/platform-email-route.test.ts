@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "./platform-auth-cookies";
 // @vitest-environment node
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -87,7 +88,7 @@ describe("email HTTP route integration", () => {
     expect(setCookie).toContain("Secure");
     expect(setCookie).toContain("SameSite=Lax");
     const cookie = setCookie.split(";")[0];
-    expect(cookie.startsWith(`${TRADERLINK_PLATFORM_SESSION_COOKIE}=`)).toBe(true);
+    expect(cookie.startsWith(`${platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE)}=`)).toBe(true);
     const token = decodeURIComponent(cookie.slice(cookie.indexOf("=") + 1));
     const sessions = new PlatformSessionService(new PlatformSessionRepository(db));
     const member = sessions.resolve(token)!;
@@ -138,7 +139,7 @@ describe("email HTTP route integration", () => {
     runPlatformMigrations(db);
     const signed = new PlatformLoginService(db).signInOAuth({ provider: "google", subject: "synthetic-google-subject", displayName: "Trader" });
     db.prepare("UPDATE platform_auth_sessions SET created_at_utc=? WHERE session_id=?").run(new Date(Date.now() - 3600000).toISOString(), signed.session.sessionId);
-    const cookie = `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${signed.token}`;
+    const cookie = `${platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE)}=${signed.token}`;
     const email = "google-member@example.test", password = "Eight123";
     const linked = await POST(request({ action: "link-email", email, password, name: "Trader" }, cookie));
     expect(linked.status).toBe(200);

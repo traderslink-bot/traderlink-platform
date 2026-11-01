@@ -442,7 +442,7 @@ function delimiterCount(line: string, delimiter: string): number {
 }
 
 function detectDelimiter(text: string): string | null {
-  const lines = text.split(/\r?\n/u).filter((line) => line.trim()).slice(0, 20);
+  const lines = text.slice(0, 64 * 1024).split(/\r?\n/u).filter((line) => line.trim()).slice(0, 20);
   const candidates = [",", ";", "\t"];
   const scores = candidates.map((delimiter) => ({
     delimiter,
@@ -456,6 +456,18 @@ function parse(text: string, delimiter: string): readonly ParsedRecord[] {
   let record: string[] = [];
   let field = "";
   let quoted = false;
+  let cellCount = 0;
+  const checkField = () => {
+    if (field.length > 1024 * 1024) throw new Error("inspection_limit_exceeded");
+  };
+  const pushField = () => {
+    if (record.length >= 4096 || ++cellCount > 1_000_000) throw new Error("inspection_limit_exceeded");
+    record.push(field); field = "";
+  };
+  const pushRecord = () => {
+    if (records.length >= 100_000) throw new Error("inspection_limit_exceeded");
+    records.push(record); record = [];
+  };
   for (let index = 0; index < text.length; index += 1) {
     const character = text[index];
     if (quoted) {
@@ -464,22 +476,21 @@ function parse(text: string, delimiter: string): readonly ParsedRecord[] {
         index += 1;
       } else if (character === '"') quoted = false;
       else field += character;
+      checkField();
       continue;
     }
     if (character === '"' && field.length === 0) quoted = true;
     else if (character === delimiter) {
-      record.push(field);
-      field = "";
+      pushField();
     } else if (character === "\r" || character === "\n") {
-      record.push(field);
-      records.push(record);
-      record = [];
-      field = "";
+      pushField();
+      pushRecord();
       if (character === "\r" && text[index + 1] === "\n") index += 1;
     } else field += character;
+    checkField();
   }
   if (quoted) throw new Error("unterminated_quote");
-  if (field.length > 0 || record.length > 0) records.push([...record, field]);
+  if (field.length > 0 || record.length > 0) { pushField(); pushRecord(); }
   return Object.freeze(records.map((item) => Object.freeze(item)));
 }
 
@@ -528,16 +539,22 @@ function tableProfile(
     suggestedMapping: suggestedMapping(labels),
     dataRowCount: rows.length,
     columns: Object.freeze(labels.map((label, index) => {
-      const values = rows.map((row) => row[index + offset]?.trim() ?? "");
-      const nonEmpty = values.filter(Boolean);
+      let nonEmptyCount = 0;
+      let maximumLength = 0;
+      const observedShapes = new Set<string>();
+      for (const row of rows) {
+        const value = row[index + offset]?.trim() ?? "";
+        if (!value) continue;
+        nonEmptyCount += 1;
+        maximumLength = Math.max(maximumLength, value.length);
+        observedShapes.add(shape(value));
+      }
       return Object.freeze({
         label,
-        emptyCount: values.length - nonEmpty.length,
-        nonEmptyCount: nonEmpty.length,
-        maximumLengthBucket: lengthBucket(
-          nonEmpty.reduce((maximum, value) => Math.max(maximum, value.length), 0),
-        ),
-        observedShapes: Object.freeze([...new Set(nonEmpty.map(shape))].sort()),
+        emptyCount: rows.length - nonEmptyCount,
+        nonEmptyCount,
+        maximumLengthBucket: lengthBucket(maximumLength),
+        observedShapes: Object.freeze([...observedShapes].sort()),
       });
     })),
   });
@@ -549,11 +566,21 @@ function tables(
 ): JournalMappingSupportPackage["tables"] {
   const sectionHeaders = records.map((record, headerRowIndex) => ({ record, headerRowIndex }))
     .filter(({ record }) => normalized(record[1] ?? "") === "header" && record.length > 2);
+  if (sectionHeaders.length > 200) throw new Error("inspection_limit_exceeded");
   if (sectionHeaders.length > 0) {
-    return Object.freeze(sectionHeaders.slice(0, 200).map(({ record: header, headerRowIndex }, index) => {
+    const dataBySection = new Map<string, ParsedRecord[]>();
+    for (const record of records) {
+      if (normalized(record[1] ?? "") !== "data") continue;
+      const key = record[0] ?? "";
+      const group = dataBySection.get(key) ?? [];
+      group.push(record); dataBySection.set(key, group);
+    }
+    let profileCells = 0;
+    return Object.freeze(sectionHeaders.map(({ record: header, headerRowIndex }, index) => {
       const section = header[0] ?? "";
-      const data = records.filter((record) =>
-        record[0] === section && normalized(record[1] ?? "") === "data");
+      const data = dataBySection.get(section) ?? [];
+      profileCells += data.length * (header.length - 2);
+      if (profileCells > 2_000_000) throw new Error("inspection_limit_exceeded");
       return tableProfile(
         looksLikeHeader(section) ? safeHeader(section, index) : `Section ${index + 1}`,
         "sectioned",
@@ -591,12 +618,17 @@ export function createJournalMappingSupportPackage(input: Readonly<{
   let encoding: JournalMappingSupportPackage["detectedEncoding"] = "unknown";
   let delimiter: string | null = null;
   let records: readonly ParsedRecord[] = Object.freeze([]);
+  let inspectionFailed = false;
+  let profiledTables: JournalMappingSupportPackage["tables"] = Object.freeze([]);
   try {
+    if (input.sourceBytes.byteLength > 25 * 1024 * 1024) throw new Error("inspection_limit_exceeded");
     const text = new TextDecoder("utf-8", { fatal: true }).decode(input.sourceBytes);
     encoding = "utf-8";
     delimiter = detectDelimiter(text);
     if (delimiter) records = parse(text, delimiter);
+    profiledTables = tables(records, delimiterName(delimiter));
   } catch {
+    inspectionFailed = true;
     records = Object.freeze([]);
   }
   const shapeCounts = new Map<number, number>();
@@ -614,8 +646,8 @@ export function createJournalMappingSupportPackage(input: Readonly<{
     recordShapeCounts: Object.freeze([...shapeCounts.entries()]
       .sort(([left], [right]) => left - right)
       .map(([fieldCount, recordCount]) => Object.freeze({ fieldCount, recordCount }))),
-    tables: tables(records, delimiterName(delimiter)),
-    failureCode: input.failureCode,
+    tables: profiledTables,
+    failureCode: inspectionFailed ? "TRADERLINK_JOURNAL_MAPPING_INSPECTION_FAILED" : input.failureCode,
     privacy: Object.freeze({
       rawValuesIncluded: false as const,
       rawRowsIncluded: false as const,

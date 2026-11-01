@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import {
   enqueueLoginMail,
   startPlatformLoginMailWorker,
@@ -13,7 +14,7 @@ import { withPlatformDatabase } from "../database/open-platform-database";
 import { resolvePlatformPublicOrigin } from "./platform-public-origin";
 import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "./platform-session-service";
 export function loginSession(request: NextRequest) {
-  return request.cookies.get(TRADERLINK_PLATFORM_SESSION_COOKIE)?.value ?? null;
+  return request.cookies.get(platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE))?.value ?? null;
 }
 export function loginReturnTo(value: unknown, fallback = "/workspace") {
   if (

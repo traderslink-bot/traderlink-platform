@@ -1,3 +1,4 @@
+import { readBoundedRequestJson } from "@/src/modules/platform/server/http/bounded-request-body";
 import { JournalDeveloperPackageService } from "@/src/modules/journal/server/administration/journal-developer-package-service";
 import { createJournalAdminReadContext, resolveJournalAdminInternalId } from "@/src/modules/journal/server/administration/journal-admin-read-helpers";
 import {
@@ -26,7 +27,7 @@ export async function POST(
 ): Promise<Response> {
   try {
     requireJournalAdminMutationRequest(request);
-    const [body, { formatRef }] = await Promise.all([request.json(), context.params]);
+    const [body, { formatRef }] = await Promise.all([readBoundedRequestJson(request, 8192), context.params]);
     if (!isRecord(body) || !Number.isSafeInteger(body.expectedRevision)) {
       platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
     }

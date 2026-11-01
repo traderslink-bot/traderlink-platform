@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { PlatformLoginError, PlatformLoginService } from "@/src/modules/platform/server/authentication/platform-login-service";
 import { loginSession } from "@/src/modules/platform/server/authentication/platform-login-http";
 import { NextResponse, type NextRequest } from "next/server";
@@ -94,10 +95,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const code = request.nextUrl.searchParams.get("code");
   const oauthError = request.nextUrl.searchParams.get("error");
   const state = request.nextUrl.searchParams.get("state");
-  const expectedState = request.cookies.get(PLATFORM_DISCORD_OAUTH_STATE_COOKIE)?.value;
-  const prompt = request.cookies.get(PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE)?.value;
+  const expectedState = request.cookies.get(platformAuthCookieName(PLATFORM_DISCORD_OAUTH_STATE_COOKIE))?.value;
+  const prompt = request.cookies.get(platformAuthCookieName(PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE))?.value;
   const returnTo = normalizeDiscordAuthReturnTo(
-    request.cookies.get(PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE)?.value,
+    request.cookies.get(platformAuthCookieName(PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE))?.value,
   );
 
   if (!state || !expectedState || state !== expectedState) {
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    if (state.startsWith("link.") && request.cookies.get("tl_provider_link_method")?.value !== "discord") throw new Error("Link expired");
+    if (state.startsWith("link.") && request.cookies.get(platformAuthCookieName("tl_provider_link_method"))?.value !== "discord") throw new Error("Link expired");
     const config = getDiscordOAuthConfig(resolvePlatformPublicOrigin(request));
     const token = await exchangeDiscordCode({ config, code });
     const [discordUser, configuredGuildMember, discordGuilds] = await Promise.all([
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Connecting Discord proves a new method for the current member; it must
     // never provision a second member through the ordinary Discord signup path.
     if (state.startsWith("link.")) {
-      const linkIntent = request.cookies.get("tl_provider_link")?.value;
+      const linkIntent = request.cookies.get(platformAuthCookieName("tl_provider_link"))?.value;
       if (!linkIntent) throw new Error("Link intent missing");
       const signed = withPlatformDatabase({mode:"runtime"}, database => database.transaction(() => {
         const result = new PlatformLoginService(database).signInOAuth({provider:"discord",subject:discordUser.id,

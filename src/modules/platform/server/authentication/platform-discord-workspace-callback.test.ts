@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "./platform-auth-cookies";
 // @vitest-environment node
 import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -34,10 +35,20 @@ function fixture() {
   return path;
 }
 describe("Discord callback admission without a plan or server membership", () => {
+  it("rejects legacy production OAuth binding cookies", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("TRADERLINK_PLATFORM_PUBLIC_ORIGIN", "https://app.traderslink.pro");
+    const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
+    const response = await GET(new NextRequest("https://app.traderslink.pro/api/auth/discord/callback?code=synthetic&state=legacy", {
+      headers: { cookie: "tl_academy_oauth_state=legacy; tl_academy_oauth_prompt=consent; tl_academy_oauth_return_to=%2Fworkspace" },
+    }));
+    expect(new URL(response.headers.get("location")!).pathname).toBe("/sign-in-help");
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it.each(["/workspace", "/workspace?panel=journal", "/rules"])("retains the session and applies the landing boundary for %s", async returnTo => {
     const databasePath = fixture();
     const response = await GET(new NextRequest("https://app.traderslink.pro/api/auth/discord/callback?code=synthetic-code&state=synthetic-state", {
-      headers: { cookie: `${PLATFORM_DISCORD_OAUTH_STATE_COOKIE}=synthetic-state; ${PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE}=consent; ${PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE}=${encodeURIComponent(returnTo)}` },
+      headers: { cookie: `${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_STATE_COOKIE)}=synthetic-state; ${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE)}=consent; ${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE)}=${encodeURIComponent(returnTo)}` },
     }));
     const location = new URL(response.headers.get("location")!);
     expect(location.pathname).toBe(returnTo.startsWith("/workspace") ? "/workspace" : "/access-required");
@@ -71,7 +82,7 @@ describe("connecting Discord to an existing Google account", () => {
       throw Error("Unexpected provider request");
     }));
     const response = await GET(new NextRequest("https://app.traderslink.pro/api/auth/discord/callback?code=synthetic-code&state=link.synthetic", {
-      headers: { cookie: `${PLATFORM_DISCORD_OAUTH_STATE_COOKIE}=link.synthetic; ${PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE}=consent; ${PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE}=${encodeURIComponent(returnTo)}; tl_provider_link=${intent}; tl_provider_link_method=discord; tl_platform_session=${google.token}` },
+      headers: { cookie: `${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_STATE_COOKIE)}=link.synthetic; ${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE)}=consent; ${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE)}=${encodeURIComponent(returnTo)}; ${platformAuthCookieName("tl_provider_link")}=${intent}; ${platformAuthCookieName("tl_provider_link_method")}=discord; ${platformAuthCookieName("tl_platform_session")}=${google.token}` },
     }));
     expect(new URL(response.headers.get("location")!).pathname).toBe(returnTo);
     expect(new URL(response.headers.get("location")!).searchParams.get("connected")).toBe("discord");

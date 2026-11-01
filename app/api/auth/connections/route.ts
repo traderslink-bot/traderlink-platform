@@ -1,3 +1,4 @@
+import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   loginOperation,
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       ["tl_provider_link", intent],
       ["tl_provider_link_method", provider],
     ])
-      response.cookies.set(name, value, {
+      response.cookies.set(platformAuthCookieName(name), value, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",

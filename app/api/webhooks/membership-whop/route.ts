@@ -1,3 +1,4 @@
+import { readBoundedRequestText, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { recordMembershipWebhookFailure } from "@/src/modules/platform/server/membership/platform-membership-webhook-health";
 import { verifyWhopWebhookSignature } from "@/src/modules/platform/server/billing/whop-ai-review-webhook";
@@ -10,7 +11,9 @@ export async function POST(request: Request): Promise<Response> {
   const identityKey = process.env.TRADERLINK_PLATFORM_WHOP_IDENTITY_HMAC_KEY;
   const apiVersionDate = process.env.WHOP_API_VERSION_DATE;
   if (!secret || !companyId || !identityKey || !apiVersionDate) return Response.json({ ok: false }, { status: 503 });
-  const raw = await request.text();
+  let raw: string;
+  try { raw = await readBoundedRequestText(request, 1_000_000); }
+  catch (error) { return Response.json({ ok: false }, { status: error instanceof RequestBodyLimitError ? 413 : 400 }); }
   if (Buffer.byteLength(raw) > 1_000_000) return Response.json({ ok: false }, { status: 413 });
   const webhookId = request.headers.get("webhook-id") ?? "";
   try {

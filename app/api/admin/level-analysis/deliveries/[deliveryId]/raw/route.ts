@@ -1,4 +1,4 @@
-import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireJournalAdminScope } from "@/src/modules/platform/server/administration/platform-admin-authorization";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { LevelAnalysisDeliveryRepository } from "@/src/modules/level-analysis/server/level-analysis-delivery-repository";
 import {
@@ -17,7 +17,7 @@ export async function GET(
     return Response.json({ ok: false, code: "feature_disabled" }, { status: 404 });
   }
   try {
-    requireTraderLinkPlatformRequestScope(request.headers);
+    requireJournalAdminScope(request.headers);
     const { deliveryId } = await context.params;
     if (!/^(?:lad|laq)_[0-9a-f]{16}$/u.test(deliveryId)) {
       return Response.json({ ok: false, code: "invalid_delivery" }, { status: 400 });

@@ -53,10 +53,10 @@ describe("member dashboard admission", () => {
 
 
 describe("Analysis rollout and effective access", () => {
-  const database = (mode = "enforced", owner = false) => ({ prepare: (sql: string) => ({ get: () =>
+  const database = (mode?: string, owner = false) => ({ prepare: (sql: string) => ({ get: () =>
     sql.includes("sqlite_schema") ? {} : sql.includes("enforcement_mode") ? (mode ? { enforcement_mode: mode } : undefined) : sql.includes("platform_operator_grants") ? (owner ? {} : undefined) : undefined,
   }) }) as unknown as Database.Database;
-  it("enforces the explicitly enabled Analysis policy and denies Analytics-only membership", () => {
+  it("enforces the Analysis default and denies Analytics-only membership", () => {
     fixture.access.booleanFeatures = ["analytics.access"];
     expect(evaluateMembershipFeature(database(), "member", "trade_analyzer.analysis").allowed).toBe(false);
   });
@@ -75,7 +75,7 @@ describe("Analysis rollout and effective access", () => {
 
 
 describe("broker-statement import rollout", () => {
-  const database = (mode = "enforced", owner = false) => ({ prepare: (sql: string) => ({ get: () =>
+  const database = (mode?: string, owner = false) => ({ prepare: (sql: string) => ({ get: () =>
     sql.includes("sqlite_schema") ? {} : sql.includes("enforcement_mode") ? (mode ? { enforcement_mode: mode } : undefined) : sql.includes("platform_operator_grants") ? (owner ? {} : undefined) : undefined,
   }) }) as unknown as Database.Database;
   it("requires import permission independently of Journal and denies missing/expired access", () => {
@@ -94,7 +94,7 @@ describe("broker-statement import rollout", () => {
 
 
 describe("Calendar view permissions", () => {
-  const database = (mode = "enforced", owner = false) => ({ prepare: (sql: string) => ({ get: () =>
+  const database = (mode?: string, owner = false) => ({ prepare: (sql: string) => ({ get: () =>
     sql.includes("sqlite_schema") ? {} : sql.includes("enforcement_mode") ? (mode ? { enforcement_mode: mode } : undefined) : sql.includes("platform_operator_grants") ? (owner ? {} : undefined) : undefined,
   }) }) as unknown as Database.Database;
   it.each([
@@ -123,7 +123,7 @@ describe("Calendar view permissions", () => {
 });
 
 describe("report/export rollout", () => {
-  const database = (mode = "enforced", owner = false) => ({ prepare: (sql: string) => ({ get: () =>
+  const database = (mode?: string, owner = false) => ({ prepare: (sql: string) => ({ get: () =>
     sql.includes("sqlite_schema") ? {} : sql.includes("enforcement_mode") ? (mode ? { enforcement_mode: mode } : undefined) : sql.includes("platform_operator_grants") ? (owner ? {} : undefined) : undefined,
   }) }) as unknown as Database.Database;
   it("requires export permission independently of Trade Explorer and denies missing/expired access", () => {
@@ -141,7 +141,7 @@ describe("report/export rollout", () => {
 });
 
 describe("Session Tracker rollout", () => {
-  const database = (mode = "enforced", owner = false) => ({ prepare: (sql: string) => ({ get: () =>
+  const database = (mode?: string, owner = false) => ({ prepare: (sql: string) => ({ get: () =>
     sql.includes("sqlite_schema") ? {} : sql.includes("enforcement_mode") ? (mode ? { enforcement_mode: mode } : undefined) : sql.includes("platform_operator_grants") ? (owner ? {} : undefined) : undefined,
   }) }) as unknown as Database.Database;
   it("requires Session Tracker independently of Journal and denies missing/expired access", () => {
@@ -159,10 +159,7 @@ describe("Session Tracker rollout", () => {
 });
 
 describe("Stock Press Releases notification settings", () => {
-  // Exercise the selected product/category policies without enabling unrelated notification policies.
-  const database = { prepare: (sql: string) => ({ get: (feature: string) => sql.includes("sqlite_schema") ? {} :
-    sql.includes("enforcement_mode") && ["news.access", "news.week_ahead", "notifications.press_release"].includes(feature)
-      ? { enforcement_mode: "enforced" } : undefined }) } as unknown as Database.Database;
+  const database = { prepare: (sql: string) => ({ get: () => sql.includes("sqlite_schema") ? {} : undefined }) } as unknown as Database.Database;
   it("permits news without notifications, and requires news even with a notification grant", () => {
     fixture.access.booleanFeatures = ["news.access"];
     expect(evaluateMembershipFeature(database, "member", "news.access").allowed).toBe(true);
@@ -179,8 +176,7 @@ describe("Stock Press Releases notification settings", () => {
 });
 
 describe("Analytics and Explorer parent access", () => {
-  const database = { prepare: (sql: string) => ({ get: () => sql.includes("sqlite_schema") ? {} :
-    sql.includes("enforcement_mode") ? { enforcement_mode: "enforced" } : undefined }) } as unknown as Database.Database;
+  const database = { prepare: (sql: string) => ({ get: () => sql.includes("sqlite_schema") ? {} : undefined }) } as unknown as Database.Database;
   it.each(["analytics.access", "analytics.trade_explorer", "watchlist.access"])("requires %s independently of Journal", feature => {
     fixture.access.booleanFeatures = ["journal.access"];
     expect(evaluateMembershipFeature(database,"member",feature).allowed).toBe(false);
@@ -191,8 +187,8 @@ describe("Analytics and Explorer parent access", () => {
 
 
 describe("Market halt notification access", () => {
-  const database = (mode = "enforced", owner = false) => ({ prepare: (sql: string) => ({ get: (feature: string) =>
-    sql.includes("sqlite_schema") ? {} : sql.includes("enforcement_mode") ? (mode && feature !== "notifications.access" ? { enforcement_mode: mode } : undefined) : sql.includes("platform_operator_grants") ? (owner ? {} : undefined) : undefined,
+  const database = (mode?: string, owner = false) => ({ prepare: (sql: string) => ({ get: () =>
+    sql.includes("sqlite_schema") ? {} : sql.includes("enforcement_mode") ? (mode ? { enforcement_mode: mode } : undefined) : sql.includes("platform_operator_grants") ? (owner ? {} : undefined) : undefined,
   }) }) as unknown as Database.Database;
   it("requires the halt feature independently of news and other notifications", () => {
     fixture.access.booleanFeatures = ["news.access", "notifications.press_release"];
