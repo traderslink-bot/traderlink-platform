@@ -33,6 +33,10 @@ function fixture() {
     platformMemberPrivateWatchlistsMigration, platformMembershipUnifiedEditorMigration]) for (const sql of migration.statements) db.exec(sql);
   const actor = randomUUID();
   db.prepare("INSERT INTO platform_users VALUES (?,'test','owner','Owner','active',?,?)").run(actor, at, at);
+  // Plan-usage scenarios explicitly opt in; the product rollout remains off by default.
+  db.prepare(`INSERT INTO platform_membership_feature_policies
+    (feature_key, enforcement_mode, updated_by_user_id, updated_at_utc)
+    VALUES ('trade_analyzer.analyses', 'enforced', ?, ?)`).run(actor, at);
   const document = emptyMembershipPlan(); document.name = "Published test"; document.visibility = "public"; document.displayOnly = true;
   document.prices.push(newMembershipPlanPrice(randomUUID()));
   const publish = (doc: typeof document, draftId: string | null = null, revision: number | null = null) => writeMembershipPlanEditor(db, actor,
