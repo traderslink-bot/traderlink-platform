@@ -23,14 +23,16 @@ function model(session: "regular" | "after_hours"): ScannerReadModel {
     universeCount: 3, receivedCount: 3, missingSymbols: [], missingFloatCount: 0,
     gainers: empty, dayGainers: empty, momentum: empty, issues: [] };
 }
-async function mount(initial: ScannerReadModel) {
-  vi.useFakeTimers(); let response = initial;
+async function mount(initial: ScannerReadModel, options: { admin?: boolean; now?: string; fail?: boolean } = {}) {
+  vi.useFakeTimers(); vi.setSystemTime(new Date(options.now ?? "2026-11-02T21:00:10Z")); let response = initial;
   const fetch = vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input) === "/api/admin/screeners/settings" && options.admin) return Response.json({ configuration: null });
     if (String(input) !== "/api/screeners/live") throw Error("unexpected request");
+    if (options.fail) throw Error("synthetic transport error");
     return Response.json(response);
   }); vi.stubGlobal("fetch", fetch);
   const container = document.createElement("div"); document.body.append(container); root = createRoot(container);
-  await act(async () => { root!.render(createElement(LiveScreenersClient)); });
+  await act(async () => { root!.render(createElement(LiveScreenersClient,{admin:options.admin})); });
   return { container, fetch, update: async (next: ScannerReadModel) => {
     response = next; await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
   } };
@@ -108,5 +110,43 @@ describe("Momentum context rendering", () => {
     expect(cells[5]).toBe("n/a");
     expect(cells[6]).toBe("8%");
     expect(page.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("member notices stay in each scanner while Admin keeps diagnostics", () => {
+  it("hides provider/coverage/warming notices from the member page during operating hours", async () => {
+    const page = await mount({ ...model("regular"), status: "partial", missingSymbols: ["TEST"], issues: ["synthetic missing input"] });
+    expect(page.container.textContent).not.toContain("Some provider data is missing");
+    expect(page.container.textContent).not.toContain("synthetic missing input");
+    expect(page.container.textContent).not.toContain("Temporarily unavailable.");
+    await page.update({ ...model("regular"), status: "warming" });
+    expect(page.container.textContent).not.toContain("collecting enough recent activity");
+  });
+  it("shows the overnight hours inside both scanner cards and removes them at 4 AM through polling", async () => {
+    const page = await mount({ ...model("regular"), status: "closed", session: null },{ now: "2026-11-03T08:59:58Z" });
+    const cards = [...page.container.querySelectorAll("section")].filter(section => ["Top Gainers","Momentum"].includes(section.querySelector("h2")?.textContent ?? ""));
+    expect(cards.length).toBe(3); // Desktop two cards and the selected mobile card.
+    expect(cards.every(card => card.textContent?.includes("Active 4:00am - 8:00pm est"))).toBe(true);
+    expect(page.container.textContent).not.toContain("extended-hours scanning session is closed");
+    await page.update({ ...model("regular"), session: "premarket", status: "warming" });
+    expect(page.container.textContent).not.toContain("Active 4:00am - 8:00pm est");
+    expect(page.fetch).toHaveBeenCalledTimes(2);
+  });
+  it.each(["disabled", "unavailable", "universe_missing"] as const)("shows only the permitted member notice for %s", async status => {
+    const page = await mount({ ...model("regular"), status });
+    expect(page.container.textContent).toContain(status==="disabled"?"Disabled":"Temporarily unavailable.");
+    expect(page.container.textContent).not.toContain("Live screeners are currently disabled");
+    expect(page.container.textContent).not.toContain("stock universe has not arrived");
+    expect(page.container.textContent).not.toContain("Live scanner data is temporarily unavailable");
+  });
+  it("uses the same short notice when fetching the model fails", async () => {
+    const page = await mount(model("regular"),{fail:true});
+    expect(page.container.textContent).toContain("Temporarily unavailable.");
+    expect(page.container.textContent).not.toContain("latest scanner update could not be loaded");
+  });
+  it("retains the detailed provider notice on the Admin page", async () => {
+    const page = await mount({ ...model("regular"), status: "partial" },{admin:true});
+    expect(page.container.textContent).toContain("Some provider data is missing. Available rows are shown below.");
+    expect(page.container.textContent).not.toContain("Active 4:00am - 8:00pm est");
   });
 });

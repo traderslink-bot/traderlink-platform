@@ -585,3 +585,48 @@ legacy architecture diagnostics remain recorded, not recast as passing checks.
 Coordinator will combine this additive successor with the frozen gainer tabs
 for one clean integration/build/release. No deployment of this successor has
 occurred yet; live/browser acceptance remains separate.
+
+## Member-only status presentation — later additive request
+
+Owner requested keeping all detailed provider, universe, warming, coverage,
+session and fetch diagnostics in Admin. Do not change the in-flight frozen
+Gainer/Momentum release for that request; prepare a source successor.
+
+Member presentation in each existing scanner card:
+
+- Disabled configuration: `Disabled` (including overnight).
+- From 8:00 PM inclusive to 4:00 AM exclusive Eastern: exact owner copy
+  `Active 4:00am - 8:00pm est`, rather than detailed closed/provider notices.
+- During operating hours, failed fetch/top-level unavailable/missing universe:
+  `Temporarily unavailable.` Do not expose internal provider/error details.
+- Ready, partial coverage and warming: no global member status banner.
+  Existing values, n/a cells and empty qualifying results retain their own
+  meanings; no sensitivity, filtering or data-collection rule changes.
+
+The operating-hours clock uses America/New_York, not a fixed UTC offset or
+the device timezone, despite preserving the owner's literal display text.
+It updates with the existing polling response/failure; no extra clock/provider
+request or worker is added. Both desktop scanner cards and the selected mobile
+card reuse the same helper. Member notices replace the card's empty result
+notice when present; do not stack duplicate global notices above the cards.
+Admin retains its detailed status block, quote coverage, diagnostics and
+normal results. Private access and disabled scanner delivery remain unchanged.
+
+Regression inventory: winter/summer Eastern boundaries, disabled precedence,
+missing-universe/error presentation, no warming/partial diagnostics on member
+page, notice inside each card, overnight-to-premarket change without reload,
+failed-fetch generic copy, unchanged Admin detail and existing Gainer/Momentum
+behavior. Tests queued behind the Coordinator's already-selected clean build;
+no overlapping heavy operation and no production changes from this slice.
+
+Final verification after that slot cleared: **215 tests across 18 files passed**,
+including 12 new pure member-notice cases and seven new React member/Admin
+checks. Five-file targeted ESLint passed without warnings. The existing poll
+crossed the actual 4 AM boundary in the component test without a reload or an
+extra fetch. Admin still shows its original detailed partial-provider notice;
+both desktop cards and the mobile selected card show only allowed member copy.
+The bounded 1.5GiB/CPU1 unit passed its resource preflight and exited zero;
+its original group is empty and its own lock released. All 770 unrelated dirty
+entries retain their original byte fingerprint. No provider/settings/delivery
+effects occurred. This is a separate successor for Coordinator clean release,
+not permission to overlap or mutate the in-flight frozen Gainer/Momentum release.

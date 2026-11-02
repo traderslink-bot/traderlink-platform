@@ -33,6 +33,7 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contrac
 import type { LiveScannerRow, LiveScreenResults, ScannerConfiguration, ScannerKind, ScannerReadModel,
   ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
 import { gainerViewResults, selectedGainerView, type GainerView, type GainerViewChoice } from "@/src/modules/scanner/live/gainer-view";
+import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
 
 const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", momentum: "Momentum" };
 const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", regular: "Regular hours", after_hours: "After hours" };
@@ -304,12 +305,14 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [chartRow,setChartRow]=useState<LiveScannerRow|null>(null);
   const [gainerChoice,setGainerChoice]=useState<GainerViewChoice|null>(null);
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
-  useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const controller=new AbortController();const load=async()=>{try{const response=await fetch('/api/screeners/live',{ cache:'no-store',credentials:'same-origin',signal:controller.signal });if(!response.ok)throw Error();setModel(await response.json());setLoadError(false);}catch{if(!controller.signal.aborted)setLoadError(true);}finally{if(!controller.signal.aborted)timer=setTimeout(()=>void load(),5000);}};void load();return()=>{controller.abort();if(timer)clearTimeout(timer);};},[]);
+  const [checkedAt,setCheckedAt]=useState<number|null>(null);
+  useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const controller=new AbortController();const load=async()=>{try{const response=await fetch('/api/screeners/live',{ cache:'no-store',credentials:'same-origin',signal:controller.signal });if(!response.ok)throw Error();setModel(await response.json());setLoadError(false);}catch{if(!controller.signal.aborted)setLoadError(true);}finally{if(!controller.signal.aborted){setCheckedAt(Date.now());timer=setTimeout(()=>void load(),5000);}}};void load();return()=>{controller.abort();if(timer)clearTimeout(timer);};},[]);
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const scannerTabs=<Tabs aria-label="Live screener" onChange={(_,next:ScannerKind)=>setScreen(next)} value={screen} variant="scrollable">{Object.entries(SCREEN_LABELS).map(([key,label])=><Tab key={key} label={label} value={key}/>)}</Tabs>;
   const gainerView=selectedGainerView(model,gainerChoice);
   const selectedGainers=gainerViewResults(model,gainerView);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
+  const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
   const contents=(kind:ScannerKind)=><>
     {kind==="gainers"?<Stack spacing={1} sx={{mb:1.5}}>
       <Tabs aria-label="Top Gainers comparison" value={gainerView} variant="scrollable"
@@ -319,8 +322,9 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       </Tabs>
       <Typography color="text.secondary" variant="caption">{gainerView==="day"?"Since the previous trading day’s regular close":"Since today’s regular close"}</Typography>
     </Stack>:null}
-    {kind==="gainers"&&gainerView==="post_market"&&model&&model.session!=="after_hours"
-      ?<Typography color="text.secondary">Post-market readings begin after the regular session closes.</Typography>
+    {memberNotice?<Alert severity={memberNotice===SCANNER_UNAVAILABLE_MESSAGE?"warning":"info"}>{memberNotice}</Alert>
+      :kind==="gainers"&&gainerView==="post_market"&&model&&model.session!=="after_hours"
+      ?<Typography color="text.secondary">{admin?"Post-market readings begin after the regular session closes.":SCANNER_UNAVAILABLE_MESSAGE}</Typography>
       :<ScannerContents onOpenChart={setChartRow} results={resultsFor(kind)} screen={kind}/>}
   </>;
   return <Stack spacing={2.5} sx={{ mt:{ xs:-1,sm:-2 } }}>
@@ -334,7 +338,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         {model?.universeSourceDate&&model.universeSourceDate!==model.tradingDate?<Alert severity="warning">Today’s universe refresh is missing. Scanning continues with the {model.universeSourceDate} list.</Alert>:null}
         {model&&model.status!=='disabled'?<Stack direction="row" sx={{ flexWrap:"wrap",gap:1 }}><Chip label={`${model.receivedCount}/${model.universeCount} quotes`} size="small"/><Chip label={`${model.missingFloatCount} missing float`} size="small"/>{model.missingSymbols.length?<Chip color="warning" label={`${model.missingSymbols.length} missing quotes`} size="small"/>:null}</Stack>:null}
       </Stack>
-    </DashboardPanel>:<><Box sx={{ display:{ xs:"block",md:"none" } }}>{scannerTabs}</Box>{loadError?<Alert severity="error">The latest scanner update could not be loaded.</Alert>:null}{model&&statusMessage(model)?<Alert severity={model.status==='unavailable'?'error':'info'}>{statusMessage(model)}</Alert>:null}</>}
+    </DashboardPanel>:<Box sx={{ display:{ xs:"block",md:"none" } }}>{scannerTabs}</Box>}
     <Box sx={{ display:{ xs:"none",md:"grid" },gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:2,alignItems:"start",'& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 } }}>
       {(["gainers","momentum"] as const).map(kind=><DashboardPanel action={admin&&resultsFor(kind)?<Chip label={`${resultsFor(kind)!.total} qualifying`} size="small"/>:undefined} key={kind} title={SCREEN_LABELS[kind]}>
         {contents(kind)}
