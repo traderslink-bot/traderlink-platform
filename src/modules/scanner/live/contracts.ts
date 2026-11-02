@@ -36,6 +36,8 @@ export type ScannerConfiguration = Readonly<{
 export type NormalizedSnapshot = Readonly<{
   symbol: string; company: string; session: ScannerSession; tradingDate: string;
   providerAt: number; receivedAt: number; price: number; baseline: number | null;
+  /** During after-hours, last_price is the same day's regular close, not after_price. */
+  regularClosePrice?: number | null;
   /** The provider clock is preserved even when it describes the regular close. */
   priceTimeBasis?: "provider" | "session_observation";
   volume: number | null; dollarVolume: number | null; bid: number | null; ask: number | null;
@@ -51,6 +53,10 @@ export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt
 export type LiveScannerRow = Readonly<{
   symbol: string; exchange: "NASDAQ" | "NYSE"; company: string; price: number;
   sessionGain: number | null; volume: number | null; dollarVolume: number | null;
+  comparisonPrice?: number | null;
+  gainBasis?: "previous_regular_close" | "today_regular_close";
+  /** Context only: after-hours gain from today's regular close; absent outside after-hours. */
+  postMarketGain?: number | null;
   marketCap: number | null; marketCapAtCollection: number; float: number;
   relativeVolume: number | null; dayHigh: number; dayLow: number; offHighPercent: number | null;
   floatRetrievedAtUtc: string; spreadPercent: number | null; providerAtUtc: string; receivedAtUtc: string;
@@ -64,4 +70,6 @@ export type ScannerReadModel = Readonly<{
   tradingDate: string; session: ScannerSession | null; updatedAtUtc: string | null; universeSourceDate?: string | null;
   universeCount: number; receivedCount: number; missingSymbols: readonly string[]; missingFloatCount: number;
   gainers: LiveScreenResults; momentum: LiveScreenResults; issues: readonly string[];
+  /** Separate all-day comparison, calculated from the same snapshot pass. */
+  dayGainers?: LiveScreenResults;
 }>;

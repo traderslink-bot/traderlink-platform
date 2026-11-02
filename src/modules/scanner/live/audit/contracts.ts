@@ -20,6 +20,10 @@ export type ScannerAuditDecision = Readonly<{
   float: number | null;
   floatRetrievedAtUtc: string | null;
   sessionGain: number | null;
+  /** Gainer comparison may differ from the unchanged day gain shown for Momentum. */
+  gainerGain?: number | null;
+  gainerComparisonPrice?: number | null;
+  gainerGainBasis?: "previous_regular_close" | "today_regular_close";
   spreadPercent: number | null;
   offHighPercent: number | null;
   relativeVolume: number | null;

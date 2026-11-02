@@ -73,9 +73,9 @@ export class LiveScannerEngine {
     universe: DailyUniverse; tradingDate: string; session: ScannerSession; snapshots: readonly NormalizedSnapshot[];
     floats: ReadonlyMap<string,FloatFact>; news: ReadonlyMap<string,readonly ScannerNewsItem[]>;
     configuration: ScannerConfiguration; now: number;
-  }>): Readonly<{ gainers: LiveScreenResults; momentum: LiveScreenResults; missingFloatCount: number; audit: readonly ScannerAuditDecision[] }> {
+  }>): Readonly<{ gainers: LiveScreenResults; dayGainers: LiveScreenResults; momentum: LiveScreenResults; missingFloatCount: number; audit: readonly ScannerAuditDecision[] }> {
     if (input.universe.tradingDate !== input.tradingDate) throw Error("scanner_universe_not_current");
-    if (!input.configuration.enabled) { this.clear(); return { gainers: EMPTY, momentum: EMPTY, missingFloatCount: 0, audit: [] }; }
+    if (!input.configuration.enabled) { this.clear(); return { gainers: EMPTY, dayGainers: EMPTY, momentum: EMPTY, missingFloatCount: 0, audit: [] }; }
     const membership = new Map(input.universe.stocks.map(stock => [stock.symbol,stock]));
     this.activity.retain([...membership.keys()]);
     const seen = new Set<string>();
@@ -99,6 +99,10 @@ export class LiveScannerEngine {
         ? (snapshot.ask-snapshot.bid)/((snapshot.ask+snapshot.bid)/2)*100 : null;
       rows.push({ symbol: stock.symbol, exchange: stock.exchange, company: snapshot.company, price: snapshot.price,
         sessionGain: snapshot.baseline !== null && snapshot.baseline > 0 ? (snapshot.price/snapshot.baseline-1)*100 : null,
+        comparisonPrice: snapshot.baseline, gainBasis: "previous_regular_close",
+        ...(input.session === "after_hours" ? { postMarketGain:
+          typeof snapshot.regularClosePrice === "number" && Number.isFinite(snapshot.regularClosePrice) && snapshot.regularClosePrice > 0
+            ? (snapshot.price/snapshot.regularClosePrice-1)*100 : null } : {}),
         volume: snapshot.volume, dollarVolume: snapshot.dollarVolume, marketCap: snapshot.marketCap,
         marketCapAtCollection: stock.marketCapAtCollection, float: fact.shares, floatRetrievedAtUtc: fact.retrievedAtUtc,
         relativeVolume: input.session === "premarket" ? null : snapshot.providerVolumeRatio,
@@ -108,7 +112,17 @@ export class LiveScannerEngine {
         priceTimeBasis: snapshot.priceTimeBasis,
         activity: this.activity.metrics(snapshot.symbol,input.now), reasons: [], news: input.news.get(stock.symbol) ?? [] });
     }
-    const gainers = rows.filter(row => matches(row,input.configuration.gainers.filters[input.session]))
+    const dayGainers = rows.filter(row => matches(row,input.configuration.gainers.filters[input.session]))
+      .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
+    const snapshotsBySymbol = new Map(input.snapshots.map(snapshot => [snapshot.symbol,snapshot]));
+    const gainerRows = input.session === "after_hours" ? rows.map(row => {
+      const close = snapshotsBySymbol.get(row.symbol)?.regularClosePrice;
+      const comparisonPrice = typeof close === "number" && Number.isFinite(close) && close > 0 ? close : null;
+      return { ...row, comparisonPrice, gainBasis: "today_regular_close" as const,
+        sessionGain: row.postMarketGain ?? null };
+    }) : rows;
+    const gainers = gainerRows.filter(row => (input.session !== "after_hours" || row.sessionGain !== null)
+      && matches(row,input.configuration.gainers.filters[input.session]))
       .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
     const momentumFilters = input.configuration.momentum.filters[input.session];
     const momentum = rows.filter(row => matches(row,momentumFilters)
@@ -122,6 +136,7 @@ export class LiveScannerEngine {
     const gainerRank=new Map(gainers.map((row,index)=>[row.symbol,index+1]));
     const momentumRank=new Map(momentum.map((row,index)=>[row.symbol,index+1]));
     const rowBySymbol=new Map(rows.map(row=>[row.symbol,row]));
+    const gainerBySymbol=new Map(gainerRows.map(row=>[row.symbol,row]));
     const audit=input.snapshots.map(snapshot=>{
       const row=rowBySymbol.get(snapshot.symbol),failure=rejected.get(snapshot.symbol)??[];
       if(!row)return {symbol:snapshot.symbol,exchange:membership.get(snapshot.symbol)?.exchange??null,
@@ -130,12 +145,15 @@ export class LiveScannerEngine {
         float:null,floatRetrievedAtUtc:null,sessionGain:null,spreadPercent:null,offHighPercent:null,relativeVolume:null,
         gainerFailures:failure,momentumFailures:failure,gainerRank:null,momentumRank:null,gainerDisplayed:false,momentumDisplayed:false,
         momentumScore:null} satisfies ScannerAuditDecision;
-      const gainerFailures=scannerFilterFailures(row,input.configuration.gainers.filters[input.session]);
+      const gainerRow=gainerBySymbol.get(row.symbol)!;
+      const gainerFailures=[...scannerFilterFailures(gainerRow,input.configuration.gainers.filters[input.session])];
+      if(input.session === "after_hours" && gainerRow.sessionGain === null && !gainerFailures.includes("gain_unavailable"))gainerFailures.push("gain_unavailable");
       const momentumFailures=[...scannerFilterFailures(row,momentumFilters),...scannerMovementFailures(row,input.configuration.momentum.focus)];
       const gr=gainerRank.get(row.symbol)??null,mr=momentumRank.get(row.symbol)??null;
       return {symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:row.marketCapAtCollection,observation:snapshot,activity:row.activity,float:row.float,floatRetrievedAtUtc:row.floatRetrievedAtUtc,
         sessionGain:row.sessionGain,spreadPercent:row.spreadPercent,offHighPercent:row.offHighPercent,relativeVolume:row.relativeVolume,
         gainerFailures,momentumFailures,gainerRank:gr,momentumRank:mr,
+        gainerGain:gainerRow.sessionGain,gainerComparisonPrice:gainerRow.comparisonPrice??null,gainerGainBasis:gainerRow.gainBasis,
         gainerDisplayed:gr!==null&&gr<=input.configuration.gainers.displayLimit,
         momentumDisplayed:mr!==null&&mr<=input.configuration.momentum.displayLimit,
         momentumScore:scannerMomentumScore(row,input.configuration.momentum.focus,momentumFilters)} satisfies ScannerAuditDecision;
@@ -143,6 +161,7 @@ export class LiveScannerEngine {
     return {
       gainers: { rows: gainers.slice(0,input.configuration.gainers.displayLimit), total: gainers.length,
         focus: this.gainersFocus.select(context,gainersCandidates,input.configuration.gainers.focus,input.now) },
+      dayGainers: { rows: dayGainers.slice(0,input.configuration.gainers.displayLimit), total: dayGainers.length, focus: [] },
       momentum: { rows: momentum.slice(0,input.configuration.momentum.displayLimit), total: momentum.length,
         focus: this.momentumFocus.select(context,momentumCandidates,input.configuration.momentum.focus,input.now) }, missingFloatCount,audit,
     };

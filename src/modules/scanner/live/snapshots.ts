@@ -73,9 +73,8 @@ export function normalizeSnapshotBatch(input: Readonly<{
     const prefix = input.session === "premarket" ? "pre" : input.session === "after_hours" ? "after" : null;
     const price = positive(value[prefix ? `${prefix}_price` : "last_price"]);
     if (price === null) { issues.add("session_price_unavailable"); continue; }
-    // Gain% remains anchored to the previous regular-session close through
-    // premarket, regular trading and after-hours. Rolling observations supply
-    // the session-local momentum measurements separately.
+    // Preserve the all-day baseline. The separate post-market ranking uses
+    // today's regular last_price, which remains separate from after_price.
     const baseline = positive(value.prev_close_price);
     if (baseline === null) issues.add("session_baseline_unavailable");
     if (!input.qualification.sessionCountersVerified) issues.add("session_counters_unverified");
@@ -93,6 +92,7 @@ export function normalizeSnapshotBatch(input: Readonly<{
     snapshots.push({ symbol, company: typeof value.name === "string" ? value.name.slice(0,200) : symbol,
       session: input.session, tradingDate: input.tradingDate, providerAt, receivedAt: input.receivedAt, price, baseline,
       ...(observedSession ? { priceTimeBasis: "session_observation" as const } : {}),
+      ...(input.session === "after_hours" ? { regularClosePrice: positive(value.last_price) } : {}),
       volume: input.qualification.sessionCountersVerified ? counter(value[prefix ? `${prefix}_volume` : "volume"],true) : null,
       dollarVolume: input.qualification.sessionCountersVerified ? counter(value[prefix ? `${prefix}_turnover` : "turnover"]) : null,
       bid: usableBook ? bid : null, ask: usableBook ? ask : null,

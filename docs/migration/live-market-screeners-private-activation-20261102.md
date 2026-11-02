@@ -467,3 +467,121 @@ three-file ESLint also passed. The bounded QA unit exited zero, its resource
 preflight passed, and its own lock was released after the unit was inactive.
 No Moomoo provider requests or hosted writes were used for these tests.
 Live deployment and browser acceptance of this correction are not yet claimed.
+
+## Day and Post-Market Gainers tabs — owner-approved implementation
+
+Owner selected two views in the existing Top Gainers card, not a new page:
+Day Gainers compares the actual current-session price with the previous trading
+day's regular close and keeps updating during post-market. Post-Market Gainers
+compares the after-hours price with today's regular close. Use existing saved
+gainer filters; do not lower liquidity/spread requirements to fill either view.
+Both views use the existing current-session volume and dollar-volume filters.
+No premarket-open/previous-post-close baseline or candle downloads are added.
+
+Real read-only OAuth snapshot evidence on November 2 at 4:35:51 PM ET:
+PARA `last_price=1.69`, `prev_close_price=3.17`, `after_price=2.72`,
+`after_change_rate=60.946`; INO `last_price=1.89`, prior close `0.6024`,
+after price `1.9185`; VCIG regular close `8.16`, prior close `3.0402`,
+after price `7.0972`. These public source fields demonstrate why the two
+comparisons rank different opportunities. `open_price` was present but is
+not used by this approved two-view design. No previous post-market close
+field was established. A separate Oct 30 PARA historical query returned zero
+bars; that does not prove the endpoint cannot return other stocks/dates.
+
+Implementation contract:
+
+- Preserve `baseline` as yesterday's regular close. Carry today's regular
+  close separately only for after-hours normalization; never substitute the
+  current after price or yesterday's close if today's close is unavailable.
+- Engine calculates both rankings from one observation/rolling-metrics pass.
+  Primary `gainers` becomes session-appropriate (post-market after close),
+  with a separate `dayGainers` result. Momentum gain/filter/score is unchanged.
+- Audit records the primary gainer comparison price, gain and basis separately
+  from the unchanged day gain. Existing immutable history remains interpretable;
+  new optional fields require no schema migration.
+- Both desktop and mobile reuse the same selected view and count. Accessible
+  tabs show Day Gainers / Post-Market Gainers with comparison-basis text.
+  The existing five-second client poll drives the default switch from the
+  server's verified session (including early closes), without a reload or
+  another provider request. Manual selection persists for that trading date;
+  a new trading date restores automatic defaults.
+- Preserve private two-account access, disabled scanner notifications, saved
+  settings, request spacing, shared budget, News links and chart behavior.
+  Include visible symbols from both views in the same existing news lookup.
+
+Acceptance inventory before release: actual field normalization; independent
+ranking/filter comparisons; missing close without wrong fallback; unchanged
+regular/premarket/Momentum behavior; default switch on live poll and early
+close; manual selection retention; next-date reset; mobile/desktop shared
+state; zero additional fetch on tab clicks; one snapshot pass for both views;
+news enrichment for both; audit reconciliation; targeted lint/type verification;
+Help alignment and Coordinator clean release gates. Work is not yet deployed.
+
+Verification checkpoint: all **191 tests across 17 files passed**, including
+15 new normalization/engine/feed/selection cases and two actual React card
+interaction/polling tests. The one mocked snapshot pass feeds both rankings;
+clicking tabs issues no fetch. Ten changed TS/TSX files passed ESLint with one
+unused test-argument warning subsequently corrected. Full archive TypeScript
+checking reported five diagnostics in unchanged baseline files only: a missing
+jsdom declaration in the membership embed-host test and required NODE_ENV
+in scanner runtime/pacing test fixtures. It reported no diagnostic in this
+feature's changed files. Do not call that a passing full typecheck, alter
+unrelated membership dependencies, or hide the baseline diagnostics.
+Final closeout after the Coordinator's Shared build: both React interaction
+tests passed again. The required legacy dashboard-template guard ran: three
+assertions passed and four failed on pre-existing contract assumptions about
+the old template/frame, configured legacy route locations and shell/title
+ownership. The relevant layout, navigation, shell and test bytes exactly match
+the pre-feature candidate. The edited scanner client's forbidden structural
+token counts are unchanged: no local shell/header/main, and the existing chart
+Drawer import remains one. Do not change unrelated application architecture to
+satisfy that legacy guard. The warning cleanup's one-file lint passed with no
+warnings. These baseline failures are retained explicitly, not reported as
+passing full architecture/typecheck acceptance.
+
+All bounded test/typecheck units are inactive with empty groups; their own
+locks were released. Normal index and package/lock files remain unchanged;
+all 770 unrelated dirty entries retain their original byte fingerprint.
+Feature source is frozen at local candidate
+`04b95985539a6a0b287da16ba9736f1e138f7d09`, parent
+`c120aeff82a2f4bd9f1b932edc4d5b680ca53169`. This documentation closeout
+does not alter that implementation. Coordinator clean integration/build and
+actual hosted verification remain required before claiming live completion.
+
+## Momentum Day % / Post % context — additive owner approval
+
+Owner approved showing both percentage contexts in the existing Momentum
+scanner, not a second Momentum view or the future compact-card/drawer redesign.
+Day % remains the previous regular-close comparison. During after-hours,
+Post % uses the same verified current after price and today's regular close
+already available for Post-Market Gainers. Reuse that computed value in both
+places. No additional API calls, candle downloads or stored settings are needed.
+
+Desktop: rename Momentum Gain% to Day %, add Post % only during after-hours,
+and keep the one-/five-minute movement, volume and volume-spike columns.
+Adjust the expanded detail colspan for the extra visible column. Both headers
+describe their comparison basis. Mobile retains its compact main row and adds
+Day % / Post % to the existing expandable details. Unknown post gain is n/a,
+not zero or a substituted previous-day comparison. Outside after-hours the
+Post % field is absent, not a misleading zero. Qualification filters, ranks,
+scores, confirmations and upper-section selection remain unchanged.
+
+New regression inventory: independent percentage math; missing regular close;
+unchanged full Momentum rows/rank/score when only context baseline changes;
+unchanged regular-hours context; actual desktop column alignment and colspan;
+mobile expandable details; session transition through the existing poll and
+no extra fetches. Existing Day/Post Gainers and private access/delivery tests
+remain in the combined regression batch. No extra scanners or layout redesign
+are included. Final combined regression passed: **196 tests across 17 files**,
+including three new engine context/qualification checks and two new actual
+React desktop/mobile/session-transition cases. Six-file targeted ESLint passed
+without warnings. The one bounded 1.5GiB/CPU1 unit passed its resource preflight,
+exited zero and closed its original group; its own common lock was released.
+All 770 unrelated entries retain their original byte fingerprint; normal index,
+package/lock files and protected Coaching listener remain unchanged.
+No extra provider requests, production data/settings writes or notifications
+were performed by these tests. Earlier baseline-only broad TypeScript and
+legacy architecture diagnostics remain recorded, not recast as passing checks.
+Coordinator will combine this additive successor with the frozen gainer tabs
+for one clean integration/build/release. No deployment of this successor has
+occurred yet; live/browser acceptance remains separate.

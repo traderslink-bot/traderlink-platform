@@ -32,6 +32,7 @@ import { ScreenerPressReleaseBoard } from "./screener-press-release-board";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 import type { LiveScannerRow, LiveScreenResults, ScannerConfiguration, ScannerKind, ScannerReadModel,
   ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
+import { gainerViewResults, selectedGainerView, type GainerView, type GainerViewChoice } from "@/src/modules/scanner/live/gainer-view";
 
 const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", momentum: "Momentum" };
 const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", regular: "Regular hours", after_hours: "After hours" };
@@ -142,7 +143,8 @@ function CompactStockTable({ rows,screen,onOpenChart }: { rows: readonly LiveSca
         row.relativeVolume==null?null:metric("RVOL",`${number.format(row.relativeVolume)}×`),
         traded==null?null:metric("Turnover",traded),
       ]:[
-        row.sessionGain===null?null:metric("Day gain",value(row.sessionGain,"%")),
+        metric("Day %",value(row.sessionGain,"%")),
+        row.postMarketGain===undefined?null:metric("Post %",value(row.postMarketGain,"%")),
         row.volume===null?null:metric("Session volume",compact.format(row.volume)),
         row.activity.fiveMinuteVolume==null?null:metric("5m Vol",compact.format(row.activity.fiveMinuteVolume)),
         row.activity.volumeAcceleration===null?null:metric("1m Vol Spike",`${number.format(row.activity.volumeAcceleration)}×`),
@@ -185,6 +187,7 @@ function CompactStockTable({ rows,screen,onOpenChart }: { rows: readonly LiveSca
 function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void }) {
   const [expandedDesktopSymbol,setExpandedDesktopSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(results.rows);
+  const showPostGain=screen==="momentum"&&results.rows.some(row=>row.postMarketGain!==undefined);
   if (!results.rows.length) return <Alert severity="info">No stocks currently qualify for this list.</Alert>;
   const desktopTableSx={
     ...movementTableSx,tableLayout:"fixed",
@@ -207,7 +210,7 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
       </TableRow>)}</TableBody></Table>:<Table size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Details" sx={{ px:"0 !important",width:22 }}/>
         <TableCell aria-label="Chart" sx={{ px:"0.125rem !important",width:26 }}/>
-        {['Ticker','Price','Gain%','1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread','News'].map(label => <TableCell key={label}>{label}</TableCell>)}
+        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread','News'].map(label => <TableCell key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=>{const expanded=expandedDesktopSymbol===row.symbol;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol)}
           onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}}}
@@ -216,12 +219,13 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
           <TableCell sx={{ px:"0.125rem !important",width:26 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
           <TableCell sx={{ fontWeight:800,pl:"0.3rem !important" }}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography></TableCell>
           <TableCell>${value(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
+          {showPostGain?<TableCell sx={{ color:row.postMarketGain==null?"text.secondary":row.postMarketGain>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.postMarketGain,"%")}</TableCell>:null}
           <TableCell>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
           <TableCell>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"n/a":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
           <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
           <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell><TableCell onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}><NewsLinks row={row} /></TableCell>
         </TableRow>
-        {expanded?<TableRow><TableCell colSpan={14} sx={{ bgcolor:"action.hover",py:"10px !important" }}>
+        {expanded?<TableRow><TableCell colSpan={showPostGain?15:14} sx={{ bgcolor:"action.hover",py:"10px !important" }}>
           <Box sx={{ display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:2 }}>
             {[
               ["$ × Vol",row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`],
@@ -298,10 +302,27 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
 export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [screen,setScreen]=useState<ScannerKind>("gainers"), [model,setModel]=useState<ScannerReadModel|null>(null), [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const [chartRow,setChartRow]=useState<LiveScannerRow|null>(null);
+  const [gainerChoice,setGainerChoice]=useState<GainerViewChoice|null>(null);
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
   useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const controller=new AbortController();const load=async()=>{try{const response=await fetch('/api/screeners/live',{ cache:'no-store',credentials:'same-origin',signal:controller.signal });if(!response.ok)throw Error();setModel(await response.json());setLoadError(false);}catch{if(!controller.signal.aborted)setLoadError(true);}finally{if(!controller.signal.aborted)timer=setTimeout(()=>void load(),5000);}};void load();return()=>{controller.abort();if(timer)clearTimeout(timer);};},[]);
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const scannerTabs=<Tabs aria-label="Live screener" onChange={(_,next:ScannerKind)=>setScreen(next)} value={screen} variant="scrollable">{Object.entries(SCREEN_LABELS).map(([key,label])=><Tab key={key} label={label} value={key}/>)}</Tabs>;
+  const gainerView=selectedGainerView(model,gainerChoice);
+  const selectedGainers=gainerViewResults(model,gainerView);
+  const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
+  const contents=(kind:ScannerKind)=><>
+    {kind==="gainers"?<Stack spacing={1} sx={{mb:1.5}}>
+      <Tabs aria-label="Top Gainers comparison" value={gainerView} variant="scrollable"
+        onChange={(_,view:GainerView)=>{if(model)setGainerChoice({tradingDate:model.tradingDate,view});}}>
+        <Tab label="Day Gainers" value="day" disabled={!model}/>
+        <Tab label="Post-Market Gainers" value="post_market" disabled={!model}/>
+      </Tabs>
+      <Typography color="text.secondary" variant="caption">{gainerView==="day"?"Since the previous trading day’s regular close":"Since today’s regular close"}</Typography>
+    </Stack>:null}
+    {kind==="gainers"&&gainerView==="post_market"&&model&&model.session!=="after_hours"
+      ?<Typography color="text.secondary">Post-market readings begin after the regular session closes.</Typography>
+      :<ScannerContents onOpenChart={setChartRow} results={resultsFor(kind)} screen={kind}/>}
+  </>;
   return <Stack spacing={2.5} sx={{ mt:{ xs:-1,sm:-2 } }}>
     {admin&&settingsError?<Alert severity="error">Scanner settings could not be loaded.</Alert>:null}
     {admin&&configuration?<AdminControls configuration={configuration} onSaved={setConfiguration}/>:admin&&!settingsError?<Skeleton height={220} variant="rounded"/>:null}
@@ -315,13 +336,13 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       </Stack>
     </DashboardPanel>:<><Box sx={{ display:{ xs:"block",md:"none" } }}>{scannerTabs}</Box>{loadError?<Alert severity="error">The latest scanner update could not be loaded.</Alert>:null}{model&&statusMessage(model)?<Alert severity={model.status==='unavailable'?'error':'info'}>{statusMessage(model)}</Alert>:null}</>}
     <Box sx={{ display:{ xs:"none",md:"grid" },gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:2,alignItems:"start",'& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 } }}>
-      {(["gainers","momentum"] as const).map(kind=><DashboardPanel action={admin&&model?.[kind]?<Chip label={`${model[kind].total} qualifying`} size="small"/>:undefined} key={kind} title={SCREEN_LABELS[kind]}>
-        <ScannerContents onOpenChart={setChartRow} results={model?.[kind]} screen={kind}/>
+      {(["gainers","momentum"] as const).map(kind=><DashboardPanel action={admin&&resultsFor(kind)?<Chip label={`${resultsFor(kind)!.total} qualifying`} size="small"/>:undefined} key={kind} title={SCREEN_LABELS[kind]}>
+        {contents(kind)}
       </DashboardPanel>)}
     </Box>
     <Box sx={{ display:{ xs:"block",md:"none" },'& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 } }}>
-      <DashboardPanel action={admin&&model?.[screen]?<Chip label={`${model[screen].total} qualifying`} size="small"/>:undefined} title={SCREEN_LABELS[screen]}>
-        <ScannerContents onOpenChart={setChartRow} results={model?.[screen]} screen={screen}/>
+      <DashboardPanel action={admin&&resultsFor(screen)?<Chip label={`${resultsFor(screen)!.total} qualifying`} size="small"/>:undefined} title={SCREEN_LABELS[screen]}>
+        {contents(screen)}
       </DashboardPanel>
     </Box>
     <ScreenerPressReleaseBoard/>

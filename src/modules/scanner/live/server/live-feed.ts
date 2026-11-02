@@ -98,7 +98,7 @@ export class LiveScannerFeed {
       for(const batch of batches)if(!returned.has(batch.join("\u0000")))receipts.push({sequence:receipts.length,requestedCount:batch.length,returnedCount:0,
         requestedSymbolsHash:createHash("sha256").update(batch.join("\n")).digest("hex"),receivedAt:null,durationMs:null,issue:"snapshot_batch_missing"});
       const evaluated = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
-      const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.momentum.rows,evaluated.momentum.focus]
+      const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus]
         .flatMap(rows => rows.map(row => row.symbol)))];
       let news: ReadonlyMap<string,readonly ScannerNewsItem[]> = new Map();
       try { news = await this.dependencies.news(visibleSymbols); } catch { issues.add("news_unavailable"); }
@@ -116,7 +116,7 @@ export class LiveScannerFeed {
       return this.set({ status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
         universeSourceDate: universe.sourceTradingDate ?? universe.tradingDate, universeCount: symbols.length,
         receivedCount: snapshots.length, missingSymbols: Object.freeze([...new Set(missing)].sort()), missingFloatCount: evaluated.missingFloatCount,
-        gainers: enrich(evaluated.gainers), momentum: enrich(evaluated.momentum), issues: Object.freeze([...issues].sort()) });
+        gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), issues: Object.freeze([...issues].sort()) });
     } catch { return this.set(empty("unavailable",date,["live_feed_unavailable"])); }
     finally { this.running = false; }
   }
