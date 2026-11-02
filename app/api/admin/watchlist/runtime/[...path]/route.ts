@@ -1,5 +1,3 @@
-import { WATCHLIST_RUNTIME_GET_PATHS as GET_PATHS, WATCHLIST_RUNTIME_POST_PATHS as POST_PATHS } from "@/src/modules/watchlist/contracts/watchlist-console-relay";
-import { readBoundedRequestText, RequestBodyLimitError } from "@/src/modules/platform/server/http/bounded-request-body";
 import { isPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { recordCategoryMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-x-admin";
@@ -19,7 +17,73 @@ export const runtime = "nodejs";
 
 type SupportedMethod = "GET" | "POST";
 
+const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/discord-text",
+  "/api/watchlist/analysis-review/category-move",
+  "/api/watchlist/analysis-review/x-post",
+  "/api/watchlist/analysis-review/free-chat",
+  "/api/watchlist/analysis-review/discord-mentions",
+  "/api/watchlist/analysis-review/export",
+  "/api/watchlist/analysis-review/history",
+  "/api/watchlist/analysis-review/queue",
+  "/api/watchlist/analysis-review/settings",
+  "/api/watchlist/analysis-review",
+  "/api/watchlist/analysis-review/preview",
+  "/api/ai-clean-read",
+  "/api/runtime/ai-read-audit",
+  "/api/runtime/day-trade-adapter",
+  "/api/runtime/status",
+  "/api/trade-plan-review",
+  "/api/watchlist",
+]);
 
+const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/discord-text",
+  "/api/watchlist/analysis-review/category-move",
+  "/api/watchlist/analysis-review/x-post",
+  "/api/watchlist/analysis-review/cancel-generation",
+  "/api/watchlist/analysis-review/free-chat",
+  "/api/watchlist/analysis-review/discord-mentions",
+  "/api/watchlist/analysis-review/settings",
+  "/api/watchlist/analysis-review/save-notes",
+  "/api/watchlist/analysis-review/save",
+  "/api/watchlist/analysis-review/approve",
+  "/api/watchlist/analysis-review/publish-without-analysis",
+  "/api/watchlist/analysis-review/retry-discord",
+  "/api/watchlist/analysis-review/verify-discord",
+  "/api/ai-clean-read/comments",
+  "/api/ai-clean-read/generate",
+  "/api/discord/clear-watchlist-channel",
+  "/api/runtime/ai-read-boundary-refreshes",
+  "/api/runtime/ai-read-cost-budget",
+  "/api/runtime/ai-read-external-research",
+  "/api/runtime/ai-read-generation",
+  "/api/runtime/ai-read-model",
+  "/api/runtime/auto-watchlist-selector",
+  "/api/runtime/auto-watchlist-selector/preview",
+  "/api/runtime/day-trade-adapter",
+  "/api/runtime/day-trade-adapter/refresh",
+  "/api/runtime/historical-provider",
+  "/api/runtime/live-provider",
+  "/api/runtime/same-day-candle-provider",
+  "/api/runtime/live-trader-read-card",
+  "/api/runtime/potential-gain-card",
+  "/api/runtime/reversal-watchlist",
+  "/api/runtime/top-regular-watchlist",
+  "/api/runtime/watchlist-lifecycle-labels",
+  "/api/trade-plan-review/notes",
+  "/api/watchlist/activate",
+  "/api/watchlist/ai-read-dip-buy-visibility",
+  "/api/watchlist/ai-read-refresh",
+  "/api/watchlist/ai-read-visibility",
+  "/api/watchlist/indicator-visibility",
+  "/api/watchlist/deactivate",
+  "/api/watchlist/deactivate-bulk",
+  "/api/watchlist/move-to-list",
+  "/api/watchlist/refresh-levels",
+  "/api/watchlist/remove-from-list",
+  "/api/watchlist/repost-snapshot",
+]);
 
 function authorized(request: Request): boolean {
   try {
@@ -60,9 +124,7 @@ async function relay(
   }
 
   const incomingUrl = new URL(request.url);
-  let body: string | undefined;
-  try { body = method === "POST" ? await readBoundedRequestText(request, 1024 * 1024) : undefined; }
-  catch (error) { return Response.json({ error: "Request unavailable." }, { status: error instanceof RequestBodyLimitError ? 413 : 400 }); }
+  let body = method === "POST" ? await request.text() : undefined;
   let freeChatWarning:string|null=null;
   if(pathname === "/api/watchlist/analysis-review/category-move" && method === "POST" && reviewActor && body) {
     try {
@@ -149,21 +211,12 @@ export async function GET(
   request: Request,
   context: Readonly<{ params: Promise<{ path: string[] }> }>,
 ): Promise<Response> {
-  return secureRuntimeResponse(await relay(request, context, "GET"));
+  return relay(request, context, "GET");
 }
 
 export async function POST(
   request: Request,
   context: Readonly<{ params: Promise<{ path: string[] }> }>,
 ): Promise<Response> {
-  return secureRuntimeResponse(await relay(request, context, "POST"));
-}
-
-function secureRuntimeResponse(response: Response): Response {
-  const headers = new Headers(response.headers);
-  const type = headers.get("content-type")?.split(";")[0].trim().toLowerCase();
-  if (type !== "application/json" && type !== "text/plain") return Response.json({ error: "Runtime response unavailable." }, { status: 502 });
-  headers.set("content-security-policy", "default-src 'none'; sandbox; frame-ancestors 'none'");
-  headers.set("x-content-type-options", "nosniff");
-  return new Response(response.body, { status: response.status, headers });
+  return relay(request, context, "POST");
 }

@@ -4,10 +4,6 @@ export const WATCHLIST_HELP_GUIDES: readonly HelpGuide[] = [{
   slug: "analysis", title: "Read Watchlist analysis",
   description: "Understand the posted price, setup areas and analysis updates.",
   sections: [{
-    id: "confirm-console-change", title: "Confirm console changes", summary: "Review a change before it is sent from the embedded Watchlist console.",
-    keywords: ["Watchlist Admin", "confirm", "cancel", "console"],
-    blocks: [{ kind: "paragraph", text: "Changes requested by the embedded Watchlist console open a confirmation in the dashboard. Review the change and its values, then select Confirm change to send it or Cancel to leave it unsent. Read-only loading does not need confirmation. If a request expires while you review it, start the change again. A failed or cancelled response after sending does not prove the change was undone; check the current ticker before retrying." }],
-  }, {
     id: "analysis-cancellation", title: "Cancel analysis", summary: "Stop a pending analysis without changing the published read.",
     keywords: ["cancel", "generation", "Discord channels"],
     blocks: [{kind:"paragraph",text:"While an analysis is running, Watchlist Admin shows its elapsed time and Cancel analysis. Cancelling prevents that request from replacing the published analysis or starting a fallback request. You can manually refresh again. Work already processed by the provider may still be charged. The same automatic boundary request is paused until a manual refresh, a new published read or a runtime restart."}, {kind:"paragraph",text:"Approved Discord posts use the channel configured for their Watchlist category: Main and Top Regular, Post-Market and Overnight Watches, Swings, or General. Moving a ticker does not redirect a post already approved for delivery. Free Chat remains a separate choice."}],

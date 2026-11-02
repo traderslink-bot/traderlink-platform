@@ -61,11 +61,11 @@ export async function requestWatchlistRuntimeRaw(
           : {}),
       },
       method: request.method,
-      redirect: "error",
+      redirect: request.reviewActor ? "error" : "follow",
       signal: AbortSignal.timeout(request.timeoutMs ?? 180_000),
     });
     return Object.freeze({
-      body: await readBoundedRequestText(response, 4 * 1024 * 1024),
+      body: await response.text(),
       contentType: response.headers.get("content-type") ?? "application/octet-stream",
       ok: response.ok,
       status: response.status,
@@ -79,4 +79,3 @@ export async function requestWatchlistRuntimeRaw(
     });
   }
 }
-import { readBoundedRequestText } from "@/src/modules/platform/server/http/bounded-request-body";

@@ -1,4 +1,3 @@
-import { WATCHLIST_CONSOLE_BOOTSTRAP } from "./watchlist-console-sandbox";
 import { WATCHLIST_GAIN_START_CONTROL } from "./watchlist-gain-start-control";
 import { WATCHLIST_PREMIUM_CONTROL } from "./watchlist-premium-control";
 import "server-only";
@@ -226,11 +225,9 @@ export function rewriteWatchlistRuntimeDocument(document: string): string {
       '"/trade-plan-review"',
       '"/api/admin/watchlist/console/trade-plan-review"',
     );
-  const doctype = rewritten.match(/^\s*<!doctype[^>]*>/iu)?.[0] ?? "";
-  const isolated = doctype + WATCHLIST_CONSOLE_BOOTSTRAP + rewritten.slice(doctype.length);
-  return isolated.includes("</body>")
-    ? isolated.replace("</body>", `${SECTION_NAVIGATION_INJECTION}${WATCHLIST_PREMIUM_CONTROL}${WATCHLIST_GAIN_START_CONTROL}</body>`)
-    : `${isolated}${SECTION_NAVIGATION_INJECTION}${WATCHLIST_PREMIUM_CONTROL}${WATCHLIST_GAIN_START_CONTROL}`;
+  return rewritten.includes("</body>")
+    ? rewritten.replace("</body>", `${SECTION_NAVIGATION_INJECTION}${WATCHLIST_PREMIUM_CONTROL}${WATCHLIST_GAIN_START_CONTROL}</body>`)
+    : `${rewritten}${SECTION_NAVIGATION_INJECTION}${WATCHLIST_PREMIUM_CONTROL}${WATCHLIST_GAIN_START_CONTROL}`;
 }
 
 export async function readWatchlistRuntimeConsoleDocument(
