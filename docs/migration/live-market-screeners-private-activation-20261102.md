@@ -423,3 +423,47 @@ qualify directly from its natural responses without another activation deploy.
 Keep both after-hours gainers and Momentum private to the two approved accounts;
 all scanner notifications remain disabled. Do not claim the session qualified
 or working live solely because these preparation tests pass.
+
+## Missed-scan rolling-window correction — November 2, 3:35 PM ET
+
+The post-market preparation release is installed at main
+`5b419642f9919b5b6f9d814cf556629e12b60ec2`, Railway deployment
+`124ccec9-c351-4fad-8f39-836dfd850b9e` (SUCCESS), with health ready/149,
+unchanged owner configuration revision 8 and scanner delivery disabled.
+Actual after-hours qualification remains a separate market-open acceptance.
+
+Read-only production audit identified a second window reset after the deployment:
+INO/INLF received a 26,314ms accepted-observation gap, SEGG 25,271ms,
+and ABOS 24,298ms around 3:29 PM ET. The old 15-second continuity rule
+discarded their accumulated history. Five-minute readings returned for
+INO/INLF/SEGG around 3:34 PM; FNGR had later gaps and remained incomplete.
+These are recorded observations, not a claim that those symbols qualify forever.
+
+Owner approved correcting the reset. Keep the 15-second **current receipt**
+freshness limit and the regular-session 30-second provider-clock guard. Do not
+erase earlier history merely because an intermediate scan is absent. Each
+1/5/6/10-minute anchor must still be a genuine observation at/before the
+boundary and within the existing ten-second tolerance. Missing endpoints
+withhold only dependent metrics. Cumulative volume/dollar differences and
+price changes use actual endpoints, not interpolated quotes or fabricated
+candles. Session/date/basis transitions, conflicting observations and counter
+decreases retain their protections. History retains its existing bounded size.
+
+The sanitized public-data fixture
+`src/modules/scanner/live/fixtures/moomoo-observation-gap-20261102.json`
+contains the actual INO/SEGG observations around the gap. Regression coverage
+reconciles each usable one-minute endpoint independently; the short fixture
+must not produce five-minute results. Synthetic cases cover surviving
+five-minute windows across a two-minute gap, withholding a missing boundary,
+recovery without an additional full-window wait and long-outage expiry.
+No changes to qualification filters, ranking, requests, pacing, access,
+notifications or production settings are part of this correction.
+
+Help was reviewed: update only the rolling-observations paragraph to distinguish
+preserved history from current-quote freshness and missing-boundary coverage.
+Focused scanner/connection regressions passed: **174 tests across 15 files**,
+including four new gap cases plus the updated missed-scan regression. Targeted
+three-file ESLint also passed. The bounded QA unit exited zero, its resource
+preflight passed, and its own lock was released after the unit was inactive.
+No Moomoo provider requests or hosted writes were used for these tests.
+Live deployment and browser acceptance of this correction are not yet claimed.

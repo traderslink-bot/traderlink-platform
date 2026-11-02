@@ -4,7 +4,7 @@ import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
 const EMPTY: RollingActivity = { oneMinuteGain: null, fiveMinuteGain: null,
   oneMinuteVolume: null, oneMinuteDollarVolume: null, fiveMinuteVolume: null,
   fiveMinuteVolumeSpike: null, volumeAcceleration: null };
-const GAP_LIMIT = 15_000;
+const CURRENT_RECEIPT_MAX_AGE_MS = 15_000;
 function anchor(rows: readonly NormalizedSnapshot[], at: number): NormalizedSnapshot | null {
   // Use an observed value at/before the boundary, never fabricate an interpolated candle.
   for (let index = rows.length-1; index >= 0; index--) {
@@ -47,8 +47,10 @@ export class RollingActivityBook {
         if (snapshot.priceTimeBasis !== "session_observation" && snapshot.providerAt === last.providerAt && snapshot.price !== last.price) {
           this.rows.delete(snapshot.symbol); return false;
         }
-        if (snapshot.receivedAt-last.receivedAt > GAP_LIMIT
-          || snapshot.volume !== null && last.volume !== null && snapshot.volume < last.volume
+        // A missed scan does not invalidate two genuine window endpoints.
+        // Keep history; anchor() independently withholds any comparison whose
+        // boundary lacks an observation. Never interpolate across the gap.
+        if (snapshot.volume !== null && last.volume !== null && snapshot.volume < last.volume
           || snapshot.dollarVolume !== null && last.dollarVolume !== null && snapshot.dollarVolume < last.dollarVolume) history = [];
       }
     }
@@ -58,7 +60,7 @@ export class RollingActivityBook {
   }
   metrics(symbol: string, now: number): RollingActivity {
     const history = this.rows.get(symbol), current = history?.at(-1);
-    if (!history || !current || now-current.receivedAt > GAP_LIMIT || now < current.receivedAt
+    if (!history || !current || now-current.receivedAt > CURRENT_RECEIPT_MAX_AGE_MS || now < current.receivedAt
       || current.priceTimeBasis !== "session_observation" && now-current.providerAt > SNAPSHOT_MAX_AGE_MS
       || now < current.providerAt) return { ...EMPTY };
     const one = anchor(history,current.receivedAt-60_000), five = anchor(history,current.receivedAt-300_000),

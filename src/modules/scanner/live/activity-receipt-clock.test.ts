@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { RollingActivityBook } from "./activity";
 import type { NormalizedSnapshot } from "./contracts";
 import fixture from "./fixtures/moomoo-receipt-clock-20261102.json";
+import gapFixture from "./fixtures/moomoo-observation-gap-20261102.json";
 
 const NOW = Date.parse("2026-11-02T19:00:00Z");
 function row(at: number, patch: Partial<NormalizedSnapshot> = {}): NormalizedSnapshot {
@@ -42,15 +43,69 @@ describe("Moomoo receipt-clock rolling activity", () => {
     expect(metrics.oneMinuteVolume).toBe(0);
     expect(metrics.volumeAcceleration).toBeNull();
   });
-  it("recovers from a real receipt gap without inventing the missing interval", () => {
+  it("preserves valid endpoint comparisons across a missed scan without inventing the missing interval", () => {
     const book = new RollingActivityBook(); fill(book);
     expect(book.metrics("TEST", NOW + 120000).oneMinuteVolume).toBe(6000);
     book.observe(row(NOW + 140000, { volume: 1014000, dollarVolume: 2028000 }));
-    expect(book.metrics("TEST", NOW + 140000).oneMinuteVolume).toBeNull();
+    expect(book.metrics("TEST", NOW + 140000).oneMinuteVolume).toBe(6000);
     for (let seconds = 150; seconds <= 200; seconds += 10) {
       book.observe(row(NOW + seconds * 1000, { volume: 1000000 + seconds * 100, dollarVolume: 2000000 + seconds * 200 }));
     }
     expect(book.metrics("TEST", NOW + 200000).oneMinuteVolume).toBe(6000);
+  });
+  it("withholds a missing one-minute boundary without erasing the valid five-minute boundary", () => {
+    const book = new RollingActivityBook(); fill(book, 600);
+    // A real two-minute interruption: no observation near the one-minute boundary.
+    book.observe(row(NOW + 720000, { volume: 1072000, dollarVolume: 2144000 }));
+    const metrics = book.metrics("TEST", NOW + 720000);
+    expect(metrics.oneMinuteGain).toBeNull();
+    expect(metrics.oneMinuteVolume).toBeNull();
+    expect(metrics.volumeAcceleration).toBeNull();
+    expect(metrics.fiveMinuteGain).toBe(0);
+    expect(metrics.fiveMinuteVolume).toBe(30000);
+    expect(metrics.fiveMinuteVolumeSpike).toBeCloseTo(1);
+  });
+  it("withholds a five-minute boundary inside a gap and recovers without another five-minute wait", () => {
+    const book = new RollingActivityBook(); fill(book, 120);
+    for (let seconds = 160; seconds <= 460; seconds += 10) {
+      book.observe(row(NOW + seconds * 1000, { volume: 1000000 + seconds * 100, dollarVolume: 2000000 + seconds * 200 }));
+      if (seconds === 440) {
+        expect(book.metrics("TEST", NOW + seconds * 1000).oneMinuteVolume).toBe(6000);
+        expect(book.metrics("TEST", NOW + seconds * 1000).fiveMinuteVolume).toBeNull();
+      }
+    }
+    expect(book.metrics("TEST", NOW + 460000).fiveMinuteVolume).toBe(30000);
+  });
+  it("cannot reuse old history after an interruption longer than the retained windows", () => {
+    const book = new RollingActivityBook(); fill(book, 600);
+    book.observe(row(NOW + 1400000, { volume: 1140000, dollarVolume: 2280000 }));
+    expect(book.metrics("TEST", NOW + 1400000)).toEqual({ oneMinuteGain: null, fiveMinuteGain: null,
+      oneMinuteVolume: null, oneMinuteDollarVolume: null, fiveMinuteVolume: null,
+      fiveMinuteVolumeSpike: null, volumeAcceleration: null });
+  });
+  it("replays today's actual INO and SEGG missed scan without discarding valid earlier anchors", () => {
+    const book = new RollingActivityBook();
+    const observations = gapFixture.observations.map(([symbol, providerAt, receivedAt, price, volume, dollarVolume]) =>
+      row(Number(receivedAt), { symbol: String(symbol), providerAt: Number(providerAt), price: Number(price),
+        volume: Number(volume), dollarVolume: Number(dollarVolume) }));
+    let recoveredAcrossGap = 0;
+    for (const observation of observations) {
+      expect(book.observe(observation)).toBe(true);
+      const prior = observations.filter(item => item.symbol === observation.symbol && item.receivedAt < observation.receivedAt);
+      const reference = prior.findLast(item => item.receivedAt <= observation.receivedAt - 60000);
+      if (!reference || observation.receivedAt - 60000 - reference.receivedAt > 10000) continue;
+      const metrics = book.metrics(observation.symbol, observation.receivedAt);
+      expect(metrics.oneMinuteVolume).toBe(observation.volume! - reference.volume!);
+      expect(metrics.oneMinuteGain).toBeCloseTo((observation.price / reference.price - 1) * 100, 10);
+      // Old code discarded the pre-gap anchor and could not calculate these windows.
+      if (reference.receivedAt < 1793651379815 && observation.receivedAt >= 1793651388552) recoveredAcrossGap++;
+      expect(metrics.fiveMinuteVolume).toBeNull(); // Fixture is shorter than five minutes.
+    }
+    expect(recoveredAcrossGap).toBeGreaterThanOrEqual(2);
+    for (const symbol of ["INO", "SEGG"]) {
+      const history = observations.filter(item => item.symbol === symbol);
+      expect(history.some((item, index) => index > 0 && item.receivedAt - history[index-1].receivedAt > 25000)).toBe(true);
+    }
   });
   it("still withholds old prices, old receipts and future timestamps", () => {
     const book = new RollingActivityBook(); fill(book);
