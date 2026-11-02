@@ -52,7 +52,6 @@ FROM platform_auth_identities
 WHERE user_id = ?
   AND auth_provider = 'discord'
   AND auth_subject = ?
-  AND status = 'active'
 ) AS matches`).get(
     input.userId,
     input.ownerDiscordSubject,
@@ -143,11 +142,10 @@ export class PlatformAdminAuthorization {
       });
     }
 
-    const guildId = resolveTraderLinkDiscordGuildId(this.environment);
     const membership = new PlatformDiscordMembershipRepository(this.database)
       .findCurrent(
         identity.scope.userId,
-        guildId,
+        resolveTraderLinkDiscordGuildId(this.environment),
       );
     const activeGrant = new PlatformOperatorRepository(this.database).findActive();
     const configuredOwnerMatched = hasConfiguredDiscordOwnerIdentity({
@@ -159,29 +157,11 @@ export class PlatformAdminAuthorization {
     });
     const discordServerOwnerMatched =
       identity.discord?.guildOwner === true && membership?.guildOwner === true;
-    const verifiedAt = membership ? Date.parse(membership.lastVerifiedAtUtc) : NaN;
-    const membershipAgeMs = now.getTime() - verifiedAt;
-    const membershipFresh = Number.isFinite(verifiedAt) &&
-      membershipAgeMs >= 0 && membershipAgeMs <= 5 * 60 * 1000;
-    // Absence retains the historical snapshot. At equal timestamps, deny until
-    // a strictly newer successful Discord verification supersedes that absence.
-    const membershipAbsent = membership && this.database.prepare<
-      [string, string, string],
-      Readonly<{ found: number }>
-    >(`SELECT 1 AS found
-FROM platform_membership_audit_events
-WHERE subject_user_id = ? AND target_type = 'discord_membership'
-  AND target_id = ? AND action = 'discord.membership.absent'
-  AND occurred_at_utc >= ?
-LIMIT 1`).get(identity.scope.userId, guildId, membership.lastVerifiedAtUtc);
     if (
       !membership ||
       !activeGrant ||
       activeGrant.userId !== identity.scope.userId ||
-      !configuredOwnerMatched ||
-      !discordServerOwnerMatched ||
-      !membershipFresh ||
-      membershipAbsent
+      (!configuredOwnerMatched && !discordServerOwnerMatched)
     ) {
       deny({
         audit,
