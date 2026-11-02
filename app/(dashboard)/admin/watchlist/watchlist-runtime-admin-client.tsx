@@ -138,6 +138,7 @@ export function WatchlistRuntimeAdminClient() {
       }
       const message = event.data as { source?: unknown; type?: unknown; height?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown; cycleId?:unknown };
       if (message.source !== "traderslink-watchlist-admin") return;
+      if (message.type === "open-live-watchlist") { window.open("https://traderslink.pro/watchlist", "_blank", "noopener,noreferrer"); return; }
       if (message.type === "frame-height" && typeof message.height === "number" && Number.isFinite(message.height)) { setHeight(Math.min(20000, Math.max(MINIMUM_FRAME_HEIGHT, message.height))); return; }
       if (message.type === "navigation-ready") { syncNavigation(); return; }
       if (message.type === "previous-analyses" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol) && typeof message.cycleId==="string" && message.cycleId.length>0 && message.cycleId.length<=200) { setHistoryRequest({symbol:message.symbol,cycleId:message.cycleId}); return; }
@@ -161,7 +162,7 @@ export function WatchlistRuntimeAdminClient() {
       <Dialog open={pendingMutation !== null} onClose={mutationBusy ? undefined : cancelMutation} fullWidth maxWidth="sm" aria-labelledby="watchlist-confirm-change-title">
         <DialogTitle id="watchlist-confirm-change-title">Confirm Watchlist change</DialogTitle>
         <DialogContent>
-          <Box component="p">Review this change requested by the embedded Watchlist console before sending it.</Box>
+          <Box component="p">Confirm this Watchlist change before continuing.</Box>
           <Box component="p" sx={{ fontWeight: 700 }}>{pendingMutation ? watchlistMutationDescription(pendingMutation) : ""}</Box>
           <Box component="pre" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", maxHeight: 320, overflow: "auto", bgcolor: "background.default", p: 2, borderRadius: 1 }}>{pendingMutation?.body ?? "No additional values."}</Box>
         </DialogContent>
@@ -198,7 +199,7 @@ export function WatchlistRuntimeAdminClient() {
       <Box
         aria-hidden={selectedSection !== "runtime"}
         component="iframe"
-        sandbox="allow-scripts"
+        sandbox="allow-scripts allow-forms"
         referrerPolicy="no-referrer"
         onLoad={handleLoad}
         ref={frameRef}

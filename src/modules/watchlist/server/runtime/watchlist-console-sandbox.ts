@@ -1,4 +1,4 @@
-export const WATCHLIST_CONSOLE_CSP = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'; sandbox allow-scripts";
+export const WATCHLIST_CONSOLE_CSP = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'; sandbox allow-scripts allow-forms";
 
 /** Runs before upstream scripts; the opaque frame never receives app credentials. */
 export const WATCHLIST_CONSOLE_BOOTSTRAP = String.raw`<script>
@@ -9,6 +9,13 @@ export const WATCHLIST_CONSOLE_BOOTSTRAP = String.raw`<script>
  let sequence = 0;
  const generation = crypto.randomUUID();
  window.parent.postMessage({source:"traderslink-watchlist-relay",type:"initialize",generation},origin);
+ // The frame cannot open popups; delegate only this fixed public Watchlist link.
+ document.addEventListener('click', event => {
+  const link = event.target instanceof Element ? event.target.closest('a#open-live-watchlist-link') : null;
+  if (!link || link.href !== 'https://traderslink.pro/watchlist') return;
+  event.preventDefault();
+  window.parent.postMessage({source:'traderslink-watchlist-admin',type:'open-live-watchlist'},origin);
+ });
  window.fetch = async (input, options = {}) => {
   const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url, window.location.href);
   const method = String(options.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
