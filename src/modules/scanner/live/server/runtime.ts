@@ -17,7 +17,13 @@ import { sendScannerUniverseAlert } from "./universe-alert";
 import { ScannerAuditRecorder, ScannerAuditStore } from "../audit/server/audit-store";
 
 const SNAPSHOT_URL = "https://webapi.moomoo.com/api/v1.0/quote/snapshot";
-let runtime: Readonly<{ feed: LiveScannerFeed; settings: ScannerSettingsStore; audit: ScannerAuditRecorder }> | null = null;
+type ScannerRuntime = Readonly<{ feed: LiveScannerFeed; settings: ScannerSettingsStore; audit: ScannerAuditRecorder }>;
+// Instrumentation and route handlers are separate Next.js bundles. Module-local
+// state would give the API a new disabled feed instead of the running worker.
+const processState = globalThis as typeof globalThis & {
+  __traderlinkLiveScannerRuntimeV1?: { instances: Map<string,ScannerRuntime>; started: WeakSet<LiveScannerFeed> };
+};
+const registry = processState.__traderlinkLiveScannerRuntimeV1 ??= { instances:new Map(),started:new WeakSet() };
 function root(environment: NodeJS.ProcessEnv): string {
   return join(dirname(resolvePlatformDatabaseConfig({ environment }).databasePath),"scanner-live-v1");
 }
@@ -35,9 +41,10 @@ function newsFor(symbols: readonly string[], environment: NodeJS.ProcessEnv): Re
       id: article.id, headline: article.headline, createdAt: article.createdAt, url: article.url, typeLabel: article.typeLabel,
     }))])));
 }
-function configuredRuntime(environment: NodeJS.ProcessEnv): Readonly<{ feed: LiveScannerFeed; settings: ScannerSettingsStore; audit: ScannerAuditRecorder }> {
-  if (runtime) return runtime;
+function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
   const directory = root(environment);
+  const existing = registry.instances.get(directory);
+  if (existing) return existing;
   const settings = new ScannerSettingsStore(directory);
   const universe = new UniverseStore(directory);
   const floatPersistence = settings.floatCache();
@@ -73,12 +80,17 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): Readonly<{ feed: Liv
     qualification: qualifiedMoomooSnapshotSession,
     audit,
   });
-  runtime = Object.freeze({ feed,settings,audit });
+  const runtime = Object.freeze({ feed,settings,audit });
+  registry.instances.set(directory,runtime);
   return runtime;
 }
 export function startConfiguredLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.env): void {
   if (environment.TRADERLINK_LIVE_SCREENERS_ENABLED !== "true" || environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED !== "true") return;
-  startLiveScannerFeed(configuredRuntime(environment).feed,environment);
+  const current = configuredRuntime(environment);
+  if (registry.started.has(current.feed)) return;
+  registry.started.add(current.feed);
+  try { startLiveScannerFeed(current.feed,environment); }
+  catch (error) { registry.started.delete(current.feed); throw error; }
 }
 export function readLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.env): ScannerReadModel {
   return configuredRuntime(environment).feed.read();

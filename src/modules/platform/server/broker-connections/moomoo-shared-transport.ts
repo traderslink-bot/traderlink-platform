@@ -79,16 +79,24 @@ export class MoomooSharedTransport {
     } finally { this.pumping = false; }
   }
 }
-let singleton: MoomooSharedTransport | null = null;
+// Share one request queue across instrumentation, API and page bundles, not one
+// queue per compiled copy of this module. Different isolated DBs remain separate.
+const processState = globalThis as typeof globalThis & {
+  __traderlinkMoomooSharedTransportsV1?: Map<string,MoomooSharedTransport>;
+};
+const transports = processState.__traderlinkMoomooSharedTransportsV1 ??= new Map();
 export function moomooSharedBudgetEnabled(environment: NodeJS.ProcessEnv = process.env): boolean {
   return environment[TRADERLINK_MOOMOO_SHARED_BUDGET_ENV] === "true";
 }
 export function getMoomooSharedTransport(environment: NodeJS.ProcessEnv = process.env): MoomooSharedTransport {
-  if (!singleton) {
-    const databasePath = resolvePlatformDatabaseConfig({ environment }).databasePath;
-    singleton = new MoomooSharedTransport({ ledgerPath: join(dirname(databasePath),"moomoo-shared-budget-v1.json") });
+  const databasePath = resolvePlatformDatabaseConfig({ environment }).databasePath;
+  const ledgerPath = join(dirname(databasePath),"moomoo-shared-budget-v1.json");
+  let transport = transports.get(ledgerPath);
+  if (!transport) {
+    transport = new MoomooSharedTransport({ ledgerPath });
+    transports.set(ledgerPath,transport);
   }
-  return singleton;
+  return transport;
 }
 export async function sharedMoomooFetch(url: string | URL | Request, init: RequestInit | undefined,
   options: Readonly<{ priority: MoomooPriority; fetcher?: typeof fetch; environment?: NodeJS.ProcessEnv; requireEnabled?: boolean }>): Promise<Response> {

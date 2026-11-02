@@ -141,3 +141,42 @@ and 500ms minimum spacing remain unchanged. Live evidence is still required.
 Continue until private activation is verified, or identify the exact remaining
 owner action from actual evidence. The passing earlier synthetic tests and
 browser QA do not prove live provider qualification or production activation.
+
+## First release and actual product failure
+
+Coordinator published `f900502f33afce69361cc71fab3dc4253f7de24a` to `main`,
+parent `76d43f48ca54a1b30c6b8c2603a923707948ec5e`. Deployment
+`bb9d8f6e-b5a2-4fbd-9d24-6c69069405b2` succeeded. Original volume and single
+writer remained intact; installed source, unchanged schema/ledger, feature flags,
+saved enabled revision 1 and scanner-delivery-off were verified. Health returned
+HTTP 200 / ready / 149 migrations. One timeout was observed during the deploying
+transition; no uninterrupted-cutover claim is made and no rollback was needed.
+
+At 17:55 UTC genuine scanner evidence contained nine cycles of today's 1,251
+symbols, four requested batches (400/400/400/51), latest collection 1,984ms,
+69 accepted fresh observations, 1,182 stale/missing quotes and four qualifying
+gainers. Budget had 36 starts/minute, no cooldown/recovery. Rolling windows
+had not warmed yet. This is partial real coverage, not 1,251 fresh quotes.
+
+The owner then reported the actual page still said **disabled** with empty
+tables. Product activation acceptance therefore FAILED despite healthy
+infrastructure and a collecting worker. The runtime's module-local singleton
+allows separately compiled instrumentation/API bundles to create different
+feed instances. The API can return a new disabled instance while the worker's
+other instance continues writing evidence.
+
+Correction: use a process-global, database-root-keyed scanner runtime registry
+and a shared start marker. Repeated imports/read-before-start return the same
+feed/settings/audit queue, without starting a second worker. A genuine startup
+exception releases its marker for retry. Separate isolated roots stay separate.
+Apply the same process-global, ledger-keyed identity to Moomoo's request queue
+so compiled bundles cannot each maintain an independent request budget.
+
+Verification: **134/134 tests passed across 12 files**, including five new
+independent-module reload/start-order/isolation/recovery/shared-transport cases,
+all scanner tests and existing Moomoo access/monitor/refresh tests. Targeted
+ESLint passed. Bounded unit `scanner-runtime-bridge-qa-20261102` exited 0,
+descendants ended and its owned common lock was released. Tests made no real
+provider requests and did not write production data. A clean correction release
+and actual owner-page acceptance remain pending; do not call the feature
+functional based solely on the audit worker.
