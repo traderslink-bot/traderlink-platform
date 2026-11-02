@@ -1,4 +1,4 @@
-import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+import { withWatchlistAdminDatabase } from "@/src/modules/watchlist/server/access/watchlist-admin-authorization";
 import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { GAIN_MAX_BYTES, sendManualLossPost, validateGainPost } from "@/src/modules/watchlist/server/notifications/watchlist-potential-gain-post";
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   let ownerUserId: string;
   try {
     requireJournalAdminMutationRequest(request);
-    ownerUserId = withJournalAdminDatabase(request.headers, (_db, scope) => scope.userId);
+    ownerUserId = withWatchlistAdminDatabase(request.headers, (_db, scope) => scope.userId);
   } catch { return json({ error: "Not found." }, 404); }
 
   let form: FormData;

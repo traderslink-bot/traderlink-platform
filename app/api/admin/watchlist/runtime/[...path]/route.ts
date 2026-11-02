@@ -7,7 +7,7 @@ import { recordFreeChatApprovalIntent, recordFreeChatMoveIntent } from "@/src/mo
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { requestWatchlistRuntimeRaw } from "@/src/modules/watchlist/server/runtime/watchlist-runtime-admin-client";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+import { withWatchlistAdminDatabase } from "@/src/modules/watchlist/server/access/watchlist-admin-authorization";
 import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
 import { recordWatchlistApprovalNotificationIntent } from "@/src/modules/watchlist/server/notifications/watchlist-notification-runtime";
 import { ownerReviewDeliveryStatus } from "@/src/modules/watchlist/server/notifications/watchlist-automatic-notifications";
@@ -117,7 +117,7 @@ async function relay(
   if (pathname === "/api/watchlist/analysis-review" || pathname.startsWith("/api/watchlist/analysis-review/")) {
     try {
       if (method === "POST") requireJournalAdminMutationRequest(request);
-      reviewActor = withJournalAdminDatabase(request.headers, (_database, scope) => `platform-owner:${scope.userId}`);
+      reviewActor = withWatchlistAdminDatabase(request.headers, (_database, scope) => `platform-owner:${scope.userId}`);
     } catch {
       return Response.json({ code: "not_found" }, { status: 404, headers: { "cache-control": "private, no-store" } });
     }
@@ -193,7 +193,7 @@ async function relay(
   if (pathname === "/api/watchlist/analysis-review/settings" && result.status === 200) {
     try {
       const value = JSON.parse(responseBody);
-      value.settings.ownerReviewDeliveryStatus = withJournalAdminDatabase(request.headers, database => ownerReviewDeliveryStatus(database));
+      value.settings.ownerReviewDeliveryStatus = withWatchlistAdminDatabase(request.headers, database => ownerReviewDeliveryStatus(database));
       responseBody = JSON.stringify(value);
     } catch { /* Runtime controls remain available if delivery status cannot be read. */ }
   }

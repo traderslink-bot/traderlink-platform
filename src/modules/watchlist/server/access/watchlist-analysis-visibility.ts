@@ -1,4 +1,4 @@
-import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+import { withWatchlistAdminDatabase } from "@/src/modules/watchlist/server/access/watchlist-admin-authorization";
 import "server-only";
 import type Database from "better-sqlite3";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -61,7 +61,7 @@ export function saveTickerPremiumOnly(database: Database.Database, input: {
 
 export function readWatchlistTickerPolicy(requestHeaders: Headers): { all: boolean; owner: boolean; privateSymbols: ReadonlySet<string>; restricted: ReadonlySet<string> } | null {
   try {
-    if (withJournalAdminDatabase(requestHeaders, () => true)) return { all: true, owner: true, privateSymbols: new Set(), restricted: new Set() };
+    if (withWatchlistAdminDatabase(requestHeaders, () => true)) return { all: true, owner: true, privateSymbols: new Set(), restricted: new Set() };
   } catch { /* Normal free members may not have dashboard access. */ }
   try {
     const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders, { membershipFeatures: ["watchlist.access"] });
@@ -83,7 +83,7 @@ export function canViewWatchlistTicker(requestHeaders: Headers, symbol: string):
 /** Independent of generic analysis entitlements. Never authorize from a client flag. */
 export function canViewWatchlistAnalysisPrices(requestHeaders: Headers, symbol: string): boolean {
   try {
-    if (withJournalAdminDatabase(requestHeaders, () => true)) return true;
+    if (withWatchlistAdminDatabase(requestHeaders, () => true)) return true;
   } catch { /* Ordinary member. */ }
   try {
     const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders, { membershipFeatures: ["watchlist.access"] });
@@ -106,6 +106,6 @@ export function isPrivateWatchlistTicker(symbol: string): boolean {
 }
 
 export function canViewPrivateWatchlistTicker(headers: Headers, symbol:string):boolean {
-  try { if(withJournalAdminDatabase(headers,()=>true))return true; }catch{}
+  try { if(withWatchlistAdminDatabase(headers,()=>true))return true; }catch{}
   try { return !isPrivateWatchlistTicker(symbol); }catch{return false;}
 }

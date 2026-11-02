@@ -1,4 +1,4 @@
-import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+import { withWatchlistAdminDatabase } from "@/src/modules/watchlist/server/access/watchlist-admin-authorization";
 import { watchlistSetupStore } from "@/src/modules/watchlist/server/setups/setup-store";
 import { SetupResultsAccumulator, SETUP_RESULT_WINDOWS } from "@/src/lib/live-watchlist/setups/setup-results";
 import type { SetupResultFilter } from "@/src/lib/live-watchlist/setups/setup-results";
@@ -10,7 +10,7 @@ const headers = { "cache-control": "private, no-store", "x-content-type-options"
 const json = (value: unknown, status = 200) => Response.json(value, { status, headers });
 let pending = false;
 export async function GET(request: Request): Promise<Response> {
-  try { withJournalAdminDatabase(request.headers, () => true); } catch { return json({ error: "Not found." }, 404); }
+  try { withWatchlistAdminDatabase(request.headers, () => true); } catch { return json({ error: "Not found." }, 404); }
   const params = new URL(request.url).searchParams;
   const minutes = Number(params.get("minutes") ?? "30"), page = Number(params.get("page") ?? "1");
   const symbol = params.get("symbol")?.trim().toUpperCase() || undefined;

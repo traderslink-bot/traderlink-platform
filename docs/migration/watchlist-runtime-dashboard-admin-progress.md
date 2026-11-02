@@ -2,6 +2,8 @@
 
 **Status:** In progress
 
+**Two-owner controls restoration:** [Source and focused verification record](watchlist-two-owner-controls-restoration-progress.md).
+
 **Controlling plan:** [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md)
 
 **Usage-panel record:** [Watchlist Usage Admin Progress](watchlist-usage-admin-progress.md)

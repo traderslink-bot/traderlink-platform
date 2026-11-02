@@ -1,4 +1,4 @@
-import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+import { withWatchlistAdminDatabase } from "@/src/modules/watchlist/server/access/watchlist-admin-authorization";
 import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
 import { parseSetupConfiguration, savedSetupPublicationIdentity, watchlistSetupStore } from "@/src/modules/watchlist/server/setups/setup-store";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 const headers = { "cache-control": "private, no-store", "x-content-type-options": "nosniff" };
 const json = (value: unknown, status = 200) => Response.json(value, { status, headers });
 function owner(request: Request): boolean {
-  try { return withJournalAdminDatabase(request.headers, () => true); } catch { return false; }
+  try { return withWatchlistAdminDatabase(request.headers, () => true); } catch { return false; }
 }
 
 export async function GET(request: Request): Promise<Response> {

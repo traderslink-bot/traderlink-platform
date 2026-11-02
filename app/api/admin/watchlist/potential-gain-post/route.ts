@@ -1,4 +1,4 @@
-import { withJournalAdminDatabase } from "@/src/modules/platform/server/administration/platform-admin-authorization";
+import { withWatchlistAdminDatabase } from "@/src/modules/watchlist/server/access/watchlist-admin-authorization";
 import { requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
@@ -10,7 +10,7 @@ const headers = { "cache-control": "private, no-store", "x-content-type-options"
 const json = (value: unknown, status = 200) => Response.json(value, { status, headers });
 const symbolPattern = /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/;
 export async function GET(request: Request) {
-  try { withJournalAdminDatabase(request.headers, () => true); } catch { return json({ error: "Not found." },404); }
+  try { withWatchlistAdminDatabase(request.headers, () => true); } catch { return json({ error: "Not found." },404); }
   const symbol = new URL(request.url).searchParams.get("symbol") ?? "";
   if (!symbolPattern.test(symbol)) return json({ error: "Invalid ticker." },400);
   try {
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   let ownerUserId: string;
-  try { requireJournalAdminMutationRequest(request); ownerUserId = withJournalAdminDatabase(request.headers, (_db, scope) => scope.userId); }
+  try { requireJournalAdminMutationRequest(request); ownerUserId = withWatchlistAdminDatabase(request.headers, (_db, scope) => scope.userId); }
   catch { return json({ error: "Not found." },404); }
   let form: FormData;
   try {

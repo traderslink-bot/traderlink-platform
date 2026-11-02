@@ -1,7 +1,7 @@
 import 'server-only';
 import type Database from 'better-sqlite3';
 import { withReadonlyPlatformDatabase } from '@/src/modules/platform/server/database/open-readonly-platform-database';
-import { withJournalAdminDatabase } from '@/src/modules/platform/server/administration/platform-admin-authorization';
+import { withWatchlistAdminDatabase } from '@/src/modules/watchlist/server/access/watchlist-admin-authorization';
 import { evaluateMembershipFeature } from '@/src/modules/platform/server/membership/platform-membership-access';
 import { hasPlatformDiscordPremiumAccess } from './platform-discord-watchlist-entitlement';
 import { analysisVisibilitySymbol } from './watchlist-analysis-visibility';
@@ -26,7 +26,7 @@ export function saveLevelsPremiumOnly(db: Database.Database,input:{symbol:string
   })();
 }
 export function canViewWatchlistLevels(headers:Headers,symbol:string):boolean {
-  try{if(withJournalAdminDatabase(headers,()=>true))return true;}catch{/* Ordinary member. */}
+  try{if(withWatchlistAdminDatabase(headers,()=>true))return true;}catch{/* Ordinary member. */}
   try {
     const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(headers, { membershipFeatures: ["watchlist.access"] });
     return withReadonlyPlatformDatabase({}, db => {
