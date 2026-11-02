@@ -265,3 +265,93 @@ Recognition of business-level throttling and stable last-known result handling
 remain separate outstanding corrections; the pacing trial does not claim them
 fixed. No Help text changes are required for this scanner-only internal cadence
 trial; visible controls, data meanings and available actions do not change.
+
+### Timing-trial release and live comparison
+
+Coordinator integrated only the four pacing/evidence files as
+`5468d1c5f30824f0af51f116f488463bdb0a6830`, parent
+`7b723620a8b0ff99556572b6c73ea2be46022aeb`, on configured Railway `main`.
+Deployment `4cd87b93-82c4-435a-ae48-b801da971f6a` succeeded. The installed
+source was independently read back; `/api/platform/health` returned ready,
+149 migrations. One writer/original volume and owner-only access remain;
+scanner delivery is OFF, pacing override absent (1,500ms default). The owner's
+newer saved configuration revision 5 was preserved rather than overwritten.
+
+Before the trial, a read-only aggregation of 115 saved cycles found **exactly
+30 normalizable batch envelopes in every complete UTC minute from 19:02
+through 19:14**, with another 2–6 rejected envelopes per minute. Exact earlier
+raw error bodies prove provider throttling, but historical generic audit
+failures do not retain their own exact code. This is strong evidence for an
+effective 30-success/minute allowance on this connection/endpoint, not a claim
+about the published general OAuth quota or other accounts.
+
+At 19:23:08 the installed ledger showed 24 starts in the preceding minute.
+The complete 19:22 minute contained 24 valid envelopes and zero rejected ones,
+although that minute includes the deployment transition and is not a wholly
+new-worker sample. A later passive check at 19:25:25 verified roughly 1.5s
+within-pass dispatch gaps (minimum recorded ledger difference 1,499ms), 25
+starts in the rolling minute, and **18 consecutive post-transition scans from
+19:22:35 through 19:25:23, all displaying 20 gainers, with zero unavailable
+batches**. Full scan cycles were approximately 9.8–10.5 seconds. These checks
+made no extra provider requests and did not alter settings or production data.
+
+The wider gap is working in this bounded live sample; sustained higher-load or
+other-session acceptance is not implied. Existing `stale_or_invalid_provider_time`
+warnings remain. Business-level `-11` cooldown recognition, honest retained
+results on failure, and the separate timestamp/rolling-activity corrections
+remain outstanding and are not represented as fixed by this pacing release.
+
+## Momentum receipt-clock correction — owner requested November 2
+
+Story: the private owner views Momentum; the existing worker collects Moomoo
+snapshots, the rolling book computes recent movement/activity, and the existing
+scanner API/table displays stocks meeting unchanged qualification settings.
+The broken boundary is the rolling book: it interpreted an unchanged last-price
+timestamp plus increasing volume as conflicting data, and used jumps in that
+price timestamp as proof of an interrupted HTTP observation sequence.
+
+Correction uses actual `receivedAt` for ordering, continuity, window anchors,
+retention and elapsed-time rate calculations. A newer real snapshot with the
+same price timestamp can carry legitimate cumulative volume/dollar updates.
+Identical counters contribute zero activity, never invented trades. Duplicate
+receipt conflicts, changed price at the identical provider timestamp, backward
+observations, counter decreases, real receipt gaps and date/session changes keep
+their rejection/reset behavior. Recent price provenance remains separate:
+prices over the existing 30-second age threshold still do not produce Momentum
+metrics. No normalizer eligibility, filters, sensitivity, request pacing, access,
+delivery, schema, API contract or visible table layout was changed.
+
+Read-only export selected only public normalized observation fields from 72
+existing cycles for three symbols (216 observations); no new provider requests,
+raw credentials, account identities, private paths or news data were included.
+The sanitized fixture is `src/modules/scanner/live/fixtures/moomoo-receipt-clock-20261102.json`.
+These are recorded normalized snapshots, not raw provider bodies or candles.
+Replaying identical saved inputs through the previous and corrected books gave:
+
+| Symbol | Before: usable 1min / 5min | After: usable 1min / 5min |
+| --- | --- | --- |
+| INO | 48 / 0 | 64 / 41 |
+| RBNE | 50 / 28 | 64 / 41 |
+| SEGG | 48 / 23 | 64 / 41 |
+
+Each symbol has 72 observations. Readiness is not qualification or profitability.
+Counter differences and price changes at the final one/five-minute windows are
+independently reconciled against the saved receipt-time anchors. No ticker has
+special runtime rules.
+
+Verification: 151 tests across 14 files passed, including nine new receipt-clock
+regressions and the complete scanner plus existing Moomoo access/monitor/refresh
+suite. Strengthened duplicate/counter-reset assertions also passed their final
+nine-test rerun. Targeted ESLint passed. The primary bounded unit verified its
+1.5GiB/no-swap/one-CPU cgroup before importing tests, exited successfully and
+released its owned QA lock after descendants closed. No production writes or
+provider calls occurred in tests. Browser UI is unchanged; no new signed-in
+production browser acceptance is claimed. Live rollout and warmed natural
+one/five-minute verification remain pending.
+
+Help's rolling-observations paragraph is updated to explain receipt timing,
+unchanged price timestamps, actual counter differences and genuine unavailable
+conditions. Only that paragraph is part of this correction; unrelated unfinished
+Help work in the assigned working tree is preserved. The previously observed
+business-level rate-limit handling and general last-known-result retention are
+not included in this owner-requested timestamp correction.

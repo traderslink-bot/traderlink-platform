@@ -1,0 +1,2166 @@
+{
+  "source": "Saved normalized Moomoo observations from existing production scanner audit; not raw responses or reconstructed candles",
+  "capturedAtUtc": "2026-11-02T19:47:32.969Z",
+  "observations": [
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648142228,
+      "receivedAt": 1793648142832,
+      "price": 2.035,
+      "volume": 193029460,
+      "dollarVolume": 372793733.723
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648140894,
+      "receivedAt": 1793648144349,
+      "price": 0.1649,
+      "volume": 298897183,
+      "dollarVolume": 68542139.439
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648143796,
+      "receivedAt": 1793648144349,
+      "price": 1.93,
+      "volume": 25549990,
+      "dollarVolume": 49249974.314
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648150202,
+      "receivedAt": 1793648152623,
+      "price": 2.035,
+      "volume": 193035357,
+      "dollarVolume": 372805997.96
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648150457,
+      "receivedAt": 1793648154167,
+      "price": 0.1649,
+      "volume": 299043838,
+      "dollarVolume": 68562675.754
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648152543,
+      "receivedAt": 1793648154167,
+      "price": 1.905,
+      "volume": 25557580,
+      "dollarVolume": 49264503.283
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648161720,
+      "receivedAt": 1793648163028,
+      "price": 2.0399,
+      "volume": 193081977,
+      "dollarVolume": 372902972.442
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648162090,
+      "receivedAt": 1793648164008,
+      "price": 0.1648,
+      "volume": 299100256,
+      "dollarVolume": 68569206.981
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648160526,
+      "receivedAt": 1793648164008,
+      "price": 1.8802,
+      "volume": 25575461,
+      "dollarVolume": 49298376.569
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648172108,
+      "receivedAt": 1793648172513,
+      "price": 2.04,
+      "volume": 193315647,
+      "dollarVolume": 373373933.009
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648166308,
+      "receivedAt": 1793648174022,
+      "price": 0.1648,
+      "volume": 299115354,
+      "dollarVolume": 68570890.711
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648173636,
+      "receivedAt": 1793648174022,
+      "price": 1.89,
+      "volume": 25581355,
+      "dollarVolume": 49309629.194
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648181777,
+      "receivedAt": 1793648182365,
+      "price": 2.0303,
+      "volume": 193360937,
+      "dollarVolume": 373464826.374
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648181229,
+      "receivedAt": 1793648183762,
+      "price": 0.1646,
+      "volume": 299266566,
+      "dollarVolume": 68598627.621
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648182954,
+      "receivedAt": 1793648183762,
+      "price": 1.8901,
+      "volume": 25597742,
+      "dollarVolume": 49340540.084
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648190591,
+      "receivedAt": 1793648192100,
+      "price": 2.035,
+      "volume": 193378311,
+      "dollarVolume": 373500401.59
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648191754,
+      "receivedAt": 1793648193534,
+      "price": 0.1649,
+      "volume": 299388696,
+      "dollarVolume": 68616411.477
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648193206,
+      "receivedAt": 1793648193534,
+      "price": 1.89,
+      "volume": 25612208,
+      "dollarVolume": 49367733.359
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648201386,
+      "receivedAt": 1793648201930,
+      "price": 2.03,
+      "volume": 193388253,
+      "dollarVolume": 373520887.637
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648202643,
+      "receivedAt": 1793648203539,
+      "price": 0.1649,
+      "volume": 299447778,
+      "dollarVolume": 68622828.172
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648201629,
+      "receivedAt": 1793648203539,
+      "price": 1.9,
+      "volume": 25620801,
+      "dollarVolume": 49383937.115
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648209407,
+      "receivedAt": 1793648211758,
+      "price": 2.0397,
+      "volume": 193405112,
+      "dollarVolume": 373555971.926
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648208882,
+      "receivedAt": 1793648213164,
+      "price": 0.1649,
+      "volume": 299456463,
+      "dollarVolume": 68623771.699
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648211882,
+      "receivedAt": 1793648213164,
+      "price": 1.8808,
+      "volume": 25627629,
+      "dollarVolume": 49396969.98
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648220512,
+      "receivedAt": 1793648221568,
+      "price": 2.03,
+      "volume": 193427820,
+      "dollarVolume": 373603174.194
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648219504,
+      "receivedAt": 1793648223106,
+      "price": 0.1649,
+      "volume": 299484701,
+      "dollarVolume": 68628268.222
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648222366,
+      "receivedAt": 1793648223106,
+      "price": 1.8954,
+      "volume": 25634004,
+      "dollarVolume": 49408954.399
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648229270,
+      "receivedAt": 1793648231419,
+      "price": 2.04,
+      "volume": 193433537,
+      "dollarVolume": 373615051.127
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648231935,
+      "receivedAt": 1793648233066,
+      "price": 0.1645,
+      "volume": 299512014,
+      "dollarVolume": 68633209.95
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648232277,
+      "receivedAt": 1793648233066,
+      "price": 1.9101,
+      "volume": 25657965,
+      "dollarVolume": 49454839.039
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648240996,
+      "receivedAt": 1793648241415,
+      "price": 2.05,
+      "volume": 193530326,
+      "dollarVolume": 373810043
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648242028,
+      "receivedAt": 1793648242823,
+      "price": 0.1626,
+      "volume": 299551643,
+      "dollarVolume": 68638575.044
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648241987,
+      "receivedAt": 1793648242823,
+      "price": 1.92,
+      "volume": 25694464,
+      "dollarVolume": 49524389.313
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648250079,
+      "receivedAt": 1793648251323,
+      "price": 2.045,
+      "volume": 193551237,
+      "dollarVolume": 373853918.472
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648250387,
+      "receivedAt": 1793648252856,
+      "price": 0.1616,
+      "volume": 299595957,
+      "dollarVolume": 68646017.846
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648251971,
+      "receivedAt": 1793648252856,
+      "price": 1.9103,
+      "volume": 25714128,
+      "dollarVolume": 49561820.306
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648257417,
+      "receivedAt": 1793648261079,
+      "price": 2.045,
+      "volume": 193566086,
+      "dollarVolume": 373884042.766
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648262118,
+      "receivedAt": 1793648262635,
+      "price": 0.1637,
+      "volume": 299601351,
+      "dollarVolume": 68646592.422
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648261072,
+      "receivedAt": 1793648262635,
+      "price": 1.9061,
+      "volume": 25731536,
+      "dollarVolume": 49594942.559
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648270206,
+      "receivedAt": 1793648270960,
+      "price": 2.05,
+      "volume": 193610466,
+      "dollarVolume": 373974194.906
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648262679,
+      "receivedAt": 1793648272471,
+      "price": 0.1627,
+      "volume": 299608538,
+      "dollarVolume": 68648004.679
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648269802,
+      "receivedAt": 1793648272471,
+      "price": 1.9037,
+      "volume": 25734580,
+      "dollarVolume": 49600781.679
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648279118,
+      "receivedAt": 1793648280762,
+      "price": 2.0477,
+      "volume": 193618168,
+      "dollarVolume": 373990069.76
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648280629,
+      "receivedAt": 1793648282749,
+      "price": 0.1639,
+      "volume": 299641174,
+      "dollarVolume": 68652431.719
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648280761,
+      "receivedAt": 1793648282749,
+      "price": 1.91,
+      "volume": 25738129,
+      "dollarVolume": 49607543.1
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648286677,
+      "receivedAt": 1793648290536,
+      "price": 2.045,
+      "volume": 193623265,
+      "dollarVolume": 374000740.768
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648291271,
+      "receivedAt": 1793648292024,
+      "price": 0.1641,
+      "volume": 299659567,
+      "dollarVolume": 68654410.801
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648291058,
+      "receivedAt": 1793648292024,
+      "price": 1.8916,
+      "volume": 25755625,
+      "dollarVolume": 49640959.152
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648295139,
+      "receivedAt": 1793648300467,
+      "price": 2.0464,
+      "volume": 193626162,
+      "dollarVolume": 374006817.053
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648301363,
+      "receivedAt": 1793648301901,
+      "price": 0.163,
+      "volume": 299688395,
+      "dollarVolume": 68659196.687
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648300784,
+      "receivedAt": 1793648301901,
+      "price": 1.9001,
+      "volume": 25760738,
+      "dollarVolume": 49650636.957
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648310099,
+      "receivedAt": 1793648310695,
+      "price": 2.04,
+      "volume": 193633324,
+      "dollarVolume": 374021807.691
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648310930,
+      "receivedAt": 1793648312261,
+      "price": 0.1647,
+      "volume": 299723595,
+      "dollarVolume": 68666216.597
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648309746,
+      "receivedAt": 1793648312261,
+      "price": 1.905,
+      "volume": 25762352,
+      "dollarVolume": 49653714.984
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648318444,
+      "receivedAt": 1793648320630,
+      "price": 2.0423,
+      "volume": 193645379,
+      "dollarVolume": 374046909.405
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648319160,
+      "receivedAt": 1793648322120,
+      "price": 0.1646,
+      "volume": 299732524,
+      "dollarVolume": 68667183.758
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648319636,
+      "receivedAt": 1793648322120,
+      "price": 1.9,
+      "volume": 25766350,
+      "dollarVolume": 49661292.087
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648328665,
+      "receivedAt": 1793648330744,
+      "price": 2.045,
+      "volume": 193653730,
+      "dollarVolume": 374064349.778
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648327191,
+      "receivedAt": 1793648332381,
+      "price": 0.1648,
+      "volume": 299747061,
+      "dollarVolume": 68668773.346
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648331560,
+      "receivedAt": 1793648332381,
+      "price": 1.85,
+      "volume": 25812941,
+      "dollarVolume": 49747885.98
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648342967,
+      "receivedAt": 1793648344093,
+      "price": 2.0436,
+      "volume": 193669247,
+      "dollarVolume": 374096633.061
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648339583,
+      "receivedAt": 1793648345892,
+      "price": 0.1647,
+      "volume": 299753675,
+      "dollarVolume": 68669685.251
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648344596,
+      "receivedAt": 1793648345892,
+      "price": 1.87,
+      "volume": 25828760,
+      "dollarVolume": 49777266.852
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648350536,
+      "receivedAt": 1793648354042,
+      "price": 2.045,
+      "volume": 193683701,
+      "dollarVolume": 374126055.208
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648350838,
+      "receivedAt": 1793648355677,
+      "price": 0.1647,
+      "volume": 299763782,
+      "dollarVolume": 68670780.45
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648352060,
+      "receivedAt": 1793648355677,
+      "price": 1.865,
+      "volume": 25833538,
+      "dollarVolume": 49786228.43
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648362394,
+      "receivedAt": 1793648363861,
+      "price": 2.055,
+      "volume": 193715124,
+      "dollarVolume": 374189555.969
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648363705,
+      "receivedAt": 1793648365380,
+      "price": 0.1649,
+      "volume": 299821327,
+      "dollarVolume": 68679075.988
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648364714,
+      "receivedAt": 1793648365380,
+      "price": 1.8685,
+      "volume": 25838368,
+      "dollarVolume": 49795107.858
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648370809,
+      "receivedAt": 1793648373621,
+      "price": 2.05,
+      "volume": 193722689,
+      "dollarVolume": 374204794.58
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648374468,
+      "receivedAt": 1793648375161,
+      "price": 0.1648,
+      "volume": 299835048,
+      "dollarVolume": 68681910.029
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648371688,
+      "receivedAt": 1793648375161,
+      "price": 1.8685,
+      "volume": 25846986,
+      "dollarVolume": 49811152.606
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648382942,
+      "receivedAt": 1793648383383,
+      "price": 2.055,
+      "volume": 193725109,
+      "dollarVolume": 374209892.852
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648381188,
+      "receivedAt": 1793648384926,
+      "price": 0.1649,
+      "volume": 299847985,
+      "dollarVolume": 68683315.569
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648382282,
+      "receivedAt": 1793648384926,
+      "price": 1.88,
+      "volume": 25853285,
+      "dollarVolume": 49822834.607
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648392395,
+      "receivedAt": 1793648393652,
+      "price": 2.0526,
+      "volume": 193733314,
+      "dollarVolume": 374227004.084
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648390398,
+      "receivedAt": 1793648395039,
+      "price": 0.1649,
+      "volume": 299886526,
+      "dollarVolume": 68689080.883
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648394363,
+      "receivedAt": 1793648395039,
+      "price": 1.89,
+      "volume": 25855439,
+      "dollarVolume": 49826892.759
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648401974,
+      "receivedAt": 1793648403325,
+      "price": 2.05,
+      "volume": 193755855,
+      "dollarVolume": 374272741.159
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648403824,
+      "receivedAt": 1793648405153,
+      "price": 0.164,
+      "volume": 299912226,
+      "dollarVolume": 68692646.681
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648404610,
+      "receivedAt": 1793648405153,
+      "price": 1.88,
+      "volume": 25864479,
+      "dollarVolume": 49843939.292
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648409882,
+      "receivedAt": 1793648413263,
+      "price": 2.043,
+      "volume": 193767878,
+      "dollarVolume": 374297852.951
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648413073,
+      "receivedAt": 1793648414786,
+      "price": 0.1641,
+      "volume": 299934567,
+      "dollarVolume": 68695327.563
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648414193,
+      "receivedAt": 1793648414786,
+      "price": 1.875,
+      "volume": 25869064,
+      "dollarVolume": 49852615.058
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648419188,
+      "receivedAt": 1793648423038,
+      "price": 2.045,
+      "volume": 193780774,
+      "dollarVolume": 374324791.779
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648421384,
+      "receivedAt": 1793648424598,
+      "price": 0.164,
+      "volume": 299991654,
+      "dollarVolume": 68703875.352
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648418810,
+      "receivedAt": 1793648424598,
+      "price": 1.888,
+      "volume": 25873339,
+      "dollarVolume": 49860561.998
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648425849,
+      "receivedAt": 1793648432903,
+      "price": 2.055,
+      "volume": 193814945,
+      "dollarVolume": 374394177.776
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648432963,
+      "receivedAt": 1793648434397,
+      "price": 0.1631,
+      "volume": 300011307,
+      "dollarVolume": 68706280.486
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648431535,
+      "receivedAt": 1793648434397,
+      "price": 1.88,
+      "volume": 25876566,
+      "dollarVolume": 49866615.291
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648441163,
+      "receivedAt": 1793648442664,
+      "price": 2.0528,
+      "volume": 193822182,
+      "dollarVolume": 374409222.743
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648441558,
+      "receivedAt": 1793648444202,
+      "price": 0.1631,
+      "volume": 300024180,
+      "dollarVolume": 68707662.161
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648438024,
+      "receivedAt": 1793648444202,
+      "price": 1.88,
+      "volume": 25883284,
+      "dollarVolume": 49879074.069
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648452106,
+      "receivedAt": 1793648452556,
+      "price": 2.0522,
+      "volume": 193830098,
+      "dollarVolume": 374425916.255
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648452083,
+      "receivedAt": 1793648454024,
+      "price": 0.1632,
+      "volume": 300026475,
+      "dollarVolume": 68708086.844
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648448705,
+      "receivedAt": 1793648454024,
+      "price": 1.86,
+      "volume": 25885204,
+      "dollarVolume": 49882641.938
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648460878,
+      "receivedAt": 1793648462355,
+      "price": 2.055,
+      "volume": 193855838,
+      "dollarVolume": 374479137.205
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648462797,
+      "receivedAt": 1793648463953,
+      "price": 0.1638,
+      "volume": 300042771,
+      "dollarVolume": 68709889.685
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648462703,
+      "receivedAt": 1793648463953,
+      "price": 1.8601,
+      "volume": 25886348,
+      "dollarVolume": 49884765.47
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648471248,
+      "receivedAt": 1793648472327,
+      "price": 2.0564,
+      "volume": 193879353,
+      "dollarVolume": 374527070.765
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648472013,
+      "receivedAt": 1793648473778,
+      "price": 0.1639,
+      "volume": 300050977,
+      "dollarVolume": 68711318.629
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648470746,
+      "receivedAt": 1793648473778,
+      "price": 1.88,
+      "volume": 25888057,
+      "dollarVolume": 49887955.488
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648480839,
+      "receivedAt": 1793648482200,
+      "price": 2.0573,
+      "volume": 193905077,
+      "dollarVolume": 374580670.463
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648479894,
+      "receivedAt": 1793648483669,
+      "price": 0.1639,
+      "volume": 300051502,
+      "dollarVolume": 68711374.766
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648481212,
+      "receivedAt": 1793648483669,
+      "price": 1.88,
+      "volume": 25890938,
+      "dollarVolume": 49893303.113
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648491690,
+      "receivedAt": 1793648492066,
+      "price": 2.061,
+      "volume": 193957122,
+      "dollarVolume": 374686772.478
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648492335,
+      "receivedAt": 1793648493567,
+      "price": 0.1638,
+      "volume": 300064296,
+      "dollarVolume": 68713193.399
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648491377,
+      "receivedAt": 1793648493567,
+      "price": 1.8602,
+      "volume": 25895224,
+      "dollarVolume": 49901245.496
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648501396,
+      "receivedAt": 1793648501846,
+      "price": 2.0672,
+      "volume": 193976266,
+      "dollarVolume": 374727127.18
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648502537,
+      "receivedAt": 1793648503433,
+      "price": 0.1636,
+      "volume": 300078570,
+      "dollarVolume": 68715685.462
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648497934,
+      "receivedAt": 1793648503433,
+      "price": 1.88,
+      "volume": 25896301,
+      "dollarVolume": 49903259.516
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648510921,
+      "receivedAt": 1793648511767,
+      "price": 2.085,
+      "volume": 194081983,
+      "dollarVolume": 374944793.81
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648512765,
+      "receivedAt": 1793648513232,
+      "price": 0.1628,
+      "volume": 300135993,
+      "dollarVolume": 68726383.865
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648508853,
+      "receivedAt": 1793648513232,
+      "price": 1.8836,
+      "volume": 25906570,
+      "dollarVolume": 49922464.581
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648520863,
+      "receivedAt": 1793648521554,
+      "price": 2.085,
+      "volume": 194126117,
+      "dollarVolume": 375037534.623
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648521778,
+      "receivedAt": 1793648523091,
+      "price": 0.1634,
+      "volume": 300197544,
+      "dollarVolume": 68737624.326
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648522586,
+      "receivedAt": 1793648523091,
+      "price": 1.9199,
+      "volume": 25934903,
+      "dollarVolume": 49976141.679
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648530875,
+      "receivedAt": 1793648531545,
+      "price": 2.0829,
+      "volume": 194211296,
+      "dollarVolume": 375220676.33
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648527823,
+      "receivedAt": 1793648532921,
+      "price": 0.1633,
+      "volume": 300210639,
+      "dollarVolume": 68739148.686
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648531866,
+      "receivedAt": 1793648532921,
+      "price": 1.92,
+      "volume": 25952679,
+      "dollarVolume": 50010103.94
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648540410,
+      "receivedAt": 1793648541290,
+      "price": 2.08,
+      "volume": 194291491,
+      "dollarVolume": 375390061.535
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648540601,
+      "receivedAt": 1793648542897,
+      "price": 0.1634,
+      "volume": 300225139,
+      "dollarVolume": 68740736.269
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648539140,
+      "receivedAt": 1793648542897,
+      "price": 1.9199,
+      "volume": 25966258,
+      "dollarVolume": 50035888.614
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648550301,
+      "receivedAt": 1793648551076,
+      "price": 2.09,
+      "volume": 194339679,
+      "dollarVolume": 375490978.801
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648550700,
+      "receivedAt": 1793648552620,
+      "price": 0.1628,
+      "volume": 300250406,
+      "dollarVolume": 68745843.422
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648549197,
+      "receivedAt": 1793648552620,
+      "price": 1.8901,
+      "volume": 25977873,
+      "dollarVolume": 50057928.955
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648558747,
+      "receivedAt": 1793648561041,
+      "price": 2.08,
+      "volume": 194462605,
+      "dollarVolume": 375747058.976
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648561117,
+      "receivedAt": 1793648562475,
+      "price": 0.1609,
+      "volume": 300291153,
+      "dollarVolume": 68752005.751
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648561987,
+      "receivedAt": 1793648562475,
+      "price": 1.8899,
+      "volume": 25994053,
+      "dollarVolume": 50088277.773
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648570304,
+      "receivedAt": 1793648570737,
+      "price": 2.0661,
+      "volume": 194531995,
+      "dollarVolume": 375891368.032
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648571820,
+      "receivedAt": 1793648572445,
+      "price": 0.1607,
+      "volume": 300359463,
+      "dollarVolume": 68764072.962
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648571320,
+      "receivedAt": 1793648572445,
+      "price": 1.87,
+      "volume": 26003652,
+      "dollarVolume": 50106141.927
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648579167,
+      "receivedAt": 1793648580784,
+      "price": 2.0664,
+      "volume": 194570466,
+      "dollarVolume": 375972665.886
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648581716,
+      "receivedAt": 1793648582165,
+      "price": 0.1601,
+      "volume": 300423752,
+      "dollarVolume": 68772915.131
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648581759,
+      "receivedAt": 1793648582165,
+      "price": 1.85,
+      "volume": 26020243,
+      "dollarVolume": 50136832.189
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648590061,
+      "receivedAt": 1793648590408,
+      "price": 2.06,
+      "volume": 194606131,
+      "dollarVolume": 376048572.544
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648589476,
+      "receivedAt": 1793648592484,
+      "price": 0.1597,
+      "volume": 300475052,
+      "dollarVolume": 68784241.138
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648590020,
+      "receivedAt": 1793648592484,
+      "price": 1.8501,
+      "volume": 26029103,
+      "dollarVolume": 50153158.664
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648598875,
+      "receivedAt": 1793648600266,
+      "price": 2.0627,
+      "volume": 194679380,
+      "dollarVolume": 376200067.636
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648601175,
+      "receivedAt": 1793648601766,
+      "price": 0.1567,
+      "volume": 300658837,
+      "dollarVolume": 68818143.505
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648600584,
+      "receivedAt": 1793648601766,
+      "price": 1.8503,
+      "volume": 26032998,
+      "dollarVolume": 50160269.15
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648610144,
+      "receivedAt": 1793648610728,
+      "price": 2.0699,
+      "volume": 194690038,
+      "dollarVolume": 376222233.024
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648611045,
+      "receivedAt": 1793648611464,
+      "price": 0.1525,
+      "volume": 300896535,
+      "dollarVolume": 68850508.41
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648607497,
+      "receivedAt": 1793648611464,
+      "price": 1.8699,
+      "volume": 26050010,
+      "dollarVolume": 50192018.594
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648619370,
+      "receivedAt": 1793648619854,
+      "price": 2.06,
+      "volume": 194782273,
+      "dollarVolume": 376413661.654
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648620140,
+      "receivedAt": 1793648621350,
+      "price": 0.1524,
+      "volume": 301064213,
+      "dollarVolume": 68877641.834
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648620243,
+      "receivedAt": 1793648621350,
+      "price": 1.865,
+      "volume": 26053821,
+      "dollarVolume": 50199047.363
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648627129,
+      "receivedAt": 1793648629554,
+      "price": 2.055,
+      "volume": 194825586,
+      "dollarVolume": 376503262.536
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648629551,
+      "receivedAt": 1793648631126,
+      "price": 0.155,
+      "volume": 301077453,
+      "dollarVolume": 68879169.36
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648623232,
+      "receivedAt": 1793648631126,
+      "price": 1.8664,
+      "volume": 26054915,
+      "dollarVolume": 50201062.667
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648637759,
+      "receivedAt": 1793648639533,
+      "price": 2.06,
+      "volume": 194896509,
+      "dollarVolume": 376653099.536
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648639701,
+      "receivedAt": 1793648641050,
+      "price": 0.1539,
+      "volume": 301098434,
+      "dollarVolume": 68881012.64
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648635596,
+      "receivedAt": 1793648641050,
+      "price": 1.86,
+      "volume": 26060885,
+      "dollarVolume": 50212482.377
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648648320,
+      "receivedAt": 1793648649386,
+      "price": 2.065,
+      "volume": 194903395,
+      "dollarVolume": 376667734.943
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648649343,
+      "receivedAt": 1793648650874,
+      "price": 0.1517,
+      "volume": 301214045,
+      "dollarVolume": 68902807.949
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648649799,
+      "receivedAt": 1793648650874,
+      "price": 1.88,
+      "volume": 26066754,
+      "dollarVolume": 50223449.336
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648653655,
+      "receivedAt": 1793648659136,
+      "price": 2.065,
+      "volume": 194910627,
+      "dollarVolume": 376683057.009
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648660229,
+      "receivedAt": 1793648660749,
+      "price": 0.1516,
+      "volume": 301262457,
+      "dollarVolume": 68908727.149
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648655078,
+      "receivedAt": 1793648660749,
+      "price": 1.8722,
+      "volume": 26067668,
+      "dollarVolume": 50225181.043
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648653655,
+      "receivedAt": 1793648668956,
+      "price": 2.065,
+      "volume": 194911997,
+      "dollarVolume": 376685954.801
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648670077,
+      "receivedAt": 1793648670533,
+      "price": 0.1517,
+      "volume": 301309438,
+      "dollarVolume": 68913664.681
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648665185,
+      "receivedAt": 1793648670533,
+      "price": 1.8754,
+      "volume": 26070814,
+      "dollarVolume": 50231119.38
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648677296,
+      "receivedAt": 1793648678821,
+      "price": 2.0671,
+      "volume": 194925695,
+      "dollarVolume": 376715057.293
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648677913,
+      "receivedAt": 1793648680296,
+      "price": 0.1519,
+      "volume": 301332231,
+      "dollarVolume": 68915726.449
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648672711,
+      "receivedAt": 1793648680296,
+      "price": 1.87,
+      "volume": 26073976,
+      "dollarVolume": 50237061.943
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648685308,
+      "receivedAt": 1793648688669,
+      "price": 2.0672,
+      "volume": 194939611,
+      "dollarVolume": 376744118.704
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648686431,
+      "receivedAt": 1793648690097,
+      "price": 0.1525,
+      "volume": 301344035,
+      "dollarVolume": 68917531.212
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648689318,
+      "receivedAt": 1793648690097,
+      "price": 1.8603,
+      "volume": 26075839,
+      "dollarVolume": 50240555.556
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648695307,
+      "receivedAt": 1793648698406,
+      "price": 2.065,
+      "volume": 194945067,
+      "dollarVolume": 376755093.408
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648696420,
+      "receivedAt": 1793648699941,
+      "price": 0.1539,
+      "volume": 301367003,
+      "dollarVolume": 68921021.952
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648699535,
+      "receivedAt": 1793648699941,
+      "price": 1.87,
+      "volume": 26081193,
+      "dollarVolume": 50250527.393
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648707936,
+      "receivedAt": 1793648708535,
+      "price": 2.0602,
+      "volume": 194977848,
+      "dollarVolume": 376820268.925
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648708425,
+      "receivedAt": 1793648709792,
+      "price": 0.154,
+      "volume": 301454745,
+      "dollarVolume": 68932832.175
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648704529,
+      "receivedAt": 1793648709792,
+      "price": 1.87,
+      "volume": 26086645,
+      "dollarVolume": 50260817.723
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648716848,
+      "receivedAt": 1793648718076,
+      "price": 2.0601,
+      "volume": 194982100,
+      "dollarVolume": 376829232.107
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648718971,
+      "receivedAt": 1793648719578,
+      "price": 0.1529,
+      "volume": 301472838,
+      "dollarVolume": 68934769.969
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648715713,
+      "receivedAt": 1793648719578,
+      "price": 1.88,
+      "volume": 26090621,
+      "dollarVolume": 50268214.916
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648726645,
+      "receivedAt": 1793648728121,
+      "price": 2.065,
+      "volume": 194990178,
+      "dollarVolume": 376846429.965
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648728520,
+      "receivedAt": 1793648729607,
+      "price": 0.1526,
+      "volume": 301521157,
+      "dollarVolume": 68939286.485
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648728438,
+      "receivedAt": 1793648729607,
+      "price": 1.88,
+      "volume": 26093294,
+      "dollarVolume": 50273216.364
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648737480,
+      "receivedAt": 1793648737960,
+      "price": 2.07,
+      "volume": 194996300,
+      "dollarVolume": 376859388.111
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648737800,
+      "receivedAt": 1793648739404,
+      "price": 0.153,
+      "volume": 301683012,
+      "dollarVolume": 68954744.777
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648738971,
+      "receivedAt": 1793648739404,
+      "price": 1.87,
+      "volume": 26100133,
+      "dollarVolume": 50286119.354
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648746026,
+      "receivedAt": 1793648747647,
+      "price": 2.0689,
+      "volume": 195010302,
+      "dollarVolume": 376888659.89
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648747430,
+      "receivedAt": 1793648749229,
+      "price": 0.153,
+      "volume": 301691286,
+      "dollarVolume": 68956131.965
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648745751,
+      "receivedAt": 1793648749229,
+      "price": 1.88,
+      "volume": 26103045,
+      "dollarVolume": 50291580.53
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648756823,
+      "receivedAt": 1793648757494,
+      "price": 2.065,
+      "volume": 195035294,
+      "dollarVolume": 376940832.592
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648755261,
+      "receivedAt": 1793648759003,
+      "price": 0.153,
+      "volume": 301723595,
+      "dollarVolume": 68962396.547
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648758537,
+      "receivedAt": 1793648759003,
+      "price": 1.9,
+      "volume": 26112209,
+      "dollarVolume": 50308939.909
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648766892,
+      "receivedAt": 1793648767451,
+      "price": 2.065,
+      "volume": 195057750,
+      "dollarVolume": 376988389.41
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648768345,
+      "receivedAt": 1793648768834,
+      "price": 0.1563,
+      "volume": 301746440,
+      "dollarVolume": 68966380.563
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648765781,
+      "receivedAt": 1793648768834,
+      "price": 1.8834,
+      "volume": 26118328,
+      "dollarVolume": 50320458.749
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648776457,
+      "receivedAt": 1793648777216,
+      "price": 2.065,
+      "volume": 195086423,
+      "dollarVolume": 377047372.099
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648778074,
+      "receivedAt": 1793648778720,
+      "price": 0.1552,
+      "volume": 301752555,
+      "dollarVolume": 68966992.625
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648776327,
+      "receivedAt": 1793648778720,
+      "price": 1.881,
+      "volume": 26123153,
+      "dollarVolume": 50329477.416
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648786126,
+      "receivedAt": 1793648787142,
+      "price": 2.065,
+      "volume": 195101679,
+      "dollarVolume": 377079071.326
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648786018,
+      "receivedAt": 1793648788644,
+      "price": 0.155,
+      "volume": 301788186,
+      "dollarVolume": 68974748.295
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648788169,
+      "receivedAt": 1793648788644,
+      "price": 1.8787,
+      "volume": 26132436,
+      "dollarVolume": 50347104.326
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648795987,
+      "receivedAt": 1793648796995,
+      "price": 2.0601,
+      "volume": 195112637,
+      "dollarVolume": 377102260.626
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648797823,
+      "receivedAt": 1793648798510,
+      "price": 0.155,
+      "volume": 301800429,
+      "dollarVolume": 68976853.925
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648796359,
+      "receivedAt": 1793648798510,
+      "price": 1.865,
+      "volume": 26138284,
+      "dollarVolume": 50357908.025
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648805052,
+      "receivedAt": 1793648806858,
+      "price": 2.06,
+      "volume": 195124285,
+      "dollarVolume": 377126824.971
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648802907,
+      "receivedAt": 1793648808335,
+      "price": 0.1549,
+      "volume": 301901848,
+      "dollarVolume": 68999216.809
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648803325,
+      "receivedAt": 1793648808335,
+      "price": 1.87,
+      "volume": 26139456,
+      "dollarVolume": 50360069.768
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648815429,
+      "receivedAt": 1793648816646,
+      "price": 2.0599,
+      "volume": 195154447,
+      "dollarVolume": 377188741.306
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648816757,
+      "receivedAt": 1793648818095,
+      "price": 0.1545,
+      "volume": 301941482,
+      "dollarVolume": 69005538.41
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648803325,
+      "receivedAt": 1793648818095,
+      "price": 1.87,
+      "volume": 26139719,
+      "dollarVolume": 50360559.511
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648826113,
+      "receivedAt": 1793648826507,
+      "price": 2.05,
+      "volume": 195165747,
+      "dollarVolume": 377212640.875
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648825517,
+      "receivedAt": 1793648828119,
+      "price": 0.1547,
+      "volume": 301948911,
+      "dollarVolume": 69006248.737
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648827535,
+      "receivedAt": 1793648828119,
+      "price": 1.87,
+      "volume": 26143901,
+      "dollarVolume": 50368268.886
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648835313,
+      "receivedAt": 1793648836443,
+      "price": 2.0626,
+      "volume": 195229166,
+      "dollarVolume": 377339154.655
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648835482,
+      "receivedAt": 1793648837916,
+      "price": 0.155,
+      "volume": 302013649,
+      "dollarVolume": 69015449.29
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648827535,
+      "receivedAt": 1793648837916,
+      "price": 1.87,
+      "volume": 26143957,
+      "dollarVolume": 50368372.815
+    },
+    {
+      "symbol": "INO",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648845632,
+      "receivedAt": 1793648846178,
+      "price": 2.055,
+      "volume": 195275353,
+      "dollarVolume": 377435903.209
+    },
+    {
+      "symbol": "RBNE",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648846442,
+      "receivedAt": 1793648847744,
+      "price": 0.1549,
+      "volume": 302046711,
+      "dollarVolume": 69019862.15
+    },
+    {
+      "symbol": "SEGG",
+      "tradingDate": "2026-11-02",
+      "session": "regular",
+      "providerAt": 1793648840734,
+      "receivedAt": 1793648847744,
+      "price": 1.8601,
+      "volume": 26149863,
+      "dollarVolume": 50379688.217
+    }
+  ]
+}
