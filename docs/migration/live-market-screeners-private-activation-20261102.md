@@ -180,3 +180,88 @@ descendants ended and its owned common lock was released. Tests made no real
 provider requests and did not write production data. A clean correction release
 and actual owner-page acceptance remain pending; do not call the feature
 functional based solely on the audit worker.
+
+## Owner-observed production behaviour and provider-first investigation
+
+The Coordinator's successor `7b723620a8b0ff99556572b6c73ea2be46022aeb`
+deployed the runtime bridge. The owner confirmed actual Top Gainers rows and
+updating prices. This does not establish both-account browser acceptance or
+correctness of either ranking. The owner then observed counts fluctuating and
+whole lists disappearing before returning on the next refresh.
+
+Read-only evidence on November 2, 2026 (all receipt times below UTC):
+
+- The owner saved broader filters at configuration revision 4. Earlier revision
+  3 still held regular-session minimum volume 300,000, dollar volume 500,000,
+  minimum gain 3%, and maximum spread 2%. A separate settings defect allows
+  entering zero into fields whose server-side minima exceed zero and reports
+  only a generic save error. Filter changes explain part, not all, of the
+  initially short lists. No settings were changed by this investigation.
+- A bounded direct OAuth market-snapshot request at 18:51:32 returned HTTP 200,
+  `ret_code: 0`, message `success`, and all 400 requested symbols in 483ms.
+  Every row supplied price, prior close, volume, turnover, bid, ask, timestamp
+  and data date. One market-cap value was zero. Only 33 price timestamps were
+  at most 30 seconds old; 367 were older (41 between 30 seconds and two minutes,
+  157 between two and 15 minutes, 169 over 15 minutes). These are raw response
+  counts, unlike the application's post-normalization accepted counts.
+- Fifty recorded natural cycles ending 18:51:32 included four entirely empty
+  cycles and seven additional cycles with unavailable batches. At 18:50:58
+  all four response bodies were rejected and zero rows displayed; the next
+  cycle at 18:51:04 displayed 20 gainers with 26 qualifying. Existing audit
+  evidence preserves only `snapshot_batch_unavailable`, not the provider body,
+  so its exact historical error code cannot be retrospectively asserted.
+- A seven-request bounded diagnostic, spaced ten seconds after each completed
+  request and using the first 400 actual universe members, captured the provider
+  explicitly rejecting requests at 18:51:55, 18:52:48 and 18:52:58. Each returned
+  **HTTP 200 with numeric `ret_code: -11` and exact message `rate limit exceeded`**,
+  and no snapshot list. Four intervening requests succeeded and returned all
+  400 symbols. The diagnostic ended; no second collector was installed.
+- The shared ledger at 18:52:33 recorded 34 starts in the preceding minute,
+  all scanner priority, 18 starts in the preceding 30 seconds, and no active
+  cooldown/recovery. Diagnostic requests were additional read-only calls and
+  did not write that ledger; their contribution must not be omitted from any
+  aggregate-rate calculation. This does not establish the actual account/IP
+  allowance, or exclude other clients outside this process.
+- Current transport detects only HTTP 429, treating HTTP 200 as accepted without
+  examining its business-level error. The normalizer subsequently rejects the
+  `-11` payload; the feed evaluates the incomplete/empty set and replaces its
+  displayed model. This is a confirmed missed rate-limit signal and a confirmed
+  mechanism capable of clearing the list. The observed timestamp-age rejection
+  is a distinct coverage problem, not an explanation of every empty cycle.
+
+No provider credentials, tokens, user identifiers or raw private responses were
+exported. No filters, stored configuration, live analyses, delivery, workers,
+services, source deployment or production databases were changed. Corrections
+and actual post-correction acceptance remain outstanding. Next implementation
+must recognize business-level throttling, determine conservative shared pacing,
+preserve successful data honestly through failures, distinguish actual missing
+quotes from age rejection, and keep Top Gainers qualification separate from
+Momentum activity requirements. Do not infer an undocumented numerical limit
+or silently lower the owner's qualification thresholds.
+
+### Owner-authorized timing experiment
+
+The owner explicitly requested trying wider request gaps. A subsequent passive
+95-second recording made **zero additional provider requests** and observed
+natural failures near minute end while successful and failed batches shared
+similar rolling request counts. It does not prove a numerical OAuth cap.
+
+The narrow pacing trial changes only scanner snapshot dispatch spacing from the
+shared 500ms floor to a provisional **1,500ms scanner-only floor**. Existing
+shared admission, single sequential worker, five-second post-pass pause, request
+timeout, qualification settings, owner allowlist and delivery-off remain intact.
+Long responses do not incur a second unnecessary wait. For later controlled
+trials `TRADERLINK_SCANNER_SNAPSHOT_SPACING_MS` accepts integer 500–5,000ms;
+invalid configuration fails rather than dispatching without spacing. This is
+an experimental cadence, not a claimed Moomoo entitlement or proved remedy.
+
+Eight clock-controlled pacing regressions cover 500/1,000/1,500/2,000/5,000ms,
+sequential ordering, long responses, early timer wakeups and invalid bounds.
+All **142 tests across 13 files passed** in the bounded scanner-pacing QA unit;
+no provider requests or production writes were made by tests. These are local
+timing tests, not live comparisons of those five cadences. The first real trial
+requires Coordinator integration/release and passive before/after evidence.
+Recognition of business-level throttling and stable last-known result handling
+remain separate outstanding corrections; the pacing trial does not claim them
+fixed. No Help text changes are required for this scanner-only internal cadence
+trial; visible controls, data meanings and available actions do not change.
