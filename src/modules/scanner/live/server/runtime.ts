@@ -8,7 +8,7 @@ import { getMoomooSharedTransport, sharedMoomooFetch } from "../../../platform/s
 import { listScannerRecentPressReleases } from "../../../news/server/scanner-recent-press-releases";
 import type { ScannerNewsItem, ScannerReadModel } from "../contracts";
 import type { MarketDay } from "../sessions";
-import { qualifiedMoomooSnapshotSession } from "../snapshots";
+import { SnapshotSessionQualifier } from "../session-qualification";
 import { DailyFloatEnricher, ScannerFloatFeed } from "./float-enrichment";
 import { LiveScannerFeed, startLiveScannerFeed } from "./live-feed";
 import { ScannerSettingsStore } from "./settings-store";
@@ -53,6 +53,7 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
     eodhdToken:environment.EODHD_API_TOKEN?.trim(),persistence:floatPersistence });
   const floatFeed = new ScannerFloatFeed(floatPersistence,(date,symbols)=>floatEnricher.load(date,symbols));
   const audit = new ScannerAuditRecorder(new ScannerAuditStore(join(directory,"audit")));
+  const sessionQualifier = new SnapshotSessionQualifier();
   const feed = new LiveScannerFeed({
     configuration: () => settings.configuration(), marketDay: async date => marketDay(date), universe: async date => {
       const exact = await universe.read(date);
@@ -75,7 +76,7 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
     },environment),
     floats: (date,symbols) => floatFeed.read(date,symbols),
     news: async symbols => newsFor(symbols,environment),
-    qualification: qualifiedMoomooSnapshotSession,
+    qualification: (session,context) => sessionQualifier.observe(session,context),
     audit,
   });
   const runtime = Object.freeze({ feed,settings,audit });

@@ -355,3 +355,71 @@ conditions. Only that paragraph is part of this correction; unrelated unfinished
 Help work in the assigned working tree is preserved. The previously observed
 business-level rate-limit handling and general last-known-result retention are
 not included in this owner-requested timestamp correction.
+
+## Post-market preparation — owner requested fix and deployment
+
+Owner prioritizes the 4:00 PM ET news window, including new runners outside Top
+Gainers and renewed momentum in established day gainers. On November 2 the
+owner clarified “fix the issue” and authorized deployment when fixed.
+
+Discovery: the former static qualification function returns false for every
+extended session, so all after-hours rows are rejected before the price/volume
+adapter can run. Public snapshot documentation describes flat `after_price`,
+`after_volume` and `after_turnover`, but no saved real snapshot response proves
+their post-market clock semantics yet. Existing October 12 **stock-quote**
+captures provide a related, explicitly different-endpoint example: SMTK after
+price changed 1.44 to 1.5479 and after volume 726,391 to 965,123 while general
+`data_time` stayed at 20:00:00.366 UTC (the regular close that day). Those
+captures must not be mislabeled as raw snapshot evidence.
+
+Correction, using only the already-scheduled snapshot responses:
+
+- Regular-session validation is unchanged; premarket remains unqualified and
+  is not silently activated by this post-market work.
+- A session/date-scoped qualifier inspects actual current after-hours fields.
+  It records a public-data witness and qualifies their observed timing/counters
+  only after two sequential responses for a requested symbol show increasing
+  after-hours share and dollar counters within 30 seconds. Invalid/repeated,
+  duplicate, unrelated, wrong-date or provider-rejected evidence cannot qualify.
+  The verified calendar controls the session, including early closes/holidays.
+- The normalized snapshot preserves the original `providerAt` even if it is the
+  regular-close clock. Explicit optional `priceTimeBasis: session_observation`
+  identifies the different time basis; no receipt is passed off as a supplied
+  after-hours trade timestamp. Receipt time supports rolling after-hours price
+  and cumulative-volume observations. Identical values add zero activity.
+- The normalizer uses after-hours price/volume/turnover, never regular-price or
+  regular-volume fallbacks. Current market-date checks and future-time guards
+  remain; observed session time must be within the verified after-hours window.
+  It does not require a regular-hours trade first, preserving fresh thin-stock
+  runners whose earlier current-day quote clock predates the regular session.
+- Engine eligibility and focus confirmation honor the explicit observed-session
+  basis; regular-session timestamp guards are unchanged. Date/session changes,
+  real observation gaps and counter resets start fresh windows. Minimum gain,
+  volume, liquidity, spread and all owner settings remain unchanged.
+- A small optional public `sessionEvidence` witness accompanies existing batch
+  audit evidence, including before a session becomes qualified. No database
+  migration, extra collector, extra request, delivery or access expansion is
+  introduced. Request spacing remains 1,500ms.
+
+Verification: **170 tests across 15 files passed**, including 19 new session
+qualification tests and the existing 151 scanner/connection regressions. Tests
+cover the real feed→normalizer→engine→audit path with exactly two mocked existing
+requests, early close/holiday/boundaries, proof reset, invalid fields, preserving
+the frozen source clock, 1/5-minute counter math, 10-minute rate comparison and
+no invented activity. The sanitized related-endpoint fixture is
+`src/modules/scanner/live/fixtures/moomoo-after-hours-quote-20261012.json`.
+Its test explicitly adapts quote fields to a synthetic snapshot envelope; it is
+not represented as live snapshot qualification. Targeted ten-file ESLint passed;
+bounded final QA verified its resource limits, completed and released its lock.
+Help adds the session-source and honest 1/5/10-minute warm-up explanation.
+
+The separate receipt-clock correction is already live at source
+`cb6221d7709ef21f7db5edc2d2b077fbf404d305`, deployment
+`d6704b40-2a96-4bf5-8bfa-56cf7197ef8c`; source/health149/owner revision8 and
+delivery-off were verified by the Coordinator. This post-market successor needs
+its own clean integration/release. Actual post-market acceptance remains pending
+until incoming snapshot fields update after 4:00 PM ET; the new worker can then
+qualify directly from its natural responses without another activation deploy.
+Keep both after-hours gainers and Momentum private to the two approved accounts;
+all scanner notifications remain disabled. Do not claim the session qualified
+or working live solely because these preparation tests pass.

@@ -36,6 +36,8 @@ export type ScannerConfiguration = Readonly<{
 export type NormalizedSnapshot = Readonly<{
   symbol: string; company: string; session: ScannerSession; tradingDate: string;
   providerAt: number; receivedAt: number; price: number; baseline: number | null;
+  /** The provider clock is preserved even when it describes the regular close. */
+  priceTimeBasis?: "provider" | "session_observation";
   volume: number | null; dollarVolume: number | null; bid: number | null; ask: number | null;
   marketCap: number | null; dayHigh: number; dayLow: number; providerVolumeRatio: number | null;
 }>;
@@ -52,6 +54,7 @@ export type LiveScannerRow = Readonly<{
   marketCap: number | null; marketCapAtCollection: number; float: number;
   relativeVolume: number | null; dayHigh: number; dayLow: number; offHighPercent: number | null;
   floatRetrievedAtUtc: string; spreadPercent: number | null; providerAtUtc: string; receivedAtUtc: string;
+  priceTimeBasis?: "provider" | "session_observation";
   activity: RollingActivity; reasons: readonly string[]; news: readonly ScannerNewsItem[];
 }>;
 export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;

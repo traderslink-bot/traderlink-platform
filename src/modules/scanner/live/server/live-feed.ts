@@ -3,6 +3,7 @@ import type { DailyUniverse, LiveScreenResults, ScannerConfiguration, ScannerNew
 import { LiveScannerEngine, type FloatFact } from "../engine";
 import { activeSession, easternClock, type MarketDay } from "../sessions";
 import { normalizeSnapshotBatch, snapshotBatches, type SnapshotQualification } from "../snapshots";
+import type { SnapshotQualificationContext } from "../session-qualification";
 import { createHash, randomUUID } from "node:crypto";
 import { SCANNER_AUDIT_SCHEMA_VERSION, type ScannerAuditBatchReceipt, type ScannerAuditCycle } from "../audit/contracts";
 import { scannerConfigurationHash } from "../audit/decision-trace";
@@ -23,7 +24,7 @@ export type LiveFeedDependencies = Readonly<{
   }>[]>;
   floats: (date: string, symbols: readonly string[]) => Promise<ReadonlyMap<string,FloatFact>>;
   news: (symbols: readonly string[]) => Promise<ReadonlyMap<string,readonly ScannerNewsItem[]>>;
-  qualification: (session: ScannerSession) => SnapshotQualification;
+  qualification: (session: ScannerSession, context: SnapshotQualificationContext) => SnapshotQualification;
   audit?: Readonly<{ enqueue: (cycle: ScannerAuditCycle) => void }>;
   now?: () => number;
 }>;
@@ -79,13 +80,16 @@ export class LiveScannerFeed {
       for (const response of responses) {
         const sequence=receipts.length;
         try {
+          const qualification = this.dependencies.qualification(session,{ payload: response.payload,
+            requestedSymbols: response.requestedSymbols, receivedAt: response.receivedAt, tradingDate: date, day });
           const normalized = normalizeSnapshotBatch({ requestedSymbols: response.requestedSymbols, payload: response.payload, session,
-            tradingDate: date, receivedAt: response.receivedAt, qualification: this.dependencies.qualification(session) });
+            tradingDate: date, receivedAt: response.receivedAt, qualification });
           snapshots.push(...normalized.snapshots); missing.push(...normalized.missingSymbols);
           normalized.issues.forEach(issue => issues.add(issue));
           receipts.push({sequence,requestedCount:response.requestedSymbols.length,returnedCount:normalized.snapshots.length,
             requestedSymbolsHash:createHash("sha256").update(response.requestedSymbols.join("\n")).digest("hex"),
-            receivedAt:response.receivedAt,durationMs:response.requestedAt===undefined?null:response.receivedAt-response.requestedAt,issue:normalized.issues[0]??null});
+            receivedAt:response.receivedAt,durationMs:response.requestedAt===undefined?null:response.receivedAt-response.requestedAt,issue:normalized.issues[0]??null,
+            ...(qualification.sessionEvidence ? { sessionEvidence: qualification.sessionEvidence } : {})});
         } catch { missing.push(...response.requestedSymbols); issues.add("snapshot_batch_unavailable");
           receipts.push({sequence,requestedCount:response.requestedSymbols.length,returnedCount:0,
             requestedSymbolsHash:createHash("sha256").update(response.requestedSymbols.join("\n")).digest("hex"),

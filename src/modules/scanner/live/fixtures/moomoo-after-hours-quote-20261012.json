@@ -1,0 +1,40 @@
+{
+  "source": "Recorded OAuth stock-quote responses, NOT snapshot responses. Tests explicitly flatten session fields to exercise the snapshot adapter; live snapshot qualification remains necessary.",
+  "endpoint": "/api/v1.0/quote/stock-quote",
+  "records": [
+    {
+      "receivedAt": "2026-10-12T20:05:30.728Z",
+      "quote": {
+        "code": "US.SMTK",
+        "data_time": 1791835200366,
+        "data_date": "2026-10-12",
+        "last_price": 1.06,
+        "prev_close_price": 1.15,
+        "volume": 1839348,
+        "turnover": 2349458.646,
+        "after_market": {
+          "price": 1.44,
+          "volume": 726391,
+          "turnover": 945399.392
+        }
+      }
+    },
+    {
+      "receivedAt": "2026-10-12T20:05:56.659Z",
+      "quote": {
+        "code": "US.SMTK",
+        "data_time": 1791835200366,
+        "data_date": "2026-10-12",
+        "last_price": 1.06,
+        "prev_close_price": 1.15,
+        "volume": 2232537,
+        "turnover": 2943714.106,
+        "after_market": {
+          "price": 1.5479,
+          "volume": 965123,
+          "turnover": 1308819.977
+        }
+      }
+    }
+  ]
+}

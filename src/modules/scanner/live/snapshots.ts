@@ -1,4 +1,5 @@
 import type { NormalizedSnapshot, ScannerSession } from "./contracts";
+import { easternClock } from "./sessions";
 
 export const SNAPSHOT_BATCH_SIZE = 400;
 export const SNAPSHOT_MAX_AGE_MS = 30_000;
@@ -8,6 +9,10 @@ export type SnapshotQualification = Readonly<{
   /** In particular, ordinary volume/turnover session inclusion is not yet qualified. */
   sessionCountersVerified: boolean;
   afterHoursRegularCloseVerified: boolean;
+  priceTimeBasis?: "provider" | "session_observation";
+  sessionWindow?: Readonly<{ startMinute: number; endMinute: number }>;
+  sessionEvidence?: Readonly<{ symbol: string; providerAt: number; receivedAt: number;
+    price: number; volume: number; dollarVolume: number; qualified: boolean }>;
 }>;
 
 /** The Nov 2 production Web API probe qualified regular-session fields only.
@@ -51,11 +56,20 @@ export function normalizeSnapshotBatch(input: Readonly<{
     if (seen.has(symbol)) { duplicates.add(symbol); issues.add("duplicate_symbol"); continue; }
     seen.add(symbol);
     const providerAt = value.update_time;
+    const observedSession = input.session === "after_hours" && input.qualification.priceTimeBasis === "session_observation"
+      && input.qualification.sessionTimestampVerified && input.qualification.sessionCountersVerified;
     if (value.data_date !== input.tradingDate || typeof providerAt !== "number" || !Number.isSafeInteger(providerAt)
-      || providerAt <= 0 || providerAt > input.receivedAt + 2000 || input.receivedAt-providerAt > SNAPSHOT_MAX_AGE_MS) {
+      || providerAt <= 0 || providerAt > input.receivedAt + 2000
+      || (observedSession ? easternClock(providerAt).date !== input.tradingDate : input.receivedAt-providerAt > SNAPSHOT_MAX_AGE_MS)) {
       issues.add("stale_or_invalid_provider_time"); continue;
     }
     if (!input.qualification.sessionTimestampVerified) { issues.add("session_timestamp_unverified"); continue; }
+    if (input.qualification.sessionWindow) {
+      const clock = easternClock(observedSession ? input.receivedAt : providerAt), window = input.qualification.sessionWindow;
+      if (clock.date !== input.tradingDate || clock.minute < window.startMinute || clock.minute >= window.endMinute) {
+        issues.add("provider_time_outside_session"); continue;
+      }
+    }
     const prefix = input.session === "premarket" ? "pre" : input.session === "after_hours" ? "after" : null;
     const price = positive(value[prefix ? `${prefix}_price` : "last_price"]);
     if (price === null) { issues.add("session_price_unavailable"); continue; }
@@ -78,6 +92,7 @@ export function normalizeSnapshotBatch(input: Readonly<{
     const dayLow = Math.min(price,...availableLows);
     snapshots.push({ symbol, company: typeof value.name === "string" ? value.name.slice(0,200) : symbol,
       session: input.session, tradingDate: input.tradingDate, providerAt, receivedAt: input.receivedAt, price, baseline,
+      ...(observedSession ? { priceTimeBasis: "session_observation" as const } : {}),
       volume: input.qualification.sessionCountersVerified ? counter(value[prefix ? `${prefix}_volume` : "volume"],true) : null,
       dollarVolume: input.qualification.sessionCountersVerified ? counter(value[prefix ? `${prefix}_turnover` : "turnover"]) : null,
       bid: usableBook ? bid : null, ask: usableBook ? ask : null,

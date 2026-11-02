@@ -41,7 +41,8 @@ class FocusSelection {
     for (const symbol of this.focused.keys()) if (!available.has(symbol)) this.focused.delete(symbol);
     for (const candidate of ranked) {
       const previous = this.confirmations.get(candidate.row.symbol);
-      const providerAt = Date.parse(candidate.row.providerAtUtc);
+      const providerAt = Date.parse(candidate.row.priceTimeBasis === "session_observation"
+        ? candidate.row.receivedAtUtc : candidate.row.providerAtUtc);
       if (!previous || now-previous.lastSeenAt > 15_000) this.confirmations.set(candidate.row.symbol,{ count: 1, lastProviderAt: providerAt, lastSeenAt: now });
       else this.confirmations.set(candidate.row.symbol,{ count: previous.count+(providerAt>previous.lastProviderAt ? 1 : 0),
         lastProviderAt: Math.max(previous.lastProviderAt,providerAt), lastSeenAt: now });
@@ -88,7 +89,8 @@ export class LiveScannerEngine {
     for (const snapshot of input.snapshots) {
       const stock = membership.get(snapshot.symbol);
       if (!stock || snapshot.tradingDate !== input.tradingDate || snapshot.session !== input.session
-        || input.now-snapshot.providerAt > SNAPSHOT_MAX_AGE_MS || snapshot.providerAt > input.now) { rejected.set(snapshot.symbol,["snapshot_not_eligible"]);continue; }
+        || input.now-(snapshot.priceTimeBasis === "session_observation" ? snapshot.receivedAt : snapshot.providerAt) > SNAPSHOT_MAX_AGE_MS
+        || snapshot.receivedAt > input.now || snapshot.providerAt > input.now) { rejected.set(snapshot.symbol,["snapshot_not_eligible"]);continue; }
       if (!this.activity.observe(snapshot)) { rejected.set(snapshot.symbol,["activity_observation_rejected"]);continue; }
       const fact = input.floats.get(snapshot.symbol), floatAt = fact ? Date.parse(fact.retrievedAtUtc) : NaN;
       if (!fact || !Number.isSafeInteger(fact.shares) || fact.shares <= 0 || !Number.isFinite(floatAt)
@@ -103,6 +105,7 @@ export class LiveScannerEngine {
         dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow,
         offHighPercent: (snapshot.price/snapshot.dayHigh-1)*100,
         spreadPercent, providerAtUtc: new Date(snapshot.providerAt).toISOString(), receivedAtUtc: new Date(snapshot.receivedAt).toISOString(),
+        priceTimeBasis: snapshot.priceTimeBasis,
         activity: this.activity.metrics(snapshot.symbol,input.now), reasons: [], news: input.news.get(stock.symbol) ?? [] });
     }
     const gainers = rows.filter(row => matches(row,input.configuration.gainers.filters[input.session]))

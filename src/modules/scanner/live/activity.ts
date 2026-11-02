@@ -31,23 +31,26 @@ export class RollingActivityBook {
     const last = history.at(-1);
     if (last && (last.tradingDate !== snapshot.tradingDate || last.session !== snapshot.session)) history = [];
     else if (last) {
-      if (snapshot.receivedAt < last.receivedAt) return false;
-      if (snapshot.providerAt < last.providerAt) return false;
-      if (snapshot.receivedAt === last.receivedAt) {
-        if (snapshot.providerAt !== last.providerAt || snapshot.price !== last.price
-          || snapshot.volume !== last.volume || snapshot.dollarVolume !== last.dollarVolume) {
+      if (last.priceTimeBasis !== snapshot.priceTimeBasis) history = [];
+      else {
+        if (snapshot.receivedAt < last.receivedAt) return false;
+        if (snapshot.providerAt < last.providerAt) return false;
+        if (snapshot.receivedAt === last.receivedAt) {
+          if (snapshot.providerAt !== last.providerAt || snapshot.price !== last.price
+            || snapshot.volume !== last.volume || snapshot.dollarVolume !== last.dollarVolume) {
+            this.rows.delete(snapshot.symbol); return false;
+          }
+          return true;
+        }
+        // Moomoo's last-price clock can stand still while cumulative volume grows.
+        // Receipt time orders real observations; unchanged counters add zero activity.
+        if (snapshot.priceTimeBasis !== "session_observation" && snapshot.providerAt === last.providerAt && snapshot.price !== last.price) {
           this.rows.delete(snapshot.symbol); return false;
         }
-        return true;
+        if (snapshot.receivedAt-last.receivedAt > GAP_LIMIT
+          || snapshot.volume !== null && last.volume !== null && snapshot.volume < last.volume
+          || snapshot.dollarVolume !== null && last.dollarVolume !== null && snapshot.dollarVolume < last.dollarVolume) history = [];
       }
-      // Moomoo's last-price clock can stand still while cumulative volume grows.
-      // Receipt time orders real observations; unchanged counters add zero activity.
-      if (snapshot.providerAt === last.providerAt && snapshot.price !== last.price) {
-        this.rows.delete(snapshot.symbol); return false;
-      }
-      if (snapshot.receivedAt-last.receivedAt > GAP_LIMIT
-        || snapshot.volume !== null && last.volume !== null && snapshot.volume < last.volume
-        || snapshot.dollarVolume !== null && last.dollarVolume !== null && snapshot.dollarVolume < last.dollarVolume) history = [];
     }
     history.push(snapshot);
     this.rows.set(snapshot.symbol, history.filter(row => row.receivedAt >= snapshot.receivedAt-670_000).slice(-240));
@@ -56,7 +59,8 @@ export class RollingActivityBook {
   metrics(symbol: string, now: number): RollingActivity {
     const history = this.rows.get(symbol), current = history?.at(-1);
     if (!history || !current || now-current.receivedAt > GAP_LIMIT || now < current.receivedAt
-      || now-current.providerAt > SNAPSHOT_MAX_AGE_MS || now < current.providerAt) return { ...EMPTY };
+      || current.priceTimeBasis !== "session_observation" && now-current.providerAt > SNAPSHOT_MAX_AGE_MS
+      || now < current.providerAt) return { ...EMPTY };
     const one = anchor(history,current.receivedAt-60_000), five = anchor(history,current.receivedAt-300_000),
       six = anchor(history,current.receivedAt-360_000), ten = anchor(history,current.receivedAt-600_000);
     // Receipt milliseconds are not synchronized to exact window boundaries. The

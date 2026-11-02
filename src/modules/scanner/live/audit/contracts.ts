@@ -40,6 +40,8 @@ export type ScannerAuditBatchReceipt = Readonly<{
   receivedAt: number | null;
   durationMs: number | null;
   issue: string | null;
+  sessionEvidence?: Readonly<{ symbol: string; providerAt: number; receivedAt: number;
+    price: number; volume: number; dollarVolume: number; qualified: boolean }>;
 }>;
 
 export type ScannerAuditCycle = Readonly<{
