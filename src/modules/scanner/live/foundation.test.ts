@@ -6,7 +6,7 @@ import { LiveScannerEngine } from "./engine";
 import { admitMoomooRequest, recordMoomoo429, reserveScannerDemand, restoreBudget } from "./request-budget";
 import { activeSession, easternClock, type MarketDay } from "./sessions";
 import { initialConfiguration, updateConfiguration, validateConfiguration } from "./settings";
-import { normalizeSnapshotBatch, snapshotBatches } from "./snapshots";
+import { normalizeSnapshotBatch, qualifiedMoomooSnapshotSession, snapshotBatches } from "./snapshots";
 import { importDailyUniverse } from "./universe";
 import { parseUniverseCsv, validateUniverseUpload } from "./universe-validation";
 
@@ -73,6 +73,25 @@ describe("daily list integrity", () => {
 });
 
 describe("session and snapshot evidence", () => {
+  it("accepts the recorded Nov 2 OAuth packet's fresh regular quotes and rejects stale thin-stock quotes", () => {
+    const receivedAt = 1793639811961;
+    const facts = [
+      { code:"US.AAPL",data_date:"2026-11-02",update_time:1793639811174,last_price:338.54,prev_close_price:344.63,volume:18867485,turnover:6432582491.841 },
+      { code:"US.AACG",data_date:"2026-11-02",update_time:1793638483081,last_price:0.6105,prev_close_price:0.6495,volume:1668,turnover:1062.372 },
+      { code:"US.AAME",data_date:"2026-11-02",update_time:1793639540916,last_price:1.1,prev_close_price:1.07,volume:32064,turnover:35184.838 },
+      { code:"US.AARD",data_date:"2026-11-02",update_time:1793639793227,last_price:1.295,prev_close_price:1.36,volume:145648,turnover:189996.108 },
+    ];
+    const result = normalizeSnapshotBatch({ requestedSymbols:["AAPL","AACG","AAME","AARD"],payload:{ ret_code:0,data:{ snapshot_list:facts } },
+      session:"regular",tradingDate:"2026-11-02",receivedAt,qualification:qualifiedMoomooSnapshotSession("regular") });
+    expect(result.snapshots.map(row=>row.symbol)).toEqual(["AAPL","AARD"]);
+    expect(result.snapshots[0].volume).toBe(18867485);
+    expect(result.snapshots[1].dollarVolume).toBe(189996.108);
+    expect(result.missingSymbols).toEqual(["AACG","AAME"]);
+    expect(result.issues).toContain("stale_or_invalid_provider_time");
+  });
+  it.each(["premarket","after_hours"] as const)("does not claim regular-session evidence qualifies %s", session => {
+    expect(batch([raw()],{ session,qualification:qualifiedMoomooSnapshotSession(session) }).snapshots).toEqual([]);
+  });
   const day: MarketDay = { date: "2026-11-02", verified: true, open: true, regularCloseEastern: "16:00", extendedCloseEastern: "20:00" };
   it("uses Eastern time across DST and observes all session boundaries", () => {
     expect(easternClock(Date.parse("2026-10-30T13:30:00Z")).minute).toBe(570);
@@ -118,6 +137,32 @@ describe("session and snapshot evidence", () => {
 });
 
 describe("rolling evidence and focus", () => {
+  it("calculates actual cumulative differences across bounded irregular provider timestamps", () => {
+    const book = new RollingActivityBook();
+    for (let index=0;index<=120;index++) {
+      const at=NOW+index*5001+(index%3)*47;
+      book.observe(snapshot(at,{ price:1+index/1000,volume:1_000_000+index*100,dollarVolume:2_000_000+index*200 }));
+    }
+    const activity=book.metrics("AAA",NOW+600120);
+    // The observed anchors are 60,012ms and 300,060ms behind, not exact boundaries.
+    expect(activity.oneMinuteVolume).toBe(1200);
+    expect(activity.oneMinuteDollarVolume).toBe(2400);
+    expect(activity.fiveMinuteVolume).toBe(6000);
+    expect(activity.fiveMinuteVolumeSpike).toBe(1);
+    expect(activity.oneMinuteGain).toBeCloseTo((1.12/1.108-1)*100);
+  });
+  it("compares rates rather than unequal window lengths for acceleration and five-minute spikes", () => {
+    const book=new RollingActivityBook();
+    for(let index=0;index<=130;index++) {
+      const elapsed=index*5001+(index%3)*47;
+      book.observe(snapshot(NOW+elapsed,{volume:1_000_000+elapsed,dollarVolume:2_000_000+elapsed*2}));
+    }
+    const activity=book.metrics("AAA",NOW+130*5001+47);
+    expect(activity.oneMinuteVolume).not.toBeNull();
+    expect(activity.fiveMinuteVolume).not.toBeNull();
+    expect(activity.volumeAcceleration).toBeCloseTo(1,10);
+    expect(activity.fiveMinuteVolumeSpike).toBeCloseTo(1,10);
+  });
   it("warms up instead of turning provider volume_ratio into RVOL/acceleration", () => {
     const book = new RollingActivityBook(); book.observe(snapshot());
     expect(book.metrics("AAA",NOW).volumeAcceleration).toBeNull();

@@ -2,6 +2,16 @@
 
 See [plan](live-market-screeners-plan.md).
 
+## 2026-11-02 audit, replay and calibration foundation
+
+The owner authorized the first three stages of the internal Scanner Audit
+system. The source implementation and verification record are maintained in
+[Live Market Scanner Audit System Progress](live-market-scanner-audit-system-progress.md),
+with the controlling design in
+[Live Market Scanner Audit, Replay and Calibration Plan](live-market-scanner-audit-system-plan.md).
+The audit hooks preserve member-facing ranking behavior and place durable writes
+outside the awaited five-second scan path.
+
 ## Current slice
 
 Owner resumed implementation after deferring setup detection. Coordinator granted

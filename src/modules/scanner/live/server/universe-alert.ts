@@ -12,6 +12,8 @@ function webhook(environment:NodeJS.ProcessEnv): URL | null {
   } catch { return null; }
 }
 export async function sendScannerUniverseAlert(input:AlertInput):Promise<void>{
+  // Scanner delivery is independent of ordinary Watchlist notifications.
+  if(input.environment.TRADERLINK_SCANNER_DELIVERY_ENABLED!=="true")return;
   const clock=easternClock(Date.now());
   if(input.kind==="missing"&&(clock.date!==input.tradingDate||clock.minute<3*60+15))return;
   const key=`${input.kind}:${input.tradingDate}:${input.sourceDate}`;

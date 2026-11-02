@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { mkdtemp, readFile, rm, symlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -8,7 +8,7 @@ import type { DailyUniverse } from "../contracts";
 import { LiveScannerFeed } from "./live-feed";
 import { MoomooSharedTransport } from "../../../platform/server/broker-connections/moomoo-shared-transport";
 import { ScannerSettingsStore } from "./settings-store";
-import { DailyFloatEnricher, type FloatCachePersistence } from "./float-enrichment";
+import { DailyFloatEnricher, ScannerFloatFeed, type FloatCachePersistence } from "./float-enrichment";
 
 const NOW = Date.parse("2026-10-30T14:00:00.000Z");
 const universe: DailyUniverse = { version: 1, tradingDate: "2026-10-30", acceptedAtUtc: "2026-10-30T07:00:00.000Z",
@@ -24,6 +24,58 @@ function floatPersistence(): FloatCachePersistence {
 }
 
 describe("DailyFloatEnricher", () => {
+  it("reads newly persisted background facts and refreshes a newly added symbol without parallel lookups", async () => {
+    const cache=floatPersistence();
+    const refresh=vi.fn(async(date:string,symbols:readonly string[])=>{
+      const facts=Object.fromEntries(symbols.map(symbol=>[symbol,{shares:500_000,retrievedAtUtc:new Date(NOW).toISOString()}]));
+      await cache.write({tradingDate:date,facts});
+      return new Map(Object.entries(facts));
+    });
+    const feed=new ScannerFloatFeed(cache,refresh,()=>NOW);
+    expect((await feed.read("2026-10-30",["ABCD"])).size).toBe(0);
+    await new Promise(resolve=>setTimeout(resolve,0));
+    expect((await feed.read("2026-10-30",["ABCD"])).get("ABCD")?.shares).toBe(500_000);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    await feed.read("2026-10-30",["ABCD","NEW"]);
+    await new Promise(resolve=>setTimeout(resolve,0));
+    expect((await feed.read("2026-10-30",["ABCD","NEW"])).has("NEW")).toBe(true);
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+  it("returns saved float facts immediately while deduplicating slow missing-float refreshes", async () => {
+    const cache = floatPersistence();
+    await cache.write({ tradingDate:"2026-10-30",facts:{ ABCD:{ shares:500_000,retrievedAtUtc:new Date(NOW).toISOString() } } });
+    let release!: ()=>void;
+    const pending = new Promise<void>(resolve=>{ release=resolve; });
+    const refresh = vi.fn(async()=>{ await pending; return new Map(); });
+    let now = NOW;
+    const feed = new ScannerFloatFeed(cache,refresh,()=>now);
+    expect((await feed.read("2026-10-30",["ABCD","MISSING"])).get("ABCD")?.shares).toBe(500_000);
+    expect((await feed.read("2026-10-30",["ABCD","MISSING"])).has("MISSING")).toBe(false);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    release(); await pending; await new Promise(resolve=>setTimeout(resolve,0));
+    await feed.read("2026-10-30",["ABCD","MISSING"]);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    now += 300_000;
+    await feed.read("2026-10-30",["ABCD","MISSING"]);
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+  it("uses a fully saved population without refreshing and recovers a rejected background refresh", async () => {
+    const cache = floatPersistence();
+    await cache.write({ tradingDate:"2026-10-30",facts:{ ABCD:{ shares:500_000,retrievedAtUtc:new Date(NOW).toISOString() } } });
+    const refresh = vi.fn(async()=>{ throw Error("provider unavailable"); });
+    let now=NOW;
+    const feed=new ScannerFloatFeed(cache,refresh,()=>now);
+    expect((await feed.read("2026-10-30",["ABCD"])).size).toBe(1);
+    expect(refresh).not.toHaveBeenCalled();
+    await feed.read("2026-10-30",["ABCD","MISSING"]);
+    await new Promise(resolve=>setTimeout(resolve,0));
+    await feed.read("2026-10-30",["ABCD","MISSING"]);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    now+=300_000;
+    await feed.read("2026-10-30",["ABCD","MISSING"]);
+    await new Promise(resolve=>setTimeout(resolve,0));
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
   it("converts Finnhub floatingShare millions exactly and skips fallback", async () => {
     const requested: string[] = [];
     const facts = await new DailyFloatEnricher({ finnhubToken:"finnhub",eodhdToken:"eodhd",persistence:floatPersistence(),finnhubSpacingMs:0,

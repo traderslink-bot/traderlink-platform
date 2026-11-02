@@ -9,6 +9,14 @@ export type SnapshotQualification = Readonly<{
   sessionCountersVerified: boolean;
   afterHoursRegularCloseVerified: boolean;
 }>;
+
+/** The Nov 2 production Web API probe qualified regular-session fields only.
+ * Extended-session fields must not inherit that evidence from a regular quote.
+ */
+export function qualifiedMoomooSnapshotSession(session: ScannerSession): SnapshotQualification {
+  return { sessionTimestampVerified: session === "regular", sessionCountersVerified: session === "regular",
+    afterHoursRegularCloseVerified: false };
+}
 type ObjectValue = Record<string, unknown>;
 const object = (value: unknown): value is ObjectValue => Boolean(value && typeof value === "object" && !Array.isArray(value));
 const positive = (value: unknown): number | null => typeof value === "number" && Number.isFinite(value) && value > 0 ? value : null;

@@ -122,3 +122,29 @@ export class DailyFloatEnricher {
     return facts;
   }
 }
+
+/** Float enrichment must never hold up the five-second quote observation loop.
+ * Return only persisted facts; a missing fact stays missing while one refresh
+ * runs in the background. Failed/missing lookups are retried after five minutes.
+ */
+export class ScannerFloatFeed {
+  private pending: Promise<void> | null = null;
+  private lastKey: string | null = null;
+  private retryAt = 0;
+  constructor(private readonly persistence: FloatCachePersistence,
+    private readonly refresh: (date: string, symbols: readonly string[]) => Promise<ReadonlyMap<string,FloatFact>>,
+    private readonly now: () => number = Date.now) {}
+  async read(date: string, symbols: readonly string[]): Promise<ReadonlyMap<string,FloatFact>> {
+    const facts = parseCache(await this.persistence.read(date),date);
+    if (symbols.every(symbol=>facts.has(symbol))) return facts;
+    const key = `${date}\u0000${symbols.join("\u0000")}`;
+    if (!this.pending && (key !== this.lastKey || this.now() >= this.retryAt)) {
+      this.lastKey = key;
+      this.pending = this.refresh(date,symbols).then(()=>{},()=>{}).finally(()=>{
+        this.retryAt = this.now()+300_000;
+        this.pending = null;
+      });
+    }
+    return facts;
+  }
+}

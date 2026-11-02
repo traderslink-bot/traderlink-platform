@@ -1,8 +1,11 @@
 import "server-only";
-import type { DailyUniverse, LiveScreenResults, ScannerConfiguration, ScannerNewsItem, ScannerReadModel } from "../contracts";
+import type { DailyUniverse, LiveScreenResults, ScannerConfiguration, ScannerNewsItem, ScannerReadModel, ScannerSession } from "../contracts";
 import { LiveScannerEngine, type FloatFact } from "../engine";
 import { activeSession, easternClock, type MarketDay } from "../sessions";
 import { normalizeSnapshotBatch, snapshotBatches, type SnapshotQualification } from "../snapshots";
+import { createHash, randomUUID } from "node:crypto";
+import { SCANNER_AUDIT_SCHEMA_VERSION, type ScannerAuditBatchReceipt, type ScannerAuditCycle } from "../audit/contracts";
+import { scannerConfigurationHash } from "../audit/decision-trace";
 
 export const TRADERLINK_LIVE_SCREENERS_ENV = "TRADERLINK_LIVE_SCREENERS_ENABLED";
 const EMPTY_RESULTS = Object.freeze({ rows: [], focus: [], total: 0 });
@@ -16,16 +19,18 @@ export type LiveFeedDependencies = Readonly<{
   universe: (date: string) => Promise<DailyUniverse | null>;
   reserveScannerBudget: (universeCount: number) => Promise<void>;
   snapshotPass: (batches: readonly (readonly string[])[]) => Promise<readonly Readonly<{
-    requestedSymbols: readonly string[]; payload: unknown; receivedAt: number;
+    requestedSymbols: readonly string[]; payload: unknown; receivedAt: number; requestedAt?: number;
   }>[]>;
   floats: (date: string, symbols: readonly string[]) => Promise<ReadonlyMap<string,FloatFact>>;
   news: (symbols: readonly string[]) => Promise<ReadonlyMap<string,readonly ScannerNewsItem[]>>;
-  qualification: () => SnapshotQualification;
+  qualification: (session: ScannerSession) => SnapshotQualification;
+  audit?: Readonly<{ enqueue: (cycle: ScannerAuditCycle) => void }>;
   now?: () => number;
 }>;
 
 export class LiveScannerFeed {
   private readonly engine = new LiveScannerEngine();
+  private readonly runtimeInstanceId=randomUUID();
   private model: ScannerReadModel = empty("disabled",easternClock(Date.now()).date);
   private running = false;
   private floatPrewarmDate: string | null = null;
@@ -62,22 +67,32 @@ export class LiveScannerFeed {
       const symbols = universe.stocks.map(stock => stock.symbol);
       const floats = await this.dependencies.floats(date,symbols);
       const snapshots = [];
+      const receipts:ScannerAuditBatchReceipt[]=[];
       const missing: string[] = [];
       const issues = new Set<string>();
       const batches = snapshotBatches(symbols);
-      let responses: readonly Readonly<{ requestedSymbols: readonly string[]; payload: unknown; receivedAt: number }>[] = [];
+      let responses: readonly Readonly<{ requestedSymbols: readonly string[]; payload: unknown; receivedAt: number; requestedAt?: number }>[] = [];
       try { responses = await this.dependencies.snapshotPass(batches); }
       catch { issues.add("snapshot_pass_unavailable"); }
       const returned = new Set(responses.map(response => response.requestedSymbols.join("\u0000")));
       for (const batch of batches) if (!returned.has(batch.join("\u0000"))) missing.push(...batch);
       for (const response of responses) {
+        const sequence=receipts.length;
         try {
           const normalized = normalizeSnapshotBatch({ requestedSymbols: response.requestedSymbols, payload: response.payload, session,
-            tradingDate: date, receivedAt: response.receivedAt, qualification: this.dependencies.qualification() });
+            tradingDate: date, receivedAt: response.receivedAt, qualification: this.dependencies.qualification(session) });
           snapshots.push(...normalized.snapshots); missing.push(...normalized.missingSymbols);
           normalized.issues.forEach(issue => issues.add(issue));
-        } catch { missing.push(...response.requestedSymbols); issues.add("snapshot_batch_unavailable"); }
+          receipts.push({sequence,requestedCount:response.requestedSymbols.length,returnedCount:normalized.snapshots.length,
+            requestedSymbolsHash:createHash("sha256").update(response.requestedSymbols.join("\n")).digest("hex"),
+            receivedAt:response.receivedAt,durationMs:response.requestedAt===undefined?null:response.receivedAt-response.requestedAt,issue:normalized.issues[0]??null});
+        } catch { missing.push(...response.requestedSymbols); issues.add("snapshot_batch_unavailable");
+          receipts.push({sequence,requestedCount:response.requestedSymbols.length,returnedCount:0,
+            requestedSymbolsHash:createHash("sha256").update(response.requestedSymbols.join("\n")).digest("hex"),
+            receivedAt:response.receivedAt,durationMs:response.requestedAt===undefined?null:response.receivedAt-response.requestedAt,issue:"snapshot_batch_unavailable"}); }
       }
+      for(const batch of batches)if(!returned.has(batch.join("\u0000")))receipts.push({sequence:receipts.length,requestedCount:batch.length,returnedCount:0,
+        requestedSymbolsHash:createHash("sha256").update(batch.join("\n")).digest("hex"),receivedAt:null,durationMs:null,issue:"snapshot_batch_missing"});
       const evaluated = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
       const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.momentum.rows,evaluated.momentum.focus]
         .flatMap(rows => rows.map(row => row.symbol)))];
@@ -87,6 +102,13 @@ export class LiveScannerFeed {
         rows: results.rows.map(row => ({ ...row, news: news.get(row.symbol) ?? [] })),
         focus: results.focus.map(row => ({ ...row, news: news.get(row.symbol) ?? [] })) });
       const status = missing.length || issues.size ? "partial" : snapshots.length ? "ready" : "warming";
+      const completedAt=(this.dependencies.now ?? Date.now)();
+      this.dependencies.audit?.enqueue({schemaVersion:SCANNER_AUDIT_SCHEMA_VERSION,cycleId:randomUUID(),runtimeInstanceId:this.runtimeInstanceId,tradingDate:date,session,
+        scheduledAt:now,completedAt,universeSourceDate:universe.sourceTradingDate??universe.tradingDate,
+        universeCount:symbols.length,universeHash:createHash("sha256").update(JSON.stringify(universe.stocks)).digest("hex"),
+        configuration,configurationHash:scannerConfigurationHash(configuration),status,
+        issues:Object.freeze([...issues].sort()),missingSymbols:Object.freeze([...new Set(missing)].sort()),
+        batches:Object.freeze(receipts),decisions:evaluated.audit});
       return this.set({ status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
         universeSourceDate: universe.sourceTradingDate ?? universe.tradingDate, universeCount: symbols.length,
         receivedCount: snapshots.length, missingSymbols: Object.freeze([...new Set(missing)].sort()), missingFloatCount: evaluated.missingFloatCount,
