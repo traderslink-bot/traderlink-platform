@@ -1,0 +1,3360 @@
+{
+  "generatedAtUtc": "2026-11-03T19:45:14.037Z",
+  "coverage": {
+    "cycles": 6546,
+    "observations": 4809710,
+    "uniqueSymbols": 1235,
+    "dates": [
+      "2026-11-02",
+      "2026-11-03"
+    ],
+    "firstCycleUtc": "2026-11-02T17:54:15.412Z",
+    "lastCycleUtc": "2026-11-03T19:32:36.995Z",
+    "statuses": {
+      "partial": 6546
+    },
+    "issues": {
+      "stale_or_invalid_provider_time": 6459,
+      "session_price_unavailable": 3003,
+      "session_timestamp_unverified": 390,
+      "snapshot_batch_unavailable": 163,
+      "snapshot_pass_unavailable": 6
+    },
+    "sessions": {
+      "after_hours": {
+        "cycles": 1447,
+        "observations": 1511503
+      },
+      "regular": {
+        "cycles": 3147,
+        "observations": 2243402
+      },
+      "premarket": {
+        "cycles": 1952,
+        "observations": 1054805
+      }
+    }
+  },
+  "referenceMoveDefinition": "first eligible observation in a contiguous period where observed five-minute gain is at least 5%",
+  "referenceMoves": 916,
+  "configurationHistory": [
+    {
+      "cycles": 209,
+      "revision": 1,
+      "session": "regular",
+      "oneMinute": 2.5,
+      "fiveMinute": 5,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 225,
+      "revision": 2,
+      "session": "regular",
+      "oneMinute": 2.5,
+      "fiveMinute": 5,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 21,
+      "revision": 3,
+      "session": "regular",
+      "oneMinute": 2.5,
+      "fiveMinute": 5,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 183,
+      "revision": 4,
+      "session": "regular",
+      "oneMinute": 2.5,
+      "fiveMinute": 5,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 285,
+      "revision": 5,
+      "session": "regular",
+      "oneMinute": 2.5,
+      "fiveMinute": 5,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 3,
+      "revision": 6,
+      "session": "regular",
+      "oneMinute": 0.5,
+      "fiveMinute": 0.5,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 1,
+      "revision": 7,
+      "session": "regular",
+      "oneMinute": 0.5,
+      "fiveMinute": 0.5,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 347,
+      "revision": 8,
+      "session": "regular",
+      "oneMinute": 0.5,
+      "fiveMinute": 0.5,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 38,
+      "revision": 9,
+      "session": "after_hours",
+      "oneMinute": 1,
+      "fiveMinute": 1,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 40000,
+        "minimumDollarVolume": 50000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 3
+      }
+    },
+    {
+      "cycles": 79,
+      "revision": 9,
+      "session": "regular",
+      "oneMinute": 1,
+      "fiveMinute": 1,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    },
+    {
+      "cycles": 1402,
+      "revision": 10,
+      "session": "after_hours",
+      "oneMinute": 1,
+      "fiveMinute": 1,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 40000,
+        "minimumDollarVolume": 50000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 3
+      }
+    },
+    {
+      "cycles": 7,
+      "revision": 11,
+      "session": "after_hours",
+      "oneMinute": 1,
+      "fiveMinute": 1,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 40000,
+        "minimumDollarVolume": 50000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 3
+      }
+    },
+    {
+      "cycles": 1952,
+      "revision": 12,
+      "session": "premarket",
+      "oneMinute": 1,
+      "fiveMinute": 1,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 15000,
+        "minimumDollarVolume": 15000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 3
+      }
+    },
+    {
+      "cycles": 1794,
+      "revision": 12,
+      "session": "regular",
+      "oneMinute": 1,
+      "fiveMinute": 1,
+      "filters": {
+        "minimumPrice": 0,
+        "maximumPrice": null,
+        "maximumMarketCap": 100000000,
+        "maximumFloat": null,
+        "minimumVolume": 300000,
+        "minimumDollarVolume": 500000,
+        "minimumSessionGain": null,
+        "maximumSpreadPercent": 2
+      }
+    }
+  ],
+  "methods": {
+    "volume_ignition": {
+      "triggerEpisodes": 10377,
+      "eligibleEpisodes": 3922,
+      "completedFiveMinuteOutcomes": 3516,
+      "censoredAtAuditCutoff": 406,
+      "uniqueEligibleTickers": 137,
+      "sessions": {
+        "premarket": 642,
+        "regular": 2960,
+        "after_hours": 320
+      },
+      "sessionOutcomes": {
+        "premarket": {
+          "episodes": 629,
+          "medianMaximumGain5m": 0.81,
+          "medianDrawdown5m": -0.85,
+          "medianGain5m": -0.09,
+          "reached1Percent": 43.24,
+          "reached3Percent": 13.99,
+          "reached5Percent": 7.15,
+          "fell2Percent": 26.23
+        },
+        "regular": {
+          "episodes": 2587,
+          "medianMaximumGain5m": 0.66,
+          "medianDrawdown5m": -0.65,
+          "medianGain5m": 0,
+          "reached1Percent": 39.23,
+          "reached3Percent": 10.98,
+          "reached5Percent": 4.21,
+          "fell2Percent": 19.13
+        },
+        "after_hours": {
+          "episodes": 300,
+          "medianMaximumGain5m": 1.04,
+          "medianDrawdown5m": -0.65,
+          "medianGain5m": 0,
+          "reached1Percent": 51.67,
+          "reached3Percent": 19.33,
+          "reached5Percent": 10.33,
+          "fell2Percent": 23.33
+        }
+      },
+      "detection": {
+        "medianIntervalSeconds": 9.9,
+        "medianIntervalShares": 10657,
+        "medianIntervalDollars": 6704.81,
+        "medianRateMultiple": 11.36,
+        "medianEpisodeShares": 53830,
+        "medianEpisodeDollars": 39482.12
+      },
+      "forwardOutcome": {
+        "medianMaximumGain5m": 0.73,
+        "p75MaximumGain5m": 1.73,
+        "medianMaximumDrawdown5m": -0.68,
+        "medianGain30s": 0,
+        "medianGain60s": 0,
+        "medianGain5m": 0,
+        "reached1Percent": 1442,
+        "reached3Percent": 430,
+        "reached5Percent": 185,
+        "fell2Percent": 730
+      },
+      "referenceMoves": {
+        "total": 916,
+        "captured": 664,
+        "captureRatePercent": 72.49,
+        "medianLeadSeconds": -70.01
+      },
+      "examples": {
+        "strongest": [
+          {
+            "symbol": "INLF",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:11:10.067Z",
+            "price": 0.3291,
+            "maxGain5m": 36.74,
+            "drawdown5m": 0,
+            "gain30s": 33.7,
+            "gain60s": 30.66,
+            "gain5m": 11.85,
+            "signals": [
+              "volume_ignition",
+              "building_volume"
+            ]
+          },
+          {
+            "symbol": "INLF",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:09:10.396Z",
+            "price": 0.333,
+            "maxGain5m": 35.14,
+            "drawdown5m": -1.17,
+            "gain30s": 9.31,
+            "gain60s": 0.72,
+            "gain5m": 10.51,
+            "signals": [
+              "volume_ignition",
+              "building_volume"
+            ]
+          },
+          {
+            "symbol": "CRIS",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:07:38.595Z",
+            "price": 0.84,
+            "maxGain5m": 26.19,
+            "drawdown5m": -1.67,
+            "gain30s": 0.85,
+            "gain60s": 0.44,
+            "gain5m": 26.19,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CJMB",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:49:55.428Z",
+            "price": 0.3804,
+            "maxGain5m": 26.18,
+            "drawdown5m": -0.11,
+            "gain30s": 0,
+            "gain60s": -0.11,
+            "gain5m": 18.32,
+            "signals": [
+              "volume_ignition"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:14:34.852Z",
+            "price": 2.345,
+            "maxGain5m": 24.95,
+            "drawdown5m": -7.04,
+            "gain30s": -5.33,
+            "gain60s": 0.68,
+            "gain5m": 19.83,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:53:05.899Z",
+            "price": 6.9271,
+            "maxGain5m": 24.83,
+            "drawdown5m": 0,
+            "gain30s": 20.41,
+            "gain60s": 17.3,
+            "gain5m": 1.2,
+            "signals": [
+              "volume_ignition"
+            ]
+          },
+          {
+            "symbol": "INLF",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:09:30.219Z",
+            "price": 0.3614,
+            "maxGain5m": 24.52,
+            "drawdown5m": -8.94,
+            "gain30s": -7.97,
+            "gain60s": -6.92,
+            "gain5m": 2.27,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:41:34.731Z",
+            "price": 5.7015,
+            "maxGain5m": 23.3,
+            "drawdown5m": -3.88,
+            "gain30s": 10.85,
+            "gain60s": 11.96,
+            "gain5m": 21.2,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CRIS",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:16:46.307Z",
+            "price": 1.0999,
+            "maxGain5m": 20.92,
+            "drawdown5m": 0,
+            "gain30s": 6.36,
+            "gain60s": 5.01,
+            "gain5m": 20.92,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:30:18.955Z",
+            "price": 4.28,
+            "maxGain5m": 20.33,
+            "drawdown5m": -1.6,
+            "gain30s": 6.78,
+            "gain60s": 20.33,
+            "gain5m": 20.33,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity"
+            ]
+          }
+        ],
+        "weakest": [
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T19:11:19.834Z",
+            "price": 2.895,
+            "maxGain5m": 0,
+            "drawdown5m": -34.26,
+            "gain30s": -20.03,
+            "gain60s": -29.71,
+            "gain5m": -29.85,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "EZGO",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:12:28.064Z",
+            "price": 0.7138,
+            "maxGain5m": 0,
+            "drawdown5m": -28.27,
+            "gain30s": -0.22,
+            "gain60s": -0.22,
+            "gain5m": -28.01,
+            "signals": [
+              "volume_ignition"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:48:30.546Z",
+            "price": 3.2989,
+            "maxGain5m": 0,
+            "drawdown5m": -26.95,
+            "gain30s": -13.91,
+            "gain60s": -22.1,
+            "gain5m": -26.95,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "ATHE",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:50:58.011Z",
+            "price": 3.03,
+            "maxGain5m": 0,
+            "drawdown5m": -22.77,
+            "gain30s": -4.63,
+            "gain60s": -5.12,
+            "gain5m": -21.12,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CRE",
+            "session": "premarket",
+            "atUtc": "2026-11-03T13:22:19.668Z",
+            "price": 3.18,
+            "maxGain5m": 0,
+            "drawdown5m": -22.64,
+            "gain30s": -9.43,
+            "gain60s": -6.92,
+            "gain5m": -22.17,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "ATHE",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:49:58.060Z",
+            "price": 3.03,
+            "maxGain5m": 0,
+            "drawdown5m": -22.11,
+            "gain30s": -3.3,
+            "gain60s": -3.96,
+            "gain5m": -20.76,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "ONEG",
+            "session": "premarket",
+            "atUtc": "2026-11-03T12:59:44.550Z",
+            "price": 2.04,
+            "maxGain5m": 0,
+            "drawdown5m": -20.09,
+            "gain30s": -2.45,
+            "gain60s": -9.81,
+            "gain5m": -21.57,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "DBGI",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:23:45.575Z",
+            "price": 0.6697,
+            "maxGain5m": 0,
+            "drawdown5m": -17.87,
+            "gain30s": -3.12,
+            "gain60s": -5.84,
+            "gain5m": -16.37,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "VCIG",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:12:43.834Z",
+            "price": 7.649,
+            "maxGain5m": 0,
+            "drawdown5m": -15.52,
+            "gain30s": -7.81,
+            "gain60s": -5.48,
+            "gain5m": -13.06,
+            "signals": [
+              "volume_ignition",
+              "building_volume"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:12:12.064Z",
+            "price": 1.4301,
+            "maxGain5m": 0,
+            "drawdown5m": -15.35,
+            "gain30s": -15.35,
+            "gain60s": -10.5,
+            "gain5m": -5.61,
+            "signals": [
+              "volume_ignition",
+              "building_volume"
+            ]
+          }
+        ],
+        "missedReferenceMoves": [
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:07:02.862Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:07:51.572Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:09:02.145Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:19:09.586Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:20:00.182Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:20:39.599Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:21:09.768Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:21:48.557Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:23:18.904Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:24:39.006Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:25:08.770Z"
+          },
+          {
+            "symbol": "SGRX",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:30:10.768Z"
+          },
+          {
+            "symbol": "WETO",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:35:14.273Z"
+          },
+          {
+            "symbol": "CJMB",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:39:41.754Z"
+          },
+          {
+            "symbol": "CJMB",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:40:20.628Z"
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:46:28.876Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:48:49.135Z"
+          },
+          {
+            "symbol": "IFBD",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:53:55.691Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:56:23.564Z"
+          },
+          {
+            "symbol": "SEGG",
+            "session": "regular",
+            "atUtc": "2026-11-02T18:01:10.226Z"
+          }
+        ]
+      }
+    },
+    "building_volume": {
+      "triggerEpisodes": 12798,
+      "eligibleEpisodes": 5979,
+      "completedFiveMinuteOutcomes": 5544,
+      "censoredAtAuditCutoff": 435,
+      "uniqueEligibleTickers": 124,
+      "sessions": {
+        "premarket": 1268,
+        "regular": 4099,
+        "after_hours": 612
+      },
+      "sessionOutcomes": {
+        "premarket": {
+          "episodes": 1250,
+          "medianMaximumGain5m": 0.93,
+          "medianDrawdown5m": -0.86,
+          "medianGain5m": -0.08,
+          "reached1Percent": 47.68,
+          "reached3Percent": 16.16,
+          "reached5Percent": 6.8,
+          "fell2Percent": 27.92
+        },
+        "regular": {
+          "episodes": 3700,
+          "medianMaximumGain5m": 0.87,
+          "medianDrawdown5m": -0.78,
+          "medianGain5m": 0,
+          "reached1Percent": 46.54,
+          "reached3Percent": 14.78,
+          "reached5Percent": 6.57,
+          "fell2Percent": 22.57
+        },
+        "after_hours": {
+          "episodes": 594,
+          "medianMaximumGain5m": 1.3,
+          "medianDrawdown5m": -0.99,
+          "medianGain5m": 0.24,
+          "reached1Percent": 57.91,
+          "reached3Percent": 25.93,
+          "reached5Percent": 14.31,
+          "fell2Percent": 29.8
+        }
+      },
+      "detection": {
+        "medianIntervalSeconds": 9.89,
+        "medianIntervalShares": 9308,
+        "medianIntervalDollars": 5562.89,
+        "medianRateMultiple": 4.43,
+        "medianEpisodeShares": 131848,
+        "medianEpisodeDollars": 81992.39
+      },
+      "forwardOutcome": {
+        "medianMaximumGain5m": 0.92,
+        "p75MaximumGain5m": 2.18,
+        "medianMaximumDrawdown5m": -0.81,
+        "medianGain30s": 0,
+        "medianGain60s": 0,
+        "medianGain5m": 0,
+        "reached1Percent": 2662,
+        "reached3Percent": 903,
+        "reached5Percent": 413,
+        "fell2Percent": 1361
+      },
+      "referenceMoves": {
+        "total": 916,
+        "captured": 799,
+        "captureRatePercent": 87.23,
+        "medianLeadSeconds": -49.21
+      },
+      "examples": {
+        "strongest": [
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:26:35.830Z",
+            "price": 3.5813,
+            "maxGain5m": 43.8,
+            "drawdown5m": -0.3,
+            "gain30s": 1.34,
+            "gain60s": 0.78,
+            "gain5m": 43.8,
+            "signals": [
+              "building_volume",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:29:36.445Z",
+            "price": 3.74,
+            "maxGain5m": 37.7,
+            "drawdown5m": 0,
+            "gain30s": 12.57,
+            "gain60s": 16.26,
+            "gain5m": 37.7,
+            "signals": [
+              "building_volume",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:29:56.839Z",
+            "price": 3.7598,
+            "maxGain5m": 36.98,
+            "drawdown5m": 0,
+            "gain30s": 12.02,
+            "gain60s": 21.55,
+            "gain5m": 36.98,
+            "signals": [
+              "building_volume",
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "INLF",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:10:10.276Z",
+            "price": 0.3334,
+            "maxGain5m": 34.97,
+            "drawdown5m": -1.29,
+            "gain30s": 7.68,
+            "gain60s": 9.18,
+            "gain5m": 10.44,
+            "signals": [
+              "building_volume"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:44:13.852Z",
+            "price": 5.6743,
+            "maxGain5m": 34.29,
+            "drawdown5m": 0,
+            "gain30s": 0.05,
+            "gain60s": 8.16,
+            "gain5m": 34.29,
+            "signals": [
+              "building_volume",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "INLF",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:11:01.279Z",
+            "price": 0.3391,
+            "maxGain5m": 32.7,
+            "drawdown5m": -2.95,
+            "gain30s": 8.46,
+            "gain60s": 8.88,
+            "gain5m": 8.64,
+            "signals": [
+              "building_volume",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:59:25.226Z",
+            "price": 3.4737,
+            "maxGain5m": 26.95,
+            "drawdown5m": 0,
+            "gain30s": 2.48,
+            "gain60s": 7.65,
+            "gain5m": 23.36,
+            "signals": [
+              "building_volume",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:13:14.896Z",
+            "price": 2.3145,
+            "maxGain5m": 26.59,
+            "drawdown5m": -5.82,
+            "gain30s": 6.66,
+            "gain60s": 8.45,
+            "gain5m": 26.16,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "INLF",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:08:11.074Z",
+            "price": 0.3571,
+            "maxGain5m": 26.02,
+            "drawdown5m": -7.84,
+            "gain30s": 0.03,
+            "gain60s": -6.75,
+            "gain5m": 5.01,
+            "signals": [
+              "building_volume"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T13:59:23.982Z",
+            "price": 2.0701,
+            "maxGain5m": 25.6,
+            "drawdown5m": -0.71,
+            "gain30s": 2.89,
+            "gain60s": 5.79,
+            "gain5m": 16.36,
+            "signals": [
+              "building_volume",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          }
+        ],
+        "weakest": [
+          {
+            "symbol": "CRE",
+            "session": "premarket",
+            "atUtc": "2026-11-03T13:22:19.668Z",
+            "price": 3.18,
+            "maxGain5m": 0,
+            "drawdown5m": -22.64,
+            "gain30s": -9.43,
+            "gain60s": -6.92,
+            "gain5m": -22.17,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "ATHE",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:42:07.931Z",
+            "price": 2.9,
+            "maxGain5m": 0,
+            "drawdown5m": -21.03,
+            "gain30s": -11.38,
+            "gain60s": -17.24,
+            "gain5m": -18.28,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:33:23.725Z",
+            "price": 5.47,
+            "maxGain5m": 0,
+            "drawdown5m": -19.74,
+            "gain30s": -5.67,
+            "gain60s": -10.6,
+            "gain5m": -19.74,
+            "signals": [
+              "building_volume"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:07:17.541Z",
+            "price": 7.48,
+            "maxGain5m": 0,
+            "drawdown5m": -18.98,
+            "gain30s": -4.82,
+            "gain60s": -3.57,
+            "gain5m": -11.83,
+            "signals": [
+              "building_volume",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "DBGI",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:23:45.575Z",
+            "price": 0.6697,
+            "maxGain5m": 0,
+            "drawdown5m": -17.87,
+            "gain30s": -3.12,
+            "gain60s": -5.84,
+            "gain5m": -16.37,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:33:29.561Z",
+            "price": 2.025,
+            "maxGain5m": 0,
+            "drawdown5m": -17.53,
+            "gain30s": -3.71,
+            "gain60s": -6.67,
+            "gain5m": -16.54,
+            "signals": [
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:26:37.760Z",
+            "price": 3.8983,
+            "maxGain5m": 0,
+            "drawdown5m": -17.39,
+            "gain30s": -0.47,
+            "gain60s": -1.24,
+            "gain5m": -11.12,
+            "signals": [
+              "building_volume",
+              "price_burst",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "SEGG",
+            "session": "regular",
+            "atUtc": "2026-11-02T18:18:34.598Z",
+            "price": 2.0071,
+            "maxGain5m": 0,
+            "drawdown5m": -16.8,
+            "gain30s": -3.28,
+            "gain60s": -5.34,
+            "gain5m": -7.89,
+            "signals": [
+              "building_volume",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "YMAT",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:34:33.496Z",
+            "price": 1.7901,
+            "maxGain5m": 0,
+            "drawdown5m": -16.76,
+            "gain30s": -3.08,
+            "gain60s": -7.26,
+            "gain5m": -15.11,
+            "signals": [
+              "building_volume",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "MERC",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:26:45.472Z",
+            "price": 0.2271,
+            "maxGain5m": 0,
+            "drawdown5m": -16.2,
+            "gain30s": -2.91,
+            "gain60s": -3.13,
+            "gain5m": -9.69,
+            "signals": [
+              "building_volume"
+            ]
+          }
+        ],
+        "missedReferenceMoves": [
+          {
+            "symbol": "SGRX",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:30:10.768Z"
+          },
+          {
+            "symbol": "WETO",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:35:14.273Z"
+          },
+          {
+            "symbol": "CJMB",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:39:41.754Z"
+          },
+          {
+            "symbol": "CJMB",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:40:20.628Z"
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:46:28.876Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:48:49.135Z"
+          },
+          {
+            "symbol": "IFBD",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:53:55.691Z"
+          },
+          {
+            "symbol": "CJMB",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:54:23.700Z"
+          },
+          {
+            "symbol": "ELAB",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:56:51.682Z"
+          },
+          {
+            "symbol": "SEGG",
+            "session": "regular",
+            "atUtc": "2026-11-02T18:01:10.226Z"
+          },
+          {
+            "symbol": "ACH",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:01:22.261Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:26:58.249Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:34:15.766Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:39:42.658Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:05:56.257Z"
+          },
+          {
+            "symbol": "IFBD",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:26:05.419Z"
+          },
+          {
+            "symbol": "ZCMD",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:51:13.681Z"
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:56:55.919Z"
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:57:16.091Z"
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:57:55.648Z"
+          }
+        ]
+      }
+    },
+    "price_burst": {
+      "triggerEpisodes": 6733,
+      "eligibleEpisodes": 1160,
+      "completedFiveMinuteOutcomes": 1102,
+      "censoredAtAuditCutoff": 58,
+      "uniqueEligibleTickers": 76,
+      "sessions": {
+        "premarket": 266,
+        "regular": 694,
+        "after_hours": 200
+      },
+      "sessionOutcomes": {
+        "premarket": {
+          "episodes": 262,
+          "medianMaximumGain5m": 1.98,
+          "medianDrawdown5m": -3.01,
+          "medianGain5m": -1.03,
+          "reached1Percent": 62.6,
+          "reached3Percent": 37.4,
+          "reached5Percent": 24.81,
+          "fell2Percent": 61.45
+        },
+        "regular": {
+          "episodes": 649,
+          "medianMaximumGain5m": 2.3,
+          "medianDrawdown5m": -2.98,
+          "medianGain5m": -0.59,
+          "reached1Percent": 64.41,
+          "reached3Percent": 43.91,
+          "reached5Percent": 28.66,
+          "fell2Percent": 61.63
+        },
+        "after_hours": {
+          "episodes": 191,
+          "medianMaximumGain5m": 2.76,
+          "medianDrawdown5m": -3.7,
+          "medianGain5m": -0.87,
+          "reached1Percent": 69.63,
+          "reached3Percent": 47.64,
+          "reached5Percent": 31.41,
+          "fell2Percent": 72.25
+        }
+      },
+      "detection": {
+        "medianIntervalSeconds": 9.91,
+        "medianIntervalShares": 26561.5,
+        "medianIntervalDollars": 34233.09,
+        "medianRateMultiple": 1.96,
+        "medianEpisodeShares": 1397776.5,
+        "medianEpisodeDollars": 2308893.12
+      },
+      "forwardOutcome": {
+        "medianMaximumGain5m": 2.32,
+        "p75MaximumGain5m": 5.82,
+        "medianMaximumDrawdown5m": -3.09,
+        "medianGain30s": -0.31,
+        "medianGain60s": -0.41,
+        "medianGain5m": -0.73,
+        "reached1Percent": 715,
+        "reached3Percent": 474,
+        "reached5Percent": 311,
+        "fell2Percent": 699
+      },
+      "referenceMoves": {
+        "total": 916,
+        "captured": 863,
+        "captureRatePercent": 94.21,
+        "medianLeadSeconds": -29.88
+      },
+      "examples": {
+        "strongest": [
+          {
+            "symbol": "RDAC",
+            "session": "premarket",
+            "atUtc": "2026-11-03T11:01:35.312Z",
+            "price": 6.75,
+            "maxGain5m": 49.63,
+            "drawdown5m": -4.44,
+            "gain30s": 14.04,
+            "gain60s": 34.81,
+            "gain5m": 45.63,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "RDAC",
+            "session": "premarket",
+            "atUtc": "2026-11-03T11:01:55.066Z",
+            "price": 7.14,
+            "maxGain5m": 41.46,
+            "drawdown5m": 0,
+            "gain30s": 29.55,
+            "gain60s": 23.11,
+            "gain5m": 38.89,
+            "signals": [
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:29:06.245Z",
+            "price": 3.68,
+            "maxGain5m": 39.95,
+            "drawdown5m": 0,
+            "gain30s": 1.63,
+            "gain60s": 14.4,
+            "gain5m": 39.95,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:14:54.703Z",
+            "price": 2.2503,
+            "maxGain5m": 31.76,
+            "drawdown5m": -1.78,
+            "gain30s": 0.88,
+            "gain60s": 13.32,
+            "gain5m": 25.76,
+            "signals": [
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:15:24.994Z",
+            "price": 2.27,
+            "maxGain5m": 30.62,
+            "drawdown5m": 0,
+            "gain30s": 13.22,
+            "gain60s": 14.98,
+            "gain5m": 25.16,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:14:32.389Z",
+            "price": 2.4478,
+            "maxGain5m": 29.5,
+            "drawdown5m": 0,
+            "gain30s": 3.36,
+            "gain60s": 7.4,
+            "gain5m": 32.36,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:23:17.168Z",
+            "price": 2.545,
+            "maxGain5m": 29.27,
+            "drawdown5m": 0,
+            "gain30s": 4.91,
+            "gain60s": 29.27,
+            "gain5m": 29.27,
+            "signals": [
+              "price_burst",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:49:33.707Z",
+            "price": 3.005,
+            "maxGain5m": 29.12,
+            "drawdown5m": 0,
+            "gain30s": 4.08,
+            "gain60s": 8.49,
+            "gain5m": 23.96,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:45:13.371Z",
+            "price": 5.9904,
+            "maxGain5m": 27.2,
+            "drawdown5m": 0,
+            "gain30s": 2.06,
+            "gain60s": 3.5,
+            "gain5m": 27.2,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:49:04.178Z",
+            "price": 2.989,
+            "maxGain5m": 26.8,
+            "drawdown5m": -0.97,
+            "gain30s": 1.86,
+            "gain60s": 4.64,
+            "gain5m": 25.56,
+            "signals": [
+              "volume_ignition",
+              "price_burst"
+            ]
+          }
+        ],
+        "weakest": [
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T19:11:19.834Z",
+            "price": 2.895,
+            "maxGain5m": 0,
+            "drawdown5m": -34.26,
+            "gain30s": -20.03,
+            "gain60s": -29.71,
+            "gain5m": -29.85,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:45:35.300Z",
+            "price": 1.29,
+            "maxGain5m": 0,
+            "drawdown5m": -31.01,
+            "gain30s": -8.53,
+            "gain60s": -11.64,
+            "gain5m": -21.71,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:07:52.983Z",
+            "price": 1.7198,
+            "maxGain5m": 0,
+            "drawdown5m": -29.61,
+            "gain30s": -2.9,
+            "gain60s": -2.9,
+            "gain5m": -28.19,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:48:30.546Z",
+            "price": 3.2989,
+            "maxGain5m": 0,
+            "drawdown5m": -26.95,
+            "gain30s": -13.91,
+            "gain60s": -22.1,
+            "gain5m": -26.95,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "WYHG",
+            "session": "premarket",
+            "atUtc": "2026-11-03T12:28:54.301Z",
+            "price": 3.4897,
+            "maxGain5m": 0,
+            "drawdown5m": -26.93,
+            "gain30s": -2.57,
+            "gain60s": -3.14,
+            "gain5m": -15.86,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:10:11.716Z",
+            "price": 2.435,
+            "maxGain5m": 0,
+            "drawdown5m": -25.67,
+            "gain30s": -5.54,
+            "gain60s": -5.91,
+            "gain5m": -25.67,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:39:59.914Z",
+            "price": 3.9521,
+            "maxGain5m": 0,
+            "drawdown5m": -24.6,
+            "gain30s": -5.62,
+            "gain60s": -6.63,
+            "gain5m": -24.6,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:11:01.418Z",
+            "price": 2.4,
+            "maxGain5m": 0,
+            "drawdown5m": -24.58,
+            "gain30s": -18.33,
+            "gain60s": -19.96,
+            "gain5m": -24.58,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CENN",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:42:01.300Z",
+            "price": 0.84,
+            "maxGain5m": 0,
+            "drawdown5m": -24.43,
+            "gain30s": -3.56,
+            "gain60s": -0.55,
+            "gain5m": -22.73,
+            "signals": [
+              "price_burst"
+            ]
+          },
+          {
+            "symbol": "ZCMD",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:52:52.290Z",
+            "price": 1.1497,
+            "maxGain5m": 0,
+            "drawdown5m": -23.1,
+            "gain30s": -4.3,
+            "gain60s": -4.32,
+            "gain5m": -19.99,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          }
+        ],
+        "missedReferenceMoves": [
+          {
+            "symbol": "INLF",
+            "session": "regular",
+            "atUtc": "2026-11-02T18:25:19.625Z"
+          },
+          {
+            "symbol": "INO",
+            "session": "regular",
+            "atUtc": "2026-11-02T19:04:51.506Z"
+          },
+          {
+            "symbol": "INO",
+            "session": "regular",
+            "atUtc": "2026-11-02T19:06:27.475Z"
+          },
+          {
+            "symbol": "FNGR",
+            "session": "regular",
+            "atUtc": "2026-11-02T19:25:00.845Z"
+          },
+          {
+            "symbol": "FNGR",
+            "session": "regular",
+            "atUtc": "2026-11-02T19:26:09.495Z"
+          },
+          {
+            "symbol": "FNGR",
+            "session": "regular",
+            "atUtc": "2026-11-02T19:27:08.382Z"
+          },
+          {
+            "symbol": "INLF",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:11:30.451Z"
+          },
+          {
+            "symbol": "NMRA",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:12:19.902Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:34:15.766Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:39:42.658Z"
+          },
+          {
+            "symbol": "WHLR",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:40:12.317Z"
+          },
+          {
+            "symbol": "WHLR",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:40:42.452Z"
+          },
+          {
+            "symbol": "RBNE",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:48:05.809Z"
+          },
+          {
+            "symbol": "IFBD",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:26:05.419Z"
+          },
+          {
+            "symbol": "INLF",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:35:10.125Z"
+          },
+          {
+            "symbol": "INLF",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:35:30.080Z"
+          },
+          {
+            "symbol": "INLF",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:36:19.991Z"
+          },
+          {
+            "symbol": "INLF",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:37:09.313Z"
+          },
+          {
+            "symbol": "INLF",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:37:38.836Z"
+          },
+          {
+            "symbol": "PARA",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:46:34.927Z"
+          }
+        ]
+      }
+    },
+    "developing_activity": {
+      "triggerEpisodes": 2889,
+      "eligibleEpisodes": 1073,
+      "completedFiveMinuteOutcomes": 985,
+      "censoredAtAuditCutoff": 88,
+      "uniqueEligibleTickers": 94,
+      "sessions": {
+        "premarket": 190,
+        "regular": 778,
+        "after_hours": 105
+      },
+      "sessionOutcomes": {
+        "premarket": {
+          "episodes": 187,
+          "medianMaximumGain5m": 0.55,
+          "medianDrawdown5m": -1.15,
+          "medianGain5m": -0.59,
+          "reached1Percent": 33.16,
+          "reached3Percent": 8.56,
+          "reached5Percent": 5.35,
+          "fell2Percent": 32.62
+        },
+        "regular": {
+          "episodes": 698,
+          "medianMaximumGain5m": 0.77,
+          "medianDrawdown5m": -1.05,
+          "medianGain5m": -0.15,
+          "reached1Percent": 43.27,
+          "reached3Percent": 15.04,
+          "reached5Percent": 7.02,
+          "fell2Percent": 27.36
+        },
+        "after_hours": {
+          "episodes": 100,
+          "medianMaximumGain5m": 0.57,
+          "medianDrawdown5m": -1.22,
+          "medianGain5m": -0.28,
+          "reached1Percent": 46,
+          "reached3Percent": 19,
+          "reached5Percent": 11,
+          "fell2Percent": 35
+        }
+      },
+      "detection": {
+        "medianIntervalSeconds": 9.89,
+        "medianIntervalShares": 5010,
+        "medianIntervalDollars": 4380.3,
+        "medianRateMultiple": 4.3,
+        "medianEpisodeShares": 46591,
+        "medianEpisodeDollars": 44135.15
+      },
+      "forwardOutcome": {
+        "medianMaximumGain5m": 0.7,
+        "p75MaximumGain5m": 1.83,
+        "medianMaximumDrawdown5m": -1.08,
+        "medianGain30s": -0.02,
+        "medianGain60s": -0.12,
+        "medianGain5m": -0.27,
+        "reached1Percent": 410,
+        "reached3Percent": 140,
+        "reached5Percent": 70,
+        "fell2Percent": 287
+      },
+      "referenceMoves": {
+        "total": 916,
+        "captured": 425,
+        "captureRatePercent": 46.4,
+        "medianLeadSeconds": -129.35
+      },
+      "examples": {
+        "strongest": [
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:49:43.929Z",
+            "price": 3.0445,
+            "maxGain5m": 27.44,
+            "drawdown5m": 0,
+            "gain30s": 3.78,
+            "gain60s": 7.08,
+            "gain5m": 22.84,
+            "signals": [
+              "volume_ignition",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:41:34.731Z",
+            "price": 5.7015,
+            "maxGain5m": 23.3,
+            "drawdown5m": -3.88,
+            "gain30s": 10.85,
+            "gain60s": 11.96,
+            "gain5m": 21.2,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CRIS",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:16:46.307Z",
+            "price": 1.0999,
+            "maxGain5m": 20.92,
+            "drawdown5m": 0,
+            "gain30s": 6.36,
+            "gain60s": 5.01,
+            "gain5m": 20.92,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:30:18.955Z",
+            "price": 4.28,
+            "maxGain5m": 20.33,
+            "drawdown5m": -1.6,
+            "gain30s": 6.78,
+            "gain60s": 20.33,
+            "gain5m": 20.33,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:47:41.964Z",
+            "price": 3.07,
+            "maxGain5m": 18.57,
+            "drawdown5m": -5.04,
+            "gain30s": -1.63,
+            "gain60s": -4.23,
+            "gain5m": 19.71,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:30:37.678Z",
+            "price": 4.3482,
+            "maxGain5m": 18.44,
+            "drawdown5m": -0.42,
+            "gain30s": 18.44,
+            "gain60s": 18.44,
+            "gain5m": 18.44,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "CRIS",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:44:41.013Z",
+            "price": 1.125,
+            "maxGain5m": 16.28,
+            "drawdown5m": -5.78,
+            "gain30s": 3.1,
+            "gain60s": 11.11,
+            "gain5m": -5.78,
+            "signals": [
+              "volume_ignition",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:40:12.939Z",
+            "price": 4.56,
+            "maxGain5m": 15.13,
+            "drawdown5m": 0,
+            "gain30s": 1.15,
+            "gain60s": 4.8,
+            "gain5m": 6.91,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:50:21.773Z",
+            "price": 0.9594,
+            "maxGain5m": 14.65,
+            "drawdown5m": -6.19,
+            "gain30s": 5.04,
+            "gain60s": 3.25,
+            "gain5m": -0.45,
+            "signals": [
+              "price_burst",
+              "developing_activity"
+            ]
+          },
+          {
+            "symbol": "MERC",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:09:26.942Z",
+            "price": 0.2177,
+            "maxGain5m": 13.69,
+            "drawdown5m": -2.02,
+            "gain30s": -1.06,
+            "gain60s": -0.64,
+            "gain5m": 8.18,
+            "signals": [
+              "developing_activity"
+            ]
+          }
+        ],
+        "weakest": [
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T19:11:19.834Z",
+            "price": 2.895,
+            "maxGain5m": 0,
+            "drawdown5m": -34.26,
+            "gain30s": -20.03,
+            "gain60s": -29.71,
+            "gain5m": -29.85,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:07:52.983Z",
+            "price": 1.7198,
+            "maxGain5m": 0,
+            "drawdown5m": -29.61,
+            "gain30s": -2.9,
+            "gain60s": -2.9,
+            "gain5m": -28.19,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:09:32.238Z",
+            "price": 2.5148,
+            "maxGain5m": 0,
+            "drawdown5m": -28.03,
+            "gain30s": -3.17,
+            "gain60s": -9.34,
+            "gain5m": -28.03,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:48:30.546Z",
+            "price": 3.2989,
+            "maxGain5m": 0,
+            "drawdown5m": -26.95,
+            "gain30s": -13.91,
+            "gain60s": -22.1,
+            "gain5m": -26.95,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:10:11.716Z",
+            "price": 2.435,
+            "maxGain5m": 0,
+            "drawdown5m": -25.67,
+            "gain30s": -5.54,
+            "gain60s": -5.91,
+            "gain5m": -25.67,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:11:01.418Z",
+            "price": 2.4,
+            "maxGain5m": 0,
+            "drawdown5m": -24.58,
+            "gain30s": -18.33,
+            "gain60s": -19.96,
+            "gain5m": -24.58,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CRIS",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:38:41.051Z",
+            "price": 1.285,
+            "maxGain5m": 0,
+            "drawdown5m": -13.62,
+            "gain30s": -3.55,
+            "gain60s": -13.62,
+            "gain5m": -13.62,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "ATHE",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:53:17.884Z",
+            "price": 2.705,
+            "maxGain5m": 0,
+            "drawdown5m": -13.49,
+            "gain30s": -2.18,
+            "gain60s": -2.77,
+            "gain5m": -9.43,
+            "signals": [
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:01:02.703Z",
+            "price": 0.9712,
+            "maxGain5m": 0,
+            "drawdown5m": -12.48,
+            "gain30s": -1.99,
+            "gain60s": -4.27,
+            "gain5m": -8.05,
+            "signals": [
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CRIS",
+            "session": "regular",
+            "atUtc": "2026-11-02T18:39:41.765Z",
+            "price": 0.7598,
+            "maxGain5m": 0,
+            "drawdown5m": -12.07,
+            "gain30s": -1.63,
+            "gain60s": -3.66,
+            "gain5m": -10.78,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          }
+        ],
+        "missedReferenceMoves": [
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:07:02.862Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:07:51.572Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:09:02.145Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:13:24.508Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:13:44.361Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:14:13.858Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:14:44.704Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:15:24.842Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:17:16.074Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:18:06.842Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:19:09.586Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:20:00.182Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:20:39.599Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:21:09.768Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:21:48.557Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:23:18.904Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:24:39.006Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:25:08.770Z"
+          },
+          {
+            "symbol": "SGRX",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:30:10.768Z"
+          },
+          {
+            "symbol": "INLF",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:31:51.086Z"
+          }
+        ]
+      }
+    },
+    "one_minute_momentum": {
+      "triggerEpisodes": 22608,
+      "eligibleEpisodes": 3244,
+      "completedFiveMinuteOutcomes": 3028,
+      "censoredAtAuditCutoff": 216,
+      "uniqueEligibleTickers": 135,
+      "sessions": {
+        "premarket": 742,
+        "regular": 1997,
+        "after_hours": 505
+      },
+      "sessionOutcomes": {
+        "premarket": {
+          "episodes": 730,
+          "medianMaximumGain5m": 0.8,
+          "medianDrawdown5m": -1.68,
+          "medianGain5m": -0.62,
+          "reached1Percent": 46.71,
+          "reached3Percent": 22.05,
+          "reached5Percent": 12.47,
+          "fell2Percent": 42.74
+        },
+        "regular": {
+          "episodes": 1812,
+          "medianMaximumGain5m": 0.92,
+          "medianDrawdown5m": -1.42,
+          "medianGain5m": -0.37,
+          "reached1Percent": 48.45,
+          "reached3Percent": 21.14,
+          "reached5Percent": 11.59,
+          "fell2Percent": 36.7
+        },
+        "after_hours": {
+          "episodes": 486,
+          "medianMaximumGain5m": 0.86,
+          "medianDrawdown5m": -1.63,
+          "medianGain5m": -0.51,
+          "reached1Percent": 46.91,
+          "reached3Percent": 23.25,
+          "reached5Percent": 12.35,
+          "fell2Percent": 43.21
+        }
+      },
+      "detection": {
+        "medianIntervalSeconds": 9.9,
+        "medianIntervalShares": 2579.5,
+        "medianIntervalDollars": 2319.1,
+        "medianRateMultiple": 1.29,
+        "medianEpisodeShares": 297807,
+        "medianEpisodeDollars": 272209.82
+      },
+      "forwardOutcome": {
+        "medianMaximumGain5m": 0.88,
+        "p75MaximumGain5m": 2.59,
+        "medianMaximumDrawdown5m": -1.53,
+        "medianGain30s": -0.01,
+        "medianGain60s": -0.1,
+        "medianGain5m": -0.45,
+        "reached1Percent": 1447,
+        "reached3Percent": 657,
+        "reached5Percent": 361,
+        "fell2Percent": 1187
+      },
+      "referenceMoves": {
+        "total": 916,
+        "captured": 907,
+        "captureRatePercent": 99.02,
+        "medianLeadSeconds": -40.05
+      },
+      "examples": {
+        "strongest": [
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:28:46.544Z",
+            "price": 3.6596,
+            "maxGain5m": 40.73,
+            "drawdown5m": -1.63,
+            "gain30s": 0.56,
+            "gain60s": 2.74,
+            "gain5m": 40.73,
+            "signals": [
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:29:06.245Z",
+            "price": 3.68,
+            "maxGain5m": 39.95,
+            "drawdown5m": 0,
+            "gain30s": 1.63,
+            "gain60s": 14.4,
+            "gain5m": 39.95,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:28:16.319Z",
+            "price": 3.7,
+            "maxGain5m": 39.19,
+            "drawdown5m": -2.7,
+            "gain30s": -1.09,
+            "gain60s": -0.54,
+            "gain5m": 39.19,
+            "signals": [
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:29:26.550Z",
+            "price": 3.72,
+            "maxGain5m": 38.44,
+            "drawdown5m": 0,
+            "gain30s": 1.07,
+            "gain60s": 13.22,
+            "gain5m": 38.44,
+            "signals": [
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:29:46.896Z",
+            "price": 3.76,
+            "maxGain5m": 36.97,
+            "drawdown5m": -0.01,
+            "gain30s": 13.83,
+            "gain60s": 15.16,
+            "gain5m": 36.97,
+            "signals": [
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "INLF",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:11:01.279Z",
+            "price": 0.3391,
+            "maxGain5m": 32.7,
+            "drawdown5m": -2.95,
+            "gain30s": 8.46,
+            "gain60s": 8.88,
+            "gain5m": 8.64,
+            "signals": [
+              "building_volume",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:14:42.658Z",
+            "price": 2.5049,
+            "maxGain5m": 29.35,
+            "drawdown5m": -0.2,
+            "gain30s": 6.59,
+            "gain60s": 6.99,
+            "gain5m": 26.95,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T18:56:17.399Z",
+            "price": 1.975,
+            "maxGain5m": 28.1,
+            "drawdown5m": 0,
+            "gain30s": 4.3,
+            "gain60s": 3.92,
+            "gain5m": 28.1,
+            "signals": [
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:45:13.371Z",
+            "price": 5.9904,
+            "maxGain5m": 27.2,
+            "drawdown5m": 0,
+            "gain30s": 2.06,
+            "gain60s": 3.5,
+            "gain5m": 27.2,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CRIS",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:07:48.944Z",
+            "price": 0.8399,
+            "maxGain5m": 26.21,
+            "drawdown5m": -1.65,
+            "gain30s": -1.65,
+            "gain60s": 0.46,
+            "gain5m": 26.21,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          }
+        ],
+        "weakest": [
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T19:11:19.834Z",
+            "price": 2.895,
+            "maxGain5m": 0,
+            "drawdown5m": -34.26,
+            "gain30s": -20.03,
+            "gain60s": -29.71,
+            "gain5m": -29.85,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:45:35.300Z",
+            "price": 1.29,
+            "maxGain5m": 0,
+            "drawdown5m": -31.01,
+            "gain30s": -8.53,
+            "gain60s": -11.64,
+            "gain5m": -21.71,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:07:52.983Z",
+            "price": 1.7198,
+            "maxGain5m": 0,
+            "drawdown5m": -29.61,
+            "gain30s": -2.9,
+            "gain60s": -2.9,
+            "gain5m": -28.19,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:08:43.168Z",
+            "price": 1.6888,
+            "maxGain5m": 0,
+            "drawdown5m": -28.32,
+            "gain30s": -5.28,
+            "gain60s": -7.02,
+            "gain5m": -24.67,
+            "signals": [
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:09:32.238Z",
+            "price": 2.5148,
+            "maxGain5m": 0,
+            "drawdown5m": -28.03,
+            "gain30s": -3.17,
+            "gain60s": -9.34,
+            "gain5m": -28.03,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:48:30.546Z",
+            "price": 3.2989,
+            "maxGain5m": 0,
+            "drawdown5m": -26.95,
+            "gain30s": -13.91,
+            "gain60s": -22.1,
+            "gain5m": -26.95,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:10:11.716Z",
+            "price": 2.435,
+            "maxGain5m": 0,
+            "drawdown5m": -25.67,
+            "gain30s": -5.54,
+            "gain60s": -5.91,
+            "gain5m": -25.67,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:46:14.825Z",
+            "price": 1.18,
+            "maxGain5m": 0,
+            "drawdown5m": -24.58,
+            "gain30s": -6.78,
+            "gain60s": -4.24,
+            "gain5m": -17.65,
+            "signals": [
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:11:11.375Z",
+            "price": 2.38,
+            "maxGain5m": 0,
+            "drawdown5m": -23.95,
+            "gain30s": -20.17,
+            "gain60s": -23.95,
+            "gain5m": -23.95,
+            "signals": [
+              "volume_ignition",
+              "developing_activity",
+              "one_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:11:32.524Z",
+            "price": 1.5699,
+            "maxGain5m": 0,
+            "drawdown5m": -22.89,
+            "gain30s": -8.91,
+            "gain60s": -18.47,
+            "gain5m": -15.91,
+            "signals": [
+              "one_minute_momentum"
+            ]
+          }
+        ],
+        "missedReferenceMoves": [
+          {
+            "symbol": "INO",
+            "session": "regular",
+            "atUtc": "2026-11-02T19:04:51.506Z"
+          },
+          {
+            "symbol": "INO",
+            "session": "regular",
+            "atUtc": "2026-11-02T19:06:27.475Z"
+          },
+          {
+            "symbol": "INO",
+            "session": "regular",
+            "atUtc": "2026-11-02T19:07:09.336Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:34:15.766Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:39:42.658Z"
+          },
+          {
+            "symbol": "CETX",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:56:34.632Z"
+          },
+          {
+            "symbol": "BDMD",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:19:41.351Z"
+          },
+          {
+            "symbol": "BDMD",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T22:20:10.868Z"
+          },
+          {
+            "symbol": "RDAC",
+            "session": "premarket",
+            "atUtc": "2026-11-03T12:12:11.247Z"
+          }
+        ]
+      }
+    },
+    "five_minute_momentum": {
+      "triggerEpisodes": 22418,
+      "eligibleEpisodes": 3011,
+      "completedFiveMinuteOutcomes": 2804,
+      "censoredAtAuditCutoff": 207,
+      "uniqueEligibleTickers": 139,
+      "sessions": {
+        "premarket": 623,
+        "regular": 1964,
+        "after_hours": 424
+      },
+      "sessionOutcomes": {
+        "premarket": {
+          "episodes": 621,
+          "medianMaximumGain5m": 0.64,
+          "medianDrawdown5m": -1.22,
+          "medianGain5m": -0.4,
+          "reached1Percent": 41.55,
+          "reached3Percent": 15.62,
+          "reached5Percent": 8.37,
+          "fell2Percent": 29.63
+        },
+        "regular": {
+          "episodes": 1780,
+          "medianMaximumGain5m": 0.62,
+          "medianDrawdown5m": -0.95,
+          "medianGain5m": -0.19,
+          "reached1Percent": 39.61,
+          "reached3Percent": 14.21,
+          "reached5Percent": 6.8,
+          "fell2Percent": 25.17
+        },
+        "after_hours": {
+          "episodes": 403,
+          "medianMaximumGain5m": 0.53,
+          "medianDrawdown5m": -1.33,
+          "medianGain5m": -0.47,
+          "reached1Percent": 39.95,
+          "reached3Percent": 18.36,
+          "reached5Percent": 6.2,
+          "fell2Percent": 30.77
+        }
+      },
+      "detection": {
+        "medianIntervalSeconds": 9.9,
+        "medianIntervalShares": 1000,
+        "medianIntervalDollars": 893.27,
+        "medianRateMultiple": 1.3,
+        "medianEpisodeShares": 44038,
+        "medianEpisodeDollars": 34957.8
+      },
+      "forwardOutcome": {
+        "medianMaximumGain5m": 0.62,
+        "p75MaximumGain5m": 1.92,
+        "medianMaximumDrawdown5m": -1.06,
+        "medianGain30s": 0,
+        "medianGain60s": -0.01,
+        "medianGain5m": -0.25,
+        "reached1Percent": 1124,
+        "reached3Percent": 424,
+        "reached5Percent": 198,
+        "fell2Percent": 756
+      },
+      "referenceMoves": {
+        "total": 916,
+        "captured": 851,
+        "captureRatePercent": 92.9,
+        "medianLeadSeconds": -69.39
+      },
+      "examples": {
+        "strongest": [
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:29:06.245Z",
+            "price": 3.68,
+            "maxGain5m": 39.95,
+            "drawdown5m": 0,
+            "gain30s": 1.63,
+            "gain60s": 14.4,
+            "gain5m": 39.95,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:28:16.319Z",
+            "price": 3.7,
+            "maxGain5m": 39.19,
+            "drawdown5m": -2.7,
+            "gain30s": -1.09,
+            "gain60s": -0.54,
+            "gain5m": 39.19,
+            "signals": [
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:49:43.929Z",
+            "price": 3.0445,
+            "maxGain5m": 27.44,
+            "drawdown5m": 0,
+            "gain30s": 3.78,
+            "gain60s": 7.08,
+            "gain5m": 22.84,
+            "signals": [
+              "volume_ignition",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T14:41:34.731Z",
+            "price": 5.7015,
+            "maxGain5m": 23.3,
+            "drawdown5m": -3.88,
+            "gain30s": 10.85,
+            "gain60s": 11.96,
+            "gain5m": 21.2,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T18:57:27.324Z",
+            "price": 2.0525,
+            "maxGain5m": 23.26,
+            "drawdown5m": -1.09,
+            "gain30s": -0.12,
+            "gain60s": 1.34,
+            "gain5m": 23.26,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T18:56:47.207Z",
+            "price": 2.08,
+            "maxGain5m": 21.63,
+            "drawdown5m": -2.9,
+            "gain30s": -2.9,
+            "gain60s": -0.72,
+            "gain5m": 21.63,
+            "signals": [
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:08:21.979Z",
+            "price": 2.4601,
+            "maxGain5m": 21.52,
+            "drawdown5m": 0,
+            "gain30s": 4.06,
+            "gain60s": 7.72,
+            "gain5m": 21.95,
+            "signals": [
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CRIS",
+            "session": "regular",
+            "atUtc": "2026-11-03T17:16:46.307Z",
+            "price": 1.0999,
+            "maxGain5m": 20.92,
+            "drawdown5m": 0,
+            "gain30s": 6.36,
+            "gain60s": 5.01,
+            "gain5m": 20.92,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "premarket",
+            "atUtc": "2026-11-03T14:09:02.328Z",
+            "price": 2.6013,
+            "maxGain5m": 20.71,
+            "drawdown5m": 0,
+            "gain30s": 3.41,
+            "gain60s": 3.05,
+            "gain5m": 24.94,
+            "signals": [
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T18:44:50.436Z",
+            "price": 1.8501,
+            "maxGain5m": 20.53,
+            "drawdown5m": 0,
+            "gain30s": 3.24,
+            "gain60s": 5.39,
+            "gain5m": 18.38,
+            "signals": [
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          }
+        ],
+        "weakest": [
+          {
+            "symbol": "CHSN",
+            "session": "regular",
+            "atUtc": "2026-11-03T19:11:19.834Z",
+            "price": 2.895,
+            "maxGain5m": 0,
+            "drawdown5m": -34.26,
+            "gain30s": -20.03,
+            "gain60s": -29.71,
+            "gain5m": -29.85,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:08:43.168Z",
+            "price": 1.6888,
+            "maxGain5m": 0,
+            "drawdown5m": -28.32,
+            "gain30s": -5.28,
+            "gain60s": -7.02,
+            "gain5m": -24.67,
+            "signals": [
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:09:32.238Z",
+            "price": 2.5148,
+            "maxGain5m": 0,
+            "drawdown5m": -28.03,
+            "gain30s": -3.17,
+            "gain60s": -9.34,
+            "gain5m": -28.03,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CNSY",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:48:30.546Z",
+            "price": 3.2989,
+            "maxGain5m": 0,
+            "drawdown5m": -26.95,
+            "gain30s": -13.91,
+            "gain60s": -22.1,
+            "gain5m": -26.95,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:10:11.716Z",
+            "price": 2.435,
+            "maxGain5m": 0,
+            "drawdown5m": -25.67,
+            "gain30s": -5.54,
+            "gain60s": -5.91,
+            "gain5m": -25.67,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T15:30:44.487Z",
+            "price": 5.9,
+            "maxGain5m": 0,
+            "drawdown5m": -25.59,
+            "gain30s": -0.76,
+            "gain60s": -0.34,
+            "gain5m": -25.59,
+            "signals": [
+              "building_volume",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "BIVI",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:11:01.418Z",
+            "price": 2.4,
+            "maxGain5m": 0,
+            "drawdown5m": -24.58,
+            "gain30s": -18.33,
+            "gain60s": -19.96,
+            "gain5m": -24.58,
+            "signals": [
+              "volume_ignition",
+              "price_burst",
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "HYFM",
+            "session": "premarket",
+            "atUtc": "2026-11-03T12:25:24.028Z",
+            "price": 0.7599,
+            "maxGain5m": 0,
+            "drawdown5m": -22.87,
+            "gain30s": -11.11,
+            "gain60s": -16.09,
+            "gain5m": -17.62,
+            "signals": [
+              "developing_activity",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "PARA",
+            "session": "regular",
+            "atUtc": "2026-11-03T16:38:31.401Z",
+            "price": 3.9,
+            "maxGain5m": 0,
+            "drawdown5m": -22.82,
+            "gain30s": -6.67,
+            "gain60s": -5.64,
+            "gain5m": -22.82,
+            "signals": [
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          },
+          {
+            "symbol": "CRE",
+            "session": "premarket",
+            "atUtc": "2026-11-03T13:22:19.668Z",
+            "price": 3.18,
+            "maxGain5m": 0,
+            "drawdown5m": -22.64,
+            "gain30s": -9.43,
+            "gain60s": -6.92,
+            "gain5m": -22.17,
+            "signals": [
+              "volume_ignition",
+              "building_volume",
+              "price_burst",
+              "developing_activity",
+              "one_minute_momentum",
+              "five_minute_momentum"
+            ]
+          }
+        ],
+        "missedReferenceMoves": [
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:18:06.842Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:19:09.586Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:20:00.182Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:20:39.599Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:21:09.768Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:21:48.557Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:23:18.904Z"
+          },
+          {
+            "symbol": "MERC",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:24:39.006Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "after_hours",
+            "atUtc": "2026-11-03T00:48:49.135Z"
+          },
+          {
+            "symbol": "HXHX",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:54:37.873Z"
+          },
+          {
+            "symbol": "HXHX",
+            "session": "regular",
+            "atUtc": "2026-11-02T20:55:17.435Z"
+          },
+          {
+            "symbol": "PARA",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:10:45.102Z"
+          },
+          {
+            "symbol": "PARA",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:18:20.747Z"
+          },
+          {
+            "symbol": "PARA",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:20:10.442Z"
+          },
+          {
+            "symbol": "SEGG",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:20:50.410Z"
+          },
+          {
+            "symbol": "PARA",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:21:40.321Z"
+          },
+          {
+            "symbol": "PARA",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:22:49.339Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:37:53.282Z"
+          },
+          {
+            "symbol": "VCIG",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:38:22.845Z"
+          },
+          {
+            "symbol": "GMEX",
+            "session": "after_hours",
+            "atUtc": "2026-11-02T21:45:55.147Z"
+          }
+        ]
+      }
+    }
+  },
+  "topSignalCombinations": [
+    {
+      "signals": "five_minute_momentum",
+      "count": 175417
+    },
+    {
+      "signals": "five_minute_momentum+one_minute_momentum",
+      "count": 46728
+    },
+    {
+      "signals": "one_minute_momentum",
+      "count": 24857
+    },
+    {
+      "signals": "developing_activity",
+      "count": 10471
+    },
+    {
+      "signals": "building_volume+volume_ignition",
+      "count": 6677
+    },
+    {
+      "signals": "volume_ignition",
+      "count": 6445
+    },
+    {
+      "signals": "developing_activity+five_minute_momentum",
+      "count": 5460
+    },
+    {
+      "signals": "building_volume",
+      "count": 4537
+    },
+    {
+      "signals": "developing_activity+five_minute_momentum+one_minute_momentum",
+      "count": 2127
+    },
+    {
+      "signals": "building_volume+developing_activity",
+      "count": 2032
+    },
+    {
+      "signals": "five_minute_momentum+one_minute_momentum+price_burst",
+      "count": 1830
+    },
+    {
+      "signals": "developing_activity+one_minute_momentum",
+      "count": 1777
+    },
+    {
+      "signals": "building_volume+developing_activity+volume_ignition",
+      "count": 1464
+    },
+    {
+      "signals": "building_volume+developing_activity+five_minute_momentum+one_minute_momentum+volume_ignition",
+      "count": 1442
+    },
+    {
+      "signals": "building_volume+developing_activity+five_minute_momentum+one_minute_momentum",
+      "count": 1233
+    },
+    {
+      "signals": "building_volume+developing_activity+five_minute_momentum",
+      "count": 1226
+    },
+    {
+      "signals": "building_volume+developing_activity+five_minute_momentum+volume_ignition",
+      "count": 1100
+    },
+    {
+      "signals": "one_minute_momentum+price_burst",
+      "count": 907
+    },
+    {
+      "signals": "price_burst",
+      "count": 891
+    },
+    {
+      "signals": "five_minute_momentum+volume_ignition",
+      "count": 614
+    }
+  ]
+}
