@@ -38,8 +38,12 @@ describe("daily list integrity", () => {
     expect(parseUniverseCsv('\uFEFF"symbol",exchange,market_cap\r\nAAA,NASDAQ,"100000000"\r\n')).toEqual([
       { symbol: "AAA", exchange: "NASDAQ", marketCapAtCollection: 100_000_000 }]);
   });
-  it.each(["0","100000001","10M","1e7","NaN","-1"]) ("rejects cap %s without inventing a value", cap => {
+  it.each(["0","500000001","10M","1e7","NaN","-1"]) ("rejects cap %s without inventing a value", cap => {
     expect(() => parseUniverseCsv(`symbol,exchange,market_cap\nAAA,NASDAQ,${cap}`)).toThrow();
+  });
+  it("accepts the collection ceiling while enforcing each source's declared ceiling",()=>{
+    expect(parseUniverseCsv("symbol,exchange,market_cap\nAAA,NASDAQ,500000000")[0].marketCapAtCollection).toBe(500000000);
+    expect(()=>validateUniverseUpload({...upload("symbol,exchange,market_cap\nAAA,NASDAQ,100000001"),metadata:{...upload().metadata,displayed_total:1,extracted_unique_count:1}},NOW)).toThrow("market_cap_invalid");
   });
   it("rejects duplicates, an unselected exchange, unexpected columns and empty data", () => {
     for (const csv of ["symbol,exchange,market_cap\nAAA,NASDAQ,1\nAAA,NASDAQ,1", "symbol,exchange,market_cap\nAAA,OTC,1",

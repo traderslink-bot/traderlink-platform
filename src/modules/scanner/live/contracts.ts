@@ -6,12 +6,12 @@ export type UniverseUpload = Readonly<{
   csv: string;
   metadata: Readonly<{
     completeness_status: "complete";
-    source_url: "https://stockanalysis.com/stocks/screener/";
+    source_url: "https://stockanalysis.com/stocks/screener/" | "https://api.nasdaq.com/api/screener/stocks";
     collection_started_at_utc: string;
     collection_finished_at_utc: string;
     displayed_total: number;
     extracted_unique_count: number;
-    applied_filters: Readonly<{ exchanges: readonly ("NASDAQ" | "NYSE")[]; market_cap_max: 100000000 }>;
+    applied_filters: Readonly<{ exchanges: readonly ("NASDAQ" | "NYSE")[]; market_cap_max: 100000000 | 500000000 }>;
   }>;
 }>;
 export type DailyUniverse = Readonly<{

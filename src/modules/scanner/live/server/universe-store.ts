@@ -4,7 +4,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { DailyUniverse, UniverseUpload } from "../contracts";
 import { importDailyUniverse } from "../universe";
-import { MAX_UNIVERSE_ROWS, parseUniverseCsv, validDate, validateUniverseUpload } from "../universe-validation";
+import { MAX_UNIVERSE_MARKET_CAP, MAX_UNIVERSE_ROWS, parseUniverseCsv, validDate, validateUniverseUpload } from "../universe-validation";
 
 const MAX_RECORD_BYTES = 2_000_000;
 const writers = new Map<string,Promise<unknown>>();
@@ -21,7 +21,7 @@ function decodeDaily(value: unknown, date: string): DailyUniverse {
   const csv = ["symbol,exchange,market_cap",...value.stocks.map(stock => {
     if (!object(stock) || typeof stock.symbol !== "string" || !/^[A-Z][A-Z0-9.-]{0,15}$/u.test(stock.symbol)
       || !["NASDAQ","NYSE"].includes(String(stock.exchange)) || !Number.isSafeInteger(stock.marketCapAtCollection)
-      || Number(stock.marketCapAtCollection) <= 0 || Number(stock.marketCapAtCollection) > 100_000_000) throw Error("scanner_universe_storage_invalid");
+      || Number(stock.marketCapAtCollection) <= 0 || Number(stock.marketCapAtCollection) > MAX_UNIVERSE_MARKET_CAP) throw Error("scanner_universe_storage_invalid");
     return `${stock.symbol},${stock.exchange},${stock.marketCapAtCollection}`;
   })].join("\n");
   try { parseUniverseCsv(csv); } catch { throw Error("scanner_universe_storage_invalid"); }
