@@ -144,7 +144,8 @@ export class LiveScannerEngine {
     const momentumFilters = input.configuration.momentum.filters[input.session];
     const momentumEligible=rows.filter(row=>matches(row,momentumFilters));
     const momentum = [...this.momentumRetention.select(`${input.tradingDate}:${input.session}`,momentumEligible,input.now)]
-      .sort((a,b) => momentumScore(b,input.configuration.momentum.focus,momentumFilters)
+      .sort((a,b) => Number(b.momentumState==="active")-Number(a.momentumState==="active")
+        || momentumScore(b,input.configuration.momentum.focus,momentumFilters)
         -momentumScore(a,input.configuration.momentum.focus,momentumFilters) || a.symbol.localeCompare(b.symbol));
     const context = `${input.tradingDate}:${input.session}`;
     const gainersCandidates = gainers.map(row => focusCandidate(row,input.configuration.gainers.focus)).filter((value): value is Candidate => value !== null);

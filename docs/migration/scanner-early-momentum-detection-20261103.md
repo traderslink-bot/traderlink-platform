@@ -44,7 +44,8 @@ a 30-second cooling period. A renewed signal immediately returns it to active
 state and restarts any later cooling interval. Without renewed activity, it is
 removed exactly at the cooling deadline. Stocks that never qualified are not
 retained, normal scanner filters continue to apply, and session changes clear
-cooling state. Audit decisions preserve the active/cooling state, last active
+cooling state. Active rows rank ahead of cooling rows so a cooling ticker does
+not displace a currently active detection. Audit decisions preserve the active/cooling state, last active
 time and removal deadline after the visible row is gone.
 
 The Help Center currently has no live-screeners guide to update. A guide should
