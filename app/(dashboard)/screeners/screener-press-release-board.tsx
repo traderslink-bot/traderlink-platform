@@ -10,11 +10,11 @@ import { useEffect, useRef, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { markPressReleaseRead } from "../press-releases/press-release-actions";
+import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
 const PressReleaseArticleDrawer = dynamic(() => import("../press-releases/press-release-article-drawer").then(module => module.PressReleaseArticleDrawer));
 type Headline = Pick<PressReleaseArticle,"id"|"ticker"|"headline"|"isRead"|"marketCap">;
 type HeadlineResponse = Readonly<{ articles?:readonly Headline[]; status?:string }>;
-const ARTICLES_PER_COLUMN=10;
 const VISIBLE_ARTICLES=30;
 const number=new Intl.NumberFormat("en-US",{ maximumFractionDigits:1 });
 
@@ -93,17 +93,15 @@ export function ScreenerPressReleaseBoard() {
 
   if(unavailable)return null;
   const visible=articles??[];
-  const columns=Array.from({ length:3 },(_,index)=>visible.slice(index*ARTICLES_PER_COLUMN,(index+1)*ARTICLES_PER_COLUMN));
   return <>
     <DashboardPanel title="PR Scanner">
       {articles===null?<Box sx={{ display:"grid",minHeight:120,placeItems:"center" }}><CircularProgress aria-label="Loading latest press releases" size={24}/></Box>
         :visible.length===0?<Typography color="text.secondary" variant="body2">No recent press releases.</Typography>
-        :<>
-          <Box sx={{ display:{ xs:"none",md:"grid" },gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:1.5 }}>
-            {columns.map((column,index)=><Box key={index} sx={{ border:1,borderColor:"divider",borderRadius:1,overflow:"hidden" }}>{column.map(article=><ArticleButton article={article} float={floatByTicker[article.ticker]} key={article.id} onOpen={open}/>)}</Box>)}
-          </Box>
-          <Box sx={{ display:{ xs:"block",md:"none" } }}>{visible.map(article=><ArticleButton article={article} float={floatByTicker[article.ticker]} key={article.id} onOpen={open}/>)}</Box>
-        </>}
+        :<Box aria-label="PR Scanner articles" role="region" tabIndex={0}
+          sx={theme=>({ ...scannerScrollStyles(theme), maxHeight: { xs: 460, md: 420 },
+            border:1,borderColor:"divider",borderRadius:1,overflowX:"hidden" })}>
+          {visible.map(article=><ArticleButton article={article} float={floatByTicker[article.ticker]} key={article.id} onOpen={open}/>)}
+        </Box>}
       {opening?<Typography color="text.secondary" role="status" sx={{ mt:1 }} variant="caption">Opening article…</Typography>:null}
     </DashboardPanel>
     {selected?<PressReleaseArticleDrawer article={selected} onClose={()=>setSelected(null)}/>:null}

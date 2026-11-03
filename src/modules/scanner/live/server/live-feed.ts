@@ -99,7 +99,7 @@ export class LiveScannerFeed {
         requestedSymbolsHash:createHash("sha256").update(batch.join("\n")).digest("hex"),receivedAt:null,durationMs:null,issue:"snapshot_batch_missing"});
       const evaluated = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
       const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus]
-        .flatMap(rows => rows.map(row => row.symbol)))];
+        .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[]))];
       let news: ReadonlyMap<string,readonly ScannerNewsItem[]> = new Map();
       try { news = await this.dependencies.news(visibleSymbols); } catch { issues.add("news_unavailable"); }
       const enrich = (results: LiveScreenResults): LiveScreenResults => ({ ...results,
@@ -107,16 +107,21 @@ export class LiveScannerFeed {
         focus: results.focus.map(row => ({ ...row, news: news.get(row.symbol) ?? [] })) });
       const status = missing.length || issues.size ? "partial" : snapshots.length ? "ready" : "warming";
       const completedAt=(this.dependencies.now ?? Date.now)();
+      const declines=evaluated.declines?{...evaluated.declines,
+        rapid:evaluated.declines.rapid.map(row=>({...row,news:news.get(row.symbol)??[]})),
+        losers:evaluated.declines.losers.map(row=>({...row,news:news.get(row.symbol)??[]}))}:undefined;
+      const premarketPullbacks=evaluated.premarketPullbacks?{...evaluated.premarketPullbacks,
+        rows:evaluated.premarketPullbacks.rows.map(row=>({...row,news:news.get(row.symbol)??[]}))}:undefined;
       this.dependencies.audit?.enqueue({schemaVersion:SCANNER_AUDIT_SCHEMA_VERSION,cycleId:randomUUID(),runtimeInstanceId:this.runtimeInstanceId,tradingDate:date,session,
         scheduledAt:now,completedAt,universeSourceDate:universe.sourceTradingDate??universe.tradingDate,
         universeCount:symbols.length,universeHash:createHash("sha256").update(JSON.stringify(universe.stocks)).digest("hex"),
         configuration,configurationHash:scannerConfigurationHash(configuration),status,
         issues:Object.freeze([...issues].sort()),missingSymbols:Object.freeze([...new Set(missing)].sort()),
-        batches:Object.freeze(receipts),decisions:evaluated.audit});
+        batches:Object.freeze(receipts),decisions:evaluated.audit,declines,premarketPullbacks});
       return this.set({ status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
         universeSourceDate: universe.sourceTradingDate ?? universe.tradingDate, universeCount: symbols.length,
         receivedCount: snapshots.length, missingSymbols: Object.freeze([...new Set(missing)].sort()), missingFloatCount: evaluated.missingFloatCount,
-        gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), issues: Object.freeze([...issues].sort()) });
+        gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), declines, premarketPullbacks, issues: Object.freeze([...issues].sort()) });
     } catch { return this.set(empty("unavailable",date,["live_feed_unavailable"])); }
     finally { this.running = false; }
   }

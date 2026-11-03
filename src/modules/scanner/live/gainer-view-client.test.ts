@@ -10,7 +10,7 @@ vi.mock("@/app/dashboard-template", () => ({
   DashboardPrimaryAction: ({ children }: { children: ReactNode }) => createElement("button", null, children),
 }));
 vi.mock("@/app/(dashboard)/charts/trading-view-chart", () => ({ TradingViewChart: () => null }));
-vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({ ScreenerPressReleaseBoard: () => null }));
+vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({ ScreenerPressReleaseBoard: () => createElement("div", {"data-pr-instance": true}, "PR Scanner") }));
 import { LiveScreenersClient } from "@/app/(dashboard)/screeners/live-screeners-client";
 
 beforeAll(() => { (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true; });
@@ -41,10 +41,18 @@ function selected(container: HTMLElement, label: string) {
   const tabs = [...container.querySelectorAll('[role="tab"]')].filter(tab => tab.textContent === label);
   return tabs.length === 2 && tabs.every(tab => tab.getAttribute("aria-selected") === "true");
 }
+async function openFullView(container: HTMLElement, label = "Momentum") {
+  const button = container.querySelector(`[aria-label="Open ${label} full view"]`) as HTMLElement;
+  await act(async () => button.click());
+  return document.body.querySelector(`[role="dialog"][aria-label="${label} full view"]`)!;
+}
 describe("actual Top Gainers card polling and tab interaction", () => {
   it("switches desktop and mobile defaults from day to post-market on polling without remounting or extra requests", async () => {
     const page = await mount(model("regular"));
     expect(selected(page.container,"Day Gainers")).toBe(true);
+    expect([...page.container.querySelectorAll("h2")].some(heading=>heading.textContent==="Top Gainers")).toBe(false);
+    expect(page.container.querySelector('[aria-label="Open Top Gainers full view"]')).not.toBeNull();
+    expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
     expect(page.fetch).toHaveBeenCalledTimes(1);
     await page.update(model("after_hours"));
     expect(selected(page.container,"Post-Market Gainers")).toBe(true);
@@ -60,7 +68,7 @@ describe("actual Top Gainers card polling and tab interaction", () => {
     expect(page.fetch).toHaveBeenCalledTimes(1); // Tab clicks never fetch.
     await page.update(model("after_hours"));
     expect(selected(page.container,"Day Gainers")).toBe(true);
-    expect(page.container.textContent).toContain("Since the previous trading day’s regular close");
+    expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
     expect(page.fetch).toHaveBeenCalledTimes(2);
   });
 });
@@ -79,12 +87,14 @@ function momentumModel(post: number | null | undefined): ScannerReadModel {
 describe("Momentum context rendering", () => {
   it("renders distinct Day/Post columns and keeps one/five-minute changes and volumes intact", async () => {
     const page = await mount(momentumModel((2.4/1.69-1)*100));
-    const header = [...page.container.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
+    const drawer = await openFullView(page.container);
+    const header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
     expect(cells.slice(4,11)).toEqual(["-24.29%","42.01%","8%","20%","10K","50K","2×"]);
     expect(header.querySelectorAll("th").length).toBe(15);
+    await act(async () => (drawer.querySelector('[aria-label="Close full scanner view"]') as HTMLElement).click());
     const mobileTab = [...page.container.querySelectorAll('[role="tab"]')].find(tab => tab.textContent === "Momentum") as HTMLElement;
     await act(async () => mobileTab.click());
     const compact = [...page.container.querySelectorAll('table[aria-label="Screener stocks"]')].at(-1)!;
@@ -98,11 +108,12 @@ describe("Momentum context rendering", () => {
   });
   it("omits Post outside after-hours, adds it on the normal poll and does not replace unknown values with zero", async () => {
     const page = await mount(momentumModel(undefined));
-    let header = [...page.container.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
+    const drawer = await openFullView(page.container);
+    let header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).not.toContain("Post %");
     expect(header.querySelectorAll("th").length).toBe(14);
     await page.update(momentumModel(null));
-    header = [...page.container.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
+    header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
@@ -110,6 +121,42 @@ describe("Momentum context rendering", () => {
     expect(cells[5]).toBe("n/a");
     expect(cells[6]).toBe("8%");
     expect(page.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("compact scanner grid and full view", () => {
+  it("keeps a single PR instance and exposes six-column summaries with keyboard details", async () => {
+    const initial = momentumModel(42);
+    const page = await mount({...initial, gainers: initial.momentum, dayGainers: initial.momentum});
+    expect(page.container.querySelectorAll('[data-pr-instance]').length).toBe(1);
+    expect(page.container.querySelectorAll('[data-scanner-card]').length).toBe(2);
+    for (const label of ["Top Gainers", "Momentum"]) {
+      const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
+      expect(table.querySelectorAll('thead th').length).toBe(6);
+      const row = table.querySelector('tbody tr')!;
+      await act(async () => row.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter',bubbles:true})));
+      expect(row.getAttribute('aria-expanded')).toBe('true');
+      expect(table.textContent).toContain('Float');
+      expect(table.textContent).toContain('Turnover');
+      expect(table.querySelector('td[colspan="6"]')).not.toBeNull();
+    }
+    expect(page.fetch).toHaveBeenCalledTimes(1);
+  });
+  it("opens full data without another request, polls it from the same model and closes with Escape", async () => {
+    const initial = momentumModel(42);
+    const page = await mount(initial);
+    const drawer = await openFullView(page.container);
+    expect(drawer.textContent).toContain('$2.4');
+    expect(page.fetch).toHaveBeenCalledTimes(1);
+    const next = {...initial, momentum:{...initial.momentum,rows:initial.momentum.rows.map(row=>({...row,price:2.5}))}};
+    await page.update(next);
+    expect(drawer.textContent).toContain('$2.5');
+    expect(page.container.querySelector('table[aria-label="Momentum compact stocks"]')!.textContent).toContain('$2.5');
+    expect(page.fetch).toHaveBeenCalledTimes(2);
+    await act(async () => drawer.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+    await act(async () => {await vi.advanceTimersByTimeAsync(300);});
+    expect(document.body.querySelector('[role="dialog"][aria-label="Momentum full view"]')).toBeNull();
+    expect(page.container.querySelectorAll('[data-pr-instance]').length).toBe(1);
   });
 });
 
@@ -124,7 +171,8 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
   });
   it("shows the overnight hours inside both scanner cards and removes them at 4 AM through polling", async () => {
     const page = await mount({ ...model("regular"), status: "closed", session: null },{ now: "2026-11-03T08:59:58Z" });
-    const cards = [...page.container.querySelectorAll("section")].filter(section => ["Top Gainers","Momentum"].includes(section.querySelector("h2")?.textContent ?? ""));
+    const cards = [...page.container.querySelectorAll('[aria-label="Top Gainers comparison"]')].map(tabs=>tabs.closest("section")!);
+    cards.push(page.container.querySelector('[data-scanner-card="momentum"] section')!);
     expect(cards.length).toBe(3); // Desktop two cards and the selected mobile card.
     expect(cards.every(card => card.textContent?.includes("Active 4:00am - 8:00pm est"))).toBe(true);
     expect(page.container.textContent).not.toContain("extended-hours scanning session is closed");

@@ -93,6 +93,7 @@ export function normalizeSnapshotBatch(input: Readonly<{
       session: input.session, tradingDate: input.tradingDate, providerAt, receivedAt: input.receivedAt, price, baseline,
       ...(observedSession ? { priceTimeBasis: "session_observation" as const } : {}),
       ...(input.session === "after_hours" ? { regularClosePrice: positive(value.last_price) } : {}),
+      premarketHigh:positive(value.pre_high_price),premarketVolume:counter(value.pre_volume,true),
       volume: input.qualification.sessionCountersVerified ? counter(value[prefix ? `${prefix}_volume` : "volume"],true) : null,
       dollarVolume: input.qualification.sessionCountersVerified ? counter(value[prefix ? `${prefix}_turnover` : "turnover"]) : null,
       bid: usableBook ? bid : null, ask: usableBook ? ask : null,

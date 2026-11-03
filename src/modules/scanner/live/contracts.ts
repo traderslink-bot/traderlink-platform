@@ -29,15 +29,27 @@ export type FocusControls = Readonly<{
   minimumOneMinuteDollarVolume: number;
 }>;
 export type ScreenControls = Readonly<{ displayLimit: number; filters: Readonly<Record<ScannerSession, ScreenFilters>>; focus: FocusControls }>;
+export type DeclineControls = Readonly<{
+  enabled: boolean; displayLimit: number; minimumDropPercent: number;
+  windowMinutes: number; retentionMinutes: number;
+}>;
+export type PremarketPullbackControls = Readonly<{
+  enabled:boolean; displayLimit:number; minimumPullbackPercent:number; removeWithinPercent:number;
+}>;
 export type ScannerConfiguration = Readonly<{
   version: 1; revision: number; enabled: boolean; updatedAtUtc: string | null;
   gainers: ScreenControls; momentum: ScreenControls;
+  declines?: DeclineControls;
+  premarketPullbacks?: PremarketPullbackControls;
 }>;
 export type NormalizedSnapshot = Readonly<{
   symbol: string; company: string; session: ScannerSession; tradingDate: string;
   providerAt: number; receivedAt: number; price: number; baseline: number | null;
   /** During after-hours, last_price is the same day's regular close, not after_price. */
   regularClosePrice?: number | null;
+  /** Separate provider session aggregate; never substituted with regular-session HOD. */
+  premarketHigh?: number | null;
+  premarketVolume?: number | null;
   /** The provider clock is preserved even when it describes the regular close. */
   priceTimeBasis?: "provider" | "session_observation";
   volume: number | null; dollarVolume: number | null; bid: number | null; ask: number | null;
@@ -64,6 +76,32 @@ export type LiveScannerRow = Readonly<{
   activity: RollingActivity; reasons: readonly string[]; news: readonly ScannerNewsItem[];
 }>;
 export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;
+export type DeclineRow = Readonly<{
+  symbol: string; exchange: "NASDAQ" | "NYSE"; company: string; price: number;
+  changePercent: number | null; comparisonPrice: number | null;
+  volume: number | null; float: number | null; spreadPercent: number | null;
+  receivedAtUtc: string; news: readonly ScannerNewsItem[];
+  drop?: Readonly<{
+    detectedAtUtc: string; startAtUtc: string; startPrice: number; detectionPrice: number;
+    lowPrice: number; lowAtUtc: string; dropPercent: number; maximumDropPercent: number;
+    reboundPercent: number; backToStartPercent: number; durationSeconds: number;
+    sharesDuringDrop: number | null;
+  }>;
+}>;
+export type DeclineResults = Readonly<{
+  rapid: readonly DeclineRow[]; losers: readonly DeclineRow[];
+  rapidTotal: number; loserTotal: number; controls: DeclineControls;
+}>;
+export type PremarketPullbackRow = Readonly<{
+  symbol:string; exchange:"NASDAQ"|"NYSE"; company:string; price:number;
+  premarketHigh:number; premarketVolume:number|null; sessionVolume:number|null; float:number|null;
+  belowHighPercent:number; backToHighPercent:number; oneMinuteVolume:number|null; fiveMinuteVolume:number|null;
+  spreadPercent:number|null; receivedAtUtc:string; news:readonly ScannerNewsItem[];
+}>;
+export type PremarketPullbackResults = Readonly<{
+  rows:readonly PremarketPullbackRow[]; total:number; missingReferenceCount:number;
+  controls:PremarketPullbackControls;
+}>;
 export type LiveScreenResults = Readonly<{ rows: readonly LiveScannerRow[]; focus: readonly FocusStock[]; total: number }>;
 export type ScannerReadModel = Readonly<{
   status: "disabled" | "universe_missing" | "closed" | "warming" | "ready" | "partial" | "unavailable";
@@ -72,4 +110,6 @@ export type ScannerReadModel = Readonly<{
   gainers: LiveScreenResults; momentum: LiveScreenResults; issues: readonly string[];
   /** Separate all-day comparison, calculated from the same snapshot pass. */
   dayGainers?: LiveScreenResults;
+  declines?: DeclineResults;
+  premarketPullbacks?: PremarketPullbackResults;
 }>;

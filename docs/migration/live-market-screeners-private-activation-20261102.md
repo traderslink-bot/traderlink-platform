@@ -630,3 +630,364 @@ its original group is empty and its own lock released. All 770 unrelated dirty
 entries retain their original byte fingerprint. No provider/settings/delivery
 effects occurred. This is a separate successor for Coordinator clean release,
 not permission to overlap or mutate the in-flight frozen Gainer/Momentum release.
+
+Member-status release installed at 6:32 PM ET: main
+`e35f9b55fad899ca7e8dce86e18c0010779ae867`, parent
+`b5610a450a4d21d1ae245b13ae65ac913ca2aef0`, Railway deployment
+`1da9139b-fadb-46ac-9612-fbb25893cfc2` SUCCESS. Coordinator verified exact
+installed source, HTTP 200 ready/149, unchanged owner revision 10/settings
+hash, original volume and old writer removed. Scanner delivery remains off,
+private access scope unchanged and spacing remains 1,500ms. The six-file
+release changes only the approved member status presentation/tests/Help/record.
+The earlier live Gainer/Momentum audit math remains recorded above. Actual
+owner browser appearance and the next live 8 PM/4 AM boundary are not claimed
+as observed merely from source installation or the passing synthetic UI tests.
+
+## Owner-requested compact desktop layout — 2026-11-03
+
+Design: four equal desktop scanner slots per row. Top Gainers and Momentum
+each occupy one slot; PR Scanner occupies two slots and shows one newest-first
+column, not three columns. Only overflowing lists scroll; local 5px/thin
+scrollbars use different light/dark thumbs. Lists retain keyboard-focusable
+scroll regions and desktop table headings stay visible. Each scanner has a
+top-right full-view drawer action; existing per-ticker expansion and charts
+remain available. Mobile retains selected-scanner tabs and one PR list below.
+
+No scanner/provider/filter/session/notification contracts change. Full views
+reuse the same polled model; the PR board is mounted once across responsive
+layouts. Help wording is updated with this layout. Focused regressions cover
+compact columns, expansion, full-view open/close and shared polling, the single
+PR request stream/article order, and theme-aware auto-overflow styling. Source
+and UI-test qualification are in progress; no browser visual acceptance or
+deployment is claimed for this layout yet.
+
+First bounded check: 216/219 tests passed (20 files, 15.9s). All feed,
+provider-budget, session, ranking and connection tests passed. The new drawer
+test needed to wait for MUI's exit transition and check removal, rather than
+expecting an `aria-hidden` attribute; the correction is under recheck. A React
+warning was corrected by moving Stack alignment into `sx`. The two unchanged
+audit tests also failed after the UTC date advanced: the review test selects
+Nov 3 when that is already its initial date, and the overflow test records a
+Nov 2 gap with no saved cycle while health defaults to today's UTC date.
+Those candidate files match their committed blobs and are outside this layout
+slice; they are not presented as new layout regressions or as passing checks.
+The unit exited, its entire control group was empty and its own lock released.
+
+Correction recheck completed: **15/15 UI/style tests passed** across three
+files; targeted seven-file ESLint passed with zero warnings. Escape closes
+the full-view drawer after its exit transition, shared polling updates the
+compact and drawer tables together, and PR remains one thirty-article list
+with one news/float fetch pair per existing refresh. Theme tests verify auto
+overflow and different thin scrollbar colors. The bounded unit completed
+successfully in 10.4 seconds, group empty and own lock released. The two
+fixed-date audit-test failures remain separately recorded above; no global
+green-suite claim is made. Browser visual review and owner acceptance remain
+pending, with no deployment requested by this source checkpoint. All 770
+unrelated dirty entries retain the recorded byte fingerprint; package files
+and Coach on port 3011 are unchanged. The React checklist preserved existing
+MUI tokens, one PR instance, shared model fetching, keyboard row expansion,
+drawer dismissal and responsive mobile behavior.
+
+## MERC disappearing from Top Gainers — Nov 2, evening ET
+
+Owner reports a sustained after-hours leader repeatedly disappearing. Read-only
+production audit inspection at installed main `e35f9b55fad899ca7e8dce86e18c0010779ae867`
+covered 90 cycles from 7:35:45 PM to 7:50:39 PM ET. MERC had an accepted
+observation in all 90, but was displayed in only 29 with 28 visibility switches.
+All 61 exclusions were `spread_above_maximum`, against revision 10's 3% spread
+ceiling. This was not a missing quote or failed Moomoo request. Sample: at
+7:41:06 PM, $0.314 against $0.126 regular close (+149.21%) with 2.79% spread
+ranked first; ten seconds later $0.3002 (+138.25%) with 5.08% spread was hidden.
+The last observation was $0.2979 (+136.43%), 19,772,510 after-hours shares,
+6.73% spread, and hidden solely by that spread filter.
+
+Correction: Top Gainers Day and Post-Market use effective filters with no
+spread exclusion, including existing saved configurations. Spread is still
+recorded and shown where applicable; Momentum's filter and score are untouched.
+Other owner filters, universe, valid-price/comparison, float and freshness rules
+remain unchanged. Gainer audit reasons use the same effective filter as actual
+ranking. Hide the now-inapplicable Gainers spread control; retain it for Momentum.
+No live settings, data or notification changes are part of implementation.
+
+Focused tests cover wide/narrow/missing spread changes with constant percentage
+leadership, unchanged Momentum rejection, settings immutability and preserved
+universe/gain-basis/volume/market-cap/display-limit behavior. Spread values used
+in the sequence are taken from MERC's recorded evidence; test order-book prices
+are synthetic constructions, not claimed to be its original bid/ask quotes.
+The compact-grid layout is a separate unapproved local slice and must not be
+included implicitly in an urgent release of this correction. Verification and
+clean Coordinator release remain pending here.
+
+Verification complete for the source correction: foundation 38/38 and feed
+22/22 tests passed. The final Gainer engine/view and actual Admin UI recheck
+passed 34/34; five-file targeted ESLint passed without warnings. The first
+added universe test correctly triggered duplicate-symbol validation because
+its fixture reused a symbol; changing only that fixture to distinct excluded
+symbols resolved it. No runtime guard was relaxed to make tests pass. Final
+unit `scanner-gainer-spread-recheck-20261102` exited zero in 8.8 seconds with
+the 1.5GiB/CPU1/swap0 preflight passed, group empty and own lock released.
+Recorded wide/narrow/missing-spread sequence now retains percentage ranking
+and consistent audit results; Momentum still rejects above its own ceiling.
+No requests, settings writes, market data changes or deliveries were added.
+Production installation and post-release audit observation are not yet claimed.
+
+### Owner reversal — Nov 2, evening ET
+
+The owner clarified that the 16% setting had been saved for premarket, not
+post-market, and explicitly declined the code change removing spread filtering.
+Restore the original configurable spread filtering and its Gainers Admin
+control. Reverse only the spread-removal source/tests/Help delta from
+`97784ed766910a9811c5b5094ec327ad1803a2c9`; preserve the separate compact-layout
+slice at `1a7be51131960d8bcf5aa0de7e82657dcb6fc63b`. No saved settings are changed.
+The earlier release handoff is withdrawn by the owner's explicit instruction;
+no new release or Coordinator handoff is authorized. Historical diagnosis and
+test receipts above are retained as evidence, not an active implementation plan.
+
+## Rapid Drops / Top Losers — local implementation, Nov 2 ET
+
+Owner authorized building this next card after the market closed. No release,
+production writes, provider calls or notifications are authorized by this slice.
+
+- One card, Rapid Drops first tab and Top Losers second. Compact summary,
+  expandable ticker context, themed overflow-only scrolling and a full-view
+  drawer. PR remains one two-slot column; existing scanner layouts are preserved.
+- Top Losers ranks negative percentage change: after-hours vs today's regular
+  close, premarket/regular vs previous trading day's regular close. No invented
+  baseline if it is missing. Existing universe membership still governs requests.
+- Rapid Drops starts at 30% within five observed minutes; admin can adjust the
+  threshold, window, list limit and retention. It uses the highest actual observed
+  price in that window, not HOD or an interpolated candle. No startup backfill.
+- Keep one episode through bounces and continued lows. Pre-drop/detection prices
+  stay fixed. Track lowest observed price, maximum fall, current distance from
+  origin, rebound from low, distance back to origin and observed duration.
+  Retain for 15 minutes after the latest new low by default; rebounds do not
+  immediately remove it. Expiry consumes old anchors so it cannot instantly
+  recreate the same fall. A later fresh rise and decline can create a new episode.
+- Cumulative session-volume difference from origin to lowest point is shown as
+  shares during the observed fall, not selling volume, tape or an exact candle.
+  Missing or reset counters do not become invented volume. No minimum volume,
+  float or spread filter excludes these lists; spread stays visible as context.
+- Valid normalized observations only; out-of-order, future or stale data is not
+  a new drop. Session/date changes, changed controls, disable and counter/basis
+  resets clear relevant history. Kept episodes retain their real quote receipt
+  time when a later provider batch misses them. In-memory episode/history state
+  starts fresh after service restart; there is no claim of complete market tape.
+- Reuse the same engine snapshot pass, float map and one unioned News lookup.
+  No extra Moomoo/Yahoo/candle request, timer or provider subscription is added.
+  Optional version-1 configuration field supports old saved configurations
+  without migration or writes during reads. Existing Gainer and Momentum
+  settings, filters, access controls and notifications remain unchanged.
+- Per-cycle compressed audit evidence includes the result rows, effective
+  controls and episode anchors/math. Existing audit-page aggregates are still
+  for Gainers/Momentum; a new decline-specific reporting page is not claimed.
+
+Validation inventory: percentage/duration/volume math, thin and unknown volume,
+large slow declines vs quick drops, stable episode through rebound, new low,
+expiry/re-arm, date/session/clock/counter reset, stale/future/backward data,
+correct session loss basis, display limits, old/new configuration validation,
+shared-pass/news/audit integration, tab/row/drawer/chart behavior, status states,
+unchanged existing scanners and no extra provider requests. Tests in progress;
+actual live-session calibration and owner visual acceptance remain pending.
+
+Initial consolidated QA: 106/107 tests passed across seven files. All existing
+Gainer/Momentum, shared-feed and current layout tests passed. The new re-arm
+test found that an expired episode's older high could overshadow a later fresh
+rebound peak. Candidate peak selection now excludes consumed observations,
+allowing a genuine later decline without recreating the original episode.
+No threshold was loosened to pass the test. Correction and semantic checks are
+pending. The first unit closed in 9.3 seconds with group empty/own lock released.
+
+Final local source qualification:
+
+- 15/15 pure decline/configuration cases, 2/2 actual card-interaction cases and
+  1/1 shared-feed integration case pass. A rapid fall is detected even while
+  the stock remains +140% for the session; it need not be a Top Loser.
+- Existing Gainer/Momentum/view tests 31/31, foundation 38/38 and feed 22/22
+  passed in the initial combined batch. No extra provider pass, float lookup
+  or News request is introduced; the existing News call uses a union of symbols.
+- Twelve-file targeted ESLint passed with zero warnings. An unused mock argument
+  warning was corrected by asserting that the News symbol list is deduplicated.
+- Strict TypeScript qualification of all eleven feature source/test roots and
+  their dependencies passed with zero diagnostics across 1,941 files, using
+  the existing compiler options and three existing ambient declarations. No
+  dependency diagnostics were hidden or suppressed. The final bounded 2GiB
+  unit completed in 18 seconds, group empty and own lock released.
+- A preceding whole-archive TypeScript attempt exhausted its 2,304MiB Node heap
+  before producing diagnostics. It is recorded as incomplete, not passed; no
+  unrelated source or dependency was changed to resolve it. No production build
+  or actual browser-geometry/light-dark visual acceptance is claimed.
+- Local tests are synthetic, not proof of live market detection quality. A
+  future authorized live session must calibrate the adjustable 30%/5-minute
+  default and retention. New card access inherits existing private scanner
+  authorization; no new public route, navigation grant or alert delivery exists.
+
+Rollback note: old saved configurations remain readable without migration.
+Once the owner saves the optional `declines` settings, an older strict codec
+does not recognize that new key; a future rollback needs compatible code or a
+reviewed settings restore. Default reads do not write that key to storage.
+The new result and effective controls are stored in compressed cycle evidence;
+new decline-specific Admin aggregate reporting remains a separate future scope.
+
+Source is saved as a narrow local checkpoint only. Owner's no-deployment hold
+remains in force; this is not a release handoff. Unaccepted compact layout is
+still separate from production, saved spread filters remain fully functional,
+and normal Watchlist notifications are unchanged.
+
+### Gainer card copy cleanup — owner request Nov 2 ET
+
+Remove the repeated Top Gainers card heading on desktop and mobile, and remove
+the Day Gainers caption “Since the previous trading day’s regular close”. Keep
+both comparison tabs, percentage calculations, filters, expand action and
+full-view drawer identification unchanged. The post-market caption was not
+requested for removal and remains. This is local-only under the no-deploy hold.
+
+Source equivalence check confirms exactly those three presentation replacements
+against the preceding local checkpoint, with no calculation/filter/feed changes.
+Help coverage was reviewed; its comparison explanation remains correct and no
+guide text needs changing for this cosmetic removal. The focused card test and
+two-file lint are queued behind the shared build; not yet reported as passed.
+
+Queued verification now completed: 13/13 actual client tests passed, including
+absent Gainer heading/Day caption, intact comparison tabs, polling, member
+notices, drawer and Momentum context. Two-file ESLint passed without warnings.
+The bounded unit completed in 7.7 seconds, original group empty and its own lock
+released. No browser visual acceptance, provider effect or deployment occurred.
+
+### Premarket High Pullbacks — local implementation, Nov 2 ET
+
+Owner authorized this fourth scanner, excluding inferred recovery/holding/retest
+statuses. It uses current price and the dedicated Moomoo premarket aggregate,
+not regular-session HOD. Display both percentage below PM high and percentage
+gain needed back to it. Initially enter at 20% below and remove below an 18%
+distance; adjustable alongside enable/list limit in existing Admin settings.
+No volume/float/spread exclusion, extra quote requests or candle backfill. News
+uses the same deduplicated lookup, audit cycles retain effective controls/rows.
+
+Read-only current OAuth snapshot probe at Nov 2, 9:46 PM ET returned five of
+five requested symbols, HTTP 200, ret_code 0, in 769ms. Four retained positive
+PM highs after close: INO 2.27 (PM volume 53,289,759), PARA 3.10 (13,270),
+VCIG 3.45 (29,646), INTJ 3.10 (193). SEGG had zero PM high and is unavailable,
+not substituted. No credentials, token refresh or settings/data writes occurred.
+Current API reference: https://open.moomoo.com/api/quote/realtime/market-snapshot.
+Docs and actual retention must be distinguished: this probe verifies retention
+for those responses, not a universal provider guarantee. No exact time of the
+PM high is supplied or invented; quote receipt is not labeled as high time.
+
+Normal scanner scheduling remains 4 AM–8 PM ET. Late start is an outage/restart
+exception, not intended operation. Existing source qualification still marks
+premarket session snapshots unverified; this feature does not broaden that gate.
+Its current source path is regular/post-market qualified observations with
+provider-retained PM aggregates. Actual 4 AM premarket qualification remains
+a separate live verification boundary, not a claimed pass.
+
+Optional settings preserve old reads without migration or read-time writes.
+Rollback after saving this new key needs a compatible strict codec or reviewed
+settings restore, as with declines. Existing private access and disabled alert
+delivery remain unchanged. The bounded QA unit completed in 17.954 seconds:
+125/125 tests across nine suites and thirteen-file ESLint passed. Coverage
+includes actual provider-field normalization through the shared feed, one
+existing snapshot/float/news budget reservation per cycle (no additional
+request), audit evidence, PM reference freezing/missing fields/date/session
+resets, entry/exit band, sorting/limits, strict optional settings and actual
+card expansion/news/chart/drawer without a separate fetch. Existing Gainer,
+Momentum and decline regressions also passed. New tests use isolated synthetic
+fixtures; PARA's public PM high/volume verifies the field interpretation, not
+future price behavior. No inferred recovery stages are displayed.
+
+Unit terminal state inactive/dead, MainPID 0, original cgroup absent and own
+common lock released. Unrelated 770-entry workspace fingerprint remains
+f92b64fe7e96d4969e3c3731f764d49267a632ef6a27720ab5b39f0b294b961c;
+package/lockfile hashes and normal index remain unchanged. Strict focused
+TypeScript passed: fifteen roots and all dependencies, 1,943 source files,
+zero diagnostics in 17.994 seconds, 904.7MiB peak under the 2GiB cap. No
+incremental or emitted output. Exact user-1001 cgroup absent, MainPID zero,
+unit inactive/dead and own common lock released. No deployment or browser
+visual acceptance claimed. React review preserved the existing MUI design, direct imports,
+derived row values, keyboard expansion and a shared no-fetch drawer.
+
+### Owner-requested independent QA — Nov 2 ET, candidate aee811fc2e
+
+Scope: PM Pullbacks selection, formulas, normalization/shared feed, old scanner
+regressions, actual Admin toggle/save, private HTTP authorization, worker
+singleton, request pacing, missing-data statuses, receipt clocks and theme-aware
+scroll styles. No coordinator messages, preview starts, provider calls, live
+data/settings writes, delivery, Git publication or deployment. Tests used the
+existing isolated dependency archive, not another checkout. No runtime changes
+were made during this QA.
+
+Consolidated findings:
+
+1. **Confirmed defect, medium:** `premarket-pullbacks.ts:41–45` freezes volume
+   together with the final PM high. If the initial valid high has null PM
+   volume, a subsequent valid same-high response with volume 12,000 leaves the
+   card's PM volume null. New isolated regression reproduces expected 12,000,
+   actual null. The correction should allow later valid PM volume to fill or
+   update independently while keeping the final high frozen and avoiding a
+   volume value associated with an inconsistent reference. No extra API calls
+   are necessary. Correction is not implemented by this QA-only task.
+2. **Existing integration limitation, not a new regression:** production
+   `SnapshotSessionQualifier.observe` still declines premarket qualification.
+   A synthetic 8 AM response with a valid pre_price/pre_high_price/pre_volume
+   produces zero normalized snapshots and session_timestamp_unverified.
+   Therefore this feature is not qualified for live 4–9:30 AM operation yet;
+   the retained-PM-high path during regular/qualified post-market is separate.
+   A real premarket evidence/qualification checkpoint remains required; the
+   QA does not bypass or silently change the existing source gate.
+3. **Acceptance unrun:** actual browser geometry, phone/dark-mode appearance,
+   drawer focus restoration and live-market calibration remain unverified.
+   DOM interaction tests and theme-style assertions do not establish these.
+
+Execution: `scanner-pm-audit-20261102`, 18 suites / 198 tests: **197 passed,
+one failed** (finding 1). Duration 19.757s under 1,536MiB/CPU1/swap0/120s.
+All 17 other suites passed, including the actual Admin enable/save test,
+shared snapshot/float/news reservation counts, 19 session qualification tests,
+12 private HTTP authorization/settings tests and eight request-pacing tests.
+No duplicate Moomoo calls were introduced by the new card; no notifications
+or inferred holding/recovery/retest statuses are added. Exact original cgroup
+absent, unit inactive/dead, MainPID zero and matching own common lock released.
+Package and lockfile hashes remain unchanged; normal Git index remains empty.
+This is **not a clean QA or release-ready claim**. Existing prior 125-test and
+focused TypeScript receipts remain historical; they did not cover finding 1.
+Help text was reviewed and remains aligned; QA-only evidence requires no guide
+change until the correction changes behavior. Preserve the failure regression
+and owner no-deployment hold for the next correction task.
+
+### Delayed premarket volume correction and release request Nov 3 ET
+
+Owner requested scanner deployment if ready, then explicitly requested sending
+the unsent bug fix to the Coordinator. The earlier blanket no-deploy hold is
+superseded by that conditional release instruction, not a claim that unrun
+release/visual/live qualification checks passed.
+
+Finding 1 is corrected: after freezing the final premarket high, later valid
+same-high responses can fill or increase its premarket volume. Missing, reset
+or inconsistent-high aggregates cannot erase or replace the accepted counter.
+Zero remains a valid known value. The frozen high, ranking, thresholds, original
+Gainer/Momentum filters, request cadence, authorization and notification state
+are unchanged. No extra requests or fallback provider calls are introduced.
+Help guide coverage remains correct; this restores the described volume field
+rather than changing the user workflow.
+
+Final relevant regression run: **200/200 tests across eighteen suites passed**,
+including the previously failing regression, new missing/reset/conflicting-high
+cases, actual Admin save and no-extra-request checks. Two-file ESLint passed.
+The first tiny TypeScript root inventory omitted Node ambient declarations and
+reported node:crypto unresolved; no source/dependency change was made for this
+harness omission. The corrected focused check explicitly includes the existing
+Node type prerequisite, retains every diagnostic and passes 251 source files
+with zero diagnostics. Test/lint unit 26.091s and typecheck unit 3.028s finished;
+exact groups absent, MainPIDs zero and matching common locks released.
+
+Release source is candidate 7cf4ee4a78ded85464ec44780255c19720937514 plus only
+three working-tree overlays: premarket-pullbacks.ts, its QA test, and this
+record. Full feature delta starts at checkpoint
+952596badbce2a178e3527bdf0732bccd1ecf12b; do not publish the mixed working
+tree or copy its unrelated Help edits. Restore-spread cancellation remains
+respected; existing owner-selected spread filters still apply.
+
+Findings 2 and 3 remain separate: the existing premarket source qualifier has
+not been qualified live, and actual browser visual/phone/focus checks are not
+claimed. No Platform build, preview update, production change or notification
+occurred during this correction. Coordinator handoff must retain these gates,
+private-account scope and disabled scanner delivery; do not represent this
+green code regression suite as complete hosted acceptance.

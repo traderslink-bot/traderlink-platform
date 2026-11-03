@@ -4,6 +4,9 @@ import { RollingActivityBook } from "./activity";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
 import type { ScannerAuditDecision } from "./audit/contracts";
 import { scannerFilterFailures, scannerMomentumScore, scannerMovementFailures } from "./audit/decision-trace";
+import { DeclineBook } from "./declines";
+import type { DeclineResults, PremarketPullbackResults } from "./contracts";
+import { PremarketPullbackBook } from "./premarket-pullbacks";
 
 export type FloatFact = Readonly<{ shares: number; retrievedAtUtc: string }>;
 type Candidate = Readonly<{ row: LiveScannerRow; score: number }>;
@@ -69,11 +72,13 @@ export class LiveScannerEngine {
   private activity = new RollingActivityBook();
   private gainersFocus = new FocusSelection();
   private momentumFocus = new FocusSelection();
+  private declines = new DeclineBook();
+  private premarketPullbacks=new PremarketPullbackBook();
   evaluate(input: Readonly<{
     universe: DailyUniverse; tradingDate: string; session: ScannerSession; snapshots: readonly NormalizedSnapshot[];
     floats: ReadonlyMap<string,FloatFact>; news: ReadonlyMap<string,readonly ScannerNewsItem[]>;
     configuration: ScannerConfiguration; now: number;
-  }>): Readonly<{ gainers: LiveScreenResults; dayGainers: LiveScreenResults; momentum: LiveScreenResults; missingFloatCount: number; audit: readonly ScannerAuditDecision[] }> {
+  }>): Readonly<{ gainers: LiveScreenResults; dayGainers: LiveScreenResults; momentum: LiveScreenResults; declines?:DeclineResults; premarketPullbacks?:PremarketPullbackResults; missingFloatCount: number; audit: readonly ScannerAuditDecision[] }> {
     if (input.universe.tradingDate !== input.tradingDate) throw Error("scanner_universe_not_current");
     if (!input.configuration.enabled) { this.clear(); return { gainers: EMPTY, dayGainers: EMPTY, momentum: EMPTY, missingFloatCount: 0, audit: [] }; }
     const membership = new Map(input.universe.stocks.map(stock => [stock.symbol,stock]));
@@ -158,7 +163,12 @@ export class LiveScannerEngine {
         momentumDisplayed:mr!==null&&mr<=input.configuration.momentum.displayLimit,
         momentumScore:scannerMomentumScore(row,input.configuration.momentum.focus,momentumFilters)} satisfies ScannerAuditDecision;
     });
+    const declines=this.declines.evaluate({universe:input.universe,session:input.session,now:input.now,
+      snapshots:input.snapshots,floats:input.floats,controls:input.configuration.declines});
+    const premarketPullbacks=this.premarketPullbacks.evaluate({universe:input.universe,session:input.session,now:input.now,
+      snapshots:input.snapshots,floats:input.floats,activity:symbol=>this.activity.metrics(symbol,input.now),controls:input.configuration.premarketPullbacks});
     return {
+      declines,premarketPullbacks,
       gainers: { rows: gainers.slice(0,input.configuration.gainers.displayLimit), total: gainers.length,
         focus: this.gainersFocus.select(context,gainersCandidates,input.configuration.gainers.focus,input.now) },
       dayGainers: { rows: dayGainers.slice(0,input.configuration.gainers.displayLimit), total: dayGainers.length, focus: [] },
@@ -166,5 +176,5 @@ export class LiveScannerEngine {
         focus: this.momentumFocus.select(context,momentumCandidates,input.configuration.momentum.focus,input.now) }, missingFloatCount,audit,
     };
   }
-  clear(): void { this.activity.clear(); this.gainersFocus.clear(); this.momentumFocus.clear(); }
+  clear(): void { this.activity.clear(); this.gainersFocus.clear(); this.momentumFocus.clear(); this.declines.clear(); this.premarketPullbacks.clear(); }
 }

@@ -1,4 +1,4 @@
-import type { FocusControls, ScannerConfiguration, ScannerSession, ScreenControls, ScreenFilters } from "./contracts";
+import type { DeclineControls, FocusControls, PremarketPullbackControls, ScannerConfiguration, ScannerSession, ScreenControls, ScreenFilters } from "./contracts";
 
 const SESSIONS: readonly ScannerSession[] = ["premarket", "regular", "after_hours"];
 const FILTER_KEYS = ["minimumPrice", "maximumPrice", "maximumMarketCap", "maximumFloat", "minimumVolume", "minimumDollarVolume", "minimumSessionGain", "maximumSpreadPercent"];
@@ -35,13 +35,26 @@ function controlsValid(value: unknown): value is ScreenControls {
     && exactKeys(filters, SESSIONS)
     && SESSIONS.every(session => filtersValid(filters[session])) && focusValid(value.focus);
 }
+function declinesValid(value:unknown):value is DeclineControls {
+  return record(value)&&exactKeys(value,["enabled","displayLimit","minimumDropPercent","windowMinutes","retentionMinutes"])
+    &&typeof value.enabled==="boolean"&&Number.isInteger(value.displayLimit)&&bounded(value.displayLimit,1,100)
+    &&bounded(value.minimumDropPercent,1,99)&&bounded(value.windowMinutes,0.5,15)&&bounded(value.retentionMinutes,1,60);
+}
 export function validateConfiguration(value: unknown): ScannerConfiguration {
-  if (!record(value) || !exactKeys(value, ["version", "revision", "enabled", "updatedAtUtc", "gainers", "momentum"])
+  if (!record(value) || !exactKeys(value, ["version", "revision", "enabled", "updatedAtUtc", "gainers", "momentum",...(Object.hasOwn(value,"declines")?["declines"]:[]),...(Object.hasOwn(value,"premarketPullbacks")?["premarketPullbacks"]:[])])
     || value.version !== 1 || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0
     || typeof value.enabled !== "boolean"
     || !(value.updatedAtUtc === null || typeof value.updatedAtUtc === "string" && Number.isFinite(Date.parse(value.updatedAtUtc)))
-    || !controlsValid(value.gainers) || !controlsValid(value.momentum)) throw Error("scanner_settings_invalid");
+    || !controlsValid(value.gainers) || !controlsValid(value.momentum)
+    || Object.hasOwn(value,"declines")&&!declinesValid(value.declines)
+    || Object.hasOwn(value,"premarketPullbacks")&&!premarketPullbacksValid(value.premarketPullbacks)) throw Error("scanner_settings_invalid");
   return structuredClone(value) as ScannerConfiguration;
+}
+function premarketPullbacksValid(value:unknown):value is PremarketPullbackControls {
+  return record(value)&&exactKeys(value,["enabled","displayLimit","minimumPullbackPercent","removeWithinPercent"])
+    &&typeof value.enabled==="boolean"&&Number.isInteger(value.displayLimit)&&bounded(value.displayLimit,1,100)
+    &&bounded(value.minimumPullbackPercent,1,99)&&bounded(value.removeWithinPercent,0,99)
+    &&Number(value.removeWithinPercent)<=Number(value.minimumPullbackPercent);
 }
 
 /** Proposed editable starting settings, not validated trading thresholds or owner acceptance. */

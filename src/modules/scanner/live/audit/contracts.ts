@@ -1,4 +1,4 @@
-import type { NormalizedSnapshot, RollingActivity, ScannerConfiguration, ScannerSession } from "../contracts";
+import type { DeclineResults, NormalizedSnapshot, PremarketPullbackResults, RollingActivity, ScannerConfiguration, ScannerSession } from "../contracts";
 
 export const SCANNER_AUDIT_SCHEMA_VERSION = 1 as const;
 
@@ -66,6 +66,8 @@ export type ScannerAuditCycle = Readonly<{
   missingSymbols: readonly string[];
   batches: readonly ScannerAuditBatchReceipt[];
   decisions: readonly ScannerAuditDecision[];
+  declines?: DeclineResults;
+  premarketPullbacks?: PremarketPullbackResults;
 }>;
 
 export type ScannerAuditHealth = Readonly<{
