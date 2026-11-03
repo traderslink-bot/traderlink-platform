@@ -1,4 +1,4 @@
-import type { DailyUniverse, FocusControls, FocusStock, LiveScannerRow, LiveScreenResults, NormalizedSnapshot,
+import type { DailyUniverse, FocusControls, FocusStock, LiveScannerRow, LiveScreenResults, MomentumSignal, NormalizedSnapshot,
   ScannerConfiguration, ScannerNewsItem, ScannerSession, ScreenFilters } from "./contracts";
 import { RollingActivityBook } from "./activity";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
@@ -7,22 +7,25 @@ import { scannerFilterFailures, scannerMomentumScore, scannerMovementFailures } 
 import { DeclineBook } from "./declines";
 import type { DeclineResults, PremarketPullbackResults } from "./contracts";
 import { PremarketPullbackBook } from "./premarket-pullbacks";
+import { MomentumEventBook } from "./momentum-events";
+import { momentumDetectionControls } from "./settings";
 
 export type FloatFact = Readonly<{ shares: number; retrievedAtUtc: string }>;
 type Candidate = Readonly<{ row: LiveScannerRow; score: number }>;
 const EMPTY: LiveScreenResults = { rows: [], focus: [], total: 0 };
 function matches(row: LiveScannerRow, filters: ScreenFilters): boolean { return scannerFilterFailures(row,filters).length===0; }
-function moving(row: LiveScannerRow, controls: FocusControls): boolean {
+function moving(row: LiveScannerRow, controls: FocusControls,allowEvents=false): boolean {
   const activity = row.activity;
-  return activity.oneMinuteGain !== null && activity.oneMinuteGain >= controls.minimumOneMinuteGain
+  return allowEvents&&Boolean(row.momentumSignals?.length) || activity.oneMinuteGain !== null && activity.oneMinuteGain >= controls.minimumOneMinuteGain
     || activity.fiveMinuteGain !== null && activity.fiveMinuteGain >= controls.minimumFiveMinuteGain;
 }
 function momentumScore(row: LiveScannerRow, controls: FocusControls, filters: ScreenFilters): number {
   return scannerMomentumScore(row,controls,filters).total;
 }
-function focusCandidate(row: LiveScannerRow, controls: FocusControls, rankingScore?: number): Candidate | null {
+function focusCandidate(row: LiveScannerRow, controls: FocusControls, rankingScore?: number,allowEvents=false): Candidate | null {
   const activity = row.activity;
-  if (!moving(row,controls) || activity.volumeAcceleration === null || activity.volumeAcceleration < controls.minimumVolumeAcceleration
+  const priceStrength=Math.max(activity.intervalGain??-Infinity,activity.oneMinuteGain??-Infinity,(activity.fiveMinuteGain??-Infinity)/5);
+  if (!moving(row,controls,allowEvents) || priceStrength<.5 || activity.volumeAcceleration === null || activity.volumeAcceleration < controls.minimumVolumeAcceleration
     || activity.oneMinuteDollarVolume === null || activity.oneMinuteDollarVolume < controls.minimumOneMinuteDollarVolume) return null;
   const gain = Math.max(0,activity.oneMinuteGain ?? 0,(activity.fiveMinuteGain ?? 0)/5);
   // An activity ranking only. No probability, entry recommendation or setup classification.
@@ -74,6 +77,7 @@ export class LiveScannerEngine {
   private momentumFocus = new FocusSelection();
   private declines = new DeclineBook();
   private premarketPullbacks=new PremarketPullbackBook();
+  private momentumEvents=new MomentumEventBook();
   evaluate(input: Readonly<{
     universe: DailyUniverse; tradingDate: string; session: ScannerSession; snapshots: readonly NormalizedSnapshot[];
     floats: ReadonlyMap<string,FloatFact>; news: ReadonlyMap<string,readonly ScannerNewsItem[]>;
@@ -83,6 +87,7 @@ export class LiveScannerEngine {
     if (!input.configuration.enabled) { this.clear(); return { gainers: EMPTY, dayGainers: EMPTY, momentum: EMPTY, missingFloatCount: 0, audit: [] }; }
     const membership = new Map(input.universe.stocks.map(stock => [stock.symbol,stock]));
     this.activity.retain([...membership.keys()]);
+    this.momentumEvents.retain([...membership.keys()]);
     const seen = new Set<string>();
     for (const snapshot of input.snapshots) {
       if (seen.has(snapshot.symbol)) throw Error("scanner_evaluation_duplicate_symbol");
@@ -102,6 +107,11 @@ export class LiveScannerEngine {
         || floatAt > input.now || input.now-floatAt > 30*60*60_000) { missingFloatCount++;rejected.set(snapshot.symbol,["float_unavailable"]);continue; }
       const spreadPercent = snapshot.bid !== null && snapshot.ask !== null && snapshot.bid > 0 && snapshot.ask >= snapshot.bid
         ? (snapshot.ask-snapshot.bid)/((snapshot.ask+snapshot.bid)/2)*100 : null;
+      const event=this.momentumEvents.evaluate(`${input.tradingDate}:${input.session}`,snapshot.symbol,snapshot.price,fact.shares,snapshot.receivedAt,
+        this.activity.metrics(snapshot.symbol,input.now),momentumDetectionControls(input.configuration)[input.session]);
+      const rollingSignals:MomentumSignal[]=[];
+      if(event.activity.oneMinuteGain!==null&&event.activity.oneMinuteGain>=input.configuration.momentum.focus.minimumOneMinuteGain)rollingSignals.push("one_minute_momentum");
+      if(event.activity.fiveMinuteGain!==null&&event.activity.fiveMinuteGain>=input.configuration.momentum.focus.minimumFiveMinuteGain)rollingSignals.push("five_minute_momentum");
       rows.push({ symbol: stock.symbol, exchange: stock.exchange, company: snapshot.company, price: snapshot.price,
         sessionGain: snapshot.baseline !== null && snapshot.baseline > 0 ? (snapshot.price/snapshot.baseline-1)*100 : null,
         comparisonPrice: snapshot.baseline, gainBasis: "previous_regular_close",
@@ -115,7 +125,7 @@ export class LiveScannerEngine {
         offHighPercent: (snapshot.price/snapshot.dayHigh-1)*100,
         spreadPercent, providerAtUtc: new Date(snapshot.providerAt).toISOString(), receivedAtUtc: new Date(snapshot.receivedAt).toISOString(),
         priceTimeBasis: snapshot.priceTimeBasis,
-        activity: this.activity.metrics(snapshot.symbol,input.now), reasons: [], news: input.news.get(stock.symbol) ?? [] });
+        activity:event.activity,momentumSignals:Object.freeze([...event.signals,...rollingSignals]),reasons:[],news:input.news.get(stock.symbol)??[] });
     }
     const dayGainers = rows.filter(row => matches(row,input.configuration.gainers.filters[input.session]))
       .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
@@ -131,13 +141,13 @@ export class LiveScannerEngine {
       .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
     const momentumFilters = input.configuration.momentum.filters[input.session];
     const momentum = rows.filter(row => matches(row,momentumFilters)
-      && moving(row,input.configuration.momentum.focus))
+      && moving(row,input.configuration.momentum.focus,true))
       .sort((a,b) => momentumScore(b,input.configuration.momentum.focus,momentumFilters)
         -momentumScore(a,input.configuration.momentum.focus,momentumFilters) || a.symbol.localeCompare(b.symbol));
     const context = `${input.tradingDate}:${input.session}`;
     const gainersCandidates = gainers.map(row => focusCandidate(row,input.configuration.gainers.focus)).filter((value): value is Candidate => value !== null);
     const momentumCandidates = momentum.map(row => focusCandidate(row,input.configuration.momentum.focus,
-      momentumScore(row,input.configuration.momentum.focus,momentumFilters))).filter((value): value is Candidate => value !== null);
+      momentumScore(row,input.configuration.momentum.focus,momentumFilters),true)).filter((value): value is Candidate => value !== null);
     const gainerRank=new Map(gainers.map((row,index)=>[row.symbol,index+1]));
     const momentumRank=new Map(momentum.map((row,index)=>[row.symbol,index+1]));
     const rowBySymbol=new Map(rows.map(row=>[row.symbol,row]));
@@ -157,7 +167,7 @@ export class LiveScannerEngine {
       const gr=gainerRank.get(row.symbol)??null,mr=momentumRank.get(row.symbol)??null;
       return {symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:row.marketCapAtCollection,observation:snapshot,activity:row.activity,float:row.float,floatRetrievedAtUtc:row.floatRetrievedAtUtc,
         sessionGain:row.sessionGain,spreadPercent:row.spreadPercent,offHighPercent:row.offHighPercent,relativeVolume:row.relativeVolume,
-        gainerFailures,momentumFailures,gainerRank:gr,momentumRank:mr,
+        gainerFailures,momentumFailures,momentumSignals:row.momentumSignals,gainerRank:gr,momentumRank:mr,
         gainerGain:gainerRow.sessionGain,gainerComparisonPrice:gainerRow.comparisonPrice??null,gainerGainBasis:gainerRow.gainBasis,
         gainerDisplayed:gr!==null&&gr<=input.configuration.gainers.displayLimit,
         momentumDisplayed:mr!==null&&mr<=input.configuration.momentum.displayLimit,
@@ -176,5 +186,5 @@ export class LiveScannerEngine {
         focus: this.momentumFocus.select(context,momentumCandidates,input.configuration.momentum.focus,input.now) }, missingFloatCount,audit,
     };
   }
-  clear(): void { this.activity.clear(); this.gainersFocus.clear(); this.momentumFocus.clear(); this.declines.clear(); this.premarketPullbacks.clear(); }
+  clear(): void { this.activity.clear();this.momentumEvents.clear();this.gainersFocus.clear();this.momentumFocus.clear();this.declines.clear();this.premarketPullbacks.clear(); }
 }

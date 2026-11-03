@@ -28,6 +28,13 @@ export type FocusControls = Readonly<{
   minimumOneMinuteGain: number; minimumFiveMinuteGain: number; minimumVolumeAcceleration: number;
   minimumOneMinuteDollarVolume: number;
 }>;
+export type MomentumDetectionSessionControls = Readonly<{
+  immediateVolumeRateMultiple:number; buildingVolumeRateMultiple:number;
+  minimumEpisodeShares:number; minimumEpisodeDollarVolume:number;minimumEpisodeFloatTurnoverPercent:number;
+  priceBurstPercent:number; maximumPriceBurstSeconds:number;
+  buildingConfirmationScans:number; episodeQuietScans:number;episodeQuietSeconds:number;
+}>;
+export type MomentumDetectionControls=Readonly<Record<ScannerSession,MomentumDetectionSessionControls>>;
 export type ScreenControls = Readonly<{ displayLimit: number; filters: Readonly<Record<ScannerSession, ScreenFilters>>; focus: FocusControls }>;
 export type DeclineControls = Readonly<{
   enabled: boolean; displayLimit: number; minimumDropPercent: number;
@@ -39,6 +46,7 @@ export type PremarketPullbackControls = Readonly<{
 export type ScannerConfiguration = Readonly<{
   version: 1; revision: number; enabled: boolean; updatedAtUtc: string | null;
   gainers: ScreenControls; momentum: ScreenControls;
+  momentumDetection?: MomentumDetectionControls;
   declines?: DeclineControls;
   premarketPullbacks?: PremarketPullbackControls;
 }>;
@@ -60,7 +68,12 @@ export type RollingActivity = Readonly<{
   oneMinuteVolume: number | null; oneMinuteDollarVolume: number | null;
   fiveMinuteVolume: number | null; fiveMinuteVolumeSpike: number | null;
   volumeAcceleration: number | null;
+  intervalSeconds?:number|null; intervalGain?:number|null;
+  intervalVolume?:number|null; intervalDollarVolume?:number|null;
+  intervalVolumeRate?:number|null; baselineVolumeRate?:number|null; intervalVolumeRateMultiple?:number|null;
+  episodeShares?:number|null; episodeDollarVolume?:number|null; episodeSeconds?:number|null;
 }>;
+export type MomentumSignal = "volume_ignition"|"building_volume"|"price_burst"|"developing_activity"|"one_minute_momentum"|"five_minute_momentum";
 export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt: string; url: string | null; typeLabel: string }>;
 export type LiveScannerRow = Readonly<{
   symbol: string; exchange: "NASDAQ" | "NYSE"; company: string; price: number;
@@ -74,6 +87,7 @@ export type LiveScannerRow = Readonly<{
   floatRetrievedAtUtc: string; spreadPercent: number | null; providerAtUtc: string; receivedAtUtc: string;
   priceTimeBasis?: "provider" | "session_observation";
   activity: RollingActivity; reasons: readonly string[]; news: readonly ScannerNewsItem[];
+  momentumSignals?:readonly MomentumSignal[];
 }>;
 export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;
 export type DeclineRow = Readonly<{

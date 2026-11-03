@@ -1,4 +1,4 @@
-import type { DeclineResults, NormalizedSnapshot, PremarketPullbackResults, RollingActivity, ScannerConfiguration, ScannerSession } from "../contracts";
+import type { DeclineResults, MomentumSignal, NormalizedSnapshot, PremarketPullbackResults, RollingActivity, ScannerConfiguration, ScannerSession } from "../contracts";
 
 export const SCANNER_AUDIT_SCHEMA_VERSION = 1 as const;
 
@@ -29,6 +29,7 @@ export type ScannerAuditDecision = Readonly<{
   relativeVolume: number | null;
   gainerFailures: readonly string[];
   momentumFailures: readonly string[];
+  momentumSignals?:readonly MomentumSignal[];
   gainerRank: number | null;
   momentumRank: number | null;
   gainerDisplayed: boolean;

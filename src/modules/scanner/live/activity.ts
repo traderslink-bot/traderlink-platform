@@ -63,8 +63,23 @@ export class RollingActivityBook {
     if (!history || !current || now-current.receivedAt > CURRENT_RECEIPT_MAX_AGE_MS || now < current.receivedAt
       || current.priceTimeBasis !== "session_observation" && now-current.providerAt > SNAPSHOT_MAX_AGE_MS
       || now < current.providerAt) return { ...EMPTY };
+    const previous=history.length>1?history.at(-2)??null:null;
     const one = anchor(history,current.receivedAt-60_000), five = anchor(history,current.receivedAt-300_000),
       six = anchor(history,current.receivedAt-360_000), ten = anchor(history,current.receivedAt-600_000);
+    const intervalSeconds=previous?(current.receivedAt-previous.receivedAt)/1000:null;
+    const intervalVolume=observedDelta(current.volume,previous,"volume"),intervalDollarVolume=observedDelta(current.dollarVolume,previous,"dollarVolume");
+    const intervalVolumeRate=intervalSeconds&&intervalVolume!==null?intervalVolume/intervalSeconds:null;
+    // Keep the newest 30 seconds out of the baseline so the developing event
+    // does not immediately redefine its own "normal" rate.
+    const baselineRows=history.filter(row=>row.receivedAt<=current.receivedAt-30_000&&row.receivedAt>=current.receivedAt-300_000);
+    const baselineRates:number[]=[];
+    for(let index=1;index<baselineRows.length;index++){
+      const elapsed=(baselineRows[index].receivedAt-baselineRows[index-1].receivedAt)/1000;
+      const delta=observedDelta(baselineRows[index].volume,baselineRows[index-1],"volume");
+      if(elapsed>0&&delta!==null)baselineRates.push(delta/elapsed);
+    }
+    baselineRates.sort((left,right)=>left-right);
+    const baselineVolumeRate=baselineRates.length?baselineRates[Math.floor(baselineRates.length/2)]:null;
     // Receipt milliseconds are not synchronized to exact window boundaries. The
     // bounded anchor supplies an observed 60–70s / 300–310s span; do not require
     // a millisecond-perfect hit, interpolate, or manufacture an OHLC candle.
@@ -85,6 +100,8 @@ export class RollingActivityBook {
         && fiveRate !== null && precedingFiveRate !== null && precedingFiveRate > 0 ? fiveRate/precedingFiveRate : null,
       // A zero historical baseline is unavailable, not infinite relative activity.
       volumeAcceleration: currentRate !== null && precedingRate !== null && precedingRate > 0 ? currentRate/precedingRate : null,
+      ...(previous?{intervalSeconds,intervalGain:(current.price/previous.price-1)*100,intervalVolume,intervalDollarVolume,
+        intervalVolumeRate,baselineVolumeRate,intervalVolumeRateMultiple:intervalVolumeRate!==null&&baselineVolumeRate!==null&&baselineVolumeRate>0?intervalVolumeRate/baselineVolumeRate:null}:{}),
     };
   }
   retain(symbols: readonly string[]): void {

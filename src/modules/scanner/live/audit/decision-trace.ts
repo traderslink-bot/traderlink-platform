@@ -33,21 +33,21 @@ export function scannerFilterFailures(row: LiveScannerRow, filters: ScreenFilter
 export function scannerMovementFailures(row: LiveScannerRow, controls: FocusControls): readonly string[] {
   const one = row.activity.oneMinuteGain;
   const five = row.activity.fiveMinuteGain;
-  return one !== null && one >= controls.minimumOneMinuteGain || five !== null && five >= controls.minimumFiveMinuteGain
+  return Boolean(row.momentumSignals?.length)||one !== null && one >= controls.minimumOneMinuteGain || five !== null && five >= controls.minimumFiveMinuteGain
     ? Object.freeze([])
     : Object.freeze([one === null && five === null ? "price_windows_warming" : "recent_price_move_below_minimum"]);
 }
 
 export function scannerMomentumScore(row: LiveScannerRow, controls: FocusControls, filters: ScreenFilters): ScannerAuditScore {
   const activity = row.activity;
-  const gain = Math.max(0,activity.oneMinuteGain ?? 0,(activity.fiveMinuteGain ?? 0)/5);
+  const gain = Math.max(0,activity.intervalGain??0,activity.oneMinuteGain ?? 0,(activity.fiveMinuteGain ?? 0)/5);
   const gainFloor = Math.max(0.1,controls.minimumOneMinuteGain,controls.minimumFiveMinuteGain/5);
   const price = Math.min(gain/gainFloor,3)/3*40;
-  const volumeAcceleration = activity.volumeAcceleration === null ? 0
-    : Math.min(activity.volumeAcceleration/Math.max(1,controls.minimumVolumeAcceleration),3)/3*25;
+  const acceleration=Math.max(activity.volumeAcceleration??0,activity.intervalVolumeRateMultiple??0);
+  const volumeAcceleration = Math.min(acceleration/Math.max(1,controls.minimumVolumeAcceleration),3)/3*25;
   const relativeVolume = row.relativeVolume === null ? 0 : Math.min(row.relativeVolume/5,1)*15;
-  const dollarVolume = activity.oneMinuteDollarVolume === null ? 0
-    : Math.min(activity.oneMinuteDollarVolume/Math.max(1,controls.minimumOneMinuteDollarVolume),3)/3*15;
+  const recentDollars=Math.max(activity.oneMinuteDollarVolume??0,activity.episodeDollarVolume??0);
+  const dollarVolume = Math.min(recentDollars/Math.max(1,controls.minimumOneMinuteDollarVolume),3)/3*15;
   const spreadCeiling = filters.maximumSpreadPercent ?? 3;
   const spread = row.spreadPercent === null ? 0 : Math.max(0,1-row.spreadPercent/Math.max(0.01,spreadCeiling))*5;
   return { total:price+volumeAcceleration+relativeVolume+dollarVolume+spread,

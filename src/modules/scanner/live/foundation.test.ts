@@ -247,6 +247,18 @@ describe("rolling evidence and focus", () => {
     expect(result.momentum.rows[0].sessionGain).toBeLessThan(0);
     expect(result.momentum.focus).toHaveLength(1);
   });
+  it("adds a sub-minute high-volume reaction before one-minute history is available",()=>{
+    const universe=importDailyUniverse(null,upload(),NOW).universe,engine=new LiveScannerEngine();
+    const configuration={...initialConfiguration(),enabled:true};
+    const floats=new Map([["AAA",{shares:500_000,retrievedAtUtc:new Date(NOW).toISOString()}]]);
+    engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW,configuration,floats,news:new Map(),
+      snapshots:[snapshot(NOW,{price:1,volume:1_000_000,dollarVolume:2_000_000})]});
+    const result=engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW+12_000,configuration,floats,news:new Map(),
+      snapshots:[snapshot(NOW+12_000,{price:1.03,volume:1_030_000,dollarVolume:2_030_000})]});
+    expect(result.momentum.rows).toHaveLength(1);
+    expect(result.momentum.rows[0].activity.oneMinuteGain).toBeNull();
+    expect(result.momentum.rows[0].momentumSignals).toEqual(expect.arrayContaining(["volume_ignition","price_burst"]));
+  });
   it("ranks sustained liquid momentum above a larger price jump with weaker activity", () => {
     const universe = importDailyUniverse(null,upload(),NOW).universe, engine = new LiveScannerEngine();
     const configuration = { ...initialConfiguration(),enabled: true };
@@ -317,6 +329,6 @@ describe("shared rolling budget and configuration", () => {
     expect(() => updateConfiguration(config,{ ...config,revision: 1 },NOW)).toThrow("conflict");
     expect(() => validateConfiguration({ ...config,momentum: { ...config.momentum,displayLimit: 0 } })).toThrow();
     expect(() => validateConfiguration({ ...config,gainers: { ...config.gainers,filters: { ...config.gainers.filters,
-      regular: { ...config.gainers.filters.regular,maximumMarketCap: 200_000_000 } } } })).toThrow();
+      regular: { ...config.gainers.filters.regular,maximumMarketCap: 500_000_001 } } } })).toThrow();
   });
 });

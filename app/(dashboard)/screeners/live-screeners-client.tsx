@@ -37,12 +37,15 @@ import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "@/src/modules/scanner/live/
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 import type { LiveScannerRow, LiveScreenResults, ScannerConfiguration, ScannerKind, ScannerReadModel,
   ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
+import { DEFAULT_MOMENTUM_DETECTION, momentumDetectionControls } from "@/src/modules/scanner/live/settings";
 import { gainerViewResults, selectedGainerView, type GainerView, type GainerViewChoice } from "@/src/modules/scanner/live/gainer-view";
 import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
 const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", momentum: "Momentum" };
 const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", regular: "Regular hours", after_hours: "After hours" };
+const MOMENTUM_SIGNAL_LABELS={volume_ignition:"Volume ignition",building_volume:"Building volume",price_burst:"Price burst",
+  developing_activity:"Developing activity",one_minute_momentum:"1min momentum",five_minute_momentum:"5min momentum"} as const;
 const number = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 2 });
 const compact = new Intl.NumberFormat("en-US",{ notation: "compact",maximumFractionDigits: 1 });
 const cardTitleTabsSx={minHeight:22,'& .MuiTabs-indicator':{height:2},'& .MuiTab-root':{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,minHeight:22,minWidth:0,p:0,pb:0.6,px:0,textTransform:"none"},'& .MuiTab-root + .MuiTab-root':{ml:2}};
@@ -153,6 +156,10 @@ function CompactStockTable({ rows,screen,onOpenChart,compactDesktop=false }: { r
         row.relativeVolume==null?null:metric("RVOL",`${number.format(row.relativeVolume)}×`),
         traded==null?null:metric("Turnover",traded),
       ]:[
+        row.momentumSignals?.length?metric("Detected",row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · ")):null,
+        row.activity.episodeShares==null?null:metric("Episode volume",compact.format(row.activity.episodeShares)),
+        row.activity.episodeDollarVolume==null?null:metric("Episode $ volume",`$${compact.format(row.activity.episodeDollarVolume)}`),
+        row.activity.episodeSeconds==null?null:metric("Episode time",`${number.format(row.activity.episodeSeconds)}s`),
         metric("Day %",value(row.sessionGain,"%")),
         row.postMarketGain===undefined?null:metric("Post %",value(row.postMarketGain,"%")),
         row.volume===null?null:metric("Session volume",compact.format(row.volume)),
@@ -239,6 +246,10 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
         {expanded?<TableRow><TableCell colSpan={showPostGain?15:14} sx={{ bgcolor:"action.hover",py:"10px !important" }}>
           <Box sx={{ display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:2 }}>
             {[
+              ["Detected",row.momentumSignals?.length?row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · "):"n/a"],
+              ["Episode volume",row.activity.episodeShares==null?"n/a":compact.format(row.activity.episodeShares)],
+              ["Episode $ volume",row.activity.episodeDollarVolume==null?"n/a":`$${compact.format(row.activity.episodeDollarVolume)}`],
+              ["Episode time",row.activity.episodeSeconds==null?"n/a":`${number.format(row.activity.episodeSeconds)}s`],
               ["$ × Vol",row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`],
               ["RVOL",row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`],
               ["HOD price",`$${value(row.dayHigh)}`],
@@ -278,6 +289,8 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
   const [saving,setSaving]=useState(false), [message,setMessage]=useState<string|null>(null);
   useEffect(()=>setDraft(configuration),[configuration]);
   const controls=draft[screen], filters=controls.filters[session];
+  const momentumDetection=momentumDetectionControls(draft)[session];
+  const updateMomentumDetection=(next:Partial<typeof momentumDetection>)=>setDraft(current=>{const all=current.momentumDetection??DEFAULT_MOMENTUM_DETECTION;return {...current,momentumDetection:{...all,[session]:{...all[session],...next}}};});
   const declines=draft.declines??DEFAULT_DECLINE_CONTROLS;
   const updateDeclines=(next:Partial<typeof declines>)=>setDraft(current=>({...current,declines:{...(current.declines??DEFAULT_DECLINE_CONTROLS),...next}}));
   const pmPullbacks=draft.premarketPullbacks??DEFAULT_PREMARKET_PULLBACK_CONTROLS;
@@ -312,6 +325,19 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
         <NumberField label="Minimum volume acceleration" current={controls.focus.minimumVolumeAcceleration} onChange={next=>next!==null&&updateControls({ focus:{ ...controls.focus,minimumVolumeAcceleration:next } })}/>
         <NumberField label="Minimum 1-minute dollar volume" current={controls.focus.minimumOneMinuteDollarVolume} onChange={next=>next!==null&&updateControls({ focus:{ ...controls.focus,minimumOneMinuteDollarVolume:next } })}/>
       </Box>
+      {screen==="momentum"?<><Typography component="h3" sx={{fontWeight:800}}>Early momentum detection</Typography>
+      <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"repeat(2,minmax(0,1fr))",lg:"repeat(4,minmax(0,1fr))"},gap:1.5}}>
+        <NumberField label="Immediate volume rate ×" current={momentumDetection.immediateVolumeRateMultiple} onChange={next=>next!==null&&updateMomentumDetection({immediateVolumeRateMultiple:next})}/>
+        <NumberField label="Building volume rate ×" current={momentumDetection.buildingVolumeRateMultiple} onChange={next=>next!==null&&updateMomentumDetection({buildingVolumeRateMultiple:next})}/>
+        <NumberField label="Episode minimum shares" current={momentumDetection.minimumEpisodeShares} onChange={next=>next!==null&&updateMomentumDetection({minimumEpisodeShares:next})}/>
+        <NumberField label="Episode minimum $ volume" current={momentumDetection.minimumEpisodeDollarVolume} onChange={next=>next!==null&&updateMomentumDetection({minimumEpisodeDollarVolume:next})}/>
+        <NumberField label="Episode minimum turnover %" current={momentumDetection.minimumEpisodeFloatTurnoverPercent} onChange={next=>next!==null&&updateMomentumDetection({minimumEpisodeFloatTurnoverPercent:next})}/>
+        <NumberField label="Price burst %" current={momentumDetection.priceBurstPercent} onChange={next=>next!==null&&updateMomentumDetection({priceBurstPercent:next})}/>
+        <NumberField label="Price burst max seconds" current={momentumDetection.maximumPriceBurstSeconds} onChange={next=>next!==null&&updateMomentumDetection({maximumPriceBurstSeconds:next})}/>
+        <NumberField label="Building confirmation scans" current={momentumDetection.buildingConfirmationScans} onChange={next=>next!==null&&updateMomentumDetection({buildingConfirmationScans:next})}/>
+        <NumberField label="Quiet scans to close episode" current={momentumDetection.episodeQuietScans} onChange={next=>next!==null&&updateMomentumDetection({episodeQuietScans:next})}/>
+        <NumberField label="Episode quiet expiry seconds" current={momentumDetection.episodeQuietSeconds} onChange={next=>next!==null&&updateMomentumDetection({episodeQuietSeconds:next})}/>
+      </Box></>:null}
       <Typography component="h3" sx={{fontWeight:800}}>Rapid Drops / Top Losers</Typography>
       <FormControlLabel control={<Switch checked={declines.enabled} onChange={event=>updateDeclines({enabled:event.target.checked})}/>} label="Enable Rapid Drops and Top Losers"/>
       <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"repeat(2,minmax(0,1fr))",lg:"repeat(4,minmax(0,1fr))"},gap:1.5}}>
