@@ -8,8 +8,12 @@ type Decision={symbol:string;observation:NormalizedSnapshot;float:number|null;ma
 type Cycle={cycleId:string;tradingDate:string;session:ScannerSession;completedAt:number;status:string;issues:string[];configuration:ScannerConfiguration;decisions:Decision[]};
 type Event={method:MomentumSignal;symbol:string;session:ScannerSession;at:number;price:number;eligible:boolean;signals:MomentumSignal[];
   intervalSeconds:number|null;intervalVolume:number|null;intervalDollars:number|null;rateMultiple:number|null;episodeShares:number|null;episodeDollars:number|null;
-  maxGain:number;minGain:number;gain30:number|null;gain60:number|null;gain300:number|null;lastElapsed:number};
+  float:number;marketCap:number|null;spreadPercent:number|null;sessionGain:number|null;offHighPercent:number|null;relativeVolume:number|null;
+  oneMinuteGain:number|null;fiveMinuteGain:number|null;oneMinuteVolume:number|null;volumeAcceleration:number|null;
+  maxGain:number;minGain:number;gain30:number|null;gain60:number|null;gain300:number|null;lastElapsed:number;maxGapSeconds:number};
 const METHODS:MomentumSignal[]=["volume_ignition","building_volume","price_burst","developing_activity","one_minute_momentum","five_minute_momentum"];
+const requestedCutoff=process.env.SCANNER_AUDIT_CUTOFF_UTC?Date.parse(process.env.SCANNER_AUDIT_CUTOFF_UTC):Infinity;
+if(!Number.isFinite(requestedCutoff))throw Error("scanner_audit_cutoff_invalid");
 const activity=new RollingActivityBook(),events=new MomentumEventBook();
 const active=new Map<string,boolean>(),activeStartedAt=new Map<string,number>(),pending=new Map<string,Event[]>(),lastEpisodeStart=new Map<string,number>();
 const completed:Event[]=[],incomplete:Event[]=[];
@@ -34,13 +38,14 @@ function updateOutcomes(symbol:string,at:number,price:number){
   for(const event of list){
     const elapsed=at-event.at;if(elapsed<=0){keep.push(event);continue;}
     if(elapsed>315_000){incomplete.push(event);continue;}
+    event.maxGapSeconds=Math.max(event.maxGapSeconds,(elapsed-event.lastElapsed)/1000);
     const gain=(price/event.price-1)*100;
     if(elapsed<=300_000){event.maxGain=Math.max(event.maxGain,gain);event.minGain=Math.min(event.minGain,gain);}
     event.lastElapsed=elapsed;
     if(event.gain30===null&&elapsed>=30_000&&elapsed<=45_000)event.gain30=gain;
     if(event.gain60===null&&elapsed>=60_000&&elapsed<=75_000)event.gain60=gain;
     if(event.gain300===null&&elapsed>=300_000)event.gain300=gain;
-    if(elapsed>=300_000)completed.push(event);else keep.push(event);
+    if(elapsed>=300_000){if(event.maxGapSeconds<=20)completed.push(event);else incomplete.push(event);}else keep.push(event);
   }
   if(keep.length)pending.set(symbol,keep);else pending.delete(symbol);
 }
@@ -51,7 +56,8 @@ function rounded(value:number|null):number|null{return value===null?null:Math.ro
 async function main(){
 for await(const line of createInterface({input:process.stdin,crlfDelay:Infinity})){
   if(!line.trim())continue;
-  const cycle=JSON.parse(line) as Cycle;coverage.cycles++;coverage.dates.add(cycle.tradingDate);coverage.firstAt=Math.min(coverage.firstAt,cycle.completedAt);coverage.lastAt=Math.max(coverage.lastAt,cycle.completedAt);
+  const cycle=JSON.parse(line) as Cycle;if(cycle.completedAt>requestedCutoff)continue;
+  coverage.cycles++;coverage.dates.add(cycle.tradingDate);coverage.firstAt=Math.min(coverage.firstAt,cycle.completedAt);coverage.lastAt=Math.max(coverage.lastAt,cycle.completedAt);
   const filter=cycle.configuration.momentum.filters[cycle.session],configurationKey=JSON.stringify({revision:cycle.configuration.revision,session:cycle.session,
     oneMinute:cycle.configuration.momentum.focus.minimumOneMinuteGain,fiveMinute:cycle.configuration.momentum.focus.minimumFiveMinuteGain,filters:filter});
   const configuration=configurations.get(configurationKey)??{cycles:0,revision:cycle.configuration.revision,session:cycle.session,
@@ -81,7 +87,11 @@ for await(const line of createInterface({input:process.stdin,crlfDelay:Infinity}
           const event:Event={method,symbol:decision.symbol,session:cycle.session,at:snapshot.receivedAt,price:snapshot.price,eligible,signals:[...signals],
             intervalSeconds:number(enriched.intervalSeconds),intervalVolume:number(enriched.intervalVolume),intervalDollars:number(enriched.intervalDollarVolume),
             rateMultiple:number(enriched.intervalVolumeRateMultiple),episodeShares:number(enriched.episodeShares),episodeDollars:number(enriched.episodeDollarVolume),
-            maxGain:0,minGain:0,gain30:null,gain60:null,gain300:null,lastElapsed:0};
+            float:decision.float,marketCap:decision.marketCapAtCollection,spreadPercent:decision.spreadPercent,
+            sessionGain:snapshot.baseline&&snapshot.baseline>0?(snapshot.price/snapshot.baseline-1)*100:null,
+            offHighPercent:snapshot.dayHigh>0?(snapshot.price/snapshot.dayHigh-1)*100:null,relativeVolume:snapshot.providerVolumeRatio,
+            oneMinuteGain:enriched.oneMinuteGain,fiveMinuteGain:enriched.fiveMinuteGain,oneMinuteVolume:enriched.oneMinuteVolume,volumeAcceleration:enriched.volumeAcceleration,
+            maxGain:0,minGain:0,gain30:null,gain60:null,gain300:null,lastElapsed:0,maxGapSeconds:0};
           pending.set(decision.symbol,[...(pending.get(decision.symbol)??[]),event]);
         }
         if(!on)activeStartedAt.delete(key);
@@ -122,11 +132,45 @@ function methodReport(method:MomentumSignal){
       weakest:[...outcomes].sort((a,b)=>a.maxGain-b.maxGain||a.minGain-b.minGain).slice(0,10).map(sample),
       missedReferenceMoves:moves.filter(move=>move.captures[method]===undefined).slice(0,20).map(move=>({symbol:move.symbol,session:move.session,atUtc:new Date(move.at).toISOString()}))}};
 }
+function priceBurstStableCohort(){
+  const raw=completed.filter(event=>event.method==="price_burst"&&event.eligible).sort((a,b)=>a.symbol.localeCompare(b.symbol)||a.session.localeCompare(b.session)||a.at-b.at);
+  const sequences:Event[]=[];let previous:{symbol:string;session:ScannerSession;lastAt:number}|null=null;
+  for(const event of raw){
+    if(!previous||previous.symbol!==event.symbol||previous.session!==event.session||event.at-previous.lastAt>300_000){sequences.push(event);previous={symbol:event.symbol,session:event.session,lastAt:event.at};}
+    else previous.lastAt=event.at;
+  }
+  const summarize=(rows:Event[])=>{const stable=rows.filter(event=>event.minGain>-2),sample=(event:Event)=>({symbol:event.symbol,session:event.session,
+    atUtc:new Date(event.at).toISOString(),triggerPrice:event.price,maximumGain5m:rounded(event.maxGain),maximumDrawdown5m:rounded(event.minGain),
+    gain30s:rounded(event.gain30),gain60s:rounded(event.gain60),gain5m:rounded(event.gain300),signals:event.signals,float:event.float,marketCap:event.marketCap,
+    spreadPercent:rounded(event.spreadPercent),sessionGain:rounded(event.sessionGain),offHighPercent:rounded(event.offHighPercent),relativeVolume:rounded(event.relativeVolume),
+    intervalShares:rounded(event.intervalVolume),intervalDollars:rounded(event.intervalDollars),volumeRateMultiple:rounded(event.rateMultiple),
+    episodeShares:rounded(event.episodeShares),episodeDollars:rounded(event.episodeDollars),oneMinuteGain:rounded(event.oneMinuteGain),
+    fiveMinuteGain:rounded(event.fiveMinuteGain),oneMinuteVolume:rounded(event.oneMinuteVolume),volumeAcceleration:rounded(event.volumeAcceleration)});
+    const peakBuckets={noRise:0,under1:0,oneTo3:0,threeTo5:0,fiveTo10:0,tenOrMore:0};
+    for(const event of stable){if(event.maxGain===0)peakBuckets.noRise++;else if(event.maxGain<1)peakBuckets.under1++;else if(event.maxGain<3)peakBuckets.oneTo3++;
+      else if(event.maxGain<5)peakBuckets.threeTo5++;else if(event.maxGain<10)peakBuckets.fiveTo10++;else peakBuckets.tenOrMore++;}
+    const segment=(segmentRows:Event[])=>({count:segmentRows.length,medianTriggerPrice:rounded(quantile(segmentRows.map(event=>event.price),.5)),
+      medianFloat:rounded(quantile(segmentRows.map(event=>event.float),.5)),medianSpreadPercent:rounded(quantile(segmentRows.flatMap(event=>event.spreadPercent===null?[]:[event.spreadPercent]),.5)),
+      medianRateMultiple:rounded(quantile(segmentRows.flatMap(event=>event.rateMultiple===null?[]:[event.rateMultiple]),.5)),
+      medianEpisodeDollars:rounded(quantile(segmentRows.flatMap(event=>event.episodeDollars===null?[]:[event.episodeDollars]),.5)),
+      medianOneMinuteGain:rounded(quantile(segmentRows.flatMap(event=>event.oneMinuteGain===null?[]:[event.oneMinuteGain]),.5)),
+      medianOffHighPercent:rounded(quantile(segmentRows.flatMap(event=>event.offHighPercent===null?[]:[event.offHighPercent]),.5))});
+    return {completeEpisodes:rows.length,fellAtLeast2Percent:rows.length-stable.length,stayedAboveMinus2Percent:stable.length,
+      stayedAboveMinus2PercentRate:rounded(rows.length?stable.length/rows.length*100:null),uniqueTickers:new Set(stable.map(event=>event.symbol)).size,
+      peakGainBuckets:peakBuckets,medianMaximumGain5m:rounded(quantile(stable.map(event=>event.maxGain),.5)),
+      medianMaximumDrawdown5m:rounded(quantile(stable.map(event=>event.minGain),.5)),medianGain5m:rounded(quantile(stable.flatMap(event=>event.gain300===null?[]:[event.gain300]),.5)),
+      segments:{under1:segment(stable.filter(event=>event.maxGain<1)),oneTo3:segment(stable.filter(event=>event.maxGain>=1&&event.maxGain<3)),
+        threeTo5:segment(stable.filter(event=>event.maxGain>=3&&event.maxGain<5)),fiveTo10:segment(stable.filter(event=>event.maxGain>=5&&event.maxGain<10)),
+        tenOrMore:segment(stable.filter(event=>event.maxGain>=10))},
+      episodes:stable.map(sample)};};
+  return {rawEpisodes:summarize(raw),deduplicatedFiveMinuteSequences:summarize(sequences)};
+}
 console.log(JSON.stringify({generatedAtUtc:new Date().toISOString(),coverage:{cycles:coverage.cycles,observations:coverage.observations,uniqueSymbols:coverage.symbols.size,
   dates:[...coverage.dates].sort(),firstCycleUtc:new Date(coverage.firstAt).toISOString(),lastCycleUtc:new Date(coverage.lastAt).toISOString(),statuses:Object.fromEntries(coverage.statuses),
   issues:Object.fromEntries([...coverage.issues].sort((a,b)=>b[1]-a[1])),sessions:Object.fromEntries(coverage.sessions)},referenceMoveDefinition:"first eligible observation in a contiguous period where observed five-minute gain is at least 5%",
   referenceMoves:moves.length,configurationHistory:[...configurations.values()].sort((a,b)=>a.revision-b.revision||a.session.localeCompare(b.session)),
-  methods:Object.fromEntries(METHODS.map(method=>[method,methodReport(method)])),topSignalCombinations:[...overlaps].sort((a,b)=>b[1]-a[1]).slice(0,20).map(([signals,count])=>({signals,count}))},null,2));
+  methods:Object.fromEntries(METHODS.map(method=>[method,methodReport(method)])),priceBurstStableCohort:priceBurstStableCohort(),
+  topSignalCombinations:[...overlaps].sort((a,b)=>b[1]-a[1]).slice(0,20).map(([signals,count])=>({signals,count}))},null,2));
 }
 
 void main().catch(error=>{console.error(error);process.exitCode=1;});

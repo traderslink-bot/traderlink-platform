@@ -30,8 +30,10 @@ results alone.
 - Every retained cycle was labelled partial. The dominant recorded issue was
   `stale_or_invalid_provider_time`; other gaps included missing session prices,
   unverified session timestamps and unavailable batches/passes.
-- Five-minute outcomes without a valid observation near the five-minute
-  endpoint were censored. They were not counted as successes or failures.
+- Five-minute outcomes require an observation within 15 seconds of the
+  five-minute endpoint and no observation gap longer than 20 seconds. Episodes
+  that fail either coverage rule are censored rather than counted as successes
+  or failures.
 
 This is a chronological replay of saved production observations through the
 candidate detection logic. The early detection methods and 30-second cooling
@@ -73,12 +75,12 @@ are not incorporated into the outcome percentages.
 
 | Method | Eligible episodes | Complete 5m outcomes | Reference moves captured | Median lead | Median max rise | Reached +5% | Fell at least 2% | Median 5m end |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Volume Ignition | 3,922 | 3,516 | 72.5% | 70s | 0.73% | 5.3% | 20.8% | 0.00% |
-| Building Volume | 5,979 | 5,544 | 87.2% | 49s | 0.92% | 7.4% | 24.5% | 0.00% |
-| Price Burst | 1,160 | 1,102 | 94.2% | 30s | 2.32% | 28.2% | 63.4% | -0.73% |
-| Developing Activity | 1,073 | 985 | 46.4% | 129s | 0.70% | 7.1% | 29.1% | -0.27% |
-| One-minute Momentum | 3,244 | 3,028 | 99.0% | 40s | 0.88% | 11.9% | 39.2% | -0.45% |
-| Five-minute Momentum | 3,011 | 2,804 | 92.9% | 69s | 0.62% | 7.1% | 27.0% | -0.25% |
+| Volume Ignition | 3,922 | 2,644 | 72.5% | 70s | 0.76% | 5.7% | 23.3% | 0.00% |
+| Building Volume | 5,979 | 4,375 | 87.2% | 49s | 0.98% | 8.0% | 26.4% | 0.00% |
+| Price Burst | 1,160 | 952 | 94.2% | 30s | 2.44% | 29.2% | 64.4% | -0.71% |
+| Developing Activity | 1,073 | 815 | 46.4% | 129s | 0.74% | 7.6% | 29.9% | -0.38% |
+| One-minute Momentum | 3,244 | 2,606 | 99.0% | 40s | 0.94% | 12.6% | 40.4% | -0.45% |
+| Five-minute Momentum | 3,011 | 2,370 | 92.9% | 69s | 0.61% | 7.6% | 27.9% | -0.27% |
 
 “Median lead” is the median time from the start of the most recent qualifying
 signal episode to reference-move confirmation. Negative lead values are shown
@@ -94,11 +96,11 @@ share, dollar-volume and float-turnover dimensions.
 **Observed behavior.** It generated 3,922 eligible episodes across 137 tickers.
 The typical detection interval was 9.9 seconds with 10,657 shares, $6,705 in
 interval dollar volume and an 11.36x rate multiple. It captured 72.5% of the
-reference moves with a median 70-second lead. Within five minutes, 41.0% reached
-+1%, 12.2% reached +3%, 5.3% reached +5%, and 20.8% fell at least 2%.
+reference moves with a median 70-second lead. Within five minutes, 42.1% reached
++1%, 13.0% reached +3%, 5.7% reached +5%, and 23.3% fell at least 2%.
 
-**Session result.** After-hours had the strongest continuation rate: 10.3%
-reached +5%, compared with 7.2% premarket and 4.2% regular hours. After-hours
+**Session result.** After-hours had the strongest continuation rate: 10.8%
+reached +5%, compared with 7.5% premarket and 4.3% regular hours. After-hours
 and premarket also had more downside than regular hours.
 
 **Reviewed cases.** INLF at 9:11:10 AM Eastern gained as much as 36.7% in the
@@ -121,11 +123,11 @@ activity requirement.
 The median detection contained 9,308 interval shares, $5,563 in interval dollar
 volume, a 4.43x rate multiple, 131,848 accumulated episode shares and $81,992
 episode dollar volume. It captured 87.2% of reference moves with a 49-second
-median lead. It reached +1% in 48.0% of complete episodes, +3% in 16.3%, and
-+5% in 7.4%; 24.5% fell at least 2%.
+median lead. It reached +1% in 49.4% of complete episodes, +3% in 17.4%, and
++5% in 8.0%; 26.4% fell at least 2%.
 
 **Session result.** After-hours was strongest: median maximum rise 1.30%, 25.9%
-reached +3%, and 14.3% reached +5%. It also carried a 29.8% rate of 2% downside.
+reached +3%, and 14.8% reached +5%. It also carried a 29.4% rate of 2% downside.
 Regular hours had the lowest downside of the three sessions.
 
 **Reviewed cases.** PARA at 9:26:35 AM Eastern is the clearest success. Building
@@ -146,11 +148,11 @@ of at most 30 seconds, with meaningful accompanying activity.
 
 **Observed behavior.** It was selective: 1,160 eligible episodes across 76
 tickers. It captured 94.2% of reference moves with a median 30-second lead. Its
-median maximum rise was the largest at 2.32%; 64.9% reached +1%, 43.0% reached
-+3%, and 28.2% reached +5%.
+median maximum rise was the largest at 2.44%; 65.5% reached +1%, 44.5% reached
++3%, and 29.2% reached +5%.
 
-It also had the largest reversal risk. Some 63.4% fell at least 2% during the
-same five-minute window, and the median five-minute ending return was -0.73%.
+It also had the largest reversal risk. Some 64.4% fell at least 2% during the
+same five-minute window, and the median five-minute ending return was -0.71%.
 After-hours had both the best +5% rate (31.4%) and the worst 2% downside rate
 (72.3%).
 
@@ -164,6 +166,70 @@ bullish quality. It should strongly increase attention while also adding an
 extension/reversal risk flag. A second price hold or renewed activity should be
 required before it receives the highest candidate ranking.
 
+### Price Burst stable-cohort recheck
+
+The owner challenged the original downside result, so Price Burst received a
+second stricter replay. A complete outcome now requires an observation within
+15 seconds of the five-minute endpoint and no observation gap longer than 20
+seconds. This reduced the complete cohort from 1,102 to 952 episodes.
+
+- 613 of 952 episodes (64.39%) fell at least 2% below the trigger price.
+- 339 episodes (35.61%) stayed above -2% for the observed five-minute window.
+- Those 339 episodes came from 55 tickers and include repeated bursts during
+  the same ticker move.
+- Their median maximum rise was 4.61%, median maximum drawdown was -0.76%, and
+  median five-minute ending return was +2.12%.
+
+Highest observed rise among the 339 raw stable episodes:
+
+| Maximum rise | Episodes | Share of stable episodes |
+| --- | ---: | ---: |
+| No observed rise | 32 | 9.4% |
+| More than 0% but under 1% | 29 | 8.6% |
+| 1% to under 3% | 61 | 18.0% |
+| 3% to under 5% | 61 | 18.0% |
+| 5% to under 10% | 75 | 22.1% |
+| 10% or more | 81 | 23.9% |
+
+Repeated Price Burst triggers from one ticker within five minutes are not
+independent opportunities. Combining those repeats produced 366 distinct burst
+sequences. Of those, 159 (43.44%) stayed above -2%:
+
+| Maximum rise | Distinct stable sequences | Share of stable sequences |
+| --- | ---: | ---: |
+| No observed rise | 27 | 17.0% |
+| More than 0% but under 1% | 25 | 15.7% |
+| 1% to under 3% | 43 | 27.0% |
+| 3% to under 5% | 26 | 16.4% |
+| 5% to under 10% | 25 | 15.7% |
+| 10% or more | 13 | 8.2% |
+
+Thus 107 of 159 stable distinct sequences reached at least +1%, 64 reached at
+least +3%, 38 reached at least +5%, and 13 reached at least +10%. Across all
+366 distinct Price Burst sequences, the stable +5% group represents 10.4% and
+the stable +10% group represents 3.6%.
+
+The first-trigger measurements suggest where to investigate next. Stable
+sequences that rose less than 1% had median episode dollar volume of about
+$19.7K and an 11.45x rate multiple. The 5–10% group had about $1.29M episode
+dollar volume and a 2.92x multiple; the 10%+ group had about $684K and a 2.61x
+multiple. The larger continuations were also generally closer to the current
+day high. This short sample suggests that sustained absolute dollar activity is
+more informative than an enormous multiple against a tiny baseline. Float,
+spread and one-minute gain did not separate the first-trigger groups cleanly.
+
+This is promising but not yet an actionable selection rule. “Stayed above
+-2%” and “eventually reached +5%” are known only after the five-minute window.
+The next audit should test episode dollar volume, distance from HOD, continued
+volume after the first burst and immediate price hold on later holdout sessions.
+The complete lists are available as
+[all 339 stable trigger episodes](scanner-price-burst-stable-episodes-20261103.csv)
+and [159 de-duplicated stable sequences](scanner-price-burst-stable-sequences-20261103.csv).
+Detection timestamps in both files are Eastern time. Each row includes the
+trigger price, highest subsequent rise, deepest observed drawdown, 30-second,
+60-second and five-minute returns, and the available activity, float, market
+cap, spread, RVOL and HOD context.
+
 ## 4. Developing Activity
 
 **What it detects.** An episode with sufficient accumulated activity, at least
@@ -173,8 +239,8 @@ or stronger absolute activity.
 **Observed behavior.** It produced 1,073 eligible episodes across 94 tickers.
 It captured only 46.4% of reference moves, but when it captured one it was the
 earliest method: median lead was 129 seconds. The trade-off is weak standalone
-continuation. Median maximum rise was 0.70%, median five-minute ending return
-was -0.27%, 7.1% reached +5%, and 29.1% fell at least 2%.
+continuation. Median maximum rise was 0.74%, median five-minute ending return
+was -0.38%, 7.6% reached +5%, and 29.9% fell at least 2%.
 
 Premarket was weakest in this short sample: only 5.4% reached +5%, with a median
 five-minute ending return of -0.59%. After-hours had more large continuations
@@ -198,8 +264,8 @@ for a fixed multi-minute period.
 or above the saved admin threshold.
 
 **Observed behavior.** It generated 3,244 eligible episodes across 135 tickers
-and captured 99.0% of reference moves with a median 40-second lead. About 47.8%
-reached +1%, 21.7% reached +3%, and 11.9% reached +5%; 39.2% fell at least 2%.
+and captured 99.0% of reference moves with a median 40-second lead. About 49.1%
+reached +1%, 23.0% reached +3%, and 12.6% reached +5%; 40.4% fell at least 2%.
 The median five-minute ending return was -0.45%.
 
 The 99% capture rate must be interpreted with the threshold history. Much of
@@ -224,9 +290,9 @@ at or above the saved admin threshold.
 **Observed behavior.** It generated 3,011 eligible episodes across 139 tickers.
 It captured 92.9% of reference moves with a median 69-second lead, reflecting
 the 1% threshold used for most of the later evidence rather than requiring a
-full 5% move. About 40.1% reached a further +1%, 15.1% reached +3%, and 7.1%
-reached +5%; 27.0% fell at least 2%. Median five-minute ending return was
--0.25%.
+full 5% move. About 40.3% reached a further +1%, 16.2% reached +3%, and 7.6%
+reached +5%; 27.9% fell at least 2%. Median five-minute ending return was
+-0.27%.
 
 **Reviewed cases.** It confirmed PARA’s 9:28–9:29 AM and 11:49 AM moves. It also
 remained active in CHSN, CNSY and BIVI after the prior five-minute gain no longer
@@ -273,8 +339,9 @@ rank by itself. The useful distinctions are:
    reason and post-detection outcomes in the live audit. The candidate already
    records active/cooling timestamps; outcome review remains an audit analysis.
 9. Investigate the persistent partial-cycle/provider-time issues separately.
-   They did not erase all observations, but they reduce confidence and censored
-   5–10% of eligible episodes depending on the method.
+   They did not erase all observations, but they reduce confidence. Depending
+   on the method, 18–33% of eligible episodes lacked the strict continuous
+   five-minute coverage required for an outcome.
 
 ## QA corrections made during this audit
 
@@ -284,7 +351,8 @@ Two replay-report defects were found and corrected before this report:
   lead time. The final report uses the start of the signal episode.
 - A later observation after a coverage gap could initially be mistaken for a
   five-minute outcome. The final report requires a valid endpoint within 15
-  seconds of the five-minute boundary and censors missing outcomes.
+  seconds of the five-minute boundary, rejects any episode with an observation
+  gap longer than 20 seconds and censors missing outcomes.
 
 Manual timeline review then confirmed representative strong and weak cases,
 including PARA, RDAC, INLF, CRIS, CHSN, CNSY and MERC. The machine-readable
