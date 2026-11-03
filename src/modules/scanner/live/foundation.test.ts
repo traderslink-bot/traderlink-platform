@@ -115,8 +115,13 @@ describe("session and snapshot evidence", () => {
     const row = batch([raw()],{ session: "after_hours" }).snapshots[0];
     expect(row.price).toBe(1.4); expect(row.baseline).toBe(0.9); expect(row.volume).toBe(1000); expect(row.dayHigh).toBe(1.5); expect(row.dayLow).toBe(0.7);
     const premarket = batch([raw()],{ session: "premarket" }).snapshots[0];
-    expect(premarket.price).toBe(1.1); expect(premarket.dayHigh).toBe(1.2); expect(premarket.dayLow).toBe(0.9);
+    expect(premarket.price).toBe(1.1); expect(premarket.baseline).toBe(1); expect(premarket.dayHigh).toBe(1.2); expect(premarket.dayLow).toBe(0.9);
     expect(batch([raw()]).snapshots[0].dayHigh).toBe(1.3); expect(batch([raw()]).snapshots[0].dayLow).toBe(0.8);
+  });
+  it("uses yesterday's regular close rather than the older daily comparison before the bell", () => {
+    const premarket = batch([raw({ pre_price:1.78,last_price:1.89,prev_close_price:0.9 })],{ session:"premarket" }).snapshots[0];
+    expect(premarket.baseline).toBe(1.89);
+    expect((premarket.price/premarket.baseline-1)*100).toBeCloseTo(-5.82,1);
   });
   it("does not treat zero extended prices or bid/ask as usable values", () => {
     expect(batch([raw({ after_price: 0 })],{ session: "after_hours" }).missingSymbols).toEqual(["AAA"]);

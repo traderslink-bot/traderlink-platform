@@ -169,6 +169,18 @@ describe("LiveScannerFeed", () => {
     expect(result.receivedCount).toBe(0);
     expect(result.issues).toContain("snapshot_pass_unavailable");
   });
+  it("keeps the last complete screen during a brief total provider failure", async () => {
+    let passes=0;
+    const feed=new LiveScannerFeed(dependencies({snapshotPass:async (batches:readonly (readonly string[])[])=>{
+      passes++;
+      if(passes===2)throw Error("brief provider limit");
+      return batches.map(requestedSymbols=>({requestedSymbols,payload,receivedAt:NOW}));
+    }}));
+    const complete=await feed.scanOnce();
+    const retained=await feed.scanOnce();
+    expect(complete.receivedCount).toBe(1);
+    expect(retained).toEqual(complete);
+  });
   it("requires a fresh float before a stock can qualify", async () => {
     const result = await new LiveScannerFeed(dependencies({ floats: async () => new Map() })).scanOnce();
     expect(result.missingFloatCount).toBe(1);

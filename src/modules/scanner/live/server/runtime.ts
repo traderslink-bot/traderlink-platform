@@ -66,12 +66,19 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
     reserveScannerBudget: count => getMoomooSharedTransport(environment).reserveScanner(count),
     snapshotPass: batches => withWatchlistIndicatorMoomooAccess(async ({ token }) => {
       return pacedSnapshotPass(batches,async (requestedSymbols,requestedAt) => {
-        const response = await sharedMoomooFetch(SNAPSHOT_URL,{ method: "POST", cache: "no-store", redirect: "error",
-          signal: AbortSignal.timeout(15_000), headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ code_list: requestedSymbols.map(symbol => `US.${symbol}`) }) },
-        { priority: "scanner", environment, requireEnabled: true });
-        if (!response.ok) throw Error("scanner_snapshot_http_unavailable");
-        return { requestedSymbols, payload: await response.json(), receivedAt: Date.now(),requestedAt };
+        try {
+          const response = await sharedMoomooFetch(SNAPSHOT_URL,{ method: "POST", cache: "no-store", redirect: "error",
+            signal: AbortSignal.timeout(15_000), headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ code_list: requestedSymbols.map(symbol => `US.${symbol}`) }) },
+          { priority: "scanner", environment, requireEnabled: true });
+          if (!response.ok) throw Error("scanner_snapshot_http_unavailable");
+          return { requestedSymbols, payload: await response.json(), receivedAt: Date.now(),requestedAt };
+        } catch {
+          // Return a batch-scoped invalid envelope so later batches still run.
+          // LiveScannerFeed records this batch as unavailable without erasing
+          // successful responses from the same pass.
+          return { requestedSymbols, payload:null, receivedAt:Date.now(),requestedAt };
+        }
       },{spacingMs:scannerSnapshotSpacing(environment)});
     },environment),
     floats: (date,symbols) => floatFeed.read(date,symbols),

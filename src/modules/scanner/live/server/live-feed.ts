@@ -97,6 +97,10 @@ export class LiveScannerFeed {
       }
       for(const batch of batches)if(!returned.has(batch.join("\u0000")))receipts.push({sequence:receipts.length,requestedCount:batch.length,returnedCount:0,
         requestedSymbolsHash:createHash("sha256").update(batch.join("\n")).digest("hex"),receivedAt:null,durationMs:null,issue:"snapshot_batch_missing"});
+      if (snapshots.length === 0 && this.model.tradingDate === date && this.model.session === session
+        && this.model.receivedCount > 0 && (issues.has("snapshot_pass_unavailable") || issues.has("snapshot_batch_unavailable"))) {
+        return this.read();
+      }
       const evaluated = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
       const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus]
         .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[]))];

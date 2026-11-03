@@ -76,7 +76,10 @@ export function normalizeSnapshotBatch(input: Readonly<{
     if (price === null) { issues.add("session_price_unavailable"); continue; }
     // Preserve the all-day baseline. The separate post-market ranking uses
     // today's regular last_price, which remains separate from after_price.
-    const baseline = positive(value.prev_close_price);
+    // Before the opening bell Moomoo keeps yesterday's regular close in
+    // last_price while prev_close_price can still describe the older daily
+    // comparison that produced yesterday's move.
+    const baseline = positive(input.session === "premarket" ? value.last_price : value.prev_close_price);
     if (baseline === null) issues.add("session_baseline_unavailable");
     if (!input.qualification.sessionCountersVerified) issues.add("session_counters_unverified");
     const bid = positive(value.bid_price), ask = positive(value.ask_price);
