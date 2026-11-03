@@ -32,17 +32,18 @@ const price=(value:number)=>`$${prices.format(value)}`;
 const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${numeric.format(value)}%`;
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 const stamp=(value:string)=>clock.format(new Date(value));
+const titleTabsSx={minHeight:22,'& .MuiTabs-indicator':{height:2},'& .MuiTab-root':{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,minHeight:22,minWidth:0,p:0,pb:0.6,px:0,textTransform:"none"},'& .MuiTab-root + .MuiTab-root':{ml:2}};
 
 function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];rapid:boolean;full:boolean;onOpenChart:(row:DeclineRow)=>void}){
   const [expanded,setExpanded]=useState<string|null>(null);
-  if(!rows.length)return <Typography color="text.secondary" variant="body2">{rapid?"No rapid drops currently detected.":"No stocks currently declining in this comparison."}</Typography>;
+  if(!rows.length)return <Alert severity="info">{rapid?"No rapid drops currently detected.":"No stocks currently declining in this comparison."}</Alert>;
   return <TableContainer role="region" aria-label={rapid?"Rapid Drops list":"Top Losers list"} tabIndex={0}
     sx={theme=>({...scannerScrollStyles(theme),maxHeight:full?"calc(100dvh - 190px)":420})}>
     <Table size="small" stickyHeader aria-label={rapid?"Rapid Drops stocks":"Top Losers stocks"}
-      sx={{tableLayout:"fixed",'& td, & th':{px:0.45,py:0.6,fontSize:"0.75rem"}}}>
+      sx={{tableLayout:"fixed",minWidth:540,'& td, & th':{px:0.45,py:0.45,fontSize:"0.68rem",fontWeight:500},'& th':{fontWeight:650}}}>
       <TableHead><TableRow><TableCell sx={{width:20}} aria-label="Expand"/>
         <TableCell>Ticker</TableCell><TableCell>Price</TableCell><TableCell>{rapid?"From start":"Change"}</TableCell>
-        {full?<><TableCell>{rapid?"Fall time":"Volume"}</TableCell><TableCell>{rapid?"Rebound":"Float"}</TableCell><TableCell>{rapid?"Back to start":"Spread"}</TableCell></>:null}
+        <TableCell>{rapid?"Fall time":"Volume"}</TableCell><TableCell>{rapid?"Rebound":"Float"}</TableCell><TableCell>{rapid?"Back to start":"Spread"}</TableCell>
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,d=row.drop;const toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const metrics:[string,string][]=open?[["Session volume",shares(row.volume)],["Float",shares(row.float)],["Spread",pct(row.spreadPercent)],
@@ -57,10 +58,10 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
             sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
             <TableCell aria-hidden>{open?"−":"+"}</TableCell><TableCell sx={{color:"warning.main",fontWeight:850}}>{row.symbol}</TableCell>
             <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(d?.dropPercent??row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(d?.dropPercent??row.changePercent)}</TableCell>
-            {full?<><TableCell>{d?`${Math.floor(d.durationSeconds/60)}m ${d.durationSeconds%60}s`:shares(row.volume)}</TableCell>
-              <TableCell>{d?pct(d.reboundPercent):shares(row.float)}</TableCell><TableCell>{d?pct(Math.max(0,d.backToStartPercent)):pct(row.spreadPercent)}</TableCell></>:null}
+            <TableCell>{d?`${Math.floor(d.durationSeconds/60)}m ${d.durationSeconds%60}s`:shares(row.volume)}</TableCell>
+            <TableCell>{d?pct(d.reboundPercent):shares(row.float)}</TableCell><TableCell>{d?pct(Math.max(0,d.backToStartPercent)):pct(row.spreadPercent)}</TableCell>
           </TableRow>
-          {open?<TableRow><TableCell colSpan={full?7:4} sx={{bgcolor:"action.hover"}}>
+          {open?<TableRow><TableCell colSpan={7} sx={{bgcolor:"action.hover"}}>
             <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
               {metrics.map(([label,value])=><Box key={label}><Typography variant="caption" color="warning.main" sx={{display:"block",fontWeight:750}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700}}>{value}</Typography></Box>)}
             </Box>
@@ -77,8 +78,8 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
 
 export function DeclinesCard({results,notice,session,onOpenChart}:{results:DeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:DeclineRow)=>void}){
   const [view,setView]=useState<"rapid"|"losers">("rapid"),[full,setFull]=useState(false);
+  const tabs=(wide:boolean)=><Tabs value={view} onChange={(_,next)=>setView(next)} aria-label={wide?"Full decline scanner view":"Decline scanner view"} variant="scrollable" sx={titleTabsSx}><Tab label="Rapid Drops" value="rapid"/><Tab label="Top Losers" value="losers"/></Tabs>;
   const contents=(wide:boolean)=><Stack spacing={1}>
-    <Tabs value={view} onChange={(_,next)=>setView(next)} aria-label={wide?"Full decline scanner view":"Decline scanner view"} variant="scrollable"><Tab label="Rapid Drops" value="rapid"/><Tab label="Top Losers" value="losers"/></Tabs>
     <Typography variant="caption" color="text.secondary">{view==="rapid"
       ?`${results?.controls.minimumDropPercent??30}% or more within ${results?.controls.windowMinutes??5} minutes · observed prices`
       :session==="after_hours"?"Since today’s regular close":"Since the previous trading day’s regular close"}</Typography>
@@ -86,11 +87,11 @@ export function DeclinesCard({results,notice,session,onOpenChart}:{results:Decli
       :!results?<Skeleton height={260}/>:<DeclineTable full={wide} rapid={view==="rapid"} rows={view==="rapid"?results.rapid:results.losers} onOpenChart={onOpenChart}/>}
   </Stack>;
   return <>
-    <DashboardPanel title="Rapid Drops / Top Losers" action={<IconButton size="small" aria-label="Open Rapid Drops full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton>}>{contents(false)}</DashboardPanel>
+    <DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>{tabs(false)}<IconButton size="small" aria-label="Open Rapid Drops full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>
     <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"Rapid Drops full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>
       <Stack sx={{p:2,minHeight:0,height:"100dvh"}} spacing={1}>
         <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">Rapid Drops / Top Losers</Typography><IconButton aria-label="Close Rapid Drops full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack>
-        <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0})}>{contents(true)}</Box>
+        <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0})}>{tabs(true)}{contents(true)}</Box>
       </Stack>
     </Drawer>
   </>;
