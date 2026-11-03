@@ -41,3 +41,31 @@ it("accepts zero as known volume then fills a later positive same-reference coun
   const at=now+1000;
   expect(book.evaluate({...base,now:at,snapshots:[{...quote,premarketVolume:12000,receivedAt:at,providerAt:at}]}).rows[0].premarketVolume).toBe(12000);
 });
+
+it.each(["regular","after_hours"] as const)("fills delayed PM volume through the actual %s qualifier and normalizer",session=>{
+  const qualifier=new SnapshotSessionQualifier(),book=new PremarketPullbackBook();
+  const close=Date.parse("2026-11-02T21:00:00Z"),start=session==="regular"?now:close+300000;
+  const day={date:universe.tradingDate,verified:true,open:true,regularCloseEastern:"16:00" as const,extendedCloseEastern:"20:00" as const};
+  const run=(index:number,premarketVolume:number|null)=>{
+    const at=start+index*10000;
+    const payload={ret_code:0,data:{snapshot_list:[{code:"US.TEST",data_date:universe.tradingDate,
+      update_time:session==="regular"?at:close,last_price:session==="regular"?7:8,prev_close_price:5,
+      volume:10000+index*1000,turnover:70000+index*7000,pre_high_price:10,pre_volume:premarketVolume,
+      after_price:7,after_volume:1000+index*100,after_turnover:7000+index*700}]}};
+    const qualification=qualifier.observe(session,{payload,requestedSymbols:["TEST"],receivedAt:at,tradingDate:universe.tradingDate,day});
+    const normalized=normalizeSnapshotBatch({payload,requestedSymbols:["TEST"],session,tradingDate:universe.tradingDate,receivedAt:at,qualification});
+    return {qualification,normalized,result:book.evaluate({universe,session,now:at,snapshots:normalized.snapshots,floats:new Map(),activity:()=>activity})};
+  };
+  if(session==="after_hours"){
+    const first=run(0,null);
+    expect(first.qualification.sessionTimestampVerified).toBe(false);
+    expect(first.normalized.snapshots).toHaveLength(0);
+  }
+  const accepted=run(1,null);
+  expect(accepted.qualification.sessionTimestampVerified).toBe(true);
+  expect(accepted.result.rows[0]).toMatchObject({price:7,premarketHigh:10,premarketVolume:null});
+  const filled=run(2,12000);
+  expect(filled.result.rows[0]).toMatchObject({price:7,premarketHigh:10,premarketVolume:12000});
+  expect(filled.result.rows[0].backToHighPercent).toBeCloseTo(42.8571429);
+  expect(filled.normalized.issues).not.toContain("session_timestamp_unverified");
+});

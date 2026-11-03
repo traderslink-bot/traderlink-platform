@@ -991,3 +991,79 @@ claimed. No Platform build, preview update, production change or notification
 occurred during this correction. Coordinator handoff must retain these gates,
 private-account scope and disabled scanner delivery; do not represent this
 green code regression suite as complete hosted acceptance.
+
+### Browser checkpoint and Coordinator preservation Nov 3
+
+Coordinator preserved the three correction overlays as
+e29bca77cf7c9e51c5857408105e83aa2b3dedc4 and integrated the complete allowlisted
+feature as local candidate eda37c804ae3c0d3d8a18214754958ff42adf371.
+This is integration evidence, not deployment evidence.
+
+An isolated browser batch passed eight cases: four equal desktop cards, the
+double-width PR area, PM keyboard expansion, each of the four full-view drawers
+with Escape/focus restoration, thin overflow scrolling and mobile layout with
+no horizontal page overflow. Zero page exceptions were recorded. The ninth
+theme case failed because the probe assumed light mode while the fixture was
+already dark; light/dark switching is therefore not yet accepted. Screenshots
+remain at /tmp/scanner-card-browser-3rZDc2. Browser APIs used synthetic fixtures;
+the 24 non-document feature source files matched the preserved correction.
+This does not verify live market behavior or the final integrated build.
+
+The first bounded preview attempt hit its compilation memory limit; one
+larger bounded retry served the Admin page successfully. Local isolated health
+returned 503 and is not claimed healthy. Both preview lifetimes have ended;
+no live service, production data, provider request or notification was changed.
+The outstanding real premarket qualification remains explicitly unrun.
+
+### Consolidated remaining readiness checks Nov 3, 08:26 UTC
+
+The previously unexplained local `/api/platform/health` 503 is classified:
+`verifyPlatformHostedRuntimeReadiness` explicitly throws
+`TRADERLINK_HOSTED_RUNTIME_PRODUCTION_REQUIRED` when NODE_ENV is not production.
+It additionally requires Railway's exact /data volume layout. The isolated
+worker-disabled runner intentionally uses development and a different local
+data root. Thus this is the expected hosted-only readiness contract, not a
+scanner or preview startup defect. Do not change the endpoint, set fake hosted
+paths or weaken storage checks to get a local green response. The real Admin
+route and local fixture data APIs returned 200. Hosted health remains the
+Coordinator's separate production gate.
+
+Completed theme acceptance with actual responsive visible switches and settled
+layout. Intermediate probe failures were (1) two responsive switches matching
+the same label and (2) measuring immediately during viewport transition. Both
+are recorded harness defects, not hidden product fixes. Final bounded probe
+passed both dark and light modes on desktop and 390px mobile, without page
+exceptions. Dark row contrast was 16.59:1 (white on rgb(21,31,45)); light was
+16.27:1 (rgb(23,32,51) on white). Four-card geometry, thin auto-overflow and
+theme-specific scrollbar colors passed in both modes. Mobile document and
+viewport widths both measured 390. Original fixture appearance was restored.
+Screenshots in /tmp/scanner-card-browser-e9pa0A were visually inspected; the
+existing analytics-choice banner is unrelated and was left intact. These
+complete the previous eight browser cases; this remains synthetic UI evidence,
+not a live market or final integrated production-build claim.
+
+Added two contract regressions to premarket-pullbacks-qa.test.ts, exercising the
+actual SnapshotSessionQualifier -> normalizeSnapshotBatch ->
+PremarketPullbackBook path in regular and after-hours sessions. Both demonstrate
+that the frozen PM high remains 10 while initially missing volume fills to
+12,000 and the correct +42.857% return distance persists. The after-hours case
+first rejects an unqualified observation, then qualifies only after advancing
+session counters. All six tests in this file passed in 1.436s; the prior full
+200-test pass is unchanged evidence, not a claimed repeated 202-test batch.
+No runtime code or request cadence changed during this completion.
+
+Readiness decision: the selected delayed-PM-volume correction works during
+regular and already-qualified post-market sessions. The premarket rejection
+does NOT block these paths. It is not necessary to widen the source contract
+to release this correction. Full live premarket scanning, however, remains
+unsupported by the existing qualifier; this is not newly caused by the repair.
+Any premarket-enablement correction must independently validate the pre_price,
+pre_volume/pre_turnover and timestamp/session relationship and preserve the
+fail-closed gate. Do not copy regular/after-hours evidence, use HOD instead of
+PM high or invent a live 4 AM receipt. Recommend releasing the selected verified
+regular/post-market fix subject to Coordinator build/hosted checks, with the
+premarket limitation explicitly retained rather than blocking unrelated repair.
+
+All operations used fresh feature-owned common-lock admission, bounded user
+units, the existing archive/dependencies, synthetic isolated data and no real
+provider or delivery effects. Coach and Paid/Shared previews were untouched.
