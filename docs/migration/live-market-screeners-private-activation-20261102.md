@@ -1,5 +1,15 @@
 # Private production screeners activation — 2026-11-02
 
+The prior timestamp-qualification policy incorrectly rejected every premarket
+row and discarded thin stocks when their last-trade clocks were more than 30
+seconds old. Current Moomoo snapshot responses now use their receipt time as
+the observation clock in every active session. The provider trade timestamp is
+retained as provenance and display context, but it no longer decides whether a
+current response is usable. Wrong trading dates, malformed rows, impossible
+future clocks, missing session prices and rejected provider envelopes remain
+invalid. Rolling activity still derives only from observed price and cumulative
+counter changes; unchanged responses add no invented movement or volume.
+
 ## Owner authorization and scope
 
 The owner explicitly replaced the earlier no-deployment/no-production-access

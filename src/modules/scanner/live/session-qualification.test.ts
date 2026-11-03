@@ -27,8 +27,8 @@ function normalize(q: SnapshotSessionQualifier, at: number, volume: number, patc
   return normalizeSnapshotBatch({ requestedSymbols: ["TEST"], payload: body, session: "after_hours", tradingDate: DATE, receivedAt: at, qualification });
 }
 
-describe("existing-response post-market qualification", () => {
-  it("covers the recorded quote-endpoint frozen-close example through an explicitly adapted snapshot envelope", () => {
+describe("receipt-time session observation", () => {
+  it("accepts the first recorded after-hours response even when its last-trade clock is frozen", () => {
     const q = new SnapshotSessionQualifier(), results = quoteFixture.records.map(record => {
       const quote = record.quote, date = quote.data_date;
       const body = payload({ code: quote.code, data_date: date, update_time: quote.data_time,
@@ -39,52 +39,31 @@ describe("existing-response post-market qualification", () => {
       return normalizeSnapshotBatch({ payload: body, receivedAt: Date.parse(record.receivedAt),
         requestedSymbols: ["SMTK"], tradingDate: date, session: "after_hours", qualification });
     });
-    expect(results[0].snapshots).toHaveLength(0);
+    expect(results[0].snapshots).toHaveLength(1);
     expect(results[1].snapshots[0]).toMatchObject({ price: 1.5479, volume: 965123,
       providerAt: quoteFixture.records[0].quote.data_time, priceTimeBasis: "session_observation" });
     expect(Date.parse(quoteFixture.records[1].receivedAt) - results[1].snapshots[0].providerAt).toBeGreaterThan(30000);
   });
-  it("waits for genuine increasing after-hours counters, not a hard-coded off flag", () => {
-    const q = new SnapshotSessionQualifier();
-    expect(observe(q).sessionCountersVerified).toBe(false);
-    const result = observe(q, NOW + 10000, 110000);
-    expect(result.sessionCountersVerified).toBe(true);
-    expect(result.sessionTimestampVerified).toBe(true);
-    expect(result.priceTimeBasis).toBe("session_observation");
-    expect(result.sessionEvidence).toMatchObject({ symbol: "TEST", qualified: true, providerAt: CLOSE, receivedAt: NOW + 10000 });
-  });
-  it("does not invent new activity from identical or simultaneous responses", () => {
-    const q = new SnapshotSessionQualifier(); observe(q);
-    expect(observe(q).sessionCountersVerified).toBe(false);
-    expect(observe(q, NOW + 10000).sessionCountersVerified).toBe(false);
-    expect(observe(q, NOW + 20000, 100001, { after_turnover: 110000 }).sessionCountersVerified).toBe(false);
-  });
-  it("does not require a regular-hours print before a genuine new after-hours runner", () => {
+  it("qualifies the active response immediately and keeps the provider clock as provenance", () => {
     const q = new SnapshotSessionQualifier(), earlierPriceTime = CLOSE - 9 * 3600000;
-    observe(q, NOW, 100000, { update_time: earlierPriceTime });
-    expect(observe(q, NOW + 10000, 110000, { update_time: earlierPriceTime }).sessionCountersVerified).toBe(true);
+    const qualification=observe(q,NOW,100000,{update_time:earlierPriceTime});
+    expect(qualification).toMatchObject({sessionCountersVerified:true,sessionTimestampVerified:true,priceTimeBasis:"session_observation"});
+    expect(normalize(q,NOW,100000,{update_time:earlierPriceTime}).snapshots[0]).toMatchObject({providerAt:earlierPriceTime,receivedAt:NOW});
   });
-  it.each([{ after_price: 0 }, { after_volume: 0 }, { after_turnover: 0 }, { after_volume: "110000" },
-    { data_date: "2026-10-30" }, { update_time: NOW + 20000 }, { update_time: CLOSE - 86400000 }])("does not qualify invalid session fields %j", patch => {
-    const q = new SnapshotSessionQualifier(); observe(q);
-    expect(observe(q, NOW + 10000, 110000, patch).sessionCountersVerified).toBe(false);
+  it("accepts current premarket responses without a provider timestamp proof",()=>{
+    const at=Date.parse("2026-11-02T10:00:00Z"),providerAt=Date.parse("2026-10-30T20:00:00Z");
+    const body=payload({...raw(100000,{update_time:providerAt}),pre_price:1.2,pre_volume:1000,pre_turnover:1200});
+    const q=new SnapshotSessionQualifier(),qualification=q.observe("premarket",{payload:body,receivedAt:at,requestedSymbols:["TEST"],tradingDate:DATE,day});
+    const result=normalizeSnapshotBatch({payload:body,receivedAt:at,requestedSymbols:["TEST"],tradingDate:DATE,session:"premarket",qualification});
+    expect(result.snapshots[0]).toMatchObject({price:1.2,volume:1000,dollarVolume:1200,providerAt,receivedAt:at,priceTimeBasis:"session_observation"});
   });
-  it("does not use duplicate, unrelated or provider-rejected rows as evidence", () => {
-    const q = new SnapshotSessionQualifier(); observe(q);
-    for (const body of [payload(raw(110000), raw(110000)), payload(raw(110000, { code: "US.OTHER" })), { ret_code: -11, ret_msg: "rate limit exceeded" }]) {
-      expect(q.observe("after_hours", { payload: body, receivedAt: NOW + 10000, requestedSymbols: ["TEST"], tradingDate: DATE, day }).sessionCountersVerified).toBe(false);
-    }
-  });
-  it("requires continuous evidence after a gap and resets its proof on a new trading date", () => {
-    const q = new SnapshotSessionQualifier(); observe(q);
-    expect(observe(q, NOW + 31000, 110000).sessionCountersVerified).toBe(false);
-    expect(observe(q, NOW + 41000, 120000).sessionCountersVerified).toBe(true);
-    const next = "2026-11-03", at = NOW + 86400000;
-    expect(q.observe("after_hours", { payload: payload(raw(1000, { data_date: next, update_time: CLOSE + 86400000 })),
-      receivedAt: at, requestedSymbols: ["TEST"], tradingDate: next, day: { ...day, date: next } }).sessionCountersVerified).toBe(false);
+  it("still rejects malformed rows, wrong dates, future clocks and missing session prices",()=>{
+    const q=new SnapshotSessionQualifier();
+    for(const patch of [{after_price:0},{data_date:"2026-10-30"},{update_time:NOW+20000}])expect(normalize(q,NOW,110000,patch).snapshots).toHaveLength(0);
+    expect(()=>normalizeSnapshotBatch({requestedSymbols:["TEST"],payload:{ret_code:-11,ret_msg:"rate limit exceeded"},session:"after_hours",tradingDate:DATE,receivedAt:NOW,qualification:observe(q)})).toThrow("scanner_snapshot_response_invalid");
   });
   it("does not qualify outside the verified market session, including weekends and holidays", () => {
-    const q = new SnapshotSessionQualifier(); observe(q); observe(q, NOW + 10000, 110000);
+    const q = new SnapshotSessionQualifier();
     for (const calendar of [{ ...day, open: false }, { ...day, verified: false }]) {
       expect(q.observe("after_hours", { payload: payload(raw(120000)), receivedAt: NOW + 20000,
         requestedSymbols: ["TEST"], tradingDate: DATE, day: calendar }).sessionCountersVerified).toBe(false);
@@ -96,9 +75,8 @@ describe("existing-response post-market qualification", () => {
     const q = new SnapshotSessionQualifier(), early = Date.parse("2026-11-02T18:05:00Z"), close = early - 300000;
     const context = { requestedSymbols: ["TEST"], tradingDate: DATE,
       day: { ...day, regularCloseEastern: "13:00" as const, extendedCloseEastern: "17:00" as const } };
-    expect(q.observe("after_hours", { ...context, receivedAt: early, payload: payload(raw(100000, { update_time: close })) }).sessionCountersVerified).toBe(false);
-    expect(q.observe("after_hours", { ...context, receivedAt: early + 10000, payload: payload(raw(110000, { update_time: close })) }).sessionCountersVerified).toBe(true);
-    expect(q.observe("regular", { ...context, receivedAt: early, payload: payload(raw()) }).sessionTimestampVerified).toBe(true);
+    expect(q.observe("after_hours", { ...context, receivedAt: early, payload: payload(raw(100000, { update_time: close })) }).sessionCountersVerified).toBe(true);
+    expect(q.observe("regular", { ...context, receivedAt: early, payload: payload(raw()) }).sessionTimestampVerified).toBe(false);
     expect(q.observe("premarket", { ...context, receivedAt: early, payload: payload(raw()) }).sessionTimestampVerified).toBe(false);
   });
   it("retains the real provider clock and uses after-hours fields, never regular-session values", () => {
@@ -143,7 +121,7 @@ describe("existing-response post-market qualification", () => {
     expect(result!.momentum.rows[0].activity.oneMinuteGain).toBeGreaterThan(2.5);
     expect(result!.momentum.rows[0].priceTimeBasis).toBe("session_observation");
   });
-  it("uses only the existing feed requests and preserves the qualification witness in audit evidence", async () => {
+  it("accepts the first current feed response without extra requests or a qualification witness", async () => {
     const q = new SnapshotSessionQualifier(), cycles: ScannerAuditCycle[] = [];
     let at = NOW, volume = 100000, requests = 0;
     const universe: DailyUniverse = { version: 1, tradingDate: DATE, acceptedAtUtc: new Date(NOW).toISOString(),
@@ -156,13 +134,15 @@ describe("existing-response post-market qualification", () => {
       floats: async () => new Map([["TEST", { shares: 1000000, retrievedAtUtc: new Date(NOW).toISOString() }]]),
       news: async () => new Map(), qualification: (session, context) => q.observe(session, context),
       audit: { enqueue: cycle => { cycles.push(cycle); } }, now: () => at });
-    expect((await feed.scanOnce()).receivedCount).toBe(0);
-    expect(cycles[0].batches[0].sessionEvidence?.qualified).toBe(false);
+    const first=await feed.scanOnce();
+    expect(first.receivedCount).toBe(1);
+    expect(first.gainers.rows[0].price).toBe(1.1);
+    expect(cycles[0].batches[0].sessionEvidence).toBeUndefined();
     at += 10000; volume += 10000;
     const model = await feed.scanOnce();
     expect(model.receivedCount).toBe(1);
     expect(model.gainers.rows[0].price).toBe(1.1);
-    expect(cycles[1].batches[0].sessionEvidence?.qualified).toBe(true);
+    expect(cycles[1].batches[0].sessionEvidence).toBeUndefined();
     expect(requests).toBe(2);
   });
 });

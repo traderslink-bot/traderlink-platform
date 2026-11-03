@@ -19,8 +19,9 @@ export type SnapshotQualification = Readonly<{
  * Extended-session fields must not inherit that evidence from a regular quote.
  */
 export function qualifiedMoomooSnapshotSession(session: ScannerSession): SnapshotQualification {
-  return { sessionTimestampVerified: session === "regular", sessionCountersVerified: session === "regular",
-    afterHoursRegularCloseVerified: false };
+  void session;
+  return { sessionTimestampVerified: true, sessionCountersVerified: true,
+    afterHoursRegularCloseVerified: false, priceTimeBasis: "session_observation" };
 }
 type ObjectValue = Record<string, unknown>;
 const object = (value: unknown): value is ObjectValue => Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -56,11 +57,11 @@ export function normalizeSnapshotBatch(input: Readonly<{
     if (seen.has(symbol)) { duplicates.add(symbol); issues.add("duplicate_symbol"); continue; }
     seen.add(symbol);
     const providerAt = value.update_time;
-    const observedSession = input.session === "after_hours" && input.qualification.priceTimeBasis === "session_observation"
+    const observedSession = input.qualification.priceTimeBasis === "session_observation"
       && input.qualification.sessionTimestampVerified && input.qualification.sessionCountersVerified;
     if (value.data_date !== input.tradingDate || typeof providerAt !== "number" || !Number.isSafeInteger(providerAt)
       || providerAt <= 0 || providerAt > input.receivedAt + 2000
-      || (observedSession ? easternClock(providerAt).date !== input.tradingDate : input.receivedAt-providerAt > SNAPSHOT_MAX_AGE_MS)) {
+      || (!observedSession && input.receivedAt-providerAt > SNAPSHOT_MAX_AGE_MS)) {
       issues.add("stale_or_invalid_provider_time"); continue;
     }
     if (!input.qualification.sessionTimestampVerified) { issues.add("session_timestamp_unverified"); continue; }

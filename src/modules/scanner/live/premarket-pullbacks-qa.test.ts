@@ -17,12 +17,12 @@ it("picks up later available PM volume without changing the frozen PM high",()=>
   expect(result.rows[0].premarketVolume).toBe(12000);
 });
 
-it("documents the existing premarket qualification boundary without bypassing it",()=>{
+it("accepts a current premarket response without a separate timestamp qualification gate",()=>{
   const at=Date.parse("2026-11-02T13:00:00Z"),payload={ret_code:0,data:{snapshot_list:[{code:"US.TEST",data_date:universe.tradingDate,update_time:at,pre_price:7,pre_high_price:10,pre_volume:12000,pre_turnover:84000}]}};
   const qualification=new SnapshotSessionQualifier().observe("premarket",{payload,requestedSymbols:["TEST"],receivedAt:at,tradingDate:universe.tradingDate,day:{date:universe.tradingDate,verified:true,open:true,regularCloseEastern:"16:00",extendedCloseEastern:"20:00"}});
-  expect(qualification.sessionTimestampVerified).toBe(false);
+  expect(qualification.sessionTimestampVerified).toBe(true);
   const result=normalizeSnapshotBatch({payload,requestedSymbols:["TEST"],receivedAt:at,tradingDate:universe.tradingDate,session:"premarket",qualification});
-  expect(result.snapshots).toHaveLength(0);expect(result.issues).toContain("session_timestamp_unverified");
+  expect(result.snapshots[0]).toMatchObject({price:7,premarketHigh:10,premarketVolume:12000,priceTimeBasis:"session_observation"});
 });
 
 it("preserves final PM high and known volume through missing, reset or conflicting aggregates",()=>{
@@ -58,8 +58,8 @@ it.each(["regular","after_hours"] as const)("fills delayed PM volume through the
   };
   if(session==="after_hours"){
     const first=run(0,null);
-    expect(first.qualification.sessionTimestampVerified).toBe(false);
-    expect(first.normalized.snapshots).toHaveLength(0);
+    expect(first.qualification.sessionTimestampVerified).toBe(true);
+    expect(first.normalized.snapshots).toHaveLength(1);
   }
   const accepted=run(1,null);
   expect(accepted.qualification.sessionTimestampVerified).toBe(true);

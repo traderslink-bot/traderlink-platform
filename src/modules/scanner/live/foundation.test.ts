@@ -73,7 +73,7 @@ describe("daily list integrity", () => {
 });
 
 describe("session and snapshot evidence", () => {
-  it("accepts the recorded Nov 2 OAuth packet's fresh regular quotes and rejects stale thin-stock quotes", () => {
+  it("accepts a current OAuth response without discarding thin stocks whose last-trade clocks are old", () => {
     const receivedAt = 1793639811961;
     const facts = [
       { code:"US.AAPL",data_date:"2026-11-02",update_time:1793639811174,last_price:338.54,prev_close_price:344.63,volume:18867485,turnover:6432582491.841 },
@@ -83,14 +83,14 @@ describe("session and snapshot evidence", () => {
     ];
     const result = normalizeSnapshotBatch({ requestedSymbols:["AAPL","AACG","AAME","AARD"],payload:{ ret_code:0,data:{ snapshot_list:facts } },
       session:"regular",tradingDate:"2026-11-02",receivedAt,qualification:qualifiedMoomooSnapshotSession("regular") });
-    expect(result.snapshots.map(row=>row.symbol)).toEqual(["AAPL","AARD"]);
+    expect(result.snapshots.map(row=>row.symbol)).toEqual(["AAPL","AACG","AAME","AARD"]);
     expect(result.snapshots[0].volume).toBe(18867485);
-    expect(result.snapshots[1].dollarVolume).toBe(189996.108);
-    expect(result.missingSymbols).toEqual(["AACG","AAME"]);
-    expect(result.issues).toContain("stale_or_invalid_provider_time");
+    expect(result.snapshots[3].dollarVolume).toBe(189996.108);
+    expect(result.missingSymbols).toEqual([]);
+    expect(result.issues).toEqual([]);
   });
-  it.each(["premarket","after_hours"] as const)("does not claim regular-session evidence qualifies %s", session => {
-    expect(batch([raw()],{ session,qualification:qualifiedMoomooSnapshotSession(session) }).snapshots).toEqual([]);
+  it.each([["premarket",1.1,500],["after_hours",1.4,1000]] as const)("uses receipt-time observation for %s session fields", (session,price,volume) => {
+    expect(batch([raw()],{ session,qualification:qualifiedMoomooSnapshotSession(session) }).snapshots[0]).toMatchObject({session,price,volume,priceTimeBasis:"session_observation"});
   });
   const day: MarketDay = { date: "2026-11-02", verified: true, open: true, regularCloseEastern: "16:00", extendedCloseEastern: "20:00" };
   it("uses Eastern time across DST and observes all session boundaries", () => {
