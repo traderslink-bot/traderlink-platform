@@ -156,7 +156,8 @@ function CompactStockTable({ rows,screen,onOpenChart,compactDesktop=false }: { r
         row.relativeVolume==null?null:metric("RVOL",`${number.format(row.relativeVolume)}×`),
         traded==null?null:metric("Turnover",traded),
       ]:[
-        row.momentumSignals?.length?metric("Detected",row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · ")):null,
+        row.momentumState==="cooling"?metric("Detected","Cooling · watching for renewed activity"):
+          row.momentumSignals?.length?metric("Detected",row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · ")):null,
         row.activity.episodeShares==null?null:metric("Episode volume",compact.format(row.activity.episodeShares)),
         row.activity.episodeDollarVolume==null?null:metric("Episode $ volume",`$${compact.format(row.activity.episodeDollarVolume)}`),
         row.activity.episodeSeconds==null?null:metric("Episode time",`${number.format(row.activity.episodeSeconds)}s`),
@@ -246,7 +247,7 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
         {expanded?<TableRow><TableCell colSpan={showPostGain?15:14} sx={{ bgcolor:"action.hover",py:"10px !important" }}>
           <Box sx={{ display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:2 }}>
             {[
-              ["Detected",row.momentumSignals?.length?row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · "):"n/a"],
+              ["Detected",row.momentumState==="cooling"?"Cooling · watching for renewed activity":row.momentumSignals?.length?row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · "):"n/a"],
               ["Episode volume",row.activity.episodeShares==null?"n/a":compact.format(row.activity.episodeShares)],
               ["Episode $ volume",row.activity.episodeDollarVolume==null?"n/a":`$${compact.format(row.activity.episodeDollarVolume)}`],
               ["Episode time",row.activity.episodeSeconds==null?"n/a":`${number.format(row.activity.episodeSeconds)}s`],

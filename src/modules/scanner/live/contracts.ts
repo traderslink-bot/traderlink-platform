@@ -88,6 +88,9 @@ export type LiveScannerRow = Readonly<{
   priceTimeBasis?: "provider" | "session_observation";
   activity: RollingActivity; reasons: readonly string[]; news: readonly ScannerNewsItem[];
   momentumSignals?:readonly MomentumSignal[];
+  momentumState?:"active"|"cooling";
+  momentumLastActiveAtUtc?:string;
+  momentumCoolingUntilUtc?:string;
 }>;
 export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;
 export type DeclineRow = Readonly<{

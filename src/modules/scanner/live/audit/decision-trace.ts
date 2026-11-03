@@ -33,7 +33,7 @@ export function scannerFilterFailures(row: LiveScannerRow, filters: ScreenFilter
 export function scannerMovementFailures(row: LiveScannerRow, controls: FocusControls): readonly string[] {
   const one = row.activity.oneMinuteGain;
   const five = row.activity.fiveMinuteGain;
-  return Boolean(row.momentumSignals?.length)||one !== null && one >= controls.minimumOneMinuteGain || five !== null && five >= controls.minimumFiveMinuteGain
+  return row.momentumState==="cooling"||Boolean(row.momentumSignals?.length)||one !== null && one >= controls.minimumOneMinuteGain || five !== null && five >= controls.minimumFiveMinuteGain
     ? Object.freeze([])
     : Object.freeze([one === null && five === null ? "price_windows_warming" : "recent_price_move_below_minimum"]);
 }

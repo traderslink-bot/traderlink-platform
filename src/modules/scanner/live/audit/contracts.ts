@@ -30,6 +30,9 @@ export type ScannerAuditDecision = Readonly<{
   gainerFailures: readonly string[];
   momentumFailures: readonly string[];
   momentumSignals?:readonly MomentumSignal[];
+  momentumState?:"active"|"cooling";
+  momentumLastActiveAtUtc?:string;
+  momentumCoolingUntilUtc?:string;
   gainerRank: number | null;
   momentumRank: number | null;
   gainerDisplayed: boolean;
