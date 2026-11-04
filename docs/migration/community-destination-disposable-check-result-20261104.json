@@ -1,0 +1,86 @@
+{
+  "status": "passed",
+  "migration": {
+    "id": "0195_traderlink_community_destination_templates",
+    "executionOrder": 233
+  },
+  "source": {
+    "path": "/home/traderlink/preview-runtime/community-alerts-watchlists-3013/preview.sqlite",
+    "inode": 3776734,
+    "size": 24645632,
+    "unchanged": true
+  },
+  "target": "/tmp/community-destination-coordinator-check-1793817337417682032.sqlite",
+  "ledgerBefore": {
+    "count": 173,
+    "last": {
+      "migration_id": "0177_traderlink_community_branded_feeds",
+      "execution_order": 190
+    }
+  },
+  "collision": {
+    "legacySwingPageId": "8ba82c94-0549-4e7a-803f-1f74bda1afff",
+    "migrated": [
+      {
+        "page_id": "11111111-1111-4111-8111-111111111111",
+        "page_type": "alert",
+        "slug": "swing-desk",
+        "secondary_slug": null
+      },
+      {
+        "page_id": "8ba82c94-0549-4e7a-803f-1f74bda1afff",
+        "page_type": "alert",
+        "slug": "swing-desk-research-8ba82c94",
+        "secondary_slug": null
+      }
+    ],
+    "legacy": {
+      "legacy_slug": "swing-desk",
+      "legacy_secondary_slug": "",
+      "page_id": "8ba82c94-0549-4e7a-803f-1f74bda1afff"
+    }
+  },
+  "urls": [
+    "https://app.example.test/communities/test-community/alert/market-team/momentum?focus=056857d2-6d98-45a9-904f-fe2d695c387b",
+    "https://app.example.test/communities/test-community/alert/market-team/momentum?focus=a2b672ae-dc76-4a5f-ad21-c25d7ffcb0b3",
+    "https://app.example.test/communities/test-community/watchlist/research-desk"
+  ],
+  "activity": {
+    "scope": [
+      {
+        "path": "/communities/test-community/alert",
+        "allowed": true
+      },
+      {
+        "path": "/communities/test-community/alert/avery/momentum",
+        "allowed": true
+      },
+      {
+        "path": "/communities/test-community/watchlist/options",
+        "allowed": true
+      },
+      {
+        "path": "/communities/test-community/content/education/charts/candlesticks",
+        "allowed": true
+      },
+      {
+        "path": "/communities/test-community/manage/pages",
+        "allowed": false
+      }
+    ],
+    "prune": {
+      "events": 0,
+      "dailyMembers": 0,
+      "privateEvents": 1,
+      "privateDailyMembers": 0
+    },
+    "retained": [
+      "/communities/test-community/alert",
+      "/communities/test-community/alert/avery/momentum",
+      "/communities/test-community/content/education/charts/candlesticks",
+      "/communities/test-community/watchlist/options"
+    ]
+  },
+  "quickCheck": "ok",
+  "foreignKeyViolations": 0
+}
