@@ -69,6 +69,7 @@ export const TOOLS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["halt reason", "halt code", "news pending", "volatility pause", "resume trading"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "A halt alert shows the ticker, time, exchange reason and the reason code when the exchange provides one. For a volatility halt, the first alert also says UP or DOWN when fresh market data clearly establishes the direction into the halt. The direction is omitted when the evidence is unavailable or unclear. The alert also shows posted quote or trading-resumption times when they are available." }),
+          Object.freeze({ kind: "paragraph", text: "The Halt Alerts card on Live Screeners lists today’s qualifying halts newest first. Pending means the exchange has not posted a trading-resumption time yet. The card updates once a minute and links to the official Nasdaq or NYSE source." }),
           Object.freeze({ kind: "paragraph", text: "Halt Alerts cover qualifying Nasdaq and NYSE news-related and volatility halts. Listing, filing, administrative, IPO, corporate-action, ETF, market-wide and resumption-only notices are not sent as Halt Alerts." }),
         ]),
       }),

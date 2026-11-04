@@ -7,6 +7,7 @@ import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "./premarket-pullbacks";
 vi.mock("@/app/dashboard-template",()=>({DashboardPanel:({title,action,children}:{title?:string;action?:ReactNode;children:ReactNode})=>createElement("section",null,createElement("h2",null,title),action,children),DashboardPrimaryAction:({children,onClick,disabled}:{children:ReactNode;onClick:()=>void;disabled:boolean})=>createElement("button",{onClick,disabled},children)}));
 vi.mock("@/app/(dashboard)/charts/trading-view-chart",()=>({TradingViewChart:()=>null}));
 vi.mock("@/app/(dashboard)/screeners/screener-press-release-board",()=>({ScreenerPressReleaseBoard:()=>null}));
+vi.mock("@/app/(dashboard)/screeners/screener-market-halts-card",()=>({ScreenerMarketHaltsCard:()=>null}));
 import { LiveScreenersClient } from "@/app/(dashboard)/screeners/live-screeners-client";
 beforeAll(()=>{(globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;});
 let root:Root|undefined;

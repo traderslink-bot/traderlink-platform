@@ -48,6 +48,14 @@ describe("market halt feed normalization", () => {
     expect(halts[0]?.ticker).toBe("QSER");
   });
 
+  it("parses the current NYSE Resume Time header", () => {
+    const halts = parseNyseTradeHalts(`Halt Date,Halt Time,Symbol,Name,Exchange,Reason,Resume Date,NYSE Resume Time
+2026-11-04,13:22:24,TEST,Test Corp,NYSE,LULD Pause,2026-11-04,13:27:24`);
+
+    expect(halts).toHaveLength(1);
+    expect(halts[0]?.resumptionTradeTimeEt).toBe("13:27:24");
+  });
+
   it("keeps NYSE-family rows and excludes Nasdaq rows from the consolidated NYSE file", () => {
     const halts = parseNyseTradeHalts(`Halt Date,Halt Time,Symbol,Name,Market,Reason,Resume Date,Resume Time
 2026-09-09,12:09:41,RIBBU,Ribbon Acquisition Corp Unit,Nasdaq,LULD Pause,2026-09-09,12:14:41

@@ -33,3 +33,7 @@
 - [x] Replace the Nasdaq RSS browser-style fetch with one direct IPv4 HTTPS request to the same official feed after the host repair still failed in Railway; NYSE retains its independent existing request.
 - [x] Add privacy-safe connection failure categories (DNS, timeout, TLS or other connection) to the existing source-only scheduler warning so the Railway-side Nasdaq fault can be repaired without logging users, endpoints, credentials or upstream content.
 - [ ] Verify the local checkpoint with focused static checks, then obtain Railway log/device-delivery confirmation before release.
+
+## 2026-11-04 Live Screeners card integration audit
+
+The Halt Alerts card is integrated as an additive two-column card below PR Scanner and reads only persisted halt events through an authenticated, private, no-store endpoint. The current-main feed implementation is preserved, including Nasdaq relay/failure diagnostics and the four-character equity-symbol boundary. NYSE receives browser-compatible CSV request headers and now recognizes the live `NYSE Resume Time` column. Help copy documents the card. Five focused feed, dashboard, client and screener integration suites pass 24 tests.

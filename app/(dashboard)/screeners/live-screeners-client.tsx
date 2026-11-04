@@ -30,6 +30,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { TradingViewChart } from "@/app/(dashboard)/charts/trading-view-chart";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard } from "./screener-press-release-board";
+import { ScreenerMarketHaltsCard } from "./screener-market-halts-card";
 import { DeclinesCard } from "./declines-card";
 import { DEFAULT_DECLINE_CONTROLS } from "@/src/modules/scanner/live/declines";
 import { PremarketPullbacksCard } from "./premarket-pullbacks-card";
@@ -289,7 +290,6 @@ function ScannerChartDrawer({ row,onClose }: { row:Pick<LiveScannerRow,"symbol"|
 function AdminControls({ configuration,onSaved }: { configuration: ScannerConfiguration; onSaved:(next:ScannerConfiguration)=>void }) {
   const [draft,setDraft]=useState(configuration), [screen,setScreen]=useState<ScannerKind>("gainers"), [session,setSession]=useState<ScannerSession>("premarket");
   const [saving,setSaving]=useState(false), [message,setMessage]=useState<string|null>(null);
-  useEffect(()=>setDraft(configuration),[configuration]);
   const controls=draft[screen], filters=controls.filters[session];
   const momentumDetection=momentumDetectionControls(draft)[session];
   const updateMomentumDetection=(next:Partial<typeof momentumDetection>)=>setDraft(current=>{const all=current.momentumDetection??DEFAULT_MOMENTUM_DETECTION;return {...current,momentumDetection:{...all,[session]:{...all[session],...next}}};});
@@ -301,7 +301,7 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
   const updateFilter=(next:Partial<ScreenFilters>)=>updateControls({ filters:{ ...controls.filters,[session]:{ ...filters,...next } } });
   const save=async()=>{ setSaving(true);setMessage(null);try{
     const response=await fetch('/api/admin/screeners/settings',{ method:'POST',credentials:'same-origin',headers:{ 'content-type':'application/json',[PLATFORM_MUTATION_REQUEST_HEADER]:'1' },body:JSON.stringify({ expectedRevision:configuration.revision,configuration:draft }) });
-    const payload=await response.json(); if(!response.ok) throw Error(payload.code||'save_failed'); onSaved(payload.configuration);setMessage('Scanner settings saved.');
+    const payload=await response.json(); if(!response.ok) throw Error(payload.code||'save_failed'); setDraft(payload.configuration);onSaved(payload.configuration);setMessage('Scanner settings saved.');
   }catch(error){setMessage(error instanceof Error&&error.message==='scanner_settings_conflict'?'Settings changed. Reload the page before saving.':'Scanner settings were not saved.');}finally{setSaving(false);}};
   return <DashboardPanel title="Scanner controls" action={<DashboardPrimaryAction disabled={saving} onClick={()=>void save()}>{saving?'Saving…':'Save settings'}</DashboardPrimaryAction>}>
     <Stack spacing={2}>
@@ -416,6 +416,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       <Box data-scanner-premarket-pullbacks-card sx={{minWidth:0}}><PremarketPullbacksCard results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} onOpenChart={setChartRow}/></Box>
       <Box data-scanner-pr-card sx={{gridColumn:{xs:"auto",md:"span 2"},minWidth:0}}><ScreenerPressReleaseBoard/></Box>
+      <Box data-scanner-halts-card sx={{gridColumn:{xs:"auto",md:"span 2"},minWidth:0}}><ScreenerMarketHaltsCard/></Box>
     </Box>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,
