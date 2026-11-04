@@ -125,7 +125,9 @@ export class ScannerAuditStore {
   }
   health(runtime:Readonly<{queueDepth:number;droppedCycles:number;lastError:string|null;expectedActive?:boolean;now?:number}>):ScannerAuditHealth{
     const latest=this.db.prepare(`SELECT * FROM scanner_audit_cycles ORDER BY completed_at DESC LIMIT 1`).get() as Record<string,unknown>|undefined;
-    const today=latest?String(latest.trading_date):new Date().toISOString().slice(0,10);
+    const latestStoredGap=this.db.prepare(`SELECT state_key FROM scanner_audit_state
+      WHERE state_key LIKE 'coverage_gap_count:%' AND CAST(state_value AS INTEGER)>0 ORDER BY state_key DESC LIMIT 1`).get() as {state_key:string}|undefined;
+    const today=latest?String(latest.trading_date):latestStoredGap?.state_key.slice("coverage_gap_count:".length)??new Date().toISOString().slice(0,10);
     const storedGaps=Number((this.db.prepare(`SELECT state_value FROM scanner_audit_state WHERE state_key=?`).get(`coverage_gap_count:${today}`) as {state_value?:string}|undefined)?.state_value??0);
     const totals=this.db.prepare(`SELECT COUNT(*) cycles,COALESCE(SUM(observation_count),0) observations,
       COALESCE(SUM(evidence_length),0) bytes FROM scanner_audit_cycles WHERE trading_date=?`).get(today) as Record<string,number>;
