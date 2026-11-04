@@ -34,7 +34,7 @@ export default async function CommunityPagesManagementPage({params,searchParams}
    <Stack direction={{xs:"column",sm:"row"}} spacing={1} sx={{alignItems:{sm:"center"},justifyContent:"space-between"}}><Typography component="h1" variant="h1">Content pages</Typography><Chip label={`${management.pagesUsed} of ${management.pageLimit} pages used`} color={management.pagesUsed>=management.pageLimit?"warning":"default"}/></Stack>
    {notice?<Alert severity="success">{notice}</Alert>:null}
    <DashboardPanel title="Create a page">
-    <CommunityPageCreateForm action={createCommunityContentPageAction} categories={activeCategories} communitySlug={communitySlug} metadataChecks={<MetadataChecks/>} pageLimitReached={management.pagesUsed>=management.pageLimit} publishers={management.eligibleMembers}/>
+    <CommunityPageCreateForm action={createCommunityContentPageAction} categories={activeCategories} communitySlug={communitySlug} pageLimitReached={management.pagesUsed>=management.pageLimit} publishers={management.eligibleMembers}/>
    </DashboardPanel>
    <DashboardPanel title="Pages">
     {management.pages.length?<Stack divider={<Divider flexItem/>} spacing={2}>{management.pages.map(page=>{

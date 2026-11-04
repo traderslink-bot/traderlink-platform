@@ -1,6 +1,6 @@
 # Community branded content foundation progress — 2026-11-04
 
-> Current continuation status: source implementation and disposable-database verification are complete. The new runtime preview remains pending Coordinator reconciliation of the complete migration queue through proposed migration 0195. Earlier “preview active” statements below describe the accepted 0177 foundation checkpoint, not the new Alert/Watchlist/Content continuation.
+> Current continuation status: implementation and private preview acceptance are complete through Coordinator-assigned migration `0199_traderlink_community_destination_templates` at execution order 237. The isolated port-3013 preview is active for owner review. No deployment or real Discord delivery occurred.
 
 - Status: foundation implementation and private preview qualification complete; final visual composition remains deferred for owner review.
 - Assigned workspace: `/home/traderlink/projects/coaching`, branch `codex/local-coaching-20261016`.
@@ -59,7 +59,7 @@
 
 ## Alert, Watchlist and Content implementation continuation — 2026-11-04
 
-- Migration proposal `0195_traderlink_community_destination_templates` preserves stable page IDs and aliases, maps legacy Swing destinations to Alert with compatibility redirects, preserves legacy resource JSON in migrated Content documents, and adds current-state Watchlist rows, revision histories, Content documents, category permissions, custom templates and daily content Stats. Its proposed execution order is 233; Coordinator manifest integration remains pending the complete 0178–0194 queue.
+- Coordinator-integrated migration `0199_traderlink_community_destination_templates` preserves stable page IDs and aliases, maps legacy Swing destinations to Alert with compatibility redirects, preserves legacy resource JSON in migrated Content documents, and adds current-state Watchlist rows, revision histories, Content documents, category permissions, custom templates and daily content Stats. It is registered at execution order 237 after the complete intervening queue.
 - Alert, Watchlist and Content hubs are active source routes. Research/Swing is selected by `research_swing` template on Alert or Watchlist and is no longer offered as a top-level destination. Legacy `/swing/...` routes resolve through the migration compatibility map.
 - Category permissions inherit through parent categories. A destination can use inherited access or restrict publishing to direct page assignments. Owner forms manage both levels.
 - Community Watchlists now use revision-checked database rows with draft, published and removed states. Add ticker can publish immediately or retain a management draft. Published metadata captures a bounded, non-live price and company snapshot without blocking authored publication when providers are unavailable.
@@ -68,10 +68,22 @@
 - Member destination reads use a 15-second, 500-entry process cache. Watchlist, Content, Research and moderation writes invalidate only the affected destination. This matches the accepted one-process invited-beta runtime.
 - Focused Alert links accept `?focus=<content-or-placement-id>`, record the content/publisher dimensions, highlight the matching card and scroll it into view.
 - Completed UTC Stats days roll up by page, category and publisher. Raw branded-page visits are retained for 90 days and pruned in bounded batches only after a corresponding daily rollup exists. A disposable preview-database copy verified one rollup and two eligible prunes with `quick_check=ok` and zero foreign-key violations.
-- Focused ESLint, diff and TypeScript checks pass for the continuation surface. The updated `0195` SQL applies cleanly to a disposable `0177` preview copy with `quick_check=ok` and zero foreign-key violations.
-- The isolated preview database was restored to its valid `0177` checkpoint after schema testing. Persistent synthetic accounts remain intact. Runtime qualification of the new architecture waits for the Coordinator-owned manifest queue; no deployment, push or real Discord delivery occurred.
+- Focused ESLint, diff and TypeScript checks pass for the continuation surface. Registered migration `0199` applies cleanly to a disposable `0177` preview copy with `quick_check=ok` and zero foreign-key violations.
+- The isolated preview database was backed up, migrated through the registered runner from its exact 173-row ledger prefix to 174 rows through execution order 237, and qualified with `quick_check=ok`, zero foreign-key violations and all four persistent synthetic accounts intact. No deployment, push or real Discord delivery occurred.
 - The page creator now changes its preset list with the selected family, while still offering Alert, Watchlist and Research presets to both Alert and Watchlist destinations. This prevents an invalid Content/preset combination from reaching the server.
 - New singular Alert, Watchlist and Content hub and nested destination paths are included in named activity retention. A disposable check retained valid hub and nested public paths and removed the private `/manage/pages` path.
 - A collision fixture proved that an old Swing destination sharing an Alert route is deterministically renamed before conversion while its legacy route map continues to target the same stable page ID. The migrated database again reported `quick_check=ok` and zero foreign-key violations.
 - Stable delivery URL checks resolve Alerts to the branded destination with `?focus=<alert-id>` and Watchlists to their stable branded destination URL.
 - The latest focused ESLint pass is clean. A scoped TypeScript pass found and corrected the page creator's legacy `swing` union narrowing; remaining diagnostics belong to preserved concurrent Coaching/test configuration files. The repository-wide default-heap pass exhausted its 2 GB Node heap before diagnostics and is not counted as acceptance evidence.
+
+
+## Integrated private-preview acceptance — 2026-11-04
+
+- Coordinator source integration is recorded at `395cd1d3dcbf63dcbb469f8a0db0ff7d23e94f2a`; migration `0199_traderlink_community_destination_templates` is registered at execution order 237. The pre-migration database backup remains preserved.
+- Registered-runner, actual preview migration, disposable collision/redirect and permission/concurrency checks all pass. The live isolated database has 174 migration rows, `quick_check=ok`, zero foreign-key violations and four preserved synthetic identities.
+- Full browser discovery covered owner, analyst, moderator and member across hubs, destinations, legacy Swing, management, publishing and role-preview routes. Authorization boundaries, stable redirect behavior, mobile layout and no-overflow checks passed.
+- Functional browser acceptance passed for Watchlist draft/direct publication and revision history, provider-unavailable publication, Content collection/document creation, custom-template assignment, category inheritance and destination restriction, stale-write rejection, focused Alert tracking and Stats dimensions.
+- A final owner-management SSR recovery error was traced to a rendered MUI subtree passed across the page's Server/Client boundary. The metadata controls now render inside the client create form. Focused ESLint and post-restart Light/Navy checks pass for owner management and member Watchlist at 1440 × 900 and 390 × 844 with HTTP 200, zero browser errors and zero horizontal overflow.
+- Exact browser and runtime evidence is in `docs/migration/community-destination-private-preview-acceptance-20261104.json`. Disposable and registered-runner receipts remain beside this progress record.
+- The Help Center coverage remains aligned with the implemented Alert, Watchlist, Content, permissions, publishing and Stats behavior. Image upload/processing remains explicitly deferred under the controlling plan.
+- The private preview remains active on `127.0.0.1:3013`; the owner's existing desktop tunnel is `http://localhost:57683`. Owner visual approval remains separate from technical acceptance.

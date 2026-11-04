@@ -1,0 +1,153 @@
+{
+  "checkedAtUtc": "2026-11-04T20:20:00.000Z",
+  "status": "passed",
+  "source": {
+    "head": "395cd1d3dcbf63dcbb469f8a0db0ff7d23e94f2a",
+    "branch": "codex/local-coaching-20261016"
+  },
+  "preview": {
+    "service": "traderlink-preview-community-3013.service",
+    "listen": "127.0.0.1:3013",
+    "workersEnabled": false,
+    "database": "/home/traderlink/preview-runtime/community-alerts-watchlists-3013/preview.sqlite",
+    "migrationCount": 174,
+    "lastExecutionOrder": 237,
+    "quickCheck": "ok",
+    "foreignKeyViolations": 0,
+    "syntheticAccountsPreserved": 4
+  },
+  "coordinatorMigration": {
+    "id": "0199_traderlink_community_destination_templates",
+    "executionOrder": 237,
+    "priorLedgerPrefixPreserved": 173
+  },
+  "browser": {
+    "completeRoleSweep": {
+      "status": "passed-before-final-form-boundary-correction",
+      "roles": [
+        "owner",
+        "analyst",
+        "moderator",
+        "member"
+      ],
+      "routesPerRole": 10,
+      "http200": 40,
+      "browserErrors": 0,
+      "horizontalOverflow": 0,
+      "authorization": "owner management allowed; analyst/moderator management denied; member management and publishing denied; member destinations allowed",
+      "legacySwingRedirect": "/communities/test-community/alert/swing-desk"
+    },
+    "finalRegression": [
+      {
+        "role": "owner",
+        "status": 200,
+        "initial": {
+          "title": "Content pages",
+          "bg": "rgb(14, 21, 32)",
+          "overflow": false,
+          "dark": true,
+          "create": 1,
+          "amd": false
+        },
+        "opposite": {
+          "title": "Content pages",
+          "bg": "rgb(245, 247, 251)",
+          "overflow": false,
+          "dark": false,
+          "create": 1,
+          "amd": false
+        },
+        "oppositeMobile": {
+          "title": "Content pages",
+          "bg": "rgb(245, 247, 251)",
+          "overflow": false,
+          "dark": false,
+          "create": 1,
+          "amd": false
+        },
+        "restored": {
+          "title": "Content pages",
+          "bg": "rgb(14, 21, 32)",
+          "overflow": false,
+          "dark": true,
+          "create": 1,
+          "amd": false
+        },
+        "restoredMobile": {
+          "title": "Content pages",
+          "bg": "rgb(14, 21, 32)",
+          "overflow": false,
+          "dark": true,
+          "create": 1,
+          "amd": false
+        },
+        "errors": []
+      },
+      {
+        "role": "member",
+        "status": 200,
+        "initial": {
+          "title": "Research Desk Watchlists",
+          "bg": "rgb(245, 247, 251)",
+          "overflow": false,
+          "dark": false,
+          "create": 0,
+          "amd": true
+        },
+        "opposite": {
+          "title": "Research Desk Watchlists",
+          "bg": "rgb(14, 21, 32)",
+          "overflow": false,
+          "dark": true,
+          "create": 0,
+          "amd": true
+        },
+        "oppositeMobile": {
+          "title": "Research Desk Watchlists",
+          "bg": "rgb(14, 21, 32)",
+          "overflow": false,
+          "dark": true,
+          "create": 0,
+          "amd": true
+        },
+        "restored": {
+          "title": "Research Desk Watchlists",
+          "bg": "rgb(245, 247, 251)",
+          "overflow": false,
+          "dark": false,
+          "create": 0,
+          "amd": true
+        },
+        "restoredMobile": {
+          "title": "Research Desk Watchlists",
+          "bg": "rgb(245, 247, 251)",
+          "overflow": false,
+          "dark": false,
+          "create": 0,
+          "amd": true
+        },
+        "errors": []
+      }
+    ],
+    "functionalFlows": [
+      "Avery saved AMD as a Watchlist draft and published it to members; revision history contains both states.",
+      "Published Watchlist metadata remained explicitly unavailable when providers were absent and authored content still published.",
+      "Owner created and rendered a stable structured Content document under its collection.",
+      "Owner created and assigned a custom Watchlist template; hidden and shown author fields matched the template.",
+      "Inherited category permission allowed Casey, restricted destination override denied Casey, stale revision was rejected, and the fixture was restored.",
+      "Focused Alert rendered, highlighted, scrolled and recorded page, publisher and content dimensions.",
+      "Stats rendered page, category and publisher rows on mobile without overflow."
+    ]
+  },
+  "static": {
+    "focusedEslint": "passed",
+    "scopedTypeScript": "passed for feature surface; preserved unrelated Coaching/test configuration diagnostics remain",
+    "dashboardTemplateVerifier": "3 passed and 4 preserved baseline failures; no new feature-specific failure"
+  },
+  "boundaries": {
+    "deployment": false,
+    "realDiscordDelivery": false,
+    "productionData": false,
+    "syntheticAccountsDeleted": false
+  }
+}

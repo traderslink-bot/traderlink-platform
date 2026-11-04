@@ -113,3 +113,8 @@ Discord delivery remains asynchronous and outside the author’s database transa
 Visit collection must not make destination rendering depend on a large synchronous aggregation. Record bounded events, aggregate older activity into daily page/category/publisher totals, and apply the project’s retention policy to raw events. A visit remains distinct from a like or other engagement signal.
 
 The accepted persistent, single-writer SQLite architecture is appropriate for invited beta while writes remain short and measured contention remains low. No numerical community or visitor capacity is claimed without load evidence. Monitor write latency, busy/lock time, event growth, cache effectiveness, page latency and delivery backlog. Sustained measured contention, rather than an assumed user count, triggers a separate scaling plan for PostgreSQL and queued event processing. The stable IDs and multi-tenant contracts must allow that storage migration without changing public URLs or owner/member workflows.
+
+
+## Implementation completion checkpoint — 2026-11-04
+
+The Alert, Watchlist and Content architecture in this plan is implemented and technically accepted in the isolated Community preview through registered migration `0199_traderlink_community_destination_templates` at execution order 237. Stable destination behavior, Research/Swing templates, category inheritance and destination restriction, current-state Watchlists, structured Content documents, compatibility routing, bounded caching, concurrency checks and Stats retention all passed their recorded runtime and browser checks. Image processing remains the planned later phase described above. Production release, real Discord delivery and synthetic-account cleanup remain outside this checkpoint.
