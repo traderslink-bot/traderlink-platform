@@ -76,7 +76,7 @@ CREATE TABLE news_market_halt_push_deliveries (
       deviceRef,
       endpointHash,
       subscription: Object.freeze({
-        endpoint: `https://push.example.test/${input.subscriptionId}`,
+        endpoint: `https://fcm.googleapis.com/test/${input.subscriptionId}`,
         expirationTime: null,
         keys: Object.freeze({
           auth: Buffer.alloc(16, 2).toString("base64url"),
