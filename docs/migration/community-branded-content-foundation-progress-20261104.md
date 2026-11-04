@@ -87,3 +87,13 @@
 - Exact browser and runtime evidence is in `docs/migration/community-destination-private-preview-acceptance-20261104.json`. Disposable and registered-runner receipts remain beside this progress record.
 - The Help Center coverage remains aligned with the implemented Alert, Watchlist, Content, permissions, publishing and Stats behavior. Image upload/processing remains explicitly deferred under the controlling plan.
 - The private preview remains active on `127.0.0.1:3013`; the owner's existing desktop tunnel is `http://localhost:57683`. Owner visual approval remains separate from technical acceptance.
+
+## Destination groups revision — 2026-11-04
+
+- Owner-approved implementation is complete in source for reusable publishing groups, destination-level permissions, individual exceptions, topic-only classification and an optional compatible Discord channel per destination.
+- Proposed migration `0200_traderlink_community_destination_groups`, Coordinator-assigned execution order 238, adds the destination/channel relationship and destination/group grants. The platform migration manifest remains Coordinator-owned and is not edited in this workspace.
+- Disposable migration verification passes 76 old/new permission comparisons, including an injected restricted destination, a direct delete-own exception and an inherited category grant. The historical category row and its unmatched `can_configure` bit remain unchanged.
+- Cross-community Discord destination assignment is rejected by the database. Group and individual permission behavior passes. Linked-channel authorization leaves Shared Alerts destination-publisher assignments byte-for-byte unchanged. SQLite reports `quick_check=ok` and zero foreign-key violations, and the source preview database remains unchanged.
+- Targeted ESLint has zero errors; the seven warnings are preserved unrelated unused Coaching symbols in `community-dashboard.tsx`. A feature-scoped TypeScript check passes. The repository-wide check exceeded its default 2 GB heap and is not claimed.
+- The Community Help Center guide now explains Publishing destinations, Groups and access, individual exceptions and topic-only classification.
+- Remaining checkpoint: Coordinator manifest integration and narrow source preservation, registered-runner qualification on an isolated database copy, then one controlled port-3013 preview update and full owner/member role browser retest. No deployment, real Discord delivery or synthetic-account deletion is authorized.

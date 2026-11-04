@@ -118,3 +118,17 @@ The accepted persistent, single-writer SQLite architecture is appropriate for in
 ## Implementation completion checkpoint — 2026-11-04
 
 The Alert, Watchlist and Content architecture in this plan is implemented and technically accepted in the isolated Community preview through registered migration `0199_traderlink_community_destination_templates` at execution order 237. Stable destination behavior, Research/Swing templates, category inheritance and destination restriction, current-state Watchlists, structured Content documents, compatibility routing, bounded caching, concurrency checks and Stats retention all passed their recorded runtime and browser checks. Image processing remains the planned later phase described above. Production release, real Discord delivery and synthetic-account cleanup remain outside this checkpoint.
+
+## Destination groups and topics revision — 2026-11-04
+
+Publishing authorization now follows the owner-approved three-part model:
+
+- **Groups and access** defines reusable sets of people. A group may contain internally selected members and/or members matched through an active mapped Discord role.
+- **Publishing destinations** define stable Alert, Watchlist or Content website pages. Each destination receives publish, edit-own, delete-own and manage-all grants for reusable groups, with individual exceptions available when needed.
+- **Topics** classify and filter published content. Topics do not grant publishing authority.
+
+A destination may connect one compatible Community Discord destination. Alert destinations accept an Alerts or general channel, Watchlist destinations accept a Watchlists or general channel, and Content destinations accept a general channel. The database rejects channel IDs from another community and incompatible content types. A publisher with access to several destinations chooses the destination when publishing; a single eligible destination may be selected automatically by the authoring UI.
+
+Existing category-inherited effective permissions migrate into direct destination-level individual grants so publish, edit-own, delete-own and moderation behavior remains unchanged. Restricted destinations remain restricted. Historical category permission rows remain as migration evidence. `can_configure` is deliberately not translated because destination permissions have no identical authority; it is preserved and reported for later owner review rather than silently broadened.
+
+Connecting a Discord channel to a publishing destination extends the existing delivery authorization read. It does not write or replace Shared Alerts destination-publisher assignments and does not affect Coaching destinations. Discord roles remain Discord evidence; TraderLink groups remain the reusable product permission layer.

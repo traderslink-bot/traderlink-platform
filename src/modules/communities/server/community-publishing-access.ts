@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import {CommunityBrandedContentRepository} from "./community-branded-content-repository";
 import {TraderLinkCommunityRepository} from "./traderlink-community-repository";
 import {isFreshCommunityEvidence} from "./community-launch-policy";
 import {assertCanonicalUuidV4,createCanonicalUuidV4} from "../../platform/server/database/platform-migration-contract";
@@ -26,7 +27,9 @@ export class CommunityPublishingAccess {
   if(!evidence||!isFreshCommunityEvidence(evidence.last_verified_at_utc,atUtc))return [];
   const roles=new Set<string>(JSON.parse(evidence.role_ids_json));roles.add(evidence.discord_guild_id);
   const destinations=this.db.prepare(`SELECT destination_id,name,discord_channel_id,content_type,status FROM traderlink_community_discord_destinations WHERE community_id=? AND content_type=? AND status='active' ORDER BY name,destination_id`).all(communityId,kind) as {destination_id:string;name:string;discord_channel_id:string;content_type:PublishingKind;status:"active"}[];
-  return destinations.filter(destination=>access.isOwner||this.assignments(communityId,destination.destination_id).some(subject=>subject.kind==="user"?subject.id===userId:roles.has(subject.id)));
+  const linkedPages=this.db.prepare("SELECT page_id,discord_destination_id FROM traderlink_community_content_pages WHERE community_id=? AND status='active' AND discord_destination_id IS NOT NULL").all(communityId) as Array<{page_id:string;discord_destination_id:string}>;
+  const branded=new CommunityBrandedContentRepository(this.db);
+  return destinations.filter(destination=>access.isOwner||this.assignments(communityId,destination.destination_id).some(subject=>subject.kind==="user"?subject.id===userId:roles.has(subject.id))||linkedPages.some(page=>page.discord_destination_id===destination.destination_id&&branded.permissions(communityId,page.page_id,userId).canPublish));
  }
  assignments(communityId:string,destinationId:string):PublisherAssignment[]{return this.db.prepare(`SELECT subject_kind kind,subject_id id FROM traderlink_community_destination_publishers WHERE community_id=? AND destination_id=? ORDER BY subject_kind,subject_id`).all(communityId,destinationId) as PublisherAssignment[];}
  saveAssignments(input:{communityId:string;actorUserId:string;destinationId:string;subjects:readonly PublisherAssignment[];atUtc:string}){
