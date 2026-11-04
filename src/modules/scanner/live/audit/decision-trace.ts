@@ -30,6 +30,22 @@ export function scannerFilterFailures(row: LiveScannerRow, filters: ScreenFilter
   return Object.freeze(failures);
 }
 
+const EARLY_LIQUIDITY_SIGNALS = new Set(["volume_ignition", "building_volume", "developing_activity"]);
+
+/**
+ * Strong early-event signals already require two of episode shares, episode
+ * dollar volume and float turnover. Let that adaptive liquidity proof replace
+ * only the cumulative session volume floors; all risk and universe filters
+ * continue to apply. A price burst alone never receives this exception.
+ */
+export function scannerMomentumFilterFailures(row: LiveScannerRow, filters: ScreenFilters): readonly string[] {
+  const failures = scannerFilterFailures(row, filters);
+  const adaptiveLiquidity = row.momentumSignals?.some(signal => EARLY_LIQUIDITY_SIGNALS.has(signal)) ?? false;
+  return adaptiveLiquidity
+    ? Object.freeze(failures.filter(reason => reason !== "volume_below_minimum" && reason !== "dollar_volume_below_minimum"))
+    : failures;
+}
+
 export function scannerMovementFailures(row: LiveScannerRow, controls: FocusControls): readonly string[] {
   const one = row.activity.oneMinuteGain;
   const five = row.activity.fiveMinuteGain;

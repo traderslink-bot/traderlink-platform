@@ -259,6 +259,31 @@ describe("rolling evidence and focus", () => {
     expect(result.momentum.rows[0].activity.oneMinuteGain).toBeNull();
     expect(result.momentum.rows[0].momentumSignals).toEqual(expect.arrayContaining(["volume_ignition","price_burst"]));
   });
+  it("lets adaptive early-event liquidity qualify before cumulative session floors",()=>{
+    const universe=importDailyUniverse(null,upload(),NOW).universe,engine=new LiveScannerEngine();
+    const configuration={...initialConfiguration(),enabled:true};
+    const floats=new Map([["AAA",{shares:500_000,retrievedAtUtc:new Date(NOW).toISOString()}]]);
+    engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW,configuration,floats,news:new Map(),
+      snapshots:[snapshot(NOW,{price:1,volume:70_000,dollarVolume:70_000})]});
+    const result=engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW+10_000,configuration,floats,news:new Map(),
+      snapshots:[snapshot(NOW+10_000,{price:1.002,volume:100_000,dollarVolume:100_000})]});
+    expect(result.momentum.rows).toHaveLength(1);
+    expect(result.momentum.rows[0].momentumSignals).toContain("volume_ignition");
+    expect(result.audit[0].momentumFailures).not.toContain("volume_below_minimum");
+    expect(result.audit[0].momentumFailures).not.toContain("dollar_volume_below_minimum");
+  });
+  it("does not let a price burst alone bypass cumulative liquidity floors",()=>{
+    const universe=importDailyUniverse(null,upload(),NOW).universe,engine=new LiveScannerEngine();
+    const configuration={...initialConfiguration(),enabled:true};
+    const floats=new Map([["AAA",{shares:50_000_000,retrievedAtUtc:new Date(NOW).toISOString()}]]);
+    engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW,configuration,floats,news:new Map(),
+      snapshots:[snapshot(NOW,{price:1,volume:50_000,dollarVolume:50_000})]});
+    const result=engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW+10_000,configuration,floats,news:new Map(),
+      snapshots:[snapshot(NOW+10_000,{price:1.02,volume:57_000,dollarVolume:57_000})]});
+    expect(result.audit[0].momentumSignals).toEqual(["price_burst"]);
+    expect(result.momentum.rows).toHaveLength(0);
+    expect(result.audit[0].momentumFailures).toEqual(expect.arrayContaining(["volume_below_minimum","dollar_volume_below_minimum"]));
+  });
   it("ranks sustained liquid momentum above a larger price jump with weaker activity", () => {
     const universe = importDailyUniverse(null,upload(),NOW).universe, engine = new LiveScannerEngine();
     const configuration = { ...initialConfiguration(),enabled: true };
