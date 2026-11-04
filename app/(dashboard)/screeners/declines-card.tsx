@@ -3,6 +3,7 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
@@ -16,9 +17,12 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tabs from "@mui/material/Tabs";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import CandlestickChartRoundedIcon from "@mui/icons-material/CandlestickChartRounded";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
 import type { DeclineResults, DeclineRow, ScannerSession } from "@/src/modules/scanner/live/contracts";
@@ -34,14 +38,22 @@ const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 const stamp=(value:string)=>clock.format(new Date(value));
 const titleTabsSx={minHeight:22,'& .MuiTabs-indicator':{height:2},'& .MuiTab-root':{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,minHeight:22,minWidth:0,p:0,pb:0.6,px:0,textTransform:"none"},'& .MuiTab-root + .MuiTab-root':{ml:2}};
 
+function ChartButton({row,onOpenChart}:{row:DeclineRow;onOpenChart:(row:DeclineRow)=>void}){
+  return <ButtonBase aria-label={`Open ${row.symbol} chart`} onClick={event=>{event.stopPropagation();onOpenChart(row);}}
+    onKeyDown={event=>event.stopPropagation()} sx={{alignItems:"center",bgcolor:"rgba(46,125,50,0.13)",borderRadius:0.75,color:"success.main",height:20,justifyContent:"center",minWidth:20,
+      '&:hover':{bgcolor:"rgba(46,125,50,0.23)"},'&:focus-visible':{outline:"2px solid",outlineColor:"success.main",outlineOffset:1}}}>
+    <CandlestickChartRoundedIcon sx={{fontSize:"0.9rem"}}/>
+  </ButtonBase>;
+}
+
 function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];rapid:boolean;full:boolean;onOpenChart:(row:DeclineRow)=>void}){
   const [expanded,setExpanded]=useState<string|null>(null);
   if(!rows.length)return <Alert severity="info">{rapid?"No rapid drops currently detected.":"No stocks currently declining in this comparison."}</Alert>;
   return <TableContainer role="region" aria-label={rapid?"Rapid Drops list":"Top Losers list"} tabIndex={0}
     sx={theme=>({...scannerScrollStyles(theme),maxHeight:full?"calc(100dvh - 190px)":420})}>
     <Table size="small" stickyHeader aria-label={rapid?"Rapid Drops stocks":"Top Losers stocks"}
-      sx={{tableLayout:"fixed",minWidth:540,'& td, & th':{px:0.45,py:0.45,fontSize:"0.68rem",fontWeight:500},'& th':{fontWeight:650}}}>
-      <TableHead><TableRow><TableCell sx={{width:20}} aria-label="Expand"/>
+      sx={{tableLayout:"fixed",minWidth:600,'& td, & th':{px:0.35,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      <TableHead><TableRow><TableCell sx={{width:28}} aria-label="Chart"/><TableCell sx={{width:28}} aria-label="Expand"/>
         <TableCell>Ticker</TableCell><TableCell>Price</TableCell><TableCell>{rapid?"From start":"Change"}</TableCell>
         <TableCell>{rapid?"Fall time":"Volume"}</TableCell><TableCell>{rapid?"Rebound":"Float"}</TableCell><TableCell>{rapid?"Back to start":"Spread"}</TableCell>
       </TableRow></TableHead>
@@ -56,12 +68,14 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
         return <Fragment key={row.symbol}>
           <TableRow hover tabIndex={0} aria-expanded={open} onClick={toggle} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();toggle();}}}
             sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
-            <TableCell aria-hidden>{open?"−":"+"}</TableCell><TableCell sx={{color:"warning.main",fontWeight:850}}>{row.symbol}</TableCell>
+            <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
+            <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
+            <TableCell sx={{color:"warning.main",fontWeight:850}}>{row.symbol}</TableCell>
             <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(d?.dropPercent??row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(d?.dropPercent??row.changePercent)}</TableCell>
             <TableCell>{d?`${Math.floor(d.durationSeconds/60)}m ${d.durationSeconds%60}s`:shares(row.volume)}</TableCell>
             <TableCell>{d?pct(d.reboundPercent):shares(row.float)}</TableCell><TableCell>{d?pct(Math.max(0,d.backToStartPercent)):pct(row.spreadPercent)}</TableCell>
           </TableRow>
-          {open?<TableRow><TableCell colSpan={7} sx={{bgcolor:"action.hover"}}>
+          {open?<TableRow><TableCell colSpan={8} sx={{bgcolor:"action.hover"}}>
             <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
               {metrics.map(([label,value])=><Box key={label}><Typography variant="caption" color="warning.main" sx={{display:"block",fontWeight:750}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700}}>{value}</Typography></Box>)}
             </Box>
@@ -76,13 +90,12 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
   </TableContainer>;
 }
 
-export function DeclinesCard({results,notice,session,onOpenChart}:{results:DeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:DeclineRow)=>void}){
+export function DeclinesCard({results,notice,onOpenChart}:{results:DeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:DeclineRow)=>void}){
   const [view,setView]=useState<"rapid"|"losers">("rapid"),[full,setFull]=useState(false);
-  const tabs=(wide:boolean)=><Tabs value={view} onChange={(_,next)=>setView(next)} aria-label={wide?"Full decline scanner view":"Decline scanner view"} variant="scrollable" sx={titleTabsSx}><Tab label="Rapid Drops" value="rapid"/><Tab label="Top Losers" value="losers"/></Tabs>;
+  const tabs=(wide:boolean)=><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Tabs value={view} onChange={(_,next)=>setView(next)} aria-label={wide?"Full decline scanner view":"Decline scanner view"} variant="scrollable" sx={titleTabsSx}><Tab label="Rapid Drops" value="rapid"/><Tab label="Top Losers" value="losers"/></Tabs>
+    <Tooltip title="Top Losers during premarket and regular hours are calculated from yesterday’s regular session close. When post-market starts, Top Losers automatically switch to today’s regular session close. Rapid Drops are stocks falling 30% or more within 5 minutes using observed prices."><IconButton aria-label="Explain Rapid Drops and Top Losers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
+  </Stack>;
   const contents=(wide:boolean)=><Stack spacing={1}>
-    <Typography variant="caption" color="text.secondary">{view==="rapid"
-      ?`${results?.controls.minimumDropPercent??30}% or more within ${results?.controls.windowMinutes??5} minutes · observed prices`
-      :session==="after_hours"?"Since today’s regular close":"Since the previous trading day’s regular close"}</Typography>
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>
       :!results?<Skeleton height={260}/>:<DeclineTable full={wide} rapid={view==="rapid"} rows={view==="rapid"?results.rapid:results.losers} onOpenChart={onOpenChart}/>}
   </Stack>;

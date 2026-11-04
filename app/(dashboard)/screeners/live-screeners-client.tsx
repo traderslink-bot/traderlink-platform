@@ -21,9 +21,11 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import CandlestickChartRoundedIcon from "@mui/icons-material/CandlestickChartRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
 import { Fragment, useEffect, useRef, useState } from "react";
 
@@ -373,14 +375,13 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const selectedGainers=gainerViewResults(model,gainerView);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
-  const gainerTabs=<Tabs aria-label="Top Gainers comparison" value={gainerView} variant="scrollable" sx={cardTitleTabsSx}
+  const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Tabs aria-label="Top Gainers comparison" value={gainerView} variant="scrollable" sx={cardTitleTabsSx}
     onChange={(_,view:GainerView)=>{if(model)setGainerChoice({tradingDate:model.tradingDate,view});}}>
     <Tab label="Day Gainers" value="day" disabled={!model}/><Tab label="Post-Market Gainers" value="post_market" disabled={!model}/>
-  </Tabs>;
+  </Tabs><Tooltip title="Day Gainers gains are calculated from yesterday’s regular session close price. Post-market Gainers are calculated from today’s regular close.">
+    <IconButton aria-label="Explain Day and Post-market Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
+  </Tooltip></Stack>;
   const contents=(kind:ScannerKind,compactDesktop=false)=><>
-    {kind==="gainers"?<Stack spacing={1} sx={{mb:gainerView==="post_market"?1.25:0}}>
-      {gainerView==="post_market"?<Typography color="text.secondary" variant="caption">Since today’s regular close</Typography>:null}
-    </Stack>:null}
     {memberNotice?<Alert severity={memberNotice===SCANNER_UNAVAILABLE_MESSAGE?"warning":"info"}>{memberNotice}</Alert>
       :kind==="gainers"&&gainerView==="post_market"&&model&&model.session!=="after_hours"
       ?<Typography color="text.secondary">{admin?"Post-market readings begin after the regular session closes.":SCANNER_UNAVAILABLE_MESSAGE}</Typography>
@@ -400,7 +401,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     <Box data-scanner-grid sx={{ display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(4,minmax(0,1fr))"},gap:1.5,alignItems:"start",'& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 } }}>
       {(["gainers","momentum"] as const).map(kind=><Box key={kind} data-scanner-card={kind} sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}>
         <DashboardPanel hideHeader>
-          <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:kind==="gainers"?0:1.25,minHeight:22}}>
+          <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>
             {kind==="momentum"?<Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box>:gainerTabs}
             <Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
           {admin&&resultsFor(kind)?<Chip label={`${resultsFor(kind)!.total}`} size="small" aria-label={`${resultsFor(kind)!.total} qualifying`}/>:null}
@@ -410,10 +411,10 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
           {contents(kind,true)}
         </DashboardPanel>
       </Box>)}
-      <Box data-scanner-declines-card sx={{minWidth:0}}><DeclinesCard results={model?.declines}
+      <Box data-scanner-declines-card sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}><DeclinesCard results={model?.declines}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)}
         session={model?.session??null} onOpenChart={setChartRow}/></Box>
-      <Box data-scanner-premarket-pullbacks-card sx={{minWidth:0}}><PremarketPullbacksCard results={model?.premarketPullbacks}
+      <Box data-scanner-premarket-pullbacks-card sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}><PremarketPullbacksCard results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} onOpenChart={setChartRow}/></Box>
       <Box data-scanner-pr-card sx={{gridColumn:{xs:"auto",md:"span 2"},minWidth:0}}><ScreenerPressReleaseBoard/></Box>
       <Box data-scanner-halts-card sx={{minWidth:0}}><ScreenerMarketHaltsCard/></Box>

@@ -64,7 +64,7 @@ describe("actual Top Gainers card polling and tab interaction", () => {
     expect(page.fetch).toHaveBeenCalledTimes(1);
     await page.update(model("after_hours"));
     expect(selected(page.container,"Post-Market Gainers")).toBe(true);
-    expect(page.container.textContent).toContain("Since today’s regular close");
+    expect(page.container.textContent).not.toContain("Since today’s regular close");
     expect(page.fetch).toHaveBeenCalledTimes(2);
     expect(page.fetch.mock.calls.every(call => String(call[0]) === "/api/screeners/live")).toBe(true);
   });
