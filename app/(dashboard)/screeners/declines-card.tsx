@@ -53,7 +53,7 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
     sx={theme=>({...scannerScrollStyles(theme),maxHeight:full?"calc(100dvh - 190px)":420})}>
     <Table size="small" stickyHeader aria-label={rapid?"Rapid Drops stocks":"Top Losers stocks"}
       sx={{tableLayout:"fixed",minWidth:600,'& td, & th':{px:0.35,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-      <TableHead><TableRow><TableCell sx={{width:28}} aria-label="Chart"/><TableCell sx={{width:28}} aria-label="Expand"/>
+      <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/>
         <TableCell>Ticker</TableCell><TableCell>Price</TableCell><TableCell>{rapid?"From start":"Change"}</TableCell>
         <TableCell>{rapid?"Fall time":"Volume"}</TableCell><TableCell>{rapid?"Rebound":"Float"}</TableCell><TableCell>{rapid?"Back to start":"Spread"}</TableCell>
       </TableRow></TableHead>
