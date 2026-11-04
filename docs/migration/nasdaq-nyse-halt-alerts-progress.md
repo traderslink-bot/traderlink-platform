@@ -37,3 +37,10 @@
 ## 2026-11-04 Live Screeners card integration audit
 
 The Halt Alerts card is integrated as an additive two-column card below PR Scanner and reads only persisted halt events through an authenticated, private, no-store endpoint. The current-main feed implementation is preserved, including Nasdaq relay/failure diagnostics and the four-character equity-symbol boundary. NYSE receives browser-compatible CSV request headers and now recognizes the live `NYSE Resume Time` column. Help copy documents the card. Five focused feed, dashboard, client and screener integration suites pass 24 tests.
+
+## 2026-11-04 Compact event list and one-alert lifecycle correction
+
+- The Live Screeners Halt Alerts card now occupies one scanner column, matches the 420px scanner-list height, and scrolls vertically and horizontally.
+- The card lists every qualifying halt event, including repeated genuine halts for one ticker. Compact columns show Ticker, Reason code, Quote Resume and Trade Resume; missing times use a neutral dash.
+- Notifications are limited to the first qualifying halt for each ticker/trading day. Continued one-minute polling still enriches the stored first event and card with later quote/trade times, but those updates no longer queue additional Push or Discord alerts. Later genuine halts remain stored and visible without generating another alert.
+- Help copy now distinguishes the single notification from the complete event list. Four focused suites pass 31 tests and targeted ESLint passes.

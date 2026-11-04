@@ -29,6 +29,10 @@ it("loads today's halt list through the private API and renders official details
       id: "halt-1", ticker: "TEST", market: "NASDAQ", haltTimeEt: "10:15:00",
       reasonCode: "LUDP", reason: "Volatility trading pause", quoteTimeEt: null,
       tradeTimeEt: "10:20:00", source: "nasdaq", sourceUrl: "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+    }, {
+      id: "halt-2", ticker: "TEST", market: "NASDAQ", haltTimeEt: "11:05:00",
+      reasonCode: "LUDP", reason: "Volatility trading pause", quoteTimeEt: "11:09:00",
+      tradeTimeEt: "11:10:00", source: "nasdaq", sourceUrl: "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
     }],
   }));
   vi.stubGlobal("fetch", fetch);
@@ -38,8 +42,11 @@ it("loads today's halt list through the private API and renders official details
   await act(async () => root!.render(createElement(ScreenerMarketHaltsCard)));
   expect(fetch).toHaveBeenCalledWith("/api/market-halts/current", expect.objectContaining({ cache: "no-store", credentials: "same-origin" }));
   expect(container.textContent).toContain("Halt Alerts");
+  expect(container.textContent).toContain("Quote Resume");
+  expect(container.textContent).toContain("Trade Resume");
   expect(container.textContent).toContain("TEST");
-  expect(container.textContent).toContain("Volatility trading pause");
+  expect(container.textContent).toContain("LUDP");
   expect(container.textContent).toContain("10:20");
+  expect(container.querySelectorAll("tbody tr")).toHaveLength(2);
   expect(container.querySelector('a[href*="nasdaqtrader.com"]')).not.toBeNull();
 });
