@@ -470,3 +470,7 @@ known and defers external script insertion until after the React effect settles.
 This prevents a discarded development script from losing its parent and throwing
 when the mobile scanner chart drawer opens or closes; the chart behavior and
 provider remain unchanged.
+
+## 2026-11-04 continuity audit correction
+
+A current-main code audit verified the shared Moomoo request budget, session-aware previous-regular-close gain baseline, exact rolling activity windows, four early-momentum event types, 30-second signal cooling, whole-screen empty-response continuity, float/news enrichment, and member/admin access boundaries. The member presentation had one remaining continuity gap: a single failed browser/API poll retained the prior model internally but immediately replaced populated tables with the generic unavailable notice. The status helper now keeps a populated model visible for the same 30-second transient-failure grace and reports a sustained outage after that boundary. Focused continuity, feed, event, retention, and member-status verification passes 51 tests. The broader scanner run passed 248 tests; four runtime tests and one route suite could not load in this older assigned checkout because it lacks unrelated current-main Platform migrations/routes, so clean-current-main integration verification remains a release checkpoint.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScannerReadModel } from "./contracts";
-import { memberScannerStatus, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_UNAVAILABLE_MESSAGE } from "./member-status";
+import { memberScannerStatus, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_TRANSIENT_FAILURE_GRACE_MS, SCANNER_UNAVAILABLE_MESSAGE } from "./member-status";
 
 const results = { rows: [], focus: [], total: 0 };
 const base: ScannerReadModel = { status: "ready", tradingDate: "2026-11-02", session: "regular",
@@ -31,6 +31,15 @@ describe("member scanner notices", () => {
   it("handles a failed client request without revealing provider details", () => {
     expect(memberScannerStatus(base,true,at("2026-11-02T20:30:00Z"))).toBe(SCANNER_UNAVAILABLE_MESSAGE);
     expect(memberScannerStatus(null,true,at("2026-11-02T20:30:00Z"))).toBe(SCANNER_UNAVAILABLE_MESSAGE);
+  });
+  it("keeps populated rows visible through one brief failed poll, then reports a sustained outage", () => {
+    const updatedAt = at("2026-11-02T20:30:00Z");
+    const populated = { ...base, updatedAtUtc: new Date(updatedAt).toISOString(), momentum: {
+      rows: [{ symbol: "TEST" } as ScannerReadModel["momentum"]["rows"][number]], focus: [], total: 1,
+    } };
+    expect(memberScannerStatus(populated,true,updatedAt + 5_000)).toBeNull();
+    expect(memberScannerStatus(populated,true,updatedAt + SCANNER_TRANSIENT_FAILURE_GRACE_MS)).toBeNull();
+    expect(memberScannerStatus(populated,true,updatedAt + SCANNER_TRANSIENT_FAILURE_GRACE_MS + 1)).toBe(SCANNER_UNAVAILABLE_MESSAGE);
   });
   it("shows operating hours overnight rather than a universe/provider error", () => {
     expect(memberScannerStatus({ ...base, status: "universe_missing" },true,at("2026-11-03T01:00:00Z")))
