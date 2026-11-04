@@ -47,6 +47,13 @@ async function openFullView(container: HTMLElement, label = "Momentum") {
   return document.body.querySelector(`[role="dialog"][aria-label="${label} full view"]`)!;
 }
 describe("actual Top Gainers card polling and tab interaction", () => {
+  it("keeps existing rows visible when a successful poll briefly returns every scanner empty", async () => {
+    const page = await mount(momentumModel(undefined));
+    expect(page.container.textContent).toContain("TEST");
+    await page.update(model("regular"));
+    expect(page.container.textContent).toContain("TEST");
+    expect(page.fetch).toHaveBeenCalledTimes(2);
+  });
   it("switches the Gainers card default from day to post-market on polling without remounting or extra requests", async () => {
     const page = await mount(model("regular"));
     expect(selected(page.container,"Day Gainers")).toBe(true);
