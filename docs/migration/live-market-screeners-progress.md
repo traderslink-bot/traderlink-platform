@@ -578,3 +578,9 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 
 - Top Losers and Premarket High Pullbacks now render ticker symbols with the
   same explicit bold yellow typography used by the Momentum table.
+
+## 2026-11-05 whole-number card percentages
+
+- Every percentage displayed in the screener cards and expanded card details
+  now rounds to a whole percent. Price precision, share counts, RVOL and volume
+  spike ratios retain their existing formats.

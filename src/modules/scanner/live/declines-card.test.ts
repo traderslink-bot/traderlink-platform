@@ -23,7 +23,7 @@ it("shows both tabs, expands drop context, opens the full view and never fetches
   const table=container.querySelector('table[aria-label="Rapid Drops stocks"]')!;
   expect(table.textContent).toContain("-40%");expect(table.textContent).toContain("$0.330");
   await act(async()=>table.querySelector('tbody tr')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
-  expect(table.textContent).toContain("Back to pre-drop price");expect(table.textContent).toContain("+66.67%");
+  expect(table.textContent).toContain("Back to pre-drop price");expect(table.textContent).toContain("+67%");
   expect(table.textContent).toContain("900");
   await act(async()=>(table.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click());
   expect(chart.mock.calls[0][0].symbol).toBe("AAA");

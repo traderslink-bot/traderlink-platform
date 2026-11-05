@@ -51,9 +51,12 @@ const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", 
 const MOMENTUM_SIGNAL_LABELS={volume_ignition:"Volume ignition",building_volume:"Building volume",price_burst:"Price burst",
   developing_activity:"Developing activity",one_minute_momentum:"1min momentum",five_minute_momentum:"5min momentum"} as const;
 const number = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 2 });
+const wholePercent = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 0 });
 const compact = new Intl.NumberFormat("en-US",{ notation: "compact",maximumFractionDigits: 1 });
 const cardTitleTabsSx={minHeight:22,'& .MuiTabs-indicator':{height:2},'& .MuiTab-root':{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,minHeight:22,minWidth:0,p:0,pb:0.6,px:0,textTransform:"none"},'& .MuiTab-root + .MuiTab-root':{ml:2}};
-function value(input: number | null | undefined, suffix = ""): string { return input == null ? "n/a" : `${number.format(input)}${suffix}`; }
+function value(input: number | null | undefined, suffix = ""): string {
+  return input == null ? "n/a" : `${suffix==="%"?wholePercent.format(input):number.format(input)}${suffix}`;
+}
 function time(input: string | null): string { return input ? new Date(input).toLocaleTimeString([],{ hour: "numeric",minute: "2-digit",second: "2-digit" }) : "n/a"; }
 function floatValue(input: number | null): string {
   if (input === null) return "n/a";
@@ -106,7 +109,7 @@ function CompactNewsLink({ row }: { row: LiveScannerRow }) {
 
 function floatTraded(row: LiveScannerRow): string | null {
   if (row.volume === null || row.float <= 0) return null;
-  return `${number.format(100 * row.volume / row.float)}%`;
+  return `${wholePercent.format(100 * row.volume / row.float)}%`;
 }
 
 function ChartButton({ expanded=false,row,onOpenChart }: { expanded?:boolean; row: LiveScannerRow; onOpenChart: (row:LiveScannerRow)=>void }) {

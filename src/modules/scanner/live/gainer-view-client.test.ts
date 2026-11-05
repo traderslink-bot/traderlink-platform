@@ -100,7 +100,7 @@ describe("Momentum context rendering", () => {
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
-    expect(cells.slice(4,11)).toEqual(["-24.29%","42.01%","8%","20%","10K","50K","2×"]);
+    expect(cells.slice(4,11)).toEqual(["-24%","42%","8%","20%","10K","50K","2×"]);
     expect(header.querySelectorAll("th").length).toBe(15);
     await act(async () => (drawer.querySelector('[aria-label="Close full scanner view"]') as HTMLElement).click());
     const compact = page.container.querySelector('table[aria-label="Momentum compact stocks"]')!;
@@ -108,8 +108,8 @@ describe("Momentum context rendering", () => {
     await act(async () => compactRow.click());
     expect(compact.textContent).toContain("Day %");
     expect(compact.textContent).toContain("Post %");
-    expect(compact.textContent).toContain("-24.29%");
-    expect(compact.textContent).toContain("42.01%");
+    expect(compact.textContent).toContain("-24%");
+    expect(compact.textContent).toContain("42%");
     expect(page.fetch).toHaveBeenCalledTimes(1);
   });
   it("omits Post outside after-hours, adds it on the normal poll and does not replace unknown values with zero", async () => {
@@ -123,7 +123,7 @@ describe("Momentum context rendering", () => {
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
-    expect(cells[4]).toBe("-24.29%");
+    expect(cells[4]).toBe("-24%");
     expect(cells[5]).toBe("n/a");
     expect(cells[6]).toBe("8%");
     expect(page.fetch).toHaveBeenCalledTimes(2);

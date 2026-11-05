@@ -29,10 +29,11 @@ import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 const subDollarPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
 const regularPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const number=new Intl.NumberFormat("en-US",{maximumFractionDigits:2});
+const wholePercent=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
 const clock=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit",second:"2-digit"});
 const price=(value:number)=>`$${(value<1?subDollarPrice:regularPrice).format(value)}`;
-const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${number.format(value)}%`;
+const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${wholePercent.format(value)}%`;
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 
 function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(row:PremarketPullbackRow)=>void}){
@@ -51,10 +52,10 @@ function PullbackTable({rows,full,onOpenChart}:{rows:readonly PremarketPullbackR
         <TableCell sx={{width:62}}>Change</TableCell><TableCell sx={{width:70}}>PM High</TableCell><TableCell sx={{width:78}}>Volume</TableCell>
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
-        const metrics:[string,string][]=open?[["Premarket high",price(row.premarketHigh)],["Below PM high",`${number.format(row.belowHighPercent)}%`],
-          ["Back to PM high",`+${number.format(row.backToHighPercent)}%`],["Premarket volume",shares(row.premarketVolume)],
+        const metrics:[string,string][]=open?[["Premarket high",price(row.premarketHigh)],["Below PM high",`${wholePercent.format(row.belowHighPercent)}%`],
+          ["Back to PM high",`+${wholePercent.format(row.backToHighPercent)}%`],["Premarket volume",shares(row.premarketVolume)],
           ["Session volume",shares(row.sessionVolume)],["1min volume",shares(row.oneMinuteVolume)],["5min volume",shares(row.fiveMinuteVolume)],
-          ["Float",shares(row.float)],["Spread",row.spreadPercent===null?"n/a":`${number.format(row.spreadPercent)}%`],
+          ["Float",shares(row.float)],["Spread",row.spreadPercent===null?"n/a":`${wholePercent.format(row.spreadPercent)}%`],
           ["Quote received",`${clock.format(new Date(row.receivedAtUtc))} ET`]]:[];
         return <Fragment key={row.symbol}><TableRow hover tabIndex={0} aria-expanded={open} onClick={toggle}
           onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();toggle();}}}
