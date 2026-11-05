@@ -166,7 +166,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
     role={compactDesktop?"region":undefined} tabIndex={compactDesktop?0:undefined}
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
     <Table aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,tableLayout:"fixed",minWidth:screen==="gainers"?788:884,'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.35,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
-      <TableHead><TableRow>{headers.map((header,index)=><TableCell align={header.right?"right":"left"} aria-label={header.label||(index===0?"Chart":"Expand")} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
+      <TableHead><TableRow>{headers.map((header,index)=><TableCell align="left" aria-label={header.label||(index===0?"Chart":"Expand")} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
         metric("HOD price",`$${value(row.dayHigh)}`),
         metric("Below HOD",value(row.offHighPercent,"%")),
@@ -364,20 +364,20 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
         <NumberField label="Quiet scans to close episode" current={momentumDetection.episodeQuietScans} onChange={next=>next!==null&&updateMomentumDetection({episodeQuietScans:next})}/>
         <NumberField label="Episode quiet expiry seconds" current={momentumDetection.episodeQuietSeconds} onChange={next=>next!==null&&updateMomentumDetection({episodeQuietSeconds:next})}/>
       </Box></>:null}
-      <Typography component="h3" sx={{fontWeight:800}}>Rapid Drops / Top Losers</Typography>
-      <FormControlLabel control={<Switch checked={declines.enabled} onChange={event=>updateDeclines({enabled:event.target.checked})}/>} label="Enable Rapid Drops and Top Losers"/>
+      <Typography component="h3" sx={{fontWeight:800}}>Top Losers and Rapid Drop Detection</Typography>
+      <FormControlLabel control={<Switch checked={declines.enabled} onChange={event=>updateDeclines({enabled:event.target.checked})}/>} label="Enable Top Losers and Rapid Drop detection"/>
       <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"repeat(2,minmax(0,1fr))",lg:"repeat(4,minmax(0,1fr))"},gap:1.5}}>
-        <NumberField label="List stocks per tab" current={declines.displayLimit} onChange={next=>next!==null&&updateDeclines({displayLimit:next})}/>
+        <NumberField label="List stocks" current={declines.displayLimit} onChange={next=>next!==null&&updateDeclines({displayLimit:next})}/>
         <NumberField label="Minimum rapid drop %" current={declines.minimumDropPercent} onChange={next=>next!==null&&updateDeclines({minimumDropPercent:next})}/>
         <NumberField label="Drop within (minutes)" current={declines.windowMinutes} onChange={next=>next!==null&&updateDeclines({windowMinutes:next})}/>
         <NumberField label="Keep after new low (minutes)" current={declines.retentionMinutes} onChange={next=>next!==null&&updateDeclines({retentionMinutes:next})}/>
       </Box>
-      <Typography component="h3" sx={{fontWeight:800}}>Premarket High Pullbacks</Typography>
-      <FormControlLabel control={<Switch checked={pmPullbacks.enabled} onChange={event=>updatePmPullbacks({enabled:event.target.checked})}/>} label="Enable Premarket High Pullbacks"/>
+      <Typography component="h3" sx={{fontWeight:800}}>High Drops</Typography>
+      <FormControlLabel control={<Switch checked={pmPullbacks.enabled} onChange={event=>updatePmPullbacks({enabled:event.target.checked})}/>} label="Enable High Drops"/>
       <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"repeat(2,minmax(0,1fr))",lg:"repeat(3,minmax(0,1fr))"},gap:1.5}}>
         <NumberField label="List stocks" current={pmPullbacks.displayLimit} onChange={next=>next!==null&&updatePmPullbacks({displayLimit:next})}/>
-        <NumberField label="Minimum pullback from PM high %" current={pmPullbacks.minimumPullbackPercent} onChange={next=>next!==null&&updatePmPullbacks({minimumPullbackPercent:next})}/>
-        <NumberField label="Remove when within % of PM high" current={pmPullbacks.removeWithinPercent} onChange={next=>next!==null&&updatePmPullbacks({removeWithinPercent:next})}/>
+        <NumberField label="Minimum drop from a session high %" current={pmPullbacks.minimumPullbackPercent} onChange={next=>next!==null&&updatePmPullbacks({minimumPullbackPercent:next})}/>
+        <NumberField label="Remove when drop is below %" current={pmPullbacks.removeWithinPercent} onChange={next=>next!==null&&updatePmPullbacks({removeWithinPercent:next})}/>
       </Box>
     </Stack>
   </DashboardPanel>;

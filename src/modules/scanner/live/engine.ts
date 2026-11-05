@@ -187,7 +187,7 @@ export class LiveScannerEngine {
     const declines=this.declines.evaluate({universe:input.universe,session:input.session,now:input.now,
       snapshots:input.snapshots,floats:input.floats,controls:input.configuration.declines});
     const premarketPullbacks=this.premarketPullbacks.evaluate({universe:input.universe,session:input.session,now:input.now,
-      snapshots:input.snapshots,floats:input.floats,activity:symbol=>this.activity.metrics(symbol,input.now),controls:input.configuration.premarketPullbacks});
+      snapshots:input.snapshots,floats:input.floats,activity:symbol=>this.activity.metrics(symbol,input.now),rapidDrops:declines.rapid,controls:input.configuration.premarketPullbacks});
     return {
       declines,premarketPullbacks,
       gainers: { rows: gainers.slice(0,input.configuration.gainers.displayLimit), total: gainers.length,

@@ -9,7 +9,7 @@ import { DeclinesCard } from "@/app/(dashboard)/screeners/declines-card";
 beforeAll(()=>{(globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;});
 let root:Root|undefined;
 afterEach(async()=>{if(root)await act(async()=>root!.unmount());root=undefined;vi.unstubAllGlobals();document.body.replaceChildren();});
-it("shows both tabs, expands drop context, opens the full view and never fetches separately",async()=>{
+it("shows only Top Losers, expands context, opens the full view and never fetches separately",async()=>{
   const now=Date.parse("2026-11-02T22:00:00Z");
   const universe:DailyUniverse={version:1,tradingDate:"2026-11-02",acceptedAtUtc:new Date(now).toISOString(),lastCollectionAtUtc:new Date(now).toISOString(),latestUploadCount:1,sourceHashes:[],stocks:[{symbol:"AAA",exchange:"NASDAQ",marketCapAtCollection:1e6}]};
   const base:NormalizedSnapshot={symbol:"AAA",company:"Synthetic",session:"after_hours",tradingDate:universe.tradingDate,
@@ -21,21 +21,18 @@ it("shows both tabs, expands drop context, opens the full view and never fetches
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
   const haltByTicker=new Map([["AAA",{id:"halt-1",ticker:"AAA",market:"NASDAQ",haltTimeEt:"17:01:00",reasonCode:"LUDP",reason:"Volatility trading pause",quoteTimeEt:null,tradeTimeEt:null}]]);
   await act(async()=>root!.render(createElement(DeclinesCard,{results,notice:null,session:"after_hours",onOpenChart:chart,haltByTicker})));
-  const table=container.querySelector('table[aria-label="Rapid Drops stocks"]')!;
+  const table=container.querySelector('table[aria-label="Top Losers stocks"]')!;
   expect(table.querySelector('[data-halt-indicator="AAA"]')).not.toBeNull();
   expect(table.textContent).toContain("-40%");expect(table.textContent).toContain("$0.330");
   await act(async()=>table.querySelector('tbody tr')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
-  expect(table.textContent).toContain("Back to pre-drop price");expect(table.textContent).toContain("+67%");
-  expect(table.textContent).toContain("900");
+  expect(table.textContent).toContain("Comparison price");
   await act(async()=>(table.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click());
   expect(chart.mock.calls[0][0].symbol).toBe("AAA");
-  const losers=[...container.querySelectorAll('[role="tab"]')].find(tab=>tab.textContent==="Top Losers") as HTMLElement;
-  await act(async()=>losers.click());expect(container.textContent).not.toContain("Since today’s regular close");
-  expect(container.querySelector('table[aria-label="Top Losers stocks"]')).not.toBeNull();
-  await act(async()=>(container.querySelector('[aria-label="Open Rapid Drops full view"]') as HTMLElement).click());
-  const drawer=document.body.querySelector('[role="dialog"][aria-label="Rapid Drops full view"]')!;
+  expect(container.querySelector('[role="tab"]')).toBeNull();expect(container.textContent).not.toContain("Rapid Drops");
+  await act(async()=>(container.querySelector('[aria-label="Open Top Losers full view"]') as HTMLElement).click());
+  const drawer=document.body.querySelector('[role="dialog"][aria-label="Top Losers full view"]')!;
   expect(drawer.querySelectorAll('thead th').length).toBe(8);
-  await act(async()=>(drawer.querySelector('[aria-label="Close Rapid Drops full view"]') as HTMLElement).click());
+  await act(async()=>(drawer.querySelector('[aria-label="Close Top Losers full view"]') as HTMLElement).click());
   expect(fetch).not.toHaveBeenCalled();
 });
 
@@ -45,12 +42,9 @@ it("uses the supplied closed/unavailable notice instead of pretending data is re
   expect(container.textContent).toContain("Active 4:00am - 8:00pm est");expect(container.querySelector('table')).toBeNull();
 });
 
-it("uses standard scanner alerts for empty Rapid Drops and Top Losers lists",async()=>{
+it("uses the standard scanner alert for an empty Top Losers list",async()=>{
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
   const emptyResults={rapid:[],losers:[],rapidTotal:0,loserTotal:0,controls:{enabled:true,minimumDropPercent:30,windowMinutes:5,retentionMinutes:15,displayLimit:20}};
   await act(async()=>root!.render(createElement(DeclinesCard,{results:emptyResults,notice:null,session:"regular",onOpenChart:vi.fn()})));
-  expect(container.querySelector('[role="alert"]')?.textContent).toContain("No rapid drops currently detected.");
-  const losers=[...container.querySelectorAll('[role="tab"]')].find(tab=>tab.textContent==="Top Losers") as HTMLElement;
-  await act(async()=>losers.click());
   expect(container.querySelector('[role="alert"]')?.textContent).toContain("No stocks currently declining in this comparison.");
 });

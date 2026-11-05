@@ -9,14 +9,12 @@ import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
-import Tab from "@mui/material/Tab";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import Tabs from "@mui/material/Tabs";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import CandlestickChartRoundedIcon from "@mui/icons-material/CandlestickChartRounded";
@@ -38,7 +36,6 @@ const price=(value:number)=>`$${(value<1?subDollarPrice:regularPrice).format(val
 const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${wholePercent.format(value)}%`;
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 const stamp=(value:string)=>clock.format(new Date(value));
-const titleTabsSx={minHeight:22,'& .MuiTabs-indicator':{height:2},'& .MuiTab-root':{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,minHeight:22,minWidth:0,p:0,pb:0.6,px:0,textTransform:"none"},'& .MuiTab-root + .MuiTab-root':{ml:2}};
 
 function ChartButton({row,onOpenChart}:{row:DeclineRow;onOpenChart:(row:DeclineRow)=>void}){
   return <ButtonBase aria-label={`Open ${row.symbol} chart`} onClick={event=>{event.stopPropagation();onOpenChart(row);}}
@@ -94,20 +91,20 @@ function DeclineTable({rows,rapid,full,onOpenChart,haltByTicker}:{rows:readonly 
 }
 
 export function DeclinesCard({results,notice,onOpenChart,haltByTicker=new Map()}:{results:DeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:DeclineRow)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
-  const [view,setView]=useState<"rapid"|"losers">("rapid"),[full,setFull]=useState(false);
-  const tabs=(wide:boolean)=><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Tabs value={view} onChange={(_,next)=>setView(next)} aria-label={wide?"Full decline scanner view":"Decline scanner view"} variant="scrollable" sx={titleTabsSx}><Tab label="Rapid Drops" value="rapid"/><Tab label="Top Losers" value="losers"/></Tabs>
-    <Tooltip title="Top Losers during premarket and regular hours are calculated from yesterday’s regular session close. When post-market starts, Top Losers automatically switch to today’s regular session close. Rapid Drops are stocks falling 30% or more within 5 minutes using observed prices."><IconButton aria-label="Explain Rapid Drops and Top Losers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
+  const [full,setFull]=useState(false);
+  const title=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Typography component="h2" variant="h2">Top Losers</Typography>
+    <Tooltip title="Top Losers during premarket and regular hours are calculated from yesterday’s regular-session close. During post-market, they are calculated from today’s regular-session close."><IconButton aria-label="Explain Top Losers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
   </Stack>;
   const contents=(wide:boolean)=><Stack spacing={1}>
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>
-      :!results?<Skeleton height={260}/>:<DeclineTable full={wide} rapid={view==="rapid"} rows={view==="rapid"?results.rapid:results.losers} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>}
+      :!results?<Skeleton height={260}/>:<DeclineTable full={wide} rapid={false} rows={results.losers} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>}
   </Stack>;
   return <>
-    <DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>{tabs(false)}<IconButton size="small" aria-label="Open Rapid Drops full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>
-    <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"Rapid Drops full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>
+    <DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>{title}<IconButton size="small" aria-label="Open Top Losers full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>
+    <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"Top Losers full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>
       <Stack sx={{p:2,minHeight:0,height:"100dvh"}} spacing={1}>
-        <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">Rapid Drops / Top Losers</Typography><IconButton aria-label="Close Rapid Drops full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack>
-        <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0})}>{tabs(true)}{contents(true)}</Box>
+        <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">Top Losers</Typography><IconButton aria-label="Close Top Losers full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack>
+        <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0})}>{contents(true)}</Box>
       </Stack>
     </Drawer>
   </>;
