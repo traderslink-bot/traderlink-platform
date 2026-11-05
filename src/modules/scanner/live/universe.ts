@@ -1,5 +1,5 @@
 import type { DailyUniverse } from "./contracts";
-import { MAX_UNIVERSE_ROWS, validateUniverseUpload } from "./universe-validation";
+import { MAX_UNIVERSE_ROWS, scannerUniverseSymbolEligible, validateUniverseUpload } from "./universe-validation";
 
 /** Pure transition. The integration layer must persist this atomically under one writer. */
 export function importDailyUniverse(previous: DailyUniverse | null, upload: unknown, now: number):
@@ -11,8 +11,9 @@ export function importDailyUniverse(previous: DailyUniverse | null, upload: unkn
     throw Error("scanner_universe_older_collection");
   }
   if (previous && previous.sourceHashes.length >= 20) throw Error("scanner_universe_import_limit");
-  const retained = new Map(previous?.stocks.map(stock => [stock.symbol, stock]) ?? []);
-  for (const stock of checked.stocks) {
+  const qualifyingStocks=checked.stocks.filter(stock=>scannerUniverseSymbolEligible(stock.symbol));
+  const retained = new Map(previous?.stocks.filter(stock=>scannerUniverseSymbolEligible(stock.symbol)).map(stock => [stock.symbol, stock]) ?? []);
+  for (const stock of qualifyingStocks) {
     const earlier = retained.get(stock.symbol);
     if (earlier && earlier.exchange !== stock.exchange) throw Error("scanner_universe_exchange_conflict");
     // Preserve the first qualifying cap: crossing the ceiling does not remove today's member.
@@ -22,7 +23,7 @@ export function importDailyUniverse(previous: DailyUniverse | null, upload: unkn
   return { idempotent: false, universe: {
     version: 1, tradingDate: checked.input.tradingDate, acceptedAtUtc: new Date(now).toISOString(),
     lastCollectionAtUtc: checked.input.metadata.collection_finished_at_utc,
-    latestUploadCount: checked.stocks.length, sourceHashes: [...(previous?.sourceHashes ?? []), checked.hash],
+    latestUploadCount: qualifyingStocks.length, sourceHashes: [...(previous?.sourceHashes ?? []), checked.hash],
     stocks: [...retained.values()].sort((a,b) => a.symbol.localeCompare(b.symbol)),
   } };
 }

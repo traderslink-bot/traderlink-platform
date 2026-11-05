@@ -505,3 +505,9 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Official halt rows now qualify only when the ticker exists in the current or latest retained combined scanner universe for that date and its collection-time market cap is at or below $200 million.
 - The check uses the durable local universe and an in-memory lookup; it adds no provider request. BATS and NYSE Arca products absent from the Nasdaq/NYSE stock universe are excluded naturally.
 - Halt-focused verification passed; the broader scanner runtime test remains blocked by unrelated missing Journal migration modules in the mixed workspace.
+
+## Warrant-suffix universe exclusion — 2026-11-05
+
+- Five-character symbols ending in W are excluded at both Nasdaq collection and combined-universe import boundaries. Durable universe reads also remove previously stored matching symbols immediately.
+- The exclusion therefore applies to scanner snapshot requests, every scanner list and halt-universe eligibility without waiting for the next trading day's collection.
+- Focused universe verification passed: 4 files and 62 tests.

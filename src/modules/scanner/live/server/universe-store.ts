@@ -4,7 +4,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { DailyUniverse, UniverseUpload } from "../contracts";
 import { importDailyUniverse } from "../universe";
-import { MAX_UNIVERSE_MARKET_CAP, MAX_UNIVERSE_ROWS, parseUniverseCsv, validDate, validateUniverseUpload } from "../universe-validation";
+import { MAX_UNIVERSE_MARKET_CAP, MAX_UNIVERSE_ROWS, parseUniverseCsv, scannerUniverseSymbolEligible, validDate, validateUniverseUpload } from "../universe-validation";
 
 const MAX_RECORD_BYTES = 2_000_000;
 const writers = new Map<string,Promise<unknown>>();
@@ -25,7 +25,8 @@ function decodeDaily(value: unknown, date: string): DailyUniverse {
     return `${stock.symbol},${stock.exchange},${stock.marketCapAtCollection}`;
   })].join("\n");
   try { parseUniverseCsv(csv); } catch { throw Error("scanner_universe_storage_invalid"); }
-  return value as DailyUniverse;
+  const universe=value as DailyUniverse;
+  return { ...universe,stocks:universe.stocks.filter(stock=>scannerUniverseSymbolEligible(stock.symbol)) };
 }
 async function readJson(file: string): Promise<unknown | null> {
   let handle;

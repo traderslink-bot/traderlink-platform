@@ -1,4 +1,5 @@
 import type { UniverseStock, UniverseUpload } from "../contracts";
+import { scannerUniverseSymbolEligible } from "../universe-validation";
 
 const SOURCE_URL="https://api.nasdaq.com/api/screener/stocks" as const;
 const MAX_MARKET_CAP=500_000_000 as const;
@@ -26,7 +27,7 @@ async function rowsFor(exchange:"NASDAQ"|"NYSE",request:typeof fetch):Promise<re
   for(const value of payload.data.rows){
     if(!object(value)||typeof value.symbol!=="string")continue;
     const symbol=value.symbol.trim().toUpperCase(),cap=typeof value.marketCap==="string"?Number(value.marketCap):value.marketCap;
-    if(!SYMBOL.test(symbol)||typeof cap!=="number"||!Number.isFinite(cap)||cap<=0||cap>MAX_MARKET_CAP)continue;
+    if(!SYMBOL.test(symbol)||!scannerUniverseSymbolEligible(symbol)||typeof cap!=="number"||!Number.isFinite(cap)||cap<=0||cap>MAX_MARKET_CAP)continue;
     const marketCapAtCollection=Math.round(cap);
     if(!Number.isSafeInteger(marketCapAtCollection)||marketCapAtCollection<=0)continue;
     stocks.push({symbol,exchange,marketCapAtCollection});

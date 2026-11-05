@@ -69,6 +69,12 @@ describe("daily list integrity", () => {
     expect(merged.stocks[0].marketCapAtCollection).toBe(10_000_000);
     expect(initial.universe.sourceHashes).toHaveLength(1);
   });
+  it("excludes five-character warrant-suffix symbols from current and retained universe rows",()=>{
+    const imported=importDailyUniverse(null,upload("symbol,exchange,market_cap\nABCD,NASDAQ,10000000\nABCDW,NASDAQ,9000000"),NOW).universe;
+    expect(imported.stocks.map(stock=>stock.symbol)).toEqual(["ABCD"]);
+    const cleaned=importDailyUniverse({...imported,stocks:[...imported.stocks,{symbol:"TESTW",exchange:"NYSE",marketCapAtCollection:5_000_000}]},upload("symbol,exchange,market_cap\nABCD,NASDAQ,10000000"),NOW).universe;
+    expect(cleaned.stocks.map(stock=>stock.symbol)).toEqual(["ABCD"]);
+  });
   it("quarantines a secondary venue conflict and refuses a cross-day merge", () => {
     const previous = importDailyUniverse(null,upload(),NOW).universe;
     const merged = importDailyUniverse(previous,upload("symbol,exchange,market_cap\nAAA,NYSE,100"),NOW).universe;
