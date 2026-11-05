@@ -547,3 +547,7 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Rapid Drops, Top Losers and Premarket High Pullbacks now display sub-dollar
   prices with three decimals (for example, `$0.330`) and prices at or above one
   dollar with two decimals.
+
+## 2026-11-05 halt card title
+
+- The screener card title is shortened from `Halt Alerts` to `Halts`.

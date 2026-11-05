@@ -42,7 +42,7 @@ it("loads today's halt list through the private API and renders official details
   root = createRoot(container);
   await act(async () => root!.render(createElement(ScreenerMarketHaltsCard, { onOpenChart })));
   expect(fetch).toHaveBeenCalledWith("/api/market-halts/current", expect.objectContaining({ cache: "no-store", credentials: "same-origin" }));
-  expect(container.textContent).toContain("Halt Alerts");
+  expect(container.textContent).toContain("Halts");
   expect(container.textContent).toContain("Quote");
   expect(container.textContent).not.toContain("Quote Resume");
   expect(container.textContent).toContain("Trade Resume");

@@ -55,7 +55,7 @@ export function ScreenerMarketHaltsCard({ onOpenChart }: { onOpenChart: (row: { 
     };
   }, []);
 
-  return <DashboardPanel title="Halt Alerts">
+  return <DashboardPanel title="Halts">
     {!model && !unavailable ? <Skeleton height={120} variant="rounded" /> : null}
     {unavailable && !model ? <Typography color="text.secondary" variant="body2">Halt data is temporarily unavailable.</Typography> : null}
     {model && !model.rows.length ? <Typography color="text.secondary" variant="body2">No qualifying Nasdaq or NYSE halts today.</Typography> : null}
