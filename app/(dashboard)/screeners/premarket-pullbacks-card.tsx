@@ -61,7 +61,7 @@ function PullbackTable({rows,full,onOpenChart}:{rows:readonly PremarketPullbackR
           <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
           <TableCell sx={{color:"warning.main",fontWeight:850}}>{row.symbol}</TableCell>
-          <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(row.changePercent)}</TableCell><TableCell>{price(row.premarketHigh)}</TableCell><TableCell>{shares(row.premarketVolume)}</TableCell>
+          <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(row.changePercent)}</TableCell><TableCell>{price(row.premarketHigh)}</TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
         </TableRow>{open?<TableRow><TableCell colSpan={7} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
             {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45}}>{value}</Typography></Box>)}

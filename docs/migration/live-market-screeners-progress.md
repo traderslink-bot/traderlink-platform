@@ -535,3 +535,9 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Premarket High Pullbacks now displays a compact `Change` column using the
   same session-aware basis as Top Losers: yesterday's regular close during
   premarket and regular hours, then today's regular close after hours.
+
+## 2026-11-05 pullback volume correction
+
+- The main Premarket High Pullbacks `Volume` column now displays the current
+  snapshot's total session volume, matching the other scanner tables.
+- Premarket-only volume remains available in the expanded details.

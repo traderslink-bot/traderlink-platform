@@ -13,7 +13,7 @@ const results:PremarketPullbackResults={controls,total:1,missingReferenceCount:0
 it("shows factual return distance, expanded context, news, chart and full drawer without a new fetch",async()=>{
   const fetch=vi.fn();vi.stubGlobal("fetch",fetch);const chart=vi.fn();const container=document.createElement("div");document.body.append(container);root=createRoot(container);
   await act(async()=>root!.render(createElement(PremarketPullbacksCard,{results,notice:null,onOpenChart:chart})));
-  expect(container.textContent).toContain("Change");expect(container.textContent).toContain("+40%");expect(container.textContent).toContain("PM High");expect(container.textContent).not.toContain("Back to PM high");expect(container.textContent).not.toMatch(/recovering|holding|retesting/i);
+  expect(container.textContent).toContain("Change");expect(container.textContent).toContain("+40%");expect(container.textContent).toContain("PM High");expect(container.querySelector("tbody tr")?.textContent).toContain("2K");expect(container.querySelector("tbody tr")?.textContent).not.toContain("1K");expect(container.textContent).not.toContain("Back to PM high");expect(container.textContent).not.toMatch(/recovering|holding|retesting/i);
   await act(async()=>container.querySelector('tbody tr')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
   expect(container.textContent).toContain("30%");expect(container.textContent).toContain("Premarket volume");expect(container.querySelector('a[href="https://example.com/news"]')).not.toBeNull();
   await act(async()=>(container.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click());expect(chart.mock.calls[0][0].symbol).toBe("AAA");
