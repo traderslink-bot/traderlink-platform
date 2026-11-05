@@ -38,8 +38,8 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   const fetch=vi.fn(async(input:RequestInfo|URL)=>{
     const url=String(input);
     if(url==="/api/market-halts/current")return Response.json({tradingDate:"2026-11-05",updatedAtUtc:"2026-11-05T15:00:00Z",rows:[
-      {id:"active",ticker:"HALT",market:"NASDAQ",haltTimeEt:"10:30:00",reasonCode:"LUDP",reason:"Pause",quoteTimeEt:"10:35:00",tradeTimeEt:"10:40:00",source:"nasdaq",sourceUrl:"https://example.com/halts"},
-      {id:"resumed",ticker:"DONE",market:"NASDAQ",haltTimeEt:"09:30:00",reasonCode:"LUDP",reason:"Pause",quoteTimeEt:"09:35:00",tradeTimeEt:"09:40:00",source:"nasdaq",sourceUrl:"https://example.com/halts"},
+      {id:"active",ticker:"HALT",market:"NASDAQ",haltTimeEt:"10:30:00",reasonCode:"LUDP",reason:"Pause",quoteTimeEt:"10:35:00",tradeTimeEt:"10:40:00",chartExchange:null,source:"nasdaq",sourceUrl:"https://example.com/halts"},
+      {id:"resumed",ticker:"DONE",market:"NASDAQ",haltTimeEt:"09:30:00",reasonCode:"LUDP",reason:"Pause",quoteTimeEt:"09:35:00",tradeTimeEt:"09:40:00",chartExchange:null,source:"nasdaq",sourceUrl:"https://example.com/halts"},
     ]});
     if(url.includes("channel=market_cap_under_30m"))return Response.json({articles:under30,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
     if(url.includes("view=expanded-summary"))return Response.json({articles:scanner,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});

@@ -89,7 +89,7 @@ export type MomentumSignal = "volume_ignition"|"building_volume"|"price_burst"|"
 export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt: string; url: string | null; typeLabel: string }>;
 export type ScannerActiveHalt = Readonly<{
   id:string; ticker:string; market:string; haltTimeEt:string; reasonCode:string; reason:string;
-  quoteTimeEt:string|null; tradeTimeEt:string|null;
+  quoteTimeEt:string|null; tradeTimeEt:string|null; chartExchange?:"NASDAQ"|"NYSE"|null;
 }>;
 export type LiveScannerRow = Readonly<{
   symbol: string; exchange: "NASDAQ" | "NYSE"; company: string; price: number;
