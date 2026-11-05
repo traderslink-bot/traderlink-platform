@@ -71,15 +71,15 @@ describe("scanner settings HTTP", () => {
 describe("scanner float HTTP",()=>{
   const floatFact={ shares:760_000,retrievedAtUtc:"2026-10-30T14:00:00.000Z" };
   it("does not read cached floats before owner authorization",async()=>{
-    const read=vi.fn(async()=>({ tradingDate:"2026-10-30",floats:{} }));
+    const read=vi.fn(async()=>({ tradingDate:"2026-10-30",exchanges:{},floats:{} }));
     const response=await handleScannerFloatsGet(new Request("https://app.traderslink.pro/api/admin/screeners/floats?symbols=SLGB"),{ owner:()=>false,read });
     expect(response.status).toBe(404);expect(read).not.toHaveBeenCalled();
   });
   it("returns only the requested owner float facts",async()=>{
-    const read=vi.fn(async()=>({ tradingDate:"2026-10-30",floats:{ SLGB:floatFact } }));
+    const read=vi.fn(async()=>({ tradingDate:"2026-10-30",exchanges:{SLGB:"NASDAQ" as const},floats:{ SLGB:floatFact } }));
     const response=await handleScannerFloatsGet(new Request("https://app.traderslink.pro/api/admin/screeners/floats?symbols=SLGB,SLGB"),{ owner:()=>true,read });
     expect(response.status).toBe(200);expect(read).toHaveBeenCalledWith(["SLGB"]);
-    expect(await response.json()).toEqual({ tradingDate:"2026-10-30",floats:{ SLGB:floatFact } });
+    expect(await response.json()).toEqual({ tradingDate:"2026-10-30",exchanges:{SLGB:"NASDAQ" as const},floats:{ SLGB:floatFact } });
   });
   it("rejects malformed symbols and suppresses private read failures",async()=>{
     const read=vi.fn(async()=>{throw Error("/private/scanner/floats.json");});

@@ -107,6 +107,9 @@ export function readLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.
 export function readLiveScannerMarketMovements(environment: NodeJS.ProcessEnv = process.env) {
   return configuredRuntime(environment).feed.movements();
 }
+export function scannerUniverseStore(environment: NodeJS.ProcessEnv = process.env): UniverseStore {
+  return new UniverseStore(root(environment));
+}
 export function scannerSettingsStore(environment: NodeJS.ProcessEnv = process.env): ScannerSettingsStore {
   return configuredRuntime(environment).settings;
 }

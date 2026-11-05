@@ -43,7 +43,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
     ]});
     if(url.includes("channel=market_cap_under_30m"))return Response.json({articles:under30,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
     if(url.includes("view=expanded-summary"))return Response.json({articles:scanner,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
-    if(url.startsWith("/api/admin/screeners/floats?"))return Response.json({floats:{AAA:{shares:500000},BBB:{shares:600000},CCC:{shares:700000}}});
+    if(url.startsWith("/api/admin/screeners/floats?"))return Response.json({exchanges:{AAA:"NASDAQ",BBB:"NYSE",CCC:"NASDAQ"},floats:{AAA:{shares:500000},BBB:{shares:600000},CCC:{shares:700000}}});
     if(url.includes("articleId=cap-1"))return Response.json({article:under30[0]});
     throw Error(`Unexpected request: ${url}`);
   });
@@ -67,8 +67,9 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(container.textContent).toContain("View all");
   expect(container.querySelector('[aria-label="Latest PR Scanner releases"]')).not.toBeNull();
   await act(async()=>{(container.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click();});
-  expect(onOpenChart).toHaveBeenCalledWith({symbol:"AAA"});
+  expect(onOpenChart).toHaveBeenCalledWith({symbol:"AAA",exchange:"NASDAQ"});
   expect(container.textContent).toContain("Float 500K");
+  expect(container.querySelector('[aria-label="Open DDD chart"]')).toBeNull();
 
   const viewAll=[...container.querySelectorAll("button")].find(button=>button.textContent==="View all") as HTMLElement;
   await act(async()=>viewAll.click());

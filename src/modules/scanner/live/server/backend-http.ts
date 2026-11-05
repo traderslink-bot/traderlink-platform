@@ -17,6 +17,7 @@ export type ScannerFloatsHttpDependencies = Readonly<{
   owner: (request: Request) => boolean;
   read: (symbols: readonly string[]) => Promise<Readonly<{
     tradingDate: string;
+    exchanges: Readonly<Record<string,"NASDAQ"|"NYSE">>;
     floats: Readonly<Record<string,Readonly<{ shares:number; retrievedAtUtc:string }>>>;
   }>>;
 }>;
