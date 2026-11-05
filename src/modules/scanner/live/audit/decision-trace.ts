@@ -38,9 +38,9 @@ const EARLY_LIQUIDITY_SIGNALS = new Set(["volume_ignition", "building_volume", "
  * only the cumulative session volume floors; all risk and universe filters
  * continue to apply. A price burst alone never receives this exception.
  */
-export function scannerMomentumFilterFailures(row: LiveScannerRow, filters: ScreenFilters): readonly string[] {
+export function scannerMomentumFilterFailures(row: LiveScannerRow, filters: ScreenFilters, allowEarlyLiquidityBypass = false): readonly string[] {
   const failures = scannerFilterFailures(row, filters);
-  const adaptiveLiquidity = row.momentumSignals?.some(signal => EARLY_LIQUIDITY_SIGNALS.has(signal)) ?? false;
+  const adaptiveLiquidity = allowEarlyLiquidityBypass && (row.momentumSignals?.some(signal => EARLY_LIQUIDITY_SIGNALS.has(signal)) ?? false);
   return adaptiveLiquidity
     ? Object.freeze(failures.filter(reason => reason !== "volume_below_minimum" && reason !== "dollar_volume_below_minimum"))
     : failures;

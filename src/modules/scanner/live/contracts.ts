@@ -35,6 +35,7 @@ export type MomentumDetectionSessionControls = Readonly<{
   buildingConfirmationScans:number; episodeQuietScans:number;episodeQuietSeconds:number;
 }>;
 export type MomentumDetectionControls=Readonly<Record<ScannerSession,MomentumDetectionSessionControls>>;
+export type MomentumLiquidityBypassControls=Readonly<Record<ScannerSession,boolean>>;
 export type ScreenControls = Readonly<{ displayLimit: number; filters: Readonly<Record<ScannerSession, ScreenFilters>>; focus: FocusControls }>;
 export type DeclineControls = Readonly<{
   enabled: boolean; displayLimit: number; minimumDropPercent: number;
@@ -47,6 +48,7 @@ export type ScannerConfiguration = Readonly<{
   version: 1; revision: number; enabled: boolean; updatedAtUtc: string | null;
   gainers: ScreenControls; momentum: ScreenControls;
   momentumDetection?: MomentumDetectionControls;
+  momentumLiquidityBypass?: MomentumLiquidityBypassControls;
   declines?: DeclineControls;
   premarketPullbacks?: PremarketPullbackControls;
 }>;

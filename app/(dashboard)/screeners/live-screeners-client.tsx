@@ -40,7 +40,7 @@ import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "@/src/modules/scanner/live/
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 import type { LiveScannerRow, LiveScreenResults, ScannerConfiguration, ScannerKind, ScannerReadModel,
   ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
-import { DEFAULT_MOMENTUM_DETECTION, momentumDetectionControls } from "@/src/modules/scanner/live/settings";
+import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, momentumDetectionControls, momentumLiquidityBypassControls } from "@/src/modules/scanner/live/settings";
 import { gainerViewResults, selectedGainerView, type GainerView, type GainerViewChoice } from "@/src/modules/scanner/live/gainer-view";
 import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
@@ -294,7 +294,9 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
   const [saving,setSaving]=useState(false), [message,setMessage]=useState<string|null>(null);
   const controls=draft[screen], filters=controls.filters[session];
   const momentumDetection=momentumDetectionControls(draft)[session];
+  const allowEarlyLiquidityBypass=momentumLiquidityBypassControls(draft)[session];
   const updateMomentumDetection=(next:Partial<typeof momentumDetection>)=>setDraft(current=>{const all=current.momentumDetection??DEFAULT_MOMENTUM_DETECTION;return {...current,momentumDetection:{...all,[session]:{...all[session],...next}}};});
+  const updateMomentumLiquidityBypass=(enabled:boolean)=>setDraft(current=>{const all=current.momentumLiquidityBypass??DEFAULT_MOMENTUM_LIQUIDITY_BYPASS;return {...current,momentumLiquidityBypass:{...all,[session]:enabled}};});
   const declines=draft.declines??DEFAULT_DECLINE_CONTROLS;
   const updateDeclines=(next:Partial<typeof declines>)=>setDraft(current=>({...current,declines:{...(current.declines??DEFAULT_DECLINE_CONTROLS),...next}}));
   const pmPullbacks=draft.premarketPullbacks??DEFAULT_PREMARKET_PULLBACK_CONTROLS;
@@ -330,6 +332,7 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
         <NumberField label="Minimum 1-minute dollar volume" current={controls.focus.minimumOneMinuteDollarVolume} onChange={next=>next!==null&&updateControls({ focus:{ ...controls.focus,minimumOneMinuteDollarVolume:next } })}/>
       </Box>
       {screen==="momentum"?<><Typography component="h3" sx={{fontWeight:800}}>Early momentum detection</Typography>
+      <FormControlLabel control={<Switch checked={allowEarlyLiquidityBypass} onChange={event=>updateMomentumLiquidityBypass(event.target.checked)}/>} label={`Allow early signals to bypass ${SESSION_LABELS[session].toLowerCase()} cumulative volume minimums`}/>
       <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"repeat(2,minmax(0,1fr))",lg:"repeat(4,minmax(0,1fr))"},gap:1.5}}>
         <NumberField label="Immediate volume rate ×" current={momentumDetection.immediateVolumeRateMultiple} onChange={next=>next!==null&&updateMomentumDetection({immediateVolumeRateMultiple:next})}/>
         <NumberField label="Building volume rate ×" current={momentumDetection.buildingVolumeRateMultiple} onChange={next=>next!==null&&updateMomentumDetection({buildingVolumeRateMultiple:next})}/>

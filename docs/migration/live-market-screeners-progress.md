@@ -482,3 +482,9 @@ The qualification, scoring, ranking, retention and removal paths were audited ag
 One structural contradiction was corrected. Strong early events were calculated before 30 seconds but then remained blocked by ordinary cumulative session volume and dollar-volume floors (300,000 shares and $500,000 in regular-hours defaults). `volume_ignition`, `building_volume` and `developing_activity` now use their existing adaptive liquidity proof—two of episode shares, episode dollar volume and float turnover—to replace only those two cumulative floors. Price, market cap, float, spread and every other filter still apply. A price burst alone cannot bypass the floors. Audit rejection reasons now use the same effective rule as qualification. Four focused suites pass 61 tests, including new positive and negative engine cases.
 
 No outcome-based trading claim is made. The two-day data also shows that directionless volume and trailing price windows can keep a candidate active during a reversal. For completed five-minute outcomes, price-burst episodes had a 2.44% median maximum rise but a -3.15% median maximum drawdown; 278 of 952 reached +5% and 613 of 952 fell at least 2%. A configurable short-interval bearish-invalidation rule should be evaluated over additional complete trading days before selection; no arbitrary cutoff was added in this slice.
+# Momentum liquidity qualification control — 2026-11-05
+
+- Production audit evidence showed regular-session momentum averaging 20.3 qualifying stocks and peaking at 31 after strong early signals began bypassing cumulative liquidity floors.
+- Early volume signals remain detected and audited, but cumulative volume and dollar-volume floors are enforced by default again.
+- Scanner admin now has a per-session switch to allow early signals to bypass those two cumulative liquidity floors when the owner deliberately enables it.
+- Focused scanner verification passed: 3 files and 77 tests.

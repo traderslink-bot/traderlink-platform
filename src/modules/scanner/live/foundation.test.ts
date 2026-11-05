@@ -69,9 +69,10 @@ describe("daily list integrity", () => {
     expect(merged.stocks[0].marketCapAtCollection).toBe(10_000_000);
     expect(initial.universe.sourceHashes).toHaveLength(1);
   });
-  it("refuses an ambiguous same-day venue change or cross-day merge", () => {
+  it("quarantines a secondary venue conflict and refuses a cross-day merge", () => {
     const previous = importDailyUniverse(null,upload(),NOW).universe;
-    expect(() => importDailyUniverse(previous,upload("symbol,exchange,market_cap\nAAA,NYSE,100"),NOW)).toThrow("exchange_conflict");
+    const merged = importDailyUniverse(previous,upload("symbol,exchange,market_cap\nAAA,NYSE,100"),NOW).universe;
+    expect(merged.stocks[0]).toMatchObject({ symbol:"AAA",exchange:"NASDAQ",marketCapAtCollection:10_000_000 });
     expect(() => importDailyUniverse({ ...previous,tradingDate: "2026-10-30" },upload(),NOW)).toThrow("date_conflict");
   });
 });
@@ -261,7 +262,7 @@ describe("rolling evidence and focus", () => {
   });
   it("lets adaptive early-event liquidity qualify before cumulative session floors",()=>{
     const universe=importDailyUniverse(null,upload(),NOW).universe,engine=new LiveScannerEngine();
-    const configuration={...initialConfiguration(),enabled:true};
+    const configuration={...initialConfiguration(),enabled:true,momentumLiquidityBypass:{premarket:false,regular:true,after_hours:false}};
     const floats=new Map([["AAA",{shares:500_000,retrievedAtUtc:new Date(NOW).toISOString()}]]);
     engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW,configuration,floats,news:new Map(),
       snapshots:[snapshot(NOW,{price:1,volume:70_000,dollarVolume:70_000})]});
@@ -271,6 +272,18 @@ describe("rolling evidence and focus", () => {
     expect(result.momentum.rows[0].momentumSignals).toContain("volume_ignition");
     expect(result.audit[0].momentumFailures).not.toContain("volume_below_minimum");
     expect(result.audit[0].momentumFailures).not.toContain("dollar_volume_below_minimum");
+  });
+  it("enforces cumulative liquidity floors for early signals by default",()=>{
+    const universe=importDailyUniverse(null,upload(),NOW).universe,engine=new LiveScannerEngine();
+    const configuration={...initialConfiguration(),enabled:true};
+    const floats=new Map([["AAA",{shares:500_000,retrievedAtUtc:new Date(NOW).toISOString()}]]);
+    engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW,configuration,floats,news:new Map(),
+      snapshots:[snapshot(NOW,{price:1,volume:70_000,dollarVolume:70_000})]});
+    const result=engine.evaluate({universe,tradingDate:universe.tradingDate,session:"regular",now:NOW+10_000,configuration,floats,news:new Map(),
+      snapshots:[snapshot(NOW+10_000,{price:1.002,volume:100_000,dollarVolume:100_000})]});
+    expect(result.audit[0].momentumSignals).toContain("volume_ignition");
+    expect(result.momentum.rows).toHaveLength(0);
+    expect(result.audit[0].momentumFailures).toEqual(expect.arrayContaining(["volume_below_minimum","dollar_volume_below_minimum"]));
   });
   it("does not let a price burst alone bypass cumulative liquidity floors",()=>{
     const universe=importDailyUniverse(null,upload(),NOW).universe,engine=new LiveScannerEngine();

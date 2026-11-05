@@ -8,7 +8,7 @@ import { DeclineBook } from "./declines";
 import type { DeclineResults, PremarketPullbackResults } from "./contracts";
 import { PremarketPullbackBook } from "./premarket-pullbacks";
 import { MomentumEventBook } from "./momentum-events";
-import { momentumDetectionControls } from "./settings";
+import { momentumDetectionControls, momentumLiquidityBypassControls } from "./settings";
 import { MomentumRetentionBook } from "./momentum-retention";
 
 export type FloatFact = Readonly<{ shares: number; retrievedAtUtc: string }>;
@@ -142,7 +142,8 @@ export class LiveScannerEngine {
       && matches(row,input.configuration.gainers.filters[input.session]))
       .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
     const momentumFilters = input.configuration.momentum.filters[input.session];
-    const momentumEligible=rows.filter(row=>scannerMomentumFilterFailures(row,momentumFilters).length===0);
+    const allowEarlyLiquidityBypass=momentumLiquidityBypassControls(input.configuration)[input.session];
+    const momentumEligible=rows.filter(row=>scannerMomentumFilterFailures(row,momentumFilters,allowEarlyLiquidityBypass).length===0);
     const momentum = [...this.momentumRetention.select(`${input.tradingDate}:${input.session}`,momentumEligible,input.now)]
       .sort((a,b) => Number(b.momentumState==="active")-Number(a.momentumState==="active")
         || momentumScore(b,input.configuration.momentum.focus,momentumFilters)
@@ -168,7 +169,7 @@ export class LiveScannerEngine {
       const momentumRow=momentumBySymbol.get(row.symbol)??row;
       const gainerFailures=[...scannerFilterFailures(gainerRow,input.configuration.gainers.filters[input.session])];
       if(input.session === "after_hours" && gainerRow.sessionGain === null && !gainerFailures.includes("gain_unavailable"))gainerFailures.push("gain_unavailable");
-      const momentumFailures=[...scannerMomentumFilterFailures(momentumRow,momentumFilters),...scannerMovementFailures(momentumRow,input.configuration.momentum.focus)];
+      const momentumFailures=[...scannerMomentumFilterFailures(momentumRow,momentumFilters,allowEarlyLiquidityBypass),...scannerMovementFailures(momentumRow,input.configuration.momentum.focus)];
       const gr=gainerRank.get(row.symbol)??null,mr=momentumRank.get(row.symbol)??null;
       return {symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:row.marketCapAtCollection,observation:snapshot,activity:row.activity,float:row.float,floatRetrievedAtUtc:row.floatRetrievedAtUtc,
         sessionGain:row.sessionGain,spreadPercent:row.spreadPercent,offHighPercent:row.offHighPercent,relativeVolume:row.relativeVolume,

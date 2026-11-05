@@ -1,4 +1,4 @@
-import type { DeclineControls, FocusControls, MomentumDetectionControls, MomentumDetectionSessionControls, PremarketPullbackControls, ScannerConfiguration, ScannerSession, ScreenControls, ScreenFilters } from "./contracts";
+import type { DeclineControls, FocusControls, MomentumDetectionControls, MomentumDetectionSessionControls, MomentumLiquidityBypassControls, PremarketPullbackControls, ScannerConfiguration, ScannerSession, ScreenControls, ScreenFilters } from "./contracts";
 
 const SESSIONS: readonly ScannerSession[] = ["premarket", "regular", "after_hours"];
 const FILTER_KEYS = ["minimumPrice", "maximumPrice", "maximumMarketCap", "maximumFloat", "minimumVolume", "minimumDollarVolume", "minimumSessionGain", "maximumSpreadPercent"];
@@ -8,7 +8,9 @@ const detection=(shares:number,dollars:number):MomentumDetectionSessionControls=
   minimumEpisodeShares:shares,minimumEpisodeDollarVolume:dollars,minimumEpisodeFloatTurnoverPercent:.05,priceBurstPercent:1.5,maximumPriceBurstSeconds:30,
   buildingConfirmationScans:2,episodeQuietScans:3,episodeQuietSeconds:90});
 export const DEFAULT_MOMENTUM_DETECTION:MomentumDetectionControls=Object.freeze({premarket:detection(10_000,10_000),regular:detection(25_000,25_000),after_hours:detection(10_000,10_000)});
+export const DEFAULT_MOMENTUM_LIQUIDITY_BYPASS:MomentumLiquidityBypassControls=Object.freeze({premarket:false,regular:false,after_hours:false});
 export function momentumDetectionControls(configuration:ScannerConfiguration):MomentumDetectionControls{return configuration.momentumDetection??DEFAULT_MOMENTUM_DETECTION;}
+export function momentumLiquidityBypassControls(configuration:ScannerConfiguration):MomentumLiquidityBypassControls{return configuration.momentumLiquidityBypass??DEFAULT_MOMENTUM_LIQUIDITY_BYPASS;}
 function record(value: unknown): value is Record<string, unknown> { return Boolean(value && typeof value === "object" && !Array.isArray(value)); }
 function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   return Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
@@ -52,18 +54,21 @@ function momentumDetectionSessionValid(value:unknown):value is MomentumDetection
   &&bounded(value.episodeQuietSeconds,15,600);}
 function momentumDetectionValid(value:unknown):value is MomentumDetectionControls{return record(value)&&exactKeys(value,SESSIONS)
   &&SESSIONS.every(session=>momentumDetectionSessionValid(value[session]));}
+function momentumLiquidityBypassValid(value:unknown):value is MomentumLiquidityBypassControls{return record(value)&&exactKeys(value,SESSIONS)
+  &&SESSIONS.every(session=>typeof value[session]==="boolean");}
 function declinesValid(value:unknown):value is DeclineControls {
   return record(value)&&exactKeys(value,["enabled","displayLimit","minimumDropPercent","windowMinutes","retentionMinutes"])
     &&typeof value.enabled==="boolean"&&Number.isInteger(value.displayLimit)&&bounded(value.displayLimit,1,100)
     &&bounded(value.minimumDropPercent,1,99)&&bounded(value.windowMinutes,0.5,15)&&bounded(value.retentionMinutes,1,60);
 }
 export function validateConfiguration(value: unknown): ScannerConfiguration {
-  if (!record(value) || !exactKeys(value, ["version", "revision", "enabled", "updatedAtUtc", "gainers", "momentum",...(Object.hasOwn(value,"momentumDetection")?["momentumDetection"]:[]),...(Object.hasOwn(value,"declines")?["declines"]:[]),...(Object.hasOwn(value,"premarketPullbacks")?["premarketPullbacks"]:[])])
+  if (!record(value) || !exactKeys(value, ["version", "revision", "enabled", "updatedAtUtc", "gainers", "momentum",...(Object.hasOwn(value,"momentumDetection")?["momentumDetection"]:[]),...(Object.hasOwn(value,"momentumLiquidityBypass")?["momentumLiquidityBypass"]:[]),...(Object.hasOwn(value,"declines")?["declines"]:[]),...(Object.hasOwn(value,"premarketPullbacks")?["premarketPullbacks"]:[])])
     || value.version !== 1 || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0
     || typeof value.enabled !== "boolean"
     || !(value.updatedAtUtc === null || typeof value.updatedAtUtc === "string" && Number.isFinite(Date.parse(value.updatedAtUtc)))
     || !controlsValid(value.gainers) || !controlsValid(value.momentum)
     || Object.hasOwn(value,"momentumDetection")&&!momentumDetectionValid(value.momentumDetection)
+    || Object.hasOwn(value,"momentumLiquidityBypass")&&!momentumLiquidityBypassValid(value.momentumLiquidityBypass)
     || Object.hasOwn(value,"declines")&&!declinesValid(value.declines)
     || Object.hasOwn(value,"premarketPullbacks")&&!premarketPullbacksValid(value.premarketPullbacks)) throw Error("scanner_settings_invalid");
   return structuredClone(value) as ScannerConfiguration;
@@ -86,7 +91,7 @@ export function initialConfiguration(): ScannerConfiguration {
   const focus = (one: number, five: number): FocusControls => ({ maximumStocks: 3, confirmationScans: 2,
     replacementImprovementPercent: 20, minimumOneMinuteGain: one, minimumFiveMinuteGain: five,
     minimumVolumeAcceleration: 2, minimumOneMinuteDollarVolume: 25_000 });
-  return { version: 1, revision: 0, enabled: false, updatedAtUtc: null,momentumDetection:DEFAULT_MOMENTUM_DETECTION,
+  return { version: 1, revision: 0, enabled: false, updatedAtUtc: null,momentumDetection:DEFAULT_MOMENTUM_DETECTION,momentumLiquidityBypass:DEFAULT_MOMENTUM_LIQUIDITY_BYPASS,
     gainers: { displayLimit: 20, filters: filters(3), focus: focus(1, 2) },
     momentum: { displayLimit: 20, filters: filters(null), focus: focus(2.5, 5) } };
 }
