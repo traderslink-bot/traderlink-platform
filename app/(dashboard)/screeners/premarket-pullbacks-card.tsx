@@ -33,7 +33,6 @@ const wholePercent=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
 const clock=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit",second:"2-digit"});
 const price=(value:number)=>`$${(value<1?subDollarPrice:regularPrice).format(value)}`;
-const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${wholePercent.format(value)}%`;
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 
 function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(row:PremarketPullbackRow)=>void}){
@@ -49,7 +48,7 @@ function PullbackTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Prema
   return <TableContainer role="region" aria-label="Premarket high pullback list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
     <Table size="small" stickyHeader aria-label="Premarket high pullback stocks" sx={{tableLayout:"fixed",minWidth:410,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
       <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/><TableCell sx={{width:58}}>Ticker</TableCell><TableCell sx={{width:70}}>Price</TableCell>
-        <TableCell sx={{width:62}}>Change</TableCell><TableCell sx={{width:70}}>PM High</TableCell><TableCell sx={{width:78}}>Volume</TableCell>
+        <TableCell sx={{width:62}}>Pullback</TableCell><TableCell sx={{width:70}}>PM High</TableCell><TableCell sx={{width:78}}>Volume</TableCell>
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const metrics:[string,string][]=open?[["Premarket high",price(row.premarketHigh)],["Below PM high",`${wholePercent.format(row.belowHighPercent)}%`],
@@ -63,7 +62,7 @@ function PullbackTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Prema
           <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
           <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-          <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(row.changePercent)}</TableCell><TableCell>{price(row.premarketHigh)}</TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
+          <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:"error.main",fontWeight:750}}>{`${wholePercent.format(row.belowHighPercent)}%`}</TableCell><TableCell>{price(row.premarketHigh)}</TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
         </TableRow>{open?<TableRow><TableCell colSpan={7} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
             {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45}}>{value}</Typography></Box>)}
