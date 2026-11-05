@@ -150,7 +150,7 @@ function momentumSignalText(row:LiveScannerRow){
 function MomentumSignalRow({row,colSpan,leftOffset}:{row:LiveScannerRow;colSpan:number;leftOffset:string}){
   const label=momentumSignalText(row);
   return <TableRow data-momentum-signals={row.symbol}><TableCell colSpan={colSpan} sx={{borderBottom:1,borderColor:"divider",pl:`${leftOffset} !important`,pr:0.5,pt:"0 !important",pb:"0.3rem !important"}}>
-    <Typography noWrap title={label} sx={{color:"text.secondary",fontSize:"0.58rem",fontWeight:400,lineHeight:1.15}}>{label}</Typography>
+    <Typography noWrap title={label} sx={{color:"warning.main",fontSize:"0.58rem",fontWeight:400,lineHeight:1.15}}>{label}</Typography>
   </TableCell></TableRow>;
 }
 
