@@ -235,4 +235,3 @@ export function ScreenerPressReleaseBoard({onOpenChart}:{onOpenChart?:(row:{symb
     </Stack>}
   </Drawer></>;
 }
-

@@ -28,7 +28,6 @@ import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
 const subDollarPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
 const regularPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
-const number=new Intl.NumberFormat("en-US",{maximumFractionDigits:2});
 const wholePercent=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
 const clock=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit",second:"2-digit"});

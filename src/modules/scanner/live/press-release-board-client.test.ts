@@ -77,4 +77,3 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   await act(async()=>([...drawer.querySelectorAll("button")].find(button=>button.textContent?.includes("Back to list")) as HTMLElement).click());
   expect(drawer.textContent).toContain("Headline cap-1");
 });
-
