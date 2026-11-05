@@ -32,6 +32,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { TradingViewChart } from "@/app/(dashboard)/charts/trading-view-chart";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard } from "./screener-press-release-board";
+import { ScannerWorkspaceCard } from "./scanner-workspace-card";
 import { DeclinesCard } from "./declines-card";
 import { DEFAULT_DECLINE_CONTROLS } from "@/src/modules/scanner/live/declines";
 import { PremarketPullbacksCard } from "./premarket-pullbacks-card";
@@ -422,7 +423,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       </Stack>
     </DashboardPanel>:null}
     <Box data-scanner-grid sx={{ display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(4,minmax(0,1fr))"},gap:1.5,alignItems:"start",'& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 } }}>
-      {(["gainers","momentum"] as const).map(kind=><Box key={kind} data-scanner-card={kind} sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}>
+      {(["gainers","momentum"] as const).map(kind=><ScannerWorkspaceCard key={kind} slot={kind}>
         <DashboardPanel hideHeader>
           <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>
             {kind==="momentum"?<Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box>:gainerTabs}
@@ -433,13 +434,13 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
           </Stack>
           {contents(kind,true)}
         </DashboardPanel>
-      </Box>)}
-      <Box data-scanner-declines-card sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}><DeclinesCard results={model?.declines}
+      </ScannerWorkspaceCard>)}
+      <ScannerWorkspaceCard slot="top-losers"><DeclinesCard results={model?.declines}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)}
-        session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></Box>
-      <Box data-scanner-premarket-pullbacks-card sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}><PremarketPullbacksCard results={model?.premarketPullbacks}
-        notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></Box>
-      <Box data-scanner-market-events-card sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}><ScreenerPressReleaseBoard managedActiveHalts={model?.activeHalts??[]} onOpenChart={setChartRow}/></Box>
+        session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
+      <ScannerWorkspaceCard slot="high-drops"><PremarketPullbacksCard results={model?.premarketPullbacks}
+        notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
+      <ScannerWorkspaceCard slot="market-events"><ScreenerPressReleaseBoard managedActiveHalts={model?.activeHalts??[]} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
     </Box>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,

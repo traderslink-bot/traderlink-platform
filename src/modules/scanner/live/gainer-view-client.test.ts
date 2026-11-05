@@ -153,17 +153,17 @@ describe("Momentum context rendering", () => {
 describe("compact scanner grid and full view", () => {
   it("renders Gainers and Momentum as separate cards without a combined scanner selector or redundant Gainers heading", async () => {
     const page = await mount(model("regular"));
-    expect(page.container.querySelectorAll('[data-scanner-card]').length).toBe(2);
+    expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
     expect(page.container.querySelector('[aria-label="Live screener"]')).toBeNull();
-    expect(page.container.querySelector('[data-scanner-card="gainers"] h2')?.textContent ?? "").not.toContain("Top Gainers");
-    expect(page.container.querySelector('[data-scanner-card="gainers"] [aria-label="Top Gainers comparison"]')).not.toBeNull();
-    expect([...page.container.querySelectorAll('[data-scanner-card="momentum"] h2')].some(heading=>heading.textContent==="Momentum")).toBe(true);
+    expect(page.container.querySelector('[data-scanner-workspace-card="gainers"] h2')?.textContent ?? "").not.toContain("Top Gainers");
+    expect(page.container.querySelector('[data-scanner-workspace-card="gainers"] [aria-label="Top Gainers comparison"]')).not.toBeNull();
+    expect([...page.container.querySelectorAll('[data-scanner-workspace-card="momentum"] h2')].some(heading=>heading.textContent==="Momentum")).toBe(true);
   });
   it("keeps a single PR instance and exposes every compact column with keyboard details", async () => {
     const initial = momentumModel(42);
     const page = await mount({...initial, gainers: initial.momentum, dayGainers: initial.momentum});
     expect(page.container.querySelectorAll('[data-pr-instance]').length).toBe(1);
-    expect(page.container.querySelectorAll('[data-scanner-card]').length).toBe(2);
+    expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
     for (const [label,columnCount] of [["Top Gainers",12],["Momentum",14]] as const) {
       const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
       expect(table.querySelectorAll('thead th').length).toBe(columnCount);
@@ -207,7 +207,7 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
   it("shows the overnight hours inside both scanner cards and removes them at 4 AM through polling", async () => {
     const page = await mount({ ...model("regular"), status: "closed", session: null },{ now: "2026-11-03T08:59:58Z" });
     const cards = [...page.container.querySelectorAll('[aria-label="Top Gainers comparison"]')].map(tabs=>tabs.closest("section")!);
-    cards.push(page.container.querySelector('[data-scanner-card="momentum"] section')!);
+    cards.push(page.container.querySelector('[data-scanner-workspace-card="momentum"] section')!);
     expect(cards.length).toBe(2);
     expect(cards.every(card => card.textContent?.includes("Active 4:00am - 8:00pm est"))).toBe(true);
     expect(page.container.textContent).not.toContain("extended-hours scanning session is closed");
