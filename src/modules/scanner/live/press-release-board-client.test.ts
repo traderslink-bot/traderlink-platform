@@ -20,8 +20,8 @@ const article=(id:string,ticker:string,publishedAt:string,routeTag="default")=>(
 
 it("uses previous-trading-day releases only to fill the three compact positions",()=>{
   const previous=[article("old-1","OLD1","2026-11-04T15:30:00.000Z"),article("old-2","OLD2","2026-11-04T14:30:00.000Z"),article("old-3","OLD3","2026-11-04T13:30:00.000Z")];
-  expect(selectCompactArticles([article("today-1","NEW1","2026-11-05T15:30:00.000Z"),...previous],{today:"2026-11-05",previous:"2026-11-04"}).map(item=>item.id)).toEqual(["today-1","old-1","old-2"]);
-  expect(selectCompactArticles([article("today-3","NEW3","2026-11-05T16:30:00.000Z"),article("today-2","NEW2","2026-11-05T16:00:00.000Z"),article("today-1","NEW1","2026-11-05T15:30:00.000Z"),...previous],{today:"2026-11-05",previous:"2026-11-04"}).map(item=>item.id)).toEqual(["today-3","today-2","today-1"]);
+  expect(selectCompactArticles([article("today-1","NEW1","2026-11-05T15:30:00.000Z"),...previous],{today:"2026-11-05",previous:"2026-11-04"}).map(item=>item.id)).toEqual(["today-1","old-1","old-2","old-3"]);
+  expect(selectCompactArticles([article("today-3","NEW3","2026-11-05T16:30:00.000Z"),article("today-2","NEW2","2026-11-05T16:00:00.000Z"),article("today-1","NEW1","2026-11-05T15:30:00.000Z"),...previous],{today:"2026-11-05",previous:"2026-11-04"}).map(item=>item.id)).toEqual(["today-3","today-2","today-1","old-1","old-2","old-3"]);
 });
 
 it("combines active halts with three PRs and uses one drawer for lists and article reading",async()=>{
@@ -48,8 +48,9 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
     throw Error(`Unexpected request: ${url}`);
   });
   vi.stubGlobal("fetch",fetch);
+  const onOpenChart=vi.fn();
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
-  await act(async()=>{root!.render(createElement(ScreenerPressReleaseBoard,{onOpenChart:vi.fn()}));});
+  await act(async()=>{root!.render(createElement(ScreenerPressReleaseBoard,{onOpenChart}));});
   await act(async()=>{await Promise.resolve();await Promise.resolve();});
 
   expect(container.textContent).toContain("Market Events");
@@ -61,12 +62,16 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(container.textContent).toContain("Trade 09:40 ET");
   expect(container.textContent).toContain("Headline today-1");
   expect(container.textContent).toContain("Headline today-3");
-  expect(container.textContent).not.toContain("Headline today-4");
-  expect(container.textContent).not.toContain("Headline previous-1");
+  expect(container.textContent).toContain("Headline today-4");
+  expect(container.textContent).toContain("Headline previous-1");
+  expect(container.textContent).toContain("View all");
+  expect(container.querySelector('[aria-label="Latest PR Scanner releases"]')).not.toBeNull();
+  await act(async()=>{(container.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click();});
+  expect(onOpenChart).toHaveBeenCalledWith({symbol:"AAA"});
   expect(container.textContent).toContain("Float 500K");
 
-  const viewMore=[...container.querySelectorAll("button")].find(button=>button.textContent==="View more PRs") as HTMLElement;
-  await act(async()=>viewMore.click());
+  const viewAll=[...container.querySelectorAll("button")].find(button=>button.textContent==="View all") as HTMLElement;
+  await act(async()=>viewAll.click());
   const drawer=document.body.querySelector('[role="dialog"][aria-label="PR workspace"]')!;
   expect(drawer).not.toBeNull();
   expect(drawer.querySelector('[aria-label="PR Scanner articles"]')?.querySelectorAll("button")).toHaveLength(4);

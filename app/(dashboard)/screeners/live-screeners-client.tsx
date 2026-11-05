@@ -294,14 +294,15 @@ function ScannerContents({ results,screen,onOpenChart,haltByTicker,compactDeskto
   return <Results haltByTicker={haltByTicker} onOpenChart={onOpenChart} results={results} screen={screen}/>;
 }
 
-function ScannerChartDrawer({ row,onClose }: { row:Pick<LiveScannerRow,"symbol"|"exchange">|null; onClose:()=>void }) {
+type ScannerChartTarget=Readonly<{symbol:string;exchange?:"NASDAQ"|"NYSE"}>;
+function ScannerChartDrawer({ row,onClose }: { row:ScannerChartTarget|null; onClose:()=>void }) {
   return <Drawer anchor="right" onClose={onClose} open={row!==null} slotProps={{ paper:{ sx:{ maxWidth:"100vw",width:{ xs:"100vw",md:"78vw",xl:1180 } } } }}>
     <Stack sx={{ height:"100dvh",minHeight:0 }}>
       <Stack direction="row" sx={{ alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",px:{ xs:1.5,md:2 },py:1.25 }}>
         <Box><Typography component="h2" sx={{ fontWeight:850 }} variant="h6">{row?.symbol} chart</Typography><Typography color="text.secondary" variant="body2">TradersLink + TradingView charts</Typography></Box>
         <IconButton aria-label="Close chart" onClick={onClose}><CloseRoundedIcon/></IconButton>
       </Stack>
-      <Box sx={{ flex:1,minHeight:0,p:{ xs:0,md:1.5 } }}>{row?<TradingViewChart symbol={`${row.exchange}:${row.symbol}`} sx={{ border:{ xs:0,md:1 },borderRadius:{ xs:0,md:2 },height:"100%",minHeight:0 }}/>:null}</Box>
+      <Box sx={{ flex:1,minHeight:0,p:{ xs:0,md:1.5 } }}>{row?<TradingViewChart symbol={row.exchange?`${row.exchange}:${row.symbol}`:row.symbol} sx={{ border:{ xs:0,md:1 },borderRadius:{ xs:0,md:2 },height:"100%",minHeight:0 }}/>:null}</Box>
     </Stack>
   </Drawer>;
 }
@@ -384,7 +385,7 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
 export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [model,setModel]=useState<ScannerReadModel|null>(null), [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
-  const [chartRow,setChartRow]=useState<Pick<LiveScannerRow,"symbol"|"exchange">|null>(null);
+  const [chartRow,setChartRow]=useState<ScannerChartTarget|null>(null);
   const [fullScanner,setFullScanner]=useState<ScannerKind|null>(null);
   const [gainerChoice,setGainerChoice]=useState<GainerViewChoice|null>(null);
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
