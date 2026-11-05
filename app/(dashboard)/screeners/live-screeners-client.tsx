@@ -136,6 +136,7 @@ const movementTableSx={
   '@keyframes scanner-price-up':{ from:{ backgroundColor:"rgba(46,125,50,0.22)" },to:{ backgroundColor:"transparent" } },
   '@keyframes scanner-price-down':{ from:{ backgroundColor:"rgba(211,47,47,0.18)" },to:{ backgroundColor:"transparent" } },
 };
+const visibleExpandedPanelSx={boxSizing:"border-box",left:0,position:"sticky",width:"100cqw"} as const;
 function movementRowSx(direction:"up"|"down"|undefined) {
   return { animation:direction?`scanner-price-${direction} 900ms ease-out`:"none",'@media (prefers-reduced-motion: reduce)':{ animation:"none" } };
 }
@@ -150,7 +151,7 @@ function CompactStockTable({ rows,screen,onOpenChart,compactDesktop=false }: { r
     : [{label:"",width:28},{label:"",width:28},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Day %",width:62},{label:"1min %",width:62},{label:"5min %",width:62},{label:"1min Vol",width:72},{label:"5min Vol",width:72},{label:"1min ↑",width:62},{label:"5min ↑",width:62},{label:"Float",width:66},{label:"Spread",width:60},{label:"News",width:52,right:true}];
   return <TableContainer aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact list`:undefined}
     role={compactDesktop?"region":undefined} tabIndex={compactDesktop?0:undefined}
-    sx={theme=>({ ...scannerScrollStyles(theme),maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
+    sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
     <Table aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,tableLayout:"fixed",minWidth:screen==="gainers"?788:884,'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.35,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
       <TableHead><TableRow>{headers.map((header,index)=><TableCell align={header.right?"right":"left"} aria-label={header.label||(index===0?"Chart":"Expand")} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
@@ -196,11 +197,12 @@ function CompactStockTable({ rows,screen,onOpenChart,compactDesktop=false }: { r
             <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell><TableCell align="right"><CompactNewsLink row={row}/></TableCell>
           </>}
         </TableRow>
-        {expanded?<TableRow><TableCell colSpan={screen==="momentum"?14:12} sx={{ bgcolor:"action.hover",position:"relative",py:"8px !important" }}>
-          {expandedMetrics.length?<Box sx={{ display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",columnGap:1.25,pr:16,rowGap:1.6,py:0.6 }}>
+        {expanded?<TableRow><TableCell colSpan={screen==="momentum"?14:12} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
+          <Box sx={{...visibleExpandedPanelSx,px:0.5,py:1}}>{expandedMetrics.length?<Box sx={{ display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",columnGap:1.25,rowGap:1.6,py:0.6 }}>
             {expandedMetrics.map((item,index)=><Fragment key={index}>{item}</Fragment>)}
           </Box>:null}
           <Box sx={{mt:1}}><NewsLinks row={row}/></Box>
+          </Box>
         </TableCell></TableRow>:null}
       </Fragment>})}</TableBody>
     </Table>
@@ -219,7 +221,7 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
     '& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.85 },
   };
   return <>
-    <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
+    <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
       {screen==="gainers"?<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart" sx={{ px:"0 !important",width:24 }}/>
         {['Ticker','Price','Gain%','Volume','$ × Vol','Float','Turnover','RVOL','Below HOD','News'].map(label => <TableCell key={label}>{label}</TableCell>)}
@@ -248,8 +250,8 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
           <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
           <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell><TableCell onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}><NewsLinks row={row} /></TableCell>
         </TableRow>
-        {expanded?<TableRow><TableCell colSpan={showPostGain?15:14} sx={{ bgcolor:"action.hover",py:"10px !important" }}>
-          <Box sx={{ display:"grid",gridTemplateColumns:"repeat(6,minmax(0,1fr))",gap:2 }}>
+        {expanded?<TableRow><TableCell colSpan={showPostGain?15:14} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
+          <Box sx={{...visibleExpandedPanelSx,display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:2,p:1.25}}>
             {[
               ["Detected",row.momentumState==="cooling"?"Cooling · watching for renewed activity":row.momentumSignals?.length?row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · "):"n/a"],
               ["Episode volume",row.activity.episodeShares==null?"n/a":compact.format(row.activity.episodeShares)],

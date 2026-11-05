@@ -521,3 +521,11 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Rapid Drops retains enough width for its additional measurements, while Top
   Losers and Premarket High Pullbacks use tighter column widths suited to their
   smaller field sets.
+
+## 2026-11-05 visible-width expanded scanner details
+
+- Expanded scanner details are constrained to the visible card viewport while
+  the collapsed data row retains horizontal scrolling for additional columns.
+- Momentum desktop details use a compact three-column grid within the card.
+- Rapid Drops, Top Losers and Premarket High Pullbacks now use the same yellow,
+  uppercase expanded-data labels as the primary scanner cards.

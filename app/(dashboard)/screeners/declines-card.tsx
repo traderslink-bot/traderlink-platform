@@ -50,7 +50,7 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
   const [expanded,setExpanded]=useState<string|null>(null);
   if(!rows.length)return <Alert severity="info">{rapid?"No rapid drops currently detected.":"No stocks currently declining in this comparison."}</Alert>;
   return <TableContainer role="region" aria-label={rapid?"Rapid Drops list":"Top Losers list"} tabIndex={0}
-    sx={theme=>({...scannerScrollStyles(theme),maxHeight:full?"calc(100dvh - 190px)":420})}>
+    sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 190px)":420})}>
     <Table size="small" stickyHeader aria-label={rapid?"Rapid Drops stocks":"Top Losers stocks"}
       sx={{tableLayout:"fixed",minWidth:rapid?520:430,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
       <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/>
@@ -75,14 +75,15 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
             <TableCell>{d?`${Math.floor(d.durationSeconds/60)}m ${d.durationSeconds%60}s`:shares(row.volume)}</TableCell>
             <TableCell>{d?pct(d.reboundPercent):shares(row.float)}</TableCell><TableCell>{d?pct(Math.max(0,d.backToStartPercent)):pct(row.spreadPercent)}</TableCell>
           </TableRow>
-          {open?<TableRow><TableCell colSpan={8} sx={{bgcolor:"action.hover"}}>
+          {open?<TableRow><TableCell colSpan={8} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
             <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
-              {metrics.map(([label,value])=><Box key={label}><Typography variant="caption" color="warning.main" sx={{display:"block",fontWeight:750}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700}}>{value}</Typography></Box>)}
+              {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45}}>{value}</Typography></Box>)}
             </Box>
             <Stack direction="row" sx={{gap:1,flexWrap:"wrap",alignItems:"center",justifyContent:"space-between"}}>
               <Stack direction="row" spacing={1}>{row.news.slice(0,3).map(item=>item.url?<Link key={item.id} href={item.url} target="_blank" rel="noreferrer" title={item.headline}>{item.typeLabel}</Link>:null)}</Stack>
               <Button size="small" onClick={()=>onOpenChart(row)} aria-label={`Open ${row.symbol} chart`}>View Chart</Button>
             </Stack>
+            </Box>
           </TableCell></TableRow>:null}
         </Fragment>;
       })}</TableBody>

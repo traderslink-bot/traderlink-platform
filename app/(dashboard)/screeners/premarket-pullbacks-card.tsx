@@ -43,7 +43,7 @@ function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(ro
 
 function PullbackTable({rows,full,onOpenChart}:{rows:readonly PremarketPullbackRow[];full:boolean;onOpenChart:(row:PremarketPullbackRow)=>void}){
   const [expanded,setExpanded]=useState<string|null>(null);
-  return <TableContainer role="region" aria-label="Premarket high pullback list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),maxHeight:full?"calc(100dvh - 150px)":420})}>
+  return <TableContainer role="region" aria-label="Premarket high pullback list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
     <Table size="small" stickyHeader aria-label="Premarket high pullback stocks" sx={{tableLayout:"fixed",minWidth:350,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
       <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/><TableCell sx={{width:58}}>Ticker</TableCell><TableCell sx={{width:70}}>Price</TableCell>
         <TableCell sx={{width:70}}>PM High</TableCell><TableCell sx={{width:78}}>Volume</TableCell>
@@ -61,13 +61,14 @@ function PullbackTable({rows,full,onOpenChart}:{rows:readonly PremarketPullbackR
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
           <TableCell sx={{color:"warning.main",fontWeight:850}}>{row.symbol}</TableCell>
           <TableCell>{price(row.price)}</TableCell><TableCell>{price(row.premarketHigh)}</TableCell><TableCell>{shares(row.premarketVolume)}</TableCell>
-        </TableRow>{open?<TableRow><TableCell colSpan={6} sx={{bgcolor:"action.hover"}}>
+        </TableRow>{open?<TableRow><TableCell colSpan={6} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
-            {metrics.map(([label,value])=><Box key={label}><Typography variant="caption" color="warning.main" sx={{display:"block",fontWeight:750}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700}}>{value}</Typography></Box>)}
+            {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45}}>{value}</Typography></Box>)}
           </Box><Stack direction="row" sx={{gap:1,flexWrap:"wrap",justifyContent:"space-between",alignItems:"center"}}>
             <Stack direction="row" spacing={1}>{row.news.slice(0,3).map(item=>item.url?<Link key={item.id} href={item.url} target="_blank" rel="noreferrer" title={item.headline}>{item.typeLabel}</Link>:null)}</Stack>
             <Button size="small" aria-label={`Open ${row.symbol} chart`} onClick={()=>onOpenChart(row)}>View Chart</Button>
           </Stack>
+          </Box>
         </TableCell></TableRow>:null}</Fragment>;
       })}</TableBody>
     </Table>
