@@ -56,7 +56,9 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(container.textContent).toContain("HALT");
   expect(container.textContent).toContain("Quote 10:35 ET");
   expect(container.textContent).toContain("Trade 10:40 ET");
-  expect(container.textContent).not.toContain("DONE");
+  expect(container.textContent).toContain("DONE");
+  expect(container.textContent).toContain("Quote 09:35 ET");
+  expect(container.textContent).toContain("Trade 09:40 ET");
   expect(container.textContent).toContain("Headline today-1");
   expect(container.textContent).toContain("Headline today-3");
   expect(container.textContent).not.toContain("Headline today-4");
