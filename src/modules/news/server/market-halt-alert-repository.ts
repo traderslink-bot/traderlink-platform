@@ -191,6 +191,16 @@ WHERE ticker = ? AND halt_date_et = ?
 LIMIT 1`).get(halt.ticker, halt.haltDateEt));
   }
 
+  hasStoredLifecycle(halt: MarketHalt): boolean {
+    return this.database.prepare<[string, string], ExistingHaltLifecycle>(`SELECT
+  halt_id, halt_time_et, issue_name, market, reason_code, reason_description,
+  resumption_quote_time_et, resumption_trade_time_et, source, source_url
+FROM news_market_halt_events
+WHERE halt_date_et = ? AND ticker = ?
+ORDER BY halt_time_et DESC, updated_at_utc DESC`).all(halt.haltDateEt,halt.ticker)
+      .some(candidate=>isSameHaltLifecycle(candidate,halt));
+  }
+
   read(scope: WorkspaceAccessScope): Readonly<{ enabled: boolean }> {
     assertActive(this.database, scope);
     const stored = this.database.prepare<[string], { enabled: number }>(

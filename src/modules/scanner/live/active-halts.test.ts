@@ -3,6 +3,10 @@ import {selectActiveScannerHalts} from "./active-halts";
 
 const halt=(id:string,ticker:string,tradeTimeEt:string|null)=>({id,ticker,market:"NASDAQ",haltTimeEt:"10:00:00",reasonCode:"LUDP",reason:"Volatility trading pause",quoteTimeEt:"10:05:00",tradeTimeEt});
 describe("active scanner halts",()=>{
+  it("removes a halt confirmed by the EODHD real-time trade stream",()=>{
+    const rows=[halt("eodhd-resumed","AAA",null)];
+    expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:07:00.000Z"),[],new Map(),new Set(["eodhd-resumed"]))).toEqual([]);
+  });
   it("keeps the newest halt per ticker when no post-halt trade is observed",()=>{
     const rows=[halt("new","AAA",null),halt("old","AAA","10:05:00"),halt("scheduled","BBB","10:06:00")];
     expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:07:00.000Z"),[],new Map([["AAA","NASDAQ"],["BBB","NASDAQ"]] as const)).map(row=>row.id)).toEqual(["new","scheduled"]);

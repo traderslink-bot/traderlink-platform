@@ -6,6 +6,7 @@ import { readLiveScannerMarketMovements, readLiveScannerRuntime, scannerUniverse
 import { handleLiveScannerGet } from "@/src/modules/scanner/live/server/backend-http";
 import { readFinnhubExchanges } from "@/src/modules/scanner/live/server/finnhub-exchange";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { eodhdResumedHaltIds } from "@/src/modules/news/server/eodhd-halt-resumption-monitor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export async function GET(request: Request): Promise<Response> {
       const halts=withReadonlyPlatformDatabase({},database=>listMarketHaltDashboard(database,now,50).rows);
       const universe=await scannerUniverseStore().readLatestOnOrBefore(scanner.tradingDate);
       const universeExchanges=new Map((universe?.stocks??[]).map(stock=>[stock.symbol,stock.exchange] as const));
-      const selected=selectActiveScannerHalts(halts,now,readLiveScannerMarketMovements(),universeExchanges);
+      const selected=selectActiveScannerHalts(halts,now,readLiveScannerMarketMovements(),universeExchanges,eodhdResumedHaltIds());
       const missing=selected.filter(halt=>halt.chartExchange===null).map(halt=>halt.ticker);
       const resolved=readFinnhubExchanges({tradingDate:scanner.tradingDate,symbols:missing,token:process.env.FINNHUB_API_KEY});
       const activeHalts=selected.map(halt=>halt.chartExchange?halt:{...halt,chartExchange:resolved.get(halt.ticker)??null});

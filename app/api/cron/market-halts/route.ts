@@ -17,6 +17,8 @@ import { marketHaltDirection } from "@/src/modules/news/server/market-halt-direc
 import { filterMarketHaltsToUniverse } from "@/src/modules/news/server/market-halt-universe-filter";
 import { UniverseStore } from "@/src/modules/scanner/live/server/universe-store";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
+import { listMarketHaltDashboard } from "@/src/modules/news/server/market-halt-dashboard";
+import { eodhdHaltResumptionMonitor } from "@/src/modules/news/server/eodhd-halt-resumption-monitor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -163,14 +165,17 @@ export async function GET(request: Request): Promise<Response> {
       const repository = new MarketHaltAlertRepository(runtimeDatabase, discordConfiguration?.channelId ?? null);
       const observedHaltIds = new Set<string>();
       const haltDirectionsById = new Map<string, Awaited<ReturnType<typeof marketHaltDirection>>>();
-      for (const halt of eligibleHalts) {
+      const eligibleKeys=new Set(eligibleHalts.map(halt=>`${halt.haltDateEt}:${halt.haltTimeEt}:${halt.ticker}`));
+      for (const halt of fetched.halts) {
+        const eligible=eligibleKeys.has(`${halt.haltDateEt}:${halt.haltTimeEt}:${halt.ticker}`);
+        if(!eligible&&!repository.hasStoredLifecycle(halt))continue;
         const result = repository.upsert({
           halt,
           observedAtUtc,
           sourceUrl: halt.source === "nyse" ? NYSE_TRADE_HALTS_CSV_URL : NASDAQ_TRADE_HALTS_RSS_URL,
         });
         if (result.inserted) created += 1;
-        observedHaltIds.add(result.haltId);
+        if(eligible)observedHaltIds.add(result.haltId);
         const key = `${halt.haltDateEt}:${halt.haltTimeEt}:${halt.ticker}`;
         const direction = directions.get(key) ?? null;
         if (!haltDirectionsById.has(result.haltId) || direction) {
@@ -185,6 +190,8 @@ export async function GET(request: Request): Promise<Response> {
         });
       }
     }).immediate();
+    const currentHalts=listMarketHaltDashboard(runtimeDatabase,new Date(),50).rows;
+    eodhdHaltResumptionMonitor().sync(currentHalts.map(halt=>({id:halt.id,ticker:halt.ticker})));
     // Each transport settles independently, including configuration failures.
     timing.phase("delivery");
     const [pushResult, discordResult] = await Promise.allSettled([
