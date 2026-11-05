@@ -614,3 +614,14 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Every Momentum result now has a permanently visible second table row listing
   its detected signals in small regular-weight text. The row is present in the
   compact card and full desktop view and does not require expanding the ticker.
+
+## 2026-11-05 active halt indicators
+
+- The five-second scanner response now includes the newest still-active halt
+  event for each ticker. A local halt-database read failure leaves the previous
+  successful indicator state in place instead of falsely clearing it.
+- A compact red pause icon appears immediately after a matching ticker in Day
+  Gainers, Momentum, Rapid Drops/Top Losers and Premarket High Pullbacks. Its
+  tooltip shows the reason, halt time and available quote/trade resume times.
+- The icon is removed when the halt feed records that trading has resumed. PR
+  rows remain unchanged, and Market Events reuses the same active halt data.

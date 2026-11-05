@@ -94,6 +94,16 @@ function momentumModel(post: number | null | undefined): ScannerReadModel {
   return { ...model(post===undefined?"regular":"after_hours"), momentum: { rows: [row], focus: [], total: 1 } };
 }
 describe("Momentum context rendering", () => {
+  it("shows an active halt beside matching tickers and removes it on the next cleared scanner update", async () => {
+    const initial=momentumModel(42),halt={id:"halt-1",ticker:"TEST",market:"NASDAQ",haltTimeEt:"16:01:00",reasonCode:"LUDP",reason:"Volatility trading pause",quoteTimeEt:"16:06:00",tradeTimeEt:null};
+    const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum,activeHalts:[halt]});
+    expect(page.container.querySelectorAll('[data-halt-indicator="TEST"]')).toHaveLength(2);
+    expect(page.container.querySelector('[aria-label*="TEST halted: LUDP"]')).not.toBeNull();
+    await page.update({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
+    expect(page.container.querySelectorAll('[data-halt-indicator="TEST"]')).toHaveLength(2);
+    await page.update({...initial,gainers:initial.momentum,dayGainers:initial.momentum,activeHalts:[]});
+    expect(page.container.querySelector('[data-halt-indicator="TEST"]')).toBeNull();
+  });
   it("keeps detected signals visible beneath each momentum ticker", async () => {
     const page = await mount(momentumModel(42));
     const compact = page.container.querySelector('table[aria-label="Momentum compact stocks"]')!;

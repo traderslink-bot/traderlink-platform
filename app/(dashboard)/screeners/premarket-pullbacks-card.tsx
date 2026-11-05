@@ -23,8 +23,9 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
-import type { PremarketPullbackResults, PremarketPullbackRow } from "@/src/modules/scanner/live/contracts";
+import type { PremarketPullbackResults, PremarketPullbackRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
+import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 
 const subDollarPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
 const regularPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -43,7 +44,7 @@ function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(ro
   </ButtonBase>;
 }
 
-function PullbackTable({rows,full,onOpenChart}:{rows:readonly PremarketPullbackRow[];full:boolean;onOpenChart:(row:PremarketPullbackRow)=>void}){
+function PullbackTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="Premarket high pullback list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
     <Table size="small" stickyHeader aria-label="Premarket high pullback stocks" sx={{tableLayout:"fixed",minWidth:410,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
@@ -61,7 +62,7 @@ function PullbackTable({rows,full,onOpenChart}:{rows:readonly PremarketPullbackR
           sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
           <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
-          <TableCell><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography></TableCell>
+          <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(row.changePercent)}</TableCell><TableCell>{price(row.premarketHigh)}</TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
         </TableRow>{open?<TableRow><TableCell colSpan={7} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
@@ -77,11 +78,11 @@ function PullbackTable({rows,full,onOpenChart}:{rows:readonly PremarketPullbackR
   </TableContainer>;
 }
 
-export function PremarketPullbacksCard({results,notice,onOpenChart}:{results:PremarketPullbackResults|undefined;notice:string|null;onOpenChart:(row:PremarketPullbackRow)=>void}){
+export function PremarketPullbacksCard({results,notice,onOpenChart,haltByTicker=new Map()}:{results:PremarketPullbackResults|undefined;notice:string|null;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
   const [full,setFull]=useState(false);
   const contents=(wide:boolean)=><Stack spacing={1}>
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>:!results?<Skeleton height={260}/>
-      :results.rows.length?<PullbackTable rows={results.rows} full={wide} onOpenChart={onOpenChart}/>:<Alert severity="info">No stocks currently qualify for this list.</Alert>}
+      :results.rows.length?<PullbackTable rows={results.rows} full={wide} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>:<Alert severity="info">No stocks currently qualify for this list.</Alert>}
   </Stack>;
   return <><DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6}}><Typography component="h2" variant="h2">Premarket High Pullbacks</Typography><Tooltip title="Sorted by percentage back to the premarket high."><IconButton aria-label="Explain Premarket High Pullbacks" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><IconButton size="small" aria-label="Open Premarket High Pullbacks full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>
     <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"Premarket High Pullbacks full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>

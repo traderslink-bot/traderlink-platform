@@ -21,8 +21,10 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DashboardPanel } from "@/app/dashboard-template";
-import type { MarketHaltDashboardReadModel, MarketHaltDashboardRow } from "@/src/modules/news/contracts/market-halt-dashboard-contracts";
+import type { MarketHaltDashboardReadModel } from "@/src/modules/news/contracts/market-halt-dashboard-contracts";
 import type { PressReleaseArticle, PressReleaseChannel } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
+import type { ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
+import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
 import { markPressReleaseRead } from "../press-releases/press-release-actions";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
@@ -61,25 +63,6 @@ function shortTime(value:string|null):string{
   if(!value)return "—";
   const [hour="",minute=""]=value.split(":");
   return hour&&minute?`${hour}:${minute}`:value;
-}
-function easternClockSeconds(now=new Date()):number{
-  const parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(now);
-  const part=(type:Intl.DateTimeFormatPartTypes)=>Number(parts.find(item=>item.type===type)?.value??0);
-  return part("hour")*3600+part("minute")*60+part("second");
-}
-function clockSeconds(value:string|null):number|null{
-  if(!value)return null;
-  const match=value.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/u);
-  return match?Number(match[1])*3600+Number(match[2])*60+Number(match[3]??0):null;
-}
-function activeHalts(model:MarketHaltDashboardReadModel|null):readonly MarketHaltDashboardRow[]{
-  const now=easternClockSeconds(),seen=new Set<string>();
-  return (model?.rows??[]).filter(row=>{
-    const resume=clockSeconds(row.tradeTimeEt);
-    if(resume!==null&&resume<=now)return false;
-    if(seen.has(row.ticker))return false;
-    seen.add(row.ticker);return true;
-  });
 }
 function DetailSection({items,title}:{items:readonly string[];title:string}){
   if(!items.length)return null;
@@ -125,7 +108,7 @@ function CompactPrRow({article,float,older,onOpen}:{article:Headline;float:numbe
   </ButtonBase>;
 }
 
-export function ScreenerPressReleaseBoard({onOpenChart}:{onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"})=>void}){
+export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"})=>void;managedActiveHalts?:readonly ScannerActiveHalt[]}){
   const [articles,setArticles]=useState<readonly Headline[]|null>(null);
   const [dates,setDates]=useState<{today:string;previous:string|null}|null>(null);
   const [floatByTicker,setFloatByTicker]=useState<Readonly<Record<string,number>>>({});
@@ -139,6 +122,7 @@ export function ScreenerPressReleaseBoard({onOpenChart}:{onOpenChart?:(row:{symb
   const listRef=useRef<HTMLDivElement|null>(null);
   const scrollByChannel=useRef<Partial<Record<PressReleaseChannel,number>>>({});
   const requestRef=useRef<AbortController|null>(null);
+  const haltsManaged=managedActiveHalts!==undefined;
 
   useEffect(()=>{
     let active=true,articleTimer:ReturnType<typeof setTimeout>|undefined,haltTimer:ReturnType<typeof setTimeout>|undefined;
@@ -157,9 +141,9 @@ export function ScreenerPressReleaseBoard({onOpenChart}:{onOpenChart?:(row:{symb
       catch{/* Keep the last successful halt state. */}
       finally{if(active)haltTimer=setTimeout(()=>void loadHalts(),60_000);}
     };
-    void loadArticles();void loadHalts();
+    void loadArticles();if(!haltsManaged)void loadHalts();
     return()=>{active=false;clearTimeout(articleTimer);clearTimeout(haltTimer);requestRef.current?.abort();};
-  },[]);
+  },[haltsManaged]);
 
   const compactArticles=useMemo(()=>{
     if(!articles||!dates)return [];
@@ -192,7 +176,7 @@ export function ScreenerPressReleaseBoard({onOpenChart}:{onOpenChart?:(row:{symb
     catch{/* Keep list available for retry. */}finally{if(requestRef.current===request)setOpening(false);}
   };
   const back=()=>{setSelected(null);requestAnimationFrame(()=>{if(listRef.current)listRef.current.scrollTop=scrollByChannel.current[channel]??0;});};
-  const active=activeHalts(halts),visibleChannel=(channelArticles[channel]??[]).filter(article=>!dates||easternDate(article.publishedAt)===dates.today);
+  const active=managedActiveHalts??selectActiveScannerHalts(halts?.rows??[]),visibleChannel=(channelArticles[channel]??[]).filter(article=>!dates||easternDate(article.publishedAt)===dates.today);
   const selectedDefinition=CHANNELS.find(item=>item.channel===channel)!;
 
   return <><DashboardPanel hideHeader>

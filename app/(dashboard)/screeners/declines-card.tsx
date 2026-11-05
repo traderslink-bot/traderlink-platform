@@ -25,8 +25,9 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
-import type { DeclineResults, DeclineRow, ScannerSession } from "@/src/modules/scanner/live/contracts";
+import type { DeclineResults, DeclineRow, ScannerActiveHalt, ScannerSession } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
+import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 
 const wholePercent=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
@@ -47,7 +48,7 @@ function ChartButton({row,onOpenChart}:{row:DeclineRow;onOpenChart:(row:DeclineR
   </ButtonBase>;
 }
 
-function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];rapid:boolean;full:boolean;onOpenChart:(row:DeclineRow)=>void}){
+function DeclineTable({rows,rapid,full,onOpenChart,haltByTicker}:{rows:readonly DeclineRow[];rapid:boolean;full:boolean;onOpenChart:(row:DeclineRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const [expanded,setExpanded]=useState<string|null>(null);
   if(!rows.length)return <Alert severity="info">{rapid?"No rapid drops currently detected.":"No stocks currently declining in this comparison."}</Alert>;
   return <TableContainer role="region" aria-label={rapid?"Rapid Drops list":"Top Losers list"} tabIndex={0}
@@ -71,7 +72,7 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
             sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
             <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
             <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
-            <TableCell><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography></TableCell>
+            <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
             <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(d?.dropPercent??row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(d?.dropPercent??row.changePercent)}</TableCell>
             <TableCell>{d?`${Math.floor(d.durationSeconds/60)}m ${d.durationSeconds%60}s`:shares(row.volume)}</TableCell>
             <TableCell>{d?pct(d.reboundPercent):shares(row.float)}</TableCell><TableCell>{d?pct(Math.max(0,d.backToStartPercent)):pct(row.spreadPercent)}</TableCell>
@@ -92,14 +93,14 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
   </TableContainer>;
 }
 
-export function DeclinesCard({results,notice,onOpenChart}:{results:DeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:DeclineRow)=>void}){
+export function DeclinesCard({results,notice,onOpenChart,haltByTicker=new Map()}:{results:DeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:DeclineRow)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
   const [view,setView]=useState<"rapid"|"losers">("rapid"),[full,setFull]=useState(false);
   const tabs=(wide:boolean)=><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Tabs value={view} onChange={(_,next)=>setView(next)} aria-label={wide?"Full decline scanner view":"Decline scanner view"} variant="scrollable" sx={titleTabsSx}><Tab label="Rapid Drops" value="rapid"/><Tab label="Top Losers" value="losers"/></Tabs>
     <Tooltip title="Top Losers during premarket and regular hours are calculated from yesterday’s regular session close. When post-market starts, Top Losers automatically switch to today’s regular session close. Rapid Drops are stocks falling 30% or more within 5 minutes using observed prices."><IconButton aria-label="Explain Rapid Drops and Top Losers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
   </Stack>;
   const contents=(wide:boolean)=><Stack spacing={1}>
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>
-      :!results?<Skeleton height={260}/>:<DeclineTable full={wide} rapid={view==="rapid"} rows={view==="rapid"?results.rapid:results.losers} onOpenChart={onOpenChart}/>}
+      :!results?<Skeleton height={260}/>:<DeclineTable full={wide} rapid={view==="rapid"} rows={view==="rapid"?results.rapid:results.losers} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>}
   </Stack>;
   return <>
     <DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>{tabs(false)}<IconButton size="small" aria-label="Open Rapid Drops full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>

@@ -1,6 +1,14 @@
 export type ScannerKind = "gainers" | "momentum";
 export type ScannerSession = "premarket" | "regular" | "after_hours";
 export type UniverseStock = Readonly<{ symbol: string; exchange: "NASDAQ" | "NYSE"; marketCapAtCollection: number }>;
+export type UniverseSourceUrl = UniverseUpload["metadata"]["source_url"];
+export type UniverseSourceImport = Readonly<{
+  sourceUrl: UniverseSourceUrl; sourceHash: string; collectionFinishedAtUtc: string; uploadCount: number;
+}>;
+export type UniverseExchangeConflict = Readonly<{
+  symbol: string; retainedExchange: "NASDAQ" | "NYSE"; quarantinedExchange: "NASDAQ" | "NYSE";
+  quarantinedSourceUrl: UniverseSourceUrl;
+}>;
 export type UniverseUpload = Readonly<{
   tradingDate: string;
   csv: string;
@@ -17,6 +25,8 @@ export type UniverseUpload = Readonly<{
 export type DailyUniverse = Readonly<{
   version: 1; tradingDate: string; acceptedAtUtc: string; lastCollectionAtUtc: string;
   latestUploadCount: number; sourceHashes: readonly string[]; stocks: readonly UniverseStock[];
+  sourceImports?: readonly UniverseSourceImport[];
+  quarantinedExchangeConflicts?: readonly UniverseExchangeConflict[];
   sourceTradingDate?: string;
 }>;
 export type ScreenFilters = Readonly<{
@@ -77,6 +87,10 @@ export type RollingActivity = Readonly<{
 }>;
 export type MomentumSignal = "volume_ignition"|"building_volume"|"price_burst"|"developing_activity"|"one_minute_momentum"|"five_minute_momentum";
 export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt: string; url: string | null; typeLabel: string }>;
+export type ScannerActiveHalt = Readonly<{
+  id:string; ticker:string; market:string; haltTimeEt:string; reasonCode:string; reason:string;
+  quoteTimeEt:string|null; tradeTimeEt:string|null;
+}>;
 export type LiveScannerRow = Readonly<{
   symbol: string; exchange: "NASDAQ" | "NYSE"; company: string; price: number;
   sessionGain: number | null; volume: number | null; dollarVolume: number | null;
@@ -132,4 +146,5 @@ export type ScannerReadModel = Readonly<{
   dayGainers?: LiveScreenResults;
   declines?: DeclineResults;
   premarketPullbacks?: PremarketPullbackResults;
+  activeHalts?:readonly ScannerActiveHalt[];
 }>;

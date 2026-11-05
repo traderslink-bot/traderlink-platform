@@ -27,7 +27,7 @@ import CandlestickChartRoundedIcon from "@mui/icons-material/CandlestickChartRou
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import { TradingViewChart } from "@/app/(dashboard)/charts/trading-view-chart";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
@@ -35,9 +35,10 @@ import { ScreenerPressReleaseBoard } from "./screener-press-release-board";
 import { DeclinesCard } from "./declines-card";
 import { DEFAULT_DECLINE_CONTROLS } from "@/src/modules/scanner/live/declines";
 import { PremarketPullbacksCard } from "./premarket-pullbacks-card";
+import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "@/src/modules/scanner/live/premarket-pullbacks";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
-import type { LiveScannerRow, LiveScreenResults, ScannerConfiguration, ScannerKind, ScannerReadModel,
+import type { LiveScannerRow, LiveScreenResults, ScannerActiveHalt, ScannerConfiguration, ScannerKind, ScannerReadModel,
   ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
 import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, momentumDetectionControls, momentumLiquidityBypassControls } from "@/src/modules/scanner/live/settings";
 import { gainerViewResults, selectedGainerView, type GainerView, type GainerViewChoice } from "@/src/modules/scanner/live/gainer-view";
@@ -153,7 +154,7 @@ function MomentumSignalRow({row,colSpan,leftOffset}:{row:LiveScannerRow;colSpan:
   </TableCell></TableRow>;
 }
 
-function CompactStockTable({ rows,screen,onOpenChart,compactDesktop=false }: { rows: readonly LiveScannerRow[]; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; compactDesktop?:boolean }) {
+function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop=false }: { rows: readonly LiveScannerRow[]; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; compactDesktop?:boolean }) {
   const [expandedSymbol,setExpandedSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(rows);
   const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
@@ -194,7 +195,7 @@ function CompactStockTable({ rows,screen,onOpenChart,compactDesktop=false }: { r
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{expanded?"−":"+"}</Typography></TableCell>
-          <TableCell><Typography noWrap component="span" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:800}}>{row.symbol}</Typography></TableCell>
+          <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><Typography noWrap component="span" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell><Typography noWrap sx={{fontSize:"0.68rem",fontWeight:500}}>${value(row.price)}</Typography></TableCell>
           {screen==="gainers"?<>
             <TableCell sx={{color:(row.sessionGain??0)>=0?"success.main":"error.main"}}>{value(row.sessionGain,"%")}</TableCell>
@@ -222,7 +223,7 @@ function CompactStockTable({ rows,screen,onOpenChart,compactDesktop=false }: { r
   </TableContainer>;
 }
 
-function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void }) {
+function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScreenResults; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt> }) {
   const [expandedDesktopSymbol,setExpandedDesktopSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(results.rows);
   const showPostGain=screen==="momentum"&&results.rows.some(row=>row.postMarketGain!==undefined);
@@ -240,7 +241,7 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
         {['Ticker','Price','Gain%','Volume','$ × Vol','Float','Turnover','RVOL','Below HOD','News'].map(label => <TableCell key={label}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
         <TableCell sx={{ px:"0 !important",width:24 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
-        <TableCell sx={{ fontWeight:800,pl:"0.5rem !important" }}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography></TableCell>
+        <TableCell sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
         <TableCell>${value(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
         <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`}</TableCell>
         <TableCell>{floatValue(row.float)}</TableCell><TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
@@ -255,7 +256,7 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
           sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:"none"},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           <TableCell sx={{ px:"0 !important",width:22 }}><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} details`} onClick={event=>{event.stopPropagation();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}} sx={{ bgcolor:"rgba(255,193,7,0.14)",borderRadius:0.75,color:"warning.main",fontSize:"0.75rem",fontWeight:800,height:20,minWidth:20,'&:hover':{ bgcolor:"rgba(255,193,7,0.24)" },'&:focus-visible':{ outline:"2px solid",outlineColor:"warning.main",outlineOffset:1 } }}>{expanded?"−":"+"}</ButtonBase></TableCell>
           <TableCell sx={{ px:"0.125rem !important",width:26 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
-          <TableCell sx={{ fontWeight:800,pl:"0.3rem !important" }}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography></TableCell>
+          <TableCell sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell>${value(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
           {showPostGain?<TableCell sx={{ color:row.postMarketGain==null?"text.secondary":row.postMarketGain>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.postMarketGain,"%")}</TableCell>:null}
           <TableCell>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
@@ -282,15 +283,15 @@ function Results({ results,screen,onOpenChart }: { results: LiveScreenResults; s
         </TableCell></TableRow>:null}
       </Fragment>})}</TableBody></Table>}
     </TableContainer>
-    <Box sx={{ display:{ xs:"block",md:"none" },mb:-2,mx:-2 }}><CompactStockTable onOpenChart={onOpenChart} rows={results.rows} screen={screen}/></Box>
+    <Box sx={{ display:{ xs:"block",md:"none" },mb:-2,mx:-2 }}><CompactStockTable haltByTicker={haltByTicker} onOpenChart={onOpenChart} rows={results.rows} screen={screen}/></Box>
   </>;
 }
 
-function ScannerContents({ results,screen,onOpenChart,compactDesktop=false }: { results: LiveScreenResults | undefined; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; compactDesktop?:boolean }) {
+function ScannerContents({ results,screen,onOpenChart,haltByTicker,compactDesktop=false }: { results: LiveScreenResults | undefined; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; compactDesktop?:boolean }) {
   if (!results) return <Skeleton height={440} variant="rounded"/>;
-  if(compactDesktop)return results.rows.length?<CompactStockTable compactDesktop rows={results.rows} screen={screen} onOpenChart={onOpenChart}/>
+  if(compactDesktop)return results.rows.length?<CompactStockTable compactDesktop haltByTicker={haltByTicker} rows={results.rows} screen={screen} onOpenChart={onOpenChart}/>
     :<Alert severity="info">No stocks currently qualify for this list.</Alert>;
-  return <Results onOpenChart={onOpenChart} results={results} screen={screen}/>;
+  return <Results haltByTicker={haltByTicker} onOpenChart={onOpenChart} results={results} screen={screen}/>;
 }
 
 function ScannerChartDrawer({ row,onClose }: { row:Pick<LiveScannerRow,"symbol"|"exchange">|null; onClose:()=>void }) {
@@ -388,10 +389,11 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [gainerChoice,setGainerChoice]=useState<GainerViewChoice|null>(null);
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
   const [checkedAt,setCheckedAt]=useState<number|null>(null);
-  useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const controller=new AbortController();const load=async()=>{try{const response=await fetch('/api/screeners/live',{ cache:'no-store',credentials:'same-origin',signal:controller.signal });if(!response.ok)throw Error();const incoming:ScannerReadModel=await response.json();setModel(previous=>{const next=applyScannerDisplayContinuity(previous,incoming,displayContinuity.current,Date.now());displayContinuity.current=next.continuity;return next.model;});setLoadError(false);}catch{if(!controller.signal.aborted)setLoadError(true);}finally{if(!controller.signal.aborted){setCheckedAt(Date.now());timer=setTimeout(()=>void load(),5000);}}};void load();return()=>{controller.abort();if(timer)clearTimeout(timer);};},[]);
+  useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const controller=new AbortController();const load=async()=>{try{const response=await fetch('/api/screeners/live',{ cache:'no-store',credentials:'same-origin',signal:controller.signal });if(!response.ok)throw Error();const incoming:ScannerReadModel=await response.json();setModel(previous=>{const haltSafeIncoming=incoming.activeHalts===undefined&&previous?.activeHalts?{...incoming,activeHalts:previous.activeHalts}:incoming;const next=applyScannerDisplayContinuity(previous,haltSafeIncoming,displayContinuity.current,Date.now());displayContinuity.current=next.continuity;return next.model;});setLoadError(false);}catch{if(!controller.signal.aborted)setLoadError(true);}finally{if(!controller.signal.aborted){setCheckedAt(Date.now());timer=setTimeout(()=>void load(),5000);}}};void load();return()=>{controller.abort();if(timer)clearTimeout(timer);};},[]);
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView=selectedGainerView(model,gainerChoice);
   const selectedGainers=gainerViewResults(model,gainerView);
+  const haltByTicker=useMemo(()=>new Map((model?.activeHalts??[]).map(halt=>[halt.ticker,halt])),[model?.activeHalts]);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
   const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Tabs aria-label="Top Gainers comparison" value={gainerView} variant="scrollable" scrollButtons={false} sx={cardTitleTabsSx}
@@ -404,7 +406,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     {memberNotice?<Alert severity={memberNotice===SCANNER_UNAVAILABLE_MESSAGE?"warning":"info"}>{memberNotice}</Alert>
       :kind==="gainers"&&gainerView==="post_market"&&model&&model.session!=="after_hours"
       ?<Typography color="text.secondary">{admin?"Post-market readings begin after the regular session closes.":SCANNER_UNAVAILABLE_MESSAGE}</Typography>
-      :<ScannerContents compactDesktop={compactDesktop} onOpenChart={setChartRow} results={resultsFor(kind)} screen={kind}/>}
+      :<ScannerContents compactDesktop={compactDesktop} haltByTicker={haltByTicker} onOpenChart={setChartRow} results={resultsFor(kind)} screen={kind}/>}
   </>;
   return <Stack spacing={2.5} sx={{ mt:{ xs:-1,sm:-2 } }}>
     {admin&&settingsError?<Alert severity="error">Scanner settings could not be loaded.</Alert>:null}
@@ -432,10 +434,10 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       </Box>)}
       <Box data-scanner-declines-card sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}><DeclinesCard results={model?.declines}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)}
-        session={model?.session??null} onOpenChart={setChartRow}/></Box>
+        session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></Box>
       <Box data-scanner-premarket-pullbacks-card sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}><PremarketPullbacksCard results={model?.premarketPullbacks}
-        notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} onOpenChart={setChartRow}/></Box>
-      <Box data-scanner-market-events-card sx={{minWidth:0}}><ScreenerPressReleaseBoard onOpenChart={setChartRow}/></Box>
+        notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></Box>
+      <Box data-scanner-market-events-card sx={{minWidth:0}}><ScreenerPressReleaseBoard managedActiveHalts={model?.activeHalts??[]} onOpenChart={setChartRow}/></Box>
     </Box>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,

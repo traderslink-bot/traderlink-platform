@@ -19,8 +19,10 @@ it("shows both tabs, expands drop context, opens the full view and never fetches
   const results=book.evaluate({universe,session:"after_hours",now:now+60000,snapshots:[{...base,price:.33,receivedAt:now+60000,volume:1000}],floats:new Map()});
   const fetch=vi.fn();vi.stubGlobal("fetch",fetch);const chart=vi.fn();
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
-  await act(async()=>root!.render(createElement(DeclinesCard,{results,notice:null,session:"after_hours",onOpenChart:chart})));
+  const haltByTicker=new Map([["AAA",{id:"halt-1",ticker:"AAA",market:"NASDAQ",haltTimeEt:"17:01:00",reasonCode:"LUDP",reason:"Volatility trading pause",quoteTimeEt:null,tradeTimeEt:null}]]);
+  await act(async()=>root!.render(createElement(DeclinesCard,{results,notice:null,session:"after_hours",onOpenChart:chart,haltByTicker})));
   const table=container.querySelector('table[aria-label="Rapid Drops stocks"]')!;
+  expect(table.querySelector('[data-halt-indicator="AAA"]')).not.toBeNull();
   expect(table.textContent).toContain("-40%");expect(table.textContent).toContain("$0.330");
   await act(async()=>table.querySelector('tbody tr')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
   expect(table.textContent).toContain("Back to pre-drop price");expect(table.textContent).toContain("+67%");
