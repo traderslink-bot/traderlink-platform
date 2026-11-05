@@ -9,7 +9,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
@@ -87,7 +86,6 @@ function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBac
       <PressReleaseDetailSection items={article.negatives} title="Negatives"/>
       <PressReleaseDetailSection items={article.riskFlags} title="Risk flags"/>
       <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance"/>
-      {article.articleText?<><Divider/><Box><Typography component="h3" sx={{fontWeight:800}} variant="subtitle2">Article</Typography><Typography sx={{mt:1,whiteSpace:"pre-wrap"}} variant="body2">{article.articleText}</Typography></Box></>:null}
       <Stack direction={{xs:"column",sm:"row"}} spacing={1}>
         <Button component="a" endIcon={<LaunchRoundedIcon/>} href={article.publicPath} target="_blank" variant="contained">Open article page</Button>
         {article.sourceUrl?<Button component="a" href={article.sourceUrl} rel="noreferrer" target="_blank" variant="outlined">Open original source</Button>:null}
@@ -100,7 +98,7 @@ function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article
     {exchange&&onOpenChart?<IconButton aria-label={`Open ${article.ticker} chart`} onClick={()=>onOpenChart({symbol:article.ticker,exchange})} size="small" sx={{alignSelf:"center",bgcolor:"rgba(46,125,50,0.13)",color:"success.main",justifySelf:"center",p:0.35}}><CandlestickChartRoundedIcon sx={{fontSize:"0.85rem"}}/></IconButton>:null}
     <ButtonBase aria-label={`Open ${article.ticker} article: ${article.headline}`} onClick={()=>onOpen(article)}
       sx={{display:"grid",gridTemplateColumns:"3.5rem minmax(0,1fr)",minHeight:42,px:0.5,py:0.45,textAlign:"left",width:"100%"}}>
-      <Box sx={{alignSelf:"stretch",minWidth:0}}>
+      <Box sx={{alignSelf:"center",minWidth:0}}>
         <Typography noWrap sx={{color:"warning.main",fontSize:"0.78rem",fontWeight:900,lineHeight:1.2}}>{article.ticker}</Typography>
         <Typography color="text.secondary" noWrap sx={{fontSize:"0.58rem",lineHeight:1.25}}>{older?"Yesterday · ":""}{timeFormatter.format(new Date(article.publishedAt))}</Typography>
       </Box>
@@ -194,7 +192,7 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
     {active.length?<Box aria-label="Current halts" role="region" sx={theme=>({...scannerScrollStyles(theme),mb:1.25,maxHeight:90,overflow:"auto"})}>{active.map(halt=><Stack direction="row" key={halt.id} sx={{alignItems:"center",borderTop:1,borderColor:"divider",gap:0.7,minHeight:30,px:0.5,py:0.35}}>
       {onOpenChart&&halt.chartExchange?<IconButton aria-label={`Open ${halt.ticker} chart`} onClick={()=>onOpenChart({symbol:halt.ticker,exchange:halt.chartExchange!})} size="small" sx={{bgcolor:"rgba(46,125,50,0.13)",color:"success.main",p:0.35}}><CandlestickChartRoundedIcon sx={{fontSize:"0.85rem"}}/></IconButton>:null}
       <Box sx={{minWidth:48}}><Typography sx={{color:"error.main",fontSize:"0.72rem",fontWeight:900,lineHeight:1.1}}>{halt.ticker}</Typography><Typography color="text.secondary" sx={{fontSize:"0.56rem"}}>{shortTime(halt.haltTimeEt)} ET</Typography></Box>
-      <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}>{halt.reasonCode} · Quote {halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?(tradeResumeHasPassedToday(halt.tradeTimeEt)?"success.main":"error.main"):"text.secondary"}}>Trade {halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
+      <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}><Box component="span" sx={{color:"error.main",fontWeight:900}}>HALT</Box> · {halt.reasonCode} · Quote {halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?(tradeResumeHasPassedToday(halt.tradeTimeEt)?"success.main":"error.main"):"text.secondary"}}>Trade {halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
     </Stack>)}</Box>:null}
     {articles===null?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
       :compactArticles.length?<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),maxHeight:126,overflow:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}

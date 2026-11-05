@@ -216,10 +216,11 @@ describe("LiveScannerFeed", () => {
     expect(complete.receivedCount).toBe(1);
     expect(retained).toEqual(complete);
   });
-  it("requires a fresh float before a stock can qualify", async () => {
+  it("keeps a qualifying stock when float data is unavailable", async () => {
     const result = await new LiveScannerFeed(dependencies({ floats: async () => new Map() })).scanOnce();
     expect(result.missingFloatCount).toBe(1);
-    expect(result.gainers.rows).toEqual([]);
+    expect(result.gainers.rows).toHaveLength(1);
+    expect(result.gainers.rows[0].float).toBeNull();
   });
 });
 

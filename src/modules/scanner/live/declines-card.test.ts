@@ -28,7 +28,7 @@ it("shows only Top Losers, expands context, opens the full view and never fetche
   expect(table.textContent).toContain("Comparison price");
   await act(async()=>(table.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click());
   expect(chart.mock.calls[0][0].symbol).toBe("AAA");
-  expect(container.textContent).toContain("Top Losers · Post-Market");
+  expect(container.textContent).toContain("Top Losers Post Market");
   expect(container.querySelector('[role="tab"]')).toBeNull();expect(container.textContent).not.toContain("Rapid Drops");
   await act(async()=>(container.querySelector('[aria-label="Open Top Losers full view"]') as HTMLElement).click());
   const drawer=document.body.querySelector('[role="dialog"][aria-label="Top Losers full view"]')!;

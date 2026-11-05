@@ -12,7 +12,7 @@ vi.mock("@/app/dashboard-template", () => ({
 vi.mock("@/app/(dashboard)/charts/trading-view-chart", () => ({ TradingViewChart: () => null }));
 vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({ ScreenerPressReleaseBoard: () => createElement("div", {"data-pr-instance": true}, "PR Scanner") }));
 vi.mock("@/app/(dashboard)/screeners/screener-market-halts-card", () => ({ ScreenerMarketHaltsCard: () => createElement("div", {"data-halt-instance": true}, "Halt Alerts") }));
-import { LiveScreenersClient } from "@/app/(dashboard)/screeners/live-screeners-client";
+import { GAINERS_EXPLANATION, LiveScreenersClient } from "@/app/(dashboard)/screeners/live-screeners-client";
 
 beforeAll(() => { (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true; });
 let root: Root | undefined;
@@ -59,14 +59,14 @@ describe("actual Top Gainers card polling and tab interaction", () => {
     expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
     expect(page.fetch).toHaveBeenCalledTimes(1);
     await page.update(model("after_hours"));
-    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers · Post-Market");
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers Post Market");
     expect(page.container.textContent).not.toContain("Since today’s regular close");
     expect(page.fetch).toHaveBeenCalledTimes(2);
     expect(page.fetch.mock.calls.every(call => String(call[0]) === "/api/screeners/live")).toBe(true);
   });
   it("returns to the day comparison when the reported session is regular", async () => {
     const page = await mount(model("after_hours"));
-    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers · Post-Market");
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers Post Market");
     await page.update(model("regular"));
     expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
     expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
@@ -121,7 +121,7 @@ describe("Momentum context rendering", () => {
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
-    expect(cells.slice(4,11)).toEqual(["-24%","42%","8%","20%","10K","50K","2×"]);
+    expect(cells.slice(5,12)).toEqual(["-24%","42%","8%","20%","10K","50K","2×"]);
     expect(header.querySelectorAll("th").length).toBe(15);
     await act(async () => (drawer.querySelector('[aria-label="Close full scanner view"]') as HTMLElement).click());
     const compact = page.container.querySelector('table[aria-label="Momentum compact stocks"]')!;
@@ -144,14 +144,15 @@ describe("Momentum context rendering", () => {
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
-    expect(cells[4]).toBe("-24%");
-    expect(cells[5]).toBe("n/a");
-    expect(cells[6]).toBe("8%");
+    expect(cells[5]).toBe("-24%");
+    expect(cells[6]).toBe("n/a");
+    expect(cells[7]).toBe("8%");
     expect(page.fetch).toHaveBeenCalledTimes(2);
   });
 });
 
 describe("compact scanner grid and full view", () => {
+  it("uses the approved gainer explanation",()=>{expect(GAINERS_EXPLANATION).toBe("This gainer list is not a standard list where percentage increase determines inclusion. The scanner qualifies candidates according to total vol, dollar vol, min gain and max spread. Day Gainers are ranked by gain from yesterday’s regular session close. Post market Gainers are ranked by gain from today’s regular close.");});
   it("keeps trailing zeroes in every scanner price",async()=>{const initial=momentumModel(42),row={...initial.momentum!.rows[0]!,price:.1,dayHigh:.2,dayLow:.1};const page=await mount({...initial,gainers:{rows:[row],focus:[],total:1},dayGainers:{rows:[row],focus:[],total:1},momentum:{rows:[row],focus:[],total:1}});expect(page.container.textContent).toContain("$0.10");expect([...page.container.querySelectorAll("td")].some(cell=>cell.textContent==="$0.1")).toBe(false);});
   it("renders Gainers and Momentum as separate cards without a combined scanner selector", async () => {
     const page = await mount(model("regular"));

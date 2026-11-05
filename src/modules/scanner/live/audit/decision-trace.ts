@@ -14,7 +14,7 @@ export function scannerFilterFailures(row: LiveScannerRow, filters: ScreenFilter
   if (row.price < filters.minimumPrice) failures.push("price_below_minimum");
   if (filters.maximumPrice !== null && row.price > filters.maximumPrice) failures.push("price_above_maximum");
   if (row.marketCapAtCollection > filters.maximumMarketCap) failures.push("market_cap_above_maximum");
-  if (filters.maximumFloat !== null && row.float > filters.maximumFloat) failures.push("float_above_maximum");
+  if (filters.maximumFloat !== null && row.float !== null && row.float > filters.maximumFloat) failures.push("float_above_maximum");
   if (row.volume === null) failures.push("volume_unavailable");
   else if (row.volume < filters.minimumVolume) failures.push("volume_below_minimum");
   if (row.dollarVolume === null) failures.push("dollar_volume_unavailable");

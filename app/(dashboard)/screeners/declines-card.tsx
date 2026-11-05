@@ -35,6 +35,7 @@ const clock=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"n
 const price=(value:number)=>`$${(value<1?subDollarPrice:regularPrice).format(value)}`;
 const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${wholePercent.format(value)}%`;
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
+const floatShares=(value:number|null)=>value===null?"—":compact.format(value);
 const stamp=(value:string)=>clock.format(new Date(value));
 
 function ChartButton({row,onOpenChart}:{row:DeclineRow;onOpenChart:(row:DeclineRow)=>void}){
@@ -57,7 +58,7 @@ function DeclineTable({rows,rapid,full,onOpenChart,haltByTicker}:{rows:readonly 
         <TableCell>{rapid?"Fall time":"Volume"}</TableCell><TableCell>{rapid?"Rebound":"Float"}</TableCell><TableCell>{rapid?"Back to start":"Spread"}</TableCell>
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,d=row.drop;const toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
-        const metrics:[string,string][]=open?[["Session volume",shares(row.volume)],["Float",shares(row.float)],["Spread",pct(row.spreadPercent)],
+        const metrics:[string,string][]=open?[["Session volume",shares(row.volume)],["Float",floatShares(row.float)],["Spread",pct(row.spreadPercent)],
           ["Quote received",`${stamp(row.receivedAtUtc)} ET`],...(d?[
             ["Pre-drop price",price(d.startPrice)],["Detected at",price(d.detectionPrice)],["Lowest since detection",price(d.lowPrice)],
             ["Largest drop",pct(d.maximumDropPercent)],["Rebound from low",pct(d.reboundPercent)],["Back to pre-drop price",pct(Math.max(0,d.backToStartPercent))],
@@ -72,7 +73,7 @@ function DeclineTable({rows,rapid,full,onOpenChart,haltByTicker}:{rows:readonly 
             <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
             <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(d?.dropPercent??row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(d?.dropPercent??row.changePercent)}</TableCell>
             <TableCell>{d?`${Math.floor(d.durationSeconds/60)}m ${d.durationSeconds%60}s`:shares(row.volume)}</TableCell>
-            <TableCell>{d?pct(d.reboundPercent):shares(row.float)}</TableCell><TableCell>{d?pct(Math.max(0,d.backToStartPercent)):pct(row.spreadPercent)}</TableCell>
+            <TableCell>{d?pct(d.reboundPercent):floatShares(row.float)}</TableCell><TableCell>{d?pct(Math.max(0,d.backToStartPercent)):pct(row.spreadPercent)}</TableCell>
           </TableRow>
           {open?<TableRow><TableCell colSpan={8} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
             <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
@@ -92,7 +93,7 @@ function DeclineTable({rows,rapid,full,onOpenChart,haltByTicker}:{rows:readonly 
 
 export function DeclinesCard({results,notice,session,onOpenChart,haltByTicker=new Map()}:{results:DeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:DeclineRow)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
   const [full,setFull]=useState(false);
-  const losersTitle=session==="after_hours"?"Top Losers · Post-Market":"Top Losers";
+  const losersTitle=session==="after_hours"?"Top Losers Post Market":"Top Losers";
   const title=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Typography component="h2" variant="h2">{losersTitle}</Typography>
     <Tooltip title="Top Losers during premarket and regular hours are calculated from yesterday’s regular-session close. During post-market, they are calculated from today’s regular-session close."><IconButton aria-label="Explain Top Losers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
   </Stack>;
@@ -104,7 +105,7 @@ export function DeclinesCard({results,notice,session,onOpenChart,haltByTicker=ne
     <DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>{title}<IconButton size="small" aria-label="Open Top Losers full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>
     <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"Top Losers full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>
       <Stack sx={{p:2,minHeight:0,height:"100dvh"}} spacing={1}>
-        <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">Top Losers</Typography><IconButton aria-label="Close Top Losers full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack>
+        <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">{losersTitle}</Typography><IconButton aria-label="Close Top Losers full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack>
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0})}>{contents(true)}</Box>
       </Stack>
     </Drawer>

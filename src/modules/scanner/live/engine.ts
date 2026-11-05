@@ -109,11 +109,13 @@ export class LiveScannerEngine {
         || snapshot.receivedAt > input.now || snapshot.providerAt > input.now) { rejected.set(snapshot.symbol,["snapshot_not_eligible"]);continue; }
       if (!this.activity.observe(snapshot)) { rejected.set(snapshot.symbol,["activity_observation_rejected"]);continue; }
       const fact = input.floats.get(snapshot.symbol), floatAt = fact ? Date.parse(fact.retrievedAtUtc) : NaN;
-      if (!fact || !Number.isSafeInteger(fact.shares) || fact.shares <= 0 || !Number.isFinite(floatAt)
-        || floatAt > input.now || input.now-floatAt > 30*60*60_000) { missingFloatCount++;rejected.set(snapshot.symbol,["float_unavailable"]);continue; }
+      const validFloat=Boolean(fact&&Number.isSafeInteger(fact.shares)&&fact.shares>0&&Number.isFinite(floatAt)
+        &&floatAt<=input.now&&input.now-floatAt<=30*60*60_000);
+      if(!validFloat)missingFloatCount++;
+      const float=validFloat?fact!.shares:null,floatRetrievedAtUtc=validFloat?fact!.retrievedAtUtc:null;
       const spreadPercent = snapshot.bid !== null && snapshot.ask !== null && snapshot.bid > 0 && snapshot.ask >= snapshot.bid
         ? (snapshot.ask-snapshot.bid)/((snapshot.ask+snapshot.bid)/2)*100 : null;
-      const event=this.momentumEvents.evaluate(`${input.tradingDate}:${input.session}`,snapshot.symbol,snapshot.price,fact.shares,snapshot.receivedAt,
+      const event=this.momentumEvents.evaluate(`${input.tradingDate}:${input.session}`,snapshot.symbol,snapshot.price,float??0,snapshot.receivedAt,
         this.activity.metrics(snapshot.symbol,input.now),momentumDetectionControls(input.configuration)[input.session]);
       const rollingSignals:MomentumSignal[]=[];
       if(event.activity.oneMinuteGain!==null&&event.activity.oneMinuteGain>=input.configuration.momentum.focus.minimumOneMinuteGain)rollingSignals.push("one_minute_momentum");
@@ -125,7 +127,7 @@ export class LiveScannerEngine {
           typeof snapshot.regularClosePrice === "number" && Number.isFinite(snapshot.regularClosePrice) && snapshot.regularClosePrice > 0
             ? (snapshot.price/snapshot.regularClosePrice-1)*100 : null } : {}),
         volume: snapshot.volume, dollarVolume: snapshot.dollarVolume, marketCap: snapshot.marketCap,
-        marketCapAtCollection: stock.marketCapAtCollection, float: fact.shares, floatRetrievedAtUtc: fact.retrievedAtUtc,
+        marketCapAtCollection: stock.marketCapAtCollection, float, floatRetrievedAtUtc,
         relativeVolume: input.session === "premarket" ? null : snapshot.providerVolumeRatio,
         dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow,
         offHighPercent: (snapshot.price/snapshot.dayHigh-1)*100,

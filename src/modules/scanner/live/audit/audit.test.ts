@@ -33,6 +33,7 @@ describe("scanner audit evidence",()=>{
   it("records every failed gate and the exact score components",()=>{const value=row(),filters={...configuration.momentum.filters.regular,
     minimumPrice:2,minimumVolume:2_000_000,maximumSpreadPercent:1};
     expect(scannerFilterFailures(value,filters)).toEqual(["price_below_minimum","volume_below_minimum","spread_above_maximum"]);
+    expect(scannerFilterFailures({...value,float:null},{...filters,maximumFloat:1})).toEqual(["price_below_minimum","volume_below_minimum","spread_above_maximum"]);
     const score=scannerMomentumScore(value,configuration.momentum.focus,configuration.momentum.filters.regular);
     expect(score.total).toBeCloseTo(score.price+score.volumeAcceleration+score.relativeVolume+score.dollarVolume+score.spread);
     expect(scannerConfigurationHash(configuration)).toHaveLength(64);

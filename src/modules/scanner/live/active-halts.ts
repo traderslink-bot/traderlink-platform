@@ -23,7 +23,7 @@ export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new D
     const haltedAt=clockSeconds(halt.haltTimeEt),movement=movementByTicker.get(halt.ticker);
     const chartExchange=universeExchanges?.get(halt.ticker)??null,inUniverse=chartExchange!==null;
     const resumedByMarket=inUniverse&&haltedAt!==null&&movement!==undefined&&easternClockSeconds(new Date(movement.previousObservedAt))>=haltedAt&&easternClockSeconds(new Date(movement.observedAt))>=haltedAt;
-    const tradeResume=clockSeconds(halt.tradeTimeEt),resumedByOfficialTime=!inUniverse&&tradeResume!==null&&nowSeconds>=tradeResume;
+    const tradeResume=clockSeconds(halt.tradeTimeEt),resumedByOfficialTime=tradeResume!==null&&nowSeconds>=tradeResume;
     if(eodhdResumedHaltIds.has(halt.id)||resumedByMarket||resumedByOfficialTime||seen.has(halt.ticker))return [];
     seen.add(halt.ticker);
     return [Object.freeze({id:halt.id,ticker:halt.ticker,market:halt.market,haltTimeEt:halt.haltTimeEt,reasonCode:halt.reasonCode,reason:halt.reason,quoteTimeEt:halt.quoteTimeEt,tradeTimeEt:halt.tradeTimeEt,chartExchange})];

@@ -35,6 +35,7 @@ const clock=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"n
 const price=(value:number)=>`$${(value<1?subDollarPrice:regularPrice).format(value)}`;
 const optionalPrice=(value:number|null)=>value===null?"n/a":price(value);
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
+const floatShares=(value:number|null)=>value===null?"—":compact.format(value);
 
 function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(row:PremarketPullbackRow)=>void}){
   return <ButtonBase aria-label={`Open ${row.symbol} chart`} onClick={event=>{event.stopPropagation();onOpenChart(row);}}
@@ -59,7 +60,7 @@ function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Prem
         const metrics:[string,string][]=open?[["Premarket high",optionalPrice(row.premarketHigh)],["Regular high",optionalPrice(row.regularHigh)],["Post-market high",optionalPrice(row.postMarketHigh)],
           ["Reference high",price(row.referenceHigh)],["Below reference high",`${wholePercent.format(row.belowHighPercent)}%`],["Back to reference high",`+${wholePercent.format(row.backToHighPercent)}%`],["Premarket volume",shares(row.premarketVolume)],
           ["Session volume",shares(row.sessionVolume)],["1min volume",shares(row.oneMinuteVolume)],["5min volume",shares(row.fiveMinuteVolume)],
-          ["Float",shares(row.float)],["Spread",row.spreadPercent===null?"n/a":`${wholePercent.format(row.spreadPercent)}%`],
+          ["Float",floatShares(row.float)],["Spread",row.spreadPercent===null?"n/a":`${wholePercent.format(row.spreadPercent)}%`],
           ...rapidMetrics,
           ["Quote received",`${clock.format(new Date(row.receivedAtUtc))} ET`]]:[];
         return <Fragment key={row.symbol}><TableRow hover tabIndex={0} aria-expanded={open} onClick={toggle}
@@ -68,7 +69,7 @@ function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Prem
           <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
           <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-          <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:"error.main",fontWeight:750}}>{wholePercent.format(displayedDrop)}%</TableCell><TableCell><Typography component="span" sx={{font:"inherit"}}>{price(displayedHigh)}</Typography><Typography component="span" sx={{color:"text.secondary",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
+          <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:"error.main",fontWeight:750}}>{wholePercent.format(displayedDrop)}%</TableCell><TableCell><Typography component="span" sx={{font:"inherit"}}>{price(displayedHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
         </TableRow>{open?<TableRow><TableCell colSpan={7} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
             {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45}}>{value}</Typography></Box>)}

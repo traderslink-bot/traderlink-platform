@@ -54,6 +54,7 @@ const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", mome
 const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", regular: "Regular hours", after_hours: "After hours" };
 const MOMENTUM_SIGNAL_LABELS={volume_ignition:"Volume ignition",building_volume:"Building volume",price_burst:"Price burst",
   developing_activity:"Developing activity",one_minute_momentum:"1min momentum",five_minute_momentum:"5min momentum"} as const;
+export const GAINERS_EXPLANATION = "This gainer list is not a standard list where percentage increase determines inclusion. The scanner qualifies candidates according to total vol, dollar vol, min gain and max spread. Day Gainers are ranked by gain from yesterday’s regular session close. Post market Gainers are ranked by gain from today’s regular close.";
 const number = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 2 });
 const priceNumber = new Intl.NumberFormat("en-US",{ minimumFractionDigits:2,maximumFractionDigits:2 });
 const wholePercent = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 0 });
@@ -64,7 +65,7 @@ function value(input: number | null | undefined, suffix = ""): string {
 function priceValue(input:number|null|undefined):string{return input==null?"n/a":priceNumber.format(input);}
 function time(input: string | null): string { return input ? new Date(input).toLocaleTimeString([],{ hour: "numeric",minute: "2-digit",second: "2-digit" }) : "n/a"; }
 function floatValue(input: number | null): string {
-  if (input === null) return "n/a";
+  if (input === null) return "—";
   if (input >= 1_000_000) return `${number.format(input/1_000_000)}M`;
   if (input >= 1_000) return `${number.format(input/1_000)}K`;
   return number.format(input);
@@ -108,7 +109,7 @@ function CompactNewsLink({ row }: { row: LiveScannerRow }) {
 }
 
 function floatTraded(row: LiveScannerRow): string | null {
-  if (row.volume === null || row.float <= 0) return null;
+  if (row.volume === null || row.float === null || row.float <= 0) return null;
   return `${wholePercent.format(100 * row.volume / row.float)}%`;
 }
 
@@ -150,7 +151,7 @@ function momentumSignalText(row:LiveScannerRow){
 function MomentumSignalRow({row,colSpan,leftOffset}:{row:LiveScannerRow;colSpan:number;leftOffset:string}){
   const label=momentumSignalText(row);
   return <TableRow data-momentum-signals={row.symbol}><TableCell colSpan={colSpan} sx={{borderBottom:1,borderColor:"divider",pl:`${leftOffset} !important`,pr:0.5,pt:"0 !important",pb:"0.3rem !important"}}>
-    <Typography noWrap title={label} sx={{color:"warning.main",fontSize:"0.58rem",fontWeight:400,lineHeight:1.15}}>{label}</Typography>
+    <Typography noWrap title={label} sx={{color:"success.main",fontSize:"0.58rem",fontWeight:400,lineHeight:1.15}}>{label}</Typography>
   </TableCell></TableRow>;
 }
 
@@ -239,18 +240,19 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
     <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
       {screen==="gainers"?<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart" sx={{ px:"0 !important",width:24 }}/>
-        {['Ticker','Price','Gain%','Volume','$ × Vol','Float','Turnover','RVOL','Below HOD','News'].map(label => <TableCell key={label}>{label}</TableCell>)}
+        {['Ticker','News','Price','Gain%','Volume','$ × Vol','Float','Turnover','RVOL','Below HOD'].map(label => <TableCell key={label}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
         <TableCell sx={{ px:"0 !important",width:24 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
         <TableCell sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+        <TableCell><NewsLinks row={row} /></TableCell>
         <TableCell>${priceValue(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
         <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`}</TableCell>
         <TableCell>{floatValue(row.float)}</TableCell><TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
-        <TableCell>{value(row.offHighPercent,"%")}</TableCell><TableCell><NewsLinks row={row} /></TableCell>
+        <TableCell>{value(row.offHighPercent,"%")}</TableCell>
       </TableRow>)}</TableBody></Table>:<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Details" sx={{ px:"0 !important",width:22 }}/>
         <TableCell aria-label="Chart" sx={{ px:"0.125rem !important",width:26 }}/>
-        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread','News'].map(label => <TableCell key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
+        {['Ticker','News','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread'].map(label => <TableCell key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=>{const expanded=expandedDesktopSymbol===row.symbol;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol)}
           onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}}}
@@ -258,12 +260,13 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
           <TableCell sx={{ px:"0 !important",width:22 }}><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} details`} onClick={event=>{event.stopPropagation();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}} sx={{ bgcolor:"rgba(255,193,7,0.14)",borderRadius:0.75,color:"warning.main",fontSize:"0.75rem",fontWeight:800,height:20,minWidth:20,'&:hover':{ bgcolor:"rgba(255,193,7,0.24)" },'&:focus-visible':{ outline:"2px solid",outlineColor:"warning.main",outlineOffset:1 } }}>{expanded?"−":"+"}</ButtonBase></TableCell>
           <TableCell sx={{ px:"0.125rem !important",width:26 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
           <TableCell sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}><NewsLinks row={row} /></TableCell>
           <TableCell>${priceValue(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
           {showPostGain?<TableCell sx={{ color:row.postMarketGain==null?"text.secondary":row.postMarketGain>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.postMarketGain,"%")}</TableCell>:null}
           <TableCell>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
           <TableCell>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"n/a":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
           <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
-          <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell><TableCell onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}><NewsLinks row={row} /></TableCell>
+          <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
         </TableRow>
         <MomentumSignalRow row={row} colSpan={showPostGain?15:14} leftOffset="3.4rem"/>
         {expanded?<TableRow><TableCell colSpan={showPostGain?15:14} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
@@ -411,8 +414,8 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
   const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
-  const gainerTitle=model?.session==="after_hours"?"Top Gainers · Post-Market":"Top Gainers";
-  const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title="Day Gainers gains are calculated from yesterday’s regular session close price. Post-market Gainers are calculated from today’s regular close.">
+  const gainerTitle=model?.session==="after_hours"?"Top Gainers Post Market":"Top Gainers";
+  const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title={GAINERS_EXPLANATION}>
     <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
   </Tooltip></Stack>;
   const contents=(kind:ScannerKind,compactDesktop=false)=><>

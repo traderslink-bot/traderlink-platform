@@ -324,11 +324,14 @@ describe("rolling evidence and focus", () => {
     expect(result!.momentum.rows[0].activity.oneMinuteGain).toBeLessThan(result!.momentum.rows[1].activity.oneMinuteGain!);
     expect(result!.momentum.focus[0].symbol).toBe("BBB");
   });
-  it("requires actual float, rejects stale snapshots and retains a cap-crossing daily member", () => {
+  it("keeps stocks with unavailable float, rejects stale snapshots and retains a cap-crossing daily member", () => {
     const universe = importDailyUniverse(null,upload(),NOW).universe, engine = new LiveScannerEngine();
     const base = { universe,tradingDate: universe.tradingDate,session: "regular" as const,now: NOW,
       configuration: { ...initialConfiguration(),enabled: true },snapshots: [snapshot(NOW,{ marketCap: 150_000_000 })],news: new Map() };
-    expect(engine.evaluate({ ...base,floats: new Map() }).gainers.total).toBe(0);
+    const withoutFloat=engine.evaluate({ ...base,floats: new Map() });
+    expect(withoutFloat.gainers.total).toBe(1);
+    expect(withoutFloat.gainers.rows[0].float).toBeNull();
+    expect(withoutFloat.missingFloatCount).toBe(1);
     const floats = new Map([["AAA",{ shares: 500_000,retrievedAtUtc: new Date(NOW).toISOString() }]]);
     expect(engine.evaluate({ ...base,floats }).gainers.rows[0].marketCap).toBe(150_000_000);
     expect(engine.evaluate({ ...base,floats,now: NOW+31_000 }).gainers.total).toBe(0);

@@ -98,9 +98,9 @@ export type LiveScannerRow = Readonly<{
   gainBasis?: "previous_regular_close" | "today_regular_close";
   /** Context only: after-hours gain from today's regular close; absent outside after-hours. */
   postMarketGain?: number | null;
-  marketCap: number | null; marketCapAtCollection: number; float: number;
+  marketCap: number | null; marketCapAtCollection: number; float: number | null;
   relativeVolume: number | null; dayHigh: number; dayLow: number; offHighPercent: number | null;
-  floatRetrievedAtUtc: string; spreadPercent: number | null; providerAtUtc: string; receivedAtUtc: string;
+  floatRetrievedAtUtc: string | null; spreadPercent: number | null; providerAtUtc: string; receivedAtUtc: string;
   priceTimeBasis?: "provider" | "session_observation";
   activity: RollingActivity; reasons: readonly string[]; news: readonly ScannerNewsItem[];
   momentumSignals?:readonly MomentumSignal[];

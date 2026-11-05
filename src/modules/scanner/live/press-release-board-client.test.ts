@@ -61,6 +61,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
 
   expect(container.textContent).toContain("Market Events");
   expect(container.textContent).toContain("HALT");
+  expect(container.textContent).toContain("HALT · LUDP");
   expect(container.textContent).toContain("Quote 10:35 ET");
   expect(container.textContent).toContain("Trade 10:40 ET");
   expect(container.textContent).not.toContain("DONE");
@@ -100,7 +101,8 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(drawer.textContent).toContain("Headline cap-1");
   await act(async()=>([...drawer.querySelectorAll("button")].find(button=>button.textContent?.includes("Headline cap-1")) as HTMLElement).click());
   await act(async()=>{await Promise.resolve();await Promise.resolve();});
-  expect(drawer.textContent).toContain("Full stored article text.");
+  expect(drawer.textContent).not.toContain("Full stored article text.");
+  expect(drawer.textContent).toContain("Short summary.");
   expect(drawer.querySelectorAll('[role="dialog"]')).toHaveLength(0);
   await act(async()=>([...drawer.querySelectorAll("button")].find(button=>button.textContent?.includes("Back to list")) as HTMLElement).click());
   expect(drawer.textContent).toContain("Headline cap-1");
