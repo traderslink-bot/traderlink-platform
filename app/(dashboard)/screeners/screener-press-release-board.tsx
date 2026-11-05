@@ -179,10 +179,11 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
   const selectedDefinition=CHANNELS.find(item=>item.channel===channel)!;
 
   return <><DashboardPanel hideHeader>
-    <Stack direction="row" sx={{alignItems:"flex-start",mb:0.6,minHeight:22}}>
+    <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:0.6,minHeight:22}}>
       <Stack direction="row" sx={{alignItems:"center",gap:0.4}}><Typography component="h2" variant="h2">Market Events</Typography>
         <Tooltip title="Shows stocks currently halted today and the latest press releases. Resumed and previous-day halts are removed."><IconButton aria-label="Explain Market Events" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
       </Stack>
+      <Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{fontSize:"0.7rem",lineHeight:1.2,mt:0.15}} type="button" underline="hover">All News</Link>
     </Stack>
     {active.length?<Box aria-label="Current halts" role="region" sx={theme=>({...scannerScrollStyles(theme),mb:1.25,maxHeight:90,overflow:"auto"})}>{active.map(halt=><Stack direction="row" key={halt.id} sx={{alignItems:"center",borderTop:1,borderColor:"divider",gap:0.7,minHeight:30,px:0.5,py:0.35}}>
       {onOpenChart?<IconButton aria-label={`Open ${halt.ticker} chart`} onClick={()=>onOpenChart({symbol:halt.ticker,exchange:halt.market.toUpperCase().includes("NASDAQ")?"NASDAQ":"NYSE"})} size="small" sx={{bgcolor:"rgba(46,125,50,0.13)",color:"success.main",p:0.35}}><CandlestickChartRoundedIcon sx={{fontSize:"0.85rem"}}/></IconButton>:null}
@@ -190,8 +191,8 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
       <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}>{halt.reasonCode} · Quote {halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · Trade {halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Typography>
     </Stack>)}</Box>:null}
     {articles===null?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
-      :compactArticles.length?<><Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),maxHeight:126,overflow:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}</Box>
-        <Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{display:"inline-block",fontSize:"0.7rem",mt:0.55}} type="button" underline="hover">View all</Link></>
+      :compactArticles.length?<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),maxHeight:126,overflow:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}
+        <Box sx={{borderTop:1,borderColor:"divider",px:0.75,py:0.55}}><Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{fontSize:"0.7rem"}} type="button" underline="hover">View all</Link></Box></Box>
       :<Typography color="text.secondary" sx={{py:2}} variant="body2">No recent press releases.</Typography>}
     {opening?<Typography color="text.secondary" role="status" variant="caption">Opening article…</Typography>:null}
   </DashboardPanel>

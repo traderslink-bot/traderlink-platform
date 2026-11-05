@@ -62,6 +62,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(container.textContent).toContain("Headline today-3");
   expect(container.textContent).toContain("Headline today-4");
   expect(container.textContent).toContain("Headline previous-1");
+  expect(container.textContent).toContain("All News");
   expect(container.textContent).toContain("View all");
   const haltRegion=container.querySelector('[aria-label="Current halts"]') as HTMLElement;
   const prRegion=container.querySelector('[aria-label="Latest PR Scanner releases"]') as HTMLElement;
@@ -77,6 +78,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(container.querySelector('[aria-label="Open DDD chart"]')).toBeNull();
 
   const viewAll=[...container.querySelectorAll("button")].find(button=>button.textContent==="View all") as HTMLElement;
+  expect(viewAll.closest('[aria-label="Latest PR Scanner releases"]')).not.toBeNull();
   await act(async()=>viewAll.click());
   const drawer=document.body.querySelector('[role="dialog"][aria-label="PR workspace"]')!;
   expect(drawer).not.toBeNull();
