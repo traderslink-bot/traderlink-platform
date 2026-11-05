@@ -2,6 +2,7 @@
 
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
 import Drawer from "@mui/material/Drawer";
@@ -380,6 +381,18 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
   </DashboardPanel>;
 }
 
+type ManualTicker=Readonly<{symbol:string;exchange:"NASDAQ"|"NYSE";addedAtUtc:string}>;
+function ManualTickersAdmin(){
+  const [tickers,setTickers]=useState<readonly ManualTicker[]>([]),[symbol,setSymbol]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState<string|null>(null);
+  useEffect(()=>{let active=true;void fetch("/api/admin/screeners/manual-tickers",{cache:"no-store",credentials:"same-origin"}).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{if(active)setTickers(payload.tickers??[]);}).catch(()=>{if(active)setMessage("Added tickers could not be loaded.");});return()=>{active=false;};},[]);
+  const mutate=async(method:"POST"|"DELETE",ticker:string)=>{setBusy(true);setMessage(null);try{const url=method==="DELETE"?`/api/admin/screeners/manual-tickers?symbol=${encodeURIComponent(ticker)}`:"/api/admin/screeners/manual-tickers";const response=await fetch(url,{method,credentials:"same-origin",headers:{...(method==="POST"?{"content-type":"application/json"}:{}),[PLATFORM_MUTATION_REQUEST_HEADER]:"1"},...(method==="POST"?{body:JSON.stringify({symbol:ticker})}:{})});const payload=await response.json();if(!response.ok)throw Error(payload.code??"save_failed");setTickers(payload.tickers??[]);setSymbol("");}catch(error){setMessage(error instanceof Error&&error.message==="ticker_not_found"?"Ticker was not found on Nasdaq or NYSE.":"Ticker was not changed.");}finally{setBusy(false);}};
+  return <DashboardPanel title="Added tickers"><Stack spacing={1.25} sx={{maxWidth:420}}>
+    <Stack direction="row" spacing={1}><TextField fullWidth label="Ticker" onChange={event=>setSymbol(event.target.value.toUpperCase())} size="small" slotProps={{htmlInput:{maxLength:16}}} value={symbol}/><Button disabled={busy||!symbol.trim()} onClick={()=>void mutate("POST",symbol)} variant="contained">Add</Button></Stack>
+    {message?<Alert severity="error">{message}</Alert>:null}
+    {tickers.length?<Stack>{tickers.map(ticker=><Stack direction="row" key={ticker.symbol} sx={{alignItems:"center",borderTop:1,borderColor:"divider",justifyContent:"space-between",minHeight:38}}><Box><Typography sx={{fontWeight:850}}>{ticker.symbol}</Typography><Typography color="text.secondary" variant="caption">{ticker.exchange}</Typography></Box><Button color="error" disabled={busy} onClick={()=>void mutate("DELETE",ticker.symbol)} size="small">Remove</Button></Stack>)}</Stack>:<Typography color="text.secondary" variant="body2">No tickers added.</Typography>}
+  </Stack></DashboardPanel>;
+}
+
 export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [model,setModel]=useState<ScannerReadModel|null>(null), [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
@@ -408,6 +421,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   </>;
   return <Stack spacing={2.5} sx={{ mt:{ xs:-1.75,sm:-2.25 } }}>
     {admin&&settingsError?<Alert severity="error">Scanner settings could not be loaded.</Alert>:null}
+    {admin?<ManualTickersAdmin/>:null}
     {admin&&configuration?<AdminControls configuration={configuration} onSaved={setConfiguration}/>:admin&&!settingsError?<Skeleton height={220} variant="rounded"/>:null}
     {admin?<DashboardPanel action={model?<Stack direction="row" spacing={1} sx={{ alignItems:"center",flexWrap:"wrap" }}><Chip label={model.session?SESSION_LABELS[model.session]:"Session closed"} size="small"/><Typography color="text.secondary" variant="caption">Updated {time(model.updatedAtUtc)}</Typography></Stack>:null} title="Live market activity">
       <Stack spacing={2}>

@@ -23,6 +23,9 @@ async function lookup(symbol:string,token:string,request:typeof fetch):Promise<C
     return response.ok?parseFinnhubExchange(await response.json(),symbol):null;
   }catch{return null;}
 }
+export async function resolveFinnhubExchange(symbol:string,token:string|undefined,request:typeof fetch=fetch):Promise<ChartExchange|null>{
+  const normalized=symbol.trim().toUpperCase(),key=token?.trim();return key&&SYMBOL.test(normalized)?lookup(normalized,key,request):null;
+}
 export function readFinnhubExchanges(input:Readonly<{tradingDate:string;symbols:readonly string[];token?:string;request?:typeof fetch;now?:()=>number}>):ReadonlyMap<string,ChartExchange>{
   const token=input.token?.trim();if(!token)return new Map();
   const request=input.request??fetch,now=input.now??Date.now,symbols=[...new Set(input.symbols)].filter(symbol=>SYMBOL.test(symbol));

@@ -13,6 +13,7 @@ import { DailyFloatEnricher, ScannerFloatFeed } from "./float-enrichment";
 import { LiveScannerFeed, startLiveScannerFeed } from "./live-feed";
 import { ScannerSettingsStore } from "./settings-store";
 import { UniverseStore } from "./universe-store";
+import { ManualTickerStore } from "./manual-ticker-store";
 import { NasdaqUniverseRefresher } from "./nasdaq-universe-source";
 import { sendScannerUniverseAlert } from "./universe-alert";
 import { pacedSnapshotPass, scannerSnapshotSpacing } from "./snapshot-pacing";
@@ -49,6 +50,7 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
   if (existing) return existing;
   const settings = new ScannerSettingsStore(directory);
   const universe = new UniverseStore(directory);
+  const manualTickers = new ManualTickerStore(join(directory,"manual-tickers.json"));
   const nasdaqUniverse = new NasdaqUniverseRefresher({store:universe});
   const floatPersistence = settings.floatCache();
   const floatEnricher = new DailyFloatEnricher({ finnhubToken:environment.FINNHUB_API_KEY?.trim(),
@@ -57,7 +59,7 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
   const audit = new ScannerAuditRecorder(new ScannerAuditStore(join(directory,"audit")));
   const sessionQualifier = new SnapshotSessionQualifier();
   const feed = new LiveScannerFeed({
-    configuration: () => settings.configuration(), marketDay: async date => marketDay(date), universe: async date => {
+    configuration: () => settings.configuration(), manualTickers:()=>manualTickers.list(), marketDay: async date => marketDay(date), universe: async date => {
       try{await nasdaqUniverse.refresh(date);}catch{/* Retain the last validated universe and alert below. */}
       const exact = await universe.read(date);
       if (exact) { await sendScannerUniverseAlert({ kind:"recovered",tradingDate:date,sourceDate:date,count:exact.stocks.length,environment }); return exact; }
@@ -113,6 +115,7 @@ export function scannerUniverseStore(environment: NodeJS.ProcessEnv = process.en
 export function scannerSettingsStore(environment: NodeJS.ProcessEnv = process.env): ScannerSettingsStore {
   return configuredRuntime(environment).settings;
 }
+export function scannerManualTickerStore(environment:NodeJS.ProcessEnv=process.env):ManualTickerStore{return new ManualTickerStore(join(root(environment),"manual-tickers.json"));}
 export function scannerAuditRecorder(environment: NodeJS.ProcessEnv = process.env): ScannerAuditRecorder {
   return configuredRuntime(environment).audit;
 }

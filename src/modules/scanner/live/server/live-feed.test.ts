@@ -129,6 +129,10 @@ describe("LiveScannerFeed", () => {
     expect(snapshotPass.mock.calls[0][0]).toEqual([["ABCD"]]);
     expect(result.universeCount).toBe(1);
   });
+  it("appends manually added tickers after the imported-universe market-cap filter",async()=>{const snapshotPass=vi.fn(async()=>[]),reserveScannerBudget=vi.fn(async()=>{}),floats=vi.fn(async()=>new Map());
+    const result=await new LiveScannerFeed(dependencies({manualTickers:async()=>[{symbol:"MANU",exchange:"NYSE",addedAtUtc:new Date(NOW).toISOString()}],snapshotPass,reserveScannerBudget,floats})).scanOnce();
+    expect(reserveScannerBudget).toHaveBeenCalledWith(2);expect(floats).toHaveBeenCalledWith("2026-10-30",["ABCD","MANU"]);expect(snapshotPass.mock.calls[0][0]).toEqual([["ABCD","MANU"]]);expect(result.universeCount).toBe(2);
+  });
   it("stays disabled without an enabled configuration", async () => {
     const feed = new LiveScannerFeed(dependencies({ configuration: async () => initialConfiguration() }));
     expect((await feed.scanOnce()).status).toBe("disabled");

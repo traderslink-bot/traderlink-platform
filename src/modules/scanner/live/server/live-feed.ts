@@ -1,5 +1,6 @@
 import "server-only";
 import type { DailyUniverse, LiveScreenResults, NormalizedSnapshot, ScannerConfiguration, ScannerNewsItem, ScannerReadModel, ScannerSession } from "../contracts";
+import type { ManualScannerTicker } from "./manual-ticker-store";
 import type { ScannerMarketMovement } from "../active-halts";
 import { LiveScannerEngine, type FloatFact } from "../engine";
 import { activeSession, easternClock, type MarketDay } from "../sessions";
@@ -19,6 +20,7 @@ export type LiveFeedDependencies = Readonly<{
   configuration: () => Promise<ScannerConfiguration>;
   marketDay: (date: string) => Promise<MarketDay>;
   universe: (date: string) => Promise<DailyUniverse | null>;
+  manualTickers?:()=>Promise<readonly ManualScannerTicker[]>;
   reserveScannerBudget: (universeCount: number) => Promise<void>;
   snapshotPass: (batches: readonly (readonly string[])[]) => Promise<readonly Readonly<{
     requestedSymbols: readonly string[]; payload: unknown; receivedAt: number; requestedAt?: number;
@@ -80,7 +82,9 @@ export class LiveScannerFeed {
       }
       const storedUniverse = await this.dependencies.universe(date);
       if (!storedUniverse) return this.set(empty("universe_missing",date));
-      const universe=requestUniverse(storedUniverse,scannerRequestMarketCap(configuration,session));
+      const filtered=requestUniverse(storedUniverse,scannerRequestMarketCap(configuration,session));
+      const manual=await this.dependencies.manualTickers?.()??[],existing=new Set(filtered.stocks.map(stock=>stock.symbol));
+      const universe={...filtered,stocks:[...filtered.stocks,...manual.filter(row=>!existing.has(row.symbol)).map(row=>({symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:1}))]};
       await this.dependencies.reserveScannerBudget(universe.stocks.length);
       const symbols = universe.stocks.map(stock => stock.symbol);
       const floats = await this.dependencies.floats(date,symbols);
