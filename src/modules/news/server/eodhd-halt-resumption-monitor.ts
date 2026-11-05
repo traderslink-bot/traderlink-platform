@@ -9,6 +9,7 @@ type SocketFactory=(url:string)=>SocketLike;
 
 const OPEN=1;
 const RECONNECT_MS=2_000;
+const MAX_RECONNECT_MS=60_000;
 
 export class EodhdHaltResumptionMonitor {
   private socket:SocketLike|null=null;
@@ -16,6 +17,7 @@ export class EodhdHaltResumptionMonitor {
   private tracked=new Map<string,TrackedHalt>();
   private resumed=new Set<string>();
   private stopped=false;
+  private reconnectDelay=RECONNECT_MS;
   constructor(private readonly token:string|undefined,private readonly socketFactory:SocketFactory=url=>new WebSocket(url)){}
   sync(halts:readonly HaltSubscription[]):void{
     const latest=new Map<string,HaltSubscription>();
@@ -39,9 +41,9 @@ export class EodhdHaltResumptionMonitor {
     if(!this.token||this.socket||this.stopped||this.tracked.size===0)return;
     const url=`wss://ws.eodhistoricaldata.com/ws/us?api_token=${encodeURIComponent(this.token)}`;
     const socket=this.socketFactory(url);this.socket=socket;
-    socket.addEventListener("open",()=>{if(this.socket===socket)this.command("subscribe",[...this.tracked.keys()]);});
+    socket.addEventListener("open",()=>{if(this.socket===socket){this.reconnectDelay=RECONNECT_MS;this.command("subscribe",[...this.tracked.keys()]);}});
     socket.addEventListener("message",event=>{if(this.socket!==socket||!("data" in event))return;this.receive(String(event.data));});
-    const closed=()=>{if(this.socket!==socket)return;this.socket=null;if(!this.stopped&&this.tracked.size&&!this.reconnect)this.reconnect=setTimeout(()=>{this.reconnect=null;this.connect();},RECONNECT_MS);};
+    const closed=()=>{if(this.socket!==socket)return;this.socket=null;if(!this.stopped&&this.tracked.size&&!this.reconnect){const delay=this.reconnectDelay;this.reconnectDelay=Math.min(MAX_RECONNECT_MS,this.reconnectDelay*2);this.reconnect=setTimeout(()=>{this.reconnect=null;this.connect();},delay);}};
     socket.addEventListener("close",closed);socket.addEventListener("error",closed);
   }
   private receive(raw:string):void{
@@ -56,7 +58,7 @@ export class EodhdHaltResumptionMonitor {
     if(!symbols.length||this.socket?.readyState!==OPEN)return;
     this.socket.send(JSON.stringify({action,symbols:symbols.join(",")}));
   }
-  private disconnect():void{if(this.reconnect){clearTimeout(this.reconnect);this.reconnect=null;}this.socket?.close();this.socket=null;}
+  private disconnect():void{if(this.reconnect){clearTimeout(this.reconnect);this.reconnect=null;}this.socket?.close();this.socket=null;this.reconnectDelay=RECONNECT_MS;}
 }
 
 const state=globalThis as typeof globalThis&{__traderlinkEodhdHaltMonitor?:EodhdHaltResumptionMonitor};

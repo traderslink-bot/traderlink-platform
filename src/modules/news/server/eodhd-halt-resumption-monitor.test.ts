@@ -31,4 +31,16 @@ describe("EODHD halt resumption monitor",()=>{
     monitor.sync([{id:"halt-2",ticker:"AEHL"}]);
     expect(monitor.resumedHaltIds().size).toBe(0);expect(JSON.parse(socket.sent.at(-1)!)).toEqual({action:"subscribe",symbols:"AEHL"});
   });
+  it("reconnects and resubscribes after a dropped connection",()=>{
+    vi.useFakeTimers();
+    try{
+      const first=new FakeSocket(),second=new FakeSocket(),factory=vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(second);
+      const monitor=new EodhdHaltResumptionMonitor("secret",factory);
+      monitor.sync([{id:"halt-1",ticker:"AEHL"}]);first.emit("close",new Event("close"));
+      vi.advanceTimersByTime(1_999);expect(factory).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(1);expect(factory).toHaveBeenCalledTimes(2);
+      second.emit("open",new Event("open"));expect(JSON.parse(second.sent[0]!)).toEqual({action:"subscribe",symbols:"AEHL"});
+      monitor.stop();
+    }finally{vi.useRealTimers();}
+  });
 });
