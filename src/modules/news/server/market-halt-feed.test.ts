@@ -66,6 +66,19 @@ describe("market halt feed normalization", () => {
     expect(nyseHalts.map((halt) => halt.ticker)).toEqual(["ACME"]);
   });
 
+  it("rejects stale same-day resumption times inherited from an earlier halt", () => {
+    const [halt] = parseNasdaqTradeHalts(`<item>
+      <ndaq:HaltDate>11/05/2026</ndaq:HaltDate><ndaq:HaltTime>11:05:57.163</ndaq:HaltTime>
+      <ndaq:IssueSymbol>OMH</ndaq:IssueSymbol><ndaq:IssueName>Ohmyhome Ltd Ords A</ndaq:IssueName>
+      <ndaq:Market>NASDAQ</ndaq:Market><ndaq:ReasonCode>LUDP</ndaq:ReasonCode>
+      <ndaq:ResumptionDate>11/05/2026</ndaq:ResumptionDate>
+      <ndaq:ResumptionQuoteTime>09:31:15</ndaq:ResumptionQuoteTime>
+      <ndaq:ResumptionTradeTime>09:42:18</ndaq:ResumptionTradeTime>
+    </item>`);
+
+    expect(halt).toMatchObject({ticker:"OMH",haltTimeEt:"11:05:57.163",resumptionQuoteTimeEt:null,resumptionTradeTimeEt:null});
+  });
+
   it("parses the current NYSE Resume Time header", () => {
     const halts = parseNyseTradeHalts(`Halt Date,Halt Time,Symbol,Name,Exchange,Reason,Resume Date,NYSE Resume Time
 2026-11-04,13:22:24,TEST,Test Corp,NYSE,LULD Pause,2026-11-04,13:27:24`);

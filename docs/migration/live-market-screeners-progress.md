@@ -493,3 +493,9 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 
 - Halt-feed normalization excludes issue names containing the whole-word ETF/ETFs or ETN/ETNs labels from both Nasdaq and NYSE source rows. Company halts and volatility reason codes remain eligible.
 - Focused halt-feed verification passed: 1 file and 6 tests.
+
+## Repeated-halt resumption isolation — 2026-11-05
+
+- Verified production stored OMH's 11:05 halt separately but accepted impossible 09:31/09:42 resumption times from an earlier halt.
+- Source normalization now rejects same-day resumption times earlier than the halt. Persistence retains learned valid times across blank refreshes while clearing impossible earlier values, and dashboard projection suppresses previously stored invalid times immediately.
+- Focused halt verification passed: 3 files and 11 tests.

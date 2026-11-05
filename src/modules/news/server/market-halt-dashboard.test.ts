@@ -29,4 +29,19 @@ describe("market halt dashboard", () => {
     expect(model.rows.map((row) => row.ticker)).toEqual(["NEW", "OLD"]);
     expect(model.updatedAtUtc).toBe("2026-11-04T15:15:00.000Z");
   });
+
+  it("does not display resumption times that predate a repeated halt",()=>{
+    database = new Database(":memory:");
+    database.exec(`CREATE TABLE news_market_halt_events (
+      halt_id TEXT, source TEXT, halt_date_et TEXT, halt_time_et TEXT, ticker TEXT,
+      market TEXT, reason_code TEXT, reason_description TEXT,
+      resumption_quote_time_et TEXT, resumption_trade_time_et TEXT,
+      source_url TEXT, updated_at_utc TEXT
+    )`);
+    database.prepare(`INSERT INTO news_market_halt_events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run("omh-new", "nasdaq", "2026-11-05", "11:05:57.163", "OMH", "NASDAQ", "LUDP", "Volatility trading pause", "09:31:15", "09:42:18", "https://example.com/nasdaq", "2026-11-05T16:06:00.000Z");
+
+    const [row]=listMarketHaltDashboard(database,new Date("2026-11-05T17:00:00.000Z")).rows;
+    expect(row).toMatchObject({ticker:"OMH",haltTimeEt:"11:05:57.163",quoteTimeEt:null,tradeTimeEt:null});
+  });
 });

@@ -35,6 +35,9 @@ function canonicalDate(value: string): string {
   const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/u);
   return match ? `${match[3]}-${match[1].padStart(2, "0")}-${match[2].padStart(2, "0")}` : "";
 }
+function possibleResumptionTime(haltTime: string, resumptionTime: string | null): string | null {
+  return resumptionTime&&resumptionTime.slice(0,8)>=haltTime.slice(0,8)?resumptionTime:null;
+}
 
 export function listMarketHaltDashboard(
   database: Database.Database,
@@ -59,8 +62,8 @@ LIMIT 250`).all();
     haltTimeEt: row.halt_time_et,
     reasonCode: row.reason_code,
     reason: row.reason_description,
-    quoteTimeEt: row.resumption_quote_time_et,
-    tradeTimeEt: row.resumption_trade_time_et,
+    quoteTimeEt: possibleResumptionTime(row.halt_time_et,row.resumption_quote_time_et),
+    tradeTimeEt: possibleResumptionTime(row.halt_time_et,row.resumption_trade_time_et),
     source: row.source,
     sourceUrl: row.source_url,
   })));
