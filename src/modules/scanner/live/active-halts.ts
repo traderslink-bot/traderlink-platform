@@ -16,13 +16,15 @@ export function easternClockSeconds(now=new Date()):number{
   const part=(type:Intl.DateTimeFormatPartTypes)=>Number(parts.find(item=>item.type===type)?.value??0);
   return part("hour")*3600+part("minute")*60+part("second");
 }
-export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new Date(),movements:readonly ScannerMarketMovement[]=[]):readonly ScannerActiveHalt[]{
-  void now;
+export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new Date(),movements:readonly ScannerMarketMovement[]=[],universeTickers?:ReadonlySet<string>):readonly ScannerActiveHalt[]{
+  const nowSeconds=easternClockSeconds(now);
   const seen=new Set<string>(),movementByTicker=new Map(movements.map(item=>[item.symbol,item]));
   return Object.freeze(rows.flatMap(halt=>{
     const haltedAt=clockSeconds(halt.haltTimeEt),movement=movementByTicker.get(halt.ticker);
-    const resumedByMarket=haltedAt!==null&&movement!==undefined&&easternClockSeconds(new Date(movement.previousObservedAt))>=haltedAt&&easternClockSeconds(new Date(movement.observedAt))>=haltedAt;
-    if(resumedByMarket||seen.has(halt.ticker))return [];
+    const inUniverse=universeTickers?.has(halt.ticker)??false;
+    const resumedByMarket=inUniverse&&haltedAt!==null&&movement!==undefined&&easternClockSeconds(new Date(movement.previousObservedAt))>=haltedAt&&easternClockSeconds(new Date(movement.observedAt))>=haltedAt;
+    const tradeResume=clockSeconds(halt.tradeTimeEt),resumedByOfficialTime=!inUniverse&&tradeResume!==null&&nowSeconds>=tradeResume;
+    if(resumedByMarket||resumedByOfficialTime||seen.has(halt.ticker))return [];
     seen.add(halt.ticker);
     return [Object.freeze({id:halt.id,ticker:halt.ticker,market:halt.market,haltTimeEt:halt.haltTimeEt,reasonCode:halt.reasonCode,reason:halt.reason,quoteTimeEt:halt.quoteTimeEt,tradeTimeEt:halt.tradeTimeEt})];
   }));

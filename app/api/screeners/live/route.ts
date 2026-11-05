@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
   return handleLiveScannerGet(request,{ member: candidate => {
     try { return hasWatchlistDashboardNavigationAccess(requireTraderLinkPlatformRequestIdentity(candidate.headers)); } catch { return false; }
-  },read: () => {
+  },read: async () => {
     const scanner=readLiveScannerRuntime();
     try{
       const now=new Date();
