@@ -26,6 +26,7 @@ it("uses previous-trading-day releases only to fill the three compact positions"
 
 it("combines active halts with three PRs and uses one drawer for lists and article reading",async()=>{
   vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-11-05T15:31:00.000Z"));
   const scanner=[
     article("today-1","AAA","2026-11-05T15:30:00.000Z"),
     article("today-2","BBB","2026-11-05T14:30:00.000Z"),
@@ -37,7 +38,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   const fetch=vi.fn(async(input:RequestInfo|URL)=>{
     const url=String(input);
     if(url==="/api/market-halts/current")return Response.json({tradingDate:"2026-11-05",updatedAtUtc:"2026-11-05T15:00:00Z",rows:[
-      {id:"active",ticker:"HALT",market:"NASDAQ",haltTimeEt:"10:30:00",reasonCode:"LUDP",reason:"Pause",quoteTimeEt:null,tradeTimeEt:null,source:"nasdaq",sourceUrl:"https://example.com/halts"},
+      {id:"active",ticker:"HALT",market:"NASDAQ",haltTimeEt:"10:30:00",reasonCode:"LUDP",reason:"Pause",quoteTimeEt:"10:35:00",tradeTimeEt:"10:40:00",source:"nasdaq",sourceUrl:"https://example.com/halts"},
       {id:"resumed",ticker:"DONE",market:"NASDAQ",haltTimeEt:"09:30:00",reasonCode:"LUDP",reason:"Pause",quoteTimeEt:"09:35:00",tradeTimeEt:"09:40:00",source:"nasdaq",sourceUrl:"https://example.com/halts"},
     ]});
     if(url.includes("channel=market_cap_under_30m"))return Response.json({articles:under30,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
@@ -53,6 +54,8 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
 
   expect(container.textContent).toContain("Market Events");
   expect(container.textContent).toContain("HALT");
+  expect(container.textContent).toContain("Quote 10:35 ET");
+  expect(container.textContent).toContain("Trade 10:40 ET");
   expect(container.textContent).not.toContain("DONE");
   expect(container.textContent).toContain("Headline today-1");
   expect(container.textContent).toContain("Headline today-3");
