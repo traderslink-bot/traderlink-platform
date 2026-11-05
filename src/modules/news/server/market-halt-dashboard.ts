@@ -45,6 +45,7 @@ export function listMarketHaltDashboard(
   database: Database.Database,
   now = new Date(),
   limit = 20,
+  eligibleTickers?: ReadonlySet<string>,
 ): MarketHaltDashboardReadModel {
   const tradingDate = easternTradingDate(now);
   const stored = database.prepare<[], StoredHalt>(`SELECT halt_id, source, halt_date_et, halt_time_et,
@@ -54,7 +55,7 @@ FROM news_market_halt_events
 ORDER BY updated_at_utc DESC
 LIMIT 250`).all();
   const today = stored
-    .filter((row) => canonicalDate(row.halt_date_et) === tradingDate && isSupportedMarketHaltMarket(row.market))
+    .filter((row) => canonicalDate(row.halt_date_et) === tradingDate && isSupportedMarketHaltMarket(row.market) && (!eligibleTickers || eligibleTickers.has(row.ticker)))
     .sort((left, right) => right.halt_time_et.localeCompare(left.halt_time_et))
     .slice(0, Math.max(1, Math.min(50, Math.trunc(limit))));
   const rows: readonly MarketHaltDashboardRow[] = Object.freeze(today.map((row) => Object.freeze({

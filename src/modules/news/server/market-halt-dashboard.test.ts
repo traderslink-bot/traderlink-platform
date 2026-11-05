@@ -29,6 +29,8 @@ describe("market halt dashboard", () => {
     const model = listMarketHaltDashboard(database, new Date("2026-11-04T18:00:00.000Z"));
     expect(model.rows.map((row) => row.ticker)).toEqual(["NEW", "OLD"]);
     expect(model.updatedAtUtc).toBe("2026-11-04T15:15:00.000Z");
+    const filtered=listMarketHaltDashboard(database,new Date("2026-11-04T18:00:00.000Z"),20,new Set(["NEW"]));
+    expect(filtered.rows.map((row)=>row.ticker)).toEqual(["NEW"]);
   });
 
   it("does not display resumption times that predate a repeated halt",()=>{
