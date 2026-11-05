@@ -6,11 +6,16 @@ import { isTraderLinkPlatformError } from "@/src/modules/platform/server/databas
 import type Database from "better-sqlite3";
 import { readScannerHeadlinesInChild } from "@/src/modules/news/server/press-release-unread-child";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
+import type { PressReleaseChannel } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
+import { easternSavedDate, recentTradingDates } from "@/src/modules/news/server/scanner-recent-press-releases";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const headers = { "cache-control": "private, no-store, max-age=0" };
+const workspaceChannels = new Set<PressReleaseChannel>([
+  "news_filtered", "market_cap_under_30m", "market_cap_30m_to_50m", "market_cap_50m_to_100m",
+]);
 
 type ScannerPhase = "identity" | "readonly_open" | "repository_access" | "sql" | "list" | "mapping" | "serialization"
   | "child_total" | "child" | "queue" | "revalidation_identity" | "revalidation_open" | "revalidation_access";
@@ -91,26 +96,31 @@ export async function GET(request: Request): Promise<Response> {
       }
       const article = timing.database(database =>
         timing.measure("list", () => new PressReleaseDashboardRepository(database).find({
-          articleId, channel: "news_filtered", scope: identity.scope,
+          articleId, channel: "all", scope: identity.scope,
         })));
       return timing.measure("serialization", () => Response.json({ article, status: article ? "ready" : "unavailable" }, {
         headers, status: article ? 200 : 404,
       }));
     }
     const view = parameters.get("view");
+    const requestedChannel = parameters.get("channel") ?? "news_filtered";
+    if (!workspaceChannels.has(requestedChannel as PressReleaseChannel)) {
+      return timing.measure("serialization", () => Response.json({ status: "unavailable" }, { headers, status: 400 }));
+    }
+    const channel=requestedChannel as PressReleaseChannel;
     const expanded = view === "expanded" || view === "expanded-summary";
     const summary = view === "summary" || view === "expanded-summary";
     timing.mode(summary ? expanded ? "expanded_summary" : "summary" : expanded ? "expanded" : "full");
     if (summary) {
       timing.execution("readonly_child");
-      const input = { channel: "news_filtered" as const, limit: expanded ? 60 : 6,
+      const input = { channel, limit: expanded ? 150 : 6,
         scope: identity.scope, includePublishedAt: expanded };
       const plan = timing.database(database => timing.measure("repository_access", () =>
         new PressReleaseDashboardRepository(database).headlineQueryPlan(input)));
       if (request.signal.aborted) throw new Error("scanner_temporarily_unavailable");
       const result = await timing.measureAsync("child_total", () => untilAbort(readScannerHeadlinesInChild(
         resolvePlatformDatabaseConfig().databasePath, plan,
-        { limit: expanded ? 60 : 6, includePublishedAt: expanded }), request.signal));
+        { limit: expanded ? 150 : 6, includePublishedAt: expanded }), request.signal));
       timing.record("queue", result.queueMs);
       timing.record("child", result.childMs);
       timing.record("sql", result.durationMs);
@@ -128,11 +138,14 @@ export async function GET(request: Request): Promise<Response> {
         id: row.id, ticker: row.ticker, headline: row.headline, isRead: row.is_read === 1, marketCap: row.market_cap,
         ...(expanded ? { publishedAt: row.published_at! } : {}),
       })));
-      return timing.measure("serialization", () => Response.json({ articles: responseArticles, status: "ready" }, { headers }));
+      const now=new Date();
+      const easternDate=easternSavedDate(now);
+      const previousTradingDate=recentTradingDates(now).dates.find(date=>date<easternDate)??null;
+      return timing.measure("serialization", () => Response.json({ articles: responseArticles,easternDate,previousTradingDate,status: "ready" }, { headers }));
     }
     const responseArticles = timing.database(database => {
       const repository = new PressReleaseDashboardRepository(database);
-      const input = { channel: "news_filtered" as const, limit: expanded ? 60 : 6, scope: identity.scope };
+      const input = { channel, limit: expanded ? 150 : 6, scope: identity.scope };
       return timing.measure("list", () => repository.list(input));
     });
     return timing.measure("serialization", () => Response.json({ articles: responseArticles, status: "ready" }, { headers }));

@@ -584,3 +584,20 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Every percentage displayed in the screener cards and expanded card details
   now rounds to a whole percent. Price precision, share counts, RVOL and volume
   spike ratios retain their existing formats.
+
+## 2026-11-05 compact Market Events workspace
+
+- The separate PR Scanner and Halts cards are combined into one compact Market
+  Events card. It shows all currently active halts from today and the newest
+  three PR Scanner releases, using the previous trading day only to fill empty
+  positions until today's releases arrive.
+- Resumed halts and prior-day halts do not remain on the card. PR rows include
+  their Eastern publication time beneath the ticker.
+- One responsive PR workspace drawer replaces stacked drawers. PR Scanner is
+  the default list, with Under $30M, $30M–$50M and $50M–$100M tabs. Lists show
+  the current Eastern day's releases and link to their full dashboard pages.
+- Selecting a headline replaces the list with the stored article in the same
+  drawer. Back restores the active list, tab and scroll position.
+- Help Center review found no existing screener or Market Events guide to
+  update; the card tooltip and drawer labels provide the current in-product
+  explanation without changing the separate press-release notification guide.

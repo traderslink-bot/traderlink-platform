@@ -14,7 +14,7 @@ type JobBase = { key: string; databasePath: string; plan: Plan; reject: (error: 
   deadline: ReturnType<typeof setTimeout>; expired: boolean; expiresAt: number };
 type UnreadJob = JobBase & { kind: "unread"; promise: Promise<Result>; resolve: (value: Result) => void };
 type HeadlineJob = JobBase & { kind: "scanner"; promise: Promise<HeadlineResult>; resolve: (value: HeadlineResult) => void;
-  limit: 6 | 60; includePublishedAt: boolean; queuedAt: number };
+  limit: 6 | 60 | 150; includePublishedAt: boolean; queuedAt: number };
 type Job = UnreadJob | HeadlineJob;
 type State = { active: boolean; jobs: Map<string, Job>; queue: Job[]; lastWarningAt: number };
 const processState = globalThis as typeof globalThis & { __traderlinkUnreadChild?: State };
@@ -162,8 +162,8 @@ export function readUnreadCountsInChild(databasePath: string, plan: Plan): Promi
 
 /** Same single child lane as unread counts; no completed cache or second process. */
 export function readScannerHeadlinesInChild(databasePath: string, plan: Plan,
-  options: Readonly<{ limit: 6 | 60; includePublishedAt: boolean }>): Promise<HeadlineResult> {
-  if (![6, 60].includes(options.limit) || typeof options.includePublishedAt !== "boolean") {
+  options: Readonly<{ limit: 6 | 60 | 150; includePublishedAt: boolean }>): Promise<HeadlineResult> {
+  if (![6, 60, 150].includes(options.limit) || typeof options.includePublishedAt !== "boolean") {
     return Promise.reject(new Error("scanner_temporarily_unavailable"));
   }
   const key = createHash("sha256").update(JSON.stringify([databasePath, plan, "scanner", options])).digest("hex");
