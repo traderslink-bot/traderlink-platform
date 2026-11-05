@@ -71,7 +71,7 @@ function DeclineTable({rows,rapid,full,onOpenChart}:{rows:readonly DeclineRow[];
             sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
             <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
             <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
-            <TableCell sx={{color:"warning.main",fontWeight:850}}>{row.symbol}</TableCell>
+            <TableCell><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography></TableCell>
             <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(d?.dropPercent??row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(d?.dropPercent??row.changePercent)}</TableCell>
             <TableCell>{d?`${Math.floor(d.durationSeconds/60)}m ${d.durationSeconds%60}s`:shares(row.volume)}</TableCell>
             <TableCell>{d?pct(d.reboundPercent):shares(row.float)}</TableCell><TableCell>{d?pct(Math.max(0,d.backToStartPercent)):pct(row.spreadPercent)}</TableCell>

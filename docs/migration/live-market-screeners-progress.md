@@ -573,3 +573,8 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - The existing scanner-admin controls remain authoritative, with new
   configurations starting at 3% and 2x.
 - Focused verification passed: 2 files and 48 tests.
+
+## 2026-11-05 secondary-card ticker emphasis
+
+- Top Losers and Premarket High Pullbacks now render ticker symbols with the
+  same explicit bold yellow typography used by the Momentum table.
