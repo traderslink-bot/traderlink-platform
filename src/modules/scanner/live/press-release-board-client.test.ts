@@ -92,7 +92,9 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(drawer.textContent).toMatch(/\d{1,2}:\d{2} (?:AM|PM) ET/u);
   expect(drawer.querySelector('[aria-label="PR Scanner articles"]')?.querySelectorAll("button")).toHaveLength(4);
 
-  const underTab=[...drawer.querySelectorAll('[role="tab"]')].find(tab=>tab.textContent==="Under $30M") as HTMLElement;
+  const underTab=drawer.querySelector('[role="tab"][aria-label="Under $30M Market Cap"]') as HTMLElement;
+  expect(underTab.textContent).toContain("Under $30M");
+  expect(underTab.textContent).toContain("Market Cap");
   await act(async()=>underTab.click());
   await act(async()=>{await Promise.resolve();await Promise.resolve();});
   expect(drawer.textContent).toContain("Headline cap-1");

@@ -47,7 +47,6 @@ import ViewDayRoundedIcon from "@mui/icons-material/ViewDayRounded";
 import WifiOffRoundedIcon from "@mui/icons-material/WifiOffRounded";
 import Box from "@mui/material/Box";
 import Badge from "@mui/material/Badge";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
@@ -63,7 +62,6 @@ import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import Image from "next/image";
 import Link from "next/link";
@@ -293,6 +291,7 @@ function NavigationLink({
               ) : null}
             </Stack>
           )}
+          secondary={item.subLabel}
           slotProps={{
             primary: {
               sx: {
@@ -300,6 +299,7 @@ function NavigationLink({
                 fontWeight: item.depth === 1 ? 760 : 620,
               },
             },
+            secondary: { sx:{fontSize:10.5,lineHeight:1.1,mt:0.15} },
           }}
         />
       )}
@@ -741,13 +741,6 @@ export function DashboardShell({
                     >
                       {group.items.map((item) => isDashboardNavigationItem(item) ? (
                         <Box component="li" key={item.href} sx={{ listStyle: "none" }}>
-                          {!compact && item.href === "/press-releases/market-cap/under-30m" ? (
-                            <Box sx={{ pb: 0.25, pl: 1.5, pr: 1.5, pt: 1.25 }}>
-                              <Typography color="text.secondary" variant="caption">
-                                Daily PR sorted by market cap
-                              </Typography>
-                            </Box>
-                          ) : null}
                         <NavigationLink
                           collapsed={compact}
                           grouped

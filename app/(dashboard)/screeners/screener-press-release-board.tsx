@@ -31,12 +31,12 @@ import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
 type Headline=Pick<PressReleaseArticle,"id"|"ticker"|"headline"|"isRead"|"marketCap"|"publishedAt">;
 type HeadlineResponse=Readonly<{articles?:readonly Headline[];easternDate?:string;previousTradingDate?:string|null;status?:string}>;
-type ChannelOption=Readonly<{channel:PressReleaseChannel;label:string;href:string}>;
+type ChannelOption=Readonly<{channel:PressReleaseChannel;label:string;href:string;subLabel?:string}>;
 const CHANNELS:readonly ChannelOption[]=[
   {channel:"news_filtered",label:"PR Scanner",href:"/press-releases/news-filtered"},
-  {channel:"market_cap_under_30m",label:"Under $30M",href:"/press-releases/market-cap/under-30m"},
-  {channel:"market_cap_30m_to_50m",label:"$30M–$50M",href:"/press-releases/market-cap/30m-50m"},
-  {channel:"market_cap_50m_to_100m",label:"$50M–$100M",href:"/press-releases/market-cap/50m-100m"},
+  {channel:"market_cap_under_30m",label:"Under $30M",subLabel:"Market Cap",href:"/press-releases/market-cap/under-30m"},
+  {channel:"market_cap_30m_to_50m",label:"$30M–$50M",subLabel:"Market Cap",href:"/press-releases/market-cap/30m-50m"},
+  {channel:"market_cap_50m_to_100m",label:"$50M–$100M",subLabel:"Market Cap",href:"/press-releases/market-cap/50m-100m"},
 ];
 const number=new Intl.NumberFormat("en-US",{maximumFractionDigits:1});
 const timeFormatter=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"});
@@ -208,7 +208,7 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
         <Typography component="h2" sx={{fontWeight:850}} variant="h6">Press Releases</Typography><IconButton aria-label="Close PR workspace" onClick={()=>setDrawerOpen(false)}><CloseRoundedIcon/></IconButton>
       </Stack>
       <Tabs aria-label="PR workspace lists" onChange={(_,next:PressReleaseChannel)=>void loadChannel(next)} value={channel} variant="scrollable" scrollButtons="auto" sx={{borderBottom:1,borderColor:"divider",px:1}}>
-        {CHANNELS.map(item=><Tab key={item.channel} label={item.label} value={item.channel}/>)}
+        {CHANNELS.map(item=><Tab aria-label={item.subLabel?`${item.label} ${item.subLabel}`:item.label} key={item.channel} label={item.subLabel?<Stack sx={{alignItems:"center",lineHeight:1}}><Box component="span">{item.label}</Box><Box component="span" sx={{fontSize:"0.56rem",fontWeight:600,mt:0.35,textTransform:"none"}}>{item.subLabel}</Box></Stack>:item.label} value={item.channel}/>)}
       </Tabs>
       <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",px:2,py:1}}>
         <Typography color="text.secondary" variant="caption">Today’s releases</Typography><Link href={selectedDefinition.href} underline="hover">Open full page</Link>
