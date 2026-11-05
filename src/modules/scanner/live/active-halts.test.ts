@@ -7,6 +7,15 @@ describe("active scanner halts",()=>{
     const rows=[halt("new","AAA",null),halt("old","AAA","10:05:00"),halt("resumed","BBB","10:06:00")];
     expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:07:00.000Z")).map(row=>row.id)).toEqual(["new"]);
   });
+  it("removes a halt after price or volume movement between two post-halt Moomoo observations",()=>{
+    const rows=[halt("missing-resume","AAA",null)];
+    expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:07:00.000Z"),[{symbol:"AAA",previousObservedAt:Date.parse("2026-11-05T14:59:59.000Z"),observedAt:Date.parse("2026-11-05T15:05:04.000Z")}])).toHaveLength(1);
+    expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:07:00.000Z"),[{symbol:"AAA",previousObservedAt:Date.parse("2026-11-05T15:05:04.000Z"),observedAt:Date.parse("2026-11-05T15:05:09.000Z")}])).toHaveLength(0);
+  });
+  it("does not let movement from an earlier lifecycle clear a later repeat halt",()=>{
+    const rows=[{...halt("second","AAA",null),haltTimeEt:"11:00:00"}];
+    expect(selectActiveScannerHalts(rows,new Date("2026-11-05T16:01:00.000Z"),[{symbol:"AAA",previousObservedAt:Date.parse("2026-11-05T15:05:04.000Z"),observedAt:Date.parse("2026-11-05T15:05:09.000Z")}])).toHaveLength(1);
+  });
   it("keeps a future scheduled resume active until its Eastern time passes",()=>{
     const rows=[halt("future","AAA","10:10:00")];
     expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:09:00.000Z"))).toHaveLength(1);

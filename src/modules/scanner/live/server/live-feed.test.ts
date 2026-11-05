@@ -158,6 +158,22 @@ describe("LiveScannerFeed", () => {
     expect((await feed.scanOnce()).status).toBe("closed");
     expect(floatLoads).toBe(0);
   });
+  it("records price or volume movement only after two accepted Moomoo observations", async () => {
+    let observedAt=NOW,volume=500_000;
+    const feed=new LiveScannerFeed(dependencies({
+      now:()=>observedAt,
+      snapshotPass:async(batches:readonly (readonly string[])[])=>batches.map(requestedSymbols=>({requestedSymbols,receivedAt:observedAt,
+        payload:{...payload,data:{snapshot_list:[{...payload.data.snapshot_list[0],update_time:observedAt,volume}]}}})),
+    }));
+    await feed.scanOnce();
+    expect(feed.movements()).toEqual([]);
+    observedAt+=5_000;
+    await feed.scanOnce();
+    expect(feed.movements()).toEqual([]);
+    observedAt+=5_000;volume+=1_000;
+    await feed.scanOnce();
+    expect(feed.movements()).toEqual([{symbol:"ABCD",previousObservedAt:NOW+5_000,observedAt:NOW+10_000}]);
+  });
   it("reports a complete fresh provider pass", async () => {
     const result = await new LiveScannerFeed(dependencies()).scanOnce();
     expect(result.status).toBe("ready");

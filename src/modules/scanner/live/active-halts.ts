@@ -1,5 +1,7 @@
 import type { ScannerActiveHalt } from "./contracts";
 
+export type ScannerMarketMovement=Readonly<{symbol:string;previousObservedAt:number;observedAt:number}>;
+
 type HaltCandidate=Readonly<{
   id:string;ticker:string;market:string;haltTimeEt:string;reasonCode:string;reason:string;
   quoteTimeEt:string|null;tradeTimeEt:string|null;
@@ -14,11 +16,12 @@ export function easternClockSeconds(now=new Date()):number{
   const part=(type:Intl.DateTimeFormatPartTypes)=>Number(parts.find(item=>item.type===type)?.value??0);
   return part("hour")*3600+part("minute")*60+part("second");
 }
-export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new Date()):readonly ScannerActiveHalt[]{
-  const current=easternClockSeconds(now),seen=new Set<string>();
+export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new Date(),movements:readonly ScannerMarketMovement[]=[]):readonly ScannerActiveHalt[]{
+  const current=easternClockSeconds(now),seen=new Set<string>(),movementByTicker=new Map(movements.map(item=>[item.symbol,item]));
   return Object.freeze(rows.flatMap(halt=>{
-    const resume=clockSeconds(halt.tradeTimeEt);
-    if((resume!==null&&resume<=current)||seen.has(halt.ticker))return [];
+    const resume=clockSeconds(halt.tradeTimeEt),haltedAt=clockSeconds(halt.haltTimeEt),movement=movementByTicker.get(halt.ticker);
+    const resumedByMarket=haltedAt!==null&&movement!==undefined&&easternClockSeconds(new Date(movement.previousObservedAt))>=haltedAt&&easternClockSeconds(new Date(movement.observedAt))>=haltedAt;
+    if((resume!==null&&resume<=current)||resumedByMarket||seen.has(halt.ticker))return [];
     seen.add(halt.ticker);
     return [Object.freeze({id:halt.id,ticker:halt.ticker,market:halt.market,haltTimeEt:halt.haltTimeEt,reasonCode:halt.reasonCode,reason:halt.reason,quoteTimeEt:halt.quoteTimeEt,tradeTimeEt:halt.tradeTimeEt})];
   }));

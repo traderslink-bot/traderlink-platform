@@ -1,5 +1,6 @@
 import "server-only";
-import type { DailyUniverse, LiveScreenResults, ScannerConfiguration, ScannerNewsItem, ScannerReadModel, ScannerSession } from "../contracts";
+import type { DailyUniverse, LiveScreenResults, NormalizedSnapshot, ScannerConfiguration, ScannerNewsItem, ScannerReadModel, ScannerSession } from "../contracts";
+import type { ScannerMarketMovement } from "../active-halts";
 import { LiveScannerEngine, type FloatFact } from "../engine";
 import { activeSession, easternClock, type MarketDay } from "../sessions";
 import { normalizeSnapshotBatch, snapshotBatches, type SnapshotQualification } from "../snapshots";
@@ -47,8 +48,11 @@ export class LiveScannerFeed {
   private model: ScannerReadModel = empty("disabled",easternClock(Date.now()).date);
   private running = false;
   private floatPrewarmDate: string | null = null;
+  private readonly lastSnapshotBySymbol=new Map<string,Readonly<{observedAt:number;price:number;volume:number|null}>>();
+  private readonly lastMovementBySymbol=new Map<string,ScannerMarketMovement>();
   constructor(private readonly dependencies: LiveFeedDependencies) {}
   read(): ScannerReadModel { return structuredClone(this.model); }
+  movements(): readonly ScannerMarketMovement[] { return structuredClone([...this.lastMovementBySymbol.values()]); }
   async scanOnce(): Promise<ScannerReadModel> {
     if (this.running) return this.read();
     this.running = true;
@@ -114,6 +118,7 @@ export class LiveScannerFeed {
         && this.model.receivedCount > 0 && (issues.has("snapshot_pass_unavailable") || issues.has("snapshot_batch_unavailable"))) {
         return this.read();
       }
+      this.recordMarketMovement(snapshots);
       const evaluated = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
       const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus]
         .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[]))];
@@ -141,6 +146,15 @@ export class LiveScannerFeed {
         gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), declines, premarketPullbacks, issues: Object.freeze([...issues].sort()) });
     } catch { return this.set(empty("unavailable",date,["live_feed_unavailable"])); }
     finally { this.running = false; }
+  }
+  private recordMarketMovement(snapshots:readonly NormalizedSnapshot[]):void {
+    for(const snapshot of snapshots){
+      const prior=this.lastSnapshotBySymbol.get(snapshot.symbol);
+      if(prior&&(prior.price!==snapshot.price||(prior.volume!==null&&snapshot.volume!==null&&prior.volume!==snapshot.volume))){
+        this.lastMovementBySymbol.set(snapshot.symbol,Object.freeze({symbol:snapshot.symbol,previousObservedAt:prior.observedAt,observedAt:snapshot.receivedAt}));
+      }
+      this.lastSnapshotBySymbol.set(snapshot.symbol,Object.freeze({observedAt:snapshot.receivedAt,price:snapshot.price,volume:snapshot.volume}));
+    }
   }
   private set(model: ScannerReadModel): ScannerReadModel { this.model = model; return this.read(); }
 }
