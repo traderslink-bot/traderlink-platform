@@ -7,7 +7,6 @@ import Chip from "@mui/material/Chip";
 import Drawer from "@mui/material/Drawer";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
-import Link from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
@@ -30,6 +29,7 @@ import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import { TradingViewChart } from "@/app/(dashboard)/charts/trading-view-chart";
+import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard } from "./screener-press-release-board";
 import { ScannerWorkspaceCard } from "./scanner-workspace-card";
@@ -37,10 +37,12 @@ import { DeclinesCard } from "./declines-card";
 import { DEFAULT_DECLINE_CONTROLS } from "@/src/modules/scanner/live/declines";
 import { PremarketPullbacksCard } from "./premarket-pullbacks-card";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
+import { ScannerNewsDrawerProvider, ScannerNewsLink } from "./scanner-news-drawer-context";
 import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "@/src/modules/scanner/live/premarket-pullbacks";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 import type { LiveScannerRow, LiveScreenResults, ScannerActiveHalt, ScannerConfiguration, ScannerKind, ScannerReadModel,
-  ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
+  ScannerNewsItem, ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
+import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, momentumDetectionControls, momentumLiquidityBypassControls } from "@/src/modules/scanner/live/settings";
 import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/gainer-view";
 import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
@@ -81,9 +83,7 @@ function NumberField({ label,current,nullable=false,onChange }: { label: string;
 function NewsLinks({ row }: { row: LiveScannerRow }) {
   if (!row.news.length) return null;
   return <Stack direction="row" sx={{ flexWrap:"wrap",gap:0.65 }}>
-    {row.news.slice(0,3).map(item => item.url
-      ? <Link aria-label={`${item.typeLabel}: ${item.headline}`} href={item.url} key={item.id} rel="noreferrer" sx={{ fontSize:"0.68rem",fontWeight:800,lineHeight:1.2 }} target="_blank" title={item.headline}>{compactNewsType(item.typeLabel)}</Link>
-      : <Typography aria-label={`${item.typeLabel}: ${item.headline}`} color="text.secondary" key={item.id} sx={{ fontSize:"0.68rem",fontWeight:800,lineHeight:1.2 }} title={item.headline}>{compactNewsType(item.typeLabel)}</Typography>)}
+    {row.news.slice(0,3).map(item => <ScannerNewsLink item={item} key={item.id} label={compactNewsType(item.typeLabel)}/>)}
   </Stack>;
 }
 
@@ -100,11 +100,8 @@ function compactNewsLabel(row: LiveScannerRow): string {
 
 function CompactNewsLink({ row }: { row: LiveScannerRow }) {
   const item = row.news[0];
-  if (!item?.url) return <Typography noWrap sx={{ color:"text.secondary",fontSize:"0.68rem",fontWeight:750 }}>—</Typography>;
-  return <Link aria-label={`Open ${item.typeLabel}: ${item.headline}`} href={item.url} onClick={event=>event.stopPropagation()}
-    onKeyDown={event=>event.stopPropagation()} rel="noreferrer" sx={{ fontSize:"0.68rem",fontWeight:800 }} target="_blank" title={item.headline}>
-    {compactNewsLabel(row)}
-  </Link>;
+  if (!item) return <Typography noWrap sx={{ color:"text.secondary",fontSize:"0.68rem",fontWeight:750 }}>—</Typography>;
+  return <ScannerNewsLink item={item} label={compactNewsLabel(row)}/>;
 }
 
 function floatTraded(row: LiveScannerRow): string | null {
@@ -387,6 +384,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [model,setModel]=useState<ScannerReadModel|null>(null), [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
   const [chartRow,setChartRow]=useState<ScannerChartTarget|null>(null);
+  const [newsArticle,setNewsArticle]=useState<PressReleaseArticle|null>(null);
   const [fullScanner,setFullScanner]=useState<ScannerKind|null>(null);
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
   const [checkedAt,setCheckedAt]=useState<number|null>(null);
@@ -397,6 +395,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const haltByTicker=useMemo(()=>new Map((model?.activeHalts??[]).map(halt=>[halt.ticker,halt])),[model?.activeHalts]);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
+  const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
   const gainerTitle=model?.session==="after_hours"?"Top Gainers · Post-Market":"Top Gainers";
   const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title="Day Gainers gains are calculated from yesterday’s regular session close price. Post-market Gainers are calculated from today’s regular close.">
     <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
@@ -418,7 +417,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         {model&&model.status!=='disabled'?<Stack direction="row" sx={{ flexWrap:"wrap",gap:1 }}><Chip label={`${model.receivedCount}/${model.universeCount} quotes`} size="small"/><Chip label={`${model.missingFloatCount} missing float`} size="small"/>{model.missingSymbols.length?<Chip color="warning" label={`${model.missingSymbols.length} missing quotes`} size="small"/>:null}</Stack>:null}
       </Stack>
     </DashboardPanel>:null}
-    <Box data-scanner-grid sx={{ display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(4,minmax(0,1fr))"},gap:1.5,alignItems:"start",'& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 } }}>
+    <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box data-scanner-grid sx={{ display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(4,minmax(0,1fr))"},gap:1.5,alignItems:"start",'& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 } }}>
       {(["gainers","momentum"] as const).map(kind=><ScannerWorkspaceCard key={kind} slot={kind}>
         <DashboardPanel hideHeader>
           <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>
@@ -437,7 +436,8 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       <ScannerWorkspaceCard slot="high-drops"><PremarketPullbacksCard results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
       <ScannerWorkspaceCard slot="market-events"><ScreenerPressReleaseBoard managedActiveHalts={model?.activeHalts??[]} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
-    </Box>
+    </Box></ScannerNewsDrawerProvider>
+    <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,
         sx:{width:{xs:"100vw",md:"90vw",xl:"85vw"},maxWidth:"100vw"}}}}>

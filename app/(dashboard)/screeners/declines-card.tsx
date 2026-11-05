@@ -6,7 +6,6 @@ import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
-import Link from "@mui/material/Link";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -26,6 +25,7 @@ import { DashboardPanel } from "@/app/dashboard-template";
 import type { DeclineResults, DeclineRow, ScannerActiveHalt, ScannerSession } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
+import { ScannerNewsLink } from "./scanner-news-drawer-context";
 
 const wholePercent=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
@@ -79,7 +79,7 @@ function DeclineTable({rows,rapid,full,onOpenChart,haltByTicker}:{rows:readonly 
               {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45}}>{value}</Typography></Box>)}
             </Box>
             <Stack direction="row" sx={{gap:1,flexWrap:"wrap",alignItems:"center",justifyContent:"space-between"}}>
-              <Stack direction="row" spacing={1}>{row.news.slice(0,3).map(item=>item.url?<Link key={item.id} href={item.url} target="_blank" rel="noreferrer" title={item.headline}>{item.typeLabel}</Link>:null)}</Stack>
+              <Stack direction="row" spacing={1}>{row.news.slice(0,3).map(item=><ScannerNewsLink item={item} key={item.id} label={item.typeLabel}/>)}</Stack>
               <Button size="small" onClick={()=>onOpenChart(row)} aria-label={`Open ${row.symbol} chart`}>View Chart</Button>
             </Stack>
             </Box>

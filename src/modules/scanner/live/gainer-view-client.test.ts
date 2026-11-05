@@ -28,6 +28,7 @@ async function mount(initial: ScannerReadModel, options: { admin?: boolean; now?
   vi.useFakeTimers(); vi.setSystemTime(new Date(options.now ?? "2026-11-02T21:00:10Z")); let response = initial;
   const fetch = vi.fn(async (input: RequestInfo | URL) => {
     if (String(input) === "/api/admin/screeners/settings" && options.admin) return Response.json({ configuration: null });
+    if (String(input).startsWith("/api/platform/news/workspace-scanner?articleId=")) return Response.json({});
     if (String(input) !== "/api/screeners/live") throw Error("unexpected request");
     if (options.fail) throw Error("synthetic transport error");
     return Response.json(response);
@@ -104,6 +105,14 @@ describe("Momentum context rendering", () => {
     const drawer = await openFullView(page.container);
     const drawerSignals = drawer.querySelector('[data-momentum-signals="TEST"]')!;
     expect(drawerSignals.textContent).toBe("Volume ignition · Price burst");
+  });
+  it("opens scanner news through the workspace article endpoint instead of an external link", async () => {
+    const initial=momentumModel(42),row={...initial.momentum!.rows[0]!,news:[{id:"article-1",headline:"Synthetic filing",createdAt:"2026-11-02T21:00:00Z",url:"https://example.com/external",typeLabel:"SEC filing"}]};
+    const page=await mount({...initial,momentum:{rows:[row],focus:[],total:1}});
+    const news=page.container.querySelector('[aria-label="Open SEC filing: Synthetic filing"]') as HTMLElement;
+    expect(news.tagName).toBe("BUTTON");expect(news.getAttribute("href")).toBeNull();
+    await act(async()=>news.click());
+    expect(page.fetch).toHaveBeenCalledWith("/api/platform/news/workspace-scanner?articleId=article-1",expect.objectContaining({cache:"no-store"}));
   });
   it("renders distinct Day/Post columns and keeps one/five-minute changes and volumes intact", async () => {
     const page = await mount(momentumModel((2.4/1.69-1)*100));
