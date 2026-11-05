@@ -114,6 +114,7 @@ export type DeclineResults = Readonly<{
 export type PremarketPullbackRow = Readonly<{
   symbol:string; exchange:"NASDAQ"|"NYSE"; company:string; price:number;
   premarketHigh:number; premarketVolume:number|null; sessionVolume:number|null; float:number|null;
+  changePercent:number|null;
   belowHighPercent:number; backToHighPercent:number; oneMinuteVolume:number|null; fiveMinuteVolume:number|null;
   spreadPercent:number|null; receivedAtUtc:string; news:readonly ScannerNewsItem[];
 }>;

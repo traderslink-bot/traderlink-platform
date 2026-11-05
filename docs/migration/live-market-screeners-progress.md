@@ -529,3 +529,9 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Momentum desktop details use a compact three-column grid within the card.
 - Rapid Drops, Top Losers and Premarket High Pullbacks now use the same yellow,
   uppercase expanded-data labels as the primary scanner cards.
+
+## 2026-11-05 pullback change column
+
+- Premarket High Pullbacks now displays a compact `Change` column using the
+  same session-aware basis as Top Losers: yesterday's regular close during
+  premarket and regular hours, then today's regular close after hours.

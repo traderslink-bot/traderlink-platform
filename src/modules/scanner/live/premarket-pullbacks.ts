@@ -67,9 +67,12 @@ export class PremarketPullbackBook {
       this.included.add(symbol);
       const fact=input.floats.get(symbol),at=fact?Date.parse(fact.retrievedAtUtc):NaN;
       const activity=input.activity(symbol);
+      const comparison=input.session==="after_hours"?quote.regularClosePrice:quote.baseline;
+      const validComparison=typeof comparison==="number"&&Number.isFinite(comparison)&&comparison>0?comparison:null;
       rows.push({symbol,exchange:members.get(symbol)!.exchange,company:quote.company,price:quote.price,
         premarketHigh:ref.high,premarketVolume:ref.volume,sessionVolume:quote.volume,
         float:fact&&Number.isSafeInteger(fact.shares)&&fact.shares>0&&at<=input.now&&input.now-at<=30*60*60000?fact.shares:null,
+        changePercent:validComparison===null?null:(quote.price/validComparison-1)*100,
         belowHighPercent:below,backToHighPercent:(ref.high/quote.price-1)*100,
         oneMinuteVolume:activity.oneMinuteVolume,fiveMinuteVolume:activity.fiveMinuteVolume,
         spreadPercent:quote.bid!==null&&quote.ask!==null&&quote.bid>0&&quote.ask>=quote.bid?(quote.ask-quote.bid)/((quote.ask+quote.bid)/2)*100:null,
