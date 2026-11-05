@@ -160,8 +160,8 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
   const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
   const metric=(label:string,content:string)=><Box sx={{ minWidth:0 }}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.9rem",fontWeight:750,lineHeight:1.3,mt:0.45 }}>{content}</Typography></Box>;
   const headers=screen==="gainers"
-    ? [{label:"",width:28},{label:"",width:28},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Gain %",width:66},{label:"Volume",width:72},{label:"$ × Vol",width:76},{label:"Float",width:66},{label:"Turnover",width:72},{label:"RVOL",width:58},{label:"Below HOD",width:76},{label:"News",width:52,right:true}]
-    : [{label:"",width:28},{label:"",width:28},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Day %",width:62},{label:"1min %",width:62},{label:"5min %",width:62},{label:"1min Vol",width:72},{label:"5min Vol",width:72},{label:"1min ↑",width:62},{label:"5min ↑",width:62},{label:"Float",width:66},{label:"Spread",width:60},{label:"News",width:52,right:true}];
+    ? [{label:"",width:28},{label:"",width:28},{label:"Ticker",width:64},{label:"News",width:52},{label:"Price",width:66},{label:"Gain %",width:66},{label:"Volume",width:72},{label:"$ × Vol",width:76},{label:"Float",width:66},{label:"Turnover",width:72},{label:"RVOL",width:58},{label:"Below HOD",width:76}]
+    : [{label:"",width:28},{label:"",width:28},{label:"Ticker",width:64},{label:"News",width:52},{label:"Price",width:66},{label:"Day %",width:62},{label:"1min %",width:62},{label:"5min %",width:62},{label:"1min Vol",width:72},{label:"5min Vol",width:72},{label:"1min ↑",width:62},{label:"5min ↑",width:62},{label:"Float",width:66},{label:"Spread",width:60}];
   return <TableContainer aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact list`:undefined}
     role={compactDesktop?"region":undefined} tabIndex={compactDesktop?0:undefined}
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
@@ -196,18 +196,19 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
           <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{expanded?"−":"+"}</Typography></TableCell>
           <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><Typography noWrap component="span" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell><CompactNewsLink row={row}/></TableCell>
           <TableCell><Typography noWrap sx={{fontSize:"0.68rem",fontWeight:500}}>${value(row.price)}</Typography></TableCell>
           {screen==="gainers"?<>
             <TableCell sx={{color:(row.sessionGain??0)>=0?"success.main":"error.main"}}>{value(row.sessionGain,"%")}</TableCell>
             <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`}</TableCell>
             <TableCell>{floatValue(row.float)}</TableCell><TableCell>{traded??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
-            <TableCell>{value(row.offHighPercent,"%")}</TableCell><TableCell align="right"><CompactNewsLink row={row}/></TableCell>
+            <TableCell>{value(row.offHighPercent,"%")}</TableCell>
           </>:<>
             <TableCell>{value(row.sessionGain,"%")}</TableCell><TableCell sx={{color:(row.activity.oneMinuteGain??0)>=0?"success.main":"error.main"}}>{value(row.activity.oneMinuteGain,"%")}</TableCell>
             <TableCell sx={{color:(row.activity.fiveMinuteGain??0)>=0?"success.main":"error.main"}}>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
             <TableCell>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"n/a":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
             <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
-            <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell><TableCell align="right"><CompactNewsLink row={row}/></TableCell>
+            <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
           </>}
         </TableRow>
         {screen==="momentum"?<MomentumSignalRow row={row} colSpan={14} leftOffset="3.8rem"/>:null}

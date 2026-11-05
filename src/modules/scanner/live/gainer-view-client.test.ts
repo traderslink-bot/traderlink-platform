@@ -167,6 +167,7 @@ describe("compact scanner grid and full view", () => {
     for (const [label,columnCount] of [["Top Gainers",12],["Momentum",14]] as const) {
       const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
       expect(table.querySelectorAll('thead th').length).toBe(columnCount);
+      expect([...table.querySelectorAll('thead th')].slice(2,4).map(cell=>cell.textContent)).toEqual(["Ticker","News"]);
       const row = table.querySelector('tbody tr')!;
       await act(async () => row.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter',bubbles:true})));
       expect(row.getAttribute('aria-expanded')).toBe('true');
