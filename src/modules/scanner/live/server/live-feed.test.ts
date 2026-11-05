@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { initialConfiguration } from "../settings";
 import type { DailyUniverse } from "../contracts";
-import { LiveScannerFeed } from "./live-feed";
+import { LiveScannerFeed, scannerRequestMarketCap } from "./live-feed";
 import { MoomooSharedTransport } from "../../../platform/server/broker-connections/moomoo-shared-transport";
 import { ScannerSettingsStore } from "./settings-store";
 import { DailyFloatEnricher, ScannerFloatFeed, type FloatCachePersistence } from "./float-enrichment";
@@ -114,6 +114,21 @@ function dependencies(overrides: Record<string,unknown> = {}) {
 }
 
 describe("LiveScannerFeed", () => {
+  it("filters the provider request universe by the active configured market-cap ceiling", async () => {
+    const configuration={...initialConfiguration(),enabled:true};
+    const reserveScannerBudget=vi.fn(async()=>{}),floats=vi.fn(async()=>new Map([
+      ["ABCD",{shares:5_000_000,retrievedAtUtc:new Date(NOW).toISOString()}],
+    ]));
+    const snapshotPass=vi.fn(async(batches:readonly (readonly string[])[])=>batches.map(requestedSymbols=>({requestedSymbols,payload,receivedAt:NOW})));
+    const result=await new LiveScannerFeed(dependencies({configuration:async()=>configuration,
+      universe:async()=>({...universe,stocks:[...universe.stocks,{symbol:"OVER",exchange:"NYSE",marketCapAtCollection:150_000_000}]}),
+      reserveScannerBudget,floats,snapshotPass})).scanOnce();
+    expect(scannerRequestMarketCap(configuration,"regular")).toBe(100_000_000);
+    expect(reserveScannerBudget).toHaveBeenCalledWith(1);
+    expect(floats).toHaveBeenCalledWith("2026-10-30",["ABCD"]);
+    expect(snapshotPass.mock.calls[0][0]).toEqual([["ABCD"]]);
+    expect(result.universeCount).toBe(1);
+  });
   it("stays disabled without an enabled configuration", async () => {
     const feed = new LiveScannerFeed(dependencies({ configuration: async () => initialConfiguration() }));
     expect((await feed.scanOnce()).status).toBe("disabled");

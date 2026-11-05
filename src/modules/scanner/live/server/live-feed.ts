@@ -29,6 +29,18 @@ export type LiveFeedDependencies = Readonly<{
   now?: () => number;
 }>;
 
+export function scannerRequestMarketCap(configuration: ScannerConfiguration, session?: ScannerSession): number {
+  const sessions: readonly ScannerSession[] = session ? [session] : ["premarket","regular","after_hours"];
+  return Math.max(...sessions.flatMap(value => [
+    configuration.gainers.filters[value].maximumMarketCap,
+    configuration.momentum.filters[value].maximumMarketCap,
+  ]));
+}
+
+function requestUniverse(universe: DailyUniverse, maximumMarketCap: number): DailyUniverse {
+  return { ...universe,stocks:universe.stocks.filter(stock => stock.marketCapAtCollection <= maximumMarketCap) };
+}
+
 export class LiveScannerFeed {
   private readonly engine = new LiveScannerEngine();
   private readonly runtimeInstanceId=randomUUID();
@@ -56,14 +68,15 @@ export class LiveScannerFeed {
           const universe = await this.dependencies.universe(date);
           if (universe && this.floatPrewarmDate !== date) {
             this.floatPrewarmDate = date;
-            try { await this.dependencies.floats(date,universe.stocks.map(stock => stock.symbol)); }
+            try { await this.dependencies.floats(date,requestUniverse(universe,scannerRequestMarketCap(configuration)).stocks.map(stock => stock.symbol)); }
             catch { this.floatPrewarmDate = null; }
           }
         }
         return this.set(empty("closed",date));
       }
-      const universe = await this.dependencies.universe(date);
-      if (!universe) return this.set(empty("universe_missing",date));
+      const storedUniverse = await this.dependencies.universe(date);
+      if (!storedUniverse) return this.set(empty("universe_missing",date));
+      const universe=requestUniverse(storedUniverse,scannerRequestMarketCap(configuration,session));
       await this.dependencies.reserveScannerBudget(universe.stocks.length);
       const symbols = universe.stocks.map(stock => stock.symbol);
       const floats = await this.dependencies.floats(date,symbols);

@@ -551,3 +551,14 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 ## 2026-11-05 halt card title
 
 - The screener card title is shortened from `Halt Alerts` to `Halts`.
+
+## 2026-11-05 provider request market-cap boundary
+
+- The stored merged universe may contain stocks through $500M for configurable
+  future use, but each live Moomoo pass now filters it before budget reservation,
+  float lookup and batching.
+- The request ceiling is the larger of the active session's Top Gainers and
+  Momentum maximum-market-cap settings, so every configured scanner remains
+  covered without requesting stocks that no active scanner can qualify.
+- With the current $100M settings, the Nov. 5 universe falls from 2,352 symbols
+  in six batches to 1,402 symbols in four batches.
