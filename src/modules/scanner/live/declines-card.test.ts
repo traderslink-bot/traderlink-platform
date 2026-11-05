@@ -13,15 +13,15 @@ it("shows both tabs, expands drop context, opens the full view and never fetches
   const now=Date.parse("2026-11-02T22:00:00Z");
   const universe:DailyUniverse={version:1,tradingDate:"2026-11-02",acceptedAtUtc:new Date(now).toISOString(),lastCollectionAtUtc:new Date(now).toISOString(),latestUploadCount:1,sourceHashes:[],stocks:[{symbol:"AAA",exchange:"NASDAQ",marketCapAtCollection:1e6}]};
   const base:NormalizedSnapshot={symbol:"AAA",company:"Synthetic",session:"after_hours",tradingDate:universe.tradingDate,
-    price:2,providerAt:now,receivedAt:now,priceTimeBasis:"session_observation",baseline:3,regularClosePrice:2,
+    price:.55,providerAt:now,receivedAt:now,priceTimeBasis:"session_observation",baseline:3,regularClosePrice:.55,
     volume:100,dollarVolume:200,bid:null,ask:null,marketCap:1e6,dayHigh:3,dayLow:1,providerVolumeRatio:null};
   const book=new DeclineBook();book.evaluate({universe,session:"after_hours",now,snapshots:[base],floats:new Map()});
-  const results=book.evaluate({universe,session:"after_hours",now:now+60000,snapshots:[{...base,price:1.2,receivedAt:now+60000,volume:1000}],floats:new Map()});
+  const results=book.evaluate({universe,session:"after_hours",now:now+60000,snapshots:[{...base,price:.33,receivedAt:now+60000,volume:1000}],floats:new Map()});
   const fetch=vi.fn();vi.stubGlobal("fetch",fetch);const chart=vi.fn();
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
   await act(async()=>root!.render(createElement(DeclinesCard,{results,notice:null,session:"after_hours",onOpenChart:chart})));
   const table=container.querySelector('table[aria-label="Rapid Drops stocks"]')!;
-  expect(table.textContent).toContain("-40%");
+  expect(table.textContent).toContain("-40%");expect(table.textContent).toContain("$0.330");
   await act(async()=>table.querySelector('tbody tr')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
   expect(table.textContent).toContain("Back to pre-drop price");expect(table.textContent).toContain("+66.67%");
   expect(table.textContent).toContain("900");

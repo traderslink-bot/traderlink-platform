@@ -26,11 +26,12 @@ import { DashboardPanel } from "@/app/dashboard-template";
 import type { PremarketPullbackResults, PremarketPullbackRow } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
-const money=new Intl.NumberFormat("en-US",{maximumFractionDigits:4});
+const subDollarPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
+const regularPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const number=new Intl.NumberFormat("en-US",{maximumFractionDigits:2});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
 const clock=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit",second:"2-digit"});
-const price=(value:number)=>`$${money.format(value)}`;
+const price=(value:number)=>`$${(value<1?subDollarPrice:regularPrice).format(value)}`;
 const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${number.format(value)}%`;
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 

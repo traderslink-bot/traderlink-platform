@@ -30,9 +30,10 @@ import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
 const numeric=new Intl.NumberFormat("en-US",{maximumFractionDigits:2});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
-const prices=new Intl.NumberFormat("en-US",{maximumFractionDigits:4});
+const subDollarPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
+const regularPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const clock=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit",second:"2-digit"});
-const price=(value:number)=>`$${prices.format(value)}`;
+const price=(value:number)=>`$${(value<1?subDollarPrice:regularPrice).format(value)}`;
 const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${numeric.format(value)}%`;
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 const stamp=(value:string)=>clock.format(new Date(value));

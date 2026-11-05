@@ -541,3 +541,9 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - The main Premarket High Pullbacks `Volume` column now displays the current
   snapshot's total session volume, matching the other scanner tables.
 - Premarket-only volume remains available in the expanded details.
+
+## 2026-11-05 compact price precision
+
+- Rapid Drops, Top Losers and Premarket High Pullbacks now display sub-dollar
+  prices with three decimals (for example, `$0.330`) and prices at or above one
+  dollar with two decimals.
