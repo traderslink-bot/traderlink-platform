@@ -152,6 +152,7 @@ describe("Momentum context rendering", () => {
 });
 
 describe("compact scanner grid and full view", () => {
+  it("keeps trailing zeroes in every scanner price",async()=>{const initial=momentumModel(42),row={...initial.momentum!.rows[0]!,price:.1,dayHigh:.2,dayLow:.1};const page=await mount({...initial,gainers:{rows:[row],focus:[],total:1},dayGainers:{rows:[row],focus:[],total:1},momentum:{rows:[row],focus:[],total:1}});expect(page.container.textContent).toContain("$0.10");expect([...page.container.querySelectorAll("td")].some(cell=>cell.textContent==="$0.1")).toBe(false);});
   it("renders Gainers and Momentum as separate cards without a combined scanner selector", async () => {
     const page = await mount(model("regular"));
     expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
