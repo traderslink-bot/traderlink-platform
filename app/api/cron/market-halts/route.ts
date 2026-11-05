@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { dirname, join } from "node:path";
 import { monitorEventLoopDelay, performance } from "node:perf_hooks";
 
 import { NYSE_TRADE_HALTS_CSV_URL, NASDAQ_TRADE_HALTS_RSS_URL, fetchOfficialMarketHalts } from "@/src/modules/news/server/market-halt-feed";
@@ -13,6 +14,9 @@ import { loadMarketHaltDiscordConfiguration } from "@/src/modules/news/server/ma
 import { MarketHaltDiscordRepository } from "@/src/modules/news/server/market-halt-discord-repository";
 import { MarketHaltDiscordDeliveryService } from "@/src/modules/news/server/market-halt-discord-delivery";
 import { marketHaltDirection } from "@/src/modules/news/server/market-halt-direction";
+import { filterMarketHaltsToUniverse } from "@/src/modules/news/server/market-halt-universe-filter";
+import { UniverseStore } from "@/src/modules/scanner/live/server/universe-store";
+import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -126,11 +130,15 @@ export async function GET(request: Request): Promise<Response> {
       health.fail({ runId, sources: fetched.sources });
       return Response.json({ ok: false, sources: fetched.sources }, { status: 503 });
     }
+    const universeStore=new UniverseStore(join(dirname(resolvePlatformDatabaseConfig({}).databasePath),"scanner-live-v1"));
+    const dates=[...new Set(fetched.halts.map(halt=>halt.haltDateEt))];
+    const universes=new Map(await Promise.all(dates.map(async date=>[date,await universeStore.readLatestOnOrBefore(date)] as const)));
+    const eligibleHalts=filterMarketHaltsToUniverse(fetched.halts,universes);
     timing.phase("direction");
     const directionObservedAtUtc = createCanonicalUtcTimestamp();
     const eligibility = new MarketHaltAlertRepository(runtimeDatabase);
     const directionCandidates = new Map<string, (typeof fetched.halts)[number]>();
-    for (const halt of fetched.halts) {
+    for (const halt of eligibleHalts) {
       const key = `${halt.haltDateEt}:${halt.haltTimeEt}:${halt.ticker}`;
       if (!eligibility.initialAlertAlreadyIssued(halt) && !directionCandidates.has(key)) {
         directionCandidates.set(key, halt);
@@ -155,7 +163,7 @@ export async function GET(request: Request): Promise<Response> {
       const repository = new MarketHaltAlertRepository(runtimeDatabase, discordConfiguration?.channelId ?? null);
       const observedHaltIds = new Set<string>();
       const haltDirectionsById = new Map<string, Awaited<ReturnType<typeof marketHaltDirection>>>();
-      for (const halt of fetched.halts) {
+      for (const halt of eligibleHalts) {
         const result = repository.upsert({
           halt,
           observedAtUtc,
@@ -200,7 +208,7 @@ export async function GET(request: Request): Promise<Response> {
     stage = "health_complete";
     timing.phase("health_complete");
     health.complete({ runId, sources: fetched.sources });
-    return Response.json({ created, delivered, discord: { ...discord, configured: discordConfiguration !== null }, ok: true, queued, sources: fetched.sources });
+    return Response.json({ created, delivered, discord: { ...discord, configured: discordConfiguration !== null }, eligible:eligibleHalts.length, ok: true, queued, sources: fetched.sources });
   } catch (error) {
     console.error("market_halt_scheduler_failed", {
       errorCode: boundedErrorCode(error),
