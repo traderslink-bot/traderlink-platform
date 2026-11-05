@@ -601,3 +601,8 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Help Center review found no existing screener or Market Events guide to
   update; the card tooltip and drawer labels provide the current in-product
   explanation without changing the separate press-release notification guide.
+
+## 2026-11-05 chart drawer attribution
+
+- The scanner chart drawer subtitle now reads `TradersLink + TradingView
+  charts` instead of displaying the ticker exchange beside TradingView.
