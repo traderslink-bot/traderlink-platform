@@ -47,13 +47,14 @@ function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(ro
 function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="High Drops list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
-    <Table size="small" stickyHeader aria-label="High Drops stocks" sx={{tableLayout:"fixed",minWidth:610,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+    <Table size="small" stickyHeader aria-label="High Drops stocks" sx={{tableLayout:"fixed",minWidth:430,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
       <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/><TableCell sx={{width:58}}>Ticker</TableCell><TableCell sx={{width:70}}>Price</TableCell>
-        <TableCell sx={{width:70}}>Drop</TableCell><TableCell sx={{width:70}}>PM High</TableCell><TableCell sx={{width:70}}>Reg High</TableCell><TableCell sx={{width:70}}>Post High</TableCell><TableCell sx={{width:78}}>Volume</TableCell>
+        <TableCell sx={{width:64}}>Drop</TableCell><TableCell sx={{width:92}}>High</TableCell><TableCell sx={{width:78}}>Volume</TableCell>
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const displayedDrop=row.rapidDrop?Math.abs(row.rapidDrop.dropPercent):row.belowHighPercent;
-        const source=row.rapidDrop?"RAPID":row.referenceSession==="premarket"?"PM":row.referenceSession==="regular"?"REG":"POST";
+        const source=row.referenceSession==="premarket"?"PRE":row.referenceSession==="regular"?"REG":"POST";
+        const displayedHigh=row.rapidDrop?.startPrice??row.referenceHigh;
         const rapidMetrics:[string,string][]=row.rapidDrop?[["Rapid start",price(row.rapidDrop.startPrice)],["Rapid low",price(row.rapidDrop.lowPrice)],["Rapid fall time",`${Math.floor(row.rapidDrop.durationSeconds/60)}m ${row.rapidDrop.durationSeconds%60}s`]]:[];
         const metrics:[string,string][]=open?[["Premarket high",optionalPrice(row.premarketHigh)],["Regular high",optionalPrice(row.regularHigh)],["Post-market high",optionalPrice(row.postMarketHigh)],
           ["Reference high",price(row.referenceHigh)],["Below reference high",`${wholePercent.format(row.belowHighPercent)}%`],["Back to reference high",`+${wholePercent.format(row.backToHighPercent)}%`],["Premarket volume",shares(row.premarketVolume)],
@@ -67,8 +68,8 @@ function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Prem
           <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
           <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-          <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:"error.main",fontWeight:750}}><Typography component="span" sx={{font:"inherit",fontWeight:750}}>{wholePercent.format(displayedDrop)}%</Typography><Typography component="span" sx={{color:row.rapidDrop?"warning.main":"text.secondary",display:"block",fontSize:"0.5rem",fontWeight:800,lineHeight:1}}>{source}</Typography></TableCell><TableCell>{optionalPrice(row.premarketHigh)}</TableCell><TableCell>{optionalPrice(row.regularHigh)}</TableCell><TableCell>{optionalPrice(row.postMarketHigh)}</TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
-        </TableRow>{open?<TableRow><TableCell colSpan={9} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
+          <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:"error.main",fontWeight:750}}>{wholePercent.format(displayedDrop)}%</TableCell><TableCell><Typography component="span" sx={{font:"inherit"}}>{price(displayedHigh)}</Typography><Typography component="span" sx={{color:"text.secondary",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
+        </TableRow>{open?<TableRow><TableCell colSpan={7} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
             {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45}}>{value}</Typography></Box>)}
           </Box><Stack direction="row" sx={{gap:1,flexWrap:"wrap",justifyContent:"space-between",alignItems:"center"}}>
