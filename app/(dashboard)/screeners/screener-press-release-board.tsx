@@ -26,6 +26,7 @@ import type { PressReleaseArticle, PressReleaseChannel } from "@/src/modules/new
 import type { ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
 import { markPressReleaseRead } from "../press-releases/press-release-actions";
+import { PressReleaseDetailSection } from "../press-releases/press-release-detail-section";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
 type Headline=Pick<PressReleaseArticle,"id"|"ticker"|"headline"|"isRead"|"marketCap"|"publishedAt">;
@@ -64,12 +65,6 @@ function shortTime(value:string|null):string{
   const [hour="",minute=""]=value.split(":");
   return hour&&minute?`${hour}:${minute}`:value;
 }
-function DetailSection({items,title}:{items:readonly string[];title:string}){
-  if(!items.length)return null;
-  return <Box><Typography component="h3" sx={{fontWeight:800}} variant="subtitle2">{title}</Typography>
-    <Stack component="ul" spacing={0.75} sx={{mb:0,mt:1,pl:2.5}}>{items.map((item,index)=><Typography component="li" key={`${title}-${index}`} variant="body2">{item}</Typography>)}</Stack>
-  </Box>;
-}
 function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBack:()=>void;onClose:()=>void}){
   return <Stack sx={{height:"100dvh",minHeight:0}}>
     <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",px:{xs:1,sm:2},py:1}}>
@@ -82,10 +77,10 @@ function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBac
       </Box>
       <Typography component="h2" variant="h2">{article.headline}</Typography>
       {article.summary?<Box><Typography component="h3" sx={{fontWeight:800}} variant="subtitle2">Summary</Typography><Typography sx={{mt:1,whiteSpace:"pre-wrap"}} variant="body2">{article.summary}</Typography></Box>:null}
-      <DetailSection items={article.positives} title="Positives"/>
-      <DetailSection items={article.negatives} title="Negatives"/>
-      <DetailSection items={article.riskFlags} title="Risk flags"/>
-      <DetailSection items={article.supportResistanceLevels} title="Support and resistance"/>
+      <PressReleaseDetailSection items={article.positives} title="Positives"/>
+      <PressReleaseDetailSection items={article.negatives} title="Negatives"/>
+      <PressReleaseDetailSection items={article.riskFlags} title="Risk flags"/>
+      <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance"/>
       {article.articleText?<><Divider/><Box><Typography component="h3" sx={{fontWeight:800}} variant="subtitle2">Article</Typography><Typography sx={{mt:1,whiteSpace:"pre-wrap"}} variant="body2">{article.articleText}</Typography></Box></>:null}
       <Stack direction={{xs:"column",sm:"row"}} spacing={1}>
         <Button component="a" endIcon={<LaunchRoundedIcon/>} href={article.publicPath} target="_blank" variant="contained">Open article page</Button>

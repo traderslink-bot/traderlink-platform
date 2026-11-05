@@ -15,6 +15,7 @@ import NextLink from "next/link";
 
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { publicNewsUrl } from "@/src/modules/news/contracts/public-news-url";
+import { PressReleaseDetailSection } from "./press-release-detail-section";
 
 export function pressReleaseEasternTime(value: string, includeDate = false): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -33,16 +34,6 @@ export function pressReleaseType(article: PressReleaseArticle): string {
   if (value?.includes("press release")) return "Press release";
   if (value) return value.replace(/\b\w/gu, (letter) => letter.toUpperCase());
   return "News";
-}
-
-function DetailSection({ items, title }: Readonly<{ items: readonly string[]; title: string }>) {
-  if (items.length === 0) return null;
-  return <Box>
-    <Typography component="h3" sx={{ fontWeight: 800 }} variant="subtitle2">{title}</Typography>
-    <Stack component="ul" spacing={0.75} sx={{ mb: 0, mt: 1, pl: 2.5 }}>
-      {items.map((item, index) => <Typography component="li" key={`${title}-${index}`} variant="body2">{item}</Typography>)}
-    </Stack>
-  </Box>;
 }
 
 export function PressReleaseArticleDrawer({ article, onClose }: Readonly<{
@@ -65,10 +56,10 @@ export function PressReleaseArticleDrawer({ article, onClose }: Readonly<{
       <Typography component="h2" variant="h2">{article.headline}</Typography>
       {!article.summaryUnavailable && article.summary ? <Box><Typography component="h3" sx={{ fontWeight: 800 }} variant="subtitle2">AI summary</Typography><Typography sx={{ mt: 1, whiteSpace: "pre-wrap" }} variant="body2">{article.summary}</Typography></Box> : null}
       <Divider />
-      {article.summaryUnavailable ? null : <DetailSection items={article.positives} title="Positives" />}
-      {article.summaryUnavailable ? null : <DetailSection items={article.negatives} title="Negatives" />}
-      <DetailSection items={article.riskFlags} title="Risk flags" />
-      <DetailSection items={article.supportResistanceLevels} title="Support and resistance" />
+      {article.summaryUnavailable ? null : <PressReleaseDetailSection items={article.positives} title="Positives" />}
+      {article.summaryUnavailable ? null : <PressReleaseDetailSection items={article.negatives} title="Negatives" />}
+      <PressReleaseDetailSection items={article.riskFlags} title="Risk flags" />
+      <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance" />
       <Divider />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={article.summaryUnavailable && article.sourceUrl && /^https?:\/\//iu.test(article.sourceUrl) ? article.sourceUrl : publicNewsUrl(article.publicPath)} variant="contained">{article.summaryUnavailable ? "Open source article" : "Open article page"}</Button>

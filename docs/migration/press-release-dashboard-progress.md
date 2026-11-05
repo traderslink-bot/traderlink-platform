@@ -114,3 +114,16 @@
 - [x] Preserve stored UTC timestamps and all ingestion, AI, Discord, and source-link behavior. The public free-article route reuses the corrected shared article view.
 - [x] Help impact reviewed: no Help-page update is needed because this changes only displayed publication time.
 - [x] Verification: source formatter scan, diff whitespace scan, and a focused `12:05 PM ET` Eastern conversion check.
+
+## 2026-11-05 support and resistance display cleanup
+
+- PR Scanner, every market-cap news channel, shared press-release drawers and
+  the screener workspace now use one detail renderer.
+- Discord `**` emphasis markers and surrounding `_` markers are removed before
+  display. The generated-data line is separated from the bullet list and shown
+  as small secondary disclaimer text.
+- Stored article metadata remains unchanged; this is a display-only cleanup and
+  requires no database migration.
+- Help Center review found no instructional behavior change; existing press
+  release guidance does not reproduce this generated level formatting and does
+  not require an update.
