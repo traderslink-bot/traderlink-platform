@@ -606,3 +606,11 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 
 - The scanner chart drawer subtitle now reads `TradersLink + TradingView
   charts` instead of displaying the ticker exchange beside TradingView.
+
+## 2026-11-05 scanner title and momentum signal rows
+
+- Day Gainers now begins at the same left edge as the other card titles; hidden
+  Material UI tab scroll controls no longer reserve space before the label.
+- Every Momentum result now has a permanently visible second table row listing
+  its detected signals in small regular-weight text. The row is present in the
+  compact card and full desktop view and does not require expanding the ticker.

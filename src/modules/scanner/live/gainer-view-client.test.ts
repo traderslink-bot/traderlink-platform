@@ -89,10 +89,20 @@ function momentumModel(post: number | null | undefined): ScannerReadModel {
     floatRetrievedAtUtc: "2026-11-02T21:00:00Z", spreadPercent: 1,
     providerAtUtc: "2026-11-02T21:00:10Z", receivedAtUtc: "2026-11-02T21:00:10Z",
     activity: { oneMinuteGain: 8, fiveMinuteGain: 20, oneMinuteVolume: 10000, fiveMinuteVolume: 50000,
-      oneMinuteDollarVolume: 24000, volumeAcceleration: 2, fiveMinuteVolumeSpike: 3 }, reasons: [], news: [] };
+      oneMinuteDollarVolume: 24000, volumeAcceleration: 2, fiveMinuteVolumeSpike: 3 }, reasons: [], news: [],
+    momentumSignals: ["volume_ignition","price_burst"] };
   return { ...model(post===undefined?"regular":"after_hours"), momentum: { rows: [row], focus: [], total: 1 } };
 }
 describe("Momentum context rendering", () => {
+  it("keeps detected signals visible beneath each momentum ticker", async () => {
+    const page = await mount(momentumModel(42));
+    const compact = page.container.querySelector('table[aria-label="Momentum compact stocks"]')!;
+    const compactSignals = compact.querySelector('[data-momentum-signals="TEST"]')!;
+    expect(compactSignals.textContent).toBe("Volume ignition · Price burst");
+    const drawer = await openFullView(page.container);
+    const drawerSignals = drawer.querySelector('[data-momentum-signals="TEST"]')!;
+    expect(drawerSignals.textContent).toBe("Volume ignition · Price burst");
+  });
   it("renders distinct Day/Post columns and keeps one/five-minute changes and volumes intact", async () => {
     const page = await mount(momentumModel((2.4/1.69-1)*100));
     const drawer = await openFullView(page.container);
