@@ -382,7 +382,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const selectedGainers=gainerViewResults(model,gainerView);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
-  const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Tabs aria-label="Top Gainers comparison" value={gainerView} variant="scrollable" sx={cardTitleTabsSx}
+  const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Tabs aria-label="Top Gainers comparison" value={gainerView} variant="scrollable" scrollButtons={false} sx={cardTitleTabsSx}
     onChange={(_,view:GainerView)=>{if(model)setGainerChoice({tradingDate:model.tradingDate,view});}}>
     <Tab label="Day Gainers" value="day" disabled={!model}/><Tab label="Post-Market Gainers" value="post_market" disabled={!model}/>
   </Tabs><Tooltip title="Day Gainers gains are calculated from yesterday’s regular session close price. Post-market Gainers are calculated from today’s regular close.">
