@@ -78,6 +78,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(getComputedStyle(haltRegion).marginBottom).toBe("10px");
   expect(getComputedStyle(prRegion).maxHeight).toBe("126px");
   expect(getComputedStyle(prRegion).overflow).toBe("auto");
+  expect(prRegion.textContent).not.toMatch(/\d{1,2}:\d{2} (?:AM|PM) ET/u);
   await act(async()=>{(container.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click();});
   expect(onOpenChart).toHaveBeenCalledWith({symbol:"AAA",exchange:"NASDAQ"});
   expect(container.textContent).toContain("Float 500K");
@@ -88,6 +89,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   await act(async()=>viewAll.click());
   const drawer=document.body.querySelector('[role="dialog"][aria-label="PR workspace"]')!;
   expect(drawer).not.toBeNull();
+  expect(drawer.textContent).toMatch(/\d{1,2}:\d{2} (?:AM|PM) ET/u);
   expect(drawer.querySelector('[aria-label="PR Scanner articles"]')?.querySelectorAll("button")).toHaveLength(4);
 
   const underTab=[...drawer.querySelectorAll('[role="tab"]')].find(tab=>tab.textContent==="Under $30M") as HTMLElement;

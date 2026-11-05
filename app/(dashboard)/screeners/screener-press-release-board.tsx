@@ -102,7 +102,7 @@ function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article
       sx={{display:"grid",gridTemplateColumns:"3.5rem minmax(0,1fr)",minHeight:42,px:0.5,py:0.45,textAlign:"left",width:"100%"}}>
       <Box sx={{alignSelf:"stretch",minWidth:0}}>
         <Typography noWrap sx={{color:"warning.main",fontSize:"0.78rem",fontWeight:900,lineHeight:1.2}}>{article.ticker}</Typography>
-        <Typography color="text.secondary" noWrap sx={{fontSize:"0.58rem",lineHeight:1.25}}>{older?"Yesterday · ":""}{timeFormatter.format(new Date(article.publishedAt))} ET</Typography>
+        <Typography color="text.secondary" noWrap sx={{fontSize:"0.58rem",lineHeight:1.25}}>{older?"Yesterday · ":""}{timeFormatter.format(new Date(article.publishedAt))}</Typography>
       </Box>
       <Box sx={{minWidth:0}}>
         <Typography color="text.secondary" noWrap sx={{fontSize:"0.6rem",fontWeight:700,lineHeight:1.15}}>{article.marketCap?`Mkt Cap ${article.marketCap}`:"Mkt Cap n/a"} · Float {floatValue(float)}</Typography>
