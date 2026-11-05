@@ -42,6 +42,7 @@ const number=new Intl.NumberFormat("en-US",{maximumFractionDigits:1});
 const timeFormatter=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit"});
 const dateFormatter=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",month:"short",day:"numeric"});
 const easternDateFormatter=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"});
+const easternClockFormatter=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",hour:"2-digit",hourCycle:"h23",minute:"2-digit",second:"2-digit"});
 
 function easternDate(value:string):string{
   const parts=easternDateFormatter.formatToParts(new Date(value));
@@ -64,6 +65,11 @@ function shortTime(value:string|null):string{
   if(!value)return "—";
   const [hour="",minute=""]=value.split(":");
   return hour&&minute?`${hour}:${minute}`:value;
+}
+export function tradeResumeHasPassedToday(tradeTimeEt:string,now=new Date()):boolean{
+  if(!/^\d{2}:\d{2}:\d{2}(?:\.\d+)?$/u.test(tradeTimeEt))return false;
+  const parts=Object.fromEntries(easternClockFormatter.formatToParts(now).map(part=>[part.type,part.value]));
+  return `${parts.hour}:${parts.minute}:${parts.second}`>=tradeTimeEt.slice(0,8);
 }
 function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBack:()=>void;onClose:()=>void}){
   return <Stack sx={{height:"100dvh",minHeight:0}}>
@@ -188,7 +194,7 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
     {active.length?<Box aria-label="Current halts" role="region" sx={theme=>({...scannerScrollStyles(theme),mb:1.25,maxHeight:90,overflow:"auto"})}>{active.map(halt=><Stack direction="row" key={halt.id} sx={{alignItems:"center",borderTop:1,borderColor:"divider",gap:0.7,minHeight:30,px:0.5,py:0.35}}>
       {onOpenChart&&halt.chartExchange?<IconButton aria-label={`Open ${halt.ticker} chart`} onClick={()=>onOpenChart({symbol:halt.ticker,exchange:halt.chartExchange})} size="small" sx={{bgcolor:"rgba(46,125,50,0.13)",color:"success.main",p:0.35}}><CandlestickChartRoundedIcon sx={{fontSize:"0.85rem"}}/></IconButton>:null}
       <Box sx={{minWidth:48}}><Typography sx={{color:"error.main",fontSize:"0.72rem",fontWeight:900,lineHeight:1.1}}>{halt.ticker}</Typography><Typography color="text.secondary" sx={{fontSize:"0.56rem"}}>{shortTime(halt.haltTimeEt)} ET</Typography></Box>
-      <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}>{halt.reasonCode} · Quote {halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · Trade {halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Typography>
+      <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}>{halt.reasonCode} · Quote {halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?(tradeResumeHasPassedToday(halt.tradeTimeEt)?"success.main":"error.main"):"text.secondary"}}>Trade {halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
     </Stack>)}</Box>:null}
     {articles===null?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
       :compactArticles.length?<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),maxHeight:126,overflow:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}

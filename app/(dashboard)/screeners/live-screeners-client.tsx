@@ -410,7 +410,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       ?<Typography color="text.secondary">{admin?"Post-market readings begin after the regular session closes.":SCANNER_UNAVAILABLE_MESSAGE}</Typography>
       :<ScannerContents compactDesktop={compactDesktop} haltByTicker={haltByTicker} onOpenChart={setChartRow} results={resultsFor(kind)} screen={kind}/>}
   </>;
-  return <Stack spacing={2.5} sx={{ mt:{ xs:-1,sm:-2 } }}>
+  return <Stack spacing={2.5} sx={{ mt:{ xs:-1.75,sm:-2.25 } }}>
     {admin&&settingsError?<Alert severity="error">Scanner settings could not be loaded.</Alert>:null}
     {admin&&configuration?<AdminControls configuration={configuration} onSaved={setConfiguration}/>:admin&&!settingsError?<Skeleton height={220} variant="rounded"/>:null}
     {admin?<DashboardPanel action={model?<Stack direction="row" spacing={1} sx={{ alignItems:"center",flexWrap:"wrap" }}><Chip label={model.session?SESSION_LABELS[model.session]:"Session closed"} size="small"/><Typography color="text.secondary" variant="caption">Updated {time(model.updatedAtUtc)}</Typography></Stack>:null} title="Live market activity">

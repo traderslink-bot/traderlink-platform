@@ -5,7 +5,7 @@ import { afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("@/app/dashboard-template",()=>({DashboardPanel:({children}:{children:ReactNode})=>createElement("section",null,children)}));
 vi.mock("@/app/(dashboard)/press-releases/press-release-actions",()=>({markPressReleaseRead:vi.fn()}));
-import { ScreenerPressReleaseBoard, selectCompactArticles } from "@/app/(dashboard)/screeners/screener-press-release-board";
+import { ScreenerPressReleaseBoard, selectCompactArticles, tradeResumeHasPassedToday } from "@/app/(dashboard)/screeners/screener-press-release-board";
 
 beforeAll(()=>{(globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;});
 let root:Root|null=null;
@@ -16,6 +16,12 @@ const article=(id:string,ticker:string,publishedAt:string,routeTag="default")=>(
   articleText:"Full stored article text.",eventType:"press_release",negatives:[],positives:["Material update"],
   publicPath:`/news/${ticker}/${id}`,riskFlags:[],routeTag,sourceUrl:"https://example.com/source",
   summary:"Short summary.",summaryUnavailable:false,supportResistanceLevels:[],
+});
+
+it("distinguishes future and reached trade-resume times in Eastern time",()=>{
+  const now=new Date("2026-11-05T16:00:00.000Z");
+  expect(tradeResumeHasPassedToday("10:59:59",now)).toBe(true);
+  expect(tradeResumeHasPassedToday("11:00:01",now)).toBe(false);
 });
 
 it("keeps at most ten compact releases while preferring today",()=>{
