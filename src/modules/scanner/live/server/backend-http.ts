@@ -5,7 +5,7 @@ const RESPONSE_HEADERS = { "cache-control": "private, no-store, max-age=0", "x-c
 const json = (value: unknown,status=200) => Response.json(value,{ status,headers: RESPONSE_HEADERS });
 export type LiveScannerHttpDependencies = Readonly<{
   member: (request: Request) => boolean;
-  read: () => ScannerReadModel | Promise<ScannerReadModel>;
+  read: () => ScannerReadModel;
 }>;
 export type ScannerSettingsHttpDependencies = Readonly<{
   owner: (request: Request) => boolean;
@@ -41,7 +41,7 @@ async function body(request: Request): Promise<unknown> {
 }
 export async function handleLiveScannerGet(request: Request, dependencies: LiveScannerHttpDependencies): Promise<Response> {
   if (request.method !== "GET" || !dependencies.member(request)) return json({ code: "not_found" },404);
-  try { return json(await dependencies.read()); }
+  try { return json(dependencies.read()); }
   catch { return json({ code: "scanner_unavailable" },503); }
 }
 export async function handleScannerFloatsGet(request:Request,dependencies:ScannerFloatsHttpDependencies):Promise<Response>{
