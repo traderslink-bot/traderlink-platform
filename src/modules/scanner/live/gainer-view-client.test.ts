@@ -38,10 +38,6 @@ async function mount(initial: ScannerReadModel, options: { admin?: boolean; now?
     response = next; await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
   } };
 }
-function selected(container: HTMLElement, label: string) {
-  const tabs = [...container.querySelectorAll('[role="tab"]')].filter(tab => tab.textContent === label);
-  return tabs.length === 1 && tabs[0]?.getAttribute("aria-selected") === "true";
-}
 async function openFullView(container: HTMLElement, label = "Momentum") {
   const button = container.querySelector(`[aria-label="Open ${label} full view"]`) as HTMLElement;
   await act(async () => button.click());
@@ -55,27 +51,23 @@ describe("actual Top Gainers card polling and tab interaction", () => {
     expect(page.container.textContent).toContain("TEST");
     expect(page.fetch).toHaveBeenCalledTimes(2);
   });
-  it("switches the Gainers card default from day to post-market on polling without remounting or extra requests", async () => {
+  it("switches the Gainers title and table to post-market on polling without remounting or extra requests", async () => {
     const page = await mount(model("regular"));
-    expect(selected(page.container,"Day Gainers")).toBe(true);
-    expect([...page.container.querySelectorAll("h2")].some(heading=>heading.textContent==="Top Gainers")).toBe(false);
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
     expect(page.container.querySelector('[aria-label="Open Top Gainers full view"]')).not.toBeNull();
     expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
     expect(page.fetch).toHaveBeenCalledTimes(1);
     await page.update(model("after_hours"));
-    expect(selected(page.container,"Post-Market Gainers")).toBe(true);
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers · Post-Market");
     expect(page.container.textContent).not.toContain("Since today’s regular close");
     expect(page.fetch).toHaveBeenCalledTimes(2);
     expect(page.fetch.mock.calls.every(call => String(call[0]) === "/api/screeners/live")).toBe(true);
   });
-  it("respects manual Day Gainers selection through later after-hours updates", async () => {
+  it("returns to the day comparison when the reported session is regular", async () => {
     const page = await mount(model("after_hours"));
-    const tab = [...page.container.querySelectorAll('[role="tab"]')].find(tab => tab.textContent === "Day Gainers") as HTMLElement;
-    await act(async () => tab.click());
-    expect(selected(page.container,"Day Gainers")).toBe(true);
-    expect(page.fetch).toHaveBeenCalledTimes(1); // Tab clicks never fetch.
-    await page.update(model("after_hours"));
-    expect(selected(page.container,"Day Gainers")).toBe(true);
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers · Post-Market");
+    await page.update(model("regular"));
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
     expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
     expect(page.fetch).toHaveBeenCalledTimes(2);
   });
@@ -151,12 +143,11 @@ describe("Momentum context rendering", () => {
 });
 
 describe("compact scanner grid and full view", () => {
-  it("renders Gainers and Momentum as separate cards without a combined scanner selector or redundant Gainers heading", async () => {
+  it("renders Gainers and Momentum as separate cards without a combined scanner selector", async () => {
     const page = await mount(model("regular"));
     expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
     expect(page.container.querySelector('[aria-label="Live screener"]')).toBeNull();
-    expect(page.container.querySelector('[data-scanner-workspace-card="gainers"] h2')?.textContent ?? "").not.toContain("Top Gainers");
-    expect(page.container.querySelector('[data-scanner-workspace-card="gainers"] [aria-label="Top Gainers comparison"]')).not.toBeNull();
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
     expect([...page.container.querySelectorAll('[data-scanner-workspace-card="momentum"] h2')].some(heading=>heading.textContent==="Momentum")).toBe(true);
   });
   it("keeps a single PR instance and exposes every compact column with keyboard details", async () => {
@@ -206,8 +197,7 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
   });
   it("shows the overnight hours inside both scanner cards and removes them at 4 AM through polling", async () => {
     const page = await mount({ ...model("regular"), status: "closed", session: null },{ now: "2026-11-03T08:59:58Z" });
-    const cards = [...page.container.querySelectorAll('[aria-label="Top Gainers comparison"]')].map(tabs=>tabs.closest("section")!);
-    cards.push(page.container.querySelector('[data-scanner-workspace-card="momentum"] section')!);
+    const cards = [page.container.querySelector('[data-scanner-workspace-card="gainers"] section')!,page.container.querySelector('[data-scanner-workspace-card="momentum"] section')!];
     expect(cards.length).toBe(2);
     expect(cards.every(card => card.textContent?.includes("Active 4:00am - 8:00pm est"))).toBe(true);
     expect(page.container.textContent).not.toContain("extended-hours scanning session is closed");

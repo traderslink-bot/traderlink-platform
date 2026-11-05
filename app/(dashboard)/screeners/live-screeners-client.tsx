@@ -42,7 +42,7 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contrac
 import type { LiveScannerRow, LiveScreenResults, ScannerActiveHalt, ScannerConfiguration, ScannerKind, ScannerReadModel,
   ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
 import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, momentumDetectionControls, momentumLiquidityBypassControls } from "@/src/modules/scanner/live/settings";
-import { gainerViewResults, selectedGainerView, type GainerView, type GainerViewChoice } from "@/src/modules/scanner/live/gainer-view";
+import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/gainer-view";
 import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import { applyScannerDisplayContinuity, type ScannerDisplayContinuity } from "@/src/modules/scanner/live/display-continuity";
@@ -54,7 +54,6 @@ const MOMENTUM_SIGNAL_LABELS={volume_ignition:"Volume ignition",building_volume:
 const number = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 2 });
 const wholePercent = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 0 });
 const compact = new Intl.NumberFormat("en-US",{ notation: "compact",maximumFractionDigits: 1 });
-const cardTitleTabsSx={minHeight:22,'& .MuiTabs-indicator':{height:2},'& .MuiTab-root':{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,minHeight:22,minWidth:0,p:0,pb:0.6,px:0,textTransform:"none"},'& .MuiTab-root + .MuiTab-root':{ml:2}};
 function value(input: number | null | undefined, suffix = ""): string {
   return input == null ? "n/a" : `${suffix==="%"?wholePercent.format(input):number.format(input)}${suffix}`;
 }
@@ -389,21 +388,18 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
   const [chartRow,setChartRow]=useState<ScannerChartTarget|null>(null);
   const [fullScanner,setFullScanner]=useState<ScannerKind|null>(null);
-  const [gainerChoice,setGainerChoice]=useState<GainerViewChoice|null>(null);
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
   const [checkedAt,setCheckedAt]=useState<number|null>(null);
   useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const controller=new AbortController();const load=async()=>{try{const response=await fetch('/api/screeners/live',{ cache:'no-store',credentials:'same-origin',signal:controller.signal });if(!response.ok)throw Error();const incoming:ScannerReadModel=await response.json();setModel(previous=>{const haltSafeIncoming=incoming.activeHalts===undefined&&previous?.activeHalts?{...incoming,activeHalts:previous.activeHalts}:incoming;const next=applyScannerDisplayContinuity(previous,haltSafeIncoming,displayContinuity.current,Date.now());displayContinuity.current=next.continuity;return next.model;});setLoadError(false);}catch{if(!controller.signal.aborted)setLoadError(true);}finally{if(!controller.signal.aborted){setCheckedAt(Date.now());timer=setTimeout(()=>void load(),5000);}}};void load();return()=>{controller.abort();if(timer)clearTimeout(timer);};},[]);
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
-  const gainerView=selectedGainerView(model,gainerChoice);
+  const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";
   const selectedGainers=gainerViewResults(model,gainerView);
   const haltByTicker=useMemo(()=>new Map((model?.activeHalts??[]).map(halt=>[halt.ticker,halt])),[model?.activeHalts]);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
-  const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Tabs aria-label="Top Gainers comparison" value={gainerView} variant="scrollable" scrollButtons={false} sx={cardTitleTabsSx}
-    onChange={(_,view:GainerView)=>{if(model)setGainerChoice({tradingDate:model.tradingDate,view});}}>
-    <Tab label="Day Gainers" value="day" disabled={!model}/><Tab label="Post-Market Gainers" value="post_market" disabled={!model}/>
-  </Tabs><Tooltip title="Day Gainers gains are calculated from yesterday’s regular session close price. Post-market Gainers are calculated from today’s regular close.">
-    <IconButton aria-label="Explain Day and Post-market Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
+  const gainerTitle=model?.session==="after_hours"?"Top Gainers · Post-Market":"Top Gainers";
+  const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title="Day Gainers gains are calculated from yesterday’s regular session close price. Post-market Gainers are calculated from today’s regular close.">
+    <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
   </Tooltip></Stack>;
   const contents=(kind:ScannerKind,compactDesktop=false)=><>
     {memberNotice?<Alert severity={memberNotice===SCANNER_UNAVAILABLE_MESSAGE?"warning":"info"}>{memberNotice}</Alert>
