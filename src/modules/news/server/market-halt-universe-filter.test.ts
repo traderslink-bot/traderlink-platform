@@ -7,9 +7,10 @@ const universe:DailyUniverse={version:1,tradingDate:"2026-11-05",acceptedAtUtc:"
   {symbol:"NANO",exchange:"NASDAQ",marketCapAtCollection:20_000_000},
   {symbol:"LIMIT",exchange:"NYSE",marketCapAtCollection:200_000_000},
   {symbol:"LARGE",exchange:"NASDAQ",marketCapAtCollection:200_000_001},
+  {symbol:"BATS",exchange:"NASDAQ",marketCapAtCollection:20_000_000},
 ]};
 
 it("keeps only current-universe halts at or below $200M",()=>{
-  const result=filterMarketHaltsToUniverse([halt("NANO"),halt("LIMIT"),halt("LARGE"),halt("BATS"),halt("NANO","2026-11-04")],new Map([[universe.tradingDate,universe]]));
+  const result=filterMarketHaltsToUniverse([halt("NANO"),halt("LIMIT"),halt("LARGE"),{...halt("BATS"),market:"BATS"},halt("NANO","2026-11-04")],new Map([[universe.tradingDate,universe]]));
   expect(result.map(item=>item.ticker)).toEqual(["NANO","LIMIT"]);
 });

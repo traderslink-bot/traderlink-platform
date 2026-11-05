@@ -2,6 +2,8 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 
+import { isSupportedMarketHaltMarket } from "./market-halt-feed";
+
 import type { MarketHaltDashboardReadModel, MarketHaltDashboardRow } from "../contracts/market-halt-dashboard-contracts";
 
 type StoredHalt = Readonly<{
@@ -52,7 +54,7 @@ FROM news_market_halt_events
 ORDER BY updated_at_utc DESC
 LIMIT 250`).all();
   const today = stored
-    .filter((row) => canonicalDate(row.halt_date_et) === tradingDate)
+    .filter((row) => canonicalDate(row.halt_date_et) === tradingDate && isSupportedMarketHaltMarket(row.market))
     .sort((left, right) => right.halt_time_et.localeCompare(left.halt_time_et))
     .slice(0, Math.max(1, Math.min(50, Math.trunc(limit))));
   const rows: readonly MarketHaltDashboardRow[] = Object.freeze(today.map((row) => Object.freeze({

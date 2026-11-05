@@ -1,5 +1,5 @@
 import type { DailyUniverse } from "../../scanner/live/contracts";
-import type { MarketHalt } from "./market-halt-feed";
+import { isSupportedMarketHaltMarket, type MarketHalt } from "./market-halt-feed";
 
 export const MARKET_HALT_MAXIMUM_MARKET_CAP = 200_000_000;
 
@@ -12,6 +12,6 @@ export function filterMarketHaltsToUniverse(
   for(const [date,universe] of universes)members.set(date,new Map(universe?.stocks.map(stock=>[stock.symbol,stock.marketCapAtCollection])??[]));
   return Object.freeze(halts.filter(halt=>{
     const marketCap=members.get(halt.haltDateEt)?.get(halt.ticker);
-    return marketCap!==undefined&&marketCap<=maximumMarketCap;
+    return isSupportedMarketHaltMarket(halt.market)&&marketCap!==undefined&&marketCap<=maximumMarketCap;
   }));
 }

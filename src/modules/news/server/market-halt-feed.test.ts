@@ -54,6 +54,10 @@ describe("market halt feed normalization", () => {
       <ndaq:IssueSymbol>TPEI</ndaq:IssueSymbol><ndaq:IssueName>MicroSectors -3x Short Taiwan ETNs</ndaq:IssueName>
       <ndaq:Market>BATS</ndaq:Market><ndaq:ReasonCode>M</ndaq:ReasonCode>
     </item><item>
+      <ndaq:HaltDate>11/05/2026</ndaq:HaltDate><ndaq:HaltTime>10:54:00</ndaq:HaltTime>
+      <ndaq:IssueSymbol>BATS</ndaq:IssueSymbol><ndaq:IssueName>Ordinary Company Class A</ndaq:IssueName>
+      <ndaq:Market>BATS</ndaq:Market><ndaq:ReasonCode>LUDP</ndaq:ReasonCode>
+    </item><item>
       <ndaq:HaltDate>11/05/2026</ndaq:HaltDate><ndaq:HaltTime>10:57:32</ndaq:HaltTime>
       <ndaq:IssueSymbol>AEHL</ndaq:IssueSymbol><ndaq:IssueName>Antelope Entprs Hld Cl A Ord</ndaq:IssueName>
       <ndaq:Market>NASDAQ</ndaq:Market><ndaq:ReasonCode>LUDP</ndaq:ReasonCode>

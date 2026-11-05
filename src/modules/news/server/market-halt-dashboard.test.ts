@@ -23,6 +23,7 @@ describe("market halt dashboard", () => {
     const insert = database.prepare(`INSERT INTO news_market_halt_events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
     insert.run("new", "nasdaq", "11/04/2026", "10:15:00", "NEW", "NASDAQ", "LUDP", "Volatility trading pause", null, "10:20:00", "https://example.com/nasdaq", "2026-11-04T15:15:00.000Z");
     insert.run("old", "nyse", "2026-11-04", "09:45:00", "OLD", "NYSE", "NYSE LULD", "Volatility trading pause", null, null, "https://example.com/nyse", "2026-11-04T14:45:00.000Z");
+    insert.run("bats", "nasdaq", "11/04/2026", "10:30:00", "BATS", "BATS", "LUDP", "Volatility trading pause", null, null, "https://example.com/nasdaq", "2026-11-04T15:30:00.000Z");
     insert.run("prior", "nasdaq", "11/03/2026", "15:00:00", "PRIOR", "NASDAQ", "T1", "News pending", null, null, "https://example.com/nasdaq", "2026-11-03T20:00:00.000Z");
 
     const model = listMarketHaltDashboard(database, new Date("2026-11-04T18:00:00.000Z"));
