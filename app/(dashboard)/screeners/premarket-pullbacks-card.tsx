@@ -44,9 +44,9 @@ function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(ro
 function PullbackTable({rows,full,onOpenChart}:{rows:readonly PremarketPullbackRow[];full:boolean;onOpenChart:(row:PremarketPullbackRow)=>void}){
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="Premarket high pullback list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),maxHeight:full?"calc(100dvh - 150px)":420})}>
-    <Table size="small" stickyHeader aria-label="Premarket high pullback stocks" sx={{tableLayout:"fixed",minWidth:430,'& td, & th':{px:0.35,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-      <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/><TableCell>Ticker</TableCell><TableCell>Price</TableCell>
-        <TableCell>PM High</TableCell><TableCell>Volume</TableCell>
+    <Table size="small" stickyHeader aria-label="Premarket high pullback stocks" sx={{tableLayout:"fixed",minWidth:350,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/><TableCell sx={{width:58}}>Ticker</TableCell><TableCell sx={{width:70}}>Price</TableCell>
+        <TableCell sx={{width:70}}>PM High</TableCell><TableCell sx={{width:78}}>Volume</TableCell>
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const metrics:[string,string][]=open?[["Premarket high",price(row.premarketHigh)],["Below PM high",`${number.format(row.belowHighPercent)}%`],

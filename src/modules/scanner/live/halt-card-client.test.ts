@@ -22,6 +22,7 @@ afterEach(async () => {
 });
 
 it("loads today's halt list through the private API and renders official details", async () => {
+  const onOpenChart = vi.fn();
   const fetch = vi.fn(async () => Response.json({
     tradingDate: "2026-11-04",
     updatedAtUtc: "2026-11-04T15:15:00.000Z",
@@ -39,14 +40,17 @@ it("loads today's halt list through the private API and renders official details
   const container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  await act(async () => root!.render(createElement(ScreenerMarketHaltsCard)));
+  await act(async () => root!.render(createElement(ScreenerMarketHaltsCard, { onOpenChart })));
   expect(fetch).toHaveBeenCalledWith("/api/market-halts/current", expect.objectContaining({ cache: "no-store", credentials: "same-origin" }));
   expect(container.textContent).toContain("Halt Alerts");
-  expect(container.textContent).toContain("Quote Resume");
+  expect(container.textContent).toContain("Quote");
+  expect(container.textContent).not.toContain("Quote Resume");
   expect(container.textContent).toContain("Trade Resume");
   expect(container.textContent).toContain("TEST");
   expect(container.textContent).toContain("LUDP");
   expect(container.textContent).toContain("10:20");
   expect(container.querySelectorAll("tbody tr")).toHaveLength(2);
   expect(container.querySelector('a[href*="nasdaqtrader.com"]')).not.toBeNull();
+  await act(async () => (container.querySelector('[aria-label="Open TEST chart"]') as HTMLElement).click());
+  expect(onOpenChart).toHaveBeenCalledWith({ symbol: "TEST", exchange: "NASDAQ" });
 });

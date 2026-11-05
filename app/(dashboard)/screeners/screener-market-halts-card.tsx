@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonBase from "@mui/material/ButtonBase";
 import Link from "@mui/material/Link";
 import Skeleton from "@mui/material/Skeleton";
 import Table from "@mui/material/Table";
@@ -9,6 +10,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
+import CandlestickChartRoundedIcon from "@mui/icons-material/CandlestickChartRounded";
 import { useEffect, useState } from "react";
 
 import { DashboardPanel } from "@/app/dashboard-template";
@@ -23,7 +25,7 @@ function shortTime(value: string | null): string {
   return hour && minute ? `${hour}:${minute}` : value;
 }
 
-export function ScreenerMarketHaltsCard() {
+export function ScreenerMarketHaltsCard({ onOpenChart }: { onOpenChart: (row: { symbol: string; exchange: string | null }) => void }) {
   const [model, setModel] = useState<MarketHaltDashboardReadModel | null>(null);
   const [unavailable, setUnavailable] = useState(false);
 
@@ -59,12 +61,17 @@ export function ScreenerMarketHaltsCard() {
     {model && !model.rows.length ? <Typography color="text.secondary" variant="body2">No qualifying Nasdaq or NYSE halts today.</Typography> : null}
     {model?.rows.length ? <TableContainer aria-label="Halt alerts list" role="region" tabIndex={0}
       sx={theme=>({...scannerScrollStyles(theme),height:420,maxHeight:420,overflow:"auto"})}>
-      <Table aria-label="Market halt events" size="small" stickyHeader sx={{tableLayout:"fixed",minWidth:430,
+      <Table aria-label="Market halt events" size="small" stickyHeader sx={{tableLayout:"fixed",width:"100%",
         '& .MuiTableCell-root':{fontSize:"0.68rem",fontWeight:500,px:0.45,py:0.45},
         '& .MuiTableCell-head':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-        <TableHead><TableRow><TableCell sx={{width:82}}>Ticker</TableCell><TableCell sx={{width:70}}>Reason</TableCell>
-          <TableCell sx={{width:120}}>Quote Resume</TableCell><TableCell sx={{width:120}}>Trade Resume</TableCell></TableRow></TableHead>
+        <TableHead><TableRow><TableCell aria-label="Chart" sx={{width:26}}/><TableCell sx={{width:"20%"}}>Ticker</TableCell><TableCell sx={{width:"17%"}}>Reason</TableCell>
+          <TableCell sx={{width:"25%"}}>Quote</TableCell><TableCell sx={{width:"30%"}}>Trade Resume</TableCell></TableRow></TableHead>
         <TableBody>{model.rows.map((halt) => <TableRow hover key={halt.id}>
+          <TableCell sx={{px:"0.125rem !important"}}><ButtonBase aria-label={`Open ${halt.ticker} chart`} onClick={()=>onOpenChart({symbol:halt.ticker,exchange:halt.market})}
+            sx={{alignItems:"center",bgcolor:"rgba(46,125,50,0.13)",borderRadius:0.75,color:"success.main",height:20,justifyContent:"center",minWidth:20,
+              '&:hover':{bgcolor:"rgba(46,125,50,0.23)"},'&:focus-visible':{outline:"2px solid",outlineColor:"success.main",outlineOffset:1}}}>
+            <CandlestickChartRoundedIcon sx={{fontSize:"0.9rem"}}/>
+          </ButtonBase></TableCell>
           <TableCell><Link href={halt.sourceUrl} rel="noreferrer" target="_blank" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:850,textDecoration:"none"}}>{halt.ticker}</Link>
             <Typography color="text.secondary" sx={{fontSize:"0.6rem",lineHeight:1.2}}>{shortTime(halt.haltTimeEt)} ET</Typography></TableCell>
           <TableCell title={halt.reason}>{halt.reasonCode}</TableCell>

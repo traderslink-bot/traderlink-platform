@@ -511,3 +511,13 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Five-character symbols ending in W are excluded at both Nasdaq collection and combined-universe import boundaries. Durable universe reads also remove previously stored matching symbols immediately.
 - The exclusion therefore applies to scanner snapshot requests, every scanner list and halt-universe eligibility without waiting for the next trading day's collection.
 - Focused universe verification passed: 4 files and 62 tests.
+
+## 2026-11-05 compact secondary scanner tables
+
+- Halt Alerts now uses the shared chart launcher as its first column and opens
+  the existing scanner chart drawer for the selected ticker.
+- Its quote-time header is shortened to `Quote`, and the table fits the card
+  width without forcing horizontal scrolling.
+- Rapid Drops retains enough width for its additional measurements, while Top
+  Losers and Premarket High Pullbacks use tighter column widths suited to their
+  smaller field sets.

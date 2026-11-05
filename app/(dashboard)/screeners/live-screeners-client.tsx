@@ -420,7 +420,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       <Box data-scanner-premarket-pullbacks-card sx={{minWidth:0,'& .MuiCardContent-root':{p:1.25,'&:last-child':{pb:1.25}}}}><PremarketPullbacksCard results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} onOpenChart={setChartRow}/></Box>
       <Box data-scanner-pr-card sx={{gridColumn:{xs:"auto",md:"span 2"},minWidth:0}}><ScreenerPressReleaseBoard/></Box>
-      <Box data-scanner-halts-card sx={{minWidth:0}}><ScreenerMarketHaltsCard/></Box>
+      <Box data-scanner-halts-card sx={{minWidth:0}}><ScreenerMarketHaltsCard onOpenChart={setChartRow}/></Box>
     </Box>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,
