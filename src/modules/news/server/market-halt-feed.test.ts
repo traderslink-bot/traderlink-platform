@@ -48,6 +48,24 @@ describe("market halt feed normalization", () => {
     expect(halts[0]?.ticker).toBe("QSER");
   });
 
+  it("excludes ETF and ETN issue names while retaining ordinary companies", () => {
+    const nasdaqHalts = parseNasdaqTradeHalts(`<item>
+      <ndaq:HaltDate>11/05/2026</ndaq:HaltDate><ndaq:HaltTime>10:53:22</ndaq:HaltTime>
+      <ndaq:IssueSymbol>TPEI</ndaq:IssueSymbol><ndaq:IssueName>MicroSectors -3x Short Taiwan ETNs</ndaq:IssueName>
+      <ndaq:Market>BATS</ndaq:Market><ndaq:ReasonCode>M</ndaq:ReasonCode>
+    </item><item>
+      <ndaq:HaltDate>11/05/2026</ndaq:HaltDate><ndaq:HaltTime>10:57:32</ndaq:HaltTime>
+      <ndaq:IssueSymbol>AEHL</ndaq:IssueSymbol><ndaq:IssueName>Antelope Entprs Hld Cl A Ord</ndaq:IssueName>
+      <ndaq:Market>NASDAQ</ndaq:Market><ndaq:ReasonCode>LUDP</ndaq:ReasonCode>
+    </item>`);
+    const nyseHalts = parseNyseTradeHalts(`Halt Date,Halt Time,Symbol,Name,Market,Reason,Resume Date,Resume Time
+2026-11-05,10:52:22,BCOR,Grayscale Bitcoin Adopters ETF,NYSE Arca,LULD Pause,2026-11-05,10:57:22
+2026-11-05,10:52:30,ACME,Acme Corporation,NYSE,LULD Pause,2026-11-05,10:57:30`);
+
+    expect(nasdaqHalts.map((halt) => halt.ticker)).toEqual(["AEHL"]);
+    expect(nyseHalts.map((halt) => halt.ticker)).toEqual(["ACME"]);
+  });
+
   it("parses the current NYSE Resume Time header", () => {
     const halts = parseNyseTradeHalts(`Halt Date,Halt Time,Symbol,Name,Exchange,Reason,Resume Date,NYSE Resume Time
 2026-11-04,13:22:24,TEST,Test Corp,NYSE,LULD Pause,2026-11-04,13:27:24`);

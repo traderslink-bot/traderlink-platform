@@ -488,3 +488,8 @@ No outcome-based trading claim is made. The two-day data also shows that directi
 - Early volume signals remain detected and audited, but cumulative volume and dollar-volume floors are enforced by default again.
 - Scanner admin now has a per-session switch to allow early signals to bypass those two cumulative liquidity floors when the owner deliberately enables it.
 - Focused scanner verification passed: 3 files and 77 tests.
+
+## Halt instrument filtering — 2026-11-05
+
+- Halt-feed normalization excludes issue names containing the whole-word ETF/ETFs or ETN/ETNs labels from both Nasdaq and NYSE source rows. Company halts and volatility reason codes remain eligible.
+- Focused halt-feed verification passed: 1 file and 6 tests.
