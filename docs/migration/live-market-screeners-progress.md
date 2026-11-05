@@ -562,3 +562,14 @@ No outcome-based trading claim is made. The two-day data also shows that directi
   covered without requesting stocks that no active scanner can qualify.
 - With the current $100M settings, the Nov. 5 universe falls from 2,352 symbols
   in six batches to 1,402 symbols in four batches.
+
+## 2026-11-05 five-minute momentum qualification
+
+- The ordinary rolling five-minute route now requires both a 3% price increase
+  and at least 2x rolling volume versus the preceding five-minute window.
+- A price move without matching volume expansion no longer creates the
+  `five_minute_momentum` signal. Faster volume-ignition, building-volume and
+  price-burst detection remain separate and unchanged.
+- The existing scanner-admin controls remain authoritative, with new
+  configurations starting at 3% and 2x.
+- Focused verification passed: 2 files and 48 tests.

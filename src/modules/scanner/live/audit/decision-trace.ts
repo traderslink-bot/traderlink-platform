@@ -49,7 +49,9 @@ export function scannerMomentumFilterFailures(row: LiveScannerRow, filters: Scre
 export function scannerMovementFailures(row: LiveScannerRow, controls: FocusControls): readonly string[] {
   const one = row.activity.oneMinuteGain;
   const five = row.activity.fiveMinuteGain;
-  return row.momentumState==="cooling"||Boolean(row.momentumSignals?.length)||one !== null && one >= controls.minimumOneMinuteGain || five !== null && five >= controls.minimumFiveMinuteGain
+  const fiveMinuteSupported=five !== null && five >= controls.minimumFiveMinuteGain
+    && row.activity.fiveMinuteVolumeSpike !== null && row.activity.fiveMinuteVolumeSpike >= controls.minimumVolumeAcceleration;
+  return row.momentumState==="cooling"||Boolean(row.momentumSignals?.length)||one !== null && one >= controls.minimumOneMinuteGain || fiveMinuteSupported
     ? Object.freeze([])
     : Object.freeze([one === null && five === null ? "price_windows_warming" : "recent_price_move_below_minimum"]);
 }

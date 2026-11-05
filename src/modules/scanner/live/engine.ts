@@ -15,6 +15,10 @@ export type FloatFact = Readonly<{ shares: number; retrievedAtUtc: string }>;
 type Candidate = Readonly<{ row: LiveScannerRow; score: number }>;
 const EMPTY: LiveScreenResults = { rows: [], focus: [], total: 0 };
 function matches(row: LiveScannerRow, filters: ScreenFilters): boolean { return scannerFilterFailures(row,filters).length===0; }
+export function qualifiesFiveMinuteMomentum(activity: LiveScannerRow["activity"], controls: FocusControls): boolean {
+  return activity.fiveMinuteGain !== null && activity.fiveMinuteGain >= controls.minimumFiveMinuteGain
+    && activity.fiveMinuteVolumeSpike !== null && activity.fiveMinuteVolumeSpike >= controls.minimumVolumeAcceleration;
+}
 function moving(row: LiveScannerRow, controls: FocusControls,allowEvents=false): boolean {
   const activity = row.activity;
   return allowEvents&&Boolean(row.momentumSignals?.length) || activity.oneMinuteGain !== null && activity.oneMinuteGain >= controls.minimumOneMinuteGain
@@ -113,7 +117,7 @@ export class LiveScannerEngine {
         this.activity.metrics(snapshot.symbol,input.now),momentumDetectionControls(input.configuration)[input.session]);
       const rollingSignals:MomentumSignal[]=[];
       if(event.activity.oneMinuteGain!==null&&event.activity.oneMinuteGain>=input.configuration.momentum.focus.minimumOneMinuteGain)rollingSignals.push("one_minute_momentum");
-      if(event.activity.fiveMinuteGain!==null&&event.activity.fiveMinuteGain>=input.configuration.momentum.focus.minimumFiveMinuteGain)rollingSignals.push("five_minute_momentum");
+      if(qualifiesFiveMinuteMomentum(event.activity,input.configuration.momentum.focus))rollingSignals.push("five_minute_momentum");
       rows.push({ symbol: stock.symbol, exchange: stock.exchange, company: snapshot.company, price: snapshot.price,
         sessionGain: snapshot.baseline !== null && snapshot.baseline > 0 ? (snapshot.price/snapshot.baseline-1)*100 : null,
         comparisonPrice: snapshot.baseline, gainBasis: "previous_regular_close",

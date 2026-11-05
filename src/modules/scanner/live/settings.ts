@@ -93,7 +93,7 @@ export function initialConfiguration(): ScannerConfiguration {
     minimumVolumeAcceleration: 2, minimumOneMinuteDollarVolume: 25_000 });
   return { version: 1, revision: 0, enabled: false, updatedAtUtc: null,momentumDetection:DEFAULT_MOMENTUM_DETECTION,momentumLiquidityBypass:DEFAULT_MOMENTUM_LIQUIDITY_BYPASS,
     gainers: { displayLimit: 20, filters: filters(3), focus: focus(1, 2) },
-    momentum: { displayLimit: 20, filters: filters(null), focus: focus(2.5, 5) } };
+    momentum: { displayLimit: 20, filters: filters(null), focus: focus(2.5, 3) } };
 }
 
 export function updateConfiguration(current: ScannerConfiguration, candidate: unknown, now: number): ScannerConfiguration {
