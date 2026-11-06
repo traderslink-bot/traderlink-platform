@@ -9,6 +9,8 @@ const detection=(shares:number,dollars:number):MomentumDetectionSessionControls=
   buildingConfirmationScans:2,episodeQuietScans:3,episodeQuietSeconds:90});
 export const DEFAULT_MOMENTUM_DETECTION:MomentumDetectionControls=Object.freeze({premarket:detection(10_000,10_000),regular:detection(25_000,25_000),after_hours:detection(10_000,10_000)});
 export const DEFAULT_MOMENTUM_LIQUIDITY_BYPASS:MomentumLiquidityBypassControls=Object.freeze({premarket:false,regular:false,after_hours:false});
+export const DEFAULT_MARKET_EVENTS_PR_MAXIMUM_MARKET_CAP=200_000_000;
+export function marketEventsPressReleaseMaximumMarketCap(configuration:ScannerConfiguration):number{return configuration.marketEventsPressReleaseMaximumMarketCap??DEFAULT_MARKET_EVENTS_PR_MAXIMUM_MARKET_CAP;}
 export function momentumDetectionControls(configuration:ScannerConfiguration):MomentumDetectionControls{return configuration.momentumDetection??DEFAULT_MOMENTUM_DETECTION;}
 export function momentumLiquidityBypassControls(configuration:ScannerConfiguration):MomentumLiquidityBypassControls{return configuration.momentumLiquidityBypass??DEFAULT_MOMENTUM_LIQUIDITY_BYPASS;}
 function record(value: unknown): value is Record<string, unknown> { return Boolean(value && typeof value === "object" && !Array.isArray(value)); }
@@ -62,7 +64,7 @@ function declinesValid(value:unknown):value is DeclineControls {
     &&bounded(value.minimumDropPercent,1,99)&&bounded(value.windowMinutes,0.5,15)&&bounded(value.retentionMinutes,1,60);
 }
 export function validateConfiguration(value: unknown): ScannerConfiguration {
-  if (!record(value) || !exactKeys(value, ["version", "revision", "enabled", "updatedAtUtc", "gainers", "momentum",...(Object.hasOwn(value,"momentumDetection")?["momentumDetection"]:[]),...(Object.hasOwn(value,"momentumLiquidityBypass")?["momentumLiquidityBypass"]:[]),...(Object.hasOwn(value,"declines")?["declines"]:[]),...(Object.hasOwn(value,"premarketPullbacks")?["premarketPullbacks"]:[])])
+  if (!record(value) || !exactKeys(value, ["version", "revision", "enabled", "updatedAtUtc", "gainers", "momentum",...(Object.hasOwn(value,"momentumDetection")?["momentumDetection"]:[]),...(Object.hasOwn(value,"momentumLiquidityBypass")?["momentumLiquidityBypass"]:[]),...(Object.hasOwn(value,"declines")?["declines"]:[]),...(Object.hasOwn(value,"premarketPullbacks")?["premarketPullbacks"]:[]),...(Object.hasOwn(value,"marketEventsPressReleaseMaximumMarketCap")?["marketEventsPressReleaseMaximumMarketCap"]:[])])
     || value.version !== 1 || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0
     || typeof value.enabled !== "boolean"
     || !(value.updatedAtUtc === null || typeof value.updatedAtUtc === "string" && Number.isFinite(Date.parse(value.updatedAtUtc)))
@@ -71,6 +73,7 @@ export function validateConfiguration(value: unknown): ScannerConfiguration {
     || Object.hasOwn(value,"momentumLiquidityBypass")&&!momentumLiquidityBypassValid(value.momentumLiquidityBypass)
     || Object.hasOwn(value,"declines")&&!declinesValid(value.declines)
     || Object.hasOwn(value,"premarketPullbacks")&&!premarketPullbacksValid(value.premarketPullbacks)) throw Error("scanner_settings_invalid");
+  if(Object.hasOwn(value,"marketEventsPressReleaseMaximumMarketCap")&&!bounded(value.marketEventsPressReleaseMaximumMarketCap,1,500_000_000))throw Error("scanner_settings_invalid");
   return structuredClone(value) as ScannerConfiguration;
 }
 function premarketPullbacksValid(value:unknown):value is PremarketPullbackControls {
@@ -91,7 +94,7 @@ export function initialConfiguration(): ScannerConfiguration {
   const focus = (one: number, five: number): FocusControls => ({ maximumStocks: 3, confirmationScans: 2,
     replacementImprovementPercent: 20, minimumOneMinuteGain: one, minimumFiveMinuteGain: five,
     minimumVolumeAcceleration: 2, minimumOneMinuteDollarVolume: 25_000 });
-  return { version: 1, revision: 0, enabled: false, updatedAtUtc: null,momentumDetection:DEFAULT_MOMENTUM_DETECTION,momentumLiquidityBypass:DEFAULT_MOMENTUM_LIQUIDITY_BYPASS,
+  return { version: 1, revision: 0, enabled: false, updatedAtUtc: null,momentumDetection:DEFAULT_MOMENTUM_DETECTION,momentumLiquidityBypass:DEFAULT_MOMENTUM_LIQUIDITY_BYPASS,marketEventsPressReleaseMaximumMarketCap:DEFAULT_MARKET_EVENTS_PR_MAXIMUM_MARKET_CAP,
     gainers: { displayLimit: 20, filters: filters(3), focus: focus(1, 2) },
     momentum: { displayLimit: 20, filters: filters(null), focus: focus(2.5, 3) } };
 }

@@ -5,7 +5,7 @@ import { afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("@/app/dashboard-template",()=>({DashboardPanel:({children}:{children:ReactNode})=>createElement("section",null,children)}));
 vi.mock("@/app/(dashboard)/press-releases/press-release-actions",()=>({markPressReleaseRead:vi.fn()}));
-import { ScreenerPressReleaseBoard, selectCompactArticles, tradeResumeHasPassedToday } from "@/app/(dashboard)/screeners/screener-press-release-board";
+import { pressReleaseMarketCapValue, ScreenerPressReleaseBoard, selectCompactArticles, tradeResumeHasPassedToday } from "@/app/(dashboard)/screeners/screener-press-release-board";
 
 beforeAll(()=>{(globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;});
 let root:Root|null=null;
@@ -28,6 +28,16 @@ it("keeps at most ten compact releases while preferring today",()=>{
   const previous=[article("old-1","OLD1","2026-11-04T15:30:00.000Z"),article("old-2","OLD2","2026-11-04T14:30:00.000Z"),article("old-3","OLD3","2026-11-04T13:30:00.000Z")];
   expect(selectCompactArticles([article("today-1","NEW1","2026-11-05T15:30:00.000Z"),...previous],{today:"2026-11-05",previous:"2026-11-04"}).map(item=>item.id)).toEqual(["today-1","old-1","old-2","old-3"]);
   expect(selectCompactArticles([article("today-3","NEW3","2026-11-05T16:30:00.000Z"),article("today-2","NEW2","2026-11-05T16:00:00.000Z"),article("today-1","NEW1","2026-11-05T15:30:00.000Z"),...previous],{today:"2026-11-05",previous:"2026-11-04"}).map(item=>item.id)).toEqual(["today-3","today-2","today-1","old-1","old-2","old-3"]);
+});
+
+it("excludes compact-card releases at or above the configured market-cap boundary",()=>{
+  const date="2026-11-05T15:30:00.000Z",dates={today:"2026-11-05",previous:null};
+  const low={...article("low","LOW",date),marketCap:"$199.9M"};
+  const boundary={...article("boundary","BOUNDARY",date),marketCap:"$200M"};
+  const high={...article("high","HIGH",date),marketCap:"1.2B"};
+  const unknown={...article("unknown","UNKNOWN",date),marketCap:null};
+  expect(pressReleaseMarketCapValue("$12.5M")).toBe(12_500_000);
+  expect(selectCompactArticles([low,boundary,high,unknown],dates,200_000_000).map(item=>item.id)).toEqual(["low","unknown"]);
 });
 
 it("combines active halts with three PRs and uses one drawer for lists and article reading",async()=>{
@@ -77,7 +87,8 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(prRegion).not.toBeNull();
   expect(getComputedStyle(haltRegion).maxHeight).toBe("90px");
   expect(getComputedStyle(haltRegion).marginBottom).toBe("10px");
-  expect(getComputedStyle(prRegion).maxHeight).toBe("126px");
+  expect(getComputedStyle(container.querySelector('[data-market-events-fill-card]') as HTMLElement).height).toBe(`${window.innerHeight-12}px`);
+  expect(getComputedStyle(prRegion).flexGrow).toBe("1");
   expect(getComputedStyle(prRegion).overflow).toBe("auto");
   expect(prRegion.textContent).not.toMatch(/\d{1,2}:\d{2} (?:AM|PM) ET/u);
   await act(async()=>{(container.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click();});

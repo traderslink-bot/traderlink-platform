@@ -61,6 +61,8 @@ export type ScannerConfiguration = Readonly<{
   momentumLiquidityBypass?: MomentumLiquidityBypassControls;
   declines?: DeclineControls;
   premarketPullbacks?: PremarketPullbackControls;
+  /** Exclusive upper bound for press releases shown in the compact Market Events card. */
+  marketEventsPressReleaseMaximumMarketCap?: number;
 }>;
 export type NormalizedSnapshot = Readonly<{
   symbol: string; company: string; session: ScannerSession; tradingDate: string;

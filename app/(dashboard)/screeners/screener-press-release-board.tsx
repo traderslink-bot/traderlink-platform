@@ -29,7 +29,7 @@ import { PressReleaseDetailSection } from "../press-releases/press-release-detai
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
 type Headline=Pick<PressReleaseArticle,"id"|"ticker"|"headline"|"isRead"|"marketCap"|"publishedAt">;
-type HeadlineResponse=Readonly<{articles?:readonly Headline[];easternDate?:string;previousTradingDate?:string|null;status?:string}>;
+type HeadlineResponse=Readonly<{articles?:readonly Headline[];easternDate?:string;previousTradingDate?:string|null;marketEventsPrMaximumMarketCap?:number;status?:string}>;
 type ChannelOption=Readonly<{channel:PressReleaseChannel;label:string;href:string;subLabel?:string}>;
 const CHANNELS:readonly ChannelOption[]=[
   {channel:"news_filtered",label:"PR Scanner",href:"/press-releases/news-filtered"},
@@ -48,9 +48,19 @@ function easternDate(value:string):string{
   const part=(type:Intl.DateTimeFormatPartTypes)=>parts.find(item=>item.type===type)?.value??"";
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
-export function selectCompactArticles(articles:readonly Headline[],dates:{today:string;previous:string|null}):readonly Headline[]{
-  const today=articles.filter(article=>easternDate(article.publishedAt)===dates.today);
-  const previous=dates.previous?articles.filter(article=>easternDate(article.publishedAt)===dates.previous):[];
+export function pressReleaseMarketCapValue(value:string|null):number|null{
+  if(!value)return null;
+  const normalized=value.trim().replace(/[$,\s]/gu,"").toUpperCase();
+  const match=normalized.match(/^([0-9]+(?:\.[0-9]+)?)([KMBT])?$/u);
+  if(!match)return null;
+  const multiplier=match[2]==="K"?1e3:match[2]==="M"?1e6:match[2]==="B"?1e9:match[2]==="T"?1e12:1;
+  const result=Number(match[1])*multiplier;
+  return Number.isFinite(result)?result:null;
+}
+export function selectCompactArticles(articles:readonly Headline[],dates:{today:string;previous:string|null},maximumMarketCap=200_000_000):readonly Headline[]{
+  const eligible=articles.filter(article=>{const cap=pressReleaseMarketCapValue(article.marketCap);return cap===null||cap<maximumMarketCap;});
+  const today=eligible.filter(article=>easternDate(article.publishedAt)===dates.today);
+  const previous=dates.previous?eligible.filter(article=>easternDate(article.publishedAt)===dates.previous):[];
   return [...today,...previous].slice(0,10);
 }
 
@@ -113,6 +123,7 @@ function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article
 export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"})=>void;managedActiveHalts?:readonly ScannerActiveHalt[]}){
   const [articles,setArticles]=useState<readonly Headline[]|null>(null);
   const [dates,setDates]=useState<{today:string;previous:string|null}|null>(null);
+  const [maximumMarketCap,setMaximumMarketCap]=useState(200_000_000);
   const [floatByTicker,setFloatByTicker]=useState<Readonly<Record<string,number>>>({});
   const [exchangeByTicker,setExchangeByTicker]=useState<Readonly<Record<string,"NASDAQ"|"NYSE">>>({});
   const [halts,setHalts]=useState<MarketHaltDashboardReadModel|null>(null);
@@ -125,6 +136,8 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
   const listRef=useRef<HTMLDivElement|null>(null);
   const scrollByChannel=useRef<Partial<Record<PressReleaseChannel,number>>>({});
   const requestRef=useRef<AbortController|null>(null);
+  const rootRef=useRef<HTMLDivElement|null>(null);
+  const [desktopHeight,setDesktopHeight]=useState<number|null>(null);
   const haltsManaged=managedActiveHalts!==undefined;
 
   useEffect(()=>{
@@ -134,7 +147,7 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
         const response=await fetch("/api/platform/news/workspace-scanner?view=expanded-summary&channel=news_filtered",{cache:"no-store"});
         if(!response.ok)throw Error();
         const result=await response.json() as HeadlineResponse,next=(result.articles??[]);
-        if(active){setArticles(next);setDates(result.easternDate?{today:result.easternDate,previous:result.previousTradingDate??null}:null);
+        if(active){setArticles(next);setDates(result.easternDate?{today:result.easternDate,previous:result.previousTradingDate??null}:null);if(Number.isFinite(result.marketEventsPrMaximumMarketCap)&&Number(result.marketEventsPrMaximumMarketCap)>0)setMaximumMarketCap(Number(result.marketEventsPrMaximumMarketCap));
           setChannelArticles(current=>({...current,news_filtered:next}));}
       }catch{/* Keep the last successful events. */}
       finally{if(active)articleTimer=setTimeout(()=>void loadArticles(),30_000);}
@@ -147,11 +160,15 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
     void loadArticles();if(!haltsManaged)void loadHalts();
     return()=>{active=false;clearTimeout(articleTimer);clearTimeout(haltTimer);requestRef.current?.abort();};
   },[haltsManaged]);
+  useEffect(()=>{
+    const measure=()=>{const root=rootRef.current;if(!root||window.innerWidth<900){setDesktopHeight(null);return;}setDesktopHeight(Math.max(300,Math.floor(window.innerHeight-root.getBoundingClientRect().top-12)));};
+    measure();window.addEventListener("resize",measure);return()=>window.removeEventListener("resize",measure);
+  },[]);
 
   const compactArticles=useMemo(()=>{
     if(!articles||!dates)return [];
-    return selectCompactArticles(articles,dates);
-  },[articles,dates]);
+    return selectCompactArticles(articles,dates,maximumMarketCap);
+  },[articles,dates,maximumMarketCap]);
   useEffect(()=>{
     const symbols=[...new Set(compactArticles.map(article=>article.ticker))];
     if(!symbols.length)return;
@@ -182,7 +199,7 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
   const active=managedActiveHalts??selectActiveScannerHalts(halts?.rows??[]),visibleChannel=(channelArticles[channel]??[]).filter(article=>!dates||easternDate(article.publishedAt)===dates.today);
   const selectedDefinition=CHANNELS.find(item=>item.channel===channel)!;
 
-  return <><DashboardPanel hideHeader>
+  return <><Box data-market-events-fill-card ref={rootRef} sx={{height:desktopHeight??"auto",minHeight:0,'& > [data-traderlink-platform-dashboard-card="panel"]':{height:"100%"},'& > [data-traderlink-platform-dashboard-card="panel"] > .MuiCardContent-root':{display:"flex",flexDirection:"column",height:"100%",minHeight:0}}}><DashboardPanel hideHeader>
     <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:0.6,minHeight:22}}>
       <Stack direction="row" sx={{alignItems:"center",gap:0.4}}><Typography component="h2" variant="h2">Market Events</Typography>
         <Tooltip title="Shows stocks currently halted today and the latest press releases. Resumed and previous-day halts are removed."><IconButton aria-label="Explain Market Events" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
@@ -195,11 +212,11 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
       <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}><Box component="span" sx={{color:"error.main",fontWeight:900}}>HALT</Box> · {halt.reasonCode} · Quote {halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?(tradeResumeHasPassedToday(halt.tradeTimeEt)?"success.main":"error.main"):"text.secondary"}}>Trade {halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
     </Stack>)}</Box>:null}
     {articles===null?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
-      :compactArticles.length?<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),maxHeight:126,overflow:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}
+      :compactArticles.length?<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),flex:1,minHeight:126,overflow:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}
         <Box sx={{borderTop:1,borderColor:"divider",px:0.75,py:0.55}}><Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{fontSize:"0.7rem"}} type="button" underline="hover">View all</Link></Box></Box>
       :<Typography color="text.secondary" sx={{py:2}} variant="body2">No recent press releases.</Typography>}
     {opening?<Typography color="text.secondary" role="status" variant="caption">Opening article…</Typography>:null}
-  </DashboardPanel>
+  </DashboardPanel></Box>
   <Drawer anchor="right" open={drawerOpen} onClose={()=>setDrawerOpen(false)} slotProps={{paper:{role:"dialog","aria-label":"PR workspace",sx:{maxWidth:"100vw",width:{xs:"100vw",md:"65vw"}}}}}>
     {selected?<ArticleView article={selected} onBack={back} onClose={()=>setDrawerOpen(false)}/>:<Stack sx={{height:"100dvh",minHeight:0}}>
       <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",px:{xs:1,sm:2},py:1}}>
