@@ -398,7 +398,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";
   const selectedGainers=gainerViewResults(model,gainerView);
-  const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
+  const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt??Date.now()));
   const haltByTicker=useMemo(()=>new Map(activeHalts.map(halt=>[halt.ticker,halt])),[activeHalts]);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
