@@ -6,6 +6,10 @@ describe("active scanner halts",()=>{
   it("removes already-stored BATS halts before display",()=>{
     expect(selectActiveScannerHalts([{...halt("bats","MHX",null),market:"BATS"}],new Date("2026-11-05T15:07:00.000Z"))).toEqual([]);
   });
+  it("removes M-code exchange-traded products even when their stored market label is unreliable",()=>{
+    const rows=["MHX","RGTC","RMBC","QUA"].map(ticker=>({...halt(ticker,ticker,null),market:"NASDAQ",reasonCode:"M"}));
+    expect(selectActiveScannerHalts(rows,new Date("2026-11-05T16:07:00.000Z"))).toEqual([]);
+  });
   it("uses confirmed scanner movement even when a manual ticker is absent from the daily universe",()=>{
     const rows=[halt("manual","AEHL",null)];
     const movements=[{symbol:"AEHL",previousObservedAt:Date.parse("2026-11-05T15:05:04.000Z"),observedAt:Date.parse("2026-11-05T15:05:09.000Z")}];
@@ -34,5 +38,10 @@ describe("active scanner halts",()=>{
     expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:20:00.000Z"),[],new Map())).toHaveLength(0);
     expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:20:00.000Z"),[],new Map([["AAA","NASDAQ"]] as const))).toHaveLength(0);
     expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:20:00.000Z"),[{symbol:"AAA",previousObservedAt:Date.parse("2026-11-05T15:10:04.000Z"),observedAt:Date.parse("2026-11-05T15:10:09.000Z")}],new Map([["AAA","NASDAQ"]] as const))).toHaveLength(0);
+  });
+  it("uses one hour from the halt time as the final removal fallback",()=>{
+    const row={...halt("aehl","AEHL",null),haltTimeEt:"13:01:00"};
+    expect(selectActiveScannerHalts([row],new Date("2026-11-05T19:00:59.000Z"))).toHaveLength(1);
+    expect(selectActiveScannerHalts([row],new Date("2026-11-05T19:01:00.000Z"))).toHaveLength(0);
   });
 });

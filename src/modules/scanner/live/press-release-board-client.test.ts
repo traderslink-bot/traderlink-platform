@@ -88,11 +88,14 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(getComputedStyle(haltRegion).maxHeight).toBe("90px");
   expect(getComputedStyle(haltRegion).marginBottom).toBe("10px");
   expect(getComputedStyle(container.querySelector('[data-market-events-fill-card]') as HTMLElement).height).toBe(`${window.innerHeight-12}px`);
-  expect(getComputedStyle(prRegion).flexGrow).toBe("1");
-  expect(getComputedStyle(prRegion).overflow).toBe("auto");
+  expect(getComputedStyle(prRegion).maxHeight).toBe("126px");
+  expect(getComputedStyle(prRegion).overflowX).toBe("auto");
+  expect(getComputedStyle(prRegion).overflowY).toBe("auto");
   expect(prRegion.textContent).not.toMatch(/\d{1,2}:\d{2} (?:AM|PM) ET/u);
   await act(async()=>{(container.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click();});
   expect(onOpenChart).toHaveBeenCalledWith({symbol:"AAA",exchange:"NASDAQ"});
+  await act(async()=>{(container.querySelector('[aria-label="Open HALT chart"]') as HTMLElement).click();});
+  expect(onOpenChart).toHaveBeenCalledWith({symbol:"SPY",exchange:"AMEX"});
   expect(container.textContent).toContain("Float 500K");
   expect(container.querySelector('[aria-label="Open DDD chart"]')).toBeNull();
 

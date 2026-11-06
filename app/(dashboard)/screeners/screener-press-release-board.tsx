@@ -120,7 +120,7 @@ function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article
   </Box>;
 }
 
-export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"})=>void;managedActiveHalts?:readonly ScannerActiveHalt[]}){
+export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX"})=>void;managedActiveHalts?:readonly ScannerActiveHalt[]}){
   const [articles,setArticles]=useState<readonly Headline[]|null>(null);
   const [dates,setDates]=useState<{today:string;previous:string|null}|null>(null);
   const [maximumMarketCap,setMaximumMarketCap]=useState(200_000_000);
@@ -207,12 +207,12 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts}:{onOp
       <Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{fontSize:"0.7rem",lineHeight:1.2,mt:0.15}} type="button" underline="hover">All News</Link>
     </Stack>
     {active.length?<Box aria-label="Current halts" role="region" sx={theme=>({...scannerScrollStyles(theme),mb:1.25,maxHeight:90,overflow:"auto"})}>{active.map(halt=><Stack direction="row" key={halt.id} sx={{alignItems:"center",borderTop:1,borderColor:"divider",gap:0.7,minHeight:30,px:0.5,py:0.35}}>
-      {onOpenChart&&halt.chartExchange?<IconButton aria-label={`Open ${halt.ticker} chart`} onClick={()=>onOpenChart({symbol:halt.ticker,exchange:halt.chartExchange!})} size="small" sx={{bgcolor:"rgba(46,125,50,0.13)",color:"success.main",p:0.35}}><CandlestickChartRoundedIcon sx={{fontSize:"0.85rem"}}/></IconButton>:null}
+      {onOpenChart?<IconButton aria-label={`Open ${halt.ticker} chart`} onClick={()=>onOpenChart(halt.chartExchange?{symbol:halt.ticker,exchange:halt.chartExchange}:{symbol:"SPY",exchange:"AMEX"})} size="small" sx={{bgcolor:"rgba(46,125,50,0.13)",color:"success.main",p:0.35}}><CandlestickChartRoundedIcon sx={{fontSize:"0.85rem"}}/></IconButton>:null}
       <Box sx={{minWidth:48}}><Typography sx={{color:"error.main",fontSize:"0.72rem",fontWeight:900,lineHeight:1.1}}>{halt.ticker}</Typography><Typography color="text.secondary" sx={{fontSize:"0.56rem"}}>{shortTime(halt.haltTimeEt)} ET</Typography></Box>
       <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}><Box component="span" sx={{color:"error.main",fontWeight:900}}>HALT</Box> · {halt.reasonCode} · Quote {halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?(tradeResumeHasPassedToday(halt.tradeTimeEt)?"success.main":"error.main"):"text.secondary"}}>Trade {halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
     </Stack>)}</Box>:null}
     {articles===null?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
-      :compactArticles.length?<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),flex:1,minHeight:126,overflow:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}
+      :compactArticles.length?<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),flex:"0 0 auto",maxHeight:126,minHeight:126,overflowX:"auto",overflowY:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}
         <Box sx={{borderTop:1,borderColor:"divider",px:0.75,py:0.55}}><Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{fontSize:"0.7rem"}} type="button" underline="hover">View all</Link></Box></Box>
       :<Typography color="text.secondary" sx={{py:2}} variant="body2">No recent press releases.</Typography>}
     {opening?<Typography color="text.secondary" role="status" variant="caption">Opening article…</Typography>:null}

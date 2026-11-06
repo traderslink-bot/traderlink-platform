@@ -150,13 +150,13 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
   const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
   const metric=(label:string,content:string)=><Box sx={{ minWidth:0 }}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.9rem",fontWeight:750,lineHeight:1.3,mt:0.45 }}>{content}</Typography></Box>;
   const headers=screen==="gainers"
-    ? [{label:"",width:82},{label:"",width:28},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Gain %",width:66},{label:"Volume",width:72},{label:"$ × Vol",width:76},{label:"Float",width:66},{label:"Turnover",width:72},{label:"RVOL",width:58},{label:"Below HOD",width:76}]
-    : [{label:"",width:82},{label:"",width:28},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Day %",width:62},{label:"1min %",width:62},{label:"5min %",width:62},{label:"1min Vol",width:72},{label:"5min Vol",width:72},{label:"1min ↑",width:62},{label:"5min ↑",width:62},{label:"Float",width:66},{label:"Spread",width:60}];
+    ? [{label:"",width:110},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Gain %",width:66},{label:"Volume",width:72},{label:"$ × Vol",width:76},{label:"Float",width:66},{label:"Turnover",width:72},{label:"RVOL",width:58},{label:"Below HOD",width:76}]
+    : [{label:"",width:110},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Day %",width:62},{label:"1min %",width:62},{label:"5min %",width:62},{label:"1min Vol",width:72},{label:"5min Vol",width:72},{label:"1min ↑",width:62},{label:"5min ↑",width:62},{label:"Float",width:66},{label:"Spread",width:60}];
   return <TableContainer aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact list`:undefined}
     role={compactDesktop?"region":undefined} tabIndex={compactDesktop?0:undefined}
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
     <Table aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,tableLayout:"fixed",minWidth:screen==="gainers"?788:884,'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.35,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
-      <TableHead><TableRow>{headers.map((header,index)=><TableCell align="left" aria-label={header.label||(index===0?"Chart and news":"Expand")} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
+      <TableHead><TableRow>{headers.map((header,index)=><TableCell align="left" aria-label={header.label||(index===0?"Chart, news and details":undefined)} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
         metric("HOD price",`$${priceValue(row.dayHigh)}`),
         metric("Below HOD",value(row.offHighPercent,"%")),
@@ -183,8 +183,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         row.spreadPercent===null?null:metric("Spread",value(row.spreadPercent,"%")),
       ]).filter(Boolean);return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
-          <TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:1.25}}><ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/></Stack></TableCell>
-          <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{expanded?"−":"+"}</Typography></TableCell>
+          <TableCell sx={{px:"0.125rem !important"}}><Stack data-compact-row-controls direction="row" sx={{alignItems:"center",gap:1.25}}><ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/><Typography aria-hidden component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{expanded?"−":"+"}</Typography></Stack></TableCell>
           <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><Typography noWrap component="span" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell><Typography noWrap sx={{fontSize:"0.68rem",fontWeight:500}}>${priceValue(row.price)}</Typography></TableCell>
           {screen==="gainers"?<>
@@ -200,8 +199,8 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
             <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
           </>}
         </TableRow>
-        {screen==="momentum"?<MomentumSignalRow row={row} colSpan={13} leftOffset="3.8rem"/>:null}
-        {expanded?<TableRow><TableCell colSpan={screen==="momentum"?13:11} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
+        {screen==="momentum"?<MomentumSignalRow row={row} colSpan={12} leftOffset="3.8rem"/>:null}
+        {expanded?<TableRow><TableCell colSpan={screen==="momentum"?12:10} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
           <Box sx={{...visibleExpandedPanelSx,px:0.5,py:1}}>{expandedMetrics.length?<Box sx={{ display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",columnGap:1.25,rowGap:1.6,py:0.6 }}>
             {expandedMetrics.map((item,index)=><Fragment key={index}>{item}</Fragment>)}
           </Box>:null}
@@ -284,7 +283,7 @@ function ScannerContents({ results,screen,onOpenChart,haltByTicker,compactDeskto
   return <Results haltByTicker={haltByTicker} onOpenChart={onOpenChart} results={results} screen={screen}/>;
 }
 
-type ScannerChartTarget=Readonly<{symbol:string;exchange:"NASDAQ"|"NYSE"}>;
+type ScannerChartTarget=Readonly<{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX"}>;
 function ScannerChartDrawer({ row,onClose }: { row:ScannerChartTarget|null; onClose:()=>void }) {
   return <Drawer anchor="right" onClose={onClose} open={row!==null} slotProps={{ paper:{ sx:{ maxWidth:"100vw",width:{ xs:"100vw",md:"78vw",xl:1180 } } } }}>
     <Stack sx={{ height:"100dvh",minHeight:0 }}>
@@ -393,7 +392,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [fullScanner,setFullScanner]=useState<ScannerKind|null>(null);
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
   const [checkedAt,setCheckedAt]=useState<number>(()=>Date.now());
-  useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const controller=new AbortController();const load=async()=>{try{const response=await fetch('/api/screeners/live',{ cache:'no-store',credentials:'same-origin',signal:controller.signal });if(!response.ok)throw Error();const incoming:ScannerReadModel=await response.json();setModel(previous=>{const haltSafeIncoming=incoming.activeHalts===undefined&&previous?.activeHalts?{...incoming,activeHalts:previous.activeHalts}:incoming;const next=applyScannerDisplayContinuity(previous,haltSafeIncoming,displayContinuity.current,Date.now());displayContinuity.current=next.continuity;return next.model;});setLoadError(false);}catch{if(!controller.signal.aborted)setLoadError(true);}finally{if(!controller.signal.aborted){setCheckedAt(Date.now());timer=setTimeout(()=>void load(),5000);}}};void load();return()=>{controller.abort();if(timer)clearTimeout(timer);};},[]);
+  useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const controller=new AbortController();const load=async()=>{try{const response=await fetch('/api/screeners/live',{ cache:'no-store',credentials:'same-origin',signal:controller.signal });if(!response.ok)throw Error();const incoming:ScannerReadModel=await response.json();setModel(previous=>{const next=applyScannerDisplayContinuity(previous,incoming,displayContinuity.current,Date.now());displayContinuity.current=next.continuity;return next.model;});setLoadError(false);}catch{if(!controller.signal.aborted)setLoadError(true);}finally{if(!controller.signal.aborted){setCheckedAt(Date.now());timer=setTimeout(()=>void load(),5000);}}};void load();return()=>{controller.abort();if(timer)clearTimeout(timer);};},[]);
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";
   const selectedGainers=gainerViewResults(model,gainerView);

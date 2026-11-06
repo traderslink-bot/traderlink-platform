@@ -87,14 +87,12 @@ function momentumModel(post: number | null | undefined): ScannerReadModel {
   return { ...model(post===undefined?"regular":"after_hours"), momentum: { rows: [row], focus: [], total: 1 } };
 }
 describe("Momentum context rendering", () => {
-  it("shows an active halt beside matching tickers and removes it on the next cleared scanner update", async () => {
+  it("shows an active halt beside matching tickers and removes it whenever the next scanner response has no current halt list", async () => {
     const initial=momentumModel(42),halt={id:"halt-1",ticker:"TEST",market:"NASDAQ",haltTimeEt:"16:01:00",reasonCode:"LUDP",reason:"Volatility trading pause",quoteTimeEt:"16:06:00",tradeTimeEt:null};
     const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum,activeHalts:[halt]});
     expect(page.container.querySelectorAll('[data-halt-indicator="TEST"]')).toHaveLength(2);
     expect(page.container.querySelector('[aria-label*="TEST halted: LUDP"]')).not.toBeNull();
     await page.update({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
-    expect(page.container.querySelectorAll('[data-halt-indicator="TEST"]')).toHaveLength(2);
-    await page.update({...initial,gainers:initial.momentum,dayGainers:initial.momentum,activeHalts:[]});
     expect(page.container.querySelector('[data-halt-indicator="TEST"]')).toBeNull();
   });
   it("keeps detected signals visible beneath each momentum ticker", async () => {
@@ -163,15 +161,20 @@ describe("compact scanner grid and full view", () => {
   });
   it("keeps a single PR instance and exposes every compact column with keyboard details", async () => {
     const initial = momentumModel(42);
-    const page = await mount({...initial, gainers: initial.momentum, dayGainers: initial.momentum});
+    const scannerRows = {...initial.momentum!,rows:[{...initial.momentum!.rows[0]!,news:[{id:"article-1",headline:"Synthetic release",createdAt:"2026-11-02T21:00:00Z",url:"https://example.com/release",typeLabel:"Press release"}]}]};
+    const page = await mount({...initial, gainers: scannerRows, dayGainers: scannerRows, momentum: scannerRows});
     expect(page.container.querySelectorAll('[data-pr-instance]').length).toBe(1);
     expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
-    for (const [label,columnCount] of [["Top Gainers",11],["Momentum",13]] as const) {
+    for (const [label,columnCount] of [["Top Gainers",10],["Momentum",12]] as const) {
       const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
       expect(table.querySelectorAll('thead th').length).toBe(columnCount);
       expect([...table.querySelectorAll('thead th')].slice(1,4).map(cell=>cell.textContent)).not.toContain("News");
-      expect(table.querySelector('thead th')?.getAttribute("aria-label")).toBe("Chart and news");
+      expect(table.querySelector('thead th')?.getAttribute("aria-label")).toBe("Chart, news and details");
       const row = table.querySelector('tbody tr')!;
+      const controls = row.querySelector('[data-compact-row-controls]')!;
+      expect(getComputedStyle(controls).gap).toBe("10px");
+      expect(controls.textContent).toContain("PR");
+      expect(controls.textContent).toContain("+");
       await act(async () => row.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter',bubbles:true})));
       expect(row.getAttribute('aria-expanded')).toBe('true');
       expect(table.textContent).toContain('Float');
