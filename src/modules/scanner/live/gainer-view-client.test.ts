@@ -121,8 +121,8 @@ describe("Momentum context rendering", () => {
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
-    expect(cells.slice(5,12)).toEqual(["-24%","42%","8%","20%","10K","50K","2×"]);
-    expect(header.querySelectorAll("th").length).toBe(15);
+    expect(cells.slice(4,11)).toEqual(["-24%","42%","8%","20%","10K","50K","2×"]);
+    expect(header.querySelectorAll("th").length).toBe(14);
     await act(async () => (drawer.querySelector('[aria-label="Close full scanner view"]') as HTMLElement).click());
     const compact = page.container.querySelector('table[aria-label="Momentum compact stocks"]')!;
     const compactRow = compact.querySelector("tbody tr") as HTMLElement;
@@ -138,15 +138,15 @@ describe("Momentum context rendering", () => {
     const drawer = await openFullView(page.container);
     let header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).not.toContain("Post %");
-    expect(header.querySelectorAll("th").length).toBe(14);
+    expect(header.querySelectorAll("th").length).toBe(13);
     await page.update(momentumModel(null));
     header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
-    expect(cells[5]).toBe("-24%");
-    expect(cells[6]).toBe("n/a");
-    expect(cells[7]).toBe("8%");
+    expect(cells[4]).toBe("-24%");
+    expect(cells[5]).toBe("n/a");
+    expect(cells[6]).toBe("8%");
     expect(page.fetch).toHaveBeenCalledTimes(2);
   });
 });
@@ -166,10 +166,11 @@ describe("compact scanner grid and full view", () => {
     const page = await mount({...initial, gainers: initial.momentum, dayGainers: initial.momentum});
     expect(page.container.querySelectorAll('[data-pr-instance]').length).toBe(1);
     expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
-    for (const [label,columnCount] of [["Top Gainers",12],["Momentum",14]] as const) {
+    for (const [label,columnCount] of [["Top Gainers",11],["Momentum",13]] as const) {
       const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
       expect(table.querySelectorAll('thead th').length).toBe(columnCount);
-      expect([...table.querySelectorAll('thead th')].slice(2,4).map(cell=>cell.textContent)).toEqual(["Ticker","News"]);
+      expect([...table.querySelectorAll('thead th')].slice(1,4).map(cell=>cell.textContent)).not.toContain("News");
+      expect(table.querySelector('thead th')?.getAttribute("aria-label")).toBe("Chart and news");
       const row = table.querySelector('tbody tr')!;
       await act(async () => row.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter',bubbles:true})));
       expect(row.getAttribute('aria-expanded')).toBe('true');

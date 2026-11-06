@@ -46,6 +46,7 @@ import type { LiveScannerRow, LiveScreenResults, ScannerActiveHalt, ScannerConfi
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, momentumDetectionControls, momentumLiquidityBypassControls } from "@/src/modules/scanner/live/settings";
 import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/gainer-view";
+import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
 import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import { applyScannerDisplayContinuity, type ScannerDisplayContinuity } from "@/src/modules/scanner/live/display-continuity";
@@ -98,16 +99,6 @@ function compactNewsType(typeLabel: string): string {
   return "News";
 }
 
-function compactNewsLabel(row: LiveScannerRow): string {
-  return row.news[0] ? compactNewsType(row.news[0].typeLabel) : "—";
-}
-
-function CompactNewsLink({ row }: { row: LiveScannerRow }) {
-  const item = row.news[0];
-  if (!item) return <Typography noWrap sx={{ color:"text.secondary",fontSize:"0.68rem",fontWeight:750 }}>—</Typography>;
-  return <ScannerNewsLink item={item} label={compactNewsLabel(row)}/>;
-}
-
 function floatTraded(row: LiveScannerRow): string | null {
   if (row.volume === null || row.float === null || row.float <= 0) return null;
   return `${wholePercent.format(100 * row.volume / row.float)}%`;
@@ -151,7 +142,7 @@ function momentumSignalText(row:LiveScannerRow){
 function MomentumSignalRow({row,colSpan,leftOffset}:{row:LiveScannerRow;colSpan:number;leftOffset:string}){
   const label=momentumSignalText(row);
   return <TableRow data-momentum-signals={row.symbol}><TableCell colSpan={colSpan} sx={{borderBottom:1,borderColor:"divider",pl:`${leftOffset} !important`,pr:0.5,pt:"0 !important",pb:"0.3rem !important"}}>
-    <Typography noWrap title={label} sx={{color:"success.main",fontSize:"0.58rem",fontWeight:400,lineHeight:1.15}}>{label}</Typography>
+    <Typography noWrap title={label} sx={{color:theme=>theme.palette.mode==="dark"?"#c4b5fd":"#7c3aed",fontSize:"0.58rem",fontWeight:400,lineHeight:1.15}}>{label}</Typography>
   </TableCell></TableRow>;
 }
 
@@ -161,13 +152,13 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
   const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
   const metric=(label:string,content:string)=><Box sx={{ minWidth:0 }}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.9rem",fontWeight:750,lineHeight:1.3,mt:0.45 }}>{content}</Typography></Box>;
   const headers=screen==="gainers"
-    ? [{label:"",width:28},{label:"",width:28},{label:"Ticker",width:64},{label:"News",width:52},{label:"Price",width:66},{label:"Gain %",width:66},{label:"Volume",width:72},{label:"$ × Vol",width:76},{label:"Float",width:66},{label:"Turnover",width:72},{label:"RVOL",width:58},{label:"Below HOD",width:76}]
-    : [{label:"",width:28},{label:"",width:28},{label:"Ticker",width:64},{label:"News",width:52},{label:"Price",width:66},{label:"Day %",width:62},{label:"1min %",width:62},{label:"5min %",width:62},{label:"1min Vol",width:72},{label:"5min Vol",width:72},{label:"1min ↑",width:62},{label:"5min ↑",width:62},{label:"Float",width:66},{label:"Spread",width:60}];
+    ? [{label:"",width:76},{label:"",width:28},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Gain %",width:66},{label:"Volume",width:72},{label:"$ × Vol",width:76},{label:"Float",width:66},{label:"Turnover",width:72},{label:"RVOL",width:58},{label:"Below HOD",width:76}]
+    : [{label:"",width:76},{label:"",width:28},{label:"Ticker",width:64},{label:"Price",width:66},{label:"Day %",width:62},{label:"1min %",width:62},{label:"5min %",width:62},{label:"1min Vol",width:72},{label:"5min Vol",width:72},{label:"1min ↑",width:62},{label:"5min ↑",width:62},{label:"Float",width:66},{label:"Spread",width:60}];
   return <TableContainer aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact list`:undefined}
     role={compactDesktop?"region":undefined} tabIndex={compactDesktop?0:undefined}
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
     <Table aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,tableLayout:"fixed",minWidth:screen==="gainers"?788:884,'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.35,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
-      <TableHead><TableRow>{headers.map((header,index)=><TableCell align="left" aria-label={header.label||(index===0?"Chart":"Expand")} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
+      <TableHead><TableRow>{headers.map((header,index)=><TableCell align="left" aria-label={header.label||(index===0?"Chart and news":"Expand")} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
         metric("HOD price",`$${priceValue(row.dayHigh)}`),
         metric("Below HOD",value(row.offHighPercent,"%")),
@@ -194,10 +185,9 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         row.spreadPercent===null?null:metric("Spread",value(row.spreadPercent,"%")),
       ]).filter(Boolean);return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
-          <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
+          <TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/></Stack></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{expanded?"−":"+"}</Typography></TableCell>
           <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><Typography noWrap component="span" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-          <TableCell><CompactNewsLink row={row}/></TableCell>
           <TableCell><Typography noWrap sx={{fontSize:"0.68rem",fontWeight:500}}>${priceValue(row.price)}</Typography></TableCell>
           {screen==="gainers"?<>
             <TableCell sx={{color:(row.sessionGain??0)>=0?"success.main":"error.main"}}>{value(row.sessionGain,"%")}</TableCell>
@@ -212,8 +202,8 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
             <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
           </>}
         </TableRow>
-        {screen==="momentum"?<MomentumSignalRow row={row} colSpan={14} leftOffset="3.8rem"/>:null}
-        {expanded?<TableRow><TableCell colSpan={screen==="momentum"?14:12} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
+        {screen==="momentum"?<MomentumSignalRow row={row} colSpan={13} leftOffset="3.8rem"/>:null}
+        {expanded?<TableRow><TableCell colSpan={screen==="momentum"?13:11} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
           <Box sx={{...visibleExpandedPanelSx,px:0.5,py:1}}>{expandedMetrics.length?<Box sx={{ display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",columnGap:1.25,rowGap:1.6,py:0.6 }}>
             {expandedMetrics.map((item,index)=><Fragment key={index}>{item}</Fragment>)}
           </Box>:null}
@@ -239,28 +229,26 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
   return <>
     <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
       {screen==="gainers"?<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
-        <TableCell aria-label="Chart" sx={{ px:"0 !important",width:24 }}/>
-        {['Ticker','News','Price','Gain%','Volume','$ × Vol','Float','Turnover','RVOL','Below HOD'].map(label => <TableCell key={label}>{label}</TableCell>)}
+        <TableCell aria-label="Chart and news" sx={{ px:"0 !important",width:76 }}/>
+        {['Ticker','Price','Gain%','Volume','$ × Vol','Float','Turnover','RVOL','Below HOD'].map(label => <TableCell key={label}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
-        <TableCell sx={{ px:"0 !important",width:24 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
+        <TableCell sx={{ px:"0 !important",width:76 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><NewsLinks row={row}/></Stack></TableCell>
         <TableCell sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-        <TableCell><NewsLinks row={row} /></TableCell>
         <TableCell>${priceValue(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
         <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`}</TableCell>
         <TableCell>{floatValue(row.float)}</TableCell><TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
         <TableCell>{value(row.offHighPercent,"%")}</TableCell>
       </TableRow>)}</TableBody></Table>:<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Details" sx={{ px:"0 !important",width:22 }}/>
-        <TableCell aria-label="Chart" sx={{ px:"0.125rem !important",width:26 }}/>
-        {['Ticker','News','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread'].map(label => <TableCell key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
+        <TableCell aria-label="Chart and news" sx={{ px:"0.125rem !important",width:76 }}/>
+        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread'].map(label => <TableCell key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=>{const expanded=expandedDesktopSymbol===row.symbol;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol)}
           onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}}}
           sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:"none"},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           <TableCell sx={{ px:"0 !important",width:22 }}><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} details`} onClick={event=>{event.stopPropagation();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}} sx={{ bgcolor:"rgba(255,193,7,0.14)",borderRadius:0.75,color:"warning.main",fontSize:"0.75rem",fontWeight:800,height:20,minWidth:20,'&:hover':{ bgcolor:"rgba(255,193,7,0.24)" },'&:focus-visible':{ outline:"2px solid",outlineColor:"warning.main",outlineOffset:1 } }}>{expanded?"−":"+"}</ButtonBase></TableCell>
-          <TableCell sx={{ px:"0.125rem !important",width:26 }}><ChartButton onOpenChart={onOpenChart} row={row}/></TableCell>
+          <TableCell sx={{ px:"0.125rem !important",width:76 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><NewsLinks row={row}/></Stack></TableCell>
           <TableCell sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-          <TableCell onClick={event=>event.stopPropagation()} onKeyDown={event=>event.stopPropagation()}><NewsLinks row={row} /></TableCell>
           <TableCell>${priceValue(row.price)}</TableCell><TableCell sx={{ color:(row.sessionGain??0)>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
           {showPostGain?<TableCell sx={{ color:row.postMarketGain==null?"text.secondary":row.postMarketGain>=0?"success.main":"error.main",fontWeight:750 }}>{value(row.postMarketGain,"%")}</TableCell>:null}
           <TableCell>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
@@ -268,8 +256,8 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
           <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
           <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
         </TableRow>
-        <MomentumSignalRow row={row} colSpan={showPostGain?15:14} leftOffset="3.4rem"/>
-        {expanded?<TableRow><TableCell colSpan={showPostGain?15:14} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
+        <MomentumSignalRow row={row} colSpan={showPostGain?14:13} leftOffset="3.4rem"/>
+        {expanded?<TableRow><TableCell colSpan={showPostGain?14:13} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
           <Box sx={{...visibleExpandedPanelSx,display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:2,p:1.25}}>
             {[
               ["Detected",row.momentumState==="cooling"?"Cooling · watching for renewed activity":row.momentumSignals?.length?row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · "):"n/a"],
@@ -410,7 +398,8 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";
   const selectedGainers=gainerViewResults(model,gainerView);
-  const haltByTicker=useMemo(()=>new Map((model?.activeHalts??[]).map(halt=>[halt.ticker,halt])),[model?.activeHalts]);
+  const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
+  const haltByTicker=useMemo(()=>new Map(activeHalts.map(halt=>[halt.ticker,halt])),[activeHalts]);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
   const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
@@ -454,7 +443,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
       <ScannerWorkspaceCard slot="high-drops"><PremarketPullbacksCard results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
-      <ScannerWorkspaceCard slot="market-events"><ScreenerPressReleaseBoard managedActiveHalts={model?.activeHalts??[]} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
+      <ScannerWorkspaceCard slot="market-events"><ScreenerPressReleaseBoard managedActiveHalts={activeHalts} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
     </Box></ScannerNewsDrawerProvider>
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}

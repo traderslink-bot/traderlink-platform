@@ -3,6 +3,14 @@ import {selectActiveScannerHalts} from "./active-halts";
 
 const halt=(id:string,ticker:string,tradeTimeEt:string|null)=>({id,ticker,market:"NASDAQ",haltTimeEt:"10:00:00",reasonCode:"LUDP",reason:"Volatility trading pause",quoteTimeEt:"10:05:00",tradeTimeEt});
 describe("active scanner halts",()=>{
+  it("removes already-stored BATS halts before display",()=>{
+    expect(selectActiveScannerHalts([{...halt("bats","MHX",null),market:"BATS"}],new Date("2026-11-05T15:07:00.000Z"))).toEqual([]);
+  });
+  it("uses confirmed scanner movement even when a manual ticker is absent from the daily universe",()=>{
+    const rows=[halt("manual","AEHL",null)];
+    const movements=[{symbol:"AEHL",previousObservedAt:Date.parse("2026-11-05T15:05:04.000Z"),observedAt:Date.parse("2026-11-05T15:05:09.000Z")}];
+    expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:07:00.000Z"),movements,new Map())).toEqual([]);
+  });
   it("removes a halt confirmed by the EODHD real-time trade stream",()=>{
     const rows=[halt("eodhd-resumed","AAA",null)];
     expect(selectActiveScannerHalts(rows,new Date("2026-11-05T15:07:00.000Z"),[],new Map(),new Set(["eodhd-resumed"]))).toEqual([]);

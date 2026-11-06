@@ -25,6 +25,6 @@ export async function GET(request: Request): Promise<Response> {
       const resolved=readFinnhubExchanges({tradingDate:scanner.tradingDate,symbols:missing,token:process.env.FINNHUB_API_KEY});
       const activeHalts=selected.map(halt=>halt.chartExchange?halt:{...halt,chartExchange:resolved.get(halt.ticker)??null});
       return {...scanner,activeHalts};
-    }catch{return scanner;}
+    }catch{return {...scanner,activeHalts:[]};}
   } });
 }
