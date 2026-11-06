@@ -52,10 +52,10 @@ function DeclineTable({rows,rapid,full,onOpenChart,haltByTicker}:{rows:readonly 
   return <TableContainer role="region" aria-label={rapid?"Rapid Drops list":"Top Losers list"} tabIndex={0}
     sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 190px)":420})}>
     <Table size="small" stickyHeader aria-label={rapid?"Rapid Drops stocks":"Top Losers stocks"}
-      sx={{tableLayout:"fixed",minWidth:rapid?520:430,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      sx={{tableLayout:"fixed",minWidth:rapid?464:370,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
       <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/>
-        <TableCell sx={{width:rapid?62:58}}>Ticker</TableCell><TableCell sx={{width:rapid?66:62}}>Price</TableCell><TableCell sx={{width:rapid?70:62}}>{rapid?"From start":"Change"}</TableCell>
-        <TableCell>{rapid?"Fall time":"Volume"}</TableCell><TableCell>{rapid?"Rebound":"Float"}</TableCell><TableCell>{rapid?"Back to start":"Spread"}</TableCell>
+        <TableCell sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell><TableCell sx={{width:rapid?62:48}}>{rapid?"From start":"Change"}</TableCell>
+        <TableCell>{rapid?"Fall time":"Vol"}</TableCell><TableCell>{rapid?"Rebound":"Float"}</TableCell><TableCell>{rapid?"Back to start":"Spread"}</TableCell>
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,d=row.drop;const toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const metrics:[string,string][]=open?[["Session volume",shares(row.volume)],["Float",floatShares(row.float)],["Spread",pct(row.spreadPercent)],

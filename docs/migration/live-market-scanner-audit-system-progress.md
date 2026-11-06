@@ -104,3 +104,11 @@ activation authority for the two approved accounts only. Follow the separate
 [activation record](live-market-screeners-private-activation-20261102.md) for
 actual production evidence, delivery-off protection, provider qualification and
 remaining access/live-result checks. Synthetic audit QA is not live acceptance.
+
+## 2026-11-06 — Selected density release integration
+
+- Integrated only the controls and density slices from 0f16023b and 18d5e2f onto current production 1b1a64cd; historical layout and secondary-card baseline commits are excluded.
+- Reserved compact chart/news/expand positions, rolled-newspaper icon with unchanged accessible article label/action, narrower columns with unchanged text sizes, Vol headings and consistent Vol/Float/dollar-volume ordering.
+- Adapted High Drops widths to the current production High/Drop/session-marker implementation rather than restoring the historical Premarket High Pullbacks composition.
+- Current production add0a802/1b1a64cd intentionally selects the latest article per ticker. Preserved that newer selection policy instead of reintroducing the older multiple-link behavior mentioned in the handoff. PR and SEC latest articles retain the same drawer action.
+- Preserved current halt expiry/filtering, purple signals, manual tickers, decimal prices, settings and polling. Integrated verification and actual deployment evidence are recorded separately by Coordinator; no owner visual acceptance is implied.

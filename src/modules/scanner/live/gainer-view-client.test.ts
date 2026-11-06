@@ -150,6 +150,27 @@ describe("Momentum context rendering", () => {
 });
 
 describe("compact scanner grid and full view", () => {
+  it("reserves the news slot without an article and keeps the production latest-article selection",async()=>{
+    const initial=momentumModel(42),row=initial.momentum!.rows[0]!;
+    const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
+    const emptyControls=page.container.querySelector('[data-compact-row-controls]')!;
+    expect(getComputedStyle(emptyControls).gridTemplateColumns).toBe("20px 20px 12px");
+    expect(getComputedStyle(emptyControls.children[1]!).width).toBe("20px");
+    expect(emptyControls.children[1]!.querySelector('button')).toBeNull();
+    const news=[{id:"latest",headline:"Latest filing",createdAt:"2026-11-02T21:00:00Z",url:"https://example.com/latest",typeLabel:"SEC filing"},{id:"earlier",headline:"Earlier release",createdAt:"2026-11-02T20:00:00Z",url:"https://example.com/earlier",typeLabel:"Press release"}];
+    const rows={rows:[{...row,news}],focus:[],total:1};
+    await page.update({...initial,gainers:rows,dayGainers:rows,momentum:rows});
+    expect(page.container.querySelector('[aria-label="Open SEC filing: Latest filing"]')?.textContent).toBe("🗞️");
+    expect(page.container.querySelector('[aria-label="Open Press release: Earlier release"]')).toBeNull();
+  });
+  it("orders Vol, Float and dollar volume consistently in compact and full gainers",async()=>{
+    const initial=momentumModel(42),page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
+    const compactHeaders=[...page.container.querySelectorAll('table[aria-label="Top Gainers compact stocks"] thead th')].map(cell=>cell.textContent);
+    expect(compactHeaders.slice(4,7)).toEqual(["Vol","Float","$ × Vol"]);
+    const full=await openFullView(page.container,"Top Gainers");
+    const fullHeaders=[...full.querySelectorAll('table thead th')].map(cell=>cell.textContent);
+    expect(fullHeaders.slice(4,7)).toEqual(["Vol","Float","$ × Vol"]);
+  });
   it("uses the approved gainer explanation",()=>{expect(GAINERS_EXPLANATION).toBe("This gainer list is not a standard list where percentage increase determines inclusion. The scanner qualifies candidates according to total vol, dollar vol, min gain and max spread. Day Gainers are ranked by gain from yesterday’s regular session close. Post market Gainers are ranked by gain from today’s regular close.");});
   it("keeps trailing zeroes in every scanner price",async()=>{const initial=momentumModel(42),row={...initial.momentum!.rows[0]!,price:.1,dayHigh:.2,dayLow:.1};const page=await mount({...initial,gainers:{rows:[row],focus:[],total:1},dayGainers:{rows:[row],focus:[],total:1},momentum:{rows:[row],focus:[],total:1}});expect(page.container.textContent).toContain("$0.10");expect([...page.container.querySelectorAll("td")].some(cell=>cell.textContent==="$0.1")).toBe(false);});
   it("renders Gainers and Momentum as separate cards without a combined scanner selector", async () => {
@@ -172,8 +193,9 @@ describe("compact scanner grid and full view", () => {
       expect(table.querySelector('thead th')?.getAttribute("aria-label")).toBe("Chart, news and details");
       const row = table.querySelector('tbody tr')!;
       const controls = row.querySelector('[data-compact-row-controls]')!;
-      expect(getComputedStyle(controls).gap).toBe("10px");
-      expect(controls.textContent).toContain("PR");
+      expect(getComputedStyle(controls).gridTemplateColumns).toBe("20px 20px 12px");
+      expect(getComputedStyle(controls).columnGap).toBe("4px");
+      expect(controls.textContent).toContain("🗞️");
       expect(controls.textContent).toContain("+");
       await act(async () => row.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter',bubbles:true})));
       expect(row.getAttribute('aria-expanded')).toBe('true');

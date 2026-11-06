@@ -48,9 +48,9 @@ function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(ro
 function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="High Drops list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
-    <Table size="small" stickyHeader aria-label="High Drops stocks" sx={{tableLayout:"fixed",minWidth:430,'& td, & th':{px:0.3,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-      <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/><TableCell sx={{width:58}}>Ticker</TableCell><TableCell sx={{width:70}}>Price</TableCell>
-        <TableCell sx={{width:64}}>Drop</TableCell><TableCell sx={{width:92}}>High</TableCell><TableCell sx={{width:78}}>Volume</TableCell>
+    <Table size="small" stickyHeader aria-label="High Drops stocks" sx={{tableLayout:"fixed",minWidth:350,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/><TableCell sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
+        <TableCell sx={{width:48}}>Drop</TableCell><TableCell sx={{width:62}}>High</TableCell><TableCell sx={{width:58}}>Vol</TableCell>
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const displayedDrop=row.rapidDrop?Math.abs(row.rapidDrop.dropPercent):row.belowHighPercent;
