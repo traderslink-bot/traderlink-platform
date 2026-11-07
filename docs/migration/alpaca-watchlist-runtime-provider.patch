@@ -1,0 +1,329 @@
+--- /dev/null
++++ b/src/lib/market-data/alpaca-runtime-providers.ts
+@@ -0,0 +1,120 @@
++/** Portable adapters for the separately hosted levels/Watchlist runtime.
++ * Only a private VPS gateway token is used here; no Alpaca broker key.
++ */
++type RuntimeFrame = "1m" | "daily" | "4h" | "5m";
++type HistoricalRequest = { symbol: string; timeframe: RuntimeFrame; lookbackBars: number; endTimeMs?: number };
++type HistoricalPlan = { plannedBarCount: number; requestStartTimestamp: number; requestEndTimestamp: number };
++type RuntimeUpdate = { symbol: string; timestamp: number; lastPrice: number; bid?: number; ask?: number };
++type AdapterOptions = { url?: string; token?: string; fetcher?: typeof fetch; now?: () => number };
++type RuntimeBar = { time: number; open: number; high: number; low: number; close: number; volume: number };
++
++class RuntimeGateway {
++  readonly now: () => number;
++  private readonly base: URL;
++  private readonly token: string;
++  private readonly fetcher: typeof fetch;
++  constructor(options: AdapterOptions = {}) {
++    const raw = options.url ?? process.env.TRADERLINK_ALPACA_GATEWAY_URL;
++    const token = options.token ?? process.env.TRADERLINK_ALPACA_GATEWAY_TOKEN;
++    if (!raw || !token) throw Error("Alpaca VPS gateway configuration is required.");
++    this.base = new URL(raw.endsWith("/") ? raw : raw + "/");
++    if (this.base.username || this.base.password || this.base.search || this.base.hash || (this.base.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && this.base.protocol === "http:" && this.base.hostname === "127.0.0.1"))) throw Error("Alpaca VPS gateway requires encrypted transport.");
++    this.token = token; this.fetcher = options.fetcher ?? fetch; this.now = options.now ?? Date.now;
++  }
++  async get(path: string, query: URLSearchParams, signal?: AbortSignal) {
++    const url = new URL(path, this.base); url.search = query.toString();
++    const timeout = AbortSignal.timeout(120_000);
++    const response = await this.fetcher(url, { headers: { Authorization: `Bearer ${this.token}` }, signal: signal ? AbortSignal.any([signal, timeout]) : timeout, redirect: "error" });
++    if (!response.ok) throw Error("Alpaca VPS market data is unavailable.");
++    return response.json();
++  }
++}
++
++export async function readAlpacaRuntimeReferencePrice(symbol: string, options: AdapterOptions = {}): Promise<{price:number;asOf:number;source:"alpaca"} | null> {
++  if (!/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol)) return null;
++  try {
++    const gateway = new RuntimeGateway(options);
++    const data = await gateway.get("quotes", new URLSearchParams({symbols:symbol}));
++    const trade = data.feed === "sip" ? data.snapshots?.[symbol]?.latestTrade : null;
++    const asOf = Date.parse(trade?.t ?? "");
++    if (typeof trade?.p !== "number" || !Number.isFinite(trade.p) || trade.p <= 0 || !Number.isFinite(asOf) || asOf > gateway.now()) return null;
++    return {price:trade.p,asOf,source:"alpaca"};
++  } catch { return null; }
++}
++
++export class AlpacaRuntimeHistoricalProvider {
++  readonly providerName = "alpaca" as const;
++  private readonly gateway: RuntimeGateway;
++  constructor(options: AdapterOptions = {}) { this.gateway = new RuntimeGateway(options); }
++  async fetchCandles(request: HistoricalRequest, plan: HistoricalPlan) {
++    const symbol = request.symbol.trim().toUpperCase();
++    if (!/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol)) throw Error("Invalid stock symbol.");
++    const started = this.gateway.now();
++    const timeframe = { "1m": "1Min", daily: "1Day", "4h": "4Hour", "5m": "5Min" }[request.timeframe];
++    const payload = await this.gateway.get("history", new URLSearchParams({ symbol, timeframe, start: String(plan.requestStartTimestamp), end: String(plan.requestEndTimestamp) })) as { symbol: string; feed: string; adjustment: string; complete: boolean; bars: RuntimeBar[] };
++    if (payload.symbol !== symbol || payload.feed !== "sip" || payload.adjustment !== "split" || !payload.complete || !Array.isArray(payload.bars)) throw Error("Alpaca candle history is incomplete.");
++    const bars = new Map<number, RuntimeBar>();
++    for (const bar of payload.bars) {
++      if (!Number.isSafeInteger(bar.time) || ![bar.open, bar.high, bar.low, bar.close, bar.volume].every(Number.isFinite) || bar.low <= 0 || bar.high < Math.max(bar.open, bar.close) || bar.low > Math.min(bar.open, bar.close) || bar.volume < 0) throw Error("Invalid Alpaca candle data.");
++      if (bar.time * 1000 >= plan.requestStartTimestamp && bar.time * 1000 <= plan.requestEndTimestamp) bars.set(bar.time, bar);
++    }
++    return { provider: "alpaca" as const, symbol, timeframe: request.timeframe, requestedLookbackBars: request.lookbackBars,
++      candles: [...bars.values()].sort((a, b) => a.time - b.time).map(bar => ({ timestamp: bar.time * 1000, open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: bar.volume })),
++      fetchStartTimestamp: started, fetchEndTimestamp: this.gateway.now(), requestedStartTimestamp: plan.requestStartTimestamp, requestedEndTimestamp: plan.requestEndTimestamp,
++      sessionMetadataAvailable: request.timeframe !== "daily", providerMetadata: { source: "alpaca_sip_vps", adjustment: "split" } };
++  }
++}
++
++const clock = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23", minute: "2-digit" });
++function sessionKey(time: number) {
++  const values = Object.fromEntries(clock.formatToParts(time).map(part => [part.type, part.value]));
++  const minute = Number(values.hour) * 60 + Number(values.minute);
++  return { date: `${values.year}-${values.month}-${values.day}`, session: minute < 240 || minute >= 1200 ? "overnight" : minute < 570 ? "premarket" : minute < 960 ? "regular" : "after_hours" };
++}
++
++/** Polls the VPS's shared WebSocket cache, never Alpaca REST for each live tick. */
++export class AlpacaRuntimeLivePriceProvider {
++  private readonly gateway: RuntimeGateway;
++  private generation = 0;
++  private timer?: ReturnType<typeof setTimeout>;
++  private abort?: AbortController;
++  private readonly published = new Map<string, string>();
++  constructor(options: AdapterOptions = {}) { this.gateway = new RuntimeGateway(options); }
++  async start(entries: { symbol: string; active: boolean }[], onUpdate: (update: RuntimeUpdate) => void) {
++    await this.stop();
++    const symbols = [...new Set(entries.filter(entry => entry.active).map(entry => entry.symbol.trim().toUpperCase()))];
++    if (symbols.length > 400 || symbols.some(symbol => !/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol))) throw Error("Invalid Alpaca Watchlist population.");
++    const generation = ++this.generation, abort = new AbortController(); this.abort = abort;
++    const publish = (symbol: string, trade: { p?: number; t?: string } | null, quote?: { bp?: number; ap?: number }) => {
++      if (generation !== this.generation || !trade || typeof trade.p !== "number" || !Number.isFinite(trade.p) || trade.p <= 0) return;
++      const timestamp = Date.parse(trade.t ?? ""), now = this.gateway.now();
++      if (!Number.isFinite(timestamp) || timestamp > now + 2000) return;
++      const source = sessionKey(timestamp), current = sessionKey(now);
++      if (current.session === "overnight") { if (now - timestamp > 8 * 3600_000 || source.session !== "overnight") return; }
++      else if (source.date !== current.date || source.session !== current.session) return;
++      const signature = `${timestamp}:${trade.p}`; if (this.published.get(symbol) === signature) return;
++      this.published.set(symbol, signature);
++      const book = typeof quote?.bp === "number" && Number.isFinite(quote.bp) && quote.bp > 0 && typeof quote.ap === "number" && Number.isFinite(quote.ap) && quote.ap >= quote.bp ? { bid: quote.bp, ask: quote.ap } : {};
++      onUpdate({ symbol, timestamp, lastPrice: trade.p, ...book });
++    };
++    const poll = async () => {
++      try {
++        if (sessionKey(this.gateway.now()).session === "overnight") {
++          const remaining = [...symbols];
++          await Promise.all(Array.from({ length: Math.min(4, symbols.length) }, async () => {
++            while (remaining.length && generation === this.generation) {
++              const symbol = remaining.shift()!;
++              try { const data = await this.gateway.get("overnight", new URLSearchParams({ symbol }), abort.signal); if (data.feed === "boats") publish(symbol, data.trade); } catch { /* Retain last accepted value. */ }
++            }
++          }));
++        } else if (symbols.length) {
++          const data = await this.gateway.get("quotes", new URLSearchParams({ symbols: symbols.join(",") }), abort.signal);
++          if (data.feed === "sip" && data.connected) for (const symbol of symbols) publish(symbol, data.snapshots?.[symbol]?.latestTrade, data.snapshots?.[symbol]?.latestQuote);
++        }
++      } catch { /* No silent provider fallback or manufactured fresh timestamp. */ }
++      finally { if (generation === this.generation && symbols.length) this.timer = setTimeout(() => void poll(), 5000); }
++    };
++    if (symbols.length) void poll();
++  }
++  async stop() { this.generation++; clearTimeout(this.timer); this.abort?.abort(); this.abort = undefined; this.published.clear(); }
++}
+--- a/src/lib/market-data/candle-types.ts
++++ b/src/lib/market-data/candle-types.ts
+@@ -4,7 +4,7 @@
+ export type CandleTimeframe = "daily" | "4h" | "5m";
+ export type CandleFetchTimeframe = "1m" | CandleTimeframe;
+ 
+-export type CandleProviderName = "ibkr" | "eodhd" | "yahoo" | "moomoo" | "stub";
++export type CandleProviderName = "ibkr" | "eodhd" | "yahoo" | "moomoo" | "alpaca" | "stub";
+ 
+ export type Candle = {
+   timestamp: number;
+--- a/src/lib/market-data/provider-factory.ts
++++ b/src/lib/market-data/provider-factory.ts
+@@ -1,3 +1,4 @@
++import { AlpacaRuntimeHistoricalProvider } from "./alpaca-runtime-providers.js";
+ import { IBApi } from "@stoqey/ib";
+ 
+ import type { CandleProviderName } from "./candle-types.js";
+@@ -25,6 +26,7 @@
+   const priority = resolveProviderPriority(options.provider);
+ 
+   for (const providerName of priority) {
++    if (providerName === "alpaca") return new AlpacaRuntimeHistoricalProvider();
+     if (providerName === "ibkr" && options.ib) {
+       return new IbkrHistoricalCandleProvider(options.ib, options.ibkrTimeoutMs);
+     }
+--- a/src/lib/market-data/selectable-same-day-candle-service.ts
++++ b/src/lib/market-data/selectable-same-day-candle-service.ts
+@@ -1,6 +1,7 @@
++import { AlpacaRuntimeHistoricalProvider } from "./alpaca-runtime-providers.js";
+ import type { CandleProviderResponse } from "./candle-types.js";
+ import { finalizeCandleProviderResponse } from "./candle-quality.js";
+-import type { CandleFetchService, HistoricalFetchRequest } from "./candle-fetch-service.js";
++import { CandleFetchService, type HistoricalFetchRequest } from "./candle-fetch-service.js";
+ import type { CoordinatedCandleFetchDiagnostics } from "./coordinated-candle-fetch-service.js";
+ import {
+   MoomooAiReadCandleLoadError,
+@@ -8,7 +9,7 @@
+   type MoomooAiReadCandleWindow,
+ } from "./platform-moomoo-ai-read-candle-loader.js";
+ 
+-export const SAME_DAY_CANDLE_PROVIDER_OPTIONS = ["yahoo", "moomoo"] as const;
++export const SAME_DAY_CANDLE_PROVIDER_OPTIONS = ["yahoo", "moomoo", "alpaca"] as const;
+ export type SameDayCandleProviderName = (typeof SAME_DAY_CANDLE_PROVIDER_OPTIONS)[number];
+ 
+ type SameDayYahooService = Pick<CandleFetchService, "fetchCandles" | "getProviderName"> & {
+@@ -35,6 +36,7 @@
+ };
+ 
+ export class SelectableSameDayCandleService {
++  private alpacaService?: CandleFetchService;
+   private selectedProvider: SameDayCandleProviderName;
+   private activeProvider: SameDayCandleProviderName | null = null;
+   private lastMoomooSuccessAt: number | null = null;
+@@ -109,7 +111,9 @@
+   async fetchCandles(request: HistoricalFetchRequest): Promise<CandleProviderResponse> {
+     this.lastAttemptAt = this.now();
+     try {
+-      const result = this.selectedProvider === "yahoo"
++      const result = this.selectedProvider === "alpaca"
++        ? await this.fetchAlpacaCandles(request)
++        : this.selectedProvider === "yahoo"
+         ? await this.fetchYahooCandles(request)
+         : await this.fetchMoomooWithYahooFallback(request);
+       this.lastSuccessAt = this.now();
+@@ -121,6 +125,15 @@
+       this.lastError = error instanceof Error ? error.message : String(error);
+       throw error;
+     }
++  }
++
++  private async fetchAlpacaCandles(request: HistoricalFetchRequest): Promise<CandleProviderResponse> {
++    this.alpacaService ??= new CandleFetchService(new AlpacaRuntimeHistoricalProvider());
++    const result = await this.alpacaService.fetchCandles({...request, preferredProvider:"alpaca"});
++    if (!this.hasAcceptedSameDayResponse(result)) throw new Error("Alpaca did not return accepted same-day candles.");
++    this.activeProvider = "alpaca";
++    this.fallbackReason = null;
++    return result;
+   }
+ 
+   private hasAcceptedSameDayResponse(response: CandleProviderResponse): boolean {
+--- a/src/lib/monitoring/live-price-provider-factory.ts
++++ b/src/lib/monitoring/live-price-provider-factory.ts
+@@ -1,3 +1,4 @@
++import { AlpacaRuntimeLivePriceProvider } from "../market-data/alpaca-runtime-providers.js";
+ import { IBApi } from "@stoqey/ib";
+ 
+ import { EodhdLivePriceProvider } from "./eodhd-live-price-provider.js";
+@@ -5,7 +6,7 @@
+ import { PlatformMoomooLivePriceProvider } from "./platform-moomoo-live-price-provider.js";
+ import type { LivePriceProvider } from "./live-price-types.js";
+ 
+-export type LivePriceProviderName = "ibkr" | "eodhd" | "moomoo";
++export type LivePriceProviderName = "ibkr" | "eodhd" | "moomoo" | "alpaca";
+ 
+ export type LivePriceProviderFactoryOptions = {
+   provider?: LivePriceProviderName;
+@@ -14,7 +15,7 @@
+ 
+ export function resolveLivePriceProviderName(raw: string | undefined): LivePriceProviderName {
+   const provider = raw?.trim().toLowerCase();
+-  if (provider === "eodhd" || provider === "moomoo") {
++  if (provider === "alpaca" || provider === "eodhd" || provider === "moomoo") {
+     return provider;
+   }
+   return "ibkr";
+@@ -22,6 +23,8 @@
+ 
+ export function createLivePriceProvider(options: LivePriceProviderFactoryOptions = {}): LivePriceProvider {
+   const provider = options.provider ?? resolveLivePriceProviderName(process.env.LEVEL_LIVE_PRICE_PROVIDER);
++
++  if (provider === "alpaca") return new AlpacaRuntimeLivePriceProvider();
+ 
+   if (provider === "eodhd") {
+     return new EodhdLivePriceProvider();
+--- a/src/runtime/main.ts
++++ b/src/runtime/main.ts
+@@ -26,7 +26,7 @@
+ import { createIbkrClient } from "../scripts/shared/ibkr-runtime.js";
+ 
+ function resolveHistoricalProviderName(raw: string | undefined): CandleProviderName {
+-  return raw?.trim().toLowerCase() === "eodhd" ? "eodhd" : "ibkr";
++  return raw?.trim().toLowerCase() === "alpaca" ? "alpaca" : raw?.trim().toLowerCase() === "eodhd" ? "eodhd" : "ibkr";
+ }
+ 
+ async function seedLevels(
+--- a/src/runtime/manual-watchlist-server.ts
++++ b/src/runtime/manual-watchlist-server.ts
+@@ -216,8 +216,8 @@
+ const DISCORD_CLEANUP_PAGE_LIMIT = 100;
+ const DISCORD_CLEANUP_PARENT_MESSAGE_PAGE_LIMIT = 50;
+ const DISCORD_CLEANUP_RETRY_DELAY_MS = 1000;
+-const RUNTIME_HISTORICAL_PROVIDER_OPTIONS = ["ibkr", "eodhd"] as const;
+-const RUNTIME_LIVE_PROVIDER_OPTIONS = ["ibkr", "eodhd", "moomoo"] as const;
++const RUNTIME_HISTORICAL_PROVIDER_OPTIONS = ["ibkr", "eodhd", "alpaca"] as const;
++const RUNTIME_LIVE_PROVIDER_OPTIONS = ["ibkr", "eodhd", "moomoo", "alpaca"] as const;
+ const PROVIDER_CONFIG_VERSION = 2;
+ const AUTO_WATCHLIST_THRESHOLD_KEYS = new Set<keyof AutoWatchlistSelectorThresholds>(
+   Object.keys(DEFAULT_AUTO_WATCHLIST_SELECTOR_CONFIG) as Array<keyof AutoWatchlistSelectorThresholds>,
+@@ -266,22 +266,22 @@
+ }
+ 
+ function resolveHistoricalProviderName(raw: string | undefined): RuntimeHistoricalProviderName {
+-  return raw?.trim().toLowerCase() === "eodhd" ? "eodhd" : "ibkr";
++  return raw?.trim().toLowerCase() === "alpaca" ? "alpaca" : raw?.trim().toLowerCase() === "eodhd" ? "eodhd" : "ibkr";
+ }
+ 
+ function parseRuntimeHistoricalProviderName(raw: unknown): RuntimeHistoricalProviderName | null {
+   const normalized = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+-  return normalized === "ibkr" || normalized === "eodhd" ? normalized : null;
++  return normalized === "alpaca" || normalized === "ibkr" || normalized === "eodhd" ? normalized : null;
+ }
+ 
+ function parseRuntimeLiveProviderName(raw: unknown): LivePriceProviderName | null {
+   const normalized = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+-  return normalized === "ibkr" || normalized === "eodhd" || normalized === "moomoo" ? normalized : null;
++  return normalized === "alpaca" || normalized === "ibkr" || normalized === "eodhd" || normalized === "moomoo" ? normalized : null;
+ }
+ 
+ function parseSameDayCandleProviderName(raw: unknown): SameDayCandleProviderName | null {
+   const normalized = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+-  return normalized === "yahoo" || normalized === "moomoo" ? normalized : null;
++  return normalized === "alpaca" || normalized === "yahoo" || normalized === "moomoo" ? normalized : null;
+ }
+ 
+ function resolveProviderConfigPath(): string {
+@@ -650,7 +650,7 @@
+   const rawCandleService = new CandleFetchService(historicalProvider);
+   const dashboardEodhdHistoricalCandleService = (() => {
+     try {
+-      return new CandleFetchService(createHistoricalCandleProvider({ provider: "eodhd" }));
++      return new CandleFetchService(createHistoricalCandleProvider({ provider: historicalProviderName === "alpaca" ? "alpaca" : "eodhd" }));
+     } catch {
+       return null;
+     }
+@@ -951,7 +951,7 @@
+   const stockLevelsGenerator = createStockLevelsGenerator({
+     generateExistingWatchlistLevels: (request) => {
+       if (!dashboardEodhdHistoricalCandleService) {
+-        throw new Error("EODHD historical levels are unavailable.");
++        throw new Error("Historical levels are unavailable.");
+       }
+       return manager.generateLevelsWithWatchlistConfiguration({
+         ...request,
+--- a/src/runtime/stock-levels-reference-price.ts
++++ b/src/runtime/stock-levels-reference-price.ts
+@@ -1,6 +1,7 @@
++import { readAlpacaRuntimeReferencePrice } from "../lib/market-data/alpaca-runtime-providers.js";
+ import { requestEodhdCurrentTrade } from "./stock-levels-live-price.js";
+ 
+-export type StockLevelsReferencePrice = { price: number; asOf: number; source: "eodhd" | "yahoo" };
++export type StockLevelsReferencePrice = { price: number; asOf: number; source: "eodhd" | "yahoo" | "alpaca" };
+ const MAX_OPEN_AGE_MS = 60_000;
+ const MAX_CLOSED_AGE_MS = 96 * 60 * 60_000;
+ const eastern = new Intl.DateTimeFormat("en-US", {
+@@ -37,6 +38,10 @@
+   symbol: string,
+   fetchFn: typeof fetch = fetch,
+ ): Promise<StockLevelsReferencePrice | null> {
++  if (process.env.TRADERLINK_MARKET_DATA_PROVIDER === "alpaca" || process.env.LEVEL_HISTORICAL_CANDLE_PROVIDER === "alpaca") {
++    const quote = await readAlpacaRuntimeReferencePrice(symbol, {fetcher:fetchFn});
++    return quote && isUsableStockLevelsPrice(quote) ? quote : null;
++  }
+   const yahoo = await requestYahooReferencePrice(symbol, fetchFn);
+   if (yahoo) return yahoo;
+   // Delayed HTTP quotes are deliberately excluded from current-price lookup.

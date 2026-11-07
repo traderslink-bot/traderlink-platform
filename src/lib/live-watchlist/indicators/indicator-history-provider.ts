@@ -19,7 +19,7 @@ export type IndicatorHistoryPage = Readonly<{
 }>;
 export type IndicatorHistoryOutcome = Readonly<{
   provider: IndicatorProvider;
-  adjustment: "moomoo-forward" | "yahoo-chart-native";
+  adjustment: "moomoo-forward" | "yahoo-chart-native" | "alpaca-split";
   bars: readonly IndicatorHistoryBar[];
   transportIds: readonly string[];
   pages: number;
@@ -170,6 +170,7 @@ function followingDate(date: string): string {
   return value.toISOString().slice(0, 10);
 }
 export function indicatorHistoryUrl(provider: IndicatorProvider, input: IndicatorHistoryRequest, nextEnd: number | null = null): string {
+  if (provider === "alpaca") throw Error("alpaca_requires_vps_gateway_adapter");
   if (!/^[A-Z][A-Z0-9.-]{0,15}$/u.test(input.symbol) || !["1m", "5m", "15m", "1d"].includes(input.timeframe)
     || !Number.isSafeInteger(input.start) || !Number.isSafeInteger(input.end) || input.start <= 0 || input.end <= input.start
     || input.end - input.start > (input.timeframe === "1d" ? 370 : input.timeframe === "1m" ? 7 : 31) * 86_400_000
@@ -199,6 +200,7 @@ export async function requestIndicatorHistoryPage(input: Readonly<{
   provider: IndicatorProvider; url: string; signal: AbortSignal; accessToken?: string;
   fetcher?: typeof fetch; now?: () => number;
 }>): Promise<IndicatorTransportResult<IndicatorHistoryPage>> {
+  if (input.provider === "alpaca") return { ok: false, reason: "invalid_request", requestAccepted: false };
   const url = new URL(input.url);
   if (url.origin !== (input.provider === "moomoo" ? "https://webapi.moomoo.com" : "https://query1.finance.yahoo.com")) {
     return { ok: false, reason: "invalid_request", requestAccepted: false };

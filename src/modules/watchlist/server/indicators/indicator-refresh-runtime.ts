@@ -1,4 +1,6 @@
 import "server-only";
+import { alpacaMarketDataEnabled } from "@/src/modules/scanner/alpaca/client";
+import { fetchAlpacaIndicatorHistory } from "@/src/modules/scanner/alpaca/watchlist-adapter";
 import { IndicatorRequestCoordinator } from "@/src/lib/live-watchlist/indicators/indicator-request-coordinator";
 import { fetchIndicatorHistory } from "@/src/lib/live-watchlist/indicators/indicator-history-provider";
 import { IndicatorRefreshService } from "@/src/lib/live-watchlist/indicators/indicator-refresh-service";
@@ -36,6 +38,7 @@ export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
   if (!state.service) {
     const coordinator = new IndicatorRequestCoordinator({ audit: event => state.service?.recordTransport(event), admission: watchlistMoomooAdmission() });
     state.service = new IndicatorRefreshService({ calendar: calendar as IndicatorCalendar,
+      ...(alpacaMarketDataEnabled() ? { providers: ["alpaca"] as const } : {}),
       record: record => {
         if (record.outcome === "queued") consumerPublications.set(record.id, { symbol: record.symbol, activationId: record.activationId });
         if (!["queued", "running"].includes(record.outcome)) consumerPublications.delete(record.id);
@@ -66,8 +69,9 @@ export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
           return Boolean(latest?.frames.includes(input.request.timeframe) && (input.provider !== "yahoo" || latest.frames.length > 2));
         };
         if (!demand?.frames.includes(input.request.timeframe) || input.provider === "yahoo" && demand.frames.length === 2) return { provider: input.provider,
-          adjustment: input.provider === "moomoo" ? "moomoo-forward" : "yahoo-chart-native", bars: [], pages: 0,
+          adjustment: input.provider === "alpaca" ? "alpaca-split" : input.provider === "moomoo" ? "moomoo-forward" : "yahoo-chart-native", bars: [], pages: 0,
           transportIds: [], outcome: "permission", nextEnd: null };
+        if (input.provider === "alpaca") return fetchAlpacaIndicatorHistory({ ...input, coordinator, isCurrent: allowed });
         const access = consumerAccess.get(input.consumer);
         if (input.provider === "moomoo" && !access) return { provider: "moomoo", adjustment: "moomoo-forward",
           bars: [], pages: 0, transportIds: [], outcome: "authentication", nextEnd: null };
@@ -97,6 +101,7 @@ export function refreshWatchlistIndicators(symbol: string, activationId: string,
       } catch { /* Missing/invalid replay inputs require a fresh warm-up; no invented checkpoint. */ }
     }
     if (!runtime.needsRefresh(symbol, activationId, demand)) return runtime.refresh(symbol, activationId, demand);
+    if (alpacaMarketDataEnabled()) return runtime.refresh(symbol, activationId, demand);
     return withWatchlistIndicatorMoomooAccess(async access => {
       entered = true; operationAccess.set(key, access);
       try { return await runtime.refresh(symbol, activationId, demand); }

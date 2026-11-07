@@ -1,4 +1,6 @@
 import "server-only";
+import { alpacaMarketDataEnabled } from "@/src/modules/scanner/alpaca/client";
+import { fetchAlpacaWatchlistCandles } from "@/src/modules/scanner/alpaca/watchlist-adapter";
 import { createHash } from "node:crypto";
 
 import type { MarketDataProviderResult, MarketDataRequest } from "@/src/modules/level-analysis/contracts/candle-review-contracts";
@@ -67,6 +69,7 @@ export async function fetchWatchlistMoomooCandles(
   request: MarketDataRequest,
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<MarketDataProviderResult> {
+  if (alpacaMarketDataEnabled(environment)) return fetchAlpacaWatchlistCandles(request, environment);
   const database = openPlatformDatabase({ mode: "runtime", environment });
   try {
     const users = new PlatformUserRepository(database, {

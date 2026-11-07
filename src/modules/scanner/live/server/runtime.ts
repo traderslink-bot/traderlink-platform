@@ -7,7 +7,7 @@ import { withWatchlistIndicatorMoomooAccess } from "../../../watchlist/server/mo
 import { getMoomooSharedTransport, sharedMoomooFetch } from "../../../platform/server/broker-connections/moomoo-shared-transport";
 import { listScannerRecentPressReleases } from "../../../news/server/scanner-recent-press-releases";
 import type { ScannerNewsItem, ScannerReadModel } from "../contracts";
-import type { MarketDay } from "../sessions";
+import { easternClock, type MarketDay } from "../sessions";
 import { SnapshotSessionQualifier } from "../session-qualification";
 import { DailyFloatEnricher, ScannerFloatFeed } from "./float-enrichment";
 import { LiveScannerFeed, startLiveScannerFeed } from "./live-feed";
@@ -18,9 +18,11 @@ import { NasdaqUniverseRefresher } from "./nasdaq-universe-source";
 import { sendScannerUniverseAlert } from "./universe-alert";
 import { pacedSnapshotPass, scannerSnapshotSpacing } from "./snapshot-pacing";
 import { ScannerAuditRecorder, ScannerAuditStore } from "../audit/server/audit-store";
+import { alpacaMarketDataEnabled, requestAlpacaGateway } from "../../alpaca/client";
+import { normalizeAlpacaScannerBatch } from "../../alpaca/scanner-snapshots";
 
 const SNAPSHOT_URL = "https://webapi.moomoo.com/api/v1.0/quote/snapshot";
-type ScannerRuntime = Readonly<{ feed: LiveScannerFeed; settings: ScannerSettingsStore; audit: ScannerAuditRecorder }>;
+type ScannerRuntime = Readonly<{ provider: "moomoo" | "alpaca"; feed: LiveScannerFeed; settings: ScannerSettingsStore; audit: ScannerAuditRecorder }>;
 // Instrumentation and route handlers are separate Next.js bundles. Module-local
 // state would give the API a new disabled feed instead of the running worker.
 const processState = globalThis as typeof globalThis & {
@@ -47,7 +49,11 @@ function newsFor(symbols: readonly string[], environment: NodeJS.ProcessEnv): Re
 function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
   const directory = root(environment);
   const existing = registry.instances.get(directory);
-  if (existing) return existing;
+  const provider = alpacaMarketDataEnabled(environment) ? "alpaca" : "moomoo";
+  if (existing) {
+    if ((existing.provider ?? "moomoo") !== provider) throw Error("scanner_provider_change_requires_restart");
+    return existing;
+  }
   const settings = new ScannerSettingsStore(directory);
   const universe = new UniverseStore(directory);
   const manualTickers = new ManualTickerStore(join(directory,"manual-tickers.json"));
@@ -68,8 +74,22 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
       await sendScannerUniverseAlert({ kind:"missing",tradingDate:date,sourceDate:retained.tradingDate,count:retained.stocks.length,environment });
       return { ...retained,tradingDate:date,sourceTradingDate:retained.tradingDate };
     },
-    reserveScannerBudget: count => getMoomooSharedTransport(environment).reserveScanner(count),
-    snapshotPass: batches => withWatchlistIndicatorMoomooAccess(async ({ token }) => {
+    reserveScannerBudget: count => alpacaMarketDataEnabled(environment) ? Promise.resolve() : getMoomooSharedTransport(environment).reserveScanner(count),
+    ...(alpacaMarketDataEnabled(environment) ? { normalizeBatch: normalizeAlpacaScannerBatch } : {}),
+    snapshotPass: async batches => {
+      if (alpacaMarketDataEnabled(environment)) {
+        const day = marketDay(easternClock(Date.now()).date);
+        const results = [];
+        for (const requestedSymbols of batches) {
+          const requestedAt = Date.now();
+          try {
+            const payload = await requestAlpacaGateway("quotes", new URLSearchParams({ symbols: requestedSymbols.join(","), sessions: "1", regularClose: day.regularCloseEastern === "13:00" ? "780" : "960" }), environment);
+            results.push({ requestedSymbols, payload, requestedAt, receivedAt: Date.now() });
+          } catch { results.push({ requestedSymbols, payload: null, requestedAt, receivedAt: Date.now() }); }
+        }
+        return results;
+      }
+      return withWatchlistIndicatorMoomooAccess(async ({ token }) => {
       return pacedSnapshotPass(batches,async (requestedSymbols,requestedAt) => {
         try {
           const response = await sharedMoomooFetch(SNAPSHOT_URL,{ method: "POST", cache: "no-store", redirect: "error",
@@ -85,18 +105,19 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
           return { requestedSymbols, payload:null, receivedAt:Date.now(),requestedAt };
         }
       },{spacingMs:scannerSnapshotSpacing(environment)});
-    },environment),
+      },environment);
+    },
     floats: (date,symbols) => floatFeed.read(date,symbols),
     news: async symbols => newsFor(symbols,environment),
     qualification: (session,context) => sessionQualifier.observe(session,context),
     audit,
   });
-  const runtime = Object.freeze({ feed,settings,audit });
+  const runtime = Object.freeze({ feed,settings,audit,provider });
   registry.instances.set(directory,runtime);
   return runtime;
 }
 export function startConfiguredLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.env): void {
-  if (environment.TRADERLINK_LIVE_SCREENERS_ENABLED !== "true" || environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED !== "true") return;
+  if (environment.TRADERLINK_LIVE_SCREENERS_ENABLED !== "true" || (!alpacaMarketDataEnabled(environment) && environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED !== "true")) return;
   const current = configuredRuntime(environment);
   if (registry.started.has(current.feed)) return;
   registry.started.add(current.feed);

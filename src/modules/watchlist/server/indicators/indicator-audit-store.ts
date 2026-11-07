@@ -22,7 +22,7 @@ export type IndicatorRefreshAudit = Readonly<{
   calculationId: string | null;
   attempts: readonly IndicatorRequestAudit[];
   timeframes: readonly Readonly<{
-    timeframe: IndicatorTimeframe; provider: "moomoo" | "yahoo" | null;
+    timeframe: IndicatorTimeframe; provider: "moomoo" | "yahoo" | "alpaca" | null;
     primaryOutcome: string; fallbackOutcome: string | null; acceptedBars: number; through: number | null;
     missingMinutes: number; missingVolumeBars?: number; excludedBars: number; calculationRevision: string | null;
     correctedBars?: number; addedBars?: number; gapReset?: boolean; rebuildReason?: string | null;
@@ -32,7 +32,7 @@ export type IndicatorCalculationEvidence = Readonly<{
   id: string; refreshId: string; createdAt: number; symbol: string; activationId: string;
   algorithmVersion: string; calendarId: string;
   timeframes: readonly Readonly<{
-    timeframe: IndicatorTimeframe; seriesKey: string; provider: "moomoo" | "yahoo";
+    timeframe: IndicatorTimeframe; seriesKey: string; provider: "moomoo" | "yahoo" | "alpaca";
     adjustment: string; initialCheckpoint: IndicatorCheckpoint | null;
     candles: readonly IndicatorCandle[]; result: IndicatorResult | null;
   }>[];

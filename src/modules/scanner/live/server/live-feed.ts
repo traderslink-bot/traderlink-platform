@@ -28,6 +28,7 @@ export type LiveFeedDependencies = Readonly<{
   floats: (date: string, symbols: readonly string[]) => Promise<ReadonlyMap<string,FloatFact>>;
   news: (symbols: readonly string[]) => Promise<ReadonlyMap<string,readonly ScannerNewsItem[]>>;
   qualification: (session: ScannerSession, context: SnapshotQualificationContext) => SnapshotQualification;
+  normalizeBatch?: typeof normalizeSnapshotBatch;
   audit?: Readonly<{ enqueue: (cycle: ScannerAuditCycle) => void }>;
   now?: () => number;
 }>;
@@ -103,7 +104,7 @@ export class LiveScannerFeed {
         try {
           const qualification = this.dependencies.qualification(session,{ payload: response.payload,
             requestedSymbols: response.requestedSymbols, receivedAt: response.receivedAt, tradingDate: date, day });
-          const normalized = normalizeSnapshotBatch({ requestedSymbols: response.requestedSymbols, payload: response.payload, session,
+          const normalized = (this.dependencies.normalizeBatch ?? normalizeSnapshotBatch)({ requestedSymbols: response.requestedSymbols, payload: response.payload, session,
             tradingDate: date, receivedAt: response.receivedAt, qualification });
           snapshots.push(...normalized.snapshots); missing.push(...normalized.missingSymbols);
           normalized.issues.forEach(issue => issues.add(issue));

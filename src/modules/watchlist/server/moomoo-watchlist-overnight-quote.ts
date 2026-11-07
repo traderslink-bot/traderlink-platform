@@ -1,10 +1,20 @@
 import 'server-only';
 import { overnightResumeAfter, type OvernightLevelReference } from '@/src/lib/live-watchlist/overnight-level-reference';
 import { withWatchlistIndicatorMoomooAccess } from './moomoo-watchlist-candle-bridge';
+import { alpacaMarketDataEnabled, requestAlpacaGateway } from '@/src/modules/scanner/alpaca/client';
 import { sharedMoomooFetch } from '@/src/modules/platform/server/broker-connections/moomoo-shared-transport';
 
 export async function fetchWatchlistOvernightQuote(symbol: string): Promise<OvernightLevelReference | null> {
   if (!/^[A-Z][A-Z0-9.-]{0,15}$/.test(symbol) || overnightResumeAfter(Date.now()) === null) return null;
+  if (alpacaMarketDataEnabled()) {
+    try {
+      const result = await requestAlpacaGateway('overnight', new URLSearchParams({symbol})) as {feed:string;trade?:{p:number;t:string}};
+      const checkedAt = Date.now(), resumeAfter = overnightResumeAfter(checkedAt);
+      const providerAt = Date.parse(result.trade?.t ?? '');
+      if (result.feed !== 'boats' || !resumeAfter || typeof result.trade?.p !== 'number' || !Number.isFinite(result.trade.p) || result.trade.p <= 0 || !Number.isFinite(providerAt) || providerAt > checkedAt + 2000 || providerAt < resumeAfter - 8*60*60*1000) return null;
+      return {price:result.trade.p,checkedAt,resumeAfter};
+    } catch { return null; }
+  }
   return withWatchlistIndicatorMoomooAccess(async ({ token }) => {
     const response = await sharedMoomooFetch('https://webapi.moomoo.com/api/v1.0/quote/stock-quote', {
       method: 'POST', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(8000),

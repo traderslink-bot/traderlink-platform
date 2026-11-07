@@ -36,6 +36,13 @@ function environment():NodeJS.ProcessEnv{return{
 };}
 
 describe("scanner runtime across independently loaded Next bundles",()=>{
+  it("starts Alpaca without requiring or obtaining a Moomoo quote connection", async () => {
+    const runtime=await import("./runtime"),env={...environment(),TRADERLINK_MARKET_DATA_PROVIDER:"alpaca",TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED:"false"},before={...calls};
+    runtime.startConfiguredLiveScannerRuntime(env);
+    expect(runtime.readLiveScannerRuntime(env).status).toBe("ready");
+    expect(calls.providers).toBe(before.providers);
+    expect(()=>runtime.readLiveScannerRuntime({...env,TRADERLINK_MARKET_DATA_PROVIDER:"moomoo"})).toThrow("scanner_provider_change_requires_restart");
+  });
   it("returns the worker's running feed to a reloaded API module without a second worker or audit writer",async()=>{
     const env=environment(),before={...calls};
     const worker=await import("./runtime");

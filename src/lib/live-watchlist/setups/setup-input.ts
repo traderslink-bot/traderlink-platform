@@ -2,7 +2,7 @@ import type { IndicatorCandle, IndicatorCheckpoint } from "../indicators/indicat
 import type { IndicatorCalendar } from "../indicators/indicator-sessions";
 
 export type SetupFrameInput = Readonly<{
-  provider: "moomoo" | "yahoo";
+  provider: "moomoo" | "yahoo" | "alpaca";
   adjustment: string;
   seriesKey: string;
   seed: IndicatorCheckpoint;

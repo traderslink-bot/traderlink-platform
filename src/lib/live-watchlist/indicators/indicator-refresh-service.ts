@@ -34,7 +34,7 @@ export class IndicatorRefreshService {
   private readonly inflight = new Map<string, Promise<WatchlistIndicatorSnapshot>>();
   private readonly records = new Map<string, IndicatorRefreshAudit>();
   private readonly instanceId: string;
-  private readonly options: Readonly<{ calendar: IndicatorCalendar; load: Load; id?: () => string; now?: () => number;
+  private readonly options: Readonly<{ calendar: IndicatorCalendar; load: Load; providers?: readonly IndicatorProvider[]; id?: () => string; now?: () => number;
     record: (record: IndicatorRefreshAudit) => void; saveCalculation: (evidence: IndicatorCalculationEvidence) => Promise<boolean> }>;
   constructor(options: IndicatorRefreshService["options"]) { this.options = options; this.instanceId = this.id(); }
   get runtimeInstanceId(): string { return this.instanceId; }
@@ -69,7 +69,7 @@ export class IndicatorRefreshService {
     try {
       const slots = new Map<IndicatorTimeframe, Slot>(), timeframes: Partial<Record<IndicatorTimeframe, IndicatorResult>> = {};
       for (const frame of evidence.timeframes as IndicatorCalculationEvidence["timeframes"]) {
-        if (!FRAMES.includes(frame.timeframe) || slots.has(frame.timeframe) || !["moomoo", "yahoo"].includes(frame.provider)) return false;
+        if (!FRAMES.includes(frame.timeframe) || slots.has(frame.timeframe) || !(this.options.providers ?? ["moomoo", "yahoo"]).includes(frame.provider)) return false;
         const series = IndicatorSeries.restore({ ...frame, activationId, completedThrough: evidence.createdAt });
         slots.set(frame.timeframe, { provider: frame.provider, adjustment: frame.adjustment, series });
         timeframes[frame.timeframe] = series.snapshot().result!;
@@ -192,7 +192,7 @@ export class IndicatorRefreshService {
     // A cold start while closed still describes the last completed trading session.
     // Candle timestamps stay historical; this does not manufacture weekend activity.
     const day = indicatorTradingDay(this.options.calendar, indicatorMarketDate(closed == null ? now : closed - 1));
-    const budget = { moomoo: createIndicatorHistoryBudget(), yahoo: createIndicatorHistoryBudget() };
+    const budget = { moomoo: createIndicatorHistoryBudget(), yahoo: createIndicatorHistoryBudget(), alpaca: createIndicatorHistoryBudget() };
     this.record({ id, instanceId: this.instanceId, symbol, activationId: ticker.activationId, queuedAt: now,
       startedAt: null, finishedAt: null, outcome: "queued", calculationId: null, attempts: [], timeframes: [] });
     this.record({ ...this.records.get(id)!, startedAt: this.now(), outcome: "running" });
@@ -224,7 +224,7 @@ export class IndicatorRefreshService {
         let primaryOutcome = "unavailable", fallbackOutcome: string | null = null, selected: Slot | undefined;
         let accepted = 0, excluded = 0, correctedBars = 0, addedBars = 0, gapReset = false;
         let rebuildReason: string | null = null;
-        for (const provider of ["moomoo", "yahoo"] as const) {
+        for (const provider of this.options.providers ?? ["moomoo", "yahoo"] as const) {
           const sameProvider = existing?.provider === provider;
           const last = sameProvider ? cached?.checkpoint.last : null;
           const initialDays = timeframe === "1d" ? 370 : timeframe === "15m" ? 14 : timeframe === "5m" ? 7 : 4;
@@ -233,8 +233,8 @@ export class IndicatorRefreshService {
           let fetched: IndicatorHistoryOutcome;
           try { fetched = await this.options.load({ provider, request: { symbol, timeframe, start, end: now }, budget: budget[provider], consumer: id,
             sufficientHistory: { minimumBars: last ? 1 : 250, coverFrom } }); }
-          catch { if (provider === "moomoo") primaryOutcome = "provider_unavailable"; else fallbackOutcome = "provider_unavailable"; continue; }
-          if (provider === "moomoo") primaryOutcome = fetched.outcome; else fallbackOutcome = fetched.outcome;
+          catch { if (provider !== "yahoo") primaryOutcome = "provider_unavailable"; else fallbackOutcome = "provider_unavailable"; continue; }
+          if (provider !== "yahoo") primaryOutcome = fetched.outcome; else fallbackOutcome = fetched.outcome;
           excluded += fetched.excludedPoints ?? 0;
           if (!["complete", "sufficient_history"].includes(fetched.outcome)) continue;
           let normalized = normalizeIndicatorSessions({ bars: fetched.bars, timeframe, calendar: this.options.calendar, completedThrough: now });
@@ -250,9 +250,9 @@ export class IndicatorRefreshService {
             let full: IndicatorHistoryOutcome;
             try { full = await this.options.load({ provider, request: { symbol, timeframe, start: now - initialDays * 86_400_000, end: now },
               budget: budget[provider], consumer: id, sufficientHistory: { minimumBars: 250, coverFrom: timeframe === "1m" && day ? day.preOpen : now } }); }
-            catch { if (provider === "moomoo") primaryOutcome = "rebuild_unavailable"; else fallbackOutcome = "rebuild_unavailable"; continue; }
+            catch { if (provider !== "yahoo") primaryOutcome = "rebuild_unavailable"; else fallbackOutcome = "rebuild_unavailable"; continue; }
             if (!["complete", "sufficient_history"].includes(full.outcome) || full.adjustment !== fetched.adjustment) {
-              if (provider === "moomoo") primaryOutcome = `rebuild_${full.outcome}`; else fallbackOutcome = `rebuild_${full.outcome}`;
+              if (provider !== "yahoo") primaryOutcome = `rebuild_${full.outcome}`; else fallbackOutcome = `rebuild_${full.outcome}`;
               continue;
             }
             normalized = normalizeIndicatorSessions({ bars: full.bars, timeframe, calendar: this.options.calendar, completedThrough: now });

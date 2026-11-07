@@ -61,7 +61,7 @@ function acceptedRecord(source: RecordInput): RecordInput {
     || !wall(calendar.normalWeekdaySession?.postMarketEndEastern)) invalid();
   const frame = input.oneMinute;
   if (frame !== null && frame !== undefined) {
-    if (!["moomoo", "yahoo"].includes(frame.provider) || !text(frame.seriesKey, 2000) || !text(frame.adjustment)
+    if (!["moomoo", "yahoo", "alpaca"].includes(frame.provider) || !text(frame.seriesKey, 2000) || !text(frame.adjustment)
       || !Array.isArray(frame.candles) || frame.candles.length > 12000) invalid();
     const seen = new Set<number>();
     for (const candle of frame.candles) {

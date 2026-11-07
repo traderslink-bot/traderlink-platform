@@ -29,7 +29,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
-import { TradingViewChart } from "@/app/(dashboard)/charts/trading-view-chart";
+import { AlpacaLightweightChart } from "@/app/(dashboard)/charts/alpaca-lightweight-chart";
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard } from "./screener-press-release-board";
@@ -287,7 +287,7 @@ function ScannerChartDrawer({ row,onClose }: { row:ScannerChartTarget|null; onCl
         <Box><Typography component="h2" sx={{ fontWeight:850 }} variant="h6">{row?.symbol} chart</Typography><Typography color="text.secondary" variant="body2">TradersLink + TradingView charts</Typography></Box>
         <IconButton aria-label="Close chart" onClick={onClose}><CloseRoundedIcon/></IconButton>
       </Stack>
-      <Box sx={{ flex:1,minHeight:0,p:{ xs:0,md:1.5 } }}>{row?<TradingViewChart symbol={`${row.exchange}:${row.symbol}`} sx={{ border:{ xs:0,md:1 },borderRadius:{ xs:0,md:2 },height:"100%",minHeight:0 }}/>:null}</Box>
+      <Box sx={{ flex:1,minHeight:0,p:{ xs:0,md:1.5 } }}>{row?<AlpacaLightweightChart symbol={`${row.exchange}:${row.symbol}`} sx={{ border:{ xs:0,md:1 },borderRadius:{ xs:0,md:2 },height:"100%",minHeight:0 }}/>:null}</Box>
     </Stack>
   </Drawer>;
 }

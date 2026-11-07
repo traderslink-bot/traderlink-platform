@@ -1,5 +1,5 @@
 /** Shared transport coordination only. Provider adapters own HTTP and payload validation. */
-export type IndicatorProvider = "moomoo" | "yahoo";
+export type IndicatorProvider = "moomoo" | "yahoo" | "alpaca";
 export type IndicatorRequestFailure = "rate_limited" | "timeout" | "transport_error" | "provider_error"
   | "authentication" | "permission" | "invalid_request" | "invalid_data" | "no_data" | "partial_data";
 export type IndicatorTransportResult<T> =
