@@ -9,3 +9,8 @@ Progress: source implemented; both local TSX syntax checks and focused price-not
 Release: mixed checkout; only use the narrow patch and new helper, never copy the entire client. The patch is generated against immutable 4770e0e4 and preserves General Watchlist/reverse-split/trader-notes code, passes marketDataStatus to every table, and adds latestPriceSource to lightweight listing projection. Hosted visual acceptance and a fresh quote-versus-record timestamp comparison remain required. The overnight record has checkedAt only; its old Checked line is replaced with Not live / Price time unavailable rather than falsely calling lookup time the price time. Original overnight price and premarket-resumption note remain intact. No schema or runtime changes.
 
 Help addition: When Live data is Off, the price note shows the last available price time in Eastern Time, not the post or page update time. The delayed-price label is hidden. Green On and red Off describe the live-data feed.
+
+Alpaca follow-up: see [independent provider QA and corrections](watchlist-alpaca-independent-qa.md).
+The owner now requests removal of the separate Price Time column and the fixed
+15-second delay claim. Actual source timestamps remain in Not live price notes;
+the paired runtime correction handles Alpaca and overnight feed status.

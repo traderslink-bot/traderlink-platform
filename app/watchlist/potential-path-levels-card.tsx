@@ -4,6 +4,7 @@ import { WatchlistPlanUpgrade } from "./watchlist-plan-upgrade";
 import Link from "next/link";
 import { normalizeOvernightLevelReference } from "@/src/lib/live-watchlist/overnight-level-reference";
 import styles from "./overnight-price-note.module.css";
+import { watchlistPriceNote } from "./watchlist-price-status";
 import type { ReactNode } from "react";
 
 import type {
@@ -212,7 +213,8 @@ function WatchlistPotentialPathCardKicker({
 export function WatchlistV2PotentialPathCard({
   symbol,
   fullLadderCard,
-  priceNote = "(delayed 15 sec)",
+  priceNote = "",
+  livePriceAvailable = false,
   metaLabel = "Updated",
   metaValue,
   showNearestLevels = true,
@@ -223,6 +225,7 @@ export function WatchlistV2PotentialPathCard({
   symbol: PotentialPathSymbol;
   fullLadderCard?: LiveWatchlistCardContent;
   priceNote?: string;
+  livePriceAvailable?: boolean;
   metaLabel?: string;
   metaValue?: string;
   showNearestLevels?: boolean;
@@ -231,7 +234,7 @@ export function WatchlistV2PotentialPathCard({
   priceNoteOwnLine?: boolean;
 }) {
   const levelMap = symbol.levelMap ?? null;
-  const overnight = normalizeOvernightLevelReference(levelMap?.overnightReference);
+  const overnight = livePriceAvailable ? null : normalizeOvernightLevelReference(levelMap?.overnightReference);
   const levelRows = buildWatchlistV2LevelRows(levelMap);
   const fullLadderBody = fullLadderCard
     ? cleanGenericCardBody(fullLadderCard)
@@ -263,8 +266,8 @@ export function WatchlistV2PotentialPathCard({
 
         {overnight ? (
           <div className={styles.note} role="note">
-            <strong>Not live · Price time unavailable</strong>
-            <span>Levels use this fixed price until live updates resume in premarket.</span>
+            <strong>{watchlistPriceNote({ latestPriceSource: "ticker", latestPriceObservedAt: overnight.observedAt ?? null }, "offline")}</strong>
+            <span>Levels use this fixed price until a newer live price arrives.</span>
           </div>
         ) : null}
         {showMeta && !overnight ? (
@@ -320,6 +323,7 @@ export function WatchlistPotentialPathCardArticle({
   guideContent = "How it works",
   guideHref = "/watchlist/how-it-works",
   priceNote,
+  livePriceAvailable,
   priceNoteOwnLine,
   showKickerHelp = true,
   showMeta,
@@ -335,6 +339,7 @@ export function WatchlistPotentialPathCardArticle({
   guideContent?: ReactNode;
   guideHref?: string;
   priceNote?: string;
+  livePriceAvailable?: boolean;
   priceNoteOwnLine?: boolean;
   showKickerHelp?: boolean;
   showMeta?: boolean;
@@ -363,6 +368,7 @@ export function WatchlistPotentialPathCardArticle({
             symbol={symbol}
             fullLadderCard={fullLadderCard}
             priceNote={priceNote}
+            livePriceAvailable={livePriceAvailable}
             priceNoteOwnLine={priceNoteOwnLine}
             showMeta={showMeta}
             showNearestLevels={showNearestLevels}

@@ -35,9 +35,12 @@ describe("watchlist display contract", () => {
     expect(clientSource).not.toContain("<span>{state}</span>");
   });
 
-  it("shows the price-delay note on the watchlist and ticker detail", () => {
-    expect(clientSource).toContain('Price {marketDataStatus === "live" ? <small className="watchlist-price-delay-note">(delayed 15 sec)</small> : null}');
-    expect(clientSource).toContain("(delayed 15 sec)");
+  it("uses actual quote status without a fixed delay claim or separate Price time column", () => {
+    expect(clientSource).not.toContain("(delayed 15 sec)");
+    expect(clientSource).not.toContain('data-mobile-label="Price time"');
+    expect(clientSource).not.toContain("<span>Price time</span>");
+    expect(clientSource).toContain("watchlistPriceNote(symbol, marketDataStatus)");
+    expect(clientSource).toContain("priceNoteOwnLine={Boolean(watchlistPriceNote(symbol, marketDataStatus))}");
   });
 
   it("matches the high-risk heading to the Potential Path ticker size", () => {

@@ -12,7 +12,7 @@ export async function fetchWatchlistOvernightQuote(symbol: string): Promise<Over
       const checkedAt = Date.now(), resumeAfter = overnightResumeAfter(checkedAt);
       const providerAt = Date.parse(result.trade?.t ?? '');
       if (result.feed !== 'boats' || !resumeAfter || typeof result.trade?.p !== 'number' || !Number.isFinite(result.trade.p) || result.trade.p <= 0 || !Number.isFinite(providerAt) || providerAt > checkedAt + 2000 || providerAt < resumeAfter - 8*60*60*1000) return null;
-      return {price:result.trade.p,checkedAt,resumeAfter};
+      return {price:result.trade.p,checkedAt,resumeAfter,observedAt:providerAt};
     } catch { return null; }
   }
   return withWatchlistIndicatorMoomooAccess(async ({ token }) => {

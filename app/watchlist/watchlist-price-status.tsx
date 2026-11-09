@@ -5,10 +5,11 @@ const priceTime = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York",
 });
 
-export function watchlistPriceNote(symbol: Pick<LiveWatchlistSymbolState, "latestPriceSource" | "latestPriceObservedAt">, status: LiveWatchlistMarketDataStatus): string {
-  if (status === "live") return "(delayed 15 sec)";
+export function watchlistPriceNote(symbol: Pick<LiveWatchlistSymbolState, "latestPriceSource" | "latestPriceObservedAt">, status: LiveWatchlistMarketDataStatus, now = Date.now()): string {
   // Never substitute publication, card refresh, or server startup time for a quote.
   const observedAt = symbol.latestPriceSource === "ticker" ? symbol.latestPriceObservedAt : null;
+  if (status === "live" && typeof observedAt === "number" && Number.isFinite(observedAt)
+    && observedAt > 0 && observedAt <= now + 2000 && now - observedAt <= 120_000) return "";
   return typeof observedAt === "number" && Number.isFinite(observedAt) && observedAt > 0
     ? `Not live · Last price: ${priceTime.format(observedAt)} ET`
     : "Not live · Price time unavailable";

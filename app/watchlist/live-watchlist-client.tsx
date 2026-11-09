@@ -1355,11 +1355,8 @@ function WatchlistTickerTable({
     <section className="watchlist-table" aria-label={ariaLabel}>
       <div className="watchlist-table-head">
         <span>Ticker</span>
-        <span>
-          Price {marketDataStatus === "live" ? <small className="watchlist-price-delay-note">(delayed 15 sec)</small> : null}
-        </span>
+        <span>Price</span>
         <span>Added</span>
-        <span>Price time</span>
         <span>Details</span>
       </div>
       {symbols.map((symbol) => {
@@ -1393,15 +1390,12 @@ const countryFlag = getWatchlistCountryFlag(symbol.companyInfo?.country);
               <WatchlistLifecycleBadge symbol={symbol} />
               <WatchlistReverseSplitBadge item={reverseSplits[symbol.symbol]} />
             </span>
-            <span className={`watchlist-mobile-field ${compactRows.price}`} data-mobile-label={marketDataStatus === "live" ? "Price (delayed 15 sec)" : "Price"}>
+            <span className={`watchlist-mobile-field ${compactRows.price}`} data-mobile-label="Price">
               {formatPrice(symbol.latestPrice)}
-              {marketDataStatus !== "live" ? <small className="watchlist-price-delay-note" style={{ display: "block" }}>{watchlistPriceNote(symbol, marketDataStatus)}</small> : null}
+              {watchlistPriceNote(symbol, marketDataStatus) ? <small className="watchlist-price-delay-note" style={{ display: "block" }}>{watchlistPriceNote(symbol, marketDataStatus)}</small> : null}
             </span>
             <span className={`watchlist-mobile-field ${compactRows.added}`} data-mobile-label="Added" style={watchlistTimeCellStyle}>
               {formatListDateTime(symbol.firstPostedAt)}
-            </span>
-            <span className={`watchlist-mobile-field ${compactRows.priceTime}`} data-mobile-label="Price time" style={watchlistTimeCellStyle}>
-              {symbol.latestPriceSource === "ticker" && symbol.latestPriceObservedAt ? formatListDateTime(symbol.latestPriceObservedAt) : "Unavailable"}
             </span>
             <span className={`watchlist-mobile-field watchlist-details-cell ${compactRows.details}`} data-mobile-label="Details">
               View details
@@ -1566,7 +1560,8 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
         fullLadderCard={symbol.cards.fullLadder}
         symbol={symbol}
         priceNote={watchlistPriceNote(symbol, marketDataStatus)}
-        priceNoteOwnLine={marketDataStatus !== "live"}
+        livePriceAvailable={!watchlistPriceNote(symbol, marketDataStatus)}
+        priceNoteOwnLine={Boolean(watchlistPriceNote(symbol, marketDataStatus))}
         showMeta={false}
         showOuterMeta={false}
       />
