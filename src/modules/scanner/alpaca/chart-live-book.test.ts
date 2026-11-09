@@ -62,3 +62,13 @@ it("never carries the old daily candle into the next Eastern date",async()=>{
  expect(book.snapshot()).toEqual([]);await book.warm(Date.parse("2026-11-10T05:00:02Z"));
  expect(get.mock.calls[1][1].get("start")).toBe("2026-11-10T05:00:00.000Z");
 });
+
+it("finishes a large daily bootstrap without quadratic identity eviction or per-trade timezone work",async()=>{
+ const now=Date.parse("2026-11-09T15:30:30Z");let page=0;
+ const book=new ChartLiveBook("AAA",{get:async()=>{const index=page++;return{trades:{AAA:Array.from({length:10000},(_,i)=>({T:"t",S:"AAA",i:index*10000+i,x:"V",p:2,s:1,t:"2026-11-09T15:00:00.123456789Z",c:["@"],z:"C"}))},next_page_token:index<19?String(index+1):null};}},true);
+ const began=performance.now();await book.warm(now);const elapsed=performance.now()-began;
+ expect(book.snapshot()[0]).toMatchObject({open:2,close:2,volume:200000});
+ book.observe({T:"t",S:"AAA",i:199999,x:"V",p:2,s:1,t:"2026-11-09T15:00:00.123456789Z",c:["@"],z:"C"});expect(book.drain()[0].volume).toBe(200000);
+ book.observe({T:"t",S:"AAA",i:200000,x:"V",p:3,s:5,t:"2026-11-09T15:30:31Z",c:["@"],z:"C"});expect(book.drain()[0]).toMatchObject({close:3,volume:200005});
+ expect(elapsed).toBeLessThan(3000);
+});

@@ -17,6 +17,9 @@ type Minute = { bar: Candle; first: string | null; last: string | null };
 export class ChartLiveBook {
   private minutes = new Map<number, Minute>();
   private seen = new Set<string>();
+  private recentKeys:string[]=[];
+  private nextKey=0;
+  private dayEnd=0;
   private buffered: Trade[] = [];
   private ready = false;
   private closedThrough = 0;
@@ -28,7 +31,7 @@ export class ChartLiveBook {
   private dirty = new Set<number>();
   constructor(private readonly symbol: string, private readonly rest: Pick<AlpacaRestData, "get">, private readonly daily=false) {}
 
-  invalidate() { this.generation++; this.ready = false; this.warming = false; this.buffered = []; this.minutes.clear(); this.seen.clear(); this.dirty.clear(); }
+  invalidate() { this.generation++; this.ready = false; this.warming = false; this.buffered = []; this.minutes.clear(); this.seen.clear(); this.recentKeys=[];this.nextKey=0;this.dirty.clear(); }
   seal(time: number) { this.closedThrough = Math.max(this.closedThrough, time); this.minutes.delete(time); this.dirty.delete(time); }
   observe(value: unknown) {
     const trade = value as Trade;
@@ -45,14 +48,17 @@ export class ChartLiveBook {
     if (!Number.isFinite(at) || !Number.isFinite(trade.p) || trade.p <= 0
       || !Number.isSafeInteger(trade.s) || trade.s < 0 || !["number", "string"].includes(typeof trade.i) || typeof trade.x !== "string") { this.invalidate(); return; }
     if(at<this.start||minute<=this.closedThrough)return;
-    if(this.daily&&easternDayStart(at/1000)*1000!==this.start){this.invalidate();return;}
+    if(this.daily&&at>=this.dayEnd){this.invalidate();return;}
     const rules = this.daily ? dailyTradeRules(trade) : {...alpacaMinuteTradeRules(trade),highLow:alpacaMinuteTradeRules(trade).prices,openClose:alpacaMinuteTradeRules(trade).prices?"all":"none"};
     if (!rules.known) { this.invalidate(); return; }
     const key = `${trade.x}:${trade.i}:${trade.t}`;
     if (this.seen.has(key)) return;
+    if(!this.historyLoading){
+      const expired=this.recentKeys[this.nextKey];if(expired)this.seen.delete(expired);
+      this.recentKeys[this.nextKey]=key;this.nextKey=(this.nextKey+1)%100_000;
+    }
     this.seen.add(key);
     if(this.historyLoading&&this.seen.size>2_000_000){this.invalidate();return;}
-    if(!this.historyLoading)while(this.seen.size>100_000)this.seen.delete(this.seen.values().next().value!);
     // Fixed-width fractional time preserves sub-millisecond ordering.
     const order = new Date(at).toISOString().slice(0, 19) + (trade.t.match(/\.(\d+)/)?.[1] ?? "").padEnd(9, "0");
     let item = this.minutes.get(minute);
@@ -74,8 +80,9 @@ export class ChartLiveBook {
     this.warming = true;
     const generation = this.generation;
     this.start = this.daily ? easternDayStart(now/1000)*1000 : Math.floor(now / 60_000) * 60_000;
+    this.dayEnd=this.daily?easternDayStart(this.start/1000+36*3600)*1000:0;
     const rebuilt = new ChartLiveBook(this.symbol,this.rest,this.daily);
-    rebuilt.start=this.start;rebuilt.closedThrough=this.closedThrough;rebuilt.ready=true;rebuilt.historyLoading=true;
+    rebuilt.start=this.start;rebuilt.dayEnd=this.dayEnd;rebuilt.closedThrough=this.closedThrough;rebuilt.ready=true;rebuilt.historyLoading=true;
     const cutoff=priceObservationOrder(new Date(now).toISOString());
     const tokens = new Set<string>();
     let token: string | null = null;
@@ -93,15 +100,16 @@ export class ChartLiveBook {
         const next = result.next_page_token;
         if (next === null || next === undefined || next === "") {
           for (const trade of this.buffered) {rebuilt.apply(trade);if(!rebuilt.ready)throw Error("invalid_chart_trade");}
-          while(rebuilt.seen.size>100_000)rebuilt.seen.delete(rebuilt.seen.values().next().value!);
-          this.minutes=rebuilt.minutes;this.seen=rebuilt.seen;this.dirty=rebuilt.dirty;this.ready=true;
+          const retained:string[]=[];let discard=Math.max(0,rebuilt.seen.size-100_000);
+          for(const key of rebuilt.seen){if(discard>0){discard--;continue;}retained.push(key);}
+          this.minutes=rebuilt.minutes;this.seen=new Set(retained);this.recentKeys=retained;this.nextKey=retained.length%100_000;this.dirty=rebuilt.dirty;this.ready=true;
           this.buffered = []; return;
         }
         if (typeof next !== "string" || tokens.has(next)) throw Error("incomplete_chart_trades");
         tokens.add(next); token = next;
       }
       throw Error("incomplete_chart_trades");
-    } catch { if (generation === this.generation) { this.ready = false; this.minutes.clear(); this.seen.clear(); this.dirty.clear(); this.retryAt = Date.now() + 5_000; } }
+    } catch { if (generation === this.generation) { this.ready = false; this.minutes.clear(); this.seen.clear(); this.recentKeys=[];this.nextKey=0;this.dirty.clear(); this.retryAt = Date.now() + 5_000; } }
     finally { if (generation === this.generation) this.warming = false; }
   }
   covers(time:number):boolean {return this.ready&&this.daily&&this.start/1000===time;}
