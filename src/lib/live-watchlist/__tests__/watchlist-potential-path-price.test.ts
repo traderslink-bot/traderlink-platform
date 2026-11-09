@@ -31,3 +31,18 @@ it("does not call a fixed reference Not live when the feed is connected", () => 
   expect(html).not.toContain("Not live");
   expect(html).toContain("Levels use this fixed price");
 });
+
+it("identifies HOD on the visible card and ladder without leaking concealed levels", () => {
+  const high = { side: "resistance" as const, price: 24.74, distancePct: 0.126, sourceLabel: "intraday", label: "24.74 (+12.6%, weak, intraday)" };
+  const hodSymbol = { ...symbol, levelMap: { ...symbol.levelMap!, resistanceLevels: [high], nearestResistance: high,
+    referenceLevels: [{ key: "hod" as const, label: "HOD", price: 24.74, kind: "session" as const }] } };
+  const props = { symbol: hodSymbol, fullLadderCard: { source: "test", title: "Full ladder", body: "Resistance:\n24.74 (+12.6%, weak, intraday)", updatedAt: checkedAt, priceWhenPosted: 22 } };
+  const html = renderToStaticMarkup(createElement(WatchlistV2PotentialPathCard, props));
+  expect(html).toContain("High of day / session reference");
+  expect(html).toContain("A new high alone does not establish resistance");
+  expect(html).toContain("High of day (session reference)");
+  expect(html).not.toContain("Nearest resistance</span>");
+  const locked = renderToStaticMarkup(createElement(WatchlistV2PotentialPathCard, { ...props, symbol: { ...hodSymbol, premiumLevelsAllowed: false } }));
+  expect(locked).not.toContain("24.74");
+  expect(locked).not.toContain("A new high alone");
+});

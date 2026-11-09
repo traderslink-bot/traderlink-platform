@@ -1,5 +1,30 @@
 # Watchlist Alpaca independent QA
 
+## November 9 — Potential Path session-high reference
+
+Owner reported that CKX's only resistance kept following its latest HOD. This
+slice identifies a mapped intraday/session-high row matching the saved HOD as
+"High of day / session reference", including the nearest-level heading and full
+ladder. A short notice explains that a new high alone does not establish
+resistance and that a retest's reaction matters. Independently mapped daily/4h
+resistance is not relabelled; prices and level selection are not changed. The
+notice and prices remain concealed under the existing levels access restriction.
+Help now documents the HOD distinction, paired automatic price-discovery guard,
+durable daily usage cap and review-control loading behavior.
+
+Two focused Vitest files passed, nine tests including card markup, ladder,
+historical-level preservation and premium concealment. No production build was
+started. Full TypeScript initially exhausted Node's default 2 GiB heap; a bounded
+4 GiB rerun completed with eight diagnostics in unchanged scanner test files
+(foundation, scroll-styles, live-feed, runtime and snapshot-pacing). Two new card
+fixture diagnostics were corrected by supplying its required source field.
+Focused TypeScript over the changed card/helper/Help/tests and their imports
+passed, as did targeted ESLint. The focused command uses the existing tsconfig
+options and Next's global declarations; no config or dependency was changed.
+Full-repository TypeScript is not claimed green. Paired Runtime evidence is in docs/watchlist-alpaca-status-qa.md in the
+assigned runtime worktree. No live analyses/data/settings or posts were changed.
+This is a local source correction, not a deployed or owner-accepted visual claim.
+
 ## November 9 follow-up corrections (supersedes old-trade display rule below)
 
 Owner clarified that Not live means the feed is not connected, not that a halted

@@ -5,6 +5,8 @@ import {
   buildWatchlistV2LevelRows,
   formatWatchlistV2LevelDistance,
   formatWatchlistV2LevelPrice,
+  isSessionHighReference,
+  labelSessionHighInLadder,
 } from "../watchlist-v2-levels";
 
 function level(
@@ -20,6 +22,24 @@ function level(
     label: `${price.toFixed(4)} (${side})`,
   };
 }
+
+it("labels an intraday HOD reference without relabelling independent historical resistance", () => {
+  const high = { ...level("resistance", 24.74), sourceLabel: "intraday" };
+  const history = { ...level("resistance", 28), sourceLabel: "daily confluence" };
+  const map = { currentPrice: 22, rangeState: "normal" as const, nearestSupport: null,
+    nearestResistance: high, nextStrongSupport: null, nextStrongResistance: history,
+    supportLevels: [], resistanceLevels: [high, history],
+    referenceLevels: [{ key: "hod" as const, kind: "session" as const, label: "HOD", price: 24.74 }] };
+  expect(isSessionHighReference(high, map)).toBe(true);
+  expect(isSessionHighReference({ ...high, sourceLabel: "daily confluence" }, map)).toBe(false);
+  expect(isSessionHighReference({ ...high, timeframes: ["daily"] }, map)).toBe(false);
+  expect(isSessionHighReference(history, map)).toBe(false);
+  expect(isSessionHighReference({ ...high, price: 24.7 }, map)).toBe(false);
+  expect(buildWatchlistV2LevelRows(map).resistance[0]?.isSessionHighReference).toBe(true);
+  const body = labelSessionHighInLadder("Resistance:\n24.74 (+12.6%, weak, intraday)\n28.00 (daily confluence)\nSupport:\n21.00", map);
+  expect(body).toContain("24.74 (+12.6%, weak, intraday) — High of day (session reference)");
+  expect(body).toContain("28.00 (daily confluence)\nSupport:\n21.00");
+});
 
 describe("buildWatchlistV2LevelRows", () => {
   it("returns every curated support and resistance level without applying a display cap", () => {

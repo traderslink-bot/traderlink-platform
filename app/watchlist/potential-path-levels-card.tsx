@@ -16,6 +16,9 @@ import { formatLevelMarketDataProvenance } from "@/src/lib/live-watchlist/live-w
 import { NO_HIGHER_RESISTANCE } from "@/src/lib/live-watchlist/resistance-evidence";
 import {
   buildWatchlistV2LevelRows,
+  isSessionHighReference,
+  labelSessionHighInLadder,
+  SESSION_HIGH_NOTICE,
   formatWatchlistV2LevelDistance,
   formatWatchlistV2LevelPrice,
   type WatchlistV2LevelRow,
@@ -63,6 +66,7 @@ function stripInternalAtrLevelWording(value: string): string {
 }
 
 function formatLevelMeta(level: WatchlistV2LevelRow): string {
+  if (level.isSessionHighReference) return "High of day / session reference";
   return [level.strengthLabel, level.sourceLabel].filter(Boolean).join(" / ") || "level";
 }
 
@@ -130,10 +134,12 @@ function WatchlistV2NearestLevels({ levelMap }: { levelMap: LiveWatchlistLevelMa
         </strong>
       </div>
       <div className="watchlist-v2-nearest-item" data-side="resistance">
-        <span>Nearest resistance</span>
+        <span>{levelMap.nearestResistance && isSessionHighReference(levelMap.nearestResistance, levelMap) ? "High of day" : "Nearest resistance"}</span>
         <strong>
           {levelMap.nearestResistance
-            ? stripInternalAtrLevelWording(levelMap.nearestResistance.label)
+            ? isSessionHighReference(levelMap.nearestResistance, levelMap)
+              ? `${formatPrice(levelMap.nearestResistance.price)} (session reference)`
+              : stripInternalAtrLevelWording(levelMap.nearestResistance.label)
             : "n/a"}
         </strong>
       </div>
@@ -238,11 +244,13 @@ export function WatchlistV2PotentialPathCard({
   const levelMap = symbol.levelMap ?? null;
   const overnight = livePriceAvailable ? null : normalizeOvernightLevelReference(levelMap?.overnightReference);
   const levelRows = buildWatchlistV2LevelRows(levelMap);
-  const fullLadderBody = fullLadderCard
+  const rawFullLadderBody = fullLadderCard
     ? cleanGenericCardBody(fullLadderCard)
         .replace(/\bheavy\b/gi, "strong")
         .replace(/\blight\b/gi, "weak")
     : null;
+  const fullLadderBody = rawFullLadderBody && levelMap ? labelSessionHighInLadder(rawFullLadderBody, levelMap) : rawFullLadderBody;
+  const hasSessionHigh = levelRows.resistance.some(level => level.isSessionHighReference);
 
   return (
     <div className="watchlist-v2-potential-path-card">
@@ -293,8 +301,9 @@ export function WatchlistV2PotentialPathCard({
             {showNearestLevels ? <WatchlistV2NearestLevels levelMap={levelMap} /> : null}
             <div className="watchlist-v2-level-columns">
               <WatchlistV2LevelSection title="Support" side="support" levels={levelRows.support} />
-              <WatchlistV2LevelSection title="Resistance" side="resistance" levels={levelRows.resistance} unavailable={levelMap.dataQuality?.status === "unavailable"} />
+              <WatchlistV2LevelSection title={hasSessionHigh ? "Resistance / session high" : "Resistance"} side="resistance" levels={levelRows.resistance} unavailable={levelMap.dataQuality?.status === "unavailable"} />
             </div>
+            {hasSessionHigh ? <p className="watchlist-v2-level-empty" role="note">{SESSION_HIGH_NOTICE}</p> : null}
             {levelRows.resistance.length > 0 && typeof symbol.cards.nearestSupportResistance?.metadata?.resistanceHistoryNotice === "string" ? <p className="watchlist-v2-level-empty">{symbol.cards.nearestSupportResistance.metadata.resistanceHistoryNotice}</p> : null}
           </>
         ) : (
