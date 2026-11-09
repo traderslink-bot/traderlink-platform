@@ -53,6 +53,7 @@ export type ScannerAuditBatchReceipt = Readonly<{
 }>;
 
 export type ScannerAuditCycle = Readonly<{
+  timingMode?:"sampled_5s"|"alpaca_events_1s";
   schemaVersion: typeof SCANNER_AUDIT_SCHEMA_VERSION;
   cycleId: string;
   runtimeInstanceId: string;

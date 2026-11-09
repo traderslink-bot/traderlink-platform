@@ -50,7 +50,7 @@ export class AlpacaSessionBook {
   private readonly seen = new Map<string, true>();
   private workers = 0;
   private generation = 0;
-  constructor(private readonly rest: AlpacaRestData) {}
+  constructor(private readonly rest: AlpacaRestData,private readonly changed?:(symbol:string)=>void) {}
   invalidate() {
     this.generation++;
     for (const entry of this.entries.values()) { entry.state.complete = false; entry.overflow = true; }
@@ -123,7 +123,7 @@ export class AlpacaSessionBook {
         this.seen.set(key, true);
       }
       while (this.seen.size > 100_000) this.seen.delete(this.seen.keys().next().value!);
-      rebuilt.complete = true; entry.state = rebuilt; entry.coveredThrough = cutoff;
+      rebuilt.complete = true; entry.state = rebuilt; entry.coveredThrough = cutoff;this.changed?.(symbol);
     } catch { /* Never substitute a partial prefix as the full session counter. */ }
     finally { entry.pending = []; entry.cutoff = null; entry.retryAt = Date.now() + 30_000; }
   }

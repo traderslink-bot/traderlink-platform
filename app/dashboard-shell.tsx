@@ -397,6 +397,7 @@ export function DashboardShell({
 }) {
   const theme = useTheme();
   const pathname = usePathname();
+  const compactMarketPage = ["/scanners", "/screeners", "/admin/scanners"].includes(pathname);
 
   const [loadedUnreadCounts, setLoadedUnreadCounts] = useState<{
     pathname: string; counts: PressReleaseUnreadCounts;
@@ -499,9 +500,10 @@ export function DashboardShell({
               (item.href !== "/scanner" || scannerEarlyAccess) &&
               (item.href !== "/market-news/general" || generalMarketNewsAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
+              (item.href !== "/scanners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/screeners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&
-              (item.href !== "/admin/screeners" || watchlistAdminNavigationAccess) &&
+              (item.href !== "/admin/scanners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/market-data" || ownerMarketDataAccess) &&
               (item.href !== "/reverse-splits" || ownerMarketDataAccess)
             ))),
@@ -974,10 +976,14 @@ export function DashboardShell({
           component="main"
           sx={{
             minWidth: 0,
-            pb: { xs: "max(16px, env(safe-area-inset-bottom))", sm: 2.5 },
+            pb: compactMarketPage ? { xs: "max(8px, env(safe-area-inset-bottom))", sm: 1 } : { xs: "max(16px, env(safe-area-inset-bottom))", sm: 2.5 },
             position: "relative",
-            px: { xs: 1.5, sm: 2.5, xl: 3 },
-            pt: { xs: 2, sm: 2.5 },
+            px: compactMarketPage ? 1 : { xs: 1.5, sm: 2.5, xl: 3 },
+            pt: compactMarketPage ? 1 : { xs: 2, sm: 2.5 },
+            ...(compactMarketPage ? {
+              "--market-chart-height": "calc(100dvh - 80px - env(safe-area-inset-top, 0px) - max(0px, env(safe-area-inset-bottom, 0px) - 8px))",
+              '& [data-traderlink-platform-dashboard-page] > :not(style) ~ :not(style)': { marginTop: 0 },
+            } : {}),
             width: "100%",
           }}
         >

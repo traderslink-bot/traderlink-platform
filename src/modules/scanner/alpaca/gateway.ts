@@ -4,6 +4,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { alpacaCandle, chartSymbol, type Candle } from "./candles";
 import { AlpacaRestData, parseHistoryRequest } from "./rest-data";
 import { AlpacaSessionBook, alpacaMinuteTradeRules } from "./session-book";
+import { ScannerStreamHub } from "./scanner-stream-hub";
 import { easternClock } from "../live/sessions";
 
 type Client = { symbol: string; response: ServerResponse };
@@ -12,10 +13,12 @@ type GatewayOptions = { keyId: string; secretKey: string; token: string };
 // This service deliberately knows no trading/account-management API URL.
 export function createAlpacaGateway(options: GatewayOptions) {
   const clients = new Set<Client>();
+  const priceUpdates=new Map<string,{price:number;time:string}>();
+  const priceTimer=setInterval(()=>{for(const client of clients){const price=priceUpdates.get(client.symbol);if(price)send(client,"price",price);}priceUpdates.clear();},250);priceTimer.unref();
   const cache = new Map<string, { at: number; bars: Candle[] }>();
   const pending = new Map<string, Promise<Candle[]>>();
   const rest = new AlpacaRestData(options);
-  const sessionBook = new AlpacaSessionBook(rest);
+  const sessionBook = new AlpacaSessionBook(rest,symbol=>scannerHub.mark(symbol));
   const leases = new Map<string, number>();
   const quotes = new Map<string, Record<string, unknown>>();
   const digest = (value: string) => createHash("sha256").update(value).digest();
@@ -28,10 +31,29 @@ export function createAlpacaGateway(options: GatewayOptions) {
   };
   const status = (state: string) => { for (const client of clients) send(client, "status", { state }); };
   const symbols = () => [...new Set([...clients].map(client => client.symbol).concat([...leases.keys()]))];
+  const snapshotQueue=new Set<string>();let bootstrapping=false;
+  async function bootstrapSnapshots(){
+    if(bootstrapping)return;bootstrapping=true;
+    try{while(snapshotQueue.size&&!stopped){
+      const batch=[...snapshotQueue].slice(0,200);for(const symbol of batch)snapshotQueue.delete(symbol);
+      try{
+        const snapshots=await rest.get("/v2/stocks/snapshots",new URLSearchParams({symbols:batch.join(","),feed:"sip"})) as Record<string,Record<string,unknown>>;
+        for(const symbol of batch)if(leases.has(symbol)&&snapshots[symbol]){quotes.set(symbol,{...snapshots[symbol],...(quotes.get(symbol)??{})});scannerHub.mark(symbol);}
+      }catch{/* Missing baselines remain unavailable; the maintenance sweep retries. */}
+    }}finally{bootstrapping=false;}
+  }
+  const scannerHub=new ScannerStreamHub((requested,regularClose)=>({feed:"sip",connected:authenticated,
+    snapshots:Object.fromEntries(requested.map(symbol=>{
+      const quote=quotes.get(symbol);if(!quote)return [symbol,null];
+      const daily=quote.dailyBar as {t?:string;c?:number}|undefined,previous=quote.prevDailyBar as {t?:string;c?:number}|undefined,bidAsk=quote.latestQuote as {t?:string;bp?:number;ap?:number}|undefined;
+      return [symbol,{dailyBar:daily?{t:daily.t,c:daily.c}:undefined,prevDailyBar:previous?{t:previous.t,c:previous.c}:undefined,latestQuote:bidAsk?{t:bidAsk.t,bp:bidAsk.bp,ap:bidAsk.ap}:undefined}];
+    })),
+    sessionTotals:Object.fromEntries(requested.map(symbol=>[symbol,subscribedTrades.has(symbol)?sessionBook.read(symbol,easternClock(Date.now()).date,regularClose):null]))
+  }) as import("./scanner-snapshots").AlpacaQuoteReply,requested=>{for(const symbol of requested){leases.set(symbol,Date.now()+45_000);if(!quotes.has(symbol)||(!quotes.get(symbol)?.prevDailyBar&&!quotes.get(symbol)?.dailyBar))snapshotQueue.add(symbol);}void bootstrapSnapshots();});
   function subscribe() {
     if (authenticated && socket?.readyState === WebSocket.OPEN) {
       const wanted = symbols();
-      socket.send(JSON.stringify({ action: "subscribe", trades: [...leases.keys()], quotes: [...leases.keys()], bars: wanted, updatedBars: wanted, dailyBars: wanted }));
+      socket.send(JSON.stringify({ action: "subscribe", trades: wanted, quotes: [...leases.keys()], bars: wanted, updatedBars: wanted, dailyBars: wanted }));
     }
   }
   function connect() {
@@ -46,13 +68,17 @@ export function createAlpacaGateway(options: GatewayOptions) {
       try { messages = JSON.parse(String(event.data)); } catch { return; }
       if (!Array.isArray(messages)) return;
       for (const message of messages) {
+        if (["t", "q", "b", "u", "d", "c", "x"].includes(message.T) && typeof message.S === "string") scannerHub.mark(message.S);
         if (["t", "c", "x"].includes(message.T)) sessionBook.observe(message);
-        if ((message.T === "c" || message.T === "x") && leases.has(message.S)) quotes.delete(message.S);
+        if(message.T === "t" && alpacaMinuteTradeRules(message).known && alpacaMinuteTradeRules(message).prices && Number.isFinite(message.p) && message.p>0){
+          if([...clients].some(client=>client.symbol===message.S)){const prior=priceUpdates.get(message.S);if(!prior||Date.parse(message.t)>=Date.parse(prior.time))priceUpdates.set(message.S,{price:message.p,time:message.t});}
+        }
+        if ((message.T === "c" || message.T === "x") && leases.has(message.S)) {quotes.delete(message.S);snapshotQueue.add(message.S);void bootstrapSnapshots();}
         if (message.T === "success" && message.msg === "authenticated") {
           clearTimeout(authTimeout); authenticated = true; retryCount = 0; subscribe();
         } else if (message.T === "subscription") {
           subscribedTrades = new Set(Array.isArray(message.trades) ? message.trades : []);
-          status("connected");
+          scannerHub.refresh();status("connected");
         } else if (message.T === "error") {
           status("unavailable"); candidate.close();
         } else if ((message.T === "t" || message.T === "q") && leases.has(message.S)) {
@@ -79,7 +105,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
       if (socket !== candidate) return;
       socket = null; authenticated = false;
       subscribedTrades.clear();
-      quotes.clear();
+      quotes.clear();priceUpdates.clear();
       sessionBook.invalidate();
       if (!stopped && symbols().length) {
         status("reconnecting");
@@ -124,9 +150,18 @@ export function createAlpacaGateway(options: GatewayOptions) {
   const server = createServer(async (request, response) => {
     response.setHeader("Cache-Control", "no-store");
     if (!timingSafeEqual(digest(request.headers.authorization ?? ""), digest(`Bearer ${options.token}`))) { response.writeHead(401); response.end(); return; }
-    if (request.method !== "GET") { response.writeHead(405); response.end(); return; }
     const url = new URL(request.url ?? "/", "http://localhost");
     try {
+      if(url.pathname === "/scanner-stream" && request.method === "POST"){
+        let body="";
+        for await(const chunk of request){body+=chunk.toString();if(body.length>131_072)throw Error("invalid_symbol");}
+        const input=JSON.parse(body) as {symbols:unknown;regularClose:unknown};
+        if(!Array.isArray(input.symbols)||!input.symbols.length||input.symbols.length>4000||![780,960].includes(Number(input.regularClose)))throw Error("invalid_symbol");
+        const requested=input.symbols.map(value=>chartSymbol(String(value)));
+        if(new Set(requested).size!==requested.length||new Set([...leases.keys(),...requested]).size>4500)throw Error("invalid_symbol");
+        scannerHub.add(requested,Number(input.regularClose),response);subscribe();connect();return;
+      }
+      if(request.method !== "GET"){response.writeHead(405);response.end();return;}
       if (url.pathname === "/health") { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ ready: true, feed: "sip" })); return; }
       if (url.pathname === "/history") {
         const result = await rest.history(parseHistoryRequest(url.searchParams));
@@ -186,7 +221,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
       response.end(JSON.stringify({ error: status === 400 ? "invalid_symbol" : status === 429 ? "busy" : "provider_unavailable" }));
     }
   });
-  return { server, close() { stopped = true; clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
+  return { server, close() { stopped = true; clearInterval(priceTimer); scannerHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
 }
 
 export async function readPrivateJson(path: string): Promise<Record<string, string>> {

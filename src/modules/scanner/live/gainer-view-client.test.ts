@@ -9,10 +9,11 @@ vi.mock("@/app/dashboard-template", () => ({
     createElement("section", null, createElement("h2", null, title), action, children),
   DashboardPrimaryAction: ({ children }: { children: ReactNode }) => createElement("button", null, children),
 }));
-vi.mock("@/app/(dashboard)/charts/alpaca-lightweight-chart", () => ({ AlpacaLightweightChart: () => null }));
-vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({ ScreenerPressReleaseBoard: () => createElement("div", {"data-pr-instance": true}, "PR Scanner") }));
+vi.mock("@/app/(dashboard)/charts/alpaca-lightweight-chart", () => ({ AlpacaLightweightChart: ({symbol}:{symbol:string}) => createElement("div",{"data-chart-symbol":symbol}) }));
+vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({ useMarketEventsData: () => ({}), ScreenerPressReleaseBoard: () => createElement("div", {"data-pr-instance": true}, "PR Scanner") }));
 vi.mock("@/app/(dashboard)/screeners/screener-market-halts-card", () => ({ ScreenerMarketHaltsCard: () => createElement("div", {"data-halt-instance": true}, "Halt Alerts") }));
-import { GAINERS_EXPLANATION, LiveScreenersClient } from "@/app/(dashboard)/screeners/live-screeners-client";
+import { availableScannerGridHeight, GAINERS_EXPLANATION, LiveScreenersClient } from "@/app/(dashboard)/screeners/live-screeners-client";
+import { DEFAULT_SCANNER_WORKSPACE_LAYOUT } from "@/app/(dashboard)/screeners/scanner-workspace-layout";
 
 beforeAll(() => { (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true; });
 let root: Root | undefined;
@@ -77,7 +78,7 @@ describe("actual Top Gainers card polling and tab interaction", () => {
 function momentumModel(post: number | null | undefined): ScannerReadModel {
   const row: LiveScannerRow = { symbol: "TEST", exchange: "NASDAQ", company: "Synthetic test company", price: 2.4,
     sessionGain: (2.4/3.17-1)*100, ...(post===undefined?{}:{postMarketGain:post}),
-    volume: 100000, dollarVolume: 240000, marketCap: 1000000, marketCapAtCollection: 1000000, float: 500000,
+    country: "CA", volume: 100000, dollarVolume: 240000, marketCap: 1000000, marketCapAtCollection: 1000000, float: 500000,
     relativeVolume: 2, dayHigh: 2.6, dayLow: 1.5, offHighPercent: -7.69,
     floatRetrievedAtUtc: "2026-11-02T21:00:00Z", spreadPercent: 1,
     providerAtUtc: "2026-11-02T21:00:10Z", receivedAtUtc: "2026-11-02T21:00:10Z",
@@ -150,32 +151,17 @@ describe("Momentum context rendering", () => {
 });
 
 describe("compact scanner grid and full view", () => {
-  it("reserves the news slot without an article and keeps the production latest-article selection",async()=>{
-    const initial=momentumModel(42),row=initial.momentum!.rows[0]!;
-    const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
-    const emptyControls=page.container.querySelector('[data-compact-row-controls]')!;
-    expect(getComputedStyle(emptyControls).gridTemplateColumns).toBe("20px 20px 12px");
-    expect(getComputedStyle(emptyControls.children[1]!).width).toBe("20px");
-    expect(emptyControls.children[1]!.querySelector('button')).toBeNull();
-    const news=[{id:"latest",headline:"Latest filing",createdAt:"2026-11-02T21:00:00Z",url:"https://example.com/latest",typeLabel:"SEC filing"},{id:"earlier",headline:"Earlier release",createdAt:"2026-11-02T20:00:00Z",url:"https://example.com/earlier",typeLabel:"Press release"}];
-    const rows={rows:[{...row,news}],focus:[],total:1};
-    await page.update({...initial,gainers:rows,dayGainers:rows,momentum:rows});
-    expect(page.container.querySelector('[aria-label="Open SEC filing: Latest filing"]')?.textContent).toBe("🗞️");
-    expect(page.container.querySelector('[aria-label="Open Press release: Earlier release"]')).toBeNull();
-  });
-  it("orders Vol, Float and dollar volume consistently in compact and full gainers",async()=>{
-    const initial=momentumModel(42),page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
-    const compactHeaders=[...page.container.querySelectorAll('table[aria-label="Top Gainers compact stocks"] thead th')].map(cell=>cell.textContent);
-    expect(compactHeaders.slice(4,7)).toEqual(["Vol","Float","$ × Vol"]);
-    const full=await openFullView(page.container,"Top Gainers");
-    const fullHeaders=[...full.querySelectorAll('table thead th')].map(cell=>cell.textContent);
-    expect(fullHeaders.slice(4,7)).toEqual(["Vol","Float","$ × Vol"]);
+  it("fills the available desktop viewport while preserving a usable two-row minimum",()=>{
+    expect(availableScannerGridHeight(900,100)).toBe(792);
+    expect(availableScannerGridHeight(440,100)).toBe(452);
   });
   it("uses the approved gainer explanation",()=>{expect(GAINERS_EXPLANATION).toBe("This gainer list is not a standard list where percentage increase determines inclusion. The scanner qualifies candidates according to total vol, dollar vol, min gain and max spread. Day Gainers are ranked by gain from yesterday’s regular session close. Post market Gainers are ranked by gain from today’s regular close.");});
   it("keeps trailing zeroes in every scanner price",async()=>{const initial=momentumModel(42),row={...initial.momentum!.rows[0]!,price:.1,dayHigh:.2,dayLow:.1};const page=await mount({...initial,gainers:{rows:[row],focus:[],total:1},dayGainers:{rows:[row],focus:[],total:1},momentum:{rows:[row],focus:[],total:1}});expect(page.container.textContent).toContain("$0.10");expect([...page.container.querySelectorAll("td")].some(cell=>cell.textContent==="$0.1")).toBe(false);});
   it("renders Gainers and Momentum as separate cards without a combined scanner selector", async () => {
     const page = await mount(model("regular"));
     expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
+    expect([...page.container.querySelectorAll('[data-scanner-workspace-slot]')].map(card=>card.getAttribute("data-scanner-workspace-slot"))).toEqual(["slot-1","slot-2","slot-3","slot-4","slot-5"]);
+    expect(DEFAULT_SCANNER_WORKSPACE_LAYOUT.assignments["ticker-workspace"]).toBe("slot-6");
     expect(page.container.querySelector('[aria-label="Live screener"]')).toBeNull();
     expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
     expect([...page.container.querySelectorAll('[data-scanner-workspace-card="momentum"] h2')].some(heading=>heading.textContent==="Momentum")).toBe(true);
@@ -189,18 +175,20 @@ describe("compact scanner grid and full view", () => {
     for (const [label,columnCount] of [["Top Gainers",10],["Momentum",12]] as const) {
       const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
       expect(table.querySelectorAll('thead th').length).toBe(columnCount);
+      expect(table.querySelector('thead')?.textContent).not.toContain('$ × Vol');
+      if(label==='Top Gainers'){expect(table.querySelector('thead th:last-child')?.textContent).toBe('Country');expect(table.querySelector('tbody tr td:last-child [aria-label="Canada flag"]')).not.toBeNull();}
       expect([...table.querySelectorAll('thead th')].slice(1,4).map(cell=>cell.textContent)).not.toContain("News");
       expect(table.querySelector('thead th')?.getAttribute("aria-label")).toBe("Chart, news and details");
       const row = table.querySelector('tbody tr')!;
       const controls = row.querySelector('[data-compact-row-controls]')!;
       expect(getComputedStyle(controls).gridTemplateColumns).toBe("20px 20px 12px");
-      expect(getComputedStyle(controls).columnGap).toBe("4px");
+      expect(getComputedStyle(controls).columnGap).toBe("8px");
       expect(controls.textContent).toContain("🗞️");
       expect(controls.textContent).toContain("+");
       await act(async () => row.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter',bubbles:true})));
       expect(row.getAttribute('aria-expanded')).toBe('true');
       expect(table.textContent).toContain('Float');
-      expect(table.textContent).toContain('Turnover');
+      expect(table.textContent).toContain(label==='Top Gainers'?'T/O':'Turnover');
       expect(table.querySelector(`td[colspan="${columnCount}"]`)).not.toBeNull();
     }
     expect(page.fetch).toHaveBeenCalledTimes(1);
@@ -260,3 +248,92 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
     expect(page.container.textContent).not.toContain("Active 4:00am - 8:00pm est");
   });
 });
+
+describe("alternative stock card view", () => {
+  it("switches each scanner independently without fetching and retains all displayed metrics", async () => {
+    const initial=momentumModel(undefined);
+    const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
+    const switchView=async(label:string,view:string)=>{
+      const group=page.container.querySelector(`[aria-label="${label} view"]`)!;
+      const button=[...group.querySelectorAll('button')].find(button=>button.textContent===view)!;
+      await act(async()=>button.click());
+    };
+    await switchView("Top Gainers","Cards");
+    const cards=page.container.querySelector('[aria-label="Top Gainers stock cards"]')!;
+    expect(cards).not.toBeNull();
+    expect(cards.querySelector('[aria-label="Canada flag"]')).not.toBeNull();
+    expect([...cards.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Price','Gain %','Vol','Float','T/O','RVOL','HOD']);
+    expect(page.container.querySelector('table[aria-label="Momentum compact stocks"]')).not.toBeNull();
+    await switchView("Momentum","Cards");
+    const momentum=page.container.querySelector('[aria-label="Momentum stock cards"]')!;
+    expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Price','Day %','Float','Spread','1min %','5min %','1min Vol','5min Vol','1min ↑','5min ↑']);
+    const expand=momentum.querySelector('[aria-label="Expand TEST card details"]') as HTMLElement;
+    await act(async()=>expand.click());
+    expect(momentum.textContent).toContain('HOD price');
+    await switchView("Top Gainers","Table");
+    expect(page.container.querySelector('table[aria-label="Top Gainers compact stocks"]')).not.toBeNull();
+    expect(page.container.querySelector('[aria-label="Momentum stock cards"]')).not.toBeNull();
+    expect(page.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("two-row table view", () => {
+  it("keeps ticker in the first row and second-row controls under the Price column", async () => {
+    const initial=momentumModel(undefined);
+    const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
+    for(const label of ['Top Gainers','Momentum']) {
+      const group=page.container.querySelector(`[aria-label="${label} view"]`)!;
+      const choice=[...group.querySelectorAll('button')].find(button=>button.textContent==='Two rows')!;
+      await act(async()=>choice.click());
+      const table=page.container.querySelector(`table[aria-label="${label} two-row stocks"]`)!;
+      expect(table.querySelector('thead th')?.textContent).toBe('Ticker');
+      if(label==='Top Gainers')expect(table.querySelector('thead')?.textContent).not.toContain('$ × Vol');
+      const first=table.querySelector('tbody tr')!;
+      expect(first.querySelector('[data-compact-row-controls]')).toBeNull();
+      expect(first.querySelector('td')?.textContent).toContain('TEST');
+      const second=first.nextElementSibling!;
+      expect(second.getAttribute('data-two-row-tools')).toBe('TEST');
+      expect(second.querySelector('td')?.textContent).toBe('');
+      if(label==='Top Gainers')expect(second.querySelector('td [aria-label="Canada flag"]')).not.toBeNull();
+      expect(second.querySelector('td')?.querySelector('[data-compact-row-controls]')).toBeNull();
+      expect(second.querySelector('[aria-label="Open TEST chart only"]')).not.toBeNull();
+      const plus=second.querySelector('[aria-label="Expand TEST two-row details"]') as HTMLElement;
+      await act(async()=>plus.click());
+      expect(first.getAttribute('aria-expanded')).toBe('true');
+      expect(second.nextElementSibling?.textContent).toContain('HOD price');
+    }
+    expect(page.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+ describe("multi-chart ticker workspace",()=>{
+  it("retains four charts and screener selection, selects ticker details, and frees a slot on close",async()=>{
+    const initial=momentumModel(undefined),template=initial.momentum.rows[0];
+    const results={...initial.momentum,rows:['TEST','AAA','BBB','CCC','DDD'].map(symbol=>({...template,symbol})),total:5};
+    const page=await mount({...initial,gainers:results,dayGainers:results});
+    await act(async()=>{(page.container.querySelector('[aria-label="Open TEST chart only"]') as HTMLElement).click();});
+    const aside=()=>document.querySelector('aside[aria-label="Chart workspace details"]')!;
+    const tab=()=>[...aside().querySelectorAll('[role=tab]')].find(el=>el.textContent==='Scanners') as HTMLElement;
+    await act(async()=>tab().click());
+    const firstChart=document.querySelector('[data-workspace-chart="TEST"] [data-chart-symbol]');
+    for(const symbol of ['AAA','BBB','CCC']) {
+      await act(async()=>{(aside().querySelector(`[aria-label="Add ${symbol} chart"]`) as HTMLElement).click();});
+      await act(async()=>tab().click());
+    }
+    expect(document.querySelectorAll('[data-workspace-chart]').length).toBe(4);
+    expect(document.querySelector('[data-workspace-chart="TEST"] [data-chart-symbol]')).toBe(firstChart);
+    expect(tab().getAttribute('aria-selected')).toBe('true');
+    await act(async()=>{(aside().querySelector('[aria-label="Add DDD chart"]') as HTMLElement).click();});
+    expect(document.querySelectorAll('[data-workspace-chart]').length).toBe(4);expect(document.body.textContent).toContain('Four charts are open');
+    await act(async()=>{([...aside().querySelectorAll('[role=tab]')].find(el=>el.textContent==='AAA') as HTMLElement).click();});
+    expect(document.querySelector('[data-workspace-chart="AAA"]')?.getAttribute('data-selected')).toBe('true');
+    const panel=[...aside().querySelectorAll('[role=tabpanel]')].find(el=>!(el as HTMLElement).hidden)!;
+    expect(aside().querySelector('[data-levels-action-slot]')?.textContent).toContain('Generate Levels');expect(panel.textContent).toContain('Recent News');
+    await act(async()=>{(document.querySelector('[aria-label="Close BBB chart"]') as HTMLElement).click();});
+    await act(async()=>tab().click());
+    await act(async()=>{(aside().querySelector('[aria-label="Add DDD chart"]') as HTMLElement).click();});
+    expect(document.querySelector('[data-workspace-chart="DDD"]')).not.toBeNull();expect(document.querySelectorAll('[data-workspace-chart]').length).toBe(4);
+    await act(async()=>{(document.querySelector('[aria-label="Close chart"]') as HTMLElement).click();});
+    expect(document.querySelector('[data-workspace-chart]')).toBeNull();
+  });
+ });

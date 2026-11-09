@@ -5,7 +5,7 @@ import { afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("@/app/dashboard-template",()=>({DashboardPanel:({children}:{children:ReactNode})=>createElement("section",null,children)}));
 vi.mock("@/app/(dashboard)/press-releases/press-release-actions",()=>({markPressReleaseRead:vi.fn()}));
-import { pressReleaseMarketCapValue, ScreenerPressReleaseBoard, selectCompactArticles, tradeResumeHasPassedToday } from "@/app/(dashboard)/screeners/screener-press-release-board";
+import { pressReleaseMarketCapValue, ScreenerPressReleaseBoard, useMarketEventsData, selectCompactArticles, tradeResumeHasPassedToday } from "@/app/(dashboard)/screeners/screener-press-release-board";
 
 beforeAll(()=>{(globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;});
 let root:Root|null=null;
@@ -65,8 +65,12 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   });
   vi.stubGlobal("fetch",fetch);
   const onOpenChart=vi.fn();
+  function TestMarketEvents() {
+    const data=useMarketEventsData(false);
+    return createElement(ScreenerPressReleaseBoard,{onOpenChart,data});
+  }
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
-  await act(async()=>{root!.render(createElement(ScreenerPressReleaseBoard,{onOpenChart}));});
+  await act(async()=>{root!.render(createElement(TestMarketEvents));});
   await act(async()=>{await Promise.resolve();await Promise.resolve();});
 
   expect(container.textContent).toContain("Market Events");
@@ -87,17 +91,17 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(prRegion).not.toBeNull();
   expect(getComputedStyle(haltRegion).maxHeight).toBe("90px");
   expect(getComputedStyle(haltRegion).marginBottom).toBe("10px");
-  expect(getComputedStyle(container.querySelector('[data-market-events-fill-card]') as HTMLElement).height).toBe(`${window.innerHeight-12}px`);
-  expect(getComputedStyle(prRegion).maxHeight).toBe("126px");
+  expect(getComputedStyle(container.querySelector('[data-market-events-fill-card]') as HTMLElement).height).toBe("auto");
+  expect(getComputedStyle(prRegion).maxHeight).toBe("none");
   expect(getComputedStyle(prRegion).overflowX).toBe("auto");
   expect(getComputedStyle(prRegion).overflowY).toBe("auto");
   expect(prRegion.textContent).not.toMatch(/\d{1,2}:\d{2} (?:AM|PM) ET/u);
-  await act(async()=>{(container.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click();});
-  expect(onOpenChart).toHaveBeenCalledWith({symbol:"AAA",exchange:"NASDAQ"});
-  await act(async()=>{(container.querySelector('[aria-label="Open HALT chart"]') as HTMLElement).click();});
-  expect(onOpenChart).toHaveBeenCalledWith({symbol:"SPY",exchange:"AMEX"});
+  await act(async()=>{(container.querySelector('[aria-label="Open AAA chart only"]') as HTMLElement).click();});
+  expect(onOpenChart).toHaveBeenCalledWith({symbol:"AAA",exchange:"NASDAQ",addChart:false});
+  await act(async()=>{(container.querySelector('[aria-label="Open SPY chart only"]') as HTMLElement).click();});
+  expect(onOpenChart).toHaveBeenCalledWith({symbol:"SPY",exchange:"AMEX",addChart:false});
   expect(container.textContent).toContain("Float 500K");
-  expect(container.querySelector('[aria-label="Open DDD chart"]')).toBeNull();
+  expect(container.querySelector('[aria-label="Open DDD chart only"]')).toBeNull();
 
   const viewAll=[...container.querySelectorAll("button")].find(button=>button.textContent==="View all") as HTMLElement;
   expect(viewAll.closest('[aria-label="Latest PR Scanner releases"]')).not.toBeNull();

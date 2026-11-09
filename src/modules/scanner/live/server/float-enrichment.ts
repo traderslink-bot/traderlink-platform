@@ -5,7 +5,7 @@ import type { FloatFact } from "../engine";
 const SYMBOL = /^[A-Z][A-Z0-9.-]{0,15}$/u;
 const EODHD_MAX_BATCH = 100;
 const DEFAULT_FINNHUB_SPACING_MS = 1_050;
-type FloatCacheRecord = Readonly<{ tradingDate: string; facts: Readonly<Record<string,FloatFact>> }>;
+type FloatCacheRecord = Readonly<{ tradingDate: string; facts: Readonly<Record<string,FloatFact>>; countries?: Readonly<Record<string,string|null>> }>;
 export type FloatCachePersistence = Readonly<{
   read: (tradingDate: string) => Promise<unknown>;
   write: (record: FloatCacheRecord) => Promise<void>;
@@ -23,6 +23,12 @@ function parseCache(value: unknown, tradingDate: string): Map<string,FloatFact> 
   if (record.tradingDate !== tradingDate || !record.facts || typeof record.facts !== "object" || Array.isArray(record.facts)) return result;
   for (const [symbol,fact] of Object.entries(record.facts)) if (SYMBOL.test(symbol) && validFact(fact)) result.set(symbol,fact);
   return result;
+}
+function parseCountries(value: unknown, tradingDate: string): Map<string,string|null> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return new Map();
+  const record=value as {tradingDate?:unknown;countries?:unknown};
+  if(record.tradingDate!==tradingDate || !record.countries || typeof record.countries!=="object" || Array.isArray(record.countries))return new Map();
+  return new Map(Object.entries(record.countries).filter((entry):entry is [string,string|null]=>SYMBOL.test(entry[0])&&(entry[1]===null||typeof entry[1]==="string"&&/^[A-Z]{2}$/.test(entry[1]))));
 }
 function positiveSafeInteger(value: unknown): number | null {
   if (typeof value !== "number" && typeof value !== "string") return null;
@@ -80,8 +86,10 @@ export class DailyFloatEnricher {
   }>) {}
   async load(tradingDate: string, symbols: readonly string[]): Promise<ReadonlyMap<string,FloatFact>> {
     if (!/^\d{4}-\d{2}-\d{2}$/u.test(tradingDate) || symbols.length > 4000 || symbols.some(symbol => !SYMBOL.test(symbol))) throw Error("scanner_float_request_invalid");
-    const facts = parseCache(await this.input.persistence.read(tradingDate),tradingDate);
-    let missing = [...new Set(symbols)].filter(symbol => !facts.has(symbol));
+    const stored = await this.input.persistence.read(tradingDate);
+    const facts = parseCache(stored,tradingDate);
+    const countries = parseCountries(stored,tradingDate);
+    let missing = [...new Set(symbols)].filter(symbol => !facts.has(symbol)||!countries.has(symbol));
     const request = this.input.request ?? fetch;
     const now = this.input.now ?? Date.now;
     const pause = this.input.pause ?? (milliseconds => new Promise(resolve => setTimeout(resolve,milliseconds)));
@@ -97,12 +105,20 @@ export class DailyFloatEnricher {
         try {
           const response = await request(endpoint,{ cache:"no-store",redirect:"error",signal:AbortSignal.timeout(15_000) });
           if (!response.ok) continue;
-          const shares = finnhubShares(await response.json(),symbol);
+          const payload:unknown = await response.json();
+          if(payload && typeof payload==="object" && !Array.isArray(payload)){
+            const profile=payload as Record<string,unknown>;
+            if(typeof profile.ticker==="string"&&profile.ticker.trim().toUpperCase()===symbol){
+              const country=typeof profile.country==="string"?profile.country.trim().toUpperCase():"";
+              countries.set(symbol,/^[A-Z]{2}$/.test(country)?country:null);
+            }
+          }
+          const shares = finnhubShares(payload,symbol);
           if (shares !== null) facts.set(symbol,{ shares,retrievedAtUtc:new Date(now()).toISOString() });
         } catch { continue; }
       }
-      missing = missing.filter(symbol => !facts.has(symbol));
     }
+    missing = [...new Set(symbols)].filter(symbol => !facts.has(symbol));
     const eodhdToken = this.input.eodhdToken?.trim();
     if (eodhdToken) for (let index=0; index<missing.length; index+=EODHD_MAX_BATCH) {
       const batch = missing.slice(index,index+EODHD_MAX_BATCH);
@@ -118,7 +134,7 @@ export class DailyFloatEnricher {
         for (const [symbol,fact] of parseEodhd(await response.json(),new Set(batch),retrievedAtUtc)) facts.set(symbol,fact);
       } catch { continue; }
     }
-    await this.input.persistence.write({ tradingDate,facts:Object.freeze(Object.fromEntries(facts)) });
+    await this.input.persistence.write({ tradingDate,facts:Object.freeze(Object.fromEntries(facts)),countries:Object.freeze(Object.fromEntries(countries)) });
     return facts;
   }
 }
@@ -134,9 +150,14 @@ export class ScannerFloatFeed {
   constructor(private readonly persistence: FloatCachePersistence,
     private readonly refresh: (date: string, symbols: readonly string[]) => Promise<ReadonlyMap<string,FloatFact>>,
     private readonly now: () => number = Date.now) {}
+  async readCountries(date:string):Promise<ReadonlyMap<string,string>> {
+    return new Map([...parseCountries(await this.persistence.read(date),date)].filter((entry):entry is [string,string]=>entry[1]!==null));
+  }
   async read(date: string, symbols: readonly string[]): Promise<ReadonlyMap<string,FloatFact>> {
-    const facts = parseCache(await this.persistence.read(date),date);
-    if (symbols.every(symbol=>facts.has(symbol))) return facts;
+    const stored=await this.persistence.read(date);
+    const facts = parseCache(stored,date);
+    const countries = parseCountries(stored,date);
+    if (symbols.every(symbol=>facts.has(symbol)&&countries.has(symbol))) return facts;
     const key = `${date}\u0000${symbols.join("\u0000")}`;
     if (!this.pending && (key !== this.lastKey || this.now() >= this.retryAt)) {
       this.lastKey = key;

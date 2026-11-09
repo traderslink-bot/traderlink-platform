@@ -1,3 +1,4 @@
+import { LEGACY_SCAN_MS } from "./event-timing";
 import type { DailyUniverse, FocusControls, FocusStock, LiveScannerRow, LiveScreenResults, MomentumSignal, NormalizedSnapshot,
   ScannerConfiguration, ScannerNewsItem, ScannerSession, ScreenFilters } from "./contracts";
 import { RollingActivityBook } from "./activity";
@@ -40,8 +41,9 @@ function focusCandidate(row: LiveScannerRow, controls: FocusControls, rankingSco
 }
 
 class FocusSelection {
+  constructor(private readonly elapsedTime=false) {}
   private context: string | null = null;
-  private confirmations = new Map<string, { count: number; lastProviderAt: number; lastSeenAt: number }>();
+  private confirmations = new Map<string, { count: number; firstAt:number; lastProviderAt: number; lastSeenAt: number }>();
   private focused = new Map<string,string>();
   select(context: string, candidates: readonly Candidate[], controls: FocusControls, now: number): readonly FocusStock[] {
     if (context !== this.context) { this.context = context; this.confirmations.clear(); this.focused.clear(); }
@@ -54,11 +56,14 @@ class FocusSelection {
       const previous = this.confirmations.get(candidate.row.symbol);
       const providerAt = Date.parse(candidate.row.priceTimeBasis === "session_observation"
         ? candidate.row.receivedAtUtc : candidate.row.providerAtUtc);
-      if (!previous || now-previous.lastSeenAt > 15_000) this.confirmations.set(candidate.row.symbol,{ count: 1, lastProviderAt: providerAt, lastSeenAt: now });
-      else this.confirmations.set(candidate.row.symbol,{ count: previous.count+(providerAt>previous.lastProviderAt ? 1 : 0),
+      if (!previous || now-previous.lastSeenAt > 15_000) this.confirmations.set(candidate.row.symbol,{ count: 1, firstAt:now, lastProviderAt: providerAt, lastSeenAt: now });
+      else this.confirmations.set(candidate.row.symbol,{ firstAt:previous.firstAt,count: previous.count+(providerAt>previous.lastProviderAt ? 1 : 0),
         lastProviderAt: Math.max(previous.lastProviderAt,providerAt), lastSeenAt: now });
     }
-    const eligible = ranked.filter(candidate => (this.confirmations.get(candidate.row.symbol)?.count ?? 0) >= controls.confirmationScans);
+    const eligible = ranked.filter(candidate => {
+      const confirmation=this.confirmations.get(candidate.row.symbol);
+      return confirmation&&(this.elapsedTime?now-confirmation.firstAt>=(controls.confirmationScans-1)*LEGACY_SCAN_MS:confirmation.count>=controls.confirmationScans);
+    });
     // Reducing the configured size keeps the strongest incumbents, not the oldest.
     const incumbent = [...this.focused.keys()].sort((a,b) => available.get(b)!.score-available.get(a)!.score || a.localeCompare(b));
     for (const symbol of incumbent.slice(controls.maximumStocks)) this.focused.delete(symbol);
@@ -77,12 +82,13 @@ class FocusSelection {
 }
 
 export class LiveScannerEngine {
-  private activity = new RollingActivityBook();
-  private gainersFocus = new FocusSelection();
-  private momentumFocus = new FocusSelection();
+  private activity:RollingActivityBook;
+  private gainersFocus:FocusSelection;
+  private momentumFocus:FocusSelection;
   private declines = new DeclineBook();
   private premarketPullbacks=new PremarketPullbackBook();
-  private momentumEvents=new MomentumEventBook();
+  private momentumEvents:MomentumEventBook;
+  constructor(private readonly elapsedTime=false) {this.activity=new RollingActivityBook(elapsedTime);this.gainersFocus=new FocusSelection(elapsedTime);this.momentumFocus=new FocusSelection(elapsedTime);this.momentumEvents=new MomentumEventBook(elapsedTime);}
   private momentumRetention=new MomentumRetentionBook();
   evaluate(input: Readonly<{
     universe: DailyUniverse; tradingDate: string; session: ScannerSession; snapshots: readonly NormalizedSnapshot[];
@@ -92,8 +98,10 @@ export class LiveScannerEngine {
     if (input.universe.tradingDate !== input.tradingDate) throw Error("scanner_universe_not_current");
     if (!input.configuration.enabled) { this.clear(); return { gainers: EMPTY, dayGainers: EMPTY, momentum: EMPTY, missingFloatCount: 0, audit: [] }; }
     const membership = new Map(input.universe.stocks.map(stock => [stock.symbol,stock]));
-    this.activity.retain([...membership.keys()]);
-    this.momentumEvents.retain([...membership.keys()]);
+    const covered=this.elapsedTime?new Set(input.snapshots.filter(snapshot=>membership.has(snapshot.symbol)&&snapshot.tradingDate===input.tradingDate&&snapshot.session===input.session&&snapshot.receivedAt<=input.now&&snapshot.providerAt<=input.now&&input.now-(snapshot.priceTimeBasis==="session_observation"?snapshot.receivedAt:snapshot.providerAt)<=SNAPSHOT_MAX_AGE_MS).map(snapshot=>snapshot.symbol)):new Set(membership.keys());
+    this.activity.retain([...covered]);
+    this.momentumEvents.retain([...covered]);
+    const coveredUniverse=this.elapsedTime?{...input.universe,stocks:input.universe.stocks.filter(stock=>covered.has(stock.symbol))}:input.universe;
     const seen = new Set<string>();
     for (const snapshot of input.snapshots) {
       if (seen.has(snapshot.symbol)) throw Error("scanner_evaluation_duplicate_symbol");
@@ -186,9 +194,9 @@ export class LiveScannerEngine {
         momentumDisplayed:mr!==null&&mr<=input.configuration.momentum.displayLimit,
         momentumScore:scannerMomentumScore(momentumRow,input.configuration.momentum.focus,momentumFilters)} satisfies ScannerAuditDecision;
     });
-    const declines=this.declines.evaluate({universe:input.universe,session:input.session,now:input.now,
+    const declines=this.declines.evaluate({universe:coveredUniverse,session:input.session,now:input.now,
       snapshots:input.snapshots,floats:input.floats,controls:input.configuration.declines});
-    const premarketPullbacks=this.premarketPullbacks.evaluate({universe:input.universe,session:input.session,now:input.now,
+    const premarketPullbacks=this.premarketPullbacks.evaluate({universe:coveredUniverse,session:input.session,now:input.now,
       snapshots:input.snapshots,floats:input.floats,activity:symbol=>this.activity.metrics(symbol,input.now),rapidDrops:declines.rapid,controls:input.configuration.premarketPullbacks});
     return {
       declines,premarketPullbacks,

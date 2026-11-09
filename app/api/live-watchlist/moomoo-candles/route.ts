@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { fetchWatchlistMoomooCandles } from "@/src/modules/watchlist/server/moomoo-watchlist-candle-bridge";
+import { alpacaMarketDataEnabled } from "@/src/modules/scanner/alpaca/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
     return NextResponse.json({
       status: "ready",
-      provider: "moomoo_open_api",
+      provider: alpacaMarketDataEnabled() ? "alpaca" : "moomoo_open_api",
       symbol,
       candles: result.candles.map((candle) => ({
         timestamp: candle.time * 1_000,
@@ -67,6 +68,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       })),
     });
   } catch {
-    return NextResponse.json({ status: "unavailable", code: "moomoo_connection_unavailable" }, { status: 503 });
+    return NextResponse.json({ status: "unavailable", code: alpacaMarketDataEnabled() ? "alpaca_connection_unavailable" : "moomoo_connection_unavailable" }, { status: 503 });
   }
 }

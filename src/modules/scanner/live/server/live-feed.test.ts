@@ -28,7 +28,7 @@ describe("DailyFloatEnricher", () => {
     const cache=floatPersistence();
     const refresh=vi.fn(async(date:string,symbols:readonly string[])=>{
       const facts=Object.fromEntries(symbols.map(symbol=>[symbol,{shares:500_000,retrievedAtUtc:new Date(NOW).toISOString()}]));
-      await cache.write({tradingDate:date,facts});
+      await cache.write({tradingDate:date,facts,countries:Object.fromEntries(symbols.map(symbol=>[symbol,null]))});
       return new Map(Object.entries(facts));
     });
     const feed=new ScannerFloatFeed(cache,refresh,()=>NOW);
@@ -61,7 +61,7 @@ describe("DailyFloatEnricher", () => {
   });
   it("uses a fully saved population without refreshing and recovers a rejected background refresh", async () => {
     const cache = floatPersistence();
-    await cache.write({ tradingDate:"2026-10-30",facts:{ ABCD:{ shares:500_000,retrievedAtUtc:new Date(NOW).toISOString() } } });
+    await cache.write({ tradingDate:"2026-10-30",countries:{ABCD:null},facts:{ ABCD:{ shares:500_000,retrievedAtUtc:new Date(NOW).toISOString() } } });
     const refresh = vi.fn(async()=>{ throw Error("provider unavailable"); });
     let now=NOW;
     const feed=new ScannerFloatFeed(cache,refresh,()=>now);
@@ -305,7 +305,7 @@ describe("ScannerSettingsStore", () => {
     const directory = await mkdtemp(join(tmpdir(),"scanner-settings-"));
     try {
       const cache = new ScannerSettingsStore(directory).floatCache();
-      const record = { tradingDate: "2026-10-30", facts: { ABCD: { shares: 1_000_000, retrievedAtUtc: new Date(NOW).toISOString() } } };
+      const record = { tradingDate: "2026-10-30", facts: { ABCD: { shares: 1_000_000, retrievedAtUtc: new Date(NOW).toISOString() } }, countries:{ABCD:"CA",UNKNOWN:null} };
       await cache.write(record);
       expect(await cache.read("2026-10-30")).toEqual(record);
       await expect(cache.write({ tradingDate: "2026-10-30", facts: { ABCD: { shares: 0, retrievedAtUtc: new Date(NOW).toISOString() } } })).rejects.toThrow("scanner_float_storage_invalid");
@@ -325,3 +325,26 @@ describe("ScannerSettingsStore", () => {
     }
   });
 });
+
+ describe("scanner country enrichment",()=>{
+  it("retains a matching Finnhub country without float and combines it with EODHD float",async()=>{
+    const persistence=floatPersistence();const request=vi.fn(async(input:RequestInfo|URL)=>String(input).includes("finnhub.io")?Response.json({ticker:"ABCD",country:" cn "}):Response.json([{code:"ABCD.US",sharesFloat:500000}]));
+    const enricher=new DailyFloatEnricher({finnhubToken:"test",eodhdToken:"test",persistence,request,finnhubSpacingMs:0});
+    await enricher.load("2026-10-30",["ABCD"]);
+    const feed=new ScannerFloatFeed(persistence,()=>Promise.reject(Error("should use cache")));
+    expect((await feed.readCountries("2026-10-30")).get("ABCD")).toBe("CN");
+    expect((await feed.read("2026-10-30",["ABCD"])).get("ABCD")?.shares).toBe(500000);
+    await enricher.load("2026-10-30",["ABCD"]);expect(request).toHaveBeenCalledTimes(2);
+  });
+  it("does not attach another ticker's country or a prior day's country",async()=>{
+    const persistence=floatPersistence();await new DailyFloatEnricher({finnhubToken:"test",persistence,request:async()=>Response.json({ticker:"WRONG",country:"US"}),finnhubSpacingMs:0}).load("2026-10-30",["ABCD"]);
+    const feed=new ScannerFloatFeed(persistence,async()=>new Map());expect((await feed.readCountries("2026-10-30")).size).toBe(0);
+    await persistence.write({tradingDate:"2026-10-30",facts:{},countries:{ABCD:"CA"}});expect((await feed.readCountries("2026-11-02")).size).toBe(0);
+  });
+  it("enriches visible results without changing qualification, and tolerates unavailable countries",async()=>{
+    const baseline=await new LiveScannerFeed(dependencies()).scanOnce();
+    const enriched=await new LiveScannerFeed(dependencies({countries:async()=>new Map([["ABCD","CN"]])})).scanOnce();
+    expect(enriched.gainers.rows[0]?.country).toBe("CN");expect(enriched.gainers.total).toBe(baseline.gainers.total);expect(enriched.status).toBe(baseline.status);
+    const missing=await new LiveScannerFeed(dependencies({countries:async()=>{throw Error("cache unavailable");}})).scanOnce();expect(missing.gainers.total).toBe(baseline.gainers.total);expect(missing.status).toBe(baseline.status);
+  });
+ });

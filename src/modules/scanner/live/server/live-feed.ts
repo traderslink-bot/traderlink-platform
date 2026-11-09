@@ -1,4 +1,5 @@
 import "server-only";
+import { eventScannerEnabled, scheduleEventScanner } from "../event-timing";
 import type { DailyUniverse, LiveScreenResults, NormalizedSnapshot, ScannerConfiguration, ScannerNewsItem, ScannerReadModel, ScannerSession } from "../contracts";
 import type { ManualScannerTicker } from "./manual-ticker-store";
 import type { ScannerMarketMovement } from "../active-halts";
@@ -26,9 +27,14 @@ export type LiveFeedDependencies = Readonly<{
     requestedSymbols: readonly string[]; payload: unknown; receivedAt: number; requestedAt?: number;
   }>[]>;
   floats: (date: string, symbols: readonly string[]) => Promise<ReadonlyMap<string,FloatFact>>;
+  countries?: (date:string) => Promise<ReadonlyMap<string,string>>;
   news: (symbols: readonly string[]) => Promise<ReadonlyMap<string,readonly ScannerNewsItem[]>>;
   qualification: (session: ScannerSession, context: SnapshotQualificationContext) => SnapshotQualification;
   normalizeBatch?: typeof normalizeSnapshotBatch;
+  eventDriven?: boolean;
+  provider?:"alpaca"|"moomoo";
+  inactive?:()=>void;
+  subscribeChanges?: (notify:()=>void)=>()=>void;
   audit?: Readonly<{ enqueue: (cycle: ScannerAuditCycle) => void }>;
   now?: () => number;
 }>;
@@ -46,15 +52,21 @@ function requestUniverse(universe: DailyUniverse, maximumMarketCap: number): Dai
 }
 
 export class LiveScannerFeed {
-  private readonly engine = new LiveScannerEngine();
+  private readonly engine: LiveScannerEngine;
   private readonly runtimeInstanceId=randomUUID();
   private model: ScannerReadModel = empty("disabled",easternClock(Date.now()).date);
   private running = false;
+  private idleWaiters=new Set<()=>void>();
   private floatPrewarmDate: string | null = null;
   private readonly lastSnapshotBySymbol=new Map<string,Readonly<{observedAt:number;price:number;volume:number|null}>>();
   private readonly lastMovementBySymbol=new Map<string,ScannerMarketMovement>();
-  constructor(private readonly dependencies: LiveFeedDependencies) {}
-  read(): ScannerReadModel { return structuredClone(this.model); }
+  constructor(private readonly dependencies: LiveFeedDependencies) { this.engine=new LiveScannerEngine(Boolean(dependencies.eventDriven)); }
+  subscribeChanges(notify:()=>void):()=>void { return this.dependencies.subscribeChanges?.(notify)??(()=>{}); }
+  read(): ScannerReadModel { return structuredClone({...this.model,...(this.dependencies.provider?{provider:this.dependencies.provider}:{}),...(this.dependencies.eventDriven?{refreshAfterMs:1000}:{})}); }
+  async whenIdle():Promise<void> {
+    if(!this.running)return;
+    await new Promise<void>((resolve,reject)=>{const done=()=>{clearTimeout(timeout);this.idleWaiters.delete(done);resolve();};const timeout=setTimeout(()=>{this.idleWaiters.delete(done);reject(Error("scanner_connection_busy"));},30_000);this.idleWaiters.add(done);});
+  }
   movements(): readonly ScannerMarketMovement[] { return structuredClone([...this.lastMovementBySymbol.values()]); }
   async scanOnce(): Promise<ScannerReadModel> {
     if (this.running) return this.read();
@@ -64,10 +76,12 @@ export class LiveScannerFeed {
     const date = clock.date;
     try {
       const configuration = await this.dependencies.configuration();
-      if (!configuration.enabled) return this.set(empty("disabled",date));
+      if (!configuration.enabled) {this.dependencies.inactive?.();this.engine.clear();return this.set(empty("disabled",date));}
       const day = await this.dependencies.marketDay(date);
       const session = activeSession(day,now);
       if (!session) {
+        this.dependencies.inactive?.();
+        if(this.dependencies.eventDriven)this.engine.clear();
         // The daily universe arrives at 3:00 AM Eastern. Warm the float cache
         // once before premarket so Finnhub's required pacing does not delay the
         // first live Moomoo snapshot pass at 4:00 AM.
@@ -82,7 +96,7 @@ export class LiveScannerFeed {
         return this.set(empty("closed",date));
       }
       const storedUniverse = await this.dependencies.universe(date);
-      if (!storedUniverse) return this.set(empty("universe_missing",date));
+      if (!storedUniverse) {this.dependencies.inactive?.();if(this.dependencies.eventDriven)this.engine.clear();return this.set(empty("universe_missing",date));}
       const filtered=requestUniverse(storedUniverse,scannerRequestMarketCap(configuration,session));
       const manual=await this.dependencies.manualTickers?.()??[],existing=new Set(filtered.stocks.map(stock=>stock.symbol));
       const universe={...filtered,stocks:[...filtered.stocks,...manual.filter(row=>!existing.has(row.symbol)).map(row=>({symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:1}))]};
@@ -119,7 +133,7 @@ export class LiveScannerFeed {
       }
       for(const batch of batches)if(!returned.has(batch.join("\u0000")))receipts.push({sequence:receipts.length,requestedCount:batch.length,returnedCount:0,
         requestedSymbolsHash:createHash("sha256").update(batch.join("\n")).digest("hex"),receivedAt:null,durationMs:null,issue:"snapshot_batch_missing"});
-      if (snapshots.length === 0 && this.model.tradingDate === date && this.model.session === session
+      if (!this.dependencies.eventDriven && snapshots.length === 0 && this.model.tradingDate === date && this.model.session === session
         && this.model.receivedCount > 0 && (issues.has("snapshot_pass_unavailable") || issues.has("snapshot_batch_unavailable"))) {
         return this.read();
       }
@@ -129,9 +143,11 @@ export class LiveScannerFeed {
         .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[]))];
       let news: ReadonlyMap<string,readonly ScannerNewsItem[]> = new Map();
       try { news = await this.dependencies.news(visibleSymbols); } catch { issues.add("news_unavailable"); }
+      let countries:ReadonlyMap<string,string>=new Map();
+      try { countries=await this.dependencies.countries?.(date)??countries; } catch { /* Country metadata never blocks scan results. */ }
       const enrich = (results: LiveScreenResults): LiveScreenResults => ({ ...results,
-        rows: results.rows.map(row => ({ ...row, news: news.get(row.symbol) ?? [] })),
-        focus: results.focus.map(row => ({ ...row, news: news.get(row.symbol) ?? [] })) });
+        rows: results.rows.map(row => ({ ...row, news: news.get(row.symbol) ?? [], country:countries.get(row.symbol)??null })),
+        focus: results.focus.map(row => ({ ...row, news: news.get(row.symbol) ?? [], country:countries.get(row.symbol)??null })) });
       const status = missing.length || issues.size ? "partial" : snapshots.length ? "ready" : "warming";
       const completedAt=(this.dependencies.now ?? Date.now)();
       const declines=evaluated.declines?{...evaluated.declines,
@@ -139,18 +155,18 @@ export class LiveScannerFeed {
         losers:evaluated.declines.losers.map(row=>({...row,news:news.get(row.symbol)??[]}))}:undefined;
       const premarketPullbacks=evaluated.premarketPullbacks?{...evaluated.premarketPullbacks,
         rows:evaluated.premarketPullbacks.rows.map(row=>({...row,news:news.get(row.symbol)??[]}))}:undefined;
-      this.dependencies.audit?.enqueue({schemaVersion:SCANNER_AUDIT_SCHEMA_VERSION,cycleId:randomUUID(),runtimeInstanceId:this.runtimeInstanceId,tradingDate:date,session,
+      this.dependencies.audit?.enqueue({timingMode:this.dependencies.eventDriven?"alpaca_events_1s":"sampled_5s",schemaVersion:SCANNER_AUDIT_SCHEMA_VERSION,cycleId:randomUUID(),runtimeInstanceId:this.runtimeInstanceId,tradingDate:date,session,
         scheduledAt:now,completedAt,universeSourceDate:universe.sourceTradingDate??universe.tradingDate,
         universeCount:symbols.length,universeHash:createHash("sha256").update(JSON.stringify(universe.stocks)).digest("hex"),
         configuration,configurationHash:scannerConfigurationHash(configuration),status,
         issues:Object.freeze([...issues].sort()),missingSymbols:Object.freeze([...new Set(missing)].sort()),
         batches:Object.freeze(receipts),decisions:evaluated.audit,declines,premarketPullbacks});
-      return this.set({ status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
+      return this.set({ ...(this.dependencies.eventDriven?{refreshAfterMs:1000}:{}),status:this.dependencies.eventDriven&&snapshots.length===0&&issues.size?"unavailable":status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
         universeSourceDate: universe.sourceTradingDate ?? universe.tradingDate, universeCount: symbols.length,
         receivedCount: snapshots.length, missingSymbols: Object.freeze([...new Set(missing)].sort()), missingFloatCount: evaluated.missingFloatCount,
         gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), declines, premarketPullbacks, issues: Object.freeze([...issues].sort()) });
     } catch { return this.set(empty("unavailable",date,["live_feed_unavailable"])); }
-    finally { this.running = false; }
+    finally { this.running = false;for(const done of this.idleWaiters)done(); }
   }
   private recordMarketMovement(snapshots:readonly NormalizedSnapshot[]):void {
     for(const snapshot of snapshots){
@@ -164,9 +180,15 @@ export class LiveScannerFeed {
   private set(model: ScannerReadModel): ScannerReadModel { this.model = model; return this.read(); }
 }
 
-let timer: ReturnType<typeof setTimeout> | null = null;
-export function startLiveScannerFeed(feed: LiveScannerFeed, environment: NodeJS.ProcessEnv = process.env): void {
-  if (timer || environment[TRADERLINK_LIVE_SCREENERS_ENV] !== "true" || environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED !== "true") return;
-  const tick = async (): Promise<void> => { await feed.scanOnce(); timer = setTimeout(() => void tick(),5_000); };
-  void tick();
+const feedStops=new WeakMap<LiveScannerFeed,()=>void>();
+export function startLiveScannerFeed(feed: LiveScannerFeed, environment: NodeJS.ProcessEnv = process.env): ()=>void {
+  if (feedStops.has(feed)) return feedStops.get(feed)!;
+  const alpaca=environment.TRADERLINK_MARKET_DATA_PROVIDER === "alpaca";
+  if (environment[TRADERLINK_LIVE_SCREENERS_ENV] !== "true" || (!alpaca && environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED !== "true")) return ()=>{};
+  let stopped=false,timer:ReturnType<typeof setTimeout>|undefined;
+  const tick=async()=>{await feed.scanOnce();if(!stopped)timer=setTimeout(()=>void tick(),5_000);};
+  const stopEvents=eventScannerEnabled(environment)?scheduleEventScanner(()=>feed.scanOnce(),notify=>feed.subscribeChanges(notify)):undefined;
+  if(!stopEvents)void tick();
+  const stop=()=>{stopped=true;clearTimeout(timer);stopEvents?.();feedStops.delete(feed);};
+  feedStops.set(feed,stop);return stop;
 }

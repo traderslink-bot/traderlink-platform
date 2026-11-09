@@ -1,4 +1,5 @@
 import type { NormalizedSnapshot, RollingActivity } from "./contracts";
+import { ACTIVITY_HISTORY_MS, LEGACY_SCAN_MS } from "./event-timing";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
 
 const EMPTY: RollingActivity = { oneMinuteGain: null, fiveMinuteGain: null,
@@ -23,6 +24,8 @@ function observedDelta(current: number | null, earlier: NormalizedSnapshot | nul
 /** Session-local snapshots, not one-minute OHLC candles or time-of-day RVOL. */
 export class RollingActivityBook {
   private rows = new Map<string, NormalizedSnapshot[]>();
+  private previous=new Map<string,NormalizedSnapshot>();
+  constructor(private readonly elapsedTime=false) {}
   observe(snapshot: NormalizedSnapshot): boolean {
     if (!Number.isFinite(snapshot.price) || snapshot.price <= 0 || !Number.isSafeInteger(snapshot.providerAt)
       || snapshot.providerAt <= 0 || !Number.isSafeInteger(snapshot.receivedAt) || snapshot.receivedAt <= 0) throw Error("scanner_activity_snapshot_invalid");
@@ -54,8 +57,18 @@ export class RollingActivityBook {
           || snapshot.dollarVolume !== null && last.dollarVolume !== null && snapshot.dollarVolume < last.dollarVolume) history = [];
       }
     }
-    history.push(snapshot);
-    this.rows.set(snapshot.symbol, history.filter(row => row.receivedAt >= snapshot.receivedAt-670_000).slice(-240));
+    if(this.elapsedTime){
+      if(history.length&&last)this.previous.set(snapshot.symbol,last);else this.previous.delete(snapshot.symbol);
+      const bucket=Math.floor(snapshot.receivedAt/LEGACY_SCAN_MS);
+      // Keep the first actual observation in each five-second bucket plus its
+      // latest observation. Never replace the anchor with an interpolated value.
+      if(history.length>1&&Math.floor(history.at(-1)!.receivedAt/LEGACY_SCAN_MS)===bucket&&Math.floor(history.at(-2)!.receivedAt/LEGACY_SCAN_MS)===bucket)history[history.length-1]=snapshot;
+      else history.push(snapshot);
+      this.rows.set(snapshot.symbol,history.filter(row=>row.receivedAt>=snapshot.receivedAt-ACTIVITY_HISTORY_MS));
+    }else{
+      history.push(snapshot);
+      this.rows.set(snapshot.symbol, history.filter(row => row.receivedAt >= snapshot.receivedAt-ACTIVITY_HISTORY_MS).slice(-240));
+    }
     return true;
   }
   metrics(symbol: string, now: number): RollingActivity {
@@ -63,7 +76,8 @@ export class RollingActivityBook {
     if (!history || !current || now-current.receivedAt > CURRENT_RECEIPT_MAX_AGE_MS || now < current.receivedAt
       || current.priceTimeBasis !== "session_observation" && now-current.providerAt > SNAPSHOT_MAX_AGE_MS
       || now < current.providerAt) return { ...EMPTY };
-    const previous=history.length>1?history.at(-2)??null:null;
+    const previous=this.elapsedTime?anchor(history,current.receivedAt-LEGACY_SCAN_MS):history.length>1?history.at(-2)??null:null;
+    const observedPrevious=this.elapsedTime?this.previous.get(symbol)??null:previous;
     const one = anchor(history,current.receivedAt-60_000), five = anchor(history,current.receivedAt-300_000),
       six = anchor(history,current.receivedAt-360_000), ten = anchor(history,current.receivedAt-600_000);
     const intervalSeconds=previous?(current.receivedAt-previous.receivedAt)/1000:null;
@@ -71,7 +85,10 @@ export class RollingActivityBook {
     const intervalVolumeRate=intervalSeconds&&intervalVolume!==null?intervalVolume/intervalSeconds:null;
     // Keep the newest 30 seconds out of the baseline so the developing event
     // does not immediately redefine its own "normal" rate.
-    const baselineRows=history.filter(row=>row.receivedAt<=current.receivedAt-30_000&&row.receivedAt>=current.receivedAt-300_000);
+    const candidates=history.filter(row=>row.receivedAt<=current.receivedAt-30_000&&row.receivedAt>=current.receivedAt-300_000);
+    const bucketRows=new Map<number,NormalizedSnapshot>();
+    if(this.elapsedTime)for(const row of candidates){const bucket=Math.floor(row.receivedAt/LEGACY_SCAN_MS);if(!bucketRows.has(bucket))bucketRows.set(bucket,row);}
+    const baselineRows=this.elapsedTime?[...bucketRows.values()]:candidates;
     const baselineRates:number[]=[];
     for(let index=1;index<baselineRows.length;index++){
       const elapsed=(baselineRows[index].receivedAt-baselineRows[index-1].receivedAt)/1000;
@@ -92,6 +109,7 @@ export class RollingActivityBook {
     const fiveRate = five ? rate(current.volume,five.volume,current.receivedAt-five.receivedAt) : null;
     const precedingFiveRate = five && ten ? rate(five.volume,ten.volume,five.receivedAt-ten.receivedAt) : null;
     return {
+      ...(this.elapsedTime?{observationVolume:observedDelta(current.volume,observedPrevious,"volume"),observationDollarVolume:observedDelta(current.dollarVolume,observedPrevious,"dollarVolume")}:{}),
       oneMinuteGain: one ? (current.price/one.price-1)*100 : null,
       fiveMinuteGain: five ? (current.price/five.price-1)*100 : null,
       oneMinuteVolume: minuteVolume, oneMinuteDollarVolume: minuteDollars,
@@ -106,7 +124,7 @@ export class RollingActivityBook {
   }
   retain(symbols: readonly string[]): void {
     const retained = new Set(symbols);
-    for (const symbol of this.rows.keys()) if (!retained.has(symbol)) this.rows.delete(symbol);
+    for (const symbol of this.rows.keys()) if (!retained.has(symbol)) {this.rows.delete(symbol);this.previous.delete(symbol);}
   }
-  clear(): void { this.rows.clear(); }
+  clear(): void { this.rows.clear();this.previous.clear(); }
 }

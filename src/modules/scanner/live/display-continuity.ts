@@ -27,7 +27,7 @@ export function applyScannerDisplayContinuity(
   now: number,
 ): Readonly<{ model: ScannerReadModel; continuity: ScannerDisplayContinuity }> {
   const contextChanged = previous !== null && (
-    previous.tradingDate !== incoming.tradingDate ||
+    previous.tradingDate !== incoming.tradingDate || previous.provider !== incoming.provider ||
     (incoming.session !== null && previous.session !== incoming.session)
   );
 
@@ -35,6 +35,7 @@ export function applyScannerDisplayContinuity(
     previous === null ||
     contextChanged ||
     TERMINAL_STATUSES.has(incoming.status) ||
+    incoming.refreshAfterMs===1000&&incoming.status==="unavailable" ||
     scannerModelHasRows(incoming) ||
     !scannerModelHasRows(previous)
   ) {

@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
-const calls = vi.hoisted(()=>({ feeds:0,starts:0,audits:0,providers:0,failStart:false }));
+const calls = vi.hoisted(()=>({ feeds:0,starts:0,audits:0,providers:0,failStart:false,stops:0,idles:0 }));
 vi.mock("../../../platform/server/database/platform-database-config",()=>({
   resolvePlatformDatabaseConfig:({environment}:{environment:NodeJS.ProcessEnv})=>({databasePath:environment.TRADERLINK_PLATFORM_DB_PATH}),
 }));
@@ -11,11 +11,13 @@ vi.mock("./live-feed",()=>({
     status="disabled";
     constructor(){calls.feeds++;}
     read(){return{status:this.status};}
+    async whenIdle(){calls.idles++;}
   },
   startLiveScannerFeed:(feed:{status:string})=>{
     calls.starts++;
     if(calls.failStart)throw Error("isolated startup failure");
     feed.status="ready";
+    return()=>{calls.stops++;};
   },
 }));
 vi.mock("../audit/server/audit-store",()=>({
@@ -97,4 +99,23 @@ describe("scanner runtime across independently loaded Next bundles",()=>{
     expect(api.getMoomooSharedTransport(environment())).not.toBe(original);
     expect(calls.providers).toBe(0);
   });
+});
+
+it('switches one running scanner after stopping and draining, reuses its audit writer and preserves unrelated environment',async()=>{
+ const {mkdtemp,rm}=await import('node:fs/promises');const {tmpdir}=await import('node:os');const {join}=await import('node:path');
+ const directory=await mkdtemp(join(tmpdir(),'scanner-provider-runtime-test-'));
+ const env={...environment(),TRADERLINK_PLATFORM_DB_PATH:join(directory,'platform.sqlite'),TRADERLINK_MARKET_DATA_PROVIDER:'alpaca'};
+ try{
+  const runtime=await import('./runtime');const before={...calls};runtime.startConfiguredLiveScannerRuntime(env);const audit=runtime.scannerAuditRecorder(env);
+  expect(runtime.scannerConnection(env).provider).toBe('alpaca');
+  expect((await runtime.changeScannerConnection('moomoo',0,env)).provider).toBe('moomoo');
+  expect(calls.stops-before.stops).toBe(1);expect(calls.idles-before.idles).toBe(1);expect(calls.starts-before.starts).toBe(2);expect(calls.audits-before.audits).toBe(1);expect(runtime.scannerAuditRecorder(env)).toBe(audit);expect(env.TRADERLINK_MARKET_DATA_PROVIDER).toBe('alpaca');
+  await expect(runtime.changeScannerConnection('alpaca',0,env)).rejects.toThrow('scanner_connection_conflict');
+  expect((await runtime.changeScannerConnection('alpaca',1,env)).provider).toBe('alpaca');
+ }finally{await rm(directory,{recursive:true,force:true});}
+});
+it('changing a stopped provider selection does not start a worker',async()=>{
+ const {mkdtemp,rm}=await import('node:fs/promises');const {tmpdir}=await import('node:os');const {join}=await import('node:path');
+ const directory=await mkdtemp(join(tmpdir(),'scanner-stopped-provider-test-'));const env={...environment(),TRADERLINK_PLATFORM_DB_PATH:join(directory,'platform.sqlite'),TRADERLINK_MARKET_DATA_PROVIDER:'moomoo'};
+ try{const runtime=await import('./runtime');const before=calls.starts;await runtime.changeScannerConnection('alpaca',0,env);expect(calls.starts).toBe(before);}finally{await rm(directory,{recursive:true,force:true});}
 });

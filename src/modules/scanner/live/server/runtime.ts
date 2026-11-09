@@ -1,4 +1,10 @@
 import "server-only";
+import {scannerConnection} from "./scanner-connection";
+export {scannerConnection} from "./scanner-connection";
+import {readScannerConnection,saveScannerConnection,type ScannerProvider} from "./provider-store";
+import { eventScannerEnabled } from "../event-timing";
+import { AlpacaScannerStream } from "../../alpaca/scanner-stream";
+import { coalescedMetadata } from "./coalesced-cache";
 import { dirname, join } from "node:path";
 import { resolvePlatformDatabaseConfig } from "../../../platform/server/database/platform-database-config";
 import { withReadonlyPlatformDatabase } from "../../../platform/server/database/open-readonly-platform-database";
@@ -22,13 +28,13 @@ import { alpacaMarketDataEnabled, requestAlpacaGateway } from "../../alpaca/clie
 import { normalizeAlpacaScannerBatch } from "../../alpaca/scanner-snapshots";
 
 const SNAPSHOT_URL = "https://webapi.moomoo.com/api/v1.0/quote/snapshot";
-type ScannerRuntime = Readonly<{ provider: "moomoo" | "alpaca"; feed: LiveScannerFeed; settings: ScannerSettingsStore; audit: ScannerAuditRecorder }>;
+type ScannerRuntime = { provider: "moomoo" | "alpaca"; stop?:()=>void;stopSource?:()=>void;feed: LiveScannerFeed; settings: ScannerSettingsStore; audit: ScannerAuditRecorder };
 // Instrumentation and route handlers are separate Next.js bundles. Module-local
 // state would give the API a new disabled feed instead of the running worker.
 const processState = globalThis as typeof globalThis & {
-  __traderlinkLiveScannerRuntimeV1?: { instances: Map<string,ScannerRuntime>; started: WeakSet<LiveScannerFeed> };
+  __traderlinkLiveScannerRuntimeV1?: { instances: Map<string,ScannerRuntime>; started: WeakSet<LiveScannerFeed>; audits?:Map<string,ScannerAuditRecorder>;providerChanges?:Set<string> };
 };
-const registry = processState.__traderlinkLiveScannerRuntimeV1 ??= { instances:new Map(),started:new WeakSet() };
+const registry = processState.__traderlinkLiveScannerRuntimeV1 ??= { instances:new Map(),started:new WeakSet(),audits:new Map<string,ScannerAuditRecorder>(),providerChanges:new Set<string>() };
 function root(environment: NodeJS.ProcessEnv): string {
   return join(dirname(resolvePlatformDatabaseConfig({ environment }).databasePath),"scanner-live-v1");
 }
@@ -46,7 +52,11 @@ function newsFor(symbols: readonly string[], environment: NodeJS.ProcessEnv): Re
       id: article.id, headline: article.headline, createdAt: article.createdAt, url: article.url, typeLabel: article.typeLabel,
     }))])));
 }
-function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
+const reusableAudits=registry.audits??=new Map<string,ScannerAuditRecorder>();
+const providerChanges=registry.providerChanges??=new Set<string>();
+function scannerEnvironment(environment:NodeJS.ProcessEnv):NodeJS.ProcessEnv{return {...environment,TRADERLINK_MARKET_DATA_PROVIDER:readScannerConnection(root(environment),environment).provider};}
+function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime {
+  const environment=scannerEnvironment(inputEnvironment);
   const directory = root(environment);
   const existing = registry.instances.get(directory);
   const provider = alpacaMarketDataEnabled(environment) ? "alpaca" : "moomoo";
@@ -62,9 +72,14 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
   const floatEnricher = new DailyFloatEnricher({ finnhubToken:environment.FINNHUB_API_KEY?.trim(),
     eodhdToken:environment.EODHD_API_TOKEN?.trim(),persistence:floatPersistence });
   const floatFeed = new ScannerFloatFeed(floatPersistence,(date,symbols)=>floatEnricher.load(date,symbols));
-  const audit = new ScannerAuditRecorder(new ScannerAuditStore(join(directory,"audit")));
+  const audit = reusableAudits.get(directory)??new ScannerAuditRecorder(new ScannerAuditStore(join(directory,"audit")));
+  reusableAudits.set(directory,audit);
   const sessionQualifier = new SnapshotSessionQualifier();
-  const feed = new LiveScannerFeed({
+  const eventDriven=eventScannerEnabled(environment);
+  const eventStream=eventDriven?new AlpacaScannerStream(environment):undefined;
+  const dependencies:ConstructorParameters<typeof LiveScannerFeed>[0]={
+    provider,
+    ...(eventStream?{eventDriven:true,subscribeChanges:eventStream.subscribe,inactive:()=>eventStream.stop()}:{}),
     configuration: () => settings.configuration(), manualTickers:()=>manualTickers.list(), marketDay: async date => marketDay(date), universe: async date => {
       try{await nasdaqUniverse.refresh(date);}catch{/* Retain the last validated universe and alert below. */}
       const exact = await universe.read(date);
@@ -75,11 +90,15 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
       return { ...retained,tradingDate:date,sourceTradingDate:retained.tradingDate };
     },
     reserveScannerBudget: count => alpacaMarketDataEnabled(environment) ? Promise.resolve() : getMoomooSharedTransport(environment).reserveScanner(count),
-    ...(alpacaMarketDataEnabled(environment) ? { normalizeBatch: normalizeAlpacaScannerBatch } : {}),
+    ...(alpacaMarketDataEnabled(environment) ? { normalizeBatch: eventDriven?input=>normalizeAlpacaScannerBatch({...input,maxQuoteAgeMs:30_000}):normalizeAlpacaScannerBatch } : {}),
     snapshotPass: async batches => {
       if (alpacaMarketDataEnabled(environment)) {
         const day = marketDay(easternClock(Date.now()).date);
         const results = [];
+        if(eventStream){
+          eventStream.configure(batches.flat(),day.date,day.regularCloseEastern === "13:00" ? 780:960);
+          return batches.map(requestedSymbols=>({requestedSymbols,payload:eventStream.read(requestedSymbols),requestedAt:Date.now(),receivedAt:Date.now()}));
+        }
         for (const requestedSymbols of batches) {
           const requestedAt = Date.now();
           try {
@@ -108,20 +127,29 @@ function configuredRuntime(environment: NodeJS.ProcessEnv): ScannerRuntime {
       },environment);
     },
     floats: (date,symbols) => floatFeed.read(date,symbols),
+    countries: date => floatFeed.readCountries(date),
     news: async symbols => newsFor(symbols,environment),
     qualification: (session,context) => sessionQualifier.observe(session,context),
     audit,
-  });
-  const runtime = Object.freeze({ feed,settings,audit,provider });
+  };
+  const feed = new LiveScannerFeed(eventDriven?{
+    ...dependencies,
+    universe:coalescedMetadata(dependencies.universe,5000,date=>date),
+    floats:coalescedMetadata(dependencies.floats,5000,(date,symbols)=>date+":"+symbols.join(",")),
+    countries:dependencies.countries?coalescedMetadata(dependencies.countries,300_000,date=>date):undefined,
+    news:coalescedMetadata(dependencies.news,5000,symbols=>symbols.join(",")),
+  }:dependencies);
+  const runtime:ScannerRuntime={ feed,settings,audit,provider,stopSource:()=>eventStream?.stop() };
   registry.instances.set(directory,runtime);
   return runtime;
 }
-export function startConfiguredLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.env): void {
+export function startConfiguredLiveScannerRuntime(inputEnvironment: NodeJS.ProcessEnv = process.env): void {
+  const environment=scannerEnvironment(inputEnvironment);
   if (environment.TRADERLINK_LIVE_SCREENERS_ENABLED !== "true" || (!alpacaMarketDataEnabled(environment) && environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED !== "true")) return;
   const current = configuredRuntime(environment);
   if (registry.started.has(current.feed)) return;
   registry.started.add(current.feed);
-  try { startLiveScannerFeed(current.feed,environment); }
+  try { current.stop=startLiveScannerFeed(current.feed,environment); }
   catch (error) { registry.started.delete(current.feed); throw error; }
 }
 export function readLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.env): ScannerReadModel {
@@ -143,4 +171,27 @@ export function scannerAuditRecorder(environment: NodeJS.ProcessEnv = process.en
 export function readScannerAuditHealth(environment: NodeJS.ProcessEnv = process.env) {
   const current=configuredRuntime(environment),model=current.feed.read();
   return current.audit.health({expectedActive:model.session!==null});
+}
+
+export async function changeScannerConnection(provider:ScannerProvider,revision:number,environment:NodeJS.ProcessEnv=process.env){
+  if(!["alpaca","moomoo"].includes(provider)||!Number.isSafeInteger(revision))throw Error("invalid_scanner_connection");
+  const directory=root(environment);if(providerChanges.has(directory))throw Error("scanner_connection_busy");
+  providerChanges.add(directory);
+  const old=registry.instances.get(directory);const wasRunning=old?registry.started.has(old.feed):false;
+  try{
+    const current=readScannerConnection(directory,environment);if(current.revision!==revision)throw Error("scanner_connection_conflict");
+    if(provider==="moomoo"&&environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED!=="true")throw Error("scanner_connection_not_configured");
+    if(provider===current.provider)return scannerConnection(environment);
+    old?.stop?.();old?.stopSource?.();await old?.feed.whenIdle();
+    // A scan already awaiting metadata may have reopened its source before it drained.
+    old?.stopSource?.();
+    await saveScannerConnection(directory,current,provider);
+    if(old){reusableAudits.set(directory,old.audit);registry.started.delete(old.feed);registry.instances.delete(directory);}
+    // A provider selector cannot enable a stopped/worker-disabled preview.
+    if(wasRunning)startConfiguredLiveScannerRuntime(environment);
+    return scannerConnection(environment);
+  }catch(error){
+    if(wasRunning&&old){registry.started.delete(old.feed);startConfiguredLiveScannerRuntime(environment);}
+    throw error;
+  }finally{providerChanges.delete(directory);}
 }

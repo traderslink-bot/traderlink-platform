@@ -76,3 +76,12 @@ describe("scanner display continuity", () => {
     expect(result.continuity.emptySince).toBeNull();
   });
 });
+
+it("never carries displayed rows across a provider switch",()=>{
+ const previous={...populated(),provider:"moomoo" as const};const incoming=model({provider:"alpaca",status:"warming"});
+ expect(applyScannerDisplayContinuity(previous,incoming,{emptySince:null},1000).model).toBe(incoming);
+});
+it("does not disguise an event-stream coverage loss as active retained rows",()=>{
+ const previous={...populated(),provider:"alpaca" as const,refreshAfterMs:1000};const incoming=model({provider:"alpaca",refreshAfterMs:1000,status:"unavailable"});
+ expect(applyScannerDisplayContinuity(previous,incoming,{emptySince:null},1000).model).toBe(incoming);
+});

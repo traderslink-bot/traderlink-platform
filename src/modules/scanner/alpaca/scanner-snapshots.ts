@@ -2,11 +2,11 @@ import type { NormalizedSnapshot, ScannerSession } from "../live/contracts";
 import type { AlpacaSessionState } from "./session-book";
 import { easternClock } from "../live/sessions";
 
-type Snapshot = { dailyBar?: { t: string; c: number }; prevDailyBar?: { t: string; c: number }; latestQuote?: { bp: number; ap: number } };
+type Snapshot = { dailyBar?: { t: string; c: number }; prevDailyBar?: { t: string; c: number }; latestQuote?: { bp: number; ap: number; t?:string } };
 export type AlpacaQuoteReply = { feed: "sip"; connected: boolean; snapshots: Record<string, Snapshot | null>; sessionTotals?: Record<string, AlpacaSessionState | null> };
 const positive = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value > 0;
 
-export function normalizeAlpacaScannerBatch(input: { payload: unknown; requestedSymbols: readonly string[]; session: ScannerSession; tradingDate: string; receivedAt: number }) {
+export function normalizeAlpacaScannerBatch(input: { payload: unknown; requestedSymbols: readonly string[]; session: ScannerSession; tradingDate: string; receivedAt: number; maxQuoteAgeMs?:number }) {
   const payload = input.payload as AlpacaQuoteReply | null;
   const snapshots: NormalizedSnapshot[] = [], issues = new Set<string>();
   if (payload?.feed !== "sip" || !payload.connected || !payload.snapshots) throw Error("alpaca_stream_unavailable");
@@ -22,7 +22,8 @@ export function normalizeAlpacaScannerBatch(input: { payload: unknown; requested
     const highs = included.flatMap(value => value.high === null ? [] : [value.high]);
     const lows = included.flatMap(value => value.low === null ? [] : [value.low]);
     const bid = quote.latestQuote?.bp, ask = quote.latestQuote?.ap;
-    const usable = positive(bid) && positive(ask) && ask >= bid;
+    const quoteAt=Date.parse(quote.latestQuote?.t??"");
+    const usable = positive(bid) && positive(ask) && ask >= bid && (input.maxQuoteAgeMs===undefined||Number.isFinite(quoteAt)&&quoteAt<=input.receivedAt&&input.receivedAt-quoteAt<=input.maxQuoteAgeMs);
     snapshots.push({ symbol, company: symbol, provider: "alpaca", session: input.session, tradingDate: input.tradingDate, providerAt: current.providerAt, receivedAt: input.receivedAt,
       price: current.price, baseline, priceTimeBasis: "session_observation", volume: current.volume, dollarVolume: current.dollarVolume,
       regularClosePrice: book.sessions.regular.price, premarketHigh: book.sessions.premarket.high, premarketVolume: book.sessions.premarket.volume,

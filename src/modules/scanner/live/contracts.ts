@@ -85,6 +85,7 @@ export type RollingActivity = Readonly<{
   volumeAcceleration: number | null;
   intervalSeconds?:number|null; intervalGain?:number|null;
   intervalVolume?:number|null; intervalDollarVolume?:number|null;
+  observationVolume?:number|null; observationDollarVolume?:number|null;
   intervalVolumeRate?:number|null; baselineVolumeRate?:number|null; intervalVolumeRateMultiple?:number|null;
   episodeShares?:number|null; episodeDollarVolume?:number|null; episodeSeconds?:number|null;
 }>;
@@ -95,6 +96,8 @@ export type ScannerActiveHalt = Readonly<{
   quoteTimeEt:string|null; tradeTimeEt:string|null; chartExchange?:"NASDAQ"|"NYSE"|null;
 }>;
 export type LiveScannerRow = Readonly<{
+  /** Finnhub company-profile country; absent while background enrichment is pending. */
+  country?: string | null;
   symbol: string; exchange: "NASDAQ" | "NYSE"; company: string; price: number;
   sessionGain: number | null; volume: number | null; dollarVolume: number | null;
   comparisonPrice?: number | null;
@@ -144,6 +147,8 @@ export type PremarketPullbackResults = Readonly<{
 }>;
 export type LiveScreenResults = Readonly<{ rows: readonly LiveScannerRow[]; focus: readonly FocusStock[]; total: number }>;
 export type ScannerReadModel = Readonly<{
+  refreshAfterMs?:number;
+  provider?:"alpaca"|"moomoo";
   status: "disabled" | "universe_missing" | "closed" | "warming" | "ready" | "partial" | "unavailable";
   tradingDate: string; session: ScannerSession | null; updatedAtUtc: string | null; universeSourceDate?: string | null;
   universeCount: number; receivedCount: number; missingSymbols: readonly string[]; missingFloatCount: number;
