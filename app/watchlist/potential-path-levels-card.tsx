@@ -215,6 +215,7 @@ export function WatchlistV2PotentialPathCard({
   fullLadderCard,
   priceNote = "",
   livePriceAvailable = false,
+  liveFeedConnected = false,
   metaLabel = "Updated",
   metaValue,
   showNearestLevels = true,
@@ -226,6 +227,7 @@ export function WatchlistV2PotentialPathCard({
   fullLadderCard?: LiveWatchlistCardContent;
   priceNote?: string;
   livePriceAvailable?: boolean;
+  liveFeedConnected?: boolean;
   metaLabel?: string;
   metaValue?: string;
   showNearestLevels?: boolean;
@@ -266,7 +268,7 @@ export function WatchlistV2PotentialPathCard({
 
         {overnight ? (
           <div className={styles.note} role="note">
-            <strong>{watchlistPriceNote({ latestPriceSource: "ticker", latestPriceObservedAt: overnight.observedAt ?? null }, "offline")}</strong>
+            {!liveFeedConnected ? <strong>{watchlistPriceNote({ latestPriceSource: "ticker", latestPriceObservedAt: overnight.observedAt ?? null }, "offline")}</strong> : null}
             <span>Levels use this fixed price until a newer live price arrives.</span>
           </div>
         ) : null}
@@ -324,6 +326,7 @@ export function WatchlistPotentialPathCardArticle({
   guideHref = "/watchlist/how-it-works",
   priceNote,
   livePriceAvailable,
+  liveFeedConnected,
   priceNoteOwnLine,
   showKickerHelp = true,
   showMeta,
@@ -340,6 +343,7 @@ export function WatchlistPotentialPathCardArticle({
   guideHref?: string;
   priceNote?: string;
   livePriceAvailable?: boolean;
+  liveFeedConnected?: boolean;
   priceNoteOwnLine?: boolean;
   showKickerHelp?: boolean;
   showMeta?: boolean;
@@ -369,6 +373,7 @@ export function WatchlistPotentialPathCardArticle({
             fullLadderCard={fullLadderCard}
             priceNote={priceNote}
             livePriceAvailable={livePriceAvailable}
+            liveFeedConnected={liveFeedConnected}
             priceNoteOwnLine={priceNoteOwnLine}
             showMeta={showMeta}
             showNearestLevels={showNearestLevels}

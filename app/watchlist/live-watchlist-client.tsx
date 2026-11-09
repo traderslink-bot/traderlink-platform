@@ -30,7 +30,7 @@ import type {
   TradersLinkAiReadPullbackScenario,
   TradersLinkAiReadSource,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
-import { WatchlistLiveDataStatus, watchlistPriceNote } from "./watchlist-price-status";
+import { WatchlistLiveDataStatus, watchlistPriceNote, hasFreshWatchlistPrice } from "./watchlist-price-status";
 import {
   getLiveWatchlistEntryGroup,
   shouldShowReversalWatchlist,
@@ -85,28 +85,6 @@ const watchlistTimeCellStyle: CSSProperties = {
 };
 
 const LIVE_WATCHLIST_CLIENT_POLL_INTERVAL_MS = 15_000;
-const MOBILE_TRADING_VIEW_QUERY = "(max-width: 700px)";
-
-const tradingViewExchangePrefixes: Record<string, string> = {
-  AMEX: "AMEX",
-  ARCA: "AMEX",
-  ARCX: "AMEX",
-  NASDAQ: "NASDAQ",
-  NASDAQCAPITALMARKET: "NASDAQ",
-  NASDAQGLOBALMARKET: "NASDAQ",
-  NYSE: "NYSE",
-  NYSEAMERICAN: "AMEX",
-  NYSEARCA: "AMEX",
-  NYSEMKT: "AMEX",
-  OTC: "OTC",
-  OTCMARKETS: "OTC",
-  OTCQB: "OTC",
-  OTCQX: "OTC",
-  XASE: "AMEX",
-  XNAS: "NASDAQ",
-  XNYS: "NYSE",
-};
-
 const detailCardHelpText: Record<string, string> = {
   "Potential Gain":
     "Potential gain compares the ticker's price when tracking began with the highest live price observed afterward. It shows the best observed move, not what every trader captured.",
@@ -155,90 +133,6 @@ function formatPercentPoints(value: number): string {
     return "n/a";
   }
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
-}
-
-function buildTradingViewSymbol(symbol: string, exchange: string | null | undefined): string {
-  const normalizedSymbol = symbol.trim().toUpperCase().replace(/[^A-Z0-9.-]/g, "");
-  const normalizedExchange = exchange?.trim().toUpperCase().replace(/[^A-Z0-9]/g, "") ?? "";
-  const exchangePrefix = tradingViewExchangePrefixes[normalizedExchange];
-  return exchangePrefix ? `${exchangePrefix}:${normalizedSymbol}` : normalizedSymbol;
-}
-
-function TradingViewChart({ symbol }: { symbol: LiveWatchlistSymbolState }) {
-  const widgetContainerRef = useRef<HTMLDivElement>(null);
-  const [mobileChart, setMobileChart] = useState(false);
-  const tradingViewSymbol = buildTradingViewSymbol(
-    symbol.symbol,
-    symbol.extendedQuote?.exchange,
-  );
-
-  useEffect(() => {
-    const media = window.matchMedia(MOBILE_TRADING_VIEW_QUERY);
-    const update = () => setMobileChart(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    const container = widgetContainerRef.current;
-    if (!container) {
-      return;
-    }
-
-    container.replaceChildren();
-
-    const widget = document.createElement("div");
-    widget.className = "tradingview-widget-container__widget";
-    widget.style.width = "100%";
-    widget.style.height = "100%";
-
-    const script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.async = true;
-    script.textContent = JSON.stringify({
-      allow_symbol_change: false,
-      autosize: true,
-      backgroundColor: "rgba(8, 15, 28, 1)",
-      calendar: false,
-      details: false,
-      extended_hours: true,
-      gridColor: "rgba(255, 255, 255, 0.06)",
-      hide_legend: false,
-      hide_side_toolbar: mobileChart,
-      hide_top_toolbar: false,
-      hide_volume: false,
-      hotlist: false,
-      interval: "5",
-      locale: "en",
-      save_image: false,
-      style: "1",
-      support_host: "https://www.tradingview.com",
-      symbol: tradingViewSymbol,
-      theme: "dark",
-      timezone: "exchange",
-      withdateranges: true,
-    });
-
-    container.append(widget, script);
-
-    return () => {
-      container.replaceChildren();
-    };
-  }, [mobileChart, tradingViewSymbol]);
-
-  return (
-    <section
-      className="watchlist-tradingview-card"
-      aria-label={`${symbol.symbol} TradingView chart`}
-    >
-      <div
-        ref={widgetContainerRef}
-        className="tradingview-widget-container watchlist-tradingview-widget"
-      />
-    </section>
-  );
 }
 
 function stripInternalAtrLevelWording(value: string): string {
@@ -1560,7 +1454,8 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
         fullLadderCard={symbol.cards.fullLadder}
         symbol={symbol}
         priceNote={watchlistPriceNote(symbol, marketDataStatus)}
-        livePriceAvailable={!watchlistPriceNote(symbol, marketDataStatus)}
+        livePriceAvailable={marketDataStatus === "live" && hasFreshWatchlistPrice(symbol)}
+        liveFeedConnected={marketDataStatus === "live"}
         priceNoteOwnLine={Boolean(watchlistPriceNote(symbol, marketDataStatus))}
         showMeta={false}
         showOuterMeta={false}
@@ -2047,7 +1942,6 @@ export function LiveWatchlistDetailClient({
 
       <WatchlistDetailCards symbol={symbol} marketDataStatus={marketDataStatus} />
       <WatchlistReverseSplitDetails item={reverseSplits[symbol.symbol]} />
-      <TradingViewChart symbol={symbol} />
     </div>
   );
 }

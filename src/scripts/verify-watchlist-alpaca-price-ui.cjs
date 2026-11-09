@@ -58,7 +58,7 @@ const output = fs.mkdtempSync('/tmp/watchlist-alpaca-price-ui-');
       assert(dims.width <= dims.viewport+1, JSON.stringify(dims));
       const fresh = page.locator('a[href="/watchlist/FRESH"]'), old = page.locator('a[href="/watchlist/OLDER"]');
       assert(!(await fresh.innerText()).includes('Not live'));
-      assert((await old.innerText()).includes('Not live · Last price:'));
+      assert(!(await old.innerText()).includes('Not live'));
       assert.equal(await fresh.locator(':scope > span').count(), 4);
       await fresh.focus(); assert(await fresh.evaluate(e => e === document.activeElement));
       if (width === 390) {
@@ -67,7 +67,7 @@ const output = fs.mkdtempSync('/tmp/watchlist-alpaca-price-ui-');
         assert(Math.abs(price.y-added.y) < 2);
       }
       await page.screenshot({ path:path.join(output,`${width}.png`), fullPage:true });
-      cases.push({ width, ...dims, fields:4, freshWarning:false, staleWarning:true, keyboardFocus:true });
+      cases.push({ width, ...dims, fields:4, freshWarning:false, unchangedTradeWarning:false, keyboardFocus:true });
     }
     console.log(JSON.stringify({ cases, screenshots:output, scope:'Actual extracted row and price-status code, real CSS, synthetic data. Next Link/decorative badges stubbed; not authenticated end-to-end acceptance.' }));
   } finally { await browser.close(); }

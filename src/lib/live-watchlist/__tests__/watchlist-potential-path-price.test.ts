@@ -25,3 +25,9 @@ it("a dated BOATS reference displays the actual trade time rather than its later
   const html=renderToStaticMarkup(createElement(WatchlistV2PotentialPathCard,{symbol:dated,livePriceAvailable:false}));
   expect(html).toContain("Not live · Last price: Nov 8, 9:50 PM ET");
 });
+
+it("does not call a fixed reference Not live when the feed is connected", () => {
+  const html=renderToStaticMarkup(createElement(WatchlistV2PotentialPathCard,{symbol,livePriceAvailable:false,liveFeedConnected:true}));
+  expect(html).not.toContain("Not live");
+  expect(html).toContain("Levels use this fixed price");
+});

@@ -43,6 +43,12 @@ describe("watchlist display contract", () => {
     expect(clientSource).toContain("priceNoteOwnLine={Boolean(watchlistPriceNote(symbol, marketDataStatus))}");
   });
 
+  it("does not mount or load an embedded TradingView chart on ticker details", () => {
+    expect(clientSource).not.toContain("TradingViewChart");
+    expect(clientSource).not.toContain("embed-widget-advanced-chart.js");
+    expect(clientSource).toContain("<WatchlistDetailCards");
+  });
+
   it("matches the high-risk heading to the Potential Path ticker size", () => {
     expect(cssSource).toMatch(/\.watchlist-v2-card-title h2\s*\{[\s\S]*?font-size:\s*1\.25rem;/);
     expect(cssSource).toMatch(/\.watchlist-high-risk-warning h2\s*\{[\s\S]*?font-size:\s*1\.25rem;/);

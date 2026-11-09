@@ -1,5 +1,35 @@
 # Watchlist Alpaca independent QA
 
+## November 9 follow-up corrections (supersedes old-trade display rule below)
+
+Owner clarified that Not live means the feed is not connected, not that a halted
+or thinly traded stock has an old last trade. Runtime now observes actual Alpaca
+transport health from existing polls. Platform hides Not live when that feed is
+live; when off, actual last-trade time remains unchanged and visible. Individual
+quote freshness still controls fixed overnight reference replacement independently
+of the note. Potential Path respects both facts. No extra provider requests.
+Help updated to match. Fake disconnected/halted/expired/BOATS tests and real
+manager tests remain distinct from live halt observation after release.
+
+Owner also requested removing the embedded TradingView chart from ticker detail.
+Removed its mount, widget script loader, responsive effects and unused symbol
+mapping; no change to other detail cards, access controls or providers. No new
+layout, chart replacement or scanner edits. Existing Help contains no TradingView
+instructions requiring deletion. A regression prohibits reintroducing its mount
+or external embedding script. Sixteen focused Platform tests pass. Component
+browser checks pass at 1440/390px with actual row/CSS and synthetic healthy-feed
+old trades, no misleading Not live, no overflow and preserved keyboard access;
+not authenticated full-page E2E. Focused lint has no errors; one pre-existing
+unused helper warning remains. Focused strict TypeScript passed across 1,936
+transitive source files. Source-only changes, not yet deployed.
+
+SMX history correction is separately committed in Runtime. Real replay of its
+original failure cutoff now supplies 173 five-minute, 127 daily and 247 four-hour
+bars through the actual manager; both outgoing formats capture them without any
+OpenAI call. See paired Runtime docs/watchlist-alpaca-status-qa.md. This corrects
+the missed downstream legacy EODHD loader, not the previously verified raw Alpaca
+loader. Existing live analyses and notifications were not changed.
+
 ## Scope and source
 
 Audit the owner's deployed Alpaca Watchlist, AI candle packet, price status and
