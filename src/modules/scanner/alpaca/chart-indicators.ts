@@ -1,0 +1,16 @@
+import type {Candle} from './candles';
+import type {ChartIndicator,ChartPreferences} from './chart-preferences';
+export type IndicatorPoint={time:number;value:number};
+const sessionClock=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+export function isVisibleSession(time:number,p:ChartPreferences){const parts=Object.fromEntries(sessionClock.formatToParts(time*1000).map(p=>[p.type,p.value]));const minute=+parts.hour*60+ +parts.minute;return minute<570?p.premarket:minute<960?p.regular:p.postmarket;}
+export function visibleSessionBars(bars:Candle[],p:ChartPreferences){return bars.filter(b=>isVisibleSession(b.time,p));}
+function average(values:number[],period:number,exponential:boolean):(number|null)[]{let sum=0,previous:number|null=null;return values.map((v,index)=>{sum+=v;if(index>=period)sum-=values[index-period];if(index<period-1)return null;previous=previous===null||!exponential?sum/period:previous+(v-previous)*2/(period+1);return previous;});}
+export function indicatorValues(bars:readonly Candle[],i:ChartIndicator):{label:string;points:IndicatorPoint[];pane:boolean;histogram?:boolean}[]{
+ const closes=bars.map(b=>b.close),points=(v:(number|null)[])=>v.flatMap((value,index)=>value===null?[]:[{time:bars[index].time,value}]);
+ if(i.type==='EMA'||i.type==='SMA')return [{label:`${i.type} ${i.period}`,points:points(average(closes,i.period,i.type==='EMA')),pane:false}];
+ if(i.type==='VWAP'){let total=0,volume=0,date='';const fmt=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});return [{label:'VWAP · Eastern day',pane:false,points:bars.flatMap(b=>{const day=fmt.format(b.time*1000);if(day!==date){date=day;total=0;volume=0;}total+=(b.high+b.low+b.close)/3*b.volume;volume+=b.volume;return volume?[{time:b.time,value:total/volume}]:[];})}];}
+ if(i.type==='RSI'){let gain=0,loss=0;const result:IndicatorPoint[]=[];for(let n=1;n<bars.length;n++){const delta=closes[n]-closes[n-1];if(n<=i.period){gain+=Math.max(0,delta)/i.period;loss+=Math.max(0,-delta)/i.period;}else{gain=(gain*(i.period-1)+Math.max(0,delta))/i.period;loss=(loss*(i.period-1)+Math.max(0,-delta))/i.period;}if(n>=i.period)result.push({time:bars[n].time,value:loss===0?gain===0?50:100:100-100/(1+gain/loss)});}return [{label:`RSI ${i.period}`,points:result,pane:true}];}
+ if(i.type==='MACD'){const fast=average(closes,12,true),slow=average(closes,26,true);const line=bars.flatMap((b,n)=>fast[n]!==null&&slow[n]!==null?[{time:b.time,value:fast[n]!-slow[n]!}]:[]);const signal=average(line.map(p=>p.value),9,true);return [{label:'MACD 12/26',points:line,pane:true},{label:'Signal 9',points:line.flatMap((b,n)=>signal[n]===null?[]:[{time:b.time,value:signal[n]!}]),pane:true},{label:'Histogram',histogram:true,points:line.flatMap((b,n)=>signal[n]===null?[]:[{time:b.time,value:b.value-signal[n]!}]),pane:true}];}
+ const middle=average(closes,i.period,false),upper=middle.map((v,n)=>v===null?null:v+2*Math.sqrt(closes.slice(n-i.period+1,n+1).reduce((s,x)=>s+(x-v)**2,0)/i.period)),lower=middle.map((v,n)=>v===null?null:2*v-upper[n]!);
+ return [{label:`Bollinger ${i.period} · 2σ`,points:points(middle),pane:false},{label:'Upper band',points:points(upper),pane:false},{label:'Lower band',points:points(lower),pane:false}];
+}

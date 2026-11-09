@@ -23,7 +23,10 @@ it("saves the dedicated enable control without changing Gainer, Momentum or decl
     if(String(input)==="/api/admin/screeners/provider")return Response.json({provider:"alpaca",revision:0,moomooAvailable:false});
     if(String(input)!=="/api/screeners/live")throw Error("unexpected request");
     const empty={rows:[],focus:[],total:0};return Response.json({status:"ready",tradingDate:"2026-11-02",session:"regular",updatedAtUtc:"2026-11-02T15:00:00Z",universeCount:0,receivedCount:0,missingSymbols:[],missingFloatCount:0,gainers:empty,momentum:empty,issues:[]});
-  });vi.stubGlobal("fetch",fetch);const container=document.createElement("div");document.body.append(container);root=createRoot(container);
+  });vi.stubGlobal("fetch",fetch);
+  class FakeSource extends EventTarget {onerror:((event:Event)=>void)|null=null;close(){}}
+  vi.stubGlobal("EventSource",FakeSource);
+  const container=document.createElement("div");document.body.append(container);root=createRoot(container);
   await act(async()=>root!.render(createElement(LiveScreenersClient,{admin:true})));
   const label=[...container.querySelectorAll("label")].find(item=>item.textContent?.includes("Enable High Drops"))!;
   expect(label).toBeDefined();const toggle=label.querySelector("input")!;expect(toggle.checked).toBe(true);

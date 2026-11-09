@@ -1,8 +1,8 @@
 import type { NormalizedSnapshot, ScannerSession } from "../live/contracts";
 import type { AlpacaSessionState } from "./session-book";
-import { easternClock } from "../live/sessions";
+import { usablePreviousClose, type SplitAdjustedPreviousClose } from "./previous-close";
 
-type Snapshot = { dailyBar?: { t: string; c: number }; prevDailyBar?: { t: string; c: number }; latestQuote?: { bp: number; ap: number; t?:string } };
+type Snapshot = { dailyBar?: { t: string; c: number }; prevDailyBar?: { t: string; c: number }; latestQuote?: { bp: number; ap: number; t?:string }; adjustedPreviousClose?: SplitAdjustedPreviousClose | null };
 export type AlpacaQuoteReply = { feed: "sip"; connected: boolean; snapshots: Record<string, Snapshot | null>; sessionTotals?: Record<string, AlpacaSessionState | null> };
 const positive = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value > 0;
 
@@ -15,8 +15,8 @@ export function normalizeAlpacaScannerBatch(input: { payload: unknown; requested
     if (!quote || !book?.complete || book.date !== input.tradingDate) { issues.add("alpaca_session_warming"); continue; }
     const current = book.sessions[input.session];
     if (!positive(current.price) || current.providerAt === null) continue;
-    const baselines = [quote.prevDailyBar, quote.dailyBar].filter(bar => bar && positive(bar.c) && Number.isFinite(Date.parse(bar.t)) && easternClock(Date.parse(bar.t)).date < input.tradingDate).sort((a, b) => Date.parse(b!.t) - Date.parse(a!.t));
-    const baseline = baselines[0]?.c ?? null;
+    const baseline = usablePreviousClose(quote.adjustedPreviousClose, symbol, input.tradingDate, input.receivedAt)
+      ? quote.adjustedPreviousClose.price : null;
     if (baseline === null) issues.add("session_baseline_unavailable");
     const included = input.session === "premarket" ? [book.sessions.premarket] : input.session === "regular" ? [book.sessions.premarket, book.sessions.regular] : Object.values(book.sessions);
     const highs = included.flatMap(value => value.high === null ? [] : [value.high]);

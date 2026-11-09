@@ -71,15 +71,15 @@ describe("scanner settings HTTP", () => {
 describe("scanner float HTTP",()=>{
   const floatFact={ shares:760_000,retrievedAtUtc:"2026-10-30T14:00:00.000Z" };
   it("does not read cached floats before owner authorization",async()=>{
-    const read=vi.fn(async()=>({ tradingDate:"2026-10-30",exchanges:{},floats:{} }));
+    const read=vi.fn(async()=>({ tradingDate:"2026-10-30",floats:{} }));
     const response=await handleScannerFloatsGet(new Request("https://app.traderslink.pro/api/admin/screeners/floats?symbols=SLGB"),{ owner:()=>false,read });
     expect(response.status).toBe(404);expect(read).not.toHaveBeenCalled();
   });
   it("returns only the requested owner float facts",async()=>{
-    const read=vi.fn(async()=>({ tradingDate:"2026-10-30",exchanges:{SLGB:"NASDAQ" as const},floats:{ SLGB:floatFact } }));
+    const read=vi.fn(async()=>({ tradingDate:"2026-10-30",floats:{ SLGB:floatFact } }));
     const response=await handleScannerFloatsGet(new Request("https://app.traderslink.pro/api/admin/screeners/floats?symbols=SLGB,SLGB"),{ owner:()=>true,read });
     expect(response.status).toBe(200);expect(read).toHaveBeenCalledWith(["SLGB"]);
-    expect(await response.json()).toEqual({ tradingDate:"2026-10-30",exchanges:{SLGB:"NASDAQ" as const},floats:{ SLGB:floatFact } });
+    expect(await response.json()).toEqual({ tradingDate:"2026-10-30",floats:{ SLGB:floatFact } });
   });
   it("rejects malformed symbols and suppresses private read failures",async()=>{
     const read=vi.fn(async()=>{throw Error("/private/scanner/floats.json");});
@@ -87,4 +87,15 @@ describe("scanner float HTTP",()=>{
     const response=await handleScannerFloatsGet(new Request("https://app.traderslink.pro/api/admin/screeners/floats?symbols=SLGB"),{ owner:()=>true,read });
     expect(response.status).toBe(503);expect(JSON.stringify(await response.json())).not.toContain("private");
   });
+});
+
+it("pushes completed scanner models immediately and cancels its subscription", async () => {
+  let notify=()=>{};const unsubscribe=vi.fn();const abort=new AbortController();
+  const response=await handleLiveScannerGet(new Request("http://localhost/api/screeners/live?stream=1",{signal:abort.signal}),{
+    member:()=>true,read:async()=>model,subscribe:callback=>{notify=callback;return unsubscribe;},
+  });
+  expect(response.headers.get("content-type")).toBe("text/event-stream");
+  const reader=response.body!.getReader();const first=await reader.read();expect(new TextDecoder().decode(first.value)).toContain('event: scanner');
+  notify();const second=await reader.read();expect(new TextDecoder().decode(second.value)).toContain('"gainers"');
+  abort.abort();expect(unsubscribe).toHaveBeenCalledOnce();await reader.cancel();
 });

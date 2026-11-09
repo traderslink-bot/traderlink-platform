@@ -143,7 +143,7 @@ export class LiveScannerEngine {
         priceTimeBasis: snapshot.priceTimeBasis,
         activity:event.activity,momentumSignals:Object.freeze([...event.signals,...rollingSignals]),reasons:[],news:input.news.get(stock.symbol)??[] });
     }
-    const dayGainers = rows.filter(row => matches(row,input.configuration.gainers.filters[input.session]))
+    const dayGainers = rows.filter(row => row.sessionGain !== null && matches(row,input.configuration.gainers.filters[input.session]))
       .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
     const snapshotsBySymbol = new Map(input.snapshots.map(snapshot => [snapshot.symbol,snapshot]));
     const gainerRows = input.session === "after_hours" ? rows.map(row => {
@@ -152,7 +152,7 @@ export class LiveScannerEngine {
       return { ...row, comparisonPrice, gainBasis: "today_regular_close" as const,
         sessionGain: row.postMarketGain ?? null };
     }) : rows;
-    const gainers = gainerRows.filter(row => (input.session !== "after_hours" || row.sessionGain !== null)
+    const gainers = gainerRows.filter(row => row.sessionGain !== null
       && matches(row,input.configuration.gainers.filters[input.session]))
       .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
     const momentumFilters = input.configuration.momentum.filters[input.session];

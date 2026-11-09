@@ -2,7 +2,7 @@ import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { listMarketHaltDashboard } from "@/src/modules/news/server/market-halt-dashboard";
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
-import { readLiveScannerMarketMovements, readLiveScannerRuntime, scannerUniverseStore } from "@/src/modules/scanner/live/server/runtime";
+import { readLiveScannerMarketMovements, readLiveScannerRuntime, scannerUniverseStore, subscribeLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
 import { handleLiveScannerGet } from "@/src/modules/scanner/live/server/backend-http";
 import { readFinnhubExchanges } from "@/src/modules/scanner/live/server/finnhub-exchange";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
@@ -11,7 +11,7 @@ import { eodhdResumedHaltIds } from "@/src/modules/news/server/eodhd-halt-resump
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
-  return handleLiveScannerGet(request,{ member: candidate => {
+  return handleLiveScannerGet(request,{ subscribe:subscribeLiveScannerRuntime, member: candidate => {
     try { return hasWatchlistDashboardNavigationAccess(requireTraderLinkPlatformRequestIdentity(candidate.headers)); } catch { return false; }
   },read: async () => {
     const scanner=readLiveScannerRuntime();

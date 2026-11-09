@@ -34,10 +34,18 @@ async function mount(initial: ScannerReadModel, options: { admin?: boolean; now?
     if (options.fail) throw Error("synthetic transport error");
     return Response.json(response);
   }); vi.stubGlobal("fetch", fetch);
+  const stream=vi.fn();const connections:FakeSource[]=[];
+  class FakeSource extends EventTarget {
+    onerror:((event:Event)=>void)|null=null;closed=false;
+    constructor(url:string){super();stream(url);connections.push(this);queueMicrotask(()=>{if(options.fail)this.onerror?.(new Event("error"));else this.emit(response);});}
+    emit(value:ScannerReadModel){if(!this.closed)this.dispatchEvent(new MessageEvent("scanner",{data:JSON.stringify(value)}));}
+    close(){this.closed=true;}
+  }
+  vi.stubGlobal("EventSource",FakeSource);
   const container = document.createElement("div"); document.body.append(container); root = createRoot(container);
   await act(async () => { root!.render(createElement(LiveScreenersClient,{admin:options.admin})); });
-  return { container, fetch, update: async (next: ScannerReadModel) => {
-    response = next; await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+  return { container, fetch, stream, connections, update: async (next: ScannerReadModel) => {
+    response = next; await act(async () => { await vi.advanceTimersByTimeAsync(5000); connections.at(-1)!.emit(next); });
   } };
 }
 async function openFullView(container: HTMLElement, label = "Momentum") {
@@ -45,25 +53,25 @@ async function openFullView(container: HTMLElement, label = "Momentum") {
   await act(async () => button.click());
   return document.body.querySelector(`[role="dialog"][aria-label="${label} full view"]`)!;
 }
-describe("actual Top Gainers card polling and tab interaction", () => {
-  it("keeps existing rows visible when a successful poll briefly returns every scanner empty", async () => {
+describe("actual Top Gainers pushed model and tab interaction", () => {
+  it("keeps existing rows visible when a successful publication briefly returns every scanner empty", async () => {
     const page = await mount(momentumModel(undefined));
     expect(page.container.textContent).toContain("TEST");
     await page.update(model("regular"));
     expect(page.container.textContent).toContain("TEST");
-    expect(page.fetch).toHaveBeenCalledTimes(2);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
   });
-  it("switches the Gainers title and table to post-market on polling without remounting or extra requests", async () => {
+  it("switches the Gainers title and table to post-market on publication without remounting or extra requests", async () => {
     const page = await mount(model("regular"));
     expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
     expect(page.container.querySelector('[aria-label="Open Top Gainers full view"]')).not.toBeNull();
     expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
-    expect(page.fetch).toHaveBeenCalledTimes(1);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
     await page.update(model("after_hours"));
     expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers Post Market");
     expect(page.container.textContent).not.toContain("Since today’s regular close");
-    expect(page.fetch).toHaveBeenCalledTimes(2);
-    expect(page.fetch.mock.calls.every(call => String(call[0]) === "/api/screeners/live")).toBe(true);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
+    expect(page.stream).toHaveBeenCalledWith("/api/screeners/live?stream=1");
   });
   it("returns to the day comparison when the reported session is regular", async () => {
     const page = await mount(model("after_hours"));
@@ -71,7 +79,7 @@ describe("actual Top Gainers card polling and tab interaction", () => {
     await page.update(model("regular"));
     expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
     expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
-    expect(page.fetch).toHaveBeenCalledTimes(2);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
   });
 });
 
@@ -130,9 +138,9 @@ describe("Momentum context rendering", () => {
     expect(compact.textContent).toContain("Post %");
     expect(compact.textContent).toContain("-24%");
     expect(compact.textContent).toContain("42%");
-    expect(page.fetch).toHaveBeenCalledTimes(1);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
   });
-  it("omits Post outside after-hours, adds it on the normal poll and does not replace unknown values with zero", async () => {
+  it("omits Post outside after-hours, adds it on the next publication and does not replace unknown values with zero", async () => {
     const page = await mount(momentumModel(undefined));
     const drawer = await openFullView(page.container);
     let header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
@@ -146,7 +154,7 @@ describe("Momentum context rendering", () => {
     expect(cells[4]).toBe("-24%");
     expect(cells[5]).toBe("n/a");
     expect(cells[6]).toBe("8%");
-    expect(page.fetch).toHaveBeenCalledTimes(2);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
   });
 });
 
@@ -191,19 +199,19 @@ describe("compact scanner grid and full view", () => {
       expect(table.textContent).toContain(label==='Top Gainers'?'T/O':'Turnover');
       expect(table.querySelector(`td[colspan="${columnCount}"]`)).not.toBeNull();
     }
-    expect(page.fetch).toHaveBeenCalledTimes(1);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
   });
   it("opens full data without another request, polls it from the same model and closes with Escape", async () => {
     const initial = momentumModel(42);
     const page = await mount(initial);
     const drawer = await openFullView(page.container);
     expect(drawer.textContent).toContain('$2.4');
-    expect(page.fetch).toHaveBeenCalledTimes(1);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
     const next = {...initial, momentum:{...initial.momentum,rows:initial.momentum.rows.map(row=>({...row,price:2.5}))}};
     await page.update(next);
     expect(drawer.textContent).toContain('$2.5');
     expect(page.container.querySelector('table[aria-label="Momentum compact stocks"]')!.textContent).toContain('$2.5');
-    expect(page.fetch).toHaveBeenCalledTimes(2);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
     await act(async () => drawer.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
     await act(async () => {await vi.advanceTimersByTimeAsync(300);});
     expect(document.body.querySelector('[role="dialog"][aria-label="Momentum full view"]')).toBeNull();
@@ -220,7 +228,7 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
     await page.update({ ...model("regular"), status: "warming" });
     expect(page.container.textContent).not.toContain("collecting enough recent activity");
   });
-  it("shows the overnight hours inside both scanner cards and removes them at 4 AM through polling", async () => {
+  it("shows the overnight hours inside both scanner cards and removes them at 4 AM through publication", async () => {
     const page = await mount({ ...model("regular"), status: "closed", session: null },{ now: "2026-11-03T08:59:58Z" });
     const cards = [page.container.querySelector('[data-scanner-workspace-card="gainers"] section')!,page.container.querySelector('[data-scanner-workspace-card="momentum"] section')!];
     expect(cards.length).toBe(2);
@@ -228,7 +236,7 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
     expect(page.container.textContent).not.toContain("extended-hours scanning session is closed");
     await page.update({ ...model("regular"), session: "premarket", status: "warming" });
     expect(page.container.textContent).not.toContain("Active 4:00am - 8:00pm est");
-    expect(page.fetch).toHaveBeenCalledTimes(2);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
   });
   it.each(["disabled", "unavailable", "universe_missing"] as const)("shows only the permitted member notice for %s", async status => {
     const page = await mount({ ...model("regular"), status });
@@ -273,7 +281,7 @@ describe("alternative stock card view", () => {
     await switchView("Top Gainers","Table");
     expect(page.container.querySelector('table[aria-label="Top Gainers compact stocks"]')).not.toBeNull();
     expect(page.container.querySelector('[aria-label="Momentum stock cards"]')).not.toBeNull();
-    expect(page.fetch).toHaveBeenCalledTimes(1);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
   });
 });
 
@@ -302,7 +310,7 @@ describe("two-row table view", () => {
       expect(first.getAttribute('aria-expanded')).toBe('true');
       expect(second.nextElementSibling?.textContent).toContain('HOD price');
     }
-    expect(page.fetch).toHaveBeenCalledTimes(1);
+    expect(page.stream).toHaveBeenCalledTimes(1);expect(page.fetch).not.toHaveBeenCalled();
   });
 });
 
@@ -337,3 +345,16 @@ describe("two-row table view", () => {
     expect(document.querySelector('[data-workspace-chart]')).toBeNull();
   });
  });
+
+it("closes the pushed model stream while hidden, resumes once and cleans up on unmount",async()=>{
+ const page=await mount(model("regular"));
+ try{
+  Object.defineProperty(document,"hidden",{configurable:true,value:true});
+  await act(async()=>document.dispatchEvent(new Event("visibilitychange")));
+  expect(page.connections[0].closed).toBe(true);expect(page.stream).toHaveBeenCalledTimes(1);
+  Object.defineProperty(document,"hidden",{configurable:true,value:false});
+  await act(async()=>document.dispatchEvent(new Event("visibilitychange")));
+  expect(page.stream).toHaveBeenCalledTimes(2);expect(page.connections[1].closed).toBe(false);expect(page.fetch).not.toHaveBeenCalled();
+  await act(async()=>root!.unmount());root=undefined;expect(page.connections[1].closed).toBe(true);
+ }finally{delete (document as unknown as {hidden?:boolean}).hidden;}
+});

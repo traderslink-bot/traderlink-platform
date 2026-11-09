@@ -57,6 +57,8 @@ export class LiveScannerFeed {
   private model: ScannerReadModel = empty("disabled",easternClock(Date.now()).date);
   private running = false;
   private idleWaiters=new Set<()=>void>();
+  private modelListeners=new Set<()=>void>();
+  subscribeModels(notify:()=>void):()=>void { this.modelListeners.add(notify);return()=>this.modelListeners.delete(notify); }
   private floatPrewarmDate: string | null = null;
   private readonly lastSnapshotBySymbol=new Map<string,Readonly<{observedAt:number;price:number;volume:number|null}>>();
   private readonly lastMovementBySymbol=new Map<string,ScannerMarketMovement>();
@@ -177,7 +179,7 @@ export class LiveScannerFeed {
       this.lastSnapshotBySymbol.set(snapshot.symbol,Object.freeze({observedAt:snapshot.receivedAt,price:snapshot.price,volume:snapshot.volume}));
     }
   }
-  private set(model: ScannerReadModel): ScannerReadModel { this.model = model; return this.read(); }
+  private set(model: ScannerReadModel): ScannerReadModel { this.model = model; for(const notify of this.modelListeners){try{notify();}catch{/* One disconnected browser cannot stop evaluation. */}}return this.read(); }
 }
 
 const feedStops=new WeakMap<LiveScannerFeed,()=>void>();

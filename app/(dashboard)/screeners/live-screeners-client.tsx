@@ -496,20 +496,24 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     return()=>{cancelAnimationFrame(frame);observer?.disconnect();window.removeEventListener("resize",schedule);window.visualViewport?.removeEventListener("resize",schedule);};
   },[]);
   useEffect(()=>{
-    let timer:ReturnType<typeof setTimeout>|undefined,loading=false,refreshMs=5000;
-    const controller=new AbortController();
-    const load=async()=>{
-      if(loading||controller.signal.aborted||document.hidden)return;
-      loading=true;
-      try{const response=await fetch('/api/screeners/live',{cache:'no-store',credentials:'same-origin',signal:controller.signal});if(!response.ok)throw Error();
-        const incoming:ScannerReadModel=await response.json();refreshMs=incoming.refreshAfterMs===1000?1000:5000;
-        setModel(previous=>{const next=applyScannerDisplayContinuity(previous,incoming,displayContinuity.current,Date.now());displayContinuity.current=next.continuity;return next.model;});setLoadError(false);
-      }catch{if(!controller.signal.aborted)setLoadError(true);}
-      finally{loading=false;if(!controller.signal.aborted){setCheckedAt(Date.now());if(!document.hidden)timer=setTimeout(()=>void load(),refreshMs);}}
+    let source:EventSource|undefined;
+    const open=()=>{
+      source?.close();source=undefined;
+      if(document.hidden)return;
+      source=new EventSource('/api/screeners/live?stream=1');
+      const connection=source;
+      source.addEventListener('scanner',event=>{
+        if(source!==connection)return;
+        try{
+          const incoming=JSON.parse((event as MessageEvent).data) as ScannerReadModel;
+          setModel(previous=>{const next=applyScannerDisplayContinuity(previous,incoming,displayContinuity.current,Date.now());displayContinuity.current=next.continuity;return next.model;});
+          setLoadError(false);setCheckedAt(Date.now());
+        }catch{setLoadError(true);}
+      });
+      source.onerror=()=>{if(source===connection){setLoadError(true);setCheckedAt(Date.now());}};
     };
-    const visibility=()=>{clearTimeout(timer);if(!document.hidden)void load();};
-    document.addEventListener('visibilitychange',visibility);void load();
-    return()=>{controller.abort();clearTimeout(timer);document.removeEventListener('visibilitychange',visibility);};
+    document.addEventListener('visibilitychange',open);open();
+    return()=>{source?.close();source=undefined;document.removeEventListener('visibilitychange',open);};
   },[]);
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";

@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "status": "local-build-only-owner-all-deploy-hold",
+  "build": {
+    "esbuild": "0.28.2",
+    "entry": "scripts/run-alpaca-market-data-gateway.ts",
+    "platform": "node",
+    "target": "node22",
+    "format": "cjs"
+  },
+  "candidate": {
+    "source": "775374d886bb8286ffb585bb9ba0dae7abfb7409",
+    "bundleSha256": "9883d11d5c63f7990072fe4db5c69b1ca926953725938bef7d8473f2717a8db8",
+    "bundleBytes": 55430,
+    "inputs": {
+      "scripts/run-alpaca-market-data-gateway.ts": "a1aa7b61b66c4ebb0b492b8010988ab5798458cd1909e98d5f1250b824eb5821",
+      "src/modules/scanner/alpaca/candles.ts": "9507f66e72798538159281497b7af60e2bf94693f4e5d9885f33a554efe608b3",
+      "src/modules/scanner/alpaca/chart-live-book.ts": "b9362318fd1a89f5ee74cd38968edc9fefd15564cb3d9c38d00ba59769508fd2",
+      "src/modules/scanner/alpaca/gateway.ts": "2889b1c6054f9f0ff0cbe9b42e6784eba8ca56b49f91ab346da2d5d15bd8f5b7",
+      "src/modules/scanner/alpaca/live-price-hub.ts": "43529339ef46cdf9b6fb2d96d8c22936c205e16db7cb35456d6c44e8e0bedf57",
+      "src/modules/scanner/alpaca/previous-close.ts": "efb5045240a3a33ca1cdf84ca6f5d3db9a90a904f6f5f4dcb621fb84a7e50dae",
+      "src/modules/scanner/alpaca/rest-data.ts": "8c16317a1c816ee6e7639df01f3fe9b274824a99988dade432f2bbaf248ac782",
+      "src/modules/scanner/alpaca/scanner-stream-hub.ts": "ee10baea3d04d19a4275c98a7701ae00aa23c6835e9eb3d19f87280339e43859",
+      "src/modules/scanner/alpaca/session-book.ts": "4878bb313bf7c99dc8d329d65afd5e834136f78aa864122e2251842fbe8f0094",
+      "src/modules/scanner/live/event-timing.ts": "98df86f49579594974f8a53ad4f7fd430054b16c5341dc77388507cfd6b77e74",
+      "src/modules/scanner/live/sessions.ts": "1aa052b5505c28a51d67d9e8cf8ac9bf35178d15678f7a181b791f98b8657e4c"
+    }
+  },
+  "recovery": {
+    "source": "ab638bf11eda88e3fccef2f3a0f162d89dbe02df",
+    "bundleSha256": "648b07528f71c8bdaee9d9c36c0c05cc41684a71ff1760d5c6e66c7161a61659",
+    "bundleBytes": 26338,
+    "inputs": {
+      "scripts/run-alpaca-market-data-gateway.ts": "a1aa7b61b66c4ebb0b492b8010988ab5798458cd1909e98d5f1250b824eb5821",
+      "src/modules/scanner/alpaca/candles.ts": "183b3e42958924a56a660c8c47934e23645eeb01854ef2c9e4871ec2c9648e9d",
+      "src/modules/scanner/alpaca/gateway.ts": "c5bb0fa903267f37da760acc6ffbcaff74ddd7cddfa1c9b9e24d0801d3d9cd97",
+      "src/modules/scanner/alpaca/rest-data.ts": "8c16317a1c816ee6e7639df01f3fe9b274824a99988dade432f2bbaf248ac782",
+      "src/modules/scanner/alpaca/session-book.ts": "265b9f5810a7e917e421c9c341dd62a945f7fa5d0f1b48cadf1f82b5f7015152",
+      "src/modules/scanner/live/sessions.ts": "1aa052b5505c28a51d67d9e8cf8ac9bf35178d15678f7a181b791f98b8657e4c"
+    },
+    "note": "Reproducible recovery-source build; installed binary digest still requires Coordinator comparison. Roll consumers back before gateway if needed; never leave the new scanner normalizer with an old gateway lacking adjustedPreviousClose."
+  }
+}

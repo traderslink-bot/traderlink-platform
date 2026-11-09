@@ -6,18 +6,24 @@ import { AlpacaRestData, parseHistoryRequest } from "./rest-data";
 import { AlpacaSessionBook, alpacaMinuteTradeRules } from "./session-book";
 import { ScannerStreamHub } from "./scanner-stream-hub";
 import { easternClock } from "../live/sessions";
+import { AlpacaPreviousCloseBook } from "./previous-close";
+import { ChartLiveBook } from "./chart-live-book";
+import { LivePriceHub, priceObservationOrder } from "./live-price-hub";
 
-type Client = { symbol: string; response: ServerResponse };
+type Client = { symbol: string; daily:boolean; response: ServerResponse };
 type GatewayOptions = { keyId: string; secretKey: string; token: string };
 
 // This service deliberately knows no trading/account-management API URL.
 export function createAlpacaGateway(options: GatewayOptions) {
   const clients = new Set<Client>();
+  const chartBooks = new Map<string, ChartLiveBook>();
   const priceUpdates=new Map<string,{price:number;time:string}>();
-  const priceTimer=setInterval(()=>{for(const client of clients){const price=priceUpdates.get(client.symbol);if(price)send(client,"price",price);}priceUpdates.clear();},250);priceTimer.unref();
+  const priceTimer=setInterval(()=>{for(const client of clients){const price=priceUpdates.get(client.symbol);if(price)send(client,"price",price);}priceUpdates.clear();for(const [key,book] of chartBooks){void book.warm();const [symbol,daily]=key.split("|");for(const bar of book.drain())for(const client of clients)if(client.symbol===symbol&&client.daily===(daily==="true"))send(client,"bar",{bar,daily:daily==="true",provisional:true});}},250);priceTimer.unref();
   const cache = new Map<string, { at: number; bars: Candle[] }>();
   const pending = new Map<string, Promise<Candle[]>>();
   const rest = new AlpacaRestData(options);
+  const previousCloses = new AlpacaPreviousCloseBook(rest);
+  let chartBasisDate = easternClock(Date.now()).date;
   const sessionBook = new AlpacaSessionBook(rest,symbol=>scannerHub.mark(symbol));
   const leases = new Map<string, number>();
   const quotes = new Map<string, Record<string, unknown>>();
@@ -29,8 +35,25 @@ export function createAlpacaGateway(options: GatewayOptions) {
     if (client.response.writableLength > 256_000) { client.response.destroy(); return; }
     client.response.write(`event: ${event}\ndata: ${JSON.stringify(value)}\n\n`);
   };
-  const status = (state: string) => { for (const client of clients) send(client, "status", { state }); };
-  const symbols = () => [...new Set([...clients].map(client => client.symbol).concat([...leases.keys()]))];
+  const status = (state: string) => { for (const client of clients) send(client, "status", { state, adjustment: "split", basisDate: easternClock(Date.now()).date }); };
+  let priceGeneration = 0;
+  let previousPriceSymbols = new Set<string>();
+  const priceHub = new LivePriceHub(() => {
+    const wanted = new Set(priceHub.symbols());
+    const removed = [...previousPriceSymbols].filter(symbol => !wanted.has(symbol) && !leases.has(symbol) && ![...clients].some(client=>client.symbol===symbol));
+    previousPriceSymbols = wanted;
+    if (authenticated && socket?.readyState === WebSocket.OPEN && removed.length) socket.send(JSON.stringify({action:"unsubscribe",trades:removed,quotes:removed,bars:removed,updatedBars:removed,dailyBars:removed}));
+    if (!symbols().length) { clearTimeout(retry); const old=socket;socket=null;authenticated=false;priceHub.state(false);old?.close(); }
+    else { subscribe(); connect(); }
+  }, bootstrapLivePrices);
+  async function bootstrapLivePrices(requested: readonly string[]) {
+    if(!requested.length)return;
+    const generation = priceGeneration;
+    const snapshots = await rest.get("/v2/stocks/snapshots", new URLSearchParams({symbols:requested.join(","),feed:"sip"})) as Record<string,{latestTrade?:unknown}>;
+    if(generation!==priceGeneration)return;
+    for(const symbol of requested)priceHub.observe(symbol,snapshots[symbol]?.latestTrade);
+  }
+  const symbols = () => [...new Set([...clients].map(client => client.symbol).concat([...leases.keys()],priceHub.symbols()))];
   const snapshotQueue=new Set<string>();let bootstrapping=false;
   async function bootstrapSnapshots(){
     if(bootstrapping)return;bootstrapping=true;
@@ -46,14 +69,14 @@ export function createAlpacaGateway(options: GatewayOptions) {
     snapshots:Object.fromEntries(requested.map(symbol=>{
       const quote=quotes.get(symbol);if(!quote)return [symbol,null];
       const daily=quote.dailyBar as {t?:string;c?:number}|undefined,previous=quote.prevDailyBar as {t?:string;c?:number}|undefined,bidAsk=quote.latestQuote as {t?:string;bp?:number;ap?:number}|undefined;
-      return [symbol,{dailyBar:daily?{t:daily.t,c:daily.c}:undefined,prevDailyBar:previous?{t:previous.t,c:previous.c}:undefined,latestQuote:bidAsk?{t:bidAsk.t,bp:bidAsk.bp,ap:bidAsk.ap}:undefined}];
+      return [symbol,{dailyBar:daily?{t:daily.t,c:daily.c}:undefined,prevDailyBar:previous?{t:previous.t,c:previous.c}:undefined,latestQuote:bidAsk?{t:bidAsk.t,bp:bidAsk.bp,ap:bidAsk.ap}:undefined,adjustedPreviousClose:previousCloses.peek(symbol,easternClock(Date.now()).date)}];
     })),
     sessionTotals:Object.fromEntries(requested.map(symbol=>[symbol,subscribedTrades.has(symbol)?sessionBook.read(symbol,easternClock(Date.now()).date,regularClose):null]))
-  }) as import("./scanner-snapshots").AlpacaQuoteReply,requested=>{for(const symbol of requested){leases.set(symbol,Date.now()+45_000);if(!quotes.has(symbol)||(!quotes.get(symbol)?.prevDailyBar&&!quotes.get(symbol)?.dailyBar))snapshotQueue.add(symbol);}void bootstrapSnapshots();});
+  }) as import("./scanner-snapshots").AlpacaQuoteReply,requested=>{for(const symbol of requested){leases.set(symbol,Date.now()+45_000);if(!quotes.has(symbol)||(!quotes.get(symbol)?.prevDailyBar&&!quotes.get(symbol)?.dailyBar))snapshotQueue.add(symbol);}void bootstrapSnapshots();void previousCloses.read(requested,easternClock(Date.now()).date).then(()=>scannerHub.refresh()).catch(()=>{});});
   function subscribe() {
     if (authenticated && socket?.readyState === WebSocket.OPEN) {
       const wanted = symbols();
-      socket.send(JSON.stringify({ action: "subscribe", trades: wanted, quotes: [...leases.keys()], bars: wanted, updatedBars: wanted, dailyBars: wanted }));
+      socket.send(JSON.stringify({ action: "subscribe", trades: wanted, quotes: [...new Set([...leases.keys(),...priceHub.symbols()])], bars: wanted, updatedBars: wanted, dailyBars: wanted }));
     }
   }
   function connect() {
@@ -68,19 +91,20 @@ export function createAlpacaGateway(options: GatewayOptions) {
       try { messages = JSON.parse(String(event.data)); } catch { return; }
       if (!Array.isArray(messages)) return;
       for (const message of messages) {
+        if (message.T === "t") priceHub.observe(message.S,message);
         if (["t", "q", "b", "u", "d", "c", "x"].includes(message.T) && typeof message.S === "string") scannerHub.mark(message.S);
-        if (["t", "c", "x"].includes(message.T)) sessionBook.observe(message);
+        if (["t", "c", "x"].includes(message.T)) { sessionBook.observe(message); for(const daily of [false,true])chartBooks.get(`${message.S}|${daily}`)?.observe(message); }
         if(message.T === "t" && alpacaMinuteTradeRules(message).known && alpacaMinuteTradeRules(message).prices && Number.isFinite(message.p) && message.p>0){
-          if([...clients].some(client=>client.symbol===message.S)){const prior=priceUpdates.get(message.S);if(!prior||Date.parse(message.t)>=Date.parse(prior.time))priceUpdates.set(message.S,{price:message.p,time:message.t});}
+          if([...clients].some(client=>client.symbol===message.S)){const prior=priceUpdates.get(message.S);if(!prior||priceObservationOrder(message.t)>=priceObservationOrder(prior.time))priceUpdates.set(message.S,{price:message.p,time:message.t});}
         }
         if ((message.T === "c" || message.T === "x") && leases.has(message.S)) {quotes.delete(message.S);snapshotQueue.add(message.S);void bootstrapSnapshots();}
         if (message.T === "success" && message.msg === "authenticated") {
           clearTimeout(authTimeout); authenticated = true; retryCount = 0; subscribe();
         } else if (message.T === "subscription") {
           subscribedTrades = new Set(Array.isArray(message.trades) ? message.trades : []);
-          scannerHub.refresh();status("connected");
+          scannerHub.refresh();priceHub.state(true);void bootstrapLivePrices(priceHub.symbols()).catch(()=>{});status("connected");
         } else if (message.T === "error") {
-          status("unavailable"); candidate.close();
+          priceHub.state(false);status("unavailable"); candidate.close();
         } else if ((message.T === "t" || message.T === "q") && leases.has(message.S)) {
           if (message.T === "t") { const rules = alpacaMinuteTradeRules(message); if (!rules.known || !rules.prices) continue; }
           const current = quotes.get(message.S) ?? {};
@@ -95,7 +119,8 @@ export function createAlpacaGateway(options: GatewayOptions) {
             quotes.set(message.S, { ...previous, ...(rollover ? { prevDailyBar: oldDaily } : {}), [message.T === "d" ? "dailyBar" : "minuteBar"]: message });
           }
           const bar = alpacaCandle(message);
-          if (bar) for (const client of clients) if (client.symbol === message.S) send(client, "bar", { bar, daily: message.T === "d" });
+          if (bar && message.T !== "d") chartBooks.get(`${message.S}|false`)?.seal(bar.time);
+          if (bar) for (const client of clients) if (client.symbol === message.S && client.daily === (message.T === "d") && !(message.T === "d" && chartBooks.get(`${message.S}|true`)?.covers(bar.time))) send(client, "bar", { bar, daily: message.T === "d" });
         }
       }
     });
@@ -104,8 +129,9 @@ export function createAlpacaGateway(options: GatewayOptions) {
       clearTimeout(authTimeout);
       if (socket !== candidate) return;
       socket = null; authenticated = false;
-      subscribedTrades.clear();
+      subscribedTrades.clear();priceGeneration++;priceHub.state(false);
       quotes.clear();priceUpdates.clear();
+      for(const book of chartBooks.values())book.invalidate();
       sessionBook.invalidate();
       if (!stopped && symbols().length) {
         status("reconnecting");
@@ -114,17 +140,24 @@ export function createAlpacaGateway(options: GatewayOptions) {
     });
   }
   const leaseTimer = setInterval(() => {
+    const basisDate = easternClock(Date.now()).date;
+    if (basisDate !== chartBasisDate) {
+      chartBasisDate = basisDate; cache.clear();
+      for(const book of chartBooks.values())book.invalidate();
+      status("reconnecting"); status(authenticated ? "connected" : "connecting");
+    }
     const expired = [...leases].filter(([, until]) => until < Date.now()).map(([symbol]) => symbol);
     for (const symbol of expired) { leases.delete(symbol); quotes.delete(symbol); sessionBook.remove(symbol); }
     if (expired.length && authenticated && socket?.readyState === WebSocket.OPEN) {
-      const unusedBars = expired.filter(symbol => ![...clients].some(client => client.symbol === symbol));
-      socket.send(JSON.stringify({ action: "unsubscribe", trades: expired, quotes: expired, bars: unusedBars, updatedBars: unusedBars, dailyBars: unusedBars }));
+      const unusedBars = expired.filter(symbol => ![...clients].some(client => client.symbol === symbol) && !priceHub.symbols().includes(symbol));
+      socket.send(JSON.stringify({ action: "unsubscribe", trades: unusedBars, quotes: unusedBars, bars: unusedBars, updatedBars: unusedBars, dailyBars: unusedBars }));
     }
     if (!symbols().length) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
   }, 5000);
   leaseTimer.unref();
   async function history(symbol: string, daily: boolean): Promise<Candle[]> {
-    const key = `${symbol}:${daily}`;
+    const basisDate = easternClock(Date.now()).date;
+    const key = `${symbol}:${daily}:${basisDate}:split`;
     const cached = cache.get(key);
     if (cached && Date.now() - cached.at < 30_000) return cached.bars;
     const existing = pending.get(key);
@@ -134,10 +167,11 @@ export function createAlpacaGateway(options: GatewayOptions) {
     if (++requests > 120) throw Error("busy");
     const load = async () => {
       const url = new URL("https://data.alpaca.markets/v2/stocks/bars");
-      url.search = new URLSearchParams({ symbols: symbol, timeframe: daily ? "1Day" : "1Min", start: new Date(Date.now() - (daily ? 400 : 14) * 86_400_000).toISOString(), end: new Date().toISOString(), feed: "sip", adjustment: "raw", sort: "desc", limit: daily ? "400" : "10000" }).toString();
+      url.search = new URLSearchParams({ symbols: symbol, timeframe: daily ? "1Day" : "1Min", start: new Date(Date.now() - (daily ? 400 : 14) * 86_400_000).toISOString(), end: new Date().toISOString(), feed: "sip", adjustment: "split", sort: "desc", limit: daily ? "400" : "10000" }).toString();
       const response = await fetch(url, { headers: { "APCA-API-KEY-ID": options.keyId, "APCA-API-SECRET-KEY": options.secretKey }, signal: AbortSignal.timeout(20_000) });
       if (!response.ok) throw Error(response.status === 429 ? "busy" : "provider_unavailable");
       const payload = await response.json();
+      if (easternClock(Date.now()).date !== basisDate) throw Error("adjustment_basis_changed");
       if (!payload.bars || !Array.isArray(payload.bars[symbol] ?? [])) throw Error("provider_unavailable");
       const bars = (payload.bars[symbol] ?? []).map(alpacaCandle).filter((bar: Candle | null): bar is Candle => bar !== null).sort((a: Candle, b: Candle) => a.time - b.time);
       cache.delete(key); cache.set(key, { at: Date.now(), bars });
@@ -152,6 +186,15 @@ export function createAlpacaGateway(options: GatewayOptions) {
     if (!timingSafeEqual(digest(request.headers.authorization ?? ""), digest(`Bearer ${options.token}`))) { response.writeHead(401); response.end(); return; }
     const url = new URL(request.url ?? "/", "http://localhost");
     try {
+      if(url.pathname === "/prices" && request.method === "POST"){
+        let body="";
+        for await(const chunk of request){body+=chunk.toString();if(body.length>16_384)throw Error("invalid_symbol");}
+        const input=JSON.parse(body) as {symbols?:unknown};
+        if(!Array.isArray(input.symbols)||!input.symbols.length||input.symbols.length>400||input.symbols.some(value=>typeof value!=="string"))throw Error("invalid_symbol");
+        const requested=input.symbols.map(value=>chartSymbol(value as string));
+        if(new Set(requested).size!==requested.length||new Set([...symbols(),...requested]).size>4500)throw Error("invalid_symbol");
+        priceHub.add(requested,response);return;
+      }
       if(url.pathname === "/scanner-stream" && request.method === "POST"){
         let body="";
         for await(const chunk of request){body+=chunk.toString();if(body.length>131_072)throw Error("invalid_symbol");}
@@ -183,11 +226,12 @@ export function createAlpacaGateway(options: GatewayOptions) {
           }
         }
         const date = easternClock(Date.now()).date;
+        const adjustedCloses = url.searchParams.get("sessions") === "1" ? await previousCloses.read(requested, date) : {};
         const regularClose = Number(url.searchParams.get("regularClose") ?? 960);
         if (![780, 960].includes(regularClose)) throw Error("invalid_symbol");
         const totals = url.searchParams.get("sessions") === "1" ? Object.fromEntries(requested.map(symbol => [symbol, subscribedTrades.has(symbol) ? sessionBook.read(symbol, date, regularClose) : null])) : undefined;
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({ feed: "sip", connected: authenticated, snapshots: Object.fromEntries(requested.map(symbol => [symbol, quotes.get(symbol) ?? null])), sessionTotals: totals })); return;
+        response.end(JSON.stringify({ feed: "sip", connected: authenticated, snapshots: Object.fromEntries(requested.map(symbol => [symbol, quotes.has(symbol) ? { ...quotes.get(symbol), adjustedPreviousClose: adjustedCloses[symbol] ?? null } : null])), sessionTotals: totals })); return;
       }
       const symbol = chartSymbol(url.searchParams.get("symbol") ?? "");
       if (url.pathname === "/overnight") {
@@ -197,20 +241,24 @@ export function createAlpacaGateway(options: GatewayOptions) {
         const daily = url.searchParams.get("daily") === "1";
         const bars = await history(symbol, daily);
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({ symbol, feed: "sip", baseTimeframe: daily ? "1D" : "1m", adjustment: "raw", bars }));
+        response.end(JSON.stringify({ symbol, feed: "sip", baseTimeframe: daily ? "1D" : "1m", adjustment: "split", basisDate: easternClock(Date.now()).date, bars }));
       } else if (url.pathname === "/stream") {
         const chartSymbols = new Set([...clients].map(client => client.symbol));
         if (clients.size >= 16 || (!chartSymbols.has(symbol) && chartSymbols.size >= 8)) throw Error("busy");
         response.writeHead(200, { "Content-Type": "text/event-stream", "X-Accel-Buffering": "no" });
         response.write("retry: 3000\n\n");
-        const client = { symbol, response }; clients.add(client);
+        const daily=url.searchParams.get("daily")==="1",bookKey=`${symbol}|${daily}`;
+        const client = { symbol, daily, response }; clients.add(client);
+        if(!chartBooks.has(bookKey))chartBooks.set(bookKey,new ChartLiveBook(symbol,rest,daily));
+        for(const bar of chartBooks.get(bookKey)!.snapshot())send(client,"bar",{bar,daily,provisional:true});
         send(client, "status", { state: authenticated ? "connected" : "connecting" });
         subscribe(); connect();
         const heartbeat = setInterval(() => response.write(": heartbeat\n\n"), 15_000);
         response.on("close", () => {
           clearInterval(heartbeat); clients.delete(client);
+          if(![...clients].some(item=>item.symbol===symbol&&item.daily===daily)){chartBooks.get(bookKey)?.invalidate();chartBooks.delete(bookKey);}
           if (!symbols().length) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
-          else if (!symbols().includes(symbol) && authenticated && socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ action: "unsubscribe", bars: [symbol], updatedBars: [symbol], dailyBars: [symbol] }));
+          else if (!symbols().includes(symbol) && authenticated && socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ action: "unsubscribe", trades:[symbol],quotes:[symbol],bars: [symbol], updatedBars: [symbol], dailyBars: [symbol] }));
         });
       } else { response.writeHead(404); response.end(); }
     } catch (error) {
@@ -221,7 +269,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
       response.end(JSON.stringify({ error: status === 400 ? "invalid_symbol" : status === 429 ? "busy" : "provider_unavailable" }));
     }
   });
-  return { server, close() { stopped = true; clearInterval(priceTimer); scannerHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
+  return { server, close() { stopped = true; clearInterval(priceTimer); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
 }
 
 export async function readPrivateJson(path: string): Promise<Record<string, string>> {

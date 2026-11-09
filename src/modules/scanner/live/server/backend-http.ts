@@ -6,6 +6,7 @@ const json = (value: unknown,status=200) => Response.json(value,{ status,headers
 export type LiveScannerHttpDependencies = Readonly<{
   member: (request: Request) => boolean;
   read: () => ScannerReadModel | Promise<ScannerReadModel>;
+  subscribe?: (notify:()=>void)=>()=>void;
 }>;
 export type ScannerSettingsHttpDependencies = Readonly<{
   owner: (request: Request) => boolean;
@@ -17,7 +18,6 @@ export type ScannerFloatsHttpDependencies = Readonly<{
   owner: (request: Request) => boolean;
   read: (symbols: readonly string[]) => Promise<Readonly<{
     tradingDate: string;
-    exchanges: Readonly<Record<string,"NASDAQ"|"NYSE">>;
     floats: Readonly<Record<string,Readonly<{ shares:number; retrievedAtUtc:string }>>>;
   }>>;
 }>;
@@ -41,6 +41,7 @@ async function body(request: Request): Promise<unknown> {
 }
 export async function handleLiveScannerGet(request: Request, dependencies: LiveScannerHttpDependencies): Promise<Response> {
   if (request.method !== "GET" || !dependencies.member(request)) return json({ code: "not_found" },404);
+  if(new URL(request.url).searchParams.get("stream")==="1"&&dependencies.subscribe)return scannerModelStream(request,dependencies);
   try { return json(await dependencies.read()); }
   catch { return json({ code: "scanner_unavailable" },503); }
 }
@@ -74,4 +75,36 @@ export async function handleScannerSettings(request: Request, dependencies: Scan
       : /^scanner_settings_/u.test(code) || error instanceof SyntaxError ? json({ code: "scanner_settings_invalid" },400)
       : json({ code: "scanner_settings_unavailable" },503);
   }
+}
+
+
+function scannerModelStream(request:Request,dependencies:LiveScannerHttpDependencies):Response {
+  let stop=()=>{},resume=()=>{};
+  const body=new ReadableStream<Uint8Array>({
+    start(controller){
+      let closed=false,running=false,dirty=false;
+      let unsubscribe=()=>{};
+      const timer=setInterval(()=>void flush(),5000);
+      const encoder=new TextEncoder();
+      const close=()=>{if(closed)return;closed=true;unsubscribe();clearInterval(timer);request.signal.removeEventListener("abort",close);try{controller.close();}catch{/* Already cancelled. */}};
+      stop=close;
+      const flush=async()=>{
+        dirty=true;if(running||closed)return;running=true;
+        try{while(dirty&&!closed&&(controller.desiredSize??0)>0){
+          dirty=false;if(!dependencies.member(request)){close();break;}
+          const model=await dependencies.read();if(closed)break;
+          const message=encoder.encode(`event: scanner\ndata: ${JSON.stringify(model)}\n\n`);
+          if(message.byteLength>1_000_000){close();break;}
+          controller.enqueue(message);
+        }}catch{close();}finally{running=false;}
+      };
+      resume=()=>{if(dirty)void flush();};
+      unsubscribe=dependencies.subscribe!(()=>void flush());
+      request.signal.addEventListener("abort",close,{once:true});
+      if(request.signal.aborted)close();else void flush();
+    },
+    pull(){resume();},
+    cancel(){stop();},
+  },{highWaterMark:1_000_000,size:chunk=>chunk.byteLength});
+  return new Response(body,{headers:{...RESPONSE_HEADERS,"Content-Type":"text/event-stream","X-Accel-Buffering":"no"}});
 }

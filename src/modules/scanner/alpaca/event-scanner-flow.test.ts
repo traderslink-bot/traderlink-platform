@@ -20,6 +20,7 @@ it('runs gateway → shared stream → scanner with no Moomoo calls, shares char
  const provider=vi.fn(async(url:URL)=>{
   expect(url.hostname).toBe('data.alpaca.markets');
   if(url.pathname.endsWith('/snapshots'))return Response.json({AAA:{prevDailyBar:{t:'2026-11-05T05:00:00Z',c:1},latestQuote:{t:new Date(now).toISOString(),bp:1.99,ap:2.01}}});
+  if(url.pathname.endsWith('/bars'))return Response.json({bars:{AAA:[{t:'2026-11-05T05:00:00Z',o:1,h:1,l:1,c:1,v:100}]}});
   if(url.pathname.endsWith('/trades'))return Response.json({trades:{AAA:[{S:'AAA',t:'2026-11-06T14:59:59Z',p:2,s:500000,i:1,x:'V',c:['@'],z:'C'}]}});
   throw Error('unexpected provider route');
  });

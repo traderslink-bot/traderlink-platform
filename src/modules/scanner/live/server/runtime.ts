@@ -155,6 +155,9 @@ export function startConfiguredLiveScannerRuntime(inputEnvironment: NodeJS.Proce
 export function readLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.env): ScannerReadModel {
   return configuredRuntime(environment).feed.read();
 }
+export function subscribeLiveScannerRuntime(notify:()=>void,environment:NodeJS.ProcessEnv=process.env):()=>void {
+  return configuredRuntime(environment).feed.subscribeModels(notify);
+}
 export function readLiveScannerMarketMovements(environment: NodeJS.ProcessEnv = process.env) {
   return configuredRuntime(environment).feed.movements();
 }
