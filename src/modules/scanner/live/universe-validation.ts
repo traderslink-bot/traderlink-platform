@@ -33,13 +33,13 @@ export function parseUniverseCsv(csv: string): readonly UniverseStock[] {
     const parts = line.split(",").map(cell);
     if (parts.length !== 3) fail("csv_invalid");
     const [symbol, exchange, cap] = parts;
-    if (!SYMBOL.test(symbol) || (exchange !== "NASDAQ" && exchange !== "NYSE")
+    if (!SYMBOL.test(symbol) || (exchange !== "NASDAQ" && exchange !== "NYSE" && exchange !== "AMEX")
       || !/^\d+$/u.test(cap)) fail("row_invalid");
     const marketCapAtCollection = Number(cap);
     if (!Number.isSafeInteger(marketCapAtCollection) || marketCapAtCollection <= 0 || marketCapAtCollection > MAX_UNIVERSE_MARKET_CAP) fail("market_cap_invalid");
     if (symbols.has(symbol)) fail("duplicate_symbol");
     symbols.add(symbol);
-    return { symbol, exchange: exchange as "NASDAQ" | "NYSE", marketCapAtCollection };
+    return { symbol, exchange: exchange as "NASDAQ" | "NYSE" | "AMEX", marketCapAtCollection };
   }).sort((a,b) => a.symbol.localeCompare(b.symbol));
 }
 export function validateUniverseUpload(value: unknown, now: number): Readonly<{ input: UniverseUpload; stocks: readonly UniverseStock[]; hash: string }> {
@@ -56,9 +56,11 @@ export function validateUniverseUpload(value: unknown, now: number): Readonly<{ 
   const filters = meta.applied_filters;
   const expectedCap=meta.source_url === "https://api.nasdaq.com/api/screener/stocks" ? 500_000_000 : 100_000_000;
   if (!filters || filters.market_cap_max !== expectedCap || !Array.isArray(filters.exchanges)
-    || filters.exchanges.length !== 2 || new Set(filters.exchanges).size !== 2
+    || ![2,3].includes(filters.exchanges.length) || new Set(filters.exchanges).size !== filters.exchanges.length
+    || filters.exchanges.some(exchange => !["NASDAQ","NYSE","AMEX"].includes(exchange))
     || !filters.exchanges.includes("NASDAQ") || !filters.exchanges.includes("NYSE")) fail("filters_invalid");
   const stocks = parseUniverseCsv(input.csv);
+  if(stocks.some(stock=>!filters.exchanges.includes(stock.exchange)))fail("filters_invalid");
   if(stocks.some(stock=>stock.marketCapAtCollection>expectedCap))fail("market_cap_invalid");
   if (!Number.isSafeInteger(meta.displayed_total) || meta.displayed_total !== stocks.length
     || meta.extracted_unique_count !== stocks.length) fail("count_mismatch");

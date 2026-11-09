@@ -73,3 +73,13 @@ it("enforces symbol/date/freshness identity and does not accept today's bar as y
   expect(usablePreviousClose({ ...reference, adjustment: "raw" }, "AAA", date, now)).toBe(false);
   expect(usablePreviousClose({ ...reference, fetchedAt: now + 6_000 }, "AAA", date, now)).toBe(false);
 });
+
+ it("isolates corrupt symbol history without suppressing valid split-adjusted neighbours", async () => {
+  const get = vi.fn(async () => ({ bars: { ADGM: [bar(1.947)], ARAY: [bar(4.4)], BAD: [{ ...bar(2), h: 1 }], CONFLICT: [bar(2), bar(3)] } }));
+  const book = new AlpacaPreviousCloseBook({ get });
+  const result = await book.read(["ADGM", "ARAY", "BAD", "CONFLICT"], date);
+  expect(result.ADGM?.price).toBe(1.947);
+  expect(result.ARAY?.price).toBe(4.4);
+  expect(result.BAD).toBeNull();
+  expect(result.CONFLICT).toBeNull();
+});

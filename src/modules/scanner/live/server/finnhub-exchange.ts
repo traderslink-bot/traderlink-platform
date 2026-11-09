@@ -1,6 +1,6 @@
 import "server-only";
 
-export type ChartExchange="NASDAQ"|"NYSE";
+export type ChartExchange="NASDAQ"|"NYSE"|"AMEX";
 type CacheEntry={date:string;exchange:ChartExchange|null;pending:Promise<void>|null;retryAt:number};
 const state=globalThis as typeof globalThis&{__traderlinkFinnhubExchangeCacheV1?:Map<string,CacheEntry>};
 const cache=state.__traderlinkFinnhubExchangeCacheV1??=new Map();
@@ -11,6 +11,7 @@ export function parseFinnhubExchange(payload:unknown,symbol:string):ChartExchang
   const row=payload as Record<string,unknown>,ticker=typeof row.ticker==="string"?row.ticker.trim().toUpperCase():"";
   const exchange=typeof row.exchange==="string"?row.exchange.trim().toUpperCase():"";
   if(ticker!==symbol||!exchange)return null;
+  if(exchange==="AMEX"||exchange.includes("NYSE AMERICAN")||exchange.includes("NYSE MKT"))return "AMEX";
   if(exchange.includes("NASDAQ"))return "NASDAQ";
   if(exchange==="NYSE"||exchange.includes("NEW YORK STOCK EXCHANGE"))return "NYSE";
   return null;

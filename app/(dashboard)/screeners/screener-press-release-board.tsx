@@ -103,7 +103,7 @@ function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBac
     </Stack>
   </Stack>;
 }
-function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article:Headline;exchange:"NASDAQ"|"NYSE"|undefined;float:number|undefined;older:boolean;onOpen:(article:Headline)=>void;onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"})=>void}){
+function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article:Headline;exchange:"NASDAQ"|"NYSE"|"AMEX"|undefined;float:number|undefined;older:boolean;onOpen:(article:Headline)=>void;onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX"})=>void}){
   const allowAdd=useSideCardChartControls();
   return <Box sx={{borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:exchange?(allowAdd?"3.25rem minmax(0,1fr)":"2.25rem minmax(0,1fr)"):"minmax(0,1fr)",minHeight:42,minWidth:420}}>
     {exchange&&onOpenChart?<ScannerChartLaunchControls row={{symbol:article.ticker,exchange}} onOpenChart={onOpenChart}/>:null}
@@ -126,7 +126,7 @@ export function useMarketEventsData(haltsManaged=true) {
   const [dates,setDates]=useState<{today:string;previous:string|null}|null>(null);
   const [maximumMarketCap,setMaximumMarketCap]=useState(200_000_000);
   const [floatByTicker,setFloatByTicker]=useState<Readonly<Record<string,number>>>({});
-  const [exchangeByTicker,setExchangeByTicker]=useState<Readonly<Record<string,"NASDAQ"|"NYSE">>>({});
+  const [exchangeByTicker,setExchangeByTicker]=useState<Readonly<Record<string,"NASDAQ"|"NYSE"|"AMEX">>>({});
   const [halts,setHalts]=useState<MarketHaltDashboardReadModel|null>(null);
   const [channelArticles,setChannelArticles]=useState<Partial<Record<PressReleaseChannel,readonly Headline[]>>>({});
   useEffect(()=>{
@@ -159,7 +159,7 @@ export function useMarketEventsData(haltsManaged=true) {
     if(!symbols.length)return;
     const request=new AbortController();
     void fetch(`/api/admin/screeners/floats?symbols=${encodeURIComponent(symbols.join(","))}`,{cache:"no-store",signal:request.signal})
-      .then(response=>response.ok?response.json():null).then((result:{exchanges?:Readonly<Record<string,"NASDAQ"|"NYSE">>;floats?:Readonly<Record<string,{shares?:unknown}>>}|null)=>{
+      .then(response=>response.ok?response.json():null).then((result:{exchanges?:Readonly<Record<string,"NASDAQ"|"NYSE"|"AMEX">>;floats?:Readonly<Record<string,{shares?:unknown}>>}|null)=>{
         if(!result)return;setExchangeByTicker(result.exchanges??{});setFloatByTicker(Object.fromEntries(Object.entries(result.floats??{}).flatMap(([symbol,fact])=>Number.isSafeInteger(fact.shares)&&Number(fact.shares)>0?[[symbol,Number(fact.shares)] as const]:[])));
       }).catch(()=>{});
     return()=>request.abort();

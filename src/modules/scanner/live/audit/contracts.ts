@@ -13,7 +13,7 @@ export type ScannerAuditScore = Readonly<{
 
 export type ScannerAuditDecision = Readonly<{
   symbol: string;
-  exchange: "NASDAQ" | "NYSE" | null;
+  exchange: "NASDAQ" | "NYSE" | "AMEX" | null;
   marketCapAtCollection: number | null;
   observation: NormalizedSnapshot;
   activity: RollingActivity;

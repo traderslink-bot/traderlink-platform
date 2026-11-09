@@ -20,6 +20,17 @@ export function ScannerWorkspaceCard({children,slot,widget}:{children:ReactNode;
       p:1.25,
       '&:last-child':{pb:1.25},
     },
+    // DashboardPanel wraps its children in a Box. Bound that body as well as
+    // CardContent so table rows scroll instead of growing beneath the card.
+    '& > [data-traderlink-platform-dashboard-card="panel"] > .MuiCardContent-root > .MuiBox-root:last-child':{
+      display:{md:"flex"},
+      flexDirection:"column",
+      flex:{md:"1 1 auto"},
+      minHeight:0,
+      minWidth:0,
+      overflow:{md:"hidden"},
+      '& > :not(.MuiTableContainer-root):not([role="list"])':{flexShrink:0},
+    },
     '& .MuiTableContainer-root':{
       flex:{md:"1 1 auto"},
       maxHeight:{md:"none !important"},

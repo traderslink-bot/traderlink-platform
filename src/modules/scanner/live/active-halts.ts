@@ -16,7 +16,7 @@ export function easternClockSeconds(now=new Date()):number{
   const part=(type:Intl.DateTimeFormatPartTypes)=>Number(parts.find(item=>item.type===type)?.value??0);
   return part("hour")*3600+part("minute")*60+part("second");
 }
-export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new Date(),movements:readonly ScannerMarketMovement[]=[],universeExchanges?:ReadonlyMap<string,"NASDAQ"|"NYSE">,eodhdResumedHaltIds:ReadonlySet<string>=new Set()):readonly ScannerActiveHalt[]{
+export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new Date(),movements:readonly ScannerMarketMovement[]=[],universeExchanges?:ReadonlyMap<string,"NASDAQ"|"NYSE"|"AMEX">,eodhdResumedHaltIds:ReadonlySet<string>=new Set()):readonly ScannerActiveHalt[]{
   const nowSeconds=easternClockSeconds(now);
   const seen=new Set<string>(),movementByTicker=new Map(movements.map(item=>[item.symbol,item]));
   return Object.freeze(rows.flatMap(halt=>{

@@ -56,6 +56,7 @@ export class AlpacaPreviousCloseBook {
     const end = Date.parse(`${date}T00:00:00Z`);
     if (!Number.isFinite(end)) throw Error("invalid_previous_close_date");
     const latest = new Map<string, { price: number; barAt: number }>();
+    const invalid = new Set<string>();
     let token: string | null = null, complete = false;
     const tokens = new Set<string>();
     for (let page = 0; page < 20; page++) {
@@ -66,14 +67,14 @@ export class AlpacaPreviousCloseBook {
       if (!result.bars || typeof result.bars !== "object" || Array.isArray(result.bars)) throw Error("invalid_previous_close_history");
       for (const symbol of symbols) {
         const bars = result.bars[symbol] ?? [];
-        if (!Array.isArray(bars)) throw Error("invalid_previous_close_history");
+        if (!Array.isArray(bars)) { invalid.add(symbol); continue; }
         for (const raw of bars) {
           const bar = alpacaCandle(raw);
-          if (!bar || bar.close <= 0) throw Error("invalid_previous_close_history");
+          if (!bar || bar.close <= 0) { invalid.add(symbol); continue; }
           const barAt = bar.time * 1000;
           if (barAt < end - 14 * 86_400_000 || barAt > end || easternClock(barAt).date >= date) continue;
           const previous = latest.get(symbol);
-          if (previous?.barAt === barAt && previous.price !== bar.close) throw Error("conflicting_previous_close_history");
+          if (previous?.barAt === barAt && previous.price !== bar.close) { invalid.add(symbol); continue; }
           if (!previous || barAt > previous.barAt) latest.set(symbol, { price: bar.close, barAt });
         }
       }
@@ -85,7 +86,7 @@ export class AlpacaPreviousCloseBook {
     }
     if (!complete) throw Error("incomplete_previous_close_history");
     for (const symbol of symbols) {
-      const value = latest.get(symbol);
+      const value = invalid.has(symbol) ? undefined : latest.get(symbol);
       this.cache.set(`${date}:${symbol}`, { at: now, value: value ? {
         symbol, ...value, adjustment: "split", basisDate: date, fetchedAt: now,
       } : null });

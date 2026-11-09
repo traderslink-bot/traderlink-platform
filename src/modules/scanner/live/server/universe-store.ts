@@ -20,7 +20,7 @@ function decodeDaily(value: unknown, date: string): DailyUniverse {
     || !Array.isArray(value.stocks) || value.stocks.length < 1 || value.stocks.length > MAX_UNIVERSE_ROWS) throw Error("scanner_universe_storage_invalid");
   const csv = ["symbol,exchange,market_cap",...value.stocks.map(stock => {
     if (!object(stock) || typeof stock.symbol !== "string" || !/^[A-Z][A-Z0-9.-]{0,15}$/u.test(stock.symbol)
-      || !["NASDAQ","NYSE"].includes(String(stock.exchange)) || !Number.isSafeInteger(stock.marketCapAtCollection)
+      || !["NASDAQ","NYSE","AMEX"].includes(String(stock.exchange)) || !Number.isSafeInteger(stock.marketCapAtCollection)
       || Number(stock.marketCapAtCollection) <= 0 || Number(stock.marketCapAtCollection) > MAX_UNIVERSE_MARKET_CAP) throw Error("scanner_universe_storage_invalid");
     return `${stock.symbol},${stock.exchange},${stock.marketCapAtCollection}`;
   })].join("\n");

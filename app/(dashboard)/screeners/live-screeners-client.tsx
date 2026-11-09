@@ -452,7 +452,7 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
   </DashboardPanel>;
 }
 
-type ManualTicker=Readonly<{symbol:string;exchange:"NASDAQ"|"NYSE";addedAtUtc:string}>;
+type ManualTicker=Readonly<{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX";addedAtUtc:string}>;
 function ManualTickersAdmin(){
   const [tickers,setTickers]=useState<readonly ManualTicker[]>([]),[symbol,setSymbol]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState<string|null>(null);
   useEffect(()=>{let active=true;void fetch("/api/admin/screeners/manual-tickers",{cache:"no-store",credentials:"same-origin"}).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{if(active)setTickers(payload.tickers??[]);}).catch(()=>{if(active)setMessage("Added tickers could not be loaded.");});return()=>{active=false;};},[]);

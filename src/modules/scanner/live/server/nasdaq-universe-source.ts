@@ -10,7 +10,7 @@ const RETRY_MS=15*60_000;
 type ObjectValue=Record<string,unknown>;
 const object=(value:unknown):value is ObjectValue=>Boolean(value&&typeof value==="object"&&!Array.isArray(value));
 
-async function rowsFor(exchange:"NASDAQ"|"NYSE",request:typeof fetch):Promise<readonly UniverseStock[]> {
+async function rowsFor(exchange:"NASDAQ"|"NYSE"|"AMEX",request:typeof fetch):Promise<readonly UniverseStock[]> {
   const url=new URL(SOURCE_URL);
   url.searchParams.set("exchange",exchange.toLowerCase());
   url.searchParams.set("download","true");
@@ -37,7 +37,7 @@ async function rowsFor(exchange:"NASDAQ"|"NYSE",request:typeof fetch):Promise<re
 
 export async function collectNasdaqUniverseUpload(input:Readonly<{tradingDate:string;request?:typeof fetch;now?:()=>number}>):Promise<UniverseUpload>{
   const request=input.request??fetch,started=(input.now??Date.now)();
-  const sets=await Promise.all([rowsFor("NASDAQ",request),rowsFor("NYSE",request)]);
+  const sets=await Promise.all([rowsFor("NASDAQ",request),rowsFor("NYSE",request),rowsFor("AMEX",request)]);
   const bySymbol=new Map<string,UniverseStock>();
   for(const stock of sets.flat()){
     const previous=bySymbol.get(stock.symbol);
@@ -49,7 +49,7 @@ export async function collectNasdaqUniverseUpload(input:Readonly<{tradingDate:st
   const finished=(input.now??Date.now)();
   return {tradingDate:input.tradingDate,csv:["symbol,exchange,market_cap",...stocks.map(stock=>`${stock.symbol},${stock.exchange},${stock.marketCapAtCollection}`)].join("\n"),metadata:{
     completeness_status:"complete",source_url:SOURCE_URL,collection_started_at_utc:new Date(started).toISOString(),collection_finished_at_utc:new Date(finished).toISOString(),
-    displayed_total:stocks.length,extracted_unique_count:stocks.length,applied_filters:{exchanges:["NASDAQ","NYSE"],market_cap_max:MAX_MARKET_CAP},
+    displayed_total:stocks.length,extracted_unique_count:stocks.length,applied_filters:{exchanges:["NASDAQ","NYSE","AMEX"],market_cap_max:MAX_MARKET_CAP},
   }};
 }
 

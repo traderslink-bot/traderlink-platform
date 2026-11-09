@@ -1,12 +1,12 @@
 export type ScannerKind = "gainers" | "momentum";
 export type ScannerSession = "premarket" | "regular" | "after_hours";
-export type UniverseStock = Readonly<{ symbol: string; exchange: "NASDAQ" | "NYSE"; marketCapAtCollection: number }>;
+export type UniverseStock = Readonly<{ symbol: string; exchange: "NASDAQ" | "NYSE" | "AMEX"; marketCapAtCollection: number }>;
 export type UniverseSourceUrl = UniverseUpload["metadata"]["source_url"];
 export type UniverseSourceImport = Readonly<{
   sourceUrl: UniverseSourceUrl; sourceHash: string; collectionFinishedAtUtc: string; uploadCount: number;
 }>;
 export type UniverseExchangeConflict = Readonly<{
-  symbol: string; retainedExchange: "NASDAQ" | "NYSE"; quarantinedExchange: "NASDAQ" | "NYSE";
+  symbol: string; retainedExchange: "NASDAQ" | "NYSE" | "AMEX"; quarantinedExchange: "NASDAQ" | "NYSE" | "AMEX";
   quarantinedSourceUrl: UniverseSourceUrl;
 }>;
 export type UniverseUpload = Readonly<{
@@ -19,7 +19,7 @@ export type UniverseUpload = Readonly<{
     collection_finished_at_utc: string;
     displayed_total: number;
     extracted_unique_count: number;
-    applied_filters: Readonly<{ exchanges: readonly ("NASDAQ" | "NYSE")[]; market_cap_max: 100000000 | 500000000 }>;
+    applied_filters: Readonly<{ exchanges: readonly ("NASDAQ" | "NYSE" | "AMEX")[]; market_cap_max: 100000000 | 500000000 }>;
   }>;
 }>;
 export type DailyUniverse = Readonly<{
@@ -93,12 +93,12 @@ export type MomentumSignal = "volume_ignition"|"building_volume"|"price_burst"|"
 export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt: string; url: string | null; typeLabel: string }>;
 export type ScannerActiveHalt = Readonly<{
   id:string; ticker:string; market:string; haltTimeEt:string; reasonCode:string; reason:string;
-  quoteTimeEt:string|null; tradeTimeEt:string|null; chartExchange?:"NASDAQ"|"NYSE"|null;
+  quoteTimeEt:string|null; tradeTimeEt:string|null; chartExchange?:"NASDAQ"|"NYSE"|"AMEX"|null;
 }>;
 export type LiveScannerRow = Readonly<{
   /** Finnhub company-profile country; absent while background enrichment is pending. */
   country?: string | null;
-  symbol: string; exchange: "NASDAQ" | "NYSE"; company: string; price: number;
+  symbol: string; exchange: "NASDAQ" | "NYSE" | "AMEX"; company: string; price: number;
   sessionGain: number | null; volume: number | null; dollarVolume: number | null;
   comparisonPrice?: number | null;
   gainBasis?: "previous_regular_close" | "today_regular_close";
@@ -116,7 +116,7 @@ export type LiveScannerRow = Readonly<{
 }>;
 export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;
 export type DeclineRow = Readonly<{
-  symbol: string; exchange: "NASDAQ" | "NYSE"; company: string; price: number;
+  symbol: string; exchange: "NASDAQ" | "NYSE" | "AMEX"; company: string; price: number;
   changePercent: number | null; comparisonPrice: number | null;
   volume: number | null; float: number | null; spreadPercent: number | null;
   receivedAtUtc: string; news: readonly ScannerNewsItem[];
@@ -132,7 +132,7 @@ export type DeclineResults = Readonly<{
   rapidTotal: number; loserTotal: number; controls: DeclineControls;
 }>;
 export type PremarketPullbackRow = Readonly<{
-  symbol:string; exchange:"NASDAQ"|"NYSE"; company:string; price:number;
+  symbol:string; exchange:"NASDAQ"|"NYSE"|"AMEX"; company:string; price:number;
   premarketHigh:number|null; regularHigh:number|null; postMarketHigh:number|null;
   referenceSession:"premarket"|"regular"|"after_hours"; referenceHigh:number;
   premarketVolume:number|null; sessionVolume:number|null; float:number|null;
