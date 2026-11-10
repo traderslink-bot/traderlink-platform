@@ -21505,3 +21505,14 @@ Current best next step:
 - Discord delivery, final chart-update events, and AI Review failure alerts
   remain separate hosted/retry-contract gates. Do not activate them merely
   because local in-app notification writers are accepted.
+
+### Private shared chart indicator continuation — 2026-11-09
+
+VWAP split/dividend event anchors and late-event refresh are implemented and verified locally; main/scanner shared chart date-caption overlap and logical-viewport preservation are corrected in the private draft. Follow docs/migration/chart-indicator-completion-ledger-20261109.md for exact checkpoint evidence and unfinished requirements. Earnings metadata source is pending owner input; EMA/SMA/RSI/MACD/Bollinger remain unadvanced; final indicator QA0/18. No deployment authorized.
+
+Private chart reference update — nativeVWAP48.0 is explicitly available anonymously (open_no_auth), with pinned URL/hash in docs/migration/chart-indicator-native-reference-manifest-20261110.json. Native band palette/defaults, multiplier boundaries/overflow and no-volume feedback are corrected and verified at7d3acea2b581527ff1b86412dcabd2658d3e09ef, including light/dark and per-frame visibility on desktop/mobile. Earnings/external-link decisions remain pending; other five indicators and18final passes remain unfinished. No deployment.
+
+
+## November 10 — shared chart standard indicators ready for review
+
+Owner clarified standard indicator configuration, not exhaustive TradingView feature parity. All six indicators are implemented and technically qualified. Three complete QA inventories per indicator: first found three obsolete expectations; next two passed all cases and 417 tests each. Immutable source 7b9cbb5cdbc0a18ae51048bb3d892f2cbf68e9ed, local codex/chart-indicator-draft branch; final receipt in docs/migration/chart-indicator-final-qa-20261110.md. Main/scanner shared price-only scaling and date/crosshair fixes pass desktop/mobile. Help draft aligned. Next step is owner visual review and Coordinator-selected integration; no deployment authorized or performed. Keep unrelated and parked source intact.

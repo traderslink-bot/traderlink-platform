@@ -9,6 +9,11 @@ import type {Candle} from './candles';
 const directories:string[]=[];afterEach(()=>{for(const d of directories.splice(0))rmSync(d,{recursive:true,force:true});});
 const study=(type:ChartIndicator['type'],period=3):ChartIndicator=>({id:'test',type,period,color:'#ff9900',width:2});
 const bars=(values:number[]):Candle[]=>values.map((close,i)=>({time:Date.parse('2026-11-06T15:00Z')/1000+i*60,open:close,high:close,low:close,close,volume:10}));
+it('preserves optional price-only scaling and the legacy unset preference shape',()=>{
+ for(const scalePriceOnly of [true,false])expect(parseChartPreferences({...DEFAULT_CHART_PREFERENCES,scalePriceOnly}).scalePriceOnly).toBe(scalePriceOnly);
+ expect(parseChartPreferences(DEFAULT_CHART_PREFERENCES)).not.toHaveProperty('scalePriceOnly');
+ expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,scalePriceOnly:'yes'})).toThrow();
+});
 it('validates the complete preference payload and requires a visible session',()=>{
  expect(parseChartPreferences(DEFAULT_CHART_PREFERENCES)).toEqual(DEFAULT_CHART_PREFERENCES);
  for(const changes of [{volumeHeight:99},{premarket:false,regular:false,postmarket:false},{upColor:'red'},{indicators:[study('EMA',0)]},{timezone:'unknown'}])expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,...changes})).toThrow();
@@ -21,20 +26,31 @@ it('persists by authenticated user with private file permissions and stale-write
  expect(statSync(join(d,readdirSync(d)[0])).mode&0o777).toBe(0o600);
 });
 it('calculates SMA/EMA from actual candles and leaves their inputs unchanged',()=>{
- const input=bars([1,2,3,4,5]);expect(indicatorValues(input,study('SMA'))[0].points.map(p=>p.value)).toEqual([2,3,4]);expect(indicatorValues(input,study('EMA'))[0].points.map(p=>p.value)).toEqual([2,3,4]);expect(input).toEqual(bars([1,2,3,4,5]));
+ const input=bars([1,2,3,4,5]);expect(indicatorValues(input,study('SMA'))[0].points.map(p=>p.value)).toEqual([2,3,4]);expect(indicatorValues(input,study('EMA'))[0].points.map(p=>p.value)).toEqual([1,1.5,2.25,3.125,4.0625]);expect(input).toEqual(bars([1,2,3,4,5]));
 });
-it('uses Wilder RSI and returns neutral 50 for a flat market',()=>{
+it('uses Wilder RSI and the standard zero-loss result for a flat market',()=>{
  expect(indicatorValues(bars([1,2,3,4]),study('RSI'))[0].points[0].value).toBe(100);
- expect(indicatorValues(bars([3,3,3,3]),study('RSI'))[0].points[0].value).toBe(50);
+ expect(indicatorValues(bars([3,3,3,3]),study('RSI'))[0].points[0].value).toBe(100);
 });
 it('resets VWAP on Eastern dates and uses real traded volume',()=>{
  const input=bars([2,4]);input[1].volume=30;expect(indicatorValues(input,study('VWAP'))[0].points.map(p=>p.value)).toEqual([2,3.5]);input[1].time+=86400;expect(indicatorValues(input,study('VWAP'))[0].points.map(p=>p.value)).toEqual([2,4]);
 });
 it('produces Bollinger bands and MACD plus its signal',()=>{
  const b=indicatorValues(bars([1,2,3]),study('Bollinger'));expect(b).toHaveLength(3);expect(b[0].points[0].value).toBe(2);expect(b[1].points[0].value).toBeGreaterThan(2);expect(b[2].points[0].value).toBeLessThan(2);
- const m=indicatorValues(bars(Array.from({length:40},(_,i)=>i+1)),study('MACD'));expect(m).toHaveLength(3);expect(m[0].points).toHaveLength(15);expect(m[1].points).toHaveLength(7);
+ const m=indicatorValues(bars(Array.from({length:40},(_,i)=>i+1)),study('MACD'));expect(m).toHaveLength(3);expect(m[0].points).toHaveLength(40);expect(m[1].points).toHaveLength(40);expect(m[0].points[0].value).toBe(0);expect(m[1].points[0].value).toBe(0);expect(m[2].points[0].value).toBe(0);
 });
 it('filters minute facts before a higher-timeframe aggregation',()=>{
  const input=bars([1,2,3]);input[0].time=Date.parse('2026-11-06T13:00Z')/1000;input[1].time=Date.parse('2026-11-06T15:00Z')/1000;input[2].time=Date.parse('2026-11-06T22:00Z')/1000;
  expect(visibleSessionBars(input,{...DEFAULT_CHART_PREFERENCES,premarket:false,postmarket:false})).toEqual([input[1]]);
+});
+
+it('round-trips standard indicator output settings without changing legacy preferences',()=>{
+ const legacy=study('VWAP');expect(parseChartPreferences({...DEFAULT_CHART_PREFERENCES,indicators:[legacy]}).indicators[0]).not.toHaveProperty('output');
+ for(const precision of [undefined,0,2,8,16])for(const priceScaleLabels of [true,false])for(const statusLineValues of [true,false]){
+  const output={priceScaleLabels,statusLineValues,...(precision===undefined?{}:{precision})};
+  const input={...DEFAULT_CHART_PREFERENCES,indicators:[{...legacy,output}]};
+  const parsed=parseChartPreferences(input);expect(parsed.indicators[0].output).toEqual(output);
+  output.priceScaleLabels=!priceScaleLabels;expect(parsed.indicators[0].output?.priceScaleLabels).toBe(priceScaleLabels);
+ }
+ for(const output of [null,{}, {priceScaleLabels:true,statusLineValues:'yes'},...[-1,17,1.5,NaN].map(precision=>({priceScaleLabels:true,statusLineValues:true,precision}))])expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,indicators:[{...legacy,output}]})).toThrow();
 });

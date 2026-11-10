@@ -27,24 +27,26 @@ export function alpacaCandle(value: unknown): Candle | null {
 const easternParts = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
 
 /** Keep real UTC timestamps while anchoring four-hour boundaries to Eastern wall time. */
-export function candleBucket(time: number, timeframe: ChartTimeframe): number {
+export function candleBucket(time: number, timeframe: ChartTimeframe, regularOnly=false): number {
   if (timeframe === "1D") return time;
   if (timeframe === "4h") {
     const parts = Object.fromEntries(easternParts.formatToParts(new Date(time * 1000)).map(part => [part.type, part.value]));
     const wall = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second) / 1000;
-    const boundary = Date.UTC(+parts.year, +parts.month - 1, +parts.day, Math.floor(+parts.hour / 4) * 4) / 1000;
+    const anchor = Date.UTC(+parts.year, +parts.month - 1, +parts.day, regularOnly?9:0, regularOnly?30:0) / 1000;
+    const boundary = anchor + Math.floor((wall-anchor)/14400)*14400;
     return boundary - (wall - time);
   }
   const seconds = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600 }[timeframe];
-  return Math.floor(time / seconds) * seconds;
+  const offset=regularOnly&&timeframe==="1h"?1800:0;
+  return Math.floor((time-offset) / seconds) * seconds+offset;
 }
 
-export function aggregateCandles(input: Iterable<Candle>, timeframe: ChartTimeframe): Candle[] {
+export function aggregateCandles(input: Iterable<Candle>, timeframe: ChartTimeframe, regularOnly=false): Candle[] {
   const unique = new Map<number, Candle>();
   for (const bar of input) unique.set(bar.time, bar);
   const buckets = new Map<number, Candle>();
   for (const bar of [...unique.values()].sort((a, b) => a.time - b.time)) {
-    const time = candleBucket(bar.time, timeframe);
+    const time = candleBucket(bar.time, timeframe,regularOnly);
     const previous = buckets.get(time);
     buckets.set(time, previous ? { ...previous, high: Math.max(previous.high, bar.high), low: Math.min(previous.low, bar.low), close: bar.close, volume: previous.volume + bar.volume } : { ...bar, time });
   }

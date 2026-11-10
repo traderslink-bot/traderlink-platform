@@ -42,7 +42,18 @@ describe("private Alpaca gateway", () => {
   });
   it("denies unauthenticated requests before provider access, validates symbols, caches history and masks provider errors", async () => {
     const nativeFetch = globalThis.fetch;
-    const provider = vi.fn<typeof fetch>(async () => Response.json({ bars: { AAPL: [{ t: "2026-11-06T14:30:00Z", o: 1, h: 2, l: 0.5, c: 1.5, v: 100 }] } }));
+    const calendarRows = Array.from({ length: 365 }, (_, index) => {
+      const date = new Date(Date.UTC(2026, 0, index + 1));
+      return { date: date.toISOString().slice(0, 10), open: "09:30", close: "16:00", weekday: date.getUTCDay() };
+    }).filter(row => row.weekday !== 0 && row.weekday !== 6).map(({ date, open, close }) => ({ date, open, close }));
+    const marketData = vi.fn<typeof fetch>(async () => Response.json({ bars: { AAPL: [{ t: "2026-11-06T14:30:00Z", o: 1, h: 2, l: 0.5, c: 1.5, v: 100 }] } }));
+    const calendar = vi.fn<typeof fetch>(async () => Response.json(calendarRows));
+    const provider = vi.fn<typeof fetch>(async (input, init) => {
+      const requested = new URL(String(input));
+      if (requested.hostname === "data.alpaca.markets" && requested.pathname === "/v2/stocks/bars") return marketData(input, init);
+      if (requested.hostname === "paper-api.alpaca.markets" && requested.pathname === "/v2/calendar") return calendar(input, init);
+      throw Error("unexpected_test_provider_request");
+    });
     vi.stubGlobal("fetch", provider);
     const gateway = createAlpacaGateway({ keyId: "private-key", secretKey: "private-secret", token: "test-gateway-token" });
     await new Promise<void>(resolve => gateway.server.listen(0, "127.0.0.1", resolve));
@@ -52,21 +63,32 @@ describe("private Alpaca gateway", () => {
       expect((await nativeFetch(`${url}/bars?symbol=AAPL`)).status).toBe(401);
       expect(provider).not.toHaveBeenCalled();
       expect((await nativeFetch(`${url}/bars?symbol=../AAPL`, auth)).status).toBe(400);
+      expect(provider).not.toHaveBeenCalled();
       const response = await nativeFetch(`${url}/bars?symbol=AAPL`, auth);
       expect(response.status).toBe(200);
       const result = await response.json();
       expect(result.bars).toHaveLength(1); expect(result.feed).toBe("sip"); expect(result.adjustment).toBe("split");
-      await nativeFetch(`${url}/bars?symbol=AAPL`, auth);
-      expect(provider).toHaveBeenCalledTimes(1);
-      const requested = new URL(String(provider.mock.calls[0][0]));
+      expect(result.calendar).toEqual({ available: true, start: "2026-01-01", end: "2026-12-31", sessions: calendarRows });
+      const repeated = await nativeFetch(`${url}/bars?symbol=AAPL`, auth);
+      expect(repeated.status).toBe(200);
+      expect(await repeated.json()).toEqual(result);
+      expect(marketData).toHaveBeenCalledTimes(1);
+      expect(calendar).toHaveBeenCalledTimes(1);
+      expect(provider).toHaveBeenCalledTimes(2);
+      const calendarRequest = new URL(String(calendar.mock.calls[0][0]));
+      expect(calendarRequest.searchParams.get("start")).toBe("2026-01-01");
+      expect(calendarRequest.searchParams.get("end")).toBe("2026-12-31");
+      const requested = new URL(String(marketData.mock.calls[0][0]));
       expect(requested.hostname).toBe("data.alpaca.markets");
       expect(requested.searchParams.get("feed")).toBe("sip");
       expect(requested.searchParams.get("adjustment")).toBe("split");
       expect(requested.searchParams.get("sort")).toBe("desc");
-      provider.mockImplementationOnce(async () => { throw Error("private-secret"); });
+      marketData.mockImplementationOnce(async () => { throw Error("private-secret"); });
       const failed = await nativeFetch(`${url}/bars?symbol=MSFT`, auth);
       expect(failed.status).toBe(502);
       expect(await failed.text()).not.toContain("private-secret");
+      expect(marketData).toHaveBeenCalledTimes(2);
+      expect(calendar).toHaveBeenCalledTimes(1);
     } finally { gateway.close(); gateway.server.closeAllConnections(); }
   });
   it("streams the open candle and volume from trades before any completed minute bar", async () => {

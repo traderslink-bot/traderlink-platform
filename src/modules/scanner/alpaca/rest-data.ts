@@ -1,9 +1,10 @@
+import {easternClock} from "../live/sessions";
 import { alpacaCandle, chartSymbol, type Candle } from "./candles";
 
 export const ALPACA_HISTORY_FRAMES = ["1Min", "5Min", "15Min", "1Hour", "4Hour", "1Day"] as const;
 export type AlpacaHistoryFrame = typeof ALPACA_HISTORY_FRAMES[number];
 export type AlpacaHistoryRequest = { symbol: string; timeframe: AlpacaHistoryFrame; start: number; end: number };
-export type AlpacaHistoryResult = { symbol: string; feed: "sip"; adjustment: "split"; bars: Candle[]; complete: boolean; nextPageToken: string | null };
+export type AlpacaHistoryResult = { basisDate?: string; symbol: string; feed: "sip"; adjustment: "split"; bars: Candle[]; complete: boolean; nextPageToken: string | null };
 
 export function parseHistoryRequest(query: URLSearchParams): AlpacaHistoryRequest {
   const symbol = chartSymbol(query.get("symbol") ?? "");
@@ -30,7 +31,8 @@ export class AlpacaRestData {
     return response.json();
   }
   async history(request: AlpacaHistoryRequest): Promise<AlpacaHistoryResult> {
-    const key = JSON.stringify(request);
+    const basisDate=easternClock(Date.now()).date;
+    const key = JSON.stringify([basisDate,request]);
     const cached = this.cache.get(key);
     if (cached && Date.now() - cached.at < 30_000) return cached.result;
     const pending = this.pending.get(key); if (pending) return pending;
@@ -52,7 +54,8 @@ export class AlpacaRestData {
         token = next;
         if (!token) break;
       }
-      const result: AlpacaHistoryResult = { symbol: request.symbol, feed: "sip", adjustment: "split", bars: [...bars.values()].sort((a, b) => a.time - b.time), complete: !token, nextPageToken: token };
+      if(easternClock(Date.now()).date!==basisDate)throw Error("adjustment_basis_changed");
+      const result: AlpacaHistoryResult = { basisDate, symbol: request.symbol, feed: "sip", adjustment: "split", bars: [...bars.values()].sort((a, b) => a.time - b.time), complete: !token, nextPageToken: token };
       this.cache.set(key, { at: Date.now(), result });
       while (this.cache.size > 32 || [...this.cache.values()].reduce((sum, value) => sum + value.result.bars.length, 0) > 150_000) this.cache.delete(this.cache.keys().next().value!);
       return result;

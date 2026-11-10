@@ -1,0 +1,528 @@
+{
+  "scope": "Owner-clarified standard six indicators; no specialist linking/earnings prerequisite; no hosted effects",
+  "verified_source": "7b9cbb5cdbc0a18ae51048bb3d892f2cbf68e9ed",
+  "runs": [
+    {
+      "source": "c0da72694352817d83ce37beb360fd6c291f0b49",
+      "pass": 1,
+      "started": "2026-11-10T03:15:21.318682+00:00",
+      "scope": "Owner-clarified standard indicators; existing offered settings; isolated synthetic HTTP/events; no hosted integration claim",
+      "unit_files": [
+        "src/modules/scanner/alpaca/candles.test.ts",
+        "src/modules/scanner/alpaca/chart-axis.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-demand.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-history.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-intervals.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar-request.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar-route.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar.test.ts",
+        "src/modules/scanner/alpaca/chart-history.test.ts",
+        "src/modules/scanner/alpaca/chart-indicator-settings.test.ts",
+        "src/modules/scanner/alpaca/chart-moving-averages.test.ts",
+        "src/modules/scanner/alpaca/chart-preferences-route.test.ts",
+        "src/modules/scanner/alpaca/chart-preferences.test.ts",
+        "src/modules/scanner/alpaca/chart-smoothing.test.ts",
+        "src/modules/scanner/alpaca/chart-standard-oscillators.test.ts",
+        "src/modules/scanner/alpaca/chart-standard-source-matrix.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-bands.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-events-integration.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-events.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-exact-reference.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-history.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-projection.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap.test.ts",
+        "src/modules/scanner/alpaca/rolling-deviation.test.ts",
+        "src/modules/scanner/alpaca/vwap-moments.test.ts"
+      ],
+      "results": [
+        {
+          "case": "types",
+          "exit": 0,
+          "seconds": 5.632,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/types.log"
+        },
+        {
+          "case": "units",
+          "exit": 1,
+          "seconds": 7.637,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/units.log"
+        },
+        {
+          "case": "standard-indicators",
+          "exit": 0,
+          "seconds": 36.218,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/standard-indicators.log"
+        },
+        {
+          "case": "vwap-bands",
+          "exit": 0,
+          "seconds": 33.214,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/vwap-bands.log"
+        },
+        {
+          "case": "vwap-timeframes",
+          "exit": 0,
+          "seconds": 122.946,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/vwap-timeframes.log"
+        },
+        {
+          "case": "vwap-forming",
+          "exit": 0,
+          "seconds": 13.461,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/vwap-forming.log"
+        },
+        {
+          "case": "vwap-visibility",
+          "exit": 0,
+          "seconds": 34.471,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/vwap-visibility.log"
+        },
+        {
+          "case": "vwap-events",
+          "exit": 0,
+          "seconds": 12.107,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/vwap-events.log"
+        },
+        {
+          "case": "vwap-offset-axis",
+          "exit": 0,
+          "seconds": 5.633,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/vwap-offset-axis.log"
+        },
+        {
+          "case": "vwap-calendar-axis",
+          "exit": 0,
+          "seconds": 6.787,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/vwap-calendar-axis.log"
+        },
+        {
+          "case": "vwap-history-window",
+          "exit": 0,
+          "seconds": 3.576,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/vwap-history-window.log"
+        },
+        {
+          "case": "crosshair-axis",
+          "exit": 0,
+          "seconds": 11.152,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-c0da72694352/crosshair-axis.log"
+        }
+      ],
+      "complete": false,
+      "finished": "2026-11-10T03:20:14.160420+00:00"
+    },
+    {
+      "source": "7b9cbb5cdbc0a18ae51048bb3d892f2cbf68e9ed",
+      "pass": 2,
+      "started": "2026-11-10T03:21:36.093282+00:00",
+      "scope": "Owner-clarified standard indicators; existing offered settings; isolated synthetic HTTP/events; no hosted integration claim",
+      "unit_files": [
+        "src/modules/scanner/alpaca/candles.test.ts",
+        "src/modules/scanner/alpaca/chart-axis.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-demand.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-history.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-intervals.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar-request.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar-route.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar.test.ts",
+        "src/modules/scanner/alpaca/chart-history.test.ts",
+        "src/modules/scanner/alpaca/chart-indicator-settings.test.ts",
+        "src/modules/scanner/alpaca/chart-moving-averages.test.ts",
+        "src/modules/scanner/alpaca/chart-preferences-route.test.ts",
+        "src/modules/scanner/alpaca/chart-preferences.test.ts",
+        "src/modules/scanner/alpaca/chart-smoothing.test.ts",
+        "src/modules/scanner/alpaca/chart-standard-oscillators.test.ts",
+        "src/modules/scanner/alpaca/chart-standard-source-matrix.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-bands.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-events-integration.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-events.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-exact-reference.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-history.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-projection.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap.test.ts",
+        "src/modules/scanner/alpaca/rolling-deviation.test.ts",
+        "src/modules/scanner/alpaca/vwap-moments.test.ts"
+      ],
+      "results": [
+        {
+          "case": "types",
+          "exit": 0,
+          "seconds": 6.082,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/types.log"
+        },
+        {
+          "case": "units",
+          "exit": 0,
+          "seconds": 8.49,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/units.log"
+        },
+        {
+          "case": "standard-indicators",
+          "exit": 0,
+          "seconds": 36.975,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/standard-indicators.log"
+        },
+        {
+          "case": "vwap-bands",
+          "exit": 0,
+          "seconds": 33.668,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/vwap-bands.log"
+        },
+        {
+          "case": "vwap-timeframes",
+          "exit": 0,
+          "seconds": 122.587,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/vwap-timeframes.log"
+        },
+        {
+          "case": "vwap-forming",
+          "exit": 0,
+          "seconds": 13.056,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/vwap-forming.log"
+        },
+        {
+          "case": "vwap-visibility",
+          "exit": 0,
+          "seconds": 33.962,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/vwap-visibility.log"
+        },
+        {
+          "case": "vwap-events",
+          "exit": 0,
+          "seconds": 11.998,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/vwap-events.log"
+        },
+        {
+          "case": "vwap-offset-axis",
+          "exit": 0,
+          "seconds": 5.681,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/vwap-offset-axis.log"
+        },
+        {
+          "case": "vwap-calendar-axis",
+          "exit": 0,
+          "seconds": 6.734,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/vwap-calendar-axis.log"
+        },
+        {
+          "case": "vwap-history-window",
+          "exit": 0,
+          "seconds": 3.123,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/vwap-history-window.log"
+        },
+        {
+          "case": "crosshair-axis",
+          "exit": 0,
+          "seconds": 10.847,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-2-7b9cbb5cdbc0/crosshair-axis.log"
+        }
+      ],
+      "complete": true,
+      "finished": "2026-11-10T03:26:29.302948+00:00"
+    },
+    {
+      "source": "7b9cbb5cdbc0a18ae51048bb3d892f2cbf68e9ed",
+      "pass": 3,
+      "started": "2026-11-10T03:26:58.936807+00:00",
+      "scope": "Owner-clarified standard indicators; existing offered settings; isolated synthetic HTTP/events; no hosted integration claim",
+      "unit_files": [
+        "src/modules/scanner/alpaca/candles.test.ts",
+        "src/modules/scanner/alpaca/chart-axis.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-demand.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-history.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-intervals.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar-request.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar-route.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar.test.ts",
+        "src/modules/scanner/alpaca/chart-history.test.ts",
+        "src/modules/scanner/alpaca/chart-indicator-settings.test.ts",
+        "src/modules/scanner/alpaca/chart-moving-averages.test.ts",
+        "src/modules/scanner/alpaca/chart-preferences-route.test.ts",
+        "src/modules/scanner/alpaca/chart-preferences.test.ts",
+        "src/modules/scanner/alpaca/chart-smoothing.test.ts",
+        "src/modules/scanner/alpaca/chart-standard-oscillators.test.ts",
+        "src/modules/scanner/alpaca/chart-standard-source-matrix.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-bands.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-events-integration.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-events.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-exact-reference.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-history.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-projection.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap.test.ts",
+        "src/modules/scanner/alpaca/rolling-deviation.test.ts",
+        "src/modules/scanner/alpaca/vwap-moments.test.ts"
+      ],
+      "results": [
+        {
+          "case": "types",
+          "exit": 0,
+          "seconds": 5.931,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/types.log"
+        },
+        {
+          "case": "units",
+          "exit": 0,
+          "seconds": 7.687,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/units.log"
+        },
+        {
+          "case": "standard-indicators",
+          "exit": 0,
+          "seconds": 36.423,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/standard-indicators.log"
+        },
+        {
+          "case": "vwap-bands",
+          "exit": 0,
+          "seconds": 33.061,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/vwap-bands.log"
+        },
+        {
+          "case": "vwap-timeframes",
+          "exit": 0,
+          "seconds": 122.073,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/vwap-timeframes.log"
+        },
+        {
+          "case": "vwap-forming",
+          "exit": 0,
+          "seconds": 13.002,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/vwap-forming.log"
+        },
+        {
+          "case": "vwap-visibility",
+          "exit": 0,
+          "seconds": 34.368,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/vwap-visibility.log"
+        },
+        {
+          "case": "vwap-events",
+          "exit": 0,
+          "seconds": 11.749,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/vwap-events.log"
+        },
+        {
+          "case": "vwap-offset-axis",
+          "exit": 0,
+          "seconds": 5.782,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/vwap-offset-axis.log"
+        },
+        {
+          "case": "vwap-calendar-axis",
+          "exit": 0,
+          "seconds": 6.788,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/vwap-calendar-axis.log"
+        },
+        {
+          "case": "vwap-history-window",
+          "exit": 0,
+          "seconds": 3.175,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/vwap-history-window.log"
+        },
+        {
+          "case": "crosshair-axis",
+          "exit": 0,
+          "seconds": 10.899,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-3-7b9cbb5cdbc0/crosshair-axis.log"
+        }
+      ],
+      "complete": true,
+      "finished": "2026-11-10T03:31:49.879436+00:00"
+    }
+  ],
+  "focused_lint": {
+    "exit": 0,
+    "log": "/tmp/traderlink-chart-final-qa-20261110/focused-lint.log"
+  },
+  "ordinary_base": "caeee3bde2392a7b5a34a9b75659b921c9b095d1",
+  "source_allowlist": [
+    "app/(dashboard)/charts/alpaca-lightweight-chart.tsx",
+    "app/(dashboard)/charts/chart-indicator-editor.tsx",
+    "app/(dashboard)/charts/chart-preferences-panel.tsx",
+    "app/api/charts/calendar/route.ts",
+    "app/api/charts/preferences/route.ts",
+    "app/api/charts/vwap-seed/route.ts",
+    "docs/migration/chart-indicator-additional-qa-20261109.md",
+    "docs/migration/chart-indicator-completion-ledger-20261109.md",
+    "docs/migration/chart-indicator-final-qa-20261110.json",
+    "docs/migration/chart-indicator-final-qa-20261110.md",
+    "docs/migration/chart-indicator-native-reference-manifest-20261110.json",
+    "docs/migration/chart-indicator-standard-settings-review-20261109.md",
+    "docs/migration/shared-chart-help-draft.md",
+    "docs/migration/shared-chart-preferences-plan.md",
+    "docs/migration/shared-lightweight-chart-progress.md",
+    "src/docs/codex-project-log.md",
+    "src/modules/scanner/alpaca/candles.ts",
+    "src/modules/scanner/alpaca/chart-band-fill.ts",
+    "src/modules/scanner/alpaca/chart-calculation-demand.test.ts",
+    "src/modules/scanner/alpaca/chart-calculation-demand.ts",
+    "src/modules/scanner/alpaca/chart-calculation-history.test.ts",
+    "src/modules/scanner/alpaca/chart-calculation-history.ts",
+    "src/modules/scanner/alpaca/chart-calculation-intervals.test.ts",
+    "src/modules/scanner/alpaca/chart-calculation-intervals.ts",
+    "src/modules/scanner/alpaca/chart-calendar-provider.ts",
+    "src/modules/scanner/alpaca/chart-calendar-request.test.ts",
+    "src/modules/scanner/alpaca/chart-calendar-request.ts",
+    "src/modules/scanner/alpaca/chart-calendar-route.test.ts",
+    "src/modules/scanner/alpaca/chart-calendar.test.ts",
+    "src/modules/scanner/alpaca/chart-calendar.ts",
+    "src/modules/scanner/alpaca/chart-history.test.ts",
+    "src/modules/scanner/alpaca/chart-history.ts",
+    "src/modules/scanner/alpaca/chart-indicator-settings.test.ts",
+    "src/modules/scanner/alpaca/chart-indicators.ts",
+    "src/modules/scanner/alpaca/chart-moving-averages.test.ts",
+    "src/modules/scanner/alpaca/chart-preference-store.ts",
+    "src/modules/scanner/alpaca/chart-preferences-route.test.ts",
+    "src/modules/scanner/alpaca/chart-preferences.test.ts",
+    "src/modules/scanner/alpaca/chart-preferences.ts",
+    "src/modules/scanner/alpaca/chart-smoothing.test.ts",
+    "src/modules/scanner/alpaca/chart-standard-oscillators.test.ts",
+    "src/modules/scanner/alpaca/chart-standard-source-matrix.test.ts",
+    "src/modules/scanner/alpaca/chart-vwap-bands.test.ts",
+    "src/modules/scanner/alpaca/chart-vwap-events-integration.test.ts",
+    "src/modules/scanner/alpaca/chart-vwap-events.test.ts",
+    "src/modules/scanner/alpaca/chart-vwap-events.ts",
+    "src/modules/scanner/alpaca/chart-vwap-exact-reference.test.ts",
+    "src/modules/scanner/alpaca/chart-vwap-history.test.ts",
+    "src/modules/scanner/alpaca/chart-vwap-history.ts",
+    "src/modules/scanner/alpaca/chart-vwap-projection.test.ts",
+    "src/modules/scanner/alpaca/chart-vwap-projection.ts",
+    "src/modules/scanner/alpaca/chart-vwap-seed.ts",
+    "src/modules/scanner/alpaca/chart-vwap.test.ts",
+    "src/modules/scanner/alpaca/client.ts",
+    "src/modules/scanner/alpaca/gateway.ts",
+    "src/modules/scanner/alpaca/proxy.ts",
+    "src/modules/scanner/alpaca/rest-data.ts",
+    "src/modules/scanner/alpaca/rolling-deviation.test.ts",
+    "src/modules/scanner/alpaca/rolling-deviation.ts",
+    "src/modules/scanner/alpaca/vwap-moments.test.ts",
+    "src/modules/scanner/alpaca/vwap-moments.ts",
+    "src/scripts/profile-chart-vwap-depth.cjs",
+    "src/scripts/run-chart-indicator-final-qa.py",
+    "src/scripts/typecheck-chart-indicators.cjs",
+    "src/scripts/verify-chart-crosshair-axis.cjs",
+    "src/scripts/verify-chart-standard-indicators.cjs",
+    "src/scripts/verify-chart-vwap-bands.cjs",
+    "src/scripts/verify-chart-vwap-calendar-axis.cjs",
+    "src/scripts/verify-chart-vwap-events.cjs",
+    "src/scripts/verify-chart-vwap-forming.cjs",
+    "src/scripts/verify-chart-vwap-history-window.cjs",
+    "src/scripts/verify-chart-vwap-offset-axis.cjs",
+    "src/scripts/verify-chart-vwap-scaling.cjs",
+    "src/scripts/verify-chart-vwap-timeframes.cjs",
+    "src/scripts/verify-chart-vwap-visibility.cjs",
+    "src/scripts/verify-chart-vwap.cjs"
+  ],
+  "completion": "Three complete inventories per indicator (18 executed). Inventory 1 found three obsolete expectations; corrected without runtime changes. Inventories 2 and 3 are entirely clean. Owner visual review/release are separate.",
+  "additional_owner_requested_runs": [
+    {
+      "source": "fc4ab49b4f01e7d152b229d8bc4be44423f63742",
+      "pass": 1,
+      "started": "2026-11-10T03:43:52.780308+00:00",
+      "scope": "Owner-clarified standard indicators; existing offered settings; isolated synthetic HTTP/events; no hosted integration claim",
+      "unit_files": [
+        "src/modules/scanner/alpaca/candles.test.ts",
+        "src/modules/scanner/alpaca/chart-axis.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-demand.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-history.test.ts",
+        "src/modules/scanner/alpaca/chart-calculation-intervals.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar-request.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar-route.test.ts",
+        "src/modules/scanner/alpaca/chart-calendar.test.ts",
+        "src/modules/scanner/alpaca/chart-history.test.ts",
+        "src/modules/scanner/alpaca/chart-indicator-settings.test.ts",
+        "src/modules/scanner/alpaca/chart-moving-averages.test.ts",
+        "src/modules/scanner/alpaca/chart-preferences-route.test.ts",
+        "src/modules/scanner/alpaca/chart-preferences.test.ts",
+        "src/modules/scanner/alpaca/chart-smoothing.test.ts",
+        "src/modules/scanner/alpaca/chart-standard-oscillators.test.ts",
+        "src/modules/scanner/alpaca/chart-standard-source-matrix.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-bands.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-events-integration.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-events.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-exact-reference.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-history.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap-projection.test.ts",
+        "src/modules/scanner/alpaca/chart-vwap.test.ts",
+        "src/modules/scanner/alpaca/rolling-deviation.test.ts",
+        "src/modules/scanner/alpaca/vwap-moments.test.ts"
+      ],
+      "results": [
+        {
+          "case": "types",
+          "exit": 0,
+          "seconds": 5.78,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/types.log"
+        },
+        {
+          "case": "units",
+          "exit": 0,
+          "seconds": 7.837,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/units.log"
+        },
+        {
+          "case": "standard-indicators",
+          "exit": 0,
+          "seconds": 36.567,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/standard-indicators.log"
+        },
+        {
+          "case": "vwap-bands",
+          "exit": 0,
+          "seconds": 33.264,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/vwap-bands.log"
+        },
+        {
+          "case": "vwap-timeframes",
+          "exit": 0,
+          "seconds": 122.429,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/vwap-timeframes.log"
+        },
+        {
+          "case": "vwap-forming",
+          "exit": 0,
+          "seconds": 13.054,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/vwap-forming.log"
+        },
+        {
+          "case": "vwap-visibility",
+          "exit": 0,
+          "seconds": 34.416,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/vwap-visibility.log"
+        },
+        {
+          "case": "vwap-events",
+          "exit": 0,
+          "seconds": 12.002,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/vwap-events.log"
+        },
+        {
+          "case": "vwap-offset-axis",
+          "exit": 0,
+          "seconds": 5.883,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/vwap-offset-axis.log"
+        },
+        {
+          "case": "vwap-calendar-axis",
+          "exit": 0,
+          "seconds": 6.984,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/vwap-calendar-axis.log"
+        },
+        {
+          "case": "vwap-history-window",
+          "exit": 0,
+          "seconds": 3.274,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/vwap-history-window.log"
+        },
+        {
+          "case": "crosshair-axis",
+          "exit": 0,
+          "seconds": 10.797,
+          "log": "/tmp/traderlink-chart-final-qa-20261110/pass-1-fc4ab49b4f01/crosshair-axis.log"
+        }
+      ],
+      "complete": true,
+      "finished": "2026-11-10T03:48:45.073983+00:00"
+    }
+  ]
+}

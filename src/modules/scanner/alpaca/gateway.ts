@@ -2,6 +2,11 @@ import { createServer, type ServerResponse } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { alpacaCandle, chartSymbol, type Candle } from "./candles";
+import {AlpacaVwapCorporateEvents} from "./chart-vwap-events";
+import {AlpacaVwapHistory} from "./chart-vwap-history";
+import {parseChartCalendarYear} from "./chart-calendar-request";
+import {parseVwapSeedRequest} from "./chart-vwap-seed";
+import {AlpacaChartCalendar} from "./chart-calendar-provider";
 import { AlpacaRestData, parseHistoryRequest } from "./rest-data";
 import { AlpacaSessionBook, alpacaMinuteTradeRules } from "./session-book";
 import { ScannerStreamHub } from "./scanner-stream-hub";
@@ -22,6 +27,8 @@ export function createAlpacaGateway(options: GatewayOptions) {
   const cache = new Map<string, { at: number; bars: Candle[] }>();
   const pending = new Map<string, Promise<Candle[]>>();
   const rest = new AlpacaRestData(options);
+  const chartCalendar = new AlpacaChartCalendar(options);
+  const vwapHistory = new AlpacaVwapHistory(rest,chartCalendar,Date.now,new AlpacaVwapCorporateEvents(options));
   const previousCloses = new AlpacaPreviousCloseBook(rest);
   let chartBasisDate = easternClock(Date.now()).date;
   const sessionBook = new AlpacaSessionBook(rest,symbol=>scannerHub.mark(symbol));
@@ -206,9 +213,17 @@ export function createAlpacaGateway(options: GatewayOptions) {
       }
       if(request.method !== "GET"){response.writeHead(405);response.end();return;}
       if (url.pathname === "/health") { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ ready: true, feed: "sip" })); return; }
+      if(url.pathname==="/calendar"){
+        const result=await chartCalendar.forYear(parseChartCalendarYear(url.searchParams));
+        response.setHeader("Content-Type","application/json");response.end(JSON.stringify(result));return;
+      }
+      if (url.pathname === "/vwap-seed") {
+        const result=await vwapHistory.read(parseVwapSeedRequest(url.searchParams));
+        response.setHeader("Content-Type","application/json");response.end(JSON.stringify(result));return;
+      }
       if (url.pathname === "/history") {
         const result = await rest.history(parseHistoryRequest(url.searchParams));
-        response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify(result)); return;
+        response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({...result,...(url.searchParams.get("timeframe")==="1Min"?{calendar:await chartCalendar.forBars(result.bars)}:{calendars:await chartCalendar.forHistory(result.bars)})})); return;
       }
       if (url.pathname === "/quotes") {
         const requested = (url.searchParams.get("symbols") ?? "").split(",").map(chartSymbol);
@@ -241,7 +256,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
         const daily = url.searchParams.get("daily") === "1";
         const bars = await history(symbol, daily);
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({ symbol, feed: "sip", baseTimeframe: daily ? "1D" : "1m", adjustment: "split", basisDate: easternClock(Date.now()).date, bars }));
+        response.end(JSON.stringify({ symbol, feed: "sip", baseTimeframe: daily ? "1D" : "1m", adjustment: "split", basisDate: easternClock(Date.now()).date, bars,...(!daily?{calendar:await chartCalendar.forBars(bars)}:{}) }));
       } else if (url.pathname === "/stream") {
         const chartSymbols = new Set([...clients].map(client => client.symbol));
         if (clients.size >= 16 || (!chartSymbols.has(symbol) && chartSymbols.size >= 8)) throw Error("busy");

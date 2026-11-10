@@ -1,0 +1,60 @@
+{
+  "purpose": "Public native reference metadata only; no copied script source or authenticated account access.",
+  "references": [
+    {
+      "scriptName": "Volume-weighted average price",
+      "version": "48.0",
+      "scriptAccess": "open_no_auth",
+      "updated": "2026-11-02T11:48:24.290058Z",
+      "id": "STD;VWAP",
+      "url": "https://pine-facade.tradingview.com/pine-facade/get/STD%3BVWAP/last",
+      "sourceSha256": "176f7d7ab679f72bfe98e7ac6cb7c10279a91cd15aa50a982107f58bc3ac83a8",
+      "pinnedUrl": "https://pine-facade.tradingview.com/pine-facade/get/STD%3BVWAP/48.0"
+    },
+    {
+      "scriptName": "Exponential moving average",
+      "version": "38.0",
+      "scriptAccess": "open_no_auth",
+      "updated": "2026-09-29T12:10:42.96481Z",
+      "id": "STD;EMA",
+      "url": "https://pine-facade.tradingview.com/pine-facade/get/STD%3BEMA/last",
+      "sourceSha256": "fadf5374335bfc15ba74eb86e4bb65a1bce1075a16457ef00341219cb53f0eb2"
+    },
+    {
+      "scriptName": "Simple moving average",
+      "version": "41.0",
+      "scriptAccess": "open_no_auth",
+      "updated": "2026-09-29T12:10:41.472391Z",
+      "id": "STD;SMA",
+      "url": "https://pine-facade.tradingview.com/pine-facade/get/STD%3BSMA/last",
+      "sourceSha256": "eb317391ee233246085cd659fade4d31724ec999a289d0013899f59750a6d5fc"
+    },
+    {
+      "scriptName": "Relative strength index",
+      "version": "47.0",
+      "scriptAccess": "open_no_auth",
+      "updated": "2026-09-29T12:10:52.006332Z",
+      "id": "STD;RSI",
+      "url": "https://pine-facade.tradingview.com/pine-facade/get/STD%3BRSI/last",
+      "sourceSha256": "138554a3d9e36943c7e2fa86f4609d7239b310a2677442f54c56641d8f369007"
+    },
+    {
+      "scriptName": "Moving average convergence divergence",
+      "version": "43.0",
+      "scriptAccess": "open_no_auth",
+      "updated": "2026-09-29T12:10:42.244824Z",
+      "id": "STD;MACD",
+      "url": "https://pine-facade.tradingview.com/pine-facade/get/STD%3BMACD/last",
+      "sourceSha256": "569525e80149118b5ef4c0fc29cca0799ca4927db15d8a1c751fdc16abd96679"
+    },
+    {
+      "scriptName": "Bollinger Bands",
+      "version": "35.0",
+      "scriptAccess": "open_no_auth",
+      "updated": "2026-09-29T12:10:12.314447Z",
+      "id": "STD;Bollinger_Bands",
+      "url": "https://pine-facade.tradingview.com/pine-facade/get/STD%3BBollinger_Bands/last",
+      "sourceSha256": "0735a0a353908f3744f782e02ce108ff8129e0d65b4bb4f8e8718f4495ae5a6b"
+    }
+  ]
+}

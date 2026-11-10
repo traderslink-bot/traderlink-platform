@@ -50,7 +50,7 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
       const payload=await upstream.json();
       if(paged&&window){
         if(payload.complete!==true||payload.adjustment!=="split"||payload.feed!=="sip"||!Array.isArray(payload.bars))throw Error("incomplete_history");
-        return Response.json(chartHistoryPage(payload.bars as Candle[],window,daily),{headers:safeHeaders});
+        return Response.json({...chartHistoryPage(payload.bars as Candle[],window,daily),basisDate:payload.basisDate,...(!daily?{calendar:payload.calendar??{available:false}}:{calendars:payload.calendars??[]})},{headers:safeHeaders});
       }
       return Response.json(payload, { headers: safeHeaders });
     } finally { request.signal.removeEventListener("abort", abort); } }

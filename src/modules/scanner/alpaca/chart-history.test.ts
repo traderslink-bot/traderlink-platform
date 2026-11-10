@@ -2,9 +2,9 @@ import {expect,it} from "vitest";
 import {CHART_HISTORY_FLOOR,chartHistoryPage,chartHistoryWindow} from "./chart-history";
 import type {Candle} from "./candles";
 const bar=(date:string):Candle=>({time:Date.parse(date)/1000,open:1,high:1,low:1,close:1,volume:10});
-it("uses stable minute-aligned recent windows and validates cursor bounds",()=>{
+it("uses stable whole-market-date starts and validates cursor bounds",()=>{
  const now=Date.parse("2026-11-08T16:12:30Z"),window=chartHistoryWindow(null,false,now);
- expect(window.end).toBe(Date.parse("2026-11-08T16:11:59.999Z"));expect(window.end-window.start).toBe(21*86400000);
+ expect(window.end).toBe(Date.parse("2026-11-08T16:11:59.999Z"));expect(window.start).toBe(Date.parse("2026-10-18T04:00:00Z"));
  for(const value of ["bad","0",String(now+120000)])expect(()=>chartHistoryWindow(value,false,now)).toThrow();
 });
 it("retains ten observed sessions initially with an older cursor that loses no excluded bars",()=>{
