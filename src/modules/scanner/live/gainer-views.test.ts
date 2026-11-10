@@ -175,3 +175,97 @@ describe("Momentum day and post-market percentage context", () => {
     expect(result.momentum.rows.every(row => row.postMarketGain === undefined)).toBe(true);
   });
 });
+
+it.each(["premarket", "regular", "after_hours"] as const)("keeps %s gainers with unavailable spread and records the same audit decision", session => {
+  const chosen = { ...config, gainers: { ...config.gainers, filters: { ...config.gainers.filters,
+    [session]: { ...config.gainers.filters[session], minimumVolume: 0, minimumDollarVolume: 0,
+      minimumSessionGain: 3, maximumSpreadPercent: 8 } } } };
+  const snapshots = normalized().map(row => ({ ...row, session, bid: null, ask: null }));
+  const result = evaluate(snapshots, session, chosen);
+  expect(result.gainers.rows.map(row => row.symbol)).toContain(session === "after_hours" ? "PARA" : "INO");
+  expect(result.dayGainers.rows.map(row => row.symbol)).toContain("INO");
+  expect(result.audit.every(row => !row.gainerFailures.includes("spread_unavailable"))).toBe(true);
+  const wide = evaluate(snapshots.map(row => ({ ...row, bid: 1, ask: 2 })), session, chosen);
+  expect(wide.gainers.rows).toEqual([]);
+  expect(wide.audit.every(row => row.gainerFailures.includes("spread_above_maximum"))).toBe(true);
+});
+
+it("admits recovered OMH PEPG SMX and PXLW immediately in descending gain order without spread", () => {
+  const symbols = ["OMH", "PEPG", "SMX", "PXLW"];
+  const fixtureUniverse = { ...universe, stocks: symbols.map(symbol => ({ symbol, exchange: "NASDAQ" as const,
+    marketCapAtCollection: symbol === "PEPG" ? 171_071_007 : 14_000_000 })) };
+  const chosen = { ...config, gainers: { ...config.gainers, filters: { ...config.gainers.filters,
+    regular: { ...config.gainers.filters.regular, maximumMarketCap: 200_000_000,
+      minimumVolume: 0, minimumDollarVolume: 0, minimumSessionGain: 1, maximumSpreadPercent: 8 } } } };
+  const snapshots = symbols.map((symbol, i) => ({ ...normalized()[0], symbol, session: "regular" as const,
+    baseline: 1, price: [1.30, 2.55, 1.58, 1.23][i], bid: null, ask: null }));
+  const engine = new LiveScannerEngine();
+  const run = (items: readonly NormalizedSnapshot[]) => engine.evaluate({ universe: fixtureUniverse,
+    tradingDate: universe.tradingDate, session: "regular", snapshots: items, configuration: chosen,
+    now: NOW, floats: new Map(), news: new Map() });
+  expect(run(snapshots.map(row => ({ ...row, baseline: null }))).gainers.rows).toEqual([]);
+  const recovered = run(snapshots);
+  expect(recovered.gainers.rows.map(row => row.symbol)).toEqual(["PEPG", "SMX", "OMH", "PXLW"]);
+  expect(recovered.audit.every(row => row.gainerDisplayed && row.gainerFailures.length === 0)).toBe(true);
+});
+
+describe("Gainer membership and audit across data outages", () => {
+  function fixture() {
+    const engine = new LiveScannerEngine();
+    const chosen = { ...config, gainers: { ...config.gainers, filters: { ...config.gainers.filters,
+      regular: { ...config.gainers.filters.regular, minimumVolume: 100, minimumDollarVolume: 100,
+        minimumSessionGain: 1, maximumSpreadPercent: 8 } } } };
+    const snapshot = (elapsed: number, patch: Partial<NormalizedSnapshot> = {}): NormalizedSnapshot => ({
+      ...normalized()[0], session: "regular", providerAt: NOW + elapsed, receivedAt: NOW + elapsed,
+      baseline: 1, price: 2, volume: 10_000, dollarVolume: 20_000, bid: 1.99, ask: 2.01, ...patch,
+    });
+    const run = (elapsed: number, snapshots: readonly NormalizedSnapshot[]) => engine.evaluate({
+      universe, tradingDate: universe.tradingDate, session: "regular", snapshots, configuration: chosen,
+      now: NOW + elapsed, floats, news: new Map(),
+    });
+    return { engine, snapshot, run };
+  }
+  it("audits absent and stale retained observations without inventing fresh timestamps or Momentum", () => {
+    const { snapshot, run } = fixture(); const first = snapshot(0);
+    run(0, [first]);
+    const absent = run(3_600_000, []);
+    expect(absent.gainers.rows).toHaveLength(1);
+    expect(absent.audit).toHaveLength(1);
+    expect(absent.audit[0]).toMatchObject({ observation: first, gainerGain: 100, gainerRank: 1,
+      gainerDisplayed: true, gainerRetained: true, gainerDataIssues: ["snapshot_unavailable"],
+      momentumDisplayed: false, momentumRank: null, momentumScore: null });
+    expect(absent.gainers.focus).toEqual([]);
+    expect(JSON.parse(JSON.stringify(absent.audit))[0].observation.receivedAt).toBe(NOW);
+    const stale = run(3_601_000, [first]);
+    expect(stale.audit[0]).toMatchObject({ observation: first, gainerGain: 100, gainerDisplayed: true,
+      gainerDataIssues: ["snapshot_not_eligible"], momentumDisplayed: false });
+  });
+  it("records recalculated gain using a saved comparison with fresh price and a missing baseline", () => {
+    const { snapshot, run } = fixture(); run(0, [snapshot(0)]);
+    const result = run(1_000, [snapshot(1_000, { price: 2.5, baseline: null })]);
+    expect(result.gainers.rows[0]).toMatchObject({ sessionGain: 150, comparisonPrice: 1, price: 2.5 });
+    expect(result.audit[0]).toMatchObject({ gainerGain: 150, gainerComparisonPrice: 1, gainerDisplayed: true,
+      gainerDataIssues: ["baseline_unavailable"], gainerRetained: true });
+    expect(result.audit[0].observation.baseline).toBeNull();
+    expect(result.audit[0].gainerFailures).not.toContain("gain_unavailable");
+  });
+  it("admits a NEW gainer with missing volume and quotes without inventing liquidity values", () => {
+    const { snapshot, run } = fixture();
+    const result = run(0, [snapshot(0, { volume: null, dollarVolume: null, bid: null, ask: null })]);
+    expect(result.gainers.rows[0]).toMatchObject({ volume: null, dollarVolume: null, sessionGain: 100 });
+    expect(result.audit[0].gainerFailures).toEqual([]);
+    expect(result.audit[0].gainerDataIssues).toEqual(["volume_unavailable", "dollar_volume_unavailable", "spread_unavailable"]);
+  });
+  it("retains an actual wide spread for fifteen minutes with matching audit then removes it", () => {
+    const { snapshot, run } = fixture(); run(0, [snapshot(0)]);
+    const wide = (elapsed: number) => snapshot(elapsed, { bid: 1, ask: 2 });
+    const retained = run(1_000, [wide(1_000)]);
+    expect(retained.audit[0]).toMatchObject({ gainerDisplayed: true, gainerRetained: true });
+    expect(retained.audit[0].gainerFailures).toContain("spread_above_maximum");
+    expect(run(900_999, [wide(900_999)]).gainers.rows).toHaveLength(1);
+    const expired = run(901_000, [wide(901_000)]);
+    expect(expired.gainers.rows).toEqual([]);
+    expect(expired.audit[0]).toMatchObject({ gainerDisplayed: false, gainerRank: null });
+    expect(run(901_001, [snapshot(901_001)]).gainers.rows).toHaveLength(1);
+  });
+});

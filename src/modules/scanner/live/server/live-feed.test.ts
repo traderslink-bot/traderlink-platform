@@ -129,7 +129,7 @@ describe("LiveScannerFeed", () => {
     expect(snapshotPass.mock.calls[0][0]).toEqual([["ABCD"]]);
     expect(result.universeCount).toBe(1);
   });
-  it("appends manually added tickers after the imported-universe market-cap filter",async()=>{const snapshotPass=vi.fn(async()=>[]),reserveScannerBudget=vi.fn(async()=>{}),floats=vi.fn(async()=>new Map());
+  it("appends manually added tickers after the imported-universe market-cap filter",async()=>{const snapshotPass=vi.fn<(batches: readonly (readonly string[])[]) => Promise<never[]>>(async()=>[]),reserveScannerBudget=vi.fn(async()=>{}),floats=vi.fn(async()=>new Map());
     const result=await new LiveScannerFeed(dependencies({manualTickers:async()=>[{symbol:"MANU",exchange:"NYSE",addedAtUtc:new Date(NOW).toISOString()}],snapshotPass,reserveScannerBudget,floats})).scanOnce();
     expect(reserveScannerBudget).toHaveBeenCalledWith(2);expect(floats).toHaveBeenCalledWith("2026-10-30",["ABCD","MANU"]);expect(snapshotPass.mock.calls[0][0]).toEqual([["ABCD","MANU"]]);expect(result.universeCount).toBe(2);
   });
@@ -348,3 +348,41 @@ describe("ScannerSettingsStore", () => {
     const missing=await new LiveScannerFeed(dependencies({countries:async()=>{throw Error("cache unavailable");}})).scanOnce();expect(missing.gainers.total).toBe(baseline.gainers.total);expect(missing.status).toBe(baseline.status);
   });
  });
+
+describe("Top Gainers on outer feed-stage failures", () => {
+  it("preserves qualified rows and their timestamps without fabricating audit or Momentum", async () => {
+    let fail = false;
+    const audit = { enqueue: vi.fn() };
+    const feed = new LiveScannerFeed(dependencies({ audit,
+      floats: async () => { if (fail) throw Error("float store offline"); return new Map(); },
+    }));
+    const before = await feed.scanOnce(); expect(before.gainers.rows).toHaveLength(1);
+    fail = true;
+    const outage = await feed.scanOnce();
+    expect(outage.status).toBe("unavailable");
+    expect(outage.gainers.rows).toEqual(before.gainers.rows);
+    expect(outage.dayGainers?.rows).toEqual(before.dayGainers?.rows);
+    expect(outage.receivedCount).toBe(0);
+    expect(outage.momentum.rows).toEqual([]);
+    expect(outage.gainers.focus).toEqual([]);
+    expect(audit.enqueue).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(JSON.stringify(feed.read())).gainers.rows).toEqual(before.gainers.rows);
+  });
+  it.each(["configuration", "session", "removed", "disabled", "closed", "date"])("does not preserve across a known %s boundary", async boundary => {
+    let fail = false, now = NOW;
+    const original = { ...initialConfiguration(), enabled: true };
+    const feed = new LiveScannerFeed(dependencies({
+      configuration: async () => fail && boundary === "disabled" ? { ...original, enabled: false }
+        : fail && boundary === "configuration" ? { ...original, revision: original.revision + 1 } : original,
+      universe: async () => fail && boundary === "removed" ? { ...universe, stocks: [] } : universe,
+      marketDay: async () => ({ date: new Date(now).toISOString().slice(0,10), verified: true,
+        open: !(fail && boundary === "closed"), regularCloseEastern: "16:00" as const, extendedCloseEastern: "20:00" as const }),
+      floats: async () => { if (fail) throw Error("offline"); return new Map(); }, now: () => now,
+    }));
+    expect((await feed.scanOnce()).gainers.rows).toHaveLength(1);
+    fail = true;
+    if (boundary === "session") now = Date.parse("2026-10-30T20:01:00Z");
+    if (boundary === "date") now += 86_400_000;
+    expect((await feed.scanOnce()).gainers.rows).toEqual([]);
+  });
+});

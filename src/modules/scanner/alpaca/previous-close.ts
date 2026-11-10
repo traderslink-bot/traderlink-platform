@@ -3,6 +3,8 @@ import { easternClock } from "../live/sessions";
 import type { AlpacaRestData } from "./rest-data";
 
 export const PREVIOUS_CLOSE_TTL_MS = 5 * 60_000;
+const PREVIOUS_CLOSE_REFRESH_MS = PREVIOUS_CLOSE_TTL_MS - 60_000;
+const PREVIOUS_CLOSE_RETRY_MS = 10_000;
 export type SplitAdjustedPreviousClose = Readonly<{
   symbol: string; price: number; barAt: number; adjustment: "split"; basisDate: string; fetchedAt: number;
 }>;
@@ -33,7 +35,10 @@ export class AlpacaPreviousCloseBook {
     if (wanted.length > 4000) throw Error("invalid_symbol");
     const missing = wanted.filter(symbol => {
       const cached = this.cache.get(`${date}:${symbol}`);
-      return !cached || now - cached.at >= (cached.value ? PREVIOUS_CLOSE_TTL_MS : 10_000);
+      if (!cached) return true;
+      if (now - cached.at < PREVIOUS_CLOSE_RETRY_MS) return false;
+      return !usablePreviousClose(cached.value, symbol, date, now)
+        || now - cached.value.fetchedAt >= PREVIOUS_CLOSE_REFRESH_MS;
     });
     // Separate requests stay bounded; identical concurrent batches share one load.
     for (let offset = 0; offset < missing.length; offset += 200) {
@@ -41,8 +46,14 @@ export class AlpacaPreviousCloseBook {
       let request = this.pending.get(key);
       if (!request) {
         if (this.pending.size >= 4) continue;
-        request = this.load(batch, date, now).catch(() => {
-          for (const symbol of batch) this.cache.set(`${date}:${symbol}`, { at: now, value: null });
+        request = this.load(batch, date).catch(() => {
+          const failedAt = Date.now();
+          for (const symbol of batch) {
+            const cached = this.cache.get(`${date}:${symbol}`);
+            // A failed refresh must not erase a still-valid adjusted reference.
+            this.cache.set(`${date}:${symbol}`, { at: failedAt,
+              value: usablePreviousClose(cached?.value, symbol, date, failedAt) ? cached!.value : null });
+          }
         }).finally(() => this.pending.delete(key));
         this.pending.set(key, request);
       }
@@ -52,7 +63,7 @@ export class AlpacaPreviousCloseBook {
     return Object.fromEntries(wanted.map(symbol => [symbol, this.peek(symbol, date, Date.now())]));
   }
 
-  private async load(symbols: readonly string[], date: string, now: number) {
+  private async load(symbols: readonly string[], date: string) {
     const end = Date.parse(`${date}T00:00:00Z`);
     if (!Number.isFinite(end)) throw Error("invalid_previous_close_date");
     const latest = new Map<string, { price: number; barAt: number }>();
@@ -85,10 +96,12 @@ export class AlpacaPreviousCloseBook {
       tokens.add(token);
     }
     if (!complete) throw Error("incomplete_previous_close_history");
+    const publishedAt = Date.now();
+    if (easternClock(publishedAt).date !== date) throw Error("previous_close_basis_changed");
     for (const symbol of symbols) {
       const value = invalid.has(symbol) ? undefined : latest.get(symbol);
-      this.cache.set(`${date}:${symbol}`, { at: now, value: value ? {
-        symbol, ...value, adjustment: "split", basisDate: date, fetchedAt: now,
+      this.cache.set(`${date}:${symbol}`, { at: publishedAt, value: value ? {
+        symbol, ...value, adjustment: "split", basisDate: date, fetchedAt: publishedAt,
       } : null });
     }
   }

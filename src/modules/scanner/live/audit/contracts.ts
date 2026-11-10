@@ -22,6 +22,9 @@ export type ScannerAuditDecision = Readonly<{
   sessionGain: number | null;
   /** Gainer comparison may differ from the unchanged day gain shown for Momentum. */
   gainerGain?: number | null;
+  /** Original observations remain unchanged when Gainers uses last available values. */
+  gainerDataIssues?: readonly string[];
+  gainerRetained?: boolean;
   gainerComparisonPrice?: number | null;
   gainerGainBasis?: "previous_regular_close" | "today_regular_close";
   spreadPercent: number | null;

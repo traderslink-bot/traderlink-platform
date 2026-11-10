@@ -75,10 +75,11 @@ describe("daily list integrity", () => {
     const cleaned=importDailyUniverse({...imported,stocks:[...imported.stocks,{symbol:"TESTW",exchange:"NYSE",marketCapAtCollection:5_000_000}]},upload("symbol,exchange,market_cap\nABCD,NASDAQ,10000000"),NOW).universe;
     expect(cleaned.stocks.map(stock=>stock.symbol)).toEqual(["ABCD"]);
   });
-  it("quarantines a secondary venue conflict and refuses a cross-day merge", () => {
+  it("rejects an exchange conflict without mutating the accepted universe and refuses a cross-day merge", () => {
     const previous = importDailyUniverse(null,upload(),NOW).universe;
-    const merged = importDailyUniverse(previous,upload("symbol,exchange,market_cap\nAAA,NYSE,100"),NOW).universe;
-    expect(merged.stocks[0]).toMatchObject({ symbol:"AAA",exchange:"NASDAQ",marketCapAtCollection:10_000_000 });
+    const accepted = structuredClone(previous);
+    expect(() => importDailyUniverse(previous,upload("symbol,exchange,market_cap\nAAA,NYSE,100"),NOW)).toThrow("scanner_universe_exchange_conflict");
+    expect(previous).toEqual(accepted);
     expect(() => importDailyUniverse({ ...previous,tradingDate: "2026-10-30" },upload(),NOW)).toThrow("date_conflict");
   });
 });
@@ -132,7 +133,8 @@ describe("session and snapshot evidence", () => {
   it("uses yesterday's regular close rather than the older daily comparison before the bell", () => {
     const premarket = batch([raw({ pre_price:1.78,last_price:1.89,prev_close_price:0.9 })],{ session:"premarket" }).snapshots[0];
     expect(premarket.baseline).toBe(1.89);
-    expect((premarket.price/premarket.baseline-1)*100).toBeCloseTo(-5.82,1);
+    expect(premarket.baseline).not.toBeNull();
+    expect((premarket.price/premarket.baseline!-1)*100).toBeCloseTo(-5.82,1);
   });
   it("does not treat zero extended prices or bid/ask as usable values", () => {
     expect(batch([raw({ after_price: 0 })],{ session: "after_hours" }).missingSymbols).toEqual(["AAA"]);
@@ -334,7 +336,11 @@ describe("rolling evidence and focus", () => {
     expect(withoutFloat.missingFloatCount).toBe(1);
     const floats = new Map([["AAA",{ shares: 500_000,retrievedAtUtc: new Date(NOW).toISOString() }]]);
     expect(engine.evaluate({ ...base,floats }).gainers.rows[0].marketCap).toBe(150_000_000);
-    expect(engine.evaluate({ ...base,floats,now: NOW+31_000 }).gainers.total).toBe(0);
+    const stale=engine.evaluate({ ...base,floats,now: NOW+31_000 });
+    expect(stale.gainers.total).toBe(1);
+    expect(stale.gainers.rows[0].providerAtUtc).toBe(new Date(NOW).toISOString());
+    expect(stale.momentum.rows).toEqual([]);
+    expect(stale.audit[0]).toMatchObject({gainerDisplayed:true,gainerRetained:true,gainerDataIssues:["snapshot_not_eligible"],momentumDisplayed:false});
   });
 });
 

@@ -30,6 +30,13 @@ export function scannerFilterFailures(row: LiveScannerRow, filters: ScreenFilter
   return Object.freeze(failures);
 }
 
+const UNAVAILABLE_GAINER_LIQUIDITY = new Set(["spread_unavailable", "volume_unavailable", "dollar_volume_unavailable"]);
+
+/** Missing liquidity data is not evidence that a Top Gainer fails its thresholds. */
+export function scannerGainerFilterFailures(row: LiveScannerRow, filters: ScreenFilters): readonly string[] {
+  return Object.freeze(scannerFilterFailures(row, filters).filter(reason => !UNAVAILABLE_GAINER_LIQUIDITY.has(reason)));
+}
+
 const EARLY_LIQUIDITY_SIGNALS = new Set(["volume_ignition", "building_volume", "developing_activity"]);
 
 /**

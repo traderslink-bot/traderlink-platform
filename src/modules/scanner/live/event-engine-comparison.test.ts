@@ -21,6 +21,11 @@ it('preserves gainer ordering, qualification and aligned rolling metrics in a te
 });
 it('drops event coverage on a gap and does not reuse the old rolling window after reconnection',()=>{
  const engine=new LiveScannerEngine(true);for(let second=0;second<=65;second++)engine.evaluate(input(second));
- expect(engine.evaluate({...input(66),snapshots:[]}).gainers.rows).toEqual([]);
+ const before=engine.evaluate(input(65));
+ const gap=engine.evaluate({...input(66),snapshots:[]});
+ expect(gap.gainers.rows).toEqual(before.gainers.rows);
+ expect(gap.momentum.rows).toEqual([]);
+ expect(gap.gainers.focus).toEqual([]);
+ expect(gap.audit.every(decision=>decision.gainerDataIssues?.includes("snapshot_unavailable")&&decision.momentumRank===null)).toBe(true);
  const recovered=engine.evaluate(input(67));expect(recovered.gainers.rows[0].activity.oneMinuteVolume).toBeNull();
 });

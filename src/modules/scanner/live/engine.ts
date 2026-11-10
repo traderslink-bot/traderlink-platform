@@ -4,7 +4,7 @@ import type { DailyUniverse, FocusControls, FocusStock, LiveScannerRow, LiveScre
 import { RollingActivityBook } from "./activity";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
 import type { ScannerAuditDecision } from "./audit/contracts";
-import { scannerFilterFailures, scannerMomentumFilterFailures, scannerMomentumScore, scannerMovementFailures } from "./audit/decision-trace";
+import { scannerConfigurationHash, scannerGainerFilterFailures, scannerMomentumFilterFailures, scannerMomentumScore, scannerMovementFailures } from "./audit/decision-trace";
 import { DeclineBook } from "./declines";
 import type { DeclineResults, PremarketPullbackResults } from "./contracts";
 import { PremarketPullbackBook } from "./premarket-pullbacks";
@@ -12,10 +12,11 @@ import { MomentumEventBook } from "./momentum-events";
 import { momentumDetectionControls, momentumLiquidityBypassControls } from "./settings";
 import { MomentumRetentionBook } from "./momentum-retention";
 
+import { GainerRetentionBook } from "./gainer-retention";
+
 export type FloatFact = Readonly<{ shares: number; retrievedAtUtc: string }>;
 type Candidate = Readonly<{ row: LiveScannerRow; score: number }>;
 const EMPTY: LiveScreenResults = { rows: [], focus: [], total: 0 };
-function matches(row: LiveScannerRow, filters: ScreenFilters): boolean { return scannerFilterFailures(row,filters).length===0; }
 export function qualifiesFiveMinuteMomentum(activity: LiveScannerRow["activity"], controls: FocusControls): boolean {
   return activity.fiveMinuteGain !== null && activity.fiveMinuteGain >= controls.minimumFiveMinuteGain
     && activity.fiveMinuteVolumeSpike !== null && activity.fiveMinuteVolumeSpike >= controls.minimumVolumeAcceleration;
@@ -82,6 +83,10 @@ class FocusSelection {
 }
 
 export class LiveScannerEngine {
+  private gainerAuditContext: string | null = null;
+  private gainerAudit = new Map<string, ScannerAuditDecision>();
+  private gainerRetention = new GainerRetentionBook();
+  private dayGainerRetention = new GainerRetentionBook();
   private activity:RollingActivityBook;
   private gainersFocus:FocusSelection;
   private momentumFocus:FocusSelection;
@@ -143,7 +148,10 @@ export class LiveScannerEngine {
         priceTimeBasis: snapshot.priceTimeBasis,
         activity:event.activity,momentumSignals:Object.freeze([...event.signals,...rollingSignals]),reasons:[],news:input.news.get(stock.symbol)??[] });
     }
-    const dayGainers = rows.filter(row => row.sessionGain !== null && matches(row,input.configuration.gainers.filters[input.session]))
+    const retentionContext = `${input.tradingDate}:${input.session}:${scannerConfigurationHash(input.configuration)}`;
+    if (this.gainerAuditContext !== retentionContext) { this.gainerAuditContext = retentionContext; this.gainerAudit.clear(); }
+    const failuresFor = (row: LiveScannerRow) => scannerGainerFilterFailures(row,input.configuration.gainers.filters[input.session]);
+    const dayGainers = [...this.dayGainerRetention.select(retentionContext, rows, failuresFor, input.now, new Set(membership.keys()))]
       .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
     const snapshotsBySymbol = new Map(input.snapshots.map(snapshot => [snapshot.symbol,snapshot]));
     const gainerRows = input.session === "after_hours" ? rows.map(row => {
@@ -152,8 +160,7 @@ export class LiveScannerEngine {
       return { ...row, comparisonPrice, gainBasis: "today_regular_close" as const,
         sessionGain: row.postMarketGain ?? null };
     }) : rows;
-    const gainers = gainerRows.filter(row => row.sessionGain !== null
-      && matches(row,input.configuration.gainers.filters[input.session]))
+    const gainers = [...this.gainerRetention.select(retentionContext, gainerRows, failuresFor, input.now, new Set(membership.keys()))]
       .sort((a,b) => (b.sessionGain ?? -Infinity)-(a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol));
     const momentumFilters = input.configuration.momentum.filters[input.session];
     const allowEarlyLiquidityBypass=momentumLiquidityBypassControls(input.configuration)[input.session];
@@ -163,16 +170,34 @@ export class LiveScannerEngine {
         || momentumScore(b,input.configuration.momentum.focus,momentumFilters)
         -momentumScore(a,input.configuration.momentum.focus,momentumFilters) || a.symbol.localeCompare(b.symbol));
     const context = `${input.tradingDate}:${input.session}`;
-    const gainersCandidates = gainers.map(row => focusCandidate(row,input.configuration.gainers.focus)).filter((value): value is Candidate => value !== null);
+    const freshGainerSymbols = new Set(rows.map(row => row.symbol));
+    const gainersCandidates = gainers.filter(row => freshGainerSymbols.has(row.symbol)).map(row => focusCandidate(row,input.configuration.gainers.focus)).filter((value): value is Candidate => value !== null);
     const momentumCandidates = momentum.map(row => focusCandidate(row,input.configuration.momentum.focus,
       momentumScore(row,input.configuration.momentum.focus,momentumFilters),true)).filter((value): value is Candidate => value !== null);
     const gainerRank=new Map(gainers.map((row,index)=>[row.symbol,index+1]));
     const momentumRank=new Map(momentum.map((row,index)=>[row.symbol,index+1]));
     const momentumBySymbol=new Map(momentum.map(row=>[row.symbol,row]));
     const rowBySymbol=new Map(rows.map(row=>[row.symbol,row]));
-    const gainerBySymbol=new Map(gainerRows.map(row=>[row.symbol,row]));
-    const audit=input.snapshots.map(snapshot=>{
+    const gainerBySymbol=new Map([...gainerRows,...gainers].map(row=>[row.symbol,row]));
+    const currentSymbols = new Set(input.snapshots.map(snapshot => snapshot.symbol));
+    const auditSnapshots = [...input.snapshots, ...gainers.flatMap(row => {
+      const previous = this.gainerAudit.get(row.symbol);
+      return !currentSymbols.has(row.symbol) && previous ? [previous.observation] : [];
+    })];
+    const audit=auditSnapshots.map(snapshot=>{
       const row=rowBySymbol.get(snapshot.symbol),failure=rejected.get(snapshot.symbol)??[];
+      const retained = gainerBySymbol.get(snapshot.symbol), previous = this.gainerAudit.get(snapshot.symbol);
+      if (!row && retained && gainerRank.has(snapshot.symbol) && previous) {
+        const gr = gainerRank.get(snapshot.symbol)!;
+        return { ...previous, observation: snapshot, gainerGain: retained.sessionGain,
+          gainerComparisonPrice: retained.comparisonPrice ?? null, gainerGainBasis: retained.gainBasis,
+          gainerFailures: failuresFor(retained), gainerRank: gr,
+          gainerDisplayed: gr <= input.configuration.gainers.displayLimit,
+          gainerRetained: true, gainerDataIssues: [currentSymbols.has(snapshot.symbol) ? "snapshot_not_eligible" : "snapshot_unavailable"],
+          momentumFailures: failure.length ? failure : ["snapshot_unavailable"], momentumRank: null,
+          momentumDisplayed: false, momentumScore: null, momentumSignals: undefined, momentumState: undefined,
+          momentumLastActiveAtUtc: undefined, momentumCoolingUntilUtc: undefined } satisfies ScannerAuditDecision;
+      }
       if(!row)return {symbol:snapshot.symbol,exchange:membership.get(snapshot.symbol)?.exchange??null,
         marketCapAtCollection:membership.get(snapshot.symbol)?.marketCapAtCollection??null,observation:snapshot,activity:{ oneMinuteGain:null,fiveMinuteGain:null,
         oneMinuteVolume:null,oneMinuteDollarVolume:null,fiveMinuteVolume:null,fiveMinuteVolumeSpike:null,volumeAcceleration:null },
@@ -181,12 +206,18 @@ export class LiveScannerEngine {
         momentumScore:null} satisfies ScannerAuditDecision;
       const gainerRow=gainerBySymbol.get(row.symbol)!;
       const momentumRow=momentumBySymbol.get(row.symbol)??row;
-      const gainerFailures=[...scannerFilterFailures(gainerRow,input.configuration.gainers.filters[input.session])];
+      const gainerFailures=[...failuresFor(gainerRow)];
       if(input.session === "after_hours" && gainerRow.sessionGain === null && !gainerFailures.includes("gain_unavailable"))gainerFailures.push("gain_unavailable");
       const momentumFailures=[...scannerMomentumFilterFailures(momentumRow,momentumFilters,allowEarlyLiquidityBypass),...scannerMovementFailures(momentumRow,input.configuration.momentum.focus)];
       const gr=gainerRank.get(row.symbol)??null,mr=momentumRank.get(row.symbol)??null;
       return {symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:row.marketCapAtCollection,observation:snapshot,activity:row.activity,float:row.float,floatRetrievedAtUtc:row.floatRetrievedAtUtc,
         sessionGain:row.sessionGain,spreadPercent:row.spreadPercent,offHighPercent:row.offHighPercent,relativeVolume:row.relativeVolume,
+        gainerDataIssues: [
+          ...(snapshot.baseline === null && gainerRow.gainBasis !== "today_regular_close" ? ["baseline_unavailable"] : []),
+          ...(snapshot.volume === null ? ["volume_unavailable"] : []),
+          ...(snapshot.dollarVolume === null ? ["dollar_volume_unavailable"] : []),
+          ...(row.spreadPercent === null ? ["spread_unavailable"] : []),
+        ], gainerRetained: gainerRank.has(row.symbol) && (gainerFailures.length > 0 || gainerRow.sessionGain !== row.sessionGain),
         gainerFailures,momentumFailures,momentumSignals:momentumRow.momentumSignals,momentumState:momentumRow.momentumState,
         momentumLastActiveAtUtc:momentumRow.momentumLastActiveAtUtc,momentumCoolingUntilUtc:momentumRow.momentumCoolingUntilUtc,gainerRank:gr,momentumRank:mr,
         gainerGain:gainerRow.sessionGain,gainerComparisonPrice:gainerRow.comparisonPrice??null,gainerGainBasis:gainerRow.gainBasis,
@@ -194,6 +225,7 @@ export class LiveScannerEngine {
         momentumDisplayed:mr!==null&&mr<=input.configuration.momentum.displayLimit,
         momentumScore:scannerMomentumScore(momentumRow,input.configuration.momentum.focus,momentumFilters)} satisfies ScannerAuditDecision;
     });
+    this.gainerAudit = new Map(audit.filter(decision => gainerRank.has(decision.symbol)).map(decision => [decision.symbol, decision]));
     const declines=this.declines.evaluate({universe:coveredUniverse,session:input.session,now:input.now,
       snapshots:input.snapshots,floats:input.floats,controls:input.configuration.declines});
     const premarketPullbacks=this.premarketPullbacks.evaluate({universe:coveredUniverse,session:input.session,now:input.now,
@@ -207,5 +239,5 @@ export class LiveScannerEngine {
         focus: this.momentumFocus.select(context,momentumCandidates,input.configuration.momentum.focus,input.now) }, missingFloatCount,audit,
     };
   }
-  clear(): void { this.activity.clear();this.momentumEvents.clear();this.momentumRetention.clear();this.gainersFocus.clear();this.momentumFocus.clear();this.declines.clear();this.premarketPullbacks.clear(); }
+  clear(): void { this.gainerAudit.clear();this.gainerAuditContext=null;this.gainerRetention.clear();this.dayGainerRetention.clear();this.activity.clear();this.momentumEvents.clear();this.momentumRetention.clear();this.gainersFocus.clear();this.momentumFocus.clear();this.declines.clear();this.premarketPullbacks.clear(); }
 }

@@ -4,7 +4,7 @@ import {MomentumEventBook} from "../modules/scanner/live/momentum-events";
 import {DEFAULT_MOMENTUM_DETECTION} from "../modules/scanner/live/settings";
 import type {MomentumSignal,NormalizedSnapshot,ScannerConfiguration,ScannerSession,ScreenFilters} from "../modules/scanner/live/contracts";
 
-type Decision={symbol:string;observation:NormalizedSnapshot;float:number|null;marketCapAtCollection:number|null;spreadPercent:number|null};
+type Decision={symbol:string;observation:NormalizedSnapshot;float:number|null;marketCapAtCollection:number|null;spreadPercent:number|null;gainerDataIssues?:readonly string[]};
 type Cycle={cycleId:string;tradingDate:string;session:ScannerSession;completedAt:number;status:string;issues:string[];configuration:ScannerConfiguration;decisions:Decision[]};
 type Event={method:MomentumSignal;symbol:string;session:ScannerSession;at:number;price:number;eligible:boolean;signals:MomentumSignal[];
   intervalSeconds:number|null;intervalVolume:number|null;intervalDollars:number|null;rateMultiple:number|null;episodeShares:number|null;episodeDollars:number|null;
@@ -68,6 +68,8 @@ for await(const line of createInterface({input:process.stdin,crlfDelay:Infinity}
   const sessionCoverage=coverage.sessions.get(cycle.session)??{cycles:0,observations:0};sessionCoverage.cycles++;sessionCoverage.observations+=cycle.decisions.length;coverage.sessions.set(cycle.session,sessionCoverage);
   coverage.observations+=cycle.decisions.length;
   for(const decision of cycle.decisions){
+    // Retained Gainer evidence is not a new Momentum observation or outcome price.
+    if(decision.gainerDataIssues?.some(issue=>issue==="snapshot_unavailable"||issue==="snapshot_not_eligible"))continue;
     const snapshot=decision.observation;coverage.symbols.add(decision.symbol);updateOutcomes(decision.symbol,snapshot.receivedAt,snapshot.price);
     if(!activity.observe(snapshot))continue;
     const rolling=activity.metrics(decision.symbol,cycle.completedAt);let signals:MomentumSignal[]=[];

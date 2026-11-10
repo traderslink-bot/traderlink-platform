@@ -56,6 +56,7 @@ export class LiveScannerFeed {
   private readonly runtimeInstanceId=randomUUID();
   private model: ScannerReadModel = empty("disabled",easternClock(Date.now()).date);
   private running = false;
+  private lastGainerContext: string | null = null;
   private idleWaiters=new Set<()=>void>();
   private modelListeners=new Set<()=>void>();
   subscribeModels(notify:()=>void):()=>void { this.modelListeners.add(notify);return()=>this.modelListeners.delete(notify); }
@@ -76,6 +77,8 @@ export class LiveScannerFeed {
     const now = (this.dependencies.now ?? Date.now)();
     const clock = easternClock(now);
     const date = clock.date;
+    let verifiedContext: { key: string; session: ScannerSession } | null = null;
+    let allowedSymbols: ReadonlySet<string> | null = null;
     try {
       const configuration = await this.dependencies.configuration();
       if (!configuration.enabled) {this.dependencies.inactive?.();this.engine.clear();return this.set(empty("disabled",date));}
@@ -97,11 +100,13 @@ export class LiveScannerFeed {
         }
         return this.set(empty("closed",date));
       }
+      verifiedContext = { key: `${date}:${session}:${scannerConfigurationHash(configuration)}`, session };
       const storedUniverse = await this.dependencies.universe(date);
       if (!storedUniverse) {this.dependencies.inactive?.();if(this.dependencies.eventDriven)this.engine.clear();return this.set(empty("universe_missing",date));}
       const filtered=requestUniverse(storedUniverse,scannerRequestMarketCap(configuration,session));
       const manual=await this.dependencies.manualTickers?.()??[],existing=new Set(filtered.stocks.map(stock=>stock.symbol));
       const universe={...filtered,stocks:[...filtered.stocks,...manual.filter(row=>!existing.has(row.symbol)).map(row=>({symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:1}))]};
+      allowedSymbols = new Set(universe.stocks.map(stock => stock.symbol));
       await this.dependencies.reserveScannerBudget(universe.stocks.length);
       const symbols = universe.stocks.map(stock => stock.symbol);
       const floats = await this.dependencies.floats(date,symbols);
@@ -163,11 +168,28 @@ export class LiveScannerFeed {
         configuration,configurationHash:scannerConfigurationHash(configuration),status,
         issues:Object.freeze([...issues].sort()),missingSymbols:Object.freeze([...new Set(missing)].sort()),
         batches:Object.freeze(receipts),decisions:evaluated.audit,declines,premarketPullbacks});
+      this.lastGainerContext = verifiedContext.key;
       return this.set({ ...(this.dependencies.eventDriven?{refreshAfterMs:1000}:{}),status:this.dependencies.eventDriven&&snapshots.length===0&&issues.size?"unavailable":status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
         universeSourceDate: universe.sourceTradingDate ?? universe.tradingDate, universeCount: symbols.length,
         receivedCount: snapshots.length, missingSymbols: Object.freeze([...new Set(missing)].sort()), missingFloatCount: evaluated.missingFloatCount,
         gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), declines, premarketPullbacks, issues: Object.freeze([...issues].sort()) });
-    } catch { return this.set(empty("unavailable",date,["live_feed_unavailable"])); }
+    } catch {
+      // Preserve established Gainers only after this pass independently verifies their context.
+      if (verifiedContext && verifiedContext.key === this.lastGainerContext
+        && this.model.tradingDate === date && this.model.session === verifiedContext.session) {
+        const retain = (results: LiveScreenResults | undefined): LiveScreenResults => {
+          const rows = (results?.rows ?? []).filter(row => !allowedSymbols || allowedSymbols.has(row.symbol));
+          return { rows, total: rows.length, focus: [] };
+        };
+        const gainers = retain(this.model.gainers), dayGainers = retain(this.model.dayGainers);
+        return this.set({ ...empty("unavailable",date,["live_feed_unavailable"]), session: verifiedContext.session,
+          updatedAtUtc: new Date(now).toISOString(), universeSourceDate: this.model.universeSourceDate,
+          universeCount: allowedSymbols?.size ?? this.model.universeCount,
+          missingSymbols: [...new Set([...gainers.rows,...dayGainers.rows].map(row => row.symbol))],
+          gainers, dayGainers });
+      }
+      return this.set(empty("unavailable",date,["live_feed_unavailable"]));
+    }
     finally { this.running = false;for(const done of this.idleWaiters)done(); }
   }
   private recordMarketMovement(snapshots:readonly NormalizedSnapshot[]):void {

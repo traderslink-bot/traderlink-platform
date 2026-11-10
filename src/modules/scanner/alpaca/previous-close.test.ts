@@ -83,3 +83,41 @@ it("enforces symbol/date/freshness identity and does not accept today's bar as y
   expect(result.BAD).toBeNull();
   expect(result.CONFLICT).toBeNull();
 });
+
+
+it("refreshes before expiry and timestamps a delayed adjusted reference when published", async () => {
+  let finish!:(value:unknown)=>void;
+  const get=vi.fn().mockResolvedValueOnce({bars:{AAA:[bar(2)]}}).mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));
+  const book=new AlpacaPreviousCloseBook({get});await book.read(["AAA"],date);
+  vi.setSystemTime(now+PREVIOUS_CLOSE_TTL_MS-59_000);
+  const pending=book.read(["AAA"],date);
+  expect(get).toHaveBeenCalledTimes(2);expect(book.peek("AAA",date)?.price).toBe(2);
+  vi.setSystemTime(now+PREVIOUS_CLOSE_TTL_MS+1);
+  expect(book.peek("AAA",date)).toBeNull();
+  finish({bars:{AAA:[bar(2.1)]}});const refreshed=await pending;
+  expect(refreshed.AAA).toMatchObject({price:2.1,fetchedAt:Date.now(),basisDate:date,adjustment:"split"});
+});
+
+it("keeps an unexpired adjusted close during a failed proactive refresh and retries without a gap",async()=>{
+  const get=vi.fn().mockResolvedValueOnce({bars:{AAA:[bar(2)]}}).mockRejectedValueOnce(Error("provider_unavailable")).mockResolvedValue({bars:{AAA:[bar(2.1)]}});
+  const book=new AlpacaPreviousCloseBook({get});await book.read(["AAA"],date);
+  vi.setSystemTime(now+PREVIOUS_CLOSE_TTL_MS-59_000);
+  expect((await book.read(["AAA"],date)).AAA?.price).toBe(2);
+  expect(book.peek("AAA",date)?.fetchedAt).toBe(now);
+  await book.read(["AAA"],date);expect(get).toHaveBeenCalledTimes(2);
+  vi.setSystemTime(Date.now()+10_001);
+  expect((await book.read(["AAA"],date)).AAA?.price).toBe(2.1);expect(get).toHaveBeenCalledTimes(3);
+});
+
+it("does not let a failed overlapping batch erase a newer successful reference", async () => {
+  let rejectFirst!: (error: Error) => void;
+  const first = new Promise<unknown>((_resolve, reject) => { rejectFirst = reject; });
+  const get = vi.fn().mockReturnValueOnce(first).mockResolvedValueOnce({ bars: { AAA: [bar(2.1)] } });
+  const book = new AlpacaPreviousCloseBook({ get });
+  const overlapping = book.read(["AAA", "BBB"], date);
+  expect((await book.read(["AAA"], date)).AAA?.price).toBe(2.1);
+  rejectFirst(Error("provider timeout"));
+  const result = await overlapping;
+  expect(result.AAA?.price).toBe(2.1);
+  expect(result.BBB).toBeNull();
+});
