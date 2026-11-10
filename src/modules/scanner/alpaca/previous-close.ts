@@ -3,7 +3,7 @@ import { easternClock } from "../live/sessions";
 import type { AlpacaRestData } from "./rest-data";
 
 export const PREVIOUS_CLOSE_TTL_MS = 5 * 60_000;
-const PREVIOUS_CLOSE_REFRESH_MS = PREVIOUS_CLOSE_TTL_MS - 60_000;
+const PREVIOUS_CLOSE_REFRESH_MS = PREVIOUS_CLOSE_TTL_MS - 120_000;
 const PREVIOUS_CLOSE_RETRY_MS = 10_000;
 export type SplitAdjustedPreviousClose = Readonly<{
   symbol: string; price: number; barAt: number; adjustment: "split"; basisDate: string; fetchedAt: number;
@@ -22,6 +22,8 @@ export function usablePreviousClose(value: unknown, symbol: string, date: string
 export class AlpacaPreviousCloseBook {
   private cache = new Map<string, { at: number; value: SplitAdjustedPreviousClose | null }>();
   private pending = new Map<string, Promise<void>>();
+  private queue: Array<{ symbols: readonly string[]; date: string; finish: () => void }> = [];
+  private workers = 0;
   constructor(private readonly rest: Pick<AlpacaRestData, "get">) {}
 
   peek(symbol: string, date: string, now = Date.now()): SplitAdjustedPreviousClose | null {
@@ -40,27 +42,45 @@ export class AlpacaPreviousCloseBook {
       return !usablePreviousClose(cached.value, symbol, date, now)
         || now - cached.value.fetchedAt >= PREVIOUS_CLOSE_REFRESH_MS;
     });
-    // Separate requests stay bounded; identical concurrent batches share one load.
-    for (let offset = 0; offset < missing.length; offset += 200) {
-      const batch = missing.slice(offset, offset + 200), key = JSON.stringify([date, batch]);
-      let request = this.pending.get(key);
-      if (!request) {
-        if (this.pending.size >= 4) continue;
-        request = this.load(batch, date).catch(() => {
-          const failedAt = Date.now();
-          for (const symbol of batch) {
-            const cached = this.cache.get(`${date}:${symbol}`);
-            // A failed refresh must not erase a still-valid adjusted reference.
-            this.cache.set(`${date}:${symbol}`, { at: failedAt,
-              value: usablePreviousClose(cached?.value, symbol, date, failedAt) ? cached!.value : null });
-          }
-        }).finally(() => this.pending.delete(key));
-        this.pending.set(key, request);
-      }
-      await request;
+    const waiting = new Set<Promise<void>>();
+    const unscheduled: string[] = [];
+    for (const symbol of missing) {
+      const existing = this.pending.get(`${date}:${symbol}`);
+      if (existing) waiting.add(existing);
+      else unscheduled.push(symbol);
     }
+    // Small provider batches avoid slow 200-symbol calls. Queue every symbol,
+    // share overlapping renewals and bound active provider work to four loads.
+    for (let offset = 0; offset < unscheduled.length; offset += 50) {
+      const batch = unscheduled.slice(offset, offset + 50);
+      let finish!: () => void;
+      const operation = new Promise<void>(resolve => { finish = resolve; });
+      for (const symbol of batch) this.pending.set(`${date}:${symbol}`, operation);
+      this.queue.push({ symbols: batch, date, finish });
+      waiting.add(operation);
+    }
+    this.pump();
+    await Promise.all(waiting);
     while (this.cache.size > 5000) this.cache.delete(this.cache.keys().next().value!);
     return Object.fromEntries(wanted.map(symbol => [symbol, this.peek(symbol, date, Date.now())]));
+  }
+
+  private pump(): void {
+    while (this.workers < 4 && this.queue.length) {
+      const task = this.queue.shift()!;
+      this.workers++;
+      void this.load(task.symbols, task.date).catch(() => {
+        const failedAt = Date.now();
+        for (const symbol of task.symbols) {
+          const key = `${task.date}:${symbol}`, cached = this.cache.get(key);
+          this.cache.set(key, { at: failedAt,
+            value: usablePreviousClose(cached?.value, symbol, task.date, failedAt) ? cached!.value : null });
+        }
+      }).finally(() => {
+        for (const symbol of task.symbols) this.pending.delete(`${task.date}:${symbol}`);
+        this.workers--; task.finish(); this.pump();
+      });
+    }
   }
 
   private async load(symbols: readonly string[], date: string) {

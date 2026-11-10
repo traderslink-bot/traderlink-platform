@@ -109,15 +109,16 @@ it("keeps an unexpired adjusted close during a failed proactive refresh and retr
   expect((await book.read(["AAA"],date)).AAA?.price).toBe(2.1);expect(get).toHaveBeenCalledTimes(3);
 });
 
-it("does not let a failed overlapping batch erase a newer successful reference", async () => {
+it("coalesces overlapping symbol batches and retries a shared failure without racing overwrites", async () => {
   let rejectFirst!: (error: Error) => void;
   const first = new Promise<unknown>((_resolve, reject) => { rejectFirst = reject; });
   const get = vi.fn().mockReturnValueOnce(first).mockResolvedValueOnce({ bars: { AAA: [bar(2.1)] } });
   const book = new AlpacaPreviousCloseBook({ get });
   const overlapping = book.read(["AAA", "BBB"], date);
-  expect((await book.read(["AAA"], date)).AAA?.price).toBe(2.1);
+  const single = book.read(["AAA"], date);
+  expect(get).toHaveBeenCalledTimes(1);
   rejectFirst(Error("provider timeout"));
-  const result = await overlapping;
-  expect(result.AAA?.price).toBe(2.1);
-  expect(result.BBB).toBeNull();
+  expect((await overlapping).AAA).toBeNull(); expect((await single).AAA).toBeNull();
+  vi.setSystemTime(now + 10_001);
+  expect((await book.read(["AAA"], date)).AAA?.price).toBe(2.1);
 });
