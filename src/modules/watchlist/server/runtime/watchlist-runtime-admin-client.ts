@@ -64,8 +64,21 @@ export async function requestWatchlistRuntimeRaw(
       redirect: request.reviewActor ? "error" : "follow",
       signal: AbortSignal.timeout(request.timeoutMs ?? 180_000),
     });
+    const body = await response.text();
+    // An upstream edge may return plaintext/HTML before the Runtime sees a
+    // request. Keep JSON API consumers usable, without retrying any mutation.
+    if (!response.ok && request.path.startsWith('/api/')) {
+      let json = false;
+      try { const value: unknown = JSON.parse(body); json = value !== null && typeof value === 'object'; } catch { /* Replace only non-JSON failures. */ }
+      if (!json) return Object.freeze({
+        body: JSON.stringify({ error: response.status === 429
+          ? 'The Watchlist connection is temporarily rate limited. Your saved analyses are preserved. Check the ticker before retrying a publish or post.'
+          : 'The Watchlist connection is temporarily unavailable. Your saved analyses are preserved. Check the ticker before retrying a publish or post.' }),
+        contentType: 'application/json; charset=utf-8', ok: false, status: response.status,
+      });
+    }
     return Object.freeze({
-      body: await response.text(),
+      body,
       contentType: response.headers.get("content-type") ?? "application/octet-stream",
       ok: response.ok,
       status: response.status,

@@ -237,7 +237,11 @@ export async function readWatchlistRuntimeConsoleDocument(
     method: "GET",
     path: runtimePath(view),
   });
-  if (!response.ok) return response;
+  if (!response.ok) return Object.freeze({
+    ...response,
+    contentType: 'text/html; charset=utf-8',
+    body: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>Watchlist connection unavailable</title></head><body style="font-family:Arial,sans-serif;padding:24px"><main><h2>Watchlist connection temporarily unavailable</h2><p role="status">${response.status === 429 ? 'The connection is temporarily rate limited.' : 'The Admin connection could not be loaded.'} Your saved tickers and analyses are unchanged.</p><p><a href="">Reload Watchlist Admin</a></p></main></body></html>`,
+  });
   return Object.freeze({
     ...response,
     body: rewriteWatchlistRuntimeDocument(response.body),

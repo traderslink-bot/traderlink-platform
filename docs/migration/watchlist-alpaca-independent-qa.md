@@ -241,3 +241,29 @@ Alpaca status. No schema migration is needed. Scanner/gateway/shared-chart
 sources remain untouched. A complete authenticated browser session on the
 deployed corrected release remains a hosted acceptance check; component browser
 fixtures and read-only live provider probes do not substitute for it.
+
+
+## November 10 — Admin connection failure handling (local only)
+
+Owner requested continuing the repair after the live connection recovered.
+Non-JSON failed Runtime API responses now become safe JSON retaining the upstream
+status, without retrying requests or changing owner authorization. Structured
+API errors and successful payloads are unchanged. A failed initial embedded
+console load now shows a readable explanation and explicit reload link rather
+than raw rate-limited text. No automatic reload, mutation replay, credential
+change, data edit or delivery was added. Runtime's paired correction preserves
+same-cycle review controls on transient errors and avoids blind JSON parsing.
+
+Five isolated transport tests pass (429/502, structured errors/success, console
+fallback, healthy rewriting and unconfigured connection); focused changed-graph
+TypeScript including installed Next global declarations reports zero diagnostics;
+targeted ESLint and diff checks pass. Runtime has three new focused regressions,
+an existing embedded-script syntax check,
+seven existing panel checks, full TypeScript and isolated Chromium recovery
+coverage. Four unrelated old row-test failures were reproduced against unchanged
+HEAD using in-memory git-show sources and remain separate test debt. No production
+build/release or signed-in production editing acceptance is claimed. Existing
+Help reviewed; existing workflow is unchanged, so no guide change is needed.
+Preserve the AGENTS assignment overlay. This slice is not deployed and is separate
+from the queued catalyst Day-trade-impact removal. Coordinator was not contacted
+for coding/testing; ordinary integration/release remains its responsibility.
