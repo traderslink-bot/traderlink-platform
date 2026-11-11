@@ -1,0 +1,225 @@
+<section id="daily-gainers-preview" data-link-mode="__GAINERS_LINK_MODE__" aria-labelledby="gainers-title">
+  <header>
+    <h1 id="gainers-title">Daily top gainers</h1>
+    <nav aria-label="Daily gainers">
+      <a href="#gainers-archive-title">Find top gainers</a>
+      <a href="#recent-gainers-title">Recent trading days</a>
+    </nav>
+  </header>
+  <p class="gainers-intro">See the top 10 U.S. stock gainers after each market close, including small-cap and micro-cap movers. Browse historical rankings and find repeat movers by ticker for your day trading watchlist.</p>
+  <section aria-labelledby="gainers-archive-title">
+    <h2 id="gainers-archive-title">Find top gainers</h2>
+    <div id="gainers-search" role="search" aria-labelledby="gainers-archive-title">
+      <div class="gainers-field"><label for="gainers-period">Period</label>
+        <select id="gainers-period"><option value="day">Day</option><option value="month">Month</option><option value="year">Year</option><option value="range">Custom range</option></select>
+      </div>
+      <div class="gainers-field" data-period="day"><label for="gainers-date">Trading date</label><select id="gainers-date"></select></div>
+      <div class="gainers-field" data-period="month" hidden><label for="gainers-month">Month</label><select id="gainers-month"></select></div>
+      <div class="gainers-field" data-period="year" hidden><label for="gainers-year">Year</label><select id="gainers-year"></select></div>
+      <div class="gainers-field" data-period="range" hidden><label for="gainers-from">From</label><input id="gainers-from" type="date"></div>
+      <div class="gainers-field" data-period="range" hidden><label for="gainers-to">To</label><input id="gainers-to" type="date"></div>
+      <div class="gainers-field"><label for="gainers-ticker">Ticker (optional)</label><input id="gainers-ticker" maxlength="16" spellcheck="false" placeholder="e.g. AAPL"></div>
+      <div class="gainers-field"><label for="gainers-cutoff">Daily rank</label><select id="gainers-cutoff"></select></div>
+      <div class="gainers-field"><label for="gainers-volume">Min. dollar volume</label>
+        <select id="gainers-volume"><option value="0">Any</option><option value="1000000">$1M</option><option value="5000000">$5M</option><option value="10000000">$10M</option><option value="50000000">$50M</option></select>
+      </div>
+      <div class="gainers-field"><label for="gainers-sort">Sort by</label>
+        <select id="gainers-sort"><option value="date">Newest date</option><option value="gain">Highest gain</option><option value="volume">Highest dollar volume</option></select>
+      </div>
+    </div>
+    <details class="gainers-months">
+      <summary>Browse by month</summary>
+      <ul>__GAINERS_MONTHS__</ul>
+    </details>
+    <div id="gainers-status" role="status"></div>
+    <dl id="gainers-stats" hidden>
+      <div><dt>Appearances</dt><dd></dd></div>
+      <div><dt>Best rank</dt><dd></dd></div>
+      <div><dt>Last appearance</dt><dd></dd></div>
+    </dl>
+    <table id="gainers-session" aria-label="Daily top gainer results">
+      <thead><tr><th scope="col">Date</th><th scope="col">Rank</th><th scope="col">Ticker</th><th scope="col">Close</th><th scope="col">Gain</th><th scope="col">Dollar volume</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <nav id="gainers-pagination" aria-label="Results pages" hidden>
+      <button type="button" id="gainers-previous">Previous</button>
+      <span id="gainers-page-count" aria-live="polite"></span>
+      <button type="button" id="gainers-next">Next</button>
+    </nav>
+  </section>
+  <section aria-labelledby="recent-gainers-title">
+    <h2 id="recent-gainers-title">Recent trading days</h2>
+    <div class="gainers-recent">__RECENT_SESSIONS__</div>
+  </section>
+</section>
+<style>
+  #daily-gainers-preview {
+    color: light-dark(#17283e, #e8eef7);
+    background: light-dark(#fff, #172434);
+    border: 1px solid light-dark(#dbe3ed, #38495d);
+    border-radius: 14px;
+    padding: clamp(12px, 4vw, 28px);
+    font-family: Inter, system-ui, sans-serif;
+  }
+  #daily-gainers-preview header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+  #daily-gainers-preview nav { display: flex; flex-wrap: wrap; gap: 14px; }
+  #daily-gainers-preview h1 { margin: 0; font-size: clamp(23px, 4vw, 32px); }
+  #daily-gainers-preview .gainers-field { display: grid; min-width: 0; max-width: 100%; gap: 4px; font-size: 14px; }
+  #daily-gainers-preview :is(select, input, button) {
+    min-height: 44px; min-width: 0; width: 100%; padding: 0 8px; font: inherit;
+    border: 1px solid light-dark(#b4c3d5, #65788f); border-radius: 8px;
+    color: inherit; background: light-dark(#f7f9fd, #233348);
+  }
+  #daily-gainers-preview .gainers-intro { font-size: 15px; line-height: 1.55; max-width: 68ch; }
+  #daily-gainers-preview h2 { font-size: 20px; margin: 24px 0 12px; }
+  #daily-gainers-preview h3 { font-size: 15px; margin: 0 0 6px; }
+  #daily-gainers-preview a { color: inherit; text-underline-offset: 3px; }
+  #daily-gainers-preview .gainers-recent { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 20px; }
+  #daily-gainers-preview .gainers-months { margin-top: 16px; }
+  #daily-gainers-preview .gainers-months ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 8px; padding-left: 22px; }
+  #daily-gainers-preview article { padding: 12px; border: 1px solid light-dark(#dbe3ed, #38495d); border-radius: 10px; }
+  #gainers-search label { white-space: nowrap; }
+  #gainers-search :is(select, input) {
+    box-sizing: border-box;
+    height: 44px;
+    white-space: nowrap;
+  }
+  #gainers-search { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+  #gainers-search .gainers-field { flex: 0 1 auto; }
+  #gainers-search :is(select, input) { width: auto; max-width: 100%; }
+  #gainers-search #gainers-ticker { width: 17ch; }
+  #daily-gainers-preview [hidden] { display: none; }
+  #gainers-status:not(:empty), #gainers-pagination { margin-top: 12px; }
+  #gainers-pagination { align-items: center; }
+  #gainers-stats { display: flex; flex-wrap: wrap; gap: 18px; }
+  #gainers-stats dd { margin: 0; font-weight: 650; }
+  #daily-gainers-preview button { width: auto; }
+  #daily-gainers-preview input { box-sizing: border-box; }
+  #daily-gainers-preview table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  #daily-gainers-preview :is(th, td) { padding: 8px 5px; border-bottom: 1px solid light-dark(#e5ebf3, #38495d); text-align: left; }
+  #daily-gainers-preview :is(th, td):nth-child(n+3) { text-align: right; }
+  #daily-gainers-preview :is(.gainers-gain, #gainers-session td:nth-child(5)) { color: light-dark(#09633d, #7de2ae); font-weight: 650; }
+  #daily-gainers-preview :is(p, footer) { font-size: 13px; color: light-dark(#4d5d73, #b7c6d9); }
+  @media (max-width: 380px) {
+    #daily-gainers-preview table { font-size: 12px; table-layout: fixed; }
+    #daily-gainers-preview :is(th, td) { white-space: normal; overflow-wrap: anywhere; padding-inline: 3px; }
+    #daily-gainers-preview article { padding-inline: 8px; }
+  }
+</style>
+<script type="application/json" id="gainers-pilot-data">__GAINERS_DATA__</script>
+<script type="application/json" id="gainers-alias-data">__GAINERS_ALIASES__</script>
+<script>
+  (() => {
+    const root = document.getElementById("daily-gainers-preview");
+    const get = (id) => root.querySelector("#gainers-" + id);
+    const data = JSON.parse(document.getElementById("gainers-pilot-data").textContent);
+    const days = Object.keys(data).sort().reverse();
+    const aliases = JSON.parse(document.getElementById("gainers-alias-data").textContent);
+    const aliasIndex = new Map(Object.entries(aliases).map(([symbol, keys]) => [symbol, new Set(keys)]));
+    const sessions = days.flatMap(day => data[day][1].map(([symbol, close, gain, volume, security = symbol], index) => {
+      if (!aliasIndex.has(symbol)) aliasIndex.set(symbol, new Set());
+      aliasIndex.get(symbol).add(security);
+      return {day, symbol, close, gain, volume, security, rank: index + 1};
+    }));
+
+    const period = get("period");
+    const picker = get("date");
+    const month = get("month");
+    const year = get("year");
+    const ticker = get("ticker");
+    const cutoff = get("cutoff");
+    const from = get("from");
+    const to = get("to");
+    const volume = get("volume");
+    const sort = get("sort");
+    const table = get("session");
+    const stats = get("stats");
+    const pagination = get("pagination");
+    const previous = get("previous");
+    const next = get("next");
+    const dateLabel = new Intl.DateTimeFormat("en-US", {dateStyle: "medium", timeZone: "UTC"});
+    const monthLabel = new Intl.DateTimeFormat("en-US", {month: "long", year: "numeric", timeZone: "UTC"});
+    const usd = new Intl.NumberFormat("en-US", {style: "currency", currency: "USD"});
+    const dollars = new Intl.NumberFormat("en-US", {style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1});
+    const pageSize = 25;
+    let rows = [];
+    let page = 0;
+
+    for (const day of days) picker.add(new Option(dateLabel.format(new Date(day)), day));
+    for (const key of new Set(days.map(day => day.slice(0, 7)))) {
+      month.add(new Option(monthLabel.format(new Date(key + "-01")), key));
+    }
+    for (const key of new Set(days.map(day => day.slice(0, 4)))) year.add(new Option(key, key));
+    for (let rank = 1; rank <= 10; rank++) cutoff.add(new Option("Top " + rank, String(rank)));
+    cutoff.value = "10";
+    for (const input of [from, to]) {
+      input.min = days.at(-1);
+      input.max = days[0];
+    }
+    from.value = from.min;
+    to.value = to.max;
+
+    function renderPage() {
+      const start = page * pageSize;
+      table.tBodies[0].replaceChildren(...rows.slice(start, start + pageSize).map(entry => {
+        const row = document.createElement("tr");
+        row.insertCell().textContent = dateLabel.format(new Date(entry.day));
+        for (const value of [entry.rank, entry.symbol, usd.format(entry.close), "+" + entry.gain.toFixed(2) + "%",
+          entry.volume == null ? "—" : dollars.format(entry.volume)]) row.insertCell().textContent = value;
+        return row;
+      }));
+      table.hidden = rows.length === 0;
+      pagination.hidden = rows.length <= pageSize;
+      previous.disabled = page === 0;
+      next.disabled = start + pageSize >= rows.length;
+      get("page-count").textContent = (start + 1) + "–" + Math.min(start + pageSize, rows.length) + " of " + rows.length;
+    }
+
+    function search() {
+      for (const field of root.querySelectorAll("[data-period]")) field.hidden = field.dataset.period !== period.value;
+      const symbol = ticker.value.trim().toUpperCase();
+      const identities = aliasIndex.get(symbol) ?? new Set();
+      const first = from.value || from.min;
+      const end = to.value || to.max;
+      const invalidRange = period.value === "range" && (!from.validity.valid || !to.validity.valid || first > end);
+      const dateMatches = day => {
+        if (period.value === "day") return day === picker.value;
+        if (period.value === "month") return day.startsWith(month.value);
+        if (period.value === "year") return day.startsWith(year.value);
+        return first <= day && day <= end;
+      };
+      rows = invalidRange || identities.size > 1 ? [] : sessions.filter(row =>
+        dateMatches(row.day) && row.rank <= Number(cutoff.value) &&
+        (!symbol || identities.has(row.security)) &&
+        (volume.value === "0" || row.volume >= Number(volume.value))
+      );
+      stats.hidden = !symbol || rows.length === 0;
+      if (!stats.hidden) {
+        const values = [rows.length, "#" + Math.min(...rows.map(row => row.rank)), dateLabel.format(new Date(rows[0].day))];
+        stats.querySelectorAll("dd").forEach((item, index) => { item.textContent = values[index]; });
+      }
+      get("status").textContent = invalidRange ? "Choose a valid date range." :
+        identities.size > 1 ? "Multiple securities used this ticker." : rows.length ? "" : "No matching results.";
+      if (sort.value === "gain") rows.sort((a, b) => b.gain - a.gain);
+      if (sort.value === "volume") rows.sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0));
+      page = 0;
+      renderPage();
+    }
+
+    get("search").addEventListener("change", search);
+    ticker.addEventListener("input", search);
+    previous.addEventListener("click", () => { page--; renderPage(); });
+    next.addEventListener("click", () => { page++; renderPage(); });
+    root.addEventListener("click", event => {
+      const link = event.target.closest("a[data-session]");
+      if (!link) return;
+      event.preventDefault();
+      period.value = link.dataset.month ? "month" : "day";
+      month.value = link.dataset.session.slice(0, 7);
+      picker.value = link.dataset.session;
+      search();
+      period.focus();
+    });
+    search();
+  })();
+</script>

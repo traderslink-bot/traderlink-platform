@@ -1,0 +1,40 @@
+--- a/static-landing-site/index.html
++++ b/static-landing-site/index.html
+@@ -251,6 +251,7 @@
+           <a href="/trade-analytics">Trade Analytics</a>
+         </div>
+       </div>
++      <a href="/stock-gainers/">Top Stock Gainers</a>
+       <a href="/academy">Academy</a>
+       <a href="https://traderslink.pro/help">Help</a>
+       <a href="https://app.traderslink.pro/api/auth/discord/login?returnTo=%2Fworkspace">Log in</a>
+--- a/static-landing-site/trading-journal/index.html
++++ b/static-landing-site/trading-journal/index.html
+@@ -647,6 +647,7 @@
+           <a href="/trade-analytics">Trade Analytics</a>
+         </div>
+       </div>
++      <a href="/stock-gainers/">Top Stock Gainers</a>
+       <a href="/academy">Academy</a>
+       <a href="/help">Help</a>
+       <a href="https://app.traderslink.pro/api/auth/discord/login?returnTo=%2Fworkspace">Log in</a>
+--- a/static-landing-site/trade-analyzer/index.html
++++ b/static-landing-site/trade-analyzer/index.html
+@@ -732,6 +732,7 @@
+           <a href="/trade-analytics">Trade Analytics</a>
+         </div>
+       </div>
++      <a href="/stock-gainers/">Top Stock Gainers</a>
+       <a href="/academy">Academy</a>
+       <a href="/help">Help</a>
+       <a href="https://app.traderslink.pro/api/auth/discord/login?returnTo=%2Fworkspace">Log in</a>
+--- a/static-landing-site/trade-analytics/index.html
++++ b/static-landing-site/trade-analytics/index.html
+@@ -789,6 +789,7 @@
+           <a href="/trade-analytics">Trade Analytics</a>
+         </div>
+       </div>
++      <a href="/stock-gainers/">Top Stock Gainers</a>
+       <a href="/academy">Academy</a>
+       <a href="/help">Help</a>
+       <a href="https://app.traderslink.pro/api/auth/discord/login?returnTo=%2Fworkspace">Log in</a>
