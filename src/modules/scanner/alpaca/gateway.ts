@@ -1,3 +1,4 @@
+import { openStatusJournal } from "./status-journal";
 import { createServer, type ServerResponse } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { createHash, timingSafeEqual } from "node:crypto";
@@ -13,14 +14,24 @@ import { ScannerStreamHub } from "./scanner-stream-hub";
 import { easternClock } from "../live/sessions";
 import { AlpacaPreviousCloseBook } from "./previous-close";
 import { ChartLiveBook } from "./chart-live-book";
+import { AlpacaTradingStatusBook } from "./trading-status";
 import { LivePriceHub, priceObservationOrder } from "./live-price-hub";
 
 type Client = { symbol: string; daily:boolean; response: ServerResponse };
-type GatewayOptions = { keyId: string; secretKey: string; token: string };
+type GatewayOptions = { keyId: string; secretKey: string; token: string; haltSource?: "alpaca" | "official"; haltStatusJournal?: string };
 
 // This service deliberately knows no trading/account-management API URL.
 export function createAlpacaGateway(options: GatewayOptions) {
   const clients = new Set<Client>();
+  const tradingStatuses = new AlpacaTradingStatusBook();
+  let statusPersistenceHealthy = true;
+  let statusJournal:ReturnType<typeof openStatusJournal>|null=null;
+  try {if(options.haltSource === "alpaca" && options.haltStatusJournal)statusJournal=openStatusJournal(options.haltStatusJournal,tradingStatuses);}
+  catch {statusPersistenceHealthy=false;}
+  let statusesSubscribed = false, statusesRejected = false, subscriptionQueued = false;
+  let subscriptionKind:"prices"|"statuses"|null=null;
+  let statusAttemptTimer:ReturnType<typeof setTimeout>|undefined;
+  const statusStartedAt = new Date().toISOString();
   const chartBooks = new Map<string, ChartLiveBook>();
   const priceUpdates=new Map<string,{price:number;time:string}>();
   const priceTimer=setInterval(()=>{for(const client of clients){const price=priceUpdates.get(client.symbol);if(price)send(client,"price",price);}priceUpdates.clear();for(const [key,book] of chartBooks){void book.warm();const [symbol,daily]=key.split("|");for(const bar of book.drain())for(const client of clients)if(client.symbol===symbol&&client.daily===(daily==="true"))send(client,"bar",{bar,daily:daily==="true",provisional:true});}},250);priceTimer.unref();
@@ -43,6 +54,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
     client.response.write(`event: ${event}\ndata: ${JSON.stringify(value)}\n\n`);
   };
   const status = (state: string) => { for (const client of clients) send(client, "status", { state, adjustment: "split", basisDate: easternClock(Date.now()).date }); };
+  const sendTradingStatus=(client:Client)=>send(client,"trading-status",{symbol:client.symbol,available:authenticated&&statusesSubscribed,status:authenticated&&statusesSubscribed?tradingStatuses.read(client.symbol):null});
   let priceGeneration = 0;
   let previousPriceSymbols = new Set<string>();
   const priceHub = new LivePriceHub(() => {
@@ -50,7 +62,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
     const removed = [...previousPriceSymbols].filter(symbol => !wanted.has(symbol) && !leases.has(symbol) && ![...clients].some(client=>client.symbol===symbol));
     previousPriceSymbols = wanted;
     if (authenticated && socket?.readyState === WebSocket.OPEN && removed.length) socket.send(JSON.stringify({action:"unsubscribe",trades:removed,quotes:removed,bars:removed,updatedBars:removed,dailyBars:removed}));
-    if (!symbols().length) { clearTimeout(retry); const old=socket;socket=null;authenticated=false;priceHub.state(false);old?.close(); }
+    if (!needsSocket()) { clearTimeout(retry); const old=socket;socket=null;authenticated=false;priceHub.state(false);old?.close(); }
     else { subscribe(); connect(); }
   }, bootstrapLivePrices);
   async function bootstrapLivePrices(requested: readonly string[]) {
@@ -61,6 +73,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
     for(const symbol of requested)priceHub.observe(symbol,snapshots[symbol]?.latestTrade);
   }
   const symbols = () => [...new Set([...clients].map(client => client.symbol).concat([...leases.keys()],priceHub.symbols()))];
+  const needsSocket = () => options.haltSource === "alpaca" || symbols().length > 0;
   const snapshotQueue=new Set<string>();let bootstrapping=false;
   async function bootstrapSnapshots(){
     if(bootstrapping)return;bootstrapping=true;
@@ -76,27 +89,43 @@ export function createAlpacaGateway(options: GatewayOptions) {
     snapshots:Object.fromEntries(requested.map(symbol=>{
       const quote=quotes.get(symbol);if(!quote)return [symbol,null];
       const daily=quote.dailyBar as {t?:string;c?:number}|undefined,previous=quote.prevDailyBar as {t?:string;c?:number}|undefined,bidAsk=quote.latestQuote as {t?:string;bp?:number;ap?:number}|undefined;
-      return [symbol,{dailyBar:daily?{t:daily.t,c:daily.c}:undefined,prevDailyBar:previous?{t:previous.t,c:previous.c}:undefined,latestQuote:bidAsk?{t:bidAsk.t,bp:bidAsk.bp,ap:bidAsk.ap}:undefined,adjustedPreviousClose:previousCloses.peek(symbol,easternClock(Date.now()).date)}];
+      return [symbol,{dailyBar:daily?{t:daily.t,c:daily.c}:undefined,prevDailyBar:previous?{t:previous.t,c:previous.c}:undefined,latestQuote:bidAsk?{t:bidAsk.t,bp:bidAsk.bp,ap:bidAsk.ap}:undefined,tradingStatus:statusesSubscribed?tradingStatuses.read(symbol):null,adjustedPreviousClose:previousCloses.peek(symbol,easternClock(Date.now()).date)}];
     })),
     sessionTotals:Object.fromEntries(requested.map(symbol=>[symbol,subscribedTrades.has(symbol)?sessionBook.read(symbol,easternClock(Date.now()).date,regularClose):null]))
   }) as import("./scanner-snapshots").AlpacaQuoteReply,requested=>{for(const symbol of requested){leases.set(symbol,Date.now()+45_000);if(!quotes.has(symbol)||(!quotes.get(symbol)?.prevDailyBar&&!quotes.get(symbol)?.dailyBar))snapshotQueue.add(symbol);}void bootstrapSnapshots();void previousCloses.read(requested,easternClock(Date.now()).date).then(()=>scannerHub.refresh()).catch(()=>{});});
   function subscribe() {
     if (authenticated && socket?.readyState === WebSocket.OPEN) {
+      if(subscriptionKind){subscriptionQueued=true;return;}
+      subscriptionKind="prices";
       const wanted = symbols();
       socket.send(JSON.stringify({ action: "subscribe", trades: wanted, quotes: [...new Set([...leases.keys(),...priceHub.symbols()])], bars: wanted, updatedBars: wanted, dailyBars: wanted }));
     }
   }
+  function requestStatuses(){
+    if(options.haltSource!=="alpaca"||statusesRejected||statusesSubscribed||subscriptionKind||!authenticated||socket?.readyState!==WebSocket.OPEN)return;
+    subscriptionKind="statuses";
+    socket.send(JSON.stringify({action:"subscribe",statuses:["*"]}));
+    statusAttemptTimer=setTimeout(()=>{
+      if(subscriptionKind!=="statuses")return;
+      statusesRejected=true;statusesSubscribed=false;subscriptionKind=null;scannerHub.refresh();
+      if(subscriptionQueued){subscriptionQueued=false;subscribe();}
+    },5000);statusAttemptTimer.unref();
+  }
   function connect() {
-    if (stopped || !symbols().length || socket) return;
+    if (stopped || !needsSocket() || socket) return;
+    subscriptionKind=null;subscriptionQueued=false;statusesSubscribed=false;clearTimeout(statusAttemptTimer);
     status("connecting");
     const candidate = new WebSocket("wss://stream.data.alpaca.markets/v2/sip");
     socket = candidate;
     const authTimeout = setTimeout(() => candidate.close(), 15_000);
     candidate.addEventListener("open", () => candidate.send(JSON.stringify({ action: "auth", key: options.keyId, secret: options.secretKey })));
     candidate.addEventListener("message", event => {
+      if(socket!==candidate||stopped)return;
       let messages: unknown;
       try { messages = JSON.parse(String(event.data)); } catch { return; }
       if (!Array.isArray(messages)) return;
+      const acceptedStatuses: Record<string, unknown>[] = [];
+      const changedSymbols = new Set<string>();
       for (const message of messages) {
         if (message.T === "t") priceHub.observe(message.S,message);
         if (["t", "q", "b", "u", "d", "c", "x"].includes(message.T) && typeof message.S === "string") scannerHub.mark(message.S);
@@ -108,10 +137,20 @@ export function createAlpacaGateway(options: GatewayOptions) {
         if (message.T === "success" && message.msg === "authenticated") {
           clearTimeout(authTimeout); authenticated = true; retryCount = 0; subscribe();
         } else if (message.T === "subscription") {
+          const completed=subscriptionKind;subscriptionKind=null;
+          if(completed==="statuses")clearTimeout(statusAttemptTimer);
+          statusesSubscribed = !statusesRejected && statusPersistenceHealthy && Array.isArray(message.statuses) && message.statuses.includes("*");
+          if(completed==="statuses"&&!statusesSubscribed)statusesRejected=true;
           subscribedTrades = new Set(Array.isArray(message.trades) ? message.trades : []);
           scannerHub.refresh();priceHub.state(true);void bootstrapLivePrices(priceHub.symbols()).catch(()=>{});status("connected");
+          for(const client of clients)sendTradingStatus(client);
+          requestStatuses();
+          if(subscriptionQueued&&!subscriptionKind){subscriptionQueued=false;subscribe();}
         } else if (message.T === "error") {
-          priceHub.state(false);status("unavailable"); candidate.close();
+          if(authenticated&&subscriptionKind==="statuses"&&[409,410].includes(message.code)){
+            clearTimeout(statusAttemptTimer);subscriptionKind=null;statusesRejected=true;statusesSubscribed=false;scannerHub.refresh();
+            if(subscriptionQueued){subscriptionQueued=false;subscribe();}
+          }else{priceHub.state(false);status("unavailable");candidate.close();}
         } else if ((message.T === "t" || message.T === "q") && leases.has(message.S)) {
           if (message.T === "t") { const rules = alpacaMinuteTradeRules(message); if (!rules.known || !rules.prices) continue; }
           const current = quotes.get(message.S) ?? {};
@@ -130,17 +169,44 @@ export function createAlpacaGateway(options: GatewayOptions) {
           if (bar) for (const client of clients) if (client.symbol === message.S && client.daily === (message.T === "d") && !(message.T === "d" && chartBooks.get(`${message.S}|true`)?.covers(bar.time))) send(client, "bar", { bar, daily: message.T === "d" });
         }
       }
+      if (options.haltSource === "alpaca") for (const message of messages) {
+        if (typeof message.S === "string") {
+          if (message.T === "s" && tradingStatuses.observe(message)) {
+            acceptedStatuses.push(message);
+            changedSymbols.add(message.S);
+          }
+          if (message.T === "t" && typeof message.t === "string" && typeof message.p === "number") {
+            const rules = alpacaMinuteTradeRules(message);
+            if (rules.known && rules.prices && tradingStatuses.observeTrade(message.S, message.t, message.p)) {
+              changedSymbols.add(message.S);
+            }
+          }
+        }
+      }
+      if (changedSymbols.size) {
+        try {
+          if (acceptedStatuses.length) statusJournal?.appendMany(acceptedStatuses);
+          for (const symbol of changedSymbols) {
+            scannerHub.mark(symbol);
+            for (const client of clients) if (client.symbol === symbol) sendTradingStatus(client);
+          }
+        } catch {
+          statusPersistenceHealthy = false;
+          statusesSubscribed = false;
+          scannerHub.refresh();
+        }
+      }
     });
     candidate.addEventListener("error", () => candidate.close());
     candidate.addEventListener("close", () => {
       clearTimeout(authTimeout);
       if (socket !== candidate) return;
-      socket = null; authenticated = false;
+      socket = null; authenticated = false; statusesSubscribed = false; subscriptionKind=null;clearTimeout(statusAttemptTimer);
       subscribedTrades.clear();priceGeneration++;priceHub.state(false);
       quotes.clear();priceUpdates.clear();
       for(const book of chartBooks.values())book.invalidate();
       sessionBook.invalidate();
-      if (!stopped && symbols().length) {
+      if (!stopped && needsSocket()) {
         status("reconnecting");
         retry = setTimeout(connect, Math.min(30_000, 1000 * 2 ** Math.min(retryCount++, 5)));
       }
@@ -159,7 +225,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
       const unusedBars = expired.filter(symbol => ![...clients].some(client => client.symbol === symbol) && !priceHub.symbols().includes(symbol));
       socket.send(JSON.stringify({ action: "unsubscribe", trades: unusedBars, quotes: unusedBars, bars: unusedBars, updatedBars: unusedBars, dailyBars: unusedBars }));
     }
-    if (!symbols().length) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
+    if (!needsSocket()) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
   }, 5000);
   leaseTimer.unref();
   async function history(symbol: string, daily: boolean): Promise<Candle[]> {
@@ -193,6 +259,10 @@ export function createAlpacaGateway(options: GatewayOptions) {
     if (!timingSafeEqual(digest(request.headers.authorization ?? ""), digest(`Bearer ${options.token}`))) { response.writeHead(401); response.end(); return; }
     const url = new URL(request.url ?? "/", "http://localhost");
     try {
+      if (url.pathname === "/halts" && request.method === "GET") {
+        response.setHeader("Content-Type", "application/json");
+        response.end(JSON.stringify({feed:"sip",connected:authenticated,statusesSubscribed,observedSince:statusStartedAt,statuses:tradingStatuses.all(),events:tradingStatuses.events()}));return;
+      }
       if(url.pathname === "/prices" && request.method === "POST"){
         let body="";
         for await(const chunk of request){body+=chunk.toString();if(body.length>16_384)throw Error("invalid_symbol");}
@@ -246,7 +316,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
         if (![780, 960].includes(regularClose)) throw Error("invalid_symbol");
         const totals = url.searchParams.get("sessions") === "1" ? Object.fromEntries(requested.map(symbol => [symbol, subscribedTrades.has(symbol) ? sessionBook.read(symbol, date, regularClose) : null])) : undefined;
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({ feed: "sip", connected: authenticated, snapshots: Object.fromEntries(requested.map(symbol => [symbol, quotes.has(symbol) ? { ...quotes.get(symbol), adjustedPreviousClose: adjustedCloses[symbol] ?? null } : null])), sessionTotals: totals })); return;
+        response.end(JSON.stringify({ feed: "sip", connected: authenticated, snapshots: Object.fromEntries(requested.map(symbol => [symbol, quotes.has(symbol) ? { ...quotes.get(symbol), tradingStatus:statusesSubscribed?tradingStatuses.read(symbol):null, adjustedPreviousClose: adjustedCloses[symbol] ?? null } : null])), sessionTotals: totals })); return;
       }
       const symbol = chartSymbol(url.searchParams.get("symbol") ?? "");
       if (url.pathname === "/overnight") {
@@ -267,12 +337,13 @@ export function createAlpacaGateway(options: GatewayOptions) {
         if(!chartBooks.has(bookKey))chartBooks.set(bookKey,new ChartLiveBook(symbol,rest,daily));
         for(const bar of chartBooks.get(bookKey)!.snapshot())send(client,"bar",{bar,daily,provisional:true});
         send(client, "status", { state: authenticated ? "connected" : "connecting" });
+        sendTradingStatus(client);
         subscribe(); connect();
         const heartbeat = setInterval(() => response.write(": heartbeat\n\n"), 15_000);
         response.on("close", () => {
           clearInterval(heartbeat); clients.delete(client);
           if(![...clients].some(item=>item.symbol===symbol&&item.daily===daily)){chartBooks.get(bookKey)?.invalidate();chartBooks.delete(bookKey);}
-          if (!symbols().length) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
+          if (!needsSocket()) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
           else if (!symbols().includes(symbol) && authenticated && socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ action: "unsubscribe", trades:[symbol],quotes:[symbol],bars: [symbol], updatedBars: [symbol], dailyBars: [symbol] }));
         });
       } else { response.writeHead(404); response.end(); }
@@ -284,7 +355,8 @@ export function createAlpacaGateway(options: GatewayOptions) {
       response.end(JSON.stringify({ error: status === 400 ? "invalid_symbol" : status === 429 ? "busy" : "provider_unavailable" }));
     }
   });
-  return { server, close() { stopped = true; clearInterval(priceTimer); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
+  server.on("listening",()=>{if(options.haltSource === "alpaca")connect();});
+  return { server, close() { stopped = true; clearTimeout(statusAttemptTimer);statusJournal?.close(); clearInterval(priceTimer); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
 }
 
 export async function readPrivateJson(path: string): Promise<Record<string, string>> {

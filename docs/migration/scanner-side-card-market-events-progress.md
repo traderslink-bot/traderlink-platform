@@ -47,3 +47,11 @@ The continuous workspace now belongs at /scanners; /screeners is a separately gu
 ## Alpaca detector and provider selector development checkpoint
 
 Owner approved a bounded event-driven Alpaca trial and keeping Moomoo code off behind an owner selector. Scanner controls now expose the connection choice; isolated stream/timing/switch/security/display checks pass. Preview remains worker-disabled and production unchanged. See [implementation, exact scope and verification](alpaca-event-scanner-progress.md), including remaining audit/storage and concurrent-user rollout gates.
+
+## November 11, 2026 — Alpaca halt lifecycle
+
+With `TRADERLINK_MARKET_HALT_SOURCE=alpaca` on the VPS gateway and Platform, the scanner reads current halts from the gateway's SIP status subscription. Nasdaq records only supply scheduled quote and trade times for the matching ticker and halt start. The existing Market Events reason categories are retained. The same active halt list supplies the pause icon to scanner cards.
+
+Trading resumption clears the pause. Two eligible, time-ordered trades after the pause began also clear it when the execution price changes. This inference lives in the gateway process. A subsequent halt starts a new lifecycle. Quote-only reopening and posted resume times leave the pause active.
+
+The local QA uses simulated SMX and OMH events and an isolated checkout of the release parent. The new gateway code must be present before selecting Alpaca. Production was left untouched.

@@ -1,3 +1,5 @@
+import { enrichAlpacaResumeSchedule, readActiveAlpacaScannerHalts } from "@/src/modules/scanner/alpaca/scanner-halts";
+import { marketHaltSource } from "@/src/modules/scanner/alpaca/halt-source";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { listMarketHaltDashboard } from "@/src/modules/news/server/market-halt-dashboard";
@@ -15,6 +17,20 @@ export async function GET(request: Request): Promise<Response> {
     try { return hasWatchlistDashboardNavigationAccess(requireTraderLinkPlatformRequestIdentity(candidate.headers)); } catch { return false; }
   },read: async () => {
     const scanner=readLiveScannerRuntime();
+    if (marketHaltSource() === "alpaca") {
+      try {
+        const active = await readActiveAlpacaScannerHalts();
+        if (!active.length) return { ...scanner, activeHalts: active };
+        try {
+          const schedule = withReadonlyPlatformDatabase({}, database => listMarketHaltDashboard(database, new Date(), 50).rows);
+          return { ...scanner, activeHalts: enrichAlpacaResumeSchedule(active, schedule) };
+        } catch {
+          return { ...scanner, activeHalts: active };
+        }
+      } catch {
+        return { ...scanner, activeHalts: [], activeHaltSourceUnavailable: true };
+      }
+    }
     try{
       const now=new Date();
       const halts=withReadonlyPlatformDatabase({},database=>listMarketHaltDashboard(database,now,50).rows);

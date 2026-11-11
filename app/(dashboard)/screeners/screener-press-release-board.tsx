@@ -168,7 +168,7 @@ export function useMarketEventsData(haltsManaged=true) {
   return {articles,setArticles,dates,setDates,maximumMarketCap,floatByTicker,exchangeByTicker,halts,compactArticles,channelArticles,setChannelArticles};
 }
 
-export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,data,compact=false}:{onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX"})=>void;managedActiveHalts?:readonly ScannerActiveHalt[];data:ReturnType<typeof useMarketEventsData>;compact?:boolean}){
+export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltSourceUnavailable,data,compact=false}:{onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX"})=>void;managedActiveHalts?:readonly ScannerActiveHalt[];haltSourceUnavailable?:boolean;data:ReturnType<typeof useMarketEventsData>;compact?:boolean}){
   const [drawerOpen,setDrawerOpen]=useState(false);
   const [channel,setChannel]=useState<PressReleaseChannel>("news_filtered");
   const [channelLoading,setChannelLoading]=useState(false);
@@ -207,10 +207,11 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,data,c
       </Stack>
       <Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{fontSize:"0.7rem",lineHeight:1.2,mt:0.15}} type="button" underline="hover">All News</Link>
     </Stack>
+    {haltSourceUnavailable && <Typography role="status" color="text.secondary" sx={{fontSize:"0.65rem",mb:0.5}}>Halt status unavailable</Typography>}
     {active.length?<Box aria-label="Current halts" role="region" sx={theme=>({...scannerScrollStyles(theme),mb:1.25,maxHeight:90,overflow:"auto"})}>{active.map(halt=><Stack direction="row" key={halt.id} sx={{alignItems:"center",borderTop:1,borderColor:"divider",gap:0.7,minHeight:30,px:0.5,py:0.35}}>
       {onOpenChart?<ScannerChartLaunchControls row={halt.chartExchange?{symbol:halt.ticker,exchange:halt.chartExchange}:{symbol:"SPY",exchange:"AMEX" as const}} onOpenChart={onOpenChart}/>:null}
       <Box sx={{minWidth:48}}><Typography sx={{color:"error.main",fontSize:"0.72rem",fontWeight:900,lineHeight:1.1}}>{halt.ticker}</Typography><Typography color="text.secondary" sx={{fontSize:"0.56rem"}}>{shortTime(halt.haltTimeEt)} ET</Typography></Box>
-      <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}><Box component="span" sx={{color:"error.main",fontWeight:900}}>HALT</Box> · {halt.reasonCode} · Quote {halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?(tradeResumeHasPassedToday(halt.tradeTimeEt)?"success.main":"error.main"):"text.secondary"}}>Trade {halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
+      <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}><Box component="span" sx={{color:"error.main",fontWeight:900}}>HALT</Box> · {halt.reasonCode} · Quote {halt.quoteTimeScheduled ? "sched. " : ""}{halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?(!halt.tradeTimeScheduled&&tradeResumeHasPassedToday(halt.tradeTimeEt)?"success.main":"error.main"):"text.secondary"}}>Trade {halt.tradeTimeScheduled ? "sched. " : ""}{halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
     </Stack>)}</Box>:null}
     {articles===null?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
       :compactArticles.length?<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),flex:{xs:"0 0 auto",md:"1 1 126px"},maxHeight:{xs:126,md:"none"},minHeight:126,overflowX:"auto",overflowY:"auto"})}>{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);void openArticle(item);}} onOpenChart={onOpenChart}/>)}

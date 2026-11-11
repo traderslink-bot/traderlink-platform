@@ -1,4 +1,8 @@
 // @vitest-environment node
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import * as statusJournal from "./status-journal";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AddressInfo } from "node:net";
 import { createAlpacaGateway } from "./gateway";
@@ -131,6 +135,112 @@ describe("private Alpaca gateway", () => {
       await priceReader.cancel();
       await vi.waitFor(()=>expect(sockets[0].readyState).toBe(3));
     }finally{abort.abort();gateway.close();gateway.server.closeAllConnections();}
+  });
+
+  it("subscribes to halt status on the existing SIP socket without needing an open chart", async () => {
+    const nativeFetch=globalThis.fetch;vi.stubGlobal("fetch",vi.fn(async()=>Response.json({trades:{OMH:[]}})));
+    const sockets: FakeSocket[]=[];
+    class FakeSocket extends EventTarget {
+      static OPEN=1;readyState=1;sent:Record<string,unknown>[]=[];
+      constructor(){super();sockets.push(this);queueMicrotask(()=>this.dispatchEvent(new Event("open")));}
+      message(data:unknown){this.dispatchEvent(Object.assign(new Event("message"),{data:JSON.stringify(data)}));}
+      send(value:string){const command=JSON.parse(value);this.sent.push(command);
+        if(command.action==="auth")queueMicrotask(()=>this.message([{T:"success",msg:"authenticated"}]));
+        if(command.action==="subscribe")queueMicrotask(()=>this.message([{T:"subscription",statuses:command.statuses,trades:command.trades}]));}
+      close(){this.readyState=3;this.dispatchEvent(new Event("close"));}
+    }
+    vi.stubGlobal("WebSocket",FakeSocket);
+    const gateway=createAlpacaGateway({keyId:"test",secretKey:"test",token:"test",haltSource:"alpaca"});
+    await new Promise<void>(resolve=>gateway.server.listen(0,"127.0.0.1",resolve));
+    const url=`http://127.0.0.1:${(gateway.server.address() as AddressInfo).port}/halts`;
+    const auth={headers:{Authorization:"Bearer test"}};
+    let chartReader:ReadableStreamDefaultReader<Uint8Array>|undefined;
+    try{
+      await vi.waitFor(()=>expect(sockets[0]?.sent.some(command=>Array.isArray(command.statuses)&&command.statuses.includes("*"))).toBe(true));
+      const chartResponse=await nativeFetch(url.replace("/halts","/stream?symbol=OMH"),auth);chartReader=chartResponse.body!.getReader();
+      sockets[0].message([{T:"s",S:"OMH",sc:"H",rc:"LUDP",rm:"Pause",z:"C",t:"2026-11-09T16:20:00Z"}]);
+      let chartEvents="";while(!chartEvents.includes('"halted":true'))chartEvents+=new TextDecoder().decode((await chartReader.read()).value);
+      expect(chartEvents).toContain("event: trading-status");
+      const paused=await (await nativeFetch(url,auth)).json();
+      expect(paused).toMatchObject({connected:true,statusesSubscribed:true,statuses:[{symbol:"OMH",halted:true}]});
+      sockets[0].message([{T:"s",S:"OMH",sc:"Q",z:"C",t:"2026-11-09T16:24:00Z"}]);
+      expect((await (await nativeFetch(url,auth)).json()).statuses[0].halted).toBe(true);
+      sockets[0].message([{T:"s",S:"OMH",sc:"T",z:"C",t:"2026-11-09T16:25:00Z"}]);
+      expect((await (await nativeFetch(url,auth)).json()).statuses[0].halted).toBe(false);
+      expect(sockets).toHaveLength(1);
+      expect((await nativeFetch(url)).status).toBe(401);
+    }finally{await chartReader?.cancel();gateway.close();gateway.server.closeAllConnections();}
+  });
+
+  it.each([409,410])("keeps prices running when the isolated status subscription is rejected with %i", async code=>{
+    const nativeFetch=globalThis.fetch;vi.stubGlobal("fetch",vi.fn(async()=>Response.json({})));
+    const sockets:FakeSocket[]=[];
+    class FakeSocket extends EventTarget{
+      static OPEN=1;readyState=1;
+      constructor(){super();sockets.push(this);queueMicrotask(()=>this.dispatchEvent(new Event("open")));}
+      message(data:unknown){this.dispatchEvent(Object.assign(new Event("message"),{data:JSON.stringify(data)}));}
+      send(value:string){const command=JSON.parse(value);
+        if(command.action==="auth")queueMicrotask(()=>this.message([{T:"success",msg:"authenticated"}]));
+        if(command.action==="subscribe")queueMicrotask(()=>this.message(command.statuses?[{T:"error",code,msg:"status subscription unavailable"}]:[{T:"subscription",statuses:[],trades:command.trades}]));}
+      close(){this.readyState=3;this.dispatchEvent(new Event("close"));}
+    }
+    vi.stubGlobal("WebSocket",FakeSocket);
+    const gateway=createAlpacaGateway({keyId:"test",secretKey:"test",token:"test",haltSource:"alpaca"});
+    await new Promise<void>(resolve=>gateway.server.listen(0,"127.0.0.1",resolve));
+    const url=`http://127.0.0.1:${(gateway.server.address() as AddressInfo).port}`,headers={Authorization:"Bearer test"};
+    const abort=new AbortController();
+    try{
+      const response=await nativeFetch(url+"/prices",{method:"POST",headers:{...headers,"Content-Type":"application/json"},body:JSON.stringify({symbols:["AAA"]}),signal:abort.signal});
+      const reader=response.body!.getReader();
+      await vi.waitFor(()=>expect(sockets).toHaveLength(1));
+      const status=await(await nativeFetch(url+"/halts",{headers})).json();
+      expect(status).toMatchObject({connected:true,statusesSubscribed:false});expect(sockets[0].readyState).toBe(1);
+      sockets[0].message([{T:"t",S:"AAA",i:1,x:"V",p:2,s:100,t:new Date().toISOString(),c:["@"],z:"C"}]);
+      let output="";while(!output.includes('"price":2'))output+=new TextDecoder().decode((await reader.read()).value);
+      expect(output).toContain('"connected":true');
+      sockets[0].message([{T:"error",code:402,msg:"auth failed"}]);
+      expect(sockets[0].readyState).toBe(3);
+      await reader.cancel();
+    }finally{abort.abort();gateway.close();gateway.server.closeAllConnections();}
+  });
+
+  it.each(["appendFailure","corruptStartup"])("keeps prices healthy and hides unpersisted halt state after %s",async mode=>{
+    const nativeFetch=globalThis.fetch;vi.stubGlobal("fetch",vi.fn(async()=>Response.json({trades:{OMH:[]}})));
+    const directory=mkdtempSync(join(tmpdir(),"alpaca-journal-boundary-")),journalPath=join(directory,"statuses.jsonl");
+    const evidence=JSON.stringify({T:"s",S:"OMH",sc:"H",t:"2026-11-09T16:20:00Z",z:"C",rc:"LUDP",rm:"Pause"})+'\n{"T":"s"';
+    if(mode==="corruptStartup")writeFileSync(journalPath,evidence,{mode:0o600});
+    const appendMany=vi.fn(()=>{throw Error("simulated fsync failure");});
+    const mock=mode==="appendFailure"?vi.spyOn(statusJournal,"openStatusJournal").mockReturnValue({append:vi.fn(),appendMany,close:vi.fn()}):null;
+    const sockets:FakeSocket[]=[];
+    class FakeSocket extends EventTarget{
+      static OPEN=1;readyState=1;statuses:string[]=[];trades:string[]=[];
+      constructor(){super();sockets.push(this);queueMicrotask(()=>this.dispatchEvent(new Event("open")));}
+      message(data:unknown){this.dispatchEvent(Object.assign(new Event("message"),{data:JSON.stringify(data)}));}
+      send(value:string){const command=JSON.parse(value);
+        if(command.action==="auth")queueMicrotask(()=>this.message([{T:"success",msg:"authenticated"}]));
+        if(command.action==="subscribe"){
+          if(command.statuses)this.statuses=command.statuses;if(command.trades)this.trades=command.trades;
+          queueMicrotask(()=>this.message([{T:"subscription",statuses:this.statuses,trades:this.trades}]));
+        }}
+      close(){this.readyState=3;this.dispatchEvent(new Event("close"));}
+    }
+    vi.stubGlobal("WebSocket",FakeSocket);
+    const gateway=createAlpacaGateway({keyId:"test",secretKey:"test",token:"test",haltSource:"alpaca",haltStatusJournal:journalPath});
+    await new Promise<void>(resolve=>gateway.server.listen(0,"127.0.0.1",resolve));
+    const url=`http://127.0.0.1:${(gateway.server.address() as AddressInfo).port}`,headers={Authorization:"Bearer test"};
+    const abort=new AbortController();let reader:ReadableStreamDefaultReader<Uint8Array>|undefined;
+    try{
+      const response=await nativeFetch(url+"/stream?symbol=OMH",{headers,signal:abort.signal});reader=response.body!.getReader();
+      await vi.waitFor(()=>expect(sockets).toHaveLength(1));
+      if(mode==="appendFailure")sockets[0].message([{T:"s",S:"OMH",sc:"H",t:"2026-11-09T16:20:00Z",z:"C",rc:"LUDP",rm:"Pause"},{T:"subscription",statuses:["*"],trades:["OMH"]}]);
+      sockets[0].message([{T:"t",S:"OMH",i:1,x:"V",p:2,s:100,t:new Date().toISOString(),c:["@"],z:"C"}]);
+      let output="";while(!output.includes("event: price"))output+=new TextDecoder().decode((await reader.read()).value);
+      expect(output).not.toContain('"halted":true');expect(output).toContain('"price":2');
+      expect(await(await nativeFetch(url+"/halts",{headers})).json()).toMatchObject({connected:true,statusesSubscribed:false});
+      expect(sockets[0].readyState).toBe(1);
+      if(mode==="appendFailure")expect(appendMany).toHaveBeenCalledOnce();
+      else expect(readFileSync(journalPath,"utf8")).toBe(evidence);
+    }finally{await reader?.cancel();abort.abort();gateway.close();gateway.server.closeAllConnections();mock?.mockRestore();rmSync(directory,{recursive:true,force:true});}
   });
 
 });

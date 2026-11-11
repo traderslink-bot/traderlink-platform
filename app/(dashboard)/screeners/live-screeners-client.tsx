@@ -560,7 +560,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     {(['gainers','momentum'] as const).filter(kind=>workspaceScreenersSelected[kind]).map(kind=><SidebarScreenerCard key={kind}><DashboardPanel title={SCREEN_LABELS[kind]}>{contents(kind,true,true)}</DashboardPanel></SidebarScreenerCard>)}
     {workspaceScreenersSelected.declines?<SidebarScreenerCard><DeclinesCard results={model?.declines} notice={memberNotice} session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     {workspaceScreenersSelected.pullbacks?<SidebarScreenerCard><PremarketPullbacksCard results={model?.premarketPullbacks} notice={memberNotice} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
-    {workspaceScreenersSelected.events?<SidebarScreenerCard><ScreenerPressReleaseBoard compact data={marketEventsData} managedActiveHalts={activeHalts} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
+    {workspaceScreenersSelected.events?<SidebarScreenerCard><ScreenerPressReleaseBoard compact data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     </Box>
     {Object.values(workspaceScreenersSelected).some(Boolean)?null:<Typography color="text.secondary" sx={{fontSize:"0.75rem"}}>Select scanners to display their cards.</Typography>}
   </Stack></ScannerNewsDrawerProvider></SideCardChartControls>;
@@ -611,7 +611,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
       <ScannerWorkspaceCard slot={workspaceLayout.assignments["high-drops"]} widget="high-drops"><PremarketPullbacksCard results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
-      <ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
+      <ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
     </Box></ScannerNewsDrawerProvider>
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}

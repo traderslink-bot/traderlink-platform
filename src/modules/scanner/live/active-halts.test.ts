@@ -45,3 +45,9 @@ describe("active scanner halts",()=>{
     expect(selectActiveScannerHalts([row],new Date("2026-11-05T19:01:00.000Z"))).toHaveLength(0);
   });
 });
+
+it("does not expire an authoritative Alpaca pause after an hour or clear it using price movement",()=>{
+  const row={...halt("alpaca-event","AAA",null),source:"alpaca" as const,halted:true,reasonCode:"M"};
+  const selected=selectActiveScannerHalts([row],new Date("2026-11-05T18:00:00Z"),[{symbol:"AAA",previousObservedAt:Date.parse("2026-11-05T17:00:00Z"),observedAt:Date.parse("2026-11-05T17:00:01Z")}]);
+  expect(selected).toHaveLength(1);
+});

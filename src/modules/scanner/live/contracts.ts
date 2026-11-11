@@ -92,6 +92,8 @@ export type RollingActivity = Readonly<{
 export type MomentumSignal = "volume_ignition"|"building_volume"|"price_burst"|"developing_activity"|"one_minute_momentum"|"five_minute_momentum";
 export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt: string; url: string | null; typeLabel: string }>;
 export type ScannerActiveHalt = Readonly<{
+  source?: "alpaca" | "nasdaq" | "nyse"; halted?: boolean;
+  quoteTimeScheduled?: boolean; tradeTimeScheduled?: boolean;
   id:string; ticker:string; market:string; haltTimeEt:string; reasonCode:string; reason:string;
   quoteTimeEt:string|null; tradeTimeEt:string|null; chartExchange?:"NASDAQ"|"NYSE"|"AMEX"|null;
 }>;
@@ -158,4 +160,5 @@ export type ScannerReadModel = Readonly<{
   declines?: DeclineResults;
   premarketPullbacks?: PremarketPullbackResults;
   activeHalts?:readonly ScannerActiveHalt[];
+  activeHaltSourceUnavailable?: boolean;
 }>;

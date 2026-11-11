@@ -3,6 +3,9 @@ import type { ScannerActiveHalt } from "./contracts";
 export type ScannerMarketMovement=Readonly<{symbol:string;previousObservedAt:number;observedAt:number}>;
 
 type HaltCandidate=Readonly<{
+  halted?:boolean;
+  chartExchange?: ScannerActiveHalt["chartExchange"];
+  source?:"alpaca"|"nasdaq"|"nyse";
   id:string;ticker:string;market:string;haltTimeEt:string;reasonCode:string;reason:string;
   quoteTimeEt:string|null;tradeTimeEt:string|null;
 }>;
@@ -20,6 +23,11 @@ export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new D
   const nowSeconds=easternClockSeconds(now);
   const seen=new Set<string>(),movementByTicker=new Map(movements.map(item=>[item.symbol,item]));
   return Object.freeze(rows.flatMap(halt=>{
+    if(halt.source==="alpaca"){
+      if(halt.halted!==true||seen.has(halt.ticker))return [];
+      seen.add(halt.ticker);
+      return [{...halt,chartExchange:universeExchanges?.get(halt.ticker)??halt.chartExchange??(halt.market==="NASDAQ"||halt.market==="NYSE"?halt.market:null)}];
+    }
     if(/^(?:BATS|CBOE(?:\s+BZX)?)$/iu.test(halt.market.trim())||halt.reasonCode.trim().toUpperCase()==="M")return [];
     const haltedAt=clockSeconds(halt.haltTimeEt),movement=movementByTicker.get(halt.ticker);
     const chartExchange=universeExchanges?.get(halt.ticker)??null;

@@ -119,13 +119,26 @@ function momentumModel(post: number | null | undefined): ScannerReadModel {
   return { ...model(post===undefined?"regular":"after_hours"), momentum: { rows: [row], focus: [], total: 1 } };
 }
 describe("Momentum context rendering", () => {
-  it("shows an active halt beside matching tickers and removes it whenever the next scanner response has no current halt list", async () => {
-    const initial=momentumModel(42),halt={id:"halt-1",ticker:"TEST",market:"NASDAQ",haltTimeEt:"16:01:00",reasonCode:"LUDP",reason:"Volatility trading pause",quoteTimeEt:"16:06:00",tradeTimeEt:null};
-    const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum,activeHalts:[halt]});
-    expect(page.container.querySelectorAll('[data-halt-indicator="TEST"]')).toHaveLength(2);
-    expect(page.container.querySelector('[aria-label*="TEST halted: LUDP"]')).not.toBeNull();
-    await page.update({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
-    expect(page.container.querySelector('[data-halt-indicator="TEST"]')).toBeNull();
+  it("shows Alpaca pause icons for SMX and OMH in Top Gainers and Momentum until each resumes", async () => {
+    const base = momentumModel(42);
+    const symbols = ["SMX", "OMH"];
+    const results = { ...base.momentum, rows: symbols.map(symbol => ({ ...base.momentum.rows[0], symbol })), total: 2 };
+    const initial = { ...base, gainers: results, dayGainers: results, momentum: results };
+    const activeHalts = symbols.map(ticker => ({
+      id: ticker, ticker, market: "NASDAQ", haltTimeEt: "16:01:00", reasonCode: "LUDP",
+      reason: "Volatility trading pause", quoteTimeEt: "16:06:00", tradeTimeEt: null, source: "alpaca" as const, halted: true,
+    }));
+    const page = await mount({ ...initial, activeHalts });
+    const icons = (ticker: string) => page.container.querySelectorAll(`[data-halt-indicator="${ticker}"]`);
+    expect(icons("SMX")).toHaveLength(2);
+    expect(icons("OMH")).toHaveLength(2);
+    await page.update({ ...initial, activeHalts: activeHalts.slice(1) });
+    expect(icons("SMX")).toHaveLength(0);
+    expect(icons("OMH")).toHaveLength(2);
+    await page.update(initial);
+    expect(icons("OMH")).toHaveLength(0);
+    expect(page.container.textContent).toContain("SMX");
+    expect(page.container.textContent).toContain("OMH");
   });
   it("keeps detected signals visible beneath each momentum ticker", async () => {
     const page = await mount(momentumModel(42));
