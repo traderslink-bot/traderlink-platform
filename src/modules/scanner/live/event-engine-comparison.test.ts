@@ -61,3 +61,28 @@ it("audits the exit of a Momentum-only ticker when its observation disappears", 
     momentumFailures: ["snapshot_unavailable"], momentumRank: null, momentumDisplayed: false,
   });
 });
+it("keeps the first Momentum detection and cools a repeated receipt of the same trade", () => {
+  const flatPrice = new LiveScannerEngine(true);
+  const singleJump = new LiveScannerEngine(true);
+  const audit = (engine: LiveScannerEngine, second: number, price: number, volume: number, tradeAt?: number) => {
+    const update = input(second);
+    return engine.evaluate({
+      ...update,
+      floats: new Map([["AAA",{shares:5_000_000,retrievedAtUtc:new Date(start).toISOString()}]]),
+      snapshots: [{ ...update.snapshots[0], price, volume, dollarVolume: volume * 2, providerAt: tradeAt ?? update.now }],
+    }).audit[0];
+  };
+  for (let second = 0; second < 65; second++) {
+    audit(flatPrice,second,2,1_000_000+second*100);
+    audit(singleJump,second,2,1_000_000+second*100);
+  }
+  const flat = audit(flatPrice,65,2,1_300_000);
+  const jump = audit(singleJump,65,2.06,1_006_500);
+  expect(flat.momentumSignals).toContain("volume_ignition");
+  expect(flat.momentumDisplayed).toBe(true);
+  expect(jump.momentumSignals).toEqual(["one_minute_momentum"]);
+  expect(jump.momentumDisplayed).toBe(true);
+  const repeated = audit(singleJump,70,2.06,1_006_500,start+65_000);
+  expect(repeated.momentumState).toBe("cooling");
+  expect(repeated.momentumLastActiveAtUtc).toBe(new Date(start+65_000).toISOString());
+});

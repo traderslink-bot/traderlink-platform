@@ -221,7 +221,13 @@ export class LiveScannerEngine {
       const momentumRow=momentumBySymbol.get(row.symbol)??row;
       const gainerFailures=[...failuresFor(gainerRow)];
       if(input.session === "after_hours" && gainerRow.sessionGain === null && !gainerFailures.includes("gain_unavailable"))gainerFailures.push("gain_unavailable");
-      const momentumFailures=[...scannerMomentumFilterFailures(momentumRow,momentumFilters,allowEarlyLiquidityBypass),...scannerMovementFailures(momentumRow,input.configuration.momentum.focus)];
+      const momentumFailures = [
+        ...scannerMomentumFilterFailures(row,momentumFilters,allowEarlyLiquidityBypass),
+        ...scannerMovementFailures(momentumRow,input.configuration.momentum.focus),
+      ];
+      if (!momentumFailures.length && !momentumBySymbol.has(row.symbol) && row.momentumSignals?.length) {
+        momentumFailures.push("momentum_waiting_for_new_trade");
+      }
       const gr=gainerRank.get(row.symbol)??null,mr=momentumRank.get(row.symbol)??null;
       return {symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:row.marketCapAtCollection,observation:snapshot,activity:row.activity,float:row.float,floatRetrievedAtUtc:row.floatRetrievedAtUtc,
         sessionGain:row.sessionGain,spreadPercent:row.spreadPercent,offHighPercent:row.offHighPercent,relativeVolume:row.relativeVolume,

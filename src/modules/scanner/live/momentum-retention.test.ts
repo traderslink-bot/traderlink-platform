@@ -14,9 +14,24 @@ describe("momentum cooling retention",()=>{
     const book=new MomentumRetentionBook(),context="2026-11-03:regular",start=Date.parse("2026-11-03T14:00:00.000Z");
     expect(book.select(context,[row(["developing_activity"])],start)[0]).toMatchObject({momentumState:"active"});
     expect(book.select(context,[row([])],start+10_000)[0]).toMatchObject({momentumState:"cooling",momentumCoolingUntilUtc:"2026-11-03T14:00:30.000Z"});
-    expect(book.select(context,[row(["volume_ignition"])],start+20_000)[0]).toMatchObject({momentumState:"active"});
+    expect(book.select(context,[{...row(["volume_ignition"]),volume:110_000}],start+20_000)[0]).toMatchObject({momentumState:"active"});
     expect(book.select(context,[row([])],start+49_999)).toHaveLength(1);
     expect(book.select(context,[row([])],start+50_000)).toHaveLength(0);
+  });
+  it("does not refresh or re-enter on the same trade after a receipt, outage, or expiry", () => {
+    const book = new MomentumRetentionBook(), context = "2026-11-03:regular";
+    const start = Date.parse("2026-11-03T14:00:00Z");
+    const observation = row(["one_minute_momentum"]);
+    expect(book.select(context,[observation],start)[0]).toMatchObject({momentumState:"active"});
+    const repeated = {...observation,receivedAtUtc:new Date(start+5_000).toISOString()};
+    expect(book.select(context,[repeated],start+5_000)[0]).toMatchObject({
+      momentumState:"cooling", momentumSignals:[], momentumLastActiveAtUtc:new Date(start).toISOString(),
+    });
+    expect(book.select(context,[],start+6_000)).toEqual([]);
+    expect(book.select(context,[repeated],start+7_000)).toEqual([]);
+    expect(book.select(context,[repeated],start+31_000)).toEqual([]);
+    expect(book.select(context,[{...repeated,providerAtUtc:new Date(start+32_000).toISOString()}],start+32_000)[0])
+      .toMatchObject({momentumState:"active",momentumLastActiveAtUtc:new Date(start+32_000).toISOString()});
   });
   it("does not retain a row that never generated a qualifying signal",()=>{
     expect(new MomentumRetentionBook().select("2026-11-03:regular",[row([])],Date.now())).toHaveLength(0);
