@@ -27,6 +27,8 @@ export function normalizeAlpacaScannerBatch(input: { payload: unknown; requested
     snapshots.push({ symbol, company: symbol, provider: "alpaca", session: input.session, tradingDate: input.tradingDate, providerAt: current.providerAt, receivedAt: input.receivedAt,
       price: current.price, baseline, priceTimeBasis: "session_observation", volume: current.volume, dollarVolume: current.dollarVolume,
       regularClosePrice: book.sessions.regular.price, premarketHigh: book.sessions.premarket.high, premarketVolume: book.sessions.premarket.volume,
+      regularHigh: input.session === "premarket" ? null : book.sessions.regular.high,
+      postMarketHigh: input.session === "after_hours" ? book.sessions.after_hours.high : null,
       bid: usable ? bid : null, ask: usable ? ask : null, marketCap: null,
       dayHigh: Math.max(current.price, ...highs), dayLow: Math.min(current.price, ...lows), providerVolumeRatio: null });
   }

@@ -2,6 +2,8 @@
 import { act, createElement, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
+import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "./premarket-pullbacks";
+import { PremarketPullbacksCard } from "@/app/(dashboard)/screeners/premarket-pullbacks-card";
 import { DeclineBook } from "./declines";
 import type { DailyUniverse, NormalizedSnapshot } from "./contracts";
 vi.mock("@/app/dashboard-template",()=>({DashboardPanel:({title,action,children}:{title:string;action:ReactNode;children:ReactNode})=>createElement("section",null,createElement("h2",null,title),action,children)}));
@@ -50,4 +52,25 @@ it("uses standard scanner alerts for an empty Top Losers list",async()=>{
   const emptyResults={rapid:[],losers:[],rapidTotal:0,loserTotal:0,controls:{enabled:true,minimumDropPercent:30,windowMinutes:5,retentionMinutes:15,displayLimit:20}};
   await act(async()=>root!.render(createElement(DeclinesCard,{results:emptyResults,notice:null,session:"regular",onOpenChart:vi.fn()})));
   expect(container.querySelector('[role="alert"]')?.textContent).toContain("No stocks currently declining in this comparison.");
+});
+
+it("shows the session-high drop on flagged NCT without replacing it with the rapid-event drop",async()=>{
+  const at="2026-11-11T16:35:24.000Z";
+  const results={controls:DEFAULT_PREMARKET_PULLBACK_CONTROLS,total:1,missingReferenceCount:0,rows:[{
+    symbol:"NCT",exchange:"NASDAQ" as const,company:"NCT",price:0.8505,premarketHigh:0.65,regularHigh:1.1101,
+    postMarketHigh:null,referenceSession:"regular" as const,referenceHigh:1.1101,premarketVolume:1000,sessionVolume:10000,
+    float:null,changePercent:null,belowHighPercent:23.3853,backToHighPercent:30.52,oneMinuteVolume:null,fiveMinuteVolume:null,
+    spreadPercent:null,receivedAtUtc:at,news:[],rapidDrop:{
+      detectedAtUtc:at,startAtUtc:at,startPrice:1.07,detectionPrice:0.7,lowPrice:0.7,lowAtUtc:at,
+      dropPercent:-20.51,maximumDropPercent:-34.58,reboundPercent:21.5,backToStartPercent:25.8,durationSeconds:30,sharesDuringDrop:500,
+    },
+  }]};
+  const container=document.createElement("div");
+  document.body.append(container);
+  root=createRoot(container);
+  await act(async()=>root!.render(createElement(PremarketPullbacksCard,{results,notice:null,onOpenChart:vi.fn()})));
+  const cells=container.querySelectorAll("tbody tr:first-child td");
+  expect(cells[2].querySelector('[aria-label="Recent rapid drop"]')).not.toBeNull();
+  expect(cells[4].textContent).toBe("23%");
+  expect(cells[5].textContent).toBe("$1.11REG");
 });

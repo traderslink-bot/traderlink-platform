@@ -83,3 +83,7 @@ TradersLink Scanner now and not wait for a separate market-data approval process
 No market-data credential, personal broker data or user connection is shared. No
 production provider configuration, database migration, scheduler or
 notification delivery has been changed by this planning record.
+
+## November 11, 2026 — High Drops session-high correction
+
+High Drops uses Alpaca’s separate session highs and ranks qualifying rows by the current percentage below the greatest available session high. The entry and removal settings still govern membership. Rapid drops appear as a bolt and retain their expanded details. The NCT regression covers an observed $0.8505 quote against Alpaca’s $1.1101 regular high and a simulated recovery to about 4% below that high.

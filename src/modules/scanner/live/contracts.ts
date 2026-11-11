@@ -73,6 +73,9 @@ export type NormalizedSnapshot = Readonly<{
   /** Separate provider session aggregate; never substituted with regular-session HOD. */
   premarketHigh?: number | null;
   premarketVolume?: number | null;
+  /** Separate session highs supplied by Alpaca's trade aggregates. */
+  regularHigh?: number | null;
+  postMarketHigh?: number | null;
   /** The provider clock is preserved even when it describes the regular close. */
   priceTimeBasis?: "provider" | "session_observation";
   volume: number | null; dollarVolume: number | null; bid: number | null; ask: number | null;

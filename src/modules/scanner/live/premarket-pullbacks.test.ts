@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PremarketPullbackBook, DEFAULT_PREMARKET_PULLBACK_CONTROLS as controls } from "./premarket-pullbacks";
+import { normalizeAlpacaScannerBatch } from "../alpaca/scanner-snapshots";
+import type { AlpacaSessionState } from "../alpaca/session-book";
 import { initialConfiguration, validateConfiguration } from "./settings";
 import type { DailyUniverse, NormalizedSnapshot, RollingActivity, ScannerSession } from "./contracts";
 
@@ -22,7 +24,35 @@ describe("Premarket High Pullbacks",()=>{
   it("clears cross-date references and honors disable",()=>{const book=new PremarketPullbackBook();run(book);expect(run(book,10,[],"regular",{...controls,enabled:false}).rows).toHaveLength(0);book.clear();expect(run(book,20,[quote(7,20,{premarketHigh:null})]).rows).toHaveLength(0);});
   it("does not reuse yesterday's reference or a prior session's price",()=>{const book=new PremarketPullbackBook();run(book);expect(run(book,10,[],"after_hours").rows).toHaveLength(0);const later=now+86400000;const result=book.evaluate({universe:{...universe,tradingDate:"2026-11-03"},session:"regular",now:later,snapshots:[quote(7,86400,{tradingDate:"2026-11-03",premarketHigh:null})],floats:new Map(),activity:()=>activity});expect(result.rows).toHaveLength(0);expect(result.missingReferenceCount).toBe(0);});
   it("tracks separate regular and post-market highs and uses the greatest available high",()=>{const book=new PremarketPullbackBook();run(book,0,[quote(12)]);const regular=run(book,10,[quote(8,10)]).rows[0];expect(regular.regularHigh).toBe(12);expect(regular.referenceSession).toBe("regular");run(book,20,[quote(15,20,{session:"after_hours",regularClosePrice:9})],"after_hours");const post=run(book,30,[quote(10,30,{session:"after_hours",regularClosePrice:9})],"after_hours").rows[0];expect(post.postMarketHigh).toBe(15);expect(post.referenceSession).toBe("after_hours");});
-  it("pins a rapid drop using its observed pre-drop start even below the ordinary high-drop threshold",()=>{const rapid={symbol:"AAA",exchange:"NASDAQ" as const,company:"Test",price:7,changePercent:null,comparisonPrice:null,volume:1000,float:null,spreadPercent:null,receivedAtUtc:new Date(now).toISOString(),news:[],drop:{detectedAtUtc:new Date(now).toISOString(),startAtUtc:new Date(now-30000).toISOString(),startPrice:10,detectionPrice:7,lowPrice:7,lowAtUtc:new Date(now).toISOString(),dropPercent:-30,maximumDropPercent:-30,reboundPercent:0,backToStartPercent:42.86,durationSeconds:30,sharesDuringDrop:500}};const result=new PremarketPullbackBook().evaluate({universe,session:"regular",now,snapshots:[quote(9,0,{premarketHigh:null})],floats:new Map(),activity:()=>activity,rapidDrops:[rapid]});expect(result.rows[0].rapidDrop?.startPrice).toBe(10);});
+  it("replays NCT from Alpaca's regular-session high and treats rapid detection as a flag",()=>{
+    const tradingDate="2026-11-11",at=Date.parse("2026-11-11T16:35:24Z");
+    const symbols=["NCT","BBB"];
+    const market={...universe,tradingDate,stocks:symbols.map(symbol=>({...universe.stocks[0],symbol}))};
+    const sample=(price:number,high:number,observedAt:number):AlpacaSessionState=>({
+      date:tradingDate,regularClose:960,complete:true,sessions:{
+        premarket:{price:0.6,high:0.65,low:0.5,volume:100,dollarVolume:55,providerAt:at-8e6},
+        regular:{price,high,low:0.6,volume:1000,dollarVolume:850,providerAt:observedAt},
+        after_hours:{price:null,high:null,low:null,volume:0,dollarVolume:0,providerAt:null},
+      },
+    });
+    const detectedAtUtc=new Date(at).toISOString();
+    const rapid={symbol:"NCT",exchange:"NASDAQ" as const,company:"NCT",price:0.8505,changePercent:null,comparisonPrice:null,volume:1000,float:null,spreadPercent:null,receivedAtUtc:detectedAtUtc,news:[],drop:{detectedAtUtc,startAtUtc:new Date(at-30000).toISOString(),startPrice:1.07,detectionPrice:0.7,lowPrice:0.7,lowAtUtc:detectedAtUtc,dropPercent:-20.51,maximumDropPercent:-34.58,reboundPercent:21.5,backToStartPercent:25.8,durationSeconds:30,sharesDuringDrop:500}};
+    const book=new PremarketPullbackBook();
+    const evaluate=(price:number,receivedAt:number)=>{
+      const payload={feed:"sip",connected:true,snapshots:{NCT:{},BBB:{}},sessionTotals:{
+        NCT:sample(price,1.1101,receivedAt),BBB:sample(0.7,1,receivedAt),
+      }};
+      const {snapshots}=normalizeAlpacaScannerBatch({payload,requestedSymbols:symbols,session:"regular",tradingDate,receivedAt});
+      return book.evaluate({universe:market,session:"regular",now:receivedAt,snapshots,floats:new Map(),activity:()=>activity,rapidDrops:[rapid]});
+    };
+    const fresh=evaluate(1.0657,at-1000);
+    expect(fresh.rows.map(row=>row.symbol)).toEqual(["BBB"]);
+    const drop=evaluate(0.8505,at);
+    expect(drop.rows.map(row=>row.symbol)).toEqual(["BBB","NCT"]);
+    expect(drop.rows[1]).toMatchObject({regularHigh:1.1101,referenceHigh:1.1101,referenceSession:"regular",rapidDrop:{startPrice:1.07}});
+    expect(drop.rows[1].belowHighPercent).toBeCloseTo(23.3853);
+    expect(evaluate(1.0657,at+1000).rows.map(row=>row.symbol)).toEqual(["BBB"]);
+  });
   it("sorts by return distance and applies the limit without losing the total",()=>{const result=new PremarketPullbackBook().evaluate({universe:{...universe,stocks:[...universe.stocks,{symbol:"BBB",exchange:"NASDAQ",marketCapAtCollection:1e6}]},session:"regular",now,snapshots:[quote(7),quote(5,0,{symbol:"BBB"})],floats:new Map(),activity:()=>activity,controls:{...controls,displayLimit:1}});expect(result.total).toBe(2);expect(result.rows.map(row=>row.symbol)).toEqual(["BBB"]);});
   it("changes selection controls without replacing the frozen reference",()=>{const book=new PremarketPullbackBook();run(book);const result=run(book,10,[quote(7,10,{premarketHigh:30})],"regular",{...controls,minimumPullbackPercent:40,removeWithinPercent:35});expect(result.rows).toHaveLength(0);});
   it("accepts legacy settings and validates optional controls",()=>{const base=initialConfiguration();expect(validateConfiguration(base)).toEqual(base);expect(validateConfiguration({...base,premarketPullbacks:controls}).premarketPullbacks).toEqual(controls);for(const change of [{minimumPullbackPercent:100},{removeWithinPercent:21},{displayLimit:0},{extra:true}])expect(()=>validateConfiguration({...base,premarketPullbacks:{...controls,...change}})).toThrow();});

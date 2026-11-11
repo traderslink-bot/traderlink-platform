@@ -10,7 +10,7 @@ type SessionHighs={regular:number|null;afterHours:number|null};
 const positive=(value:unknown):value is number=>typeof value==="number"&&Number.isFinite(value)&&value>0;
 const volume=(value:unknown):number|null=>typeof value==="number"&&Number.isSafeInteger(value)&&value>=0?value:null;
 
-/** Current-day provider premarket aggregates, not historical candles or inferred recovery states. */
+/** Current-day session highs and pullbacks from the greatest available reference. */
 export class PremarketPullbackBook {
   private date="";
   private session:ScannerSession|null=null;
@@ -40,10 +40,10 @@ export class PremarketPullbackBook {
       if(previous&&(quote.receivedAt<=previous.receivedAt||quote.providerAt<previous.providerAt
         ||quote.priceTimeBasis!=="session_observation"&&quote.providerAt===previous.providerAt&&quote.price!==previous.price))continue;
       const reference=this.references.get(quote.symbol);
-      if(positive(quote.premarketHigh)&&!reference?.frozen){
+      if(positive(quote.premarketHigh)&&(quote.provider==="alpaca"||!reference?.frozen)){
         // At/after the open, latch the provider's final PM aggregate, not its
         // largest regular-session price and not merely the first observed price.
-        const high=input.session==="premarket"?Math.max(reference?.high??0,quote.premarketHigh):quote.premarketHigh;
+        const high=input.session==="premarket"&&quote.provider!=="alpaca"?Math.max(reference?.high??0,quote.premarketHigh):quote.premarketHigh;
         this.references.set(quote.symbol,{high,volume:volume(quote.premarketVolume),frozen:input.session!=="premarket"});
       }else if(reference?.frozen&&quote.premarketHigh===reference.high){
         // The final high is fixed, but its volume may arrive on a later pass.
@@ -55,8 +55,12 @@ export class PremarketPullbackBook {
         }
       }
       const highs=this.sessionHighs.get(quote.symbol)??{regular:null,afterHours:null};
-      if(input.session==="regular")highs.regular=Math.max(highs.regular??0,quote.price);
-      if(input.session==="after_hours")highs.afterHours=Math.max(highs.afterHours??0,quote.price);
+      if(input.session!=="premarket"&&positive(quote.regularHigh)) highs.regular=quote.regularHigh;
+      else if(input.session==="regular"&&quote.provider!=="alpaca") highs.regular=Math.max(highs.regular??0,quote.price);
+      if(input.session==="after_hours"){
+        if(positive(quote.postMarketHigh)) highs.afterHours=quote.postMarketHigh;
+        else if(quote.provider!=="alpaca") highs.afterHours=Math.max(highs.afterHours??0,quote.price);
+      }
       this.sessionHighs.set(quote.symbol,highs);
       this.quotes.set(quote.symbol,quote);
     }
@@ -75,7 +79,7 @@ export class PremarketPullbackBook {
       if(!reference){missingReferenceCount++;this.included.delete(symbol);continue;}
       const below=(1-quote.price/reference.high)*100,rapidDrop=rapidBySymbol.get(symbol);
       const boundary=this.included.has(symbol)?controls.removeWithinPercent:controls.minimumPullbackPercent;
-      if(!rapidDrop&&(below+1e-9<boundary||below<=0)){this.included.delete(symbol);continue;}
+      if(below+1e-9<boundary||below<=0){this.included.delete(symbol);continue;}
       this.included.add(symbol);
       const fact=input.floats.get(symbol),at=fact?Date.parse(fact.retrievedAtUtc):NaN;
       const activity=input.activity(symbol);
@@ -91,9 +95,7 @@ export class PremarketPullbackBook {
         spreadPercent:quote.bid!==null&&quote.ask!==null&&quote.bid>0&&quote.ask>=quote.bid?(quote.ask-quote.bid)/((quote.ask+quote.bid)/2)*100:null,
         receivedAtUtc:new Date(quote.receivedAt).toISOString(),news:[],...(rapidDrop?{rapidDrop}:{})});
     }
-    rows.sort((a,b)=>Number(Boolean(b.rapidDrop))-Number(Boolean(a.rapidDrop))
-      ||(b.rapidDrop?Date.parse(b.rapidDrop.detectedAtUtc):0)-(a.rapidDrop?Date.parse(a.rapidDrop.detectedAtUtc):0)
-      ||b.belowHighPercent-a.belowHighPercent||a.symbol.localeCompare(b.symbol));
+    rows.sort((a,b)=>b.belowHighPercent-a.belowHighPercent||a.symbol.localeCompare(b.symbol));
     return {rows:rows.slice(0,controls.displayLimit),total:rows.length,missingReferenceCount,controls};
   }
 }
