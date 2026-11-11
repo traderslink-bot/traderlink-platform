@@ -24,13 +24,17 @@ function NumberInput({label,value,onChange,min=1,max=10000,integer=true,disabled
 function NumberSetting(props:Parameters<typeof NumberInput>[0]){return <NumberInput key={props.value} {...props}/>;}
 const name=(i:ChartIndicator)=>i.type==='EMA'||i.type==='SMA'||i.type==='RSI'?`${i.type} ${i.period}`:i.type==='MACD'?`MACD ${i.fastLength??12}, ${i.slowLength??26}, ${i.signalLength??9}`:i.type==='Bollinger'?`Bollinger Bands ${i.period}, ${i.deviation??2}`:'VWAP';
 const typeName = (type: ChartIndicator['type']) => type === 'Bollinger' ? 'Bollinger Bands' : type;
-export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresetsChange}:{
+export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresetsChange,initialType,defaultPriceScaleLabels,display,onDisplayChange}:{
  indicators:ChartIndicator[];
  onChange:(value:ChartIndicator[])=>void;
  savedPresets:SavedIndicatorPreset[];
+ initialType?: ChartIndicator['type'];
+ defaultPriceScaleLabels: boolean;
+ display: import('./chart-view-memory').ChartIndicatorDisplay;
+ onDisplayChange: (type: ChartIndicator['type'], action: 'hidden' | 'enabled', value: boolean) => void;
  onPresetsChange:(presets:SavedIndicatorPreset[])=>void;
 }){
- const [search,setSearch]=useState(''),[selected,setSelected]=useState(''),[tab,setTab]=useState('inputs');
+ const [search,setSearch]=useState(''),[selected,setSelected]=useState(()=>indicators.find(indicator=>indicator.type===initialType)?.id??''),[tab,setTab]=useState('inputs');
  const [presetName,setPresetName]=useState(''),[presetError,setPresetError]=useState('');
  const active=indicators.find(i=>i.id===selected)??indicators.at(-1);
  const activeTab=tab==='visibility'&&active?.type!=='VWAP'?'inputs':tab;
@@ -85,9 +89,12 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
    <Typography component="h3" sx={{ fontWeight: 700 }}>On this chart</Typography>
    {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
     const group = indicators.filter(indicator => indicator.type === type);
+    const enabled = display.enabled[type] ?? group.some(indicator => indicator.visible !== false);
+    const hidden = display.hidden.has(type);
     return <Stack key={type} direction="row" sx={{ alignItems: 'center', gap: 0.5, border: 1, borderColor: active?.type === type ? 'primary.main' : 'divider', minWidth: 0 }}>
-     <Checkbox size="small" checked={group.some(indicator => indicator.visible !== false)} slotProps={{ input: { 'aria-label': `Show ${typeName(type)}` } }} onChange={(_, visible) => onChange(indicators.map(indicator => indicator.type === type ? { ...indicator, visible } : indicator))} />
      <Button onClick={() => choose(group[0].id)} aria-pressed={active?.type === type} sx={{ flex: 1, justifyContent: 'flex-start', textTransform: 'none', minWidth: 0 }}>{typeName(type)}</Button>
+      <Button size="small" aria-label={`${hidden?'Show':'Hide'} ${typeName(type)} details`} onClick={() => onDisplayChange(type,'hidden',!hidden)} sx={{textTransform:'none',lineHeight:1.2}}>{hidden?'Show details':'Hide details'}</Button>
+      <Button size="small" aria-label={`Turn ${enabled?'off':'on'} ${typeName(type)}`} onClick={() => onDisplayChange(type,'enabled',!enabled)} sx={{textTransform:'none',lineHeight:1.2}}>{enabled?'Turn off':'Turn on'}</Button>
      <IconButton aria-label={`Remove ${typeName(type)}`} onClick={() => onChange(indicators.filter(indicator => indicator.type !== type))}><DeleteOutline /></IconButton>
     </Stack>;
    })}
@@ -142,7 +149,7 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     })}
     <Button size="small" disabled={indicators.length >= 20} sx={{ alignSelf: 'flex-start' }} onClick={() => {
      if (active.type !== 'EMA' && active.type !== 'SMA') return;
-     const line = nextMovingAverageLine(active.type, lines, crypto.randomUUID());
+     const line = nextMovingAverageLine(active.type, indicators, crypto.randomUUID());
      onChange([...indicators, line]);
      choose(line.id);
     }}>Add {active.type} line</Button>
@@ -187,10 +194,10 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
       <TextField select label="Line style" value={options.style} onChange={e=>style(plot.key,{style:Number(e.target.value) as PlotStyle['style']})} size="small" sx={{width:120}}>{['Solid','Dotted','Dashed'].map((label,value)=><MenuItem key={value} value={value}>{label}</MenuItem>)}</TextField>
      </Stack>:<Stack spacing={1}>{['positive-rising','positive-falling','negative-rising','negative-falling'].map(key=><TextField key={`${key}-${active.plots?.[key]?.color}`} label={key.replace('-',' ')} type="color" defaultValue={active.plots?.[key]?.color??(key.startsWith('positive')?'#16a085':'#e45757')} onBlur={e=>style(key,{color:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}}/>)}</Stack>}
     </Box>;})}
+     <FormControlLabel label="Labels on price scale" control={<Checkbox checked={active.output?.priceScaleLabels??defaultPriceScaleLabels} onChange={(_,priceScaleLabels)=>edit({output:{...active.output,priceScaleLabels,statusLineValues:active.output?.statusLineValues??true}})}/>}/>
     {active.type==='VWAP'?<Stack spacing={1}>
-     <TextField select label="Precision" value={active.output?.precision??''} onChange={e=>edit({output:{priceScaleLabels:active.output?.priceScaleLabels??false,statusLineValues:active.output?.statusLineValues??false,...(e.target.value!==''?{precision:Number(e.target.value)}:{})}})} size="small"><MenuItem value="">Default</MenuItem>{Array.from({length:17},(_,n)=><MenuItem key={n} value={n}>{n}</MenuItem>)}</TextField>
-     <FormControlLabel label="Labels on price scale" control={<Checkbox checked={active.output?.priceScaleLabels??false} onChange={(_,priceScaleLabels)=>edit({output:{...active.output,priceScaleLabels,statusLineValues:active.output?.statusLineValues??false}})}/>}/>
-     <FormControlLabel label="Values in status line" control={<Checkbox checked={active.output?.statusLineValues??false} onChange={(_,statusLineValues)=>edit({output:{...active.output,statusLineValues,priceScaleLabels:active.output?.priceScaleLabels??false}})}/>}/>
+     <TextField select label="Precision" value={active.output?.precision??''} onChange={e=>edit({output:{...active.output,statusLineValues:active.output?.statusLineValues??true,precision:e.target.value!==''?Number(e.target.value):undefined}})} size="small"><MenuItem value="">Default</MenuItem>{Array.from({length:17},(_,n)=><MenuItem key={n} value={n}>{n}</MenuItem>)}</TextField>
+     <FormControlLabel label="Values in status line" control={<Checkbox checked={active.output?.statusLineValues??true} onChange={(_,statusLineValues)=>edit({output:{...active.output,statusLineValues}})}/>}/>
     </Stack>:null}
     {active.type==='VWAP'?bands.levels.map((level,index)=>level.enabled?<Box key={`fill-${index}`} sx={{borderBottom:1,borderColor:'divider',pb:1}}><FormControlLabel label={`Bands Fill #${index+1}`} control={<Checkbox checked={level.fillVisible} onChange={(_,fillVisible)=>band(index,{fillVisible})}/>}/><Stack direction="row" sx={{gap:1,flexWrap:'wrap'}}><TextField label={`Bands Fill #${index+1} color`} type="color" key={level.fillColor} defaultValue={level.fillColor} onBlur={e=>band(index,{fillColor:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:150}}/><NumberSetting label={`Bands Fill #${index+1} opacity`} value={level.fillOpacity} min={0} max={100} integer={false} onChange={fillOpacity=>band(index,{fillOpacity})}/></Stack></Box>:null):null}
    </Stack>}

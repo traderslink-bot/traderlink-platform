@@ -1,6 +1,14 @@
 import type { ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { CHART_TIMEFRAMES, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
+import type { IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
+
+export type ChartIndicatorDisplay = {
+  hidden: ReadonlySet<IndicatorType>;
+  enabled: Readonly<Partial<Record<IndicatorType, boolean>>>;
+};
+export const defaultIndicatorDisplay: ChartIndicatorDisplay = { hidden: new Set(), enabled: {} };
+
 type Range = { from: number; to: number };
 export type ChartViewSnapshot = {
   symbol: string; timeframe: ChartTimeframe; sessions: string; basisDate: string;
@@ -26,6 +34,7 @@ function valid(value: unknown): value is ChartViewSnapshot {
 const key = (panel: string, symbol: string, timeframe: ChartTimeframe, sessions: string) => JSON.stringify([panel, symbol, timeframe, sessions]);
 /** Only small view coordinates are retained. No candles, charts, streams or timers. */
 export class ChartViewMemory {
+  private indicatorDisplays = new Map<string, Map<string, { symbol: string; display: ChartIndicatorDisplay }>>();
   private states = new Map<string, State>();
   constructor(private storage: () => Storage | undefined) {}
   private scope(owner: string, workspace: string) { return `${owner}:${workspace}`; }
@@ -49,7 +58,22 @@ export class ChartViewMemory {
     const scope = this.scope(owner, workspace), state = this.state(scope);
     state.panels = Object.fromEntries(layout.groups.flatMap(g => g.panels.map(p => [p.id, g.symbol])));
     for (const k of Object.keys(state.views)) { try { const [panel, symbol] = JSON.parse(k); if (state.panels[panel] !== symbol) delete state.views[k]; } catch { delete state.views[k]; } }
+    const displays = this.indicatorDisplays.get(scope);
+    if (displays) for (const [panel, entry] of displays) {
+      if (state.panels[panel] !== entry.symbol) displays.delete(panel);
+    }
     this.persist(scope, state);
+  }
+  readIndicatorDisplay(owner: string, workspace: string, panel: string, symbol: string) {
+    const entry = this.indicatorDisplays.get(this.scope(owner, workspace))?.get(panel);
+    return entry?.symbol === symbol ? entry.display : defaultIndicatorDisplay;
+  }
+  writeIndicatorDisplay(owner: string, workspace: string, panel: string, symbol: string, display: ChartIndicatorDisplay) {
+    const scope = this.scope(owner, workspace);
+    if (this.state(scope).panels[panel] !== symbol) return;
+    const displays = this.indicatorDisplays.get(scope) ?? new Map();
+    displays.set(panel, { symbol, display });
+    this.indicatorDisplays.set(scope, displays);
   }
   read(owner: string, workspace: string, panel: string, symbol: string, timeframe: ChartTimeframe, sessions: string) {
     const state = this.state(this.scope(owner, workspace));
@@ -67,7 +91,7 @@ export class ChartViewMemory {
     this.persist(scope, state);
   }
   clear(owner: string, workspace: string) {
-    const scope = this.scope(owner, workspace); this.states.set(scope, { panels: {}, views: {} });
+    const scope = this.scope(owner, workspace); this.indicatorDisplays.delete(scope); this.states.set(scope, { panels: {}, views: {} });
     try { this.storage()?.removeItem(prefix + scope); } catch { /* No storage access. */ }
   }
 }

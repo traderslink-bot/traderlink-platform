@@ -17,42 +17,49 @@ export function ChartWorkspaceViewRow({book,onChange,disabled,onStartMultiTicker
   const selected=book.selectedTab===multi?.id?multiValue:tickers.some(tab=>tab.id===book.selectedTab)?book.selectedTab:false;
   const scrollRef=useRef<HTMLDivElement>(null);
   const rowRef=useRef<HTMLDivElement>(null);
-  const activeTicker=tickers.find(tab=>tab.id===selected);
-  const closeLabel=selected===multiValue?"Close Multi-ticker view":activeTicker?`Close ${activeTicker.layout.groups[0].symbol} ticker view`:null;
   useLayoutEffect(()=>{
-    const row=rowRef.current;
-    if(!row||!showRow||!closeLabel)return;
-    const tab=row.querySelector('[role="tab"][aria-selected="true"]');
-    if(!tab)return;
-    const align=()=>row.style.setProperty("--view-close-right",`${row.getBoundingClientRect().right-tab.getBoundingClientRect().right}px`);
-    const observer=new ResizeObserver(align);
-    observer.observe(row);observer.observe(tab);align();
+    const tab=rowRef.current?.querySelector('[role="tab"][aria-selected="true"]');
     const scroller=scrollRef.current;
-    if(scroller){
-      const bounds=scroller.getBoundingClientRect(), activeBounds=tab.getBoundingClientRect();
-      if(activeBounds.left<bounds.left)scroller.scrollLeft+=activeBounds.left-bounds.left;
-      else if(activeBounds.right>bounds.right)scroller.scrollLeft+=activeBounds.right-bounds.right;
-    }
-    return()=>observer.disconnect();
-  },[selected,showRow,closeLabel,tickers.length,showMultiTicker,inline]);
+    if(!showRow||!tab||!scroller)return;
+    const bounds=scroller.getBoundingClientRect(), activeBounds=tab.getBoundingClientRect();
+    if(activeBounds.left<bounds.left)scroller.scrollLeft+=activeBounds.left-bounds.left;
+    else if(activeBounds.right>bounds.right)scroller.scrollLeft+=activeBounds.right-bounds.right;
+  },[selected,showRow,tickers.length,showMultiTicker,inline]);
   if(!showRow)return null;
   const choose=(value:string)=>{
     if(value!==multiValue){onChange({...book,selectedTab:value});return;}
     if(multi)onChange(openMultiTicker(book,crypto.randomUUID()));
     else onStartMultiTicker();
   };
-  const row=<Box ref={rowRef} sx={{position:"relative",flexShrink:0,minWidth:"max-content"}}>
-  <Tabs data-chart-view-row value={selected} onChange={(_,id:string)=>choose(id)} variant="fullWidth" aria-label="Chart views"
-    sx={{flexShrink:0,minHeight:44,borderBottom:inline?0:1,borderColor:"divider","& .MuiTab-root":{minHeight:44,minWidth:48,maxWidth:"none",px:inline?1:0.5,whiteSpace:"nowrap",textTransform:"none",fontSize:12},"& .MuiTab-root.Mui-selected":{color:"warning.main",fontWeight:700},"& .MuiTabs-indicator":{bgcolor:"warning.main"}}}>
-    {tickers.map(tab=><Tab key={tab.id} value={tab.id} disabled={disabled} title={chartTabDescription(tab)} sx={tab.id===selected?{flexBasis:"32px",pr:"32px",minWidth:"64px !important"}:undefined} label={<Box component="span" sx={{maxWidth:"100%",overflow:"hidden",textOverflow:"ellipsis"}}>{tab.layout.groups[0].symbol}</Box>}/>)}
-    {showMultiTicker && <Tab value={multiValue} label="Multi-ticker" disabled={disabled||!multi&&(!tickers.length||book.tabs.length>=MAX_CHART_TABS)} sx={{flex:"0 0 auto",minWidth:selected===multiValue?"116px !important":"88px !important",pr:selected===multiValue?"32px":undefined}}/>}
-  </Tabs>
-  {closeLabel && <IconButton aria-label={closeLabel} title={closeLabel} disabled={disabled} onClick={()=>selected===multiValue?onCloseMultiTicker():onChange(closeSelectedChartTab(book))}
-    sx={{position:"absolute",top:0,right:"var(--view-close-right)",width:32,height:44,p:0,borderRadius:0,"&&":{minWidth:32}}}>
+  const closeTicker=(id:string)=>{
+    if(id===book.selectedTab){onChange(closeSelectedChartTab(book));return;}
+    onChange({...book,tabs:book.tabs.filter(tab=>tab.id!==id)});
+  };
+  const tickerWidth=112,multiWidth=116,gap=4,closeWidth=36;
+  const closeButton=(label:string,left:number,close:()=>void)=><IconButton aria-label={label} title={label} disabled={disabled} onClick={close}
+    sx={{position:"absolute",top:3,left,width:closeWidth,height:38,p:0,borderRadius:0}}>
     <CloseRounded sx={{fontSize:17}}/>
-  </IconButton>}
+  </IconButton>;
+  return <Box ref={scrollRef} sx={{flex:inline?1:undefined,flexShrink:0,minWidth:0,overflowX:"auto",scrollbarWidth:"none"}}>
+    <Box ref={rowRef} sx={{position:"relative",width:"max-content",pl:`${gap}px`,pr:`${gap}px`}}>
+      <Tabs data-chart-view-row value={selected} onChange={(_,id:string)=>choose(id)} aria-label="Chart views"
+        sx={{minHeight:44,"& .MuiTabs-list":{gap:`${gap}px`,justifyContent:"flex-start"},
+          "& .MuiTabs-indicator":{display:"none"},
+          "& .MuiTab-root":{flex:"0 0 auto",minHeight:38,height:38,my:"3px",px:1.25,py:0,minWidth:0,maxWidth:"none",
+            alignItems:"flex-start",border:1,borderColor:"divider",borderRadius:0,whiteSpace:"nowrap",textTransform:"none",fontSize:12},
+          "& .MuiTab-root.Mui-selected":{color:"warning.main",borderColor:"warning.main",fontWeight:700},
+          "& .MuiTab-root.Mui-focusVisible":{outline:"2px solid",outlineColor:"warning.main",outlineOffset:-3}}}>
+        {tickers.map(tab=><Tab key={tab.id} value={tab.id} disabled={disabled} title={chartTabDescription(tab)}
+          sx={{width:tickerWidth,pr:`${closeWidth}px !important`}} label={<Box component="span" sx={{maxWidth:"100%",overflow:"hidden",textOverflow:"ellipsis"}}>{tab.layout.groups[0].symbol}</Box>}/>)}
+        {showMultiTicker && <Tab value={multiValue} label="Multi-ticker" disabled={disabled||!multi&&(!tickers.length||book.tabs.length>=MAX_CHART_TABS)}
+          sx={{width:multiWidth,pr:selected===multiValue?`${closeWidth}px !important`:undefined}}/>}
+      </Tabs>
+      {tickers.map((tab,index)=><Box key={tab.id}>{closeButton(`Close ${tab.layout.groups[0].symbol} ticker view`,
+        gap+index*(tickerWidth+gap)+tickerWidth-closeWidth-1,()=>closeTicker(tab.id))}</Box>)}
+      {selected===multiValue&&closeButton("Close Multi-ticker view",gap+tickers.length*(tickerWidth+gap)+multiWidth-closeWidth-1,onCloseMultiTicker)}
+    </Box>
   </Box>;
-  return <Box ref={scrollRef} sx={{flex:inline?1:undefined,flexShrink:0,minWidth:0,overflowX:"auto",scrollbarWidth:"none"}}>{row}</Box>;
+
 }
 
 export function ChartWorkspaceTabs({book,onChange,disabled,defaultTimeframe}:Props & {defaultTimeframe:ChartTimeframe}){

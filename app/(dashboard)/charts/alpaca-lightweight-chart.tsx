@@ -11,11 +11,12 @@ import {ChartPreferencesPanel} from "./chart-preferences-panel";
 import {useChartPreferences} from "./use-chart-preferences";
 import {parseVwapSeedRequest,validVwapSeed,type VwapSeed} from "@/src/modules/scanner/alpaca/chart-vwap-seed";
 import {easternClock} from "@/src/modules/scanner/live/sessions";
+import { chartVwapCache } from "./chart-vwap-cache";
 import {ChartBandFill} from "@/src/modules/scanner/alpaca/chart-band-fill";
 import {calculationDemand} from "@/src/modules/scanner/alpaca/chart-calculation-demand";
 import {ChartCalculationHistory,type CalculationHistory} from "@/src/modules/scanner/alpaca/chart-calculation-history";
 import {calculationInterval,futureCalculationAxis} from "@/src/modules/scanner/alpaca/chart-calculation-intervals";
-import {carryVwapPoints,offsetVwap,projectVwap} from "@/src/modules/scanner/alpaca/chart-vwap-projection";
+import {carryVwapPoints,offsetVwap,projectVwap,indicatorReadoutIndex} from "@/src/modules/scanner/alpaca/chart-vwap-projection";
 import {readChartCalendarYear} from "@/src/modules/scanner/alpaca/chart-calendar-request";
 import {ChartSessionCalendar} from "@/src/modules/scanner/alpaca/chart-calendar";
 import {type IndicatorPlot,vwapAnchorKey,indicatorPlotStyle,indicatorHistogramColor,indicatorValues,isVisibleSession,visibleSessionBars} from "@/src/modules/scanner/alpaca/chart-indicators";
@@ -23,15 +24,18 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { chartTickLabel, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
 import type { Time } from "lightweight-charts";
 import { aggregateCandles, candleBucket, displayCandles, CHART_TIMEFRAMES, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
 
 import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-view";
-import { canRestoreChartPrice, chartViews, restoreChartRange } from "./chart-view-memory";
+import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorDisplay } from "./chart-view-memory";
+import { indicatorPriceScaleLabels, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
 import { sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
+
+const indicatorName = (type: IndicatorType) => type === "Bollinger" ? "BOLL" : type;
 
 export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactIdentity, viewId, viewWorkspace = "main" }: {
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
@@ -45,7 +49,21 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const {preferences,ready,message,change,ownerKey}=useChartPreferences();
   const dark = preferences.theme === "dark" || preferences.theme === "auto" && theme.palette.mode === "dark";
   const [panel,setPanel]=useState<"indicators"|"settings"|null>(null);
-  const vwapSeedCache=useRef(new Map<string,{value:VwapSeed;at:number}>());
+  const [initialIndicator,setInitialIndicator]=useState<IndicatorType>();
+  const [indicatorMenu,setIndicatorMenu]=useState<{anchor:HTMLElement;type:IndicatorType}|null>(null);
+  const displayKey=JSON.stringify([ownerKey,viewWorkspace,viewId,ticker]);
+  const [localDisplay,setLocalDisplay]=useState<{key:string;value:ChartIndicatorDisplay}>();
+  if(localDisplay&&localDisplay.key!==displayKey)setLocalDisplay(undefined);
+  const indicatorDisplay=localDisplay?.key===displayKey?localDisplay.value:
+    ownerKey&&viewId?chartViews.readIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker):defaultIndicatorDisplay;
+  const changeIndicatorDisplay=(type:IndicatorType,action:"hidden"|"enabled",value:boolean)=>{
+    const next=action==="enabled"?{...indicatorDisplay,enabled:{...indicatorDisplay.enabled,[type]:value}}:
+      {...indicatorDisplay,hidden:new Set(value?[...indicatorDisplay.hidden,type]:[...indicatorDisplay.hidden].filter(item=>item!==type))};
+    setLocalDisplay({key:displayKey,value:next});
+    if(ownerKey&&viewId)chartViews.writeIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker,next);
+  };
+  const openIndicators=(type?:IndicatorType)=>{setInitialIndicator(type);setPanel("indicators");};
+
   const marketCalendar=useRef(new ChartSessionCalendar());
   const [sessionMessage,setSessionMessage]=useState("");
   const memory=useRef<{key:string;basisDate:string;bars:Candle[];nextBefore:number|null;range:import("lightweight-charts").IRange<Time>|null;logicalRange:{from:number;to:number}|null;axis:{first:number|undefined;last:number|undefined;count:number;sessions:string};priceRange:import("lightweight-charts").IRange<number>|null}|null>(null);
@@ -56,6 +74,17 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const crosshairDetails = useRef<HTMLDivElement>(null);
   const [activeTimeframe,setActiveTimeframe]=useState<ChartTimeframe|null>(null);
   const timeframe=controlledTimeframe??activeTimeframe??preferences.timeframe;
+  const enabledOverrides=indicatorDisplay.enabled;
+  const activeIndicators=useMemo(()=>{
+    const visibleTypes=new Set(preferences.indicators.filter(indicator=>indicator.visible!==false).map(indicator=>indicator.type));
+    return preferences.indicators.flatMap(indicator=>{
+      const enabled=enabledOverrides[indicator.type];
+      if(enabled===false||indicator.type==="VWAP"&&indicator.timeframes&&!indicator.timeframes.includes(timeframe))return [];
+      if(indicator.visible!==false)return [indicator];
+      return enabled===true&&!visibleTypes.has(indicator.type)?[{...indicator,visible:true}]:[];
+    });
+  },[preferences.indicators,enabledOverrides,timeframe]);
+  const readoutTypes=[...new Set(activeIndicators.map(indicator=>indicator.type))];
   const regularOnly=preferences.regular&&!preferences.premarket&&!preferences.postmarket;
   if(ready&&controlledTimeframe===undefined&&activeTimeframe===null)setActiveTimeframe(preferences.timeframe);
   const changePreferences = (next: typeof preferences) => {
@@ -101,26 +130,70 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       const volume = preferences.volume?chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceLineVisible: false, lastValueVisible: false }, 1):undefined;
       chart.panes()[0].setStretchFactor(100-preferences.volumeHeight);if(volume)chart.panes()[1].setStretchFactor(preferences.volumeHeight);
       let nextPane=volume?2:1;
-      const studies=preferences.indicators.filter(indicator=>indicator.visible!==false&&(indicator.type!=='VWAP'||!indicator.timeframes||indicator.timeframes.includes(timeframe))).flatMap(indicator=>{
+      const studies=activeIndicators.flatMap(indicator=>{
         const parts=indicatorValues([],indicator,timeframe),pane=parts[0]?.pane?nextPane++:0;
-        return parts.map((part,index)=>{const style=indicatorPlotStyle(indicator,part.key);return {indicator,index,key:part.key,histogram:part.histogram,series:part.histogram
-          ?chart.addSeries(HistogramSeries,{visible:style.visible,priceLineVisible:false,lastValueVisible:false},pane)
-          :chart.addSeries(LineSeries,{visible:style.visible,color:style.color,lineWidth:style.width,lineStyle:style.style,title:part.label,priceLineVisible:false,lastValueVisible:indicator.output?.priceScaleLabels??false,...(preferences.scalePriceOnly&&pane===0?{autoscaleInfoProvider:()=>null}:{}),...(indicator.type==="RSI"?{autoscaleInfoProvider:()=>({priceRange:{minValue:0,maxValue:100}})}:{})},pane)};});
+        return parts.map((part,index)=>{const style=indicatorPlotStyle(indicator,part.key);
+          const lastValueVisible=indicatorPriceScaleLabels(preferences,indicator);
+          const labelOptions={title:lastValueVisible?part.label:"",lastValueVisible};
+          return {indicator,index,key:part.key,label:part.label,histogram:part.histogram,series:part.histogram
+          ?chart.addSeries(HistogramSeries,{visible:style.visible,...labelOptions,priceLineVisible:false},pane)
+          :chart.addSeries(LineSeries,{visible:style.visible,color:style.color,lineWidth:style.width,lineStyle:style.style,...labelOptions,priceLineVisible:false,...(preferences.scalePriceOnly&&pane===0?{autoscaleInfoProvider:()=>null}:{}),...(indicator.type==="RSI"?{autoscaleInfoProvider:()=>({priceRange:{minValue:0,maxValue:100}})}:{})},pane)};});
       });
       const indicatorAxis=studies.some(study=>study.indicator.type==='VWAP'&&(study.indicator.offset??0)>0)?chart.addSeries(LineSeries,{visible:false,priceLineVisible:false,lastValueVisible:false},0):undefined;
       let activeCrosshair:import("lightweight-charts").MouseEventParams<Time>|undefined;
       const studyPoints=new Map<typeof studies[number],readonly {time:number;value:number}[]>();
       const appliedPrecisions=new Map<typeof studies[number],number>();
       const studyPrecision=(study:typeof studies[number])=>{const format=candles.options().priceFormat;return study.indicator.output?.precision??('precision' in format?format.precision:2);};
+      const bandOrder:Readonly<Record<string,number>>={upper:0,main:1,lower:2};
+      const legendStudies=[...studies].sort((a,b)=>a.indicator.id===b.indicator.id&&a.indicator.type==="Bollinger"
+        ? (bandOrder[a.key]??3)-(bandOrder[b.key]??3) : 0);
+      const legendValues=new Map<typeof studies[number],HTMLSpanElement>();
+      const cacheOwner=ownerKey??"";
+      const vwapReadoutKeys=new Map(studies.filter(study=>study.indicator.type==="VWAP").map(study=>
+        [study,JSON.stringify([ticker,timeframe,sessionKey,study.indicator,study.key])]));
+      const flushVwap=()=>chartVwapCache.flush(cacheOwner);
+      window.addEventListener("pagehide",flushVwap);
       const updateIndicatorLegend=()=>{
-        const element=indicatorLegend.current;if(!element)return;
-        const nodes=studies.filter(study=>study.indicator.output?.statusLineValues&&study.series.options().visible).map(study=>{
-          const points=studyPoints.get(study)??[],time=activeCrosshair?.time;let value:number|undefined;
-          if(typeof time==='number'){let lo=0,hi=points.length;while(lo<hi){const mid=(lo+hi)>>>1;if(points[mid].time<time)lo=mid+1;else hi=mid;}if(points[lo]?.time===time)value=points[lo].value;}else if(time===undefined)value=points.at(-1)?.value;
-          const span=document.createElement('span');span.dataset.indicatorValue=study.indicator.id+':'+study.key;
-          span.textContent=study.series.options().title+' '+(typeof value==='number'&&Number.isFinite(value)?value.toFixed(studyPrecision(study)):'—');
-          Object.assign(span.style,{color:indicatorPlotStyle(study.indicator,study.key).color,whiteSpace:'nowrap'});return span;
-        });element.replaceChildren(...nodes);
+        const legend=indicatorLegend.current;if(!legend)return;
+        const readoutBasis=vwapReadoutKeys.size?easternClock(Date.now()).date:"";
+        for(const slot of legend.querySelectorAll<HTMLElement>("[data-indicator-readout]")){
+          for(const study of legendStudies){
+            if(study.indicator.type!==slot.dataset.indicatorReadout||study.indicator.output?.statusLineValues===false||!study.series.options().visible)continue;
+            const points=studyPoints.get(study)??[],time=activeCrosshair?.time;
+            const isVwap=study.indicator.type==="VWAP";
+            const carried=isVwap&&typeof time==="number"&&displayed.get(time)?.carried===true;
+            const index=indicatorReadoutIndex(points,time,carried);
+            const newest=points.at(-1);
+            const readoutId=vwapReadoutKeys.get(study);
+            const readoutKey=readoutId?readoutBasis+readoutId:undefined;
+            if(readoutKey&&newest&&historyBasisDate===readoutBasis)chartVwapCache.writeReadout(cacheOwner,readoutKey,{...newest,precision:studyPrecision(study)});
+            const saved=readoutKey&&(!loaded||chartHalted||seedLoading||seedError)?chartVwapCache.readReadout(cacheOwner,readoutKey):undefined;
+            const savedMatchesSlot=carried&&saved&&typeof time==="number"&&saved.time<=time
+              &&easternClock(saved.time*1000).date===easternClock(time*1000).date;
+            const fallback=saved&&(time===undefined||savedMatchesSlot)?saved.value:undefined;
+            const pointValue=points[index]?.value;
+            const value=pointValue??fallback;
+            const precision=pointValue===undefined&&fallback!==undefined&&saved?saved.precision:studyPrecision(study);
+            const {type,period}=study.indicator;
+            const label=study.key==="main"&&(type==="EMA"||type==="SMA")?String(period):
+              type==="Bollinger"&&study.key==="main"?"Middle":
+              type==="Bollinger"&&study.key==="upper"?"Upper":
+              type==="Bollinger"&&study.key==="lower"?"Lower":
+              type==="VWAP"&&study.key==="main"?"":study.label;
+            let span=legendValues.get(study);
+            if(!span){
+              span=document.createElement("span");
+              span.dataset.indicatorValue=study.indicator.id+":"+study.key;
+              legendValues.set(study,span);
+              slot.append(span);
+            }
+            const text=(label?label+": ":"")+(typeof value==="number"&&Number.isFinite(value)?value.toFixed(precision):"—");
+            if(span.textContent!==text)span.textContent=text;
+            span.style.color=study.histogram&&value!==undefined
+              ?indicatorHistogramColor(study.indicator,value,points[Math.max(0,index-1)]?.value??value,preferences.upColor,preferences.downColor)
+              :indicatorPlotStyle(study.indicator,study.key).color;
+          }
+        }
       };
       const updateStudyFormats=()=>{for(const study of studies){if(study.indicator.output){const precision=studyPrecision(study);if(appliedPrecisions.get(study)!==precision){study.series.applyOptions({priceFormat:{type:'custom',formatter:(value:number)=>value.toFixed(precision),minMove:10**-precision}});appliedPrecisions.set(study,precision);}}}};
       const futureIndicatorTimes=new Set<number>();
@@ -215,19 +288,20 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         const basisDate=easternClock(Date.now()).date;
         if(historyBasisDate!==basisDate){seedError=true;return undefined;}
         const query=new URLSearchParams({symbol:ticker,timeframe:calculationFrame,anchor:indicator.anchor??'Session',before:String(actual[0].time),premarket:preferences.premarket?'1':'0',regular:preferences.regular?'1':'0',postmarket:preferences.postmarket?'1':'0'}),request=parseVwapSeedRequest(query),key=basisDate+query.toString();
-        const cachedEntry=vwapSeedCache.current.get(key),cached=cachedEntry?.value,validCached=cached&&validVwapSeed(cached,request,basisDate)?cached:undefined;
+        const cachedEntry=chartVwapCache.readSeed(cacheOwner,key),cached=cachedEntry?.value,validCached=cached&&validVwapSeed(cached,request,basisDate)?cached:undefined;
         const expired=validCached&&cachedEntry&&Date.now()-cachedEntry.at>=300_000;
         const needsMoments=indicator.vwapBands?.mode==='Standard deviation'&&indicator.vwapBands.levels.some(level=>level.enabled);
         const missingMoments=validCached&&validCached.volume>0&&needsMoments&&!validCached.moments;
         if(validCached&&!expired&&(!missingMoments||Date.now()-(seedMomentAttempts.get(key)??0)<30_000))return validCached;
-        if(Date.now()-(seedFailures.get(key)??0)<30_000){if(!validCached||expired)seedError=true;return validCached;}
-        seedLoading=true;if(!pendingSeeds.has(key)){
+        if(Date.now()-(seedFailures.get(key)??0)<30_000){if(!validCached)seedError=true;return validCached;}
+        if(!validCached)seedLoading=true;
+        if(!pendingSeeds.has(key)){
           if(missingMoments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
           pendingSeeds.add(key);
           void sharedChartFetch('/api/charts/vwap-seed?'+query.toString(),{credentials:'same-origin',signal:abort.signal,cache:'no-store'}).then(async response=>{
             if(!response.ok)throw Error();const value=await response.json();if(!validVwapSeed(value,request,basisDate))throw Error();
             if(needsMoments&&value.volume>0&&!value.moments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
-            vwapSeedCache.current.set(key,{value,at:Date.now()});while(vwapSeedCache.current.size>64)vwapSeedCache.current.delete(vwapSeedCache.current.keys().next().value!);
+            chartVwapCache.writeSeed(cacheOwner,key,value);
           }).catch(()=>{if(!abort.signal.aborted)seedFailures.set(key,Date.now());}).finally(()=>{pendingSeeds.delete(key);if(!disposed)writeAll(false);});
         }
         return validCached;
@@ -312,7 +386,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         indicatorAxis?.setData([...futureIndicatorTimes].sort((a,b)=>a-b).map(time=>({time:time as Stamp})));
         updateStudyFormats();updateIndicatorLegend();
         updateBandFills();
-        if(calendarReady)setSessionMessage(vwapProblem|| (seedError?'VWAP history could not load. Retrying shortly.':seedLoading?'Loading VWAP history…':''));
+        const hasVwapSnapshot=[...vwapReadoutKeys.values()].some(key=>chartVwapCache.readReadout(cacheOwner,historyBasisDate+key));
+        if(calendarReady)setSessionMessage(vwapProblem|| (seedError&&!hasVwapSnapshot?'VWAP history could not load. Retrying shortly.':seedLoading&&!hasVwapSnapshot?'Loading VWAP history…':''));
         if(initial){
           const from=typeof restore?.range?.from==="number"&&data.length?Math.max(restore.range.from,data[0].time):null;
           const to=typeof restore?.range?.to==="number"&&data.length?Math.min(restore.range.to,data[data.length-1].time):null;
@@ -416,7 +491,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if(!message.available||message.symbol!==ticker||message.status?.symbol!==ticker||typeof message.status.halted!=="boolean")return;
         const at=Date.parse(message.status.observedAt);
         if(!Number.isFinite(at)||at<haltStatusAt)return;
-        haltStatusAt=at;chartHalted=message.status.halted;renderPriceGuide();
+        haltStatusAt=at;chartHalted=message.status.halted;renderPriceGuide();updateIndicatorLegend();
       });
       source.addEventListener("bar", event => {
         if (disposed) return;
@@ -476,12 +551,13 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       const confirmationTimer=setInterval(()=>{const minute=Math.floor(Date.now()/60_000);if(minute!==confirmationMinute){confirmationMinute=minute;if(!disposed&&loaded&&studies.some(study=>study.indicator.type==='VWAP'&&study.indicator.calculationTimeframe&&study.indicator.calculationTimeframe!==timeframe))writeAll(false);}},1000);
       const gapTimer = setInterval(() => { if (!disposed && loaded && connected){if(historyBasisDate!==easternClock(Date.now()).date)void loadHistory();else if(timeframe!=="1D")writeAll(false);} }, 60_000);
       const remove = removeChart;
-      removeChart = () => { saveView();clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);if(loaded)memory.current={key:cacheKey,basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,range:chart.timeScale().getVisibleRange(),logicalRange:chart.timeScale().getVisibleLogicalRange(),axis:{first:displayPoints[0]?.time,last:displayPoints.at(-1)?.time,count:displayPoints.length,sessions:sessionKey},priceRange:chart.priceScale("right").getVisibleRange()}; element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.replaceChildren();remove?.(); };
+      removeChart = () => { saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);if(loaded)memory.current={key:cacheKey,basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,range:chart.timeScale().getVisibleRange(),logicalRange:chart.timeScale().getVisibleLogicalRange(),axis:{first:displayPoints[0]?.time,last:displayPoints.at(-1)?.time,count:displayPoints.length,sessions:sessionKey},priceRange:chart.priceScale("right").getVisibleRange()}; element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
+      updateIndicatorLegend();
       await loadHistory();
     }
     void start().catch(() => { if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [ticker, timeframe, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace]);
+  }, [ticker, timeframe, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators]);
 
   const compactToolbarHeight = 40;
   const mainToolbar = viewWorkspace === "main";
@@ -502,7 +578,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     </Stack> : <>    <Stack direction="row" sx={{ alignItems: "center", gap: 0.25, px: 0.5, minHeight: 27, flexWrap: "wrap" }}>
       <Typography sx={{ color:dark?"warning.main":"#354358",fontSize: 11, fontWeight: 700, mr: 0.5 }}>{ticker}</Typography>
       {CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
-      <Button size="small" disabled={!ready} onClick={()=>setPanel("indicators")} sx={{minHeight:mainToolbar?34:44,minWidth:0,px:0.75,textTransform:"none"}}>Indicators</Button>
+      <Button size="small" disabled={!ready} onClick={()=>openIndicators()} sx={{minHeight:mainToolbar?34:44,minWidth:0,px:0.75,textTransform:"none"}}>Indicators</Button>
       <IconButton size="small" disabled={!ready} aria-label="Chart settings" onClick={()=>setPanel("settings")} sx={{minWidth:44,minHeight:mainToolbar?34:44}}><SettingsOutlined fontSize="small"/></IconButton>
       {multiviewButton}
       {actions}
@@ -516,7 +592,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     </Menu>
     <Menu keepMounted anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
       <MenuItem disabled={!ready} onClick={() => { setFrameAnchor(menuAnchor); setMenuAnchor(null); }}>Timeframe</MenuItem>
-      <MenuItem disabled={!ready} onClick={() => { setPanel("indicators"); setMenuAnchor(null); }}>Indicators</MenuItem>
+      <MenuItem disabled={!ready} onClick={() => { openIndicators(); setMenuAnchor(null); }}>Indicators</MenuItem>
       <MenuItem disabled={!ready} onClick={() => { setPanel("settings"); setMenuAnchor(null); }}>Appearance</MenuItem>
     </Menu>
     </> : null}
@@ -525,7 +601,23 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     {historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
     {error ? <Stack role="alert" direction="row" sx={{ alignItems: "center", px: 1, gap: 1 }}><Typography sx={{ fontSize: 12 }}>{error}</Typography><Button size="small" onClick={() => setAttempt(value => value + 1)}>Retry</Button></Stack> : null}
     <Box ref={crosshairDetails} data-chart-crosshair-details sx={{position:compact?"absolute":"static",top:compact?compactToolbarHeight:undefined,left:0,right:0,zIndex:2,pointerEvents:"none",minHeight:compact?0:16,px:0.5,fontSize:10,color:"text.secondary",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} />
-    <Box sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}><Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/><Box ref={indicatorLegend} data-chart-indicator-legend sx={{position:"absolute",zIndex:1,top:4,left:8,right:65,display:"flex",flexWrap:"wrap",columnGap:1,rowGap:0.25,fontSize:11,pointerEvents:"none",maxHeight:"40%",overflow:"hidden"}}/><Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/></Box>
-    <ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={preferences} onChange={changePreferences} message={message}/>
+    <Box sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}><Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/><Box ref={indicatorLegend} data-chart-indicator-legend sx={{position:"absolute",zIndex:1,top:4,left:8,right:65,pointerEvents:"none",fontSize:11}}>
+      {readoutTypes.map(type=><Box key={type} sx={{display:indicatorDisplay.hidden.has(type)?"none":"flex",alignItems:"center",gap:0.6,minWidth:0}}>
+        <Button size="small" aria-haspopup="menu" aria-expanded={indicatorMenu?.type===type} aria-label={`${indicatorName(type)} options`}
+          onClick={event=>setIndicatorMenu({anchor:event.currentTarget,type})}
+          sx={{pointerEvents:"auto",color:dark?"#e3e8ef":"#243246",minWidth:0,minHeight:compact?28:20,px:0.4,py:0,fontSize:11,lineHeight:1.25,fontWeight:700}}>
+          {indicatorName(type)}
+        </Button>
+        <Box data-indicator-readout={type} sx={{display:"flex",gap:0.75,flexWrap:"wrap",minWidth:0,fontVariantNumeric:"tabular-nums","& span":{whiteSpace:"nowrap"}}}/>
+      </Box>)}
+    </Box><Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/></Box>
+    <Menu anchorEl={indicatorMenu?.anchor} open={Boolean(indicatorMenu)} onClose={()=>setIndicatorMenu(null)}>
+      {indicatorMenu?[
+        <MenuItem key="settings" onClick={()=>{openIndicators(indicatorMenu.type);setIndicatorMenu(null);}}>Settings</MenuItem>,
+        <MenuItem key="hide" onClick={()=>{changeIndicatorDisplay(indicatorMenu.type,"hidden",true);setIndicatorMenu(null);}}>Hide details</MenuItem>,
+        <MenuItem key="off" onClick={()=>{changeIndicatorDisplay(indicatorMenu.type,"enabled",false);setIndicatorMenu(null);}}>Turn off</MenuItem>,
+      ]:null}
+    </Menu>
+    <ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={preferences} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/>
   </Box>;
 }

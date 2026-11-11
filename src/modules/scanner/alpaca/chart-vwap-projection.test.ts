@@ -1,3 +1,4 @@
+import { indicatorReadoutIndex } from "./chart-vwap-projection";
 // @vitest-environment node
 import {expect,it} from 'vitest';
 import {CHART_TIMEFRAMES} from './candles';
@@ -61,3 +62,14 @@ for(const chartFrame of CHART_TIMEFRAMES)for(const calculationFrame of CHART_TIM
   }
  });
 }
+
+it("keeps the VWAP readout on carried halt candles, then uses the resumed value",()=>{
+  const halt=Date.parse("2026-11-11T16:15:00Z")/1000;
+  const points=[{time:halt-60,value:0.94},{time:halt+300,value:0.99}];
+  expect(indicatorReadoutIndex(points,halt,true)).toBe(0);
+  expect(indicatorReadoutIndex(points,halt+240,true)).toBe(0);
+  expect(indicatorReadoutIndex(points,halt+300,false)).toBe(1);
+  expect(indicatorReadoutIndex(points,undefined,false)).toBe(1);
+  expect(indicatorReadoutIndex(points,halt,false)).toBe(-1);
+  expect(indicatorReadoutIndex(points,halt+86400,true)).toBe(-1);
+});

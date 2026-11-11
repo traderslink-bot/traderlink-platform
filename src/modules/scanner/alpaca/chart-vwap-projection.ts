@@ -1,4 +1,20 @@
+import {easternClock} from '../live/sessions';
 import type {IndicatorPoint} from './chart-indicators';
+
+/** Use the last same-day value when the crosshair is on a no-trade slot. */
+export function indicatorReadoutIndex(points:readonly IndicatorPoint[],time:unknown,carried:boolean):number {
+ if(time===undefined)return points.length-1;
+ if(typeof time!=='number')return -1;
+ let low=0,high=points.length;
+ while(low<high){
+  const middle=(low+high)>>>1;
+  if(points[middle].time<time)low=middle+1;
+  else high=middle;
+ }
+ if(points[low]?.time===time)return low;
+ const previous=points[low-1];
+ return carried&&previous&&easternClock(previous.time*1000).date===easternClock(time*1000).date?low-1:-1;
+}
 
 /** Quiet display slots do not add volume or interpolate a fictitious VWAP move. */
 export function carryVwapPoints(points:readonly IndicatorPoint[],axis:readonly {time:number;carried?:boolean}[],sameAnchor:(previous:number,current:number)=>boolean):IndicatorPoint[]{

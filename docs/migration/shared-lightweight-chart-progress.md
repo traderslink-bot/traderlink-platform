@@ -129,3 +129,17 @@ Replaced fixed initial 240/100-bar windows in the shared renderer with timeframe
 ## November 11, 2026 — Public chart attribution
 
 The shared chart renders without a credit link or information card. The public `traderslink.pro/attributions` page carries the exact v5.2.0 upstream notice and links to TradingView. The main domain forwards the route to Platform, which renders the page with the homepage navigation and footer.
+
+## November 11, 2026 — Ticker tab alignment
+
+The chart workspace lays out equal-width ticker tabs from the left. Each ticker has its own close button, and the selected tab has an orange border on all sides. The row can scroll on narrow screens.
+
+## November 11, 2026 — Indicator readouts and chart controls
+
+The chart shows compact, color-matched values grouped by indicator. The indicator name opens Settings, Hide details and Turn off. The Indicators drawer can restore either state. Display choices stay in memory for the same open chart across tab changes, and closing or replacing a chart clears them. Saved indicator configurations and presets continue through the existing account preferences editor.
+
+The built-in presets use distinct line colors. Price-scale indicator labels default off. Chart settings applies the label setting to all indicators, and Style can override individual labels.
+
+VWAP keeps its last valid readout on no-trade halt slots. Refreshes of a valid historical seed run silently, and the next real candle updates the readout after trading resumes.
+
+VWAP reuses validated seeds and the last same-day readout per account and calculation settings across chart tab switches and browser reloads. Live candle reconciliation updates the readout after history catches up.

@@ -30,6 +30,8 @@ export type DashboardNavigationIconKey =
   | "results"
   | "rules"
   | "scanner"
+  | "screener"
+  | "tradeJournal"
   | "ticker"
   | "timing"
   | "tradeAnalysis"
@@ -65,10 +67,11 @@ export function isDashboardNavigationItem(
 }
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "stockTools";
+  id: "tradeJournal" | "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "stockTools";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationGroupItem[];
+  subgroups?: readonly DashboardNavigationGroup[];
 }>;
 
 export const DASHBOARD_MARKET_HALT_ALERTS_ITEM: DashboardNavigationDrawerItem =
@@ -220,7 +223,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
         Object.freeze({ href: "/watchlist", label: "Watchlist", icon: "watchlist" as const }),
         Object.freeze({ href: "/scanners", label: "Scanners", icon: "scanner" as const }),
-        Object.freeze({ href: "/screeners", label: "Screeners", icon: "scanner" as const, statusLabel: "Coming soon" as const }),
+        Object.freeze({ href: "/screeners", label: "Screeners", icon: "screener" as const, statusLabel: "Coming soon" as const }),
         Object.freeze({ href: "/private-watchlist", label: "Private Watchlist", icon: "watchlist" as const }),
         Object.freeze({ href: "/reverse-splits", label: "Reverse Splits", icon: "compareArrows" as const }),
         Object.freeze({ href: "/levels", label: "Levels Generator", icon: "marketCharts" as const }),
@@ -259,9 +262,18 @@ export type DashboardSidebarNavigationSection = Readonly<
   }
 >;
 
+const journalGroupIds = new Set<DashboardNavigationGroup["id"]>(["tradeEntry", "trades", "tradeAnalyzer", "analytics"]);
+const tradeJournalGroup: DashboardNavigationGroup = Object.freeze({
+  id: "tradeJournal",
+  label: "Trade Journal",
+  icon: "tradeJournal",
+  items: Object.freeze([DASHBOARD_HOME_ITEM]),
+  subgroups: Object.freeze(DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(group => journalGroupIds.has(group.id))),
+});
+
 export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNavigationSection[] =
-  Object.freeze(DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group) =>
-    Object.freeze({ kind: "group" as const, group })));
+  Object.freeze([tradeJournalGroup, ...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(group => !journalGroupIds.has(group.id))]
+    .map(group => Object.freeze({ kind: "group" as const, group })));
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({

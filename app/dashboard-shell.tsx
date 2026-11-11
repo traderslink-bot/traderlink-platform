@@ -34,7 +34,9 @@ import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import RttIcon from "@mui/icons-material/Rtt";
 import ScienceRoundedIcon from "@mui/icons-material/ScienceRounded";
-import SavedSearchRoundedIcon from "@mui/icons-material/SavedSearchRounded";
+import RadarRoundedIcon from "@mui/icons-material/RadarRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
@@ -71,7 +73,6 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
-  DASHBOARD_HOME_ITEM,
   DASHBOARD_MARKET_HALT_ALERTS_ITEM,
   DASHBOARD_NAVIGATION_HREFS,
   DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
@@ -145,7 +146,9 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     reflection: <NoteAltRoundedIcon />,
     results: <QueryStatsRoundedIcon />,
     rules: <GavelRoundedIcon />,
-    scanner: <SavedSearchRoundedIcon />,
+    scanner: <RadarRoundedIcon />,
+    screener: <FilterListRoundedIcon />,
+    tradeJournal: <MenuBookRoundedIcon />,
     ticker: <RttIcon />,
     timing: <QueryBuilderIcon />,
     tradeAnalysis: <ShowChartRoundedIcon />,
@@ -597,6 +600,131 @@ export function DashboardShell({
 
   const navigation = (mobile: boolean) => {
     const compact = mobile ? false : collapsed;
+    const hasActiveRoute = (group: DashboardNavigationGroup): boolean =>
+      group.items.some(item => isDashboardNavigationItem(item) && isActive(pathname, item.href)) ||
+      Boolean(group.subgroups?.some(hasActiveRoute));
+    const renderGroup = (group: DashboardNavigationGroup, divider: ReactNode, nested = false): ReactNode => {
+      const open = expandedGroups[group.id] ?? hasActiveRoute(group);
+      const groupUnreadCount = group.id === "pressReleases"
+        ? pressReleaseUnreadCounts?.all ?? 0
+        : 0;
+      if (compact) return (
+        <Box key={group.id} component="li">
+          {divider}
+          <Tooltip title={group.label} placement="right">
+            <ListItemButton
+              aria-label={group.label}
+              aria-expanded={false}
+              selected={hasActiveRoute(group)}
+              onClick={() => {
+                setExpandedGroups(current => ({ ...current, [group.id]: true }));
+                setDesktopNavigationCollapsed(false);
+              }}
+              sx={{ mx: 1, minHeight: 44, borderRadius: 2, justifyContent: "center", px: 1 }}
+            >
+              <ListItemIcon sx={{ minWidth: 0 }}>{navigationIcon(group.icon)}</ListItemIcon>
+            </ListItemButton>
+          </Tooltip>
+        </Box>
+      );
+      return (
+        <Box
+          key={group.id}
+          component="li"
+          sx={{ my: 0.5, py: 0.5 }}
+        >
+          {divider}
+          <ListItemButton
+              aria-expanded={open}
+              onClick={() =>
+                setExpandedGroups((current) => ({
+                  ...current,
+                  [group.id]: !open,
+                }))
+              }
+              sx={{ borderRadius: 2, minHeight: nested ? 38 : 42, mx: 1, mt: 0.25 }}
+            >
+              <ListItemIcon sx={{ minWidth: 38 }}>
+                {navigationIcon(group.icon)}
+              </ListItemIcon>
+              <ListItemText
+                primary={(
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                    <span>{group.label}</span>
+                    {groupUnreadCount > 0 ? (
+                      <Box
+                        component="span"
+                        sx={{
+                          bgcolor: "error.main",
+                          borderRadius: 5,
+                          color: "error.contrastText",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          lineHeight: "20px",
+                          minWidth: 20,
+                          px: 0.75,
+                          textAlign: "center",
+                        }}
+                      >
+                        {groupUnreadCount > 99 ? "99+" : groupUnreadCount}
+                      </Box>
+                    ) : null}
+                  </Stack>
+                )}
+                slotProps={{
+                  primary: {
+                    sx: { fontSize: 14.5, fontWeight: 820 },
+                  },
+                }}
+              />
+              {open ? (
+                <ExpandLessRoundedIcon fontSize="small" />
+              ) : (
+                <ExpandMoreRoundedIcon fontSize="small" />
+              )}
+            </ListItemButton>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <List
+              disablePadding
+              sx={{
+                borderLeft: (theme) => `2px solid ${theme.palette.mode === "dark" ? theme.palette.divider : "#d4dae3"}`,
+                ml: 2.5,
+                mr: 0.5,
+              }}
+            >
+              {group.items.map((item) => isDashboardNavigationItem(item) ? (
+                <Box component="li" key={item.href} sx={{ listStyle: "none" }}>
+                  <NavigationLink
+                    collapsed={false}
+                    grouped
+                    offline={offline}
+                    item={item}
+                    onNavigate={closeMobile}
+                    onOpenTradeDrawer={openWorkspaceTradeDrawer}
+                    onOpenAiChat={openAiChat}
+                    pathname={pathname}
+                    unreadCount={pressReleaseUnreadCount(
+                      item.href,
+                      pressReleaseUnreadCounts,
+                    )}
+                  />
+                </Box>
+              ) : offline || item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id ? null : (
+                <NavigationDrawerButton
+                  collapsed={false}
+                  grouped
+                  item={item}
+                  key={item.id}
+                  onOpen={openMarketHaltAlerts}
+                />
+              ))}
+              {group.subgroups?.map(subgroup => renderGroup(subgroup, null, true))}
+            </List>
+          </Collapse>
+        </Box>
+      );
+    };
+
     return (
       <Stack sx={{ height: "100%" }}>
         {mobile ? (
@@ -651,133 +779,14 @@ export function DashboardShell({
           sx={{ flexGrow: 1, overflowY: "auto", py: 1.25 }}
         >
           <List disablePadding>
-            <NavigationLink
-              collapsed={compact}
-              offline={offline}
-              item={DASHBOARD_HOME_ITEM}
-              onNavigate={closeMobile}
-              onOpenTradeDrawer={openWorkspaceTradeDrawer}
-              onOpenAiChat={openAiChat}
-              pathname={pathname}
-            />
-            {sidebarNavigationSections.map((section, sectionIndex) => {
-              const divider = section.dividerBefore ? (
-                <Divider sx={{ my: 1.25 }} />
-              ) : compact && sectionIndex > 0 ? (
-                <Divider sx={{ mx: 2, my: 0.75 }} />
-              ) : null;
-
-              const { group } = section;
-              const open = expandedGroups[group.id] ?? group.items.some((item) =>
-                isDashboardNavigationItem(item) && isActive(pathname, item.href));
-              const groupUnreadCount = group.id === "pressReleases"
-                ? pressReleaseUnreadCounts?.all ?? 0
-                : 0;
-              return (
-                <Box
-                  key={group.id}
-                  sx={compact ? undefined : {
-                    my: 0.5,
-                    py: 0.5,
-                  }}
-                >
-                  {divider}
-                  {compact ? null : (
-                    <ListItemButton
-                      aria-expanded={open}
-                      onClick={() =>
-                        setExpandedGroups((current) => ({
-                          ...current,
-                          [group.id]: !current[group.id],
-                        }))
-                      }
-                      sx={{ borderRadius: 2, minHeight: 42, mx: 1, mt: 0.25 }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 38 }}>
-                        {navigationIcon(group.icon)}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={(
-                          <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
-                            <span>{group.label}</span>
-                            {groupUnreadCount > 0 ? (
-                              <Box
-                                component="span"
-                                sx={{
-                                  bgcolor: "error.main",
-                                  borderRadius: 5,
-                                  color: "error.contrastText",
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                  lineHeight: "20px",
-                                  minWidth: 20,
-                                  px: 0.75,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {groupUnreadCount > 99 ? "99+" : groupUnreadCount}
-                              </Box>
-                            ) : null}
-                          </Stack>
-                        )}
-                        slotProps={{
-                          primary: {
-                            sx: { fontSize: 14.5, fontWeight: 820 },
-                          },
-                        }}
-                      />
-                      {open ? (
-                        <ExpandLessRoundedIcon fontSize="small" />
-                      ) : (
-                        <ExpandMoreRoundedIcon fontSize="small" />
-                      )}
-                    </ListItemButton>
-                  )}
-                  <Collapse in={compact || open} timeout="auto" unmountOnExit>
-                    <List
-                      disablePadding
-                      sx={compact ? undefined : {
-                        borderLeft: (theme) => `2px solid ${theme.palette.mode === "dark" ? theme.palette.divider : "#d4dae3"}`,
-                        ml: 2.5,
-                        mr: 0.5,
-                      }}
-                    >
-                      {group.items.map((item) => isDashboardNavigationItem(item) ? (
-                        <Box component="li" key={item.href} sx={{ listStyle: "none" }}>
-                        <NavigationLink
-                          collapsed={compact}
-                          grouped
-                          offline={offline}
-                          item={item}
-                          onNavigate={closeMobile}
-                          onOpenTradeDrawer={openWorkspaceTradeDrawer}
-                          onOpenAiChat={openAiChat}
-                          pathname={pathname}
-                          unreadCount={pressReleaseUnreadCount(
-                            item.href,
-                            pressReleaseUnreadCounts,
-                          )}
-                        />
-                        </Box>
-                      ) : offline || item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id ? null : (
-                        <NavigationDrawerButton
-                          collapsed={compact}
-                          grouped
-                          item={item}
-                          key={item.id}
-                          onOpen={openMarketHaltAlerts}
-                        />
-                      ))}
-                    </List>
-                  </Collapse>
-                </Box>
-              );
-            })}
+            {sidebarNavigationSections.map((section, index) => renderGroup(section.group,
+              section.dividerBefore ? <Divider sx={{ my: 1.25 }} /> :
+                compact && index > 0 ? <Divider sx={{ mx: 2, my: 0.75 }} /> : null))}
           </List>
         </Box>
         <Stack spacing={0.5} sx={{ px: compact ? 1 : 2, py: 1 }}>
           <DashboardAppearanceSwitch compact={compact} />
-          <InstallTradersLinkPwaMethods compact={compact} />
+          {!compact && <InstallTradersLinkPwaMethods compact={false} />}
         </Stack>
       </Stack>
     );

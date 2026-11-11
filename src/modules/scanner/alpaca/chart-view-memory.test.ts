@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { canRestoreChartPrice, ChartViewMemory, restoreChartRange, type ChartViewSnapshot } from "@/app/(dashboard)/charts/chart-view-memory";
+import { canRestoreChartPrice, ChartViewMemory, defaultIndicatorDisplay, restoreChartRange, type ChartViewSnapshot } from "@/app/(dashboard)/charts/chart-view-memory";
 import { singleChart } from "./chart-multiview";
 const view: ChartViewSnapshot = {symbol:"OMH",timeframe:"1m",sessions:"[true,true,true]",basisDate:"2026-11-10",range:{from:100,to:180},logicalRange:{from:1.25,to:4.75},axis:{first:80,last:200,count:7,sessions:"[true,true,true]"},anchor:{time:100,offset:0.25},priceRange:{from:1,to:4},autoScale:false,preferenceAutoScale:true,logarithmic:false};
 function fixture(){const values=new Map<string,string>();const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);},removeItem:(k:string)=>{values.delete(k);}};return {values,storage,memory:new ChartViewMemory(()=>storage)};}
@@ -32,4 +32,22 @@ it("does not restore manual price ranges across adjustment dates or changed scal
  expect(canRestoreChartPrice(view,{autoScale:true,logarithmic:false},"2026-11-11")).toBe(false);
  expect(canRestoreChartPrice(view,{autoScale:false,logarithmic:false},"2026-11-10")).toBe(false);
  expect(canRestoreChartPrice(view,{autoScale:true,logarithmic:true},"2026-11-10")).toBe(false);
+});
+
+it("retains display choices for the same chart while pruning closed or replaced charts",()=>{
+  const memory=new ChartViewMemory(()=>undefined);
+  const layout={version:1 as const,selectedPanel:"one",groups:[
+    {id:"group-1",symbol:"NCT",panels:[{id:"one",timeframe:"1m" as const}]},
+    {id:"group-2",symbol:"OMH",panels:[{id:"two",timeframe:"5m" as const}]},
+  ]};
+  memory.retain("owner","main",layout);
+  const display={hidden:new Set(["EMA"] as const),enabled:{SMA:false}};
+  memory.writeIndicatorDisplay("owner","main","one","NCT",display);
+  expect(memory.readIndicatorDisplay("owner","main","one","NCT")).toBe(display);
+  expect(memory.readIndicatorDisplay("owner","main","two","OMH")).toBe(defaultIndicatorDisplay);
+  expect(memory.readIndicatorDisplay("owner","scanner","one","NCT")).toBe(defaultIndicatorDisplay);
+  memory.retain("owner","main",{...layout,groups:[{...layout.groups[0],symbol:"SMX"},layout.groups[1]]});
+  expect(memory.readIndicatorDisplay("owner","main","one","SMX")).toBe(defaultIndicatorDisplay);
+  memory.retain("owner","main",layout);
+  expect(memory.readIndicatorDisplay("owner","main","one","NCT")).toBe(defaultIndicatorDisplay);
 });

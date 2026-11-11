@@ -15,30 +15,38 @@ export function defaultVwapBands(firstEnabled=true):VwapBands{
  return {mode:'Standard deviation',levels:[level(0),level(1),level(2)]};
 }
 export type PlotStyle={visible?:boolean;color?:string;width?:1|2|3|4;style?:0|1|2};
-export type IndicatorOutput={precision?:number;priceScaleLabels:boolean;statusLineValues:boolean};
+export type IndicatorOutput={precision?:number;priceScaleLabels?:boolean;statusLineValues:boolean};
 export type ChartIndicator={output?:IndicatorOutput;id:string;type:IndicatorType;period:number;color:string;width:1|2|3;anchor?:typeof VWAP_ANCHORS[number];hideOnDaily?:boolean;vwapBands?:VwapBands;offset?:number;calculationTimeframe?:ChartTimeframe;waitForClose?:boolean;timeframes?:ChartTimeframe[];source?:PriceSource;visible?:boolean;fastLength?:number;slowLength?:number;signalLength?:number;oscillatorMa?:"SMA"|"EMA";signalMa?:"SMA"|"EMA";deviation?:number;basisMa?:MaType;levels?:{upper:number;middle:number;lower:number};smoothing?:{type:MaType|"None"|"SMA+BB";length:number;deviation:number};plots?:Record<string,PlotStyle>};
 export const MAX_SAVED_INDICATOR_PRESETS = 20;
 export const MAX_SAVED_INDICATOR_PRESET_BYTES = 32 * 1024;
 export const MAX_INDICATOR_PRESET_NAME_LENGTH = 60;
 export type SavedIndicatorPreset = { id: string; name: string; type: IndicatorType; indicators: ChartIndicator[] };
-export type ChartPreferences={version:1;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;autoScale:boolean;scalePriceOnly?:boolean;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
+export type ChartPreferences={version:1;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
 export const DEFAULT_CHART_PREFERENCES:ChartPreferences={version:1,timeframe:'1m',theme:'auto',kind:'candles',grid:true,volume:true,volumeHeight:20,logarithmic:false,autoScale:true,timezone:'America/New_York',upColor:'#16a085',downColor:'#e45757',premarket:true,regular:true,postmarket:true,indicators:[]};
+export function indicatorPriceScaleLabels(preferences:ChartPreferences,indicator:ChartIndicator):boolean {
+ return indicator.output?.priceScaleLabels??preferences.indicatorPriceScaleLabels??false;
+}
+export function setAllIndicatorPriceScaleLabels(preferences:ChartPreferences,visible:boolean):ChartPreferences {
+ return {...preferences,indicatorPriceScaleLabels:visible,indicators:preferences.indicators.map(indicator=>
+  indicator.output?.priceScaleLabels===undefined?indicator:{...indicator,output:{...indicator.output,priceScaleLabels:undefined}})};
+}
 export function parseChartPreferences(value:unknown):ChartPreferences{
  if(!value||typeof value!=='object')throw Error('invalid_preferences');const p=value as ChartPreferences;
  if(p.version!==1||!CHART_TIMEFRAMES.includes(p.timeframe)||!['auto','light','dark'].includes(p.theme)||!['candles','bars','line'].includes(p.kind)||!['America/New_York','America/Toronto','UTC'].includes(p.timezone)||!Number.isInteger(p.volumeHeight)||p.volumeHeight<10||p.volumeHeight>40)throw Error('invalid_preferences');
  for(const key of ['grid','volume','logarithmic','autoScale','premarket','regular','postmarket'] as const)if(typeof p[key]!=='boolean')throw Error('invalid_preferences');
  if(!p.premarket&&!p.regular&&!p.postmarket)throw Error('invalid_preferences');
  const color=(s:unknown)=>typeof s==='string'&&/^#[a-f0-9]{6}$/i.test(s);
+ if(p.indicatorPriceScaleLabels!==undefined&&typeof p.indicatorPriceScaleLabels!=='boolean')throw Error('invalid_preferences');
  if(p.scalePriceOnly!==undefined&&typeof p.scalePriceOnly!=='boolean')throw Error('invalid_preferences');
  if(!color(p.upColor)||!color(p.downColor)||!Array.isArray(p.indicators)||p.indicators.length>20)throw Error('invalid_preferences');
  const presets = p.savedIndicatorPresets === undefined ? undefined : parseSavedIndicatorPresets(p.savedIndicatorPresets);
- return {version:1,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,autoScale:p.autoScale,...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
+ return {version:1,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,autoScale:p.autoScale,...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
 }
 
 function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {
  const color=(s:unknown)=>typeof s==='string'&&/^#[a-f0-9]{6}$/i.test(s);
  const ids=new Set<string>();for(const i of indicators){if(!i||typeof i.id!=='string'||!/^[-a-zA-Z0-9]{1,80}$/.test(i.id)||ids.has(i.id)||!INDICATOR_TYPES.includes(i.type)||!Number.isInteger(i.period)||i.period<1||i.period>10000||!color(i.color)||![1,2,3].includes(i.width))throw Error('invalid_preferences');ids.add(i.id);
- if(i.output!==undefined&&(!i.output||typeof i.output!=='object'||typeof i.output.priceScaleLabels!=='boolean'||typeof i.output.statusLineValues!=='boolean'||i.output.precision!==undefined&&(!Number.isInteger(i.output.precision)||i.output.precision<0||i.output.precision>16)))throw Error('invalid_preferences');
+ if(i.output!==undefined&&(!i.output||typeof i.output!=='object'||i.output.priceScaleLabels!==undefined&&typeof i.output.priceScaleLabels!=='boolean'||typeof i.output.statusLineValues!=='boolean'||i.output.precision!==undefined&&(!Number.isInteger(i.output.precision)||i.output.precision<0||i.output.precision>16)))throw Error('invalid_preferences');
  if(i.vwapBands!==undefined){
   const bands=i.vwapBands;
   if(i.type!=='VWAP'||!bands||!['Standard deviation','Percentage'].includes(bands.mode)||!Array.isArray(bands.levels)||bands.levels.length!==3)throw Error('invalid_preferences');
@@ -57,7 +65,7 @@ function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {
  if(i.plots!==undefined){if(!i.plots||typeof i.plots!=='object'||Array.isArray(i.plots)||Object.keys(i.plots).length>16)throw Error('invalid_preferences');for(const [key,plot]of Object.entries(i.plots)){if(!/^[a-z0-9-]{1,30}$/.test(key)||!plot||typeof plot!=='object'||plot.visible!==undefined&&typeof plot.visible!=='boolean'||plot.color!==undefined&&!color(plot.color)||plot.width!==undefined&&![1,2,3,4].includes(plot.width)||plot.style!==undefined&&![0,1,2].includes(plot.style))throw Error('invalid_preferences');}}
  }
  return indicators.map(i=>({id:i.id,type:i.type,period:i.period,color:i.color,width:i.width,
- ...(i.output?{output:{priceScaleLabels:i.output.priceScaleLabels,statusLineValues:i.output.statusLineValues,...(i.output.precision!==undefined?{precision:i.output.precision}:{})}}:{}),
+ ...(i.output?{output:{...(i.output.priceScaleLabels!==undefined?{priceScaleLabels:i.output.priceScaleLabels}:{}),statusLineValues:i.output.statusLineValues,...(i.output.precision!==undefined?{precision:i.output.precision}:{})}}:{}),
  ...(i.vwapBands?{vwapBands:{mode:i.vwapBands.mode,levels:i.vwapBands.levels.map(level=>({enabled:level.enabled,multiplier:level.multiplier,fillVisible:level.fillVisible,fillColor:level.fillColor,fillOpacity:level.fillOpacity})) as VwapBands['levels']}}:{}),
  ...(i.offset!==undefined?{offset:i.offset}:{}),...(i.calculationTimeframe!==undefined?{calculationTimeframe:i.calculationTimeframe}:{}),...(i.waitForClose!==undefined?{waitForClose:i.waitForClose}:{}),
  ...(i.timeframes!==undefined?{timeframes:[...i.timeframes]}:{}),
