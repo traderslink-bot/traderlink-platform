@@ -86,3 +86,42 @@ Daily live correction and source browser qualification now pass. Daily charts ha
 ## November 10 — standard indicator completion
 
 VWAP, configurable multiple EMA/SMA lines, RSI, MACD and Bollinger Bands are technically complete for the owner-clarified standard scope. Calculation, current-candle display, practical settings and account persistence pass all six timeframes. Three complete QA inventories per indicator were executed; the first’s obsolete test expectations were corrected and the final two inventories are clean. See [final QA evidence](chart-indicator-final-qa-20261110.md). Price-only scaling and shared desktop/mobile date/crosshair fixes also pass. Help draft updated; existing public Help registry unchanged. Owner visual review and release remain separate. No production build against the mixed checkout, no push/deploy/preview change.
+
+## November 10 — multiview planning queued after scanner repair
+
+Scanner repair deployment and sustained reference qualification are complete. Owner requests main-page and scanner-drawer multiview for up to four total charts, combining multiple tickers with multiple timeframes per ticker. See [owner review proposal](shared-chart-multiview-plan.md). Layout approval remains pending; no chart implementation, preview or hosted changes made.
+
+## November 10 — multiview owner preview ready
+
+Owner approved implementation and QA before private preview. Main chart and scanner drawer now use the same shared chart renderer in up to four panels: one ticker/multiple frames, several tickers, or mixed 2+1/2+2 groups. Main/scanner layouts save independently per account, duplicate frames and fifth panels are prevented, and drawer details remain one tab per ticker. Dark chart ticker labels use the existing orange theme token at the owner's request.
+
+[QA record](shared-chart-multiview-qa.md): 19 focused tests, zero projected-source TypeScript diagnostics, clean targeted lint, and 25 real browser checks passed including private Tailscale HTTPS and phone behavior. Existing dashboard-template baseline failures are separately recorded. The authorized private preview uses isolated static scanner/news/levels fixtures and real read-only Alpaca candle delivery, with workers disabled. Source checkpoint 7186aaee4062a81405c857dbf7fb92c0e404b62b is preserved on codex/chart-multiview-implementation. Owner visual approval pending; no push, production deploy or gateway change.
+
+## November 10 — mobile Tabs/Stack setting
+
+Owner approved mobile users choosing Tabs or Stack. Mobile Multiview settings now save that choice per account/workspace. Stack includes all configured tickers and timeframes vertically; Tabs retains the selected ticker's timeframe stack. Four-panel limit and desktop grid remain unchanged. Existing saved layouts load as Tabs; ticker/chart edits preserve the setting. [QA record](shared-chart-multiview-qa.md): 20 focused tests, clean targeted types/lint, ten mobile/desktop/drawer browser checks and a real-data four-chart performance probe pass. The probe shared three streams across four charts and measured responsive scrolling; physical-phone owner acceptance remains pending. Private preview updated, no production change.
+
+## November 10 — independent landscape layouts
+
+Owner approved Portrait Tabs/Stack and Landscape Tabs/Stack/Grid, saved independently per workspace/account. Landscape Grid shows two columns with extra charts in the next scrollable row. Short-screen height is corrected so the main chart workspace and final row remain within reach; wider landscape phones receive the same compact behavior. Existing layout data is preserved. Shared chart instances and data connections remain in use. [QA record](shared-chart-multiview-qa.md): 21 focused tests, clean targeted types/lint and ten rotation/grid/scroll/desktop/drawer browser checks pass. Private preview updated; owner physical-phone visual review pending. No push or production deploy.
+
+## November 10 — compact main-chart mobile controls and Focus
+
+Owner-approved trial is ready in the private preview. Mobile main chart now uses a 44px workspace row, search dialog, layout/count icon and Focus action. Per-chart compact toolbar has ticker, direct timeframe and collapsed options. Focus fills the viewport and retains exit/dashboard navigation. Shared renderer remains the only chart implementation; scanner drawer and desktop retain current controls. Header height styling is chart-scoped, without editing shared shell source. [QA record](shared-chart-multiview-qa.md): 21 focused tests, clean targeted types/lint and eleven browser workflows pass. Loaded landscape screenshots reviewed for normal/focus canvas fit. Owner phone review pending; no production deploy/push.
+
+## November 10 — two-row mobile chart trial
+
+Owner-approved mobile main-chart trial now combines dashboard navigation/search/Multiview/Focus in one page toolbar, with Notifications/Account/Help in page options. Tabs integrate into the first chart toolbar instead of a separate selected-ticker row. Stack/Grid retain chart labels. Desktop, other pages and scanner drawers restore their normal controls. Shared shell source unchanged. [QA record](shared-chart-multiview-qa.md): 21 focused tests, clean targeted types/lint and sixteen browser workflows pass, including all relocated actions and normal-header restoration. Private preview ready for owner phone review; no hosted release.
+
+## November 10 — mobile menu icons
+
+Owner-requested account icon and chart gear replace the two ellipsis icons in compact main-chart controls. Existing menus and 44px targets verified in the mobile browser; targeted lint clean. Private preview updated, no hosted release.
+
+## November 10 — remember open chart views
+
+Owner-approved view memory now restores per-chart zoom, pan and compatible manual price scale when switching ticker tabs, navigating dashboard pages or reloading. Browser storage contains only small bounded view snapshots, scoped per account/workspace/panel/ticker/timeframe/session. Hidden charts remain unmounted; candles reload from the provider. Explicit chart/ticker close or replacement clears its snapshots, with protection against late unmount writes. Older history restoration and adjustment-date guards reuse existing data boundaries. [QA record](shared-chart-multiview-qa.md): 36 focused tests, clean targeted types/lint, eight real-data restoration/close workflows and sixteen UI regression workflows pass. Private preview updated; owner phone review pending. No hosted deployment.
+
+
+## Default candle density trial — 2026-11-10
+
+Replaced fixed initial 240/100-bar windows in the shared renderer with timeframe-specific pixel spacing (9/10/10/11/11/12px) measured against actual plot width, plus three right-side slots. Initial manual price range uses the corresponding visible slice. Saved/restored views retain priority, sparse histories keep readable spacing, and existing historical loading remains intact. Focused tests, typecheck, lint and 12 real-data phone/desktop interval checks pass. Help draft updated; public guides remain unchanged during private trial. Owner review pending; no production deployment.

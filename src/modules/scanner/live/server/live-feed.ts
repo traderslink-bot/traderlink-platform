@@ -4,6 +4,7 @@ import type { DailyUniverse, LiveScreenResults, NormalizedSnapshot, ScannerConfi
 import type { ManualScannerTicker } from "./manual-ticker-store";
 import type { ScannerMarketMovement } from "../active-halts";
 import { LiveScannerEngine, type FloatFact } from "../engine";
+import { scannerUniverseSymbolEligible } from "../universe-validation";
 import { activeSession, easternClock, type MarketDay } from "../sessions";
 import { normalizeSnapshotBatch, snapshotBatches, type SnapshotQualification } from "../snapshots";
 import type { SnapshotQualificationContext } from "../session-qualification";
@@ -48,7 +49,7 @@ export function scannerRequestMarketCap(configuration: ScannerConfiguration, ses
 }
 
 function requestUniverse(universe: DailyUniverse, maximumMarketCap: number): DailyUniverse {
-  return { ...universe,stocks:universe.stocks.filter(stock => stock.marketCapAtCollection <= maximumMarketCap) };
+  return { ...universe,stocks:universe.stocks.filter(stock => scannerUniverseSymbolEligible(stock.symbol) && stock.marketCapAtCollection <= maximumMarketCap) };
 }
 
 export class LiveScannerFeed {
@@ -105,7 +106,7 @@ export class LiveScannerFeed {
       if (!storedUniverse) {this.dependencies.inactive?.();if(this.dependencies.eventDriven)this.engine.clear();return this.set(empty("universe_missing",date));}
       const filtered=requestUniverse(storedUniverse,scannerRequestMarketCap(configuration,session));
       const manual=await this.dependencies.manualTickers?.()??[],existing=new Set(filtered.stocks.map(stock=>stock.symbol));
-      const universe={...filtered,stocks:[...filtered.stocks,...manual.filter(row=>!existing.has(row.symbol)).map(row=>({symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:1}))]};
+      const universe={...filtered,stocks:[...filtered.stocks,...manual.filter(row=>scannerUniverseSymbolEligible(row.symbol)&&!existing.has(row.symbol)).map(row=>({symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:1}))]};
       allowedSymbols = new Set(universe.stocks.map(stock => stock.symbol));
       await this.dependencies.reserveScannerBudget(universe.stocks.length);
       const symbols = universe.stocks.map(stock => stock.symbol);

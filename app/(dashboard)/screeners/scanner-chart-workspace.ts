@@ -3,8 +3,10 @@ import type { LiveScannerRow } from "@/src/modules/scanner/live/contracts";
 export type ScannerChartTarget=Readonly<{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX";showDetails?:boolean;addChart?:boolean;stock?:LiveScannerRow}>;
 export type ScannerChartWorkspace=Readonly<{charts:readonly ScannerChartTarget[];selectedSymbol:string|null;limitReached:boolean}>;
 export const EMPTY_CHART_WORKSPACE:ScannerChartWorkspace={charts:[],selectedSymbol:null,limitReached:false};
-export type ScannerChartAction={type:"replace";chart:ScannerChartTarget}|{type:"open";chart:ScannerChartTarget}|{type:"select";symbol:string}|{type:"remove";symbol:string}|{type:"close"};
+export type ScannerChartAction={type:"replace";chart:ScannerChartTarget}|{type:"open";chart:ScannerChartTarget}|{type:"select";symbol:string}|{type:"remove";symbol:string}|{type:"close"}|{type:"limit"}|{type:"configure";charts:readonly ScannerChartTarget[];selectedSymbol:string|null};
 export function scannerChartWorkspace(state:ScannerChartWorkspace,action:ScannerChartAction):ScannerChartWorkspace {
+  if(action.type==="limit")return {...state,limitReached:true};
+  if(action.type==="configure")return {charts:action.charts,selectedSymbol:action.selectedSymbol,limitReached:false};
   if(action.type==="replace")return {charts:[{...action.chart,showDetails:true}],selectedSymbol:action.chart.symbol,limitReached:false};
   if(action.type==="close")return EMPTY_CHART_WORKSPACE;
   if(action.type==="select")return state.charts.some(chart=>chart.symbol===action.symbol)?{...state,selectedSymbol:action.symbol}:state;

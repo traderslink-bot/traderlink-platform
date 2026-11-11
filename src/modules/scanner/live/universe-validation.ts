@@ -5,8 +5,9 @@ export const MAX_UNIVERSE_ROWS = 4000;
 export const MAX_UPLOAD_BYTES = 512_000;
 export const MAX_UNIVERSE_MARKET_CAP = 500_000_000;
 const SYMBOL = /^[A-Z][A-Z0-9.-]{0,15}$/u;
-const WARRANT_SUFFIX = /^[A-Z0-9]{4}W$/u;
-export function scannerUniverseSymbolEligible(symbol: string): boolean { return SYMBOL.test(symbol)&&!WARRANT_SUFFIX.test(symbol); }
+const WARRANT_SUFFIX = /(?:^[A-Z0-9]{4}W|[.-]WS)$/u;
+const WARRANT_ALIASES = new Set(["PEWW"]); // GrabAGun warrant symbol in the issuer’s SEC filings.
+export function scannerUniverseSymbolEligible(symbol: string): boolean { return SYMBOL.test(symbol) && !WARRANT_SUFFIX.test(symbol) && !WARRANT_ALIASES.has(symbol); }
 function fail(reason: string): never { throw new Error("scanner_universe_" + reason); }
 export function validDate(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value)

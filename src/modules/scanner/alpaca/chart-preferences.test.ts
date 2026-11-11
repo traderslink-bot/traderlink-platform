@@ -54,3 +54,23 @@ it('round-trips standard indicator output settings without changing legacy prefe
  }
  for(const output of [null,{}, {priceScaleLabels:true,statusLineValues:'yes'},...[-1,17,1.5,NaN].map(precision=>({priceScaleLabels:true,statusLineValues:true,precision}))])expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,indicators:[{...legacy,output}]})).toThrow();
 });
+
+it('round-trips named indicator setups by owner and validates their contents', () => {
+ const directory = mkdtempSync(join(tmpdir(), 'chart-presets-test-'));
+ directories.push(directory);
+ const indicators = [study('EMA', 9), { ...study('EMA', 21), id: 'second', plots: { main: { color: '#123456' } } }];
+ const preset = { id: 'preset-1', name: 'My intraday EMA', type: 'EMA' as const, indicators };
+ const preferences = parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, savedIndicatorPresets: [preset] });
+ writeChartPreferences(directory, 'owner-a', 0, preferences);
+ expect(readChartPreferences(directory, 'owner-a').preferences.savedIndicatorPresets).toEqual([preset]);
+ expect(readChartPreferences(directory, 'owner-b').preferences.savedIndicatorPresets).toBeUndefined();
+ expect(preferences.indicators).toEqual([]);
+ for (const invalid of [
+  [{ ...preset, name: ' ' }],
+  [{ ...preset, type: 'SMA' }],
+  [{ ...preset, indicators: [study('EMA', 0)] }],
+  [preset, { ...preset, id: 'preset-2', name: 'my intraday ema' }],
+ ]) {
+  expect(() => parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, savedIndicatorPresets: invalid })).toThrow('invalid_preferences');
+ }
+});

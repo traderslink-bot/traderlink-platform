@@ -13,7 +13,8 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import DeleteOutline from '@mui/icons-material/DeleteForeverOutlined';
 import {CHART_TIMEFRAMES} from '@/src/modules/scanner/alpaca/candles';
-import {defaultVwapBands,type VwapBandLevel,type VwapBands,INDICATOR_TYPES,VWAP_ANCHORS,MA_TYPES,PRICE_SOURCES,type ChartIndicator,type PlotStyle} from '@/src/modules/scanner/alpaca/chart-preferences';
+import {defaultVwapBands,type VwapBandLevel,type VwapBands,INDICATOR_TYPES,VWAP_ANCHORS,MA_TYPES,PRICE_SOURCES,MAX_SAVED_INDICATOR_PRESETS,MAX_SAVED_INDICATOR_PRESET_BYTES,MAX_INDICATOR_PRESET_NAME_LENGTH,type ChartIndicator,type PlotStyle,type SavedIndicatorPreset} from '@/src/modules/scanner/alpaca/chart-preferences';
+import {indicatorPresets, indicatorPresetRows, nextMovingAverageLine} from '@/src/modules/scanner/alpaca/chart-indicator-presets';
 import {indicatorPlotStyle,indicatorValues} from '@/src/modules/scanner/alpaca/chart-indicators';
 
 function NumberInput({label,value,onChange,min=1,max=10000,integer=true,disabled=false,step}:{label:string;value:number;onChange:(value:number)=>void;min?:number;max?:number|null;integer?:boolean;disabled?:boolean;step?:number}){
@@ -22,34 +23,137 @@ function NumberInput({label,value,onChange,min=1,max=10000,integer=true,disabled
 }
 function NumberSetting(props:Parameters<typeof NumberInput>[0]){return <NumberInput key={props.value} {...props}/>;}
 const name=(i:ChartIndicator)=>i.type==='EMA'||i.type==='SMA'||i.type==='RSI'?`${i.type} ${i.period}`:i.type==='MACD'?`MACD ${i.fastLength??12}, ${i.slowLength??26}, ${i.signalLength??9}`:i.type==='Bollinger'?`Bollinger Bands ${i.period}, ${i.deviation??2}`:'VWAP';
-const vwapDefaults=(id:string):ChartIndicator=>({id,type:'VWAP',period:20,color:'#2962ff',width:1,source:'hlc3',anchor:'Session',offset:0,waitForClose:true,hideOnDaily:false,output:{priceScaleLabels:true,statusLineValues:true},vwapBands:defaultVwapBands()});
-export function ChartIndicatorEditor({indicators,onChange}:{indicators:ChartIndicator[];onChange:(value:ChartIndicator[])=>void}){
+const typeName = (type: ChartIndicator['type']) => type === 'Bollinger' ? 'Bollinger Bands' : type;
+export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresetsChange}:{
+ indicators:ChartIndicator[];
+ onChange:(value:ChartIndicator[])=>void;
+ savedPresets:SavedIndicatorPreset[];
+ onPresetsChange:(presets:SavedIndicatorPreset[])=>void;
+}){
  const [search,setSearch]=useState(''),[selected,setSelected]=useState(''),[tab,setTab]=useState('inputs');
+ const [presetName,setPresetName]=useState(''),[presetError,setPresetError]=useState('');
  const active=indicators.find(i=>i.id===selected)??indicators.at(-1);
  const activeTab=tab==='visibility'&&active?.type!=='VWAP'?'inputs':tab;
  const edit=(changes:Partial<ChartIndicator>)=>{if(active)onChange(indicators.map(i=>i.id===active.id?{...i,...changes}:i));};
- const add=(type:ChartIndicator['type'])=>{const id=crypto.randomUUID(),indicator:ChartIndicator=type==='VWAP'?vwapDefaults(id):{id,type,period:type==='RSI'?14:type==='EMA'||type==='SMA'?9:20,color:['#e99b32','#42a5f5','#ab47bc','#26a69a','#ef5350'][indicators.length%5],width:2};onChange([...indicators,indicator]);setSelected(id);setTab('inputs');};
+ const lines = active ? indicators.filter(indicator => indicator.type === active.type) : [];
+ const movingAverage = active?.type === 'EMA' || active?.type === 'SMA';
+ const choose = (id: string) => { setSelected(id); setTab('inputs'); setPresetName(''); setPresetError(''); };
+ const add = (type: ChartIndicator['type']) => {
+  const existing = indicators.find(indicator => indicator.type === type);
+  if (existing) { choose(existing.id); return; }
+  const rows = indicatorPresetRows(type, 0, () => crypto.randomUUID());
+  onChange([...indicators, ...rows]);
+  choose(rows[0].id);
+ };
+ const applyPreset = (type: ChartIndicator['type'], rows: ChartIndicator[]) => {
+  const first = indicators.findIndex(indicator => indicator.type === type);
+  onChange([...indicators.slice(0, first), ...rows, ...indicators.slice(first).filter(indicator => indicator.type !== type)]);
+  choose(rows[0].id);
+ };
+ const savePreset = () => {
+  if (!active) return;
+  const name = presetName.trim();
+  if (!name || /[\u0000-\u001f\u007f]/u.test(name)) { setPresetError('Enter a preset name.'); return; }
+  if (savedPresets.some(preset => preset.type === active.type && preset.name.toLowerCase() === name.toLowerCase())) {
+   setPresetError('A preset with this name already exists for this indicator.');
+   return;
+  }
+  const next = [...savedPresets, { id: crypto.randomUUID(), name, type: active.type, indicators: lines }];
+  if (new TextEncoder().encode(JSON.stringify(next)).length > MAX_SAVED_INDICATOR_PRESET_BYTES) {
+   setPresetError('Preset storage is full. Remove a saved preset to make room.');
+   return;
+  }
+  onPresetsChange(next);
+  setPresetName('');
+  setPresetError('');
+ };
+ const editLine = (id: string, changes: Partial<ChartIndicator>) =>
+  onChange(indicators.map(indicator => indicator.id === id ? { ...indicator, ...changes } : indicator));
  const bands=active?.vwapBands??defaultVwapBands(false);
  const band=(index:number,changes:Partial<VwapBandLevel>)=>edit({vwapBands:{...bands,levels:bands.levels.map((level,n)=>n===index?{...level,...changes}:level) as VwapBands['levels']}});
  const style=(key:string,changes:PlotStyle)=>{if(active)edit({plots:{...active.plots,[key]:{...active.plots?.[key],...changes}}});};
  const sourceLabel=(source:string)=>({open:'Open',high:'High',low:'Low',close:'Close',hl2:'HL2',hlc3:'HLC3',ohlc4:'OHLC4',hlcc4:'HLCC4'}[source]??source);
  return <>
   <TextField label="Search indicators" value={search} onChange={e=>setSearch(e.target.value)} size="small"/>
-  <Stack direction="row" sx={{flexWrap:'wrap',gap:1}}>{INDICATOR_TYPES.filter(type=>(type==='Bollinger'?'Bollinger Bands':type).toLowerCase().includes(search.toLowerCase())).map(type=><Button variant="outlined" key={type} disabled={indicators.length>=20} onClick={()=>add(type)}>Add {type==='Bollinger'?'Bollinger Bands':type}</Button>)}</Stack>
-  <Typography variant="body2" color="text.secondary">Add EMA or SMA more than once to show different lengths together.</Typography>
-  {!indicators.length?<Typography variant="body2">Choose an indicator to add it to your chart.</Typography>:<>
-   <Typography component="h3" sx={{fontWeight:700}}>On this chart</Typography>
-   {indicators.map(i=><Stack key={i.id} direction="row" sx={{alignItems:'center',gap:0.5,border:1,borderColor:active?.id===i.id?'primary.main':'divider',minWidth:0}}>
-    <Checkbox size="small" checked={i.visible!==false} slotProps={{input:{'aria-label':`Show ${name(i)}`}}} onChange={(_,visible)=>onChange(indicators.map(row=>row.id===i.id?{...row,visible}:row))}/>
-    <Button onClick={()=>{setSelected(i.id);setTab('inputs');}} aria-pressed={active?.id===i.id} sx={{flex:1,justifyContent:'flex-start',textTransform:'none',minWidth:0}}>{name(i)}</Button>
-    <IconButton aria-label={`Remove ${name(i)}`} onClick={()=>onChange(indicators.filter(row=>row.id!==i.id))}><DeleteOutline/></IconButton>
-   </Stack>)}
-  </>}
+  <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+   {INDICATOR_TYPES.filter(type => typeName(type).toLowerCase().includes(search.toLowerCase())).map(type => {
+    const added = indicators.some(indicator => indicator.type === type);
+    return <Button variant="outlined" key={type} disabled={!added && indicators.length + indicatorPresets[type][0].settings.length > 20} onClick={() => add(type)}>{added ? `Edit ${typeName(type)}` : `Add ${typeName(type)}`}</Button>;
+   })}
+  </Stack>
+  {indicators.length ? <>
+   <Typography component="h3" sx={{ fontWeight: 700 }}>On this chart</Typography>
+   {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
+    const group = indicators.filter(indicator => indicator.type === type);
+    return <Stack key={type} direction="row" sx={{ alignItems: 'center', gap: 0.5, border: 1, borderColor: active?.type === type ? 'primary.main' : 'divider', minWidth: 0 }}>
+     <Checkbox size="small" checked={group.some(indicator => indicator.visible !== false)} slotProps={{ input: { 'aria-label': `Show ${typeName(type)}` } }} onChange={(_, visible) => onChange(indicators.map(indicator => indicator.type === type ? { ...indicator, visible } : indicator))} />
+     <Button onClick={() => choose(group[0].id)} aria-pressed={active?.type === type} sx={{ flex: 1, justifyContent: 'flex-start', textTransform: 'none', minWidth: 0 }}>{typeName(type)}</Button>
+     <IconButton aria-label={`Remove ${typeName(type)}`} onClick={() => onChange(indicators.filter(indicator => indicator.type !== type))}><DeleteOutline /></IconButton>
+    </Stack>;
+   })}
+  </> : <Typography variant="body2">Choose an indicator to add it to your chart.</Typography>}
   {active?<Box sx={{borderTop:1,borderColor:'divider',pt:1}}>
-   <Typography component="h3" sx={{fontWeight:700,mb:1}}>{name(active)}</Typography>
+   <Typography component="h3" sx={{fontWeight:700,mb:1}}>{typeName(active.type)} settings</Typography>
+   <Box component="details" sx={{ mb: 1 }}>
+    <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>TraderLink presets</Typography>
+    <Stack spacing={1} sx={{ py: 1 }}>
+     <Typography variant="caption" color="text.secondary">Loading a preset replaces this indicator’s current settings.</Typography>
+     {indicatorPresets[active.type].map((preset, index) => <Box key={preset.title} sx={{ border: 1, borderColor: 'divider', p: 1 }}>
+      <Typography variant="subtitle2">{preset.title}{index === 0 ? ' · Default' : ''}</Typography>
+      <Typography variant="body2" color="text.secondary">{preset.description}</Typography>
+      <Button size="small" disabled={indicators.length - lines.length + preset.settings.length > 20} onClick={() => applyPreset(active.type, indicatorPresetRows(active.type, index, () => crypto.randomUUID()))} aria-label={`Load ${preset.title}`}>Load preset</Button>
+     </Box>)}
+    </Stack>
+   </Box>
+   <Box component="details" sx={{ mb: 1 }}>
+    <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>My presets</Typography>
+    <Stack spacing={1} sx={{ py: 1 }}>
+     <Stack component="form" direction="row" useFlexGap sx={{ gap: 1, flexWrap: 'wrap' }} onSubmit={event => { event.preventDefault(); savePreset(); }}>
+      <TextField size="small" label="Preset name" value={presetName} error={Boolean(presetError)} helperText={presetError || undefined}
+       onChange={event => { setPresetName(event.target.value); setPresetError(''); }}
+       slotProps={{ htmlInput: { maxLength: MAX_INDICATOR_PRESET_NAME_LENGTH } }} sx={{ flex: 1, minWidth: 140 }} />
+      <Button type="submit" size="small" disabled={!presetName.trim() || savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS}>Save current setup</Button>
+     </Stack>
+     {savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS && <Typography variant="caption">Remove a saved preset to make room.</Typography>}
+     {savedPresets.filter(preset => preset.type === active.type).map(preset => <Stack direction="row" key={preset.id} sx={{ alignItems: 'center', gap: 0.5 }}>
+      <Typography variant="body2" sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{preset.name}</Typography>
+      <Button size="small" aria-label={`Load ${preset.name}`} disabled={indicators.length - lines.length + preset.indicators.length > 20}
+       onClick={() => applyPreset(active.type, preset.indicators.map(indicator => ({ ...indicator, id: crypto.randomUUID() })))}>Load</Button>
+      <IconButton size="small" aria-label={`Delete preset ${preset.name}`} onClick={() => onPresetsChange(savedPresets.filter(item => item.id !== preset.id))}><DeleteOutline fontSize="small" /></IconButton>
+     </Stack>)}
+    </Stack>
+   </Box>
+   {movingAverage && <Stack spacing={1} sx={{ mb: 1 }}>
+    {lines.map(line => {
+     const label = name(line);
+     const options = indicatorPlotStyle(line, 'main');
+     return <Stack key={line.id} direction="row" useFlexGap sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Checkbox size="small" checked={line.visible !== false && options.visible} slotProps={{ input: { 'aria-label': `Show ${label} line` } }} onChange={(_, visible) => editLine(line.id, { visible, plots: { ...line.plots, main: { ...line.plots?.main, visible } } })} />
+      <NumberSetting label={`${label} length`} value={line.period} onChange={period => editLine(line.id, { period })} />
+      <TextField key={options.color} type="color" label={`${label} color`} defaultValue={options.color} onBlur={event => {
+       if (event.target.value !== options.color) editLine(line.id, { plots: { ...line.plots, main: { ...line.plots?.main, color: event.target.value } } });
+      }} size="small" slotProps={{ inputLabel: { shrink: true } }} sx={{ width: 88 }} />
+      <Button size="small" aria-pressed={active.id === line.id} aria-label={`Edit ${label} line settings`} onClick={() => choose(line.id)}>Settings</Button>
+      {lines.length > 1 && <IconButton size="small" aria-label={`Remove ${label} line`} onClick={() => {
+       if (active.id === line.id) choose(lines.find(item => item.id !== line.id)!.id);
+       onChange(indicators.filter(item => item.id !== line.id));
+      }}><DeleteOutline fontSize="small" /></IconButton>}
+     </Stack>;
+    })}
+    <Button size="small" disabled={indicators.length >= 20} sx={{ alignSelf: 'flex-start' }} onClick={() => {
+     if (active.type !== 'EMA' && active.type !== 'SMA') return;
+     const line = nextMovingAverageLine(active.type, lines, crypto.randomUUID());
+     onChange([...indicators, line]);
+     choose(line.id);
+    }}>Add {active.type} line</Button>
+   </Stack>}
+   {!movingAverage && lines.length > 1 && <TextField select size="small" fullWidth label="Saved configuration" value={active.id} onChange={event => choose(event.target.value)}>
+    {lines.map((line, index) => <MenuItem key={line.id} value={line.id}>{name(line)} ({index + 1})</MenuItem>)}
+   </TextField>}
+   {movingAverage && <Typography variant="body2" sx={{ fontWeight: 700 }}>{name(active)} line settings</Typography>}
    <Tabs value={activeTab} onChange={(_,value)=>setTab(value)} aria-label={`${name(active)} settings`}><Tab value="inputs" label="Inputs"/><Tab value="style" label="Style"/>{active.type==='VWAP'?<Tab value="visibility" label="Visibility"/>:null}</Tabs>
    {activeTab==='inputs'?<Stack key={active.id} spacing={2} sx={{pt:2}}>
-    {!['VWAP','MACD'].includes(active.type)?<NumberSetting label={`${active.type} length`} value={active.period} onChange={period=>edit({period})}/>:null}
+    {!movingAverage&&!['VWAP','MACD'].includes(active.type)?<NumberSetting label={`${active.type} length`} value={active.period} onChange={period=>edit({period})}/>:null}
     <TextField select label="Source" value={active.source??(active.type==='VWAP'?'hlc3':'close')} onChange={e=>edit({source:e.target.value as ChartIndicator['source']})} size="small">{PRICE_SOURCES.map(value=><MenuItem key={value} value={value}>{sourceLabel(value)}</MenuItem>)}</TextField>
     {active.type==='VWAP'?<>
      <TextField select label="Anchor Period" value={active.anchor??'Session'} onChange={e=>edit({anchor:e.target.value as ChartIndicator['anchor']})} size="small">{VWAP_ANCHORS.map(value=><MenuItem key={value} value={value}>{value}</MenuItem>)}</TextField>
@@ -90,7 +194,6 @@ export function ChartIndicatorEditor({indicators,onChange}:{indicators:ChartIndi
     </Stack>:null}
     {active.type==='VWAP'?bands.levels.map((level,index)=>level.enabled?<Box key={`fill-${index}`} sx={{borderBottom:1,borderColor:'divider',pb:1}}><FormControlLabel label={`Bands Fill #${index+1}`} control={<Checkbox checked={level.fillVisible} onChange={(_,fillVisible)=>band(index,{fillVisible})}/>}/><Stack direction="row" sx={{gap:1,flexWrap:'wrap'}}><TextField label={`Bands Fill #${index+1} color`} type="color" key={level.fillColor} defaultValue={level.fillColor} onBlur={e=>band(index,{fillColor:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:150}}/><NumberSetting label={`Bands Fill #${index+1} opacity`} value={level.fillOpacity} min={0} max={100} integer={false} onChange={fillOpacity=>band(index,{fillOpacity})}/></Stack></Box>:null):null}
    </Stack>}
-   {active.type==='VWAP'?<Button onClick={()=>onChange(indicators.map(indicator=>indicator.id===active.id?vwapDefaults(active.id):indicator))} sx={{mt:1,textTransform:'none'}}>Reset VWAP defaults</Button>:null}
   </Box>:null}
  </>;
 }

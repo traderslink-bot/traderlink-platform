@@ -397,7 +397,8 @@ export function DashboardShell({
 }) {
   const theme = useTheme();
   const pathname = usePathname();
-  const compactMarketPage = ["/scanners", "/screeners", "/admin/scanners"].includes(pathname);
+  const chartWorkspacePage = pathname === "/charts" && watchlistAdminNavigationAccess;
+  const compactMarketPage = chartWorkspacePage || ["/scanners", "/screeners", "/admin/scanners"].includes(pathname);
 
   const [loadedUnreadCounts, setLoadedUnreadCounts] = useState<{
     pathname: string; counts: PressReleaseUnreadCounts;
@@ -859,7 +860,7 @@ export function DashboardShell({
               variant="outlined"
             />
           ) : null}
-          <Box sx={{ flexGrow: 1 }} />
+          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
           <NotificationCenter notifications={notifications} />
           <Tooltip title={helpLabel}>
             <IconButton

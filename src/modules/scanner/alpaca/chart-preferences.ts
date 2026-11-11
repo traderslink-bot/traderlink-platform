@@ -17,7 +17,11 @@ export function defaultVwapBands(firstEnabled=true):VwapBands{
 export type PlotStyle={visible?:boolean;color?:string;width?:1|2|3|4;style?:0|1|2};
 export type IndicatorOutput={precision?:number;priceScaleLabels:boolean;statusLineValues:boolean};
 export type ChartIndicator={output?:IndicatorOutput;id:string;type:IndicatorType;period:number;color:string;width:1|2|3;anchor?:typeof VWAP_ANCHORS[number];hideOnDaily?:boolean;vwapBands?:VwapBands;offset?:number;calculationTimeframe?:ChartTimeframe;waitForClose?:boolean;timeframes?:ChartTimeframe[];source?:PriceSource;visible?:boolean;fastLength?:number;slowLength?:number;signalLength?:number;oscillatorMa?:"SMA"|"EMA";signalMa?:"SMA"|"EMA";deviation?:number;basisMa?:MaType;levels?:{upper:number;middle:number;lower:number};smoothing?:{type:MaType|"None"|"SMA+BB";length:number;deviation:number};plots?:Record<string,PlotStyle>};
-export type ChartPreferences={version:1;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;autoScale:boolean;scalePriceOnly?:boolean;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;indicators:ChartIndicator[]};
+export const MAX_SAVED_INDICATOR_PRESETS = 20;
+export const MAX_SAVED_INDICATOR_PRESET_BYTES = 32 * 1024;
+export const MAX_INDICATOR_PRESET_NAME_LENGTH = 60;
+export type SavedIndicatorPreset = { id: string; name: string; type: IndicatorType; indicators: ChartIndicator[] };
+export type ChartPreferences={version:1;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;autoScale:boolean;scalePriceOnly?:boolean;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
 export const DEFAULT_CHART_PREFERENCES:ChartPreferences={version:1,timeframe:'1m',theme:'auto',kind:'candles',grid:true,volume:true,volumeHeight:20,logarithmic:false,autoScale:true,timezone:'America/New_York',upColor:'#16a085',downColor:'#e45757',premarket:true,regular:true,postmarket:true,indicators:[]};
 export function parseChartPreferences(value:unknown):ChartPreferences{
  if(!value||typeof value!=='object')throw Error('invalid_preferences');const p=value as ChartPreferences;
@@ -27,7 +31,13 @@ export function parseChartPreferences(value:unknown):ChartPreferences{
  const color=(s:unknown)=>typeof s==='string'&&/^#[a-f0-9]{6}$/i.test(s);
  if(p.scalePriceOnly!==undefined&&typeof p.scalePriceOnly!=='boolean')throw Error('invalid_preferences');
  if(!color(p.upColor)||!color(p.downColor)||!Array.isArray(p.indicators)||p.indicators.length>20)throw Error('invalid_preferences');
- const ids=new Set<string>();for(const i of p.indicators){if(!i||typeof i.id!=='string'||!/^[-a-zA-Z0-9]{1,80}$/.test(i.id)||ids.has(i.id)||!INDICATOR_TYPES.includes(i.type)||!Number.isInteger(i.period)||i.period<1||i.period>10000||!color(i.color)||![1,2,3].includes(i.width))throw Error('invalid_preferences');ids.add(i.id);
+ const presets = p.savedIndicatorPresets === undefined ? undefined : parseSavedIndicatorPresets(p.savedIndicatorPresets);
+ return {version:1,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,autoScale:p.autoScale,...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
+}
+
+function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {
+ const color=(s:unknown)=>typeof s==='string'&&/^#[a-f0-9]{6}$/i.test(s);
+ const ids=new Set<string>();for(const i of indicators){if(!i||typeof i.id!=='string'||!/^[-a-zA-Z0-9]{1,80}$/.test(i.id)||ids.has(i.id)||!INDICATOR_TYPES.includes(i.type)||!Number.isInteger(i.period)||i.period<1||i.period>10000||!color(i.color)||![1,2,3].includes(i.width))throw Error('invalid_preferences');ids.add(i.id);
  if(i.output!==undefined&&(!i.output||typeof i.output!=='object'||typeof i.output.priceScaleLabels!=='boolean'||typeof i.output.statusLineValues!=='boolean'||i.output.precision!==undefined&&(!Number.isInteger(i.output.precision)||i.output.precision<0||i.output.precision>16)))throw Error('invalid_preferences');
  if(i.vwapBands!==undefined){
   const bands=i.vwapBands;
@@ -46,7 +56,7 @@ export function parseChartPreferences(value:unknown):ChartPreferences{
  if(i.smoothing!==undefined&&(!i.smoothing||typeof i.smoothing!=='object'||![...MA_TYPES,"None","SMA+BB"].includes(i.smoothing.type)||!Number.isInteger(i.smoothing.length)||i.smoothing.length<1||i.smoothing.length>10000||!Number.isFinite(i.smoothing.deviation)||i.smoothing.deviation<=0||i.smoothing.deviation>100))throw Error("invalid_preferences");
  if(i.plots!==undefined){if(!i.plots||typeof i.plots!=='object'||Array.isArray(i.plots)||Object.keys(i.plots).length>16)throw Error('invalid_preferences');for(const [key,plot]of Object.entries(i.plots)){if(!/^[a-z0-9-]{1,30}$/.test(key)||!plot||typeof plot!=='object'||plot.visible!==undefined&&typeof plot.visible!=='boolean'||plot.color!==undefined&&!color(plot.color)||plot.width!==undefined&&![1,2,3,4].includes(plot.width)||plot.style!==undefined&&![0,1,2].includes(plot.style))throw Error('invalid_preferences');}}
  }
- return {version:1,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,autoScale:p.autoScale,...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,indicators:p.indicators.map(i=>({id:i.id,type:i.type,period:i.period,color:i.color,width:i.width,
+ return indicators.map(i=>({id:i.id,type:i.type,period:i.period,color:i.color,width:i.width,
  ...(i.output?{output:{priceScaleLabels:i.output.priceScaleLabels,statusLineValues:i.output.statusLineValues,...(i.output.precision!==undefined?{precision:i.output.precision}:{})}}:{}),
  ...(i.vwapBands?{vwapBands:{mode:i.vwapBands.mode,levels:i.vwapBands.levels.map(level=>({enabled:level.enabled,multiplier:level.multiplier,fillVisible:level.fillVisible,fillColor:level.fillColor,fillOpacity:level.fillOpacity})) as VwapBands['levels']}}:{}),
  ...(i.offset!==undefined?{offset:i.offset}:{}),...(i.calculationTimeframe!==undefined?{calculationTimeframe:i.calculationTimeframe}:{}),...(i.waitForClose!==undefined?{waitForClose:i.waitForClose}:{}),
@@ -56,5 +66,31 @@ export function parseChartPreferences(value:unknown):ChartPreferences{
  ...Object.fromEntries((['fastLength','slowLength','signalLength','oscillatorMa','signalMa','deviation','basisMa'] as const).filter(key=>i[key]!==undefined).map(key=>[key,i[key]])),
  ...(i.smoothing?{smoothing:{type:i.smoothing.type,length:i.smoothing.length,deviation:i.smoothing.deviation}}:{}),
  ...(i.levels?{levels:{upper:i.levels.upper,middle:i.levels.middle,lower:i.levels.lower}}:{}),
- ...(i.plots?{plots:Object.fromEntries(Object.entries(i.plots).map(([key,value])=>[key,{...(value.visible!==undefined?{visible:value.visible}:{}),...(value.color!==undefined?{color:value.color}:{}),...(value.width!==undefined?{width:value.width}:{}),...(value.style!==undefined?{style:value.style}:{})}]))}:{})}))};
+ ...(i.plots?{plots:Object.fromEntries(Object.entries(i.plots).map(([key,value])=>[key,{...(value.visible!==undefined?{visible:value.visible}:{}),...(value.color!==undefined?{color:value.color}:{}),...(value.width!==undefined?{width:value.width}:{}),...(value.style!==undefined?{style:value.style}:{})}]))}:{})}));
+}
+
+function parseSavedIndicatorPresets(value: unknown): SavedIndicatorPreset[] {
+ if (!Array.isArray(value) || value.length > MAX_SAVED_INDICATOR_PRESETS) throw Error('invalid_preferences');
+ const ids = new Set<string>(), names = new Set<string>();
+ const presets = value.map((preset): SavedIndicatorPreset => {
+  if (!preset || typeof preset !== 'object' || typeof preset.id !== 'string' ||
+      !/^[-a-zA-Z0-9]{1,80}$/.test(preset.id) || ids.has(preset.id) ||
+      typeof preset.name !== 'string' || !INDICATOR_TYPES.includes(preset.type) ||
+      !Array.isArray(preset.indicators) || !preset.indicators.length || preset.indicators.length > 20) {
+   throw Error('invalid_preferences');
+  }
+  const name = preset.name.trim(), key = `${preset.type}:${name.toLowerCase()}`;
+  if (!name || name.length > MAX_INDICATOR_PRESET_NAME_LENGTH || /[\u0000-\u001f\u007f]/u.test(name) || names.has(key)) {
+   throw Error('invalid_preferences');
+  }
+  const indicators = parseIndicators(preset.indicators);
+  if (indicators.some(indicator => indicator.type !== preset.type)) throw Error('invalid_preferences');
+  ids.add(preset.id);
+  names.add(key);
+  return { id: preset.id, name, type: preset.type, indicators };
+ });
+ if (new TextEncoder().encode(JSON.stringify(presets)).length > MAX_SAVED_INDICATOR_PRESET_BYTES) {
+  throw Error('invalid_preferences');
+ }
+ return presets;
 }

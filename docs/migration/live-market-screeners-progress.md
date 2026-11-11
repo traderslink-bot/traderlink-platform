@@ -625,3 +625,8 @@ No outcome-based trading claim is made. The two-day data also shows that directi
   tooltip shows the reason, halt time and available quote/trade resume times.
 - The icon is removed when the halt feed records that trading has resumed. PR
   rows remain unchanged, and Market Events reuses the same active halt data.
+
+
+The shared universe filter excludes .WS and -WS warrant suffixes and the issuer-listed PEWW alias while preserving PEW common stock. Focused QA passed (62 tests), including import and retained-universe coverage.
+
+The scanner feed now applies the same warrant filter to manually added tickers and to the provider request universe. The feed regression confirms PEW appears in Gainers while stored warrant aliases never enter provider or float requests. 97 focused tests passed in the feature workspace.

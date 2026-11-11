@@ -69,11 +69,16 @@ describe("daily list integrity", () => {
     expect(merged.stocks[0].marketCapAtCollection).toBe(10_000_000);
     expect(initial.universe.sourceHashes).toHaveLength(1);
   });
-  it("excludes five-character warrant-suffix symbols from current and retained universe rows",()=>{
-    const imported=importDailyUniverse(null,upload("symbol,exchange,market_cap\nABCD,NASDAQ,10000000\nABCDW,NASDAQ,9000000"),NOW).universe;
-    expect(imported.stocks.map(stock=>stock.symbol)).toEqual(["ABCD"]);
-    const cleaned=importDailyUniverse({...imported,stocks:[...imported.stocks,{symbol:"TESTW",exchange:"NYSE",marketCapAtCollection:5_000_000}]},upload("symbol,exchange,market_cap\nABCD,NASDAQ,10000000"),NOW).universe;
-    expect(cleaned.stocks.map(stock=>stock.symbol)).toEqual(["ABCD"]);
+  it("excludes warrants from current and retained universe rows while keeping common shares", () => {
+    const csv = "symbol,exchange,market_cap\nABCD,NASDAQ,10000000\nABCDW,NASDAQ,9000000\nPEW,NYSE,10000000\nPEW.WS,NYSE,9000000\nPEW-WS,NYSE,9000000\nPEWW,NYSE,9000000";
+    const imported = importDailyUniverse(null, upload(csv), NOW).universe;
+    expect(imported.stocks.map(stock => stock.symbol)).toEqual(["ABCD", "PEW"]);
+    const retainedWarrants = ["TESTW", "PEW.WS", "PEW-WS", "PEWW"].map(symbol => ({
+      symbol, exchange: "NYSE" as const, marketCapAtCollection: 5_000_000,
+    }));
+    const cleaned = importDailyUniverse({ ...imported, stocks: [...imported.stocks, ...retainedWarrants] },
+      upload("symbol,exchange,market_cap\nABCD,NASDAQ,10000000"), NOW).universe;
+    expect(cleaned.stocks.map(stock => stock.symbol)).toEqual(["ABCD", "PEW"]);
   });
   it("rejects an exchange conflict without mutating the accepted universe and refuses a cross-day merge", () => {
     const previous = importDailyUniverse(null,upload(),NOW).universe;

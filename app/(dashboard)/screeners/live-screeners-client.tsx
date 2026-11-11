@@ -1,5 +1,10 @@
 "use client";
 
+import { ChartMultiviewCharts } from "../charts/chart-multiview";
+import { ChartMultiviewMenu } from "../charts/chart-multiview-menu";
+import { useChartMultiview } from "../charts/use-chart-multiview";
+import { chartCount, reconcileChartTickers, selectedChart, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
+
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -26,15 +31,12 @@ import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useTheme } from "@mui/material/styles";
 import { ScannerChartLaunchControls, SideCardChartControls, useSideCardChartControls } from "./scanner-chart-launch-controls";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
 import { Fragment, useEffect, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
 
-import { AlpacaLightweightChart } from "@/app/(dashboard)/charts/alpaca-lightweight-chart";
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard, useMarketEventsData } from "./screener-press-release-board";
@@ -321,14 +323,13 @@ function SidebarScreenerCard({children}:{children:ReactNode}) {
     '& .MuiTableContainer-root':{overscrollBehaviorY:"auto",flex:"1 1 auto",minHeight:0,maxHeight:"none !important",overflow:"auto"}}}>{children}</Box>;
 }
 
-function ScannerChartDrawer({charts,row,onClose,onSelect,onRemove,onAdd,screeners,section,onSectionChange,stocks,limitReached}: {
+function ScannerChartDrawer({charts,row,onClose,onSelect,onRemove,onAdd,screeners,section,onSectionChange,stocks,limitReached,layout,onLayoutChange,layoutReady,layoutMessage}: {
+  layout:ChartMultiview;onLayoutChange:(next:ChartMultiview)=>void;layoutReady:boolean;layoutMessage:string;
   charts:readonly ScannerChartTarget[];row:ScannerChartTarget|null;onClose:()=>void;onSelect:(symbol:string)=>void;onRemove:(symbol:string)=>void;onAdd:(symbol:string)=>void;
   screeners:ReactNode;section:"details"|"screeners";onSectionChange:(section:"details"|"screeners")=>void;stocks:readonly LiveScannerRow[];limitReached:boolean;
 }) {
   const tabsId=useId();
-  const theme=useTheme();
-  const mobile=useMediaQuery(theme.breakpoints.down("md"));
-  const visibleCharts=mobile?charts.filter(chart=>chart.symbol===row?.symbol):charts;
+
   const [newChartSymbol,setNewChartSymbol]=useState("");
   const addChart=()=>{const symbol=newChartSymbol.trim().toUpperCase();if(/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol)){onAdd(symbol);setNewChartSymbol("");}};
   const [levelsActionTarget,setLevelsActionTarget]=useState<HTMLDivElement|null>(null);
@@ -342,6 +343,7 @@ function ScannerChartDrawer({charts,row,onClose,onSelect,onRemove,onAdd,screener
               <TextField value={newChartSymbol} onChange={event=>setNewChartSymbol(event.target.value)} placeholder="Ticker" slotProps={{htmlInput:{"aria-label":"Add chart ticker",maxLength:15}}} size="small" sx={{width:82,'& input':{py:0.4,px:0.75,fontSize:12}}}/>
               <Button type="submit" size="small" disabled={!/^[A-Z][A-Z0-9.-]{0,14}$/.test(newChartSymbol.trim().toUpperCase())} sx={{minWidth:0,px:0.5,fontSize:11}}>Add chart</Button>
             </Box>
+            <ChartMultiviewMenu layout={layout} onChange={onLayoutChange} disabled={!layoutReady}/>{layoutMessage?<Typography role="status" variant="caption">{layoutMessage}</Typography>:null}
             {charts.map(chart=><Box key={chart.symbol} sx={{display:"inline-flex",alignItems:"center",borderRadius:1,bgcolor:row?.symbol===chart.symbol?"action.selected":undefined}}>
               <Button size="small" aria-pressed={row?.symbol===chart.symbol} aria-label={`Show ${chart.symbol} details`} onClick={()=>{onSelect(chart.symbol);onSectionChange("details");}} sx={{px:0.5,py:0,minHeight:24,minWidth:0,color:"warning.main",fontWeight:800,textTransform:"none"}}>{chart.symbol}</Button>
               <IconButton size="small" aria-label={`Close ${chart.symbol} chart`} onClick={()=>onRemove(chart.symbol)} sx={{p:0.5}}><CloseRoundedIcon sx={{fontSize:16}}/></IconButton>
@@ -352,10 +354,8 @@ function ScannerChartDrawer({charts,row,onClose,onSelect,onRemove,onAdd,screener
       </Stack>
       {limitReached?<Alert severity="info" sx={{py:0}}>Four charts are open. Close a chart before adding another.</Alert>:null}
       <Box data-chart-workspace-scroll sx={{flex:1,minHeight:0,display:{xs:"block",md:"grid"},gridTemplateColumns:row?.showDetails?{xs:"1fr",md:"minmax(0,2fr) minmax(380px,1fr)"}:"1fr",overflowY:{xs:"auto",md:"hidden"},overscrollBehaviorY:"auto"}}>
-        <Box data-workspace-charts sx={{height:row?.showDetails?{xs:"55dvh",md:"auto"}:"100%",display:"grid",gridTemplateColumns:visibleCharts.length>1?"repeat(2,minmax(0,1fr))":"minmax(0,1fr)",gridTemplateRows:visibleCharts.length>2?"repeat(2,minmax(0,1fr))":"minmax(0,1fr)",gap:0.5,minWidth:0,minHeight:row?.showDetails?{xs:"55dvh",md:0}:0,p:{xs:0,md:0.5}}}>
-          {visibleCharts.map(chart=><Box key={chart.symbol} data-workspace-chart={chart.symbol} data-selected={row?.symbol===chart.symbol} sx={{minWidth:0,minHeight:0,display:"flex",flexDirection:"column",border:1,borderColor:row?.symbol===chart.symbol?"warning.main":"divider",borderRadius:1,overflow:"hidden"}}>
-            <Box sx={{flex:1,minWidth:0,minHeight:0}}><AlpacaLightweightChart symbol={`${chart.exchange}:${chart.symbol}`} sx={{height:{xs:"100%",sm:"100%"},minHeight:{xs:0,sm:0},border:0,borderRadius:0}}/></Box>
-          </Box>)}
+        <Box data-workspace-charts sx={{display:"flex",minWidth:0,minHeight:0,height:{xs:"65dvh",md:"auto"},p:{xs:0,md:0.5}}}>
+          <ChartMultiviewCharts workspace="scanner" layout={layout} onChange={onLayoutChange} onSelectTicker={onSelect} activeSymbol={row?.symbol} allowEmpty ready={layoutReady}/>
         </Box>
         {row?.showDetails?<Stack component="aside" aria-label="Chart workspace details" spacing={0.5} sx={{minWidth:0,minHeight:0,pl:2,pr:0.5,py:0.5,borderLeft:{md:1},borderColor:"divider",overflow:{xs:"visible",md:"hidden"}}}>
           <Stack direction="row" sx={{alignItems:"center",gap:0.75,minWidth:0,flexShrink:0,borderBottom:1,borderColor:"divider"}}>
@@ -469,9 +469,22 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [model,setModel]=useState<ScannerReadModel|null>(null), [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
   const [chartWorkspace,dispatchChart]=useReducer(scannerChartWorkspace,EMPTY_CHART_WORKSPACE);
+  const chartView=useChartMultiview("scanner");
+  const chartLayout=reconcileChartTickers(chartView.layout,chartWorkspace.charts.map(chart=>chart.symbol));
   const chartRow=chartWorkspace.charts.find(chart=>chart.symbol===chartWorkspace.selectedSymbol)??null;
   const [workspaceSection,setWorkspaceSection]=useState<"details"|"screeners">("details");
-  const setChartRow=(chart:ScannerChartTarget)=>{dispatchChart({type:chart.addChart?"open":"replace",chart:{...chart,showDetails:true,stock:chart.stock??[...(model?.gainers.rows??[]),...(model?.dayGainers?.rows??[]),...(model?.momentum.rows??[])].find(stock=>stock.symbol===chart.symbol)}});setWorkspaceSection("details");};
+  const setChartRow=(chart:ScannerChartTarget)=>{
+    const currentGroup=chartLayout.groups.find(group=>group.symbol===chart.symbol);
+    const existing=currentGroup??chartView.layout.groups.find(group=>group.symbol===chart.symbol);
+    if(chart.addChart&&!currentGroup&&chartCount(chartLayout)>=4){dispatchChart({type:"limit"});return;}
+    const next=chart.addChart?reconcileChartTickers(chartLayout,[...chartWorkspace.charts.map(item=>item.symbol),chart.symbol]):!chartWorkspace.charts.length&&existing?{version:1 as const,groups:[existing],selectedPanel:existing.panels[0].id}:singleChart(chart.symbol,existing?.panels[0].timeframe??"1m");
+    chartView.change({...next,mobileLayout:chartView.layout.mobileLayout??"tabs",landscapeLayout:chartView.layout.landscapeLayout??chartView.layout.mobileLayout??"tabs",selectedPanel:next.groups.find(group=>group.symbol===chart.symbol)?.panels[0].id??next.selectedPanel});
+    dispatchChart({type:chart.addChart?"open":"replace",chart:{...chart,showDetails:true,stock:chart.stock??[...(model?.gainers.rows??[]),...(model?.dayGainers?.rows??[]),...(model?.momentum.rows??[])].find(stock=>stock.symbol===chart.symbol)}});setWorkspaceSection("details");
+  };
+  const configureCharts=(next:ChartMultiview)=>{
+    chartView.change(next);
+    dispatchChart({type:"configure",selectedSymbol:selectedChart(next)?.group.symbol??null,charts:next.groups.map(group=>chartWorkspace.charts.find(chart=>chart.symbol===group.symbol)??{symbol:group.symbol,exchange:"NASDAQ",showDetails:true})});
+  };
   const [workspaceScreenersSelected,setWorkspaceScreenersSelected]=useState({gainers:true,momentum:false,declines:false,pullbacks:false,events:false});
   const [newsArticle,setNewsArticle]=useState<PressReleaseArticle|null>(null);
   const [fullScanner,setFullScanner]=useState<ScannerKind|null>(null);
@@ -612,6 +625,6 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0,p:2})}>{fullScanner==="gainers"?gainerTabs:null}{contents(fullScanner)}</Box>
       </Stack>:null}
     </Drawer>
-    <ScannerChartDrawer onAdd={symbol=>{setChartRow({symbol,exchange:"NASDAQ",showDetails:true,addChart:true});setWorkspaceSection("details");}} charts={chartWorkspace.charts} limitReached={chartWorkspace.limitReached} onSelect={symbol=>dispatchChart({type:"select",symbol})} onRemove={symbol=>dispatchChart({type:"remove",symbol})} onClose={()=>{dispatchChart({type:"close"});setWorkspaceSection("details");}} row={chartRow} screeners={workspaceScreeners} section={workspaceSection} onSectionChange={setWorkspaceSection} stocks={[...(selectedGainers?.rows??[]),...(model?.momentum.rows??[])]}/>
+    <ScannerChartDrawer layout={chartLayout} onLayoutChange={configureCharts} layoutReady={chartView.ready} layoutMessage={chartView.message} onAdd={symbol=>{setChartRow({symbol,exchange:"NASDAQ",showDetails:true,addChart:true});setWorkspaceSection("details");}} charts={chartWorkspace.charts} limitReached={chartWorkspace.limitReached} onSelect={symbol=>{const group=chartLayout.groups.find(group=>group.symbol===symbol);if(group&&!group.panels.some(panel=>panel.id===chartLayout.selectedPanel))chartView.change({...chartLayout,selectedPanel:group.panels[0].id});dispatchChart({type:"select",symbol});}} onRemove={symbol=>{chartView.change({...chartLayout,groups:chartLayout.groups.filter(group=>group.symbol!==symbol),selectedPanel:chartLayout.groups.filter(group=>group.symbol!==symbol).some(group=>group.panels.some(panel=>panel.id===chartLayout.selectedPanel))?chartLayout.selectedPanel:chartLayout.groups.filter(group=>group.symbol!==symbol)[0]?.panels[0].id??null});dispatchChart({type:"remove",symbol});}} onClose={()=>{chartView.clearViews();dispatchChart({type:"close"});setWorkspaceSection("details");}} row={chartRow} screeners={workspaceScreeners} section={workspaceSection} onSectionChange={setWorkspaceSection} stocks={[...(selectedGainers?.rows??[]),...(model?.momentum.rows??[])]}/>
   </Stack>;
 }

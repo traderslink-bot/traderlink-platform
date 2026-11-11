@@ -133,6 +133,23 @@ describe("LiveScannerFeed", () => {
     const result=await new LiveScannerFeed(dependencies({manualTickers:async()=>[{symbol:"MANU",exchange:"NYSE",addedAtUtc:new Date(NOW).toISOString()}],snapshotPass,reserveScannerBudget,floats})).scanOnce();
     expect(reserveScannerBudget).toHaveBeenCalledWith(2);expect(floats).toHaveBeenCalledWith("2026-10-30",["ABCD","MANU"]);expect(snapshotPass.mock.calls[0][0]).toEqual([["ABCD","MANU"]]);expect(result.universeCount).toBe(2);
   });
+  it("keeps manual PEW common shares while excluding stored warrants from scanner input and results", async () => {
+    const symbols = ["PEW", "PEW.WS", "PEW-WS", "PEWW", "ABCDW"];
+    const manualTickers = async () => symbols.map(symbol => ({
+      symbol, exchange: "NYSE" as const, addedAtUtc: new Date(NOW).toISOString(),
+    }));
+    const snapshotPass = vi.fn(async (batches: readonly (readonly string[])[]) => batches.map(requestedSymbols => ({
+      requestedSymbols, receivedAt: NOW, payload: { ret_code: 0, data: { snapshot_list: symbols.map(symbol => ({
+        ...payload.data.snapshot_list[0], code: `US.${symbol}`,
+      })) } },
+    })));
+    const floats = vi.fn(async () => new Map([["PEW", { shares: 5_000_000, retrievedAtUtc: new Date(NOW).toISOString() }]]));
+    const result = await new LiveScannerFeed(dependencies({ manualTickers, snapshotPass, floats })).scanOnce();
+    expect(snapshotPass).toHaveBeenCalledWith([["ABCD", "PEW"]]);
+    expect(floats).toHaveBeenCalledWith("2026-10-30", ["ABCD", "PEW"]);
+    expect(result.universeCount).toBe(2);
+    expect(result.gainers.rows.map(row => row.symbol)).toEqual(["PEW"]);
+  });
   it("stays disabled without an enabled configuration", async () => {
     const feed = new LiveScannerFeed(dependencies({ configuration: async () => initialConfiguration() }));
     expect((await feed.scanOnce()).status).toBe("disabled");
