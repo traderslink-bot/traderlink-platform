@@ -117,10 +117,10 @@ export class ScannerAuditStore {
         const previous=readState.get(cycle.tradingDate,cycle.session,decision.symbol) as {gainer_rank:number|null;momentum_rank:number|null;best_momentum_score:number|null}|undefined;
         const codes:string[]=[];
         if(seen.run(cycle.tradingDate,cycle.session,decision.symbol,cycle.cycleId).changes)codes.push("first_observed");
+        if(previous?.gainer_rank==null&&decision.gainerRank!==null)codes.push("gainer_entered");
+        if(previous?.momentum_rank==null&&decision.momentumRank!==null)codes.push("momentum_entered");
         if(previous){
-          if(previous.gainer_rank===null&&decision.gainerRank!==null)codes.push("gainer_entered");
           if(previous.gainer_rank!==null&&decision.gainerRank===null)codes.push("gainer_left");
-          if(previous.momentum_rank===null&&decision.momentumRank!==null)codes.push("momentum_entered");
           if(previous.momentum_rank!==null&&decision.momentumRank===null)codes.push("momentum_left");
           if(decision.momentumRank!==null&&previous.momentum_rank!==null&&Math.abs(decision.momentumRank-previous.momentum_rank)>=5)codes.push("momentum_rank_changed");
         }

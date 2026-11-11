@@ -91,14 +91,15 @@ describe("scanner audit evidence",()=>{
     await store.record(value);expect((await stat(path)).size).toBe(before);store.close();await appendFile(path,Buffer.from("orphan"));
     store=await ScannerAuditStore.create(root);expect(store.health({queueDepth:0,droppedCycles:0,lastError:null}).state).toBe("degraded");store.close();
   });
-  it("retains nonqualifying state so a ticker re-entry is recorded",async()=>{
+  it("records initial qualification, exit and re-entry",async()=>{
     const root=await mkdtemp(join(tmpdir(),"scanner-audit-reentry-"));const store=await ScannerAuditStore.create(root);
     const out={...decision(),gainerRank:null,momentumRank:null,gainerDisplayed:false,momentumDisplayed:false};
     await store.record(cycle("enter"));await store.record({...cycle("leave",[out]),completedAt:NOW+5_000});
     await store.record({...cycle("reenter"),completedAt:NOW+10_000});store.close();
     const db=new Database(join(root,"audit-control.sqlite"),{readonly:true});
     const codes=(db.prepare(`SELECT event_code FROM scanner_audit_candidate_events ORDER BY at_utc,event_code`).all() as {event_code:string}[]).map(value=>value.event_code);
-    expect(codes).toContain("momentum_left");expect(codes.filter(value=>value==="momentum_entered")).toHaveLength(1);db.close();
+    expect(codes).toContain("momentum_left");expect(codes.filter(value=>value==="momentum_entered")).toHaveLength(2);
+    expect(codes.filter(value=>value==="gainer_entered")).toHaveLength(2);db.close();
   });
   it("marks health missing when an active scanner stops producing audit cycles",async()=>{
     const root=await mkdtemp(join(tmpdir(),"scanner-audit-stale-"));const store=await ScannerAuditStore.create(root);await store.record(cycle());
