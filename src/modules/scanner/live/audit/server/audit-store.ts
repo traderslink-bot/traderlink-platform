@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdirSync, statSync } from "node:fs";
+import { mkdirSync, readdirSync, statSync } from "node:fs";
 import { mkdir, open, readdir, rm, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
@@ -54,6 +54,7 @@ function database(root:string): Database.Database {
 
 export class ScannerAuditStore {
   private db:Database.Database;
+  private readonly recoveredSegments = new Map<string,string>();
   constructor(private readonly root:string) { mkdirSync(root,{recursive:true,mode:0o700});this.db=database(root);this.reconcileKnownSegments(); }
   static async create(root:string):Promise<ScannerAuditStore>{await mkdir(root,{recursive:true,mode:0o700});return new ScannerAuditStore(root);}
   recordingEnabled():boolean {
@@ -94,7 +95,8 @@ export class ScannerAuditStore {
     const existing=this.db.prepare(`SELECT 1 FROM scanner_audit_cycles WHERE cycle_id=?`).get(cycle.cycleId);
     if(existing)return 0;
     const started=Date.now(), hour=new Date(cycle.completedAt).toISOString().slice(11,13);
-    const relative=join(cycle.tradingDate,cycle.session,`${hour}.jsonl.gz`), path=join(this.root,relative);
+    const original=join(cycle.tradingDate,cycle.session,`${hour}.jsonl.gz`);
+    const relative=this.recoveredSegments.get(original) ?? original, path=join(this.root,relative);
     await mkdir(dirname(path),{recursive:true,mode:0o700});
     const encoded=Buffer.from(`${JSON.stringify(cycle)}\n`), compressed=await gzip(encoded,{level:6});
     let offset=0; try{offset=(await stat(path)).size;}catch{/* new segment */}
@@ -160,7 +162,7 @@ export class ScannerAuditStore {
     const lastAt=latest?Number(latest.completed_at):null;
     const droppedCycles=Math.max(storedGaps,runtime.droppedCycles);
     const stale=runtime.expectedActive===true&&(lastAt===null||(runtime.now??Date.now())-lastAt>20_000);
-    const state:ScannerAuditHealth["state"]=stale?"missing":runtime.lastError||droppedCycles?"degraded":latest?.status==="partial"?"partial":lastAt===null?"missing":"complete";
+    const state:ScannerAuditHealth["state"]=stale?"missing":runtime.lastError||droppedCycles?"degraded":latest?.status==="partial"||latest?.status==="warming"?"partial":lastAt===null?"missing":"complete";
     const observations=Number(totals.observations),bytes=Number(totals.bytes),bytesPerObservation=observations?bytes/observations:null;
     const dbBytes=["audit-control.sqlite","audit-control.sqlite-wal","audit-control.sqlite-shm"].reduce((total,name)=>{
       try{return total+statSync(join(this.root,name)).size;}catch{return total;}},0);
@@ -235,8 +237,24 @@ export class ScannerAuditStore {
     }finally{await handle.close();}}
   private reconcileKnownSegments():void{
     const rows=this.db.prepare(`SELECT trading_date,evidence_path,MAX(evidence_offset+evidence_length) expected FROM scanner_audit_cycles GROUP BY trading_date,evidence_path`).all() as Array<{trading_date:string;evidence_path:string;expected:number}>;
+    const indexed = new Set(rows.map(row => row.evidence_path));
+    for (const date of readdirSync(this.root,{withFileTypes:true})) {
+      if (!date.isDirectory() || !DATE.test(date.name)) continue;
+      for (const session of readdirSync(join(this.root,date.name),{withFileTypes:true})) {
+        if (!session.isDirectory() || !["premarket","regular","after_hours"].includes(session.name)) continue;
+        const directory=join(this.root,date.name,session.name);
+        for (const file of readdirSync(directory,{withFileTypes:true})) {
+          if (!file.isFile() || !/^\d{2}(?:-recovery-[0-9a-f-]{36})?\.jsonl\.gz$/u.test(file.name)) continue;
+          const path=join(date.name,session.name,file.name);
+          if (!indexed.has(path)) rows.push({trading_date:date.name,evidence_path:path,expected:0});
+        }
+      }
+    }
     for(const row of rows){let actual=-1;try{actual=statSync(join(this.root,row.evidence_path)).size;}catch{/* missing file */}
       if(actual===row.expected)continue;
+      if (actual<row.expected && /^\d{2}\.jsonl\.gz$/u.test(row.evidence_path.split("/").at(-1) ?? "")) {
+        this.recoveredSegments.set(row.evidence_path,row.evidence_path.replace(/\.jsonl\.gz$/u,`-recovery-${randomUUID()}.jsonl.gz`));
+      }
       const key=`segment_reconciled:${row.evidence_path}:${row.expected}:${actual}`;
       const transaction=this.db.transaction(()=>{const inserted=this.db.prepare(`INSERT OR IGNORE INTO scanner_audit_state VALUES(?,'1')`).run(key).changes;
         if(!inserted)return;this.db.prepare(`INSERT INTO scanner_audit_integrity_events VALUES(?,?,?,?)`).run(randomUUID(),new Date().toISOString(),

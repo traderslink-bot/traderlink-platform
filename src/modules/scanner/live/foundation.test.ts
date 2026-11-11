@@ -345,7 +345,7 @@ describe("rolling evidence and focus", () => {
     expect(stale.gainers.total).toBe(1);
     expect(stale.gainers.rows[0].providerAtUtc).toBe(new Date(NOW).toISOString());
     expect(stale.momentum.rows).toEqual([]);
-    expect(stale.audit[0]).toMatchObject({gainerDisplayed:true,gainerRetained:true,gainerDataIssues:["snapshot_not_eligible"],momentumDisplayed:false});
+    expect(stale.audit[0]).toMatchObject({gainerDisplayed:true,gainerRetained:true,gainerDataIssues:["snapshot_stale"],momentumDisplayed:false});
   });
 });
 

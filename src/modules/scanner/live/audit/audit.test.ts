@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { appendFile,mkdtemp,readFile,stat,writeFile } from "node:fs/promises";
+import { appendFile,mkdir,mkdtemp,readFile,stat,truncate,writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe,expect,it } from "vitest";
@@ -90,6 +90,34 @@ describe("scanner audit evidence",()=>{
     await store.record(value);const path=join(root,"2026-11-02","regular","15.jsonl.gz"),before=(await stat(path)).size;
     await store.record(value);expect((await stat(path)).size).toBe(before);store.close();await appendFile(path,Buffer.from("orphan"));
     store=await ScannerAuditStore.create(root);expect(store.health({queueDepth:0,droppedCycles:0,lastError:null}).state).toBe("degraded");store.close();
+  });
+  it("reports the first unindexed segment after restart and can append verified cycles", async () => {
+    const root = await mkdtemp(join(tmpdir(),"scanner-audit-first-segment-"));
+    const directory = join(root,"2026-11-02","regular");
+    await mkdir(directory,{recursive:true});
+    await writeFile(join(directory,"15.jsonl.gz"),"interrupted write");
+    let store = await ScannerAuditStore.create(root);
+    expect(store.health({queueDepth:0,droppedCycles:0,lastError:null})).toMatchObject({state:"degraded",droppedCycles:1});
+    store.close();
+    store = await ScannerAuditStore.create(root);
+    expect(store.health({queueDepth:0,droppedCycles:0,lastError:null}).droppedCycles).toBe(1);
+    await store.record(cycle());
+    expect((await store.timeline("2026-11-02","AAA")).points).toHaveLength(1);
+    store.close();
+  });
+  it("preserves truncated evidence and writes new cycles to a recovery segment", async () => {
+    const root=await mkdtemp(join(tmpdir(),"scanner-audit-truncated-segment-"));
+    const path=join(root,"2026-11-02","regular","15.jsonl.gz");
+    let store=await ScannerAuditStore.create(root);
+    await store.record(cycle("interrupted"));
+    store.close();
+    await truncate(path,5);
+    store=await ScannerAuditStore.create(root);
+    await store.record({...cycle("recovered"),completedAt:NOW+5_000});
+    expect((await stat(path)).size).toBe(5);
+    expect((await store.timeline("2026-11-02","AAA",{limit:1})).points[0].cycleId).toBe("recovered");
+    expect(store.health({queueDepth:0,droppedCycles:0,lastError:null}).state).toBe("degraded");
+    store.close();
   });
   it("records initial qualification, exit and re-entry",async()=>{
     const root=await mkdtemp(join(tmpdir(),"scanner-audit-reentry-"));const store=await ScannerAuditStore.create(root);

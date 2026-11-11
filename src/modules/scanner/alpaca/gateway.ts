@@ -10,6 +10,7 @@ import {parseVwapSeedRequest} from "./chart-vwap-seed";
 import {AlpacaChartCalendar} from "./chart-calendar-provider";
 import { AlpacaRestData, parseHistoryRequest } from "./rest-data";
 import { AlpacaSessionBook, alpacaMinuteTradeRules } from "./session-book";
+import { AlpacaScannerListings } from "./scanner-listings";
 import { ScannerStreamHub } from "./scanner-stream-hub";
 import { easternClock } from "../live/sessions";
 import { AlpacaPreviousCloseBook } from "./previous-close";
@@ -40,6 +41,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
   const rest = new AlpacaRestData(options);
   const chartCalendar = new AlpacaChartCalendar(options);
   const vwapHistory = new AlpacaVwapHistory(rest,chartCalendar,Date.now,new AlpacaVwapCorporateEvents(options));
+  const listings = new AlpacaScannerListings(options);
   const previousCloses = new AlpacaPreviousCloseBook(rest);
   let chartBasisDate = easternClock(Date.now()).date;
   const sessionBook = new AlpacaSessionBook(rest,symbol=>scannerHub.mark(symbol));
@@ -79,8 +81,10 @@ export function createAlpacaGateway(options: GatewayOptions) {
     if(bootstrapping)return;bootstrapping=true;
     try{while(snapshotQueue.size&&!stopped){
       const batch=[...snapshotQueue].slice(0,200);for(const symbol of batch)snapshotQueue.delete(symbol);
+      const generation = priceGeneration;
       try{
         const snapshots=await rest.get("/v2/stocks/snapshots",new URLSearchParams({symbols:batch.join(","),feed:"sip"})) as Record<string,Record<string,unknown>>;
+        if (generation !== priceGeneration) continue;
         for(const symbol of batch)if(leases.has(symbol)&&snapshots[symbol]){quotes.set(symbol,{...snapshots[symbol],...(quotes.get(symbol)??{})});scannerHub.mark(symbol);}
       }catch{/* Missing baselines remain unavailable; the maintenance sweep retries. */}
     }}finally{bootstrapping=false;}
@@ -283,6 +287,11 @@ export function createAlpacaGateway(options: GatewayOptions) {
       }
       if(request.method !== "GET"){response.writeHead(405);response.end();return;}
       if (url.pathname === "/health") { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ ready: true, feed: "sip" })); return; }
+      if (url.pathname === "/scanner-listings") {
+        const excluded = await listings.read();
+        response.setHeader("Content-Type", "application/json");
+        response.end(JSON.stringify({ excluded })); return;
+      }
       if(url.pathname==="/calendar"){
         const result=await chartCalendar.forYear(parseChartCalendarYear(url.searchParams));
         response.setHeader("Content-Type","application/json");response.end(JSON.stringify(result));return;

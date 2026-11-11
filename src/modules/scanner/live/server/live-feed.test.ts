@@ -150,6 +150,20 @@ describe("LiveScannerFeed", () => {
     expect(result.universeCount).toBe(2);
     expect(result.gainers.rows.map(row => row.symbol)).toEqual(["PEW"]);
   });
+  it("removes a newly ineligible incumbent from the stored and manual scanner universe", async () => {
+    let excluded = new Set<string>();
+    const snapshotPass = vi.fn(async (batches: readonly (readonly string[])[]) =>
+      batches.map(requestedSymbols => ({ requestedSymbols, payload, receivedAt: NOW })));
+    const feed = new LiveScannerFeed(dependencies({
+      excludedListings: async () => excluded,
+      manualTickers: async () => [{symbol:"ABCD",exchange:"NASDAQ",addedAtUtc:new Date(NOW).toISOString()}],
+      snapshotPass,
+    }));
+    expect((await feed.scanOnce()).gainers.rows.map(row => row.symbol)).toEqual(["ABCD"]);
+    excluded = new Set(["ABCD"]);
+    expect((await feed.scanOnce()).gainers.rows).toEqual([]);
+    expect(snapshotPass).toHaveBeenCalledTimes(1);
+  });
   it("stays disabled without an enabled configuration", async () => {
     const feed = new LiveScannerFeed(dependencies({ configuration: async () => initialConfiguration() }));
     expect((await feed.scanOnce()).status).toBe("disabled");

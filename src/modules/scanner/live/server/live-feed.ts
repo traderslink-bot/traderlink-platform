@@ -22,6 +22,7 @@ export type LiveFeedDependencies = Readonly<{
   configuration: () => Promise<ScannerConfiguration>;
   marketDay: (date: string) => Promise<MarketDay>;
   universe: (date: string) => Promise<DailyUniverse | null>;
+  excludedListings?: () => Promise<ReadonlySet<string>>;
   manualTickers?:()=>Promise<readonly ManualScannerTicker[]>;
   reserveScannerBudget: (universeCount: number) => Promise<void>;
   snapshotPass: (batches: readonly (readonly string[])[]) => Promise<readonly Readonly<{
@@ -106,7 +107,13 @@ export class LiveScannerFeed {
       if (!storedUniverse) {this.dependencies.inactive?.();if(this.dependencies.eventDriven)this.engine.clear();return this.set(empty("universe_missing",date));}
       const filtered=requestUniverse(storedUniverse,scannerRequestMarketCap(configuration,session));
       const manual=await this.dependencies.manualTickers?.()??[],existing=new Set(filtered.stocks.map(stock=>stock.symbol));
-      const universe={...filtered,stocks:[...filtered.stocks,...manual.filter(row=>scannerUniverseSymbolEligible(row.symbol)&&!existing.has(row.symbol)).map(row=>({symbol:row.symbol,exchange:row.exchange,marketCapAtCollection:1}))]};
+      let listingIssue = false;
+      const excluded = await this.dependencies.excludedListings?.().catch(() => { listingIssue = true; return undefined; });
+      const universe = { ...filtered, stocks: [
+        ...filtered.stocks,
+        ...manual.filter(row => scannerUniverseSymbolEligible(row.symbol) && !existing.has(row.symbol))
+          .map(row => ({ symbol: row.symbol, exchange: row.exchange, marketCapAtCollection: 1 })),
+      ].filter(stock => !excluded?.has(stock.symbol)) };
       allowedSymbols = new Set(universe.stocks.map(stock => stock.symbol));
       await this.dependencies.reserveScannerBudget(universe.stocks.length);
       const symbols = universe.stocks.map(stock => stock.symbol);
@@ -115,9 +122,11 @@ export class LiveScannerFeed {
       const receipts:ScannerAuditBatchReceipt[]=[];
       const missing: string[] = [];
       const issues = new Set<string>();
-      const batches = snapshotBatches(symbols);
+      if (listingIssue) issues.add("listing_eligibility_unavailable");
+      const batches = symbols.length ? snapshotBatches(symbols) : [];
       let responses: readonly Readonly<{ requestedSymbols: readonly string[]; payload: unknown; receivedAt: number; requestedAt?: number }>[] = [];
-      try { responses = await this.dependencies.snapshotPass(batches); }
+      if (!batches.length) this.dependencies.inactive?.();
+      try { if (batches.length) responses = await this.dependencies.snapshotPass(batches); }
       catch { issues.add("snapshot_pass_unavailable"); }
       const returned = new Set(responses.map(response => response.requestedSymbols.join("\u0000")));
       for (const batch of batches) if (!returned.has(batch.join("\u0000"))) missing.push(...batch);

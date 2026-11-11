@@ -9,6 +9,33 @@ import { createAlpacaGateway } from "./gateway";
 
 afterEach(() => vi.unstubAllGlobals());
 describe("private Alpaca gateway", () => {
+  it("serves a cached exclusion list without treating broker restrictions as listing removals", async () => {
+    const nativeFetch = globalThis.fetch;
+    const upstream = vi.fn(async (url: string) => {
+      expect(new URL(url).pathname).toBe("/v2/assets");
+      return Response.json([
+        {symbol:"OTCM",exchange:"OTC",status:"active",tradable:false},
+        {symbol:"NXXT",exchange:"NASDAQ",status:"active",tradable:false},
+        {symbol:"OLD",exchange:"NYSE",status:"inactive",tradable:false},
+        {symbol:"OMH",exchange:"NASDAQ",status:"active",tradable:false},
+        {symbol:"SMX",exchange:"NASDAQ",status:"inactive",tradable:false},
+        {symbol:"SMX",exchange:"NASDAQ",status:"active",tradable:true},
+      ]);
+    });
+    vi.stubGlobal("fetch",upstream);
+    const gateway = createAlpacaGateway({keyId:"test",secretKey:"test",token:"test"});
+    await new Promise<void>(resolve => gateway.server.listen(0,"127.0.0.1",resolve));
+    try {
+      const url = `http://127.0.0.1:${(gateway.server.address() as AddressInfo).port}/scanner-listings`;
+      expect((await nativeFetch(url)).status).toBe(401);
+      const request = () => nativeFetch(url,{headers:{Authorization:"Bearer test"}}).then(response => response.json());
+      expect(await Promise.all([request(),request()])).toEqual([
+        {excluded:["OTCM","OLD"]},{excluded:["OTCM","OLD"]},
+      ]);
+      expect(upstream).toHaveBeenCalledTimes(1);
+    } finally { gateway.close(); gateway.server.closeAllConnections(); }
+  });
+
   it("shares one upstream socket and closes it after the last chart disconnects", async () => {
     const sockets: FakeSocket[] = [];
     class FakeSocket extends EventTarget {

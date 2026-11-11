@@ -112,6 +112,7 @@ export type LiveScannerRow = Readonly<{
   marketCap: number | null; marketCapAtCollection: number; float: number | null;
   relativeVolume: number | null; dayHigh: number; dayLow: number; offHighPercent: number | null;
   floatRetrievedAtUtc: string | null; spreadPercent: number | null; providerAtUtc: string; receivedAtUtc: string;
+  provider?: NormalizedSnapshot["provider"];
   priceTimeBasis?: "provider" | "session_observation";
   activity: RollingActivity; reasons: readonly string[]; news: readonly ScannerNewsItem[];
   momentumSignals?:readonly MomentumSignal[];

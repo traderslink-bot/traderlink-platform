@@ -29,3 +29,35 @@ it('drops event coverage on a gap and does not reuse the old rolling window afte
  expect(gap.audit.every(decision=>decision.gainerDataIssues?.includes("snapshot_unavailable")&&decision.momentumRank===null)).toBe(true);
  const recovered=engine.evaluate(input(67));expect(recovered.gainers.rows[0].activity.oneMinuteVolume).toBeNull();
 });
+it("keeps a stale incumbent behind fresh gainers and rejects new stale trades", () => {
+  const engine = new LiveScannerEngine(true);
+  expect(engine.evaluate(input(0)).gainers.rows.map(row => row.symbol)).toEqual(["BBB","AAA"]);
+  const update = input(31);
+  update.snapshots[1] = { ...update.snapshots[1], providerAt: start };
+  const ranked = engine.evaluate(update);
+  expect(ranked.gainers.rows.map(row => row.symbol)).toEqual(["AAA","BBB"]);
+  expect(ranked.gainers.rows[1].receivedAtUtc).toBe(new Date(start).toISOString());
+  expect(ranked.audit.find(row => row.symbol === "BBB")).toMatchObject({
+    gainerRetained: true, gainerDataIssues: ["snapshot_stale"], momentumFailures: ["snapshot_stale"], momentumRank: null,
+  });
+  expect(new LiveScannerEngine(true).evaluate(update).gainers.rows.map(row => row.symbol)).toEqual(["AAA"]);
+  expect(engine.evaluate(input(32)).gainers.rows.map(row => row.symbol)).toEqual(["BBB","AAA"]);
+});
+it("audits the exit of a Momentum-only ticker when its observation disappears", () => {
+  const engine = new LiveScannerEngine(true);
+  const configuration = { ...config, gainers: { ...config.gainers, filters: {
+    ...config.gainers.filters, regular: { ...config.gainers.filters.regular, minimumSessionGain: 300 },
+  } } };
+  for (let second = 0; second < 60; second++) engine.evaluate({ ...input(second), configuration });
+  const update = input(60);
+  update.snapshots[0] = { ...update.snapshots[0], price: 2.2, volume: 1_300_000, dollarVolume: 2_600_000 };
+  const active = engine.evaluate({ ...update, configuration });
+  expect(active.gainers.rows).toEqual([]);
+  expect(active.momentum.rows.map(row => row.symbol)).toContain("AAA");
+  const missing = engine.evaluate({ ...input(61), configuration, snapshots: [] });
+  expect(missing.momentum.rows).toEqual([]);
+  expect(missing.audit.find(row => row.symbol === "AAA")).toMatchObject({
+    observation: { providerAt: update.now, receivedAt: update.now },
+    momentumFailures: ["snapshot_unavailable"], momentumRank: null, momentumDisplayed: false,
+  });
+});

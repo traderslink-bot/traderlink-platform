@@ -238,7 +238,7 @@ describe("Gainer membership and audit across data outages", () => {
     expect(JSON.parse(JSON.stringify(absent.audit))[0].observation.receivedAt).toBe(NOW);
     const stale = run(3_601_000, [first]);
     expect(stale.audit[0]).toMatchObject({ observation: first, gainerGain: 100, gainerDisplayed: true,
-      gainerDataIssues: ["snapshot_not_eligible"], momentumDisplayed: false });
+      gainerDataIssues: ["snapshot_stale"], momentumDisplayed: false });
   });
   it("records recalculated gain using a saved comparison with fresh price and a missing baseline", () => {
     const { snapshot, run } = fixture(); run(0, [snapshot(0)]);

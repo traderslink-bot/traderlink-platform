@@ -53,7 +53,7 @@ export class AlpacaSessionBook {
   constructor(private readonly rest: AlpacaRestData,private readonly changed?:(symbol:string)=>void) {}
   invalidate() {
     this.generation++;
-    for (const entry of this.entries.values()) { entry.state.complete = false; entry.overflow = true; }
+    for (const entry of this.entries.values()) { entry.state.complete = false; entry.overflow = true; entry.retryAt = 0; }
   }
   observe(message: unknown) {
     const trade = message as Trade;
@@ -125,6 +125,6 @@ export class AlpacaSessionBook {
       while (this.seen.size > 100_000) this.seen.delete(this.seen.keys().next().value!);
       rebuilt.complete = true; entry.state = rebuilt; entry.coveredThrough = cutoff;this.changed?.(symbol);
     } catch { /* Never substitute a partial prefix as the full session counter. */ }
-    finally { entry.pending = []; entry.cutoff = null; entry.retryAt = Date.now() + 30_000; }
+    finally { entry.pending = []; entry.cutoff = null; entry.retryAt = generation === this.generation ? Date.now() + 30_000 : 0; }
   }
 }

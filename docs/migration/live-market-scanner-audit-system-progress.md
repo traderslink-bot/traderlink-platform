@@ -116,3 +116,7 @@ remaining access/live-result checks. Synthetic audit QA is not live acceptance.
 ## Scanner Admin recording controls
 
 Audit recording defaults to off, including for installations without a saved preference. Scanner Admin can persist the recording setting or delete stored audit evidence and its indexes.
+
+## Listing eligibility, trade freshness, and recovery
+
+Scanner input now excludes symbols Alpaca identifies as inactive or on exchanges outside the scanner universe. A temporary trading halt does not change listing eligibility. Scanner rankings check both trade and receipt timestamps. Established Gainers can still display their last available values behind current observations. The audit records stale inputs explicitly and records a Momentum exit if its input disappears. SIP reconnect discards obsolete warm-up requests and restarts the session backfill promptly. Audit restart checks include unindexed first segments and preserve truncated files while directing new evidence to a recovery segment.

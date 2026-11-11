@@ -18,11 +18,13 @@ it('runs gateway → shared stream → scanner with no Moomoo calls, shares char
   close(){this.readyState=3;this.dispatchEvent(new Event('close'));}
  }
  vi.stubGlobal('WebSocket',Socket);const nativeFetch=fetch;
+ let liveTrade: {t:string;p:number;s:number;i:number}|undefined;
+ let recoveredTrade: {t:string;p:number;s:number;i:number}|undefined;
  const provider=vi.fn(async(url:URL)=>{
   expect(url.hostname).toBe('data.alpaca.markets');
   if(url.pathname.endsWith('/snapshots'))return Response.json({AAA:{prevDailyBar:{t:'2026-11-05T05:00:00Z',c:1},latestQuote:{t:new Date(now).toISOString(),bp:1.99,ap:2.01}}});
   if(url.pathname.endsWith('/bars'))return Response.json({bars:{AAA:[{t:'2026-11-05T05:00:00Z',o:1,h:1,l:1,c:1,v:100}]}});
-  if(url.pathname.endsWith('/trades'))return Response.json({trades:{AAA:[{S:'AAA',t:'2026-11-06T14:59:59Z',p:2,s:500000,i:1,x:'V',c:['@'],z:'C'}]}});
+  if(url.pathname.endsWith('/trades'))return Response.json({trades:{AAA:[{S:'AAA',t:'2026-11-06T14:59:59Z',p:2,s:500000,i:1,x:'V',c:['@'],z:'C'},...[liveTrade,recoveredTrade].filter(Boolean).map(trade=>({...trade,S:'AAA',x:'V',c:['@'],z:'C'}))]}});
   throw Error('unexpected provider route');
  });
  vi.stubGlobal('fetch',provider);const gateway=createAlpacaGateway({keyId:'test-key',secretKey:'test-secret',token:'scanner-test'});
@@ -37,7 +39,8 @@ it('runs gateway → shared stream → scanner with no Moomoo calls, shares char
   await vi.waitFor(()=>{now+=250;expect(source.read(['AAA']).sessionTotals?.AAA?.complete).toBe(true);},{timeout:3000});
   expect((await feed.scanOnce()).gainers.rows[0].price).toBe(2);
   const chart=await nativeFetch(origin+'/stream?symbol=AAA',{headers:{Authorization:'Bearer scanner-test'}});const reader=chart.body!.getReader();
-  now+=1000;sockets[0].message([{T:'t',S:'AAA',t:new Date(now).toISOString(),p:2.2,s:1000,i:2,x:'V',c:['@'],z:'C'}]);
+  now+=1000;liveTrade={t:new Date(now).toISOString(),p:2.2,s:1000,i:2};
+  sockets[0].message([{T:'t',S:'AAA',...liveTrade,x:'V',c:['@'],z:'C'}]);
   await vi.waitFor(()=>expect(source.read(['AAA']).sessionTotals?.AAA?.sessions.regular.price).toBe(2.2));
   const updated=await feed.scanOnce();expect(updated.gainers.rows[0].price).toBe(2.2);expect(updated.gainers.rows[0].volume).toBe(501000);expect(updated.refreshAfterMs).toBe(1000);expect(sockets).toHaveLength(1);
   let text='';while(!text.includes('event: price')){const part=await reader.read();if(part.done)throw Error('chart ended');text+=new TextDecoder().decode(part.value);}expect(text).toContain('"price":2.2');await reader.cancel();
@@ -50,6 +53,16 @@ it('runs gateway → shared stream → scanner with no Moomoo calls, shares char
   expect(auditCycles.at(-1)?.decisions[0]).toMatchObject({gainerDisplayed:true,gainerRetained:true,
     gainerDataIssues:['snapshot_unavailable'],momentumDisplayed:false,momentumRank:null,momentumScore:null});
   expect(auditCycles.at(-1)?.decisions[0].observation.receivedAt).toBe(Date.parse(updated.gainers.rows[0].receivedAtUtc));
+  recoveredTrade={t:new Date(now).toISOString(),p:2.3,s:2_000,i:3};
+  await vi.waitFor(()=>expect(sockets).toHaveLength(2),{timeout:3000});
+  await vi.waitFor(()=>{
+    now+=250;
+    const rebuilt=source.read(['AAA']);
+    expect(rebuilt.sessionTotals?.AAA?.sessions.regular.price).toBe(2.3);
+    expect(rebuilt.snapshots.AAA?.adjustedPreviousClose?.price).toBe(1);
+  },{timeout:3000});
+  const reconnected=await feed.scanOnce();
+  expect(reconnected.gainers.rows[0]).toMatchObject({price:2.3,volume:503_000});
   expect(provider).toHaveBeenCalled();
  }finally{source.stop();gateway.close();gateway.server.closeAllConnections();clock.mockRestore();vi.unstubAllGlobals();}
 },10000);

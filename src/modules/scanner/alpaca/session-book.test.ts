@@ -43,4 +43,21 @@ describe("Alpaca exact session trade counters", () => {
     book.invalidate(); expect(book.read("TEST", "2026-11-06", 960).complete).toBe(false);
     book.remove("TEST");
   });
+  it("discards an in-flight rebuild from the old connection and retries immediately", async () => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date("2026-11-06T15:00:00Z"));
+    const rest = new AlpacaRestData({ keyId: "test", secretKey: "test" });
+    let finish!: (value: unknown) => void;
+    const get = vi.spyOn(rest,"get")
+      .mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }))
+      .mockResolvedValue({ trades: { TEST: [trade("2026-11-06T14:59:59Z",3,200)] } });
+    const book = new AlpacaSessionBook(rest);
+    book.read("TEST","2026-11-06",960);
+    book.invalidate();
+    finish({ trades: { TEST: [trade("2026-11-06T14:59:58Z",2,100)] } });
+    await vi.waitFor(() => expect(book.read("TEST","2026-11-06",960)).toMatchObject({
+      complete:true,sessions:{regular:{price:3,volume:200}},
+    }));
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+
 });

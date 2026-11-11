@@ -8,7 +8,7 @@ export function alpacaMarketDataEnabled(environment: NodeJS.ProcessEnv = process
 }
 
 /** Server-to-server only. No broker key is ever loaded by Platform/Railway. */
-export async function requestAlpacaGateway(path: "calendar" | "vwap-seed" | "history" | "quotes" | "overnight" | "halts", query: URLSearchParams, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal): Promise<unknown> {
+export async function requestAlpacaGateway(path: "scanner-listings" | "calendar" | "vwap-seed" | "history" | "quotes" | "overnight" | "halts", query: URLSearchParams, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal): Promise<unknown> {
   const base = environment.TRADERLINK_ALPACA_GATEWAY_URL;
   let token = environment.TRADERLINK_ALPACA_GATEWAY_TOKEN;
   const local = environment.NODE_ENV !== "production";

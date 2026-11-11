@@ -77,8 +77,25 @@ function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime 
   const sessionQualifier = new SnapshotSessionQualifier();
   const eventDriven=eventScannerEnabled(environment);
   const eventStream=eventDriven?new AlpacaScannerStream(environment):undefined;
+  let knownExcludedListings: ReadonlySet<string> | undefined;
+  const refreshExcludedListings = coalescedMetadata(async () => {
+    try {
+      const value = await requestAlpacaGateway("scanner-listings", new URLSearchParams(), environment, AbortSignal.timeout(6000)) as { excluded?: unknown };
+      if (!Array.isArray(value.excluded) || value.excluded.length > 40_000 || value.excluded.some(symbol => typeof symbol !== "string")) throw Error("scanner_listings_invalid");
+      knownExcludedListings = new Set<string>(value.excluded);
+    } catch { /* Preserve the last verified exclusions through a provider outage. */ }
+    return knownExcludedListings;
+  }, 60_000, () => "scanner-listings");
+  const excludedListings = async () => {
+    const refresh = refreshExcludedListings();
+    if (knownExcludedListings) return knownExcludedListings;
+    const result = await refresh;
+    if (!result) throw Error("scanner_listings_unavailable");
+    return result;
+  };
   const dependencies:ConstructorParameters<typeof LiveScannerFeed>[0]={
     provider,
+    ...(alpacaMarketDataEnabled(environment) ? { excludedListings } : {}),
     ...(eventStream?{eventDriven:true,subscribeChanges:eventStream.subscribe,inactive:()=>eventStream.stop()}:{}),
     configuration: () => settings.configuration(), manualTickers:()=>manualTickers.list(), marketDay: async date => marketDay(date), universe: async date => {
       try{await nasdaqUniverse.refresh(date);}catch{/* Retain the last validated universe and alert below. */}
