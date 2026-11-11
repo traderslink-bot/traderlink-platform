@@ -40,6 +40,7 @@ export type ScannerAuditDecision = Readonly<{
   momentumRank: number | null;
   gainerDisplayed: boolean;
   momentumDisplayed: boolean;
+  momentumLowerPriority?: boolean;
   momentumScore: ScannerAuditScore | null;
 }>;
 

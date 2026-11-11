@@ -29,6 +29,12 @@ function moving(row: LiveScannerRow, controls: FocusControls,allowEvents=false):
 function momentumScore(row: LiveScannerRow, controls: FocusControls, filters: ScreenFilters): number {
   return scannerMomentumScore(row,controls,filters).total;
 }
+function lowTurnoverOneMinuteMomentum(row: LiveScannerRow, session: ScannerSession): boolean {
+  const signals = row.momentumSignals;
+  if (signals?.length !== 1 || signals[0] !== "one_minute_momentum") return false;
+  const recentTurnover = Math.max(row.activity.oneMinuteDollarVolume ?? 0, row.activity.episodeDollarVolume ?? 0);
+  return recentTurnover < (session === "regular" ? 10_000 : 5_000);
+}
 function focusCandidate(row: LiveScannerRow, controls: FocusControls, rankingScore?: number,allowEvents=false): Candidate | null {
   const activity = row.activity;
   const priceStrength=Math.max(activity.intervalGain??-Infinity,activity.oneMinuteGain??-Infinity,(activity.fiveMinuteGain??-Infinity)/5);
@@ -179,8 +185,10 @@ export class LiveScannerEngine {
     const momentumFilters = input.configuration.momentum.filters[input.session];
     const allowEarlyLiquidityBypass=momentumLiquidityBypassControls(input.configuration)[input.session];
     const momentumEligible=rows.filter(row=>scannerMomentumFilterFailures(row,momentumFilters,allowEarlyLiquidityBypass).length===0);
+    const lowerPrioritySymbols = new Set(momentumEligible.filter(row => lowTurnoverOneMinuteMomentum(row,input.session)).map(row => row.symbol));
     const momentum = [...this.momentumRetention.select(`${input.tradingDate}:${input.session}`,momentumEligible,input.now)]
       .sort((a,b) => Number(b.momentumState==="active")-Number(a.momentumState==="active")
+        || Number(lowerPrioritySymbols.has(a.symbol)) - Number(lowerPrioritySymbols.has(b.symbol))
         || momentumScore(b,input.configuration.momentum.focus,momentumFilters)
         -momentumScore(a,input.configuration.momentum.focus,momentumFilters) || a.symbol.localeCompare(b.symbol));
     const context = `${input.tradingDate}:${input.session}`;
@@ -208,7 +216,7 @@ export class LiveScannerEngine {
           gainerDisplayed: gr <= input.configuration.gainers.displayLimit,
           gainerRetained: true, gainerDataIssues: [failure[0] ?? "snapshot_unavailable"],
           momentumFailures: failure.length ? failure : ["snapshot_unavailable"], momentumRank: null,
-          momentumDisplayed: false, momentumScore: null, momentumSignals: undefined, momentumState: undefined,
+          momentumDisplayed: false, momentumScore: null, momentumSignals: undefined, momentumState: undefined, momentumLowerPriority: undefined,
           momentumLastActiveAtUtc: undefined, momentumCoolingUntilUtc: undefined } satisfies ScannerAuditDecision;
       }
       if(!row)return {symbol:snapshot.symbol,exchange:membership.get(snapshot.symbol)?.exchange??null,
@@ -242,6 +250,7 @@ export class LiveScannerEngine {
         gainerGain:gainerRow.sessionGain,gainerComparisonPrice:gainerRow.comparisonPrice??null,gainerGainBasis:gainerRow.gainBasis,
         gainerDisplayed:gr!==null&&gr<=input.configuration.gainers.displayLimit,
         momentumDisplayed:mr!==null&&mr<=input.configuration.momentum.displayLimit,
+        momentumLowerPriority: mr !== null && lowerPrioritySymbols.has(row.symbol),
         momentumScore:scannerMomentumScore(momentumRow,input.configuration.momentum.focus,momentumFilters)} satisfies ScannerAuditDecision;
     });
     this.gainerAudit = new Map(audit.filter(decision => gainerRank.has(decision.symbol)).map(decision => [decision.symbol, decision]));
