@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdirSync, statSync } from "node:fs";
-import { mkdir, open, stat } from "node:fs/promises";
+import { mkdir, open, readdir, rm, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { gunzip as gunzipCallback, gzip as gzipCallback } from "node:zlib";
@@ -56,6 +56,32 @@ export class ScannerAuditStore {
   private db:Database.Database;
   constructor(private readonly root:string) { mkdirSync(root,{recursive:true,mode:0o700});this.db=database(root);this.reconcileKnownSegments(); }
   static async create(root:string):Promise<ScannerAuditStore>{await mkdir(root,{recursive:true,mode:0o700});return new ScannerAuditStore(root);}
+  recordingEnabled():boolean {
+    const row=this.db.prepare("SELECT state_value FROM scanner_audit_state WHERE state_key='recording_enabled'").get() as {state_value:string}|undefined;
+    return row?.state_value==="1";
+  }
+  setRecordingEnabled(enabled:boolean):void {
+    this.db.prepare("INSERT INTO scanner_audit_state VALUES('recording_enabled',?) ON CONFLICT(state_key) DO UPDATE SET state_value=excluded.state_value").run(enabled?"1":"0");
+  }
+  async deleteHistory():Promise<void> {
+    this.db.transaction(()=>{
+      this.db.exec(`
+        DELETE FROM scanner_audit_cycles;
+        DELETE FROM scanner_audit_versions;
+        DELETE FROM scanner_audit_integrity_events;
+        DELETE FROM scanner_audit_candidate_events;
+        DELETE FROM scanner_audit_symbol_state;
+        DELETE FROM scanner_audit_seen_symbols;
+        DELETE FROM scanner_audit_cycle_summaries;
+        DELETE FROM scanner_audit_cycle_reason_counts;
+        DELETE FROM scanner_audit_state WHERE state_key<>'recording_enabled';
+      `);
+    })();
+    this.db.pragma("wal_checkpoint(TRUNCATE)");
+    for(const entry of await readdir(this.root,{withFileTypes:true})){
+      if(entry.isDirectory()&&DATE.test(entry.name))await rm(join(this.root,entry.name),{recursive:true,force:true});
+    }
+  }
   recordGap(code:string,detail:string,tradingDate:string):void{
     const transaction=this.db.transaction(()=>{
       this.db.prepare(`INSERT INTO scanner_audit_integrity_events VALUES(?,?,?,?)`).run(randomUUID(),new Date().toISOString(),code,detail.slice(0,500));
@@ -223,18 +249,84 @@ export class ScannerAuditStore {
 }
 
 export class ScannerAuditRecorder {
-  private queue:ScannerAuditCycle[]=[];private draining=false;private dropped=0;private error:string|null=null;
-  constructor(private readonly store:ScannerAuditStore,private readonly maximumQueue=24){}
-  enqueue(cycle:ScannerAuditCycle):void{
-    if(this.queue.length>=this.maximumQueue){this.dropped++;this.error="audit_queue_overflow";
-      queueMicrotask(()=>this.store.recordGap("audit_queue_overflow",cycle.cycleId,cycle.tradingDate));return;}
-    this.queue.push(cycle);void this.drain();
+  private queue:ScannerAuditCycle[]=[];
+  private drainTask:Promise<void>|undefined;
+  private reads=new Set<Promise<unknown>>();
+  private dropped=0;
+  private error:string|null=null;
+  private enabled:boolean;
+  private deleting=false;
+
+  constructor(private readonly store:ScannerAuditStore,private readonly maximumQueue=24){
+    this.enabled=store.recordingEnabled();
   }
-  health(options:Readonly<{expectedActive?:boolean;now?:number}>={}):ScannerAuditHealth{return this.store.health({queueDepth:this.queue.length,droppedCycles:this.dropped,lastError:this.error,...options});}
-  timeline(date:string,symbol:string,options:Readonly<{beforeUtc?:string;limit?:number}>={}):Promise<ScannerAuditTimelinePage>{return this.store.timeline(date,symbol,options);}
-  dailyReview(date:string):ScannerAuditDailyReview{return this.store.dailyReview(date);}
-  rejections(date:string,options:Parameters<ScannerAuditStore["rejections"]>[1]):Promise<ScannerAuditRejectionPage>{return this.store.rejections(date,options);}
-  private async drain():Promise<void>{if(this.draining)return;this.draining=true;try{while(this.queue.length){const cycle=this.queue.shift()!;
-    try{await this.store.record(cycle);this.error=null;}catch(error){this.error=error instanceof Error?error.message:"audit_write_failed";
-      this.store.recordGap("audit_write_failed",`${cycle.cycleId}:${this.error}`,cycle.tradingDate);}}}finally{this.draining=false;}}
+  recordingState(){return {enabled:this.enabled,deleting:this.deleting};}
+  isRecording(){return this.enabled&&!this.deleting;}
+  async setRecording(enabled:boolean):Promise<void>{
+    this.requireAvailable();
+    this.store.setRecordingEnabled(enabled);
+    this.enabled=enabled;
+    if(!enabled){
+      this.queue.length=0;
+      await this.drainTask;
+    }
+  }
+  async deleteHistory():Promise<void>{
+    this.requireAvailable();
+    this.deleting=true;
+    this.queue.length=0;
+    try{
+      await this.drainTask;
+      await Promise.allSettled([...this.reads]);
+      await this.store.deleteHistory();
+      this.dropped=0;
+      this.error=null;
+    }finally{this.deleting=false;}
+  }
+  enqueue(cycle:ScannerAuditCycle):void{
+    if(!this.isRecording())return;
+    if(this.queue.length>=this.maximumQueue){
+      this.dropped++;
+      this.error="audit_queue_overflow";
+      this.store.recordGap("audit_queue_overflow",cycle.cycleId,cycle.tradingDate);
+      return;
+    }
+    this.queue.push(cycle);
+    this.startDrain();
+  }
+  health(options:Readonly<{expectedActive?:boolean;now?:number}>={}):ScannerAuditHealth{
+    this.requireAvailable();
+    return this.store.health({queueDepth:this.queue.length,droppedCycles:this.dropped,lastError:this.error,...options,expectedActive:this.isRecording()&&options.expectedActive});
+  }
+  timeline(date:string,symbol:string,options:Readonly<{beforeUtc?:string;limit?:number}>={}):Promise<ScannerAuditTimelinePage>{
+    this.requireAvailable();
+    return this.track(this.store.timeline(date,symbol,options));
+  }
+  dailyReview(date:string):ScannerAuditDailyReview{this.requireAvailable();return this.store.dailyReview(date);}
+  rejections(date:string,options:Parameters<ScannerAuditStore["rejections"]>[1]):Promise<ScannerAuditRejectionPage>{
+    this.requireAvailable();
+    return this.track(this.store.rejections(date,options));
+  }
+  private requireAvailable(){if(this.deleting)throw Error("audit_delete_in_progress");}
+  private async track<T>(operation:Promise<T>):Promise<T>{
+    this.reads.add(operation);
+    try{return await operation;}finally{this.reads.delete(operation);}
+  }
+  private startDrain(){
+    if(this.drainTask||!this.queue.length)return;
+    this.drainTask=this.drain().finally(()=>{
+      this.drainTask=undefined;
+      this.startDrain();
+    });
+  }
+  private async drain():Promise<void>{
+    while(this.queue.length){
+      const cycle=this.queue.shift()!;
+      try{await this.store.record(cycle);this.error=null;}
+      catch(error){
+        this.error=error instanceof Error?error.message:"audit_write_failed";
+        this.store.recordGap("audit_write_failed",`${cycle.cycleId}:${this.error}`,cycle.tradingDate);
+      }
+    }
+  }
 }

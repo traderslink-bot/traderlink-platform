@@ -36,7 +36,7 @@ export type LiveFeedDependencies = Readonly<{
   provider?:"alpaca"|"moomoo";
   inactive?:()=>void;
   subscribeChanges?: (notify:()=>void)=>()=>void;
-  audit?: Readonly<{ enqueue: (cycle: ScannerAuditCycle) => void }>;
+  audit?: Readonly<{ isRecording?:()=>boolean; enqueue: (cycle: ScannerAuditCycle) => void }>;
   now?: () => number;
 }>;
 
@@ -163,7 +163,8 @@ export class LiveScannerFeed {
         losers:evaluated.declines.losers.map(row=>({...row,news:news.get(row.symbol)??[]}))}:undefined;
       const premarketPullbacks=evaluated.premarketPullbacks?{...evaluated.premarketPullbacks,
         rows:evaluated.premarketPullbacks.rows.map(row=>({...row,news:news.get(row.symbol)??[]}))}:undefined;
-      this.dependencies.audit?.enqueue({timingMode:this.dependencies.eventDriven?"alpaca_events_1s":"sampled_5s",schemaVersion:SCANNER_AUDIT_SCHEMA_VERSION,cycleId:randomUUID(),runtimeInstanceId:this.runtimeInstanceId,tradingDate:date,session,
+      const audit=this.dependencies.audit;
+      if(audit&&audit.isRecording?.()!==false)audit.enqueue({timingMode:this.dependencies.eventDriven?"alpaca_events_1s":"sampled_5s",schemaVersion:SCANNER_AUDIT_SCHEMA_VERSION,cycleId:randomUUID(),runtimeInstanceId:this.runtimeInstanceId,tradingDate:date,session,
         scheduledAt:now,completedAt,universeSourceDate:universe.sourceTradingDate??universe.tradingDate,
         universeCount:symbols.length,universeHash:createHash("sha256").update(JSON.stringify(universe.stocks)).digest("hex"),
         configuration,configurationHash:scannerConfigurationHash(configuration),status,

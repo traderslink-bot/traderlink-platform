@@ -112,3 +112,7 @@ remaining access/live-result checks. Synthetic audit QA is not live acceptance.
 - Adapted High Drops widths to the current production High/Drop/session-marker implementation rather than restoring the historical Premarket High Pullbacks composition.
 - Current production add0a802/1b1a64cd intentionally selects the latest article per ticker. Preserved that newer selection policy instead of reintroducing the older multiple-link behavior mentioned in the handoff. PR and SEC latest articles retain the same drawer action.
 - Preserved current halt expiry/filtering, purple signals, manual tickers, decimal prices, settings and polling. Integrated verification and actual deployment evidence are recorded separately by Coordinator; no owner visual acceptance is implied.
+
+## Scanner Admin recording controls
+
+Audit recording defaults to off, including for installations without a saved preference. Scanner Admin can persist the recording setting or delete stored audit evidence and its indexes.

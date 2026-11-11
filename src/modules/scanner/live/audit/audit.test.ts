@@ -60,8 +60,30 @@ describe("scanner audit evidence",()=>{
   });
   it("keeps a queue-overflow coverage gap visible after restart",async()=>{
     const root=await mkdtemp(join(tmpdir(),"scanner-audit-gap-"));let store=await ScannerAuditStore.create(root);
-    new ScannerAuditRecorder(store,0).enqueue(cycle());await new Promise(resolve=>setImmediate(resolve));expect(store.health({queueDepth:0,droppedCycles:0,lastError:null}).droppedCycles).toBe(1);
+    const recorder=new ScannerAuditRecorder(store,0);await recorder.setRecording(true);recorder.enqueue(cycle());expect(store.health({queueDepth:0,droppedCycles:0,lastError:null}).droppedCycles).toBe(1);
     store.close();store=await ScannerAuditStore.create(root);expect(store.health({queueDepth:0,droppedCycles:0,lastError:null}).state).toBe("degraded");store.close();
+  });
+  it("defaults recording off, persists the setting, and deletes only audit history",async()=>{
+    const root=await mkdtemp(join(tmpdir(),"scanner-audit-controls-"));
+    await writeFile(join(root,"keep.txt"),"keep");
+    let store=await ScannerAuditStore.create(root);
+    await store.record(cycle("existing"));
+    let recorder=new ScannerAuditRecorder(store);
+    expect(recorder.recordingState().enabled).toBe(false);
+    recorder.enqueue(cycle("disabled"));
+    expect((await recorder.timeline("2026-11-02","AAA")).points).toHaveLength(1);
+    await recorder.setRecording(true);
+    store.close();
+    store=await ScannerAuditStore.create(root);
+    recorder=new ScannerAuditRecorder(store);
+    expect(recorder.recordingState().enabled).toBe(true);
+    await recorder.setRecording(false);
+    await recorder.deleteHistory();
+    expect(recorder.recordingState().enabled).toBe(false);
+    expect((await recorder.timeline("2026-11-02","AAA")).points).toHaveLength(0);
+    await expect(stat(join(root,"2026-11-02"))).rejects.toMatchObject({code:"ENOENT"});
+    expect(await readFile(join(root,"keep.txt"),"utf8")).toBe("keep");
+    store.close();
   });
   it("is idempotent for a repeated cycle and reports an unindexed evidence tail after restart",async()=>{
     const root=await mkdtemp(join(tmpdir(),"scanner-audit-recovery-"));let store=await ScannerAuditStore.create(root);const value=cycle();
