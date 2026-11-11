@@ -33,6 +33,23 @@ describe("momentum cooling retention",()=>{
     expect(book.select(context,[{...repeated,providerAtUtc:new Date(start+32_000).toISOString()}],start+32_000)[0])
       .toMatchObject({momentumState:"active",momentumLastActiveAtUtc:new Date(start+32_000).toISOString()});
   });
+  it("counts separate moves per session and promotes a hit without counting it twice", () => {
+    const book = new MomentumRetentionBook(), context = "2026-11-03:regular";
+    const start = Date.parse("2026-11-03T14:00:00Z");
+    const observation = row(["one_minute_momentum"]);
+    expect(book.select(context,[observation],start)[0].momentumHit).toMatchObject({
+      number:1,tier:"early",startedAtUtc:new Date(start).toISOString(),
+    });
+    const confirmation={...row(["price_burst","building_volume"]),volume:120_000};
+    expect(book.select(context,[confirmation],start+5_000,()=>true)[0].momentumHit).toMatchObject({
+      number:1,tier:"confirmed",startedAtUtc:new Date(start).toISOString(),signals:["price_burst","building_volume"],
+    });
+    expect(book.select(context,[confirmation],start+6_000)[0].momentumHit?.number).toBe(1);
+    expect(book.select(context,[confirmation],start+35_000)).toEqual([]);
+    const next={...observation,providerAtUtc:new Date(start+36_000).toISOString()};
+    expect(book.select(context,[next],start+36_000)[0].momentumHit).toMatchObject({number:2,tier:"early"});
+    expect(book.select("2026-11-03:after_hours",[next],start+37_000)[0].momentumHit?.number).toBe(1);
+  });
   it("does not retain a row that never generated a qualifying signal",()=>{
     expect(new MomentumRetentionBook().select("2026-11-03:regular",[row([])],Date.now())).toHaveLength(0);
   });

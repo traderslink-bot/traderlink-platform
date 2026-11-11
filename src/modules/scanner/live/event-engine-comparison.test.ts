@@ -93,9 +93,10 @@ it.each([
 ] as const)("keeps low-turnover one-minute detections below confirmed turnover in $session", ({session,low,high}) => {
   const engine = new LiveScannerEngine(true);
   const floats = new Map(["AAA","BBB"].map(symbol => [symbol,{shares:100_000_000,retrievedAtUtc:new Date(start).toISOString()}]));
+  const configuration = { ...config, momentum: { ...config.momentum, displayLimit:1 } };
   const replay = (second: number) => {
     const update = input(second);
-    return engine.evaluate({ ...update, floats, session, snapshots: update.snapshots.map((snapshot,index) => {
+    return engine.evaluate({ ...update, configuration, floats, session, snapshots: update.snapshots.map((snapshot,index) => {
       const rate = index === 0 ? low : high;
       return { ...snapshot, session, price: 2 + second * (index === 0 ? 0.004 : 0.001), bid: 2, ask: 2.01,
         volume: 1_000_000 + second * rate, dollarVolume: 2_000_000 + second * rate * 2 };
@@ -103,7 +104,10 @@ it.each([
   };
   for (let second=0;second<60;second++) replay(second);
   const result = replay(60);
-  expect(result.momentum.rows.map(row => row.symbol)).toEqual(["BBB","AAA"]);
+  expect(result.momentum.rows.map(row => row.symbol)).toEqual(["BBB"]);
+  expect(result.momentum.momentumSections).toMatchObject({
+    confirmed:[{symbol:"BBB"}],early:[{symbol:"AAA"}],confirmedTotal:1,earlyTotal:1,
+  });
   expect(result.audit.find(row => row.symbol==="AAA")).toMatchObject({
     momentumSignals:["one_minute_momentum"],momentumRank:2,momentumDisplayed:true,momentumLowerPriority:true,momentumFailures:[],
   });

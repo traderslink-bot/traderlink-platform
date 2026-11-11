@@ -118,6 +118,12 @@ export type LiveScannerRow = Readonly<{
   momentumSignals?:readonly MomentumSignal[];
   momentumState?:"active"|"cooling";
   momentumLastActiveAtUtc?:string;
+  momentumHit?: Readonly<{
+    number: number;
+    startedAtUtc: string;
+    tier: "confirmed" | "early";
+    signals: readonly MomentumSignal[];
+  }>;
   momentumCoolingUntilUtc?:string;
 }>;
 export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;
@@ -151,7 +157,14 @@ export type PremarketPullbackResults = Readonly<{
   rows:readonly PremarketPullbackRow[]; total:number; missingReferenceCount:number;
   controls:PremarketPullbackControls;
 }>;
-export type LiveScreenResults = Readonly<{ rows: readonly LiveScannerRow[]; focus: readonly FocusStock[]; total: number }>;
+export type LiveScreenResults = Readonly<{ rows: readonly LiveScannerRow[]; focus: readonly FocusStock[]; total: number;
+  momentumSections?: Readonly<{
+    confirmed: readonly LiveScannerRow[];
+    early: readonly LiveScannerRow[];
+    confirmedTotal: number;
+    earlyTotal: number;
+  }>;
+}>;
 export type ScannerReadModel = Readonly<{
   refreshAfterMs?:number;
   provider?:"alpaca"|"moomoo";

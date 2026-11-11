@@ -64,10 +64,11 @@ import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import { applyScannerDisplayContinuity, type ScannerDisplayContinuity } from "@/src/modules/scanner/live/display-continuity";
 
+import { MomentumSections } from "./momentum-sections";
+import { momentumSignalText } from "./momentum-signal-text";
+
 const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", momentum: "Momentum" };
 const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", regular: "Regular hours", after_hours: "After hours" };
-const MOMENTUM_SIGNAL_LABELS={volume_ignition:"Volume ignition",building_volume:"Building volume",price_burst:"Price burst",
-  developing_activity:"Developing activity",one_minute_momentum:"1min momentum",five_minute_momentum:"5min momentum"} as const;
 export const GAINERS_EXPLANATION = "This gainer list is not a standard list where percentage increase determines inclusion. The scanner qualifies candidates according to total vol, dollar vol, min gain and max spread. Day Gainers are ranked by gain from yesterday’s regular session close. Post market Gainers are ranked by gain from today’s regular close.";
 const number = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 2 });
 const priceNumber = new Intl.NumberFormat("en-US",{ minimumFractionDigits:2,maximumFractionDigits:2 });
@@ -140,10 +141,6 @@ const visibleExpandedPanelSx={boxSizing:"border-box",left:0,position:"sticky",wi
 function movementRowSx(direction:"up"|"down"|undefined) {
   return { animation:direction?`scanner-price-${direction} 900ms ease-out`:"none",'@media (prefers-reduced-motion: reduce)':{ animation:"none" } };
 }
-function momentumSignalText(row:LiveScannerRow){
-  if(row.momentumSignals?.length)return row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · ");
-  return row.momentumState==="cooling"?"Cooling · watching for renewed activity":"Detected activity";
-}
 function MomentumSignalRow({row,colSpan,leftOffset}:{row:LiveScannerRow;colSpan:number;leftOffset:string}){
   const label=momentumSignalText(row);
   return <TableRow data-momentum-signals={row.symbol}><TableCell colSpan={colSpan} sx={{borderBottom:1,borderColor:"divider",pl:`${leftOffset} !important`,pr:0.5,pt:"0 !important",pb:"0.3rem !important"}}>
@@ -174,8 +171,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         row.relativeVolume==null?null:metric("RVOL",`${number.format(row.relativeVolume)}×`),
         traded==null?null:metric("T/O",traded),
       ]:[
-        row.momentumState==="cooling"?metric("Detected","Cooling · watching for renewed activity"):
-          row.momentumSignals?.length?metric("Detected",row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · ")):null,
+        row.momentumHit || row.momentumSignals?.length ? metric("Detected",momentumSignalText(row)) : null,
         row.activity.episodeShares==null?null:metric("Episode volume",compact.format(row.activity.episodeShares)),
         row.activity.episodeDollarVolume==null?null:metric("Episode $ volume",`$${compact.format(row.activity.episodeDollarVolume)}`),
         row.activity.episodeSeconds==null?null:metric("Episode time",`${number.format(row.activity.episodeSeconds)}s`),
@@ -274,7 +270,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
         {expanded?<TableRow><TableCell colSpan={showPostGain?14:13} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
           <Box sx={{...visibleExpandedPanelSx,display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:2,p:1.25}}>
             {[
-              ["Detected",row.momentumState==="cooling"?"Cooling · watching for renewed activity":row.momentumSignals?.length?row.momentumSignals.map(signal=>MOMENTUM_SIGNAL_LABELS[signal]).join(" · "):"n/a"],
+              ["Detected",momentumSignalText(row)],
               ["Episode volume",row.activity.episodeShares==null?"n/a":compact.format(row.activity.episodeShares)],
               ["Episode $ volume",row.activity.episodeDollarVolume==null?"n/a":`$${compact.format(row.activity.episodeDollarVolume)}`],
               ["Episode time",row.activity.episodeSeconds==null?"n/a":`${number.format(row.activity.episodeSeconds)}s`],
@@ -293,7 +289,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
   </>;
 }
 
-function ScannerContents({ results,screen,onOpenChart,haltByTicker,compactDesktop=false,displayMode="table" }: { results: LiveScreenResults | undefined; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; compactDesktop?:boolean; displayMode?:"table"|"cards"|"two-rows" }) {
+function ScannerResultView({ results,screen,onOpenChart,haltByTicker,compactDesktop=false,displayMode="table" }: { results: LiveScreenResults | undefined; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; compactDesktop?:boolean; displayMode?:"table"|"cards"|"two-rows" }) {
   const allowAdd=useSideCardChartControls();
   if (!results) return <Skeleton height={440} variant="rounded"/>;
   if(displayMode==="cards")return results.rows.length?<ScannerStockCards rows={results.rows} screen={screen}
@@ -308,6 +304,13 @@ function ScannerContents({ results,screen,onOpenChart,haltByTicker,compactDeskto
   if(compactDesktop)return results.rows.length?<CompactStockTable compactDesktop haltByTicker={haltByTicker} rows={results.rows} screen={screen} onOpenChart={onOpenChart}/>
     :<Alert severity="info">No stocks currently qualify for this list.</Alert>;
   return <Results haltByTicker={haltByTicker} onOpenChart={onOpenChart} results={results} screen={screen}/>;
+}
+
+function ScannerContents(props: Parameters<typeof ScannerResultView>[0]) {
+  const sections = props.results?.momentumSections;
+  if (props.screen !== "momentum" || !sections) return <ScannerResultView {...props}/>;
+  return <MomentumSections sections={sections} compact={props.compactDesktop}
+    renderResults={(rows,total) => <ScannerResultView {...props} results={{ rows, total, focus: [] }}/>}/>;
 }
 
 /** Compact scanner styling with the table scrolling inside its grid cell. */
@@ -467,6 +470,8 @@ function ManualTickersAdmin(){
 export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const workspaceLayout=DEFAULT_SCANNER_WORKSPACE_LAYOUT;
   const [model,setModel]=useState<ScannerReadModel|null>(null), [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
+  const momentumSections = model?.momentum.momentumSections;
+  const momentumStocks = momentumSections ? [...momentumSections.confirmed,...momentumSections.early] : model?.momentum.rows ?? [];
   const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
   const [chartWorkspace,dispatchChart]=useReducer(scannerChartWorkspace,EMPTY_CHART_WORKSPACE);
   const chartView=useChartMultiview("scanner");
@@ -479,7 +484,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     if(chart.addChart&&!currentGroup&&chartCount(chartLayout)>=4){dispatchChart({type:"limit"});return;}
     const next=chart.addChart?reconcileChartTickers(chartLayout,[...chartWorkspace.charts.map(item=>item.symbol),chart.symbol]):!chartWorkspace.charts.length&&existing?{version:1 as const,groups:[existing],selectedPanel:existing.panels[0].id}:singleChart(chart.symbol,existing?.panels[0].timeframe??"1m");
     chartView.change({...next,mobileLayout:chartView.layout.mobileLayout??"tabs",landscapeLayout:chartView.layout.landscapeLayout??chartView.layout.mobileLayout??"tabs",selectedPanel:next.groups.find(group=>group.symbol===chart.symbol)?.panels[0].id??next.selectedPanel});
-    dispatchChart({type:chart.addChart?"open":"replace",chart:{...chart,showDetails:true,stock:chart.stock??[...(model?.gainers.rows??[]),...(model?.dayGainers?.rows??[]),...(model?.momentum.rows??[])].find(stock=>stock.symbol===chart.symbol)}});setWorkspaceSection("details");
+    dispatchChart({type:chart.addChart?"open":"replace",chart:{...chart,showDetails:true,stock:chart.stock??[...(model?.gainers.rows??[]),...(model?.dayGainers?.rows??[]),...momentumStocks].find(stock=>stock.symbol===chart.symbol)}});setWorkspaceSection("details");
   };
   const configureCharts=(next:ChartMultiview)=>{
     chartView.change(next);
@@ -548,7 +553,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       :<ScannerContents displayMode={displayModes[kind]} compactDesktop={compactDesktop} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:inWorkspace||kind==="gainers"})} results={resultsFor(kind)} screen={kind}/>}
   </>;
   const workspaceScreeners=<SideCardChartControls value={true}><ScannerNewsDrawerProvider onOpen={item=>{
-    const stock=[...(selectedGainers?.rows??[]),...(model?.momentum.rows??[])].find(row=>row.news.some(news=>news.id===item.id));
+    const stock=[...(selectedGainers?.rows??[]),...momentumStocks].find(row=>row.news.some(news=>news.id===item.id));
     if(stock){setChartRow({...stock,showDetails:true});setWorkspaceSection("details");}
   }}><Stack spacing={0.5} sx={{height:{md:"100%"},minHeight:0}}>
     <Box role="group" aria-label="Visible scanners" sx={{display:"flex",flexWrap:"wrap",columnGap:0.5,flexShrink:0}}>
@@ -625,6 +630,6 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0,p:2})}>{fullScanner==="gainers"?gainerTabs:null}{contents(fullScanner)}</Box>
       </Stack>:null}
     </Drawer>
-    <ScannerChartDrawer layout={chartLayout} onLayoutChange={configureCharts} layoutReady={chartView.ready} layoutMessage={chartView.message} onAdd={symbol=>{setChartRow({symbol,exchange:"NASDAQ",showDetails:true,addChart:true});setWorkspaceSection("details");}} charts={chartWorkspace.charts} limitReached={chartWorkspace.limitReached} onSelect={symbol=>{const group=chartLayout.groups.find(group=>group.symbol===symbol);if(group&&!group.panels.some(panel=>panel.id===chartLayout.selectedPanel))chartView.change({...chartLayout,selectedPanel:group.panels[0].id});dispatchChart({type:"select",symbol});}} onRemove={symbol=>{chartView.change({...chartLayout,groups:chartLayout.groups.filter(group=>group.symbol!==symbol),selectedPanel:chartLayout.groups.filter(group=>group.symbol!==symbol).some(group=>group.panels.some(panel=>panel.id===chartLayout.selectedPanel))?chartLayout.selectedPanel:chartLayout.groups.filter(group=>group.symbol!==symbol)[0]?.panels[0].id??null});dispatchChart({type:"remove",symbol});}} onClose={()=>{chartView.clearViews();dispatchChart({type:"close"});setWorkspaceSection("details");}} row={chartRow} screeners={workspaceScreeners} section={workspaceSection} onSectionChange={setWorkspaceSection} stocks={[...(selectedGainers?.rows??[]),...(model?.momentum.rows??[])]}/>
+    <ScannerChartDrawer layout={chartLayout} onLayoutChange={configureCharts} layoutReady={chartView.ready} layoutMessage={chartView.message} onAdd={symbol=>{setChartRow({symbol,exchange:"NASDAQ",showDetails:true,addChart:true});setWorkspaceSection("details");}} charts={chartWorkspace.charts} limitReached={chartWorkspace.limitReached} onSelect={symbol=>{const group=chartLayout.groups.find(group=>group.symbol===symbol);if(group&&!group.panels.some(panel=>panel.id===chartLayout.selectedPanel))chartView.change({...chartLayout,selectedPanel:group.panels[0].id});dispatchChart({type:"select",symbol});}} onRemove={symbol=>{chartView.change({...chartLayout,groups:chartLayout.groups.filter(group=>group.symbol!==symbol),selectedPanel:chartLayout.groups.filter(group=>group.symbol!==symbol).some(group=>group.panels.some(panel=>panel.id===chartLayout.selectedPanel))?chartLayout.selectedPanel:chartLayout.groups.filter(group=>group.symbol!==symbol)[0]?.panels[0].id??null});dispatchChart({type:"remove",symbol});}} onClose={()=>{chartView.clearViews();dispatchChart({type:"close"});setWorkspaceSection("details");}} row={chartRow} screeners={workspaceScreeners} section={workspaceSection} onSectionChange={setWorkspaceSection} stocks={[...(selectedGainers?.rows??[]),...momentumStocks]}/>
   </Stack>;
 }

@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import { useState, type ReactNode } from "react";
 import type { LiveScannerRow, ScannerKind } from "@/src/modules/scanner/live/contracts";
 
+import { momentumSignalText } from "./momentum-signal-text";
 import { ScannerCountryFlag } from "./scanner-country-flag";
 
 type Metric = readonly [label: string, value: string];
@@ -54,8 +55,10 @@ export function ScannerStockCards({ rows, screen, renderTools, renderHalt }: {
         <Box component="dl" sx={{ m: 0, mt: 0.5, display: "grid", gridTemplateColumns: `repeat(${bottom.length},minmax(0,1fr))`, gap: 0.5 }}>
           {bottom.map(metric => <Reading key={metric[0]} metric={metric}/>)}
         </Box>
+        {screen === "momentum" ? <Typography sx={{ fontSize: "0.6rem", color: "text.secondary", mt:0.4 }}>
+          {momentumSignalText(row)}
+        </Typography> : null}
         {expanded ? <Box sx={{ borderTop: 1, borderColor: "divider", mt: 0.5, pt: 0.5 }}>
-          {screen === "momentum" && row.momentumSignals?.length ? <Typography sx={{ fontSize: "0.6rem", color: "text.secondary" }}>{row.momentumSignals.map(signal => ({volume_ignition:"Volume ignition",building_volume:"Building volume",price_burst:"Price burst",developing_activity:"Developing activity",one_minute_momentum:"1min momentum",five_minute_momentum:"5min momentum"})[signal]).join(" · ")}</Typography> : null}
           <Box component="dl" sx={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 0.5, m: 0 }}>
             {([["HOD price", `$${prices.format(row.dayHigh)}`], ["Session low", `$${prices.format(row.dayLow)}`], ["Session Vol", shares(row.volume)]] as Metric[]).map(metric => <Reading key={metric[0]} metric={metric}/>)}
           </Box>

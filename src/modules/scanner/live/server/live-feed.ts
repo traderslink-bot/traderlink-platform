@@ -156,15 +156,19 @@ export class LiveScannerFeed {
       }
       this.recordMarketMovement(snapshots);
       const evaluated = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
-      const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus]
+      const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus,evaluated.momentum.momentumSections?.confirmed??[],evaluated.momentum.momentumSections?.early??[]]
         .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[]))];
       let news: ReadonlyMap<string,readonly ScannerNewsItem[]> = new Map();
       try { news = await this.dependencies.news(visibleSymbols); } catch { issues.add("news_unavailable"); }
       let countries:ReadonlyMap<string,string>=new Map();
       try { countries=await this.dependencies.countries?.(date)??countries; } catch { /* Country metadata never blocks scan results. */ }
+      const enrichRow = <T extends LiveScreenResults["rows"][number]>(row:T): T =>
+        ({ ...row, news: news.get(row.symbol) ?? [], country:countries.get(row.symbol)??null });
       const enrich = (results: LiveScreenResults): LiveScreenResults => ({ ...results,
-        rows: results.rows.map(row => ({ ...row, news: news.get(row.symbol) ?? [], country:countries.get(row.symbol)??null })),
-        focus: results.focus.map(row => ({ ...row, news: news.get(row.symbol) ?? [], country:countries.get(row.symbol)??null })) });
+        rows: results.rows.map(enrichRow), focus: results.focus.map(enrichRow),
+        ...(results.momentumSections ? { momentumSections: { ...results.momentumSections,
+          confirmed: results.momentumSections.confirmed.map(enrichRow),
+          early: results.momentumSections.early.map(enrichRow) } } : {}) });
       const status = missing.length || issues.size ? "partial" : snapshots.length ? "ready" : "warming";
       const completedAt=(this.dependencies.now ?? Date.now)();
       const declines=evaluated.declines?{...evaluated.declines,

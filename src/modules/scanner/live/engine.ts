@@ -35,6 +35,14 @@ function lowTurnoverOneMinuteMomentum(row: LiveScannerRow, session: ScannerSessi
   const recentTurnover = Math.max(row.activity.oneMinuteDollarVolume ?? 0, row.activity.episodeDollarVolume ?? 0);
   return recentTurnover < (session === "regular" ? 10_000 : 5_000);
 }
+function hasMomentumConfirmation(row: LiveScannerRow, session: ScannerSession): boolean {
+  const signals = row.momentumSignals ?? [];
+  const priceMove = signals.some(signal => signal === "price_burst" || signal === "one_minute_momentum" || signal === "five_minute_momentum")
+    || Math.max(row.activity.intervalGain ?? 0, row.activity.oneMinuteGain ?? 0) >= 0.5;
+  const turnover = Math.max(row.activity.oneMinuteDollarVolume ?? 0, row.activity.episodeDollarVolume ?? 0);
+  return priceMove && (turnover >= (session === "regular" ? 10_000 : 5_000)
+    || signals.includes("building_volume") || signals.includes("five_minute_momentum"));
+}
 function focusCandidate(row: LiveScannerRow, controls: FocusControls, rankingScore?: number,allowEvents=false): Candidate | null {
   const activity = row.activity;
   const priceStrength=Math.max(activity.intervalGain??-Infinity,activity.oneMinuteGain??-Infinity,(activity.fiveMinuteGain??-Infinity)/5);
@@ -186,11 +194,19 @@ export class LiveScannerEngine {
     const allowEarlyLiquidityBypass=momentumLiquidityBypassControls(input.configuration)[input.session];
     const momentumEligible=rows.filter(row=>scannerMomentumFilterFailures(row,momentumFilters,allowEarlyLiquidityBypass).length===0);
     const lowerPrioritySymbols = new Set(momentumEligible.filter(row => lowTurnoverOneMinuteMomentum(row,input.session)).map(row => row.symbol));
-    const momentum = [...this.momentumRetention.select(`${input.tradingDate}:${input.session}`,momentumEligible,input.now)]
+    const momentum = [...this.momentumRetention.select(`${input.tradingDate}:${input.session}`,momentumEligible,input.now,row => hasMomentumConfirmation(row,input.session))]
       .sort((a,b) => Number(b.momentumState==="active")-Number(a.momentumState==="active")
         || Number(lowerPrioritySymbols.has(a.symbol)) - Number(lowerPrioritySymbols.has(b.symbol))
         || momentumScore(b,input.configuration.momentum.focus,momentumFilters)
         -momentumScore(a,input.configuration.momentum.focus,momentumFilters) || a.symbol.localeCompare(b.symbol));
+    const confirmedMomentum = momentum.filter(row => row.momentumHit?.tier === "confirmed");
+    const earlyMomentum = momentum.filter(row => row.momentumHit?.tier === "early");
+    const limit = input.configuration.momentum.displayLimit;
+    const momentumSections = {
+      confirmed: confirmedMomentum.slice(0,limit), early: earlyMomentum.slice(0,limit),
+      confirmedTotal: confirmedMomentum.length, earlyTotal: earlyMomentum.length,
+    };
+    const displayedMomentum = new Set([...momentumSections.confirmed,...momentumSections.early].map(row => row.symbol));
     const context = `${input.tradingDate}:${input.session}`;
     const gainersCandidates = gainers.filter(row => freshGainerSymbols.has(row.symbol)).map(row => focusCandidate(row,input.configuration.gainers.focus)).filter((value): value is Candidate => value !== null);
     const momentumCandidates = momentum.map(row => focusCandidate(row,input.configuration.momentum.focus,
@@ -249,7 +265,7 @@ export class LiveScannerEngine {
         momentumLastActiveAtUtc:momentumRow.momentumLastActiveAtUtc,momentumCoolingUntilUtc:momentumRow.momentumCoolingUntilUtc,gainerRank:gr,momentumRank:mr,
         gainerGain:gainerRow.sessionGain,gainerComparisonPrice:gainerRow.comparisonPrice??null,gainerGainBasis:gainerRow.gainBasis,
         gainerDisplayed:gr!==null&&gr<=input.configuration.gainers.displayLimit,
-        momentumDisplayed:mr!==null&&mr<=input.configuration.momentum.displayLimit,
+        momentumDisplayed:displayedMomentum.has(row.symbol),
         momentumLowerPriority: mr !== null && lowerPrioritySymbols.has(row.symbol),
         momentumScore:scannerMomentumScore(momentumRow,input.configuration.momentum.focus,momentumFilters)} satisfies ScannerAuditDecision;
     });
@@ -265,7 +281,7 @@ export class LiveScannerEngine {
       gainers: { rows: gainers.slice(0,input.configuration.gainers.displayLimit), total: gainers.length,
         focus: this.gainersFocus.select(context,gainersCandidates,input.configuration.gainers.focus,input.now) },
       dayGainers: { rows: dayGainers.slice(0,input.configuration.gainers.displayLimit), total: dayGainers.length, focus: [] },
-      momentum: { rows: momentum.slice(0,input.configuration.momentum.displayLimit), total: momentum.length,
+      momentum: { rows: momentum.slice(0,limit), total: momentum.length, momentumSections,
         focus: this.momentumFocus.select(context,momentumCandidates,input.configuration.momentum.focus,input.now) }, missingFloatCount,audit,
     };
   }
