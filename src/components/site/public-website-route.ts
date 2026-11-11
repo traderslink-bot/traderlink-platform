@@ -5,7 +5,7 @@ const publicPageRoots = [
 ] as const;
 const publicPages = new Set([
   "/", "/trading-journal", "/trade-analyzer", "/trade-analytics",
-  "/privacy", "/terms", "/beta", "/filtered-news-momentum-scanner-access",
+  "/privacy", "/terms", "/attributions", "/beta", "/filtered-news-momentum-scanner-access",
   "/access-required", "/sign-in-help", "/watchlist/how-it-works",
   "/smokeys-12-week-market-structure-plan",
 ]);

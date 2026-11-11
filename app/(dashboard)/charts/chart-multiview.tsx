@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { Box, IconButton, Link, Tab, Tabs } from "@mui/material";
+import { Box, IconButton, Tab, Tabs } from "@mui/material";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -69,9 +69,5 @@ export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenM
         </Box>)}
       </Box>)}
     </Box>
-    {renderedCount > 0 && <Link href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer" underline="hover" color="text.secondary"
-      sx={{ flexShrink: 0, alignSelf: "flex-end", px: 0.5, fontSize: 10, lineHeight: "14px" }}>
-      TradingView Lightweight Charts™ · Copyright (c) 2025 TradingView, Inc.
-    </Link>}
   </Box>;
 }

@@ -125,3 +125,7 @@ Owner-approved view memory now restores per-chart zoom, pan and compatible manua
 ## Default candle density trial — 2026-11-10
 
 Replaced fixed initial 240/100-bar windows in the shared renderer with timeframe-specific pixel spacing (9/10/10/11/11/12px) measured against actual plot width, plus three right-side slots. Initial manual price range uses the corresponding visible slice. Saved/restored views retain priority, sparse histories keep readable spacing, and existing historical loading remains intact. Focused tests, typecheck, lint and 12 real-data phone/desktop interval checks pass. Help draft updated; public guides remain unchanged during private trial. Owner review pending; no production deployment.
+
+## November 11, 2026 — Public chart attribution
+
+The shared chart renders without a credit link or information card. The public `traderslink.pro/attributions` page carries the exact v5.2.0 upstream notice and links to TradingView. The main domain forwards the route to Platform, which renders the page with the homepage navigation and footer.
