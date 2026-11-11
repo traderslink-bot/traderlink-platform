@@ -22,7 +22,9 @@ it('rejects invalid and oversized settings without changing stored preferences',
  expect((await POST(request({...original,padding:'x'.repeat(70000)}))).status).toBe(400);expect((await (await GET(new Request('http://localhost/api'))).json()).revision).toBe(0);
 });
 
-it('keeps the new chart preferences private to the existing allowed accounts',async()=>{
- setup.privateChart=false;expect((await GET(new Request('http://localhost/api'))).status).toBe(403);expect((await POST(request({}))).status).toBe(403);
- setup.privateChart=true;expect((await GET(new Request('http://localhost/api'))).status).toBe(200);
+it('allows signed-in accounts outside the scanner allowlist to save chart preferences',async()=>{
+ setup.privateChart=false;
+ const response=await GET(new Request('http://localhost/api'));
+ expect(response.status).toBe(200);
+ expect((await POST(request(await response.json()))).status).toBe(200);
 });

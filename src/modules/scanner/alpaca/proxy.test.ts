@@ -25,12 +25,14 @@ describe("authenticated chart proxy", () => {
     expect((await proxyAlpacaChart(new Request("https://app.example/api?symbol=AAPL"), false)).status).toBe(200);
     expect(upstream).toHaveBeenCalledTimes(2);
   });
-  it("blocks other authenticated accounts before contacting the gateway", async () => {
+  it("allows chart history and streaming for signed-in accounts outside the scanner allowlist", async () => {
     configure(); access.mockReturnValue(false);
-    const upstream = vi.fn(); vi.stubGlobal("fetch", upstream);
-    expect((await proxyAlpacaChart(new Request("https://app.example/api?symbol=AAPL"), false)).status).toBe(403);
-    expect((await proxyAlpacaChart(new Request("https://app.example/api?symbol=AAPL"), true)).status).toBe(403);
-    expect(upstream).not.toHaveBeenCalled();
+    const upstream = vi.fn(async () => Response.json({ bars: [], feed: "sip" })); vi.stubGlobal("fetch", upstream);
+    expect((await proxyAlpacaChart(new Request("https://app.example/api?symbol=AAPL"), false)).status).toBe(200);
+    const stream = await proxyAlpacaChart(new Request("https://app.example/api?symbol=AAPL"), true);
+    expect(stream.status).toBe(200);
+    await stream.body?.cancel();
+    expect(upstream).toHaveBeenCalledTimes(2);
   });
   it("retains the normal authentication boundary", async () => {
     configure(); identity.mockImplementation(() => { throw Error("unauthenticated"); });

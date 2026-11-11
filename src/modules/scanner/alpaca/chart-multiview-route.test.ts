@@ -26,6 +26,6 @@ it("keeps authentication, permission, mutation, size and conflict gates on layou
  expect((await POST(request({...original,padding:"x".repeat(10000)}))).status).toBe(400);
  expect((await POST(request(original))).status).toBe(200);expect((await POST(request(original))).status).toBe(409);
  setup.user="";expect((await get()).status).toBe(401);setup.user="user-a";
- setup.privateChart=false;expect((await get()).status).toBe(403);
+ setup.privateChart=false;expect((await get()).status).toBe(200);expect((await get("scanner")).status).toBe(403);
  expect((await get("invalid")).status).toBe(400);
 });

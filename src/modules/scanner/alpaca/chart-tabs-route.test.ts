@@ -25,5 +25,5 @@ it("enforces private-owner access, mutation, size and strict payload validation"
  const original=await(await get()).json();setup.allowed=false;expect((await POST(request(original))).status).toBe(403);setup.allowed=true;
  expect((await POST(request({...original,layout:{...original.layout,admin:true}}))).status).toBe(400);
  expect((await POST(request({...original,padding:"x".repeat(MAX_CHART_TABS_BYTES)}))).status).toBe(400);
- setup.user="";expect((await get()).status).toBe(401);setup.user="user-a";setup.privateChart=false;expect((await get()).status).toBe(403);expect((await POST(request(original))).status).toBe(403);
+ setup.user="";expect((await get()).status).toBe(401);setup.user="user-a";setup.privateChart=false;const response=await get();expect(response.status).toBe(200);expect((await POST(request(await response.json()))).status).toBe(200);
 });

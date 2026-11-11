@@ -143,3 +143,7 @@ The built-in presets use distinct line colors. Price-scale indicator labels defa
 VWAP keeps its last valid readout on no-trade halt slots. Refreshes of a valid historical seed run silently, and the next real candle updates the readout after trading resumes.
 
 VWAP reuses validated seeds and the last same-day readout per account and calculation settings across chart tab switches and browser reloads. Live candle reconciliation updates the readout after history catches up.
+
+## November 11, 2026 — Signed-in Charts access
+
+Local candidate opens the chart workspace and chart-only data and preference endpoints to signed-in Platform users. Scanner pages, results, and scanner layout access keep the existing allowlist. Live access remains pending confirmation of member-facing Alpaca data rights.

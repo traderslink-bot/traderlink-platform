@@ -3,9 +3,7 @@ import Box from "@mui/material/Box";
 
 import { DashboardPage } from "../../dashboard-template";
 import { MarketChartWorkspace } from "./market-chart-workspace";
-import { TradingViewChart } from "./trading-view-chart";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 
 export const metadata: Metadata = {
   title: "Market Charts | TraderLink Platform",
@@ -13,8 +11,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 export default async function MarketChartsPage() {
-  const identity = await requireTraderLinkPlatformPageIdentity();
-  const privateChart = hasWatchlistDashboardNavigationAccess(identity);
+  await requireTraderLinkPlatformPageIdentity();
   return (
     <DashboardPage>
       <Box
@@ -33,7 +30,7 @@ export default async function MarketChartsPage() {
       >
         Market Charts
       </Box>
-      {privateChart ? <MarketChartWorkspace /> : <TradingViewChart />}
+      <MarketChartWorkspace />
     </DashboardPage>
   );
 }

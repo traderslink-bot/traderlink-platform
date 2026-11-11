@@ -400,7 +400,7 @@ export function DashboardShell({
 }) {
   const theme = useTheme();
   const pathname = usePathname();
-  const chartWorkspacePage = pathname === "/charts" && watchlistAdminNavigationAccess;
+  const chartWorkspacePage = pathname === "/charts";
   const compactMarketPage = chartWorkspacePage || ["/scanners", "/screeners", "/admin/scanners"].includes(pathname);
 
   const [loadedUnreadCounts, setLoadedUnreadCounts] = useState<{

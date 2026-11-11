@@ -4,14 +4,12 @@ import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform
 import { chartHistoryPage, chartHistoryWindow } from "./chart-history";
 import type { Candle } from "./candles";
 import { chartSymbol } from "./candles";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 
 export async function proxyAlpacaChart(request: Request, stream: boolean): Promise<Response> {
   const safeHeaders = { "Cache-Control": "private, no-store" };
   try {
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
     const local = identity.mode === "local_development" && process.env.NODE_ENV !== "production";
-    if (!hasWatchlistDashboardNavigationAccess(identity)) return Response.json({ error: "scanner_access_denied" }, { status: 403, headers: safeHeaders });
     const query = new URL(request.url).searchParams;
     let symbol: string;
     try { symbol = chartSymbol(query.get("symbol") ?? ""); } catch { return Response.json({ error: "invalid_symbol" }, { status: 400, headers: safeHeaders }); }
