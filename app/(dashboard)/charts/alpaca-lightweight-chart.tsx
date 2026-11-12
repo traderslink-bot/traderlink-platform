@@ -120,6 +120,13 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     setStatus("Loading candles…"); setError(null); setHistoryMessage("");
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
+    const requestHistory = () => sharedChartFetch(
+      `/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}`,
+      { signal: abort.signal, credentials: "same-origin" },
+    );
+    const initialHistory = requestHistory();
+    // The request may settle before the lazy chart library finishes loading.
+    void initialHistory.catch(() => {});
     async function start() {
       const { createChart, CandlestickSeries, HistogramSeries, LineSeries, BarSeries, ColorType, TickMarkType, PriceScaleMode, CrosshairMode } = await import("lightweight-charts");
       if (disposed) return;
@@ -424,11 +431,11 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         updateDates();
       };
       const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
-      const loadHistory = async () => {
+      const loadHistory = async (initialRequest?: Promise<Response>) => {
         if (loading) { reloadAfter = true; return; }
         loading = true;
         try {
-          const response = await sharedChartFetch(`/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}`, { signal: abort.signal, credentials: "same-origin" });
+          const response = await (initialRequest ?? requestHistory());
           if (!response.ok) throw Error(response.status === 429 ? "Chart requests are busy. Try again shortly." : "Candles unavailable. Try again.");
           const data = await response.json();
           if (disposed) return;
@@ -600,9 +607,9 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       const remove = removeChart;
       removeChart = () => { document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);if(loaded)memory.current={key:cacheKey,basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,range:chart.timeScale().getVisibleRange(),logicalRange:chart.timeScale().getVisibleLogicalRange(),axis:{first:displayPoints[0]?.time,last:displayPoints.at(-1)?.time,count:displayPoints.length,sessions:sessionKey},priceRange:chart.priceScale("right").getVisibleRange()}; element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
       updateIndicatorLegend();
-      await loadHistory();
+      await loadHistory(initialHistory);
     }
-    void start().catch(() => { if (!disposed) setError("Chart could not load. Try again."); });
+    void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
   }, [ticker, timeframe, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget]);
 

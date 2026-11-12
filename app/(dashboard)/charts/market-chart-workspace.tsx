@@ -175,7 +175,7 @@ export function MarketChartWorkspace() {
       {!compact && error && <Alert severity="warning">{error}</Alert>}
       {message && !["View saved", "Saving view…"].includes(message) ? <Alert severity="warning">{message}</Alert> : null}
       <ChartPreferencesContext.Provider value={chartPreferences}>
-        <ChartMultiviewCharts key={tab.id} viewPrefix={chartTabPrefix(tab.id)} layout={layout} onChange={change} ready={ready} onDefaultTimeframeChange={setPendingDefaultTimeframe} onOpenMultiview={() => multiTickerLauncher.current?.open(tab.id)} compactMobile workspaceRow plain={book.plain} />
+        {ready && <ChartMultiviewCharts key={tab.id} viewPrefix={chartTabPrefix(tab.id)} layout={layout} onChange={change} ready={ready} onDefaultTimeframeChange={setPendingDefaultTimeframe} onOpenMultiview={() => multiTickerLauncher.current?.open(tab.id)} compactMobile workspaceRow plain={book.plain} />}
       </ChartPreferencesContext.Provider>
       {compact && focus ? <Stack direction="row" sx={{ position: "absolute", bottom: "max(4px,env(safe-area-inset-bottom,0px))", right: 4, zIndex: 3, bgcolor: "background.paper", border: 1, borderColor: "divider" }}>
         <IconButton aria-label="Open dashboard navigation" onClick={navigation} sx={{ width: 44, height: 44 }}><MenuRounded /></IconButton>
