@@ -120,8 +120,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     setStatus("Loading candles…"); setError(null); setHistoryMessage("");
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
-    // Studies with recursive calculations need the same warm-up as the full chart.
-    const useRecentHistory = !activeIndicators.length && timeframe !== "4h" && timeframe !== "1D";
+    const useRecentHistory = timeframe !== "4h" && timeframe !== "1D";
     const requestHistory = (recent = false) => sharedChartFetch(
       `/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}${recent ? "&recent=1" : ""}`,
       { signal: abort.signal, credentials: "same-origin" },
@@ -253,6 +252,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       };
       const pendingSeeds=new Set<string>(),seedFailures=new Map<string,number>(),seedMomentAttempts=new Map<string,number>();
       let initialViewReady = false, viewSaveTimer: ReturnType<typeof setTimeout> | undefined;
+      let indicatorsReady = !useRecentHistory || !studies.length;
+      let warmupTimer: ReturnType<typeof setTimeout> | undefined;
       let loaded = false, loading = false, reloadAfter = false, connected = false, loadingOlder = false;
       let nextBefore: number | null = restore?.nextBefore??null, userPanned = false;
       const scheduleView = () => { clearTimeout(viewSaveTimer); viewSaveTimer=setTimeout(saveView,250); };
@@ -406,7 +407,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         renderPriceGuide();
         if(initial&&!(restorePrice?savedView!.autoScale:preferences.autoScale)&&data.length){const recent=data.slice(-defaultView.visibleBars),low=Math.min(...recent.map(b=>b.low)),high=Math.max(...recent.map(b=>b.high)),margin=Math.max((high-low)*0.05,high*0.01,0.0001);chart.priceScale("right").setVisibleRange(restore?.priceRange??{from:Math.max(0.0001,low-margin),to:high+margin});}
         volume?.setData(data.map(volumePoint));
-        for(const study of studies){
+        for(const study of indicatorsReady ? studies : []){
           const part=study.indicator.type==='VWAP'?{points:[]}:indicatorValues(actual,study.indicator,timeframe)[study.index];
           const points=study.indicator.type==='VWAP'?vwapPoints(study.indicator,actual,data,study.index):part.points;
           studyPoints.set(study,points);
@@ -434,17 +435,18 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       };
       const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
       let recentHistory = useRecentHistory;
-      const loadHistory = async (initialRequest?: Promise<Response>) => {
+      const loadHistory = async (initialRequest?: Promise<Response>, warmup = false) => {
         if (loading) { reloadAfter = true; return; }
         loading = true;
         try {
-          const recent = recentHistory && (!loaded || historyBasisDate === easternClock(Date.now()).date);
+          let recent = !warmup && recentHistory && (!loaded || historyBasisDate === easternClock(Date.now()).date);
           const response = await (initialRequest ?? requestHistory(recent));
           if (!response.ok) throw Error(response.status === 429 ? "Chart requests are busy. Try again shortly." : "Candles unavailable. Try again.");
           let data = await response.json();
           if (disposed) return;
           if (recent && !visibleSessionBars(data.bars, preferences).length) {
             recentHistory = false;
+            recent = false;
             const full = await requestHistory();
             if (!full.ok) throw Error("Candles unavailable. Try again.");
             data = await full.json();
@@ -453,6 +455,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           if(!loaded&&savedView&&data.bars.length&&savedView.anchor.time<data.bars[0].time){
             const history=await calculationHistory.read(timeframe,savedView.anchor.time);
             if(disposed)return;
+            recent = false;
             data.bars=history.bars;data.basisDate=history.basisDate;marketCalendar.current=history.calendar;
             data.nextBefore=history.bars.length?history.bars[0].time*1000-1:data.nextBefore;
           }
@@ -461,20 +464,29 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           const newBasis=historyBasisDate!==basisDate;historyBasisDate=basisDate;
           marketCalendar.current.merge(data.calendar);if(Array.isArray(data.calendars))for(const value of data.calendars)marketCalendar.current.merge(value);
           const initial = !loaded;
+          if (!recent) indicatorsReady = true;
+          if (warmup) recentHistory = false;
           if(initial&&(!restore||!restore.bars.length)||newBasis&&!initial)bars.clear();
-          if(initial&&(!restore||!restore.bars.length)||newBasis&&!initial){nextBefore=data.nextBefore??null;}
+          if(warmup||initial&&(!restore||!restore.bars.length)||newBasis&&!initial){nextBefore=data.nextBefore??null;}
           for (const bar of data.bars as Candle[]) bars.set(bar.time, bar);
           for (const bar of queued.values()) bars.set(bar.time, bar);
           queued.clear(); loaded = true;
           const latest = [...bars.values()].reduce<Candle|undefined>((last,bar)=>!last||bar.time>last.time?bar:last,undefined);
           candles.applyOptions({ priceFormat: { type: "price", precision: latest && latest.close < 1 ? 4 : 2, minMove: latest && latest.close < 1 ? 0.0001 : 0.01 } });
-          writeAll(initial); initialViewReady=true; setError(null);
+          writeAll(initial, warmup); initialViewReady=true; setError(null);
+          if (initial && !indicatorsReady) {
+            // Yield to the browser before starting the full indicator history request.
+            warmupTimer = setTimeout(() => { if (!disposed) void loadHistory(undefined, true); }, 0);
+          }
           setStatus(idleStatus());
-        } catch (failure) { if (!disposed) setError(failure instanceof Error ? failure.message : "Candles unavailable."); }
+        } catch (failure) {
+          if (!disposed && warmup) setSessionMessage("Indicator history could not load. Retrying shortly.");
+          else if (!disposed) setError(failure instanceof Error ? failure.message : "Candles unavailable.");
+        }
         finally { loading = false; if (reloadAfter && !disposed) { reloadAfter = false; void loadHistory(); } }
       };
       const loadOlder = async () => {
-        if(disposed||loading||loadingOlder||nextBefore===null)return;
+        if(disposed||loading||loadingOlder||!indicatorsReady||nextBefore===null)return;
         loadingOlder=true;userPanned=false;setHistoryMessage("Loading older candles…");
         try {
           const response=await sharedChartFetch(`/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe==="1D"?"1":"0"}&before=${nextBefore}`,{signal:abort.signal,credentials:"same-origin"});
@@ -558,7 +570,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
             candles.update(point(updated)); volume?.update(volumePoint(updated));
             const actual = studies.length ? aggregateCandles(inputs, timeframe,regularOnly) : [];
             vwapFrameCache.clear();
-            for (const study of studies) {
+            for (const study of indicatorsReady ? studies : []) {
               if(study.indicator.type==="VWAP"&&!calendarReady)continue;
               const part = study.indicator.type==='VWAP'?{points:vwapPoints(study.indicator,actual,displayPoints,study.index)}:indicatorValues(actual, study.indicator,timeframe)[study.index];
               const latest = part.points.at(-1);
@@ -603,7 +615,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         const tradingHours=day!==0&&day!==6&&clock.minute>=240&&clock.minute<1200;
         const needsHistory=!loaded||historyBasisDate!==clock.date||
           tradingHours&&!chartHalted&&(!connected||now-lastBarReceivedAt>=120_000);
-        if(needsHistory&&!loading&&now-lastRecoveryAt>=60_000){
+        if(!indicatorsReady && loaded && !loading && now-lastRecoveryAt>=60_000){
+          lastRecoveryAt=now;
+          void loadHistory(undefined,true);
+        }else if(needsHistory&&!loading&&now-lastRecoveryAt>=60_000){
           lastRecoveryAt=now;
           void loadHistory();
         }
@@ -616,7 +631,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       window.addEventListener("online",recoverHistory);
       window.addEventListener("pageshow",recoverHistory);
       const remove = removeChart;
-      removeChart = () => { document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);if(loaded)memory.current={key:cacheKey,basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,range:chart.timeScale().getVisibleRange(),logicalRange:chart.timeScale().getVisibleLogicalRange(),axis:{first:displayPoints[0]?.time,last:displayPoints.at(-1)?.time,count:displayPoints.length,sessions:sessionKey},priceRange:chart.priceScale("right").getVisibleRange()}; element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
+      removeChart = () => { document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);if(loaded)memory.current={key:cacheKey,basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,range:chart.timeScale().getVisibleRange(),logicalRange:chart.timeScale().getVisibleLogicalRange(),axis:{first:displayPoints[0]?.time,last:displayPoints.at(-1)?.time,count:displayPoints.length,sessions:sessionKey},priceRange:chart.priceScale("right").getVisibleRange()}; element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
       updateIndicatorLegend();
       await loadHistory(initialHistory);
     }
