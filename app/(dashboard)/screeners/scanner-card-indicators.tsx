@@ -177,6 +177,20 @@ export function scannerSignalAge(at: number, now: number): string | null {
   return `${Math.floor(age / 60_000)}m ago`;
 }
 
+type DisplaySignal = NonNullable<IndicatorDisplayRow["signals"]>[number];
+
+function RecentSignal({ signal, compact = false }: { signal: DisplaySignal; compact?: boolean }) {
+  const age = useSyncExternalStore(subscribeSignalClock, () => scannerSignalAge(signal.at, readSignalClock()), () => null);
+  if (age === null) return null;
+  const color = tones[signalDirections[signal.kind]??"neutral"];
+  if (compact) return <Typography component="span" variant="inherit" sx={{color,ml:0.5,whiteSpace:"nowrap"}}>
+    {signal.kind==="emaBullishCross"?"Crossed above":"Crossed below"} · {age}
+  </Typography>;
+  return <Typography component="p" variant="inherit" sx={{m:0}}>
+    <Box component="span" sx={{color}}>{signal.text}</Box>{" · "}{age}
+  </Typography>;
+}
+
 function compactRead(name: Indicator, reading: IndicatorDisplayRow, result?: ReturnType<typeof scannerIndicatorResults>["result"]) {
   const state = reading.state;
   if (name === "VWAP" && state) return [reading.value, state.split(" · ").at(-1)?.replace(" VWAP", "")].join(" · ");
@@ -194,8 +208,7 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
   const [visible,setVisible]=useState(false);
   const [history,setHistory]=useState<(CandleHistory & {symbol:string})|null>(null);
   const enabled = selected.length > 0;
-  const signalClock = useSyncExternalStore(subscribeSignalClock, readSignalClock, () => 0);
-  const signalNow = Math.max(now,signalClock);
+  const [detailsOpen,setDetailsOpen]=useState(false);
   const frameMs = Number.parseInt(frame, 10) * 60_000;
   // Keep completed minute bars for VWAP, even when the selected study timeframe is larger.
   const minute = Math.floor(now / 60_000);
@@ -219,48 +232,39 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
     try {return scannerIndicatorResults(history.bars,frame,minute*60_000,history.calendar);}
     catch {return null;}
   },[history,frame,minute,row.symbol]);
-  const readings = indicatorDisplayRows({result:computed?.result,timeframe:frame,livePrice:row.price,
-    vwap:computed?.vwap?.value ?? null,vwapSignals:computed?.vwap?.signals});
+  const result=computed?.result, vwap=computed?.vwap;
+  const readings=useMemo(()=>indicatorDisplayRows({result,timeframe:frame,livePrice:row.price,
+    vwap:vwap?.value??null,vwapSignals:vwap?.signals}),[result,frame,row.price,vwap]);
   const chosen = selected.flatMap(name => {
     const reading = readings.find(item => item.label === readingNames[name]);
     return reading && (reading.state || !["—", "Unavailable"].includes(reading.value)) &&
-      (name !== "EMA" || computed?.result?.ema9 != null || computed?.result?.ema20 != null)
-      ? [{name, reading, text:compactRead(name,reading,computed?.result),
-        events: reading.signals?.flatMap(signal => {
-          const age = scannerSignalAge(signal.at,signalNow);
-          return age === null ? [] : [{ ...signal, age }];
-        }) ?? []}] : [];
+      (name !== "EMA" || result?.ema9 != null || result?.ema20 != null)
+      ? [{name, reading, text:compactRead(name,reading,result)}] : [];
   });
   if (!enabled) return null;
   return <Box ref={ref} data-scanner-indicator-frame={frame} sx={{minHeight:1}}>
     <Box sx={{display:"flex",gap:0.65,flexWrap:"wrap",fontSize:"0.66rem"}}>
-      {chosen.map(({name,reading,text,events})=>{
+      {chosen.map(({name,reading,text})=>{
         const direction = readingDirection(reading);
         return <Box key={name} data-scanner-indicator={name}>
           <Typography component="span" variant="inherit" color="text.secondary">{name} </Typography>
           <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
             {directionLabels[direction]} · {text}
           </Typography>
-          {name==="EMA"&&events.map(event=><Typography key={event.at} component="span" variant="inherit"
-            sx={{color:tones[signalDirections[event.kind]??"neutral"],ml:0.5,whiteSpace:"nowrap"}}>
-            {event.kind==="emaBullishCross"?"Crossed above":"Crossed below"} · {event.age}
-          </Typography>)}
+          {name==="EMA"&&reading.signals?.map(event=><RecentSignal key={event.at} signal={event} compact/>)}
         </Box>;
       })}
     </Box>
-    {chosen.length>0&&<Box component="details" sx={{mt:0.25,fontSize:"0.66rem",color:"text.secondary","& summary":{cursor:"pointer"}}}>
+    {chosen.length>0&&<Box component="details" onToggle={event=>setDetailsOpen(event.currentTarget.open)} sx={{mt:0.25,fontSize:"0.66rem",color:"text.secondary","& summary":{cursor:"pointer"}}}>
       <summary>Details</summary>
-      {chosen.map(({name,reading,text,events})=><Box key={name} sx={{my:0.45}}>
+      {detailsOpen&&chosen.map(({name,reading,text})=><Box key={name} sx={{my:0.45}}>
         <Typography component="p" variant="inherit" sx={{m:0}}>
           <strong>{name}</strong>{" "}
           <Box component="span" sx={{color:tones[readingDirection(reading)]}}>
             {[reading.value && reading.value !== text ? reading.value : null, name==="EMA"?text:reading.state ?? text].filter(Boolean).join(" · ")}
           </Box>
         </Typography>
-        {events.map(signal=><Typography key={`${signal.kind}-${signal.at}`} component="p" variant="inherit" sx={{m:0}}>
-          <Box component="span" sx={{color:tones[signalDirections[signal.kind]??"neutral"]}}>{signal.text}</Box>
-          {" · "}<span>{signal.age}</span>
-        </Typography>)}
+        {reading.signals?.map(signal=><RecentSignal key={`${signal.kind}-${signal.at}`} signal={signal}/>)}
       </Box>)}
     </Box>}
   </Box>;
