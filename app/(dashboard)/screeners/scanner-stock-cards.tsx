@@ -61,8 +61,14 @@ export function ScannerViewSettings({ label, view, onViewChange }: { label: stri
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const id = useId();
   return <>
-    <Button size="small" aria-label={`${label} view: ${scannerViews[view]}`} endIcon={<KeyboardArrowDownRounded fontSize="small"/>} aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? id : undefined}
-      onClick={event => setAnchor(event.currentTarget)} sx={{fontSize:"0.68rem",lineHeight:1.2,textTransform:"none",whiteSpace:"nowrap",px:0.5,py:0.25,minHeight:24,minWidth:0,'& .MuiButton-endIcon':{ml:0.25,mr:0}}}>
+    <Button size="small" variant="outlined" aria-label={`${label} view: ${scannerViews[view]}`} endIcon={<KeyboardArrowDownRounded fontSize="small"/>} aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? id : undefined}
+      onClick={event => setAnchor(event.currentTarget)} sx={{
+        color:"text.primary",borderColor:"divider",bgcolor:"background.paper",
+        fontSize:"0.68rem",lineHeight:1.2,textTransform:"none",whiteSpace:"nowrap",
+        px:0.65,py:0.25,minHeight:24,minWidth:0,
+        "&:hover":{borderColor:"text.secondary",bgcolor:"action.hover"},
+        "& .MuiButton-endIcon":{ml:0.4,mr:0},
+      }}>
       {scannerViews[view]}
     </Button>
     <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}

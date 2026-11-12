@@ -47,3 +47,5 @@ The HOD Drops info and lightning-bolt tooltips now explain the default 30%/five-
 Rapid drop rows use the shared signed gain/loss color and an explicit neutral recovery gray in dark mode. Desktop and mobile preview verified red drop and gray recovery. Lint passed. Preview only.
 
 Compact rapid rows now show signed peak-to-low loss and fall duration, with recovery used internally for signal clearing. Desktop and mobile preview verified the synthetic −39% in 1m 15s example and clearing. Twenty-two tests and lint passed. Preview only.
+
+Final scanner review made the card view selector a compact outlined field and matched rapid ticker orange to HOD ticker orange. Focused TypeScript caught a widened indicator direction in the server result; the row projection now has an explicit type. Desktop and mobile preview checks verified dropdown appearance and operation, ticker color, rapid clearing, HOD ranking, Momentum sections, chart/news actions, mobile tabs, and independent server-read settings. The final 4× mobile stress run still recorded long tasks, with no steady-window candle requests. The owner requested another QA pass and a deployment hold.

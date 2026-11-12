@@ -111,7 +111,7 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
         {rows.map(row=>row.drop&&<Stack key={row.symbol} role="listitem" direction="row"
           sx={{alignItems:"center",gap:0.6,minHeight:25,fontSize:"0.68rem"}}>
           <ChartButton row={row} onOpenChart={onOpenChart}/>
-          <Typography variant="inherit" color="warning.main" sx={{fontWeight:800}}>{row.symbol}</Typography>
+          <Typography variant="inherit" sx={{color:"warning.main",fontWeight:800}}>{row.symbol}</Typography>
           <RapidMarker/>
           <ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>
           <Typography variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.drop.maximumDropPercent)}}>{wholePercent.format(row.drop.maximumDropPercent)}%</Typography>

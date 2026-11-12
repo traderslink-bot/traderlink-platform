@@ -39,7 +39,7 @@ export type ScannerIndicatorRead = {
 };
 
 export function prepareScannerIndicatorRows(readings: readonly IndicatorDisplayRow[], result: ReturnType<typeof scannerIndicatorResults>["result"]) {
-  return SCANNER_INDICATORS.flatMap(name => {
+  return SCANNER_INDICATORS.flatMap<IndicatorRow>(name => {
     const reading = readings.find(item => item.label === readingNames[name]);
     if (!reading || (!reading.state && ["—", "Unavailable"].includes(reading.value)) ||
       (name === "EMA" && result?.ema9 == null && result?.ema20 == null)) return [];
