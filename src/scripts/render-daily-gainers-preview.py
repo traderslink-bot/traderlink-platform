@@ -9,6 +9,11 @@ from pathlib import Path
 FIRST_PREVIEW_DAY = "2025-01-01"
 CANONICAL_BASE = "https://traderslink.pro/stock-gainers/"
 COLUMNS = ("Rank", "Ticker", "Close", "Gain", "Dollar volume")
+MAX_GAIN_NOTE = (
+    "Max gain measures the percentage rise from the previous trading day’s regular-session close "
+    "to the highest price reached from premarket through today’s regular-session close. "
+    "Postmarket prices are excluded."
+)
 
 
 def label(day, month=False):
@@ -24,11 +29,22 @@ def volume_label(amount):
     return f"${amount:,}"
 
 
+def ranking_method(sessions):
+    methods = {"session-high" if "sessionHigh" in row else "close-to-close"
+               for session in sessions.values() for row in session["rows"]}
+    if len(methods) != 1:
+        raise ValueError("Expected a nonempty archive using a single ranking method")
+    return methods.pop()
+
+
 def table(session):
-    headings = "".join(f'<th scope="col">{heading}</th>' for heading in COLUMNS)
+    max_gain = "sessionHigh" in session["rows"][0]
+    columns = ("Rank", "Ticker", "Session high", "Close", "Max gain", "Dollar volume") if max_gain else COLUMNS
+    headings = "".join(f'<th scope="col">{heading}</th>' for heading in columns)
     rows = "".join(
         f'<tr><td>{index}</td><th scope="row">{escape(row["symbol"])}</th>'
-        f'<td>${row["close"]:,.2f}</td><td class="gainers-gain">+{row["gain"]:,.2f}%</td>'
+        + (f'<td>${row["sessionHigh"]:,.2f}</td>' if max_gain else "")
+        + f'<td>${row["close"]:,.2f}</td><td class="gainers-gain">+{row["gain"]:,.2f}%</td>'
         f'<td>{volume_label(row.get("dollarVolume"))}</td></tr>'
         for index, row in enumerate(session["rows"], 1)
     )
@@ -49,6 +65,7 @@ def html_json(value):
 def render(sessions, aliases, site=False):
     template = Path(__file__).with_name("daily-gainers-preview.html").read_text()
     days = sorted(sessions, reverse=True)
+    session_high = ranking_method(sessions) == "session-high"
 
     def session_link(day):
         if site:
@@ -70,11 +87,17 @@ def render(sessions, aliases, site=False):
         for entry in result["rows"]:
             symbol = entry["symbol"]
             row = [symbol, entry["close"], entry["gain"], entry.get("dollarVolume")]
-            if entry.get("security", symbol) != symbol:
+            if session_high:
+                row.extend([entry.get("security", symbol), entry["sessionHigh"]])
+            elif entry.get("security", symbol) != symbol:
                 row.append(entry["security"])
             rows.append(row)
         compact[day] = [result["compared"], rows]
+    method_note = f'<p class="gainers-method"><em>{MAX_GAIN_NOTE}</em></p>' if session_high else ""
     return (template.replace("__RECENT_SESSIONS__", "".join(recent))
+            .replace("__GAINERS_METHOD_NOTE__", method_note)
+            .replace("__GAINERS_HIGH_COLUMN__", '<th scope="col">Session high</th>' if session_high else "")
+            .replace("__GAINERS_GAIN_LABEL__", "Max gain" if session_high else "Gain")
             .replace("__GAINERS_MONTHS__", "".join(months))
             .replace("__GAINERS_DATA__", html_json(compact))
             .replace("__GAINERS_ALIASES__", html_json(aliases))
@@ -113,12 +136,16 @@ def write_page(root, path, contents):
 def export_site(sessions, aliases, root, *, indexable=False):
     days = sorted(sessions, reverse=True)
     months = group_months(days)
+    session_high = ranking_method(sessions) == "session-high"
+    method = "Split-adjusted max gain" if session_high else "Split-adjusted close-to-close"
+    method_note = f"<p><small><em>{MAX_GAIN_NOTE}</em></small></p>" if session_high else ""
     for position, day in enumerate(days):
         session = sessions[day]
         title = f"Top Stock Gainers for {label(day)}"
         leader = session["rows"][0]
-        description = (f'{leader["symbol"]} led the Alpaca-covered U.S. gainers on {label(day)}. '
-                       'See all 10 stocks, their gains, closes and dollar volume.')
+        description = (f'{leader["symbol"]} led the Alpaca-covered U.S. gainers on {label(day)}. ' +
+                       ('See all 10 stocks, their session highs, closes, max gains and dollar volume.' if session_high
+                        else 'See all 10 stocks, their gains, closes and dollar volume.'))
         navigation = ['<a href="../">Stock gainers hub</a>',
                       f'<a href="../month/{day[:7]}/">{label(day, month=True)} archive</a>']
         if position + 1 < len(days):
@@ -127,8 +154,8 @@ def export_site(sessions, aliases, root, *, indexable=False):
             navigation.append(f'<a href="../{days[position - 1]}/">Next trading day</a>')
         body = (
             f'<nav aria-label="Trading dates">{"".join(navigation)}</nav><main><h1>{title}</h1>'
-            f'<p>{session["compared"]:,} stocks compared · Alpaca SIP · Split-adjusted close-to-close</p>'
-            f'{table(session)}<p>Estimated dollar volume uses unadjusted volume and VWAP.</p></main>'
+            f'<p>{session["compared"]:,} stocks compared · Alpaca SIP · {method}</p>'
+            f'{method_note}{table(session)}<p>Estimated dollar volume uses unadjusted volume and VWAP.</p></main>'
         )
         write_page(root, day, document(title, description, f"{day}/", body, indexable=indexable))
     for month, dates in months.items():

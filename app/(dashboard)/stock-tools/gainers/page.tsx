@@ -3,9 +3,11 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-import { DashboardPage, DashboardPanel, DashboardPrimaryAction } from "../../../dashboard-template";
+import { DashboardPage, DashboardPanel, DashboardSecondaryAction } from "../../../dashboard-template";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { findGainerAppearances, readGainerArchive } from "@/src/modules/stock-gainers/server/archive";
+
+import { GainerFilterForm, type GainerFilters, type GainerPeriod } from "./gainer-filters";
 
 export const metadata: Metadata = {
   title: "Stock Gainers | TradersLink Platform",
@@ -19,35 +21,20 @@ const dollarVolume = new Intl.NumberFormat("en-US", {
   style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1,
 });
 
-const controls = {
-  alignItems: "end",
-  display: "flex",
-  flexWrap: "wrap",
-  gap: 1.5,
-  "& label": { display: "grid", gap: 0.5, fontSize: 14 },
-  "& input, & select": {
-    border: 1,
-    borderColor: "divider",
-    borderRadius: 1,
-    minHeight: 40,
-    maxWidth: "100%",
-    px: 1,
-    font: "inherit",
-    color: "text.primary",
-    bgcolor: "background.paper",
-  },
-} as const;
-
 type RankedRow = {
   rank: number;
   symbol: string;
   close: number;
+  sessionHigh?: number;
   gain: number;
   dollarVolume?: number | null;
-  day?: string;
+  day: string;
 };
 
-function Rankings({ rows, showDate = false }: { rows: RankedRow[]; showDate?: boolean }) {
+function Rankings({ rows, sessionHigh }: {
+  rows: RankedRow[];
+  sessionHigh: boolean;
+}) {
   return (
     <Box sx={{
       overflowX: "auto",
@@ -57,15 +44,17 @@ function Rankings({ rows, showDate = false }: { rows: RankedRow[]; showDate?: bo
     }}>
       <table>
         <thead><tr>
-          {showDate && <th scope="col">Date</th>}
+          <th scope="col">Date</th>
           <th scope="col">Rank</th><th scope="col">Ticker</th>
-          <th scope="col">Close</th><th scope="col">Gain</th><th scope="col">Dollar volume</th>
+          {sessionHigh && <th scope="col">Session high</th>}
+          <th scope="col">Close</th><th scope="col">{sessionHigh ? "Max gain" : "Gain"}</th><th scope="col">Dollar volume</th>
         </tr></thead>
         <tbody>
           {rows.map((row) => (
             <tr key={`${row.day ?? ""}:${row.rank}`}>
-              {showDate && row.day && <td><a href={`${route}?day=${row.day}`}>{row.day}</a></td>}
+              <td>{dateLabel.format(new Date(row.day))}</td>
               <td>{row.rank}</td><th scope="row">{row.symbol}</th>
+              {sessionHigh && <td>{row.sessionHigh == null ? "—" : price.format(row.sessionHigh)}</td>}
               <td>{price.format(row.close)}</td>
               <Box component="td" sx={{ color: "success.main" }}>+{row.gain.toFixed(2)}%</Box>
               <td>{row.dollarVolume == null ? "—" : dollarVolume.format(row.dollarVolume)}</td>
@@ -102,63 +91,86 @@ export default async function StockGainersPage({
   const query = (name: string) => typeof params[name] === "string" ? params[name] : undefined;
   const latest = days[0];
   const earliest = days[days.length - 1];
-  const day = days.find((entry) => entry === query("day")) ?? latest;
-  const fromParam = query("from");
-  const toParam = query("to");
-  const from = fromParam && dateWithin(fromParam, earliest, latest) ? fromParam : earliest;
-  const to = toParam && dateWithin(toParam, earliest, latest) ? toParam : latest;
-  const symbol = (query("ticker") ?? "").trim().toUpperCase().slice(0, 16);
+  const months = [...new Set(days.map((day) => day.slice(0, 7)))];
+  const years = [...new Set(days.map((day) => day.slice(0, 4)))];
+  const requestedPeriod = query("period");
+  const period: GainerPeriod = requestedPeriod === "month" || requestedPeriod === "year" || requestedPeriod === "range"
+    ? requestedPeriod : "day";
+  const boundedDate = (value: string | undefined, fallback: string) =>
+    value && dateWithin(value, earliest, latest) ? value : fallback;
   const requestedCutoff = Number(query("cutoff"));
-  const cutoff = Number.isInteger(requestedCutoff) && requestedCutoff >= 1 && requestedCutoff <= 10
-    ? requestedCutoff : 10;
-  const matches = symbol ? findGainerAppearances(archive, days, symbol, from, to, cutoff) : null;
-  const firstMatch = matches?.rows[0];
+  const requestedVolume = Number(query("volume"));
+  const requestedSort = query("sort");
+  const filters: GainerFilters = {
+    period,
+    day: boundedDate(query("day"), latest),
+    month: months.find((month) => month === query("month")) ?? months[0],
+    year: years.find((year) => year === query("year")) ?? years[0],
+    from: boundedDate(query("from"), earliest),
+    to: boundedDate(query("to"), latest),
+    ticker: (query("ticker") ?? "").trim().toUpperCase().slice(0, 16),
+    cutoff: Number.isInteger(requestedCutoff) && requestedCutoff >= 1 && requestedCutoff <= 10 ? requestedCutoff : 10,
+    volume: [0, 1_000_000, 5_000_000, 10_000_000, 50_000_000].includes(requestedVolume) ? requestedVolume : 0,
+    sort: requestedSort === "gain" || requestedSort === "volume" ? requestedSort : "date",
+  };
+  const invalidRange = period === "range" && filters.from > filters.to;
+  const matchingDays = days.filter((day) => {
+    if (period === "day") return day === filters.day;
+    if (period === "month") return day.startsWith(filters.month);
+    if (period === "year") return day.startsWith(filters.year);
+    return filters.from <= day && day <= filters.to;
+  });
+  const { rows, ambiguous } = findGainerAppearances(
+    archive, days, filters.ticker, matchingDays.at(-1) ?? "9999", matchingDays[0] ?? "0000",
+    filters.cutoff, filters.volume,
+  );
+  const lastAppearance = rows[0]?.day;
+  const bestRank = rows.reduce((best, row) => Math.min(best, row.rank), 10);
+  if (filters.sort === "gain") rows.sort((a, b) => b.gain - a.gain);
+  if (filters.sort === "volume") rows.sort((a, b) => (b.dollarVolume ?? 0) - (a.dollarVolume ?? 0));
+  const pageSize = 25;
+  const lastPage = Math.max(1, Math.ceil(rows.length / pageSize));
+  const requestedPage = Number(query("page"));
+  const page = Number.isSafeInteger(requestedPage) ? Math.min(lastPage, Math.max(1, requestedPage)) : 1;
+  const start = (page - 1) * pageSize;
+  const pageHref = (value: number) => `${route}?${new URLSearchParams({
+    ...filters, cutoff: String(filters.cutoff), volume: String(filters.volume), page: String(value),
+  })}`;
+  const sessionHigh = archive.rankingMethod === "session-high";
 
   return (
     <DashboardPage>
       <Typography component="h1" variant="h1">Stock Gainers</Typography>
-      <DashboardPanel title="Daily top 10">
+      <DashboardPanel title="Find top gainers">
         <Typography component="p" variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: "68ch" }}>
           See the top 10 U.S. stock gainers after each market close, including small-cap and micro-cap movers. Browse historical rankings and find repeat movers by ticker for your day trading watchlist.
         </Typography>
-        <Box component="form" action={route} method="get" sx={controls}>
-          <label>Trading date
-            <select name="day" defaultValue={day}>
-              {days.map((entry) => <option key={entry} value={entry}>{dateLabel.format(new Date(entry))}</option>)}
-            </select>
-          </label>
-          {symbol && <input type="hidden" name="ticker" value={symbol} />}
-          {symbol && <input type="hidden" name="from" value={from} />}
-          {symbol && <input type="hidden" name="to" value={to} />}
-          {symbol && <input type="hidden" name="cutoff" value={cutoff} />}
-          <DashboardPrimaryAction type="submit">Show date</DashboardPrimaryAction>
-        </Box>
-        <Rankings rows={archive.sessions[day].rows.map((row, index) => ({ ...row, rank: index + 1 }))} />
-      </DashboardPanel>
-      <DashboardPanel title="Ticker appearances">
-        {firstMatch && matches && (
-          <Box component="dl" sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 0, "& dd": { m: 0, fontWeight: 700 } }}>
-            <div><dt>Appearances</dt><dd>{matches.rows.length}</dd></div>
-            <div><dt>Best rank</dt><dd>#{Math.min(...matches.rows.map((row) => row.rank))}</dd></div>
-            <div><dt>Last appearance</dt><dd>{dateLabel.format(new Date(firstMatch.day))}</dd></div>
+        {sessionHigh && (
+          <Typography component="p" variant="caption" sx={{ display: "block", fontStyle: "italic", mb: 2 }}>
+            Max gain measures the percentage rise from the previous trading day’s regular-session close
+            to the highest price reached from premarket through today’s regular-session close.
+            Postmarket prices are excluded.
+          </Typography>
+        )}
+        <GainerFilterForm key={JSON.stringify(filters)} filters={filters} earliest={earliest} latest={latest} years={years} />
+        {invalidRange && <Alert severity="warning" sx={{ mt: 2 }}>Choose an end date on or after the start date.</Alert>}
+        {ambiguous && !invalidRange && <Alert severity="info" sx={{ mt: 2 }}>Multiple securities used this ticker.</Alert>}
+        {!rows.length && !ambiguous && !invalidRange && <Alert severity="info" sx={{ mt: 2 }}>No matching results.</Alert>}
+        {filters.ticker && lastAppearance && (
+          <Box component="dl" sx={{ display: "flex", flexWrap: "wrap", gap: 2, "& dd": { m: 0, fontWeight: 700 } }}>
+            <div><dt>Appearances</dt><dd>{rows.length}</dd></div>
+            <div><dt>Best rank</dt><dd>#{bestRank}</dd></div>
+            <div><dt>Last appearance</dt><dd>{dateLabel.format(new Date(lastAppearance))}</dd></div>
           </Box>
         )}
-        {symbol && from > to && <Alert severity="warning">Choose an end date on or after the start date.</Alert>}
-        {matches?.ambiguous && <Alert severity="info">Multiple securities used this ticker.</Alert>}
-        {matches && from <= to && !matches.ambiguous && !firstMatch && <Alert severity="info">No appearances found.</Alert>}
-        <Box component="form" action={route} method="get" sx={controls}>
-          <input type="hidden" name="day" value={day} />
-          <label>Ticker<input name="ticker" defaultValue={symbol} maxLength={16} required /></label>
-          <label>From<input type="date" name="from" min={earliest} max={latest} defaultValue={from} /></label>
-          <label>To<input type="date" name="to" min={earliest} max={latest} defaultValue={to} /></label>
-          <label>Rank cutoff
-            <select name="cutoff" defaultValue={cutoff}>
-              {Array.from({ length: 10 }, (_, index) => index + 1).map((rank) => <option key={rank} value={rank}>Top {rank}</option>)}
-            </select>
-          </label>
-          <DashboardPrimaryAction type="submit">Find appearances</DashboardPrimaryAction>
-        </Box>
-        {firstMatch && matches && <Rankings rows={matches.rows} showDate />}
+        {rows.length > 0 && <Rankings sessionHigh={sessionHigh} rows={rows.slice(start, start + pageSize)} />}
+        {lastPage > 1 && (
+          <Box component="nav" aria-label="Results pages" sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center", mt: 2 }}>
+            {page > 1 && <DashboardSecondaryAction href={pageHref(page - 1)}>Previous</DashboardSecondaryAction>}
+            <Typography component="span">{start + 1}–{Math.min(start + pageSize, rows.length)} of {rows.length}</Typography>
+            {page < lastPage && <DashboardSecondaryAction href={pageHref(page + 1)}>Next</DashboardSecondaryAction>}
+          </Box>
+        )}
       </DashboardPanel>
     </DashboardPage>
   );

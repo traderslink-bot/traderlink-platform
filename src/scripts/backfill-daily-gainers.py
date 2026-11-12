@@ -2,9 +2,10 @@
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from fractions import Fraction
+import gzip
 import hashlib
 import heapq
 import json
@@ -33,19 +34,26 @@ def alpaca_reader():
         (Path.home() / ".config/traderlink/alpaca-owner-test.json").read_text()
     )
     headers = {
+        "Accept-Encoding": "gzip",
         "APCA-API-KEY-ID": credentials["keyId"],
         "APCA-API-SECRET-KEY": credentials["secretKey"],
     }
+
+    def read_response(response):
+        if response.headers.get("Content-Encoding") == "gzip":
+            with gzip.GzipFile(fileobj=response) as body:
+                return json.load(body, parse_float=Decimal)
+        return json.load(response, parse_float=Decimal)
 
     def get(origin, path, **params):
         request = Request(f"{origin}{path}?{urlencode(params)}", headers=headers)
         for attempt in range(4):
             try:
                 with urlopen(request, timeout=30) as response:
-                    return json.load(response, parse_float=Decimal)
+                    return read_response(response)
             except HTTPError as error:
                 if error.code == 400:
-                    message = json.load(error).get("message", "")
+                    message = read_response(error).get("message", "")
                     match = re.fullmatch(r"invalid symbol: (.+)", message)
                     if match:
                         raise InvalidSymbol(match[1]) from None
@@ -56,7 +64,7 @@ def alpaca_reader():
     return get
 
 
-def run(start, end):
+def run(start, end, *, session_high=False):
     get = alpaca_reader()
     calendar = get(CALENDAR, "/v2/calendar", start=start - timedelta(days=10), end=end)
     sessions = [date.fromisoformat(entry["date"]) for entry in calendar]
@@ -118,6 +126,34 @@ def run(start, end):
     symbols = sorted(symbols)
     session_set = set(sessions)
     eastern = ZoneInfo("America/New_York")
+    windows = {
+        date.fromisoformat(entry["date"]): (
+            time.fromisoformat(entry["session_open"]),
+            time.fromisoformat(entry["close"]),
+        ) for entry in calendar if date.fromisoformat(entry["date"]) >= start
+    }
+    if session_high and any(t.minute or t.second for window in windows.values() for t in window):
+        raise ValueError("A market boundary is not aligned to an hourly bar")
+
+    def fetch_highs(batch):
+        highs = {}
+        params = dict(symbols=",".join(batch), timeframe="1Hour",
+                      start=datetime.combine(start, time.min, eastern).isoformat(),
+                      end=datetime.combine(end + timedelta(days=1), time.min, eastern).isoformat(),
+                      adjustment="split", feed="sip", asof="-", limit=10000)
+        while True:
+            page = get(DATA, "/v2/stocks/bars", **params)
+            for symbol, bars in page["bars"].items():
+                for bar in bars:
+                    local = datetime.fromisoformat(bar["t"]).astimezone(eastern)
+                    window = windows.get(local.date())
+                    if window and window[0] <= local.time() < window[1] and bar["n"] > 0:
+                        key = (local.date(), symbol)
+                        highs[key] = max(highs.get(key, 0), Fraction(bar["h"]))
+            token = page["next_page_token"]
+            if not token:
+                return highs
+            params["page_token"] = token
 
     def fetch_batch(batch):
         closes = {}
@@ -190,6 +226,13 @@ def run(start, end):
     with ThreadPoolExecutor(max_workers=4) as pool:
         rename_ratios = dict(pool.map(fetch_rename, jobs))
 
+    highs = {}
+    if session_high:
+        tradable = {symbol for day, symbol in closes if day >= start} - set(rejected)
+        batches = [batch for original in batches if (batch := [symbol for symbol in original if symbol in tradable])]
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            highs = {key: high for batch in pool.map(fetch_highs, batches) for key, high in batch.items()}
+
     results = {}
     rename_pairs = 0
     for previous, session in zip(sessions, sessions[1:]):
@@ -214,16 +257,22 @@ def run(start, end):
                 base = close * ratio
                 rename_pairs += 1
             identity = next(iter(identities), symbol)
-            candidates.append((close, base, symbol, identity))
+            high = highs.get((session, symbol)) if session_high else close
+            if high is None:
+                continue
+            # The regular closing auction can print exactly at the boundary.
+            # Include the daily close without including the following hour.
+            peak = max(high, close)
+            candidates.append((peak, base, symbol, identity, close))
         gainers = sorted(
-            ((base / close, symbol, close, base, identity)
-             for close, base, symbol, identity in candidates if close > base)
+            ((base / peak, symbol, peak, base, identity, close)
+             for peak, base, symbol, identity, close in candidates if peak > base)
         )[:10]
         audited = heapq.nsmallest(10, (
-            (-(close - base) / base, symbol)
-            for close, base, symbol, _ in candidates if close > base
+            (-(peak - base) / base, symbol)
+            for peak, base, symbol, _, _ in candidates if peak > base
         ))
-        if audited != [(1 - close / base, symbol) for _, symbol, close, base, _ in gainers]:
+        if audited != [(1 - peak / base, symbol) for _, symbol, peak, base, _, _ in gainers]:
             raise ValueError(f"Ranking mismatch for {session}")
         if len(gainers) != 10:
             raise ValueError(f"Incomplete leaderboard for {session}")
@@ -231,14 +280,16 @@ def run(start, end):
             "compared": len(candidates),
             "rows": [
                 {"symbol": symbol, "security": identity, "close": float(close),
-                 "previousClose": float(base), "gain": float((close / base - 1) * 100)}
-                for _, symbol, close, base, identity in gainers
+                 "previousClose": float(base), "gain": float((peak / base - 1) * 100),
+                 **({"sessionHigh": float(peak)} if session_high else {})}
+                for _, symbol, peak, base, identity, close in gainers
             ],
         }
     aliases = {symbol: sorted({identity for _, _, identity in intervals})
                for symbol, intervals in by_symbol.items()}
     return {"symbolCount": len(symbols), "rejectedSymbols": rejected, "sessions": results,
-            "aliases": aliases, "renamePairs": rename_pairs, "barCount": len(closes)}
+            "aliases": aliases, "renamePairs": rename_pairs, "barCount": len(closes),
+            "rankingMethod": "session-high" if session_high else "close-to-close"}
 
 
 def write_json(output, results):
@@ -258,10 +309,11 @@ if __name__ == "__main__":
     parser.add_argument("start", type=date.fromisoformat)
     parser.add_argument("end", type=date.fromisoformat)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--session-high", action="store_true")
     args = parser.parse_args()
     if args.start > args.end:
         parser.error("start must be on or before end")
-    results = run(args.start, args.end)
+    results = run(args.start, args.end, session_high=args.session_high)
     write_json(args.output, results)
     print(f"{len(results['sessions'])} sessions, {results['symbolCount']} candidate symbols, "
           f"{results['barCount']} bars, {results['renamePairs']} rename-day comparisons")

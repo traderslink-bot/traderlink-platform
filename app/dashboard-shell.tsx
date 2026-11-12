@@ -38,6 +38,7 @@ import RadarRoundedIcon from "@mui/icons-material/RadarRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
+import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
@@ -130,6 +131,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     swing: <EventRepeatIcon />,
     roundTrips: <RestartAltIcon />,
     marketCharts: <CandlestickChartIcon />,
+    stockGainers: <TrendingUpRoundedIcon />,
     data: <ViewDayRoundedIcon />,
     dayTradeAnalysis: <TodayIcon />,
     entryExit: <AirlineStopsIcon />,

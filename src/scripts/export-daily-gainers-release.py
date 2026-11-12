@@ -17,6 +17,9 @@ def export(snapshot, output):
     dates = sorted(sessions)
     if not dates or any(len(session["rows"]) != 10 for session in sessions.values()):
         raise ValueError("Release snapshot must have ten ranked entries per session")
+    method = renderer["ranking_method"](sessions)
+    if method != archive.get("rankingMethod", "close-to-close"):
+        raise ValueError("Snapshot metadata does not match its ranking method")
     output.mkdir(mode=0o700, exist_ok=False)
     dashboard = output / "dashboard"
     dashboard.mkdir(mode=0o700)
@@ -37,7 +40,7 @@ def export(snapshot, output):
         for path in sorted(output.rglob("*")) if path.is_file()
     }
     manifest = {
-        "firstSession": dates[0], "lastSession": dates[-1],
+        "rankingMethod": method, "firstSession": dates[0], "lastSession": dates[-1],
         "sessions": len(dates), "rankedRows": len(dates) * 10, "months": len(months),
         "publicPages": len(pages), "sha256": files,
     }

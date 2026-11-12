@@ -7,6 +7,7 @@
     </nav>
   </header>
   <p class="gainers-intro">See the top 10 U.S. stock gainers after each market close, including small-cap and micro-cap movers. Browse historical rankings and find repeat movers by ticker for your day trading watchlist.</p>
+  __GAINERS_METHOD_NOTE__
   <section aria-labelledby="gainers-archive-title">
     <h2 id="gainers-archive-title">Find top gainers</h2>
     <div id="gainers-search" role="search" aria-labelledby="gainers-archive-title">
@@ -38,7 +39,7 @@
       <div><dt>Last appearance</dt><dd></dd></div>
     </dl>
     <table id="gainers-session" aria-label="Daily top gainer results">
-      <thead><tr><th scope="col">Date</th><th scope="col">Rank</th><th scope="col">Ticker</th><th scope="col">Close</th><th scope="col">Gain</th><th scope="col">Dollar volume</th></tr></thead>
+      <thead><tr><th scope="col">Date</th><th scope="col">Rank</th><th scope="col">Ticker</th>__GAINERS_HIGH_COLUMN__<th scope="col">Close</th><th scope="col">__GAINERS_GAIN_LABEL__</th><th scope="col">Dollar volume</th></tr></thead>
       <tbody></tbody>
     </table>
     <nav id="gainers-pagination" aria-label="Results pages" hidden>
@@ -71,6 +72,7 @@
     color: inherit; background: light-dark(#f7f9fd, #233348);
   }
   #daily-gainers-preview .gainers-intro { font-size: 15px; line-height: 1.55; max-width: 68ch; }
+  #daily-gainers-preview .gainers-method { font-size: 12px; margin-top: -4px; max-width: 76ch; }
   #daily-gainers-preview h2 { font-size: 20px; margin: 24px 0 12px; }
   #daily-gainers-preview h3 { font-size: 15px; margin: 0 0 6px; }
   #daily-gainers-preview a { color: inherit; text-underline-offset: 3px; }
@@ -98,7 +100,7 @@
   #daily-gainers-preview table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   #daily-gainers-preview :is(th, td) { padding: 8px 5px; border-bottom: 1px solid light-dark(#e5ebf3, #38495d); text-align: left; }
   #daily-gainers-preview :is(th, td):nth-child(n+3) { text-align: right; }
-  #daily-gainers-preview :is(.gainers-gain, #gainers-session td:nth-child(5)) { color: light-dark(#09633d, #7de2ae); font-weight: 650; }
+  #daily-gainers-preview :is(.gainers-gain, #gainers-session .gainers-gain) { color: light-dark(#09633d, #7de2ae); font-weight: 650; }
   #daily-gainers-preview :is(p, footer) { font-size: 13px; color: light-dark(#4d5d73, #b7c6d9); }
   @media (max-width: 380px) {
     #daily-gainers-preview table { font-size: 12px; table-layout: fixed; }
@@ -116,10 +118,10 @@
     const days = Object.keys(data).sort().reverse();
     const aliases = JSON.parse(document.getElementById("gainers-alias-data").textContent);
     const aliasIndex = new Map(Object.entries(aliases).map(([symbol, keys]) => [symbol, new Set(keys)]));
-    const sessions = days.flatMap(day => data[day][1].map(([symbol, close, gain, volume, security = symbol], index) => {
+    const sessions = days.flatMap(day => data[day][1].map(([symbol, close, gain, volume, security = symbol, high], index) => {
       if (!aliasIndex.has(symbol)) aliasIndex.set(symbol, new Set());
       aliasIndex.get(symbol).add(security);
-      return {day, symbol, close, gain, volume, security, rank: index + 1};
+      return {day, symbol, close, gain, volume, security, high, rank: index + 1};
     }));
 
     const period = get("period");
@@ -164,8 +166,14 @@
       table.tBodies[0].replaceChildren(...rows.slice(start, start + pageSize).map(entry => {
         const row = document.createElement("tr");
         row.insertCell().textContent = dateLabel.format(new Date(entry.day));
-        for (const value of [entry.rank, entry.symbol, usd.format(entry.close), "+" + entry.gain.toFixed(2) + "%",
-          entry.volume == null ? "—" : dollars.format(entry.volume)]) row.insertCell().textContent = value;
+        row.insertCell().textContent = entry.rank;
+        row.insertCell().textContent = entry.symbol;
+        if (entry.high != null) row.insertCell().textContent = usd.format(entry.high);
+        row.insertCell().textContent = usd.format(entry.close);
+        const gainCell = row.insertCell();
+        gainCell.className = "gainers-gain";
+        gainCell.textContent = "+" + entry.gain.toFixed(2) + "%";
+        row.insertCell().textContent = entry.volume == null ? "—" : dollars.format(entry.volume);
         return row;
       }));
       table.hidden = rows.length === 0;

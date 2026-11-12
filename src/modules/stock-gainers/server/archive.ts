@@ -6,18 +6,20 @@ type Gainer = {
   symbol: string;
   security?: string;
   close: number;
+  sessionHigh?: number;
   gain: number;
   dollarVolume?: number | null;
 };
 
 export type GainerArchive = {
+  rankingMethod?: "session-high" | "close-to-close";
   sessions: Record<string, { rows: Gainer[] }>;
   aliases: Record<string, string[]>;
 };
 
 export async function readGainerArchive(): Promise<GainerArchive | null> {
   const previewPath = process.env.NODE_ENV === "development"
-    ? join(homedir(), "preview-runtime", "admin-watchlist", "daily-gainers", "dashboard", "archive.json")
+    ? join(homedir(), "preview-runtime", "admin-watchlist", "daily-gainers-session-high", "dashboard", "archive.json")
     : undefined;
   const archivePath = process.env.TRADERLINK_DAILY_GAINERS_ARCHIVE_PATH || previewPath;
   if (!archivePath) return null;
@@ -37,6 +39,7 @@ export function findGainerAppearances(
   from: string,
   to: string,
   cutoff: number,
+  minimumVolume = 0,
 ) {
   const identities = new Set(archive.aliases[symbol]);
   for (const day of days) {
@@ -50,7 +53,8 @@ export function findGainerAppearances(
     for (const day of days) {
       if (day < from || day > to) continue;
       for (const [index, entry] of archive.sessions[day].rows.slice(0, cutoff).entries()) {
-        if (identities.has(entry.security ?? entry.symbol)) {
+        if ((!symbol || identities.has(entry.security ?? entry.symbol)) &&
+            (minimumVolume === 0 || (entry.dollarVolume ?? 0) >= minimumVolume)) {
           rows.push({ ...entry, day, rank: index + 1 });
         }
       }

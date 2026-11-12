@@ -10,6 +10,7 @@ export type DashboardNavigationIconKey =
   | "swing"
   | "roundTrips"
   | "marketCharts"
+  | "stockGainers"
   | "data"
   | "execution"
   | "halt"
@@ -231,7 +232,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/admin/scanners", label: "Scanner Admin", icon: "admin" as const }),
         Object.freeze({ href: "/market-data", label: "Market Data", icon: "marketCharts" as const }),
         Object.freeze({ href: "/charts", label: "Market Charts", icon: "marketCharts" as const }),
-        Object.freeze({ href: "/stock-tools/gainers", label: "Stock Gainers", icon: "marketCharts" as const }),
+        Object.freeze({ href: "/stock-tools/gainers", label: "Stock Gainers", icon: "stockGainers" as const }),
         DASHBOARD_MARKET_HALT_ALERTS_ITEM,
       ]),
     }),
