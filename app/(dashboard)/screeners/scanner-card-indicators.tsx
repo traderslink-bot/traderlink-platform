@@ -149,45 +149,24 @@ const signalDirections: Partial<Record<IndicatorSignalKind, "bullish" | "bearish
 };
 const readingDirection = (reading: IndicatorDisplayRow) =>
   reading.tone === "bullish" || reading.tone === "bearish" ? reading.tone : "neutral";
-const directionLabels = { bullish:"Bullish", bearish:"Bearish", neutral:"Neutral" } as const;
 const readingNames: Record<Indicator, string> = {
   EMA: "Moving averages", VWAP: "VWAP", RSI: "RSI", Trend: "Trend", "RSI momentum": "Momentum", Volume: "Volume", ATR: "ATR",
 };
 const SIGNAL_WINDOW_MS = 15 * 60_000;
-const signalClockListeners = new Set<() => void>();
-let signalClockTimer: ReturnType<typeof setInterval> | undefined;
-const readSignalClock = () => Math.floor(Date.now() / 10_000) * 10_000;
-function subscribeSignalClock(listener: () => void) {
-  signalClockListeners.add(listener);
-  signalClockTimer ??= setInterval(() => signalClockListeners.forEach(notify => notify()), 1000);
-  return () => {
-    signalClockListeners.delete(listener);
-    if (!signalClockListeners.size) {
-      clearInterval(signalClockTimer);
-      signalClockTimer = undefined;
-    }
-  };
-}
-
-export function scannerSignalAge(at: number, now: number): string | null {
+export function isRecentScannerSignal(at: number, now: number): boolean {
   const age = now - at;
-  if (!Number.isFinite(age) || age < 0 || age >= SIGNAL_WINDOW_MS) return null;
-  if (age < 10_000) return "just now";
-  if (age < 60_000) return `${Math.floor(age / 10_000) * 10}s ago`;
-  return `${Math.floor(age / 60_000)}m ago`;
+  return age >= 0 && age < SIGNAL_WINDOW_MS;
 }
 
 type DisplaySignal = NonNullable<IndicatorDisplayRow["signals"]>[number];
 
 function RecentSignal({ signal, compact = false }: { signal: DisplaySignal; compact?: boolean }) {
-  const age = useSyncExternalStore(subscribeSignalClock, () => scannerSignalAge(signal.at, readSignalClock()), () => null);
-  if (age === null) return null;
   const color = tones[signalDirections[signal.kind]??"neutral"];
   if (compact) return <Typography component="span" variant="inherit" sx={{color,ml:0.5,whiteSpace:"nowrap"}}>
-    {signal.kind==="emaBullishCross"?"Crossed above":"Crossed below"} · {age}
+    {signal.kind==="emaBullishCross"?"Crossed above":"Crossed below"}
   </Typography>;
   return <Typography component="p" variant="inherit" sx={{m:0}}>
-    <Box component="span" sx={{color}}>{signal.text}</Box>{" · "}{age}
+    <Box component="span" sx={{color}}>{signal.text}</Box>
   </Typography>;
 }
 
@@ -249,9 +228,9 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
         return <Box key={name} data-scanner-indicator={name}>
           <Typography component="span" variant="inherit" color="text.secondary">{name} </Typography>
           <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
-            {directionLabels[direction]} · {text}
+            {text}
           </Typography>
-          {name==="EMA"&&reading.signals?.map(event=><RecentSignal key={event.at} signal={event} compact/>)}
+          {name==="EMA"&&reading.signals?.filter(event=>isRecentScannerSignal(event.at,now)).map(event=><RecentSignal key={event.at} signal={event} compact/>)}
         </Box>;
       })}
     </Box>
@@ -264,7 +243,7 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
             {[reading.value && reading.value !== text ? reading.value : null, name==="EMA"?text:reading.state ?? text].filter(Boolean).join(" · ")}
           </Box>
         </Typography>
-        {reading.signals?.map(signal=><RecentSignal key={`${signal.kind}-${signal.at}`} signal={signal}/>)}
+        {reading.signals?.filter(signal=>isRecentScannerSignal(signal.at,now)).map(signal=><RecentSignal key={`${signal.kind}-${signal.at}`} signal={signal}/>)}
       </Box>)}
     </Box>}
   </Box>;

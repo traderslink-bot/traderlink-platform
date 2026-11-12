@@ -1,15 +1,15 @@
 import { expect, it } from "vitest";
-import { scannerIndicatorResults, scannerSignalAge } from "@/app/(dashboard)/screeners/scanner-card-indicators";
+import { scannerIndicatorResults, isRecentScannerSignal } from "@/app/(dashboard)/screeners/scanner-card-indicators";
 
-it("shows a relative age for 15 elapsed minutes, then drops the event", () => {
+it("shows an event for 15 elapsed minutes, then drops it on refresh", () => {
   const at = Date.UTC(2026, 10, 12, 15);
-  expect(scannerSignalAge(at, at - 1)).toBeNull();
-  expect(scannerSignalAge(at, at)).toBe("just now");
-  expect(scannerSignalAge(at, at + 30_000)).toBe("30s ago");
-  expect(scannerSignalAge(at, at + 60_000)).toBe("1m ago");
-  expect(scannerSignalAge(at, at + 899_999)).toBe("14m ago");
-  expect(scannerSignalAge(at, at + 900_000)).toBeNull();
-  expect(scannerSignalAge(at, at + 86_400_000)).toBeNull();
+  expect(isRecentScannerSignal(at, at - 1)).toBe(false);
+  expect(isRecentScannerSignal(at, at)).toBe(true);
+  expect(isRecentScannerSignal(at, at + 30_000)).toBe(true);
+  expect(isRecentScannerSignal(at, at + 60_000)).toBe(true);
+  expect(isRecentScannerSignal(at, at + 899_999)).toBe(true);
+  expect(isRecentScannerSignal(at, at + 900_000)).toBe(false);
+  expect(isRecentScannerSignal(at, at + 86_400_000)).toBe(false);
 });
 
 it("keeps EMA alignment after a recent crossover expires in each scanner timeframe", () => {
@@ -24,8 +24,8 @@ it("keeps EMA alignment after a recent crossover expires in each scanner timefra
     const cross = result.signals?.averages;
     if (!cross) throw Error(`Missing EMA crossover on ${frame}`);
     expect(cross.kind, frame).toBe("emaBullishCross");
-    expect(scannerSignalAge(cross.at, through), frame).not.toBeNull();
-    expect(scannerSignalAge(cross.at, cross.at + 900_000), frame).toBeNull();
+    expect(isRecentScannerSignal(cross.at, through), frame).toBe(true);
+    expect(isRecentScannerSignal(cross.at, cross.at + 900_000), frame).toBe(false);
     expect(result.ema9!, frame).toBeGreaterThan(result.ema20!);
   }
 });
