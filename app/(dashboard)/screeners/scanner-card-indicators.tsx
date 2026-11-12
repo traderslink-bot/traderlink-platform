@@ -8,7 +8,7 @@ import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import type { Theme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { calculateIndicatorHistory, calculateSessionVwap } from "@/src/lib/live-watchlist/indicators/indicator-engine";
 import { indicatorDisplayRows, type IndicatorDisplayRow } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
 import { aggregateCandles, type Candle } from "@/src/modules/scanner/alpaca/candles";
@@ -192,7 +192,6 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
   const [visible,setVisible]=useState(false);
   const [history,setHistory]=useState<(CandleHistory & {symbol:string})|null>(null);
   const enabled = selected.length > 0;
-  const [detailsOpen,setDetailsOpen]=useState(false);
   const frameMs = Number.parseInt(frame, 10) * 60_000;
   // Keep completed minute bars for VWAP, even when the selected study timeframe is larger.
   const minute = Math.floor(now / 60_000);
@@ -221,39 +220,64 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
     vwap:vwap?.value??null,vwapSignals:vwap?.signals}),[result,frame,row.price,vwap]);
   const chosen = selected.flatMap(name => {
     const reading = readings.find(item => item.label === readingNames[name]);
-    return reading && (reading.state || !["—", "Unavailable"].includes(reading.value)) &&
-      (name !== "EMA" || result?.ema9 != null || result?.ema20 != null)
-      ? [{name, reading, text:compactRead(name,reading,result)}] : [];
+    if (!reading || (!reading.state && ["—", "Unavailable"].includes(reading.value)) ||
+      (name === "EMA" && result?.ema9 == null && result?.ema20 == null)) return [];
+    const text = compactRead(name,reading,result);
+    const details = [reading.value && reading.value !== text ? reading.value : null,
+      name === "EMA" ? text : reading.state ?? text].filter(Boolean).join(" · ");
+    return [{name, text, details, direction:readingDirection(reading),
+      signals:reading.signals?.filter(signal=>isRecentScannerSignal(signal.at,now)) ?? []}];
   });
   if (!enabled) return null;
   return <Box ref={ref} data-scanner-indicator-frame={frame} sx={{minHeight:1}}>
-    {chosen.length>0&&<Box component="details" onToggle={event=>setDetailsOpen(event.currentTarget.open)}
+    {chosen.length>0&&<IndicatorRows rows={chosen}/>}
+  </Box>;
+}
+
+
+type IndicatorRow = {
+  name: Indicator;
+  text: string;
+  details: string;
+  direction: ReturnType<typeof readingDirection>;
+  signals: readonly DisplaySignal[];
+};
+
+const IndicatorRows = memo(function IndicatorRows({ rows }: { rows: readonly IndicatorRow[] }) {
+  const [detailsOpen,setDetailsOpen]=useState(false);
+  return <Box component="details" onToggle={event=>setDetailsOpen(event.currentTarget.open)}
       sx={{fontSize:"0.66rem",color:"text.secondary","&[open] > summary > svg":{transform:"rotate(180deg)"}}}>
       <Box component="summary" aria-label="Indicator details"
         sx={{display:"flex",alignItems:"flex-start",cursor:"pointer",listStyle:"none","&::-webkit-details-marker":{display:"none"}}}>
         <KeyboardArrowDownRounded aria-hidden="true" sx={{fontSize:"1rem",flexShrink:0,mr:0.25}}/>
         <Box component="span" sx={{display:"flex",gap:0.65,flexWrap:"wrap",minWidth:0}}>
-          {chosen.map(({name,reading,text})=>{
-            const direction = readingDirection(reading);
+          {rows.map(({name,direction,text,signals})=>{
             return <Box component="span" key={name} data-scanner-indicator={name}>
               <Typography component="span" variant="inherit" sx={{color:scannerCardLabelColor,fontWeight:700}}>{name} </Typography>
               <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
                 {text}
               </Typography>
-              {name==="EMA"&&reading.signals?.filter(event=>isRecentScannerSignal(event.at,now)).map(event=><RecentSignal key={event.at} signal={event} compact/>)}
+              {name==="EMA"&&signals.map(event=><RecentSignal key={event.at} signal={event} compact/>)}
             </Box>;
           })}
         </Box>
       </Box>
-      {detailsOpen&&chosen.map(({name,reading,text})=><Box key={name} sx={{my:0.45}}>
+      {detailsOpen&&rows.map(({name,direction,signals,details})=><Box key={name} sx={{my:0.45}}>
         <Typography component="p" variant="inherit" sx={{m:0}}>
           <strong>{name}</strong>{" "}
-          <Box component="span" sx={{color:tones[readingDirection(reading)]}}>
-            {[reading.value && reading.value !== text ? reading.value : null, name==="EMA"?text:reading.state ?? text].filter(Boolean).join(" · ")}
+          <Box component="span" sx={{color:tones[direction]}}>
+            {details}
           </Box>
         </Typography>
-        {reading.signals?.filter(signal=>isRecentScannerSignal(signal.at,now)).map(signal=><RecentSignal key={`${signal.kind}-${signal.at}`} signal={signal}/>)}
+        {signals.map(signal=><RecentSignal key={`${signal.kind}-${signal.at}`} signal={signal}/>)}
       </Box>)}
-    </Box>}
-  </Box>;
-}
+    </Box>;
+}, (previous, next) => previous.rows.length === next.rows.length && previous.rows.every((row, index) => {
+  const other = next.rows[index];
+  return row.name === other.name && row.text === other.text && row.details === other.details &&
+    row.direction === other.direction && row.signals.length === other.signals.length &&
+    row.signals.every((signal, signalIndex) => {
+      const nextSignal = other.signals[signalIndex];
+      return signal.kind === nextSignal.kind && signal.text === nextSignal.text && signal.at === nextSignal.at;
+    });
+}));
