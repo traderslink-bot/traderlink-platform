@@ -3,9 +3,9 @@ import type { IndicatorResult, IndicatorTimeframe } from "./indicator-engine";
 export type IndicatorDisplayRow = Readonly<{ label: string; value: string; explanation: string;
   state?: string; tone?: "bullish" | "bearish" | "neutral" | "activity"; calculation?: string;
   conditionState?: "Overbought" | "Oversold";
-  signals?: readonly Readonly<{ text: string; at: number }>[] }>;
+  signals?: readonly Readonly<{ text: string; at: number; kind: IndicatorSignal["kind"] }>[] }>;
 const displaySignals = (...events: (IndicatorSignal | undefined)[]) =>
-  events.flatMap(event => event ? [{ text: indicatorSignalLabels[event.kind], at: event.at }] : []).sort((a, b) => b.at - a.at);
+  events.flatMap(event => event ? [{ text: indicatorSignalLabels[event.kind], at: event.at, kind: event.kind }] : []).sort((a, b) => b.at - a.at);
 const finite = (n: number | null | undefined): n is number => typeof n === "number" && Number.isFinite(n);
 export const indicatorPrice = (n: number | null | undefined): string => finite(n) ? `$${n.toFixed(n < 1 ? 4 : 2)}` : "—";
 export const indicatorFrameLabel = (frame: IndicatorTimeframe): string => frame === "1d" ? "Daily" : frame;

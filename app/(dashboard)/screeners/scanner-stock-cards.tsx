@@ -6,6 +6,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { useId, useState, useSyncExternalStore, type ReactNode } from "react";
@@ -48,19 +49,30 @@ export function useTickerCardSections() {
   return { sections, update };
 }
 
-export function TickerCardSectionSettings() {
+const scannerViews = { table: "Table", cards: "Cards", "two-rows": "Two rows" } as const;
+export type ScannerView = keyof typeof scannerViews;
+
+export function ScannerViewSettings({ label, view, onViewChange }: { label: string; view: ScannerView; onViewChange: (view: ScannerView) => void }) {
   const { sections, update } = useTickerCardSections();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const id = useId();
   return <>
-    <Button size="small" aria-expanded={Boolean(anchor)} aria-controls={anchor ? id : undefined}
+    <Button size="small" aria-label={`${label} view: ${scannerViews[view]}`} endIcon={<KeyboardArrowDownRounded fontSize="small"/>} aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? id : undefined}
       onClick={event => setAnchor(event.currentTarget)} sx={{fontSize:"0.68rem",textTransform:"none",px:0.5,minWidth:0}}>
-      Card sections
+      {scannerViews[view]}
     </Button>
     <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}
-      anchorOrigin={{vertical:"bottom",horizontal:"left"}}
-      slotProps={{paper:{id,role:"group","aria-label":"Ticker card sections",sx:{p:1.25,minWidth:228}}}}>
-      <Typography variant="body2" sx={{fontWeight:700,px:0.5}}>Basic Stats</Typography>
+      anchorOrigin={{vertical:"bottom",horizontal:"right"}} transformOrigin={{vertical:"top",horizontal:"right"}}
+      slotProps={{paper:{id,role:"dialog","aria-label":`${label} view settings`,sx:{p:1.25,minWidth:228}}}}>
+      <Box role="group" aria-label="Display view">
+        {(Object.entries(scannerViews) as [ScannerView,string][]).map(([value,text])=>
+          <Button size="small" key={value} aria-pressed={view===value}
+            onClick={()=>{onViewChange(value);if(value!=="cards")setAnchor(null);}} sx={{width:"100%",minHeight:32,justifyContent:"flex-start",textTransform:"none",bgcolor:view===value?"action.selected":undefined}}>
+            {text}
+          </Button>)}
+      </Box>
+      {view==="cards"&&<Box role="group" aria-label="Ticker card sections" sx={{borderTop:1,borderColor:"divider",mt:0.75,pt:0.75}}>
+      <Typography variant="body2" sx={{fontWeight:700,px:0.5}}>Card sections</Typography>
       {[...sections, ...SECTIONS.filter(section => !sections.includes(section))].map(section => {
         const enabled = sections.includes(section);
         return <Box key={section} sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1}}>
@@ -77,6 +89,7 @@ export function TickerCardSectionSettings() {
         </Box>;
       })}
       {sections.includes("indicators") && <ScannerIndicatorSettings/>}
+      </Box>}
     </Popover>
   </>;
 }

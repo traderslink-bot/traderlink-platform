@@ -13,6 +13,7 @@ import { aggregateCandles, type Candle } from "@/src/modules/scanner/alpaca/cand
 import { indicatorMarketDate, indicatorSessionWindow, indicatorTradingDay, normalizeIndicatorSessions, type IndicatorCalendar } from "@/src/lib/live-watchlist/indicators/indicator-sessions";
 import exchangeCalendar from "@/src/modules/coach/server/market-calendar/us-equities-review-calendar.v1.json";
 import { calendarDate, parseCalendarSessions, type ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
+import type { IndicatorSignalKind } from "@/src/lib/live-watchlist/indicators/indicator-signals";
 import type { LiveScannerRow } from "@/src/modules/scanner/live/contracts";
 
 const FRAMES = ["1m", "5m", "15m"] as const;
@@ -138,6 +139,16 @@ export function scannerIndicatorResults(bars: readonly Candle[], frame: Frame, t
 }
 
 const tones = { bullish:"success.main", bearish:"error.main", neutral:"warning.main" } as const;
+const signalDirections: Partial<Record<IndicatorSignalKind, "bullish" | "bearish">> = {
+  emaBullishCross:"bullish", emaBearishCross:"bearish",
+  uptrendEstablished:"bullish", uptrendRealigned:"bullish", uptrendPriceWeakening:"bearish", uptrendLost:"bearish",
+  downtrendEstablished:"bearish", downtrendRealigned:"bearish", downtrendPriceWeakening:"bullish", downtrendLost:"bullish",
+  rsiAboveMidpoint:"bullish", rsiBelowMidpoint:"bearish", rsiRecovered:"bullish",
+  momentumTurningHigher:"bullish", momentumTurningLower:"bearish",
+  vwapReclaimed:"bullish", vwapLost:"bearish",
+};
+const readingDirection = (reading: IndicatorDisplayRow) =>
+  reading.tone === "bullish" || reading.tone === "bearish" ? reading.tone : "neutral";
 const directionLabels = { bullish:"Bullish", bearish:"Bearish", neutral:"Neutral" } as const;
 const readingNames: Record<Indicator, string> = {
   EMA: "Moving averages", VWAP: "VWAP", RSI: "RSI", Trend: "Trend", "RSI momentum": "Momentum", Volume: "Volume", ATR: "ATR",
@@ -203,7 +214,7 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
   return <Box ref={ref} data-scanner-indicator-frame={frame} sx={{minHeight:1}}>
     <Box sx={{display:"flex",gap:0.65,flexWrap:"wrap",fontSize:"0.66rem"}}>
       {chosen.map(({name,reading,text})=>{
-        const direction = reading.tone === "bullish" || reading.tone === "bearish" ? reading.tone : "neutral";
+        const direction = readingDirection(reading);
         return <Box key={name} data-scanner-indicator={name}>
           <Typography component="span" variant="inherit" color="text.secondary">{name} </Typography>
           <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
@@ -214,10 +225,18 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
     </Box>
     {chosen.length>0&&<Box component="details" sx={{mt:0.25,fontSize:"0.66rem",color:"text.secondary","& summary":{cursor:"pointer"}}}>
       <summary>Details</summary>
-      {chosen.map(({name,reading,text})=><Typography key={name} component="p" variant="inherit" sx={{m:0,my:0.45}}>
-        <strong>{name}</strong> {[reading.value && reading.value !== text ? reading.value : null, reading.state ?? text,
-          ...reading.signals?.map(signal => `${signal.text} · ${timestamp.format(signal.at)} ET`) ?? []].filter(Boolean).join(" · ")}
-      </Typography>)}
+      {chosen.map(({name,reading,text})=><Box key={name} sx={{my:0.45}}>
+        <Typography component="p" variant="inherit" sx={{m:0}}>
+          <strong>{name}</strong>{" "}
+          <Box component="span" sx={{color:tones[readingDirection(reading)]}}>
+            {[reading.value && reading.value !== text ? reading.value : null, reading.state ?? text].filter(Boolean).join(" · ")}
+          </Box>
+        </Typography>
+        {reading.signals?.map(signal=><Typography key={`${signal.kind}-${signal.at}`} component="p" variant="inherit" sx={{m:0}}>
+          <Box component="span" sx={{color:tones[signalDirections[signal.kind]??"neutral"]}}>{signal.text}</Box>
+          {" · "}<time dateTime={new Date(signal.at).toISOString()}>{timestamp.format(signal.at)} ET</time>
+        </Typography>)}
+      </Box>)}
     </Box>}
   </Box>;
 }

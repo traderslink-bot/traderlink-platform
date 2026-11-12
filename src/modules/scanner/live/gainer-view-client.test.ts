@@ -298,29 +298,37 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
   });
 });
 
+async function switchView(container: HTMLElement, label: string, view: string) {
+  const trigger = container.querySelector<HTMLButtonElement>(`[aria-label^="${label} view: "]`)!;
+  await act(async () => trigger.click());
+  const panel = document.querySelector<HTMLElement>(`[aria-label="${label} view settings"]`)!;
+  const choice = [...panel.querySelectorAll("button")].find(button => button.textContent === view)!;
+  await act(async () => choice.click());
+  if (view === "Cards") {
+    expect(panel.querySelector('[aria-label="Ticker card sections"]')).not.toBeNull();
+    await act(async () => panel.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+  }
+  await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+}
+
 describe("alternative stock card view", () => {
   it("switches each scanner independently and shows the new Basic Stats without extra requests", async () => {
     const initial=momentumModel(undefined);
     const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
-    const switchView=async(label:string,view:string)=>{
-      const group=page.container.querySelector(`[aria-label="${label} view"]`)!;
-      const button=[...group.querySelectorAll('button')].find(button=>button.textContent===view)!;
-      await act(async()=>button.click());
-    };
-    await switchView("Top Gainers","Cards");
+    await switchView(page.container,"Top Gainers","Cards");
     const cards=page.container.querySelector('[aria-label="Top Gainers stock cards"]')!;
     expect(cards).not.toBeNull();
     expect(cards.querySelector('[aria-label="Canada flag"]')).not.toBeNull();
     expect([...cards.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
     expect(page.container.querySelector('table[aria-label="Momentum compact stocks"]')).not.toBeNull();
-    await switchView("Momentum","Cards");
+    await switchView(page.container,"Momentum","Cards");
     const momentum=page.container.querySelector('[aria-label="Momentum stock cards"]')!;
     expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
     expect(momentum.querySelector('[aria-label="Open TEST chart only"]')).not.toBeNull();
     expect(momentum.querySelector('[aria-label="Expand TEST card details"]')).toBeNull();
     expect(momentum.querySelector('[aria-label="Indicators"]')).toBeNull();
     expect(momentum.querySelector('[aria-label="Catalyst"]')).toBeNull();
-    await switchView("Top Gainers","Table");
+    await switchView(page.container,"Top Gainers","Table");
     expect(page.container.querySelector('table[aria-label="Top Gainers compact stocks"]')).not.toBeNull();
     expect(page.container.querySelector('[aria-label="Momentum stock cards"]')).not.toBeNull();
     expect(page.stream).toHaveBeenCalledTimes(1);expectOnlyInitialChartRequests(page.fetch);
@@ -332,9 +340,7 @@ describe("two-row table view", () => {
     const initial=momentumModel(undefined);
     const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
     for(const label of ['Top Gainers','Momentum']) {
-      const group=page.container.querySelector(`[aria-label="${label} view"]`)!;
-      const choice=[...group.querySelectorAll('button')].find(button=>button.textContent==='Two rows')!;
-      await act(async()=>choice.click());
+      await switchView(page.container,label,"Two rows");
       const table=page.container.querySelector(`table[aria-label="${label} two-row stocks"]`)!;
       expect(table.querySelector('thead th')?.textContent).toBe('Ticker');
       if(label==='Top Gainers')expect(table.querySelector('thead')?.textContent).not.toContain('$ × Vol');

@@ -27,8 +27,6 @@ import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Tab from "@mui/material/Tab";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -52,7 +50,7 @@ import { ScannerWorkspaceCard } from "./scanner-workspace-card";
 import { DEFAULT_SCANNER_WORKSPACE_LAYOUT } from "./scanner-workspace-layout";
 import { DeclinesCard } from "./declines-card";
 import { ScannerCountryFlag } from "./scanner-country-flag";
-import { ScannerStockCards, TickerCardSectionSettings } from "./scanner-stock-cards";
+import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
 import { ScannerProviderControls } from "./scanner-provider-controls";
 import { ScannerTickerDetails } from "./scanner-ticker-details";
 import { EMPTY_CHART_WORKSPACE, scannerChartWorkspace,replaceScannerChartPanel, type ScannerChartTarget } from "./scanner-chart-workspace";
@@ -543,7 +541,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [workspaceScreenersSelected,setWorkspaceScreenersSelected]=useState({gainers:true,momentum:false,declines:false,pullbacks:false,events:false});
   const [newsArticle,setNewsArticle]=useState<PressReleaseArticle|null>(null);
   const [fullScanner,setFullScanner]=useState<ScannerKind|null>(null);
-  const [displayModes,setDisplayModes]=useState<Record<ScannerKind,"table"|"cards"|"two-rows">>({gainers:"table",momentum:"table"});
+  const [displayModes,setDisplayModes]=useState<Record<ScannerKind,ScannerView>>({gainers:"table",momentum:"table"});
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
   const [checkedAt,setCheckedAt]=useState<number>(()=>Date.now());
   const gridRef=useRef<HTMLDivElement|null>(null);
@@ -596,12 +594,13 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title={GAINERS_EXPLANATION}>
     <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
   </Tooltip></Stack>;
+  const viewSettings=(kind:ScannerKind)=><ScannerViewSettings label={SCREEN_LABELS[kind]} view={displayModes[kind]}
+    onViewChange={view=>setDisplayModes(previous=>({...previous,[kind]:view}))}/>;
   const contents=(kind:ScannerKind,compactDesktop=false,inWorkspace=false)=><>
     {memberNotice?<Alert severity={memberNotice===SCANNER_UNAVAILABLE_MESSAGE?"warning":"info"}>{memberNotice}</Alert>
       :kind==="gainers"&&gainerView==="post_market"&&model&&model.session!=="after_hours"
       ?<Typography color="text.secondary">{admin?"Post-market readings begin after the regular session closes.":SCANNER_UNAVAILABLE_MESSAGE}</Typography>
       :<>
-        {displayModes[kind]==="cards" && <Box sx={{alignSelf:"flex-start"}}><TickerCardSectionSettings/></Box>}
         <ScannerContents now={checkedAt} displayMode={displayModes[kind]} compactDesktop={compactDesktop} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:inWorkspace||kind==="gainers"})} results={resultsFor(kind)} screen={kind}/></>}
   </>;
   const workspaceScreeners=<SideCardChartControls value={true}><ScannerNewsDrawerProvider onOpen={item=>{
@@ -614,7 +613,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         sx={{m:0,'& .MuiFormControlLabel-label':{fontSize:"0.75rem"}}}/>)}
     </Box>
     <Box sx={{display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(2,minmax(0,1fr))"},gap:0.5,flex:{md:1},minHeight:0,gridTemplateRows:{md:`repeat(${Math.max(2,Math.ceil(Object.values(workspaceScreenersSelected).filter(Boolean).length/2))},minmax(0,1fr))`},alignItems:"stretch",'& > *':{minWidth:0}}}>
-    {(['gainers','momentum'] as const).filter(kind=>workspaceScreenersSelected[kind]).map(kind=><SidebarScreenerCard key={kind}><DashboardPanel title={SCREEN_LABELS[kind]}>{contents(kind,true,true)}</DashboardPanel></SidebarScreenerCard>)}
+    {(['gainers','momentum'] as const).filter(kind=>workspaceScreenersSelected[kind]).map(kind=><SidebarScreenerCard key={kind}><DashboardPanel title={SCREEN_LABELS[kind]} action={viewSettings(kind)}>{contents(kind,true,true)}</DashboardPanel></SidebarScreenerCard>)}
     {workspaceScreenersSelected.declines?<SidebarScreenerCard><DeclinesCard results={model?.declines} notice={memberNotice} session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     {workspaceScreenersSelected.pullbacks?<SidebarScreenerCard><PremarketPullbacksCard results={model?.premarketPullbacks} notice={memberNotice} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     {workspaceScreenersSelected.events?<SidebarScreenerCard><ScreenerPressReleaseBoard compact data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
@@ -654,15 +653,11 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
           <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>
             {kind==="momentum"?<Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box>:gainerTabs}
             <Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
+          {viewSettings(kind)}
           {admin&&resultsFor(kind)?<Chip label={`${resultsFor(kind)!.total}`} size="small" aria-label={`${resultsFor(kind)!.total} qualifying`}/>:null}
           <IconButton size="small" aria-label={`Open ${SCREEN_LABELS[kind]} full view`} title={`Open ${SCREEN_LABELS[kind]} full view`} onClick={()=>setFullScanner(kind)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton>
             </Stack>
           </Stack>
-          <ToggleButtonGroup exclusive size="small" value={displayModes[kind]} aria-label={`${SCREEN_LABELS[kind]} view`}
-            onChange={(_,next:"table"|"cards"|"two-rows"|null)=>{if(next)setDisplayModes(previous=>({...previous,[kind]:next}));}}
-            sx={{alignSelf:"flex-start",mb:0.75,'& .MuiToggleButton-root':{fontSize:"0.6rem",lineHeight:1.2,px:1,py:0.5,textTransform:"none"}}}>
-            <ToggleButton value="table">Table</ToggleButton><ToggleButton value="cards">Cards</ToggleButton><ToggleButton value="two-rows">Two rows</ToggleButton>
-          </ToggleButtonGroup>
           {contents(kind,true)}
         </DashboardPanel>
       </ScannerWorkspaceCard>)}
@@ -680,7 +675,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       {fullScanner?<Stack sx={{height:"100dvh",minHeight:0}}>
         <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",borderBottom:1,borderColor:"divider",px:2,py:1.25}}>
           <Typography component="h2" variant="h6" sx={{fontWeight:800}}>{SCREEN_LABELS[fullScanner]}</Typography>
-          <IconButton aria-label="Close full scanner view" onClick={()=>setFullScanner(null)}><CloseRoundedIcon/></IconButton>
+          <Stack direction="row" sx={{alignItems:"center"}}>{viewSettings(fullScanner)}<IconButton aria-label="Close full scanner view" onClick={()=>setFullScanner(null)}><CloseRoundedIcon/></IconButton></Stack>
         </Stack>
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0,p:2})}>{fullScanner==="gainers"?gainerTabs:null}{contents(fullScanner)}</Box>
       </Stack>:null}
