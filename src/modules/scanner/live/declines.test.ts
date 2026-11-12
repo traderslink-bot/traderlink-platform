@@ -72,6 +72,23 @@ describe("Rapid Drops and Top Losers from existing observations",()=>{
     run(book,110,[quote(1.8,110)],"after_hours",controls);
     expect(run(book,130,[quote(1.1,130)],"after_hours",controls).rapid).toHaveLength(1);
   });
+  it("clears at 75% recovery and lets the recovery trade anchor a new drop",()=>{
+    const book=new DeclineBook();
+    run(book,0,[quote(1,0)]);
+    expect(run(book,60,[quote(.60,60)]).rapid).toHaveLength(1);
+    expect(run(book,90,[quote(.899,90)]).rapid).toHaveLength(1);
+    expect(run(book,100,[quote(.90,100)]).rapid).toHaveLength(0);
+    expect(run(book,110,[quote(.60,110)]).rapid[0].drop?.startPrice).toBe(.90);
+  });
+  it("expires five minutes from detection even after a new low and with older retention settings",()=>{
+    const book=new DeclineBook();
+    const controls={...DEFAULT_DECLINE_CONTROLS,retentionMinutes:15};
+    const scan=(time:number,price:number)=>run(book,time,[quote(price,time)],"after_hours",controls);
+    scan(0,1);
+    expect(scan(60,.69).rapid).toHaveLength(1);
+    expect(scan(359,.59).rapid).toHaveLength(1);
+    expect(scan(360,.58).rapid).toHaveLength(0);
+  });
   it("clears at session changes and volume counter resets instead of inventing a fall",()=>{
     const book=new DeclineBook();run(book,0,[quote(2,0)]);
     expect(run(book,60,[quote(1,60,{volume:1})]).rapid).toHaveLength(0);

@@ -25,7 +25,8 @@ import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
-import type { PremarketPullbackResults, PremarketPullbackRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
+import { rapidDropRecoveryPercent } from "@/src/modules/scanner/live/declines";
+import type { DeclineRow, PremarketPullbackResults, PremarketPullbackRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 import { ScannerNewsLink } from "./scanner-news-drawer-context";
@@ -40,7 +41,9 @@ const optionalPrice=(value:number|null)=>value===null?"n/a":price(value);
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 const floatShares=(value:number|null)=>value===null?"—":compact.format(value);
 
-function ChartButton({row,onOpenChart}:{row:PremarketPullbackRow;onOpenChart:(row:PremarketPullbackRow)=>void}){
+type DropChartTarget = Pick<DeclineRow, "symbol" | "exchange" | "price">;
+
+function ChartButton<T extends DropChartTarget>({row,onOpenChart}:{row:T;onOpenChart:(row:T)=>void}){
   return <ButtonBase aria-label={`Open ${row.symbol} chart`} onClick={event=>{event.stopPropagation();onOpenChart(row);}}
     onKeyDown={event=>event.stopPropagation()} sx={{alignItems:"center",bgcolor:"rgba(46,125,50,0.13)",borderRadius:0.75,color:"success.main",height:20,justifyContent:"center",minWidth:20,
       '&:hover':{bgcolor:"rgba(46,125,50,0.23)"},'&:focus-visible':{outline:"2px solid",outlineColor:"success.main",outlineOffset:1}}}>
@@ -85,9 +88,32 @@ function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Prem
   </TableContainer>;
 }
 
-export function PremarketPullbacksCard({results,notice,onOpenChart,haltByTicker=new Map()}:{results:PremarketPullbackResults|undefined;notice:string|null;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
+function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
+  rows: readonly DeclineRow[]; onOpenChart: (row: DropChartTarget) => void;
+  haltByTicker: ReadonlyMap<string,ScannerActiveHalt>;
+}) {
+  return <Box component="section" aria-label="Recent Rapid Drops" sx={{minWidth:0}}>
+    <Typography component="h3" sx={{fontSize:"0.7rem",fontWeight:800,mb:0.35}}>Recent Rapid Drops</Typography>
+    {rows.length===0 ? <Typography color="text.secondary" sx={{fontSize:"0.65rem"}}>No recent rapid drops.</Typography> :
+      <Box role="list" sx={theme=>({...scannerScrollStyles(theme),overflowX:"hidden",maxHeight:110})}>
+        {rows.map(row=>row.drop&&<Stack key={row.symbol} role="listitem" direction="row"
+          sx={{alignItems:"center",gap:0.6,minHeight:25,fontSize:"0.68rem"}}>
+          <ChartButton row={row} onOpenChart={onOpenChart}/>
+          <Typography variant="inherit" color="warning.main" sx={{fontWeight:800}}>{row.symbol}</Typography>
+          <ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>
+          <Typography variant="inherit" color="error.main" sx={{fontWeight:750}}>{wholePercent.format(row.drop.maximumDropPercent)}%</Typography>
+          <Typography variant="inherit" color="text.secondary" sx={{ml:"auto",pr:0.25}}>
+            {wholePercent.format(rapidDropRecoveryPercent(row.drop.startPrice,row.drop.lowPrice,row.price))}% recovered
+          </Typography>
+        </Stack>)}
+      </Box>}
+  </Box>;
+}
+
+export function PremarketPullbacksCard({results,rapid=[],notice,onOpenChart,haltByTicker=new Map()}:{results:PremarketPullbackResults|undefined;rapid?:readonly DeclineRow[];notice:string|null;onOpenChart:(row:DropChartTarget)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
   const [full,setFull]=useState(false);
   const contents=(wide:boolean)=><Stack spacing={1}>
+    {!notice&&results?.controls.enabled&&<RecentRapidDrops rows={rapid} onOpenChart={onOpenChart} haltByTicker={haltByTicker}/>}
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>:!results?<Skeleton height={260}/>
       :results.rows.length?<HighDropsTable rows={results.rows} full={wide} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>:<Alert severity="info">No stocks currently qualify for this list.</Alert>}
   </Stack>;

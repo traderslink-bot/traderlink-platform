@@ -2,11 +2,18 @@ import type { DeclineControls, DeclineResults, DeclineRow, DailyUniverse, Normal
 import type { FloatFact } from "./engine";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
 
+export const RAPID_DROP_RETENTION_MINUTES = 5;
+export const RAPID_DROP_RECOVERY_PERCENT = 75;
+
 export const DEFAULT_DECLINE_CONTROLS: DeclineControls = Object.freeze({
-  enabled:true, displayLimit:20, minimumDropPercent:30, windowMinutes:5, retentionMinutes:15,
+  enabled:true, displayLimit:20, minimumDropPercent:30, windowMinutes:5, retentionMinutes:RAPID_DROP_RETENTION_MINUTES,
 });
-type Episode = { start:NormalizedSnapshot; detected:NormalizedSnapshot; low:NormalizedSnapshot; lastLowAt:number };
+type Episode = { start:NormalizedSnapshot; detected:NormalizedSnapshot; low:NormalizedSnapshot };
 const percent = (price:number,base:number)=>(price/base-1)*100;
+
+export function rapidDropRecoveryPercent(start: number, low: number, current: number): number {
+  return start > low ? Math.max(0, Math.min(100, (current - low) / (start - low) * 100)) : 0;
+}
 
 /** Observed traded-price changes only. No quotes/order-book requests, interpolation or volume gating. */
 export class DeclineBook {
@@ -49,17 +56,20 @@ export class DeclineBook {
       let episode=this.episodes.get(quote.symbol);
       if(!episode&&peak&&peak.receivedAt>(this.consumedThrough.get(quote.symbol)??0)
         &&percent(quote.price,peak.price)<=-controls.minimumDropPercent+1e-9){
-        episode={start:peak,detected:quote,low:quote,lastLowAt:quote.receivedAt};
+        episode={start:peak,detected:quote,low:quote};
         this.episodes.set(quote.symbol,episode);
       }
-      if(episode&&quote.price<episode.low.price){episode.low=quote;episode.lastLowAt=quote.receivedAt;}
+      if(episode&&quote.price<episode.low.price)episode.low=quote;
       rows.push(quote);this.history.set(quote.symbol,rows.slice(-1000));this.last.set(quote.symbol,quote);
     }
     for(const [symbol,episode]of this.episodes){
-      if(input.now-episode.lastLowAt>=controls.retentionMinutes*60000){
+      const latest=this.last.get(symbol)!;
+      const recovered=rapidDropRecoveryPercent(episode.start.price,episode.low.price,latest.price)+1e-9>=RAPID_DROP_RECOVERY_PERCENT;
+      const expired=input.now-episode.detected.receivedAt>=Math.min(controls.retentionMinutes,RAPID_DROP_RETENTION_MINUTES)*60000;
+      if(recovered||expired){
         this.episodes.delete(symbol);
         // Do not recreate the same selloff from the old peak after expiry.
-        this.consumedThrough.set(symbol,input.now);
+        this.consumedThrough.set(symbol,recovered?latest.receivedAt-1:input.now);
       }
     }
     const makeRow=(quote:NormalizedSnapshot):DeclineRow=>{

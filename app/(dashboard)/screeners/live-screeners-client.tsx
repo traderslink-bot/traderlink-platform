@@ -57,7 +57,7 @@ import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scan
 import { ScannerProviderControls } from "./scanner-provider-controls";
 import { ScannerTickerDetails } from "./scanner-ticker-details";
 import { EMPTY_CHART_WORKSPACE, scannerChartWorkspace,replaceScannerChartPanel, type ScannerChartTarget } from "./scanner-chart-workspace";
-import { DEFAULT_DECLINE_CONTROLS } from "@/src/modules/scanner/live/declines";
+import { DEFAULT_DECLINE_CONTROLS, RAPID_DROP_RETENTION_MINUTES } from "@/src/modules/scanner/live/declines";
 import { PremarketPullbacksCard } from "./premarket-pullbacks-card";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 import { ScannerNewsDrawerProvider, ScannerNewsLink } from "./scanner-news-drawer-context";
@@ -465,7 +465,7 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
         <NumberField label="List stocks" current={declines.displayLimit} onChange={next=>next!==null&&updateDeclines({displayLimit:next})}/>
         <NumberField label="Minimum rapid drop %" current={declines.minimumDropPercent} onChange={next=>next!==null&&updateDeclines({minimumDropPercent:next})}/>
         <NumberField label="Drop within (minutes)" current={declines.windowMinutes} onChange={next=>next!==null&&updateDeclines({windowMinutes:next})}/>
-        <NumberField label="Keep after new low (minutes)" current={declines.retentionMinutes} onChange={next=>next!==null&&updateDeclines({retentionMinutes:next})}/>
+        <NumberField label="Keep after detection (max 5 min)" current={Math.min(declines.retentionMinutes,RAPID_DROP_RETENTION_MINUTES)} onChange={next=>next!==null&&updateDeclines({retentionMinutes:Math.min(next,RAPID_DROP_RETENTION_MINUTES)})}/>
       </Box>
       <Typography component="h3" sx={{fontWeight:800}}>HOD Drops</Typography>
       <FormControlLabel control={<Switch checked={pmPullbacks.enabled} onChange={event=>updatePmPullbacks({enabled:event.target.checked})}/>} label="Enable HOD Drops"/>
@@ -645,7 +645,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     <Box sx={{display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(2,minmax(0,1fr))"},gap:0.5,flex:{md:1},minHeight:0,gridTemplateRows:{md:`repeat(${Math.max(2,Math.ceil(Object.values(workspaceScreenersSelected).filter(Boolean).length/2))},minmax(0,1fr))`},alignItems:"stretch",'& > *':{minWidth:0}}}>
     {(['gainers','momentum'] as const).filter(kind=>workspaceScreenersSelected[kind]).map(kind=><SidebarScreenerCard key={kind}><DashboardPanel title={SCREEN_LABELS[kind]} action={viewSettings(kind)}>{contents(kind,true,true)}</DashboardPanel></SidebarScreenerCard>)}
     {workspaceScreenersSelected.declines?<SidebarScreenerCard><DeclinesCard results={model?.declines} notice={memberNotice} session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
-    {workspaceScreenersSelected.pullbacks?<SidebarScreenerCard><PremarketPullbacksCard results={model?.premarketPullbacks} notice={memberNotice} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
+    {workspaceScreenersSelected.pullbacks?<SidebarScreenerCard><PremarketPullbacksCard rapid={model?.declines?.rapid} results={model?.premarketPullbacks} notice={memberNotice} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     {workspaceScreenersSelected.events?<SidebarScreenerCard><ScreenerPressReleaseBoard compact data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     </Box>
     {Object.values(workspaceScreenersSelected).some(Boolean)?null:<Typography color="text.secondary" sx={{fontSize:"0.75rem"}}>Select scanners to display their cards.</Typography>}
@@ -714,7 +714,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       {showScanner("top-losers")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["top-losers"]} widget="top-losers"><DeclinesCard results={model?.declines}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)}
         session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
-      {showScanner("high-drops")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["high-drops"]} widget="high-drops"><PremarketPullbacksCard results={model?.premarketPullbacks}
+      {showScanner("high-drops")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["high-drops"]} widget="high-drops"><PremarketPullbacksCard rapid={model?.declines?.rapid} results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
       {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
     </Box></Box></ScannerNewsDrawerProvider>
@@ -746,7 +746,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       onClose={()=>{setDrawerOpen(false);}} row={temporary?.chart??chartRow}
       screeners={workspaceScreeners} section={temporary?"details":workspaceSection}
       onSectionChange={temporary?()=>{}:setWorkspaceSection} stocks={[...(model?.dayGainers?.rows??[]),...(model?.momentum.rows??[]),...(selectedGainers?.rows??[])]}
-      fallbackQuotes={[...(model?.declines?.losers??[]),...(model?.premarketPullbacks?.rows??[])]} postMarket={model?.session==="after_hours"}/>
+      fallbackQuotes={[...(model?.declines?.losers??[]),...(model?.premarketPullbacks?.rows??[]),...(model?.declines?.rapid??[])]} postMarket={model?.session==="after_hours"}/>
     <Dialog open={Boolean(replacement)} onClose={()=>setReplacement(null)} aria-labelledby="replace-scanner-chart-title">
       <DialogTitle id="replace-scanner-chart-title">Choose a chart to replace</DialogTitle>
       <DialogContent>
