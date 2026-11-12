@@ -41,3 +41,5 @@ Recent Rapid Drops is visible above the HOD rankings and shows the maximum drop 
 Removed the visible rapid section heading and its empty message. A compact Rapid label identifies active rows at the top and replaces the bolt beside qualifying HOD tickers. Desktop and mobile preview QA and five card tests passed. Preview only.
 
 Restored the themed lightning bolt in both rapid and HOD rows at the owner's request. HOD ticker contents can wrap within their cell to keep the bolt clear of Price. Desktop and mobile browser bounds checks, five card tests and lint passed. Preview only.
+
+The HOD Drops info and lightning-bolt tooltips now explain the default 30%/five-minute trigger and 75% recovery or five-minute expiry. Browser QA, five card tests and lint passed. Preview only.

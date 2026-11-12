@@ -51,8 +51,10 @@ function ChartButton<T extends DropChartTarget>({row,onOpenChart}:{row:T;onOpenC
   </ButtonBase>;
 }
 
+const RAPID_DROP_HELP = "By default, a stock qualifies when it falls 30% or more from a recent peak within 5 minutes. The flag clears at 75% recovery of that drop or after 5 minutes, whichever comes first.";
+
 function RapidMarker() {
-  return <Tooltip title="Recent rapid drop">
+  return <Tooltip describeChild title={RAPID_DROP_HELP}>
     <BoltRoundedIcon role="img" aria-label="Recent rapid drop"
       sx={{color:"warning.main",fontSize:"0.8rem",flexShrink:0}}/>
   </Tooltip>;
@@ -124,7 +126,7 @@ export function PremarketPullbacksCard({results,rapid=[],notice,onOpenChart,halt
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>:!results?<Skeleton height={260}/>
       :results.rows.length?<HighDropsTable rows={results.rows} full={wide} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>:<Alert severity="info">No stocks currently qualify for this list.</Alert>}
   </Stack>;
-  return <><DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6}}><Typography component="h2" variant="h2">HOD Drops</Typography><Tooltip title="Ranks by the current drop from the highest available session high. A bolt marks a recent rapid drop."><IconButton aria-label="Explain HOD Drops" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><IconButton size="small" aria-label="Open HOD Drops full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>
+  return <><DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6}}><Typography component="h2" variant="h2">HOD Drops</Typography><Tooltip title={`HOD Drops ranks stocks by how far they are below the session high. The bolt marks a rapid drop. ${RAPID_DROP_HELP}`}><IconButton aria-label="Explain HOD Drops" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><IconButton size="small" aria-label="Open HOD Drops full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>
     <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"HOD Drops full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>
       <Stack spacing={1} sx={{p:2,height:"100dvh",minHeight:0}}><Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">HOD Drops</Typography><IconButton aria-label="Close HOD Drops full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack>
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0})}>{contents(true)}</Box></Stack>
