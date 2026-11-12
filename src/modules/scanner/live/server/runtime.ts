@@ -1,3 +1,4 @@
+import { readAlpacaScannerHaltSymbols } from "../../alpaca/scanner-halts";
 import "server-only";
 import {scannerConnection} from "./scanner-connection";
 export {scannerConnection} from "./scanner-connection";
@@ -95,6 +96,7 @@ function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime 
   };
   const dependencies:ConstructorParameters<typeof LiveScannerFeed>[0]={
     provider,
+    ...(provider === "alpaca" ? { haltedSymbols: readAlpacaScannerHaltSymbols } : {}),
     ...(alpacaMarketDataEnabled(environment) ? { excludedListings } : {}),
     ...(eventStream?{eventDriven:true,subscribeChanges:eventStream.subscribe,inactive:()=>eventStream.stop()}:{}),
     configuration: () => settings.configuration(), manualTickers:()=>manualTickers.list(), marketDay: async date => marketDay(date), universe: async date => {

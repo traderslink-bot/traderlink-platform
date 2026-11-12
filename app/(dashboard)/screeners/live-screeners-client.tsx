@@ -44,7 +44,7 @@ import { ScannerWorkspaceCard } from "./scanner-workspace-card";
 import { DEFAULT_SCANNER_WORKSPACE_LAYOUT } from "./scanner-workspace-layout";
 import { DeclinesCard } from "./declines-card";
 import { ScannerCountryFlag } from "./scanner-country-flag";
-import { ScannerStockCards } from "./scanner-stock-cards";
+import { ScannerStockCards, TickerCardSectionSettings } from "./scanner-stock-cards";
 import { ScannerProviderControls } from "./scanner-provider-controls";
 import { ScannerTickerDetails } from "./scanner-ticker-details";
 import { EMPTY_CHART_WORKSPACE, scannerChartWorkspace, type ScannerChartTarget } from "./scanner-chart-workspace";
@@ -289,15 +289,12 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
   </>;
 }
 
-function ScannerResultView({ results,screen,onOpenChart,haltByTicker,compactDesktop=false,displayMode="table" }: { results: LiveScreenResults | undefined; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; compactDesktop?:boolean; displayMode?:"table"|"cards"|"two-rows" }) {
-  const allowAdd=useSideCardChartControls();
+function ScannerResultView({ results,screen,onOpenChart,haltByTicker,now,compactDesktop=false,displayMode="table" }: { results: LiveScreenResults | undefined; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; now:number; compactDesktop?:boolean; displayMode?:"table"|"cards"|"two-rows" }) {
   if (!results) return <Skeleton height={440} variant="rounded"/>;
-  if(displayMode==="cards")return results.rows.length?<ScannerStockCards rows={results.rows} screen={screen}
+  if(displayMode==="cards")return results.rows.length?<ScannerStockCards rows={results.rows} screen={screen} now={now}
     renderHalt={symbol=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>}
-    renderTools={(row,expanded,toggle)=><Box sx={{display:"grid",gridTemplateColumns:allowAdd?"44px 20px 12px":"20px 20px 12px",columnGap:"8px",alignItems:"center"}}>
+    renderTools={row=><Box sx={{display:"flex",alignItems:"center",gap:0.65,flexShrink:0}}>
       <ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/>
-      <ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} card details`} aria-expanded={expanded} onClick={toggle}
-        sx={{fontSize:"0.9rem",height:20,minWidth:12,color:"text.secondary"}}>{expanded?"−":"+"}</ButtonBase>
     </Box>}/>:<Alert severity="info">No stocks currently qualify for this list.</Alert>;
   if(displayMode==="two-rows")return results.rows.length?<CompactStockTable twoRows compactDesktop haltByTicker={haltByTicker} rows={results.rows} screen={screen} onOpenChart={onOpenChart}/>
     :<Alert severity="info">No stocks currently qualify for this list.</Alert>;
@@ -550,7 +547,9 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     {memberNotice?<Alert severity={memberNotice===SCANNER_UNAVAILABLE_MESSAGE?"warning":"info"}>{memberNotice}</Alert>
       :kind==="gainers"&&gainerView==="post_market"&&model&&model.session!=="after_hours"
       ?<Typography color="text.secondary">{admin?"Post-market readings begin after the regular session closes.":SCANNER_UNAVAILABLE_MESSAGE}</Typography>
-      :<ScannerContents displayMode={displayModes[kind]} compactDesktop={compactDesktop} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:inWorkspace||kind==="gainers"})} results={resultsFor(kind)} screen={kind}/>}
+      :<>
+        {displayModes[kind]==="cards" && <Box sx={{alignSelf:"flex-start"}}><TickerCardSectionSettings/></Box>}
+        <ScannerContents now={checkedAt} displayMode={displayModes[kind]} compactDesktop={compactDesktop} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:inWorkspace||kind==="gainers"})} results={resultsFor(kind)} screen={kind}/></>}
   </>;
   const workspaceScreeners=<SideCardChartControls value={true}><ScannerNewsDrawerProvider onOpen={item=>{
     const stock=[...(selectedGainers?.rows??[]),...momentumStocks].find(row=>row.news.some(news=>news.id===item.id));

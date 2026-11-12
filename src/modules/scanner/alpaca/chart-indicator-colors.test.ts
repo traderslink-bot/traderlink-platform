@@ -45,3 +45,27 @@ it("defaults all preset labels off and lets global and individual controls overr
   expect(off.indicators.every(indicator => !indicatorPriceScaleLabels(off, indicator))).toBe(true);
   expect(off.indicators[0].output).toEqual({ statusLineValues: true });
 });
+
+it("starts SMA with the daily trend preset and keeps the intraday preset selectable", () => {
+  expect(indicatorPresets.SMA[0].title).toBe("Daily trend context");
+  expect(indicatorPresetRows("SMA", 0, () => "test").map(line => line.period)).toEqual([20, 50, 200]);
+  expect(indicatorPresetRows("SMA", 1, () => "test").map(line => line.period)).toEqual([20]);
+});
+
+it("keeps built-in lines at least 3:1 against both chart backgrounds", () => {
+  const luminance = (color: string) => {
+    const rgb = [1, 3, 5].map(index => parseInt(color.slice(index, index + 2), 16) / 255)
+      .map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+    return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+  };
+  for (const type of INDICATOR_TYPES) {
+    for (const [index] of indicatorPresets[type].entries()) {
+      for (const color of colors(indicatorPresetRows(type, index, () => "test"))) {
+        for (const background of ["#ffffff", "#101722"]) {
+          const a = luminance(color), b = luminance(background);
+          expect((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05), `${type} ${color} on ${background}`).toBeGreaterThanOrEqual(3);
+        }
+      }
+    }
+  }
+});

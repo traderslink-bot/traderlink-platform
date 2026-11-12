@@ -7,21 +7,36 @@ export class ChartStreamHandle extends EventTarget {
   onerror: ((event: Event) => void) | null = null;
   private closed = false;
   constructor(private readonly url: string, private readonly shared: SharedStream) { super(); }
+  reconnectIfClosed() {
+    if (!this.closed && this.shared.source.readyState === EventSource.CLOSED) connectStream(this.url, this.shared);
+  }
   close() {
     if (this.closed) return; this.closed = true; this.shared.clients.delete(this);
     if (!this.shared.clients.size) { this.shared.source.close(); streams.delete(this.url); }
   }
 }
+function connectStream(url: string, current: SharedStream, source = new EventSource(url)) {
+  current.source = source;
+  current.latest.clear();
+  for (const type of eventTypes) source.addEventListener(type, event => {
+    if (current.source !== source) return;
+    const message = event as MessageEvent;
+    current.latest.set(type, message);
+    for (const client of current.clients) client.dispatchEvent(new MessageEvent(type, { data: message.data }));
+  });
+  source.onerror = event => {
+    if (current.source !== source) return;
+    current.latest.clear();
+    for (const client of current.clients) client.onerror?.(event);
+  };
+}
 export function sharedChartStream(url: string): ChartStreamHandle {
   let shared = streams.get(url);
   if (!shared) {
-    shared = { source: new EventSource(url), clients: new Set(), latest: new Map() }; streams.set(url, shared);
-    const current = shared;
-    for (const type of eventTypes) current.source.addEventListener(type, event => {
-      const message = event as MessageEvent; current.latest.set(type, message);
-      for (const client of current.clients) client.dispatchEvent(new MessageEvent(type, { data: message.data }));
-    });
-    current.source.onerror = event => { current.latest.clear(); for (const client of current.clients) client.onerror?.(event); };
+    const source = new EventSource(url);
+    shared = { source, clients: new Set(), latest: new Map() };
+    streams.set(url, shared);
+    connectStream(url, shared, source);
   }
   const client = new ChartStreamHandle(url, shared); shared.clients.add(client);
   const current = shared;

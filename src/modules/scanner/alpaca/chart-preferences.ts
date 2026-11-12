@@ -21,7 +21,8 @@ export const MAX_SAVED_INDICATOR_PRESETS = 20;
 export const MAX_SAVED_INDICATOR_PRESET_BYTES = 32 * 1024;
 export const MAX_INDICATOR_PRESET_NAME_LENGTH = 60;
 export type SavedIndicatorPreset = { id: string; name: string; type: IndicatorType; indicators: ChartIndicator[] };
-export type ChartPreferences={version:1;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
+export type CrosshairTarget = "price" | "normal" | "nearest" | `indicator:${string}:${string}`;
+export type ChartPreferences={version:1;crosshairTarget?:CrosshairTarget;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
 export const DEFAULT_CHART_PREFERENCES:ChartPreferences={version:1,timeframe:'1m',theme:'auto',kind:'candles',grid:true,volume:true,volumeHeight:20,logarithmic:false,autoScale:true,timezone:'America/New_York',upColor:'#16a085',downColor:'#e45757',premarket:true,regular:true,postmarket:true,indicators:[]};
 export function indicatorPriceScaleLabels(preferences:ChartPreferences,indicator:ChartIndicator):boolean {
  return indicator.output?.priceScaleLabels??preferences.indicatorPriceScaleLabels??false;
@@ -37,10 +38,11 @@ export function parseChartPreferences(value:unknown):ChartPreferences{
  if(!p.premarket&&!p.regular&&!p.postmarket)throw Error('invalid_preferences');
  const color=(s:unknown)=>typeof s==='string'&&/^#[a-f0-9]{6}$/i.test(s);
  if(p.indicatorPriceScaleLabels!==undefined&&typeof p.indicatorPriceScaleLabels!=='boolean')throw Error('invalid_preferences');
+ if(p.crosshairTarget!==undefined&&(typeof p.crosshairTarget!=="string"||!/^(?:price|normal|nearest|indicator:[A-Za-z0-9_-]{1,80}:[A-Za-z0-9_-]{1,40})$/u.test(p.crosshairTarget)))throw Error('invalid_preferences');
  if(p.scalePriceOnly!==undefined&&typeof p.scalePriceOnly!=='boolean')throw Error('invalid_preferences');
  if(!color(p.upColor)||!color(p.downColor)||!Array.isArray(p.indicators)||p.indicators.length>20)throw Error('invalid_preferences');
  const presets = p.savedIndicatorPresets === undefined ? undefined : parseSavedIndicatorPresets(p.savedIndicatorPresets);
- return {version:1,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,autoScale:p.autoScale,...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
+ return {version:1,...(p.crosshairTarget!==undefined?{crosshairTarget:p.crosshairTarget}:{}),timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,autoScale:p.autoScale,...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
 }
 
 function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {

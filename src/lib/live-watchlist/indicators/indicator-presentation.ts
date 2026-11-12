@@ -1,7 +1,11 @@
+import { indicatorSignalLabels, type IndicatorSignal, type VwapSignals } from "./indicator-signals";
 import type { IndicatorResult, IndicatorTimeframe } from "./indicator-engine";
 export type IndicatorDisplayRow = Readonly<{ label: string; value: string; explanation: string;
   state?: string; tone?: "bullish" | "bearish" | "neutral" | "activity"; calculation?: string;
-  conditionState?: "Overbought" | "Oversold" }>;
+  conditionState?: "Overbought" | "Oversold";
+  signals?: readonly Readonly<{ text: string; at: number }>[] }>;
+const displaySignals = (...events: (IndicatorSignal | undefined)[]) =>
+  events.flatMap(event => event ? [{ text: indicatorSignalLabels[event.kind], at: event.at }] : []).sort((a, b) => b.at - a.at);
 const finite = (n: number | null | undefined): n is number => typeof n === "number" && Number.isFinite(n);
 export const indicatorPrice = (n: number | null | undefined): string => finite(n) ? `$${n.toFixed(n < 1 ? 4 : 2)}` : "—";
 export const indicatorFrameLabel = (frame: IndicatorTimeframe): string => frame === "1d" ? "Daily" : frame;
@@ -15,9 +19,9 @@ export function indicatorSummary(result: IndicatorResult | undefined): string {
 }
 export function indicatorDisplayRows(input: Readonly<{
   result?: IndicatorResult; timeframe: IndicatorTimeframe; livePrice: number | null;
-  vwap: number | null;
+  vwap: number | null; vwapSignals?: VwapSignals;
 }>): readonly IndicatorDisplayRow[] {
-  const r = input.result, timeframe = input.timeframe === "1d" ? "daily" : input.timeframe;
+  const r = input.result, signals = r?.signals, timeframe = input.timeframe === "1d" ? "daily" : input.timeframe;
   const trend = r?.trend ? trendNames[r.trend] : "—";
   const trendExplanation = r?.trend === "uptrend" ? "EMA9 is above EMA20, both are rising, and price remains above EMA20."
     : r?.trend === "downtrend" ? "EMA9 is below EMA20, both are falling, and price remains below EMA20."
@@ -53,6 +57,10 @@ export function indicatorDisplayRows(input: Readonly<{
     volumeExplanation = `${r.volumeChangePercent > 0 ? "More" : r.volumeChangePercent < 0 ? "Fewer" : "The same number of"} shares traded than in the previous candle. More history is needed to judge whether activity is unusually strong or quiet.`;
     volumeCalculation = `Compared only with the previous completed ${timeframe} candle; a recent-average comparison is not available yet.`;
   }
+  if (volumeState === "Elevated activity" && r?.priceDirection) {
+    volumeExplanation = r.priceDirection === "flat" ? "Elevated volume · price flat."
+      : `Price ${r.priceDirection} · ${r.volumeRatio!.toFixed(2)}× typical volume.`;
+  }
   if (input.timeframe === "1d" && r && new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "2-digit", hourCycle: "h23" }).format(r.dataThrough) === "13") {
     volumeExplanation += " This was a shortened trading session.";
   }
@@ -67,19 +75,23 @@ export function indicatorDisplayRows(input: Readonly<{
   const atrExplanation = !finite(r?.atr14) ? "" : `${r.volatility === "expanding" ? "Price swings are getting larger than recently; allow for wider fluctuations." : r.volatility === "contracting" ? "Price swings are getting smaller than recently; current movement is more contained." : r.volatility === "steady" ? "Price swings are similar in size to recent conditions." : "Shows the recent typical size of price swings; a comparison with earlier volatility is not available yet."} ATR measures movement size, not whether price will rise or fall.`;
   return [
     { label: "Trend", value: trend === "—" ? trend : "", state: r?.trend ? trend : undefined,
-      tone: r?.trend === "uptrend" ? "bullish" : r?.trend === "downtrend" ? "bearish" : "neutral", explanation: trendExplanation },
+      tone: r?.trend === "uptrend" ? "bullish" : r?.trend === "downtrend" ? "bearish" : "neutral", explanation: trendExplanation, signals: displaySignals(signals?.trend) },
     { label: "Momentum", value: momentum === "—" ? momentum : "", state: momentum === "—" ? undefined : momentum,
-      tone: r?.rsiDirection === "falling" ? "bearish" : r?.rsiDirection === "rising" || r?.rsiDirection === "recovered_above_oversold" ? "bullish" : "neutral", explanation: momentumExplanation },
-    { label: "RSI", value: finite(r?.rsi14) ? r.rsi14.toFixed(1) : "—", state: rsiState, tone: rsiTone, conditionState: rsiCondition,
+      tone: r?.rsiDirection === "falling" ? "bearish" : r?.rsiDirection === "rising" || r?.rsiDirection === "recovered_above_oversold" ? "bullish" : "neutral", explanation: momentumExplanation, signals: displaySignals(signals?.momentum) },
+    { label: "RSI", value: finite(r?.rsi14) ? r.rsi14.toFixed(1) : "—", state: rsiState, tone: rsiTone, conditionState: rsiCondition, signals: displaySignals(signals?.rsiUpper, signals?.rsiMidpoint, signals?.rsiLower),
       explanation: rsiExplanation + (rsiCondition === "Overbought" ? " Strong recent buying pressure. Price may be stretched, but the run can continue." : rsiCondition === "Oversold" ? " Strong recent selling pressure. Price may be stretched downward, but a bounce has not been confirmed." : "") },
-    { label: "VWAP", value: finite(input.vwap) ? indicatorPrice(input.vwap) : "Unavailable", explanation: finite(input.vwap)
-      ? `${vwapPosition ? `Live price is ${vwapPosition} today's` : "Today's"} VWAP (including extended hours).` : "" },
+    { label: "VWAP", value: finite(input.vwap) ? indicatorPrice(input.vwap) : "Unavailable",
+      state: vwapPosition === "above" ? "Bullish · Price above VWAP" : vwapPosition === "below" ? "Bearish · Price below VWAP"
+        : vwapPosition === "at" ? "Neutral · Price at VWAP" : undefined,
+      tone: vwapPosition === "above" ? "bullish" : vwapPosition === "below" ? "bearish" : "neutral",
+      explanation: finite(input.vwap) ? "Intraday VWAP including extended hours." : "",
+      signals: displaySignals(input.timeframe === "1d" ? undefined : input.vwapSignals?.[input.timeframe]) },
     { label: "Moving averages", value: `EMA9 ${indicatorPrice(r?.ema9)} · EMA20 ${indicatorPrice(r?.ema20)}`,
       state: averageState, tone: !averagesReady ? undefined : mixed ? "neutral" : gap! > 0 ? "bullish" : "bearish",
-      explanation: averageExplanation, calculation: "EMA9 is a 9-period exponential moving average and reacts faster than the 20-period EMA20. Both weight recent prices more heavily. Mixed means their separation is within 5% of ATR, matching the Trend calculation's alignment tolerance. Without ATR, only equal averages are labeled mixed." },
-    { label: "Volume", value: volumeValue, explanation: volumeExplanation, state: volumeState, tone: "activity", calculation: volumeCalculation },
+      explanation: averageExplanation, signals: displaySignals(signals?.averages), calculation: "EMA9 is a 9-period exponential moving average and reacts faster than the 20-period EMA20. Both weight recent prices more heavily. Mixed means their separation is within 5% of ATR, matching the Trend calculation's alignment tolerance. Without ATR, only equal averages are labeled mixed." },
+    { label: "Volume", value: volumeValue, explanation: volumeExplanation, state: volumeState, tone: "neutral", signals: displaySignals(signals?.volume), calculation: volumeCalculation },
     { label: "ATR", value: finite(r?.atr14) ? `${indicatorPrice(r.atr14)}${finite(r.atrPercent) ? ` · ${r.atrPercent.toFixed(1)}%` : ""}` : "—",
-      state: atrState, tone: "activity", explanation: atrExplanation,
+      state: atrState, tone: "neutral", explanation: atrExplanation, signals: displaySignals(signals?.atr, signals?.range),
       calculation: finite(r?.atr14) ? `Wilder average true range over 14 ${timeframe} candles, including gaps. Widening/narrowing compares it with the preceding 20 ATR readings: at least 10% higher/lower. The percentage shown is ATR divided by price, not a forecast.` : undefined },
   ];
 }

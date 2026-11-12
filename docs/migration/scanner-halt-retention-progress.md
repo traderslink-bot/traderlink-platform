@@ -1,0 +1,7 @@
+# Scanner halt retention
+
+The published source ranks fresh gainers ahead of retained rows. A halt can make the last Alpaca trade stale while the price remains the last valid price. In a full list the stale row can fall below the display cutoff. Momentum and other scanner books also have normal freshness or expiry rules. POAS was reported by the owner. This mechanism was reproduced with a POAS fixture and was not verified against the original live tick.
+
+The scanner uses the existing cached Alpaca status read to keep already visible, eligible rows in their existing lists during a confirmed halt. It preserves their last displayed values and their Momentum section. A confirmed resume returns the ticker to normal ranking. A failed status read keeps the last confirmed halt set for the trading day. Listing exclusions, configuration and session boundaries still apply. Market Events keeps its existing reason-code filters. Detection audit continues to record the raw detector decisions, and halt retention applies to the published lists.
+
+Seven focused suites and 67 tests passed against the canonical source plus this change. The POAS replay covers a full list, a stale trade, a temporary halt-status outage, resume and removal by listing exclusion. The focused strict TypeScript check passed. The separate UI/API Market Events suite could not start in the isolated source fixture because a press-release dependency was absent. No production, preview or gateway changes were made.

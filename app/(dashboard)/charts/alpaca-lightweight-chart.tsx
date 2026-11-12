@@ -84,6 +84,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       return enabled===true&&!visibleTypes.has(indicator.type)?[{...indicator,visible:true}]:[];
     });
   },[preferences.indicators,enabledOverrides,timeframe]);
+  const crosshairLines=useMemo(()=>activeIndicators.flatMap(indicator=>indicatorValues([],indicator,timeframe)
+    .filter(plot=>!plot.pane&&!plot.histogram&&indicatorPlotStyle(indicator,plot.key).visible)
+    .map(plot=>({value:`indicator:${indicator.id}:${plot.key}` as const,label:plot.label}))),[activeIndicators,timeframe]);
+  const crosshairTarget=preferences.crosshairTarget??"price";
   const readoutTypes=[...new Set(activeIndicators.map(indicator=>indicator.type))];
   const regularOnly=preferences.regular&&!preferences.premarket&&!preferences.postmarket;
   if(ready&&controlledTimeframe===undefined&&activeTimeframe===null)setActiveTimeframe(preferences.timeframe);
@@ -111,13 +115,14 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
     async function start() {
-      const { createChart, CandlestickSeries, HistogramSeries, LineSeries, BarSeries, ColorType, TickMarkType, PriceScaleMode } = await import("lightweight-charts");
+      const { createChart, CandlestickSeries, HistogramSeries, LineSeries, BarSeries, ColorType, TickMarkType, PriceScaleMode, CrosshairMode } = await import("lightweight-charts");
       if (disposed) return;
       let displayPoints: DisplayCandle[] = [];
       const dateKey = new Intl.DateTimeFormat("en-CA", { timeZone: preferences.timezone, year: "numeric", month: "numeric", day: "numeric" });
       const dayKey = (time: number) => dateKey.format(time * 1000);
       const chart = createChart(element!, {
         autoSize: true,
+        crosshair: { mode: crosshairTarget==="nearest"?CrosshairMode.Magnet:CrosshairMode.Normal },
         layout: { background: { type: ColorType.Solid, color: dark ? "#101722" : "#ffffff" }, textColor: dark ? "#c7d2df" : "#354358", fontSize: 11, attributionLogo: false },
         grid: { vertLines: { visible:preferences.grid,color: dark ? "#1d2939" : "#eef1f5" }, horzLines: { visible:preferences.grid,color: dark ? "#1d2939" : "#eef1f5" } },
         timeScale: { minBarSpacing: 0.001, timeVisible: timeframe !== "1D", secondsVisible: false, rightOffset: 4, tickMarkFormatter: (time: Time, tickMarkType: number) => chartTickLabel(time, timeframe, tickMarkType <= TickMarkType.DayOfMonth &&
@@ -139,6 +144,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           ?chart.addSeries(HistogramSeries,{visible:style.visible,...labelOptions,priceLineVisible:false},pane)
           :chart.addSeries(LineSeries,{visible:style.visible,color:style.color,lineWidth:style.width,lineStyle:style.style,...labelOptions,priceLineVisible:false,...(preferences.scalePriceOnly&&pane===0?{autoscaleInfoProvider:()=>null}:{}),...(indicator.type==="RSI"?{autoscaleInfoProvider:()=>({priceRange:{minValue:0,maxValue:100}})}:{})},pane)};});
       });
+      const snapSeries=crosshairTarget.startsWith("indicator:")?studies.find(study=>
+        `indicator:${study.indicator.id}:${study.key}`===crosshairTarget&&study.series.options().visible)?.series:undefined;
       const indicatorAxis=studies.some(study=>study.indicator.type==='VWAP'&&(study.indicator.offset??0)>0)?chart.addSeries(LineSeries,{visible:false,priceLineVisible:false,lastValueVisible:false},0):undefined;
       let activeCrosshair:import("lightweight-charts").MouseEventParams<Time>|undefined;
       const studyPoints=new Map<typeof studies[number],readonly {time:number;value:number}[]>();
@@ -255,6 +262,13 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         for(const {label,left,width}of bounds)label.style.visibility=left<to&&left+width>from?'hidden':'visible';
       };
       chart.subscribeCrosshairMove(event => {
+        if(event.point&&event.time!==undefined&&event.paneIndex===0&&crosshairTarget!=="normal"&&crosshairTarget!=="nearest"){
+          const indicator=snapSeries?event.seriesData.get(snapSeries):undefined;
+          const candle=event.seriesData.get(candles);
+          const price=indicator&&"value" in indicator?indicator.value:
+            candle&&"close" in candle?candle.close:candle&&"value" in candle?candle.value:undefined;
+          if(typeof price==="number"&&Number.isFinite(price))chart.setCrosshairPosition(price,event.time,candles);
+        }
         activeCrosshair=event.point&&event.time!==undefined?event:undefined;updateIndicatorLegend();updateDateVisibility();
         if (!crosshairDetails.current) return;
         const bar = typeof event.time === "number" ? displayed.get(event.time) : undefined;
@@ -468,6 +482,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           if(key!==calculationViewKey){calculationViewKey=key;clearTimeout(calculationViewTimer);calculationViewTimer=setTimeout(()=>{if(!disposed&&loaded)writeAll(false);},50);}
         }
       });
+      let lastBarReceivedAt = Date.now(), lastRecoveryAt = 0;
       source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}`);
       source.addEventListener("status", event => {
         if (disposed) return;
@@ -498,6 +513,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         const message = JSON.parse((event as MessageEvent).data) as { bar: Candle; daily: boolean };
         if (message.daily !== (timeframe === "1D")) return;
         const bar = message.bar;
+        lastBarReceivedAt = Date.now();
         if (!loaded || loading) queued.set(bar.time, bar);
         if(historyBasisDate&&historyBasisDate!==easternClock(Date.now()).date){queued.set(bar.time,bar);if(!loading)void loadHistory();return;}
         if (!loaded) return;
@@ -546,18 +562,43 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         });
         auxiliarySource.addEventListener('status',event=>{if(!disposed&&JSON.parse((event as MessageEvent).data).state==='connected'){calculationHistory.invalidate();calculationContexts.clear();contextCoverage.clear();if(loaded)writeAll(false);}});
       }
-      source.onerror = () => { if(livePrice&&!chartHalted){candles.removePriceLine(livePrice);livePrice=undefined;lastGuidePrice=null;} if (!disposed && loaded) setStatus("Reconnecting…"); };
+      source.onerror = () => {
+        if(disposed)return;
+        connected=false;
+        if(livePrice&&!chartHalted){candles.removePriceLine(livePrice);livePrice=undefined;lastGuidePrice=null;}
+        if(loaded)setStatus("Reconnecting…");
+      };
       let confirmationMinute=Math.floor(Date.now()/60_000);
       const confirmationTimer=setInterval(()=>{const minute=Math.floor(Date.now()/60_000);if(minute!==confirmationMinute){confirmationMinute=minute;if(!disposed&&loaded&&studies.some(study=>study.indicator.type==='VWAP'&&study.indicator.calculationTimeframe&&study.indicator.calculationTimeframe!==timeframe))writeAll(false);}},1000);
-      const gapTimer = setInterval(() => { if (!disposed && loaded && connected){if(historyBasisDate!==easternClock(Date.now()).date)void loadHistory();else if(timeframe!=="1D")writeAll(false);} }, 60_000);
+      const recoverHistory = () => {
+        if(disposed||document.hidden)return;
+        source?.reconnectIfClosed();
+        auxiliarySource?.reconnectIfClosed();
+        const now=Date.now(), clock=easternClock(now);
+        const day=new Date(clock.date+"T12:00:00Z").getUTCDay();
+        const tradingHours=day!==0&&day!==6&&clock.minute>=240&&clock.minute<1200;
+        const needsHistory=!loaded||historyBasisDate!==clock.date||
+          tradingHours&&!chartHalted&&(!connected||now-lastBarReceivedAt>=120_000);
+        if(needsHistory&&!loading&&now-lastRecoveryAt>=60_000){
+          lastRecoveryAt=now;
+          void loadHistory();
+        }
+      };
+      const gapTimer=setInterval(()=>{
+        recoverHistory();
+        if(!disposed&&loaded&&connected&&!loading&&timeframe!=="1D"&&historyBasisDate===easternClock(Date.now()).date)writeAll(false);
+      },60_000);
+      document.addEventListener("visibilitychange",recoverHistory);
+      window.addEventListener("online",recoverHistory);
+      window.addEventListener("pageshow",recoverHistory);
       const remove = removeChart;
-      removeChart = () => { saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);if(loaded)memory.current={key:cacheKey,basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,range:chart.timeScale().getVisibleRange(),logicalRange:chart.timeScale().getVisibleLogicalRange(),axis:{first:displayPoints[0]?.time,last:displayPoints.at(-1)?.time,count:displayPoints.length,sessions:sessionKey},priceRange:chart.priceScale("right").getVisibleRange()}; element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
+      removeChart = () => { document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);if(loaded)memory.current={key:cacheKey,basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,range:chart.timeScale().getVisibleRange(),logicalRange:chart.timeScale().getVisibleLogicalRange(),axis:{first:displayPoints[0]?.time,last:displayPoints.at(-1)?.time,count:displayPoints.length,sessions:sessionKey},priceRange:chart.priceScale("right").getVisibleRange()}; element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
       updateIndicatorLegend();
       await loadHistory();
     }
     void start().catch(() => { if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [ticker, timeframe, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators]);
+  }, [ticker, timeframe, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget]);
 
   const compactToolbarHeight = 40;
   const mainToolbar = viewWorkspace === "main";
@@ -618,6 +659,6 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         <MenuItem key="off" onClick={()=>{changeIndicatorDisplay(indicatorMenu.type,"enabled",false);setIndicatorMenu(null);}}>Turn off</MenuItem>,
       ]:null}
     </Menu>
-    <ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={preferences} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/>
+    <ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={preferences} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/>
   </Box>;
 }

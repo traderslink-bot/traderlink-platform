@@ -1,3 +1,5 @@
+import type { IndicatorSignal, IndicatorSignalKind, IndicatorSignals, IntradayIndicatorFrame, VwapSignals } from "./indicator-signals";
+
 /** Pure Watchlist calculations. No provider, database, AI, clock or UI side effects. */
 export const WATCHLIST_INDICATOR_VERSION = "indicators-v1" as const;
 export type IndicatorTimeframe = "1m" | "5m" | "15m" | "1d";
@@ -38,6 +40,16 @@ export type IndicatorCheckpoint = Readonly<{
   wilder: WilderState;
   points: readonly Point[];
   volumeBars: readonly IndicatorCandle[];
+  signalState?: Readonly<{
+    trend: TrendState | null;
+    lastDirectionalTrend: "uptrend" | "downtrend" | null;
+    emaSide: number;
+    rsiMidpointSide: number;
+    momentum: number | null;
+    volumeDirection: number | null;
+    volatility: IndicatorResult["volatility"];
+  }>;
+  signals?: IndicatorSignals;
 }>;
 export type TrendState = "uptrend" | "downtrend" | "sideways" | "mixed";
 export type RsiCondition = "oversold" | "overbought" | "below_midpoint" | "above_midpoint" | "at_midpoint";
@@ -65,6 +77,8 @@ export type IndicatorResult = Readonly<{
   volumeBaselineBars: number;
   volumeRatio: number | null;
   volumeState: "above_baseline" | "below_baseline" | "near_baseline" | null;
+  priceDirection?: "rising" | "falling" | "flat";
+  signals?: IndicatorSignals;
 }>;
 
 const emptyEma = (): EmaState => ({ count: 0, seedSum: 0, value: null });
@@ -144,6 +158,82 @@ function classifyTrend(p: Point, old: Point | undefined, close: number): {
   return { trend, ema9SlopeAtr, ema20SlopeAtr };
 }
 
+function indicatorEvents(previous: IndicatorCheckpoint, candle: IndicatorCandle, result: IndicatorResult) {
+  const prior = previous.signalState;
+  const previousPoint = previous.points.at(-1);
+  const priorClose = previous.last?.close;
+  const events: Partial<Record<keyof IndicatorSignals, IndicatorSignal>> = { ...previous.signals };
+  const record = (group: keyof IndicatorSignals, kind: IndicatorSignalKind) => { events[group] = { kind, at: candle.end }; };
+
+  const emaSide = result.ema9 !== null && result.ema20 !== null ? Math.sign(result.ema9 - result.ema20) : 0;
+  const previousSide = prior?.emaSide ?? (previousPoint?.ema9 != null && previousPoint.ema20 !== null
+    ? Math.sign(previousPoint.ema9 - previousPoint.ema20) : 0);
+  if (emaSide && previousSide && emaSide !== previousSide) {
+    record("averages", emaSide > 0 ? "emaBullishCross" : "emaBearishCross");
+  }
+
+  const trend = result.trend;
+  const previousTrend = prior?.trend ?? (priorClose !== undefined && previousPoint
+    ? classifyTrend(previousPoint, previous.points.at(-4), priorClose).trend : null);
+  const lastDirectionalTrend = prior?.lastDirectionalTrend ?? (previousTrend === "uptrend" || previousTrend === "downtrend" ? previousTrend : null);
+  if (previousTrend && trend && trend !== previousTrend) {
+    if (trend === "uptrend") record("trend", lastDirectionalTrend === trend ? "uptrendRealigned" : "uptrendEstablished");
+    else if (trend === "downtrend") record("trend", lastDirectionalTrend === trend ? "downtrendRealigned" : "downtrendEstablished");
+    else if (previousTrend === "uptrend") record("trend", emaSide > 0 && result.ema20 !== null && candle.close < result.ema20
+      ? "uptrendPriceWeakening" : "uptrendLost");
+    else if (previousTrend === "downtrend") record("trend", emaSide < 0 && result.ema20 !== null && candle.close > result.ema20
+      ? "downtrendPriceWeakening" : "downtrendLost");
+  }
+
+  const rsi = result.rsi14;
+  const previousRsi = previousPoint?.rsi;
+  const rsiMidpointSide = rsi === null ? 0 : Math.sign(rsi - 50);
+  const previousMidpointSide = prior?.rsiMidpointSide ?? (previousRsi == null ? 0 : Math.sign(previousRsi - 50));
+  if (rsi !== null && previousRsi != null) {
+    if (previousRsi <= 70 && rsi > 70) record("rsiUpper", "rsiOverbought");
+    if (previousRsi > 70 && rsi <= 70) record("rsiUpper", "rsiLeftOverbought");
+    if (previousRsi >= 30 && rsi < 30) record("rsiLower", "rsiOversold");
+    if (previousRsi < 30 && rsi >= 30) record("rsiLower", "rsiRecovered");
+    if (rsiMidpointSide && previousMidpointSide && rsiMidpointSide !== previousMidpointSide) {
+      record("rsiMidpoint", rsiMidpointSide > 0 ? "rsiAboveMidpoint" : "rsiBelowMidpoint");
+    }
+  }
+
+  const momentum = result.rsiChange;
+  const previousMomentum = prior?.momentum ?? null;
+  if (momentum !== null && previousMomentum !== null) {
+    if (momentum >= 3 && previousMomentum < 3) record("momentum", "momentumTurningHigher");
+    else if (momentum <= -3 && previousMomentum > -3) record("momentum", "momentumTurningLower");
+    else if (previousMomentum >= 3 && momentum < 3) record("momentum", "upsideMomentumEasing");
+    else if (previousMomentum <= -3 && momentum > -3) record("momentum", "downsideMomentumEasing");
+  }
+
+  const sameVolumeSession = previous.timeframe === "1d" || previous.last?.sessionKey === candle.sessionKey;
+  if (!sameVolumeSession) delete events.volume;
+  const volumeDirection = sameVolumeSession && previous.last?.volume != null && candle.volume !== null
+    ? Math.sign(candle.volume - previous.last.volume) : null;
+  if (volumeDirection && volumeDirection !== prior?.volumeDirection) {
+    record("volume", volumeDirection > 0 ? "volumePickingUp" : "volumeFading");
+  }
+
+  if (prior?.volatility && result.volatility !== prior.volatility) {
+    if (prior.volatility === "contracting" && result.volatility === "expanding") record("atr", "atrExpandingFromQuiet");
+    if (result.volatility === "contracting") record("atr", "atrContracting");
+  }
+  if (previousPoint?.atr && candle.high - candle.low >= 2 * previousPoint.atr) record("range", "wideCandle");
+
+  return {
+    signals: events,
+    signalState: {
+      trend,
+      lastDirectionalTrend: trend === "uptrend" || trend === "downtrend" ? trend : lastDirectionalTrend,
+      emaSide: emaSide || previousSide,
+      rsiMidpointSide: rsiMidpointSide || previousMidpointSide,
+      momentum, volumeDirection, volatility: result.volatility === "steady" ? prior?.volatility ?? "steady" : result.volatility,
+    },
+  };
+}
+
 /** Input must be a coherent validated series. Unknown gaps require a rebuild, not a fabricated bar. */
 export function advanceIndicator(
   previous: IndicatorCheckpoint, candle: IndicatorCandle, completedThrough: number,
@@ -190,11 +280,14 @@ export function advanceIndicator(
     volumeRatio,
     volumeState: volumeRatio === null ? null : volumeRatio >= 1.4 ? "above_baseline" : volumeRatio <= 0.75 ? "below_baseline" : "near_baseline",
   };
+  const events = indicatorEvents(previous, candle, result);
   const checkpoint: IndicatorCheckpoint = {
-    ...previous, count: result.bars, last: { ...candle }, ema9, ema20, wilder,
+    ...previous, ...events, count: result.bars, last: { ...candle }, ema9, ema20, wilder,
     points: [...previous.points, point].slice(-20), volumeBars: [...volumeBars, { ...candle }].slice(-20),
   };
-  return { checkpoint, result };
+  return { checkpoint, result: { ...result, signals: events.signals,
+    ...(previous.last ? { priceDirection: candle.close > previous.last.close ? "rising" : candle.close < previous.last.close ? "falling" : "flat" } : {}),
+  } };
 }
 
 /** Full chronological rebuild also serves as the exact replay path for a retained seed history. */
@@ -219,7 +312,9 @@ export type SessionVwapInput = Readonly<{
   /** True only after the adapter reconciles unknown missing minutes versus confirmed no trades. */
   coverageComplete: boolean;
 }>;
-export function calculateSessionVwap(input: SessionVwapInput): Readonly<{ value: number | null; dataThrough: number | null }> {
+export type SessionVwap = Readonly<{ value: number | null; dataThrough: number | null; signals?: VwapSignals }>;
+
+export function calculateSessionVwap(input: SessionVwapInput): SessionVwap {
   if (![input.sessionStart, input.sessionEnd, input.completedThrough].every(Number.isSafeInteger)) {
     throw new Error("watchlist_indicator_invalid_session");
   }
@@ -227,6 +322,16 @@ export function calculateSessionVwap(input: SessionVwapInput): Readonly<{ value:
   let volume = 0;
   let priceVolume = 0;
   let dataThrough: number | null = null;
+  const signals: Partial<Record<IntradayIndicatorFrame, IndicatorSignal>> = {};
+  const frames = ([["1m", 60_000], ["5m", 300_000], ["15m", 900_000]] as const).map(([frame, duration]) => ({
+    frame, duration, bucket: 0, side: 0, pendingSide: 0,
+  }));
+  const finishBucket = (state: (typeof frames)[number]) => {
+    if (state.pendingSide && state.side && state.pendingSide !== state.side) {
+      signals[state.frame] = { kind: state.pendingSide > 0 ? "vwapReclaimed" : "vwapLost", at: state.bucket };
+    }
+    if (state.pendingSide) state.side = state.pendingSide;
+  };
   for (const candle of input.candles) {
     validateCandle(candle, input.completedThrough);
     if (candle.volume === null) return { value: null, dataThrough: null };
@@ -237,6 +342,17 @@ export function calculateSessionVwap(input: SessionVwapInput): Readonly<{ value:
     volume += candle.volume;
     priceVolume += ((candle.high + candle.low + candle.close) / 3) * candle.volume;
     dataThrough = candle.end;
+    if (candle.volume === 0 || volume === 0) continue;
+    for (const frame of frames) {
+      const bucket = Math.ceil(candle.end / frame.duration) * frame.duration;
+      if (frame.bucket && frame.bucket !== bucket) finishBucket(frame);
+      frame.bucket = bucket;
+      frame.pendingSide = Math.sign(candle.close - priceVolume / volume);
+    }
   }
-  return { value: volume > 0 ? priceVolume / volume : null, dataThrough };
+  for (const frame of frames) {
+    if (frame.bucket && dataThrough !== null && frame.bucket <= dataThrough) finishBucket(frame);
+  }
+  return { value: volume > 0 ? priceVolume / volume : null, dataThrough,
+    ...(Object.keys(signals).length ? { signals } : {}) };
 }

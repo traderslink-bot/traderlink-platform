@@ -16,19 +16,34 @@ function allowedCardReason(status: AlpacaTradingStatus): boolean {
   return (status.tape === "A" || status.tape === "B") && CTA_EQUIVALENT_CODES.has(code);
 }
 
-let pending: Promise<readonly ScannerActiveHalt[]> | undefined;
+let pending: Promise<readonly AlpacaTradingStatus[]> | undefined;
 let expiresAt = 0;
 
 /** Share one bounded gateway read across scanner SSE clients. */
-export function readActiveAlpacaScannerHalts(): Promise<readonly ScannerActiveHalt[]> {
+function readConfirmedAlpacaHalts(): Promise<readonly AlpacaTradingStatus[]> {
   const now = Date.now();
   if (pending && now < expiresAt) return pending;
   expiresAt = Number.POSITIVE_INFINITY;
-  pending = loadActiveHalts(now).finally(() => { expiresAt = Date.now() + 1000; });
+  pending = loadConfirmedHalts(now).finally(() => { expiresAt = Date.now() + 1000; });
   return pending;
 }
 
-async function loadActiveHalts(now: number): Promise<readonly ScannerActiveHalt[]> {
+export async function readAlpacaScannerHaltSymbols(): Promise<ReadonlySet<string>> {
+  return new Set((await readConfirmedAlpacaHalts()).map(status => status.symbol));
+}
+
+export async function readActiveAlpacaScannerHalts(): Promise<readonly ScannerActiveHalt[]> {
+  return (await readConfirmedAlpacaHalts()).flatMap(status => {
+    if (!allowedCardReason(status)) return [];
+    const row = alpacaHaltRow(status);
+    if (!row) return [];
+    if ((status.tape === "C" || status.tape === "O") && row.reasonCode === "T1" &&
+      clockSecond(row.haltTimeEt) === "07:50:00" && process.env.TRADERLINK_INCLUDE_NASDAQ_0750_T1_HALTS !== "true") return [];
+    return [row];
+  }).sort((a,b) => b.haltTimeEt.localeCompare(a.haltTimeEt) || a.ticker.localeCompare(b.ticker));
+}
+
+async function loadConfirmedHalts(now: number): Promise<readonly AlpacaTradingStatus[]> {
   const data = await requestAlpacaGateway("halts", new URLSearchParams(), process.env, AbortSignal.timeout(2500)) as {
     feed?: string; connected?: boolean; statusesSubscribed?: boolean; statuses?: AlpacaTradingStatus[];
   } | null;
@@ -36,16 +51,11 @@ async function loadActiveHalts(now: number): Promise<readonly ScannerActiveHalt[
     throw Error("alpaca_halt_status_unavailable");
   }
   const date = easternClock(now).date;
-  return data.statuses.flatMap(status => {
-    if (!status || status.halted !== true || typeof status.symbol !== "string" || !scannerUniverseSymbolEligible(status.symbol) || !allowedCardReason(status)) return [];
+  return data.statuses.filter(status => {
+    if (!status || status.halted !== true || typeof status.symbol !== "string" || !scannerUniverseSymbolEligible(status.symbol)) return false;
     const time = Date.parse(status.haltedAt ?? status.pauseObservedAt ?? status.observedAt);
-    if (!Number.isFinite(time) || time > now || easternClock(time).date !== date) return [];
-    const row = alpacaHaltRow(status);
-    if (!row) return [];
-    if ((status.tape === "C" || status.tape === "O") && row.reasonCode === "T1" &&
-      clockSecond(row.haltTimeEt) === "07:50:00" && process.env.TRADERLINK_INCLUDE_NASDAQ_0750_T1_HALTS !== "true") return [];
-    return [row];
-  }).sort((a,b) => b.haltTimeEt.localeCompare(a.haltTimeEt) || a.ticker.localeCompare(b.ticker));
+    return Number.isFinite(time) && time <= now && easternClock(time).date === date;
+  });
 }
 
 type ExchangeResumeSchedule = Pick<ScannerActiveHalt, "ticker" | "haltTimeEt" | "quoteTimeEt" | "tradeTimeEt">;

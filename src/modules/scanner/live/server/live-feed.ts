@@ -3,6 +3,7 @@ import { eventScannerEnabled, scheduleEventScanner } from "../event-timing";
 import type { DailyUniverse, LiveScreenResults, NormalizedSnapshot, ScannerConfiguration, ScannerNewsItem, ScannerReadModel, ScannerSession } from "../contracts";
 import type { ManualScannerTicker } from "./manual-ticker-store";
 import type { ScannerMarketMovement } from "../active-halts";
+import { retainHaltedScannerRows } from "../halt-retention";
 import { LiveScannerEngine, type FloatFact } from "../engine";
 import { scannerUniverseSymbolEligible } from "../universe-validation";
 import { activeSession, easternClock, type MarketDay } from "../sessions";
@@ -36,6 +37,7 @@ export type LiveFeedDependencies = Readonly<{
   eventDriven?: boolean;
   provider?:"alpaca"|"moomoo";
   inactive?:()=>void;
+  haltedSymbols?: () => Promise<ReadonlySet<string>>;
   subscribeChanges?: (notify:()=>void)=>()=>void;
   audit?: Readonly<{ isRecording?:()=>boolean; enqueue: (cycle: ScannerAuditCycle) => void }>;
   now?: () => number;
@@ -58,6 +60,8 @@ export class LiveScannerFeed {
   private readonly runtimeInstanceId=randomUUID();
   private model: ScannerReadModel = empty("disabled",easternClock(Date.now()).date);
   private running = false;
+  private haltDate: string | null = null;
+  private haltedSymbols: ReadonlySet<string> = new Set();
   private lastGainerContext: string | null = null;
   private idleWaiters=new Set<()=>void>();
   private modelListeners=new Set<()=>void>();
@@ -117,6 +121,9 @@ export class LiveScannerFeed {
       allowedSymbols = new Set(universe.stocks.map(stock => stock.symbol));
       await this.dependencies.reserveScannerBudget(universe.stocks.length);
       const symbols = universe.stocks.map(stock => stock.symbol);
+      if (this.haltDate !== date) { this.haltDate = date; this.haltedSymbols = new Set(); }
+      // Share the gateway read with Market Events, and run it alongside the snapshot pass.
+      const haltRead = this.dependencies.haltedSymbols?.().catch(() => undefined);
       const floats = await this.dependencies.floats(date,symbols);
       const snapshots = [];
       const receipts:ScannerAuditBatchReceipt[]=[];
@@ -155,7 +162,12 @@ export class LiveScannerFeed {
         return this.read();
       }
       this.recordMarketMovement(snapshots);
-      const evaluated = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
+      const detected = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
+      this.haltedSymbols = (await haltRead) ?? this.haltedSymbols;
+      const sameContext = this.lastGainerContext === verifiedContext.key && this.model.session === session;
+      const evaluated = sameContext && this.haltedSymbols.size
+        ? { ...detected, ...retainHaltedScannerRows(detected, this.model, this.haltedSymbols, allowedSymbols, configuration) }
+        : detected;
       const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus,evaluated.momentum.momentumSections?.confirmed??[],evaluated.momentum.momentumSections?.early??[]]
         .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[]))];
       let news: ReadonlyMap<string,readonly ScannerNewsItem[]> = new Map();

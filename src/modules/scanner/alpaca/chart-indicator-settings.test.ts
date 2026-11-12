@@ -50,3 +50,11 @@ it('uses plain VWAP with cumulative HLC3/volume from visible session start, befo
   expect(indicatorValues(regularOnly,study('VWAP'))[0].points.map(p=>p.value)).toEqual([20,20]);
  }
 });
+
+it("preserves valid crosshair choices and accepts existing preferences without a target", () => {
+  expect(parseChartPreferences(DEFAULT_CHART_PREFERENCES).crosshairTarget).toBeUndefined();
+  for (const crosshairTarget of ["price", "normal", "nearest", "indicator:ema9:main"] as const) {
+    expect(parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, crosshairTarget }).crosshairTarget).toBe(crosshairTarget);
+  }
+  expect(() => parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, crosshairTarget: "indicator:" })).toThrow();
+});

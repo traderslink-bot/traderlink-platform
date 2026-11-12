@@ -269,3 +269,46 @@ describe("Gainer membership and audit across data outages", () => {
     expect(run(901_001, [snapshot(901_001)]).gainers.rows).toHaveLength(1);
   });
 });
+
+it("keeps a listed POAS in a full Top Gainers list through a confirmed halt and resumes normal ranking", async () => {
+  let now = NOW;
+  let halted = false, unavailable = false, excluded = false;
+  const members = { ...universe, stocks: [
+    { ...universe.stocks[0], symbol: "POAS" }, universe.stocks[1],
+  ] };
+  const feed = new LiveScannerFeed({
+    configuration: async () => ({ ...config, gainers: { ...config.gainers, displayLimit: 1 } }),
+    marketDay: async () => ({ date: universe.tradingDate, verified: true, open: true, regularCloseEastern: "16:00", extendedCloseEastern: "20:00" }),
+    universe: async () => members, excludedListings: async () => new Set(excluded ? ["POAS"] : []),
+    reserveScannerBudget: async () => {},
+    snapshotPass: async batches => batches.map(requestedSymbols => ({ requestedSymbols, payload: {}, receivedAt: now })),
+    normalizeBatch: ({ requestedSymbols }) => ({
+      snapshots: requestedSymbols.map(symbol => ({
+        ...normalized()[0], symbol, provider: "alpaca" as const, baseline: 1, regularClosePrice: 1,
+        price: symbol === "POAS" ? (now === NOW || halted ? 3 : 1.05) : 2,
+        providerAt: symbol === "POAS" && halted ? NOW : now, receivedAt: now,
+      })), missingSymbols: [], issues: [],
+    }),
+    haltedSymbols: async () => { if (unavailable) throw Error("offline"); return new Set(halted ? ["POAS"] : []); },
+    floats: async () => floats, news: async () => new Map(),
+    qualification: () => ({ sessionTimestampVerified: true, sessionCountersVerified: true, afterHoursRegularCloseVerified: true }),
+    eventDriven: true, provider: "alpaca", now: () => now,
+  });
+  expect((await feed.scanOnce()).gainers.rows[0]?.symbol).toBe("POAS");
+  halted = true;
+  now += 120_000;
+  const paused = await feed.scanOnce();
+  expect(paused.gainers.rows[0]).toMatchObject({ symbol: "POAS", sessionGain: 200, providerAtUtc: new Date(NOW).toISOString() });
+  expect(paused.dayGainers?.rows[0]?.symbol).toBe("POAS");
+  unavailable = true;
+  now += 60_000;
+  expect((await feed.scanOnce()).gainers.rows[0]?.symbol).toBe("POAS");
+  unavailable = false;
+  halted = false;
+  now += 1000;
+  expect((await feed.scanOnce()).gainers.rows[0]?.symbol).toBe("INO");
+  excluded = true;
+  halted = true;
+  now += 1000;
+  expect((await feed.scanOnce()).gainers.rows[0]?.symbol).toBe("INO");
+});

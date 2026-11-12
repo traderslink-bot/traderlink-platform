@@ -294,7 +294,7 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
 });
 
 describe("alternative stock card view", () => {
-  it("switches each scanner independently without new requests and retains all displayed metrics", async () => {
+  it("switches each scanner independently and shows the new Basic Stats without extra requests", async () => {
     const initial=momentumModel(undefined);
     const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
     const switchView=async(label:string,view:string)=>{
@@ -306,14 +306,15 @@ describe("alternative stock card view", () => {
     const cards=page.container.querySelector('[aria-label="Top Gainers stock cards"]')!;
     expect(cards).not.toBeNull();
     expect(cards.querySelector('[aria-label="Canada flag"]')).not.toBeNull();
-    expect([...cards.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Price','Gain %','Vol','Float','T/O','RVOL','HOD']);
+    expect([...cards.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
     expect(page.container.querySelector('table[aria-label="Momentum compact stocks"]')).not.toBeNull();
     await switchView("Momentum","Cards");
     const momentum=page.container.querySelector('[aria-label="Momentum stock cards"]')!;
-    expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Price','Day %','Float','Spread','1min %','5min %','1min Vol','5min Vol','1min ↑','5min ↑']);
-    const expand=momentum.querySelector('[aria-label="Expand TEST card details"]') as HTMLElement;
-    await act(async()=>expand.click());
-    expect(momentum.textContent).toContain('HOD price');
+    expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
+    expect(momentum.querySelector('[aria-label="Open TEST chart only"]')).not.toBeNull();
+    expect(momentum.querySelector('[aria-label="Expand TEST card details"]')).toBeNull();
+    expect(momentum.querySelector('[aria-label="Indicators"]')).toBeNull();
+    expect(momentum.querySelector('[aria-label="Catalyst"]')).toBeNull();
     await switchView("Top Gainers","Table");
     expect(page.container.querySelector('table[aria-label="Top Gainers compact stocks"]')).not.toBeNull();
     expect(page.container.querySelector('[aria-label="Momentum stock cards"]')).not.toBeNull();
