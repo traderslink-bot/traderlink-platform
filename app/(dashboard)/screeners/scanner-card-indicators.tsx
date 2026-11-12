@@ -226,7 +226,7 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
       {chosen.map(({name,reading,text})=>{
         const direction = readingDirection(reading);
         return <Box key={name} data-scanner-indicator={name}>
-          <Typography component="span" variant="inherit" color="text.secondary">{name} </Typography>
+          <Typography component="span" variant="inherit" sx={{color:"var(--scanner-card-label)",fontWeight:600}}>{name} </Typography>
           <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
             {text}
           </Typography>

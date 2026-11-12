@@ -103,7 +103,7 @@ const percent = (n: number | null, signed = false) => n === null ? "—" : `${si
 
 function Reading({ label, value }: { label: string; value: string }) {
   return <Box sx={{minWidth:0,textAlign:"left"}}>
-    <Typography component="dt" sx={{color:"text.secondary",fontSize:"0.62rem",lineHeight:1.15}}>{label}</Typography>
+    <Typography component="dt" sx={{color:"var(--scanner-card-label)",fontWeight:600,fontSize:"0.62rem",lineHeight:1.15}}>{label}</Typography>
     <Typography component="dd" sx={{m:0,fontWeight:650,fontSize:"0.72rem",lineHeight:1.25,overflowWrap:"anywhere"}}>{value}</Typography>
   </Box>;
 }
@@ -123,12 +123,14 @@ export function ScannerStockCards({ rows, screen, now, renderTools, renderHalt }
       const catalyst = row.news.find(item => Number.isFinite(Date.parse(item.createdAt)));
       const post = screen === "gainers" && row.gainBasis === "today_regular_close";
       return <Box role="listitem" key={row.symbol} data-scanner-stock-card={row.symbol}
-        sx={{border:1,borderColor:"divider",borderRadius:0,mb:0.55,px:0.7,py:0.55,minWidth:0,bgcolor:"background.paper"}}>
-        <Box sx={{display:"grid",gridTemplateColumns:"minmax(0,auto) minmax(0,1fr)",alignItems:"center",columnGap:0.65,rowGap:0.3,minWidth:0}}>
-          <Box sx={{display:"flex",alignItems:"center",gap:0.4,minWidth:0}}>
+        sx={theme=>({"--scanner-card-label":theme.palette.mode==="dark"?"#B0BAC6":"#4F5D6D",
+          border:1,borderColor:"divider",borderRadius:0,mb:0.55,px:0.7,py:0.55,minWidth:0,bgcolor:"background.paper"})}>
+        <Box sx={{display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",alignItems:"center",columnGap:0.65,minWidth:0}}>
+          <Box sx={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:0.4,minWidth:0}}>
             <Typography component="span" sx={{color:"warning.main",fontSize:"0.84rem",fontWeight:850,overflowWrap:"anywhere"}}>{row.symbol}</Typography>
             {renderHalt(row.symbol)}
             {row.country && <ScannerCountryFlag country={row.country}/>}
+            {renderTools(row)}
           </Box>
           <Box sx={{display:"flex",alignItems:"center",gap:0.6,ml:"auto",fontSize:"0.76rem",fontVariantNumeric:"tabular-nums"}}>
             <Typography component="span" variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.sessionGain)}}>{price.format(row.price)}</Typography>
@@ -137,14 +139,13 @@ export function ScannerStockCards({ rows, screen, now, renderTools, renderHalt }
               {percent(row.sessionGain,true)}
             </Typography>
           </Box>
-          <Box sx={{alignSelf:"center"}}>{renderTools(row)}</Box>
-          <Box component="dl" aria-label="Basic stats"
-          sx={{m:0,mt:0.15,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:0.55,fontVariantNumeric:"tabular-nums"}}>
+        </Box>
+        <Box component="dl" aria-label="Stats"
+          sx={{m:0,mt:0.45,pt:0.35,borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:0.55,fontVariantNumeric:"tabular-nums"}}>
           <Reading label="Vol" value={shares(row.volume)}/>
           <Reading label="Float" value={shares(row.float)}/>
           <Reading label="T/O" value={percent(turnover)}/>
           <Reading label="RVOL" value={row.relativeVolume === null ? "—" : `${decimal.format(row.relativeVolume)}×`}/>
-          </Box>
         </Box>
         {screen === "momentum" && <Typography sx={{fontSize:"0.65rem",color:"text.secondary",mt:0.4,overflowWrap:"anywhere"}}>
           {momentumSignalText(row)}
