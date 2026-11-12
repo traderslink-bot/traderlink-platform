@@ -21,7 +21,7 @@ it("shows factual return distance, expanded context, news, chart and full drawer
   await act(async()=>(container.querySelector('[aria-label="Open AAA chart"]') as HTMLElement).click());expect(chart.mock.calls[0][0].symbol).toBe("AAA");
   expect(container.textContent).toContain("HOD Drops");
   expect([...container.querySelectorAll("thead th")].some(cell=>cell.textContent==="Drop")).toBe(true);
-  await act(async()=>(container.querySelector('[aria-label="Open HOD Drops full view"]') as HTMLElement).click());const drawer=document.body.querySelector('[role="dialog"]')!;expect(drawer.querySelectorAll('thead th')).toHaveLength(7);
+  await act(async()=>(container.querySelector('[aria-label="Open HOD Drops full view"]') as HTMLElement).click());const drawer=document.body.querySelector('[role="dialog"]')!;expect(drawer.querySelectorAll('thead th')).toHaveLength(8);expect(drawer.querySelector('thead th:last-child')?.textContent).toBe('Country');
   await act(async()=>(drawer.querySelector('[aria-label="Close HOD Drops full view"]') as HTMLElement).click());expect(fetch).not.toHaveBeenCalled();
 });
 it("honors disabled and closed states",async()=>{const container=document.createElement("div");document.body.append(container);root=createRoot(container);await act(async()=>root!.render(createElement(PremarketPullbacksCard,{results:undefined,notice:"Active 4:00am - 8:00pm est",onOpenChart:vi.fn()})));expect(container.textContent).toContain("Active 4:00am - 8:00pm est");await act(async()=>root!.render(createElement(PremarketPullbacksCard,{results:{...results,controls:{...controls,enabled:false}},notice:null,onOpenChart:vi.fn()})));expect(container.textContent).toContain("Disabled");expect(container.querySelector('table')).toBeNull();});

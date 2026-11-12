@@ -128,6 +128,7 @@ export type LiveScannerRow = Readonly<{
 }>;
 export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;
 export type DeclineRow = Readonly<{
+  country?: string | null;
   symbol: string; exchange: "NASDAQ" | "NYSE" | "AMEX"; company: string; price: number;
   changePercent: number | null; comparisonPrice: number | null;
   volume: number | null; float: number | null; spreadPercent: number | null;
@@ -144,6 +145,7 @@ export type DeclineResults = Readonly<{
   rapidTotal: number; loserTotal: number; controls: DeclineControls;
 }>;
 export type PremarketPullbackRow = Readonly<{
+  country?: string | null;
   symbol:string; exchange:"NASDAQ"|"NYSE"|"AMEX"; company:string; price:number;
   premarketHigh:number|null; regularHigh:number|null; postMarketHigh:number|null;
   referenceSession:"premarket"|"regular"|"after_hours"; referenceHigh:number;

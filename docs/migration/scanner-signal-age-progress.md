@@ -53,3 +53,5 @@ Final scanner review made the card view selector a compact outlined field and ma
 The indicator timeframe selector now uses a 76px field with a separate visible label. Mobile preview verified all three choices and existing indicator controls. Lint passed. Deployment remains held.
 
 Restored the original floating Indicator timeframe label on a compact 144px field. Mobile preview verified all three timeframes and lint passed. Deployment remains held.
+
+Top Losers and HOD Drops now share the scanner view selector and ticker-card layout with Top Gainers and Momentum. All four ticker scanners include country and PR actions in Table, Cards and Two rows. Decline and HOD rows use the existing country enrichment. Mobile tab switching preserves each scanner's selected view during the session. Desktop and mobile browser QA verified all 24 scanner/view combinations, visible flags and PR controls, and article drawers for the two newly supported scanners. Focused TypeScript, lint and 392 scanner/indicator tests passed. The separate Market Events feed keeps its event layout.

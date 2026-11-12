@@ -13,7 +13,7 @@ import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { useId, useState, useSyncExternalStore, type ReactNode } from "react";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
-import type { LiveScannerRow, ScannerKind } from "@/src/modules/scanner/live/contracts";
+import type { DeclineRow, LiveScannerRow, PremarketPullbackRow, ScannerKind } from "@/src/modules/scanner/live/contracts";
 
 import { momentumSignalText } from "./momentum-signal-text";
 import { ScannerCountryFlag } from "./scanner-country-flag";
@@ -130,46 +130,62 @@ function Reading({ label, value }: { label: string; value: string }) {
   </Box>;
 }
 
-export function ScannerStockCards({ rows, screen, now, renderTools, renderHalt }: {
-  rows: readonly LiveScannerRow[];
-  screen: ScannerKind;
+type ScannerCardRow = LiveScannerRow | DeclineRow | PremarketPullbackRow;
+const isLiveRow = (row: ScannerCardRow): row is LiveScannerRow => "sessionGain" in row;
+const isHodRow = (row: ScannerCardRow): row is PremarketPullbackRow => "referenceHigh" in row;
+type ScannerCardScreen = ScannerKind | "top-losers" | "high-drops";
+const stockCardLabels: Record<ScannerCardScreen,string> = {
+  gainers:"Top Gainers", momentum:"Momentum", "top-losers":"Top Losers", "high-drops":"HOD Drops",
+};
+
+export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, now, renderTools, renderHalt }: {
+  rows: readonly Row[];
+  screen: ScannerCardScreen;
   now: number;
-  renderTools: (row: LiveScannerRow) => ReactNode;
+  renderTools: (row: Row) => ReactNode;
   renderHalt: (symbol: string) => ReactNode;
 }) {
   const { sections } = useTickerCardSections();
-  return <Box role="list" aria-label={`${screen === "gainers" ? "Top Gainers" : "Momentum"} stock cards`}
+  return <Box role="list" aria-label={`${stockCardLabels[screen]} stock cards`}
     sx={theme=>({...scannerScrollStyles(theme),minWidth:0,minHeight:0,maxHeight:420,overflowX:"hidden",flex:"1 1 auto"})}>
     {rows.map(row => {
-      const turnover = row.volume !== null && row.float !== null && row.float > 0 ? 100 * row.volume / row.float : null;
+      const live = isLiveRow(row) ? row : null;
+      const hod = isHodRow(row) ? row : null;
+      const change = isLiveRow(row) ? row.sessionGain : row.changePercent;
+      const movement = hod ? -hod.belowHighPercent : change;
+      const volume = isHodRow(row) ? row.sessionVolume : row.volume;
+      const turnover = volume !== null && row.float !== null && row.float > 0 ? 100 * volume / row.float : null;
       const catalyst = row.news.find(item => Number.isFinite(Date.parse(item.createdAt)));
-      const post = screen === "gainers" && row.gainBasis === "today_regular_close";
+      const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
+      const stats = hod ? [
+        ["Vol",shares(volume)],["Float",shares(row.float)],["High",price.format(hod.referenceHigh)],["Spread",percent(row.spreadPercent)],
+      ] : [
+        ["Vol",shares(volume)],["Float",shares(row.float)],["T/O",percent(turnover)],
+        live ? ["RVOL",live.relativeVolume === null ? "—" : `${decimal.format(live.relativeVolume)}×`] : ["Spread",percent(row.spreadPercent)],
+      ];
       return <Box role="listitem" key={row.symbol} data-scanner-stock-card={row.symbol}
         sx={{border:1,borderColor:"divider",borderRadius:0,mb:0.55,px:0.7,py:0.55,minWidth:0,bgcolor:"background.paper"}}>
         <Box sx={{display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",alignItems:"center",columnGap:0.65,minWidth:0}}>
           <Box sx={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:0.4,minWidth:0}}>
             <Typography component="span" sx={{color:"warning.main",fontSize:"0.84rem",fontWeight:850,overflowWrap:"anywhere"}}>{row.symbol}</Typography>
             {renderHalt(row.symbol)}
-            {row.country && <ScannerCountryFlag country={row.country}/>}
+            <ScannerCountryFlag country={row.country}/>
             {renderTools(row)}
           </Box>
           <Box sx={{display:"flex",alignItems:"center",gap:0.6,ml:"auto",fontSize:"0.76rem",fontVariantNumeric:"tabular-nums"}}>
-            <Typography component="span" variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.sessionGain)}}>{price.format(row.price)}</Typography>
-            <Typography component="span" variant="inherit" sx={{fontWeight:800,color:scannerGainColor(row.sessionGain)}}
-              aria-label={`${post ? "After-hours" : "Day"} change ${percent(row.sessionGain,true)}`}>
-              {percent(row.sessionGain,true)}
+            <Typography component="span" variant="inherit" sx={{fontWeight:750,color:scannerGainColor(change)}}>{price.format(row.price)}</Typography>
+            <Typography component="span" variant="inherit" sx={{fontWeight:800,color:scannerGainColor(movement)}}
+              aria-label={`${hod ? "Below session high" : post ? "After-hours change" : "Day change"} ${percent(movement,true)}`}>
+              {percent(movement,true)}
             </Typography>
           </Box>
         </Box>
-        {screen === "momentum" && <Typography sx={{fontSize:"0.65rem",color:theme=>theme.palette.mode==="dark"?"#c4b5fd":"#7c3aed",mt:0.4,overflowWrap:"anywhere"}}>
-          {momentumSignalText(row)}
+        {screen === "momentum" && live && <Typography sx={{fontSize:"0.65rem",color:theme=>theme.palette.mode==="dark"?"#c4b5fd":"#7c3aed",mt:0.4,overflowWrap:"anywhere"}}>
+          {momentumSignalText(live)}
         </Typography>}
         {sections.map(section => section === "stats" ? <Box key={section} component="dl" aria-label="Stats"
           sx={{m:0,mt:0.65,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:0.55,fontVariantNumeric:"tabular-nums"}}>
-          <Reading label="Vol" value={shares(row.volume)}/>
-          <Reading label="Float" value={shares(row.float)}/>
-          <Reading label="T/O" value={percent(turnover)}/>
-          <Reading label="RVOL" value={row.relativeVolume === null ? "—" : `${decimal.format(row.relativeVolume)}×`}/>
+          {stats.map(([label,value]) => <Reading key={label} label={label} value={value}/>)}
         </Box> : section === "indicators" || catalyst ? <Box component="section" key={section}
           aria-label={SECTION_LABELS[section]} sx={{minWidth:0,mt:0.65}}>
           {section === "indicators" ? <ScannerIndicatorReads row={row} now={now}/> : catalyst && (

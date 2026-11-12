@@ -36,7 +36,8 @@ it("shows Top Losers only, ignores drop context, opens full view and never fetch
   expect(container.querySelector('table[aria-label="Top Losers stocks"]')).not.toBeNull();
   await act(async()=>(container.querySelector('[aria-label="Open Top Losers full view"]') as HTMLElement).click());
   const drawer=document.body.querySelector('[role="dialog"][aria-label="Top Losers full view"]')!;
-  expect(drawer.querySelectorAll('thead th').length).toBe(8);
+  expect(drawer.querySelectorAll('thead th').length).toBe(9);
+  expect(drawer.querySelector('thead th:last-child')?.textContent).toBe('Country');
   await act(async()=>(drawer.querySelector('[aria-label="Close Top Losers full view"]') as HTMLElement).click());
   expect(fetch).not.toHaveBeenCalled();
 });

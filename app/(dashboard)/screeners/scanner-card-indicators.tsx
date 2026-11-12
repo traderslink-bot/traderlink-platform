@@ -117,7 +117,7 @@ function RecentSignal({ signal, compact = false }: { signal: DisplaySignal; comp
   </Typography>;
 }
 
-export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:number }) {
+export function ScannerIndicatorReads({ row,now }: { row:Pick<LiveScannerRow,"symbol"|"price">; now:number }) {
   const { frame,selected }=useSettings();
   const ref=useRef<HTMLDivElement|null>(null);
   const [visible,setVisible]=useState(false);

@@ -174,7 +174,7 @@ export class LiveScannerFeed {
       try { news = await this.dependencies.news(visibleSymbols); } catch { issues.add("news_unavailable"); }
       let countries:ReadonlyMap<string,string>=new Map();
       try { countries=await this.dependencies.countries?.(date)??countries; } catch { /* Country metadata never blocks scan results. */ }
-      const enrichRow = <T extends LiveScreenResults["rows"][number]>(row:T): T =>
+      const enrichRow = <T extends {symbol:string;news:readonly ScannerNewsItem[];country?:string|null}>(row:T): T =>
         ({ ...row, news: news.get(row.symbol) ?? [], country:countries.get(row.symbol)??null });
       const enrich = (results: LiveScreenResults): LiveScreenResults => ({ ...results,
         rows: results.rows.map(enrichRow), focus: results.focus.map(enrichRow),
@@ -184,10 +184,10 @@ export class LiveScannerFeed {
       const status = missing.length || issues.size ? "partial" : snapshots.length ? "ready" : "warming";
       const completedAt=(this.dependencies.now ?? Date.now)();
       const declines=evaluated.declines?{...evaluated.declines,
-        rapid:evaluated.declines.rapid.map(row=>({...row,news:news.get(row.symbol)??[]})),
-        losers:evaluated.declines.losers.map(row=>({...row,news:news.get(row.symbol)??[]}))}:undefined;
+        rapid:evaluated.declines.rapid.map(enrichRow),
+        losers:evaluated.declines.losers.map(enrichRow)}:undefined;
       const premarketPullbacks=evaluated.premarketPullbacks?{...evaluated.premarketPullbacks,
-        rows:evaluated.premarketPullbacks.rows.map(row=>({...row,news:news.get(row.symbol)??[]}))}:undefined;
+        rows:evaluated.premarketPullbacks.rows.map(enrichRow)}:undefined;
       const audit=this.dependencies.audit;
       if(audit&&audit.isRecording?.()!==false)audit.enqueue({timingMode:this.dependencies.eventDriven?"alpaca_events_1s":"sampled_5s",schemaVersion:SCANNER_AUDIT_SCHEMA_VERSION,cycleId:randomUUID(),runtimeInstanceId:this.runtimeInstanceId,tradingDate:date,session,
         scheduledAt:now,completedAt,universeSourceDate:universe.sourceTradingDate??universe.tradingDate,

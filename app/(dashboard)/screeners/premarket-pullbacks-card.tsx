@@ -1,5 +1,7 @@
 "use client";
 
+import { ScannerCountryFlag } from "./scanner-country-flag";
+import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
 import { scannerGainColor } from "./scanner-gain-color";
 
 import Alert from "@mui/material/Alert";
@@ -28,7 +30,7 @@ import { DashboardPanel } from "@/app/dashboard-template";
 import type { DeclineRow, PremarketPullbackResults, PremarketPullbackRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
-import { ScannerNewsLink } from "./scanner-news-drawer-context";
+import { ScannerNewsLink, ScannerRowNews } from "./scanner-news-drawer-context";
 
 const subDollarPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
 const regularPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -64,12 +66,13 @@ function RapidMarker() {
   </Tooltip>;
 }
 
-function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
+function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;twoRows:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="HOD Drops list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
-    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{tableLayout:"fixed",minWidth:350,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-      <TableHead><TableRow><TableCell sx={{width:26}} aria-label="Chart"/><TableCell sx={{width:24}} aria-label="Expand"/><TableCell sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
+    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{tableLayout:"fixed",minWidth:twoRows?350:394,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:48}} aria-label="Chart and news"/><TableCell sx={{width:24}} aria-label="Expand"/></>}<TableCell sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
         <TableCell sx={{width:48}}>Drop</TableCell><TableCell sx={{width:62}}>High</TableCell><TableCell sx={{width:58}}>Vol</TableCell>
+      {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const source=row.referenceSession==="premarket"?"PRE":row.referenceSession==="regular"?"REG":"POST";
@@ -83,11 +86,18 @@ function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Prem
         return <Fragment key={row.symbol}><TableRow hover tabIndex={0} aria-expanded={open} onClick={toggle}
           onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();toggle();}}}
           sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
-          <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
-          <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
+          {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:0.4}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/></Stack></TableCell>
+          <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell></>}
           <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25,flexWrap:"wrap"}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>{row.rapidDrop?<RapidMarker/>:null}</Stack></TableCell>
           <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(-row.belowHighPercent),fontWeight:750}}>{wholePercent.format(row.belowHighPercent)}%</TableCell><TableCell><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
-        </TableRow>{open?<TableRow><TableCell colSpan={7} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
+        {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
+          </TableRow>
+          {twoRows&&<TableRow data-two-row-tools={row.symbol}>
+            <TableCell><ScannerCountryFlag country={row.country}/></TableCell>
+            <TableCell colSpan={4}><Stack direction="row" sx={{alignItems:"center",gap:0.8,pb:0.3}}>
+              <ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/>
+            </Stack></TableCell>
+          </TableRow>}{open?<TableRow><TableCell colSpan={twoRows?5:8} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
             {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45,color:label==="Below reference high"?scannerGainColor(-row.belowHighPercent):undefined}}>{value}</Typography></Box>)}
           </Box><Stack direction="row" sx={{gap:1,flexWrap:"wrap",justifyContent:"space-between",alignItems:"center"}}>
@@ -113,6 +123,7 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
           <ChartButton row={row} onOpenChart={onOpenChart}/>
           <Typography variant="inherit" sx={{color:"warning.main",fontWeight:800}}>{row.symbol}</Typography>
           <RapidMarker/>
+          <ScannerCountryFlag country={row.country}/><ScannerRowNews news={row.news}/>
           <ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>
           <Typography variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.drop.maximumDropPercent)}}>{wholePercent.format(row.drop.maximumDropPercent)}%</Typography>
           <Typography variant="inherit" color="text.secondary">in {rapidFallTime(row.drop.durationSeconds)}</Typography>
@@ -121,16 +132,20 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
   </Box>;
 }
 
-export function PremarketPullbacksCard({results,rapid=[],notice,onOpenChart,haltByTicker=new Map()}:{results:PremarketPullbackResults|undefined;rapid?:readonly DeclineRow[];notice:string|null;onOpenChart:(row:DropChartTarget)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
+export function PremarketPullbacksCard({results,view="table",onViewChange,now=0,rapid=[],notice,onOpenChart,haltByTicker=new Map()}:{view?:ScannerView;onViewChange?:(view:ScannerView)=>void;now?:number;results:PremarketPullbackResults|undefined;rapid?:readonly DeclineRow[];notice:string|null;onOpenChart:(row:DropChartTarget)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
   const [full,setFull]=useState(false);
+  const viewSettings=onViewChange&&<ScannerViewSettings label="HOD Drops" view={view} onViewChange={onViewChange}/>;
   const contents=(wide:boolean)=><Stack spacing={1}>
     {!notice&&results?.controls.enabled&&<RecentRapidDrops rows={rapid} onOpenChart={onOpenChart} haltByTicker={haltByTicker}/>}
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>:!results?<Skeleton height={260}/>
-      :results.rows.length?<HighDropsTable rows={results.rows} full={wide} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>:<Alert severity="info">No stocks currently qualify for this list.</Alert>}
+      :results.rows.length?(view==="cards"?<ScannerStockCards screen="high-drops" rows={results.rows} now={now}
+        renderHalt={symbol=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>}
+        renderTools={row=><>{row.rapidDrop&&<RapidMarker/>}<ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/></>}/>
+        :<HighDropsTable twoRows={view==="two-rows"} rows={results.rows} full={wide} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>):<Alert severity="info">No stocks currently qualify for this list.</Alert>}
   </Stack>;
-  return <><DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6}}><Typography component="h2" variant="h2">HOD Drops</Typography><Tooltip title={`HOD Drops ranks stocks by how far they are below the session high. The bolt marks a rapid drop. ${RAPID_DROP_HELP}`}><IconButton aria-label="Explain HOD Drops" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><IconButton size="small" aria-label="Open HOD Drops full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack>{contents(false)}</DashboardPanel>
+  return <><DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6}}><Typography component="h2" variant="h2">HOD Drops</Typography><Tooltip title={`HOD Drops ranks stocks by how far they are below the session high. The bolt marks a rapid drop. ${RAPID_DROP_HELP}`}><IconButton aria-label="Explain HOD Drops" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><Stack direction="row" sx={{alignItems:"center",gap:0.4}}>{viewSettings}<IconButton size="small" aria-label="Open HOD Drops full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack></Stack>{contents(false)}</DashboardPanel>
     <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"HOD Drops full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>
-      <Stack spacing={1} sx={{p:2,height:"100dvh",minHeight:0}}><Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">HOD Drops</Typography><IconButton aria-label="Close HOD Drops full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack>
+      <Stack spacing={1} sx={{p:2,height:"100dvh",minHeight:0}}><Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">HOD Drops</Typography><Stack direction="row" sx={{alignItems:"center",gap:0.5}}>{viewSettings}<IconButton aria-label="Close HOD Drops full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack></Stack>
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0})}>{contents(true)}</Box></Stack>
     </Drawer></>;
 }

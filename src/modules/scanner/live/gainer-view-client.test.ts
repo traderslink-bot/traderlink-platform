@@ -170,7 +170,7 @@ describe("Momentum context rendering", () => {
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
     expect(cells.slice(4,11)).toEqual(["-24%","42%","8%","20%","10K","50K","2×"]);
-    expect(header.querySelectorAll("th").length).toBe(14);
+    expect(header.querySelectorAll("th").length).toBe(15);
     await act(async () => (drawer.querySelector('[aria-label="Close full scanner view"]') as HTMLElement).click());
     const compact = page.container.querySelector('table[aria-label="Momentum compact stocks"]')!;
     const compactRow = compact.querySelector("tbody tr") as HTMLElement;
@@ -186,7 +186,7 @@ describe("Momentum context rendering", () => {
     const drawer = await openFullView(page.container);
     let header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).not.toContain("Post %");
-    expect(header.querySelectorAll("th").length).toBe(13);
+    expect(header.querySelectorAll("th").length).toBe(14);
     await page.update(momentumModel(null));
     header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).toContain("Post %");
@@ -221,11 +221,12 @@ describe("compact scanner grid and full view", () => {
     const page = await mount({...initial, gainers: scannerRows, dayGainers: scannerRows, momentum: scannerRows});
     expect(page.container.querySelectorAll('[data-pr-instance]').length).toBe(1);
     expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
-    for (const [label,columnCount] of [["Top Gainers",10],["Momentum",12]] as const) {
+    for (const [label,columnCount] of [["Top Gainers",10],["Momentum",13]] as const) {
       const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
       expect(table.querySelectorAll('thead th').length).toBe(columnCount);
       expect(table.querySelector('thead')?.textContent).not.toContain('$ × Vol');
-      if(label==='Top Gainers'){expect(table.querySelector('thead th:last-child')?.textContent).toBe('Country');expect(table.querySelector('tbody tr td:last-child [aria-label="Canada flag"]')).not.toBeNull();}
+      expect(table.querySelector('thead th:last-child')?.textContent).toBe('Country');
+      expect(table.querySelector('tbody tr td:last-child [aria-label="Canada flag"]')).not.toBeNull();
       expect([...table.querySelectorAll('thead th')].slice(1,4).map(cell=>cell.textContent)).not.toContain("News");
       expect(table.querySelector('thead th')?.getAttribute("aria-label")).toBe("Chart, news and details");
       const row = table.querySelector('tbody tr')!;
