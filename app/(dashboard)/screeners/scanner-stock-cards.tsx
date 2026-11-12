@@ -12,6 +12,7 @@ import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRound
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { useId, useState, useSyncExternalStore, type ReactNode } from "react";
+import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import type { LiveScannerRow, ScannerKind } from "@/src/modules/scanner/live/contracts";
 
 import { momentumSignalText } from "./momentum-signal-text";
@@ -132,7 +133,7 @@ export function ScannerStockCards({ rows, screen, now, renderTools, renderHalt }
 }) {
   const { sections } = useTickerCardSections();
   return <Box role="list" aria-label={`${screen === "gainers" ? "Top Gainers" : "Momentum"} stock cards`}
-    sx={{minWidth:0,minHeight:0,maxHeight:420,overflowY:"auto",overflowX:"hidden",flex:"1 1 auto"}}>
+    sx={theme=>({...scannerScrollStyles(theme),minWidth:0,minHeight:0,maxHeight:420,overflowX:"hidden",flex:"1 1 auto"})}>
     {rows.map(row => {
       const turnover = row.volume !== null && row.float !== null && row.float > 0 ? 100 * row.volume / row.float : null;
       const catalyst = row.news.find(item => Number.isFinite(Date.parse(item.createdAt)));
@@ -154,7 +155,7 @@ export function ScannerStockCards({ rows, screen, now, renderTools, renderHalt }
             </Typography>
           </Box>
         </Box>
-        {screen === "momentum" && <Typography sx={{fontSize:"0.65rem",color:"text.secondary",mt:0.4,overflowWrap:"anywhere"}}>
+        {screen === "momentum" && <Typography sx={{fontSize:"0.65rem",color:theme=>theme.palette.mode==="dark"?"#c4b5fd":"#7c3aed",mt:0.4,overflowWrap:"anywhere"}}>
           {momentumSignalText(row)}
         </Typography>}
         {sections.map(section => section === "stats" ? <Box key={section} component="dl" aria-label="Stats"
