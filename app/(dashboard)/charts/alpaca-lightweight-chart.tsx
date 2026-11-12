@@ -32,7 +32,7 @@ import { aggregateCandles, candleBucket, displayCandles, CHART_TIMEFRAMES, type 
 import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-view";
 import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorDisplay } from "./chart-view-memory";
 import { indicatorPriceScaleLabels, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
-import { sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
+import { readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
 
 const ChartPreferencesPanel = lazy(() => import("./chart-preferences-panel").then(module => ({ default: module.ChartPreferencesPanel })));
 
@@ -328,7 +328,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if(!pendingSeeds.has(key)){
           if(missingMoments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
           pendingSeeds.add(key);
-          void sharedChartFetch('/api/charts/vwap-seed?'+query.toString(),{credentials:'same-origin',signal:abort.signal,cache:'no-store'}).then(async response=>{
+          void readChartVwapSeed('/api/charts/vwap-seed?'+query.toString(),abort.signal,async response=>{
             if(!response.ok)throw Error();const value=await response.json();if(!validVwapSeed(value,request,basisDate))throw Error();
             if(needsMoments&&value.volume>0&&!value.moments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
             chartVwapCache.writeSeed(cacheOwner,key,value);

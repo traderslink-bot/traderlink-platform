@@ -65,3 +65,16 @@ export async function sharedChartFetch(url: string, init: RequestInit = {}): Pro
     current.users--; if (!current.users && pending.get(url) === current) { pending.delete(url); current.controller.abort(); }
   }
 }
+
+// The chart gateway can calculate two distinct VWAP seeds at a time.
+const vwapSeedLanes = [Promise.resolve(), Promise.resolve()];
+let nextVwapSeedLane = 0;
+export function readChartVwapSeed<T>(url: string, signal: AbortSignal, parse: (response: Response) => Promise<T>): Promise<T> {
+  const lane = nextVwapSeedLane++ % vwapSeedLanes.length;
+  const result = vwapSeedLanes[lane].then(async () => {
+    signal.throwIfAborted();
+    return parse(await sharedChartFetch(url, { credentials: "same-origin", signal, cache: "no-store" }));
+  });
+  vwapSeedLanes[lane] = result.then(() => {}, () => {});
+  return result;
+}
