@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Typography from "@mui/material/Typography";
 
 import { DashboardPage, DashboardPanel, DashboardSecondaryAction } from "../../../dashboard-template";
@@ -16,6 +19,7 @@ export const metadata: Metadata = {
 
 const route = "/stock-tools/gainers";
 const dateLabel = new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" });
+const shortDate = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "2-digit", timeZone: "UTC" });
 const price = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const dollarVolume = new Intl.NumberFormat("en-US", {
   style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1,
@@ -44,15 +48,29 @@ function Rankings({ rows, sessionHigh }: {
     }}>
       <table>
         <thead><tr>
-          <th scope="col">Date</th>
+          <th scope="col">
+            Date
+            <Box component="small" sx={{ display: "block", fontSize: "0.72em", fontWeight: 400, whiteSpace: "nowrap" }}>
+              MM/DD/YY
+            </Box>
+          </th>
           <th scope="col">Rank</th><th scope="col">Ticker</th>
-          {sessionHigh && <th scope="col">Session high</th>}
-          <th scope="col">Close</th><th scope="col">{sessionHigh ? "Max gain" : "Gain"}</th><th scope="col">Dollar volume</th>
+          {sessionHigh && <th scope="col">High</th>}
+          <th scope="col">Close</th><th scope="col">{sessionHigh ? "Max gain" : "Gain"}</th><th scope="col">
+            <Box component="span" sx={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
+              $Vol
+              <Tooltip describeChild title="Estimated dollars traded (share volume × volume-weighted average price). This total can include postmarket trades.">
+                <IconButton size="small" aria-label="About dollar volume">
+                  <InfoOutlinedIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </th>
         </tr></thead>
         <tbody>
           {rows.map((row) => (
             <tr key={`${row.day ?? ""}:${row.rank}`}>
-              <td>{dateLabel.format(new Date(row.day))}</td>
+              <Box component="td" sx={{ whiteSpace: "nowrap" }}>{shortDate.format(new Date(row.day))}</Box>
               <td>{row.rank}</td><th scope="row">{row.symbol}</th>
               {sessionHigh && <td>{row.sessionHigh == null ? "—" : price.format(row.sessionHigh)}</td>}
               <td>{price.format(row.close)}</td>
@@ -147,9 +165,8 @@ export default async function StockGainersPage({
         </Typography>
         {sessionHigh && (
           <Typography component="p" variant="caption" sx={{ display: "block", fontStyle: "italic", mb: 2 }}>
-            Max gain measures the percentage rise from the previous trading day’s regular-session close
-            to the highest price reached from premarket through today’s regular-session close.
-            Postmarket prices are excluded.
+            Max gain is the percentage increase from the previous regular-session close to the session high.
+            The session high includes premarket and regular-session trading. Postmarket prices are excluded.
           </Typography>
         )}
         <GainerFilterForm key={JSON.stringify(filters)} filters={filters} earliest={earliest} latest={latest} years={years} />

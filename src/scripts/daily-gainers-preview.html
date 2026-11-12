@@ -39,7 +39,7 @@
       <div><dt>Last appearance</dt><dd></dd></div>
     </dl>
     <table id="gainers-session" aria-label="Daily top gainer results">
-      <thead><tr><th scope="col">Date</th><th scope="col">Rank</th><th scope="col">Ticker</th>__GAINERS_HIGH_COLUMN__<th scope="col">Close</th><th scope="col">__GAINERS_GAIN_LABEL__</th><th scope="col">Dollar volume</th></tr></thead>
+      <thead><tr><th scope="col">Date<small class="gainers-date-format">MM/DD/YY</small></th><th scope="col">Rank</th><th scope="col">Ticker</th>__GAINERS_HIGH_COLUMN__<th scope="col">Close</th><th scope="col">__GAINERS_GAIN_LABEL__</th>__GAINERS_VOLUME_HEADING__</tr></thead>
       <tbody></tbody>
     </table>
     <nav id="gainers-pagination" aria-label="Results pages" hidden>
@@ -54,6 +54,7 @@
   </section>
 </section>
 <style>
+  __GAINERS_VOLUME_STYLES__
   #daily-gainers-preview {
     color: light-dark(#17283e, #e8eef7);
     background: light-dark(#fff, #172434);
@@ -99,6 +100,8 @@
   #daily-gainers-preview input { box-sizing: border-box; }
   #daily-gainers-preview table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   #daily-gainers-preview :is(th, td) { padding: 8px 5px; border-bottom: 1px solid light-dark(#e5ebf3, #38495d); text-align: left; }
+  #daily-gainers-preview .gainers-date-format { display: block; font-size: 0.72em; font-weight: 400; white-space: nowrap; }
+  #gainers-session td:first-child { white-space: nowrap; }
   #daily-gainers-preview :is(th, td):nth-child(n+3) { text-align: right; }
   #daily-gainers-preview :is(.gainers-gain, #gainers-session .gainers-gain) { color: light-dark(#09633d, #7de2ae); font-weight: 650; }
   #daily-gainers-preview :is(p, footer) { font-size: 13px; color: light-dark(#4d5d73, #b7c6d9); }
@@ -140,6 +143,7 @@
     const previous = get("previous");
     const next = get("next");
     const dateLabel = new Intl.DateTimeFormat("en-US", {dateStyle: "medium", timeZone: "UTC"});
+    const shortDate = new Intl.DateTimeFormat("en-US", {month: "2-digit", day: "2-digit", year: "2-digit", timeZone: "UTC"});
     const monthLabel = new Intl.DateTimeFormat("en-US", {month: "long", year: "numeric", timeZone: "UTC"});
     const usd = new Intl.NumberFormat("en-US", {style: "currency", currency: "USD"});
     const dollars = new Intl.NumberFormat("en-US", {style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1});
@@ -165,7 +169,7 @@
       const start = page * pageSize;
       table.tBodies[0].replaceChildren(...rows.slice(start, start + pageSize).map(entry => {
         const row = document.createElement("tr");
-        row.insertCell().textContent = dateLabel.format(new Date(entry.day));
+        row.insertCell().textContent = shortDate.format(new Date(entry.day));
         row.insertCell().textContent = entry.rank;
         row.insertCell().textContent = entry.symbol;
         if (entry.high != null) row.insertCell().textContent = usd.format(entry.high);

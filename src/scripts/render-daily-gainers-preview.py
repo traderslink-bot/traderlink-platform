@@ -8,11 +8,27 @@ from pathlib import Path
 
 FIRST_PREVIEW_DAY = "2025-01-01"
 CANONICAL_BASE = "https://traderslink.pro/stock-gainers/"
-COLUMNS = ("Rank", "Ticker", "Close", "Gain", "Dollar volume")
+COLUMNS = ("Rank", "Ticker", "Close", "Gain")
+VOLUME_HELP = "Estimated dollars traded (share volume × volume-weighted average price). This total can include postmarket trades."
+VOLUME_HEADING = (
+    '<th scope="col"><span class="gainers-volume-label">$Vol'
+    '<details class="gainers-volume-help"><summary aria-label="About dollar volume">ⓘ</summary>'
+    f'<span class="gainers-volume-tip">{VOLUME_HELP}</span></details></span></th>'
+)
+VOLUME_STYLES = """
+.gainers-volume-label { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.gainers-volume-help { position: relative; display: inline-block; }
+.gainers-volume-help summary { list-style: none; cursor: pointer; line-height: 1; padding: 3px; }
+.gainers-volume-help summary::-webkit-details-marker { display: none; }
+.gainers-volume-tip {
+    position: absolute; z-index: 2; top: 100%; right: 0; width: min(210px, 60vw);
+    padding: 8px; border-radius: 6px; text-align: left; font: 400 12px/1.4 system-ui, sans-serif;
+    white-space: normal; background: #17283e; color: #fff;
+}
+"""
 MAX_GAIN_NOTE = (
-    "Max gain measures the percentage rise from the previous trading day’s regular-session close "
-    "to the highest price reached from premarket through today’s regular-session close. "
-    "Postmarket prices are excluded."
+    "Max gain is the percentage increase from the previous regular-session close to the session high. "
+    "The session high includes premarket and regular-session trading. Postmarket prices are excluded."
 )
 
 
@@ -39,8 +55,8 @@ def ranking_method(sessions):
 
 def table(session):
     max_gain = "sessionHigh" in session["rows"][0]
-    columns = ("Rank", "Ticker", "Session high", "Close", "Max gain", "Dollar volume") if max_gain else COLUMNS
-    headings = "".join(f'<th scope="col">{heading}</th>' for heading in columns)
+    columns = ("Rank", "Ticker", "High", "Close", "Max gain") if max_gain else COLUMNS
+    headings = "".join(f'<th scope="col">{heading}</th>' for heading in columns) + VOLUME_HEADING
     rows = "".join(
         f'<tr><td>{index}</td><th scope="row">{escape(row["symbol"])}</th>'
         + (f'<td>${row["sessionHigh"]:,.2f}</td>' if max_gain else "")
@@ -96,7 +112,9 @@ def render(sessions, aliases, site=False):
     method_note = f'<p class="gainers-method"><em>{MAX_GAIN_NOTE}</em></p>' if session_high else ""
     return (template.replace("__RECENT_SESSIONS__", "".join(recent))
             .replace("__GAINERS_METHOD_NOTE__", method_note)
-            .replace("__GAINERS_HIGH_COLUMN__", '<th scope="col">Session high</th>' if session_high else "")
+            .replace("__GAINERS_VOLUME_HEADING__", VOLUME_HEADING)
+            .replace("__GAINERS_VOLUME_STYLES__", VOLUME_STYLES)
+            .replace("__GAINERS_HIGH_COLUMN__", '<th scope="col">High</th>' if session_high else "")
             .replace("__GAINERS_GAIN_LABEL__", "Max gain" if session_high else "Gain")
             .replace("__GAINERS_MONTHS__", "".join(months))
             .replace("__GAINERS_DATA__", html_json(compact))
@@ -114,6 +132,7 @@ def document(title, description, path, body, *, indexable=False):
 <meta name="description" content="{escape(description, quote=True)}">
 <link rel="canonical" href="{CANONICAL_BASE}{path}">
 <style>
+{VOLUME_STYLES}
 body {{ font: 16px/1.5 system-ui,sans-serif; color: #17283e; max-width: 70rem; margin: auto; padding: 1rem; }}
 nav {{ display: flex; flex-wrap: wrap; gap: 1rem; }}
 table {{ border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }}

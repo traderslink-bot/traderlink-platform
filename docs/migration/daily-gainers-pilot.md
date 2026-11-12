@@ -100,3 +100,11 @@ The corrected archive is complete through November 11, 2026. All 467 calendar se
 The dashboard now groups all approved filters in one panel above a single results table. Day uses a native date input. Month, Year and Custom range share the optional ticker, Top 1–10, minimum dollar volume and sort filters. Appearance statistics follow the same filters, with no separate form. Results paginate at 25 rows. Chromium verified the dashboard form component and combined query submission. The filtered results were checked against the complete max-gain release snapshot. Authenticated hosted smoke testing remains a release step.
 
 Stock Gainers uses a dedicated rising-arrow icon in the dashboard sidebar. The navigation check confirmed that the icon key is assigned only to Stock Gainers.
+
+The calculation note now anchors both prices to the trading date shown. Verified the wording on the public hub and all dated pages. The read-only date-copy export retains the identical dashboard snapshot.
+
+The calculation note now defines max gain and the session high directly. It applies equally to recent and historical rankings. The hub and all 467 dated pages were checked. The release snapshot is byte-identical.
+
+Result tables now label the session peak **High**. Date cells use `MM/DD/YY` with the format shown beneath the **Date** heading. Chromium verified recent and historical dates and the narrow layout. This update is local under the owner's deployment hold.
+
+The dollar-volume column is labeled **$Vol** on both surfaces and has adjacent help explaining the calculation and current postmarket coverage. The public help opens by keyboard or click. Verified at mobile width. The change remains local.
