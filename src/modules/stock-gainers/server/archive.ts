@@ -7,6 +7,8 @@ type Gainer = {
   security?: string;
   close: number;
   sessionHigh?: number;
+  displayHigh?: number;
+  displayClose?: number;
   gain: number;
   dollarVolume?: number | null;
 };

@@ -61,8 +61,8 @@ def table(session):
     headings = "".join(f'<th scope="col">{heading}</th>' for heading in columns) + VOLUME_HEADING
     rows = "".join(
         f'<tr><td>{index}</td><th scope="row">{escape(row["symbol"])}</th>'
-        + (f'<td>${row["sessionHigh"]:,.2f}</td>' if max_gain else "")
-        + f'<td>${row["close"]:,.2f}</td><td class="gainers-gain">+{row["gain"]:,.2f}%</td>'
+        + (f'<td>${row.get("displayHigh", row["sessionHigh"]):,.2f}</td>' if max_gain else "")
+        + f'<td>${row.get("displayClose", row["close"]):,.2f}</td><td class="gainers-gain">+{row["gain"]:,.2f}%</td>'
         f'<td>{volume_label(row.get("dollarVolume"))}</td></tr>'
         for index, row in enumerate(session["rows"], 1)
     )
@@ -104,9 +104,9 @@ def render(sessions, aliases, site=False):
         rows = []
         for entry in result["rows"]:
             symbol = entry["symbol"]
-            row = [symbol, entry["close"], entry["gain"], entry.get("dollarVolume")]
+            row = [symbol, entry.get("displayClose", entry["close"]), entry["gain"], entry.get("dollarVolume")]
             if session_high:
-                row.extend([entry.get("security", symbol), entry["sessionHigh"]])
+                row.extend([entry.get("security", symbol), entry.get("displayHigh", entry["sessionHigh"])])
             elif entry.get("security", symbol) != symbol:
                 row.append(entry["security"])
             rows.append(row)

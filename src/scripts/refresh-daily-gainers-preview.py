@@ -52,6 +52,9 @@ def refresh(directory, preview, now, *, session_high=False):
         calendar = get(backfill["CALENDAR"], "/v2/calendar", start=start, end=end)
         verify_rows(result["sessions"], calendar, get)
     add_dollar_volume(result["sessions"], get)
+    if session_high:
+        add_display_prices = runpy.run_path(str(SCRIPTS / "daily-gainers-display-prices.py"))["add_display_prices"]
+        add_display_prices(result["sessions"], get)
     archive["sessions"].update(result["sessions"])
     archive["aliases"] = result["aliases"]
     archive["rankingMethod"] = method

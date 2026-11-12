@@ -29,6 +29,8 @@ type RankedRow = {
   symbol: string;
   close: number;
   sessionHigh?: number;
+  displayHigh?: number;
+  displayClose?: number;
   gain: number;
   dollarVolume?: number | null;
   day: string;
@@ -71,8 +73,8 @@ function Rankings({ rows, sessionHigh }: {
             <tr key={`${row.day ?? ""}:${row.rank}`}>
               <Box component="td" sx={{ whiteSpace: "nowrap" }}>{shortDate.format(new Date(row.day))}</Box>
               <td>{row.rank}</td><th scope="row">{row.symbol}</th>
-              {sessionHigh && <td>{row.sessionHigh == null ? "—" : price.format(row.sessionHigh)}</td>}
-              <td>{price.format(row.close)}</td>
+              {sessionHigh && <td>{row.sessionHigh == null ? "—" : price.format(row.displayHigh ?? row.sessionHigh)}</td>}
+              <td>{price.format(row.displayClose ?? row.close)}</td>
               <Box component="td" sx={{ color: "success.main" }}>+{row.gain.toFixed(2)}%</Box>
               <td>{row.dollarVolume == null ? "—" : dollarVolume.format(row.dollarVolume)}</td>
             </tr>

@@ -12,6 +12,7 @@ import runpy
 SCRIPTS = Path(__file__).parent
 backfill = runpy.run_path(str(SCRIPTS / "backfill-daily-gainers.py"))
 add_dollar_volume = runpy.run_path(str(SCRIPTS / "daily-gainers-dollar-volume.py"))["add_dollar_volume"]
+add_display_prices = runpy.run_path(str(SCRIPTS / "daily-gainers-display-prices.py"))["add_display_prices"]
 
 
 def rebuild(directory, start, end):
@@ -31,7 +32,9 @@ def rebuild(directory, start, end):
                 raise ValueError(f"Invalid checkpoint: {output.name}")
         else:
             result = backfill["run"](first, last, session_high=True)
-            add_dollar_volume(result["sessions"], backfill["alpaca_reader"]())
+            get = backfill["alpaca_reader"]()
+            add_dollar_volume(result["sessions"], get)
+            add_display_prices(result["sessions"], get)
             backfill["write_json"](output, result)
         print(f"{first} through {last}: {len(result['sessions'])} sessions", flush=True)
         return result["aliases"]
