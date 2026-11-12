@@ -153,21 +153,36 @@ const directionLabels = { bullish:"Bullish", bearish:"Bearish", neutral:"Neutral
 const readingNames: Record<Indicator, string> = {
   EMA: "Moving averages", VWAP: "VWAP", RSI: "RSI", Trend: "Trend", "RSI momentum": "Momentum", Volume: "Volume", ATR: "ATR",
 };
-const timestamp = new Intl.DateTimeFormat("en-US", {
-  timeZone:"America/New_York", hour:"numeric", minute:"2-digit", month:"short", day:"numeric",
-});
+const SIGNAL_WINDOW_MS = 15 * 60_000;
+const signalClockListeners = new Set<() => void>();
+let signalClockTimer: ReturnType<typeof setInterval> | undefined;
+const readSignalClock = () => Math.floor(Date.now() / 10_000) * 10_000;
+function subscribeSignalClock(listener: () => void) {
+  signalClockListeners.add(listener);
+  signalClockTimer ??= setInterval(() => signalClockListeners.forEach(notify => notify()), 1000);
+  return () => {
+    signalClockListeners.delete(listener);
+    if (!signalClockListeners.size) {
+      clearInterval(signalClockTimer);
+      signalClockTimer = undefined;
+    }
+  };
+}
 
-function compactRead(name: Indicator, reading: IndicatorDisplayRow, through: number | undefined) {
-  const latest = reading.signals?.find(signal => signal.at === through);
+export function scannerSignalAge(at: number, now: number): string | null {
+  const age = now - at;
+  if (!Number.isFinite(age) || age < 0 || age >= SIGNAL_WINDOW_MS) return null;
+  if (age < 10_000) return "just now";
+  if (age < 60_000) return `${Math.floor(age / 10_000) * 10}s ago`;
+  return `${Math.floor(age / 60_000)}m ago`;
+}
+
+function compactRead(name: Indicator, reading: IndicatorDisplayRow, result?: ReturnType<typeof scannerIndicatorResults>["result"]) {
   const state = reading.state;
-  if (name === "VWAP" && state) {
-    const position = state.split(" · ").at(-1)?.replace(" VWAP", "");
-    return [reading.value, latest ? latest.text.replace("Price ", "") : position].join(" · ");
+  if (name === "VWAP" && state) return [reading.value, state.split(" · ").at(-1)?.replace(" VWAP", "")].join(" · ");
+  if (name === "EMA" && result?.ema9 != null && result.ema20 != null) {
+    return result.ema9 === result.ema20 ? "9 at 20" : result.ema9 > result.ema20 ? "9 above 20" : "9 below 20";
   }
-  if (latest) return latest.text.replace(/^EMA 9 crossed (above|below) EMA 20$/u, "9 crossed $1 20")
-    .replace(/^RSI momentum /u, "").replace(/ · .+$/u, "");
-  if (name === "EMA" && state) return state === "Bullish alignment" ? "9 above 20"
-    : state === "Bearish alignment" ? "9 below 20" : state;
   if (name === "RSI") return [reading.value, reading.conditionState].filter(Boolean).join(" · ");
   if (name === "ATR") return [reading.value, state].filter(Boolean).join(" · ");
   return state ?? reading.value;
@@ -179,6 +194,8 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
   const [visible,setVisible]=useState(false);
   const [history,setHistory]=useState<(CandleHistory & {symbol:string})|null>(null);
   const enabled = selected.length > 0;
+  const signalClock = useSyncExternalStore(subscribeSignalClock, readSignalClock, () => 0);
+  const signalNow = Math.max(now,signalClock);
   const frameMs = Number.parseInt(frame, 10) * 60_000;
   // Keep completed minute bars for VWAP, even when the selected study timeframe is larger.
   const minute = Math.floor(now / 60_000);
@@ -208,33 +225,41 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
     const reading = readings.find(item => item.label === readingNames[name]);
     return reading && (reading.state || !["—", "Unavailable"].includes(reading.value)) &&
       (name !== "EMA" || computed?.result?.ema9 != null || computed?.result?.ema20 != null)
-      ? [{name, reading, text:compactRead(name,reading,name === "VWAP" ? computed?.vwap?.dataThrough ?? undefined : computed?.result?.dataThrough)}] : [];
+      ? [{name, reading, text:compactRead(name,reading,computed?.result),
+        events: reading.signals?.flatMap(signal => {
+          const age = scannerSignalAge(signal.at,signalNow);
+          return age === null ? [] : [{ ...signal, age }];
+        }) ?? []}] : [];
   });
   if (!enabled) return null;
   return <Box ref={ref} data-scanner-indicator-frame={frame} sx={{minHeight:1}}>
     <Box sx={{display:"flex",gap:0.65,flexWrap:"wrap",fontSize:"0.66rem"}}>
-      {chosen.map(({name,reading,text})=>{
+      {chosen.map(({name,reading,text,events})=>{
         const direction = readingDirection(reading);
         return <Box key={name} data-scanner-indicator={name}>
           <Typography component="span" variant="inherit" color="text.secondary">{name} </Typography>
           <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
             {directionLabels[direction]} · {text}
           </Typography>
+          {name==="EMA"&&events.map(event=><Typography key={event.at} component="span" variant="inherit"
+            sx={{color:tones[signalDirections[event.kind]??"neutral"],ml:0.5,whiteSpace:"nowrap"}}>
+            {event.kind==="emaBullishCross"?"Crossed above":"Crossed below"} · {event.age}
+          </Typography>)}
         </Box>;
       })}
     </Box>
     {chosen.length>0&&<Box component="details" sx={{mt:0.25,fontSize:"0.66rem",color:"text.secondary","& summary":{cursor:"pointer"}}}>
       <summary>Details</summary>
-      {chosen.map(({name,reading,text})=><Box key={name} sx={{my:0.45}}>
+      {chosen.map(({name,reading,text,events})=><Box key={name} sx={{my:0.45}}>
         <Typography component="p" variant="inherit" sx={{m:0}}>
           <strong>{name}</strong>{" "}
           <Box component="span" sx={{color:tones[readingDirection(reading)]}}>
-            {[reading.value && reading.value !== text ? reading.value : null, reading.state ?? text].filter(Boolean).join(" · ")}
+            {[reading.value && reading.value !== text ? reading.value : null, name==="EMA"?text:reading.state ?? text].filter(Boolean).join(" · ")}
           </Box>
         </Typography>
-        {reading.signals?.map(signal=><Typography key={`${signal.kind}-${signal.at}`} component="p" variant="inherit" sx={{m:0}}>
+        {events.map(signal=><Typography key={`${signal.kind}-${signal.at}`} component="p" variant="inherit" sx={{m:0}}>
           <Box component="span" sx={{color:tones[signalDirections[signal.kind]??"neutral"]}}>{signal.text}</Box>
-          {" · "}<time dateTime={new Date(signal.at).toISOString()}>{timestamp.format(signal.at)} ET</time>
+          {" · "}<span>{signal.age}</span>
         </Typography>)}
       </Box>)}
     </Box>}
