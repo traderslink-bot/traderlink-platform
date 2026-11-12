@@ -19,11 +19,12 @@ import { ScannerCountryFlag } from "./scanner-country-flag";
 import { scannerCardLabelColor, ScannerIndicatorReads, ScannerIndicatorSettings } from "./scanner-card-indicators";
 import { ScannerNewsLink } from "./scanner-news-drawer-context";
 
-const SECTION_LABELS = { indicators: "Indicators", catalyst: "Catalyst" } as const;
+const SECTION_LABELS = { stats: "Stats", indicators: "Indicators", catalyst: "Catalyst" } as const;
 type Section = keyof typeof SECTION_LABELS;
-const SECTIONS: readonly Section[] = ["indicators", "catalyst"];
-const KEY = "traderslink.scanner.ticker-card-sections.v1";
-let storedSections = "";
+const SECTIONS: readonly Section[] = ["stats", "indicators", "catalyst"];
+const LEGACY_KEY = "traderslink.scanner.ticker-card-sections.v1";
+const KEY = "traderslink.scanner.ticker-card-sections.v2";
+let storedSections = "stats";
 const listeners = new Set<() => void>();
 
 function subscribe(listener: () => void) {
@@ -36,12 +37,12 @@ function subscribe(listener: () => void) {
 }
 
 function readSections() {
-  try { return window.localStorage.getItem(KEY) ?? ""; }
+  try { return window.localStorage.getItem(KEY) ?? `stats,${window.localStorage.getItem(LEGACY_KEY) ?? ""}`; }
   catch { return storedSections; }
 }
 
 export function useTickerCardSections() {
-  const stored = useSyncExternalStore(subscribe, readSections, () => "");
+  const stored = useSyncExternalStore(subscribe, readSections, () => "stats");
   const sections = [...new Set(stored.split(",").filter((value): value is Section => SECTIONS.includes(value as Section)))];
   const update = (next: readonly Section[]) => {
     storedSections = next.join(",");
@@ -80,18 +81,26 @@ export function ScannerViewSettings({ label, view, onViewChange }: { label: stri
       {view==="cards"&&<Box role="group" aria-label="Ticker card sections" sx={{borderTop:1,borderColor:"divider",mt:0.75,pt:0.75}}>
       <Typography variant="body2" sx={{fontWeight:700,px:0.5}}>Card sections</Typography>
       {[...sections, ...SECTIONS.filter(section => !sections.includes(section))].map(section => {
-        const enabled = sections.includes(section);
+        const position = sections.indexOf(section);
+        const enabled = position >= 0;
+        const move = (offset: number) => {
+          const next = [...sections];
+          const target = position + offset;
+          [next[position], next[target]] = [next[target], next[position]];
+          update(next);
+        };
         return <Box key={section} sx={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1}}>
           <FormControlLabel sx={{m:0}} label={SECTION_LABELS[section]} control={
             <Checkbox size="small" checked={enabled} onChange={(_, checked) => update(
               checked ? [...sections, section] : sections.filter(value => value !== section)
             )}/>
           }/>
-          {enabled && sections.length === 2 && <Button size="small"
-            aria-label={`Move ${SECTION_LABELS[section]} ${sections[0] === section ? "down" : "up"}`}
-            onClick={() => update([...sections].reverse())} sx={{minWidth:30}}>
-            {sections[0] === section ? "↓" : "↑"}
-          </Button>}
+          {enabled && sections.length > 1 && <Box sx={{display:"flex"}}>
+            <Button size="small" aria-label={`Move ${SECTION_LABELS[section]} up`}
+              disabled={position===0} onClick={() => move(-1)} sx={{minWidth:30}}>↑</Button>
+            <Button size="small" aria-label={`Move ${SECTION_LABELS[section]} down`}
+              disabled={position===sections.length-1} onClick={() => move(1)} sx={{minWidth:30}}>↓</Button>
+          </Box>}
         </Box>;
       })}
       {sections.includes("indicators") && <ScannerIndicatorSettings/>}
@@ -145,18 +154,17 @@ export function ScannerStockCards({ rows, screen, now, renderTools, renderHalt }
             </Typography>
           </Box>
         </Box>
-        <Box component="dl" aria-label="Stats"
-          sx={{m:0,mt:0.45,pt:0.35,borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:0.55,fontVariantNumeric:"tabular-nums"}}>
+        {screen === "momentum" && <Typography sx={{fontSize:"0.65rem",color:"text.secondary",mt:0.4,overflowWrap:"anywhere"}}>
+          {momentumSignalText(row)}
+        </Typography>}
+        {sections.map(section => section === "stats" ? <Box key={section} component="dl" aria-label="Stats"
+          sx={{m:0,mt:0.65,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:0.55,fontVariantNumeric:"tabular-nums"}}>
           <Reading label="Vol" value={shares(row.volume)}/>
           <Reading label="Float" value={shares(row.float)}/>
           <Reading label="T/O" value={percent(turnover)}/>
           <Reading label="RVOL" value={row.relativeVolume === null ? "—" : `${decimal.format(row.relativeVolume)}×`}/>
-        </Box>
-        {screen === "momentum" && <Typography sx={{fontSize:"0.65rem",color:"text.secondary",mt:0.4,overflowWrap:"anywhere"}}>
-          {momentumSignalText(row)}
-        </Typography>}
-        {sections.map(section => section === "indicators" || catalyst ? <Box component="section" key={section}
-          aria-label={SECTION_LABELS[section]} sx={{minWidth:0,borderTop:1,borderColor:"divider",mt:0.45,pt:0.35}}>
+        </Box> : section === "indicators" || catalyst ? <Box component="section" key={section}
+          aria-label={SECTION_LABELS[section]} sx={{minWidth:0,mt:0.65}}>
           {section === "indicators" ? <ScannerIndicatorReads row={row} now={now}/> : catalyst && (
             <Box sx={{display:"flex",alignItems:"baseline",gap:0.6,minWidth:0,overflowWrap:"anywhere",fontSize:"0.68rem","& button":{minWidth:0,textAlign:"left",fontWeight:550,lineHeight:1.25}}}>
               <Typography component="time" dateTime={catalyst.createdAt} variant="inherit" color="text.secondary" sx={{flexShrink:0,whiteSpace:"nowrap"}}>
