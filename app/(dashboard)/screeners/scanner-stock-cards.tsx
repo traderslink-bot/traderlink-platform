@@ -58,7 +58,7 @@ export function ScannerViewSettings({ label, view, onViewChange }: { label: stri
   const id = useId();
   return <>
     <Button size="small" aria-label={`${label} view: ${scannerViews[view]}`} endIcon={<KeyboardArrowDownRounded fontSize="small"/>} aria-haspopup="dialog" aria-expanded={Boolean(anchor)} aria-controls={anchor ? id : undefined}
-      onClick={event => setAnchor(event.currentTarget)} sx={{fontSize:"0.68rem",textTransform:"none",px:0.5,minWidth:0}}>
+      onClick={event => setAnchor(event.currentTarget)} sx={{fontSize:"0.68rem",lineHeight:1.2,textTransform:"none",whiteSpace:"nowrap",px:0.5,py:0.25,minHeight:24,minWidth:0,'& .MuiButton-endIcon':{ml:0.25,mr:0}}}>
       {scannerViews[view]}
     </Button>
     <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}

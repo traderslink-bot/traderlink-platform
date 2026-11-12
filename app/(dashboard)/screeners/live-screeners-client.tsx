@@ -591,7 +591,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
   const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
   const gainerTitle=model?.session==="after_hours"?"Top Gainers Post Market":"Top Gainers";
-  const gainerTabs=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title={GAINERS_EXPLANATION}>
+  const gainerTabs=<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title={GAINERS_EXPLANATION}>
     <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
   </Tooltip></Stack>;
   const viewSettings=(kind:ScannerKind)=><ScannerViewSettings label={SCREEN_LABELS[kind]} view={displayModes[kind]}
@@ -650,12 +650,12 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     }}>
       {(["gainers","momentum"] as const).map(kind=><ScannerWorkspaceCard key={kind} slot={workspaceLayout.assignments[kind]} widget={kind}>
         <DashboardPanel hideHeader>
-          <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>
+          <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5,minHeight:22}}>
             {kind==="momentum"?<Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box>:gainerTabs}
-            <Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
+            <Stack direction="row" spacing={0.5} sx={{alignItems:"center",flexShrink:0}}>
           {viewSettings(kind)}
           {admin&&resultsFor(kind)?<Chip label={`${resultsFor(kind)!.total}`} size="small" aria-label={`${resultsFor(kind)!.total} qualifying`}/>:null}
-          <IconButton size="small" aria-label={`Open ${SCREEN_LABELS[kind]} full view`} title={`Open ${SCREEN_LABELS[kind]} full view`} onClick={()=>setFullScanner(kind)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton>
+          <IconButton size="small" sx={{p:0.25}} aria-label={`Open ${SCREEN_LABELS[kind]} full view`} title={`Open ${SCREEN_LABELS[kind]} full view`} onClick={()=>setFullScanner(kind)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton>
             </Stack>
           </Stack>
           {contents(kind,true)}
