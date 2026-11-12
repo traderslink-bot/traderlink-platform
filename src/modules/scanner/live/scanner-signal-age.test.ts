@@ -1,5 +1,6 @@
+import { scannerIndicatorResults } from "./scanner-indicator-calculation";
 import { expect, it } from "vitest";
-import { scannerIndicatorResults, isRecentScannerSignal } from "@/app/(dashboard)/screeners/scanner-card-indicators";
+import { isRecentScannerSignal } from "@/app/(dashboard)/screeners/scanner-card-indicators";
 
 it("shows an event for 15 elapsed minutes, then drops it on refresh", () => {
   const at = Date.UTC(2026, 10, 12, 15);
