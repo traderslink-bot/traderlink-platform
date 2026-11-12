@@ -7,7 +7,6 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import GridViewOutlined from "@mui/icons-material/GridViewOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import {ChartPreferencesPanel} from "./chart-preferences-panel";
 import {useChartPreferences} from "./use-chart-preferences";
 import {parseVwapSeedRequest,validVwapSeed,type VwapSeed} from "@/src/modules/scanner/alpaca/chart-vwap-seed";
 import {easternClock} from "@/src/modules/scanner/live/sessions";
@@ -24,7 +23,7 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { chartTickLabel, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
 import type { Time } from "lightweight-charts";
 import { aggregateCandles, candleBucket, displayCandles, CHART_TIMEFRAMES, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
@@ -34,6 +33,8 @@ import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-vie
 import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorDisplay } from "./chart-view-memory";
 import { indicatorPriceScaleLabels, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
 import { sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
+
+const ChartPreferencesPanel = lazy(() => import("./chart-preferences-panel").then(module => ({ default: module.ChartPreferencesPanel })));
 
 const indicatorName = (type: IndicatorType) => type === "Bollinger" ? "BOLL" : type;
 
@@ -49,6 +50,11 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const {preferences,ready,message,change,ownerKey}=useChartPreferences();
   const dark = preferences.theme === "dark" || preferences.theme === "auto" && theme.palette.mode === "dark";
   const [panel,setPanel]=useState<"indicators"|"settings"|null>(null);
+  const [preferencesOpened,setPreferencesOpened]=useState(false);
+  const openPreferences=(next: "indicators"|"settings")=>{
+    setPreferencesOpened(true);
+    setPanel(next);
+  };
   const [initialIndicator,setInitialIndicator]=useState<IndicatorType>();
   const [indicatorMenu,setIndicatorMenu]=useState<{anchor:HTMLElement;type:IndicatorType}|null>(null);
   const displayKey=JSON.stringify([ownerKey,viewWorkspace,viewId,ticker]);
@@ -62,7 +68,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     setLocalDisplay({key:displayKey,value:next});
     if(ownerKey&&viewId)chartViews.writeIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker,next);
   };
-  const openIndicators=(type?:IndicatorType)=>{setInitialIndicator(type);setPanel("indicators");};
+  const openIndicators=(type?:IndicatorType)=>{setInitialIndicator(type);openPreferences("indicators");};
 
   const marketCalendar=useRef(new ChartSessionCalendar());
   const [sessionMessage,setSessionMessage]=useState("");
@@ -620,7 +626,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       <Typography sx={{ color:dark?"warning.main":"#354358",fontSize: 11, fontWeight: 700, mr: 0.5 }}>{ticker}</Typography>
       {CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
       <Button size="small" disabled={!ready} onClick={()=>openIndicators()} sx={{minHeight:mainToolbar?34:44,minWidth:0,px:0.75,textTransform:"none"}}>Indicators</Button>
-      <IconButton size="small" disabled={!ready} aria-label="Chart settings" onClick={()=>setPanel("settings")} sx={{minWidth:44,minHeight:mainToolbar?34:44}}><SettingsOutlined fontSize="small"/></IconButton>
+      <IconButton size="small" disabled={!ready} aria-label="Chart settings" onClick={()=>openPreferences("settings")} sx={{minWidth:44,minHeight:mainToolbar?34:44}}><SettingsOutlined fontSize="small"/></IconButton>
       {multiviewButton}
       {actions}
       {!mainToolbar && closeAction}
@@ -631,10 +637,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     {compact ? <><Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}>
       {CHART_TIMEFRAMES.map(value => <MenuItem key={value} selected={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => { if (onTimeframeChange) onTimeframeChange(value); else setActiveTimeframe(value); setFrameAnchor(null); }}>{value}</MenuItem>)}
     </Menu>
-    <Menu keepMounted anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+    <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
       <MenuItem disabled={!ready} onClick={() => { setFrameAnchor(menuAnchor); setMenuAnchor(null); }}>Timeframe</MenuItem>
       <MenuItem disabled={!ready} onClick={() => { openIndicators(); setMenuAnchor(null); }}>Indicators</MenuItem>
-      <MenuItem disabled={!ready} onClick={() => { setPanel("settings"); setMenuAnchor(null); }}>Appearance</MenuItem>
+      <MenuItem disabled={!ready} onClick={() => { openPreferences("settings"); setMenuAnchor(null); }}>Appearance</MenuItem>
     </Menu>
     </> : null}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
@@ -659,6 +665,6 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         <MenuItem key="off" onClick={()=>{changeIndicatorDisplay(indicatorMenu.type,"enabled",false);setIndicatorMenu(null);}}>Turn off</MenuItem>,
       ]:null}
     </Menu>
-    <ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={preferences} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/>
+    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={preferences} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
   </Box>;
 }

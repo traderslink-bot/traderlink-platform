@@ -10,7 +10,7 @@ import { chartSymbol, type ChartTimeframe } from "@/src/modules/scanner/alpaca/c
 import { chartCount, selectedChart, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { ChartMultiviewCharts } from "./chart-multiview";
 import { ChartMultiviewMenu } from "./chart-multiview-menu";
-import { useChartPreferences } from "./use-chart-preferences";
+import { ChartPreferencesContext, useChartPreferences } from "./use-chart-preferences";
 import { useChartTabs } from "./use-chart-tabs";
 import { ChartWorkspaceTabs, ChartWorkspaceViewRow } from "./chart-workspace-tabs";
 import { chartTabPrefix, chartTabDisplayLabel, chartWorkspaceViews, closeSelectedChartTab, openMultiTicker, type ChartTabs } from "@/src/modules/scanner/alpaca/chart-tabs";
@@ -20,7 +20,8 @@ const NEW_MULTI_TICKER = ":new-multi-ticker";
 
 export function MarketChartWorkspace() {
   const {book,change:changeBook,ready,message}=useChartTabs();
-  const { preferences, ready: preferencesReady, message: preferencesMessage } = useChartPreferences();
+  const chartPreferences = useChartPreferences();
+  const { preferences, ready: preferencesReady, message: preferencesMessage } = chartPreferences;
   const [pendingDefaultTimeframe, setPendingDefaultTimeframe] = useState<ChartTimeframe>();
   const defaultTimeframe = pendingDefaultTimeframe ?? preferences.timeframe;
   const chartOpeningReady = ready && (preferencesReady || Boolean(preferencesMessage));
@@ -173,7 +174,9 @@ export function MarketChartWorkspace() {
       {message ? <Box role="status" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>{message}</Box> : null}
       {!compact && error && <Alert severity="warning">{error}</Alert>}
       {message && !["View saved", "Saving view…"].includes(message) ? <Alert severity="warning">{message}</Alert> : null}
-      <ChartMultiviewCharts key={tab.id} viewPrefix={chartTabPrefix(tab.id)} layout={layout} onChange={change} ready={ready} onDefaultTimeframeChange={setPendingDefaultTimeframe} onOpenMultiview={() => multiTickerLauncher.current?.open(tab.id)} compactMobile workspaceRow plain={book.plain} />
+      <ChartPreferencesContext.Provider value={chartPreferences}>
+        <ChartMultiviewCharts key={tab.id} viewPrefix={chartTabPrefix(tab.id)} layout={layout} onChange={change} ready={ready} onDefaultTimeframeChange={setPendingDefaultTimeframe} onOpenMultiview={() => multiTickerLauncher.current?.open(tab.id)} compactMobile workspaceRow plain={book.plain} />
+      </ChartPreferencesContext.Provider>
       {compact && focus ? <Stack direction="row" sx={{ position: "absolute", bottom: "max(4px,env(safe-area-inset-bottom,0px))", right: 4, zIndex: 3, bgcolor: "background.paper", border: 1, borderColor: "divider" }}>
         <IconButton aria-label="Open dashboard navigation" onClick={navigation} sx={{ width: 44, height: 44 }}><MenuRounded /></IconButton>
         <IconButton aria-label="Exit focus mode" onClick={() => setFocus(false)} sx={{ width: 44, height: 44 }}><FullscreenExitRounded /></IconButton>
