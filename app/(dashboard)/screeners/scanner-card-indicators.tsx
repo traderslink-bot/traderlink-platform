@@ -5,6 +5,7 @@ import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
+import type { Theme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { calculateIndicatorHistory, calculateSessionVwap } from "@/src/lib/live-watchlist/indicators/indicator-engine";
@@ -138,6 +139,9 @@ export function scannerIndicatorResults(bars: readonly Candle[], frame: Frame, t
   return { result, vwap };
 }
 
+export const scannerCardLabelColor = (theme: Theme) =>
+  theme.palette.mode === "dark" ? "#929CAA" : "#4F5D6D";
+
 const tones = { bullish:"success.main", bearish:"error.main", neutral:"warning.main" } as const;
 const signalDirections: Partial<Record<IndicatorSignalKind, "bullish" | "bearish">> = {
   emaBullishCross:"bullish", emaBearishCross:"bearish",
@@ -226,7 +230,7 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
       {chosen.map(({name,reading,text})=>{
         const direction = readingDirection(reading);
         return <Box key={name} data-scanner-indicator={name}>
-          <Typography component="span" variant="inherit" sx={{color:"var(--scanner-card-label)",fontWeight:600}}>{name} </Typography>
+          <Typography component="span" variant="inherit" sx={{color:scannerCardLabelColor,fontWeight:700}}>{name} </Typography>
           <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
             {text}
           </Typography>

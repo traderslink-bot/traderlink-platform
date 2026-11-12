@@ -5,6 +5,8 @@ import { scannerGainColor } from "./scanner-gain-color";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
+import IconButton from "@mui/material/IconButton";
+import CloseRounded from "@mui/icons-material/CloseRounded";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import Popover from "@mui/material/Popover";
@@ -14,7 +16,7 @@ import type { LiveScannerRow, ScannerKind } from "@/src/modules/scanner/live/con
 
 import { momentumSignalText } from "./momentum-signal-text";
 import { ScannerCountryFlag } from "./scanner-country-flag";
-import { ScannerIndicatorReads, ScannerIndicatorSettings } from "./scanner-card-indicators";
+import { scannerCardLabelColor, ScannerIndicatorReads, ScannerIndicatorSettings } from "./scanner-card-indicators";
 import { ScannerNewsLink } from "./scanner-news-drawer-context";
 
 const SECTION_LABELS = { indicators: "Indicators", catalyst: "Catalyst" } as const;
@@ -64,7 +66,11 @@ export function ScannerViewSettings({ label, view, onViewChange }: { label: stri
     <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)}
       anchorOrigin={{vertical:"bottom",horizontal:"right"}} transformOrigin={{vertical:"top",horizontal:"right"}}
       slotProps={{paper:{id,role:"dialog","aria-label":`${label} view settings`,sx:{p:1.25,minWidth:228}}}}>
-      <Box role="group" aria-label="Display view">
+      <IconButton aria-label="Close view settings" size="small" onClick={() => setAnchor(null)}
+        sx={{position:"absolute",top:10,right:10,width:32,height:32}}>
+        <CloseRounded fontSize="small"/>
+      </IconButton>
+      <Box role="group" aria-label="Display view" sx={{pr:4.5}}>
         {(Object.entries(scannerViews) as [ScannerView,string][]).map(([value,text])=>
           <Button size="small" key={value} aria-pressed={view===value}
             onClick={()=>{onViewChange(value);if(value!=="cards")setAnchor(null);}} sx={{width:"100%",minHeight:32,justifyContent:"flex-start",textTransform:"none",bgcolor:view===value?"action.selected":undefined}}>
@@ -103,7 +109,7 @@ const percent = (n: number | null, signed = false) => n === null ? "—" : `${si
 
 function Reading({ label, value }: { label: string; value: string }) {
   return <Box sx={{minWidth:0,textAlign:"left"}}>
-    <Typography component="dt" sx={{color:"var(--scanner-card-label)",fontWeight:600,fontSize:"0.62rem",lineHeight:1.15}}>{label}</Typography>
+    <Typography component="dt" sx={{color:scannerCardLabelColor,fontWeight:700,fontSize:"0.62rem",lineHeight:1.15}}>{label}</Typography>
     <Typography component="dd" sx={{m:0,fontWeight:650,fontSize:"0.72rem",lineHeight:1.25,overflowWrap:"anywhere"}}>{value}</Typography>
   </Box>;
 }
@@ -123,8 +129,7 @@ export function ScannerStockCards({ rows, screen, now, renderTools, renderHalt }
       const catalyst = row.news.find(item => Number.isFinite(Date.parse(item.createdAt)));
       const post = screen === "gainers" && row.gainBasis === "today_regular_close";
       return <Box role="listitem" key={row.symbol} data-scanner-stock-card={row.symbol}
-        sx={theme=>({"--scanner-card-label":theme.palette.mode==="dark"?"#B0BAC6":"#4F5D6D",
-          border:1,borderColor:"divider",borderRadius:0,mb:0.55,px:0.7,py:0.55,minWidth:0,bgcolor:"background.paper"})}>
+        sx={{border:1,borderColor:"divider",borderRadius:0,mb:0.55,px:0.7,py:0.55,minWidth:0,bgcolor:"background.paper"}}>
         <Box sx={{display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",alignItems:"center",columnGap:0.65,minWidth:0}}>
           <Box sx={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:0.4,minWidth:0}}>
             <Typography component="span" sx={{color:"warning.main",fontSize:"0.84rem",fontWeight:850,overflowWrap:"anywhere"}}>{row.symbol}</Typography>
