@@ -37,6 +37,9 @@ import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import ViewDayOutlined from "@mui/icons-material/ViewDayOutlined";
+import ViewStreamOutlined from "@mui/icons-material/ViewStreamOutlined";
 import { ScannerChartLaunchControls, SideCardChartControls, useSideCardChartControls } from "./scanner-chart-launch-controls";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -47,7 +50,7 @@ import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/pres
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard, useMarketEventsData } from "./screener-press-release-board";
 import { ScannerWorkspaceCard } from "./scanner-workspace-card";
-import { DEFAULT_SCANNER_WORKSPACE_LAYOUT } from "./scanner-workspace-layout";
+import { DEFAULT_SCANNER_WORKSPACE_LAYOUT, type ScannerWorkspaceWidget } from "./scanner-workspace-layout";
 import { DeclinesCard } from "./declines-card";
 import { ScannerCountryFlag } from "./scanner-country-flag";
 import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
@@ -74,6 +77,21 @@ import { MomentumSections } from "./momentum-sections";
 import { momentumSignalText } from "./momentum-signal-text";
 
 const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", momentum: "Momentum" };
+const MOBILE_SCANNER_LAYOUT_KEY = "traderslink.scanner.mobile-layout.v1";
+const MOBILE_SCANNER_TABS = [
+  {widget:"gainers", label:"Gainers", accessibleLabel:"Top Gainers"},
+  {widget:"momentum", label:"Momentum", accessibleLabel:"Momentum"},
+  {widget:"top-losers", label:"Losers", accessibleLabel:"Top Losers"},
+  {widget:"high-drops", label:"HOD Drops", accessibleLabel:"HOD Drops"},
+  {widget:"market-events", label:"Events", accessibleLabel:"Market Events"},
+] as const;
+type MobileScannerTab = typeof MOBILE_SCANNER_TABS[number]["widget"];
+
+function readMobileScannerLayout() {
+  try { return typeof window !== "undefined" && window.localStorage.getItem(MOBILE_SCANNER_LAYOUT_KEY)==="tabs"; }
+  catch { return false; }
+}
+
 const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", regular: "Regular hours", after_hours: "After hours" };
 export const GAINERS_EXPLANATION = "This gainer list is not a standard list where percentage increase determines inclusion. The scanner qualifies candidates according to total vol, dollar vol, min gain and max spread. Day Gainers are ranked by gain from yesterday’s regular session close. Post market Gainers are ranked by gain from today’s regular close.";
 const number = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 2 });
@@ -474,6 +492,18 @@ function ManualTickersAdmin(){
 
 export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const workspaceLayout=DEFAULT_SCANNER_WORKSPACE_LAYOUT;
+  const mobile = useMediaQuery("(max-width:899.95px)") && !admin;
+  const [preferTabs,setPreferTabs]=useState(readMobileScannerLayout);
+  const [activeScanner,setActiveScanner]=useState<MobileScannerTab>("gainers");
+  const mobileTabs = mobile && preferTabs;
+  const mobileTabsId = useId();
+  const showScanner = (widget: ScannerWorkspaceWidget) => !mobileTabs || widget===activeScanner;
+  const toggleMobileLayout = () => {
+    const next = !preferTabs;
+    setPreferTabs(next);
+    try { window.localStorage.setItem(MOBILE_SCANNER_LAYOUT_KEY,next?"tabs":"stacked"); }
+    catch { /* Keep this choice for the current page. */ }
+  };
   const [model,setModel]=useState<ScannerReadModel|null>(null), [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const momentumSections = model?.momentum.momentumSections;
   const momentumStocks = momentumSections ? [...momentumSections.confirmed,...momentumSections.early] : model?.momentum.rows ?? [];
@@ -635,20 +665,40 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     {!drawerOpen&&chartWorkspace.charts.length>0&&<Box sx={{display:"flex",justifyContent:"flex-end"}}>
       <Button size="small" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>Reopen chart drawer</Button>
     </Box>}
-    <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box data-scanner-grid ref={gridRef} sx={{
+    <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box>
+      {mobile&&<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0,mb:0.6}}>
+        {mobileTabs?<Tabs value={activeScanner} onChange={(_,value:MobileScannerTab)=>setActiveScanner(value)}
+          aria-label="Scanner cards" variant="scrollable" scrollButtons={false}
+          sx={{flex:1,minWidth:0,minHeight:36,"& .MuiTab-root":{minWidth:0,minHeight:36,px:0.85,py:0.3,
+            textTransform:"none",fontSize:"0.71rem",fontWeight:700,whiteSpace:"nowrap"}}}>
+          {MOBILE_SCANNER_TABS.map(({widget,label,accessibleLabel})=><Tab key={widget} value={widget} label={label}
+            id={`${mobileTabsId}-${widget}`} aria-label={accessibleLabel} aria-controls={`${mobileTabsId}-panel`}/>)}
+        </Tabs>:<Box sx={{flex:1}}/>}
+        {mobileTabs?<Tooltip title="Use stacked layout">
+          <IconButton size="small" aria-label="Use stacked layout" onClick={toggleMobileLayout}
+            sx={{width:36,height:36,flexShrink:0,border:1,borderColor:"divider",borderRadius:1}}>
+            <ViewStreamOutlined fontSize="small"/>
+          </IconButton>
+        </Tooltip>:<Button size="small" variant="outlined" aria-label="Use tabs" onClick={toggleMobileLayout}
+          startIcon={<ViewDayOutlined fontSize="small"/>} sx={{height:36,textTransform:"none",fontSize:"0.71rem"}}>
+          Tabs
+        </Button>}
+      </Stack>}
+      <Box data-scanner-grid ref={gridRef} role={mobileTabs?"tabpanel":undefined}
+        id={mobileTabs?`${mobileTabsId}-panel`:undefined} aria-labelledby={mobileTabs?`${mobileTabsId}-${activeScanner}`:undefined} sx={{
       alignItems:"start",
       display:"grid",
       gap:1.5,
       gridTemplateAreas:{
-        xs:workspaceLayout.mobileAreas,
+        xs:mobileTabs?"none":workspaceLayout.mobileAreas,
         md:workspaceLayout.desktopAreas,
       },
       height:{xs:"auto",md:desktopGridHeight?`${desktopGridHeight}px`:"calc(100dvh - 76px)"},
       gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(4,minmax(0,1fr))"},
-      gridTemplateRows:{xs:"repeat(5,auto)",md:"repeat(2,minmax(0,1fr))"},
+      gridTemplateRows:{xs:mobileTabs?"auto":"repeat(5,auto)",md:"repeat(2,minmax(0,1fr))"},
       '& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 },
     }}>
-      {(["gainers","momentum"] as const).map(kind=><ScannerWorkspaceCard key={kind} slot={workspaceLayout.assignments[kind]} widget={kind}>
+      {(["gainers","momentum"] as const).filter(showScanner).map(kind=><ScannerWorkspaceCard key={kind} slot={workspaceLayout.assignments[kind]} widget={kind}>
         <DashboardPanel hideHeader>
           <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5,minHeight:22}}>
             {kind==="momentum"?<Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box>:gainerTabs}
@@ -661,13 +711,13 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
           {contents(kind,true)}
         </DashboardPanel>
       </ScannerWorkspaceCard>)}
-      <ScannerWorkspaceCard slot={workspaceLayout.assignments["top-losers"]} widget="top-losers"><DeclinesCard results={model?.declines}
+      {showScanner("top-losers")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["top-losers"]} widget="top-losers"><DeclinesCard results={model?.declines}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)}
-        session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
-      <ScannerWorkspaceCard slot={workspaceLayout.assignments["high-drops"]} widget="high-drops"><PremarketPullbacksCard results={model?.premarketPullbacks}
-        notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
-      <ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>
-    </Box></ScannerNewsDrawerProvider>
+        session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
+      {showScanner("high-drops")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["high-drops"]} widget="high-drops"><PremarketPullbacksCard results={model?.premarketPullbacks}
+        notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
+      {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
+    </Box></Box></ScannerNewsDrawerProvider>
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,
