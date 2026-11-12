@@ -2,6 +2,8 @@
 
 import { ChartMultiviewCharts } from "../charts/chart-multiview";
 import { ChartMultiviewMenu } from "../charts/chart-multiview-menu";
+import { useChartPreferences } from "../charts/use-chart-preferences";
+import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import { useChartMultiview } from "../charts/use-chart-multiview";
 import { chartCount, reconcileChartTickers, selectedChart, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 
@@ -12,6 +14,10 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Drawer from "@mui/material/Drawer";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -35,7 +41,7 @@ import { ScannerChartLaunchControls, SideCardChartControls, useSideCardChartCont
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
-import { Fragment, useEffect, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
+import { Fragment, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
 
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
@@ -47,7 +53,7 @@ import { ScannerCountryFlag } from "./scanner-country-flag";
 import { ScannerStockCards, TickerCardSectionSettings } from "./scanner-stock-cards";
 import { ScannerProviderControls } from "./scanner-provider-controls";
 import { ScannerTickerDetails } from "./scanner-ticker-details";
-import { EMPTY_CHART_WORKSPACE, scannerChartWorkspace, type ScannerChartTarget } from "./scanner-chart-workspace";
+import { EMPTY_CHART_WORKSPACE, scannerChartWorkspace,replaceScannerChartPanel, type ScannerChartTarget } from "./scanner-chart-workspace";
 import { DEFAULT_DECLINE_CONTROLS } from "@/src/modules/scanner/live/declines";
 import { PremarketPullbacksCard } from "./premarket-pullbacks-card";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
@@ -323,45 +329,47 @@ function SidebarScreenerCard({children}:{children:ReactNode}) {
     '& .MuiTableContainer-root':{overscrollBehaviorY:"auto",flex:"1 1 auto",minHeight:0,maxHeight:"none !important",overflow:"auto"}}}>{children}</Box>;
 }
 
-function ScannerChartDrawer({charts,row,onClose,onSelect,onRemove,onAdd,screeners,section,onSectionChange,stocks,limitReached,layout,onLayoutChange,layoutReady,layoutMessage}: {
-  layout:ChartMultiview;onLayoutChange:(next:ChartMultiview)=>void;layoutReady:boolean;layoutMessage:string;
+function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,onClose,onSelect,onRemove,onAdd,screeners,section,onSectionChange,stocks,layout,onLayoutChange,layoutReady,layoutMessage,defaultTimeframe}: {
+  open:boolean;temporary:boolean;onBack:()=>void;onSaveTemporary:()=>void;
+  layout:ChartMultiview;onLayoutChange:(next:ChartMultiview)=>void;layoutReady:boolean;layoutMessage:string;defaultTimeframe:ChartTimeframe;
   charts:readonly ScannerChartTarget[];row:ScannerChartTarget|null;onClose:()=>void;onSelect:(symbol:string)=>void;onRemove:(symbol:string)=>void;onAdd:(symbol:string)=>void;
-  screeners:ReactNode;section:"details"|"screeners";onSectionChange:(section:"details"|"screeners")=>void;stocks:readonly LiveScannerRow[];limitReached:boolean;
+  screeners:ReactNode;section:"details"|"screeners";onSectionChange:(section:"details"|"screeners")=>void;stocks:readonly LiveScannerRow[];
 }) {
   const tabsId=useId();
 
   const [newChartSymbol,setNewChartSymbol]=useState("");
   const addChart=()=>{const symbol=newChartSymbol.trim().toUpperCase();if(/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol)){onAdd(symbol);setNewChartSymbol("");}};
   const [levelsActionTarget,setLevelsActionTarget]=useState<HTMLDivElement|null>(null);
-  return <Drawer anchor="right" onClose={onClose} open={charts.length>0} slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":"Chart workspace",sx:{borderRadius:0,'& [data-traderlink-platform-dashboard-card="panel"]':{borderRadius:0},maxWidth:"100vw",width:row?.showDetails?"100vw":{xs:"100vw",md:"78vw",xl:1180}}}}}>
+  return <Drawer anchor="right" onClose={onClose} open={open&&charts.length>0} slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":"Chart workspace",sx:{borderRadius:0,'& [data-traderlink-platform-dashboard-card="panel"]':{borderRadius:0},maxWidth:"100vw",width:row?.showDetails?"100vw":{xs:"100vw",md:"78vw",xl:1180}}}}}>
     <Stack sx={{height:"100dvh",minHeight:0}}>
       <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",flexShrink:0,px:{xs:1.5,md:2},py:0}}>
         <Box sx={{minWidth:0}}>
           <Stack direction="row" data-chart-header-controls sx={{alignItems:"center",flexWrap:"wrap",gap:0.75}}>
             <Typography color="text.secondary" variant="body2">TradersLink + TradingView charts</Typography>
+            {temporary?<><Button size="small" onClick={onBack}>Back to saved charts</Button>
+              <Button size="small" onClick={onSaveTemporary}>Add to saved charts</Button></>:<>
             <Box component="form" onSubmit={event=>{event.preventDefault();addChart();}} sx={{display:"flex",alignItems:"center",gap:0.5}}>
               <TextField value={newChartSymbol} onChange={event=>setNewChartSymbol(event.target.value)} placeholder="Ticker" slotProps={{htmlInput:{"aria-label":"Add chart ticker",maxLength:15}}} size="small" sx={{width:82,'& input':{py:0.4,px:0.75,fontSize:12}}}/>
               <Button type="submit" size="small" disabled={!/^[A-Z][A-Z0-9.-]{0,14}$/.test(newChartSymbol.trim().toUpperCase())} sx={{minWidth:0,px:0.5,fontSize:11}}>Add chart</Button>
             </Box>
-            <ChartMultiviewMenu layout={layout} onChange={onLayoutChange} disabled={!layoutReady}/>{layoutMessage?<Typography role="status" variant="caption">{layoutMessage}</Typography>:null}
+            <ChartMultiviewMenu layout={layout} defaultTimeframe={defaultTimeframe} onChange={onLayoutChange} disabled={!layoutReady}/>{layoutMessage?<Typography role="status" variant="caption">{layoutMessage}</Typography>:null}
             {charts.map(chart=><Box key={chart.symbol} sx={{display:"inline-flex",alignItems:"center",borderRadius:1,bgcolor:row?.symbol===chart.symbol?"action.selected":undefined}}>
               <Button size="small" aria-pressed={row?.symbol===chart.symbol} aria-label={`Show ${chart.symbol} details`} onClick={()=>{onSelect(chart.symbol);onSectionChange("details");}} sx={{px:0.5,py:0,minHeight:24,minWidth:0,color:"warning.main",fontWeight:800,textTransform:"none"}}>{chart.symbol}</Button>
               <IconButton size="small" aria-label={`Close ${chart.symbol} chart`} onClick={()=>onRemove(chart.symbol)} sx={{p:0.5}}><CloseRoundedIcon sx={{fontSize:16}}/></IconButton>
-            </Box>)}
+            </Box>)}</>}
           </Stack>
         </Box>
         <IconButton aria-label="Close chart" onClick={onClose} sx={{p:"5px",flexShrink:0}}><CloseRoundedIcon/></IconButton>
       </Stack>
-      {limitReached?<Alert severity="info" sx={{py:0}}>Four charts are open. Close a chart before adding another.</Alert>:null}
       <Box data-chart-workspace-scroll sx={{flex:1,minHeight:0,display:{xs:"block",md:"grid"},gridTemplateColumns:row?.showDetails?{xs:"1fr",md:"minmax(0,2fr) minmax(380px,1fr)"}:"1fr",overflowY:{xs:"auto",md:"hidden"},overscrollBehaviorY:"auto"}}>
         <Box data-workspace-charts sx={{display:"flex",minWidth:0,minHeight:0,height:{xs:"65dvh",md:"auto"},p:{xs:0,md:0.5}}}>
-          <ChartMultiviewCharts workspace="scanner" layout={layout} onChange={onLayoutChange} onSelectTicker={onSelect} activeSymbol={row?.symbol} allowEmpty ready={layoutReady}/>
+          <ChartMultiviewCharts key={temporary?"temporary":"saved"} plain={temporary} viewPrefix={temporary?"temporary-":""} workspace="scanner" defaultTimeframe={defaultTimeframe} layout={layout} onChange={onLayoutChange} onSelectTicker={onSelect} activeSymbol={row?.symbol} allowEmpty ready={layoutReady}/>
         </Box>
         {row?.showDetails?<Stack component="aside" aria-label="Chart workspace details" spacing={0.5} sx={{minWidth:0,minHeight:0,pl:2,pr:0.5,py:0.5,borderLeft:{md:1},borderColor:"divider",overflow:{xs:"visible",md:"hidden"}}}>
           <Stack direction="row" sx={{alignItems:"center",gap:0.75,minWidth:0,flexShrink:0,borderBottom:1,borderColor:"divider"}}>
           <Tabs value={section==="screeners"?"screeners":row.symbol} onChange={(_,value:string)=>{if(value==="screeners")onSectionChange("screeners");else{onSelect(value);onSectionChange("details");}}} variant="scrollable" scrollButtons="auto" aria-label="Open stock details" sx={{minHeight:34,flex:1,minWidth:0,'& .MuiTab-root':{minHeight:34,minWidth:0,px:1.25,py:0.5,fontSize:"0.8rem",textTransform:"none"},'& .MuiTab-root.Mui-selected':{color:"warning.main",bgcolor:"action.selected",fontWeight:800},'& .MuiTabs-indicator':{bgcolor:"warning.main",height:3}}}>
             {charts.map(chart=><Tab key={chart.symbol} value={chart.symbol} label={chart.symbol} id={`${tabsId}-${chart.symbol}-tab`} aria-controls={`${tabsId}-${chart.symbol}-panel`}/>)}
-            <Tab value="screeners" label="Scanners" id={`${tabsId}-screeners-tab`} aria-controls={`${tabsId}-screeners-panel`}/>
+            {!temporary&&<Tab value="screeners" label="Scanners" id={`${tabsId}-screeners-tab`} aria-controls={`${tabsId}-screeners-panel`}/>}
           </Tabs>
             <Box data-levels-action-slot ref={setLevelsActionTarget} sx={{flexShrink:0}}/>
           </Stack>
@@ -472,20 +480,63 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
   const [chartWorkspace,dispatchChart]=useReducer(scannerChartWorkspace,EMPTY_CHART_WORKSPACE);
   const chartView=useChartMultiview("scanner");
-  const chartLayout=reconcileChartTickers(chartView.layout,chartWorkspace.charts.map(chart=>chart.symbol));
+  const { preferences:chartPreferences, ready:preferencesReady, message:preferencesMessage }=useChartPreferences();
+  const defaultTimeframe=chartPreferences.timeframe;
+  const chartOpeningReady=(preferencesReady||Boolean(preferencesMessage))&&(chartView.ready||Boolean(chartView.message));
+  const pendingChart=useRef<ScannerChartTarget|null>(null);
+  const chartLayout=reconcileChartTickers(chartView.layout,chartWorkspace.charts.map(chart=>chart.symbol),defaultTimeframe);
   const chartRow=chartWorkspace.charts.find(chart=>chart.symbol===chartWorkspace.selectedSymbol)??null;
   const [workspaceSection,setWorkspaceSection]=useState<"details"|"screeners">("details");
+  const [drawerOpen,setDrawerOpen]=useState(false);
+  const [temporary,setTemporary]=useState<{chart:ScannerChartTarget;layout:ChartMultiview}|null>(null);
+  const [replacement,setReplacement]=useState<ScannerChartTarget|null>(null);
+  const selectSavedChart=(symbol:string)=>{
+    const group=chartLayout.groups.find(item=>item.symbol===symbol);
+    if(group&&!group.panels.some(panel=>panel.id===chartLayout.selectedPanel))
+      chartView.change({...chartLayout,selectedPanel:group.panels[0].id});
+    dispatchChart({type:"select",symbol});
+  };
+  const saveCharts=(next:ChartMultiview,chart?:ScannerChartTarget)=>{
+    chartView.change(next);
+    dispatchChart({type:"configure",selectedSymbol:selectedChart(next)?.group.symbol??null,
+      charts:next.groups.map(group=>chart?.symbol===group.symbol?chart:
+        chartWorkspace.charts.find(item=>item.symbol===group.symbol)??{symbol:group.symbol,exchange:"NASDAQ",showDetails:true})});
+  };
+  const openChart=(request:ScannerChartTarget)=>{
+    const chart={...request,showDetails:true,stock:request.stock??[...(model?.gainers.rows??[]),...(model?.dayGainers?.rows??[]),...(model?.momentum.rows??[])].find(stock=>stock.symbol===request.symbol)};
+    if(chartLayout.groups.some(group=>group.symbol===chart.symbol)){
+      setTemporary(null);selectSavedChart(chart.symbol);setWorkspaceSection("details");setDrawerOpen(true);return;
+    }
+    if(!request.addChart&&chartLayout.groups.length){
+      setTemporary({chart,layout:singleChart(chart.symbol,defaultTimeframe)});setDrawerOpen(true);return;
+    }
+    if(chartCount(chartLayout)>=4){setReplacement(chart);return;}
+    const next=reconcileChartTickers(chartLayout,[...chartWorkspace.charts.map(item=>item.symbol),chart.symbol],defaultTimeframe);
+    saveCharts({...next,selectedPanel:next.groups.find(group=>group.symbol===chart.symbol)?.panels[0].id??next.selectedPanel},chart);
+    setTemporary(null);setWorkspaceSection("details");setDrawerOpen(true);
+  };
+  const replaceChart=(panelId:string)=>{
+    if(!replacement)return;
+    const next=replaceScannerChartPanel(chartLayout,panelId,replacement.symbol,defaultTimeframe);
+    if(next===chartLayout)return;
+    saveCharts(next,replacement);
+    setReplacement(null);setTemporary(null);setWorkspaceSection("details");setDrawerOpen(true);
+  };
+  const openPendingChart=useEffectEvent(()=>{
+    const chart=pendingChart.current;
+    pendingChart.current=null;
+    if(chart)openChart(chart);
+  });
+  useEffect(()=>{
+    if(chartOpeningReady)openPendingChart();
+  },[chartOpeningReady]);
   const setChartRow=(chart:ScannerChartTarget)=>{
-    const currentGroup=chartLayout.groups.find(group=>group.symbol===chart.symbol);
-    const existing=currentGroup??chartView.layout.groups.find(group=>group.symbol===chart.symbol);
-    if(chart.addChart&&!currentGroup&&chartCount(chartLayout)>=4){dispatchChart({type:"limit"});return;}
-    const next=chart.addChart?reconcileChartTickers(chartLayout,[...chartWorkspace.charts.map(item=>item.symbol),chart.symbol]):!chartWorkspace.charts.length&&existing?{version:1 as const,groups:[existing],selectedPanel:existing.panels[0].id}:singleChart(chart.symbol,existing?.panels[0].timeframe??"1m");
-    chartView.change({...next,mobileLayout:chartView.layout.mobileLayout??"tabs",landscapeLayout:chartView.layout.landscapeLayout??chartView.layout.mobileLayout??"tabs",selectedPanel:next.groups.find(group=>group.symbol===chart.symbol)?.panels[0].id??next.selectedPanel});
-    dispatchChart({type:chart.addChart?"open":"replace",chart:{...chart,showDetails:true,stock:chart.stock??[...(model?.gainers.rows??[]),...(model?.dayGainers?.rows??[]),...momentumStocks].find(stock=>stock.symbol===chart.symbol)}});setWorkspaceSection("details");
+    if(chartOpeningReady)openChart(chart);
+    else pendingChart.current=chart;
   };
   const configureCharts=(next:ChartMultiview)=>{
-    chartView.change(next);
-    dispatchChart({type:"configure",selectedSymbol:selectedChart(next)?.group.symbol??null,charts:next.groups.map(group=>chartWorkspace.charts.find(chart=>chart.symbol===group.symbol)??{symbol:group.symbol,exchange:"NASDAQ",showDetails:true})});
+    if(temporary){setTemporary({...temporary,layout:next});return;}
+    saveCharts(next);
   };
   const [workspaceScreenersSelected,setWorkspaceScreenersSelected]=useState({gainers:true,momentum:false,declines:false,pullbacks:false,events:false});
   const [newsArticle,setNewsArticle]=useState<PressReleaseArticle|null>(null);
@@ -580,6 +631,9 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         {model&&model.status!=='disabled'?<Stack direction="row" sx={{ flexWrap:"wrap",gap:1 }}><Chip label={`${model.receivedCount}/${model.universeCount} quotes`} size="small"/><Chip label={`${model.missingFloatCount} missing float`} size="small"/>{model.missingSymbols.length?<Chip color="warning" label={`${model.missingSymbols.length} missing quotes`} size="small"/>:null}</Stack>:null}
       </Stack>
     </DashboardPanel>:null}
+    {!drawerOpen&&chartWorkspace.charts.length>0&&<Box sx={{display:"flex",justifyContent:"flex-end"}}>
+      <Button size="small" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>Reopen chart drawer</Button>
+    </Box>}
     <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box data-scanner-grid ref={gridRef} sx={{
       alignItems:"start",
       display:"grid",
@@ -629,6 +683,32 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0,p:2})}>{fullScanner==="gainers"?gainerTabs:null}{contents(fullScanner)}</Box>
       </Stack>:null}
     </Drawer>
-    <ScannerChartDrawer layout={chartLayout} onLayoutChange={configureCharts} layoutReady={chartView.ready} layoutMessage={chartView.message} onAdd={symbol=>{setChartRow({symbol,exchange:"NASDAQ",showDetails:true,addChart:true});setWorkspaceSection("details");}} charts={chartWorkspace.charts} limitReached={chartWorkspace.limitReached} onSelect={symbol=>{const group=chartLayout.groups.find(group=>group.symbol===symbol);if(group&&!group.panels.some(panel=>panel.id===chartLayout.selectedPanel))chartView.change({...chartLayout,selectedPanel:group.panels[0].id});dispatchChart({type:"select",symbol});}} onRemove={symbol=>{chartView.change({...chartLayout,groups:chartLayout.groups.filter(group=>group.symbol!==symbol),selectedPanel:chartLayout.groups.filter(group=>group.symbol!==symbol).some(group=>group.panels.some(panel=>panel.id===chartLayout.selectedPanel))?chartLayout.selectedPanel:chartLayout.groups.filter(group=>group.symbol!==symbol)[0]?.panels[0].id??null});dispatchChart({type:"remove",symbol});}} onClose={()=>{chartView.clearViews();dispatchChart({type:"close"});setWorkspaceSection("details");}} row={chartRow} screeners={workspaceScreeners} section={workspaceSection} onSectionChange={setWorkspaceSection} stocks={[...(selectedGainers?.rows??[]),...momentumStocks]}/>
+    <ScannerChartDrawer open={drawerOpen} temporary={Boolean(temporary)} defaultTimeframe={defaultTimeframe}
+      layout={temporary?.layout??chartLayout} onLayoutChange={configureCharts} layoutReady={chartView.ready}
+      layoutMessage={temporary?"":chartView.message}
+      onBack={()=>setTemporary(null)} onSaveTemporary={()=>{if(temporary)openChart({...temporary.chart,addChart:true});}}
+      onAdd={symbol=>setChartRow({symbol,exchange:"NASDAQ",showDetails:true,addChart:true})}
+      charts={temporary?[temporary.chart]:chartWorkspace.charts} onSelect={temporary?()=>{}:selectSavedChart}
+      onRemove={symbol=>{
+        const groups=chartLayout.groups.filter(group=>group.symbol!==symbol);
+        const selectedPanel=groups.some(group=>group.panels.some(panel=>panel.id===chartLayout.selectedPanel))
+          ?chartLayout.selectedPanel:groups[0]?.panels[0].id??null;
+        saveCharts({...chartLayout,groups,selectedPanel});
+        if(!groups.length)setDrawerOpen(false);
+      }}
+      onClose={()=>{setDrawerOpen(false);}} row={temporary?.chart??chartRow}
+      screeners={workspaceScreeners} section={temporary?"details":workspaceSection}
+      onSectionChange={temporary?()=>{}:setWorkspaceSection} stocks={[...(selectedGainers?.rows??[]),...(model?.momentum.rows??[])]}/>
+    <Dialog open={Boolean(replacement)} onClose={()=>setReplacement(null)} aria-labelledby="replace-scanner-chart-title">
+      <DialogTitle id="replace-scanner-chart-title">Choose a chart to replace</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{mb:1}}>All four chart slots are in use. Choose a slot for {replacement?.symbol}.</Typography>
+        <Stack spacing={0.5}>{chartLayout.groups.flatMap(group=>group.panels.map(panel=>
+          <Button key={panel.id} onClick={()=>replaceChart(panel.id)} sx={{justifyContent:"flex-start",textTransform:"none"}}>
+            Replace {group.symbol} · {panel.timeframe}
+          </Button>))}</Stack>
+      </DialogContent>
+      <DialogActions><Button onClick={()=>setReplacement(null)}>Cancel</Button></DialogActions>
+    </Dialog>
   </Stack>;
 }

@@ -1,8 +1,9 @@
-import type { IndicatorResult, IndicatorTimeframe } from "./indicator-engine";
+import { intradayIndicatorMinutes, publicIndicatorSignals, type IntradayIndicatorFrame, type VwapSignals } from "./indicator-signals";
+import type { IndicatorResult, IndicatorTimeframe, SessionVwap } from "./indicator-engine";
 export type WatchlistMemberIndicatorSnapshot = Readonly<{
   version: "indicators-v1"; symbol: string; activationId: string;
   timeframes: Readonly<Partial<Record<IndicatorTimeframe, IndicatorResult>>>;
-  vwap: Readonly<{ value: number | null; dataThrough: number | null }>;
+  vwap: SessionVwap;
 }>;
 const numbers = ["dataThrough", "bars", "close", "ema9", "ema20", "rsi14", "rsiChange", "atr14", "atrPercent", "atrRatio",
   "ema9SlopeAtr", "ema20SlopeAtr", "volume", "volumeChangePercent", "volumeBaselineBars", "volumeRatio"] as const;
@@ -23,10 +24,20 @@ export function memberIndicatorSnapshot(input: WatchlistMemberIndicatorSnapshot 
       rsiCondition: allowed(result.rsiCondition, ["oversold", "overbought", "below_midpoint", "above_midpoint", "at_midpoint"]),
       rsiDirection: allowed(result.rsiDirection, ["rising", "falling", "little_changed", "recovered_above_oversold"]),
       volatility: allowed(result.volatility, ["expanding", "contracting", "steady"]),
+      signals: publicIndicatorSignals(result.signals, result.dataThrough),
+      priceDirection: allowed(result.priceDirection ?? null, ["rising", "falling", "flat"]) ?? undefined,
       volumeState: allowed(result.volumeState, ["above_baseline", "below_baseline", "near_baseline"]),
     } as IndicatorResult;
   }
+  const value = finite(input.vwap.value) ? input.vwap.value : null;
+  const dataThrough = Number.isSafeInteger(input.vwap.dataThrough) && input.vwap.dataThrough! > 0 ? input.vwap.dataThrough : null;
+  const signals: Partial<Record<IntradayIndicatorFrame, VwapSignals[IntradayIndicatorFrame]>> = {};
+  if (value !== null && dataThrough !== null) {
+    for (const frame of Object.keys(intradayIndicatorMinutes) as IntradayIndicatorFrame[]) {
+      const signal = publicIndicatorSignals({ vwap: input.vwap.signals?.[frame] }, dataThrough)?.vwap;
+      if (signal) signals[frame] = signal;
+    }
+  }
   return { version: "indicators-v1", symbol: input.symbol, activationId: input.activationId, timeframes,
-    vwap: { value: finite(input.vwap.value) ? input.vwap.value : null,
-      dataThrough: Number.isSafeInteger(input.vwap.dataThrough) && input.vwap.dataThrough! > 0 ? input.vwap.dataThrough : null } };
+    vwap: { value, dataThrough, ...(Object.keys(signals).length ? { signals } : {}) } };
 }

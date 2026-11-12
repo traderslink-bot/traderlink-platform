@@ -54,7 +54,7 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, publicationIden
   }, [symbol, firstPostedAt, activationId]);
   const current = snapshot?.activationId === activationId ? snapshot : null;
   const result = current?.timeframes[selected];
-  const rows = watchlistIndicatorGroups(indicatorDisplayRows({ result, timeframe: selected, livePrice, vwap: current?.vwap.value ?? null }));
+  const rows = watchlistIndicatorGroups(indicatorDisplayRows({ result, timeframe: selected, livePrice, vwap: current?.vwap.value ?? null, vwapSignals: current?.vwap.signals }));
   const select = (frame: IndicatorTimeframe) => {
     setOpenHelp(null);
     setSelected(frame);
@@ -90,7 +90,10 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, publicationIden
             {part.state ? <span className={styles.state} data-tone={part.tone}>{part.state}</span> : null}
             {part.conditionState ? <span className={styles.state} data-tone="neutral">{part.conditionState}</span> : null}
             {part.label === "RSI" ? "RSI " : null}{part.value}
-            {part.explanation ? <p>{part.explanation}</p> : null}
+            {part.explanation ? <p>{part.label === "Momentum" ? <strong>RSI momentum. </strong> : null}{part.explanation}</p> : null}
+            {part.signals?.map(signal => <p key={`${signal.text}-${signal.at}`}>
+              <strong>{signal.text}</strong>{" · "}<time dateTime={new Date(signal.at).toISOString()}>{timestamp(signal.at)}</time>
+            </p>)}
           </div>)}
           {row.label === "VWAP" ? <p className={styles.updated}>Last updated {timestamp(current?.vwap.dataThrough)}</p> : null}
         </dd>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { IndicatorSeries } from "./indicator-series";
 import {
   advanceIndicator, calculateIndicatorHistory, calculateSessionVwap, createIndicatorCheckpoint,
   type IndicatorCandle,
@@ -118,5 +119,102 @@ describe("Watchlist deterministic indicator engine (no providers or AI)", () => 
     expect(calculateSessionVwap({ ...input, coverageComplete: false }).value).toBeNull();
     expect(() => calculateSessionVwap({ ...input, sessionStart: start + 60_000 })).toThrow("invalid_vwap_series");
     expect(() => calculateSessionVwap({ ...input, candles: [bars[0], bars[0]] })).toThrow("invalid_vwap_series");
+  });
+});
+
+describe("Watchlist signal events", () => {
+  it("timestamps an EMA cross once, preserves it on steady continuation, then records a second cross", () => {
+    const bars = candles(50, i => i < 35 ? 100 + i : i < 45 ? 65 : 300);
+    const { results } = run(bars);
+    expect(results[34].signals?.averages).toBeUndefined();
+    expect(results[35].signals?.averages).toEqual({ kind: "emaBearishCross", at: bars[35].end });
+    expect(results[44].signals?.averages).toEqual(results[35].signals?.averages);
+    expect(results[45].signals?.averages).toEqual({ kind: "emaBullishCross", at: bars[45].end });
+  });
+
+  it("reports loss of trend alignment separately from an EMA cross", () => {
+    const bars = candles(36, i => i < 35 ? 100 + i : 119);
+    const { results } = run(bars);
+    expect(results[34].trend).toBe("uptrend");
+    expect(results[35].signals?.trend).toEqual({ kind: "uptrendPriceWeakening", at: bars[35].end });
+    expect(results[35].signals?.averages).toBeUndefined();
+  });
+
+  it("preserves distinct RSI threshold events on a single sharp move in either direction", () => {
+    const bars = candles(38, i => i < 34 ? 100 + i : i === 34 ? 75 : 250);
+    const { results } = run(bars);
+    expect(results[34].signals).toMatchObject({
+      rsiUpper: { kind: "rsiLeftOverbought", at: bars[34].end },
+      rsiMidpoint: { kind: "rsiBelowMidpoint", at: bars[34].end },
+      rsiLower: { kind: "rsiOversold", at: bars[34].end },
+      momentum: { kind: "momentumTurningLower", at: bars[34].end },
+    });
+    expect(results[35].signals).toMatchObject({
+      rsiUpper: { kind: "rsiOverbought", at: bars[35].end },
+      rsiMidpoint: { kind: "rsiAboveMidpoint", at: bars[35].end },
+      rsiLower: { kind: "rsiRecovered", at: bars[35].end },
+    });
+    expect(results[37].signals?.momentum).toEqual({ kind: "momentumTurningHigher", at: bars[37].end });
+  });
+
+  it("describes flat price on elevated volume and resets volume comparisons at a session boundary", () => {
+    const bars = candles(25, () => 100).map((bar, i) => ({
+      ...bar, volume: i === 22 ? 400 : 100, sessionKey: i === 24 ? "2026-09-11:postmarket" : bar.sessionKey,
+    }));
+    const { results } = run(bars);
+    expect(results[22]).toMatchObject({ volumeState: "above_baseline", priceDirection: "flat",
+      signals: { volume: { kind: "volumePickingUp", at: bars[22].end } } });
+    expect(results[23].signals?.volume).toEqual({ kind: "volumeFading", at: bars[23].end });
+    expect(results[24].signals?.volume).toBeUndefined();
+    expect(results[24].volume).toBe(100);
+  });
+
+  it("uses preceding ATR to detect a wide candle in either price direction", () => {
+    for (const close of [90, 110]) {
+      const bars = candles(39, () => 100).map((bar, i) => i < 38 ? bar : {
+        ...bar, close, high: Math.max(100, close) + 1, low: Math.min(100, close) - 1,
+      });
+      const { results } = run(bars);
+      expect(results[37].atr14).toBe(2);
+      expect(results[38].signals?.range).toEqual({ kind: "wideCandle", at: bars[38].end });
+      expect(results[38].atr14).toBeGreaterThan(2);
+    }
+  });
+
+  it("detects ATR contraction and subsequent expansion through a steady period", () => {
+    const bars = candles(75, () => 100).map((bar, i) => {
+      const halfRange = i < 37 ? 2 : i < 70 ? 0.1 : 8;
+      return { ...bar, high: 100 + halfRange, low: 100 - halfRange };
+    });
+    const { results } = run(bars);
+    expect(results.find(result => result.signals?.atr?.kind === "atrContracting")?.volatility).toBe("contracting");
+    const expansion = results.find(result => result.signals?.atr?.kind === "atrExpandingFromQuiet");
+    expect(expansion?.signals?.atr?.at).toBe(expansion?.dataThrough);
+    expect(expansion?.volatility).toBe("expanding");
+  });
+
+  it("tracks VWAP against the same intraday price series and waits for the selected bucket to close", () => {
+    const bars = candles(30, i => i < 5 ? 99 + i : i < 10 || i >= 15 ? 85 : 130);
+    const vwap = (count: number) => calculateSessionVwap({ candles: bars.slice(0, count), sessionStart: start,
+      sessionEnd: start + 3_600_000, completedThrough: bars[count - 1].end, coverageComplete: true });
+    expect(vwap(6).signals?.["1m"]).toEqual({ kind: "vwapLost", at: bars[5].end });
+    expect(vwap(6).signals?.["5m"]).toBeUndefined();
+    expect(vwap(10).signals?.["5m"]).toEqual({ kind: "vwapLost", at: bars[9].end });
+    expect(vwap(15).signals?.["5m"]).toEqual({ kind: "vwapReclaimed", at: bars[14].end });
+    expect(vwap(15).signals?.["15m"]).toBeUndefined();
+    expect(vwap(30).signals?.["15m"]).toEqual({ kind: "vwapLost", at: bars[29].end });
+  });
+
+  it("restores legacy checkpoints and keeps the same original timestamp across refreshed reads", () => {
+    const bars = candles(38, i => i < 35 ? 100 + i : 65);
+    const calculation = run(bars);
+    const { signals, priceDirection, ...legacyResult } = calculation.results.at(-1)!;
+    const through = bars.at(-1)!.end;
+    const restore = (result: typeof calculation.results[number]) => IndicatorSeries.restore({ activationId: "fixture", seriesKey: "fixture:unadjusted",
+      timeframe: "1m", completedThrough: through, initialCheckpoint: createIndicatorCheckpoint("1m", "fixture:unadjusted"),
+      candles: bars, result });
+    expect(restore(legacyResult).snapshot().result).toEqual(calculation.results.at(-1));
+    expect(restore({ ...legacyResult, signals, priceDirection }).snapshot().result?.signals?.averages)
+      .toEqual({ kind: "emaBearishCross", at: bars[35].end });
   });
 });

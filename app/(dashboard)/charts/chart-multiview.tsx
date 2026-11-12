@@ -9,9 +9,9 @@ import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import { AlpacaLightweightChart } from "./alpaca-lightweight-chart";
 import { ChartMultiviewMenu } from "./chart-multiview-menu";
 
-export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenMultiview, onDefaultTimeframeChange, activeSymbol, allowEmpty = false, ready = true, compactMobile = false, workspace = "main", viewPrefix = "", plain = false, workspaceRow = false }: {
+export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenMultiview, onDefaultTimeframeChange, defaultTimeframe, activeSymbol, allowEmpty = false, ready = true, compactMobile = false, workspace = "main", viewPrefix = "", plain = false, workspaceRow = false }: {
   layout: ChartMultiview; onChange: (next: ChartMultiview) => void; onSelectTicker?: (symbol: string) => void; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
-  activeSymbol?: string; allowEmpty?: boolean; ready?: boolean; compactMobile?: boolean; workspace?: "main" | "scanner"; viewPrefix?: string; plain?: boolean; workspaceRow?: boolean;
+  defaultTimeframe?: ChartTimeframe; activeSymbol?: string; allowEmpty?: boolean; ready?: boolean; compactMobile?: boolean; workspace?: "main" | "scanner"; viewPrefix?: string; plain?: boolean; workspaceRow?: boolean;
 }) {
   const theme = useTheme(), narrow = useMediaQuery(theme.breakpoints.down("md"));
   const landscape = useMediaQuery("(orientation: landscape) and (max-height: 600px) and (max-width: 1200px)"), mobile = narrow || landscape;
@@ -63,7 +63,7 @@ export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenM
             }}
             onOpenMultiview={onOpenMultiview}
             onDefaultTimeframeChange={onDefaultTimeframeChange}
-            actions={!main && !plain ? <ChartMultiviewMenu layout={{ ...layout, selectedPanel: panel.id }} onChange={onChange} disabled={!ready} /> : undefined}
+            actions={!main && !plain ? <ChartMultiviewMenu layout={{ ...layout, selectedPanel: panel.id }} onChange={onChange} disabled={!ready} defaultTimeframe={defaultTimeframe} /> : undefined}
             closeAction={!plain && (allowEmpty || chartCount(layout) > 1) ? <IconButton size="small" aria-label={`Close ${group.symbol} ${panel.timeframe} chart`} onClick={() => onChange(removeChartPanel(layout, panel.id))} sx={{ minWidth: main && mobile ? 44 : { xs: 44, md: 28 }, minHeight: main ? (mobile ? 40 : 34) : { xs: 44, md: 28 }, p: 0.25 }}><CloseRounded sx={{ fontSize: 16 }} /></IconButton> : undefined}
             sx={{ flex: 1, height: "100%", minHeight: 0, border: 0, borderRadius: 0 }} />
         </Box>)}

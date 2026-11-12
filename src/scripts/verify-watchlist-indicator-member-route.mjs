@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { stripTypeScriptTypes } from "node:module";
+import { registerHooks, stripTypeScriptTypes } from "node:module";
 import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
-import { memberIndicatorSnapshot } from "../lib/live-watchlist/indicators/indicator-member-snapshot.ts";
+registerHooks({ resolve(specifier, context, next) {
+  try { return next(specifier, context); } catch (error) {
+    if (error.code === "ERR_MODULE_NOT_FOUND" && specifier === "./indicator-signals") return next(`${specifier}.ts`, context);
+    throw error;
+  }
+} });
+const { memberIndicatorSnapshot } = await import("../lib/live-watchlist/indicators/indicator-member-snapshot.ts");
 
 const posted = Date.parse("2026-09-11T13:30:00Z");
 let auth = false, ticker = { status: "live", firstPostedAt: posted }, storeReads = 0, cacheReads = 0, assertions = 0;
@@ -10,10 +16,14 @@ const context = createContext({ Response });
 const source = await readFile(new URL("../../app/api/live-watchlist/symbols/[symbol]/indicators/route.ts", import.meta.url), "utf8");
 const privateSnapshot = { version: "indicators-v1", symbol: "TNON", activationId: `TNON:${posted}`, calculationId: "private-audit-id", provider: "Moomoo",
   timeframes: { "1m": { version: "indicators-v1", timeframe: "1m", close: 3, dataThrough: posted + 60_000,
-    provider: "Moomoo", requestScope: "private-scope", rawError: "private-error", trend: "uptrend" } }, vwap: { value: 3, dataThrough: posted + 60_000, secret: "private-vwap" } };
+    provider: "Moomoo", requestScope: "private-scope", rawError: "private-error", trend: "uptrend",
+    signals: { trend: { kind: "uptrendEstablished", at: posted + 60_000, secret: "private-signal" } } } }, vwap: { value: 3, dataThrough: posted + 60_000, secret: "private-vwap" } };
 const imports = {
-  "@/src/lib/live-watchlist/live-watchlist-auth": { authorizeWatchlistMemberRequest: async () => auth ? { ok: true } : { ok: false, error: "Access denied.", status: 403 } },
-  "@/src/lib/live-watchlist/live-watchlist-store": { LiveWatchlistStore: class { async getSymbol() { storeReads++; return ticker; } } },
+  "@/src/modules/watchlist/server/access/watchlist-analysis-visibility": { canViewPrivateWatchlistTicker: () => true, canViewWatchlistTicker: () => true },
+  "@/src/modules/watchlist/server/access/watchlist-feature-access": { readWatchlistFeatureAccess: () => ({ indicators: true, tickerDetails: true }) },
+  "@/src/lib/live-watchlist/live-watchlist-auth": { authorizeWatchlistMemberRequest: async () => auth ? { ok: true, principal: { platformUserId: "fixture" } } : { ok: false, error: "Access denied.", status: 403 } },
+  "@/src/lib/live-watchlist/live-watchlist-store": { LiveWatchlistStore: class { async getSymbol() { storeReads++; return ticker; } },
+    validIndicatorPublicationIdentity: (symbol, identity) => identity === `${symbol}:${posted}` },
   "@/src/modules/watchlist/server/indicators/indicator-refresh-runtime": { readCachedWatchlistIndicators: (symbol, activationId) => {
     cacheReads++; assert.equal(symbol, "TNON"); assert.equal(activationId, `TNON:${posted}`); return privateSnapshot;
   } },
@@ -34,10 +44,11 @@ for (const invalid of [null, { status: "deactivated", firstPostedAt: posted }, {
   ticker = invalid; equal((await get("TNON")).status, 404);
 }
 equal(cacheReads, 0);
-ticker = { status: "live", firstPostedAt: posted };
+ticker = { status: "live", firstPostedAt: posted, indicatorPublicationIdentity: `TNON:${posted}` };
 const response = await get("tnon"), body = await response.text();
 equal(response.status, 200); equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
 equal(/Moomoo|private-|provider|requestScope|rawError|calculationId|secret/u.test(body), false);
 equal(JSON.parse(body).snapshot.timeframes["1m"].trend, "uptrend");
+equal(JSON.parse(body).snapshot.timeframes["1m"].signals.trend, { kind: "uptrendEstablished", at: posted + 60_000 });
 equal(cacheReads, 1);
 console.log(`PASS: ${assertions} focused assertions against the actual member Indicators GET handler: existing authorization first, absent/deactivated/unposted ticker concealment, exact activation lookup, no-store and positive nested output allowlist. No provider requests or live storage.`);

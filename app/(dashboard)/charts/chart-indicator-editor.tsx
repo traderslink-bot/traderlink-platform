@@ -78,6 +78,8 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  const style=(key:string,changes:PlotStyle)=>{if(active)edit({plots:{...active.plots,[key]:{...active.plots?.[key],...changes}}});};
  const sourceLabel=(source:string)=>({open:'Open',high:'High',low:'Low',close:'Close',hl2:'HL2',hlc3:'HLC3',ohlc4:'OHLC4',hlcc4:'HLCC4'}[source]??source);
  return <>
+  <Typography component="h3" sx={{fontWeight:700}}>Chart defaults</Typography>
+  <Typography variant="body2" color="text.secondary">Indicators you add here are saved to your account for Charts and Scanners.</Typography>
   <TextField label="Search indicators" value={search} onChange={e=>setSearch(e.target.value)} size="small"/>
   <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
    {INDICATOR_TYPES.filter(type => typeName(type).toLowerCase().includes(search.toLowerCase())).map(type => {
@@ -86,7 +88,7 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
    })}
   </Stack>
   {indicators.length ? <>
-   <Typography component="h3" sx={{ fontWeight: 700 }}>On this chart</Typography>
+   <Typography component="h3" sx={{ fontWeight: 700 }}>This chart</Typography>
    {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
     const group = indicators.filter(indicator => indicator.type === type);
     const enabled = display.enabled[type] ?? group.some(indicator => indicator.visible !== false);
@@ -95,12 +97,15 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
      <Button onClick={() => choose(group[0].id)} aria-pressed={active?.type === type} sx={{ flex: 1, justifyContent: 'flex-start', textTransform: 'none', minWidth: 0 }}>{typeName(type)}</Button>
       <Button size="small" aria-label={`${hidden?'Show':'Hide'} ${typeName(type)} details`} onClick={() => onDisplayChange(type,'hidden',!hidden)} sx={{textTransform:'none',lineHeight:1.2}}>{hidden?'Show details':'Hide details'}</Button>
       <Button size="small" aria-label={`Turn ${enabled?'off':'on'} ${typeName(type)}`} onClick={() => onDisplayChange(type,'enabled',!enabled)} sx={{textTransform:'none',lineHeight:1.2}}>{enabled?'Turn off':'Turn on'}</Button>
-     <IconButton aria-label={`Remove ${typeName(type)}`} onClick={() => onChange(indicators.filter(indicator => indicator.type !== type))}><DeleteOutline /></IconButton>
     </Stack>;
    })}
-  </> : <Typography variant="body2">Choose an indicator to add it to your chart.</Typography>}
+  </> : <Typography variant="body2">Choose an indicator to add it to your chart defaults.</Typography>}
   {active?<Box sx={{borderTop:1,borderColor:'divider',pt:1}}>
-   <Typography component="h3" sx={{fontWeight:700,mb:1}}>{typeName(active.type)} settings</Typography>
+   <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:1,mb:1}}>
+    <Typography component="h3" sx={{fontWeight:700}}>{typeName(active.type)} defaults</Typography>
+    <Button size="small" onClick={()=>onChange(indicators.filter(indicator=>indicator.type!==active.type))}
+      sx={{textTransform:"none"}}>Remove from chart defaults</Button>
+   </Stack>
    <Box component="details" sx={{ mb: 1 }}>
     <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>TraderLink presets</Typography>
     <Stack spacing={1} sx={{ py: 1 }}>

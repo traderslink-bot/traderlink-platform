@@ -75,3 +75,10 @@ it("persists separate portrait and landscape layouts across rotation and edits",
  writeChartMultiview(directory,"owner-a",0,layout); expect(readChartMultiview(directory,"owner-a").layout).toEqual(layout);
  expect(()=>parseChartMultiview({...original,landscapeLayout:"rows"})).toThrow("invalid_layout");
 });
+
+it("uses the saved default for newly opened scanner symbols without resetting existing panels", () => {
+  const current = singleChart("POAS", "15m");
+  const added = reconcileChartTickers(current, ["POAS", "OMH"], "5m");
+  expect(added.groups.map(group => [group.symbol, group.panels[0].timeframe])).toEqual([["POAS", "15m"], ["OMH", "5m"]]);
+  expect(reconcileChartTickers(added, ["POAS", "OMH"], "1h")).toEqual(added);
+});

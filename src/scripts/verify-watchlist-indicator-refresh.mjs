@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { registerHooks } from "node:module";
 registerHooks({ resolve(specifier, context, next) {
+  if (specifier.startsWith("@/")) specifier = new URL("../../" + specifier.slice(2), import.meta.url).href;
+  if (specifier.startsWith("file:") && !/\.[a-z]+$/u.test(specifier)) return next(`${specifier}.ts`, context);
   try { return next(specifier, context); } catch (error) {
     if (error.code === "ERR_MODULE_NOT_FOUND" && specifier.startsWith(".") && !/\.[a-z]+$/u.test(specifier)) return next(`${specifier}.ts`, context);
     throw error;
@@ -115,3 +117,36 @@ equal(recoveryAudits.at(-1).timeframes.filter(f=>f.primaryOutcome==='cached_clos
 recoveryNow+=600000;await recoveryService.refresh('FEIM','FEIM:recovery');equal(recoveryCalls.length,6);equal(recoveryAudits.at(-1).outcome,'session_closed');
 recoveryService.reconcilePopulation(new Map());equal(recoveryService.current('FEIM','FEIM:recovery'),null);
 console.log(`PASS: ${assertions} offline refresh integration assertions across nine named ticker fixtures: four frames, session VWAP, completed Daily caching, two-minute reuse, retained timestamps on failure, explicit Yahoo fallback, immutable prior evidence and activation isolation. These are synthetic fixtures, not live market-data acceptance.`);
+
+const sparseThrough = day.preOpen + 60 * 60_000;
+let sparseNow = sparseThrough;
+let lastAlpacaEvidence;
+const sparseAudit = [];
+const sparseService = new IndicatorRefreshService({
+  calendar, providers: ["alpaca"], now: () => sparseNow, record: row => sparseAudit.push(row),
+  saveCalculation: async calculation => { lastAlpacaEvidence = calculation; return true; },
+  load: async input => {
+    const bars = Array.from({ length: 28 }, (_, index) => {
+      const price = index === 27 ? 2 : 3 + index * 0.01;
+      return { start: day.preOpen + index * 120_000, open: price, high: price + .02, low: price - .02, close: price, volume: 100 };
+    }).filter(bar => bar.start >= input.request.start);
+    return { provider: "alpaca", adjustment: "alpaca-split", pages: 1, transportIds: [], nextEnd: null,
+      outcome: bars.length ? "complete" : "no_data", bars };
+  },
+});
+const minuteDemand = { frames: ["1m"], minimumIntervalMs: 0, reuseCompletedFrames: false };
+const sparse = await sparseService.refresh("QUIET", "fixture", minuteDemand);
+assert.equal(sparse.timeframes["1m"].bars, 28);
+assert.ok(sparse.timeframes["1m"].ema20 > 0);
+assert.equal(sparse.timeframes["1m"].signals.averages.kind, "emaBearishCross");
+assert.equal(sparse.vwap.signals["1m"].kind, "vwapLost");
+assert.equal(sparseAudit.at(-1).timeframes[0].gapReset, false);
+sparseNow += 120_000;
+const sameRead = await sparseService.refresh("QUIET", "fixture", minuteDemand);
+assert.deepEqual(sameRead.vwap, sparse.vwap);
+assert.deepEqual(sameRead.timeframes, sparse.timeframes);
+const restartedAlpaca = new IndicatorRefreshService({ calendar, providers: ["alpaca"], now: () => sparseNow,
+  record: () => {}, saveCalculation: async () => true, load: async () => { throw Error("Unexpected provider call"); } });
+assert.equal(restartedAlpaca.restore("QUIET", "fixture", lastAlpacaEvidence), true);
+assert.deepEqual(restartedAlpaca.current("QUIET", "fixture").vwap, sparse.vwap);
+console.log("PASS: sparse Alpaca history retains EMA and VWAP, confirms events on real bars, and restores the same readings and timestamps.");

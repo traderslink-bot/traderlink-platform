@@ -43,7 +43,7 @@ export function selectedChart(layout: ChartMultiview) {
   for (const group of layout.groups) { const panel = group.panels.find(panel => panel.id === layout.selectedPanel); if (panel) return { group, panel }; }
   return null;
 }
-export function reconcileChartTickers(layout: ChartMultiview, symbols: readonly string[]): ChartMultiview {
+export function reconcileChartTickers(layout: ChartMultiview, symbols: readonly string[], defaultTimeframe: ChartTimeframe = "1m"): ChartMultiview {
   const wanted = [...new Set(symbols.map(chartSymbol))].slice(0, 4);
   const groups = layout.groups.filter(group => wanted.includes(group.symbol));
   const missing = wanted.filter(symbol => !groups.some(group => group.symbol === symbol));
@@ -51,7 +51,7 @@ export function reconcileChartTickers(layout: ChartMultiview, symbols: readonly 
   if (groups.reduce((sum, group) => sum + group.panels.length, 0) + missing.length > 4) return layout;
   const used = new Set(groups.flatMap(group => [group.id, ...group.panels.map(panel => panel.id)]));
   const id = (prefix: string) => { let i = 1; while (used.has(`${prefix}-${i}`)) i++; const result = `${prefix}-${i}`; used.add(result); return result; };
-  for (const symbol of missing) groups.push({ id: id("ticker"), symbol, panels: [{ id: id("chart"), timeframe: "1m" }] });
+  for (const symbol of missing) groups.push({ id: id("ticker"), symbol, panels: [{ id: id("chart"), timeframe: defaultTimeframe }] });
   const ordered = wanted.map(symbol => groups.find(group => group.symbol === symbol)!);
   return { ...layout, version: 1, groups: ordered, selectedPanel: ordered.some(group => group.panels.some(panel => panel.id === layout.selectedPanel)) ? layout.selectedPanel : ordered[0]?.panels[0].id ?? null };
 }

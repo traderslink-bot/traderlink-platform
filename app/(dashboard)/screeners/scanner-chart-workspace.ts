@@ -1,3 +1,5 @@
+import { reconcileChartTickers, removeChartPanel, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
+import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import type { LiveScannerRow } from "@/src/modules/scanner/live/contracts";
 
 export type ScannerChartTarget=Readonly<{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX";showDetails?:boolean;addChart?:boolean;stock?:LiveScannerRow}>;
@@ -19,4 +21,13 @@ export function scannerChartWorkspace(state:ScannerChartWorkspace,action:Scanner
   if(state.charts[0]&&!state.charts[0].showDetails)return {charts:[action.chart],selectedSymbol:action.chart.symbol,limitReached:false};
   if(state.charts.length===4)return {...state,limitReached:true};
   return {charts:[...state.charts,{...action.chart,showDetails:state.charts.length?true:action.chart.showDetails}],selectedSymbol:action.chart.symbol,limitReached:false};
+}
+
+export function replaceScannerChartPanel(layout: ChartMultiview, panelId: string, symbol: string, defaultTimeframe: ChartTimeframe): ChartMultiview {
+  if (layout.groups.some(group => group.symbol === symbol || !group.panels.length)
+    || !layout.groups.some(group => group.panels.some(panel => panel.id === panelId))) return layout;
+  const remaining = removeChartPanel(layout, panelId);
+  const next = reconcileChartTickers(remaining, [...remaining.groups.map(group => group.symbol), symbol], defaultTimeframe);
+  const added = next.groups.find(group => group.symbol === symbol);
+  return added ? { ...next, selectedPanel: added.panels[0].id } : layout;
 }

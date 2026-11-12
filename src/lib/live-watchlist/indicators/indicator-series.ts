@@ -42,7 +42,12 @@ export class IndicatorSeries {
     series.state = { ...series.state, initialCheckpoint: checkpoint, checkpoint };
     const restored = series.update({ activationId: input.activationId, expectedRevision: 0, candles: input.candles,
       completedThrough: input.completedThrough, continuous: () => true });
-    if (restored.outcome !== "updated" || JSON.stringify(restored.snapshot.result) !== JSON.stringify(input.result)) {
+    const replayed = restored.snapshot.result;
+    // Old snapshots can be restored with their original numeric readings and enriched from retained bars.
+    const comparable = replayed && input.result.signals === undefined
+      ? Object.fromEntries(Object.entries(replayed).filter(([key]) => key !== "signals" && key !== "priceDirection"))
+      : replayed;
+    if (restored.outcome !== "updated" || JSON.stringify(comparable) !== JSON.stringify(input.result)) {
       throw Error("indicator_restore_replay_mismatch");
     }
     return series;

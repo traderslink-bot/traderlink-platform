@@ -1,6 +1,6 @@
 import { IndicatorSeries } from "./indicator-series";
 import { indicatorHistoryRebuildReason } from "./indicator-history-rebuild";
-import { calculateSessionVwap } from "./indicator-engine";
+import { calculateSessionVwap, type SessionVwap } from "./indicator-engine";
 import { createIndicatorHistoryBudget } from "./indicator-history-provider";
 import { indicatorMarketDate, indicatorTradingDay, indicatorVwapCoverage, normalizeIndicatorSessions } from "./indicator-sessions";
 import type { IndicatorCandle, IndicatorResult, IndicatorTimeframe } from "./indicator-engine";
@@ -13,7 +13,7 @@ export type WatchlistIndicatorSnapshot = Readonly<{
   version: "indicators-v1"; symbol: string; activationId: string;
   calculationId: string | null;
   timeframes: Readonly<Partial<Record<IndicatorTimeframe, IndicatorResult>>>;
-  vwap: Readonly<{ value: number | null; dataThrough: number | null }>;
+  vwap: SessionVwap;
 }>;
 type Slot = { provider: IndicatorProvider; adjustment: string; series: IndicatorSeries; checkedMarketDate?: string; checkedClosedBoundary?: number };
 export type IndicatorSharedCandles = Readonly<{ provider: IndicatorProvider; dataThrough: number; candles: readonly IndicatorCandle[] }>;
@@ -261,7 +261,9 @@ export class IndicatorRefreshService {
           const series = !reason && sameProvider && cached?.seriesKey === seriesKey ? existing!.series
             : new IndicatorSeries({ activationId: ticker.activationId, seriesKey, timeframe });
           const update = series.update({ activationId: ticker.activationId, expectedRevision: series.snapshot().revision,
-            candles: normalized.candles, completedThrough: now, continuous: (a, b) => this.continuous(a, b) });
+            candles: normalized.candles, completedThrough: now,
+            // Alpaca's adapter accepts only complete history responses. Missing trade bars are normal.
+            continuous: (a, b) => provider === "alpaca" || this.continuous(a, b) });
           if (update.outcome === "seed_history_required" || update.outcome === "superseded") continue;
           accepted = normalized.candles.length; changed ||= update.outcome === "updated";
           correctedBars = update.correctedBars; addedBars = update.addedBars; gapReset = update.gapReset;
@@ -279,11 +281,12 @@ export class IndicatorRefreshService {
         this.record({ ...this.records.get(id)!, timeframes: frameAudit, finishedAt: this.now(), outcome: "superseded" });
         return ticker.snapshot;
       }
-      const oneMinute = ticker.slots.get("1m")?.series.snapshot().candles.filter(c => day && c.start >= day.preOpen && c.end <= day.postClose) ?? [];
+      const minuteSlot = ticker.slots.get("1m");
+      const oneMinute = minuteSlot?.series.snapshot().candles.filter(c => day && c.start >= day.preOpen && c.end <= day.postClose) ?? [];
       const minuteThrough = oneMinute.at(-1)?.end ?? now;
       const coverage = day ? indicatorVwapCoverage({ candles: oneMinute, day, completedThrough: minuteThrough }) : null;
       const vwapInput = day ? { candles: oneMinute, sessionStart: day.preOpen, sessionEnd: day.postClose, completedThrough: minuteThrough,
-        coverageComplete: coverage?.complete ?? false } : null;
+        coverageComplete: minuteSlot?.provider === "alpaca" || (coverage?.complete ?? false) } : null;
       const vwap = vwapInput ? calculateSessionVwap(vwapInput) : { value: null, dataThrough: null };
       const minuteAudit = frameAudit.find(frame => frame.timeframe === "1m");
       if (minuteAudit && coverage) frameAudit[frameAudit.indexOf(minuteAudit)] = { ...minuteAudit, missingMinutes: coverage.missingMinutes };
