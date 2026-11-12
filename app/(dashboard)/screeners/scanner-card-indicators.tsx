@@ -8,7 +8,7 @@ import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import type { Theme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { memo, startTransition, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { SCANNER_INDICATOR_FRAMES as FRAMES, SCANNER_INDICATORS as INDICATORS,
   type ScannerIndicatorFrame as Frame, type ScannerIndicatorRead, type DisplaySignal, type IndicatorRow } from "@/src/modules/scanner/live/scanner-indicator-read";
 import type { IndicatorSignalKind } from "@/src/lib/live-watchlist/indicators/indicator-signals";
@@ -22,10 +22,16 @@ let fallback = "";
 function read() {
   try { return localStorage.getItem(KEY) ?? fallback; } catch { return fallback; }
 }
+function notifySettings() {
+  listeners.forEach(listener=>listener());
+}
 function subscribe(listener: () => void) {
+  if (!listeners.size) window.addEventListener("storage",notifySettings);
   listeners.add(listener);
-  window.addEventListener("storage",listener);
-  return () => { listeners.delete(listener); window.removeEventListener("storage",listener); };
+  return () => {
+    listeners.delete(listener);
+    if (!listeners.size) window.removeEventListener("storage",notifySettings);
+  };
 }
 function useSettings() {
   const saved = useSyncExternalStore(subscribe,read,()=>"");
@@ -39,7 +45,7 @@ function useSettings() {
   const save = (next: typeof settings) => {
     fallback=JSON.stringify(next);
     try { localStorage.setItem(KEY,fallback); } catch { /* Keep this tab usable. */ }
-    listeners.forEach(listener=>listener());
+    notifySettings();
   };
   return { ...settings, save };
 }
@@ -60,7 +66,7 @@ export function ScannerIndicatorSettings() {
   </Box>;
 }
 
-type History = { minute:number; promise:Promise<ScannerIndicatorRead | null> };
+type History = { minute:number; promise:Promise<ScannerIndicatorRead | null>; value?:ScannerIndicatorRead };
 const histories = new Map<string,History>();
 const queue: Array<()=>void> = [];
 let active = 0;
@@ -84,9 +90,32 @@ function readsFor(symbol: string, frame: Frame, minute: number): Promise<Scanner
     pump();
   });
   histories.delete(key);
-  histories.set(key,{minute,promise});
+  const entry:History={minute,promise};
+  histories.set(key,entry);
+  void promise.then(value=>{
+    if (value) entry.value=value;
+    else if (histories.get(key)===entry) histories.delete(key);
+  });
   if(histories.size>100) histories.delete(histories.keys().next().value!);
   return promise;
+}
+
+const visibilityCallbacks = new Map<Element, (visible:boolean)=>void>();
+let indicatorVisibilityObserver: IntersectionObserver | undefined;
+function observeIndicatorVisibility(node: HTMLElement, callback: (visible:boolean)=>void) {
+  if (typeof IntersectionObserver === "undefined") {
+    callback(true);
+    return () => {};
+  }
+  indicatorVisibilityObserver ??= new IntersectionObserver(entries=>{
+    for (const entry of entries) visibilityCallbacks.get(entry.target)?.(entry.isIntersecting);
+  });
+  visibilityCallbacks.set(node,callback);
+  indicatorVisibilityObserver.observe(node);
+  return () => {
+    indicatorVisibilityObserver?.unobserve(node);
+    visibilityCallbacks.delete(node);
+  };
 }
 
 export const scannerCardLabelColor = (theme: Theme) =>
@@ -121,21 +150,20 @@ export function ScannerIndicatorReads({ row,now }: { row:Pick<LiveScannerRow,"sy
   const { frame,selected }=useSettings();
   const ref=useRef<HTMLDivElement|null>(null);
   const [visible,setVisible]=useState(false);
-  const [history,setHistory]=useState<ScannerIndicatorRead|null>(null);
   const enabled = selected.length > 0;
   const frameMs = Number.parseInt(frame, 10) * 60_000;
   const historyWindow = Math.floor(now / frameMs) * frameMs / 60_000;
+  const [history,setHistory]=useState<ScannerIndicatorRead|null>(()=>
+    histories.get(`${row.symbol}:${frame}`)?.value??null);
   useEffect(()=>{
-    if(!ref.current || !enabled || typeof IntersectionObserver==="undefined") return;
-    const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting));
-    observer.observe(ref.current);
-    return ()=>observer.disconnect();
+    if (!ref.current || !enabled) return;
+    return observeIndicatorVisibility(ref.current,setVisible);
   },[enabled]);
   useEffect(()=>{
     if(!visible||!enabled) return;
     let current=true;
     void readsFor(row.symbol,frame,historyWindow).then(value=>{
-      if(current && value) setHistory(value);
+      if(current && value) startTransition(()=>setHistory(value));
     });
     return ()=>{current=false;};
   },[row.symbol,frame,historyWindow,visible,enabled]);

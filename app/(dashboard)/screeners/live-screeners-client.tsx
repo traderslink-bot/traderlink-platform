@@ -44,7 +44,7 @@ import { ScannerChartLaunchControls, SideCardChartControls, useSideCardChartCont
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
-import { Fragment, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
+import { Fragment, startTransition, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
 
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
@@ -355,7 +355,17 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
   const [newChartSymbol,setNewChartSymbol]=useState("");
   const addChart=()=>{const symbol=newChartSymbol.trim().toUpperCase();if(/^[A-Z][A-Z0-9.-]{0,14}$/.test(symbol)){onAdd(symbol);setNewChartSymbol("");}};
   const [levelsActionTarget,setLevelsActionTarget]=useState<HTMLDivElement|null>(null);
-  return <Drawer anchor="right" onClose={onClose} open={open&&charts.length>0} slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":"Chart workspace",sx:{borderRadius:0,'& [data-traderlink-platform-dashboard-card="panel"]':{borderRadius:0},maxWidth:"100vw",width:row?.showDetails?"100vw":{xs:"100vw",md:"78vw",xl:1180}}}}}>
+  const [detailsReady,setDetailsReady]=useState(false);
+  const [visitedDetails,setVisitedDetails]=useState<ReadonlySet<string>>(()=>new Set());
+  const detailSymbol=section==="details"&&row?.showDetails?row.symbol:null;
+  useEffect(()=>{
+    if (!open || !detailsReady || !detailSymbol) return;
+    startTransition(()=>setVisitedDetails(previous=>previous.has(detailSymbol)?previous:new Set([...previous,detailSymbol])));
+  },[open,detailsReady,detailSymbol]);
+  return <Drawer anchor="right" onClose={onClose} open={open&&charts.length>0} slotProps={{transition:{
+    onEntered:()=>setDetailsReady(true),
+    onExited:()=>{setDetailsReady(false);setVisitedDetails(new Set());},
+  },paper:{role:"dialog","aria-modal":true,"aria-label":"Chart workspace",sx:{borderRadius:0,'& [data-traderlink-platform-dashboard-card="panel"]':{borderRadius:0},maxWidth:"100vw",width:row?.showDetails?"100vw":{xs:"100vw",md:"78vw",xl:1180}}}}}>
     <Stack sx={{height:"100dvh",minHeight:0}}>
       <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",flexShrink:0,px:{xs:1.5,md:2},py:0}}>
         <Box sx={{minWidth:0}}>
@@ -389,7 +399,7 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
             <Box data-levels-action-slot ref={setLevelsActionTarget} sx={{flexShrink:0}}/>
           </Stack>
           {charts.map(chart=><Box key={chart.symbol} role="tabpanel" id={`${tabsId}-${chart.symbol}-panel`} aria-labelledby={`${tabsId}-${chart.symbol}-tab`} hidden={section!=="details"||row.symbol!==chart.symbol} sx={{flex:{xs:"0 0 auto",md:1},minHeight:0,overflowY:{xs:"visible",md:"auto"}}}>
-            <ScannerTickerDetails symbol={chart.symbol} stock={stocks.find(stock=>stock.symbol===chart.symbol)??chart.stock} quote={fallbackQuotes.find(quote=>quote.symbol===chart.symbol)} postMarket={postMarket} actionTarget={levelsActionTarget} active={row.symbol===chart.symbol} onGenerate={()=>onSectionChange("details")}/>
+            {visitedDetails.has(chart.symbol)&&<ScannerTickerDetails symbol={chart.symbol} stock={stocks.find(stock=>stock.symbol===chart.symbol)??chart.stock} quote={fallbackQuotes.find(quote=>quote.symbol===chart.symbol)} postMarket={postMarket} actionTarget={levelsActionTarget} active={row.symbol===chart.symbol} onGenerate={()=>onSectionChange("details")}/>}
           </Box>)}
           <Box role="tabpanel" id={`${tabsId}-screeners-panel`} aria-labelledby={`${tabsId}-screeners-tab`} hidden={section!=="screeners"} sx={{flex:{xs:"0 0 auto",md:1},minHeight:0}}>{section==="screeners"?screeners:null}</Box>
         </Stack>:null}

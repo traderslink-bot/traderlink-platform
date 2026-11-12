@@ -390,7 +390,7 @@ describe("two-row table view", () => {
     await act(async()=>{([...aside().querySelectorAll('[role=tab]')].find(el=>el.textContent==='AAA') as HTMLElement).click();});
     expect(document.querySelector('[data-workspace-chart="AAA"]')?.getAttribute('data-selected')).toBe('true');
     const panel=[...aside().querySelectorAll('[role=tabpanel]')].find(el=>!(el as HTMLElement).hidden)!;
-    expect(aside().querySelector('[data-levels-action-slot]')?.textContent).toContain('Generate Levels');expect(panel.textContent).toContain('Recent News');
+    await vi.waitFor(()=>expect(aside().querySelector('[data-levels-action-slot]')?.textContent).toContain('Generate Levels'));expect(panel.textContent).toContain('Recent News');
     await act(async()=>{(document.querySelector('[aria-label="Close BBB chart"]') as HTMLElement).click();});
     await act(async()=>tab().click());
     await act(async()=>{(aside().querySelector('[aria-label="Add DDD chart"]') as HTMLElement).click();});
@@ -434,6 +434,7 @@ it("colors scanner prices against the displayed comparison and keeps the drawer'
   const postValue = [...page.container.querySelectorAll("td")].find(cell => cell.textContent === "42%")!;
   expect(color(postValue)).toBe("rgb(46, 125, 50)");
   await act(async () => { (page.container.querySelector('[aria-label="Open TEST chart only"]') as HTMLElement).click(); });
+  await vi.waitFor(()=>expect(document.querySelector('[aria-label="TEST stock details"]')).not.toBeNull());
   const detail = document.querySelector('[aria-label="TEST stock details"]')!;
   const fact = (label: string) => [...detail.querySelectorAll("dt")].find(el => el.textContent === label)!.nextElementSibling!;
   expect(fact("Day change").textContent).toBe("-24%");
