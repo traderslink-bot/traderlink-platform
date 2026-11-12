@@ -1,12 +1,14 @@
 """Render the private gainers hub and its crawlable day and month pages."""
 
 import argparse
+import base64
+import gzip
 from datetime import date
 from html import escape
 import json
 from pathlib import Path
 
-FIRST_PREVIEW_DAY = "2025-01-01"
+FIRST_PREVIEW_DAY = "2020-01-01"
 CANONICAL_BASE = "https://traderslink.pro/stock-gainers/"
 COLUMNS = ("Rank", "Ticker", "Close", "Gain")
 VOLUME_HELP = "Estimated dollars traded (share volume × volume-weighted average price). This total can include postmarket trades."
@@ -110,6 +112,9 @@ def render(sessions, aliases, site=False):
             rows.append(row)
         compact[day] = [result["compared"], rows]
     method_note = f'<p class="gainers-method"><em>{MAX_GAIN_NOTE}</em></p>' if session_high else ""
+    data = html_json(compact)
+    if not site:
+        data = base64.b64encode(gzip.compress(data.encode("utf-8"), mtime=0)).decode("ascii")
     return (template.replace("__RECENT_SESSIONS__", "".join(recent))
             .replace("__GAINERS_METHOD_NOTE__", method_note)
             .replace("__GAINERS_VOLUME_HEADING__", VOLUME_HEADING)
@@ -117,7 +122,8 @@ def render(sessions, aliases, site=False):
             .replace("__GAINERS_HIGH_COLUMN__", '<th scope="col">High</th>' if session_high else "")
             .replace("__GAINERS_GAIN_LABEL__", "Max gain" if session_high else "Gain")
             .replace("__GAINERS_MONTHS__", "".join(months))
-            .replace("__GAINERS_DATA__", html_json(compact))
+            .replace("__GAINERS_DATA__", data)
+            .replace("__GAINERS_DATA_ENCODING__", "" if site else ' data-encoding="gzip"')
             .replace("__GAINERS_ALIASES__", html_json(aliases))
             .replace("__GAINERS_LINK_MODE__", "site" if site else "inline"))
 

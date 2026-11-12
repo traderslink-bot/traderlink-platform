@@ -40,11 +40,6 @@
       <ul>__GAINERS_MONTHS__</ul>
     </details>
     <div id="gainers-status" role="status"></div>
-    <dl id="gainers-stats" hidden>
-      <div><dt>Appearances</dt><dd></dd></div>
-      <div><dt>Best rank</dt><dd></dd></div>
-      <div><dt>Last appearance</dt><dd></dd></div>
-    </dl>
     <table id="gainers-session" aria-label="Daily top gainer results">
       <thead><tr><th scope="col">Date<small class="gainers-date-format">MM/DD/YY</small></th><th scope="col">Rank</th><th scope="col">Ticker</th>__GAINERS_HIGH_COLUMN__<th scope="col">Close</th><th scope="col">__GAINERS_GAIN_LABEL__</th>__GAINERS_VOLUME_HEADING__</tr></thead>
       <tbody></tbody>
@@ -102,8 +97,6 @@
   #daily-gainers-preview [hidden] { display: none; }
   #gainers-status:not(:empty), #gainers-pagination { margin-top: 12px; }
   #gainers-pagination { align-items: center; }
-  #gainers-stats { display: flex; flex-wrap: wrap; gap: 18px; }
-  #gainers-stats dd { margin: 0; font-weight: 650; }
   #daily-gainers-preview button { width: auto; }
   #daily-gainers-preview input { box-sizing: border-box; }
   #daily-gainers-preview table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
@@ -119,13 +112,18 @@
     #daily-gainers-preview article { padding-inline: 8px; }
   }
 </style>
-<script type="application/json" id="gainers-pilot-data">__GAINERS_DATA__</script>
+<script type="application/json" id="gainers-pilot-data"__GAINERS_DATA_ENCODING__>__GAINERS_DATA__</script>
 <script type="application/json" id="gainers-alias-data">__GAINERS_ALIASES__</script>
 <script>
-  (() => {
+  (async () => {
     const root = document.getElementById("daily-gainers-preview");
     const get = (id) => root.querySelector("#gainers-" + id);
-    const data = JSON.parse(document.getElementById("gainers-pilot-data").textContent);
+    const embedded = document.getElementById("gainers-pilot-data");
+    const archiveText = embedded.dataset.encoding === "gzip"
+      ? await new Response(new Blob([Uint8Array.from(atob(embedded.textContent), char => char.charCodeAt(0))])
+        .stream().pipeThrough(new DecompressionStream("gzip"))).text()
+      : embedded.textContent;
+    const data = JSON.parse(archiveText);
     const days = Object.keys(data).sort().reverse();
     const aliases = JSON.parse(document.getElementById("gainers-alias-data").textContent);
     const aliasIndex = new Map(Object.entries(aliases).map(([symbol, keys]) => [symbol, new Set(keys)]));
@@ -146,7 +144,6 @@
     const volume = get("volume");
     const sort = get("sort");
     const table = get("session");
-    const stats = get("stats");
     const pagination = get("pagination");
     const previous = get("previous");
     const next = get("next");
@@ -210,18 +207,13 @@
         if (period.value === "year") return day.startsWith(year.value);
         return first <= day && day <= end;
       };
-      rows = invalidRange || identities.size > 1 ? [] : sessions.filter(row =>
+      rows = invalidRange ? [] : sessions.filter(row =>
         dateMatches(row.day) && row.rank <= Number(cutoff.value) &&
-        (!symbol || identities.has(row.security)) &&
+        (!symbol || row.symbol === symbol || (identities.size === 1 && identities.has(row.security))) &&
         (volume.value === "0" || row.volume >= Number(volume.value))
       );
-      stats.hidden = !symbol || rows.length === 0;
-      if (!stats.hidden) {
-        const values = [rows.length, "#" + Math.min(...rows.map(row => row.rank)), dateLabel.format(new Date(rows[0].day))];
-        stats.querySelectorAll("dd").forEach((item, index) => { item.textContent = values[index]; });
-      }
       get("status").textContent = invalidRange ? "Choose a valid date range." :
-        identities.size > 1 ? "Multiple securities used this ticker." : rows.length ? "" : "No matching results.";
+        rows.length ? "" : "No matching results.";
       if (sort.value === "gain") rows.sort((a, b) => b.gain - a.gain);
       if (sort.value === "volume") rows.sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0));
       page = 0;

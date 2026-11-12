@@ -47,18 +47,16 @@ export function findGainerAppearances(
       if (entry.symbol === symbol) identities.add(entry.security ?? entry.symbol);
     }
   }
-  const ambiguous = identities.size > 1;
   const rows = [];
-  if (!ambiguous) {
-    for (const day of days) {
-      if (day < from || day > to) continue;
-      for (const [index, entry] of archive.sessions[day].rows.slice(0, cutoff).entries()) {
-        if ((!symbol || identities.has(entry.security ?? entry.symbol)) &&
-            (minimumVolume === 0 || (entry.dollarVolume ?? 0) >= minimumVolume)) {
-          rows.push({ ...entry, day, rank: index + 1 });
-        }
+  for (const day of days) {
+    if (day < from || day > to) continue;
+    for (const [index, entry] of archive.sessions[day].rows.slice(0, cutoff).entries()) {
+      const matchesTicker = !symbol || entry.symbol === symbol ||
+        (identities.size === 1 && identities.has(entry.security ?? entry.symbol));
+      if (matchesTicker && (minimumVolume === 0 || (entry.dollarVolume ?? 0) >= minimumVolume)) {
+        rows.push({ ...entry, day, rank: index + 1 });
       }
     }
   }
-  return { ambiguous, rows };
+  return rows;
 }

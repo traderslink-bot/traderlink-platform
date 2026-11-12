@@ -18,7 +18,6 @@ export const metadata: Metadata = {
 };
 
 const route = "/stock-tools/gainers";
-const dateLabel = new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" });
 const shortDate = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "2-digit", timeZone: "UTC" });
 const price = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const dollarVolume = new Intl.NumberFormat("en-US", {
@@ -138,12 +137,10 @@ export default async function StockGainersPage({
     if (period === "year") return day.startsWith(filters.year);
     return filters.from <= day && day <= filters.to;
   });
-  const { rows, ambiguous } = findGainerAppearances(
+  const rows = findGainerAppearances(
     archive, days, filters.ticker, matchingDays.at(-1) ?? "9999", matchingDays[0] ?? "0000",
     filters.cutoff, filters.volume,
   );
-  const lastAppearance = rows[0]?.day;
-  const bestRank = rows.reduce((best, row) => Math.min(best, row.rank), 10);
   if (filters.sort === "gain") rows.sort((a, b) => b.gain - a.gain);
   if (filters.sort === "volume") rows.sort((a, b) => (b.dollarVolume ?? 0) - (a.dollarVolume ?? 0));
   const pageSize = 25;
@@ -171,15 +168,7 @@ export default async function StockGainersPage({
         )}
         <GainerFilterForm key={JSON.stringify(filters)} filters={filters} earliest={earliest} latest={latest} years={years} />
         {invalidRange && <Alert severity="warning" sx={{ mt: 2 }}>Choose an end date on or after the start date.</Alert>}
-        {ambiguous && !invalidRange && <Alert severity="info" sx={{ mt: 2 }}>Multiple securities used this ticker.</Alert>}
-        {!rows.length && !ambiguous && !invalidRange && <Alert severity="info" sx={{ mt: 2 }}>No matching results.</Alert>}
-        {filters.ticker && lastAppearance && (
-          <Box component="dl" sx={{ display: "flex", flexWrap: "wrap", gap: 2, "& dd": { m: 0, fontWeight: 700 } }}>
-            <div><dt>Appearances</dt><dd>{rows.length}</dd></div>
-            <div><dt>Best rank</dt><dd>#{bestRank}</dd></div>
-            <div><dt>Last appearance</dt><dd>{dateLabel.format(new Date(lastAppearance))}</dd></div>
-          </Box>
-        )}
+        {!rows.length && !invalidRange && <Alert severity="info" sx={{ mt: 2 }}>No matching results.</Alert>}
         {rows.length > 0 && <Rankings sessionHigh={sessionHigh} rows={rows.slice(start, start + pageSize)} />}
         {lastPage > 1 && (
           <Box component="nav" aria-label="Results pages" sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center", mt: 2 }}>

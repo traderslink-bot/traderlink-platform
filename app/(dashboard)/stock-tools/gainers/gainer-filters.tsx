@@ -90,7 +90,7 @@ export function GainerFilterForm({ filters, earliest, latest, years }: {
           </select>
         </Box>
       </Box>
-      <DashboardPrimaryAction type="submit" sx={{ height: 44, whiteSpace: "nowrap" }}>Apply filters</DashboardPrimaryAction>
+      <DashboardPrimaryAction type="submit" sx={{ height: 44, whiteSpace: "nowrap" }}>Search</DashboardPrimaryAction>
     </Box>
   );
 }
