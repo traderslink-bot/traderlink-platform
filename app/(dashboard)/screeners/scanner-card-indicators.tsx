@@ -1,5 +1,6 @@
 "use client";
 
+import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -176,7 +177,7 @@ function RecentSignal({ signal, compact = false }: { signal: DisplaySignal; comp
 
 function compactRead(name: Indicator, reading: IndicatorDisplayRow, result?: ReturnType<typeof scannerIndicatorResults>["result"]) {
   const state = reading.state;
-  if (name === "VWAP" && state) return [reading.value, state.split(" · ").at(-1)?.replace(" VWAP", "")].join(" · ");
+  if (name === "VWAP" && state) return [reading.value, state.split(" · ").at(-1)?.replace(/^Price /u, "").replace(" VWAP", "")].join(" · ");
   if (name === "EMA" && result?.ema9 != null && result.ema20 != null) {
     return result.ema9 === result.ema20 ? "9 at 20" : result.ema9 > result.ema20 ? "9 above 20" : "9 below 20";
   }
@@ -226,20 +227,24 @@ export function ScannerIndicatorReads({ row,now }: { row:LiveScannerRow; now:num
   });
   if (!enabled) return null;
   return <Box ref={ref} data-scanner-indicator-frame={frame} sx={{minHeight:1}}>
-    <Box sx={{display:"flex",gap:0.65,flexWrap:"wrap",fontSize:"0.66rem"}}>
-      {chosen.map(({name,reading,text})=>{
-        const direction = readingDirection(reading);
-        return <Box key={name} data-scanner-indicator={name}>
-          <Typography component="span" variant="inherit" sx={{color:scannerCardLabelColor,fontWeight:700}}>{name} </Typography>
-          <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
-            {text}
-          </Typography>
-          {name==="EMA"&&reading.signals?.filter(event=>isRecentScannerSignal(event.at,now)).map(event=><RecentSignal key={event.at} signal={event} compact/>)}
-        </Box>;
-      })}
-    </Box>
-    {chosen.length>0&&<Box component="details" onToggle={event=>setDetailsOpen(event.currentTarget.open)} sx={{mt:0.25,fontSize:"0.66rem",color:"text.secondary","& summary":{cursor:"pointer"}}}>
-      <summary>Details</summary>
+    {chosen.length>0&&<Box component="details" onToggle={event=>setDetailsOpen(event.currentTarget.open)}
+      sx={{fontSize:"0.66rem",color:"text.secondary","&[open] > summary > svg":{transform:"rotate(180deg)"}}}>
+      <Box component="summary" aria-label="Indicator details"
+        sx={{display:"flex",alignItems:"flex-start",cursor:"pointer",listStyle:"none","&::-webkit-details-marker":{display:"none"}}}>
+        <KeyboardArrowDownRounded aria-hidden="true" sx={{fontSize:"1rem",flexShrink:0,mr:0.25}}/>
+        <Box component="span" sx={{display:"flex",gap:0.65,flexWrap:"wrap",minWidth:0}}>
+          {chosen.map(({name,reading,text})=>{
+            const direction = readingDirection(reading);
+            return <Box component="span" key={name} data-scanner-indicator={name}>
+              <Typography component="span" variant="inherit" sx={{color:scannerCardLabelColor,fontWeight:700}}>{name} </Typography>
+              <Typography component="span" variant="inherit" sx={{fontWeight:700,color:tones[direction]}}>
+                {text}
+              </Typography>
+              {name==="EMA"&&reading.signals?.filter(event=>isRecentScannerSignal(event.at,now)).map(event=><RecentSignal key={event.at} signal={event} compact/>)}
+            </Box>;
+          })}
+        </Box>
+      </Box>
       {detailsOpen&&chosen.map(({name,reading,text})=><Box key={name} sx={{my:0.45}}>
         <Typography component="p" variant="inherit" sx={{m:0}}>
           <strong>{name}</strong>{" "}

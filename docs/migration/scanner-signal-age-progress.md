@@ -13,3 +13,5 @@ The scanner ticker card now places chart and news actions beside the country fla
 Dark-mode preview QA reproduced white labels with the inherited CSS variable. Both label types now resolve their colors directly from the active theme. The display menu has a labeled close button. Desktop preview QA verified the computed dark label color and closed the menu using the new button. File lint passed. Preview only.
 
 Stats now defaults on and can be hidden or reordered with Indicators and Catalyst. Existing section choices and order carry forward, with Stats initially first. The ticker header stays fixed and internal dividers are removed. Mobile preview QA verified default visibility, reordering through both sections, persistence after reload, and the outer border. File lint passed. No Help Center update is needed for this preview layout change.
+
+The compact VWAP read uses Above, Below or At. The compact indicator row is now the native expandable summary, with a leading chevron and a screen-reader label. Mobile preview QA verified the VWAP wording and expansion by tapping the EMA read and pressing Enter. File lint passed. No Help Center update is needed. Preview only.
