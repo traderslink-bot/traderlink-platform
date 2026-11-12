@@ -13,3 +13,17 @@ export function scannerScrollStyles(theme: Theme) {
     "&::-webkit-scrollbar-thumb:hover": { backgroundColor: dark ? "rgba(178,192,218,0.65)" : "rgba(51,73,105,0.55)" },
   };
 }
+
+
+// Mark only the ticker column and its flag cell. Controls stay in normal table flow.
+export const scannerStickyTickerSx = {
+  '& [data-scanner-sticky-ticker]': {
+    position: "sticky",
+    left: 0,
+    zIndex: 2,
+    bgcolor: "background.paper",
+    borderRight: 1,
+    borderRightColor: "divider",
+  },
+  '& thead [data-scanner-sticky-ticker]': { zIndex: 4 },
+} as const;

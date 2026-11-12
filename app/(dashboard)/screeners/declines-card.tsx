@@ -28,7 +28,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
 import type { DeclineResults, DeclineRow, ScannerActiveHalt, ScannerSession } from "@/src/modules/scanner/live/contracts";
-import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
+import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 
 const wholePercent=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
@@ -53,8 +53,8 @@ function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
   return <TableContainer role="region" aria-label="Top Losers list" tabIndex={0}
     sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 190px)":420})}>
     <Table size="small" stickyHeader aria-label="Top Losers stocks"
-      sx={{tableLayout:"fixed",minWidth:twoRows?370:414,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-      <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:allowAdd?68:48}} aria-label={allowAdd?"Open or add chart and news":"Chart and news"}/><TableCell sx={{width:24}} aria-label="Expand"/></>}<TableCell sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell><TableCell sx={{width:48}}>Change</TableCell>
+      sx={{...scannerStickyTickerSx,tableLayout:"fixed",minWidth:twoRows?370:414,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:allowAdd?68:48}} aria-label={allowAdd?"Open or add chart and news":"Chart and news"}/><TableCell sx={{width:24}} aria-label="Expand"/></>}<TableCell data-scanner-sticky-ticker sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell><TableCell sx={{width:48}}>Change</TableCell>
         <TableCell>Vol</TableCell><TableCell>Float</TableCell><TableCell>Spread</TableCell>
       {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
       </TableRow></TableHead>
@@ -66,14 +66,14 @@ function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
             sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
             {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:0.4}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/></Stack></TableCell>
             <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell></>}
-          <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
             <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(row.changePercent),fontWeight:750}}>{pct(row.changePercent)}</TableCell>
             <TableCell>{shares(row.volume)}</TableCell>
             <TableCell>{floatShares(row.float)}</TableCell><TableCell>{pct(row.spreadPercent)}</TableCell>
           {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
           </TableRow>
           {twoRows&&<TableRow data-two-row-tools={row.symbol}>
-            <TableCell><ScannerCountryFlag country={row.country}/></TableCell>
+            <TableCell data-scanner-sticky-ticker><ScannerCountryFlag country={row.country}/></TableCell>
             <TableCell colSpan={5}><Stack direction="row" sx={{alignItems:"center",gap:0.8,pb:0.3}}>
               <ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/>
             </Stack></TableCell>

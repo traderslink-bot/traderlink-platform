@@ -28,7 +28,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
 import type { DeclineRow, PremarketPullbackResults, PremarketPullbackRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
-import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
+import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 import { ScannerNewsLink, ScannerRowNews } from "./scanner-news-drawer-context";
 
@@ -69,8 +69,8 @@ function RapidMarker() {
 function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;twoRows:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="HOD Drops list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
-    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{tableLayout:"fixed",minWidth:twoRows?350:394,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-      <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:48}} aria-label="Chart and news"/><TableCell sx={{width:24}} aria-label="Expand"/></>}<TableCell sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
+    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{...scannerStickyTickerSx,tableLayout:"fixed",minWidth:twoRows?350:394,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:48}} aria-label="Chart and news"/><TableCell sx={{width:24}} aria-label="Expand"/></>}<TableCell data-scanner-sticky-ticker sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
         <TableCell sx={{width:48}}>Drop</TableCell><TableCell sx={{width:62}}>High</TableCell><TableCell sx={{width:58}}>Vol</TableCell>
       {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
       </TableRow></TableHead>
@@ -88,12 +88,12 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
           sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
           {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:0.4}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/></Stack></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell></>}
-          <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25,flexWrap:"wrap"}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>{row.rapidDrop?<RapidMarker/>:null}</Stack></TableCell>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25,flexWrap:"wrap"}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>{row.rapidDrop?<RapidMarker/>:null}</Stack></TableCell>
           <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(-row.belowHighPercent),fontWeight:750}}>{wholePercent.format(row.belowHighPercent)}%</TableCell><TableCell><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
         {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
           </TableRow>
           {twoRows&&<TableRow data-two-row-tools={row.symbol}>
-            <TableCell><ScannerCountryFlag country={row.country}/></TableCell>
+            <TableCell data-scanner-sticky-ticker><ScannerCountryFlag country={row.country}/></TableCell>
             <TableCell colSpan={4}><Stack direction="row" sx={{alignItems:"center",gap:0.8,pb:0.3}}>
               <ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/>
             </Stack></TableCell>

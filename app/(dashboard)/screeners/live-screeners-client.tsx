@@ -70,7 +70,7 @@ import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, marketEv
 import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/gainer-view";
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
 import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
-import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
+import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { applyScannerDisplayContinuity, type ScannerDisplayContinuity } from "@/src/modules/scanner/live/display-continuity";
 
 import { MomentumSections } from "./momentum-sections";
@@ -181,9 +181,9 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
   return <TableContainer aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact list`:undefined}
     role={compactDesktop?"region":undefined} tabIndex={compactDesktop?0:undefined}
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
-    <Table aria-label={twoRows?`${SCREEN_LABELS[screen]} two-row stocks`:compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,tableLayout:"fixed",width:headers.reduce((total,header)=>total+header.width,0),minWidth:headers.reduce((total,header)=>total+header.width,0),'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.2,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
+    <Table aria-label={twoRows?`${SCREEN_LABELS[screen]} two-row stocks`:compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,...scannerStickyTickerSx,tableLayout:"fixed",width:headers.reduce((total,header)=>total+header.width,0),minWidth:headers.reduce((total,header)=>total+header.width,0),'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.2,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
       <colgroup>{headers.map((header,index)=><col key={index} style={{width:header.width}}/>)}</colgroup>
-      <TableHead><TableRow>{headers.map((header,index)=><TableCell align="left" aria-label={header.label||(index===0?"Chart, news and details":undefined)} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
+      <TableHead><TableRow>{headers.map((header,index)=><TableCell data-scanner-sticky-ticker={header.label==="Ticker"?true:undefined} align="left" aria-label={header.label||(index===0?"Chart, news and details":undefined)} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
         metric("HOD price",`$${priceValue(row.dayHigh)}`),
         metric("HOD",value(row.offHighPercent,"%"),row.offHighPercent),
@@ -210,7 +210,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
       ]).filter(Boolean);const secondRowTools=<Box data-compact-row-controls sx={{display:"grid",gridTemplateColumns:allowAdd?"44px 20px 12px":"20px 20px 12px",alignItems:"center",columnGap:"8px",width:allowAdd?92:68}}><ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} two-row details`} aria-expanded={expanded} onClick={()=>toggle(row.symbol)} sx={{color:"text.secondary",fontSize:"0.9rem",height:20,minWidth:12}}>{expanded?"−":"+"}</ButtonBase></Box>;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:twoRows||screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           {!twoRows?<TableCell sx={{px:"0.125rem !important"}}><Box data-compact-row-controls sx={{display:"grid",gridTemplateColumns:allowAdd?"44px 20px 12px":"20px 20px 12px",alignItems:"center",columnGap:"8px",width:allowAdd?92:68}}><ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/><Typography aria-hidden component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{expanded?"−":"+"}</Typography></Box></TableCell>:null}
-          <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><Typography noWrap component="span" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><Typography noWrap component="span" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell><Typography noWrap sx={{fontSize:"0.68rem",fontWeight:500,color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</Typography></TableCell>
           {screen==="gainers"?<>
             <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell>
@@ -226,8 +226,8 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
           </>}
           {!twoRows?<TableCell><ScannerCountryFlag country={row.country}/></TableCell>:null}
         </TableRow>
-        {twoRows?<TableRow data-two-row-tools={row.symbol}><TableCell sx={{py:"0.15rem !important"}}><ScannerCountryFlag country={row.country}/></TableCell><TableCell colSpan={headers.length-1} sx={{py:"0.15rem !important"}}>
-          <Box sx={{...visibleExpandedPanelSx,width:"calc(100cqw - 48px)",display:"flex",alignItems:"center",gap:1,pt:0.15,pb:"4px"}}>{secondRowTools}
+        {twoRows?<TableRow data-two-row-tools={row.symbol}><TableCell data-scanner-sticky-ticker sx={{py:"0.15rem !important"}}><ScannerCountryFlag country={row.country}/></TableCell><TableCell colSpan={headers.length-1} sx={{py:"0.15rem !important"}}>
+          <Box sx={{width:"calc(100cqw - 48px)",display:"flex",alignItems:"center",gap:1,pt:0.15,pb:"4px"}}>{secondRowTools}
             {screen==="momentum"?<Typography noWrap title={momentumSignalText(row)} sx={{fontSize:"0.58rem",color:theme=>theme.palette.mode==="dark"?"#c4b5fd":"#7c3aed",minWidth:0}}>{momentumSignalText(row)}</Typography>:null}
           </Box>
         </TableCell></TableRow>:null}
@@ -251,7 +251,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
   const showPostGain=screen==="momentum"&&results.rows.some(row=>row.postMarketGain!==undefined);
   if (!results.rows.length) return <Alert severity="info">No stocks currently qualify for this list.</Alert>;
   const desktopTableSx={
-    ...movementTableSx,tableLayout:"fixed",
+    ...movementTableSx,...scannerStickyTickerSx,tableLayout:"fixed",
     width:"100%",
     '& .MuiTableCell-root':{ overflow:"hidden",px:0.25,py:0.42,fontSize:"0.68rem",textOverflow:"ellipsis",whiteSpace:"nowrap" },
     '& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.85 },
@@ -260,10 +260,10 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
     <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
       {screen==="gainers"?<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart and news" sx={{ px:"0 !important",width:48 }}/>
-        {['Ticker','Price','Gain%','Vol','Float','T/O','RVOL','HOD','Country'].map(label => <TableCell key={label}>{label}</TableCell>)}
+        {['Ticker','Price','Gain%','Vol','Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
         <TableCell sx={{ px:"0 !important",width:allowAdd?72:48 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><NewsLinks row={row}/></Stack></TableCell>
-        <TableCell sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+        <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
         <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
         <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{floatValue(row.float)}</TableCell>
         <TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
@@ -271,14 +271,14 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
       </TableRow>)}</TableBody></Table>:<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Details" sx={{ px:"0 !important",width:22 }}/>
         <TableCell aria-label="Chart and news" sx={{ px:"0.125rem !important",width:48 }}/>
-        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread','Country'].map(label => <TableCell key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
+        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=>{const expanded=expandedDesktopSymbol===row.symbol;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol)}
           onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}}}
           sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:"none"},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           <TableCell sx={{ px:"0 !important",width:22 }}><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} details`} onClick={event=>{event.stopPropagation();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}} sx={{ bgcolor:"rgba(255,193,7,0.14)",borderRadius:0.75,color:"warning.main",fontSize:"0.75rem",fontWeight:800,height:20,minWidth:20,'&:hover':{ bgcolor:"rgba(255,193,7,0.24)" },'&:focus-visible':{ outline:"2px solid",outlineColor:"warning.main",outlineOffset:1 } }}>{expanded?"−":"+"}</ButtonBase></TableCell>
           <TableCell sx={{ px:"0.125rem !important",width:allowAdd?72:48 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><NewsLinks row={row}/></Stack></TableCell>
-          <TableCell sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
           {showPostGain?<TableCell sx={{ color:scannerGainColor(row.postMarketGain),fontWeight:750 }}>{value(row.postMarketGain,"%")}</TableCell>:null}
           <TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell sx={{color:scannerGainColor(row.activity.fiveMinuteGain)}}>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
