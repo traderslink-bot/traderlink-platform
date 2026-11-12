@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { DashboardPrimaryAction } from "../../../dashboard-ui";
 
 export type GainerPeriod = "day" | "month" | "year" | "range";
@@ -28,6 +31,7 @@ export function GainerFilterForm({ filters, earliest, latest, years }: {
   years: string[];
 }) {
   const [period, setPeriod] = useState(filters.period);
+  const [minimumVolume, setMinimumVolume] = useState(filters.volume);
   return (
     <Box component="form" action="/stock-tools/gainers" method="get" role="search" aria-label="Find top gainers"
       sx={{
@@ -66,13 +70,26 @@ export function GainerFilterForm({ filters, earliest, latest, years }: {
       <label>Daily rank<select name="cutoff" defaultValue={filters.cutoff}>
         {Array.from({ length: 10 }, (_, index) => index + 1).map((rank) => <option key={rank} value={rank}>Top {rank}</option>)}
       </select></label>
-      <label>Min. dollar volume<select name="volume" defaultValue={filters.volume}>
-        {VOLUME_OPTIONS.map((value) => <option key={value} value={value}>{value ? `$${value / 1_000_000}M` : "Any"}</option>)}
-      </select></label>
       <label>Sort by<select name="sort" defaultValue={filters.sort}>
         <option value="date">Newest date</option><option value="gain">Highest gain</option>
         <option value="volume">Highest dollar volume</option>
       </select></label>
+      <Box component="details" sx={{ "& > summary": { cursor: "pointer", py: 1.5, whiteSpace: "nowrap" } }}>
+        <summary>{minimumVolume ? `Dollar volume · $${minimumVolume / 1_000_000}M min.` : "Dollar volume"}</summary>
+        <Box sx={{ display: "grid", gap: 0.5 }}>
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.25 }}>
+            <label htmlFor="dashboard-gainers-volume">Min. $Vol</label>
+            <Tooltip describeChild title="Shows only stocks with at least this much dollar volume on the trading date. Choose Any to show all volumes.">
+              <IconButton size="small" aria-label="About minimum dollar volume" sx={{ p: 0.25 }}>
+                <InfoOutlinedIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <select id="dashboard-gainers-volume" name="volume" value={minimumVolume} onChange={(event) => setMinimumVolume(Number(event.target.value))}>
+            {VOLUME_OPTIONS.map((value) => <option key={value} value={value}>{value ? `$${value / 1_000_000}M` : "Any"}</option>)}
+          </select>
+        </Box>
+      </Box>
       <DashboardPrimaryAction type="submit" sx={{ height: 44, whiteSpace: "nowrap" }}>Apply filters</DashboardPrimaryAction>
     </Box>
   );
