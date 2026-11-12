@@ -449,8 +449,8 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
         <NumberField label="Drop within (minutes)" current={declines.windowMinutes} onChange={next=>next!==null&&updateDeclines({windowMinutes:next})}/>
         <NumberField label="Keep after new low (minutes)" current={declines.retentionMinutes} onChange={next=>next!==null&&updateDeclines({retentionMinutes:next})}/>
       </Box>
-      <Typography component="h3" sx={{fontWeight:800}}>High Drops</Typography>
-      <FormControlLabel control={<Switch checked={pmPullbacks.enabled} onChange={event=>updatePmPullbacks({enabled:event.target.checked})}/>} label="Enable High Drops"/>
+      <Typography component="h3" sx={{fontWeight:800}}>HOD Drops</Typography>
+      <FormControlLabel control={<Switch checked={pmPullbacks.enabled} onChange={event=>updatePmPullbacks({enabled:event.target.checked})}/>} label="Enable HOD Drops"/>
       <Box sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"repeat(2,minmax(0,1fr))",lg:"repeat(3,minmax(0,1fr))"},gap:1.5}}>
         <NumberField label="List stocks" current={pmPullbacks.displayLimit} onChange={next=>next!==null&&updatePmPullbacks({displayLimit:next})}/>
         <NumberField label="Minimum drop from a session high %" current={pmPullbacks.minimumPullbackPercent} onChange={next=>next!==null&&updatePmPullbacks({minimumPullbackPercent:next})}/>
@@ -608,7 +608,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     if(stock){setChartRow({...stock,showDetails:true});setWorkspaceSection("details");}
   }}><Stack spacing={0.5} sx={{height:{md:"100%"},minHeight:0}}>
     <Box role="group" aria-label="Visible scanners" sx={{display:"flex",flexWrap:"wrap",columnGap:0.5,flexShrink:0}}>
-      {([['gainers','Top Gainers'],['momentum','Momentum'],['declines','Top Losers'],['pullbacks','High Drops'],['events','Market Events']] as const).map(([key,label])=><FormControlLabel key={key} label={label}
+      {([['gainers','Top Gainers'],['momentum','Momentum'],['declines','Top Losers'],['pullbacks','HOD Drops'],['events','Market Events']] as const).map(([key,label])=><FormControlLabel key={key} label={label}
         control={<Checkbox size="small" checked={workspaceScreenersSelected[key]} onChange={(_,checked)=>setWorkspaceScreenersSelected(previous=>({...previous,[key]:checked}))}/>}
         sx={{m:0,'& .MuiFormControlLabel-label':{fontSize:"0.75rem"}}}/>)}
     </Box>

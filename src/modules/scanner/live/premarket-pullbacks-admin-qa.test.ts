@@ -28,7 +28,7 @@ it("saves the dedicated enable control without changing Gainer, Momentum or decl
   vi.stubGlobal("EventSource",FakeSource);
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
   await act(async()=>root!.render(createElement(LiveScreenersClient,{admin:true})));
-  const label=[...container.querySelectorAll("label")].find(item=>item.textContent?.includes("Enable High Drops"))!;
+  const label=[...container.querySelectorAll("label")].find(item=>item.textContent?.includes("Enable HOD Drops"))!;
   expect(label).toBeDefined();const toggle=label.querySelector("input")!;expect(toggle.checked).toBe(true);
   await act(async()=>toggle.click());
   const save=[...container.querySelectorAll("button")].find(button=>button.textContent==="Save settings")!;
