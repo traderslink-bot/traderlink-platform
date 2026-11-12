@@ -25,7 +25,6 @@ import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
-import { rapidDropRecoveryPercent } from "@/src/modules/scanner/live/declines";
 import type { DeclineRow, PremarketPullbackResults, PremarketPullbackRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
@@ -53,6 +52,11 @@ function ChartButton<T extends DropChartTarget>({row,onOpenChart}:{row:T;onOpenC
 
 const RAPID_DROP_HELP = "By default, a stock qualifies when it falls 30% or more from a recent peak within 5 minutes. The flag clears at 75% recovery of that drop or after 5 minutes, whichever comes first.";
 
+function rapidFallTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  return minutes ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
+}
+
 function RapidMarker() {
   return <Tooltip describeChild title={RAPID_DROP_HELP}>
     <BoltRoundedIcon role="img" aria-label="Recent rapid drop"
@@ -69,7 +73,7 @@ function HighDropsTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Prem
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const source=row.referenceSession==="premarket"?"PRE":row.referenceSession==="regular"?"REG":"POST";
-        const rapidMetrics:[string,string][]=row.rapidDrop?[["Rapid start",price(row.rapidDrop.startPrice)],["Rapid low",price(row.rapidDrop.lowPrice)],["Rapid fall time",`${Math.floor(row.rapidDrop.durationSeconds/60)}m ${row.rapidDrop.durationSeconds%60}s`]]:[];
+        const rapidMetrics:[string,string][]=row.rapidDrop?[["Rapid start",price(row.rapidDrop.startPrice)],["Rapid low",price(row.rapidDrop.lowPrice)],["Rapid fall time",rapidFallTime(row.rapidDrop.durationSeconds)]]:[];
         const metrics:[string,string][]=open?[["Premarket high",optionalPrice(row.premarketHigh)],["Regular high",optionalPrice(row.regularHigh)],["Post-market high",optionalPrice(row.postMarketHigh)],
           ["Reference high",price(row.referenceHigh)],["Below reference high",`${wholePercent.format(row.belowHighPercent)}%`],["Back to reference high",`+${wholePercent.format(row.backToHighPercent)}%`],["Premarket volume",shares(row.premarketVolume)],
           ["Session volume",shares(row.sessionVolume)],["1min volume",shares(row.oneMinuteVolume)],["5min volume",shares(row.fiveMinuteVolume)],
@@ -111,9 +115,7 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
           <RapidMarker/>
           <ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>
           <Typography variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.drop.maximumDropPercent)}}>{wholePercent.format(row.drop.maximumDropPercent)}%</Typography>
-          <Typography variant="inherit" sx={{ml:"auto",pr:0.25,color:theme=>theme.palette.mode==="dark"?"#929CAA":theme.palette.text.secondary}}>
-            {wholePercent.format(rapidDropRecoveryPercent(row.drop.startPrice,row.drop.lowPrice,row.price))}% recovered
-          </Typography>
+          <Typography variant="inherit" color="text.secondary">in {rapidFallTime(row.drop.durationSeconds)}</Typography>
         </Stack>)}
       </Box>
   </Box>;

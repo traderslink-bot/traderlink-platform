@@ -45,3 +45,5 @@ Restored the themed lightning bolt in both rapid and HOD rows at the owner's req
 The HOD Drops info and lightning-bolt tooltips now explain the default 30%/five-minute trigger and 75% recovery or five-minute expiry. Browser QA, five card tests and lint passed. Preview only.
 
 Rapid drop rows use the shared signed gain/loss color and an explicit neutral recovery gray in dark mode. Desktop and mobile preview verified red drop and gray recovery. Lint passed. Preview only.
+
+Compact rapid rows now show signed peak-to-low loss and fall duration, with recovery used internally for signal clearing. Desktop and mobile preview verified the synthetic −39% in 1m 15s example and clearing. Twenty-two tests and lint passed. Preview only.
