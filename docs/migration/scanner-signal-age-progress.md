@@ -43,3 +43,5 @@ Removed the visible rapid section heading and its empty message. A compact Rapid
 Restored the themed lightning bolt in both rapid and HOD rows at the owner's request. HOD ticker contents can wrap within their cell to keep the bolt clear of Price. Desktop and mobile browser bounds checks, five card tests and lint passed. Preview only.
 
 The HOD Drops info and lightning-bolt tooltips now explain the default 30%/five-minute trigger and 75% recovery or five-minute expiry. Browser QA, five card tests and lint passed. Preview only.
+
+Rapid drop rows use the shared signed gain/loss color and an explicit neutral recovery gray in dark mode. Desktop and mobile preview verified red drop and gray recovery. Lint passed. Preview only.

@@ -110,8 +110,8 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
           <Typography variant="inherit" color="warning.main" sx={{fontWeight:800}}>{row.symbol}</Typography>
           <RapidMarker/>
           <ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>
-          <Typography variant="inherit" color="error.main" sx={{fontWeight:750}}>{wholePercent.format(row.drop.maximumDropPercent)}%</Typography>
-          <Typography variant="inherit" color="text.secondary" sx={{ml:"auto",pr:0.25}}>
+          <Typography variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.drop.maximumDropPercent)}}>{wholePercent.format(row.drop.maximumDropPercent)}%</Typography>
+          <Typography variant="inherit" sx={{ml:"auto",pr:0.25,color:theme=>theme.palette.mode==="dark"?"#929CAA":theme.palette.text.secondary}}>
             {wholePercent.format(rapidDropRecoveryPercent(row.drop.startPrice,row.drop.lowPrice,row.price))}% recovered
           </Typography>
         </Stack>)}
