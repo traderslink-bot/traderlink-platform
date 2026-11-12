@@ -22,8 +22,6 @@ export const scannerStickyTickerSx = {
     left: 0,
     zIndex: 2,
     bgcolor: "background.paper",
-    borderRight: 1,
-    borderRightColor: "divider",
   },
   '& thead [data-scanner-sticky-ticker]': { zIndex: 4 },
 } as const;
