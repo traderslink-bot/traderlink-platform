@@ -120,11 +120,13 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     setStatus("Loading candles…"); setError(null); setHistoryMessage("");
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
-    const requestHistory = () => sharedChartFetch(
-      `/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}`,
+    // Studies with recursive calculations need the same warm-up as the full chart.
+    const useRecentHistory = !activeIndicators.length && timeframe !== "4h" && timeframe !== "1D";
+    const requestHistory = (recent = false) => sharedChartFetch(
+      `/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}${recent ? "&recent=1" : ""}`,
       { signal: abort.signal, credentials: "same-origin" },
     );
-    const initialHistory = requestHistory();
+    const initialHistory = requestHistory(useRecentHistory);
     // The request may settle before the lazy chart library finishes loading.
     void initialHistory.catch(() => {});
     async function start() {
@@ -431,14 +433,23 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         updateDates();
       };
       const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
+      let recentHistory = useRecentHistory;
       const loadHistory = async (initialRequest?: Promise<Response>) => {
         if (loading) { reloadAfter = true; return; }
         loading = true;
         try {
-          const response = await (initialRequest ?? requestHistory());
+          const recent = recentHistory && (!loaded || historyBasisDate === easternClock(Date.now()).date);
+          const response = await (initialRequest ?? requestHistory(recent));
           if (!response.ok) throw Error(response.status === 429 ? "Chart requests are busy. Try again shortly." : "Candles unavailable. Try again.");
-          const data = await response.json();
+          let data = await response.json();
           if (disposed) return;
+          if (recent && !visibleSessionBars(data.bars, preferences).length) {
+            recentHistory = false;
+            const full = await requestHistory();
+            if (!full.ok) throw Error("Candles unavailable. Try again.");
+            data = await full.json();
+            if (disposed) return;
+          }
           if(!loaded&&savedView&&data.bars.length&&savedView.anchor.time<data.bars[0].time){
             const history=await calculationHistory.read(timeframe,savedView.anchor.time);
             if(disposed)return;

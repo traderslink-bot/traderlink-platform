@@ -16,7 +16,7 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
     const paged = !stream && query.get("history") === "1";
     const daily = query.get("daily") === "1";
     let window: ReturnType<typeof chartHistoryWindow> | undefined;
-    if (paged) { try { window=chartHistoryWindow(query.get("before"),daily); } catch { return Response.json({error:"invalid_history_range"},{status:400,headers:safeHeaders}); } }
+    if (paged) { try { window=chartHistoryWindow(query.get("before"), daily, Date.now(), query.get("recent") === "1"); } catch { return Response.json({error:"invalid_history_range"},{status:400,headers:safeHeaders}); } }
     const configured = process.env.TRADERLINK_ALPACA_GATEWAY_URL;
     let token = process.env.TRADERLINK_ALPACA_GATEWAY_TOKEN;
     if (process.env.NODE_ENV !== "production" && process.env.TRADERLINK_ALPACA_GATEWAY_TOKEN_FILE) {

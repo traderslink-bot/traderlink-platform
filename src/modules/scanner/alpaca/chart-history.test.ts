@@ -21,3 +21,13 @@ it("does not trim older chunks or daily pages to ten sessions",()=>{
  expect(chartHistoryPage(bars,chartHistoryWindow(String(Date.parse("2026-10-20T00:00Z")),false),false).bars).toHaveLength(15);
  expect(chartHistoryPage(bars,chartHistoryWindow(null,true),true).bars).toHaveLength(15);
 });
+
+it("shortens only the first intraday request and preserves its older cursor", () => {
+ const now = Date.parse("2026-11-08T16:12:30Z");
+ const recent = chartHistoryWindow(null, false, now, true);
+ expect(recent.start).toBe(Date.parse("2026-11-01T04:00:00Z"));
+ const {nextBefore} = chartHistoryPage([bar("2026-11-06T14:00:00Z")], recent, false);
+ expect(nextBefore).toBe(recent.start - 1);
+ expect(chartHistoryWindow(String(nextBefore), false, now, true)).toEqual(chartHistoryWindow(String(nextBefore), false, now));
+ expect(chartHistoryWindow(null, true, now, true)).toEqual(chartHistoryWindow(null, true, now));
+});
