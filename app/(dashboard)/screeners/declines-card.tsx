@@ -1,5 +1,7 @@
 "use client";
 
+import { scannerGainColor } from "./scanner-gain-color";
+
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -62,7 +64,7 @@ function TopLosersTable({rows,full,onOpenChart,haltByTicker}:{rows:readonly Decl
             <TableCell sx={{px:"0.125rem !important"}}><ChartButton row={row} onOpenChart={onOpenChart}/></TableCell>
             <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell>
             <TableCell><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-            <TableCell>{price(row.price)}</TableCell><TableCell sx={{color:(row.changePercent??0)<0?"error.main":"success.main",fontWeight:750}}>{pct(row.changePercent)}</TableCell>
+            <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(row.changePercent),fontWeight:750}}>{pct(row.changePercent)}</TableCell>
             <TableCell>{shares(row.volume)}</TableCell>
             <TableCell>{floatShares(row.float)}</TableCell><TableCell>{pct(row.spreadPercent)}</TableCell>
           </TableRow>

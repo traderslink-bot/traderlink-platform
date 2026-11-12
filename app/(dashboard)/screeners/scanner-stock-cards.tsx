@@ -1,5 +1,7 @@
 "use client";
 
+import { scannerGainColor } from "./scanner-gain-color";
+
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -85,7 +87,6 @@ const price = new Intl.NumberFormat("en-US", { style:"currency", currency:"USD",
 const date = new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", month:"short", day:"numeric" });
 const shares = (n: number | null) => n === null ? "—" : compact.format(n);
 const percent = (n: number | null, signed = false) => n === null ? "—" : `${signed && n > 0 ? "+" : ""}${decimal.format(n)}%`;
-const changeColor = (n: number | null) => n === null || n === 0 ? "text.secondary" : n > 0 ? "success.main" : "error.main";
 
 function Reading({ label, value }: { label: string; value: string }) {
   return <Box sx={{minWidth:0,textAlign:"left"}}>
@@ -117,8 +118,8 @@ export function ScannerStockCards({ rows, screen, now, renderTools, renderHalt }
             {row.country && <ScannerCountryFlag country={row.country}/>}
           </Box>
           <Box sx={{display:"flex",alignItems:"center",gap:0.6,ml:"auto",fontSize:"0.76rem",fontVariantNumeric:"tabular-nums"}}>
-            <Typography component="span" variant="inherit" sx={{fontWeight:750,color:changeColor(row.sessionGain)}}>{price.format(row.price)}</Typography>
-            <Typography component="span" variant="inherit" sx={{fontWeight:800,color:changeColor(row.sessionGain)}}
+            <Typography component="span" variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.sessionGain)}}>{price.format(row.price)}</Typography>
+            <Typography component="span" variant="inherit" sx={{fontWeight:800,color:scannerGainColor(row.sessionGain)}}
               aria-label={`${post ? "After-hours" : "Day"} change ${percent(row.sessionGain,true)}`}>
               {percent(row.sessionGain,true)}
             </Typography>

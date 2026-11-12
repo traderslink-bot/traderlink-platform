@@ -1,5 +1,7 @@
 "use client";
 
+import { scannerGainColor } from "./scanner-gain-color";
+
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -19,8 +21,8 @@ const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFra
 const price = (n: number) => `$${n >= 1 ? n.toFixed(2) : n.toFixed(4)}`;
 const stamp = (n: number | string) => new Date(n).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET";
 
-export function ScannerTickerDetails({ symbol, stock, actionTarget, active=true, onGenerate }: {
-  symbol: string; stock: LiveScannerRow | undefined;
+export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionTarget, active=true, onGenerate }: {
+  symbol: string; stock: LiveScannerRow | undefined; quote?: {price:number;changePercent:number|null}; postMarket?: boolean;
   actionTarget?:HTMLElement|null;active?:boolean;onGenerate?:()=>void;
 }) {
   const [map, setMap] = useState<StockLevelsMap | null>(null);
@@ -61,13 +63,28 @@ export function ScannerTickerDetails({ symbol, stock, actionTarget, active=true,
   }
   const levelAction=<DashboardPrimaryAction sx={{whiteSpace:"nowrap",flexShrink:0,fontSize:"0.65rem",px:1,py:0,minHeight:26,height:26}} disabled={busy} onClick={() => {onGenerate?.();void generate();}}>{busy ? "Generating…" : "Generate Levels"}</DashboardPrimaryAction>;
   const rows = buildWatchlistV2LevelRows(map?.levelMap);
-  const facts = stock ? [["Price", price(stock.price)], ["Day change", stock.sessionGain == null ? "—" : `${stock.sessionGain.toFixed(0)}%`],
-    ["Vol", stock.volume == null ? "—" : compact.format(stock.volume)], ["Float", stock.float == null ? "—" : compact.format(stock.float)],
-    ["Market cap", stock.marketCap == null ? "—" : `$${compact.format(stock.marketCap)}`], ["RVOL", stock.relativeVolume == null ? "—" : `${stock.relativeVolume.toFixed(1)}×`]] : [];
+  const postOnly = stock?.gainBasis === "today_regular_close";
+  const dayGain = stock ? (postOnly ? undefined : stock.sessionGain) : postMarket ? undefined : quote?.changePercent;
+  const postGain = stock ? (postOnly ? stock.sessionGain : stock.postMarketGain) : postMarket ? quote?.changePercent : undefined;
+  const currentPrice = stock?.price ?? quote?.price;
+  const priceGain = dayGain === undefined ? postGain : dayGain;
+  const changeFact = (label: string, change: number | null): [string, string, string] =>
+    [label, change == null ? "—" : `${change.toFixed(0)}%`, scannerGainColor(change)];
+  const facts: [string, string, string?][] = currentPrice === undefined ? [] : [
+    ["Price", price(currentPrice), scannerGainColor(priceGain)],
+    ...(dayGain === undefined ? [] : [changeFact("Day change", dayGain)]),
+    ...(postGain === undefined ? [] : [changeFact("Post-market change", postGain)]),
+    ...(stock ? [
+      ["Vol", stock.volume == null ? "—" : compact.format(stock.volume)],
+      ["Float", stock.float == null ? "—" : compact.format(stock.float)],
+      ["Market cap", stock.marketCap == null ? "—" : `$${compact.format(stock.marketCap)}`],
+      ["RVOL", stock.relativeVolume == null ? "—" : `${stock.relativeVolume.toFixed(1)}×`],
+    ] as [string, string][] : []),
+  ];
   return <Stack component="section" aria-label={`${symbol} stock details`} spacing={1} sx={{minWidth:0,p:0.5,containerType:"inline-size"}}>
     <Box data-stock-technicals sx={{display:"grid",gridTemplateColumns:{xs:"1fr",sm:"minmax(0,1fr) minmax(0,2fr)"},gap:1.5,alignItems:"start"}}>
       {facts.length ? <Box component="dl" sx={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 1, m: 0,"@container (max-width: 550px)":{gridTemplateColumns:"repeat(2,minmax(0,1fr))"} }}>
-        {facts.map(([label, content]) => <Box key={label}><Typography component="dt" sx={{ color: "text.secondary", fontSize: "0.65rem" }}>{label}</Typography><Typography component="dd" sx={{ m: 0, fontSize: "0.8rem", fontWeight: 750 }}>{content}</Typography></Box>)}
+        {facts.map(([label, content, color]) => <Box key={label}><Typography component="dt" sx={{ color: "text.secondary", fontSize: "0.65rem" }}>{label}</Typography><Typography component="dd" sx={{ m: 0, fontSize: "0.8rem", fontWeight: 750, color }}>{content}</Typography></Box>)}
       </Box> : null}
     <Box sx={{minWidth:0,gridColumn:facts.length?undefined:"1 / -1"}}>
       {actionTarget===undefined?levelAction:active&&actionTarget?createPortal(levelAction,actionTarget):null}

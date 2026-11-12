@@ -417,3 +417,21 @@ it("closes the pushed model stream while hidden, resumes once and cleans up on u
   await act(async()=>root!.unmount());root=undefined;expect(page.connections[1].closed).toBe(true);
  }finally{delete (document as unknown as {hidden?:boolean}).hidden;}
 });
+
+it("colors scanner prices against the displayed comparison and keeps the drawer's Day and Post signs separate", async () => {
+  const initial = momentumModel(42), day = { ...initial.momentum.rows[0], gainBasis: "previous_regular_close" as const };
+  const post = { ...day, gainBasis: "today_regular_close" as const, sessionGain: 42 };
+  const rows = (row: LiveScannerRow) => ({ rows: [row], focus: [], total: 1 });
+  const page = await mount({ ...initial, dayGainers: rows(day), gainers: rows(post), momentum: rows(day) });
+  const color = (element: Element) => getComputedStyle(element).color;
+  const postValue = [...page.container.querySelectorAll("td")].find(cell => cell.textContent === "42%")!;
+  expect(color(postValue)).toBe("rgb(46, 125, 50)");
+  await act(async () => { (page.container.querySelector('[aria-label="Open TEST chart only"]') as HTMLElement).click(); });
+  const detail = document.querySelector('[aria-label="TEST stock details"]')!;
+  const fact = (label: string) => [...detail.querySelectorAll("dt")].find(el => el.textContent === label)!.nextElementSibling!;
+  expect(fact("Day change").textContent).toBe("-24%");
+  expect(color(fact("Price"))).toBe("rgb(211, 47, 47)");
+  expect(color(fact("Day change"))).toBe("rgb(211, 47, 47)");
+  expect(fact("Post-market change").textContent).toBe("42%");
+  expect(color(fact("Post-market change"))).toBe("rgb(46, 125, 50)");
+});
