@@ -51,3 +51,5 @@ Compact rapid rows now show signed peak-to-low loss and fall duration, with reco
 Final scanner review made the card view selector a compact outlined field and matched rapid ticker orange to HOD ticker orange. Focused TypeScript caught a widened indicator direction in the server result; the row projection now has an explicit type. Desktop and mobile preview checks verified dropdown appearance and operation, ticker color, rapid clearing, HOD ranking, Momentum sections, chart/news actions, mobile tabs, and independent server-read settings. The final 4× mobile stress run still recorded long tasks, with no steady-window candle requests. The owner requested another QA pass and a deployment hold.
 
 The indicator timeframe selector now uses a 76px field with a separate visible label. Mobile preview verified all three choices and existing indicator controls. Lint passed. Deployment remains held.
+
+Restored the original floating Indicator timeframe label on a compact 144px field. Mobile preview verified all three timeframes and lint passed. Deployment remains held.

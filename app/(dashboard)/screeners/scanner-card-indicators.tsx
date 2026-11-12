@@ -47,11 +47,9 @@ function useSettings() {
 export function ScannerIndicatorSettings() {
   const { frame,selected,save } = useSettings();
   return <Box sx={{borderTop:1,borderColor:"divider",pt:1,mt:0.6}}>
-    <Typography component="span" variant="body2" sx={{mr:0.85}}>Indicator timeframe</Typography>
-    <TextField select size="small" value={frame}
+    <TextField select size="small" label="Indicator timeframe" value={frame}
       onChange={event=>save({frame:event.target.value as Frame,selected})}
-      slotProps={{select:{inputProps:{"aria-label":"Indicator timeframe"}}}}
-      sx={{width:76,verticalAlign:"middle"}}>
+      sx={{width:144,maxWidth:"100%"}}>
       {FRAMES.map(value=><MenuItem key={value} value={value}>{value}</MenuItem>)}
     </TextField>
     <Box sx={{display:"flex",gap:0.5,flexWrap:"wrap",mt:0.25}}>
