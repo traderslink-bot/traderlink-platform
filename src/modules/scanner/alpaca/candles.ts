@@ -65,7 +65,8 @@ export function displayCandles(input: readonly Candle[], timeframe: ChartTimefra
   };
   for (const bar of input) {
     const previous = result.at(-1);
-    if (previous && step) {
+    // A contiguous pair has no slots to fill, so it needs no timezone conversion.
+    if (previous && step && bar.time - previous.time > step) {
       const currentSession = session(bar.time);
       // Preserve gaps within an observed trading day; do not invent overnight/weekend sessions.
       if (session(previous.time).date === currentSession.date) {

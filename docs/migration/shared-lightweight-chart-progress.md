@@ -147,3 +147,11 @@ VWAP reuses validated seeds and the last same-day readout per account and calcul
 ## November 11, 2026 — Signed-in Charts access
 
 Local candidate opens the chart workspace and chart-only data and preference endpoints to signed-in Platform users. Scanner pages, results, and scanner layout access keep the existing allowlist. Live access remains pending confirmation of member-facing Alpaca data rights.
+
+## November 12, 2026 — Charts performance QA
+
+The signed-in live browser opened one and four charts on desktop, mobile portrait, and mobile landscape. The four-chart layout used four symbols and four timeframes. Panning and scrolling reached each chart and no chart API returned an HTTP error. The mobile runs used 4× CPU throttling. The test layouts were scoped to the QA page and did not replace the account's saved tabs.
+
+Profiling identified timezone conversion for contiguous candles and a second session-filter pass after rendering. The preview skips timezone conversion when there is no gap and uses the displayed series to determine the empty-state message. All 19 focused candle and session tests passed. A synthetic comparison across all six timeframes preserved all output, including the fall DST boundary and carried slots. The median one-minute display preparation time for approximately 8,400 input bars fell from 51 ms to 2 ms in the same Node process. This measures the function only. No production deployment was requested.
+
+The preview rendered one and four charts in all three viewport sizes with no chart API HTTP errors. Mobile portrait stacked four charts in a single column and landscape showed two columns with a scrollable second row. The development preview still showed mobile startup stalls. Its timings do not establish a production page-load improvement.

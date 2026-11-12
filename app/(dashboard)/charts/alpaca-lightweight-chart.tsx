@@ -417,7 +417,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         }
         updateDates();
       };
-      const idleStatus=()=>!bars.size?"No candles for this symbol.":timeframe!=="1D"&&!visibleSessionBars([...bars.values()],preferences).length?"No candles in selected sessions.":"";
+      const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
       const loadHistory = async () => {
         if (loading) { reloadAfter = true; return; }
         loading = true;
