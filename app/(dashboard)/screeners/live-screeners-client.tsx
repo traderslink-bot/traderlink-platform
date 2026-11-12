@@ -44,7 +44,7 @@ import { ScannerChartLaunchControls, SideCardChartControls, useSideCardChartCont
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
-import { Fragment, startTransition, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
+import { Fragment, memo, startTransition, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
 
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
@@ -497,6 +497,14 @@ function ManualTickersAdmin(){
   </Stack></DashboardPanel>;
 }
 
+// The modal owns focus while open. Keep the covered grid mounted at its last
+// render so opening, switching and live publications do not rebuild both grids.
+const ScannerPageSurface = memo(function ScannerPageSurface({ children }: {
+  covered: boolean; children: ReactNode;
+}) {
+  return children;
+}, (_, next) => next.covered);
+
 export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const workspaceLayout=DEFAULT_SCANNER_WORKSPACE_LAYOUT;
   const mobile = useMediaQuery("(max-width:899.95px)") && !admin;
@@ -515,6 +523,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const momentumSections = model?.momentum.momentumSections;
   const momentumStocks = momentumSections ? [...momentumSections.confirmed,...momentumSections.early] : model?.momentum.rows ?? [];
   const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
+  const publishedModel=useRef<ScannerReadModel|null>(null);
   const [chartWorkspace,dispatchChart]=useReducer(scannerChartWorkspace,EMPTY_CHART_WORKSPACE);
   const chartView=useChartMultiview("scanner");
   const { preferences:chartPreferences, ready:preferencesReady, message:preferencesMessage }=useChartPreferences();
@@ -609,8 +618,11 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         if(source!==connection)return;
         try{
           const incoming=JSON.parse((event as MessageEvent).data) as ScannerReadModel;
-          setModel(previous=>{const next=applyScannerDisplayContinuity(previous,incoming,displayContinuity.current,Date.now());displayContinuity.current=next.continuity;return next.model;});
-          setLoadError(false);setCheckedAt(Date.now());
+          const now=Date.now();
+          const next=applyScannerDisplayContinuity(publishedModel.current,incoming,displayContinuity.current,now);
+          displayContinuity.current=next.continuity;
+          publishedModel.current=next.model;
+          startTransition(()=>{setModel(next.model);setLoadError(false);setCheckedAt(now);});
         }catch{setLoadError(true);}
       });
       source.onerror=()=>{if(source===connection){setLoadError(true);setCheckedAt(Date.now());}};
@@ -673,6 +685,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     {!drawerOpen&&chartWorkspace.charts.length>0&&<Box sx={{display:"flex",justifyContent:"flex-end"}}>
       <Button size="small" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>Reopen chart drawer</Button>
     </Box>}
+    <ScannerPageSurface covered={drawerOpen}>
     <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box>
       {mobile&&<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0,mb:0.6}}>
         {mobileTabs?<Tabs value={activeScanner} onChange={(_,value:MobileScannerTab)=>setActiveScanner(value)}
@@ -726,6 +739,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
       {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
     </Box></Box></ScannerNewsDrawerProvider>
+    </ScannerPageSurface>
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,

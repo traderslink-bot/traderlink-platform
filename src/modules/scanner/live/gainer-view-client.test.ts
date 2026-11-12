@@ -364,6 +364,24 @@ describe("two-row table view", () => {
 });
 
  describe("multi-chart ticker workspace",()=>{
+  it("keeps the covered grid stable while the drawer receives live rows and catches up on close",async()=>{
+    const initial=momentumModel(undefined);
+    const results=initial.momentum;
+    const page=await mount({...initial,gainers:results,dayGainers:results});
+    const grid=page.container.querySelector('[data-scanner-grid]')!;
+    const open=grid.querySelector('[aria-label="Open TEST chart only"]') as HTMLElement;
+    await act(async()=>open.click());
+    const drawer=document.querySelector('[role="dialog"][aria-label="Chart workspace"]')!;
+    const scanners=[...drawer.querySelectorAll('[role="tab"]')].find(tab=>tab.textContent==="Scanners") as HTMLElement;
+    await act(async()=>scanners.click());
+    const changed={...results,rows:results.rows.map(row=>({...row,price:3.78}))};
+    await page.update({...initial,gainers:changed,dayGainers:changed});
+    expect(drawer.querySelector('[data-sidebar-screener-card]')?.textContent).toContain("$3.78");
+    expect(grid.textContent).not.toContain("$3.78");
+    await act(async()=>(drawer.querySelector('[aria-label="Close chart"]') as HTMLElement).click());
+    expect(grid.textContent).toContain("$3.78");
+  });
+
   it("retains four charts and screener selection, selects ticker details, and frees a slot on close",async()=>{
     const initial=momentumModel(undefined),template=initial.momentum.rows[0];
     const results={...initial.momentum,rows:['TEST','AAA','BBB','CCC','DDD'].map(symbol=>({...template,symbol})),total:5};

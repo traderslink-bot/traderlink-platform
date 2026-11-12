@@ -11,11 +11,12 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
-import { useId, useState, useSyncExternalStore, type ReactNode } from "react";
+import { startTransition, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import type { DeclineRow, LiveScannerRow, PremarketPullbackRow, ScannerKind } from "@/src/modules/scanner/live/contracts";
 
 import { momentumSignalText } from "./momentum-signal-text";
+import { useSideCardChartControls } from "./scanner-chart-launch-controls";
 import { ScannerCountryFlag } from "./scanner-country-flag";
 import { scannerCardLabelColor, ScannerIndicatorReads, ScannerIndicatorSettings } from "./scanner-card-indicators";
 import { ScannerNewsLink } from "./scanner-news-drawer-context";
@@ -146,9 +147,30 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
   renderHalt: (symbol: string) => ReactNode;
 }) {
   const { sections } = useTickerCardSections();
+  const inDrawer = useSideCardChartControls();
+  const batchSize = 6;
+  const [limit,setLimit]=useState(batchSize);
+  const sentinel=useRef<HTMLDivElement>(null);
+  const hasMore=inDrawer&&rows.length>limit;
+  useEffect(()=>{
+    const node=sentinel.current;
+    if (!hasMore || !node) return;
+    if (typeof IntersectionObserver==="undefined"){
+      startTransition(()=>setLimit(rows.length));
+      return;
+    }
+    const observer=new IntersectionObserver(([entry])=>{
+      if(entry.isIntersecting){
+        observer.disconnect();
+        startTransition(()=>setLimit(current=>current+batchSize));
+      }
+    },{root:node.parentElement,rootMargin:"0px 0px 24px"});
+    observer.observe(node);
+    return ()=>observer.disconnect();
+  },[hasMore,limit,rows.length]);
   return <Box role="list" aria-label={`${stockCardLabels[screen]} stock cards`}
     sx={theme=>({...scannerScrollStyles(theme),minWidth:0,minHeight:0,maxHeight:420,overflowX:"hidden",flex:"1 1 auto"})}>
-    {rows.map(row => {
+    {(inDrawer?rows.slice(0,limit):rows).map(row => {
       const live = isLiveRow(row) ? row : null;
       const hod = isHodRow(row) ? row : null;
       const change = isLiveRow(row) ? row.sessionGain : row.changePercent;
@@ -199,5 +221,6 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
         </Box> : null)}
       </Box>;
     })}
+    {hasMore&&<Box ref={sentinel} aria-hidden="true" sx={{height:1}}/>}
   </Box>;
 }
