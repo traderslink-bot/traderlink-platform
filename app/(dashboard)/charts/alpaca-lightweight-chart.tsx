@@ -559,13 +559,22 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         }
       });
       let lastBarReceivedAt = Date.now(), lastRecoveryAt = 0;
+      let streamHasConnected = false;
       source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}`);
       source.addEventListener("status", event => {
         if (disposed) return;
         const state = JSON.parse((event as MessageEvent).data).state;
         if(state!=="connected"&&!chartHalted&&livePrice){candles.removePriceLine(livePrice);livePrice=undefined;lastGuidePrice=null;}
         const wasConnected = connected; connected = state === "connected";
-        if (connected && !wasConnected && loaded){calculationHistory.invalidate();calculationContexts.clear();contextCoverage.clear();void loadHistory();}
+        if (connected && !wasConnected) {
+          const reconnecting = streamHasConnected;
+          streamHasConnected = true;
+          // The first connection is already covered by the returning chart's history request.
+          if (loaded && (!catchingUp || reconnecting)) {
+            calculationHistory.invalidate();calculationContexts.clear();contextCoverage.clear();
+            void loadHistory();
+          }
+        }
         if (loaded && !catchingUp) setStatus(connected ? idleStatus() : state === "unavailable" ? "Feed unavailable." : "Connecting…");
       });
       source.addEventListener("price",event=>{
