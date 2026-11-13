@@ -11,8 +11,8 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import Close from '@mui/icons-material/Close';
 import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
-import ExpandMore from '@mui/icons-material/ExpandMore';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -133,9 +133,11 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     {active.type==='VWAP'?bands.levels.map((level,index)=>level.enabled?<Box key={`fill-${index}`} sx={{borderBottom:1,borderColor:'divider',pb:1}}><FormControlLabel label={`Bands Fill #${index+1}`} control={<Checkbox checked={level.fillVisible} onChange={(_,fillVisible)=>band(index,{fillVisible})}/>}/><Stack direction="row" sx={{gap:1,flexWrap:'wrap'}}><TextField label={`Bands Fill #${index+1} color`} type="color" key={level.fillColor} defaultValue={level.fillColor} onBlur={e=>band(index,{fillColor:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:150}}/><NumberSetting label={`Bands Fill #${index+1} opacity`} value={level.fillOpacity} min={0} max={100} integer={false} onChange={fillOpacity=>band(index,{fillOpacity})}/></Stack></Box>:null):null}
    </Stack>}
  </> : null;
- const settings = active ? <Box id={settingsId} sx={{borderTop:1,borderColor:'divider',p:1}}>
-   <FormControlLabel label="Show values on chart" control={<Checkbox color="default" checked={!display.hidden.has(active.type)} onChange={(_,checked)=>onDisplayChange(active.type,'hidden',!checked)} />}/>
-   <Typography variant="subtitle2" sx={{mb:1}}>Saved settings for Charts and Scanners</Typography>
+ const settings = active ? <Box sx={{border:1,borderColor:'divider',p:1}}>
+   <Stack direction="row" sx={{alignItems:'center',justifyContent:'space-between',mb:1}}>
+    <Typography component="h4" variant="subtitle2">{typeName(active.type)}</Typography>
+    <IconButton aria-label="Close indicator setup" size="small" onClick={()=>choose('')}><Close fontSize="small"/></IconButton>
+   </Stack>
    <Box component="details" sx={{ mb: 1 }}>
     <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>TraderLink presets</Typography>
     <Stack spacing={1} sx={{ py: 1 }}>
@@ -201,8 +203,11 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
    {!movingAverage && plotSettings}
    <Button variant="outlined" color="error" size="small" sx={{mt:2,textTransform:'none'}} onClick={()=>setRemoval({kind:'indicator',id:active.id,type:active.type})}>Remove from defaults</Button>
   </Box> : null;
+ const defaultsHeading = `${settingsId}-defaults`;
+ const chartHeading = `${settingsId}-chart`;
  return <>
-  <Typography component="h3" sx={{fontWeight:700}}>Chart defaults</Typography>
+  <Stack component="section" aria-labelledby={defaultsHeading} spacing={1}>
+  <Typography component="h3" id={defaultsHeading} sx={{fontWeight:700}}>Chart defaults</Typography>
   <Typography variant="body2" color="text.secondary">Indicators you add here are saved to your account for Charts and Scanners.</Typography>
   <TextField select fullWidth size="small" label="Add or edit indicator" value="" onChange={event=>add(event.target.value as ChartIndicator['type'])}>
    {[...INDICATOR_TYPES].sort((a,b)=>Number(indicators.some(i=>i.type===b))-Number(indicators.some(i=>i.type===a))).map(type=>{
@@ -212,27 +217,24 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     </MenuItem>;
    })}
   </TextField>
-  {indicators.length ? <>
-   <Typography component="h3" sx={{ fontWeight: 700 }}>This chart</Typography>
+  {settings}
+  </Stack>
+  {indicators.length > 0 && <Stack component="section" aria-labelledby={chartHeading} spacing={1}>
+   <Typography component="h3" id={chartHeading} sx={{fontWeight:700}}>This chart</Typography>
    {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
-    const group = indicators.filter(indicator => indicator.type === type);
-    const enabled = display.enabled[type] ?? group.some(indicator => indicator.visible !== false);
-    const expanded = active?.type === type;
-    return <Box key={type} sx={{border:1,borderColor:'divider'}}>
-     <Stack direction="row" sx={{alignItems:'center',minHeight:44,pr:0.5}}>
-      <Button color="inherit" aria-label={`${typeName(type)} settings`} aria-expanded={expanded} aria-controls={expanded ? settingsId : undefined}
-       onClick={()=>expanded ? setSelected('') : choose(group[0].id)}
-       sx={{flex:1,minWidth:0,minHeight:44,justifyContent:'space-between',textTransform:'none',fontWeight:600}}>
-       {typeName(type)}<ExpandMore fontSize="small" sx={{transform:expanded?'rotate(180deg)':undefined}}/>
-      </Button>
-      <Switch size="small" color="default" checked={enabled} slotProps={{input:{role:'switch','aria-label':`Enable ${typeName(type)} on this chart`}}}
-       onChange={(_,checked)=>onDisplayChange(type,'enabled',checked)}/>
-     </Stack>
-     {expanded && settings}
-    </Box>;
-
+    const enabled = display.enabled[type] ?? indicators.some(indicator => indicator.type === type && indicator.visible !== false);
+    const label = typeName(type);
+    return <Stack key={type} direction="row" sx={{alignItems:'center',minHeight:44,px:1,gap:0.5,border:1,borderColor:'divider'}}>
+     <Typography variant="body2" sx={{flex:1,fontWeight:600}}>{label}</Typography>
+     <FormControlLabel label="Show values" sx={{mx:0,'& .MuiFormControlLabel-label':{fontSize:'0.8125rem'}}}
+      control={<Checkbox size="small" color="default" checked={!display.hidden.has(type)}
+       slotProps={{input:{'aria-label':`Show ${label} values on this chart`}}}
+       onChange={(_,checked)=>onDisplayChange(type,'hidden',!checked)}/>}/>
+     <Switch size="small" color="default" checked={enabled} slotProps={{input:{role:'switch','aria-label':`Enable ${label} on this chart`}}}
+      onChange={(_,checked)=>onDisplayChange(type,'enabled',checked)}/>
+    </Stack>;
    })}
-  </> : <Typography variant="body2">Choose an indicator to add it to your chart defaults.</Typography>}
+  </Stack>}
 
   <Dialog open={Boolean(removal)} onClose={()=>setRemoval(undefined)} aria-labelledby={confirmationId} fullWidth maxWidth="xs">
    <DialogTitle id={confirmationId}>{removal?.kind==='line' ? `Delete ${removal.label} line?` : removal ? `Remove ${typeName(removal.type)} from defaults?` : ''}</DialogTitle>

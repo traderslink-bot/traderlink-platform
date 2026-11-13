@@ -89,4 +89,4 @@ Choose **Multi-ticker** inside Multiview to set it up even when only one ticker 
 
 In Multiview, use **+ Timeframe** to add a chart and its remove button to take it out. Multi-ticker also offers **+ Add ticker**. The selected timeframes are shown directly, with a note when the four-chart limit is reached.
 
-Under **This chart**, select an indicator row to expand its settings. The switch on the right enables or disables the indicator on the open chart. Inside the expanded row, **Show values on chart** controls the on-chart readout for that chart. The red **Remove from defaults** button asks for confirmation before removing the entire indicator from your account defaults for Charts and Scanners.
+Use **Chart defaults** to edit indicator settings and presets for your account. The red **Remove from defaults** button asks for confirmation before removing the entire indicator from your defaults for Charts and Scanners. Under **This chart**, use the switch to turn an indicator on or off and **Show values** to control its readout on the open chart.
