@@ -1,5 +1,7 @@
 "use client";
 
+import { scannerPrice as price } from "./scanner-price";
+
 import { ScannerPageTicker } from "./scanner-page-ticker";
 
 import { Fragment, useState } from "react";
@@ -14,7 +16,6 @@ import { ScannerRowNews } from "./scanner-news-drawer-context";
 import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 
-const price = new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:4});
 const shares = new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
 const stateText = { above:"Above", at:"At level", below:"Back below" };
 export function BreakoutStatus({row}:{row:BreakoutRow}) {
@@ -42,7 +43,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
       !rows ? <Skeleton height={160}/> :
       rows.length===0 ? <Typography variant="body2" color="text.secondary">No premarket high breaks yet.</Typography> :
       view==="cards" ? <ScannerStockCards screen="breakouts" rows={rows} now={now} renderHalt={halt} renderTools={tools}
-        renderSignal={row=><>PM high {price.format(row.breakoutLevel)} · <BreakoutStatus row={row}/></>}/> :
+        renderSignal={row=><>PM high {price(row.breakoutLevel)} · <BreakoutStatus row={row}/></>}/> :
       <TableContainer sx={theme=>({...scannerScrollStyles(theme),maxHeight:420})}>
         <Table size="small" stickyHeader aria-label="Breakouts" sx={{
           ...scannerStickyTickerSx,
@@ -57,8 +58,8 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
             <TableRow hover>
               {!twoRows&&<TableCell>{tools(row)}</TableCell>}
               <TableCell data-scanner-sticky-ticker><ScannerPageTicker symbol={row.symbol}/>{halt(row.symbol)}</TableCell>
-              <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{price.format(row.price)}</TableCell>
-              <TableCell>{price.format(row.breakoutLevel)}</TableCell><TableCell><BreakoutStatus row={row}/></TableCell>
+              <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{price(row.price)}</TableCell>
+              <TableCell>{price(row.breakoutLevel)}</TableCell><TableCell><BreakoutStatus row={row}/></TableCell>
               <TableCell>{row.volume===null?"—":shares.format(row.volume)}</TableCell>
               <TableCell>{row.float===null?"—":shares.format(row.float)}</TableCell>
               {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}

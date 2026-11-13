@@ -1,5 +1,7 @@
 "use client";
 
+import { scannerPrice as price } from "./scanner-price";
+
 import { scannerGainColor } from "./scanner-gain-color";
 
 import Alert from "@mui/material/Alert";
@@ -18,7 +20,6 @@ import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-rel
 import type { LiveScannerRow, ScannerNewsItem } from "@/src/modules/scanner/live/contracts";
 
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
-const price = (n: number) => `$${n >= 1 ? n.toFixed(2) : n.toFixed(4)}`;
 const stamp = (n: number | string) => new Date(n).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET";
 
 export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionTarget, active=true, onGenerate }: {

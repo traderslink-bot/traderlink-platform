@@ -1,5 +1,7 @@
 "use client";
 
+import { scannerPrice as price } from "./scanner-price";
+
 import { ScannerPageTicker } from "./scanner-page-ticker";
 
 import { scannerGainColor } from "./scanner-gain-color";
@@ -121,7 +123,6 @@ export function ScannerViewSettings({ label, view, onViewChange }: { label: stri
 
 const compact = new Intl.NumberFormat("en-US", { notation:"compact", maximumFractionDigits:1 });
 const decimal = new Intl.NumberFormat("en-US", { maximumFractionDigits:1 });
-const price = new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", minimumFractionDigits:2, maximumFractionDigits:4 });
 const date = new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", month:"short", day:"numeric" });
 const shares = (n: number | null) => n === null ? "—" : compact.format(n);
 const percent = (n: number | null, signed = false) => n === null ? "—" : `${signed && n > 0 ? "+" : ""}${decimal.format(n)}%`;
@@ -183,7 +184,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
       const catalyst = row.news.find(item => Number.isFinite(Date.parse(item.createdAt)));
       const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
       const stats = hod ? [
-        ["Vol",shares(volume)],["Float",shares(row.float)],["High",price.format(hod.referenceHigh)],["Spread",percent(row.spreadPercent)],
+        ["Vol",shares(volume)],["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",percent(row.spreadPercent)],
       ] : [
         ["Vol",shares(volume)],["Float",shares(row.float)],["T/O",percent(turnover)],
         live ? ["RVOL",live.relativeVolume === null ? "—" : `${decimal.format(live.relativeVolume)}×`] : ["Spread",percent(row.spreadPercent)],
@@ -198,7 +199,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
             {renderTools(row)}
           </Box>
           <Box sx={{display:"flex",alignItems:"center",gap:0.6,ml:"auto",fontSize:"0.76rem",fontVariantNumeric:"tabular-nums"}}>
-            <Typography component="span" variant="inherit" sx={{fontWeight:750,color:scannerGainColor(change)}}>{price.format(row.price)}</Typography>
+            <Typography component="span" variant="inherit" sx={{fontWeight:750,color:scannerGainColor(change)}}>{price(row.price)}</Typography>
             <Typography component="span" variant="inherit" sx={{fontWeight:800,color:scannerGainColor(movement)}}
               aria-label={`${hod ? "Below session high" : post ? "After-hours change" : "Day change"} ${percent(movement,true)}`}>
               {percent(movement,true)}

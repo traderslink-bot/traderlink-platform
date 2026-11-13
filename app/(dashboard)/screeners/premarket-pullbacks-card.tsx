@@ -1,5 +1,7 @@
 "use client";
 
+import { scannerPrice as price } from "./scanner-price";
+
 import { ScannerPageTicker } from "./scanner-page-ticker";
 
 import { ScannerCountryFlag } from "./scanner-country-flag";
@@ -34,12 +36,9 @@ import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanne
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 import { ScannerNewsLink, ScannerRowNews } from "./scanner-news-drawer-context";
 
-const subDollarPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:3,maximumFractionDigits:3});
-const regularPrice=new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const wholePercent=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
 const clock=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit",second:"2-digit"});
-const price=(value:number)=>`$${(value<1?subDollarPrice:regularPrice).format(value)}`;
 const optionalPrice=(value:number|null)=>value===null?"n/a":price(value);
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 const floatShares=(value:number|null)=>value===null?"—":compact.format(value);

@@ -1,5 +1,7 @@
 "use client";
 
+import { scannerPriceNumber } from "./scanner-price";
+
 import { ScannerLayoutHandles, ScannerLayoutToolbar, type NamedLayout } from "./scanner-layout-editor";
 import { defaultPositions, desktopRows, validPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
 import { ScannerPageTicker, ScannerPageTickerSelection } from "./scanner-page-ticker";
@@ -103,7 +105,6 @@ function readMobileScannerLayout() {
 const SESSION_LABELS: Record<ScannerSession,string> = { premarket: "Premarket", regular: "Regular hours", after_hours: "After hours" };
 export const GAINERS_EXPLANATION = "This gainer list is not a standard list where percentage increase determines inclusion. The scanner qualifies candidates according to total vol, dollar vol, min gain and max spread. Day Gainers are ranked by gain from yesterday’s regular session close. Post market Gainers are ranked by gain from today’s regular close.";
 const number = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 2 });
-const priceNumber = new Intl.NumberFormat("en-US",{ minimumFractionDigits:2,maximumFractionDigits:2 });
 const wholePercent = new Intl.NumberFormat("en-US",{ maximumFractionDigits: 0 });
 const compact = new Intl.NumberFormat("en-US",{ notation: "compact",maximumFractionDigits: 1 });
 const MIN_DESKTOP_GRID_HEIGHT=452;
@@ -111,7 +112,7 @@ export function availableScannerGridHeight(viewportHeight:number,gridTop:number)
 function value(input: number | null | undefined, suffix = ""): string {
   return input == null ? "n/a" : `${suffix==="%"?wholePercent.format(input):number.format(input)}${suffix}`;
 }
-function priceValue(input:number|null|undefined):string{return input==null?"n/a":priceNumber.format(input);}
+function priceValue(input:number|null|undefined):string{return input==null?"n/a":scannerPriceNumber(input);}
 function time(input: string | null): string { return input ? new Date(input).toLocaleTimeString([],{ hour: "numeric",minute: "2-digit",second: "2-digit" }) : "n/a"; }
 function floatValue(input: number | null): string {
   if (input === null) return "—";

@@ -26,7 +26,7 @@ it("shows Top Losers only, ignores drop context, opens full view and never fetch
   await act(async()=>root!.render(createElement(DeclinesCard,{results:cardResults,notice:null,session:"after_hours",onOpenChart:chart,haltByTicker})));
   const table=container.querySelector('table[aria-label="Top Losers stocks"]')!;
   expect(table.querySelector('[data-halt-indicator="AAA"]')).not.toBeNull();
-  expect(table.textContent).toContain("-40%");expect(table.textContent).toContain("$0.330");
+  expect(table.textContent).toContain("-40%");expect(table.textContent).toContain("$0.3300");
   await act(async()=>table.querySelector('tbody tr')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
   expect(table.textContent).toContain("Comparison price");expect(table.textContent).not.toContain("Back to pre-drop price");
   expect(table.textContent).toContain("1K");
@@ -73,5 +73,5 @@ it("shows the session-high drop on flagged NCT without replacing it with the rap
   const cells=container.querySelectorAll("tbody tr:first-child td");
   expect(cells[2].querySelector('[aria-label="Recent rapid drop"]')).not.toBeNull();
   expect(cells[4].textContent).toBe("23%");
-  expect(cells[5].textContent).toBe("$1.11REG");
+  expect(cells[5].textContent).toBe("$1.1101REG");
 });
