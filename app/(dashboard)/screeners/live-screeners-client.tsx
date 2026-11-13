@@ -15,6 +15,9 @@ import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import { useChartMultiview } from "../charts/use-chart-multiview";
 import { chartCount, reconcileChartTickers, selectedChart, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 
+import CandlestickChartOutlined from "@mui/icons-material/CandlestickChartOutlined";
+import DashboardCustomizeOutlined from "@mui/icons-material/DashboardCustomizeOutlined";
+import Portal from "@mui/material/Portal";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -83,6 +86,8 @@ import { applyScannerDisplayContinuity, type ScannerDisplayContinuity } from "@/
 
 import { MomentumSections } from "./momentum-sections";
 import { momentumSignalText } from "./momentum-signal-text";
+
+const scannerToolbar = () => document.getElementById("dashboard-scanner-toolbar");
 
 const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", momentum: "Momentum" };
 const MOBILE_SCANNER_LAYOUT_KEY = "traderslink.scanner.mobile-layout.v1";
@@ -730,9 +735,20 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         {model&&model.status!=='disabled'?<Stack direction="row" sx={{ flexWrap:"wrap",gap:1 }}><Chip label={`${model.receivedCount}/${model.universeCount} quotes`} size="small"/><Chip label={`${model.missingFloatCount} missing float`} size="small"/>{model.missingSymbols.length?<Chip color="warning" label={`${model.missingSymbols.length} missing quotes`} size="small"/>:null}</Stack>:null}
       </Stack>
     </DashboardPanel>:null}
-    {!drawerOpen&&chartWorkspace.charts.length>0&&<Box sx={{display:"flex",justifyContent:"flex-end"}}>
-      <Button size="small" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>Reopen chart drawer</Button>
-    </Box>}
+    {!admin&&<Portal container={scannerToolbar}>
+      <Stack direction="row" sx={{justifyContent:"flex-end"}}>
+        {!drawerOpen&&chartWorkspace.charts.length>0&&<Tooltip title="Reopen chart drawer">
+          <IconButton aria-label="Reopen chart drawer" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>
+            <CandlestickChartOutlined fontSize="small"/>
+          </IconButton>
+        </Tooltip>}
+        {!mobile&&!draft&&<Tooltip title="Edit layout">
+          <IconButton aria-label="Edit layout" onClick={()=>{setLayoutName(stored.active);setDraft(positions);}}>
+            <DashboardCustomizeOutlined fontSize="small"/>
+          </IconButton>
+        </Tooltip>}
+      </Stack>
+    </Portal>}
     <ScannerCompactChartCovered value={drawerOpen}>
     <ScannerPageTickerSelection value={admin?null:pageTickerSelection}>
     <ScannerPageSurface covered={drawerOpen}>
@@ -757,7 +773,6 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       </Stack>}
       {!admin&&!mobile&&<ScannerLayoutToolbar editing={draft!==null} name={draft?layoutName:stored.active}
         setName={setLayoutName} saved={stored.layouts}
-        onEdit={()=>{setLayoutName(stored.active);setDraft(positions);}}
         onSelect={name=>saveLayouts(name,stored.layouts)}
         onCancel={()=>setDraft(null)}
         onReset={()=>setDraft(defaultPositions)}
