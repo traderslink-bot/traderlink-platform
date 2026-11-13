@@ -1,5 +1,5 @@
 "use client";
-import {useId,useState} from 'react';
+import {useId,useRef,useState} from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
@@ -47,12 +47,18 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  const [removal,setRemoval]=useState<{kind:'line'|'indicator';id:string;type:ChartIndicator['type'];label?:string}>();
  const settingsId = useId();
  const confirmationId = useId();
+ const restoreSelectAfterRemoval = useRef(false);
+ const indicatorSelectRef = useRef<{focus: () => void} | null>(null);
  const active=indicators.find(i=>i.id===selected);
  const activeTab=tab==='visibility'&&active?.type!=='VWAP'?'inputs':tab;
  const edit=(changes:Partial<ChartIndicator>)=>{if(active)onChange(indicators.map(i=>i.id===active.id?{...i,...changes}:i));};
  const lines = active ? indicators.filter(indicator => indicator.type === active.type) : [];
  const movingAverage = active?.type === 'EMA' || active?.type === 'SMA';
  const choose = (id: string) => { setSelected(id); setOpenLine(undefined); setTab('inputs'); setPresetName(''); setPresetError(''); };
+ const closeSetup = () => {
+  choose('');
+  indicatorSelectRef.current?.focus();
+ };
  const add = (type: ChartIndicator['type']) => {
   const existing = indicators.find(indicator => indicator.type === type);
   if (existing) { choose(existing.id); return; }
@@ -136,7 +142,7 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  const settings = active ? <Box sx={{border:1,borderColor:'divider',p:1}}>
    <Stack direction="row" sx={{alignItems:'center',justifyContent:'space-between',mb:1}}>
     <Typography component="h4" variant="subtitle2">{typeName(active.type)}</Typography>
-    <IconButton aria-label="Close indicator setup" size="small" onClick={()=>choose('')}><Close fontSize="small"/></IconButton>
+    <IconButton aria-label="Close indicator setup" size="small" onClick={closeSetup}><Close fontSize="small"/></IconButton>
    </Stack>
    <Box component="details" sx={{ mb: 1 }}>
     <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>TraderLink presets</Typography>
@@ -206,21 +212,11 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  const defaultsHeading = `${settingsId}-defaults`;
  const chartHeading = `${settingsId}-chart`;
  return <>
-  <Stack component="section" aria-labelledby={defaultsHeading} spacing={1}>
-  <Typography component="h3" id={defaultsHeading} sx={{fontWeight:700}}>Chart defaults</Typography>
-  <Typography variant="body2" color="text.secondary">Indicators you add here are saved to your account for Charts and Scanners.</Typography>
-  <TextField select fullWidth size="small" label="Add or edit indicator" value="" onChange={event=>add(event.target.value as ChartIndicator['type'])}>
-   {[...INDICATOR_TYPES].sort((a,b)=>Number(indicators.some(i=>i.type===b))-Number(indicators.some(i=>i.type===a))).map(type=>{
-    const added=indicators.some(indicator=>indicator.type===type);
-    return <MenuItem key={type} value={type} disabled={!added && indicators.length + indicatorPresets[type][0].settings.length > 20}>
-     {added ? `Edit ${typeName(type)}` : `Add ${typeName(type)}`}
-    </MenuItem>;
-   })}
-  </TextField>
-  {settings}
-  </Stack>
   {indicators.length > 0 && <Stack component="section" aria-labelledby={chartHeading} spacing={1}>
-   <Typography component="h3" id={chartHeading} sx={{fontWeight:700}}>This chart</Typography>
+   <Stack direction="row" sx={{alignItems:'baseline',justifyContent:'space-between',px:'9px'}}>
+    <Typography component="h3" id={chartHeading} sx={{fontWeight:700}}>This chart</Typography>
+    <Typography variant="caption" color="text.secondary" sx={{width:40,textAlign:'center'}}>On</Typography>
+   </Stack>
    {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
     const enabled = display.enabled[type] ?? indicators.some(indicator => indicator.type === type && indicator.visible !== false);
     const label = typeName(type);
@@ -236,7 +232,25 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
    })}
   </Stack>}
 
-  <Dialog open={Boolean(removal)} onClose={()=>setRemoval(undefined)} aria-labelledby={confirmationId} fullWidth maxWidth="xs">
+  <Stack component="section" aria-labelledby={defaultsHeading} spacing={1}>
+  <Typography component="h3" id={defaultsHeading} sx={{fontWeight:700}}>Chart defaults</Typography>
+  <Typography variant="body2" color="text.secondary">Indicators you add here are saved to your account for Charts and Scanners.</Typography>
+  <TextField select fullWidth size="small" label="Add or edit indicator" inputRef={indicatorSelectRef} value="" onChange={event=>add(event.target.value as ChartIndicator['type'])}>
+   {[...INDICATOR_TYPES].sort((a,b)=>Number(indicators.some(i=>i.type===b))-Number(indicators.some(i=>i.type===a))).map(type=>{
+    const added=indicators.some(indicator=>indicator.type===type);
+    return <MenuItem key={type} value={type} disabled={!added && indicators.length + indicatorPresets[type][0].settings.length > 20}>
+     {added ? `Edit ${typeName(type)}` : `Add ${typeName(type)}`}
+    </MenuItem>;
+   })}
+  </TextField>
+  {settings}
+  </Stack>
+
+  <Dialog open={Boolean(removal)} onClose={()=>setRemoval(undefined)} aria-labelledby={confirmationId} fullWidth maxWidth="xs" slotProps={{transition:{onExited:()=>{
+   if(!restoreSelectAfterRemoval.current)return;
+   restoreSelectAfterRemoval.current=false;
+   indicatorSelectRef.current?.focus();
+  }}}}>
    <DialogTitle id={confirmationId}>{removal?.kind==='line' ? `Delete ${removal.label} line?` : removal ? `Remove ${typeName(removal.type)} from defaults?` : ''}</DialogTitle>
    <DialogContent>{removal?.kind==='line' ? 'This removes the line from your saved indicator settings.' : 'This removes the entire indicator setup from your account defaults for Charts and Scanners.'}</DialogContent>
    <DialogActions>
@@ -244,7 +258,10 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     <Button color="error" variant="outlined" onClick={()=>{
      if(!removal)return;
      const next=indicators.filter(i=>removal.kind==='line'?i.id!==removal.id:i.type!==removal.type);
-     if(removal.kind==='indicator')setSelected('');
+     if(removal.kind==='indicator'){
+      restoreSelectAfterRemoval.current=true;
+      choose('');
+     }
      else if(selected===removal.id)choose(next.find(i=>i.type===removal.type)?.id??'');
      onChange(next);
      setRemoval(undefined);
