@@ -13,7 +13,7 @@ const Chart = lazy(() => import("../charts/alpaca-lightweight-chart").then(modul
 const Covered = createContext(false);
 export const ScannerCompactChartCovered = Covered.Provider;
 
-export function ScannerCompactChart({ symbol, selectedSymbol, slot }: { symbol: string | null; selectedSymbol: string | null; slot: ScannerWorkspaceSlotId }) {
+export function ScannerCompactChart({ symbol, selectedSymbol, slot, keepMounted = false }: { symbol: string | null; selectedSymbol: string | null; slot: ScannerWorkspaceSlotId; keepMounted?: boolean }) {
   const covered = useContext(Covered);
   const viewport = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -43,12 +43,14 @@ export function ScannerCompactChart({ symbol, selectedSymbol, slot }: { symbol: 
     };
   }, [symbol, covered, visible, ticker, selectedSymbol]);
 
+  const [hasShown,setHasShown]=useState(false);
   const activeTicker = selectedSymbol ?? ticker;
+  if(visible&&activeTicker&&!hasShown)setHasShown(true);
   const fallback = <Skeleton animation={false} variant="rectangular" sx={{height:"100%"}}/>;
   return <ScannerWorkspaceCard slot={slot} widget="ticker-workspace">
     <DashboardPanel hideHeader>
       <Box ref={viewport} aria-label="Scanner chart" sx={{height:{xs:320,md:"auto"},flex:1,minHeight:0}}>
-        {activeTicker && visible && !covered ? <Suspense fallback={fallback}>
+        {activeTicker && (visible || keepMounted && hasShown) && !covered ? <Suspense fallback={fallback}>
           <Chart key={activeTicker} symbol={activeTicker} timeframe={timeframe} onTimeframeChange={setTimeframe}
             viewId="scanner-page-chart" viewWorkspace="scanner" compactMobile compactToolbar/>
         </Suspense> : fallback}

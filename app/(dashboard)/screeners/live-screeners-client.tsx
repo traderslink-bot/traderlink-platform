@@ -1,5 +1,7 @@
 "use client";
 
+import { ScannerLayoutHandles, ScannerLayoutToolbar, type NamedLayout } from "./scanner-layout-editor";
+import { defaultPositions, desktopRows, validPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
 import { ScannerPageTicker, ScannerPageTickerSelection } from "./scanner-page-ticker";
 
 import { scannerGainColor } from "./scanner-gain-color";
@@ -513,6 +515,33 @@ const ScannerPageSurface = memo(function ScannerPageSurface({ children }: {
 
 export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const workspaceLayout=DEFAULT_SCANNER_WORKSPACE_LAYOUT;
+  const [stored,setStored]=useState<{active:string;layouts:NamedLayout[]}>({active:"",layouts:[]});
+  const [draft,setDraft]=useState<DesktopPositions|null>(null);
+  const [layoutName,setLayoutName]=useState("");
+  useEffect(()=>{
+    const frame=requestAnimationFrame(()=>{
+      try{
+        const value=JSON.parse(localStorage.getItem("traderslink.scanner.desktop-layout.v1")??"null");
+        if(value&&Array.isArray(value.layouts)){
+          const layouts=value.layouts.filter((item:NamedLayout)=>item&&typeof item.name==="string"&&item.name.trim()&&validPositions(item.positions));
+          setStored({layouts,active:layouts.some((item:NamedLayout)=>item.name===value.active)?value.active:""});
+        }
+      }catch{/* Default layout remains available. */}
+    });
+    return ()=>cancelAnimationFrame(frame);
+  },[]);
+  const saveLayouts=(active:string,layouts:NamedLayout[])=>{
+    const next={active,layouts};
+    setStored(next);
+    try{localStorage.setItem("traderslink.scanner.desktop-layout.v1",JSON.stringify(next));}
+    catch{/* Keep layouts for this page if storage is unavailable. */}
+  };
+  const positions=draft??stored.layouts.find(item=>item.name===stored.active)?.positions??defaultPositions;
+  const customDesktop=!admin&&positions!==defaultPositions;
+  const positionStyles=customDesktop?Object.fromEntries(widgets.map(widget=>{
+    const {x,y,w,h}=positions[widget];
+    return [`& > [data-scanner-workspace-card="${widget}"]`,{gridArea:{md:`${y+1} / ${x+1} / span ${h} / span ${w}`}}];
+  })):undefined;
   const mobile = useMediaQuery("(max-width:899.95px)") && !admin;
   const [preferTabs,setPreferTabs]=useState(readMobileScannerLayout);
   const [activeScanner,setActiveScanner]=useState<MobileScannerTab>("gainers");
@@ -725,18 +754,32 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
           Tabs
         </Button>}
       </Stack>}
+      {!admin&&!mobile&&<ScannerLayoutToolbar editing={draft!==null} name={draft?layoutName:stored.active}
+        setName={setLayoutName} saved={stored.layouts}
+        onEdit={()=>{setLayoutName(stored.active);setDraft(positions);}}
+        onSelect={name=>saveLayouts(name,stored.layouts)}
+        onCancel={()=>setDraft(null)}
+        onReset={()=>setDraft(defaultPositions)}
+        onSave={()=>{
+          const name=layoutName.trim();
+          if(!draft||!name)return;
+          saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,positions:draft}]);
+          setDraft(null);
+        }}/>}
       <Box data-scanner-grid ref={gridRef} role={mobileTabs?"tabpanel":undefined}
         id={mobileTabs?`${mobileTabsId}-panel`:undefined} aria-labelledby={mobileTabs?`${mobileTabsId}-${activeScanner}`:undefined} sx={{
+      position:"relative",
       alignItems:"start",
       display:"grid",
       gap:1.5,
       gridTemplateAreas:{
         xs:mobileTabs?"none":workspaceLayout.mobileAreas,
-        md:workspaceLayout.desktopAreas,
+        md:customDesktop?"none":workspaceLayout.desktopAreas,
       },
-      height:{xs:"auto",md:desktopGridHeight?`${desktopGridHeight}px`:"calc(100dvh - 76px)"},
+      height:{xs:"auto",md:desktopGridHeight?`${(desktopGridHeight+12)*desktopRows(admin?defaultPositions:positions)/2-12}px`:"calc(100dvh - 76px)"},
       gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(4,minmax(0,1fr))"},
-      gridTemplateRows:{xs:mobileTabs?"auto":"repeat(7,auto)",md:"repeat(2,minmax(0,1fr))"},
+      gridTemplateRows:{xs:mobileTabs?"auto":"repeat(7,auto)",md:`repeat(${desktopRows(admin?defaultPositions:positions)},minmax(0,1fr))`},
+      ...positionStyles,
       '& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 },
     }}>
       {(["gainers","momentum"] as const).filter(showScanner).map(kind=><ScannerWorkspaceCard key={kind} slot={workspaceLayout.assignments[kind]} widget={kind}>
@@ -762,7 +805,8 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         <ScannerBreakoutsCard rows={model?.breakouts??(model?[]:undefined)} now={checkedAt} notice={memberNotice}
           haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({symbol:row.symbol,exchange:row.exchange,stock:row})}/>
       </ScannerWorkspaceCard>}
-      {!admin&&showScanner("ticker-workspace")&&<ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={compactChartSymbol} selectedSymbol={pageTicker}/>}
+      {!admin&&showScanner("ticker-workspace")&&<ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={compactChartSymbol} selectedSymbol={pageTicker} keepMounted={!mobile&&draft!==null}/>}
+      {!admin&&!mobile&&draft&&<ScannerLayoutHandles positions={draft} onChange={setDraft}/>}
     </Box></Box></ScannerNewsDrawerProvider>
     </ScannerPageSurface>
     </ScannerPageTickerSelection>
