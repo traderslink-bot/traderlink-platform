@@ -7,6 +7,11 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
@@ -19,9 +24,9 @@ import {defaultVwapBands,type VwapBandLevel,type VwapBands,INDICATOR_TYPES,VWAP_
 import {indicatorPresets, indicatorPresetRows, nextMovingAverageLine} from '@/src/modules/scanner/alpaca/chart-indicator-presets';
 import {indicatorPlotStyle,indicatorValues} from '@/src/modules/scanner/alpaca/chart-indicators';
 
-function NumberInput({label,value,onChange,min=1,max=10000,integer=true,disabled=false,step}:{label:string;value:number;onChange:(value:number)=>void;min?:number;max?:number|null;integer?:boolean;disabled?:boolean;step?:number}){
+function NumberInput({label,value,onChange,min=1,max=10000,integer=true,disabled=false,step,width=150,accessibleLabel}:{label:string;value:number;onChange:(value:number)=>void;min?:number;max?:number|null;integer?:boolean;disabled?:boolean;step?:number;width?:number;accessibleLabel?:string}){
  const [draft,setDraft]=useState(String(value)),[error,setError]=useState(false);
- return <TextField disabled={disabled} label={label} type="number" value={draft} onChange={e=>setDraft(e.target.value)} onBlur={()=>{const n=Number(draft),valid=draft.trim()!==''&&Number.isFinite(n)&&n>=min&&(max===null||n<=max)&&(!integer||Number.isInteger(n));setError(!valid);if(valid&&n!==value)onChange(n);}} onKeyDown={e=>{if(e.key==='Enter')(e.target as HTMLInputElement).blur();}} error={error} helperText={error?`Enter ${integer?'a whole number':'a number'} ${max===null?`${min} or greater`:`from ${min} to ${max}`}.`:undefined} size="small" slotProps={{htmlInput:{min,max:max??undefined,step:step??(integer?1:'any')}}} sx={{width:150}}/>;
+ return <TextField disabled={disabled} label={label} type="number" value={draft} onChange={e=>setDraft(e.target.value)} onBlur={()=>{const n=Number(draft),valid=draft.trim()!==''&&Number.isFinite(n)&&n>=min&&(max===null||n<=max)&&(!integer||Number.isInteger(n));setError(!valid);if(valid&&n!==value)onChange(n);}} onKeyDown={e=>{if(e.key==='Enter')(e.target as HTMLInputElement).blur();}} error={error} helperText={error?`Enter ${integer?'a whole number':'a number'} ${max===null?`${min} or greater`:`from ${min} to ${max}`}.`:undefined} size="small" slotProps={{htmlInput:{'aria-label':accessibleLabel,min,max:max??undefined,step:step??(integer?1:'any')}}} sx={{width,...(accessibleLabel && {"& input":{MozAppearance:"textfield","&::-webkit-inner-spin-button, &::-webkit-outer-spin-button":{WebkitAppearance:"none",margin:0}}})}}/>;
 }
 function NumberSetting(props:Parameters<typeof NumberInput>[0]){return <NumberInput key={props.value} {...props}/>;}
 const name=(i:ChartIndicator)=>i.type==='EMA'||i.type==='SMA'||i.type==='RSI'?`${i.type} ${i.period}`:i.type==='MACD'?`MACD ${i.fastLength??12}, ${i.slowLength??26}, ${i.signalLength??9}`:i.type==='Bollinger'?`Bollinger Bands ${i.period}, ${i.deviation??2}`:'VWAP';
@@ -36,15 +41,18 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  onDisplayChange: (type: ChartIndicator['type'], action: 'hidden' | 'enabled', value: boolean) => void;
  onPresetsChange:(presets:SavedIndicatorPreset[])=>void;
 }){
- const [search,setSearch]=useState(''),[selected,setSelected]=useState(()=>indicators.find(indicator=>indicator.type===initialType)?.id??''),[tab,setTab]=useState('inputs');
+ const [selected,setSelected]=useState(()=>indicators.find(indicator=>indicator.type===initialType)?.id??''),[tab,setTab]=useState('inputs');
  const [presetName,setPresetName]=useState(''),[presetError,setPresetError]=useState('');
+ const [openLine,setOpenLine]=useState<string>();
+ const [removal,setRemoval]=useState<{kind:'line'|'indicator';id:string;type:ChartIndicator['type'];label?:string}>();
  const settingsId = useId();
+ const confirmationId = useId();
  const active=indicators.find(i=>i.id===selected);
  const activeTab=tab==='visibility'&&active?.type!=='VWAP'?'inputs':tab;
  const edit=(changes:Partial<ChartIndicator>)=>{if(active)onChange(indicators.map(i=>i.id===active.id?{...i,...changes}:i));};
  const lines = active ? indicators.filter(indicator => indicator.type === active.type) : [];
  const movingAverage = active?.type === 'EMA' || active?.type === 'SMA';
- const choose = (id: string) => { setSelected(id); setTab('inputs'); setPresetName(''); setPresetError(''); };
+ const choose = (id: string) => { setSelected(id); setOpenLine(undefined); setTab('inputs'); setPresetName(''); setPresetError(''); };
  const add = (type: ChartIndicator['type']) => {
   const existing = indicators.find(indicator => indicator.type === type);
   if (existing) { choose(existing.id); return; }
@@ -80,67 +88,8 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  const band=(index:number,changes:Partial<VwapBandLevel>)=>edit({vwapBands:{...bands,levels:bands.levels.map((level,n)=>n===index?{...level,...changes}:level) as VwapBands['levels']}});
  const style=(key:string,changes:PlotStyle)=>{if(active)edit({plots:{...active.plots,[key]:{...active.plots?.[key],...changes}}});};
  const sourceLabel=(source:string)=>({open:'Open',high:'High',low:'Low',close:'Close',hl2:'HL2',hlc3:'HLC3',ohlc4:'OHLC4',hlcc4:'HLCC4'}[source]??source);
- const settings = active ? <Box id={settingsId} sx={{borderTop:1,borderColor:'divider',p:1}}>
-   <FormControlLabel label="Show values on chart" control={<Checkbox color="default" checked={!display.hidden.has(active.type)} onChange={(_,checked)=>onDisplayChange(active.type,'hidden',!checked)} />}/>
-   <Typography variant="subtitle2" sx={{mb:1}}>Saved settings for Charts and Scanners</Typography>
-   <Box component="details" sx={{ mb: 1 }}>
-    <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>TraderLink presets</Typography>
-    <Stack spacing={1} sx={{ py: 1 }}>
-     <Typography variant="caption" color="text.secondary">Loading a preset replaces this indicator’s current settings.</Typography>
-     {indicatorPresets[active.type].map((preset, index) => <Box key={preset.title} sx={{ border: 1, borderColor: 'divider', p: 1 }}>
-      <Typography variant="subtitle2">{preset.title}{index === 0 ? ' · Default' : ''}</Typography>
-      <Typography variant="body2" color="text.secondary">{preset.description}</Typography>
-      <Button color="inherit" variant="outlined" size="small" disabled={indicators.length - lines.length + preset.settings.length > 20} onClick={() => applyPreset(active.type, indicatorPresetRows(active.type, index, () => crypto.randomUUID()))} aria-label={`Load ${preset.title}`}>Load preset</Button>
-     </Box>)}
-    </Stack>
-   </Box>
-   <Box component="details" sx={{ mb: 1 }}>
-    <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>My presets</Typography>
-    <Stack spacing={1} sx={{ py: 1 }}>
-     <Stack component="form" direction="row" useFlexGap sx={{ gap: 1, flexWrap: 'wrap' }} onSubmit={event => { event.preventDefault(); savePreset(); }}>
-      <TextField size="small" label="Preset name" value={presetName} error={Boolean(presetError)} helperText={presetError || undefined}
-       onChange={event => { setPresetName(event.target.value); setPresetError(''); }}
-       slotProps={{ htmlInput: { maxLength: MAX_INDICATOR_PRESET_NAME_LENGTH } }} sx={{ flex: 1, minWidth: 140 }} />
-      <Button type="submit" color="inherit" variant="outlined" size="small" disabled={!presetName.trim() || savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS}>Save current setup</Button>
-     </Stack>
-     {savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS && <Typography variant="caption">Remove a saved preset to make room.</Typography>}
-     {savedPresets.filter(preset => preset.type === active.type).map(preset => <Stack direction="row" key={preset.id} sx={{ alignItems: 'center', gap: 0.5 }}>
-      <Typography variant="body2" sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{preset.name}</Typography>
-      <Button color="inherit" variant="outlined" size="small" aria-label={`Load ${preset.name}`} disabled={indicators.length - lines.length + preset.indicators.length > 20}
-       onClick={() => applyPreset(active.type, preset.indicators.map(indicator => ({ ...indicator, id: crypto.randomUUID() })))}>Load</Button>
-      <IconButton size="small" aria-label={`Delete preset ${preset.name}`} onClick={() => onPresetsChange(savedPresets.filter(item => item.id !== preset.id))}><DeleteOutline fontSize="small" /></IconButton>
-     </Stack>)}
-    </Stack>
-   </Box>
-   {movingAverage && <Stack spacing={1} sx={{ mb: 1 }}>
-    {lines.map(line => {
-     const label = name(line);
-     const options = indicatorPlotStyle(line, 'main');
-     return <Stack key={line.id} direction="row" useFlexGap sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-      <Checkbox size="small" checked={line.visible !== false && options.visible} slotProps={{ input: { 'aria-label': `Show ${label} line` } }} onChange={(_, visible) => editLine(line.id, { visible, plots: { ...line.plots, main: { ...line.plots?.main, visible } } })} />
-      <NumberSetting label={`${label} length`} value={line.period} onChange={period => editLine(line.id, { period })} />
-      <TextField key={options.color} type="color" label={`${label} color`} defaultValue={options.color} onBlur={event => {
-       if (event.target.value !== options.color) editLine(line.id, { plots: { ...line.plots, main: { ...line.plots?.main, color: event.target.value } } });
-      }} size="small" slotProps={{ inputLabel: { shrink: true } }} sx={{ width: 88 }} />
-      <Button color="inherit" variant="outlined" size="small" aria-pressed={active.id === line.id} aria-label={`Edit ${label} line settings`} onClick={() => choose(line.id)}>Edit line</Button>
-      {lines.length > 1 && <IconButton size="small" aria-label={`Remove ${label} line`} onClick={() => {
-       if (active.id === line.id) choose(lines.find(item => item.id !== line.id)!.id);
-       onChange(indicators.filter(item => item.id !== line.id));
-      }}><DeleteOutline fontSize="small" /></IconButton>}
-     </Stack>;
-    })}
-    <Button color="inherit" variant="outlined" size="small" disabled={indicators.length >= 20} sx={{ alignSelf: 'flex-start' }} onClick={() => {
-     if (active.type !== 'EMA' && active.type !== 'SMA') return;
-     const line = nextMovingAverageLine(active.type, indicators, crypto.randomUUID());
-     onChange([...indicators, line]);
-     choose(line.id);
-    }}>Add {active.type} line</Button>
-   </Stack>}
-   {!movingAverage && lines.length > 1 && <TextField select size="small" fullWidth label="Saved configuration" value={active.id} onChange={event => choose(event.target.value)}>
-    {lines.map((line, index) => <MenuItem key={line.id} value={line.id}>{name(line)} ({index + 1})</MenuItem>)}
-   </TextField>}
-   {movingAverage && <Typography variant="body2" sx={{ fontWeight: 700 }}>{name(active)} line settings</Typography>}
-   <Tabs textColor="inherit" sx={{"& .MuiTabs-indicator":{bgcolor:"text.primary"}}} value={activeTab} onChange={(_,value)=>setTab(value)} aria-label={`${name(active)} settings`}><Tab value="inputs" label="Inputs"/><Tab value="style" label="Style"/>{active.type==='VWAP'?<Tab value="visibility" label="Visibility"/>:null}</Tabs>
+ const plotSettings = active ? <>
+   <Tabs textColor="inherit" sx={{"& .MuiTabs-indicator":{bgcolor:"text.primary"},"& .MuiTab-root":{minWidth:0,px:1.5}}} value={activeTab} onChange={(_,value)=>setTab(value)} aria-label={`${name(active)} settings`}><Tab value="inputs" label="Inputs"/><Tab value="style" label="Style"/>{active.type==='VWAP'?<Tab value="visibility" label="Visibility"/>:null}</Tabs>
    {activeTab==='inputs'?<Stack key={active.id} spacing={2} sx={{pt:2}}>
     {!movingAverage&&!['VWAP','MACD'].includes(active.type)?<NumberSetting label={`${active.type} length`} value={active.period} onChange={period=>edit({period})}/>:null}
     <TextField select label="Source" value={active.source??(active.type==='VWAP'?'hlc3':'close')} onChange={e=>edit({source:e.target.value as ChartIndicator['source']})} size="small">{PRICE_SOURCES.map(value=><MenuItem key={value} value={value}>{sourceLabel(value)}</MenuItem>)}</TextField>
@@ -168,10 +117,10 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     </>:null}
     {active.type==='RSI'?<Stack spacing={1}>{(['upper','middle','lower'] as const).map((key,index)=>{const levels=active.levels??{upper:70,middle:50,lower:30};return <NumberSetting key={key} label={['Upper level','Middle level','Lower level'][index]} value={levels[key]} min={key==='lower'?0:levels[key==='middle'?'lower':'middle']+0.01} max={key==='upper'?100:levels[key==='middle'?'upper':'middle']-0.01} integer={false} onChange={value=>edit({levels:{...levels,[key]:value}})}/>;})}</Stack>:null}
    </Stack>:activeTab==='visibility'?<Stack sx={{pt:1}}>{CHART_TIMEFRAMES.map(frame=><FormControlLabel key={frame} label={frame} control={<Checkbox checked={(active.timeframes??[...CHART_TIMEFRAMES]).includes(frame)} onChange={(_,checked)=>edit({timeframes:CHART_TIMEFRAMES.filter(value=>value===frame?checked:(active.timeframes??[...CHART_TIMEFRAMES]).includes(value))})}/>}/>)}</Stack>:<Stack spacing={2} sx={{pt:2}}>
-    {indicatorValues([],active).filter(plot=>active.type!=='VWAP'||plot.key==='main'||bands.levels[Number(plot.key.at(-1))-1]?.enabled).map(plot=>{const options=indicatorPlotStyle(active,plot.key);return <Box key={plot.key} sx={{borderBottom:1,borderColor:'divider',pb:1}}>
-     <FormControlLabel label={plot.label} control={<Checkbox checked={options.visible} onChange={(_,visible)=>style(plot.key,{visible})}/>}/>
+    {indicatorValues([],active).filter(plot=>active.type!=='VWAP'||plot.key==='main'||bands.levels[Number(plot.key.at(-1))-1]?.enabled).map(plot=>{const options=indicatorPlotStyle(active,plot.key);const inlineControls = movingAverage && plot.key === 'main'; return <Box key={plot.key} sx={{borderBottom:1,borderColor:'divider',pb:1}}>
+     {!inlineControls && <FormControlLabel label={plot.label} control={<Checkbox checked={options.visible} onChange={(_,visible)=>style(plot.key,{visible})}/>}/>}
      {!plot.histogram?<Stack direction="row" sx={{flexWrap:'wrap',gap:1}}>
-      <TextField label={`${plot.label} color`} type="color" key={options.color} defaultValue={options.color} onBlur={e=>style(plot.key,{color:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:130}}/>
+      {!inlineControls && <TextField label={`${plot.label} color`} type="color" key={options.color} defaultValue={options.color} onBlur={e=>style(plot.key,{color:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:130}}/>}
       <TextField select label="Width" value={options.width} onChange={e=>style(plot.key,{width:Number(e.target.value) as PlotStyle['width']})} size="small" sx={{width:95}}>{[1,2,3,4].map(value=><MenuItem key={value} value={value}>{value}px</MenuItem>)}</TextField>
       <TextField select label="Line style" value={options.style} onChange={e=>style(plot.key,{style:Number(e.target.value) as PlotStyle['style']})} size="small" sx={{width:120}}>{['Solid','Dotted','Dashed'].map((label,value)=><MenuItem key={value} value={value}>{label}</MenuItem>)}</TextField>
      </Stack>:<Stack spacing={1}>{['positive-rising','positive-falling','negative-rising','negative-falling'].map(key=><TextField key={`${key}-${active.plots?.[key]?.color}`} label={key.replace('-',' ')} type="color" defaultValue={active.plots?.[key]?.color??(key.startsWith('positive')?'#16a085':'#e45757')} onBlur={e=>style(key,{color:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}}/>)}</Stack>}
@@ -183,21 +132,86 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     </Stack>:null}
     {active.type==='VWAP'?bands.levels.map((level,index)=>level.enabled?<Box key={`fill-${index}`} sx={{borderBottom:1,borderColor:'divider',pb:1}}><FormControlLabel label={`Bands Fill #${index+1}`} control={<Checkbox checked={level.fillVisible} onChange={(_,fillVisible)=>band(index,{fillVisible})}/>}/><Stack direction="row" sx={{gap:1,flexWrap:'wrap'}}><TextField label={`Bands Fill #${index+1} color`} type="color" key={level.fillColor} defaultValue={level.fillColor} onBlur={e=>band(index,{fillColor:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:150}}/><NumberSetting label={`Bands Fill #${index+1} opacity`} value={level.fillOpacity} min={0} max={100} integer={false} onChange={fillOpacity=>band(index,{fillOpacity})}/></Stack></Box>:null):null}
    </Stack>}
-   <Button variant="outlined" color="error" size="small" sx={{mt:2,textTransform:'none'}} onClick={()=>{
-    onChange(indicators.filter(indicator=>indicator.type!==active.type));
-    setSelected('');
-   }}>Remove from defaults</Button>
+ </> : null;
+ const settings = active ? <Box id={settingsId} sx={{borderTop:1,borderColor:'divider',p:1}}>
+   <FormControlLabel label="Show values on chart" control={<Checkbox color="default" checked={!display.hidden.has(active.type)} onChange={(_,checked)=>onDisplayChange(active.type,'hidden',!checked)} />}/>
+   <Typography variant="subtitle2" sx={{mb:1}}>Saved settings for Charts and Scanners</Typography>
+   <Box component="details" sx={{ mb: 1 }}>
+    <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>TraderLink presets</Typography>
+    <Stack spacing={1} sx={{ py: 1 }}>
+     <Typography variant="caption" color="text.secondary">Loading a preset replaces this indicator’s current settings.</Typography>
+     {indicatorPresets[active.type].map((preset, index) => <Box key={preset.title} sx={{ border: 1, borderColor: 'divider', p: 1 }}>
+      <Typography variant="subtitle2">{preset.title}{index === 0 ? ' · Default' : ''}</Typography>
+      <Typography variant="body2" color="text.secondary">{preset.description}</Typography>
+      <Button color="inherit" variant="outlined" size="small" disabled={indicators.length - lines.length + preset.settings.length > 20} onClick={() => applyPreset(active.type, indicatorPresetRows(active.type, index, () => crypto.randomUUID()))} aria-label={`Load ${preset.title}`}>Load preset</Button>
+     </Box>)}
+    </Stack>
+   </Box>
+   <Box component="details" sx={{ mb: 2 }}>
+    <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>My presets</Typography>
+    <Stack spacing={1} sx={{ py: 1 }}>
+     <Stack component="form" direction="row" useFlexGap sx={{ gap: 1, flexWrap: 'wrap' }} onSubmit={event => { event.preventDefault(); savePreset(); }}>
+      <TextField size="small" label="Preset name" value={presetName} error={Boolean(presetError)} helperText={presetError || undefined}
+       onChange={event => { setPresetName(event.target.value); setPresetError(''); }}
+       slotProps={{ htmlInput: { maxLength: MAX_INDICATOR_PRESET_NAME_LENGTH } }} sx={{ flex: 1, minWidth: 140 }} />
+      <Button type="submit" color="inherit" variant="outlined" size="small" disabled={!presetName.trim() || savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS}>Save current setup</Button>
+     </Stack>
+     {savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS && <Typography variant="caption">Remove a saved preset to make room.</Typography>}
+     {savedPresets.filter(preset => preset.type === active.type).map(preset => <Stack direction="row" key={preset.id} sx={{ alignItems: 'center', gap: 0.5 }}>
+      <Typography variant="body2" sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{preset.name}</Typography>
+      <Button color="inherit" variant="outlined" size="small" aria-label={`Load ${preset.name}`} disabled={indicators.length - lines.length + preset.indicators.length > 20}
+       onClick={() => applyPreset(active.type, preset.indicators.map(indicator => ({ ...indicator, id: crypto.randomUUID() })))}>Load</Button>
+      <IconButton size="small" aria-label={`Delete preset ${preset.name}`} onClick={() => onPresetsChange(savedPresets.filter(item => item.id !== preset.id))}><DeleteOutline fontSize="small" /></IconButton>
+     </Stack>)}
+    </Stack>
+   </Box>
+   {movingAverage && <Stack spacing={1} sx={{mt:1,mb:1}}>
+    {lines.map(line => {
+     const label = name(line);
+     const options = indicatorPlotStyle(line, 'main');
+     const expanded = openLine === line.id;
+     const lineSettingsId = `${settingsId}-${line.id}`;
+     return <Box key={line.id} sx={{border:1,borderColor:'divider',minWidth:0}}>
+      <Stack direction="row" sx={{alignItems:'center',gap:0.5,minHeight:48}}>
+       <Checkbox color="default" size="small" sx={{p:1,minWidth:40,minHeight:44}} checked={line.visible !== false && options.visible}
+        slotProps={{input:{'aria-label':`Show ${label} line`}}} onChange={(_,visible)=>editLine(line.id,{visible,plots:{...line.plots,main:{...line.plots?.main,visible}}})}/>
+       <NumberSetting label="Length" accessibleLabel={`${label} length`} width={86} value={line.period} onChange={period=>editLine(line.id,{period})}/>
+       <Box component="input" type="color" aria-label={`${label} color`} key={options.color} defaultValue={options.color}
+        onBlur={event=>{if(event.target.value!==options.color)editLine(line.id,{plots:{...line.plots,main:{...line.plots?.main,color:event.target.value}}});}}
+        sx={{width:40,height:44,p:0.5,border:0,bgcolor:'transparent',cursor:'pointer',flexShrink:0}}/>
+       <IconButton aria-label={`Edit ${label} line settings`} aria-expanded={expanded} aria-controls={expanded?lineSettingsId:undefined}
+        onClick={()=>{setSelected(line.id);setTab('inputs');setOpenLine(expanded?undefined:line.id);}}
+        sx={{minWidth:44,minHeight:44}}><SettingsOutlined fontSize="small"/></IconButton>
+       {lines.length>1 && <IconButton aria-label={`Delete ${label} line`} onClick={()=>setRemoval({kind:'line',id:line.id,type:line.type,label})}
+        sx={{minWidth:44,minHeight:44}}><DeleteOutline fontSize="small"/></IconButton>}
+      </Stack>
+      {expanded && <Box id={lineSettingsId} sx={{p:1,borderTop:1,borderColor:'divider'}}>{plotSettings}</Box>}
+     </Box>;
+    })}
+    <Button color="inherit" variant="outlined" size="small" disabled={indicators.length >= 20} sx={{ alignSelf: 'flex-start' }} onClick={() => {
+     if (active.type !== 'EMA' && active.type !== 'SMA') return;
+     const line = nextMovingAverageLine(active.type, indicators, crypto.randomUUID());
+     onChange([...indicators, line]);
+     choose(line.id);
+    }}>Add {active.type} line</Button>
+   </Stack>}
+   {!movingAverage && lines.length > 1 && <TextField select size="small" fullWidth label="Saved configuration" value={active.id} onChange={event => choose(event.target.value)}>
+    {lines.map((line, index) => <MenuItem key={line.id} value={line.id}>{name(line)} ({index + 1})</MenuItem>)}
+   </TextField>}
+   {!movingAverage && plotSettings}
+   <Button variant="outlined" color="error" size="small" sx={{mt:2,textTransform:'none'}} onClick={()=>setRemoval({kind:'indicator',id:active.id,type:active.type})}>Remove from defaults</Button>
   </Box> : null;
  return <>
   <Typography component="h3" sx={{fontWeight:700}}>Chart defaults</Typography>
   <Typography variant="body2" color="text.secondary">Indicators you add here are saved to your account for Charts and Scanners.</Typography>
-  <TextField label="Search indicators" value={search} onChange={e=>setSearch(e.target.value)} size="small"/>
-  <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-   {INDICATOR_TYPES.filter(type => typeName(type).toLowerCase().includes(search.toLowerCase())).map(type => {
-    const added = indicators.some(indicator => indicator.type === type);
-    return <Button color="inherit" variant="outlined" key={type} disabled={!added && indicators.length + indicatorPresets[type][0].settings.length > 20} onClick={() => add(type)}>{added ? `Edit ${typeName(type)}` : `Add ${typeName(type)}`}</Button>;
+  <TextField select fullWidth size="small" label="Add or edit indicator" value="" onChange={event=>add(event.target.value as ChartIndicator['type'])}>
+   {[...INDICATOR_TYPES].sort((a,b)=>Number(indicators.some(i=>i.type===b))-Number(indicators.some(i=>i.type===a))).map(type=>{
+    const added=indicators.some(indicator=>indicator.type===type);
+    return <MenuItem key={type} value={type} disabled={!added && indicators.length + indicatorPresets[type][0].settings.length > 20}>
+     {added ? `Edit ${typeName(type)}` : `Add ${typeName(type)}`}
+    </MenuItem>;
    })}
-  </Stack>
+  </TextField>
   {indicators.length ? <>
    <Typography component="h3" sx={{ fontWeight: 700 }}>This chart</Typography>
    {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
@@ -220,5 +234,20 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
    })}
   </> : <Typography variant="body2">Choose an indicator to add it to your chart defaults.</Typography>}
 
+  <Dialog open={Boolean(removal)} onClose={()=>setRemoval(undefined)} aria-labelledby={confirmationId} fullWidth maxWidth="xs">
+   <DialogTitle id={confirmationId}>{removal?.kind==='line' ? `Delete ${removal.label} line?` : removal ? `Remove ${typeName(removal.type)} from defaults?` : ''}</DialogTitle>
+   <DialogContent>{removal?.kind==='line' ? 'This removes the line from your saved indicator settings.' : 'This removes the entire indicator setup from your account defaults for Charts and Scanners.'}</DialogContent>
+   <DialogActions>
+    <Button color="inherit" onClick={()=>setRemoval(undefined)} autoFocus>Cancel</Button>
+    <Button color="error" variant="outlined" onClick={()=>{
+     if(!removal)return;
+     const next=indicators.filter(i=>removal.kind==='line'?i.id!==removal.id:i.type!==removal.type);
+     if(removal.kind==='indicator')setSelected('');
+     else if(selected===removal.id)choose(next.find(i=>i.type===removal.type)?.id??'');
+     onChange(next);
+     setRemoval(undefined);
+    }}>{removal?.kind==='line'?'Delete line':'Remove from defaults'}</Button>
+   </DialogActions>
+  </Dialog>
  </>;
 }

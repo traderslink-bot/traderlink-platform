@@ -14,7 +14,7 @@ During an active session, the open candle and volume can change as trades arrive
 
 ## Add and remove indicators
 
-Choose **Indicators**, then add the study you want. EMA and SMA each have one entry. Use **Add EMA line** or **Add SMA line** inside the indicator settings to configure additional lines. Each line has its own length, color, visibility, and settings for source, smoothing, width and line style.
+Choose **Indicators** and open **Add or edit indicator**. Indicators already in your defaults appear first. EMA and SMA each have one entry. Use **Add EMA line** or **Add SMA line** to add lengths. Change visibility, length and color on the line itself. Use its gear to open source, smoothing, width and line style directly below that line. The trash icon opens a confirmation for deleting that line.
 
 Expand **TraderLink presets** to see each setup’s title and intended use. An indicator starts with its default preset. **Load preset** replaces that indicator’s current settings. The EMA default uses 9- and 20-bar lines for intraday momentum, with a 20/50 alternative for slower trend context. SMA starts with 20 bars and offers a 20/50/200 daily setup. VWAP starts with a single session line and offers a session-band setup. RSI, MACD and Bollinger Bands start with their standard defaults.
 
@@ -89,4 +89,4 @@ Choose **Multi-ticker** inside Multiview to set it up even when only one ticker 
 
 In Multiview, use **+ Timeframe** to add a chart and its remove button to take it out. Multi-ticker also offers **+ Add ticker**. The selected timeframes are shown directly, with a note when the four-chart limit is reached.
 
-Under **This chart**, select an indicator row to expand its settings. The switch on the right enables or disables the indicator on the open chart. Inside the expanded row, **Show values on chart** controls the on-chart readout for that chart. The red **Remove from defaults** button removes the indicator from your account defaults for Charts and Scanners.
+Under **This chart**, select an indicator row to expand its settings. The switch on the right enables or disables the indicator on the open chart. Inside the expanded row, **Show values on chart** controls the on-chart readout for that chart. The red **Remove from defaults** button asks for confirmation before removing the entire indicator from your account defaults for Charts and Scanners.
