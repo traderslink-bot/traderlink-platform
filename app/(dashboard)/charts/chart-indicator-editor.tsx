@@ -1,11 +1,13 @@
 "use client";
-import {useState} from 'react';
+import {useId,useState} from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
+import Switch from '@mui/material/Switch';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -36,7 +38,8 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
 }){
  const [search,setSearch]=useState(''),[selected,setSelected]=useState(()=>indicators.find(indicator=>indicator.type===initialType)?.id??''),[tab,setTab]=useState('inputs');
  const [presetName,setPresetName]=useState(''),[presetError,setPresetError]=useState('');
- const active=indicators.find(i=>i.id===selected)??indicators.at(-1);
+ const settingsId = useId();
+ const active=indicators.find(i=>i.id===selected);
  const activeTab=tab==='visibility'&&active?.type!=='VWAP'?'inputs':tab;
  const edit=(changes:Partial<ChartIndicator>)=>{if(active)onChange(indicators.map(i=>i.id===active.id?{...i,...changes}:i));};
  const lines = active ? indicators.filter(indicator => indicator.type === active.type) : [];
@@ -77,35 +80,9 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  const band=(index:number,changes:Partial<VwapBandLevel>)=>edit({vwapBands:{...bands,levels:bands.levels.map((level,n)=>n===index?{...level,...changes}:level) as VwapBands['levels']}});
  const style=(key:string,changes:PlotStyle)=>{if(active)edit({plots:{...active.plots,[key]:{...active.plots?.[key],...changes}}});};
  const sourceLabel=(source:string)=>({open:'Open',high:'High',low:'Low',close:'Close',hl2:'HL2',hlc3:'HLC3',ohlc4:'OHLC4',hlcc4:'HLCC4'}[source]??source);
- return <>
-  <Typography component="h3" sx={{fontWeight:700}}>Chart defaults</Typography>
-  <Typography variant="body2" color="text.secondary">Indicators you add here are saved to your account for Charts and Scanners.</Typography>
-  <TextField label="Search indicators" value={search} onChange={e=>setSearch(e.target.value)} size="small"/>
-  <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-   {INDICATOR_TYPES.filter(type => typeName(type).toLowerCase().includes(search.toLowerCase())).map(type => {
-    const added = indicators.some(indicator => indicator.type === type);
-    return <Button variant="outlined" key={type} disabled={!added && indicators.length + indicatorPresets[type][0].settings.length > 20} onClick={() => add(type)}>{added ? `Edit ${typeName(type)}` : `Add ${typeName(type)}`}</Button>;
-   })}
-  </Stack>
-  {indicators.length ? <>
-   <Typography component="h3" sx={{ fontWeight: 700 }}>This chart</Typography>
-   {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
-    const group = indicators.filter(indicator => indicator.type === type);
-    const enabled = display.enabled[type] ?? group.some(indicator => indicator.visible !== false);
-    const hidden = display.hidden.has(type);
-    return <Stack key={type} direction="row" sx={{ alignItems: 'center', gap: 0.5, border: 1, borderColor: active?.type === type ? 'primary.main' : 'divider', minWidth: 0 }}>
-     <Button onClick={() => choose(group[0].id)} aria-pressed={active?.type === type} sx={{ flex: 1, justifyContent: 'flex-start', textTransform: 'none', minWidth: 0 }}>{typeName(type)}</Button>
-      <Button size="small" aria-label={`${hidden?'Show':'Hide'} ${typeName(type)} details`} onClick={() => onDisplayChange(type,'hidden',!hidden)} sx={{textTransform:'none',lineHeight:1.2}}>{hidden?'Show details':'Hide details'}</Button>
-      <Button size="small" aria-label={`Turn ${enabled?'off':'on'} ${typeName(type)}`} onClick={() => onDisplayChange(type,'enabled',!enabled)} sx={{textTransform:'none',lineHeight:1.2}}>{enabled?'Turn off':'Turn on'}</Button>
-    </Stack>;
-   })}
-  </> : <Typography variant="body2">Choose an indicator to add it to your chart defaults.</Typography>}
-  {active?<Box sx={{borderTop:1,borderColor:'divider',pt:1}}>
-   <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:1,mb:1}}>
-    <Typography component="h3" sx={{fontWeight:700}}>{typeName(active.type)} defaults</Typography>
-    <Button size="small" onClick={()=>onChange(indicators.filter(indicator=>indicator.type!==active.type))}
-      sx={{textTransform:"none"}}>Remove from chart defaults</Button>
-   </Stack>
+ const settings = active ? <Box id={settingsId} sx={{borderTop:1,borderColor:'divider',p:1}}>
+   <FormControlLabel label="Show values on chart" control={<Checkbox color="default" checked={!display.hidden.has(active.type)} onChange={(_,checked)=>onDisplayChange(active.type,'hidden',!checked)} />}/>
+   <Typography variant="subtitle2" sx={{mb:1}}>Saved settings for Charts and Scanners</Typography>
    <Box component="details" sx={{ mb: 1 }}>
     <Typography component="summary" variant="body2" sx={{ cursor: 'pointer' }}>TraderLink presets</Typography>
     <Stack spacing={1} sx={{ py: 1 }}>
@@ -113,7 +90,7 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
      {indicatorPresets[active.type].map((preset, index) => <Box key={preset.title} sx={{ border: 1, borderColor: 'divider', p: 1 }}>
       <Typography variant="subtitle2">{preset.title}{index === 0 ? ' · Default' : ''}</Typography>
       <Typography variant="body2" color="text.secondary">{preset.description}</Typography>
-      <Button size="small" disabled={indicators.length - lines.length + preset.settings.length > 20} onClick={() => applyPreset(active.type, indicatorPresetRows(active.type, index, () => crypto.randomUUID()))} aria-label={`Load ${preset.title}`}>Load preset</Button>
+      <Button color="inherit" variant="outlined" size="small" disabled={indicators.length - lines.length + preset.settings.length > 20} onClick={() => applyPreset(active.type, indicatorPresetRows(active.type, index, () => crypto.randomUUID()))} aria-label={`Load ${preset.title}`}>Load preset</Button>
      </Box>)}
     </Stack>
    </Box>
@@ -124,12 +101,12 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
       <TextField size="small" label="Preset name" value={presetName} error={Boolean(presetError)} helperText={presetError || undefined}
        onChange={event => { setPresetName(event.target.value); setPresetError(''); }}
        slotProps={{ htmlInput: { maxLength: MAX_INDICATOR_PRESET_NAME_LENGTH } }} sx={{ flex: 1, minWidth: 140 }} />
-      <Button type="submit" size="small" disabled={!presetName.trim() || savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS}>Save current setup</Button>
+      <Button type="submit" color="inherit" variant="outlined" size="small" disabled={!presetName.trim() || savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS}>Save current setup</Button>
      </Stack>
      {savedPresets.length >= MAX_SAVED_INDICATOR_PRESETS && <Typography variant="caption">Remove a saved preset to make room.</Typography>}
      {savedPresets.filter(preset => preset.type === active.type).map(preset => <Stack direction="row" key={preset.id} sx={{ alignItems: 'center', gap: 0.5 }}>
       <Typography variant="body2" sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{preset.name}</Typography>
-      <Button size="small" aria-label={`Load ${preset.name}`} disabled={indicators.length - lines.length + preset.indicators.length > 20}
+      <Button color="inherit" variant="outlined" size="small" aria-label={`Load ${preset.name}`} disabled={indicators.length - lines.length + preset.indicators.length > 20}
        onClick={() => applyPreset(active.type, preset.indicators.map(indicator => ({ ...indicator, id: crypto.randomUUID() })))}>Load</Button>
       <IconButton size="small" aria-label={`Delete preset ${preset.name}`} onClick={() => onPresetsChange(savedPresets.filter(item => item.id !== preset.id))}><DeleteOutline fontSize="small" /></IconButton>
      </Stack>)}
@@ -145,14 +122,14 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
       <TextField key={options.color} type="color" label={`${label} color`} defaultValue={options.color} onBlur={event => {
        if (event.target.value !== options.color) editLine(line.id, { plots: { ...line.plots, main: { ...line.plots?.main, color: event.target.value } } });
       }} size="small" slotProps={{ inputLabel: { shrink: true } }} sx={{ width: 88 }} />
-      <Button size="small" aria-pressed={active.id === line.id} aria-label={`Edit ${label} line settings`} onClick={() => choose(line.id)}>Settings</Button>
+      <Button color="inherit" variant="outlined" size="small" aria-pressed={active.id === line.id} aria-label={`Edit ${label} line settings`} onClick={() => choose(line.id)}>Edit line</Button>
       {lines.length > 1 && <IconButton size="small" aria-label={`Remove ${label} line`} onClick={() => {
        if (active.id === line.id) choose(lines.find(item => item.id !== line.id)!.id);
        onChange(indicators.filter(item => item.id !== line.id));
       }}><DeleteOutline fontSize="small" /></IconButton>}
      </Stack>;
     })}
-    <Button size="small" disabled={indicators.length >= 20} sx={{ alignSelf: 'flex-start' }} onClick={() => {
+    <Button color="inherit" variant="outlined" size="small" disabled={indicators.length >= 20} sx={{ alignSelf: 'flex-start' }} onClick={() => {
      if (active.type !== 'EMA' && active.type !== 'SMA') return;
      const line = nextMovingAverageLine(active.type, indicators, crypto.randomUUID());
      onChange([...indicators, line]);
@@ -163,7 +140,7 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     {lines.map((line, index) => <MenuItem key={line.id} value={line.id}>{name(line)} ({index + 1})</MenuItem>)}
    </TextField>}
    {movingAverage && <Typography variant="body2" sx={{ fontWeight: 700 }}>{name(active)} line settings</Typography>}
-   <Tabs value={activeTab} onChange={(_,value)=>setTab(value)} aria-label={`${name(active)} settings`}><Tab value="inputs" label="Inputs"/><Tab value="style" label="Style"/>{active.type==='VWAP'?<Tab value="visibility" label="Visibility"/>:null}</Tabs>
+   <Tabs textColor="inherit" sx={{"& .MuiTabs-indicator":{bgcolor:"text.primary"}}} value={activeTab} onChange={(_,value)=>setTab(value)} aria-label={`${name(active)} settings`}><Tab value="inputs" label="Inputs"/><Tab value="style" label="Style"/>{active.type==='VWAP'?<Tab value="visibility" label="Visibility"/>:null}</Tabs>
    {activeTab==='inputs'?<Stack key={active.id} spacing={2} sx={{pt:2}}>
     {!movingAverage&&!['VWAP','MACD'].includes(active.type)?<NumberSetting label={`${active.type} length`} value={active.period} onChange={period=>edit({period})}/>:null}
     <TextField select label="Source" value={active.source??(active.type==='VWAP'?'hlc3':'close')} onChange={e=>edit({source:e.target.value as ChartIndicator['source']})} size="small">{PRICE_SOURCES.map(value=><MenuItem key={value} value={value}>{sourceLabel(value)}</MenuItem>)}</TextField>
@@ -206,6 +183,42 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     </Stack>:null}
     {active.type==='VWAP'?bands.levels.map((level,index)=>level.enabled?<Box key={`fill-${index}`} sx={{borderBottom:1,borderColor:'divider',pb:1}}><FormControlLabel label={`Bands Fill #${index+1}`} control={<Checkbox checked={level.fillVisible} onChange={(_,fillVisible)=>band(index,{fillVisible})}/>}/><Stack direction="row" sx={{gap:1,flexWrap:'wrap'}}><TextField label={`Bands Fill #${index+1} color`} type="color" key={level.fillColor} defaultValue={level.fillColor} onBlur={e=>band(index,{fillColor:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:150}}/><NumberSetting label={`Bands Fill #${index+1} opacity`} value={level.fillOpacity} min={0} max={100} integer={false} onChange={fillOpacity=>band(index,{fillOpacity})}/></Stack></Box>:null):null}
    </Stack>}
-  </Box>:null}
+   <Button variant="outlined" color="error" size="small" sx={{mt:2,textTransform:'none'}} onClick={()=>{
+    onChange(indicators.filter(indicator=>indicator.type!==active.type));
+    setSelected('');
+   }}>Remove from defaults</Button>
+  </Box> : null;
+ return <>
+  <Typography component="h3" sx={{fontWeight:700}}>Chart defaults</Typography>
+  <Typography variant="body2" color="text.secondary">Indicators you add here are saved to your account for Charts and Scanners.</Typography>
+  <TextField label="Search indicators" value={search} onChange={e=>setSearch(e.target.value)} size="small"/>
+  <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+   {INDICATOR_TYPES.filter(type => typeName(type).toLowerCase().includes(search.toLowerCase())).map(type => {
+    const added = indicators.some(indicator => indicator.type === type);
+    return <Button color="inherit" variant="outlined" key={type} disabled={!added && indicators.length + indicatorPresets[type][0].settings.length > 20} onClick={() => add(type)}>{added ? `Edit ${typeName(type)}` : `Add ${typeName(type)}`}</Button>;
+   })}
+  </Stack>
+  {indicators.length ? <>
+   <Typography component="h3" sx={{ fontWeight: 700 }}>This chart</Typography>
+   {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
+    const group = indicators.filter(indicator => indicator.type === type);
+    const enabled = display.enabled[type] ?? group.some(indicator => indicator.visible !== false);
+    const expanded = active?.type === type;
+    return <Box key={type} sx={{border:1,borderColor:'divider'}}>
+     <Stack direction="row" sx={{alignItems:'center',minHeight:44,pr:0.5}}>
+      <Button color="inherit" aria-label={`${typeName(type)} settings`} aria-expanded={expanded} aria-controls={expanded ? settingsId : undefined}
+       onClick={()=>expanded ? setSelected('') : choose(group[0].id)}
+       sx={{flex:1,minWidth:0,minHeight:44,justifyContent:'space-between',textTransform:'none',fontWeight:600}}>
+       {typeName(type)}<ExpandMore fontSize="small" sx={{transform:expanded?'rotate(180deg)':undefined}}/>
+      </Button>
+      <Switch size="small" color="default" checked={enabled} slotProps={{input:{role:'switch','aria-label':`Enable ${typeName(type)} on this chart`}}}
+       onChange={(_,checked)=>onDisplayChange(type,'enabled',checked)}/>
+     </Stack>
+     {expanded && settings}
+    </Box>;
+
+   })}
+  </> : <Typography variant="body2">Choose an indicator to add it to your chart defaults.</Typography>}
+
  </>;
 }
