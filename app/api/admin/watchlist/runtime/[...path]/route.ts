@@ -4,6 +4,9 @@ import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watch
 import { recordXApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-x-runtime";
 import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
 import { recordFreeChatApprovalIntent, recordFreeChatMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
+import { readFreeChatMoveDelivery, retryFreeChatMoveDelivery } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-store";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { requestWatchlistRuntimeRaw } from "@/src/modules/watchlist/server/runtime/watchlist-runtime-admin-client";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -16,6 +19,15 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 type SupportedMethod = "GET" | "POST";
+type CategoryMoveDeliveryStatus = {
+  id: string; cycleId: string; symbol: string; to: string; current: boolean;
+  freeChat?: boolean; placement: string; destination: string; approvalRevision?: number | null;
+};
+
+function canRetryFreeChatMove(move: CategoryMoveDeliveryStatus | undefined): move is CategoryMoveDeliveryStatus {
+  return Boolean(move?.current && move.freeChat && move.to !== "private" && move.placement === "complete" &&
+    move.destination === "confirmed" && Number.isSafeInteger(move.approvalRevision) && (move.approvalRevision ?? 0) > 0);
+}
 
 const GET_PATHS = new Set([
   "/api/watchlist/analysis-review/discord-text",
@@ -126,7 +138,27 @@ async function relay(
   const incomingUrl = new URL(request.url);
   let body = method === "POST" ? await request.text() : undefined;
   let freeChatWarning:string|null=null;
-  if(pathname === "/api/watchlist/analysis-review/category-move" && method === "POST" && reviewActor && body) {
+  const categoryMove = pathname === "/api/watchlist/analysis-review/category-move";
+  const deliveryRetry = categoryMove && method === "POST" ? incomingUrl.searchParams.get("retry") : null;
+  if (deliveryRetry === "free-chat" && reviewActor) {
+    const unavailable = () => Response.json({error:"This Free Chat delivery is no longer retryable."}, {status:409,headers:{"cache-control":"private, no-store"}});
+    try {
+      const input = JSON.parse(body ?? "{}");
+      if (typeof input.symbol !== "string" || !/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(input.symbol)
+        || typeof input.id !== "string" || typeof input.cycleId !== "string") return unavailable();
+      if (isPrivateWatchlistTicker(input.symbol)) return unavailable();
+      const status = await requestWatchlistRuntimeRaw({method:"GET",reviewActor,path:pathname+"?symbol="+encodeURIComponent(input.symbol)});
+      if (!status.ok) return unavailable();
+      const move = JSON.parse(status.body).moves?.find((item: CategoryMoveDeliveryStatus) =>
+        item.id === input.id && item.symbol === input.symbol && item.cycleId === input.cycleId && item.to === input.to);
+      if (!canRetryFreeChatMove(move)) return unavailable();
+      const ownerUserId = reviewActor.slice("platform-owner:".length);
+      const queued = withPlatformDatabase({mode:"runtime"}, db => retryFreeChatMoveDelivery(db, {...move, ownerUserId}));
+      return queued ? Response.json({ok:true}, {headers:{"cache-control":"private, no-store"}}) : unavailable();
+    } catch { return unavailable(); }
+  }
+  if (deliveryRetry !== null && deliveryRetry !== "destination") return Response.json({error:"Invalid delivery retry."}, {status:400});
+  if(pathname === "/api/watchlist/analysis-review/category-move" && method === "POST" && reviewActor && body && deliveryRetry === null) {
     try {
       const input=JSON.parse(body);
       if(typeof input.symbol === "string" && input.to !== "private" && isPrivateWatchlistTicker(input.symbol)) {
@@ -172,7 +204,7 @@ async function relay(
     try { recordWatchlistApprovalNotificationIntent(body, reviewActor, pathname.endsWith("/publish-without-analysis")); }
     catch { console.error("Watchlist notification intent could not be saved; approval remains unchanged."); }
   }
-  if(pathname==='/api/watchlist/analysis-review/category-move'&&method==='POST'&&reviewActor&&body){
+  if(categoryMove&&method==='POST'&&reviewActor&&body&&deliveryRetry===null){
     try{recordFreeChatMoveIntent(body,reviewActor);}catch{freeChatWarning='Free Chat could not be queued. The ticker can still move; use Post to Free Chat to send it separately.';console.error('Free Chat move intent could not be prepared; move remains available.');}
     try{recordCategoryMoveIntent(body,reviewActor);}catch(error){
       const code=error&&typeof error==='object'&&'code' in error&&typeof error.code==='string'&&/^SQLITE_[A-Z_]+$/.test(error.code)?error.code:'intent_failed';
@@ -188,6 +220,20 @@ async function relay(
     path: `${pathname}${incomingUrl.search}`,
   });
   let responseBody = result.body;
+  if (categoryMove && method === "GET" && reviewActor && result.ok) {
+    try {
+      const value = JSON.parse(responseBody);
+      const move: CategoryMoveDeliveryStatus | undefined = value.moves?.at(-1);
+      if (move?.current && move.freeChat) {
+        const ownerUserId = reviewActor.slice("platform-owner:".length);
+        const delivery = withReadonlyPlatformDatabase({}, db => readFreeChatMoveDelivery(db, {...move, ownerUserId}));
+        if (delivery) {
+          value.moves[value.moves.length - 1] = {...move, freeChatDelivery:{...delivery,retryable:delivery.retryable&&canRetryFreeChatMove(move)}};
+          responseBody = JSON.stringify(value);
+        }
+      }
+    } catch { /* Placement status remains usable when delivery lookup is unavailable. */ }
+  }
   if(freeChatWarning){try{responseBody=JSON.stringify({...JSON.parse(responseBody),freeChatWarning});}catch{/* Preserve the move response. */}}
   if (xPostingWarning) { try { responseBody=JSON.stringify({...JSON.parse(responseBody),xPostingWarning}); } catch { /* Approval response preserved. */ } }
   if (pathname === "/api/watchlist/analysis-review/settings" && result.status === 200) {

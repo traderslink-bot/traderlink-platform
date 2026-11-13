@@ -1,5 +1,22 @@
 # Watchlist Alpaca independent QA
 
+## November 12 — separate new moves from delivery retry
+
+Owner requested narrow mobile layout and retry-state fixes. The owner-only
+category-move GET now reports the exact Free Chat receipt for the current move.
+Explicit Free Chat retry rechecks current placement and updates only its
+failed, nonexpired, non-cooling-down receipt. It never forwards a placement POST
+or writes a new notification intent. Duplicate ordinary move requests no longer
+reset failed Free Chat receipts. Discord/cleanup retries go directly to the
+paired Runtime's retry-only path without requeueing Free Chat or member alerts.
+No schema or owner-authorization changes.
+
+Twelve focused in-memory Platform tests, targeted ESLint and changed-graph
+TypeScript (1430 files, zero diagnostics) pass. Paired Runtime verified mobile
+and desktop layouts and mock move/retry requests. No live effects from tests.
+Deploy both slices through Coordinator, Runtime first; no Help change needed
+for the restored workflow. Preserve unrelated AGENTS assignment overlay.
+
 ## November 9 — Potential Path session-high reference
 
 Owner reported that CKX's only resistance kept following its latest HOD. This

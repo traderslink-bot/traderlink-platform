@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),{test}=require('node:test'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),ts=require('typescript'),Database=require('better-sqlite3');
 const root=path.resolve(__dirname,'../../../../../..');
-function load(file,ports={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(root,file),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,esModuleInterop:true}}).outputText,{exports,require:name=>name==='server-only'?{}:ports[name]??require(name),Date,Number,JSON,Error,Set,Map});return exports;}
+function load(file,ports={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(root,file),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,esModuleInterop:true}}).outputText,{exports,require:name=>name==='server-only'?{}:ports[name]??require(name),Date,Number,JSON,Error,Set,Map,URL,Response});return exports;}
 const operation='12345678-1234-4123-8123-123456789abc';
 function setup(t){
  const db=new Database(':memory:');t.after(()=>db.close());db.exec('CREATE TABLE platform_users(user_id TEXT PRIMARY KEY);');db.prepare('INSERT INTO platform_users VALUES(?)').run('owner');
@@ -45,11 +45,63 @@ test('uncertain Free Chat delivery is never automatically repeated',async t=>{
 });
 test('explicit move retry retries only a confirmed failure, not a sent post',async t=>{
  const h=setup(t);h.queue();h.set({result:{state:'failed',message:'Not accepted'}});await h.worker.reconcileFreeChatPublications();assert.equal(h.state().state,'failed');
- h.queue();h.set({result:{state:'sent',message:'Posted',messageId:'111111111111111111'}});await h.worker.reconcileFreeChatPublications();assert.equal(h.state().state,'sent');assert.equal(h.sent(),2);
+ h.queue();await h.worker.reconcileFreeChatPublications();assert.equal(h.state().state,'failed');assert.equal(h.sent(),1);
+ assert.equal(h.store.retryFreeChatMoveDelivery(h.db,{symbol:'TEST',cycleId:'cycle',id:operation,ownerUserId:'owner'}),true);
+ h.set({result:{state:'sent',message:'Posted',messageId:'111111111111111111'}});await h.worker.reconcileFreeChatPublications();assert.equal(h.state().state,'sent');assert.equal(h.sent(),2);
  h.queue();await h.worker.reconcileFreeChatPublications();assert.equal(h.sent(),2);
 });
 test('old queued moves expire without a post',async t=>{
  const h=setup(t);h.queue();h.db.prepare('UPDATE platform_watchlist_free_chat_posts SET requested_at_ms=?').run(Date.now()-90000000);await h.worker.reconcileFreeChatPublications();assert.equal(h.sent(),0);assert.equal(h.state().state,'cancelled');
+});
+test('Free Chat move receipt retry is exact, owner-scoped, failed-only and cooldown-aware',t=>{
+ const h=setup(t),now=Date.now(),identity={symbol:'TEST',cycleId:'cycle',id:operation,ownerUserId:'owner'};
+ const read=()=>h.store.readFreeChatMoveDelivery(h.db,identity,now);
+ const retry=(overrides={})=>h.store.retryFreeChatMoveDelivery(h.db,{...identity,...overrides},now);
+ assert.equal(read(),null);assert.equal(retry(),false);
+ h.queue();
+ for(const state of ['pending','retry','sending','sent','uncertain','cancelled']){
+  h.db.prepare('UPDATE platform_watchlist_free_chat_posts SET state=?').run(state);
+  assert.equal(read().retryable,false,state);assert.equal(retry(),false,state);
+ }
+ h.db.prepare("UPDATE platform_watchlist_free_chat_posts SET state='failed',requested_at_ms=?,next_attempt_at_ms=?").run(now,now+10000);
+ assert.equal(read().retryable,false);assert.equal(retry(),false);
+ h.db.prepare("UPDATE platform_watchlist_free_chat_posts SET requested_at_ms=?,next_attempt_at_ms=0").run(now-86400001);
+ assert.equal(read().retryable,false);assert.equal(retry(),false);
+ h.db.prepare("UPDATE platform_watchlist_free_chat_posts SET requested_at_ms=?").run(now);
+ assert.equal(read().retryable,true);
+ assert.equal(retry({ownerUserId:'other'}),false);assert.equal(retry({id:'other'}),false);assert.equal(retry({symbol:'OTHER'}),false);
+ assert.equal(retry(),true);assert.equal(h.state().state,'pending');assert.equal(retry(),false);
+ assert.equal(h.db.prepare('SELECT count(*) n FROM platform_watchlist_free_chat_posts').get().n,1);
+ assert.equal(h.sent(),0);
+});
+test('Free Chat retry proxy reads the exact current move and never forwards a placement POST',async t=>{
+ const h=setup(t);h.queue();h.db.prepare("UPDATE platform_watchlist_free_chat_posts SET state='failed'").run();
+ const requests=[];let current=true;
+ const route=load('app/api/admin/watchlist/runtime/[...path]/route.ts',{
+  '@/src/modules/watchlist/server/access/watchlist-analysis-visibility':{isPrivateWatchlistTicker:()=>false},
+  '@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications':{recordCategoryMoveIntent:()=>assert.fail('retry must not create a notification intent')},
+  '@/src/modules/watchlist/server/notifications/watchlist-x-admin':{},
+  '@/src/modules/watchlist/server/notifications/watchlist-x-runtime':{},
+  '@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin':{},
+  '@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime':{recordFreeChatMoveIntent:()=>assert.fail('retry must not create a Free Chat intent')},
+  '@/src/modules/watchlist/server/notifications/watchlist-free-chat-store':h.store,
+  '@/src/modules/platform/server/database/open-readonly-platform-database':{},
+  '@/src/modules/platform/server/database/open-platform-database':{withPlatformDatabase:(_o,fn)=>fn(h.db)},
+  '@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access':{hasWatchlistDashboardNavigationAccess:()=>true},
+  '@/src/modules/watchlist/server/runtime/watchlist-runtime-admin-client':{requestWatchlistRuntimeRaw:async req=>{
+   requests.push(req);return {ok:true,body:JSON.stringify({moves:[{...h.input,current,placement:'complete',destination:'confirmed',approvalRevision:3}]})};
+  }},
+  '@/src/modules/platform/server/authentication/require-platform-request-scope':{requireTraderLinkPlatformRequestIdentity:()=>({})},
+  '@/src/modules/watchlist/server/access/watchlist-admin-authorization':{withWatchlistAdminDatabase:(_h,fn)=>fn(h.db,{userId:'owner'})},
+  '@/src/modules/platform/server/administration/platform-admin-request-security':{requireJournalAdminMutationRequest:()=>{}},
+  '@/src/modules/watchlist/server/notifications/watchlist-notification-runtime':{},
+  '@/src/modules/watchlist/server/notifications/watchlist-automatic-notifications':{},
+ });
+ const retry=()=>route.POST(new Request('https://app.test/api/admin/watchlist/runtime/watchlist/analysis-review/category-move?retry=free-chat',{method:'POST',body:JSON.stringify(h.input)}),{params:Promise.resolve({path:['watchlist','analysis-review','category-move']})});
+ current=false;assert.equal((await retry()).status,409);assert.equal(h.state().state,'failed');
+ current=true;assert.equal((await retry()).status,200);assert.equal(h.state().state,'pending');
+ assert.equal((await retry()).status,409);
+ assert.equal(requests.length,3);assert.ok(requests.every(req=>req.method==='GET'));assert.equal(h.sent(),0);
 });
 test('moving out of Private records Free Chat choice without adding unsupported approval fields',async()=>{
  const source=fs.readFileSync(path.join(root,'app/api/admin/watchlist/runtime/[...path]/route.ts'),'utf8');
@@ -57,7 +109,7 @@ test('moving out of Private records Free Chat choice without adding unsupported 
  const end=source.indexOf('  if (pathname === "/api/watchlist/analysis-review/x-post"',start);
  const requests=[],intents=[];
  const input={symbol:'TEST',id:operation,to:'main',notify:true,freeChat:true,deleteSource:false,cycleId:'private'};
- const invoke=new Function('pathname','method','reviewActor','body','isPrivateWatchlistTicker','requestWatchlistRuntimeRaw','recordWatchlistApprovalNotificationIntent','recordFreeChatApprovalIntent','Response','console','return (async()=>{'+source.slice(start,end)+'})();');
+ const invoke=new Function('pathname','method','reviewActor','body','isPrivateWatchlistTicker','requestWatchlistRuntimeRaw','recordWatchlistApprovalNotificationIntent','recordFreeChatApprovalIntent','Response','console','const deliveryRetry=null;return (async()=>{'+source.slice(start,end)+'})();');
  const result=await invoke('/api/watchlist/analysis-review/category-move','POST','platform-owner:owner',JSON.stringify(input),()=>true,async request=>{requests.push(request);return {ok:true,body:JSON.stringify(request.method==='GET'?{review:{cycleId:'private',head:2,cancelled:false,draft:{revision:2,body:{kind:'original'}}}}:{ok:true})};},()=>{},body=>intents.push(JSON.parse(body)),Response,{error:()=>{}});
  assert.equal(result.status,200);assert.equal(intents[0].freeChat,true);
  const approval=JSON.parse(requests.at(-1).body);assert.equal(approval.freeChat,undefined);assert.equal(approval.notifyUsers,true);assert.equal(approval.draftRevision,2);
