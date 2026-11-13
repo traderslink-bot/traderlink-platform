@@ -1,5 +1,5 @@
 import {expect,it} from "vitest";
-import {CHART_HISTORY_FLOOR,chartHistoryPage,chartHistoryWindow} from "./chart-history";
+import {chartCatchUpWindow,CHART_HISTORY_FLOOR,chartHistoryPage,chartHistoryWindow} from "./chart-history";
 import type {Candle} from "./candles";
 const bar=(date:string):Candle=>({time:Date.parse(date)/1000,open:1,high:1,low:1,close:1,volume:10});
 it("uses stable whole-market-date starts and validates cursor bounds",()=>{
@@ -30,4 +30,10 @@ it("shortens only the first intraday request and preserves its older cursor", ()
  expect(nextBefore).toBe(recent.start - 1);
  expect(chartHistoryWindow(String(nextBefore), false, now, true)).toEqual(chartHistoryWindow(String(nextBefore), false, now));
  expect(chartHistoryWindow(null, true, now, true)).toEqual(chartHistoryWindow(null, true, now));
+});
+
+it("bounds catch-up to recent minute-aligned history", () => {
+ const now = Date.parse("2026-11-12T16:10:20Z");
+ expect(chartCatchUpWindow(String(now - 320_000), now)).toEqual({start:now - 320_000,end:now - 20_001,initial:false});
+ for (const start of [now, now - 319_999, now - 1_280_000]) expect(() => chartCatchUpWindow(String(start), now)).toThrow();
 });

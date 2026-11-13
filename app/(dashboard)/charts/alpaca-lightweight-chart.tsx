@@ -137,11 +137,16 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
     const useRecentHistory = timeframe !== "4h" && timeframe !== "1D";
-    const requestHistory = (recent = false) => sharedChartFetch(
-      `/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}${recent ? "&recent=1" : ""}`,
+    const now = Date.now();
+    const lastCached = cached?.bars.reduce((last, bar) => Math.max(last, bar.time), 0) ?? 0;
+    const overlapStart = (lastCached - 300) * 1000;
+    const catchUpFrom = timeframe !== "1D" && lastCached && now - overlapStart < 20 * 60_000 &&
+      overlapStart < Math.floor(now / 60_000) * 60_000 - 1 ? overlapStart : null;
+    const requestHistory = (recent = false, from: number | null = null) => sharedChartFetch(
+      `/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}${recent ? "&recent=1" : ""}${from !== null ? `&catchUpFrom=${from}` : ""}`,
       { signal: abort.signal, credentials: "same-origin" },
     );
-    const initialHistory = requestHistory(useRecentHistory && !cached);
+    const initialHistory = requestHistory(useRecentHistory && !cached, catchUpFrom);
     // The request may settle before the lazy chart library finishes loading.
     void initialHistory.catch(() => {});
     async function start() {
@@ -459,10 +464,20 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         const warmup = loaded && !indicatorsReady;
         try {
           let recent = !warmup && recentHistory && (!loaded || historyBasisDate === easternClock(Date.now()).date);
-          const response = await (initialRequest ?? requestHistory(recent));
+          let response = await (initialRequest ?? requestHistory(recent));
+          const deltaRequested = Boolean(initialRequest && catchUpFrom !== null);
+          if (deltaRequested && !response.ok) response = await requestHistory();
           if (!response.ok) throw Error(response.status === 429 ? "Chart requests are busy. Try again shortly." : "Candles unavailable. Try again.");
           let data = await response.json();
           if (disposed) return;
+          const delta = deltaRequested && data.catchUpFrom === catchUpFrom && data.basisDate === cached?.basisDate &&
+            data.basisDate === easternClock(Date.now()).date;
+          if (deltaRequested && !delta && data.catchUpFrom !== undefined) {
+            const full = await requestHistory();
+            if (!full.ok) throw Error("Candles unavailable. Try again.");
+            data = await full.json();
+            if (disposed) return;
+          }
           if (recent && !visibleSessionBars(data.bars, preferences).length) {
             recentHistory = false;
             recent = false;
@@ -471,7 +486,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
             data = await full.json();
             if (disposed) return;
           }
-          if((!loaded||catchingUp)&&savedView&&data.bars.length&&savedView.anchor.time<data.bars[0].time){
+          if(!delta&&(!loaded||catchingUp)&&savedView&&data.bars.length&&savedView.anchor.time<data.bars[0].time){
             const history=await calculationHistory.read(timeframe,savedView.anchor.time);
             if(disposed)return;
             recent = false;
@@ -485,8 +500,12 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           const initial = !loaded;
           if (!recent) indicatorsReady = true;
           if (warmup) recentHistory = false;
-          if(initial || catchingUp || newBasis)bars.clear();
-          if(warmup || initial || catchingUp || newBasis){nextBefore=data.nextBefore??null;}
+          if (delta) {
+            for (const time of bars.keys()) if (time * 1000 >= catchUpFrom!) bars.delete(time);
+          } else {
+            if(initial || catchingUp || newBasis)bars.clear();
+            if(warmup || initial || catchingUp || newBasis){nextBefore=data.nextBefore??null;}
+          }
           catchingUp = false;
           for (const bar of data.bars as Candle[]) bars.set(bar.time, bar);
           for (const bar of queued.values()) bars.set(bar.time, bar);

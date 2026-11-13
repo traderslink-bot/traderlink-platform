@@ -1,7 +1,7 @@
 import "server-only";
 import { readFile } from "node:fs/promises";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { chartHistoryPage, chartHistoryWindow } from "./chart-history";
+import { chartCatchUpWindow, chartHistoryPage, chartHistoryWindow } from "./chart-history";
 import type { Candle } from "./candles";
 import { chartSymbol } from "./candles";
 
@@ -15,8 +15,12 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
     try { symbol = chartSymbol(query.get("symbol") ?? ""); } catch { return Response.json({ error: "invalid_symbol" }, { status: 400, headers: safeHeaders }); }
     const paged = !stream && query.get("history") === "1";
     const daily = query.get("daily") === "1";
+    const from = paged ? query.get("catchUpFrom") : null;
     let window: ReturnType<typeof chartHistoryWindow> | undefined;
-    if (paged) { try { window=chartHistoryWindow(query.get("before"), daily, Date.now(), query.get("recent") === "1"); } catch { return Response.json({error:"invalid_history_range"},{status:400,headers:safeHeaders}); } }
+    if (paged) { try {
+      if (from !== null && (daily || query.has("before") || query.has("recent"))) throw Error("invalid_history_range");
+      window = from === null ? chartHistoryWindow(query.get("before"), daily, Date.now(), query.get("recent") === "1") : chartCatchUpWindow(from);
+    } catch { return Response.json({error:"invalid_history_range"},{status:400,headers:safeHeaders}); } }
     const configured = process.env.TRADERLINK_ALPACA_GATEWAY_URL;
     let token = process.env.TRADERLINK_ALPACA_GATEWAY_TOKEN;
     if (process.env.NODE_ENV !== "production" && process.env.TRADERLINK_ALPACA_GATEWAY_TOKEN_FILE) {
@@ -48,7 +52,7 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
       const payload=await upstream.json();
       if(paged&&window){
         if(payload.complete!==true||payload.adjustment!=="split"||payload.feed!=="sip"||!Array.isArray(payload.bars))throw Error("incomplete_history");
-        return Response.json({...chartHistoryPage(payload.bars as Candle[],window,daily),basisDate:payload.basisDate,...(!daily?{calendar:payload.calendar??{available:false}}:{calendars:payload.calendars??[]})},{headers:safeHeaders});
+        return Response.json({...chartHistoryPage(payload.bars as Candle[],window,daily),basisDate:payload.basisDate,...(from !== null ? {catchUpFrom:window.start} : {}),...(!daily?{calendar:payload.calendar??{available:false}}:{calendars:payload.calendars??[]})},{headers:safeHeaders});
       }
       return Response.json(payload, { headers: safeHeaders });
     } finally { request.signal.removeEventListener("abort", abort); } }

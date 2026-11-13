@@ -19,3 +19,13 @@ export function chartHistoryPage(bars: Candle[], window: ReturnType<typeof chart
   const nextBefore=(retained&&result.length?result[0].time*1000:window.start)-1;
   return {bars:result,nextBefore:nextBefore>=CHART_HISTORY_FLOOR?nextBefore:null,adjustment:"split"};
 }
+
+
+export function chartCatchUpWindow(from: string, now = Date.now()) {
+  const {end} = chartHistoryWindow(null, false, now);
+  const start = Number(from);
+  if (!Number.isSafeInteger(start) || start % 60_000 !== 0 || start >= end || end - start > 20 * 60_000) {
+    throw Error("invalid_history_range");
+  }
+  return {start, end, initial: false};
+}

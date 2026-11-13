@@ -205,3 +205,9 @@ The private VPS replay ran four eager charts with all six indicators in portrait
 The private preview keeps up to four recent main-chart candle snapshots in browser memory, each capped at 20,000 bars and usable for five minutes on the same split-adjustment date. A returning chart draws the snapshot, reconnects its stream, and marks the chart Catching up while it fetches authoritative history. This experiment uses the full existing history request to preserve exact study warm-up and adjustment behavior. Chart controls and Help Center instructions still apply.
 
 Four eager charts were tested with all six indicators in portrait and landscape. The replay corrected a bar and added a minute while away, and deliberately held the return history response for five seconds. Each chart drew before the response. The final candle-axis boundaries and counts and the displayed indicator readings matched a fresh load. Focused lint and 69 tests passed. Timings characterize the controlled replay, not production.
+
+### Short browser catch-up
+
+The private preview can refresh a same-date, recent intraday snapshot with a five-minute overlap plus missed bars. The server bounds the request to 20 minutes and the client replaces the overlap while preserving the older history cursor. Daily, stale, rejected, or different-basis requests use full history. Existing chart controls and Help Center instructions still apply.
+
+Four eager charts and all six indicators were exercised in portrait and landscape with fixed candle replay, including a corrected bar and a missed minute. Both final displayed readings and candle-axis boundaries and counts matched fresh loads. The short replay received 26 bars in the four catch-up requests. An additional full request was observed during the tab transition, so end-to-end gains were mixed. Focused lint and 70 tests passed. Preview only.
