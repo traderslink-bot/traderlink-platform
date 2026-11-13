@@ -435,9 +435,11 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       };
       const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
       let recentHistory = useRecentHistory;
-      const loadHistory = async (initialRequest?: Promise<Response>, warmup = false) => {
+      const loadHistory = async (initialRequest?: Promise<Response>) => {
         if (loading) { reloadAfter = true; return; }
         loading = true;
+        // Every refresh after the first paint must finish any outstanding warm-up.
+        const warmup = loaded && !indicatorsReady;
         try {
           let recent = !warmup && recentHistory && (!loaded || historyBasisDate === easternClock(Date.now()).date);
           const response = await (initialRequest ?? requestHistory(recent));
@@ -476,7 +478,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           writeAll(initial, warmup); initialViewReady=true; setError(null);
           if (initial && !indicatorsReady) {
             // Yield to the browser before starting the full indicator history request.
-            warmupTimer = setTimeout(() => { if (!disposed) void loadHistory(undefined, true); }, 0);
+            warmupTimer = setTimeout(() => { if (!disposed && !loading && !indicatorsReady) void loadHistory(); }, 0);
           }
           setStatus(idleStatus());
         } catch (failure) {
@@ -615,10 +617,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         const tradingHours=day!==0&&day!==6&&clock.minute>=240&&clock.minute<1200;
         const needsHistory=!loaded||historyBasisDate!==clock.date||
           tradingHours&&!chartHalted&&(!connected||now-lastBarReceivedAt>=120_000);
-        if(!indicatorsReady && loaded && !loading && now-lastRecoveryAt>=60_000){
-          lastRecoveryAt=now;
-          void loadHistory(undefined,true);
-        }else if(needsHistory&&!loading&&now-lastRecoveryAt>=60_000){
+        if((needsHistory || !indicatorsReady)&&!loading&&now-lastRecoveryAt>=60_000){
           lastRecoveryAt=now;
           void loadHistory();
         }
