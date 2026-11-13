@@ -167,6 +167,11 @@ export type LiveScreenResults = Readonly<{ rows: readonly LiveScannerRow[]; focu
     earlyTotal: number;
   }>;
 }>;
+export type BreakoutRow = LiveScannerRow & Readonly<{
+  breakoutLevel: number;
+  breakoutAtUtc: string;
+  breakoutState: "above" | "at" | "below";
+}>;
 export type ScannerReadModel = Readonly<{
   refreshAfterMs?:number;
   provider?:"alpaca"|"moomoo";
@@ -176,6 +181,7 @@ export type ScannerReadModel = Readonly<{
   gainers: LiveScreenResults; momentum: LiveScreenResults; issues: readonly string[];
   /** Separate all-day comparison, calculated from the same snapshot pass. */
   dayGainers?: LiveScreenResults;
+  breakouts?: readonly BreakoutRow[];
   declines?: DeclineResults;
   premarketPullbacks?: PremarketPullbackResults;
   activeHalts?:readonly ScannerActiveHalt[];

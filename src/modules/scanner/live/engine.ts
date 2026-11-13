@@ -5,8 +5,9 @@ import { RollingActivityBook } from "./activity";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
 import type { ScannerAuditDecision } from "./audit/contracts";
 import { scannerConfigurationHash, scannerGainerFilterFailures, scannerMomentumFilterFailures, scannerMomentumScore, scannerMovementFailures } from "./audit/decision-trace";
+import { BreakoutBook } from "./breakouts";
 import { DeclineBook } from "./declines";
-import type { DeclineResults, PremarketPullbackResults } from "./contracts";
+import type { BreakoutRow, DeclineResults, PremarketPullbackResults } from "./contracts";
 import { PremarketPullbackBook } from "./premarket-pullbacks";
 import { MomentumEventBook } from "./momentum-events";
 import { momentumDetectionControls, momentumLiquidityBypassControls } from "./settings";
@@ -106,6 +107,7 @@ export class LiveScannerEngine {
   private gainersFocus:FocusSelection;
   private momentumFocus:FocusSelection;
   private declines = new DeclineBook();
+  private breakouts = new BreakoutBook();
   private premarketPullbacks=new PremarketPullbackBook();
   private momentumEvents:MomentumEventBook;
   constructor(private readonly elapsedTime=false) {this.activity=new RollingActivityBook(elapsedTime);this.gainersFocus=new FocusSelection(elapsedTime);this.momentumFocus=new FocusSelection(elapsedTime);this.momentumEvents=new MomentumEventBook(elapsedTime);}
@@ -114,10 +116,11 @@ export class LiveScannerEngine {
     universe: DailyUniverse; tradingDate: string; session: ScannerSession; snapshots: readonly NormalizedSnapshot[];
     floats: ReadonlyMap<string,FloatFact>; news: ReadonlyMap<string,readonly ScannerNewsItem[]>;
     configuration: ScannerConfiguration; now: number;
-  }>): Readonly<{ gainers: LiveScreenResults; dayGainers: LiveScreenResults; momentum: LiveScreenResults; declines?:DeclineResults; premarketPullbacks?:PremarketPullbackResults; missingFloatCount: number; audit: readonly ScannerAuditDecision[] }> {
+  }>): Readonly<{ gainers: LiveScreenResults; dayGainers: LiveScreenResults; momentum: LiveScreenResults; breakouts?:readonly BreakoutRow[]; declines?:DeclineResults; premarketPullbacks?:PremarketPullbackResults; missingFloatCount: number; audit: readonly ScannerAuditDecision[] }> {
     if (input.universe.tradingDate !== input.tradingDate) throw Error("scanner_universe_not_current");
     if (!input.configuration.enabled) { this.clear(); return { gainers: EMPTY, dayGainers: EMPTY, momentum: EMPTY, missingFloatCount: 0, audit: [] }; }
     const membership = new Map(input.universe.stocks.map(stock => [stock.symbol,stock]));
+    this.breakouts.begin(input.tradingDate, membership);
     const eligibleContext = (snapshot: NormalizedSnapshot) => membership.has(snapshot.symbol)
       && snapshot.tradingDate === input.tradingDate && snapshot.session === input.session;
     const fresh = (snapshot: NormalizedSnapshot) => {
@@ -157,7 +160,7 @@ export class LiveScannerEngine {
       const rollingSignals:MomentumSignal[]=[];
       if(event.activity.oneMinuteGain!==null&&event.activity.oneMinuteGain>=input.configuration.momentum.focus.minimumOneMinuteGain)rollingSignals.push("one_minute_momentum");
       if(qualifiesFiveMinuteMomentum(event.activity,input.configuration.momentum.focus))rollingSignals.push("five_minute_momentum");
-      rows.push({ symbol: stock.symbol, exchange: stock.exchange, company: snapshot.company, price: snapshot.price,
+      const row: LiveScannerRow = { symbol: stock.symbol, exchange: stock.exchange, company: snapshot.company, price: snapshot.price,
         sessionGain: snapshot.baseline !== null && snapshot.baseline > 0 ? (snapshot.price/snapshot.baseline-1)*100 : null,
         comparisonPrice: snapshot.baseline, gainBasis: "previous_regular_close",
         ...(input.session === "after_hours" ? { postMarketGain:
@@ -170,7 +173,9 @@ export class LiveScannerEngine {
         offHighPercent: (snapshot.price/snapshot.dayHigh-1)*100,
         spreadPercent, providerAtUtc: new Date(snapshot.providerAt).toISOString(), receivedAtUtc: new Date(snapshot.receivedAt).toISOString(),
         priceTimeBasis: snapshot.priceTimeBasis, provider: snapshot.provider,
-        activity:event.activity,momentumSignals:Object.freeze([...event.signals,...rollingSignals]),reasons:[],news:input.news.get(stock.symbol)??[] });
+        activity:event.activity,momentumSignals:Object.freeze([...event.signals,...rollingSignals]),reasons:[],news:input.news.get(stock.symbol)??[] };
+      rows.push(row);
+      this.breakouts.observe(snapshot,row);
     }
     const retentionContext = `${input.tradingDate}:${input.session}:${scannerConfigurationHash(input.configuration)}`;
     if (this.gainerAuditContext !== retentionContext) { this.gainerAuditContext = retentionContext; this.gainerAudit.clear(); this.momentumAudit.clear(); }
@@ -277,7 +282,7 @@ export class LiveScannerEngine {
     const premarketPullbacks=this.premarketPullbacks.evaluate({universe:coveredUniverse,session:input.session,now:input.now,
       snapshots:freshSnapshots,floats:input.floats,activity:symbol=>this.activity.metrics(symbol,input.now),rapidDrops:declines.rapid,controls:input.configuration.premarketPullbacks});
     return {
-      declines,premarketPullbacks,
+      declines,premarketPullbacks,breakouts:this.breakouts.read(input.session),
       gainers: { rows: gainers.slice(0,input.configuration.gainers.displayLimit), total: gainers.length,
         focus: this.gainersFocus.select(context,gainersCandidates,input.configuration.gainers.focus,input.now) },
       dayGainers: { rows: dayGainers.slice(0,input.configuration.gainers.displayLimit), total: dayGainers.length, focus: [] },
@@ -285,5 +290,5 @@ export class LiveScannerEngine {
         focus: this.momentumFocus.select(context,momentumCandidates,input.configuration.momentum.focus,input.now) }, missingFloatCount,audit,
     };
   }
-  clear(): void { this.momentumAudit.clear();this.gainerAudit.clear();this.gainerAuditContext=null;this.gainerRetention.clear();this.dayGainerRetention.clear();this.activity.clear();this.momentumEvents.clear();this.momentumRetention.clear();this.gainersFocus.clear();this.momentumFocus.clear();this.declines.clear();this.premarketPullbacks.clear(); }
+  clear(): void { this.momentumAudit.clear();this.gainerAudit.clear();this.gainerAuditContext=null;this.gainerRetention.clear();this.dayGainerRetention.clear();this.activity.clear();this.momentumEvents.clear();this.momentumRetention.clear();this.gainersFocus.clear();this.momentumFocus.clear();this.declines.clear();this.premarketPullbacks.clear();this.breakouts.clear(); }
 }

@@ -134,15 +134,16 @@ function Reading({ label, value }: { label: string; value: string }) {
 type ScannerCardRow = LiveScannerRow | DeclineRow | PremarketPullbackRow;
 const isLiveRow = (row: ScannerCardRow): row is LiveScannerRow => "sessionGain" in row;
 const isHodRow = (row: ScannerCardRow): row is PremarketPullbackRow => "referenceHigh" in row;
-type ScannerCardScreen = ScannerKind | "top-losers" | "high-drops";
+type ScannerCardScreen = ScannerKind | "top-losers" | "high-drops" | "breakouts";
 const stockCardLabels: Record<ScannerCardScreen,string> = {
-  gainers:"Top Gainers", momentum:"Momentum", "top-losers":"Top Losers", "high-drops":"HOD Drops",
+  gainers:"Top Gainers", momentum:"Momentum", "top-losers":"Top Losers", "high-drops":"HOD Drops", breakouts:"Breakouts",
 };
 
-export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, now, renderTools, renderHalt }: {
+export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, now, renderTools, renderHalt, renderSignal }: {
   rows: readonly Row[];
   screen: ScannerCardScreen;
   now: number;
+  renderSignal?: (row: Row) => ReactNode;
   renderTools: (row: Row) => ReactNode;
   renderHalt: (symbol: string) => ReactNode;
 }) {
@@ -205,6 +206,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
         {screen === "momentum" && live && <Typography sx={{fontSize:"0.65rem",color:theme=>theme.palette.mode==="dark"?"#c4b5fd":"#7c3aed",mt:0.4,overflowWrap:"anywhere"}}>
           {momentumSignalText(live)}
         </Typography>}
+        {renderSignal&&<Typography sx={{fontSize:"0.7rem",mt:0.4}}>{renderSignal(row)}</Typography>}
         {sections.map(section => section === "stats" ? <Box key={section} component="dl" aria-label="Stats"
           sx={{m:0,mt:0.65,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:0.55,fontVariantNumeric:"tabular-nums"}}>
           {stats.map(([label,value]) => <Reading key={label} label={label} value={value}/>)}

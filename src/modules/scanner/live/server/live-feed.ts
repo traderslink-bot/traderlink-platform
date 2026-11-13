@@ -169,7 +169,7 @@ export class LiveScannerFeed {
         ? { ...detected, ...retainHaltedScannerRows(detected, this.model, this.haltedSymbols, allowedSymbols, configuration) }
         : detected;
       const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus,evaluated.momentum.momentumSections?.confirmed??[],evaluated.momentum.momentumSections?.early??[]]
-        .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[]))];
+        .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[],evaluated.breakouts?.map(row=>row.symbol)??[]))];
       let news: ReadonlyMap<string,readonly ScannerNewsItem[]> = new Map();
       try { news = await this.dependencies.news(visibleSymbols); } catch { issues.add("news_unavailable"); }
       let countries:ReadonlyMap<string,string>=new Map();
@@ -199,7 +199,7 @@ export class LiveScannerFeed {
       return this.set({ ...(this.dependencies.eventDriven?{refreshAfterMs:1000}:{}),status:this.dependencies.eventDriven&&snapshots.length===0&&issues.size?"unavailable":status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
         universeSourceDate: universe.sourceTradingDate ?? universe.tradingDate, universeCount: symbols.length,
         receivedCount: snapshots.length, missingSymbols: Object.freeze([...new Set(missing)].sort()), missingFloatCount: evaluated.missingFloatCount,
-        gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), declines, premarketPullbacks, issues: Object.freeze([...issues].sort()) });
+        gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), declines, premarketPullbacks, breakouts:evaluated.breakouts?.map(enrichRow), issues: Object.freeze([...issues].sort()) });
     } catch {
       // Preserve established Gainers only after this pass independently verifies their context.
       if (verifiedContext && verifiedContext.key === this.lastGainerContext

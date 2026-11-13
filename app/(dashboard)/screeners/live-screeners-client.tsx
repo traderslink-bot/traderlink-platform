@@ -50,6 +50,7 @@ import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/pres
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard, useMarketEventsData } from "./screener-press-release-board";
 import { ScannerCompactChart, ScannerCompactChartCovered } from "./scanner-compact-chart";
+import { ScannerBreakoutsCard } from "./scanner-breakouts-card";
 import { ScannerWorkspaceCard } from "./scanner-workspace-card";
 import { DEFAULT_SCANNER_WORKSPACE_LAYOUT, type ScannerWorkspaceWidget } from "./scanner-workspace-layout";
 import { DeclinesCard } from "./declines-card";
@@ -85,6 +86,7 @@ const MOBILE_SCANNER_TABS = [
   {widget:"top-losers", label:"Losers", accessibleLabel:"Top Losers"},
   {widget:"high-drops", label:"HOD Drops", accessibleLabel:"HOD Drops"},
   {widget:"market-events", label:"Events", accessibleLabel:"Market Events"},
+  {widget:"breakouts", label:"Breakouts", accessibleLabel:"Breakouts"},
   {widget:"ticker-workspace", label:"Chart", accessibleLabel:"Chart"},
 ] as const;
 type MobileScannerTab = typeof MOBILE_SCANNER_TABS[number]["widget"];
@@ -720,7 +722,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       },
       height:{xs:"auto",md:desktopGridHeight?`${desktopGridHeight}px`:"calc(100dvh - 76px)"},
       gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(4,minmax(0,1fr))"},
-      gridTemplateRows:{xs:mobileTabs?"auto":"repeat(6,auto)",md:"repeat(2,minmax(0,1fr))"},
+      gridTemplateRows:{xs:mobileTabs?"auto":"repeat(7,auto)",md:"repeat(2,minmax(0,1fr))"},
       '& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 },
     }}>
       {(["gainers","momentum"] as const).filter(showScanner).map(kind=><ScannerWorkspaceCard key={kind} slot={workspaceLayout.assignments[kind]} widget={kind}>
@@ -742,6 +744,10 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       {showScanner("high-drops")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["high-drops"]} widget="high-drops"><PremarketPullbacksCard now={checkedAt} view={displayModes["high-drops"]} onViewChange={view=>setDisplayModes(previous=>({...previous,"high-drops":view}))} rapid={model?.declines?.rapid} results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
       {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
+      {!admin&&showScanner("breakouts")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments.breakouts} widget="breakouts">
+        <ScannerBreakoutsCard rows={model?.breakouts??(model?[]:undefined)} now={checkedAt} notice={memberNotice}
+          haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({symbol:row.symbol,exchange:row.exchange,stock:row})}/>
+      </ScannerWorkspaceCard>}
       {!admin&&showScanner("ticker-workspace")&&<ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={compactChartSymbol}/>}
     </Box></Box></ScannerNewsDrawerProvider>
     </ScannerPageSurface>
