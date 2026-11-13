@@ -16,3 +16,8 @@ per mode with fixture scanner and candle data and 4× mobile CPU throttling.
 It verified chart canvas dimensions, startup ordering, zero offscreen mobile
 chart subscriptions, and disconnect and reconnect when opening and closing
 the drawer. Production deployment and live market-data timing are pending.
+
+Clicking an orange ticker selects it in the page chart. The green chart
+action opens the drawer. Mobile tabs switch to Chart, and the stacked
+layout scrolls the chart into view. Browser QA covered Table, Two rows
+and Cards on desktop and in both mobile layouts.

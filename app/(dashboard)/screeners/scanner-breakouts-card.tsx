@@ -1,7 +1,9 @@
 "use client";
 
+import { ScannerPageTicker } from "./scanner-page-ticker";
+
 import { Fragment, useState } from "react";
-import { Box, Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { DashboardPanel } from "@/app/dashboard-template";
 import type { BreakoutRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
@@ -54,7 +56,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
           <TableBody>{rows.map(row=><Fragment key={row.symbol}>
             <TableRow hover>
               {!twoRows&&<TableCell>{tools(row)}</TableCell>}
-              <TableCell data-scanner-sticky-ticker><Box component="span" sx={{color:"warning.main",fontWeight:800}}>{row.symbol}</Box>{halt(row.symbol)}</TableCell>
+              <TableCell data-scanner-sticky-ticker><ScannerPageTicker symbol={row.symbol}/>{halt(row.symbol)}</TableCell>
               <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{price.format(row.price)}</TableCell>
               <TableCell>{price.format(row.breakoutLevel)}</TableCell><TableCell><BreakoutStatus row={row}/></TableCell>
               <TableCell>{row.volume===null?"—":shares.format(row.volume)}</TableCell>

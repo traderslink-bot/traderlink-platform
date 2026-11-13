@@ -1,5 +1,7 @@
 "use client";
 
+import { ScannerPageTicker } from "./scanner-page-ticker";
+
 import { ScannerCountryFlag } from "./scanner-country-flag";
 import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
 import { ScannerRowNews } from "./scanner-news-drawer-context";
@@ -66,7 +68,7 @@ function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
             sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
             {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:0.4}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/></Stack></TableCell>
             <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell></>}
-          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
             <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(row.changePercent),fontWeight:750}}>{pct(row.changePercent)}</TableCell>
             <TableCell>{shares(row.volume)}</TableCell>
             <TableCell>{floatShares(row.float)}</TableCell><TableCell>{pct(row.spreadPercent)}</TableCell>

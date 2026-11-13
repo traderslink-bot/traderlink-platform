@@ -1,5 +1,7 @@
 "use client";
 
+import { ScannerPageTicker, ScannerPageTickerSelection } from "./scanner-page-ticker";
+
 import { scannerGainColor } from "./scanner-gain-color";
 
 import { ChartMultiviewCharts } from "../charts/chart-multiview";
@@ -44,7 +46,7 @@ import { ScannerChartLaunchControls, SideCardChartControls, useSideCardChartCont
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
-import { Fragment, memo, startTransition, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
+import { Fragment, memo, useCallback, startTransition, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
 
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
@@ -214,7 +216,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
       ]).filter(Boolean);const secondRowTools=<Box data-compact-row-controls sx={{display:"grid",gridTemplateColumns:allowAdd?"44px 20px 12px":"20px 20px 12px",alignItems:"center",columnGap:"8px",width:allowAdd?92:68}}><ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} two-row details`} aria-expanded={expanded} onClick={()=>toggle(row.symbol)} sx={{color:"text.secondary",fontSize:"0.9rem",height:20,minWidth:12}}>{expanded?"−":"+"}</ButtonBase></Box>;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:twoRows||screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           {!twoRows?<TableCell sx={{px:"0.125rem !important"}}><Box data-compact-row-controls sx={{display:"grid",gridTemplateColumns:allowAdd?"44px 20px 12px":"20px 20px 12px",alignItems:"center",columnGap:"8px",width:allowAdd?92:68}}><ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/><Typography aria-hidden component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{expanded?"−":"+"}</Typography></Box></TableCell>:null}
-          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><Typography noWrap component="span" sx={{color:"warning.main",fontSize:"0.68rem",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell><Typography noWrap sx={{fontSize:"0.68rem",fontWeight:500,color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</Typography></TableCell>
           {screen==="gainers"?<>
             <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell>
@@ -267,7 +269,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
         {['Ticker','Price','Gain%','Vol','Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
         <TableCell sx={{ px:"0 !important",width:allowAdd?72:48 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><NewsLinks row={row}/></Stack></TableCell>
-        <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+        <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
         <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
         <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{floatValue(row.float)}</TableCell>
         <TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
@@ -282,7 +284,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
           sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:"none"},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           <TableCell sx={{ px:"0 !important",width:22 }}><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} details`} onClick={event=>{event.stopPropagation();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}} sx={{ bgcolor:"rgba(255,193,7,0.14)",borderRadius:0.75,color:"warning.main",fontSize:"0.75rem",fontWeight:800,height:20,minWidth:20,'&:hover':{ bgcolor:"rgba(255,193,7,0.24)" },'&:focus-visible':{ outline:"2px solid",outlineColor:"warning.main",outlineOffset:1 } }}>{expanded?"−":"+"}</ButtonBase></TableCell>
           <TableCell sx={{ px:"0.125rem !important",width:allowAdd?72:48 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><NewsLinks row={row}/></Stack></TableCell>
-          <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><Typography component="span" sx={{ color:"warning.main",font:"inherit",fontWeight:800 }}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
           {showPostGain?<TableCell sx={{ color:scannerGainColor(row.postMarketGain),fontWeight:750 }}>{value(row.postMarketGain,"%")}</TableCell>:null}
           <TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell sx={{color:scannerGainColor(row.activity.fiveMinuteGain)}}>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
@@ -516,6 +518,17 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [activeScanner,setActiveScanner]=useState<MobileScannerTab>("gainers");
   const mobileTabs = mobile && preferTabs;
   const mobileTabsId = useId();
+  const [pageTicker,setPageTicker]=useState<string|null>(null);
+  const selectPageTicker=useCallback((symbol:string)=>{
+    setPageTicker(symbol);
+    if(mobileTabs)setActiveScanner("ticker-workspace");
+    else if(mobile){
+      gridRef.current?.querySelector('[data-scanner-workspace-card="ticker-workspace"]')
+        ?.scrollIntoView({block:"nearest"});
+    }
+  },[mobile,mobileTabs]);
+  const pageTickerSelection=useMemo(()=>({ticker:pageTicker,select:selectPageTicker}),[pageTicker,selectPageTicker]);
+
   const showScanner = (widget: ScannerWorkspaceWidget) => !mobileTabs || widget===activeScanner;
   const toggleMobileLayout = () => {
     const next = !preferTabs;
@@ -691,6 +704,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       <Button size="small" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>Reopen chart drawer</Button>
     </Box>}
     <ScannerCompactChartCovered value={drawerOpen}>
+    <ScannerPageTickerSelection value={admin?null:pageTickerSelection}>
     <ScannerPageSurface covered={drawerOpen}>
     <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box>
       {mobile&&<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0,mb:0.6}}>
@@ -748,9 +762,10 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
         <ScannerBreakoutsCard rows={model?.breakouts??(model?[]:undefined)} now={checkedAt} notice={memberNotice}
           haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({symbol:row.symbol,exchange:row.exchange,stock:row})}/>
       </ScannerWorkspaceCard>}
-      {!admin&&showScanner("ticker-workspace")&&<ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={compactChartSymbol}/>}
+      {!admin&&showScanner("ticker-workspace")&&<ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={compactChartSymbol} selectedSymbol={pageTicker}/>}
     </Box></Box></ScannerNewsDrawerProvider>
     </ScannerPageSurface>
+    </ScannerPageTickerSelection>
     </ScannerCompactChartCovered>
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}

@@ -1,5 +1,7 @@
 "use client";
 
+import { ScannerPageTicker } from "./scanner-page-ticker";
+
 import { ScannerCountryFlag } from "./scanner-country-flag";
 import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
 import { scannerGainColor } from "./scanner-gain-color";
@@ -88,7 +90,7 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
           sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
           {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:0.4}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerRowNews news={row.news}/></Stack></TableCell>
           <TableCell aria-hidden sx={{pr:"0 !important",textAlign:"center"}}><Typography component="span" sx={{color:"text.secondary",fontSize:"0.9rem",fontWeight:700,lineHeight:1}}>{open?"−":"+"}</Typography></TableCell></>}
-          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25,flexWrap:"wrap"}}><Typography component="span" sx={{color:"warning.main",font:"inherit",fontWeight:800}}>{row.symbol}</Typography><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>{row.rapidDrop?<RapidMarker/>:null}</Stack></TableCell>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25,flexWrap:"wrap"}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>{row.rapidDrop?<RapidMarker/>:null}</Stack></TableCell>
           <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(-row.belowHighPercent),fontWeight:750}}>{wholePercent.format(row.belowHighPercent)}%</TableCell><TableCell><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
         {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
           </TableRow>
@@ -121,7 +123,7 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
         {rows.map(row=>row.drop&&<Stack key={row.symbol} role="listitem" direction="row"
           sx={{alignItems:"center",gap:0.6,minHeight:25,fontSize:"0.68rem"}}>
           <ChartButton row={row} onOpenChart={onOpenChart}/>
-          <Typography variant="inherit" sx={{color:"warning.main",fontWeight:800}}>{row.symbol}</Typography>
+          <ScannerPageTicker symbol={row.symbol}/>
           <RapidMarker/>
           <ScannerCountryFlag country={row.country}/><ScannerRowNews news={row.news}/>
           <ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>

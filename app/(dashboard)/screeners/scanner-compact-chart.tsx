@@ -13,7 +13,7 @@ const Chart = lazy(() => import("../charts/alpaca-lightweight-chart").then(modul
 const Covered = createContext(false);
 export const ScannerCompactChartCovered = Covered.Provider;
 
-export function ScannerCompactChart({ symbol, slot }: { symbol: string | null; slot: ScannerWorkspaceSlotId }) {
+export function ScannerCompactChart({ symbol, selectedSymbol, slot }: { symbol: string | null; selectedSymbol: string | null; slot: ScannerWorkspaceSlotId }) {
   const covered = useContext(Covered);
   const viewport = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -29,7 +29,7 @@ export function ScannerCompactChart({ symbol, slot }: { symbol: string | null; s
   }, []);
 
   useEffect(() => {
-    if (!symbol || covered || !visible || ticker) return;
+    if (!symbol || covered || !visible || ticker || selectedSymbol) return;
     // Allow the committed scanner rows to paint before mounting the chart.
     let next = 0;
     const frame = requestAnimationFrame(() => {
@@ -41,14 +41,15 @@ export function ScannerCompactChart({ symbol, slot }: { symbol: string | null; s
       cancelAnimationFrame(frame);
       cancelAnimationFrame(next);
     };
-  }, [symbol, covered, visible, ticker]);
+  }, [symbol, covered, visible, ticker, selectedSymbol]);
 
+  const activeTicker = selectedSymbol ?? ticker;
   const fallback = <Skeleton animation={false} variant="rectangular" sx={{height:"100%"}}/>;
   return <ScannerWorkspaceCard slot={slot} widget="ticker-workspace">
     <DashboardPanel hideHeader>
       <Box ref={viewport} aria-label="Scanner chart" sx={{height:{xs:320,md:"auto"},flex:1,minHeight:0}}>
-        {ticker && visible && !covered ? <Suspense fallback={fallback}>
-          <Chart symbol={ticker} timeframe={timeframe} onTimeframeChange={setTimeframe}
+        {activeTicker && visible && !covered ? <Suspense fallback={fallback}>
+          <Chart key={activeTicker} symbol={activeTicker} timeframe={timeframe} onTimeframeChange={setTimeframe}
             viewId="scanner-page-chart" viewWorkspace="scanner" compactMobile compactToolbar/>
         </Suspense> : fallback}
       </Box>

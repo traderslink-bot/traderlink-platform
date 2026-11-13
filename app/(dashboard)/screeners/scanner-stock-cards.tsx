@@ -1,5 +1,7 @@
 "use client";
 
+import { ScannerPageTicker } from "./scanner-page-ticker";
+
 import { scannerGainColor } from "./scanner-gain-color";
 
 import Box from "@mui/material/Box";
@@ -190,7 +192,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
         sx={{border:1,borderColor:"divider",borderRadius:0,mb:0.55,px:0.7,py:0.55,minWidth:0,bgcolor:"background.paper"}}>
         <Box sx={{display:"grid",gridTemplateColumns:"minmax(0,1fr) auto",alignItems:"center",columnGap:0.65,minWidth:0}}>
           <Box sx={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:0.4,minWidth:0}}>
-            <Typography component="span" sx={{color:"warning.main",fontSize:"0.84rem",fontWeight:850,overflowWrap:"anywhere"}}>{row.symbol}</Typography>
+            <ScannerPageTicker symbol={row.symbol}/>
             {renderHalt(row.symbol)}
             <ScannerCountryFlag country={row.country}/>
             {renderTools(row)}
