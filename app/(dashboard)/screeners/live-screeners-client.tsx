@@ -49,6 +49,7 @@ import { Fragment, memo, startTransition, useEffect, useEffectEvent, useMemo, us
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard, useMarketEventsData } from "./screener-press-release-board";
+import { ScannerCompactChart, ScannerCompactChartCovered } from "./scanner-compact-chart";
 import { ScannerWorkspaceCard } from "./scanner-workspace-card";
 import { DEFAULT_SCANNER_WORKSPACE_LAYOUT, type ScannerWorkspaceWidget } from "./scanner-workspace-layout";
 import { DeclinesCard } from "./declines-card";
@@ -84,6 +85,7 @@ const MOBILE_SCANNER_TABS = [
   {widget:"top-losers", label:"Losers", accessibleLabel:"Top Losers"},
   {widget:"high-drops", label:"HOD Drops", accessibleLabel:"HOD Drops"},
   {widget:"market-events", label:"Events", accessibleLabel:"Market Events"},
+  {widget:"ticker-workspace", label:"Chart", accessibleLabel:"Chart"},
 ] as const;
 type MobileScannerTab = typeof MOBILE_SCANNER_TABS[number]["widget"];
 
@@ -633,6 +635,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";
   const selectedGainers=gainerViewResults(model,gainerView);
+  const compactChartSymbol=model ? selectedGainers?.rows[0]?.symbol ?? momentumStocks[0]?.symbol ?? "SPY" : loadError ? "SPY" : null;
   const marketEventsData=useMarketEventsData();
   const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
   const haltByTicker=useMemo(()=>new Map(activeHalts.map(halt=>[halt.ticker,halt])),[activeHalts]);
@@ -685,6 +688,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     {!drawerOpen&&chartWorkspace.charts.length>0&&<Box sx={{display:"flex",justifyContent:"flex-end"}}>
       <Button size="small" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>Reopen chart drawer</Button>
     </Box>}
+    <ScannerCompactChartCovered value={drawerOpen}>
     <ScannerPageSurface covered={drawerOpen}>
     <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box>
       {mobile&&<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0,mb:0.6}}>
@@ -716,7 +720,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       },
       height:{xs:"auto",md:desktopGridHeight?`${desktopGridHeight}px`:"calc(100dvh - 76px)"},
       gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(4,minmax(0,1fr))"},
-      gridTemplateRows:{xs:mobileTabs?"auto":"repeat(5,auto)",md:"repeat(2,minmax(0,1fr))"},
+      gridTemplateRows:{xs:mobileTabs?"auto":"repeat(6,auto)",md:"repeat(2,minmax(0,1fr))"},
       '& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 },
     }}>
       {(["gainers","momentum"] as const).filter(showScanner).map(kind=><ScannerWorkspaceCard key={kind} slot={workspaceLayout.assignments[kind]} widget={kind}>
@@ -738,8 +742,10 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
       {showScanner("high-drops")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["high-drops"]} widget="high-drops"><PremarketPullbacksCard now={checkedAt} view={displayModes["high-drops"]} onViewChange={view=>setDisplayModes(previous=>({...previous,"high-drops":view}))} rapid={model?.declines?.rapid} results={model?.premarketPullbacks}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
       {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
+      {!admin&&showScanner("ticker-workspace")&&<ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={compactChartSymbol}/>}
     </Box></Box></ScannerNewsDrawerProvider>
     </ScannerPageSurface>
+    </ScannerCompactChartCovered>
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,

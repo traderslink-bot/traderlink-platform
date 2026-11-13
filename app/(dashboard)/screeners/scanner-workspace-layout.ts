@@ -11,8 +11,8 @@ export type ScannerWorkspaceLayout=Readonly<{
 /** Initial workspace preset. User-selected presets can replace this configuration later. */
 export const DEFAULT_SCANNER_WORKSPACE_LAYOUT:ScannerWorkspaceLayout={
   id:"four-screeners-and-workspace",
-  desktopAreas:'"slot-1 slot-2 slot-3 slot-4" "slot-5 slot-6 slot-6 slot-6"',
-  mobileAreas:'"slot-1" "slot-2" "slot-3" "slot-4" "slot-5"',
+  desktopAreas:'"slot-1 slot-2 slot-3 slot-4" "slot-5 . slot-6 slot-6"',
+  mobileAreas:'"slot-1" "slot-2" "slot-3" "slot-4" "slot-5" "slot-6"',
   assignments:{
     gainers:"slot-1",
     momentum:"slot-2",

@@ -48,14 +48,14 @@ const candleSnapshotLifetime = 5 * 60_000;
 
 const indicatorName = (type: IndicatorType) => type === "Bollinger" ? "BOLL" : type;
 
-export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactIdentity, viewId, viewWorkspace = "main" }: {
+export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactIdentity, viewId, viewWorkspace = "main" }: {
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
-  viewId?: string; viewWorkspace?: "main" | "scanner"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
+  viewId?: string; viewWorkspace?: "main" | "scanner"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
   const ticker = symbol.split(":").at(-1)!;
   const theme = useTheme();
   const narrow = useMediaQuery(theme.breakpoints.down("md")), landscape = useMediaQuery("(orientation: landscape) and (max-height: 600px) and (max-width: 1200px)");
-  const compact = compactMobile && (narrow || landscape);
+  const compact = compactToolbar || (compactMobile && (narrow || landscape));
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null), [frameAnchor, setFrameAnchor] = useState<HTMLElement | null>(null);
   const {preferences,ready,message,change,ownerKey}=useChartPreferences();
   const dark = preferences.theme === "dark" || preferences.theme === "auto" && theme.palette.mode === "dark";
