@@ -58,6 +58,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
       {id:"resumed",ticker:"DONE",market:"NASDAQ",haltTimeEt:"09:30:00",reasonCode:"LUDP",reason:"Pause",quoteTimeEt:"09:35:00",tradeTimeEt:"09:40:00",chartExchange:null,source:"nasdaq",sourceUrl:"https://example.com/halts"},
     ]});
     if(url.includes("channel=market_cap_under_30m"))return Response.json({articles:under30,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
+    if(url.includes("view=recent"))return Response.json({articles:scanner,since:"2026-11-03T15:31:00.000Z",next:null});
     if(url.includes("view=expanded-summary"))return Response.json({articles:scanner,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
     if(url.startsWith("/api/admin/screeners/floats?"))return Response.json({exchanges:{AAA:"NASDAQ",BBB:"NYSE",CCC:"NASDAQ"},floats:{AAA:{shares:500000},BBB:{shares:600000},CCC:{shares:700000}}});
     if(url.includes("articleId=cap-1"))return Response.json({article:under30[0]});
@@ -83,8 +84,8 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(container.textContent).toContain("Headline today-3");
   expect(container.textContent).toContain("Headline today-4");
   expect(container.textContent).toContain("Headline previous-1");
-  expect(container.textContent).toContain("All News");
-  expect(container.textContent).toContain("View all");
+  expect(container.textContent).not.toContain("All News");
+  expect(container.textContent).toContain("More news");
   const haltRegion=container.querySelector('[aria-label="Current halts"]') as HTMLElement;
   const prRegion=container.querySelector('[aria-label="Latest PR Scanner releases"]') as HTMLElement;
   expect(haltRegion).not.toBeNull();
@@ -103,13 +104,13 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   expect(container.textContent).toContain("Float 500K");
   expect(container.querySelector('[aria-label="Open DDD chart only"]')).toBeNull();
 
-  const viewAll=[...container.querySelectorAll("button")].find(button=>button.textContent==="View all") as HTMLElement;
+  const viewAll=[...container.querySelectorAll("button")].find(button=>button.textContent==="More news") as HTMLElement;
   expect(viewAll.closest('[aria-label="Latest PR Scanner releases"]')).not.toBeNull();
   await act(async()=>viewAll.click());
-  const drawer=document.body.querySelector('[role="dialog"][aria-label="PR workspace"]')!;
+  const drawer=document.body.querySelector('[role="dialog"][aria-label="Recent News"]')!;
   expect(drawer).not.toBeNull();
   expect(drawer.textContent).toMatch(/\d{1,2}:\d{2} (?:AM|PM) ET/u);
-  expect(drawer.querySelector('[aria-label="PR Scanner articles"]')?.querySelectorAll("button")).toHaveLength(4);
+  expect(drawer.querySelector('[aria-label="PR Scanner articles"]')?.querySelectorAll("button")).toHaveLength(5);
 
   const underTab=drawer.querySelector('[role="tab"][aria-label="Under $30M Market Cap"]') as HTMLElement;
   expect(underTab.textContent).toContain("Under $30M");

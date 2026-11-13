@@ -55,3 +55,11 @@ With `TRADERLINK_MARKET_HALT_SOURCE=alpaca` on the VPS gateway and Platform, the
 Trading resumption clears the pause. Two eligible, time-ordered trades after the pause began also clear it when the execution price changes. This inference lives in the gateway process. A subsequent halt starts a new lifecycle. Quote-only reopening and posted resume times leave the pause active.
 
 The local QA uses simulated SMX and OMH events and an isolated checkout of the release parent. The new gateway code must be present before selecting Alpaca. Production was left untouched.
+
+## Recent News and Market Events scrolling
+
+Market Events keeps its compact PR filter. More news is inside the PR scroll
+area. The Recent News drawer reads a rolling 48-hour window from the existing
+authorized headline reader. Load more uses a timestamp and article ID cursor.
+The desktop card and PR list stay within the scanner grid row. Browser QA
+covered desktop and both mobile layouts with fixture headlines.

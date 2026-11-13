@@ -149,6 +149,7 @@ export class PressReleaseDashboardRepository {
   /** Parent-authorized plan only; the child never accepts SQL from HTTP input. */
   headlineQueryPlan(input: Readonly<{
     channel: PressReleaseChannel; limit?: number; scope: WorkspaceAccessScope; includePublishedAt: boolean;
+    since?: string; before?: { publishedAt: string; id: string };
   }>): Readonly<{ sql: string; parameters: readonly (string | number)[] }> {
     assertActiveUser(this.database, input.scope);
     assertMembershipFeature(this.database, input.scope.userId, "news.access");
@@ -167,9 +168,12 @@ LEFT JOIN news_article_read_receipts receipt
 WHERE article.route_tag IN (${placeholders(tags)})
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
+${input.since ? "AND julianday(article.published_at) >= julianday(?)" : ""}
+  ${input.before ? "AND (article.published_at < ? OR (article.published_at = ? AND article.id > ?))" : ""}
 ORDER BY article.published_at DESC, article.id
 LIMIT ?`,
-      parameters: Object.freeze([input.scope.userId, ...tags, delaySeconds, delaySeconds, limit]),
+      parameters: Object.freeze([input.scope.userId, ...tags, delaySeconds, delaySeconds, ...(input.since ? [input.since] : []),
+        ...(input.before ? [input.before.publishedAt, input.before.publishedAt, input.before.id] : []), limit]),
     });
   }
 

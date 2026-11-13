@@ -110,19 +110,29 @@ export async function GET(request: Request): Promise<Response> {
       return timing.measure("serialization", () => Response.json({ status: "unavailable" }, { headers, status: 400 }));
     }
     const channel=requestedChannel as PressReleaseChannel;
-    const expanded = view === "expanded" || view === "expanded-summary";
-    const summary = view === "summary" || view === "expanded-summary";
+    const recent = view === "recent";
+    const cursorTime = parameters.get("before");
+    const cursorId = parameters.get("beforeId");
+    if (recent && ((cursorTime === null) !== (cursorId === null) ||
+      (cursorTime !== null && (cursorTime.length > 40 || !Number.isFinite(Date.parse(cursorTime)) || !cursorId || cursorId.length > 128)))) {
+      return Response.json({ status: "unavailable" }, { headers, status: 400 });
+    }
+    const since = recent ? new Date(Date.now() - 48 * 60 * 60_000).toISOString() : undefined;
+    const expanded = recent || view === "expanded" || view === "expanded-summary";
+    const summary = recent || view === "summary" || view === "expanded-summary";
     timing.mode(summary ? expanded ? "expanded_summary" : "summary" : expanded ? "expanded" : "full");
     if (summary) {
       timing.execution("readonly_child");
-      const input = { channel, limit: expanded ? 150 : 6,
+      const limit = recent ? 60 : expanded ? 150 : 6;
+      const input = { channel, limit, since,
+        before: recent && cursorTime && cursorId ? { publishedAt: cursorTime, id: cursorId } : undefined,
         scope: identity.scope, includePublishedAt: expanded };
       const plan = timing.database(database => timing.measure("repository_access", () =>
         new PressReleaseDashboardRepository(database).headlineQueryPlan(input)));
       if (request.signal.aborted) throw new Error("scanner_temporarily_unavailable");
       const result = await timing.measureAsync("child_total", () => untilAbort(readScannerHeadlinesInChild(
         resolvePlatformDatabaseConfig().databasePath, plan,
-        { limit: expanded ? 150 : 6, includePublishedAt: expanded }), request.signal));
+        { limit, includePublishedAt: expanded }), request.signal));
       timing.record("queue", result.queueMs);
       timing.record("child", result.childMs);
       timing.record("sql", result.durationMs);
@@ -140,6 +150,12 @@ export async function GET(request: Request): Promise<Response> {
         id: row.id, ticker: row.ticker, headline: row.headline, isRead: row.is_read === 1, marketCap: row.market_cap,
         ...(expanded ? { publishedAt: row.published_at! } : {}),
       })));
+      if (recent) {
+        const articles = responseArticles.slice(0, 59);
+        const last = articles.at(-1);
+        const next = responseArticles.length === 60 && last ? { publishedAt:last.publishedAt, id:last.id } : null;
+        return Response.json({ articles, since, next, status:"ready" }, { headers });
+      }
       const now=new Date();
       const easternDate=easternSavedDate(now);
       const previousTradingDate=recentTradingDates(now).dates.find(date=>date<easternDate)??null;
@@ -149,7 +165,9 @@ export async function GET(request: Request): Promise<Response> {
     }
     const responseArticles = timing.database(database => {
       const repository = new PressReleaseDashboardRepository(database);
-      const input = { channel, limit: expanded ? 150 : 6, scope: identity.scope };
+      const limit = recent ? 60 : expanded ? 150 : 6;
+      const input = { channel, limit, since,
+        before: recent && cursorTime && cursorId ? { publishedAt: cursorTime, id: cursorId } : undefined, scope: identity.scope };
       return timing.measure("list", () => repository.list(input));
     });
     return timing.measure("serialization", () => Response.json({ articles: responseArticles, status: "ready" }, { headers }));
