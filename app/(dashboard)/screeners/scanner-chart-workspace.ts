@@ -2,7 +2,7 @@ import { reconcileChartTickers, removeChartPanel, type ChartMultiview } from "@/
 import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import type { LiveScannerRow } from "@/src/modules/scanner/live/contracts";
 
-export type ScannerChartTarget=Readonly<{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX";showDetails?:boolean;addChart?:boolean;stock?:LiveScannerRow}>;
+export type ScannerChartTarget=Readonly<{symbol:string;exchange?:"NASDAQ"|"NYSE"|"AMEX";showDetails?:boolean;addChart?:boolean;stock?:LiveScannerRow}>;
 export type ScannerChartWorkspace=Readonly<{charts:readonly ScannerChartTarget[];selectedSymbol:string|null;limitReached:boolean}>;
 export const EMPTY_CHART_WORKSPACE:ScannerChartWorkspace={charts:[],selectedSymbol:null,limitReached:false};
 export type ScannerChartAction={type:"replace";chart:ScannerChartTarget}|{type:"open";chart:ScannerChartTarget}|{type:"select";symbol:string}|{type:"remove";symbol:string}|{type:"close"}|{type:"limit"}|{type:"configure";charts:readonly ScannerChartTarget[];selectedSymbol:string|null};

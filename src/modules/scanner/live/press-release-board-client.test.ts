@@ -102,7 +102,10 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
   await act(async()=>{(container.querySelector('[aria-label="Open SPY chart only"]') as HTMLElement).click();});
   expect(onOpenChart).toHaveBeenCalledWith({symbol:"SPY",exchange:"AMEX",addChart:false});
   expect(container.textContent).toContain("Float 500K");
-  expect(container.querySelector('[aria-label="Open DDD chart only"]')).toBeNull();
+  const tickerWithoutExchange=container.querySelector('[aria-label="Open DDD chart only"]') as HTMLElement;
+  expect(tickerWithoutExchange).not.toBeNull();
+  await act(async()=>tickerWithoutExchange.click());
+  expect(onOpenChart).toHaveBeenLastCalledWith({symbol:"DDD",addChart:false});
 
   const viewAll=[...container.querySelectorAll("button")].find(button=>button.textContent==="More news") as HTMLElement;
   expect(viewAll.closest('[aria-label="Latest PR Scanner releases"]')).not.toBeNull();

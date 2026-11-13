@@ -63,3 +63,5 @@ area. The Recent News drawer reads a rolling 48-hour window from the existing
 authorized headline reader. Load more uses a timestamp and article ID cursor.
 The desktop card and PR list stay within the scanner grid row. Browser QA
 covered desktop and both mobile layouts with fixture headlines.
+
+PR chart actions now accept a ticker with no exchange lookup match. Known exchanges are retained. Focused tests and isolated desktop and mobile browser QA passed.

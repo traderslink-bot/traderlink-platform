@@ -1,6 +1,7 @@
 "use client";
 
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import type { ScannerChartTarget } from "./scanner-chart-workspace";
 import { ScannerChartLaunchControls, useSideCardChartControls } from "./scanner-chart-launch-controls";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -105,10 +106,10 @@ function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBac
     </Stack>
   </Stack>;
 }
-function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article:Headline;exchange:"NASDAQ"|"NYSE"|"AMEX"|undefined;float:number|undefined;older:boolean;onOpen:(article:Headline)=>void;onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX"})=>void}){
+function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article:Headline;exchange:"NASDAQ"|"NYSE"|"AMEX"|undefined;float:number|undefined;older:boolean;onOpen:(article:Headline)=>void;onOpenChart?:(row:ScannerChartTarget)=>void}){
   const allowAdd=useSideCardChartControls();
-  return <Box sx={{borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:exchange?(allowAdd?"3.25rem minmax(0,1fr)":"2.25rem minmax(0,1fr)"):"minmax(0,1fr)",minHeight:42,minWidth:420}}>
-    {exchange&&onOpenChart?<ScannerChartLaunchControls row={{symbol:article.ticker,exchange}} onOpenChart={onOpenChart}/>:null}
+  return <Box sx={{borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:onOpenChart?(allowAdd?"3.25rem minmax(0,1fr)":"2.25rem minmax(0,1fr)"):"minmax(0,1fr)",minHeight:42,minWidth:420}}>
+    {onOpenChart?<ScannerChartLaunchControls row={exchange?{symbol:article.ticker,exchange}:{symbol:article.ticker}} onOpenChart={onOpenChart}/>:null}
     <ButtonBase aria-label={`Open ${article.ticker} article: ${article.headline}`} onClick={()=>onOpen(article)}
       sx={{display:"grid",gridTemplateColumns:"3.5rem minmax(0,1fr)",minHeight:42,px:0.5,py:0.45,textAlign:"left",width:"100%"}}>
       <Box sx={{alignSelf:"center",minWidth:0}}>
@@ -168,7 +169,7 @@ export function useMarketEventsData(haltsManaged=true) {
   return {articles,setArticles,dates,setDates,maximumMarketCap,floatByTicker,exchangeByTicker,halts,compactArticles};
 }
 
-export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltSourceUnavailable,data,compact=false}:{onOpenChart?:(row:{symbol:string;exchange:"NASDAQ"|"NYSE"|"AMEX"})=>void;managedActiveHalts?:readonly ScannerActiveHalt[];haltSourceUnavailable?:boolean;data:ReturnType<typeof useMarketEventsData>;compact?:boolean}){
+export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltSourceUnavailable,data,compact=false}:{onOpenChart?:(row:ScannerChartTarget)=>void;managedActiveHalts?:readonly ScannerActiveHalt[];haltSourceUnavailable?:boolean;data:ReturnType<typeof useMarketEventsData>;compact?:boolean}){
   const [drawerOpen,setDrawerOpen]=useState(false);
   const [channel,setChannel]=useState<PressReleaseChannel>("news_filtered");
   const [channelLoading,setChannelLoading]=useState(false);
