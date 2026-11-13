@@ -1,6 +1,7 @@
 "use client";
 
-import { Box, Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, IconButton, MenuItem, Portal, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import DashboardCustomizeOutlined from "@mui/icons-material/DashboardCustomizeOutlined";
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { desktopRows, placeCard, widgetNames, widgets, type DesktopPositions } from "./scanner-desktop-layout";
 import type { ScannerWorkspaceWidget } from "./scanner-workspace-layout";
@@ -76,11 +77,13 @@ export function ScannerLayoutHandles({ positions,onChange }: {positions:DesktopP
   </Box>;
 }
 
+const scannerToolbar = () => document.getElementById("dashboard-scanner-toolbar");
+
 export function ScannerLayoutToolbar({editing,name,setName,saved,onEdit,onSelect,onSave,onCancel,onReset}:{
   editing:boolean;name:string;setName:(name:string)=>void;saved:NamedLayout[];
   onEdit:()=>void;onSelect:(name:string)=>void;onSave:()=>void;onCancel:()=>void;onReset:()=>void;
 }) {
-  return <Stack direction="row" sx={{alignItems:"center",justifyContent:"flex-end",gap:0.75,mb:0.6,flexWrap:"wrap"}}>
+  return <Stack direction="row" sx={{alignItems:"center",justifyContent:"flex-end",gap:0.75,mb:editing||saved.length?0.6:0,flexWrap:"wrap"}}>
     {editing?<><Typography variant="caption" sx={{mr:"auto"}}>Drag Move or Resize, or use the arrow keys on a handle.</Typography>
       <TextField label="Layout name" size="small" value={name} onChange={e=>setName(e.target.value)} slotProps={{htmlInput:{maxLength:40}}}/>
       <Button size="small" onClick={onReset}>Reset to default</Button>
@@ -91,7 +94,15 @@ export function ScannerLayoutToolbar({editing,name,setName,saved,onEdit,onSelect
         <MenuItem value="">Default</MenuItem>
         {saved.map(item=><MenuItem key={item.name} value={item.name}>{item.name}</MenuItem>)}
       </TextField>}
-      <Button size="small" variant="outlined" onClick={onEdit}>Edit layout</Button>
+      <Portal container={scannerToolbar}>
+        <Box sx={{display:"flex",justifyContent:"flex-end"}}>
+          <Tooltip title="Edit layout">
+            <IconButton aria-label="Edit layout" onClick={onEdit}>
+              <DashboardCustomizeOutlined fontSize="small"/>
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </Portal>
     </>}
   </Stack>;
 }

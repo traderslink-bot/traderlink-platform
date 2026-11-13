@@ -871,7 +871,7 @@ export function DashboardShell({
               variant="outlined"
             />
           ) : null}
-          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
+          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : pathname === "/scanners" ? "dashboard-scanner-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
           <NotificationCenter notifications={notifications} />
           <Tooltip title={helpLabel}>
             <IconButton

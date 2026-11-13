@@ -11,3 +11,6 @@ Isolated Chromium QA covered outline-only dragging, pointer and keyboard
 resize, named layouts, reset and cancel, and chart canvas and feed continuity.
 Median first-row time was 561 ms before and 596 ms after across three runs
 per version with fixture data. Focused TypeScript and lint passed.
+
+The desktop Edit layout entry uses the Dashboard Customize icon in the
+Scanner top navigation. Editing controls stay above the grid.
