@@ -187,3 +187,21 @@ Preview follow-up exercised all six study types together with one and four chart
 A reconnect could start recent history before the candle-first warm-up timer ran. The busy handler retained only a generic refresh, so the warm-up request was lost. While a chart has painted candles and still needs indicator history, every refresh now requests full history. The scheduled warm-up skips work if a refresh already started it. Recovery keeps using the same path.
 
 Preview browser QA injected the reconnect immediately before the warm-up callback on first navigation and browser reload, with one and four charts in portrait and landscape. Candles painted while full history was held. All six indicators populated and the final readings matched the full-history replay. No chart API errors occurred. Focused lint and 76 tests passed. Existing Help Center instructions still apply.
+
+### Mobile Multiview viewport loading
+
+The main chart workspace starts substantially visible mobile panels first. After the first candles arrive, or when scrolling begins, it starts panels within 240 px of the viewport. Mounted panels stay mounted to retain chart state and live subscriptions. The existing chart controls and Help Center instructions still apply.
+
+Private Chromium replay tested four charts in 390 × 844 portrait and 844 × 390 landscape at 4× CPU throttling with all six indicators enabled. The first usable chart and scroll waits were measured on each layout. The final indicator readouts matched eager loading and no chart API errors occurred. Rapid scrolling immediately after first paint can still outrun prefetch. Cold development compilation and variable startup timings preclude a production speedup estimate. Targeted lint and 20 focused tests passed.
+
+### VPS candle cache preview experiment
+
+The gateway reuses a complete minute-history prefix within the existing 30-second freshness window and refreshes a five-minute overlap. The original prefix age is retained so repeated requests cannot extend its freshness indefinitely. Only the same symbol, timeframe, and split adjustment date can share a prefix. The existing 32-entry and 150,000-bar caps apply. No disk cache is used.
+
+The private VPS replay ran four eager charts with all six indicators in portrait and landscape. Repeat requests advanced the window by a minute. Upstream fixture bars fell from 53,340 to 44 per layout, and all 15 displayed readings on every chart matched. The isolated four-request recent history replay took 596 ms cold and 217 ms on repeat with simulated upstream latency. The development browser did not show a consistent first-candle improvement. Peak observed process RSS was about 157 MiB and sampled heap growth from the empty cache was at most 18 MiB. This is a four-chart replay measurement and does not establish production memory demand or latency. The app preview uses eager loading. The production gateway was untouched. Targeted lint and 56 tests passed. Existing Help Center instructions still apply.
+
+### Browser candle snapshots
+
+The private preview keeps up to four recent main-chart candle snapshots in browser memory, each capped at 20,000 bars and usable for five minutes on the same split-adjustment date. A returning chart draws the snapshot, reconnects its stream, and marks the chart Catching up while it fetches authoritative history. This experiment uses the full existing history request to preserve exact study warm-up and adjustment behavior. Chart controls and Help Center instructions still apply.
+
+Four eager charts were tested with all six indicators in portrait and landscape. The replay corrected a bar and added a minute while away, and deliberately held the return history response for five seconds. Each chart drew before the response. The final candle-axis boundaries and counts and the displayed indicator readings matched a fresh load. Focused lint and 69 tests passed. Timings characterize the controlled replay, not production.
