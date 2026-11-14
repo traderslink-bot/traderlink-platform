@@ -301,7 +301,7 @@ function Section({
   const heading = <Box sx={{ minWidth: 0 }}>
     <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", width: "fit-content" }}>
       <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{title}</Typography>
-      {titleHelp ? <AnalyzerHelpTooltip label={title} text={titleHelp} /> : null}
+      {!collapsible && titleHelp ? <AnalyzerHelpTooltip label={title} text={titleHelp} /> : null}
     </Stack>
     {description ? <Typography color="text.secondary" variant="body2">{description}</Typography> : null}
   </Box>;
@@ -315,12 +315,17 @@ function Section({
     </Paper>;
   }
   return (
-    <Accordion defaultExpanded={defaultExpanded} disableGutters sx={{ border: 1, borderColor: "divider", borderRadius: "8px !important", boxShadow: "none", overflow: "hidden", "&:before": { display: "none" } }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minWidth: 0, px: { xs: 1.5, sm: 2.25 }, py: 0.5 }}>
-        {heading}
-      </AccordionSummary>
-      <AccordionDetails sx={{ px: { xs: 1.5, sm: 2.25 }, pb: 2.25, pt: 0 }}>{children}</AccordionDetails>
-    </Accordion>
+    <Box sx={{ position: "relative" }}>
+      <Accordion defaultExpanded={defaultExpanded} disableGutters sx={{ position: "relative", border: 1, borderColor: "divider", borderRadius: "8px !important", boxShadow: "none", overflow: "hidden", "&:before": { display: "none" } }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minWidth: 0, px: { xs: 1.5, sm: 2.25 }, py: 0.5, ...(titleHelp ? { pr: { xs: 7.5, sm: 8.25 } } : {}) }}>
+          {heading}
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: { xs: 1.5, sm: 2.25 }, pb: 2.25, pt: 0 }}>{children}</AccordionDetails>
+      </Accordion>
+      {titleHelp ? <Box sx={{ position: "absolute", top: 8, right: { xs: 1.5, sm: 2.25 } }}>
+        <AnalyzerHelpTooltip label={title} text={titleHelp} />
+      </Box> : null}
+    </Box>
   );
 }
 

@@ -42,7 +42,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["trade analyzer", "chart replay", "day trade analysis", "historical analytics"],
         blocks: [
           { kind: "paragraph", text: "Trade Analyzer uses the allowance and reset period included in your plan and selected add-ons, shared across your Journal accounts. If your plan does not include it, the Workspace Analyzer icon opens a small message with a link to upgrade. The Analyze choices in trade-entry review also show an upgrade link. An unlimited allowance has no personal quantity limit. When no analyses remain, choose a plan with more analyses or wait for the displayed reset. Saved results remain stored. Trade Analyzer Analysis is a separate plan feature from generating a Trade Analyzer result. If your plan does not include Analysis, its pages show a labelled screenshot of the Demo account and a link to plans and add-ons. The screenshot controls are not interactive. The preview does not show your trades or use an analysis allowance. Existing saved results remain stored when membership expires." },
-          { kind: "paragraph", text: "The Trade Analyzer combines your exact Trade Tracker executions with supported Moomoo candles. Inside Session Tracker it replays one selected trade and explains its entries, exits, price path and completed candle patterns. Day Trade Analysis compares saved Analyzer results across eligible day trades." },
+          { kind: "paragraph", text: "The Trade Analyzer combines your exact Trade Tracker executions with supported market candles. Inside Session Tracker it replays one selected trade and explains its entries, exits, price path and completed candle patterns. Day Trade Analysis compares saved Analyzer results across eligible day trades." },
           { kind: "table", columns: ["Area", "Purpose"], rows: [
             ["Session Tracker", "Review one trading day, select a ticker and trade, replay the chart, inspect executions and save notes, tags and rules."],
             ["Trade Analyzer", "The reusable chart, exact execution details, Green-to-Red review and candle-pattern capability."],
@@ -88,7 +88,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           { kind: "table", columns: ["Fact", "Meaning"], rows: [
             ["Open / High / Low / Close", "The first, highest, lowest and final traded price represented by that candle."],
             ["Volume", "The number of shares traded during the candle."],
-            ["Turnover", "The traded dollar value supplied by Moomoo for the candle. It helps compare activity across differently priced stocks."],
+            ["Turnover", "The traded dollar value when the saved candle includes it. It helps compare activity across differently priced stocks."],
           ] },
           { kind: "paragraph", text: "Hover or select the chart to inspect a candle. Saved server-side candles are reused when another eligible replay needs the same symbol, date and interval." },
           { kind: "paragraph", text: "When a new day-trade candle download is needed, it starts at 4:00 AM Eastern and runs through the latest completed minute, up to 8:00 PM for that trading date. A download for a past day therefore covers the full extended session. Sufficient saved candles are reused without downloading the rest of the day just because time has passed. Entry indicators still use only candles completed before the entry, and each study keeps its own measurement window." },
@@ -267,7 +267,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Move against you", "The average and typical price movement per share against the trade across the complete measured population."],
             ["Percentage movement", "The same movement relative to that execution's price, making differently priced tickers easier to compare."],
           ] },
-          { kind: "callout", title: "Measured candle range", text: "The page uses saved Moomoo one-minute candle evidence. A candle that shares a fill does not prove whether its high or low occurred before the fill, so the Analyzer does not claim that unknown sequence." },
+          { kind: "callout", title: "Measured candle range", text: "The page uses saved one-minute candle evidence. A candle that shares a fill does not prove whether its high or low occurred before the fill, so the Analyzer does not claim that unknown sequence." },
         ],
       },
       {
@@ -577,7 +577,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
     slug: "data-availability",
     title: "Data availability and limitations",
-    description: "Understand Moomoo data, same-day timing, post-session updates, eligibility and factual unavailable states.",
+    description: "Understand market data, same-day timing, eligibility and unavailable states.",
     sections: [
       {
         id: "market-data-and-imports",
@@ -595,17 +595,17 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["same day", "30 minutes", "pending", "post exit", "leave page", "notification"],
         blocks: [
           { kind: "paragraph", text: "For a newly completed same-day trade, Trade Analyzer collects market data through 30 minutes after the final exit's one-minute candle before creating its first completed result. Seconds do not change that readiness time. The blue collection notice gives the expected Eastern Time. You can leave the page while it completes; when the result is ready, TradersLink adds an in-app update and uses the notification channels you have configured." },
-          { kind: "paragraph", text: "A later finalized-session update can add the 60-minute observation when that market data is available. You do not have to wait for it before reviewing the first completed result. When the extended-hours session closes before a full 30 minutes can form, the collection notice identifies the shorter available market-data window." },
+          { kind: "paragraph", text: "When the saved market data extends far enough after exit, the Analyzer can include a 60-minute observation. You do not have to wait for it before reviewing the first completed result. When the extended-hours session closes before a full 30 minutes can form, the collection notice identifies the shorter available market-data window." },
           { kind: "paragraph", text: "If the required market data cannot be collected after its bounded retries, TraderLink records an unavailable state rather than leaving the trade on a collecting message. The card distinguishes too few available candles from a failed data request. Sparse candles alone do not prove low trading volume. It never fills missing future candles with zeroes or guesses." },
         ],
       },
       {
         id: "post-session-reconciliation",
         title: "Post-session reconciliation",
-        summary: "Allow one final update after Moomoo finalizes same-day candles.",
+        summary: "Understand the timing of saved market data.",
         keywords: ["post session", "reconciliation", "final candle", "update"],
         blocks: [
-          { kind: "callout", title: "One final same-day update", text: "Moomoo can finalize candle values after the session. TraderLink performs one post-session reconciliation so saved candles, indicators and dependent analysis can use the final values." },
+          { kind: "callout", title: "One post-session refresh", text: "Trade Analyzer checks for finalized candles at 4:15 a.m. Eastern the next day. Your saved result stays available while it checks. The refresh uses no additional Analyzer allowance." },
         ],
       },
       {
@@ -625,7 +625,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["premarket", "regular session", "after hours", "overnight", "unavailable", "incomplete"],
         blocks: [
           { kind: "bullets", items: [
-            "Current U.S. premarket, regular-session and after-hours coverage is supported when Moomoo returns the required candles.",
+            "Current U.S. premarket, regular-session and after-hours coverage is supported when market data includes the required candles.",
             "Overnight-session analysis is not currently supported.",
             "Pending means a required future window has not finished forming.",
             "Incomplete means only part of the required candle range is available.",
@@ -649,7 +649,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["paid eligibility", "cancellation", "historical lookback", "old imports", "retained access"],
         blocks: [
           { kind: "paragraph", text: "An active paid plan is required to create new Analyzer results. Completed analyses remain readable after paid access ends. Older historical Trade Tracker imports outside the Analyzer eligibility period remain available in Trade Tracker and regular Analytics but do not enter Analyzer coverage." },
-          { kind: "callout", title: "Historical lookback is still being tested", text: "TraderLink has not published a fixed initial lookback. It will be chosen after Moomoo testing rather than being assumed to be 30 days or another arbitrary value." },
+          { kind: "callout", title: "Historical lookback is still being tested", text: "TraderLink has not published a fixed initial lookback. Coverage depends on the candles available for the symbol and date." },
         ],
       },
     ],

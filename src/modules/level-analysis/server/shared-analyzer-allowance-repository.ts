@@ -306,7 +306,7 @@ WHERE reservation_id = ?`).get(reservation.reservationId) as { count: number };
         if (attempts.count >= 34) return null;
       }
       const settings = this.settings();
-      if (!settings.enabled || !settings.designatedConnectionConfigured) return null;
+      if (!settings.enabled) return null;
       const exemptions = new AnalyzerOwnerExemptionRepository(this.database);
       const exemptionEventId = exemptions.activeEventId(retry?.user_id ?? reservation!.userId);
       // A queued, uncharged download must still have access when it starts.

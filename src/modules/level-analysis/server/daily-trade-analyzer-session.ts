@@ -30,10 +30,13 @@ function newYorkWallTimeToEpochSeconds(
   hour: number,
   minute = 0,
 ): number | null {
-  const offsetMinutes = offsetMinutesAt(year, month, day, hour);
-  return offsetMinutes === null
-    ? null
-    : Math.floor((Date.UTC(year, month - 1, day, hour, minute) - offsetMinutes * 60_000) / 1000);
+  const wallClock = Date.UTC(year, month - 1, day, hour, minute);
+  const initialOffset = offsetMinutesAt(year, month, day, hour);
+  if (initialOffset === null) return null;
+  const candidate = new Date(wallClock - initialOffset * 60_000);
+  const actualOffset = offsetMinutesAt(candidate.getUTCFullYear(), candidate.getUTCMonth() + 1,
+    candidate.getUTCDate(), candidate.getUTCHours());
+  return actualOffset === null ? null : (wallClock - actualOffset * 60_000) / 1000;
 }
 
 export type NewYorkExtendedSession = Readonly<{
@@ -142,13 +145,11 @@ export function dailyTradeFirstResultCoverageEnd(
     : Math.min(session.endTime, Math.floor(readyAt.getTime() / 1000));
 }
 
-/**
- * Moomoo can revise same-day one-minute bars after extended trading closes.
- * Reconcile once at 04:15 New York time the following morning, well after the
- * 20:00 session end, without polling during the night.
- */
-export function postSessionReconciliationAt(
-  session: NewYorkExtendedSession,
-): Date {
-  return new Date((session.endTime + (8 * 60 + 15) * 60) * 1000);
+/** Schedule final candle reconciliation at 04:15 Eastern the following day. */
+export function postSessionReconciliationAt(session: NewYorkExtendedSession): Date {
+  const nextDate = new Date((session.endTime + 8 * 3600) * 1000);
+  const parts = dateParts(nextDate.toISOString().slice(0, 10));
+  const seconds = parts ? newYorkWallTimeToEpochSeconds(...parts, 4, 15) : null;
+  if (seconds === null) throw new Error("analyzer_reconciliation_date_invalid");
+  return new Date(seconds * 1000);
 }

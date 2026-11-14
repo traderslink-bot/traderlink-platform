@@ -46,35 +46,40 @@ WHERE history_request_id = ? AND status = 'requested'`).run(timestamp, row.histo
     }).immediate();
   }
 
-  read(scope: AccountScope, jobId: string, allRequests = false): readonly Row[] {
+  read(scope: AccountScope, jobId: string, allRequests = false, alpacaOnly = false): readonly Row[] {
     const retry = new ManualAnalyzerRetryRepository(this.database).latest(jobId);
     return this.database.prepare(`SELECT request.* FROM ${historySource} request
 JOIN level_analysis_logical_trade_jobs job ON job.logical_trade_job_id = request.logical_trade_job_id
 WHERE job.logical_trade_job_id = ? AND job.user_id = ? AND job.workspace_id = ? AND job.account_id = ?
 AND (? = 1 OR request.retry_request_id IS ?)
+${alpacaOnly ? `AND EXISTS (SELECT 1 FROM level_analysis_analyzer_acquisitions acquisition
+ JOIN level_analysis_market_session_sets session ON session.market_session_set_id = acquisition.market_session_set_id
+ WHERE acquisition.acquisition_id = request.acquisition_id
+ AND session.provider_adapter_version = 'alpaca_sip_raw_v1')` : ""}
 ORDER BY request.requested_end_seconds DESC, request.attempt_number ASC`).all(
       jobId, scope.userId, scope.workspaceId, scope.accountId, allRequests ? 1 : 0, retry?.retry_request_id ?? null,
     ) as readonly Row[];
   }
 
-  compatibleEvidence(scope: AccountScope, symbol: string, start: number, asOf: number) {
+  compatibleEvidence(scope: AccountScope, symbol: string, start: number, asOf: number, source: "alpaca_sip_raw_v1" | "moomoo_history_kline_v1" = "moomoo_history_kline_v1") {
+    const alpaca = source === "alpaca_sip_raw_v1";
     const rows = this.database.prepare(`SELECT request.* FROM ${historySource} request
 JOIN level_analysis_logical_trade_jobs job ON job.logical_trade_job_id = request.logical_trade_job_id
-JOIN level_analysis_market_session_sets session ON session.market_session_set_id = job.market_session_set_id
+${alpaca ? "JOIN level_analysis_analyzer_acquisitions acquisition ON acquisition.acquisition_id = request.acquisition_id" : ""}
+JOIN level_analysis_market_session_sets session ON session.market_session_set_id = ${alpaca ? "acquisition" : "job"}.market_session_set_id
 WHERE job.user_id = ? AND job.workspace_id = ? AND job.account_id = ?
- AND session.provider_symbol = ? AND session.provider_key = 'moomoo_history_kline'
- AND session.provider_adapter_version = 'moomoo_history_kline_v1'
+ AND session.provider_symbol = ? AND session.provider_adapter_version = ?
  AND request.status IN ('complete', 'no_history', 'partial')
  AND request.requested_start_seconds < ? AND request.requested_end_seconds > ?
 ORDER BY request.completed_at_utc DESC, request.history_request_id LIMIT 100`).all(
-      scope.userId, scope.workspaceId, scope.accountId, symbol, asOf, start,
+      scope.userId, scope.workspaceId, scope.accountId, symbol, source, asOf, start,
     ) as readonly Row[];
-    const parsed = this.parseEvidence(rows);
+    const parsed = this.parseEvidence(rows, alpaca);
     const candles = new Map<number, NormalizedMarketCandle>();
     // The query above requires Moomoo adapter v1: both historical and future
     // receipts under that identity retain native END labels. Do not rewrite
     // immutable receipt JSON/digests or mix normalized analysis snapshots here.
-    for (const candle of moomooV1AnalyzerCandles(parsed.candles, { start, endExclusive: asOf })) {
+    for (const candle of (alpaca ? parsed.candles : moomooV1AnalyzerCandles(parsed.candles, { start, endExclusive: asOf }))) {
       if (candle.time >= start && candle.time + 60 <= asOf && !candles.has(candle.time)) candles.set(candle.time, candle);
     }
     return { ranges: parsed.ranges.map((range) => ({ start: Math.max(start, range.start),
@@ -99,7 +104,7 @@ ORDER BY request.completed_at_utc DESC, request.history_request_id LIMIT 100`).a
   }
 
   begin(input: Readonly<{ scope: AccountScope; jobId: string; acquisitionId: string;
-    range: IndicatorHistoryRange; now: Date }>): string | null {
+    range: IndicatorHistoryRange; now: Date; alpaca?: boolean }>): string | null {
     const { range } = input;
     if (!Number.isSafeInteger(range.start) || range.start <= 0 || range.start % 60 !== 0 ||
         !Number.isSafeInteger(range.endExclusive) || range.endExclusive % 60 !== 0 ||
@@ -117,16 +122,19 @@ WHERE job.logical_trade_job_id = ? AND job.user_id = ? AND job.workspace_id = ? 
  OR EXISTS(SELECT 1 FROM level_analysis_manual_retry_acquisitions link WHERE link.acquisition_id=acquisition.acquisition_id AND link.retry_request_id=?))`).get(input.acquisitionId,input.jobId,input.scope.userId,
         input.scope.workspaceId,input.scope.accountId,retry?.retry_request_id ?? null,retry?.retry_request_id ?? null);
       if (!authorized) return null;
-      const prior = this.read(input.scope, input.jobId).filter((r) =>
-        r.requested_start_seconds === range.start && r.requested_end_seconds === range.endExclusive);
-      if (prior.some((r) => r.status === "complete" || r.status === "no_history" || r.status === "requested") || prior.length >= 3) return null;
+
+      const inRange = (r: Row) =>
+        r.requested_start_seconds === range.start && r.requested_end_seconds === range.endExclusive;
+      const all = this.read(input.scope, input.jobId).filter(inRange);
+      const prior = input.alpaca ? this.read(input.scope, input.jobId, false, true).filter(inRange) : all;
+      if (prior.some((r) => r.status === "complete" || r.status === "no_history" || r.status === "requested") || all.length >= 3) return null;
       const id = createCanonicalUuidV4();
       const table = retry ? "level_analysis_manual_retry_history_requests" : "level_analysis_indicator_history_requests";
       this.database.prepare(`INSERT INTO ${table}
  (history_request_id, logical_trade_job_id, acquisition_id, requested_start_seconds, requested_end_seconds,
  attempt_number, status, created_at_utc${retry ? ",retry_request_id" : ""}) VALUES (?, ?, ?, ?, ?, ?, 'requested', ?${retry ? ",?" : ""})`).run(
         id, input.jobId, input.acquisitionId, range.start, range.endExclusive,
-        prior.length + 1, createCanonicalUtcTimestamp(input.now), ...(retry ? [retry.retry_request_id] : []));
+        all.length + 1, createCanonicalUtcTimestamp(input.now), ...(retry ? [retry.retry_request_id] : []));
       return id;
     }).immediate();
   }
@@ -135,7 +143,7 @@ WHERE job.logical_trade_job_id = ? AND job.user_id = ? AND job.workspace_id = ? 
     result: MarketDataProviderResult; now: Date }>): boolean {
     const result = input.result;
     const emptyComplete = !result.ok && result.requestCoverage === "complete" &&
-      result.failureReasonCode === "moomoo_returned_no_candles";
+      result.code === "coverage_unavailable";
     const complete = result.ok && result.requestCoverage === "complete";
     const candles = result.ok ? result.candles : [];
     const json = JSON.stringify(candles);
@@ -160,7 +168,7 @@ AND EXISTS (SELECT 1 FROM level_analysis_logical_trade_jobs job WHERE job.logica
     return this.parseEvidence(this.read(scope, jobId));
   }
 
-  private parseEvidence(rows: readonly Row[]) {
+  private parseEvidence(rows: readonly Row[], alpaca = false) {
     const ranges: IndicatorHistoryRange[] = [];
     const candles: NormalizedMarketCandle[] = [];
     for (const row of rows) {
@@ -173,7 +181,8 @@ AND EXISTS (SELECT 1 FROM level_analysis_logical_trade_jobs job WHERE job.logica
       if (!Array.isArray(values)) throw new Error("indicator_history_evidence_invalid");
       const requested = { start: row.requested_start_seconds, endExclusive: row.requested_end_seconds };
       ranges.push(...(row.status === "partial"
-        ? moomooV1ObservedCoverage(values as NormalizedMarketCandle[], requested)
+        ? alpaca ? (values as NormalizedMarketCandle[]).map((bar) => ({ start: bar.time, endExclusive: bar.time + 60 }))
+          : moomooV1ObservedCoverage(values as NormalizedMarketCandle[], requested)
         : [requested]));
       candles.push(...values as NormalizedMarketCandle[]);
     }

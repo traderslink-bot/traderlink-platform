@@ -39,6 +39,34 @@ function openInitializer(path: string): Database.Database {
 }
 
 describe("TraderLink Platform migrations", () => {
+  it("preserves existing Analyzer session receipts while enabling raw Alpaca cache rows", () => {
+    const database = openInitializer(newPath("analyzer-alpaca"));
+    try {
+      runPlatformMigrations(database, { manifest: platformMigrationManifest.slice(0, -1) });
+      const time = "2026-10-09T08:00:00.000Z";
+      const legacy = "10000000-0000-4000-8000-000000000001";
+      const version = "10000000-0000-4000-8000-000000000002";
+      database.prepare(`INSERT INTO level_analysis_market_session_sets VALUES
+        (?, 'moomoo_history_kline', 'moomoo_history_kline_v1', 'TEST', 'unknown', '2026-10-09',
+         '1m', 'america_new_york_extended_0400_2000_v1', ?, ?, 'ready', NULL, ?, ?)`).run(legacy, version, time, time, time);
+      database.prepare(`INSERT INTO level_analysis_market_session_set_versions VALUES
+        (?, ?, 1, ?, ?, 'America/New_York', NULL, 'ready', NULL, NULL, ?)`).run(version, legacy, time, time, time);
+      runPlatformMigrations(database);
+      expect(database.pragma("foreign_key_check")).toEqual([]);
+      expect(database.prepare("SELECT market_session_set_id FROM level_analysis_market_session_set_versions WHERE market_session_set_version_id=?").get(version))
+        .toEqual({ market_session_set_id: legacy });
+      database.prepare(`INSERT INTO level_analysis_market_session_sets SELECT
+        '10000000-0000-4000-8000-000000000003', 'alpaca_sip_raw', 'alpaca_sip_raw_v1',
+        provider_symbol, exchange_identity, trading_date_new_york, interval, session_policy,
+        NULL, NULL, 'queued', NULL, created_at_utc, updated_at_utc
+        FROM level_analysis_market_session_sets WHERE market_session_set_id=?`).run(legacy);
+      expect(database.prepare("SELECT provider_key FROM level_analysis_market_session_sets ORDER BY provider_key").all())
+        .toEqual([{ provider_key: "alpaca_sip_raw" }, { provider_key: "moomoo_history_kline" }]);
+    } finally {
+      database.close();
+    }
+  });
+
   it("creates exactly the current registry and empty managed domain tables", () => {
     const database = openInitializer(newPath("foundation"));
     try {

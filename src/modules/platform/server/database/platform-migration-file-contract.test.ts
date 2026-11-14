@@ -15,7 +15,7 @@ describe("static platform migration file contract", () => {
       })),
     );
     expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
-      "0185_news_general_market_news",
+      "0186_daily_trade_analyzer_alpaca_cache",
     );
   });
 

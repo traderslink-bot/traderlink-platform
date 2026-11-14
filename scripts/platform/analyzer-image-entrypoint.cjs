@@ -4,8 +4,8 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 
 function selectSchema(plan, role, rows, schema, latestDigest) {
-  assert(['final', 'recovery'].includes(role));
-  assert(rows.length === 150 || (role === 'recovery' && rows.length === 149));
+  assert(['final', 'recovery', 'migration'].includes(role));
+  assert(rows.length === 150 || (['recovery', 'migration'].includes(role) && rows.length === 149));
   assert.deepEqual(rows, plan.ledger.slice(0, rows.length));
   const digest = crypto.createHash('sha256').update(JSON.stringify(schema) + '\n').digest('hex');
   assert.equal(digest, rows.length === 149 ? plan.predecessorSchemaSha256 : plan.targetSchemaSha256);
@@ -34,6 +34,20 @@ function main() {
     count = selectSchema(plan, role, rows, schema, digest);
   } finally {
     db.close();
+  }
+  if (role === 'migration' && count === 149) {
+    const port = Number(env.PORT || 3000);
+    require('node:http').createServer((request, response) => {
+      response.setHeader('Cache-Control', 'no-store');
+      if (request.url === '/api/platform/health') {
+        response.setHeader('Content-Type', 'application/json');
+        response.end(JSON.stringify({ status: 'maintenance_ready', migrationCount: count, deployment: env.RAILWAY_DEPLOYMENT_ID, pid: process.pid }));
+      } else {
+        response.writeHead(503, { 'Retry-After': '300', 'Content-Type': 'text/plain; charset=utf-8' });
+        response.end('TradersLink is undergoing scheduled maintenance.');
+      }
+    }).listen(port, '0.0.0.0');
+    return;
   }
   delete env.TRADERLINK_RECOVERY_SCHEMA_PREFIX;
   delete env.TRADERLINK_GENERAL_NEWS_MAINTENANCE_WINDOW;

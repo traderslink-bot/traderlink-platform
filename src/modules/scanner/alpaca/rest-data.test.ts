@@ -15,6 +15,20 @@ describe("Alpaca shared history transport", () => {
     expect(new URL(String(transport.mock.calls[1][0])).searchParams.get("page_token")).toBe("next-page");
     await rest.history(request); expect(transport).toHaveBeenCalledTimes(2);
   });
+  it("requesting raw Analyzer history does not change split-adjusted chart history", async () => {
+    const transport = vi.fn<typeof fetch>(async () => Response.json({ bars: {}, next_page_token: null }));
+    const rest = new AlpacaRestData({ keyId: "test-key", secretKey: "test-secret" }, transport);
+    const query = new URLSearchParams({ symbol: "TEST", timeframe: "1Min", start: "1000", end: "100000" });
+    const chart = await rest.history(parseHistoryRequest(query));
+    query.set("adjustment", "raw");
+    const analyzer = await rest.history(parseHistoryRequest(query));
+    expect(chart.adjustment).toBe("split");
+    expect(analyzer.adjustment).toBe("raw");
+    expect(transport.mock.calls.map(([url]) => new URL(String(url)).searchParams.get("adjustment"))).toEqual(["split", "raw"]);
+    query.set("timeframe", "1Day");
+    expect(() => parseHistoryRequest(query)).toThrow("invalid_history_request");
+  });
+
   it("rejects arbitrary timeframes, oversized ranges and future bounds", () => {
     expect(() => parseHistoryRequest(new URLSearchParams({ symbol: "AAPL", timeframe: "1Sec", start: "1", end: "2" }))).toThrow();
     expect(() => parseHistoryRequest(new URLSearchParams({ symbol: "AAPL", timeframe: "1Min", start: "1", end: String(Date.now()) }))).toThrow();

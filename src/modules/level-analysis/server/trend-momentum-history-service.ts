@@ -1,7 +1,7 @@
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { TradeExecutionIndicatorInput } from "@/src/lib/trade-candle-analysis/trend-momentum-executions";
 import { inspectIndicatorWarmup, hasCompletedIndicatorCoverage } from "@/src/lib/trade-candle-analysis/trend-momentum-history";
-import type { MarketDataProvider, MarketDataProviderResult } from "../contracts/candle-review-contracts";
+import type { MarketDataProvider, MarketDataProviderResult, NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import type { ClaimedLogicalTradeAnalyzerJob } from "./logical-trade-analyzer-repository";
 import { TrendMomentumHistoryRepository } from "./trend-momentum-history-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
@@ -13,26 +13,39 @@ export class TrendMomentumHistoryService {
   constructor(private readonly history: TrendMomentumHistoryRepository,
     private readonly allowances: SharedAnalyzerAllowanceRepository,
     private readonly providerFor: (scope: AccountScope) => Promise<MarketDataProvider>,
-    private readonly now: () => Date = () => new Date()) {}
+    private readonly now: () => Date = () => new Date(),
+    private readonly splitDates?: (symbol: string) => Promise<readonly string[]>) {}
 
   beginSession(job: ClaimedLogicalTradeAnalyzerJob, acquisitionId: string, start: number, endExclusive: number) {
     return this.history.begin({ scope: job.scope, jobId: job.jobId, acquisitionId,
-      range: { start, endExclusive }, now: this.now() });
+      range: { start, endExclusive }, now: this.now(), alpaca: Boolean(this.splitDates) });
   }
   finishSession(job: ClaimedLogicalTradeAnalyzerJob, requestId: string, result: MarketDataProviderResult) {
     this.history.finish({ scope: job.scope, jobId: job.jobId, requestId, result, now: this.now() });
   }
 
-  async prepare(job: ClaimedLogicalTradeAnalyzerJob, asOf: number): Promise<
+  async prepare(job: ClaimedLogicalTradeAnalyzerJob, asOf: number, reconciledSession?: readonly NormalizedMarketCandle[]): Promise<
     { pending: true } | { pending: false; input: TradeExecutionIndicatorInput; outcome: string }> {
     const now = this.now();
     this.history.recoverInterrupted(job.scope, job.jobId, now);
     const session = newYorkExtendedSession(job.target.tradingDateNewYork);
     if (!session) throw new Error("indicator_history_session_invalid");
-    const prior = priorIndicatorHistoryRanges(job.target.tradingDateNewYork);
-    const evidence = this.history.compatibleEvidence(job.scope, job.target.providerSymbol, prior.at(-1)!.start, asOf);
-    const history = { asOf, completedRanges: evidence.ranges,
-      candles: evidence.candles.map((bar) => ({ time: bar.time, open: Number(bar.openDecimal),
+    let prior = priorIndicatorHistoryRanges(job.target.tradingDateNewYork);
+    if (this.splitDates) {
+      const dates = await this.splitDates(job.target.providerSymbol);
+      const lastSplit = dates.filter((date) => date <= job.target.tradingDateNewYork).sort().at(-1);
+      const splitSession = lastSplit ? newYorkExtendedSession(lastSplit) : null;
+      if (splitSession) prior = prior.filter((range) => range.start >= splitSession.startTime);
+    }
+    const evidence = this.history.compatibleEvidence(job.scope, job.target.providerSymbol,
+      prior.at(-1)?.start ?? session.startTime, asOf, this.splitDates ? "alpaca_sip_raw_v1" : "moomoo_history_kline_v1");
+    const evidenceBars = reconciledSession
+      ? [...evidence.candles.filter((bar) => bar.time < session.startTime),
+        ...reconciledSession.filter((bar) => bar.time >= session.startTime && bar.time + 60 <= asOf)]
+      : evidence.candles;
+    const history = { asOf, completedRanges: reconciledSession
+      ? [...evidence.ranges, { start: session.startTime, endExclusive: asOf }] : evidence.ranges,
+      candles: evidenceBars.map((bar) => ({ time: bar.time, open: Number(bar.openDecimal),
         high: Number(bar.highDecimal), low: Number(bar.lowDecimal), close: Number(bar.closeDecimal),
         volume: Number(bar.volumeDecimal), turnover: bar.turnoverDecimal == null ? null : Number(bar.turnoverDecimal) })) };
     const input = buildTradeIndicatorInput(job.target.tradingDateNewYork, history);
@@ -40,8 +53,9 @@ export class TrendMomentumHistoryService {
     const enough = inspectIndicatorWarmup({ ...history, asOf: Math.floor(earliest) },
       [{ interval: "1m", requiredBars: 200 }, { interval: "5m", requiredBars: 200 }])
       .every((frame) => frame.missingBars === 0);
-    const currentCovered = hasCompletedIndicatorCoverage(evidence.ranges, session.startTime, asOf);
+    const currentCovered = hasCompletedIndicatorCoverage(history.completedRanges, session.startTime, asOf);
     if (enough && currentCovered) return { pending: false, input, outcome: "complete" };
+    if (reconciledSession) return { pending: false, input, outcome: "history_exhausted" };
     // One range per pass. Completed sparse/empty windows are never retried.
     const candidates = [...(!currentCovered ? [{ start: session.startTime, endExclusive: asOf }] : []), ...(!enough ? prior : [])];
     const rows = this.history.read(job.scope, job.jobId);
@@ -55,7 +69,7 @@ export class TrendMomentumHistoryService {
       if (last?.completed_at_utc && Date.parse(last.completed_at_utc) + 60_000 > now.getTime()) return { pending: true };
       const requestStartedAt = this.allowances.historyRequestStartedAt(job.jobId, job.createdAtUtc, now);
       if (now.getTime() - Date.parse(requestStartedAt) >= 24 * 3600_000) { exhaustedByFailure = true; break; }
-      const scope = this.allowances.designatedScope();
+      const scope = this.splitDates ? job.scope : this.allowances.designatedScope();
       if (!scope || !this.allowances.hasHistoryReservation(job.jobId, now)) {
         return { pending: false, input, outcome: "provider_unavailable" };
       }
@@ -63,7 +77,7 @@ export class TrendMomentumHistoryService {
         marketSessionSetId: job.marketSessionSetId, now, historyContinuation: true });
       if (!acquisition) return { pending: true };
       const requestId = this.history.begin({ scope: job.scope, jobId: job.jobId,
-        acquisitionId: acquisition.acquisitionId, range, now });
+        acquisitionId: acquisition.acquisitionId, range, now, alpaca: Boolean(this.splitDates) });
       if (!requestId) {
         this.allowances.completeAcquisition({ acquisitionId: acquisition.acquisitionId, now, outcome: "provider_unavailable" });
         return { pending: true };

@@ -16,7 +16,7 @@ const now = new Date("2026-09-13T16:00:00.000Z");
 for (const retryStatus of ["provider_unavailable", "completed"]) test(retryStatus + " requeue preserves job identity and prevents duplicate retries", () => {
   const db = fixture();
   try {
-    for (const column of ["desired_coverage_end_utc TEXT", "attempt_count INTEGER", "next_attempt_at_utc TEXT", "completed_at_utc TEXT", "lease_expires_at_utc TEXT", "created_at_utc TEXT", "updated_at_utc TEXT"]) {
+    for (const column of ["desired_coverage_end_utc TEXT", "attempt_count INTEGER", "next_attempt_at_utc TEXT", "completed_at_utc TEXT", "lease_expires_at_utc TEXT", "created_at_utc TEXT", "updated_at_utc TEXT", "post_session_refresh INTEGER NOT NULL DEFAULT 0"]) {
       db.exec(`ALTER TABLE level_analysis_logical_trade_jobs ADD COLUMN ${column}`);
     }
     db.exec(`CREATE TABLE level_analysis_market_session_sets(market_session_set_id TEXT PRIMARY KEY,provider_key,provider_adapter_version,provider_symbol,exchange_identity,trading_date_new_york,interval,session_policy,current_version_id,current_coverage_end_utc,current_status,lease_expires_at_utc,created_at_utc,updated_at_utc,

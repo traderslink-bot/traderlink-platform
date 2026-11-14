@@ -40,7 +40,8 @@ export function createAlpacaGateway(options: GatewayOptions) {
   const pending = new Map<string, Promise<Candle[]>>();
   const rest = new AlpacaRestData(options);
   const chartCalendar = new AlpacaChartCalendar(options);
-  const vwapHistory = new AlpacaVwapHistory(rest,chartCalendar,Date.now,new AlpacaVwapCorporateEvents(options));
+  const corporateEvents = new AlpacaVwapCorporateEvents(options);
+  const vwapHistory = new AlpacaVwapHistory(rest, chartCalendar, Date.now, corporateEvents);
   const listings = new AlpacaScannerListings(options);
   const previousCloses = new AlpacaPreviousCloseBook(rest);
   let chartBasisDate = easternClock(Date.now()).date;
@@ -300,8 +301,19 @@ export function createAlpacaGateway(options: GatewayOptions) {
         const result=await vwapHistory.read(parseVwapSeedRequest(url.searchParams));
         response.setHeader("Content-Type","application/json");response.end(JSON.stringify(result));return;
       }
+      if (url.pathname === "/analyzer-splits") {
+        const result = await corporateEvents.read(chartSymbol(url.searchParams.get("symbol") ?? ""), "Splits");
+        response.setHeader("Content-Type", "application/json");
+        response.end(JSON.stringify(result));
+        return;
+      }
       if (url.pathname === "/history") {
         const result = await rest.history(parseHistoryRequest(url.searchParams));
+        if (result.adjustment === "raw") {
+          response.setHeader("Content-Type", "application/json");
+          response.end(JSON.stringify(result));
+          return;
+        }
         response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({...result,...(url.searchParams.get("timeframe")==="1Min"?{calendar:await chartCalendar.forBars(result.bars)}:{calendars:await chartCalendar.forHistory(result.bars)})})); return;
       }
       if (url.pathname === "/quotes") {

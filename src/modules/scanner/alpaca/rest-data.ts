@@ -3,8 +3,9 @@ import { alpacaCandle, chartSymbol, type Candle } from "./candles";
 
 export const ALPACA_HISTORY_FRAMES = ["1Min", "5Min", "15Min", "1Hour", "4Hour", "1Day"] as const;
 export type AlpacaHistoryFrame = typeof ALPACA_HISTORY_FRAMES[number];
-export type AlpacaHistoryRequest = { symbol: string; timeframe: AlpacaHistoryFrame; start: number; end: number };
-export type AlpacaHistoryResult = { basisDate?: string; symbol: string; feed: "sip"; adjustment: "split"; bars: Candle[]; complete: boolean; nextPageToken: string | null };
+type HistoryAdjustment = "split" | "raw";
+export type AlpacaHistoryRequest = { adjustment?: HistoryAdjustment; symbol: string; timeframe: AlpacaHistoryFrame; start: number; end: number };
+export type AlpacaHistoryResult = { basisDate?: string; symbol: string; feed: "sip"; adjustment: HistoryAdjustment; bars: Candle[]; complete: boolean; nextPageToken: string | null };
 
 export function parseHistoryRequest(query: URLSearchParams): AlpacaHistoryRequest {
   const symbol = chartSymbol(query.get("symbol") ?? "");
@@ -12,7 +13,11 @@ export function parseHistoryRequest(query: URLSearchParams): AlpacaHistoryReques
   const start = Number(query.get("start")), end = Number(query.get("end"));
   if (!ALPACA_HISTORY_FRAMES.includes(timeframe) || !Number.isSafeInteger(start) || !Number.isSafeInteger(end)
     || start <= 0 || end <= start || end > Date.now() + 60_000 || end - start > (timeframe === "1Day" ? 3650 : 180) * 86_400_000) throw Error("invalid_history_request");
-  return { symbol, timeframe, start, end };
+  const adjustment = query.get("adjustment");
+  if (adjustment !== null && (adjustment !== "raw" || timeframe !== "1Min" || end - start > 86_400_000)) {
+    throw Error("invalid_history_request");
+  }
+  return { symbol, timeframe, start, end, ...(adjustment === "raw" ? { adjustment } : {}) };
 }
 
 /** Shared by scanner/Watchlist consumers. Provider keys exist only in the VPS process. */
@@ -32,7 +37,8 @@ export class AlpacaRestData {
   }
   async history(request: AlpacaHistoryRequest): Promise<AlpacaHistoryResult> {
     const basisDate=easternClock(Date.now()).date;
-    const key = JSON.stringify([basisDate,request]);
+    const adjustment = request.adjustment ?? "split";
+    const key = JSON.stringify([basisDate, adjustment, request]);
     const cached = this.cache.get(key);
     if (cached && Date.now() - cached.at < 30_000) return cached.result;
     const pending = this.pending.get(key); if (pending) return pending;
@@ -40,7 +46,7 @@ export class AlpacaRestData {
     const load = async () => {
       const bars = new Map<number, Candle>(); let token: string | null = null;
       for (let page = 0; page < 20; page++) {
-        const query = new URLSearchParams({ symbols: request.symbol, timeframe: request.timeframe, start: new Date(request.start).toISOString(), end: new Date(request.end).toISOString(), feed: "sip", adjustment: "split", sort: "asc", limit: "10000" });
+        const query = new URLSearchParams({ symbols: request.symbol, timeframe: request.timeframe, start: new Date(request.start).toISOString(), end: new Date(request.end).toISOString(), feed: "sip", adjustment, sort: "asc", limit: "10000" });
         if (token) query.set("page_token", token);
         const payload = await this.get("/v2/stocks/bars", query) as { bars?: Record<string, unknown[]>; next_page_token?: unknown };
         if (!payload.bars || !Array.isArray(payload.bars[request.symbol] ?? [])) throw Error("provider_unavailable");
@@ -55,7 +61,7 @@ export class AlpacaRestData {
         if (!token) break;
       }
       if(easternClock(Date.now()).date!==basisDate)throw Error("adjustment_basis_changed");
-      const result: AlpacaHistoryResult = { basisDate, symbol: request.symbol, feed: "sip", adjustment: "split", bars: [...bars.values()].sort((a, b) => a.time - b.time), complete: !token, nextPageToken: token };
+      const result: AlpacaHistoryResult = { basisDate, symbol: request.symbol, feed: "sip", adjustment, bars: [...bars.values()].sort((a, b) => a.time - b.time), complete: !token, nextPageToken: token };
       this.cache.set(key, { at: Date.now(), result });
       while (this.cache.size > 32 || [...this.cache.values()].reduce((sum, value) => sum + value.result.bars.length, 0) > 150_000) this.cache.delete(this.cache.keys().next().value!);
       return result;

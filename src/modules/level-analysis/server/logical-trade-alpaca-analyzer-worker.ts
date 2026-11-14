@@ -2,13 +2,12 @@ import type { AccountScope } from "@/src/modules/platform/contracts/workspace-ac
 import type { MarketDataProvider } from "../contracts/candle-review-contracts";
 import { analyzeDailyTrade } from "./daily-trade-analyzer";
 import { DailyTradeAnalyzerRepository } from "./daily-trade-analyzer-repository";
-import { availableSessionEnd, dailyTradeFirstResultCoverageEnd, newYorkExtendedSession } from "./daily-trade-analyzer-session";
+import { availableSessionEnd, dailyTradeFirstResultCoverageEnd, newYorkExtendedSession, postSessionReconciliationAt } from "./daily-trade-analyzer-session";
 import { validateDailyTradeExecutionCandles } from "./daily-trade-execution-candle-validation";
 import { LogicalTradeAnalyzerRepository, type ClaimedLogicalTradeAnalyzerJob } from "./logical-trade-analyzer-repository";
 import { SharedAnalyzerAllowanceRepository } from "./shared-analyzer-allowance-repository";
 import type { LogicalTradeAnalyzerNotificationService } from "./logical-trade-analyzer-notification-service";
 import type { TrendMomentumHistoryService } from "./trend-momentum-history-service";
-import { moomooV1AnalyzerCandles } from "./providers/moomoo-analyzer-candle-time";
 
 type ProviderFactory = (scope: AccountScope) => Promise<MarketDataProvider>;
 
@@ -21,8 +20,8 @@ function retainSharedSession(tradingDate: string, submittedAtUtc: string, now: D
   return tradingDate >= cutoff.toISOString().slice(0, 10);
 }
 
-/** Processes the logical-trade FIFO through only the configured shared Moomoo scope. */
-export class LogicalTradeMoomooAnalyzerWorker {
+/** Processes the logical-trade FIFO using raw Alpaca candles. */
+export class LogicalTradeAlpacaAnalyzerWorker {
   constructor(
     private readonly logical: LogicalTradeAnalyzerRepository,
     private readonly candles: DailyTradeAnalyzerRepository,
@@ -70,14 +69,15 @@ export class LogicalTradeMoomooAnalyzerWorker {
         symbol: job.target.providerSymbol,
       });
       if (job.attemptCount >= 3) {
+        if (job.postSessionRefresh) {
+          this.logical.finish(job.jobId, "provider_unavailable", this.now());
+          return true;
+        }
         this.allowances.release(job.jobId, this.now());
         this.logical.persistResult({ analyzed: null, marketSessionSetVersionId: null,
           now: this.now(), scope: job.scope, status: "provider_unavailable", target: job.target });
         this.logical.finish(job.jobId, "provider_unavailable", this.now());
-        const notification = diagnosticStage === "create_moomoo_provider" || diagnosticStage === "fetch_moomoo_candles"
-          ? this.notifications?.notifySharedConnectionFailure.bind(this.notifications)
-          : this.notifications?.notifyFailure.bind(this.notifications);
-        notification?.({ occurredAt: this.now(), scope: job.scope, target: job.target });
+        this.notifications?.notifyFailure({ occurredAt: this.now(), scope: job.scope, target: job.target });
       } else {
         this.logical.reschedule(job.jobId, new Date(this.now().getTime() + 60_000), this.now());
       }
@@ -100,7 +100,66 @@ export class LogicalTradeMoomooAnalyzerWorker {
       this.logical.finish(job.jobId, "expired", startedAt);
       return true;
     }
-    const desiredEnd = Math.min(policyEnd, availableEnd);
+    if (job.postSessionRefresh) {
+      const due = postSessionReconciliationAt(session);
+      if (startedAt < due) {
+        this.logical.reschedule(job.jobId, due, startedAt);
+        return true;
+      }
+      setDiagnosticStage("reconcile_alpaca_candles");
+      const setId = job.marketSessionSetId;
+      const retrievedAt = this.candles.currentSessionRetrievedAt(setId);
+      let versionId = this.candles.currentSessionVersionId(setId);
+      let bars = this.candles.readCurrentCandles(setId);
+      const coverageEnd = this.candles.currentSessionCoverageEnd(setId);
+      const fullEnd = new Date(session.endTime * 1000).toISOString();
+      const needsDownload = !versionId || !retrievedAt || Date.parse(retrievedAt) < due.getTime() ||
+        !coverageEnd || coverageEnd < fullEnd || bars.length === 0;
+      let refreshed: Extract<Awaited<ReturnType<MarketDataProvider["fetch"]>>, { ok: true }> | undefined;
+      if (needsDownload) {
+        const provider = await this.providerFor(job.scope);
+        const result = await provider.fetch({ symbol: job.target.providerSymbol, interval: "1m",
+          startTime: session.startTime, endTime: session.endTime, includeExtendedHours: true });
+        if (!result.ok) {
+          if (result.code === "provider_unavailable") throw new Error(result.failureReasonCode);
+          this.logical.finish(job.jobId, "no_coverage", this.now());
+          return true;
+        }
+        refreshed = result;
+        bars = result.candles;
+      }
+      // Keep the previous analysis and cache if revised evidence loses a fill.
+      if (validateDailyTradeExecutionCandles({
+        candles: bars, direction: job.target.direction, events: job.target.events,
+      }).length) {
+        this.logical.finish(job.jobId, "no_coverage", this.now());
+        return true;
+      }
+      if (refreshed) {
+        versionId = this.candles.persistMarketSession({
+          candles: bars, completedAtUtc: this.now().toISOString(), coverageEndUtc: fullEnd,
+          failureReasonCode: null, marketSessionSetId: setId, outcome: "ready",
+          providerExchangeTimezone: refreshed.exchangeTimezone, providerUtcOffsetSeconds: refreshed.utcOffsetSeconds,
+          requestedStartUtc: new Date(session.startTime * 1000).toISOString(),
+          requestedEndUtc: fullEnd, sha256: refreshed.normalizedCandleSha256,
+        });
+      }
+      const trend = await this.trendMomentum?.prepare(job, policyEnd, bars);
+      this.logical.persistResult({
+        analyzed: analyzeDailyTrade({ candles: bars, dailyRanges: [], direction: job.target.direction,
+          events: job.target.events,
+          ...(trend && !trend.pending ? { trendMomentum: { ...trend.input, historyOutcome: trend.outcome } } : {}) }),
+        evidenceCandles: bars, marketSessionSetVersionId: versionId, now: this.now(), scope: job.scope,
+        status: "ready", target: job.target,
+      });
+      this.logical.finish(job.jobId, "completed", this.now());
+      return true;
+    }
+    if (availableEnd < policyEnd) {
+      this.logical.reschedule(job.jobId, new Date(policyEnd * 1000), startedAt);
+      return true;
+    }
+    const desiredEnd = policyEnd;
     // Readiness and measurement endpoints are separate from reusable download
     // coverage. Fetch the available session only when saved coverage is lacking.
     const downloadEnd = availableEnd;
@@ -110,7 +169,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
     let sessionVersionId = this.candles.currentSessionVersionId(job.marketSessionSetId);
     setDiagnosticStage("read_current_session_coverage");
     const storedCoverageEnd = this.candles.currentSessionCoverageEnd(job.marketSessionSetId);
-    let hasDesiredCoverage = current.length > 0 && storedCoverageEnd !== null &&
+    const hasDesiredCoverage = current.length > 0 && storedCoverageEnd !== null &&
       Math.floor(Date.parse(storedCoverageEnd) / 1000) >= desiredEnd;
     let chargedAcquisitionId: string | null = null;
     const recordFailure = (failureReasonCode: string,
@@ -123,31 +182,9 @@ export class LogicalTradeMoomooAnalyzerWorker {
         requestedStartUtc: new Date(session.startTime * 1000).toISOString(),
         requestedEndUtc: new Date(downloadEnd * 1000).toISOString(), sha256: null });
     if (!hasDesiredCoverage) {
-      setDiagnosticStage("resolve_designated_scope");
-      const providerScope = this.allowances.designatedScope();
-      if (!providerScope) {
-        sessionVersionId = recordFailure("shared_moomoo_scope_unavailable", "provider_unavailable", startedAt);
-        this.allowances.release(job.jobId, startedAt);
-        this.logical.persistResult({ analyzed: null, marketSessionSetVersionId: sessionVersionId,
-          now: startedAt, scope: job.scope, status: "provider_unavailable", target: job.target });
-        this.logical.finish(job.jobId, "provider_unavailable", startedAt);
-        this.notifications?.notifySharedConnectionFailure({ occurredAt: startedAt, scope: job.scope, target: job.target });
-        return true;
-      }
-      let provider: MarketDataProvider;
-      try {
-        setDiagnosticStage("create_moomoo_provider");
-        provider = await this.providerFor(providerScope);
-      } catch {
-        sessionVersionId = recordFailure("moomoo_connection_unavailable", "provider_unavailable", startedAt);
-        this.allowances.release(job.jobId, startedAt);
-        this.logical.persistResult({ analyzed: null, marketSessionSetVersionId: sessionVersionId,
-          now: startedAt, scope: job.scope, status: "provider_unavailable", target: job.target });
-        this.logical.finish(job.jobId, "provider_unavailable", startedAt);
-        this.notifications?.notifySharedConnectionFailure({ occurredAt: startedAt, scope: job.scope, target: job.target });
-        return true;
-      }
-      setDiagnosticStage("begin_moomoo_acquisition");
+      setDiagnosticStage("create_market_data_provider");
+      const provider = await this.providerFor(job.scope);
+      setDiagnosticStage("begin_market_data_acquisition");
       const acquisition = this.allowances.beginAcquisition({
         jobId: job.jobId, marketSessionSetId: job.marketSessionSetId, now: startedAt,
         historyContinuation: Boolean(this.trendMomentum),
@@ -161,7 +198,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
       }
       chargedAcquisitionId = acquisition.acquisitionId;
       const historyRequest = this.trendMomentum?.beginSession(job, acquisition.acquisitionId, session.startTime, downloadEnd);
-      setDiagnosticStage("fetch_moomoo_candles");
+      setDiagnosticStage("fetch_alpaca_candles");
       const result = await provider.fetch({
         symbol: job.target.providerSymbol, interval: "1m", startTime: session.startTime,
         endTime: downloadEnd, includeExtendedHours: true,
@@ -172,23 +209,24 @@ export class LogicalTradeMoomooAnalyzerWorker {
         const outcome = result.code === "provider_unavailable" ? "provider_unavailable" : "no_coverage";
         sessionVersionId = recordFailure(result.failureReasonCode, outcome, completedAt);
         console.error("TraderLink Trade Analyzer market-data acquisition failed.", {
-          adapter: "moomoo_history_kline_v1", failureReasonCode: result.failureReasonCode,
+          adapter: "alpaca_sip_raw_v1", failureReasonCode: result.failureReasonCode,
           requestedEndUtc: new Date(downloadEnd * 1000).toISOString(),
           requestedStartUtc: new Date(session.startTime * 1000).toISOString(),
           symbol: job.target.providerSymbol,
         });
         this.allowances.completeAcquisition({ acquisitionId: acquisition.acquisitionId, now: completedAt, outcome });
+        if (outcome === "provider_unavailable" && job.attemptCount < 3) {
+          this.logical.reschedule(job.jobId, new Date(completedAt.getTime() + 60_000), completedAt);
+          return true;
+        }
+        this.allowances.release(job.jobId, completedAt);
         this.logical.persistResult({ analyzed: null, marketSessionSetVersionId: sessionVersionId,
           now: completedAt, scope: job.scope, status: outcome, target: job.target });
         this.logical.finish(job.jobId, outcome, completedAt);
-        (outcome === "provider_unavailable"
-          ? this.notifications?.notifySharedConnectionFailure.bind(this.notifications)
-          : this.notifications?.notifyFailure.bind(this.notifications)
-        )?.({ occurredAt: completedAt, scope: job.scope, target: job.target, failureReason: outcome });
+        this.notifications?.notifyFailure({ occurredAt: completedAt, scope: job.scope, target: job.target, failureReason: outcome });
         return true;
       }
       current = result.candles;
-      hasDesiredCoverage = true;
       if (retainSharedSession(job.target.tradingDateNewYork, job.createdAtUtc, completedAt)) {
         sessionVersionId = this.candles.persistMarketSession({
           candles: current, completedAtUtc: completedAt.toISOString(),
@@ -205,9 +243,7 @@ export class LogicalTradeMoomooAnalyzerWorker {
     } else if (!this.trendMomentum) {
       this.allowances.release(job.jobId, startedAt);
     }
-    // Both cache and provider receipts retain the explicit v1 native END-label
-    // contract. Persist above before converting this derived calculation view.
-    current = moomooV1AnalyzerCandles(current, { start: session.startTime, endExclusive: downloadEnd });
+    current = current.filter((bar) => bar.time >= session.startTime && bar.time + 60 <= downloadEnd);
     setDiagnosticStage("validate_execution_candles");
     const mismatches = validateDailyTradeExecutionCandles({
       candles: current, direction: job.target.direction, events: job.target.events,
@@ -250,13 +286,15 @@ export class LogicalTradeMoomooAnalyzerWorker {
         ...(trendFailed ? { trendMomentumUnavailableReason: "history_unavailable" as const } : {}) },
       evidenceCandles: current,
       marketSessionSetVersionId: sessionVersionId, now: completedAt, scope: job.scope,
-      status: hasDesiredCoverage && desiredEnd >= policyEnd ? "ready" : "pending", target: job.target,
+      status: "ready", target: job.target,
     });
-    if (hasDesiredCoverage && desiredEnd >= policyEnd) {
+    const refreshAt = postSessionReconciliationAt(session);
+    if (startedAt < refreshAt) {
+      this.logical.schedulePostSessionRefresh(job.jobId, refreshAt, this.now());
+    } else {
       this.logical.finish(job.jobId, "completed", completedAt);
-      this.notifications?.notifyReady({ occurredAt: completedAt, scope: job.scope, target: job.target });
     }
-    else this.logical.reschedule(job.jobId, new Date(policyEnd * 1000), completedAt);
+    this.notifications?.notifyReady({ occurredAt: completedAt, scope: job.scope, target: job.target });
     return true;
   }
 }

@@ -70,3 +70,32 @@ for (const scenario of ["new", "refresh", "expired"] as const) test("worker hist
   assert.equal(acquisitions, 3);
   assert.ok(requests.every((r) => r.range.endExclusive - r.range.start <= 86400));
 });
+
+test("Alpaca warmup excludes pre-split evidence for an effective split date", async () => {
+  const day = "2026-09-11";
+  const session = newYorkExtendedSession(day)!;
+  const asOf = session.startTime + 7200;
+  const reads: unknown[][] = [];
+  const history = {
+    recoverInterrupted: () => 0,
+    compatibleEvidence: (...args: unknown[]) => {
+      reads.push(args);
+      return { ranges: [{ start: session.startTime, endExclusive: asOf }], candles: [] };
+    },
+    read: () => [],
+  } as unknown as TrendMomentumHistoryRepository;
+  const allowance = {} as SharedAnalyzerAllowanceRepository;
+  const job = {
+    jobId: "job", scope: { userId: "user", workspaceId: "workspace", accountId: "account" },
+    target: { tradingDateNewYork: day, providerSymbol: "TEST", events: [
+      { executedAtUtc: new Date((session.startTime + 3600) * 1000).toISOString() },
+    ] },
+  } as unknown as ClaimedLogicalTradeAnalyzerJob;
+  const service = new TrendMomentumHistoryService(history, allowance,
+    async () => { throw new Error("No prior-basis download expected"); },
+    () => new Date(asOf * 1000), async () => [day]);
+  const result = await service.prepare(job, asOf);
+  assert.deepEqual(reads[0]?.slice(1), ["TEST", session.startTime, asOf, "alpaca_sip_raw_v1"]);
+  assert.equal(result.pending, false);
+  if (!result.pending) assert.equal(result.outcome, "history_exhausted");
+});

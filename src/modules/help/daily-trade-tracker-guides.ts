@@ -419,7 +419,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         keywords: Object.freeze(["moomoo", "market data", "execution imports"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "callout", title: "Market data and execution imports are separate", text: "Importing broker executions is a separate permission and workflow from Analyzer market data." }),
-          Object.freeze({ kind: "link", href: "/help/trade-analyzer/data-availability#market-data-and-imports", label: "Read Analyzer data availability help", text: "See the reusable Moomoo, paid eligibility, same-day timing and unavailable-state explanation." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/data-availability#market-data-and-imports", label: "Read Analyzer data availability help", text: "See Analyzer eligibility, same-day timing and unavailable states." }),
         ]),
       }),
       Object.freeze({
@@ -441,10 +441,10 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
       Object.freeze({
         id: "post-session-update",
         title: "One post-session reconciliation",
-        summary: "Understand why finalized Moomoo candles can adjust the chart once after the session.",
+        summary: "Understand when the Analyzer saves market data.",
         keywords: Object.freeze(["post session", "reconciliation", "final candle", "update", "moomoo finalizes"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "callout", title: "Same-day disclosure", text: "Same-day analysis uses the candles available at the time. Moomoo may finalize those candles after the session, so TradersLink performs one final update to the chart and analysis." }),
+          Object.freeze({ kind: "callout", title: "Same-day disclosure", text: "Same-day analysis uses the candles available at the time. Trade Analyzer checks for finalized candles at 4:15 a.m. Eastern the next day, with no additional Analyzer allowance." }),
           Object.freeze({ kind: "paragraph", text: "The final pass can update candle values, indicator details or analysis that depends on them. Already useful analysis remains available if that final refresh cannot finish; TradersLink does not replace it with invented or empty results." }),
         ]),
       }),

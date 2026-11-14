@@ -19,6 +19,7 @@ ENV NODE_OPTIONS=--max-old-space-size=4096
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
+RUN node scripts/platform/analyzer-0186-bundle.cjs
 RUN node scripts/platform/build-erasure-worker.cjs --out-dir /app/erasure-worker
 RUN node scripts/platform/build-news-maintenance-command-20261028.cjs
 
@@ -39,6 +40,7 @@ COPY --from=dependencies --chown=nextjs:nodejs /app/bin/traderlink-integrity-cac
 COPY --from=builder --chown=nextjs:nodejs /app/erasure-worker ./workers
 COPY --from=builder --chown=nextjs:nodejs /app/news-maintenance/news-general-0185-maintenance.cjs ./workers/news-general-0185-maintenance.cjs
 
+COPY --from=builder --chown=nextjs:nodejs /app/analyzer-maintenance/migrate.cjs ./analyzer-0186-migrate.cjs
 RUN mv /app/server.js /app/application-server.js
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/analyzer-image-entrypoint.cjs ./server.js
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/analyzer-exact-ledger.json /app/scripts/platform/analyzer-image-role.json ./
