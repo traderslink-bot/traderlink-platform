@@ -14,7 +14,7 @@
       <div class="gainers-field"><label for="gainers-period">Period</label>
         <select id="gainers-period"><option value="day">Day</option><option value="month">Month</option><option value="year">Year</option><option value="range">Custom range</option></select>
       </div>
-      <div class="gainers-field" data-period="day"><label for="gainers-date">Trading date</label><select id="gainers-date"></select></div>
+      <div class="gainers-field" data-period="day"><label for="gainers-date">Trading date</label><input id="gainers-date" type="date" required></div>
       <div class="gainers-field" data-period="month" hidden><label for="gainers-month">Month</label><select id="gainers-month"></select></div>
       <div class="gainers-field" data-period="year" hidden><label for="gainers-year">Year</label><select id="gainers-year"></select></div>
       <div class="gainers-field" data-period="range" hidden><label for="gainers-from">From</label><input id="gainers-from" type="date"></div>
@@ -147,7 +147,6 @@
     const pagination = get("pagination");
     const previous = get("previous");
     const next = get("next");
-    const dateLabel = new Intl.DateTimeFormat("en-US", {dateStyle: "medium", timeZone: "UTC"});
     const shortDate = new Intl.DateTimeFormat("en-US", {month: "2-digit", day: "2-digit", year: "2-digit", timeZone: "UTC"});
     const monthLabel = new Intl.DateTimeFormat("en-US", {month: "long", year: "numeric", timeZone: "UTC"});
     const usd = new Intl.NumberFormat("en-US", {style: "currency", currency: "USD"});
@@ -156,7 +155,9 @@
     let rows = [];
     let page = 0;
 
-    for (const day of days) picker.add(new Option(dateLabel.format(new Date(day)), day));
+    picker.min = days.at(-1);
+    picker.max = days[0];
+    picker.value = days[0];
     for (const key of new Set(days.map(day => day.slice(0, 7)))) {
       month.add(new Option(monthLabel.format(new Date(key + "-01")), key));
     }
@@ -207,12 +208,14 @@
         if (period.value === "year") return day.startsWith(year.value);
         return first <= day && day <= end;
       };
-      rows = invalidRange ? [] : sessions.filter(row =>
+      const invalidDay = period.value === "day" && !picker.validity.valid;
+      rows = invalidRange || invalidDay ? [] : sessions.filter(row =>
         dateMatches(row.day) && row.rank <= Number(cutoff.value) &&
         (!symbol || row.symbol === symbol || (identities.size === 1 && identities.has(row.security))) &&
         (volume.value === "0" || row.volume >= Number(volume.value))
       );
-      get("status").textContent = invalidRange ? "Choose a valid date range." :
+      get("status").textContent = invalidDay ? "Choose a trading date within the archive." :
+        invalidRange ? "Choose a valid date range." :
         rows.length ? "" : "No matching results.";
       if (sort.value === "gain") rows.sort((a, b) => b.gain - a.gain);
       if (sort.value === "volume") rows.sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0));

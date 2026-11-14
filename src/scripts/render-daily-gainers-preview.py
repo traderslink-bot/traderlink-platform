@@ -28,6 +28,12 @@ VOLUME_STYLES = """
     white-space: normal; background: #17283e; color: #fff;
 }
 """
+TABLE_SCROLL_STYLES = """
+.gainers-table-scroll { max-width: 100%; min-width: 0; overflow-x: auto; }
+.gainers-table-scroll table { min-width: 390px; }
+.gainers-table-scroll :is(th, td) { white-space: nowrap; }
+#gainers-results-scroll table { min-width: 510px; }
+"""
 MAX_GAIN_NOTE = (
     "Max gain is the percentage increase from the previous regular-session close to the session high. "
     "The session high includes premarket and regular-session trading. Postmarket prices are excluded."
@@ -66,7 +72,8 @@ def table(session):
         f'<td>{volume_label(row.get("dollarVolume"))}</td></tr>'
         for index, row in enumerate(session["rows"], 1)
     )
-    return f"<table><thead><tr>{headings}</tr></thead><tbody>{rows}</tbody></table>"
+    return (f'<div class="gainers-table-scroll" tabindex="0" role="region" aria-label="Daily gainers table">'
+            f"<table><thead><tr>{headings}</tr></thead><tbody>{rows}</tbody></table></div>")
 
 
 def group_months(days):
@@ -118,7 +125,7 @@ def render(sessions, aliases, site=False):
     return (template.replace("__RECENT_SESSIONS__", "".join(recent))
             .replace("__GAINERS_METHOD_NOTE__", method_note)
             .replace("__GAINERS_VOLUME_HEADING__", VOLUME_HEADING)
-            .replace("__GAINERS_VOLUME_STYLES__", VOLUME_STYLES)
+            .replace("__GAINERS_VOLUME_STYLES__", VOLUME_STYLES + TABLE_SCROLL_STYLES)
             .replace("__GAINERS_HIGH_COLUMN__", '<th scope="col">High</th>' if session_high else "")
             .replace("__GAINERS_GAIN_LABEL__", "Max gain" if session_high else "Gain")
             .replace("__GAINERS_MONTHS__", "".join(months))
@@ -130,6 +137,7 @@ def render(sessions, aliases, site=False):
 
 def document(title, description, path, body, *, indexable=False):
     robots = "index,follow" if indexable else "noindex,nofollow"
+    navigation = Path(__file__).with_name("daily-gainers-public-nav.html").read_text()
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -138,14 +146,15 @@ def document(title, description, path, body, *, indexable=False):
 <meta name="description" content="{escape(description, quote=True)}">
 <link rel="canonical" href="{CANONICAL_BASE}{path}">
 <style>
-{VOLUME_STYLES}
-body {{ font: 16px/1.5 system-ui,sans-serif; color: #17283e; max-width: 70rem; margin: auto; padding: 1rem; }}
-nav {{ display: flex; flex-wrap: wrap; gap: 1rem; }}
+{VOLUME_STYLES}{TABLE_SCROLL_STYLES}
+body {{ font: 16px/1.5 system-ui,sans-serif; color: #17283e; margin: 0; }}
+.gainers-page-content {{ max-width: 70rem; margin: auto; padding: 1rem; }}
+.gainers-page-content nav {{ display: flex; flex-wrap: wrap; gap: 1rem; }}
 table {{ border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }}
 th, td {{ padding: .5rem .25rem; border-bottom: 1px solid #e1e7ef; text-align: left; }}
 @media(max-width: 380px) {{ table {{ font-size: 13px; }} }}
 </style>
-</head><body>{body}</body></html>
+</head><body>{navigation}<div class="gainers-page-content">{body}</div></body></html>
 """
 
 
@@ -158,13 +167,19 @@ def write_page(root, path, contents):
     temporary.replace(output)
 
 
-def export_site(sessions, aliases, root, *, indexable=False):
+def site_page(sessions, aliases, path, *, indexable=False):
     days = sorted(sessions, reverse=True)
     months = group_months(days)
     session_high = ranking_method(sessions) == "session-high"
     method = "Split-adjusted max gain" if session_high else "Split-adjusted close-to-close"
     method_note = f"<p><small><em>{MAX_GAIN_NOTE}</em></small></p>" if session_high else ""
-    for position, day in enumerate(days):
+    if path == "sitemap.xml":
+        paths = ["", *(f"{day}/" for day in days), *(f"month/{month}/" for month in months)]
+        xml = "".join(f"<url><loc>{CANONICAL_BASE}{item}</loc></url>" for item in paths)
+        return f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{xml}</urlset>'
+    if path in sessions:
+        day = path
+        position = days.index(day)
         session = sessions[day]
         title = f"Top Stock Gainers for {label(day)}"
         leader = session["rows"][0]
@@ -182,22 +197,29 @@ def export_site(sessions, aliases, root, *, indexable=False):
             f'<p>{session["compared"]:,} stocks compared · Alpaca SIP · {method}</p>'
             f'{method_note}{table(session)}<p>Estimated dollar volume uses unadjusted volume and VWAP.</p></main>'
         )
-        write_page(root, day, document(title, description, f"{day}/", body, indexable=indexable))
-    for month, dates in months.items():
+        return document(title, description, f"{day}/", body, indexable=indexable)
+    if path.startswith("month/") and path[6:] in months:
+        month = path[6:]
+        dates = months[month]
         title = f"Daily Stock Gainers for {label(dates[0], month=True)}"
         entries = "".join(
             f'<li><a href="../../{day}/">{label(day)}</a> · '
             f'{escape(sessions[day]["rows"][0]["symbol"])} led the session</li>' for day in dates
         )
         body = f'<nav><a href="../../">Stock gainers hub</a></nav><main><h1>{title}</h1><ul>{entries}</ul></main>'
-        write_page(root, f"month/{month}", document(title, "Browse the top 10 stocks for each trading day.", f"month/{month}/", body, indexable=indexable))
-    write_page(root, "", document("Top Stock Gainers and Daily Rankings",
+        return document(title, "Browse the top 10 stocks for each trading day.", f"month/{month}/", body, indexable=indexable)
+    if path == "":
+        return document("Top Stock Gainers and Daily Rankings",
                                    "See the top 10 U.S. stock gainers after the close, including small-cap and micro-cap movers. Browse historical rankings and find repeat movers by ticker.",
-                                   "", render(sessions, aliases, site=True), indexable=indexable))
-    paths = ["", *(f"{day}/" for day in days), *(f"month/{month}/" for month in months)]
-    xml = "".join(f"<url><loc>{CANONICAL_BASE}{path}</loc></url>" for path in paths)
+                                   "", render(sessions, aliases, site=True), indexable=indexable)
+    return None
+
+
+def export_site(sessions, aliases, root, *, indexable=False):
+    for path in ["", *sorted(sessions, reverse=True), *(f"month/{month}" for month in group_months(sessions))]:
+        write_page(root, path, site_page(sessions, aliases, path, indexable=indexable))
     temporary = root / ".sitemap.xml.tmp"
-    temporary.write_text(f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{xml}</urlset>')
+    temporary.write_text(site_page(sessions, aliases, "sitemap.xml", indexable=indexable))
     temporary.replace(root / "sitemap.xml")
 
 

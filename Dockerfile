@@ -27,6 +27,8 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
+RUN apt-get update && apt-get install --yes --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs nextjs
 
@@ -45,6 +47,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-rel
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-release-manifest-20261028.json ./scripts/platform/general-news-release-manifest-20261028.json
 
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-image-source-20261028.json ./scripts/platform/general-news-image-source-20261028.json
+
+COPY --from=builder /app/src/scripts/render-public-gainers-request.py /app/src/scripts/render-daily-gainers-preview.py /app/src/scripts/daily-gainers-preview.html /app/src/scripts/daily-gainers-public-nav.html /app/src/scripts/
 
 USER nextjs
 EXPOSE 3000
