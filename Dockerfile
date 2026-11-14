@@ -39,14 +39,9 @@ COPY --from=dependencies --chown=nextjs:nodejs /app/bin/traderlink-integrity-cac
 COPY --from=builder --chown=nextjs:nodejs /app/erasure-worker ./workers
 COPY --from=builder --chown=nextjs:nodejs /app/news-maintenance/news-general-0185-maintenance.cjs ./workers/news-general-0185-maintenance.cjs
 
-# Normal application and workers start only after exact schema149 is proven.
-# Guarded migration and prepared148/149 recovery images are separate operations.
 RUN mv /app/server.js /app/application-server.js
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-public-service-entrypoint-20261028.cjs ./server.js
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-release-entrypoint-20261028.cjs ./scripts/platform/general-news-release-entrypoint-20261028.cjs
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-release-manifest-20261028.json ./scripts/platform/general-news-release-manifest-20261028.json
-
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/general-news-image-source-20261028.json ./scripts/platform/general-news-image-source-20261028.json
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/analyzer-image-entrypoint.cjs ./server.js
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/analyzer-exact-ledger.json /app/scripts/platform/analyzer-image-role.json ./
 
 COPY --from=builder /app/src/scripts/render-public-gainers-request.py /app/src/scripts/render-daily-gainers-preview.py /app/src/scripts/daily-gainers-preview.html /app/src/scripts/daily-gainers-public-nav.html /app/src/scripts/
 

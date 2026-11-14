@@ -1,3 +1,4 @@
+import { dailyTradeAnalyzerAlpacaCacheMigration } from "@/src/modules/level-analysis/server/database/migrations/0186_daily_trade_analyzer_alpaca_cache";
 import { newsGeneralMarketNewsMigration } from "@/src/modules/news/server/database/migrations/0185_news_general_market_news";
 import { platformAccountErasureRecoveryMigration } from "./migrations/0183_platform_account_erasure_recovery";
 import { platformWatchlistUsageUserRecentMigration } from "./migrations/0184_platform_watchlist_usage_user_recent";
@@ -675,6 +676,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0183_platform_account_erasure_recovery.ts", migration: platformAccountErasureRecoveryMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0184_platform_watchlist_usage_user_recent.ts", migration: platformWatchlistUsageUserRecentMigration }),
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0185_news_general_market_news.ts", migration: newsGeneralMarketNewsMigration }),
+    Object.freeze({ sourcePath: "src/modules/level-analysis/server/database/migrations/0186_daily_trade_analyzer_alpaca_cache.ts", migration: dailyTradeAnalyzerAlpacaCacheMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
