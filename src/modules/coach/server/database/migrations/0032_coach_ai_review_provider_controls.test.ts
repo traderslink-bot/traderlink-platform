@@ -18,7 +18,7 @@ const monthlyReservationId = "00000000-0000-4000-8000-000000000009";
 function setup(): Database.Database {
   const database = new Database(":memory:");
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => new Date(at) });
+  runPlatformMigrations(database, { manifest: platformMigrationManifest.filter(migration => migration.executionOrder <= 32), now: () => new Date(at) });
   database.exec(`INSERT INTO platform_users VALUES ('${userId}', 'development_local', 'review-control-test', 'Test owner', 'active', '${at}', '${at}');
 INSERT INTO platform_workspaces VALUES ('${workspaceId}', 'Test workspace', 'America/New_York', 'active', '${at}', '${at}');
 INSERT INTO platform_workspace_memberships VALUES ('${workspaceId}', '${userId}', 'owner', 'active', '${userId}', '${at}', '${at}');

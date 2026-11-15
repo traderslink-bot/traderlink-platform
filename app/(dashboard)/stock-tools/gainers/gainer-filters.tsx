@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { DashboardPrimaryAction } from "../../../dashboard-ui";
+import { DashboardPrimaryAction } from "../../../dashboard-template";
 
 export type GainerPeriod = "day" | "month" | "year" | "range";
 

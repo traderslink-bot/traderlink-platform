@@ -312,6 +312,7 @@ export function scanTraderIntelligenceArchitectureBoundaries(
       }
       if (
         !isV3Core &&
+        !dependency.typeOnly &&
         /trader-intelligence-v3\/domain(?:\/|$)/.test(normalizedDependency)
       ) {
         pushFinding(

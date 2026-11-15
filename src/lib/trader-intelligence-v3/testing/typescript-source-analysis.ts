@@ -4,6 +4,7 @@ export interface TraderIntelligenceModuleDependency {
   specifier: string;
   kind: "import" | "export" | "require" | "dynamic_import" | "import_equals";
   importedNames: readonly string[] | null;
+  typeOnly?: true;
 }
 
 export function parseTraderIntelligenceTypeScript(
@@ -57,6 +58,7 @@ export function extractTraderIntelligenceModuleDependencies(
           specifier,
           kind: "import",
           importedNames,
+          ...(clause?.isTypeOnly ? { typeOnly: true as const } : {}),
         });
       }
     } else if (ts.isExportDeclaration(node)) {

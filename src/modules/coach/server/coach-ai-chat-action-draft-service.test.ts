@@ -278,6 +278,11 @@ describe("CoachAiChatActionDraftService", () => {
 
   it("rechecks the Journal account allowance when confirming an AI-created account", () => {
     const f = fixture();
+    f.database.prepare(`INSERT INTO platform_membership_feature_definitions
+VALUES ('journal.accounts', 'Journal accounts', 'journal', 'limit', 'ready', 1, ?, ?, ?)
+ON CONFLICT(feature_key) DO NOTHING`).run(f.scope.userId, now.toISOString(), now.toISOString());
+    f.database.prepare(`INSERT INTO platform_membership_feature_policies VALUES ('journal.accounts', 'enforced', ?, ?)
+ON CONFLICT(feature_key) DO UPDATE SET enforcement_mode = excluded.enforcement_mode`).run(f.scope.userId, now.toISOString());
     let limit = 3;
     const access = vi.spyOn(PlatformMembershipRepository.prototype, "readEffectiveAccess").mockImplementation(() => ({
       userId: f.scope.userId, evaluatedAtUtc: now.toISOString(), booleanFeatures: [], sources: [], limits: { "journal.accounts": limit },
@@ -510,6 +515,7 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
     const f = fixture();
     try {
       const notifications = new PlatformNotificationRepository(f.database);
+      notifications.replaceDiscordDmCategories({ scope: f.scope, categories: [], updatedAtUtc: now.toISOString() });
       const service = new CoachAiChatActionDraftService(f.database);
       const draft = service.create(f.scope, {
         conversationId: f.conversationId,

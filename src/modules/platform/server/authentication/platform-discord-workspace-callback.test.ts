@@ -26,7 +26,7 @@ function fixture() {
   vi.stubEnv("DISCORD_CLIENT_ID", "synthetic-client-id"); vi.stubEnv("DISCORD_CLIENT_SECRET", "synthetic-secret");
   vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
     const url = String(input);
-    if (url.includes("/oauth2/token")) return Response.json({ access_token: "synthetic-access", token_type: "Bearer", scope: "identify guilds guilds.members.read", expires_in: 3600 });
+    if (url.includes("/oauth2/token")) return Response.json({ access_token: "test-token", token_type: "Bearer", scope: "identify guilds guilds.members.read", expires_in: 3600 });
     if (url.endsWith("/users/@me")) return Response.json({ id: "123456789012345678", username: "synthetic-trader", global_name: "Trader" });
     if (url.endsWith("/users/@me/guilds")) return Response.json([]);
     if (url.includes("/guilds/")) return Response.json({ message: "Unknown Member", code: 10007 }, { status: 404 });
@@ -75,7 +75,7 @@ describe("connecting Discord to an existing Google account", () => {
     database.close();
     vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
       const url = String(input);
-      if (url.includes("/oauth2/token")) return Response.json({ access_token: "synthetic-access", token_type: "Bearer", scope: "identify guilds guilds.members.read", expires_in: 3600 });
+      if (url.includes("/oauth2/token")) return Response.json({ access_token: "test-token", token_type: "Bearer", scope: "identify guilds guilds.members.read", expires_in: 3600 });
       if (url.endsWith("/users/@me")) return Response.json({ id: "123456789012345678", username: "synthetic-trader", global_name: "Trader" });
       if (url.endsWith("/users/@me/guilds")) return Response.json([]);
       if (url.includes("/guilds/")) return Response.json({ roles: [], joined_at: joinedAt });

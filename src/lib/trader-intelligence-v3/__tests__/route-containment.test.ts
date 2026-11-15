@@ -3,7 +3,7 @@ import { join, relative } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX } from "../contracts";
+import { TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX } from "../contracts";
 import {
   discoverTraderIntelligenceApiRoutes,
   scanTraderIntelligenceRouteContainment,
@@ -63,14 +63,16 @@ describe("Trader Intelligence route containment matrix", () => {
         routeRecords: allApiRouteRecords(),
         intelligenceClientRecords: intelligenceClientRecords(),
       }),
-    ].sort();
-    const classifiedRoutes = TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX.map(
+      ...allApiRouteRecords().filter(record =>
+        TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.some(entry => entry.modulePath === record.path),
+      ).map(record => record.path),
+    ];
+    const classifiedRoutes = TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.map(
       (entry) => entry.modulePath,
     ).sort();
 
     expect(new Set(classifiedRoutes).size).toBe(classifiedRoutes.length);
-    expect(classifiedRoutes).toEqual(actualRoutes);
-    expect(classifiedRoutes).toHaveLength(136);
+    expect(classifiedRoutes).toEqual([...new Set(actualRoutes)].sort());
   });
 
   it("uses AST inspection to require exact wrapper paths and complete method coverage", () => {
@@ -78,13 +80,63 @@ describe("Trader Intelligence route containment matrix", () => {
       scanTraderIntelligenceRouteContainment({
         routeRecords: allApiRouteRecords(),
         intelligenceClientRecords: intelligenceClientRecords(),
-        matrix: TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX,
+        matrix: TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX,
       }),
     ).toEqual([]);
   });
 
+  it("recognizes the imported Journal admin guard on the raw delivery route", () => {
+    const path = "app/api/admin/level-analysis/deliveries/[deliveryId]/raw/route.ts";
+    const source = readFileSync(path, "utf8");
+    const matrix = TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(entry => entry.modulePath === path);
+    expect(matrix).toHaveLength(1);
+    const check = (testedSource: string) => scanTraderIntelligenceRouteContainment({
+      routeRecords: [{ path, source: testedSource }],
+      intelligenceClientRecords: [],
+      matrix,
+    });
+    expect(check(source)).toEqual([]);
+    const untrusted = source.replace(
+      "@/src/modules/platform/server/administration/platform-admin-authorization",
+      "./unrecognized-guard",
+    );
+    expect(check(untrusted)).toContainEqual(expect.objectContaining({
+      code: "ti_v3_route_method_unwrapped", path, method: "GET",
+    }));
+  });
+
+  it("requires Scanner settings to pass its verified owner predicate to the shared handler", () => {
+    const path = "app/api/admin/screeners/settings/route.ts";
+    const source = readFileSync(path, "utf8");
+    const check = (testedSource: string) => scanTraderIntelligenceRouteContainment({
+      routeRecords: [{ path, source: testedSource }],
+      intelligenceClientRecords: [],
+      matrix: TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(entry => entry.modulePath === path),
+    });
+    expect(check(source)).toEqual([]);
+    expect(check(source.replace("{ owner,mutation:", "{ owner: () => true,mutation:")))
+      .toContainEqual(expect.objectContaining({
+        code: "ti_v3_route_method_unwrapped", path, method: "GET",
+      }));
+  });
+
+  it("requires an imported worker gate on scheduled routes", () => {
+    const path = "app/api/cron/ai-reviews/route.ts";
+    const source = readFileSync(path, "utf8");
+    const check = (testedSource: string) => scanTraderIntelligenceRouteContainment({
+      routeRecords: [{ path, source: testedSource }],
+      intelligenceClientRecords: [],
+      matrix: TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(entry => entry.modulePath === path),
+    });
+    expect(check(source)).toEqual([]);
+    expect(check(source.replace("!isAuthorizedPlatformCronRequest(request)", "false")))
+      .toContainEqual(expect.objectContaining({
+        code: "ti_v3_route_method_unwrapped", path, method: "GET",
+      }));
+  });
+
   it("requires mutation classifications to include an unsafe HTTP method", () => {
-    for (const entry of TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX) {
+    for (const entry of TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX) {
       if (entry.classification === "owner_mutation") {
         expect(
           entry.methods.some(
@@ -108,7 +160,7 @@ describe("Trader Intelligence route containment matrix", () => {
       scanTraderIntelligenceRouteContainment({
         routeRecords,
         intelligenceClientRecords: intelligenceClientRecords(),
-        matrix: TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX,
+        matrix: TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX,
       }),
     ).toContainEqual(
       expect.objectContaining({
@@ -140,7 +192,7 @@ describe("Trader Intelligence route containment matrix", () => {
       scanTraderIntelligenceRouteContainment({
         routeRecords: [{ path, source }],
         intelligenceClientRecords: [],
-        matrix: TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX.filter(
+        matrix: TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(
           (entry) => entry.modulePath === path,
         ),
       }),
@@ -189,7 +241,9 @@ describe("Trader Intelligence route containment matrix", () => {
     expect(layoutSource).toContain("requireTraderIntelligenceOwnerPageAccess");
     expect(dashboardLayoutSource).toContain('dynamic = "force-dynamic"');
     expect(dashboardLayoutSource).toContain('fetchCache = "force-no-store"');
-    expect(dashboardLayoutSource).toContain("requireTraderLinkPlatformPageIdentity");
+    const dashboardFrameSource = readFileSync("app/dashboard-layout-frame.tsx", "utf8");
+    expect(dashboardLayoutSource).toContain("<TraderLinkPlatformDashboardFrame>");
+    expect(dashboardFrameSource).toContain("await requireTraderLinkPlatformServerComponentPageIdentity()");
     expect(nextConfigSource).toContain('"/intelligence/:path*"');
     expect(nextConfigSource).toContain('"/workspace/:path*"');
     expect(nextConfigSource).toContain('"/trades/:path*"');

@@ -11,7 +11,7 @@ const roots = [
   "app/(dashboard)/account/preferences/page.tsx",
   "src/modules/platform/server/membership/platform-membership-stripe.ts",
   "src/modules/platform/server/membership/platform-membership-generation-allowance.ts",
-  "src/modules/watchlist/server/private/private-watchlist-allowance.ts",
+  "src/modules/watchlist/server/member-watchlists/private-watchlist-allowance.ts",
   "src/modules/platform/server/notifications/platform-remote-notification-delivery-service.ts",
   "src/modules/news/server/market-halt-web-push-repository.ts",
   "src/modules/news/server/press-release-web-push-repository.ts",

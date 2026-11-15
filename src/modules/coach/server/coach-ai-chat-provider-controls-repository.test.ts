@@ -67,13 +67,14 @@ function reservationInput(reservation: Readonly<{ conversationId: string; assist
 }
 
 describe("Coach AI Chat provider controls repository", () => {
-  it("starts disabled, copies no invented pricing, and rejects enablement without complete caps and prices", () => {
+  it("starts disabled with seeded pricing and rejects enablement without complete caps and prices", () => {
     const fixture = setup();
     try {
-      expect(fixture.controls.readChatSettings()).toMatchObject({ modelId: "gpt-5.6-sol", inputCostUsdPerMillionTokens: null });
+      expect(fixture.controls.readChatSettings()).toMatchObject({ modelId: "gpt-5.6-luna", inputCostUsdPerMillionTokens: "0.20" });
       expect(fixture.controls.readFeatureControls(fixture.scope).filter((item) => item.scopeKind === "platform").map((item) => [item.featureKey, item.enabled])).toEqual([
         ["ai_chat", false], ["daily_companion", false], ["monthly_reviews", false], ["weekly_reviews", false],
       ]);
+      fixture.controls.saveChatSettings({ modelId: "gpt-5.6-luna", inputCostUsdPerMillionTokens: null, cachedInputCostUsdPerMillionTokens: null, cacheWriteInputCostUsdPerMillionTokens: null, outputCostUsdPerMillionTokens: null });
       expect(() => fixture.controls.savePlatformFeatureControl({ featureKey: "ai_chat", enabled: true, dailyRequestCap: 1, dailyTokenCap: 1, dailyEstimatedSpendCapUsd: "1" })).toThrow("coach_ai_feature_control_transition_invalid");
       fixture.controls.saveChatSettings({ modelId: "gpt-chat-a", inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" });
       expect(() => fixture.controls.savePlatformFeatureControl({ featureKey: "ai_chat", enabled: true, dailyRequestCap: null, dailyTokenCap: null, dailyEstimatedSpendCapUsd: null })).toThrow("coach_ai_feature_control_transition_invalid");

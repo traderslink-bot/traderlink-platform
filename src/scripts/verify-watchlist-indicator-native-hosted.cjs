@@ -43,7 +43,7 @@ async function fullMatrix(headers) {
     load: async input => {
       if (input.provider !== 'moomoo') return { provider: 'yahoo', adjustment: 'yahoo-chart-native', bars: [], transportIds: [], pages: 0, outcome: 'no_data', nextEnd: null };
       return fetchIndicatorHistory({ ...input, scope: 'readonly-diagnostic', coordinator,
-        accessToken: 'forwarded-server-side-only', fetcher: async (url, options) => {
+        accessToken: 'test-token', fetcher: async (url, options) => {
           const target = new URL(url);
           if (++requests > 90 || target.origin !== 'https://webapi.moomoo.com'
             || !symbols.some(symbol => target.pathname === `/api/v1.0/quote/US.${symbol}/history-kline`)) throw Error('Matrix network boundary');

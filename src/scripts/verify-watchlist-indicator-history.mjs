@@ -85,13 +85,13 @@ equal(parseYahooIndicatorPage(onlyQuote).reason,'invalid_data');
 const events = [], urls = [];
 const coordinator = new IndicatorRequestCoordinator({ sleep: async () => {}, audit: e => events.push(e) });
 const base = { provider: "moomoo", request, scope: "private-connection", consumer: "refresh:test", coordinator,
-  accessToken: "secret-fixture-never-printed", budget: createIndicatorHistoryBudget() };
+  accessToken: "test-token", budget: createIndicatorHistoryBudget() };
 const yahooQuoteHistory=await fetchIndicatorHistory({...base,provider:'yahoo',scope:'trailing-quote',budget:createIndicatorHistoryBudget(),
   request:{symbol:'FEIM',timeframe:'15m',start:1789170000000,end:1789171200000},fetcher:async()=>Response.json(terminalQuote)});
 equal(yahooQuoteHistory.outcome,'complete');equal(yahooQuoteHistory.excludedPoints,1);equal(yahooQuoteHistory.bars.length,1);
 const fetched = await fetchIndicatorHistory({ ...base, fetcher: async (url, options) => {
   urls.push(url);
-  equal(options.headers.Authorization, "Bearer secret-fixture-never-printed");
+  equal(options.headers.Authorization, "Bearer test-token");
   equal(options.redirect, "error");
   return Response.json(urls.length === 1 ? payload([row(end)], true, end - 2 * minute) : payload([row(start + minute)]));
 } });

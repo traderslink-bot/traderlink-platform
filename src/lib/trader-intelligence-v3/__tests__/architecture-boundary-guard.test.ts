@@ -178,6 +178,17 @@ describe("Trader Intelligence v3 architecture boundary guard", () => {
     );
   });
 
+  it("allows an erased type import without allowing runtime domain imports", () => {
+    const path = "app/api/trades/route.ts";
+    const domain = "@/src/lib/trader-intelligence-v3/domain";
+    const typeImport = `import type { TraderIntelligenceOwnerContext } from "${domain}";`;
+    expect(scanTraderIntelligenceArchitectureBoundaries([{ path, source: typeImport }])).toEqual([]);
+    expect(scanTraderIntelligenceArchitectureBoundaries([{
+      path,
+      source: `${typeImport}\nimport { parseExactMoney } from "${domain}";`,
+    }])).toContainEqual(expect.objectContaining({ code: "ti_v3_arch_legacy_exact_truth_import" }));
+  });
+
   it.each([
     ["const value = Number(financial);", "Number"],
     ["const value = parseFloat(financial);", "parseFloat"],

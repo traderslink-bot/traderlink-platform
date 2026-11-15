@@ -96,11 +96,13 @@ describe("Plan catalog lifecycle", () => {
       f.db.prepare(`INSERT INTO platform_membership_provider_definitions
         (provider_key,label,integration_mode,configuration_state,created_by_user_id,created_at_utc,updated_at_utc)
         VALUES ('stripe','Stripe','native','ready',?,?,?)`).run(f.actor, at, at);
+      f.db.prepare(`INSERT INTO platform_membership_feature_policies VALUES ('trade_analyzer.analyses', 'enforced', ?, ?)
+        ON CONFLICT(feature_key) DO UPDATE SET enforcement_mode = excluded.enforcement_mode`).run(f.actor, at);
       f.db.exec(`CREATE TABLE level_analysis_analyzer_reservations(reservation_id,user_id,correction_waiver,status,expires_at_utc);
         CREATE TABLE level_analysis_analyzer_acquisitions(reservation_id,charged_user_id,charge_kind,started_at_utc);`);
       const base = readMembershipPlanEditor(f.db, f.planId); base.displayOnly = false;
       for (const key of ["levels.generations", "trade_analyzer.analyses"]) base.features.push({ key, limit: 10, resetDays: 30, period: null, brief: null, details: null });
-      base.prices[0].name = "Free base"; base.prices[0].provider = "free"; f.publish(base);
+      base.prices[0].name = "Free base"; base.prices[0].provider = "free"; base.prices[0].billing = "free"; f.publish(base);
       const baseOffer = readMembershipPlanEditor(f.db, f.planId).prices[0].id;
       const addons: string[] = [];
       for (const [name, amount, limit] of [["Stock Tools", "10.25", 20], ["Extra Tools", "5.50", 5]] as const) {

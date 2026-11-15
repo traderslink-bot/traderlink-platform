@@ -14,9 +14,13 @@ describe("static platform migration file contract", () => {
         executionOrder: entry.migration.executionOrder,
       })),
     );
-    expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
-      "0186_daily_trade_analyzer_alpaca_cache",
-    );
+    expect(platformMigrationFileEntries.slice(-2).map(({ migration }) => [
+      migration.migrationId,
+      migration.executionOrder,
+    ])).toEqual([
+      ["0186_daily_trade_analyzer_alpaca_cache", 223],
+      ["0187_journal_chart_entries", 224],
+    ]);
   });
 
   it("accepts either TypeScript string quote style without changing migration identity", () => {

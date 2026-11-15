@@ -101,7 +101,7 @@ describe("durable Moomoo attention episodes", () => {
         f.db.prepare(`INSERT INTO platform_notification_email_addresses VALUES (?,?,?,'qa',?,?,?,'confirmed',NULL,NULL,?,?,?)`)
           .run(randomUUID(),scope.userId,String(index+1).repeat(64),"a".repeat(16),"b".repeat(32),"c".repeat(16),at,at,at);
         new PlatformWebPushRepository(f.db,{activeKeyVersion:"qa",keysBase64:{qa:key}}).subscribe({scope,updatedAtUtc:at,
-          subscription:{expirationTime:null,endpoint:`https://push.example.test/device-${index}`,keys:{p256dh:Buffer.concat([Buffer.from([4]),Buffer.alloc(64,1)]).toString("base64url"),auth:Buffer.alloc(16,1).toString("base64url")}}});
+          subscription:{expirationTime:null,endpoint:`https://fcm.googleapis.com/fcm/send/synthetic-device-${index}`,keys:{p256dh:Buffer.concat([Buffer.from([4]),Buffer.alloc(64,1)]).toString("base64url"),auth:Buffer.alloc(16,1).toString("base64url")}}});
       }
       f.repo.markReauthorizationRequired(f.scopes[0]!,at);f.repo.reconcileAttentionAlert(f.scopes[0]!);
       expect(count(f.db,"platform_notification_remote_deliveries")).toBe(2);

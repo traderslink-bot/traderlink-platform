@@ -7,7 +7,7 @@ import { MembershipForm } from "../../admin/journal/memberships/membership-form"
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { evaluateMembershipFeature, isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
-import { PrivateWatchlistRepository } from "@/src/modules/watchlist/server/private/private-watchlist-repository";
+import { PrivateWatchlistRepository } from "@/src/modules/watchlist/server/member-watchlists/private-watchlist-repository";
 import { formatWatchlistBudget } from "@/src/modules/platform/contracts/membership-watchlist-budget";
 import { changePrivateWatchlist } from "./actions";
 import { PrivateTicker } from "./private-ticker";

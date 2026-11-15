@@ -3,6 +3,7 @@ import "server-only";
 import { readFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 
+import { compareUnicodeCodePoints } from "../../domain/canonical";
 import type { TraderIntelligenceOwnerContext } from "../../domain";
 import type { CanonicalContentDigest } from "../../domain/identity";
 import type {
@@ -185,8 +186,8 @@ export function resolveConfiguredDashboardAnalytics(args: {
   const executionActivity = Object.freeze(
     [...acceptedExecutions]
       .sort((left, right) =>
-        right.content.executedAt.localeCompare(left.content.executedAt) ||
-        right.canonicalContentDigest.localeCompare(left.canonicalContentDigest))
+        compareUnicodeCodePoints(right.content.executedAt, left.content.executedAt) ||
+        compareUnicodeCodePoints(right.canonicalContentDigest, left.canonicalContentDigest))
       .map((execution) => Object.freeze({
         executionDigest: execution.canonicalContentDigest,
         executedAt: execution.content.executedAt,

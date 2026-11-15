@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET as callbackGET } from "../../../../app/api/auth/discord/callback/route";
 import { GET as loginGET } from "../../../../app/api/auth/discord/login/route";
@@ -17,7 +17,13 @@ import { runPlatformMigrations } from "@/src/modules/platform/server/database/ru
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "@/src/modules/platform/server/authentication/platform-session-service";
 
+import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
+
 const roots: string[] = [];
+
+beforeEach(() => {
+  vi.stubEnv("TRADERLINK_PLATFORM_PUBLIC_ORIGIN", "https://traderslink.pro");
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -37,7 +43,7 @@ describe("Discord Academy auth routes", () => {
         "https://traderslink.pro/api/auth/discord/login?returnTo=%2Facademy%2F",
         {
           headers: {
-            cookie: `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${sessionToken}`,
+            cookie: `${platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE)}=${sessionToken}`,
           },
         },
       ),
@@ -48,7 +54,8 @@ describe("Discord Academy auth routes", () => {
     );
   });
 
-  it("starts Discord OAuth silently and shares state across TradersLink hosts", async () => {
+  it("starts Discord OAuth silently with host-only production state", async () => {
+    vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("DISCORD_CLIENT_ID", "client-id");
     vi.stubEnv("DISCORD_CLIENT_SECRET", "client-secret");
 
@@ -63,11 +70,13 @@ describe("Discord Academy auth routes", () => {
 
     const setCookieHeader = getSetCookieHeaders(response).join("\n");
     expect(setCookieHeader).toContain(ACADEMY_OAUTH_STATE_COOKIE);
-    expect(setCookieHeader).toContain(`${ACADEMY_OAUTH_PROMPT_COOKIE}=none`);
+    expect(setCookieHeader).toContain(`${platformAuthCookieName(ACADEMY_OAUTH_PROMPT_COOKIE)}=none`);
     expect(setCookieHeader).toContain(
-      `${ACADEMY_OAUTH_RETURN_TO_COOKIE}=%2Fwatchlist`,
+      `${platformAuthCookieName(ACADEMY_OAUTH_RETURN_TO_COOKIE)}=%2Fwatchlist`,
     );
-    expect(setCookieHeader).toContain("Domain=.traderslink.pro");
+    const issuedState = getSetCookieHeaders(response).find(cookie => cookie.startsWith(`${platformAuthCookieName(ACADEMY_OAUTH_STATE_COOKIE)}=`));
+    expect(issuedState).toContain("Secure");
+    expect(issuedState).not.toContain("Domain=");
     expect(setCookieHeader).toContain(
       `${ACADEMY_OAUTH_STATE_COOKIE}=; Path=/; Max-Age=0`,
     );
@@ -84,7 +93,7 @@ describe("Discord Academy auth routes", () => {
         "https://traderslink.pro/api/auth/discord/login?returnTo=%2Fwatchlist%2FALBT",
         {
           headers: {
-            cookie: `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${sessionToken}`,
+            cookie: `${platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE)}=${sessionToken}`,
           },
         },
       ),
@@ -94,7 +103,7 @@ describe("Discord Academy auth routes", () => {
       "https://traderslink.pro/watchlist/ALBT",
     );
     expect(getSetCookieHeaders(response).join("\n"))
-      .not.toContain(`${ACADEMY_OAUTH_PROMPT_COOKIE}=consent`);
+      .not.toContain(`${platformAuthCookieName(ACADEMY_OAUTH_PROMPT_COOKIE)}=consent`);
   });
 
   it("reuses a Premium member session for the requested watchlist page", async () => {
@@ -106,7 +115,7 @@ describe("Discord Academy auth routes", () => {
         "https://traderslink.pro/api/auth/discord/login?returnTo=%2Fwatchlist%2FALBT",
         {
           headers: {
-            cookie: `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${sessionToken}`,
+            cookie: `${platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE)}=${sessionToken}`,
           },
         },
       ),
@@ -118,15 +127,16 @@ describe("Discord Academy auth routes", () => {
   });
 
   it("falls back to a consent prompt when silent Discord OAuth is unavailable", async () => {
+    vi.stubEnv("NODE_ENV", "production");
     const response = await callbackGET(
       new NextRequest(
         "https://traderslink.pro/api/auth/discord/callback?error=consent_required&state=state-1",
         {
           headers: {
             cookie: [
-              `${ACADEMY_OAUTH_STATE_COOKIE}=state-1`,
-              `${ACADEMY_OAUTH_PROMPT_COOKIE}=none`,
-              `${ACADEMY_OAUTH_RETURN_TO_COOKIE}=/watchlist/ALBT`,
+              `${platformAuthCookieName(ACADEMY_OAUTH_STATE_COOKIE)}=state-1`,
+              `${platformAuthCookieName(ACADEMY_OAUTH_PROMPT_COOKIE)}=none`,
+              `${platformAuthCookieName(ACADEMY_OAUTH_RETURN_TO_COOKIE)}=/watchlist/ALBT`,
             ].join("; "),
           },
         },
@@ -144,7 +154,7 @@ describe("Discord Academy auth routes", () => {
       cookie.includes("Domain=.traderslink.pro")
     )).toBe(true);
     expect(setCookieHeader).toContain(
-      `${ACADEMY_OAUTH_STATE_COOKIE}=; Path=/; Max-Age=0`,
+      `${platformAuthCookieName(ACADEMY_OAUTH_STATE_COOKIE)}=; Path=/; Max-Age=0`,
     );
   });
 
@@ -160,7 +170,7 @@ describe("Discord Academy auth routes", () => {
 
     const setCookieHeader = getSetCookieHeaders(response).join("\n");
     expect(setCookieHeader).toContain(
-      `${ACADEMY_OAUTH_RETURN_TO_COOKIE}=%2Fwatchlist`,
+      `${platformAuthCookieName(ACADEMY_OAUTH_RETURN_TO_COOKIE)}=%2Fwatchlist`,
     );
   });
 
@@ -282,9 +292,9 @@ function callbackRequest(returnTo: string): NextRequest {
     {
       headers: {
         cookie: [
-          `${ACADEMY_OAUTH_STATE_COOKIE}=state-1`,
-          `${ACADEMY_OAUTH_PROMPT_COOKIE}=consent`,
-          `${ACADEMY_OAUTH_RETURN_TO_COOKIE}=${encodeURIComponent(returnTo)}`,
+          `${platformAuthCookieName(ACADEMY_OAUTH_STATE_COOKIE)}=state-1`,
+          `${platformAuthCookieName(ACADEMY_OAUTH_PROMPT_COOKIE)}=consent`,
+          `${platformAuthCookieName(ACADEMY_OAUTH_RETURN_TO_COOKIE)}=${encodeURIComponent(returnTo)}`,
         ].join("; "),
       },
     },

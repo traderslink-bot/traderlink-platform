@@ -1,4 +1,13 @@
 import Database from "better-sqlite3";
+import { vi } from "vitest";
+
+// These legacy generation tests exercise scheduling, issuance and reservations.
+// Membership admission is covered against the current schema by its own tests.
+vi.mock("@/src/modules/platform/server/membership/membership-ai-review-access", () => ({
+  hasAiReviewGenerationAccess: () => true,
+  assertAiReviewGenerationAccess: () => undefined,
+}));
+
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -24,7 +33,7 @@ function setup(enabledAtUtc = createdAtUtc): Readonly<{
   const database = new Database(":memory:");
   database.pragma("foreign_keys = ON");
   runPlatformMigrations(database, {
-    manifest: platformMigrationManifest,
+    manifest: platformMigrationManifest.filter(migration => migration.executionOrder < 65),
     now: () => new Date(createdAtUtc),
   });
   const userId = createCanonicalUuidV4();
@@ -65,6 +74,13 @@ function setup(enabledAtUtc = createdAtUtc): Readonly<{
     cacheWriteInputCostUsdPerMillionTokens: "1.25",
     outputCostUsdPerMillionTokens: "2",
   }, new Date(createdAtUtc));
+  database.prepare(`UPDATE coach_ai_review_budget_controls
+SET trailing_30_day_estimated_spend_cap_usd = '10', updated_at_utc = '2026-08-10T00:00:00.000Z'
+WHERE control_key = 'ai_reviews'`).run();
+  database.prepare(`UPDATE coach_ai_feature_controls
+SET enabled = 1, daily_request_cap = 10, daily_token_cap = 100000,
+  daily_estimated_spend_cap_usd = '10', updated_at_utc = '2026-01-02T12:00:00.001Z'
+WHERE feature_key = 'monthly_reviews' AND scope_kind = 'platform'`).run();
   return Object.freeze({ database, scope });
 }
 

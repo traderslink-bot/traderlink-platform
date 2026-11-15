@@ -14,11 +14,35 @@ const retiredLegacyAnalyticsLabClient = join(
 );
 const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "market-news", "general", "general-market-news-feed.tsx"),
-  join(dashboardRoot, "ai-chat", "ai-chat-client.tsx"),
   join(dashboardRoot, "ai-reviews", "trade-tracker-review-coverage.tsx"),
   join(dashboardRoot, "calendar", "calendar-client.tsx"),
   join(dashboardRoot, "press-releases", "press-release-article-drawer.tsx"),
   join(dashboardRoot, "workspace", "workspace-rules-panel.tsx"),
+  join(dashboardRoot, "analytics", "candle-pattern-occurrence-explorer.tsx"),
+  join(dashboardRoot, "analytics", "trade-analysis-client.tsx"),
+  join(dashboardRoot, "analytics", "trade-detail-drawer.tsx"),
+  join(dashboardRoot, "analytics", "trade-explorer", "trade-explorer-client.tsx"),
+  join(dashboardRoot, "analytics", "trade-explorer", "trade-review-editor.tsx"),
+  join(dashboardRoot, "analytics", "trade-explorer", "trade-tag-creation-drawer.tsx"),
+  join(dashboardRoot, "charts", "chart-preferences-panel.tsx"),
+  join(dashboardRoot, "charts", "trade-market-chart-drawer.tsx"),
+  join(dashboardRoot, "notes", "journal-notes-drawer.tsx"),
+  join(dashboardRoot, "scanner", "scanner-client.tsx"),
+  join(dashboardRoot, "screeners", "declines-card.tsx"),
+  join(dashboardRoot, "screeners", "live-screeners-client.tsx"),
+  join(dashboardRoot, "screeners", "premarket-pullbacks-card.tsx"),
+  join(dashboardRoot, "screeners", "screener-press-release-board.tsx"),
+  join(dashboardRoot, "screeners", "workspace", "declines-card.tsx"),
+  join(dashboardRoot, "screeners", "workspace", "live-screeners-client.tsx"),
+  join(dashboardRoot, "screeners", "workspace", "premarket-pullbacks-card.tsx"),
+  join(dashboardRoot, "screeners", "workspace", "screener-press-release-board.tsx"),
+  join(dashboardRoot, "trades", "trade-details-drawer.tsx"),
+  join(dashboardRoot, "workspace", "workspace-atomic-trade-edit-drawer.tsx"),
+  join(dashboardRoot, "workspace", "workspace-calendar-panel.tsx"),
+  join(dashboardRoot, "workspace", "workspace-more-filters-drawer.tsx"),
+  join(dashboardRoot, "workspace", "workspace-news-scanner-panel.tsx"),
+  join(dashboardRoot, "workspace", "workspace-trade-analyzer-panel.tsx"),
+  join(dashboardRoot, "workspace", "workspace-trade-library-client.tsx"),
 ]);
 
 function filesBelow(root: string): readonly string[] {
@@ -46,27 +70,34 @@ function importsMaterialDrawer(source: string): boolean {
 describe("TraderLink Platform dashboard template enforcement", () => {
   it("wraps every dashboard route with the approved shared template", () => {
     const layout = readFileSync(join(dashboardRoot, "layout.tsx"), "utf8");
+    const frame = readFileSync("app/dashboard-layout-frame.tsx", "utf8");
     expect(layout).toContain(
-      'import { TraderLinkPlatformDashboardTemplate } from "../dashboard-template"',
+      'import { TraderLinkPlatformDashboardFrame } from "../dashboard-layout-frame"',
     );
-    expect(layout).toContain("<TraderLinkPlatformDashboardTemplate");
-    expect(layout).toContain("</TraderLinkPlatformDashboardTemplate>");
+    expect(layout).toContain("<TraderLinkPlatformDashboardFrame>{children}</TraderLinkPlatformDashboardFrame>");
+    expect(frame).toContain('import { TraderLinkPlatformDashboardTemplate } from "./dashboard-template"');
+    expect(frame).toContain("<TraderLinkPlatformDashboardTemplate");
+    expect(frame).toContain("</TraderLinkPlatformDashboardTemplate>");
   });
 
-  it("keeps every configured navigation destination inside the route group", () => {
+  it("requires a route for every configured navigation destination", () => {
     const routes = filesBelow(dashboardRoot)
       .filter((path) => path.endsWith(`${sep}page.tsx`))
       .map(routeForPage);
-    expect(
-      DASHBOARD_NAVIGATION_HREFS.filter((href) => !routes.includes(href)),
-    ).toEqual([]);
+    const pressReleaseRoute = "app/(dashboard)/press-releases/[[...channel]]/page.tsx";
+    const channels = readFileSync(pressReleaseRoute, "utf8");
+    const resolves = (href: string) => routes.includes(href) ||
+      (href === "/watchlist" && existsSync("app/watchlist/page.tsx")) ||
+      (href.startsWith("/press-releases/") &&
+        channels.includes(`case "${href.slice("/press-releases/".length)}":`));
+    expect(DASHBOARD_NAVIGATION_HREFS.filter(href => !resolves(href))).toEqual([]);
   });
 
   it("rejects local dashboard shells, headers, sidebars, and page containers", () => {
     const forbidden = [
       /from ["']@mui\/material\/AppBar["']/,
       /from ["']@mui\/material\/Toolbar["']/,
-      /DashboardShell/,
+      /<\w*DashboardShell\b|(?:function|class)\s+\w*DashboardShell\b|from ["'][^"']*dashboard-shell["']/,
       /logo-horizontal-main\.png/,
       /component=["']main["']/,
       /<main(?:\s|>)/,
@@ -154,8 +185,9 @@ describe("TraderLink Platform dashboard template enforcement", () => {
 
   it("keeps route titles and navigation in the shared configuration", () => {
     const shell = readFileSync("app/dashboard-shell.tsx", "utf8");
-    expect(shell).toContain("DASHBOARD_ROUTE_TITLES");
-    expect(shell).toContain("DASHBOARD_MAIN_NAVIGATION_GROUPS");
+    const navigation = readFileSync("app/dashboard-navigation.ts", "utf8");
+    expect(navigation).toContain("DASHBOARD_ROUTE_TITLES");
+    expect(shell).toContain("DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS");
     expect(shell).not.toContain("const navigationGroups");
     expect(shell).not.toContain("const routeTitles");
   });

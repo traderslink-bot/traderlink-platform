@@ -164,7 +164,7 @@ describe("CoachAiChatAnnotationContextService", () => {
     }
   });
 
-  it("rejects oversized rule-result periods and another account before reading Journal data", () => {
+  it("rejects oversized periods without reading rule results and refuses another account", () => {
     const { annotations, dashboard, service } = fixture();
     expect(() => service.ruleResults(scope, accountId, {
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
@@ -172,6 +172,8 @@ describe("CoachAiChatAnnotationContextService", () => {
       startDate: "2026-01-01",
       endDate: "2026-08-05",
     })).toThrow();
+    expect(dashboard.getTradingDay).toHaveBeenCalledTimes(1);
+    dashboard.getTradingDay.mockClear();
     expect(() => service.listRules(scope,
       "70000000-0000-4000-8000-000000000099", {
         contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,

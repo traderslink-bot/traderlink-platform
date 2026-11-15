@@ -1,4 +1,4 @@
-import type { CanonicalUtcTimestamp } from "../../domain/canonical";
+import { compareUnicodeCodePoints, type CanonicalUtcTimestamp } from "../../domain/canonical";
 import {
   compareExactDecimals,
   validateExactDecimal,
@@ -965,7 +965,8 @@ export class InMemoryExecutionRuleRepository {
         )
         .sort(
           (left, right) =>
-            Number(left.versionOrdinal) - Number(right.versionOrdinal),
+            left.versionOrdinal.length - right.versionOrdinal.length ||
+            compareUnicodeCodePoints(left.versionOrdinal, right.versionOrdinal),
       ),
     );
   }

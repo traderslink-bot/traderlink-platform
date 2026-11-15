@@ -107,17 +107,14 @@ WHERE halt_id = ? ORDER BY state`).all(firstHaltId)).toEqual([
         observedAtUtc: "2026-09-08T14:20:00.000Z",
         sourceUrl: "https://example.test",
       });
-      // All five active subscriptions receive the new revision, regardless of
-      // each subscription's earlier delivery state.
-      expect(repository.reconcileDeliveryLifecycle({ haltId: revised.haltId, observedAtUtc: "2026-09-08T14:20:00.000Z" })).toBe(5);
-      expect(database.prepare(`SELECT COUNT(*) AS count FROM news_market_halt_push_deliveries
-WHERE halt_id = ? AND notification_stage = 'trade_time' AND notification_revision = 1`).get(revised.haltId)).toEqual({ count: 5 });
+      // Revised resume times enrich the event without creating another delivery.
+      expect(repository.reconcileDeliveryLifecycle({ haltId: revised.haltId, observedAtUtc: "2026-09-08T14:20:00.000Z" })).toBe(0);
+      expect(database.prepare(`SELECT resumption_trade_time_et FROM news_market_halt_events
+WHERE halt_id = ?`).get(revised.haltId)).toEqual({ resumption_trade_time_et: "10:30:00" });
       expect(database.prepare(`SELECT notification_stage, notification_revision FROM news_market_halt_push_deliveries
-WHERE halt_id = ? AND subscription_id = '00000000-0000-4000-8000-000000000003'
-ORDER BY notification_stage, notification_revision`).all(revised.haltId)).toEqual([
-        { notification_stage: "initial", notification_revision: 0 },
-        { notification_stage: "trade_time", notification_revision: 1 },
-      ]);
+WHERE halt_id = ? ORDER BY subscription_id`).all(revised.haltId)).toEqual(
+        [{ notification_stage: "initial", notification_revision: 0 }],
+      );
     } finally {
       database.close();
     }

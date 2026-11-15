@@ -5,7 +5,7 @@ import { PlatformMembershipRepository } from "./platform-membership-repository";
 import { membershipFeaturesFromForm } from "./platform-membership-features";
 import { parseMembershipAmount } from "../../contracts/platform-membership-pricing";
 import { evaluateMembershipFeature } from "./platform-membership-access";
-import { managePrivateWatchlistAllowance } from "../../../watchlist/server/private/private-watchlist-management";
+import { managePrivateWatchlistAllowance } from "../../../watchlist/server/member-watchlists/private-watchlist-management";
 import { saveWatchlistPlanPolicy } from "../../../watchlist/server/access/watchlist-plan-policy";
 
 const uuid = z.uuid();

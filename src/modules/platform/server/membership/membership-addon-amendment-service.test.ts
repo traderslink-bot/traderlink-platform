@@ -6,8 +6,8 @@ import { MembershipAddonAmendmentService } from "./membership-addon-amendment-se
 import { MembershipAddonAmendmentRepository } from "./membership-addon-amendment-repository";
 import { applyMembershipStripeEvent,verifyMembershipStripeEvent } from "./platform-membership-stripe";
 
-beforeEach(()=>{vi.stubEnv('STRIPE_SECRET_KEY','sk_test_synthetic_only');vi.stubEnv('STRIPE_MEMBERSHIP_WEBHOOK_SECRET','synthetic_only')});
-afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals()});
+beforeEach(()=>{vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date(at));vi.stubEnv('STRIPE_SECRET_KEY','sk_test_synthetic_only');vi.stubEnv('STRIPE_MEMBERSHIP_WEBHOOK_SECRET','synthetic_only')});
+afterEach(()=>{vi.useRealTimers();vi.unstubAllEnvs();vi.unstubAllGlobals()});
 function setup({free=false}:{free?:boolean}={}) {
   const f=amendmentFixture(),requests:{path:string;body:URLSearchParams;key:string|null}[]=[];
   if(free)f.addon=f.publish('addon','Free extra analyses','0',20);
