@@ -11,11 +11,11 @@ const { loadAccountIdentityConfiguration } = require('../../src/modules/journal/
 const { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS: canonicalizers, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION: defaultVersion } = require('../../src/modules/journal/server/accounts/journal-source-account-canonicalizers.ts');
 
 const live = '/data/traderlink-platform.sqlite';
-const checkpoint = '/data/backups/analyzer-0186-20261114';
+const checkpoint = '/data/backups/journal-chart-0187-20261115';
 const backup = path.join(checkpoint, 'backup.sqlite');
 const restore = path.join(checkpoint, 'restore-verification.sqlite');
-const migration = '0186_daily_trade_analyzer_alpaca_cache';
-const targetDigest = '36507a90f169612bc844c96da29a805abd1e69b139db1fb745316f2d18b805b2';
+const migration = '0187_journal_chart_entries';
+const targetDigest = require('./analyzer-exact-ledger.json').targetSchemaSha256;
 const prefix = manifest.slice(0, -1);
 const save = (name, data) => fs.writeFileSync(path.join(checkpoint, name + '.json'), JSON.stringify(data, null, 2) + '\n', { flag: 'wx', mode: 0o600, flush: true });
 const open = file => {
@@ -27,17 +27,20 @@ const open = file => {
 function advance(file, liveWrite, deadline) {
   const db = open(file);
   try {
-    const tables = ['level_analysis_market_session_sets', 'level_analysis_market_session_set_versions', 'level_analysis_logical_trade_jobs'];
-    const count = () => tables.map(table => db.prepare('SELECT count(*) AS n FROM ' + table).get().n);
-    const before = count();
+    const counts = () => ['journal_accounts', 'level_analysis_logical_trade_jobs'].map(table =>
+      db.prepare('SELECT count(*) AS n FROM ' + table).get().n);
+    const before = counts();
     const result = runPlatformMigrations(db, { manifest, beforeMigrationBoundary(phase) {
       assert(Date.now() < deadline, 'migration deadline reached');
-      if (liveWrite && phase === 'statements') save('live-admission', { at: new Date().toISOString(), migration });
+      if (liveWrite && phase === 'statements') {
+        assert(Date.now() + 30 * 60000 < deadline, 'insufficient recovery time before live statements');
+        save('live-admission', { at: new Date().toISOString(), migration });
+      }
     } });
     assert.deepEqual([...result.appliedMigrationIds], [migration]);
     assert.equal(result.finalSchemaSha256, targetDigest);
-    assert.deepEqual(count(), before);
-    assert.equal(db.prepare('SELECT count(*) AS n FROM level_analysis_logical_trade_jobs WHERE post_session_refresh != 0').get().n, 0);
+    assert.deepEqual(counts(), before);
+    assert.equal(db.prepare('SELECT count(*) AS n FROM journal_chart_entries').get().n, 0);
     db.pragma('wal_checkpoint(TRUNCATE)');
     return { schema: result.finalSchemaSha256, counts: before };
   } finally {
@@ -54,7 +57,7 @@ async function main() {
   assert.equal(process.env.RAILWAY_DEPLOYMENT_ID, expectedDeployment);
   const deadline = Number(deadlineText);
   assert(Number.isSafeInteger(deadline) && deadline > Date.now() && deadline - Date.now() < 12 * 3600000);
-  assert.equal(manifest.length, 150);
+  assert.equal(manifest.length, 151);
   assert.equal(manifest.at(-1).migrationId, migration);
   assert.equal(fs.realpathSync(live), live);
   assert(!fs.existsSync(checkpoint));
@@ -92,11 +95,11 @@ async function main() {
   assert(Date.now() + 30 * 60000 < deadline, 'insufficient remaining live verification and recovery time');
   const result = advance(live, true, deadline);
   save('completed', result);
-  console.log(JSON.stringify({ stage: 'analyzer_migration_complete', ...result }));
+  console.log(JSON.stringify({ stage: 'journal_chart_migration_complete', ...result }));
 }
 
 if (require.main === module) main().catch(error => {
-  console.error(JSON.stringify({ stage: 'analyzer_migration_error', code: error.code ?? 'guard_failure', message: error.message }));
+  console.error(JSON.stringify({ stage: 'journal_chart_migration_error', code: error.code ?? 'guard_failure', message: error.message }));
   process.exitCode = 1;
 });
 module.exports = { advance };
