@@ -5,61 +5,112 @@ import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
 import FullscreenExitRoundedIcon from "@mui/icons-material/FullscreenExitRounded";
 import FullscreenRoundedIcon from "@mui/icons-material/FullscreenRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
+import InputBase from "@mui/material/InputBase";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, lazy, Suspense, useContext, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { DashboardSecondaryAction } from "../dashboard-template";
-import { TradingViewChart } from "./charts/trading-view-chart";
+import { chartSymbol } from "@/src/modules/scanner/alpaca/candles";
+
+const WorkspaceChart = lazy(async () => {
+  const { AlpacaLightweightChart } = await import("./charts/alpaca-lightweight-chart");
+  return { default: AlpacaLightweightChart };
+});
 
 type DashboardChartContextValue = Readonly<{
   closeChart: () => void;
   open: boolean;
   openRequest: number;
   openChart: (symbol?: string) => void;
+  setChartSymbol: (symbol: string) => void;
   symbol: string;
 }>;
 
 const DashboardChartContext = createContext<DashboardChartContextValue | null>(null);
 
+function WorkspaceChartTicker({ ticker, onChangeTicker }: Readonly<{
+  ticker: string;
+  onChangeTicker: (ticker: string) => void;
+}>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const input = event.currentTarget.elements.namedItem("ticker");
+    if (!(input instanceof HTMLInputElement)) return;
+
+    try {
+      const nextTicker = chartSymbol(input.value);
+      input.value = nextTicker;
+      onChangeTicker(nextTicker);
+      input.blur();
+    } catch {
+      input.setCustomValidity("Enter a valid ticker symbol.");
+      input.reportValidity();
+    }
+  }
+
+  return (
+    <Box component="form" onSubmit={submit} sx={{ minWidth: 0 }}>
+      <InputBase
+        name="ticker"
+        defaultValue={ticker}
+        startAdornment={<SearchOutlinedIcon aria-hidden sx={{ fontSize: 15, ml: 0.5, color: "text.secondary" }} />}
+        inputProps={{ "aria-label": "Chart ticker", maxLength: 15, enterKeyHint: "search", autoCapitalize: "characters", spellCheck: false }}
+        onFocus={(event) => event.target.select()}
+        onChange={(event) => event.target.setCustomValidity("")}
+        sx={{
+          width: 110, maxWidth: "100%", height: 30, fontSize: 12, fontWeight: 700,
+          border: 1, borderColor: "divider", borderRadius: 0.5,
+          "& input": { px: 0.5, py: 0, minWidth: 0 },
+          "&:hover": { borderColor: "text.secondary" },
+          "&:focus-within": { borderColor: "primary.main", outline: "1px solid", outlineColor: "primary.main" },
+        }}
+      />
+    </Box>
+  );
+}
+
+type ChartPanelMode = "normal" | "minimized" | "full-screen";
+
 function DashboardChartPanel({
+  onChangeTicker,
   onClose,
   openRequest,
   symbol,
 }: Readonly<{
+  onChangeTicker: (ticker: string) => void;
   onClose: () => void;
   openRequest: number;
   symbol: string;
 }>) {
-  const [fullScreen, setFullScreen] = useState(false);
-  const [minimized, setMinimized] = useState(false);
+  const [panelView, setPanelView] = useState<{ request: number; mode: ChartPanelMode }>();
+  const mode = panelView?.request === openRequest ? panelView.mode : "normal";
+  const fullScreen = mode === "full-screen";
+  const minimized = mode === "minimized";
+  const setMode = (next: ChartPanelMode) => setPanelView({ request: openRequest, mode: next });
   const panelRef = useRef<HTMLDivElement | null>(null);
   const visibleHeight = fullScreen ? "100dvh" : { xs: 460, md: 620 };
   const ticker = symbol.replace(/^.*:/, "");
 
   useEffect(() => {
-    setFullScreen(false);
-    setMinimized(false);
     const frame = window.requestAnimationFrame(() => panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     return () => window.cancelAnimationFrame(frame);
   }, [openRequest]);
 
-  useEffect(() => {
-    if (!minimized) window.dispatchEvent(new Event("resize"));
-  }, [fullScreen, minimized]);
-
   return (
     <Box
       ref={panelRef}
+      data-journal-workspace-chart
       sx={{
         bgcolor: "background.paper",
         border: fullScreen ? 0 : 1,
         borderColor: "divider",
-        borderRadius: fullScreen ? 0 : 2,
+        borderRadius: 0,
         boxShadow: fullScreen ? 24 : 0,
         height: minimized ? "auto" : visibleHeight,
         inset: fullScreen ? 0 : "auto",
@@ -73,7 +124,7 @@ function DashboardChartPanel({
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", minHeight: 52, px: 1.5 }}>
           <DashboardSecondaryAction
             aria-label={`Restore ${ticker} chart`}
-            onClick={() => setMinimized(false)}
+            onClick={() => setMode("normal")}
             startIcon={<VisibilityIcon />}
             sx={{ flex: 1, justifyContent: "flex-start" }}
           >
@@ -83,48 +134,34 @@ function DashboardChartPanel({
             <IconButton aria-label="Close chart" onClick={onClose} size="small"><CloseRoundedIcon /></IconButton>
           </Tooltip>
         </Stack>
-      ) : (
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ alignItems: "center", justifyContent: "space-between", minHeight: 52, px: 1.5 }}
-        >
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
-            <VisibilityIcon color="primary" fontSize="small" />
-            <Typography noWrap sx={{ fontWeight: 850 }}>
-              Chart · {symbol}
-            </Typography>
-          </Stack>
-          <Stack direction="row" spacing={0.25}>
-            <Tooltip title="Minimize chart">
-              <IconButton aria-label="Minimize chart" onClick={() => {
-                setFullScreen(false);
-                setMinimized(true);
-              }} size="small">
-                <KeyboardArrowDownRoundedIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={fullScreen ? "Exit full screen" : "Full screen"}>
-              <IconButton aria-label={fullScreen ? "Exit full screen" : "Full screen"} onClick={() => setFullScreen((current) => !current)} size="small">
-                {fullScreen ? <FullscreenExitRoundedIcon /> : <FullscreenRoundedIcon />}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Close chart">
-              <IconButton aria-label="Close chart" onClick={onClose} size="small"><CloseRoundedIcon /></IconButton>
-            </Tooltip>
-          </Stack>
-        </Stack>
-      )}
-      <Box
-        aria-hidden={minimized}
-        sx={{
-          display: minimized ? "none" : "block",
-          height: "calc(100% - 52px)",
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
-        <TradingViewChart symbol={symbol} sx={{ border: 0, borderRadius: 0, height: "100%", minHeight: 0 }} />
+      ) : null}
+      <Box aria-hidden={minimized} sx={{ display: minimized ? "none" : "block", height: "100%", minHeight: 0 }}>
+        <Suspense fallback={<Typography role="status" variant="body2" sx={{ p: 1 }}>Loading chart…</Typography>}>
+          <WorkspaceChart
+            symbol={ticker}
+            compactToolbar
+            compactIdentity={<WorkspaceChartTicker key={ticker} ticker={ticker} onChangeTicker={onChangeTicker} />}
+            actions={
+              <Stack direction="row">
+                <Tooltip title="Minimize chart">
+                  <IconButton aria-label="Minimize chart" onClick={() => setMode("minimized")} size="small" sx={{ minWidth: 34, height: 40 }}>
+                    <KeyboardArrowDownRoundedIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={fullScreen ? "Exit full screen" : "Full screen"}>
+                  <IconButton aria-label={fullScreen ? "Exit full screen" : "Full screen"} onClick={() => setMode(fullScreen ? "normal" : "full-screen")} size="small" sx={{ minWidth: 34, height: 40 }}>
+                    {fullScreen ? <FullscreenExitRoundedIcon /> : <FullscreenRoundedIcon />}
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Close chart">
+                  <IconButton aria-label="Close chart" onClick={onClose} size="small" sx={{ minWidth: 34, height: 40 }}>
+                    <CloseRoundedIcon />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            }
+          />
+        </Suspense>
       </Box>
     </Box>
   );
@@ -133,7 +170,7 @@ function DashboardChartPanel({
 export function DashboardChartProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [open, setOpen] = useState(false);
   const [openRequest, setOpenRequest] = useState(0);
-  const [symbol, setSymbol] = useState("NASDAQ:AAPL");
+  const [symbol, setSymbol] = useState("AAPL");
   const openChart = (nextSymbol?: string) => {
     if (nextSymbol?.trim()) setSymbol(nextSymbol.trim().toUpperCase());
     setOpenRequest((current) => current + 1);
@@ -141,7 +178,7 @@ export function DashboardChartProvider({ children }: Readonly<{ children: ReactN
   };
 
   return (
-    <DashboardChartContext.Provider value={{ closeChart: () => setOpen(false), open, openChart, openRequest, symbol }}>
+    <DashboardChartContext.Provider value={{ closeChart: () => setOpen(false), open, openChart, openRequest, setChartSymbol: setSymbol, symbol }}>
       {children}
     </DashboardChartContext.Provider>
   );
@@ -165,6 +202,6 @@ export function DashboardChartAction() {
 }
 
 export function DashboardChartPanelSlot() {
-  const { closeChart, open, openRequest, symbol } = useDashboardChart();
-  return open ? <DashboardChartPanel onClose={closeChart} openRequest={openRequest} symbol={symbol} /> : null;
+  const { closeChart, open, openRequest, setChartSymbol, symbol } = useDashboardChart();
+  return open ? <DashboardChartPanel onChangeTicker={setChartSymbol} onClose={closeChart} openRequest={openRequest} symbol={symbol} /> : null;
 }

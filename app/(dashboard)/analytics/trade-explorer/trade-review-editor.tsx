@@ -409,6 +409,16 @@ export function TradeExplorerReviewEditor({
                   />
                 </Box>
 
+                {Boolean(model.chartItems?.length) && <Stack spacing={0.75}>
+                  <Typography sx={{ fontWeight: 800 }} variant="subtitle1">From the chart</Typography>
+                  {model.chartItems?.map((item) => <Box key={item.id}>
+                    <Typography variant="caption" color="text.secondary">{item.symbol} · {item.day}</Typography>
+                    <Typography variant="body2" sx={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>
+                      {item.plan ? `Planned entry ${item.plan.entry} · Stop ${item.plan.stop} · Target ${item.plan.target}` : item.text}
+                    </Typography>
+                  </Box>)}
+                </Stack>}
+
                 <Divider />
 
                 <Box>

@@ -1,3 +1,4 @@
+import type { ChartJournalItem } from "@/src/modules/journal/contracts/journal-chart-contracts";
 import type { JournalTagPresetCategory } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 
 export type TradeExplorerReviewTarget = Readonly<{
@@ -35,6 +36,7 @@ export type TradeExplorerPresetRuleReview = Readonly<{
 
 export type TradeExplorerReviewModel = Readonly<{
   availableTags: readonly TradeExplorerReviewTag[];
+  chartItems?: readonly ChartJournalItem[];
   customRules: readonly TradeExplorerCustomRuleReview[];
   note: Readonly<{
     revision: number | null;

@@ -1,4 +1,5 @@
 import { dailyTradeAnalyzerAlpacaCacheMigration } from "@/src/modules/level-analysis/server/database/migrations/0186_daily_trade_analyzer_alpaca_cache";
+import { journalChartEntriesMigration } from "@/src/modules/journal/server/database/migrations/0187_journal_chart_entries";
 import { newsGeneralMarketNewsMigration } from "@/src/modules/news/server/database/migrations/0185_news_general_market_news";
 import { platformAccountErasureRecoveryMigration } from "./migrations/0183_platform_account_erasure_recovery";
 import { platformWatchlistUsageUserRecentMigration } from "./migrations/0184_platform_watchlist_usage_user_recent";
@@ -677,6 +678,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0184_platform_watchlist_usage_user_recent.ts", migration: platformWatchlistUsageUserRecentMigration }),
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0185_news_general_market_news.ts", migration: newsGeneralMarketNewsMigration }),
     Object.freeze({ sourcePath: "src/modules/level-analysis/server/database/migrations/0186_daily_trade_analyzer_alpaca_cache.ts", migration: dailyTradeAnalyzerAlpacaCacheMigration }),
+    Object.freeze({ sourcePath: "src/modules/journal/server/database/migrations/0187_journal_chart_entries.ts", migration: journalChartEntriesMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -686,6 +688,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
     "0185_news_general_market_news": Object.freeze(["news_general_articles", "news_general_symbols", "news_general_revisions", "news_general_deliveries", "news_general_status"]),
+    "0187_journal_chart_entries": Object.freeze(["journal_chart_entries"]),
     "0183_platform_account_erasure_recovery": Object.freeze(["platform_erasure_operations", "platform_erasure_objects", "platform_erasure_history"]),
     "0175_platform_profile_name": Object.freeze(["platform_user_profile_names"]),
     "0176_platform_discord_identity_release": Object.freeze(["platform_discord_released_origins", "platform_discord_identity_releases"]),

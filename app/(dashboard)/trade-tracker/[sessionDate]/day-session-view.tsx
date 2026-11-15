@@ -3523,6 +3523,8 @@ export function DaySessionView({
             {openTrade?.analyzer && hasVisibleAnalysis(openTrade.analyzer) ? (
               <DailyTradeAnalyzerChart
                 analysis={openTrade.analyzer}
+                allowMarketChart={!offlineSavedAtUtc}
+                timezone={openTrade.timezone}
                 currency={data.currency}
                 direction={openTrade.direction}
                 interval={selectedInterval}

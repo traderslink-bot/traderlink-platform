@@ -213,3 +213,137 @@ The private preview can refresh a same-date, recent intraday snapshot with a fiv
 Four eager charts and all six indicators were exercised in portrait and landscape with fixed candle replay, including a corrected bar and a missed minute. Both final displayed readings and candle-axis boundaries and counts matched fresh loads. The short replay received 26 bars in the four catch-up requests. An additional full request was observed during the tab transition, so end-to-end gains were mixed. Focused lint and 70 tests passed. Preview only.
 
 The follow-up trace identified the counted full response as the single-chart tab opened after the measurement to save the chart axis. The measurement now ends before that click. The initial stream connection also no longer queues a duplicate history refresh during cached catch-up; subsequent reconnects retain recovery. In the final preview replay, four charts with all six indicators returned exactly four short requests totaling 26 bars per orientation, versus 35,561 full-history bars. Candle-axis counts/ranges and displayed indicator readings matched fresh loads. All-indicator readiness took 3.77 s versus 4.01 s in portrait and 3.73 s versus 3.82 s in landscape. Development candle-paint timings varied. Lint and 70 focused tests passed.
+
+### Rays, arrows, and channels
+
+The shared drawing menu now has Ray, Horizontal ray, Vertical line, five arrow options, and Parallel, Flat top/bottom, and Disjoint channels. The tools use the same saved ticker drawings and canvas overlay as the initial tools. The placement menu closes immediately so the first anchor click reaches the chart.
+
+Private preview verification with fixture candles covered placing and editing every new tool with one and four workspace charts, timeframe changes, and reload. Drawing edits made no candle or stream requests. In the desktop browser test with four charts and 22 saved drawings, both idle and active channel placement held about 16.7 ms median frame intervals. Full TypeScript and focused lint passed. Owner review pending in the private preview.
+
+### Fibonacci, range measurements, and toolbar visibility
+
+The shared chart adds two-point Fibonacci retracement, three-point trend-based extension, Price range, Date range and Date and price range. Measurements use saved anchor prices and timestamps. The date label includes elapsed time and the bar distance on the active timeframe. Saved drawings remain keyed by browser account and ticker. Completed edits autosave the current set and the browser session retains up to 20 undo steps per chart editor.
+
+Each chart starts with its drawing toolbar hidden. Chart options can show or hide it for the open chart. Chart settings saves an account-wide Always show drawing toolbar preference. Toolbar visibility stays outside the market-data effect, and hiding it leaves saved drawings visible. The private HTTPS preview needed to forward the existing same-origin mutation headers for its chart preferences route. That preview-only correction is outside this source commit.
+
+Preview QA used sample candles. Desktop single-chart and four visible workspace charts passed marker placement, editing and persistence for all five tools, with no additional market-data requests from drawing or changing visibility. The four-chart browser recorded 16.7 ms median and p95 frame intervals at idle and during Fibonacci extension preview. Mobile portrait passed touch placement and editing in the single chart and in the four-tab workspace. Full TypeScript, focused ESLint and 18 focused tests passed. Owner review pending in the private preview.
+
+### Brush, Highlighter, and drawing autosave
+
+Brush and Highlighter share the drawing primitive. They store time/price points, repaint in one animation frame callback during a drag, and store one completed stroke with bounded point density on release. The Highlighter uses a wider translucent stroke. Both use the existing ticker-specific browser storage and share the existing editing and undo controls.
+
+Chart settings groups toolbar visibility and the account-wide drawing autosave switch under Drawing tools. Autosave defaults on. When off, each ticker's edited set stays in the current tab until Save drawings writes it to browser storage. Previously saved drawings open as usual. Both switches stay outside the market-data effect.
+
+Private desktop preview with sample candles verified brush and highlighter rendering, edit persistence, refresh and timeframe changes, manual saving and unsaved refresh behavior. One and four visible charts held about 16.7 ms median frame intervals while drawing and at idle, without extra market-data requests. Focused tests, ESLint and TypeScript passed. Private preview review only.
+
+### Path, Circle, Ellipse, and Triangle
+
+The shared chart supports a point-by-point Path with an arrow at the last point, a center-and-radius Circle, a rotatable Ellipse with two axis endpoints and a width anchor, and a three-corner Triangle. Finish path, double-click, and Enter complete a path. Each drawing shares ticker storage, autosave, manual save and the existing drawing editor.
+
+Private desktop preview QA with sample candles verified all four tools with one and four visible charts, all three path completion controls, timeframe switching, refresh, independent ticker storage, and manual save with autosave off. Four charts held a 16.7 ms median frame interval at idle and during path preview with no extra market-data requests from drawings. Focused drawing tests, ESLint and TypeScript passed.
+
+### Rotated rectangle, Polyline, Arc, Curve, and Double curve
+
+The shared chart now draws three-point rotated rectangles and circular arcs, open or closed polylines, and quadratic or cubic curves with editable control points. Polyline can finish open by double-click, Enter, or Finish polyline. Click the first vertex or use Close shape to create a filled polygon. All five use the existing ticker drawing store and manual save when autosave is off.
+
+Private desktop QA used sample candles with one and four visible charts. It covered placing and editing all five tools, selecting and dragging a curve from its stroke, opening and closing polylines, ticker isolation, timeframe switching, refresh, and manual save. The four-chart median frame interval was 16.7 ms both at idle and during Double curve placement, with no extra market-data requests. TypeScript and focused ESLint passed. Preview only.
+
+### Note, Anchored note, Callout, and Price label
+
+Note follows the selected chart price and time. Anchored note is positioned relative to the visible price pane, so it stays in place during chart zoom and pan. Callout has independent pointer and text box anchors, and Price label formats the selected price automatically. Text annotations can be cancelled before they enter the drawing store. All four use the existing per-ticker drawing state and autosave preference.
+
+Private desktop QA with sample candles passed for one and four charts. It exercised editing and dragging, pinned position during zoom, timeframe changes, ticker isolation, autosave, manual save, and refresh behavior. Idle and callout-drawing median frame intervals were 16.7 ms with four visible charts, and drawings sent no additional market-data requests. TypeScript and focused ESLint passed. Preview only.
+
+### Price note, Signpost, Comment, and Flag mark
+
+Price note attaches an automatic price and optional text to a movable box. Signpost keeps its label above or below the pin on the same bar. Comment uses a compact speech bubble, and Flag mark places a color-editable flag without a text editor. All four share ticker storage, autosave, manual save, and drawing undo.
+
+Private desktop QA with sample candles covered placement, rendering, editing, ticker isolation, timeframe switching, refresh, and manual save with autosave off on one and four charts. The four-chart median and 95th-percentile frame intervals held at 16.7 ms while previewing a signpost. Drawing did not fetch extra market data. Focused ESLint and TypeScript passed. Preview only.
+
+### Long and Short position drawings
+
+Place entry, target and stop directly on the shared price pane. The target placement defines the width. The drawings show green reward and red risk zones, prices, percentages and reward in R. Long and short enforce the appropriate target and stop sides during placement and editing. The existing ticker store handles autosave and manual save.
+
+Private desktop QA with sample candles verified one and four charts, invalid placements, labels and ratio, moving a saved position, ticker isolation, timeframe changes and refresh in both autosave modes. Four charts held a median and 95th-percentile frame interval of 16.7 ms at idle and while previewing the stop, with no extra candle or stream requests. Six focused tests, ESLint and TypeScript passed. Preview only.
+
+### Position forecast and Bars pattern
+
+Position forecast marks an entry and a later target, showing the price change, elapsed time, and target status from loaded traded candles. Bars pattern takes an OHLC snapshot of a selected range and lets the user place or move the copy. Each drawing uses the existing ticker store and the same autosave and manual save rules. The tools consume the chart's existing candle data.
+
+Private desktop preview passed with one and four visible charts. QA covered placement, invalid selections, rendered bars and forecast readouts, moving a copied pattern, placing a pending forecast, ticker isolation, timeframe changes, manual save and refresh. The four-chart median frame interval was 16.7 ms at idle and while placing a forecast, with no extra market-data requests from drawings. Focused ESLint, TypeScript and eight Vitest cases passed. Preview only.
+
+### Ghost feed and Projection
+
+Ghost feed draws hypothetical candles between two chosen time and price points. It stores the candle count and the average range of up to 20 preceding traded bars so the drawing stays consistent across refreshes and timeframes. Projection draws a shaded three-point region from a starting price to a later deadline and target, with the target price, change and duration. Both use the existing ticker store and autosave rules.
+
+Private desktop preview QA with sample candles passed with one and four visible charts. It verified placement and backwards Ghost feed, invalid selections, drawing beyond the last candle, ticker isolation, timeframe changes, autosave, manual save and refresh. Four-chart median and p95 frame intervals stayed at 16.7 ms while previewing ghost candles, with no additional market-data requests. Nine focused tests, ESLint and TypeScript passed. Preview only.
+
+### Anchored VWAP and Fixed Range Volume Profile
+
+Anchored VWAP uses the chart's loaded traded candles from the selected anchor, with HLC3 weighted by volume and no session reset. Fixed Range Volume Profile estimates price distribution by splitting candle volume across 24 high-to-low price rows and highlights the point of control and the 70% value area. Both use minute history already loaded on intraday charts and daily history on daily charts. Saved anchors are ticker-specific, with the fixed range retaining the selected end bar's duration across timeframe changes. Drawing source preparation is lazy and adds no candle requests.
+
+Private desktop preview QA with sample candles verified placement, rendered values, ticker isolation, timeframe changes, autosave and manual save across refresh with one and four charts. Anchored VWAP matched an independent candle calculation. Panning with both drawings visible held 16.7 ms median frame intervals with one and four charts, and the four-chart placement test measured 16.7 ms at median and p95. No extra market-data requests. Eleven focused tests, ESLint and TypeScript passed. Preview only.
+
+### Anchored Volume Profile and Regression Trend
+
+Anchored Volume Profile extends from a chosen bar to the latest loaded traded bar, stays pinned at the right edge during panning, and reuses the Fixed Range Volume Profile candle-based estimate and 70% value area. Regression Trend fits a line to traded candles over the selected range on the active timeframe, preserving carried slots on the time axis without including their prices in the fit. It defaults to Close and two residual standard deviations per side. The drawing editor allows a different source and separate deviation settings, including zero to hide a band. Both save by ticker and use drawing autosave and manual save.
+
+Private desktop preview QA with sample candles passed with one and four visible charts. It covered right-edge pinning while panning, a simulated streamed candle changing the profile's point of control, regression settings and invalid deviation handling, ticker isolation, timeframe changes, autosave, manual saving and refresh. Panning median frame intervals were 16.7 ms and p95 was 16.8 ms with both tools visible in either layout. No extra market-data requests. Thirteen focused tests, TypeScript and focused ESLint passed. Preview only.
+
+### Pitchfork, Schiff Pitchfork, Modified Schiff Pitchfork, and Inside Pitchfork
+
+All four tools use three time/price anchors with editable parallel rails and a dashed median. The median follows the corresponding TradingView Auto Pitchfork geometry. The drawings project forward and share the existing ticker-specific drawing store and autosave or manual-save controls.
+
+Private desktop preview QA with sample candles passed with one and four visible charts. It covered placement and color editing for each variant, distinct rendered median slopes, timeframe switching, ticker isolation, refresh, autosave and manual saving. Median and 95th-percentile frame intervals stayed around 16.7 ms at idle and while panning with the drawings visible. Drawing and panning did not trigger extra market-data requests in the measured runs. Fourteen focused tests, TypeScript and focused ESLint passed. Preview only.
+
+### Gann Box, Gann Square Fixed, Gann Square, and Gann Fan
+
+All four tools use editable time and price anchors and share ticker-specific storage and autosave. Gann Box draws a four-section grid with optional diagonals. The squares include a five-section grid, fan angles and arcs. The fixed version starts at a 1:1 visual ratio and preserves its proportions during resize. The regular square can be resized freely or with Shift to preserve its proportions. The fan extends nine angles from the first point, with the second point setting its 1/1 angle. Each tool uses the shared color control and its applicable layer toggles.
+
+Desktop QA with sample candles verified placement and styles with one and four charts, fixed-square resizing, ticker isolation, timeframe switching, refresh, autosave and manual save. With Gann drawings visible, median and p95 frame intervals held at about 16.7 ms while panning, with no additional market-data requests. Touch placement and settings also passed in mobile portrait and landscape. Sixteen focused tests, TypeScript and targeted ESLint passed. Preview only.
+
+### Fibonacci Channel, Fibonacci Time Zone, Fibonacci Speed Resistance Fan, and Trend-Based Fib Time
+
+The channel projects parallel levels from a two-point baseline and a third point that sets the 1.0 boundary. Time Zone uses the two anchors to space Fibonacci sequence markers, and Trend-Based Fib Time projects ratio markers from its third anchor. The speed resistance fan projects time and price retracements from the same origin. The tools share ticker storage and manual saving when autosave is off. Each exposes the applicable drawing settings, including channel extension, fan reversal and grid, and time guides.
+
+Desktop QA with sample candles verified geometry, invalid point handling, style edits, timeframe switching, ticker isolation, refresh, autosave and manual save with one and four charts. Median and p95 frame intervals held around 16.7 ms while panning, including with drawings visible on all four charts. Drawing and panning made no additional market-data requests during the measured runs. Touch placement and settings passed in mobile portrait and landscape. Nineteen focused tests, TypeScript and targeted ESLint passed. Preview only.
+
+### Fib Circles, Fib Spiral, Fib Speed Resistance Arcs, and Fib Wedge
+
+Fib Circles uses two opposing corners and can be constrained to round circles with Shift. Fib Spiral uses its center and a directional anchor with golden-ratio growth per quarter turn and a counterclockwise option. Speed Resistance Arcs use the first anchor as center, with a full-circle option. The Wedge uses a third anchor for its second edge, with the outer arc passing through the end of the first edge. The four tools use the shared drawing editor and ticker storage and respect the existing autosave setting.
+
+Desktop QA with sample candles verified geometry and style changes, ticker isolation, timeframe changes, refresh, autosave, and manual save with one and four charts. Panning median frame intervals were about 16.7 ms, with a p95 of 16.8 ms with drawings on all four charts. Drawing and panning added no market-data requests during the measurements. Touch placement and settings passed in mobile portrait and landscape. Twenty-two focused tests, TypeScript and targeted ESLint passed. Preview only.
+
+### Drawing catalog and review
+
+The shared chart menu organizes 91 tools into six groups. The final addition covers Info Line, Extended Line, Trend Angle, Crossline, Pitchfan, the five Elliott wave variants, XABCD, Cypher, ABCD, Triangle, Three Drives, Head and Shoulders, three cycle tools, Sector, Arrow Marker, Pin, Table, Icon, Sticker and Emoji. Patterns are placed manually and show measured ratios where applicable. Icons, stickers and emojis use an included set. Scope follows the drawing tools and chart actions in the [Advanced Charts catalog](https://www.tradingview.com/charting-library-docs/latest/ui_elements/drawings/Drawings-List/).
+
+Drawing actions include temporary Measure, Zoom to range, Eraser, drag selection, lock, hide, repeat placement, weak and strong candle magnets, undo and confirmed removal by ticker. The last saved drawings are shared across chart panels for that ticker within the current browser. Chart view actions such as hide and lock apply to the view where they are set. The Help Center and private help draft explain the menu and saving controls. The preview uses sample candles.
+
+Browser QA placed and saved all 26 newly added tools and exercised keyboard menu navigation, pin click, measure without saving, zoom, eraser, repeat placement, hide, lock, undo, and confirmed bulk removal. It verified ticker isolation, timeframe changes, refresh, and manual save with autosave off. Sample-data desktop panning held a 16.7 ms median and a p95 of 16.8 ms with one chart and 16.7 ms with four charts. The four-chart run stored 33 drawings and drew objects in each view. Drawing edits and the measured panning introduced no extra market-data requests. Mobile portrait and landscape passed the group-selection, drawing and hide/show flows. Twenty-four focused tests, TypeScript and targeted ESLint passed.
+
+### Drawing tools full QA
+
+The catalog generated from the drawing definitions contains 91 tools. Chromium browser checks placed each tool, verified its edited color painted on the chart, saved it, and verified it reloaded. All 91 passed in a single desktop chart, with four desktop charts open, and in touch emulation at 430 × 900 and 844 × 390. The single-chart run also selected and dragged each saved drawing. Input traces verified that touch strokes followed by Save persisted Brush and Highlighter colors. The test sends touch moves across consecutive frames to reproduce a normal gesture.
+
+Fixed drawing edits overwriting work saved by another tab, visibility resetting when the toolbar closes or Measure opens, and fast drags dropping their final pointer position. Added coverage for undo preserving unrelated changes and manual drafts, ignored unchanged drawing edits in the undo history, and corrected dragging Anchored Volume Profile from the chart's right margin and applying Long and Short Position line colors.
+
+Separate browser checks covered chart and drawer sharing by ticker, undo, erasing, locking, candle snapping, repeat placement, zoom, temporary measurement, confirmation before bulk delete, chart timeframe changes, and both autosave modes. Sample-data desktop panning measured 16.7 ms median frame intervals and a p95 of 16.7–16.8 ms with one and four charts. The measured pans made zero additional market-data requests. Forty-two focused tests, TypeScript, and targeted ESLint passed. The preview uses sample candles and mobile browser emulation.
+
+### Drawing QA rerun
+
+Undo now returns deleted drawings to their original stacking order while preserving drawings added in another tab. Escape closes the active drawing editor, discards an uncommitted note, and returns focus to Drawings. Escape inside the symbol picker closes the picker first. The existing Help Center workflow remains accurate.
+
+The full 91-tool catalog passed placement, style, render, and reload checks with one and four desktop charts and in mobile portrait and landscape emulation. The single desktop chart also passed selection and dragging for every tool. The drawing and scanner drawer sharing workflows passed, including autosave, manual save, and recovery from a simulated browser storage error. Targeted checks covered a cancelled freehand gesture, invalid regression settings, and the return to 1m after visiting all six timeframes. Forty-three focused tests, targeted ESLint, and TypeScript passed. Desktop panning with sample candles held around 16.7 ms per frame with no additional market-data requests.
+
+## Journal on the chart
+
+The main Charts page and Journal Workspace share the on-chart Journal panel. See [Journal workflows and verification](chart-journal-progress.md).
+
+## Weekly, monthly and yearly candles
+
+The shared chart offers 1W, 1M and 1Y everywhere it is used. All four daily-based views share split-adjusted daily history and live daily updates. The new views aggregate in the exchange calendar, with Monday-start weeks and calendar months and years. Empty periods have no candles. The short, account-scoped browser cache holds up to eight daily history windows, and reconnect recovery can refresh from the source. VWAP on the new views uses the last daily calculation of each period. Future chart positions and drawing ranges follow calendar boundaries.
+
+The isolated browser fixture tested four panes on one ticker. They shared one request for daily bars and one daily stream, and an injected correction reached all four candles. A simulated reconnect refreshed all four panes with one fresh daily request. Weekly and monthly fills across the fall clock change and yearly fills across New Year passed the Trade Analyzer drawer checks. Clickable marker groups retain the exact saved execution data. Fit trade restored both periods after panning, including the yearly check in mobile portrait emulation. All 420 focused tests, TypeScript and targeted ESLint passed. The browser tests used simulated market data. No deployment.
+
+The QA rerun found that a single pane was reopening its daily stream on each timeframe switch. The stream now stays available for one second after its final subscriber detaches. The next chart can reuse the connection and its most recent bar during that interval, and a closed chart releases the unused connection. The isolated browser checks verified one connection through 1D, 1W, 1M and 1Y, current and historical corrections without double-counting volume, and one fresh shared request after a four-pane reconnect. Fit trade and exact fill details passed again on desktop, with weekly and monthly checked in mobile landscape and yearly in mobile portrait. The expanded chart suite passed 508 tests.

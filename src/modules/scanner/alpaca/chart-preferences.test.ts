@@ -14,6 +14,23 @@ it('preserves optional price-only scaling and the legacy unset preference shape'
  expect(parseChartPreferences(DEFAULT_CHART_PREFERENCES)).not.toHaveProperty('scalePriceOnly');
  expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,scalePriceOnly:'yes'})).toThrow();
 });
+it('stores the global toolbar preference without enabling it for other accounts',()=>{
+ const d=mkdtempSync(join(tmpdir(),'chart-prefs-test-'));directories.push(d);
+ expect(readChartPreferences(d,'owner-a').preferences.alwaysShowDrawingToolbar).toBeUndefined();
+ for(const [revision,alwaysShowDrawingToolbar] of [[0,true],[1,false]] as const){
+  writeChartPreferences(d,'owner-a',revision,{...DEFAULT_CHART_PREFERENCES,alwaysShowDrawingToolbar});
+  expect(readChartPreferences(d,'owner-a').preferences.alwaysShowDrawingToolbar).toBe(alwaysShowDrawingToolbar);
+ }
+ expect(readChartPreferences(d,'owner-b').preferences.alwaysShowDrawingToolbar).toBeUndefined();
+ expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,alwaysShowDrawingToolbar:'yes'})).toThrow();
+});
+it('round-trips the autosave preference and preserves the default for existing accounts',()=>{
+ expect(parseChartPreferences(DEFAULT_CHART_PREFERENCES).autosaveDrawings??true).toBe(true);
+ for(const autosaveDrawings of [true,false]){
+  expect(parseChartPreferences({...DEFAULT_CHART_PREFERENCES,autosaveDrawings}).autosaveDrawings).toBe(autosaveDrawings);
+ }
+ expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,autosaveDrawings:'no'})).toThrow();
+});
 it('validates the complete preference payload and requires a visible session',()=>{
  expect(parseChartPreferences(DEFAULT_CHART_PREFERENCES)).toEqual(DEFAULT_CHART_PREFERENCES);
  for(const changes of [{volumeHeight:99},{premarket:false,regular:false,postmarket:false},{upColor:'red'},{indicators:[study('EMA',0)]},{timezone:'unknown'}])expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,...changes})).toThrow();

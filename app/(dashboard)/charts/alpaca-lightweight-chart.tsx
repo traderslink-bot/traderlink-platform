@@ -1,11 +1,15 @@
 "use client";
 
+import { ChartDrawings } from "./chart-drawings";
+import { candleIndexAtOrAfter } from "./chart-drawing-volume";
+import { useDrawingControls } from "./chart-drawing-controls";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import GridViewOutlined from "@mui/icons-material/GridViewOutlined";
+import MenuBookOutlined from "@mui/icons-material/MenuBookOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import {useChartPreferences} from "./use-chart-preferences";
 import {parseVwapSeedRequest,validVwapSeed,type VwapSeed} from "@/src/modules/scanner/alpaca/chart-vwap-seed";
@@ -23,17 +27,23 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { chartTickLabel, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
-import type { Time } from "lightweight-charts";
-import { aggregateCandles, candleBucket, displayCandles, isCalendarChartTimeframe, nextChartCalendarPeriod, usesDailyCandles, CHART_TIMEFRAMES, type ChartCalculationTimeframe, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
+import type { ISeriesMarkersPluginApi, Time } from "lightweight-charts";
+import { aggregateCandles, candleBucket, displayCandles, easternDayStart, isCalendarChartTimeframe, nextChartCalendarPeriod, usesDailyCandles, CHART_TIMEFRAMES, type ChartCalculationTimeframe, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
 
 import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-view";
 import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorDisplay } from "./chart-view-memory";
-import { indicatorPriceScaleLabels, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
+import { indicatorPriceScaleLabels, type ChartPreferences, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
 import { readChartCandleHistory, readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
 
+import { makeJournalMarkers, chartJournalDayAt, chartJournalFocusBounds } from "./chart-journal-model";
+import { useChartJournalDisplay } from "./chart-journal-display";
+import { useChartJournalBridge } from "./chart-journal-bridge";
+import type { MarketTradeContext, MarketTradeMark } from "./chart-trade-context";
+
+const ChartJournalPanel = lazy(() => import("./chart-journal-panel"));
 const ChartPreferencesPanel = lazy(() => import("./chart-preferences-panel").then(module => ({ default: module.ChartPreferencesPanel })));
 
 type ChartCandleSnapshot = {
@@ -48,16 +58,33 @@ const candleSnapshotLifetime = 5 * 60_000;
 
 const indicatorName = (type: IndicatorType) => type === "Bollinger" ? "BOLL" : type;
 
-export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main" }: {
+export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick }: {
+  tradeContext?: MarketTradeContext; tradeFocusRevision?: number; onTradeMarkClick?: (marks: readonly MarketTradeMark[]) => void;
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
   viewId?: string; viewWorkspace?: "main" | "scanner"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
-  const ticker = symbol.split(":").at(-1)!;
+  const baseTicker = symbol.split(":").at(-1)!.toUpperCase();
+  const {preferences:accountPreferences,ready,message,change,ownerKey,journalAccountRef}=useChartPreferences();
+  const journalDisplay = useChartJournalDisplay(journalAccountRef);
+  const journal = useChartJournalBridge(journalAccountRef, baseTicker);
+  const { refs: journalRefs, scope: journalScope } = journal;
+  const ticker = journal.current?.reviewSymbol ?? baseTicker;
+  const activeTradeContext = ticker === baseTicker ? tradeContext : undefined;
+  const focusScope = journalScope || (activeTradeContext ? `trade-context:${baseTicker}` : "");
+  const tradeMarksById = useMemo(() => new Map(activeTradeContext?.marks.map(mark => [mark.id, mark])), [activeTradeContext]);
+  const chartIdentity = ticker === baseTicker ? compactIdentity : null;
   const theme = useTheme();
   const narrow = useMediaQuery(theme.breakpoints.down("md")), landscape = useMediaQuery("(orientation: landscape) and (max-height: 600px) and (max-width: 1200px)");
   const compact = compactToolbar || (compactMobile && (narrow || landscape));
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null), [frameAnchor, setFrameAnchor] = useState<HTMLElement | null>(null);
-  const {preferences,ready,message,change,ownerKey}=useChartPreferences();
+  // Toolbar visibility must not restart candles or subscriptions.
+  const alwaysShowDrawingToolbar=accountPreferences.alwaysShowDrawingToolbar??false;
+  const chartOptionsKey=useMemo(()=>JSON.stringify({...accountPreferences,alwaysShowDrawingToolbar:undefined,autosaveDrawings:undefined}),[accountPreferences]);
+  const preferences=useMemo(()=>JSON.parse(chartOptionsKey) as ChartPreferences,[chartOptionsKey]);
+  const [drawingEngine,setDrawingEngine]=useState<ChartDrawings|null>(null);
+  const {toolbar:drawingToolbar,overlay:drawingOverlay,toolbarShown,toggleToolbar,saveError:drawingSaveError}=useDrawingControls(
+    drawingEngine,ownerKey,ticker,compact,alwaysShowDrawingToolbar,accountPreferences.autosaveDrawings??true,
+  );
   const dark = preferences.theme === "dark" || preferences.theme === "auto" && theme.palette.mode === "dark";
   const [panel,setPanel]=useState<"indicators"|"settings"|null>(null);
   const [preferencesOpened,setPreferencesOpened]=useState(false);
@@ -84,6 +111,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const [sessionMessage,setSessionMessage]=useState("");
 
   const container = useRef<HTMLDivElement>(null);
+  const journalPortal = useCallback(() => container.current?.closest<HTMLElement>("[data-journal-chart-drawer]") ?? null, []);
   const dateAxis = useRef<HTMLDivElement>(null);
   const indicatorLegend = useRef<HTMLDivElement>(null);
   const [historyMessage,setHistoryMessage] = useState("");
@@ -110,7 +138,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const readoutTypes=[...new Set(activeIndicators.map(indicator=>indicator.type))];
   const regularOnly=preferences.regular&&!preferences.premarket&&!preferences.postmarket;
   if(ready&&controlledTimeframe===undefined&&activeTimeframe===null)setActiveTimeframe(preferences.timeframe);
-  const changePreferences = (next: typeof preferences) => {
+  const changePreferences = (next: ChartPreferences) => {
     change(next);
     if (next.timeframe !== preferences.timeframe) onDefaultTimeframeChange?.(next.timeframe);
   };
@@ -142,12 +170,19 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     setStatus("Loading candles…"); setError(null); setHistoryMessage("");
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
-    const useRecentHistory = timeframe !== "4h" && !daily;
+    const useRecentHistory = !activeTradeContext && timeframe !== "4h" && !daily;
     const now = Date.now();
     const lastCached = cached?.bars.reduce((last, bar) => Math.max(last, bar.time), 0) ?? 0;
     const overlapStart = (lastCached - 300) * 1000;
     const catchUpFrom = !daily && lastCached && now - overlapStart < 20 * 60_000 &&
       overlapStart < Math.floor(now / 60_000) * 60_000 - 1 ? overlapStart : null;
+    const latestHistoryBar = Math.floor(now / 60_000) * 60_000 - 1;
+    const tradeThrough = activeTradeContext
+      ? daily
+        ? nextChartCalendarPeriod(activeTradeContext.to, "1Y") * 1000 - 1
+        : Math.floor(activeTradeContext.to * 1000) + 5 * 86_400_000
+      : null;
+    let contextThrough = tradeThrough === null ? null : Math.min(latestHistoryBar, tradeThrough);
     const readHistory = (query: URLSearchParams, reuseDaily = true) => readChartCandleHistory(
       `/api/screeners/charts/bars?${query}`, abort.signal,
       daily && ownerKey ? { owner: ownerKey, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
@@ -156,13 +191,14 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0" });
       if (recent) query.set("recent", "1");
       if (from !== null) query.set("catchUpFrom", String(from));
+      if (contextThrough !== null && (!daily || contextThrough < latestHistoryBar)) query.set("before", String(contextThrough));
       return readHistory(query, reuseDaily);
     };
     const initialHistory = requestHistory(useRecentHistory && !cached, catchUpFrom, attempt === 0);
     // The request may settle before the lazy chart library finishes loading.
     void initialHistory.catch(() => {});
     async function start() {
-      const { createChart, CandlestickSeries, HistogramSeries, LineSeries, BarSeries, ColorType, TickMarkType, PriceScaleMode, CrosshairMode } = await import("lightweight-charts");
+      const { createChart, createSeriesMarkers, CandlestickSeries, HistogramSeries, LineSeries, BarSeries, ColorType, TickMarkType, PriceScaleMode, CrosshairMode } = await import("lightweight-charts");
       if (disposed) return;
       let displayPoints: DisplayCandle[] = [];
       const dateKey = new Intl.DateTimeFormat("en-CA", { timeZone: preferences.timezone, year: "numeric", month: "numeric", day: "numeric" });
@@ -179,6 +215,43 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       removeChart = () => chart.remove();
       chart.priceScale("right").applyOptions({autoScale:restorePrice?savedView!.autoScale:preferences.autoScale,mode:preferences.logarithmic?PriceScaleMode.Logarithmic:PriceScaleMode.Normal});
       const candles = preferences.kind==="line" ? chart.addSeries(LineSeries,{color:preferences.upColor}) : preferences.kind==="bars" ? chart.addSeries(BarSeries,{upColor:preferences.upColor,downColor:preferences.downColor}) : chart.addSeries(CandlestickSeries, { upColor: preferences.upColor, downColor: preferences.downColor, borderVisible: false, wickUpColor: preferences.upColor, wickDownColor: preferences.downColor, priceFormat: { type: "price", precision: 4, minMove: 0.0001 } });
+      const drawingInterval={"1m":60,"5m":300,"15m":900,"1h":3600,"4h":14400,"1D":86400}[vwapDisplayFrame];
+      let drawingVolumeBars:Candle[]|undefined;
+      const drawings=new ChartDrawings(y=>candles.coordinateToPrice(y),price=>candles.priceToCoordinate(price),
+        dark,()=>displayPoints,drawingInterval,()=>{
+          if(!drawingVolumeBars){
+            const input=[...bars.values()];
+            drawingVolumeBars=(daily?input:visibleSessionBars(input,preferences,
+              calendarReady?marketCalendar.current:undefined)).sort((a,b)=>a.time-b.time);
+          }
+          return drawingVolumeBars;
+        },calendarFrame);
+      chart.panes()[0].attachPrimitive(drawings);
+      chart.subscribeClick(({ point, time, paneIndex, hoveredObjectId }) => {
+        if (!point || paneIndex !== 0) return;
+        const listener = journalRefs.interaction.current;
+        if (typeof hoveredObjectId === "string") {
+          const marker = journalMarkerBuckets.get(hoveredObjectId);
+          if (marker) {
+            const tradeMarks = marker.ids.flatMap(id => {
+              const mark = tradeMarksById.get(id);
+              return mark ? [mark] : [];
+            });
+            if (tradeMarks.length && onTradeMarkClick) {
+              onTradeMarkClick(tradeMarks);
+              return;
+            }
+            if (listener && marker.kind !== "pattern" && marker.kind !== "rule" &&
+              listener({ kind: "marker", ids: marker.ids, type: marker.kind })) return;
+          }
+        }
+        if (listener && typeof time === "number") {
+          const bar = displayed.get(time);
+          if (bar && listener({ kind: "candle", candle: { time, price: bar.close, estimated: bar.carried === true } })) return;
+        }
+        drawings.togglePin(point);
+      });
+      setDrawingEngine(drawings);
       const volume = preferences.volume?chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceLineVisible: false, lastValueVisible: false }, 1):undefined;
       chart.panes()[0].setStretchFactor(100-preferences.volumeHeight);if(volume)chart.panes()[1].setStretchFactor(preferences.volumeHeight);
       let nextPane=volume?2:1;
@@ -424,6 +497,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         return parts[index]?.points??[];
       };
       const writeAll = (initial: boolean, prepend = false) => {
+        drawingVolumeBars=undefined;
         seedLoading=false;seedError=false;vwapProblem="";vwapFrameCache.clear();futureIndicatorTimes.clear();
         calendarReady=daily||[...bars.values()].every(bar=>marketCalendar.current.covers(bar.time));
         setSessionMessage(studies.some(study=>study.indicator.type==="VWAP")&&!calendarReady?"VWAP unavailable: trading-session data could not load.":"");
@@ -465,7 +539,88 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           chart.timeScale().setVisibleLogicalRange({from:range.from + added,to:range.to + added});
         }
         updateDates();
+        renderJournalOverlay();
       };
+      let journalMarkers: ISeriesMarkersPluginApi<Time> | undefined;
+      let journalMarkerBuckets: ReturnType<typeof makeJournalMarkers>["buckets"] = new Map();
+
+      function renderJournalOverlay() {
+        const overlay = journalRefs.overlay.current;
+        const journalMarks = overlay?.scope === journalScope && overlay.symbol === ticker ? overlay.items : [];
+        // The selected trade already supplies its executions. Keep personal note pins alongside the analysis.
+        const items = activeTradeContext
+          ? [...activeTradeContext.marks, ...journalMarks.filter(item => item.kind === "note")]
+          : journalMarks;
+        if (!items.length) {
+          if (journalMarkers) {
+            journalMarkers.detach();
+            journalMarkers = undefined;
+            journalMarkerBuckets.clear();
+          }
+          return;
+        }
+        const result = makeJournalMarkers(items, {
+          timeframe, regularOnly, sortedCandles: displayPoints, hasCandle: (time) => displayed.has(time),
+        }, (time) => daily || isVisibleSession(time, preferences,
+            calendarReady ? marketCalendar.current : undefined));
+        journalMarkerBuckets = result.buckets;
+        if (journalMarkers) journalMarkers.setMarkers(result.markers);
+        else if (result.markers.length) journalMarkers = createSeriesMarkers(candles, result.markers, { autoScale: false });
+      }
+
+      let focusingJournal = false;
+      function moveToJournalCandles(from: number, to: number) {
+        const { first: firstBucket, last: lastBucket } = chartJournalFocusBounds(from, to, timeframe, regularOnly);
+        const firstIndex = candleIndexAtOrAfter(displayPoints, firstBucket);
+        const first = displayPoints[firstIndex];
+        if (!first) return false;
+        if (first.time > lastBucket) return false;
+        // A partial bar on either side keeps the plotted fills visible with context.
+        let lastIndex = firstIndex;
+        while (lastIndex + 1 < displayPoints.length && displayPoints[lastIndex + 1].time <= lastBucket) lastIndex++;
+        const surrounding = activeTradeContext ? Math.max(12, Math.ceil((lastIndex - firstIndex) * 0.25)) : 5;
+        chart.timeScale().setVisibleLogicalRange({
+          from: Math.max(0, firstIndex - surrounding), to: Math.min(displayPoints.length + 2, lastIndex + surrounding),
+        });
+        return true;
+      }
+
+      async function focusJournal() {
+        const target = journalRefs.pendingFocus.current;
+        if (!target || target.scope !== focusScope || target.symbol !== ticker || !loaded || loading || focusingJournal || disposed) return;
+        focusingJournal = true;
+        try {
+          if (!moveToJournalCandles(target.from, target.to)) {
+            const midnightTomorrow = easternDayStart(Date.parse(`${chartJournalDayAt(target.to)}T12:00:00Z`) / 1000 + 86400);
+            const through = calendarFrame ? nextChartCalendarPeriod(target.to, calendarFrame) : midnightTomorrow;
+            const before = Math.min(Date.now(), through * 1000) - 1;
+            const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0", before: String(before) });
+            const result = await readHistory(query);
+            if (disposed || journalRefs.pendingFocus.current !== target) return;
+            if (result.basisDate !== historyBasisDate || !Array.isArray(result.bars)) throw Error();
+            marketCalendar.current.merge(result.calendar);
+            result.calendars?.forEach((value) => marketCalendar.current.merge(value));
+            const combined = new Map(bars);
+            for (const bar of result.bars) if (!combined.has(bar.time)) combined.set(bar.time, bar);
+            if (displayCandles(aggregateCandles(combined.values(), timeframe, regularOnly), timeframe).length <= 80_000) {
+              for (const [time, bar] of combined) bars.set(time, bar);
+              writeAll(false, true);
+            }
+            if (!moveToJournalCandles(target.from, target.to)) throw Error();
+          }
+          if (journalRefs.pendingFocus.current === target) journalRefs.setStatus("");
+        } catch {
+          if (!disposed && journalRefs.pendingFocus.current === target) {
+            journalRefs.setStatus("Candles for this trade could not be shown in the selected timeframe and sessions.");
+          }
+        } finally {
+          focusingJournal = false;
+          if (journalRefs.pendingFocus.current === target && !disposed) journalRefs.pendingFocus.current = null;
+          else if (!disposed) void focusJournal();
+        }
+      }
+      const journalEngine = { symbol: ticker, renderOverlay: renderJournalOverlay, focus: focusJournal };
+      if (focusScope) journalRefs.engine.current = journalEngine;
       const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
       let recentHistory = useRecentHistory && !cached;
       let catchingUp = Boolean(cached);
@@ -530,8 +685,15 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           if (!disposed && warmup) setSessionMessage("Indicator history could not load. Retrying shortly.");
           else if (!disposed && catchingUp) setStatus("Catching up…");
           else if (!disposed) setError(failure instanceof Error ? failure.message : "Candles unavailable.");
+          if (!disposed && !loaded && journalRefs.pendingFocus.current?.symbol === ticker) {
+            journalRefs.setStatus("Candles for this trade could not load.");
+          }
         }
-        finally { loading = false; if (reloadAfter && !disposed) { reloadAfter = false; void loadHistory(); } }
+        finally {
+          loading = false;
+          if (reloadAfter && !disposed) { reloadAfter = false; void loadHistory(); }
+          else if (!disposed) void focusJournal();
+        }
       };
       const loadOlder = async () => {
         if(disposed||loading||loadingOlder||!indicatorsReady||nextBefore===null)return;
@@ -547,6 +709,40 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         }catch(failure){if(!disposed)setHistoryMessage(failure instanceof Error?failure.message:"Older candles could not load.");}
         finally{loadingOlder=false;}
       };
+      async function loadLater() {
+        if (disposed || loading || loadingOlder || contextThrough === null || contextThrough >= latestHistoryBar) return;
+        const through = contextThrough;
+        const next = Math.min(latestHistoryBar, daily
+          ? nextChartCalendarPeriod((through + 1) / 1000, "1Y") * 1000 - 1
+          : through + 20 * 86_400_000);
+        const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0", before: String(next) });
+        loadingOlder = true;
+        userPanned = false;
+        setHistoryMessage("Loading later candles…");
+        try {
+          const page = await readHistory(query).catch(() => { throw Error("Later candles could not load. Pan right to retry."); });
+          if (disposed) return;
+          if (page.basisDate !== historyBasisDate || historyBasisDate !== easternClock(Date.now()).date) throw Error("Price adjustments changed. Reload the chart.");
+          const combined = new Map(bars);
+          const newBars = (page.bars as Candle[]).filter(bar => bar.time * 1000 > through);
+          for (const bar of newBars) combined.set(bar.time, bar);
+          if (displayCandles(aggregateCandles(combined.values(), timeframe, regularOnly), timeframe).length > 80_000) {
+            contextThrough = latestHistoryBar;
+            setHistoryMessage("Chart history limit reached. Use a larger timeframe.");
+            return;
+          }
+          contextThrough = next;
+          marketCalendar.current.merge(page.calendar);
+          if (Array.isArray(page.calendars)) for (const value of page.calendars) marketCalendar.current.merge(value);
+          for (const bar of newBars) bars.set(bar.time, bar);
+          writeAll(false, true);
+          setHistoryMessage(newBars.length || next === latestHistoryBar ? "" : "No candles in that period. Pan right to continue.");
+        } catch (failure) {
+          if (!disposed) setHistoryMessage(failure instanceof Error ? failure.message : "Later candles could not load.");
+        } finally {
+          loadingOlder = false;
+        }
+      }
       function saveView(){
         if(!loaded||!initialViewReady||!ownerKey||!viewId||!displayPoints.length)return;
         const logicalRange=chart.timeScale().getVisibleLogicalRange(),range=chart.timeScale().getVisibleRange();
@@ -558,8 +754,15 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           anchor:{time:displayPoints[index].time,offset:logicalRange.from-index},priceRange:chart.priceScale("right").getVisibleRange(),
           autoScale:chart.priceScale("right").options().autoScale,preferenceAutoScale:preferences.autoScale,logarithmic:preferences.logarithmic});
       }
+      let previousVisibleTo = 0;
       chart.timeScale().subscribeVisibleLogicalRangeChange(range=>{
-        updateDates();if(range&&range.from<40&&userPanned&&!loadingOlder)void loadOlder();
+        const movedRight = Boolean(range && range.to > previousVisibleTo);
+        if (range) previousVisibleTo = range.to;
+        updateDates();
+        if (range && userPanned && !loadingOlder) {
+          if (activeTradeContext && movedRight && range.to > displayPoints.length - 30) void loadLater();
+          else if (range.from < 40) void loadOlder();
+        }
         if(range&&loaded&&!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??vwapDisplayFrame)==='1D')!==daily)){
           const key=range.from.toFixed(2)+':'+range.to.toFixed(2);
           if(key!==calculationViewKey){calculationViewKey=key;clearTimeout(calculationViewTimer);calculationViewTimer=setTimeout(()=>{if(!disposed&&loaded)writeAll(false);},50);}
@@ -567,6 +770,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       });
       let lastBarReceivedAt = Date.now(), lastRecoveryAt = 0;
       let streamHasConnected = false;
+      if (!activeTradeContext) {
       source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily ? "1" : "0"}`, daily);
       source.addEventListener("status", event => {
         if (disposed) return;
@@ -629,6 +833,13 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           if (current) {
             const updated = { ...current, carried: false };
             displayPoints[displayPoints.length - 1] = updated; displayed.set(bucket, updated);
+            if(drawingVolumeBars&&(daily||isVisibleSession(bar.time,preferences,
+              calendarReady?marketCalendar.current:undefined))){
+              const index=candleIndexAtOrAfter(drawingVolumeBars,bar.time);
+              if(index<drawingVolumeBars.length-1||index===drawingVolumeBars.length-1&&drawingVolumeBars[index].time!==bar.time){
+                drawingVolumeBars=undefined;
+              }else drawingVolumeBars[index]=bar;
+            }
             candles.update(point(updated)); volume?.update(volumePoint(updated));
             const actual = studies.length ? displayPoints.filter(value => !value.carried) : [];
             vwapFrameCache.clear();
@@ -666,10 +877,11 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if(livePrice&&!chartHalted){candles.removePriceLine(livePrice);livePrice=undefined;lastGuidePrice=null;}
         if(loaded && !catchingUp)setStatus("Reconnecting…");
       };
+      }
       let confirmationMinute=Math.floor(Date.now()/60_000);
       const confirmationTimer=setInterval(()=>{const minute=Math.floor(Date.now()/60_000);if(minute!==confirmationMinute){confirmationMinute=minute;if(!disposed&&loaded&&!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&study.indicator.calculationTimeframe&&study.indicator.calculationTimeframe!==timeframe))writeAll(false);}},1000);
       const recoverHistory = () => {
-        if(disposed||document.hidden)return;
+        if(disposed||document.hidden||activeTradeContext)return;
         source?.reconnectIfClosed();
         auxiliarySource?.reconnectIfClosed();
         const now=Date.now(), clock=easternClock(now);
@@ -690,7 +902,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       window.addEventListener("online",recoverHistory);
       window.addEventListener("pageshow",recoverHistory);
       const remove = removeChart;
-      removeChart = () => { document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);if(cacheKey && loaded && !catchingUp && indicatorsReady && bars.size && bars.size<=20_000){
+      removeChart = () => {
+        if (journalRefs.engine.current === journalEngine) journalRefs.engine.current = null;
+        journalMarkers?.detach();
+ document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);if(cacheKey && loaded && !catchingUp && indicatorsReady && bars.size && bars.size<=20_000){
         recentChartCandles.delete(cacheKey);
         recentChartCandles.set(cacheKey,{basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,calendar:marketCalendar.current,savedAt:Date.now()});
         while(recentChartCandles.size>4)recentChartCandles.delete(recentChartCandles.keys().next().value!);
@@ -708,7 +923,17 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget]);
+  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget, journalRefs, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick]);
+
+  useEffect(() => {
+    if (!activeTradeContext || !ready) return;
+    const target = { symbol: ticker, from: activeTradeContext.from, to: activeTradeContext.to, scope: focusScope };
+    journalRefs.pendingFocus.current = target;
+    if (journalRefs.engine.current?.symbol === ticker) void journalRefs.engine.current.focus();
+    return () => {
+      if (journalRefs.pendingFocus.current === target) journalRefs.pendingFocus.current = null;
+    };
+  }, [activeTradeContext, focusScope, journalRefs, ready, ticker, timeframe, tradeFocusRevision]);
 
   const mainToolbar = viewWorkspace === "main";
   const multiviewButton = onOpenMultiview && (
@@ -717,20 +942,30 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       <GridViewOutlined fontSize="small" />
     </IconButton>
   );
+  const journalButton = journalScope ? <IconButton size="small" title="Journal" aria-label={`Journal for ${ticker}`}
+    aria-expanded={Boolean(journal.current?.open)} aria-controls={journal.panelId}
+    onClick={journal.open} sx={{ width: compact ? 36 : 34, height: compact ? compactToolbarHeight : 34, flexShrink: 0 }}>
+    <MenuBookOutlined fontSize="small" />
+  </IconButton> : null;
   return <Box data-alpaca-chart={ticker} sx={[{ borderRadius: 0, height: "100%", position: "relative", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }, ...(Array.isArray(sx) ? sx : [sx])]}>
     {compact ? <Stack data-chart-compact-toolbar direction="row" sx={{ alignItems: "center", px: 0.5, height: compactToolbarHeight, flexShrink: 0, gap: 0.5 }}>
-      <Box data-chart-identity sx={{ flex: 1, minWidth: 0 }}>{compactIdentity ?? <Typography sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700 }}>{ticker}</Typography>}</Box>
-      {status ? <Typography role="status" sx={compactIdentity ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" } : { fontSize: 10, color: "text.secondary", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", maxWidth: 100 }}>{status}</Typography> : null}
+      <Box data-chart-identity sx={{ flex: 1, minWidth: 0 }}>{chartIdentity ?? <Typography sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700 }}>{ticker}</Typography>}</Box>
+      {status ? <Typography role="status" sx={chartIdentity ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" } : { fontSize: 10, color: "text.secondary", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", maxWidth: 100 }}>{status}</Typography> : null}
       <Button aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready} sx={{ minWidth: 44, height: compactToolbarHeight, px: 0.5 }}>{timeframe}</Button>
       <IconButton aria-label={`${ticker} chart options`} aria-haspopup="menu" onClick={event => setMenuAnchor(event.currentTarget)} sx={{ width: 44, height: compactToolbarHeight }}><SettingsOutlined fontSize="small" /></IconButton>
+      {drawingToolbar}
+      {journalButton}
       {multiviewButton}
       {actions}
       {closeAction}
     </Stack> : <>    <Stack direction="row" sx={{ alignItems: "center", gap: 0.25, px: 0.5, minHeight: 27, flexWrap: "wrap" }}>
       <Typography sx={{ color:dark?"warning.main":"#354358",fontSize: 11, fontWeight: 700, mr: 0.5 }}>{ticker}</Typography>
       {CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
+      <IconButton size="small" disabled={!ready} aria-label="Chart options" aria-haspopup="menu"
+        onClick={event=>setMenuAnchor(event.currentTarget)} sx={{minWidth:44,minHeight:mainToolbar?34:44}}><SettingsOutlined fontSize="small"/></IconButton>
       <Button size="small" disabled={!ready} onClick={()=>openIndicators()} sx={{minHeight:mainToolbar?34:44,minWidth:0,px:0.75,textTransform:"none"}}>Indicators</Button>
-      <IconButton size="small" disabled={!ready} aria-label="Chart settings" onClick={()=>openPreferences("settings")} sx={{minWidth:44,minHeight:mainToolbar?34:44}}><SettingsOutlined fontSize="small"/></IconButton>
+      {drawingToolbar}
+      {journalButton}
       {multiviewButton}
       {actions}
       {!mainToolbar && closeAction}
@@ -738,16 +973,20 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       {mainToolbar && closeAction && <Box sx={{ ml: "auto" }}>{closeAction}</Box>}
     </Stack>
 </>}
-    {compact ? <><Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}>
+    {compact ? <Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}>
       {CHART_TIMEFRAMES.map(value => <MenuItem key={value} selected={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => { if (onTimeframeChange) onTimeframeChange(value); else setActiveTimeframe(value); setFrameAnchor(null); }}>{value}</MenuItem>)}
-    </Menu>
+    </Menu> : null}
     <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
-      <MenuItem disabled={!ready} onClick={() => { setFrameAnchor(menuAnchor); setMenuAnchor(null); }}>Timeframe</MenuItem>
-      <MenuItem disabled={!ready} onClick={() => { openIndicators(); setMenuAnchor(null); }}>Indicators</MenuItem>
-      <MenuItem disabled={!ready} onClick={() => { openPreferences("settings"); setMenuAnchor(null); }}>Appearance</MenuItem>
+      {compact&&<MenuItem disabled={!ready} onClick={() => { setFrameAnchor(menuAnchor); setMenuAnchor(null); }}>Timeframe</MenuItem>}
+      {compact&&<MenuItem disabled={!ready} onClick={() => { openIndicators(); setMenuAnchor(null); }}>Indicators</MenuItem>}
+      <MenuItem disabled={!ready} onClick={() => { openPreferences("settings"); setMenuAnchor(null); }}>Chart settings</MenuItem>
+      <MenuItem disabled={!ready} onClick={() => { toggleToolbar(); setMenuAnchor(null); }}>
+        {toolbarShown?"Hide drawing toolbar":"Show drawing toolbar"}
+      </MenuItem>
     </Menu>
-    </> : null}
+    {drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
+    {activeTradeContext && journal.status && !journal.current?.open && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>{journal.status}</Typography>}
     {sessionMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{sessionMessage}</Typography>:null}
     {historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
     {error ? <Stack role="alert" direction="row" sx={{ alignItems: "center", px: 1, gap: 1 }}><Typography sx={{ fontSize: 12 }}>{error}</Typography><Button size="small" onClick={() => setAttempt(value => value + 1)}>Retry</Button></Stack> : null}
@@ -761,7 +1000,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         </Button>
         <Box data-indicator-readout={type} sx={{display:"flex",gap:0.75,flexWrap:"wrap",minWidth:0,fontVariantNumeric:"tabular-nums","& span":{whiteSpace:"nowrap"}}}/>
       </Box>)}
-    </Box><Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/></Box>
+    </Box><Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/>{drawingOverlay}</Box>
     <Menu anchorEl={indicatorMenu?.anchor} open={Boolean(indicatorMenu)} onClose={()=>setIndicatorMenu(null)}>
       {indicatorMenu?[
         <MenuItem key="settings" onClick={()=>{openIndicators(indicatorMenu.type);setIndicatorMenu(null);}}>Settings</MenuItem>,
@@ -769,6 +1008,12 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         <MenuItem key="off" onClick={()=>{changeIndicatorDisplay(indicatorMenu.type,"enabled",false);setIndicatorMenu(null);}}>Turn off</MenuItem>,
       ]:null}
     </Menu>
-    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={preferences} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
+    {journalAccountRef && (journal.current || journalDisplay.active && (journalDisplay.showFills || journalDisplay.showNotes)) && <Suspense fallback={null}>
+      <ChartJournalPanel key={journal.scope} accountRef={journalAccountRef} symbol={ticker}
+        drawingOwner={ownerKey} tradeContextActive={Boolean(activeTradeContext)} allowAnalyzer={!tradeContext} open={Boolean(journal.current?.open)} display={journalDisplay} portalContainer={journalPortal} onClose={journal.close} onOpen={journal.open}
+        onReview={journal.review} focusStatus={journal.status} register={journal.register}
+        setOverlay={journal.setOverlay} panelId={journal.panelId} />
+    </Suspense>}
+    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={accountPreferences} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
   </Box>;
 }

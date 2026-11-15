@@ -1,4 +1,4 @@
-import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireExpectedJournalAccountSelection, requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
 import { withWritableJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -12,7 +12,8 @@ export async function POST(request: Request): Promise<Response> {
   try {
     requirePlatformMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const body = await request.json() as { roundTripId?: unknown; refreshIndicators?: unknown };
+    const body = await request.json() as { roundTripId?: unknown; refreshIndicators?: unknown; expectedAccountSelectionRef?: unknown };
+    if (body.expectedAccountSelectionRef !== undefined) requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     if (typeof body.roundTripId !== "string" || !UUID_PATTERN.test(body.roundTripId)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "roundTripId" });
     }

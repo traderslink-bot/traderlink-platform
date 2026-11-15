@@ -90,3 +90,11 @@ Choose **Multi-ticker** inside Multiview to set it up even when only one ticker 
 In Multiview, use **+ Timeframe** to add a chart and its remove button to take it out. Multi-ticker also offers **+ Add ticker**. The selected timeframes are shown directly, with a note when the four-chart limit is reached.
 
 Use **Chart defaults** to edit indicator settings and presets for your account. The red **Remove from defaults** button asks for confirmation before removing the entire indicator from your defaults for Charts and Scanners. Under **This chart**, use the switch to turn an indicator on or off and **Show values** to control its readout on the open chart.
+
+## Draw on a chart
+
+Open **Chart options** and choose **Show drawing toolbar**. Open the pencil menu and choose a group, then a tool. Place the points requested on the chart. Choose **Select drawing** to move an existing drawing or edit its color and available settings. Click a pin to read its note.
+
+Drawings save by ticker in the current browser and appear when you open that ticker on another TraderLink chart in the same browser. In **Chart settings**, use **Drawing tools** to keep the toolbar visible or turn off automatic saving. With automatic saving off, choose **Save drawings** in the pencil menu before you refresh or close the browser.
+
+Use **Measure** for a temporary price and time readout and **Zoom to range** to focus on two times. Open **Drawing options** to hide or lock drawings in the current view, snap new anchors to candle prices, place the same tool repeatedly, or remove the ticker’s drawings. **Undo drawing change** restores the previous set from the current chart session.

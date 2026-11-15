@@ -379,7 +379,7 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
   return <Drawer anchor="right" onClose={onClose} open={open&&charts.length>0} slotProps={{transition:{
     onEntered:()=>setDetailsReady(true),
     onExited:()=>{setDetailsReady(false);setVisitedDetails(new Set());},
-  },paper:{role:"dialog","aria-modal":true,"aria-label":"Chart workspace",sx:{borderRadius:0,'& [data-traderlink-platform-dashboard-card="panel"]':{borderRadius:0},maxWidth:"100vw",width:row?.showDetails?"100vw":{xs:"100vw",md:"78vw",xl:1180}}}}}>
+  },paper:{role:"dialog","aria-modal":true,"aria-label":"Chart workspace",...{"data-journal-chart-drawer":row?.showDetails?"with-details":"chart-only"},sx:{borderRadius:0,'& [data-traderlink-platform-dashboard-card="panel"]':{borderRadius:0},maxWidth:"100vw",width:row?.showDetails?"100vw":{xs:"100vw",md:"78vw",xl:1180}}}}}>
     <Stack sx={{height:"100dvh",minHeight:0}}>
       <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",flexShrink:0,px:{xs:1.5,md:2},py:0}}>
         <Box sx={{minWidth:0}}>

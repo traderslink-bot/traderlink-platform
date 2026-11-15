@@ -1,5 +1,7 @@
 # Workspace TradingView chart panel plan
 
+The shared chart now supplies the Workspace panel. The original embed plan below records the accepted panel interactions. The [progress record](workspace-tradingview-chart-panel-progress.md) tracks the replacement.
+
 ## Purpose
 
 Bring the existing `/charts` TradingView embed into Workspace without creating a

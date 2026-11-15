@@ -33,3 +33,11 @@ Related plan:
 The Help Center has no existing Market Charts guide. This reuse of the existing
 chart embed therefore does not leave a current guide inconsistent; a dedicated
 Market Charts guide can be added as a separate documentation slice.
+
+## Shared chart replacement
+
+The Journal Workspace Chart action and the trade-row chart actions now open the same lazy-loaded AlpacaLightweightChart used by /charts. The panel retains ticker selection, fullscreen, minimize and restore, and close. The shared toolbar contains symbol search alongside the chart and panel controls. The existing Help Center chart instructions still apply.
+
+The inventory found one active TradingView embed in the Journal. The Daily Trade Analyzer and Candle Review use dedicated historical renderers. A shared-renderer conversion for those surfaces must preserve their saved historical candles, execution markers, and analysis evidence.
+
+Forty-five focused tests, targeted ESLint, and TypeScript passed. The panel tests cover both launch paths, exchange-qualified tickers, ticker validation, fullscreen, and retaining the chart instance on minimize. Private-browser visual review remains pending.

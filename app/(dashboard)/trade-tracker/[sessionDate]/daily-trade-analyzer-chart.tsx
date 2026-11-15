@@ -24,7 +24,9 @@ import {
   type MouseEventParams,
   type Time,
 } from "lightweight-charts";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import CandlestickChartOutlined from "@mui/icons-material/CandlestickChartOutlined";
+import { buildMarketTradeContext, type ChartRuleEvidence } from "../../charts/chart-trade-context";
 
 import { calculateIndicatorPoints } from "@/src/lib/trade-candle-analysis/indicator-context";
 import { savedTradeIndicatorChart } from "@/src/lib/trade-candle-analysis/trend-momentum-chart";
@@ -381,18 +383,14 @@ type ChartDetail = Readonly<{
   rules: readonly ChartRuleDetail[];
 }>;
 
-export type ChartRuleEvidence = Readonly<{
-  label: string;
-  netPnl: string | null;
-  occurredAt: string;
-  ruleId: string;
-  triggerAt: string | null;
-}>;
+export type { ChartRuleEvidence } from "../../charts/chart-trade-context";
+const TradeMarketChartDrawer = lazy(() => import("../../charts/trade-market-chart-drawer"));
 type ChartRuleDetail = ChartRuleEvidence & Readonly<{ violationCount: number }>;
 const EMPTY_RULE_EVIDENCE: readonly ChartRuleEvidence[] = Object.freeze([]);
 
 export function DailyTradeAnalyzerChart({
   analysis,
+  allowMarketChart = true,
   currency,
   direction,
   interval,
@@ -402,8 +400,10 @@ export function DailyTradeAnalyzerChart({
   symbol,
   tradeLabelColor,
   tradeNumber,
+  timezone = "America/New_York",
 }: {
   analysis: DaySessionTradeAnalyzer;
+  allowMarketChart?: boolean;
   currency: string;
   direction: "long" | "short";
   interval: DailyTradeChartInterval;
@@ -413,6 +413,7 @@ export function DailyTradeAnalyzerChart({
   symbol: string;
   tradeLabelColor: "success" | "error";
   tradeNumber: number;
+  timezone?: string;
 }) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
@@ -436,6 +437,13 @@ export function DailyTradeAnalyzerChart({
   const [rangeMode, setRangeMode] = useState<ChartRangeMode>("around_trade");
   const [rangeRevision, setRangeRevision] = useState(0);
   const chartInterval = interval;
+  const [fullChart, setFullChart] = useState(false);
+  const marketContext = useMemo(() => allowMarketChart ? buildMarketTradeContext(analysis, direction, currency, ruleEvidence) : null,
+    [allowMarketChart, analysis, currency, direction, ruleEvidence]);
+  async function openMarketChart() {
+    if (document.fullscreenElement === frameRef.current) await document.exitFullscreen().catch(() => undefined);
+    setFullChart(true);
+  }
 
   const [mobilePatternKeyOpen, setMobilePatternKeyOpen] = useState(false);
   const exactTurnoverAvailable = useMemo(
@@ -1244,7 +1252,16 @@ export function DailyTradeAnalyzerChart({
         >
           {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
         </Button>
+        {marketContext && <Button startIcon={<CandlestickChartOutlined />} size="small" variant="outlined" onClick={() => void openMarketChart()}
+          sx={{ minHeight: { xs: 44, md: 32 }, textTransform: "none",
+            ...(usesDarkChartControls ? { bgcolor: theme.palette.primary.main, color: theme.palette.primary.contrastText } : {}) }}>
+          Open in Charts
+        </Button>}
       </Stack>
+      {fullChart && marketContext && <Suspense fallback={null}>
+        <TradeMarketChartDrawer analysis={analysis} context={marketContext} currency={currency} direction={direction} interval={interval}
+          onClose={() => setFullChart(false)} selectedEventId={selectedEventId} symbol={symbol} timezone={timezone} />
+      </Suspense>}
       <Menu
         anchorEl={displayMenuAnchor}
         disablePortal

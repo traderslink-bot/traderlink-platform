@@ -9,6 +9,7 @@ import {
   withReadonlyJournalAnnotations,
   withWritableJournalAnnotations,
 } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
+import { readChartJournalTradeItems } from "@/src/modules/journal/server/chart/journal-chart-service";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   requireExpectedJournalAccountSelection,
@@ -289,6 +290,8 @@ WHERE workspace_id = ? AND account_id = ? AND logical_trade_id = ?`).all(
         ] ?? Object.freeze([]);
     return Object.freeze({
       availableTags: Object.freeze(service.listTags(account).map(tagView)),
+      chartItems: withReadonlyPlatformDatabase({}, (database) =>
+        readChartJournalTradeItems(database, account, logical?.memberRoundTripIds ?? [context.trade.roundTripId])),
       customRules: Object.freeze(customRules),
       note: Object.freeze({
         revision: logicalEvidence ? logicalEvidence.note?.revision ?? null : roundTripNote?.revision ?? null,

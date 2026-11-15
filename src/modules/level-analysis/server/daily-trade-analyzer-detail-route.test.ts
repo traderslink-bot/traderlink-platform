@@ -127,6 +127,16 @@ describe("daily trade Analyzer detail route", () => {
     }, status: "ready" });
   });
 
+  it("checks the selected Chart Journal account without a round-trip version", async () => {
+    const url = new URL(request(false).url);
+    url.searchParams.set("expectedAccountSelectionRef", expectedAccountSelectionRef);
+    mocks.requireExpectedSelection.mockImplementationOnce(() => { throw Error("wrong account"); });
+    const response = await GET(new Request(url));
+    expect(mocks.requireExpectedSelection).toHaveBeenCalledWith(scope, expectedAccountSelectionRef);
+    expect(mocks.readAnalysis).not.toHaveBeenCalled();
+    expect(response.ok).toBe(false);
+  });
+
   it("does not return stale detail when the current version no longer matches", async () => {
     mocks.readAnalysis.mockReturnValue(null);
 

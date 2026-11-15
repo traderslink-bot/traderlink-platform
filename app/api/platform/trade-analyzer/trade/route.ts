@@ -173,7 +173,7 @@ export async function GET(request: Request): Promise<Response> {
     const scope = requireTraderLinkPlatformRequestScope(request.headers, {
       membershipAnyFeatures: ["journal.access", "analytics.access"],
     });
-    if (roundTripVersionId) {
+    if (roundTripVersionId || url.searchParams.has("expectedAccountSelectionRef")) {
       requireExpectedJournalAccountSelection(
         scope,
         url.searchParams.get("expectedAccountSelectionRef"),
@@ -216,6 +216,7 @@ export async function GET(request: Request): Promise<Response> {
           ? journalReportingCurrencyMultiplier(sourceCurrency, sourceDate, reportingContext)
           : "1";
         return Object.freeze({
+          currency: sourceCurrency && sourceDate ? reportingContext.reportingCurrency : sourceCurrency,
           analysis: { ...scaleDaySessionTradeAnalyzer(source, multiplier),
             reviewContext: source.reviewContext ?? readAnalyzerWrittenReviewContext(verifiedReadonlyDatabase, scope) },
           profitProtection: scaleProfitProtectionOutcome(profitProtection, multiplier),
@@ -233,6 +234,7 @@ export async function GET(request: Request): Promise<Response> {
         ...result.analysis,
         profitProtection: result.profitProtection,
       }),
+      currency: result.currency,
       status: "ready",
     }, {
       headers: { "cache-control": "no-store" },
