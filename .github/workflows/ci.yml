@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - codex/full-ci-repair-20261115
   pull_request:
     types:
       - ready_for_review
@@ -28,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test
+        run: npm test -- --maxWorkers=2 --testTimeout=20000
 
       - name: Verify Trader Intelligence v3 GA0-A2 exact truth
         run: npm run verify:ti-v3:ga0-a2

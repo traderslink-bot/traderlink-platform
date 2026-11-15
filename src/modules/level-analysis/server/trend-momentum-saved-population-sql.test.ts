@@ -19,7 +19,7 @@ CREATE TABLE journal_logical_trades(workspace_id, account_id, logical_trade_id, 
 CREATE TABLE journal_logical_trade_versions(workspace_id, account_id, logical_trade_version_id, trade_style);
 CREATE TABLE journal_logical_trade_daily_analyses(workspace_id, account_id, logical_trade_id, logical_trade_version_id, logical_trade_analysis_id, current_revision, status);
 CREATE TABLE journal_logical_trade_daily_analysis_versions(logical_trade_analysis_id, revision_number, logical_trade_analysis_version_id, result_json, evidence_candles_json, execution_mismatches_json);
-CREATE TABLE level_analysis_logical_trade_jobs(workspace_id, account_id, logical_trade_id, logical_trade_version_id, status, created_at_utc, desired_coverage_end_utc);
+CREATE TABLE level_analysis_logical_trade_jobs(workspace_id, account_id, logical_trade_id, logical_trade_version_id, status, created_at_utc, desired_coverage_end_utc, post_session_refresh INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE journal_round_trip_daily_trade_analyses(workspace_id, account_id, round_trip_id, round_trip_version_id, daily_trade_analysis_id, current_revision, status);
 CREATE TABLE journal_round_trip_daily_trade_analysis_versions(daily_trade_analysis_id, revision_number, daily_trade_analysis_version_id, status, market_session_set_version_id);
 CREATE TABLE journal_round_trip_daily_trade_analysis_event_snapshots(daily_trade_analysis_version_id, snapshot_json, candle_time_utc_seconds);

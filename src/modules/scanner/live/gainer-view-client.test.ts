@@ -34,6 +34,7 @@ function model(session: "regular" | "after_hours"): ScannerReadModel {
 async function mount(initial: ScannerReadModel, options: { admin?: boolean; now?: string; fail?: boolean } = {}) {
   vi.useFakeTimers(); vi.setSystemTime(new Date(options.now ?? "2026-11-02T21:00:10Z")); let response = initial;
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
+  vi.stubGlobal("IntersectionObserver", class { observe() {} unobserve() {} disconnect() {} });
   let layout = EMPTY_MULTIVIEW, revision = 1;
   const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     if (String(input) === CHART_PREFERENCES && (init?.method ?? "GET") === "GET") {
@@ -208,8 +209,8 @@ describe("compact scanner grid and full view", () => {
   it("keeps trailing zeroes in every scanner price",async()=>{const initial=momentumModel(42),row={...initial.momentum!.rows[0]!,price:.1,dayHigh:.2,dayLow:.1};const page=await mount({...initial,gainers:{rows:[row],focus:[],total:1},dayGainers:{rows:[row],focus:[],total:1},momentum:{rows:[row],focus:[],total:1}});expect(page.container.textContent).toContain("$0.10");expect([...page.container.querySelectorAll("td")].some(cell=>cell.textContent==="$0.1")).toBe(false);});
   it("renders Gainers and Momentum as separate cards without a combined scanner selector", async () => {
     const page = await mount(model("regular"));
-    expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
-    expect([...page.container.querySelectorAll('[data-scanner-workspace-slot]')].map(card=>card.getAttribute("data-scanner-workspace-slot"))).toEqual(["slot-1","slot-2","slot-3","slot-4","slot-5"]);
+    expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(7);
+    expect([...page.container.querySelectorAll('[data-scanner-workspace-slot]')].map(card=>card.getAttribute("data-scanner-workspace-slot"))).toEqual(["slot-1","slot-2","slot-3","slot-4","slot-5","slot-7","slot-6"]);
     expect(DEFAULT_SCANNER_WORKSPACE_LAYOUT.assignments["ticker-workspace"]).toBe("slot-6");
     expect(page.container.querySelector('[aria-label="Live screener"]')).toBeNull();
     expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
@@ -220,7 +221,7 @@ describe("compact scanner grid and full view", () => {
     const scannerRows = {...initial.momentum!,rows:[{...initial.momentum!.rows[0]!,news:[{id:"article-1",headline:"Synthetic release",createdAt:"2026-11-02T21:00:00Z",url:"https://example.com/release",typeLabel:"Press release"}]}]};
     const page = await mount({...initial, gainers: scannerRows, dayGainers: scannerRows, momentum: scannerRows});
     expect(page.container.querySelectorAll('[data-pr-instance]').length).toBe(1);
-    expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(5);
+    expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(7);
     for (const [label,columnCount] of [["Top Gainers",10],["Momentum",13]] as const) {
       const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
       expect(table.querySelectorAll('thead th').length).toBe(columnCount);
@@ -423,7 +424,7 @@ describe("two-row table view", () => {
     await act(async()=>{await vi.advanceTimersByTimeAsync(500);});
     expect(document.querySelector('[data-workspace-chart]')).toBeNull();
     expect(page.savedLayout().groups.map(group => group.symbol)).toEqual(["TEST", "AAA", "CCC", "DDD"]);
-    const reopen = [...page.container.querySelectorAll("button")].find(button => button.textContent === "Reopen chart drawer")!;
+    const reopen = document.querySelector<HTMLButtonElement>('[aria-label="Reopen chart drawer"]')!;
     await act(async()=>{reopen.click();});
     expect(document.querySelectorAll('[data-workspace-chart]').length).toBe(4);
     expect(tab().getAttribute('aria-selected')).toBe('true');

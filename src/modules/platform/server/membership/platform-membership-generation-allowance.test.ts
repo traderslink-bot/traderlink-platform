@@ -21,7 +21,8 @@ beforeEach(()=>{
  db.exec(`CREATE TABLE platform_membership_plan_versions(plan_version_id,published_at_utc);
  CREATE TABLE platform_membership_plan_features(plan_version_id,feature_key,feature_kind,limit_value,reset_days);
  CREATE TABLE platform_membership_entitlements(entitlement_id,user_id,status,plan_version_id,source_type,starts_at_utc,ends_at_utc,created_at_utc,updated_at_utc);
- CREATE TABLE platform_membership_feature_policies(feature_key,enforcement_mode);
+ CREATE TABLE platform_membership_feature_policies(feature_key PRIMARY KEY,enforcement_mode);
+ INSERT INTO platform_membership_feature_policies VALUES ('trade_analyzer.analyses','enforced'),('levels.generations','enforced');
  CREATE TABLE platform_operator_grants(user_id,authority_key,grant_state);
  CREATE TABLE level_analysis_analyzer_reservations(reservation_id,user_id,logical_trade_job_id,allowance_cycle_id,daily_new_york_date,status,correction_waiver,expires_at_utc,created_at_utc,updated_at_utc);
  CREATE TABLE level_analysis_analyzer_acquisitions(acquisition_id,market_session_set_id,charged_user_id,reservation_id,charge_kind,started_at_utc,completed_at_utc,outcome);
@@ -38,12 +39,12 @@ beforeEach(()=>{
 });
 afterEach(()=>db.close());
 describe('plan-based Analyzer generation admission and accounting',()=>{
- it('defaults to enforced and distinguishes no feature from an included zero allowance',()=>{
+ it('enforces the configured policy and distinguishes no feature from an included zero allowance',()=>{
   expect(read()).toMatchObject({included:false,remaining:0});
   grant(0);expect(read()).toMatchObject({included:true,remaining:0});
  });
  it.each(['off','shadow'])('preserves explicit %s policy and beta fallback',mode=>{
-  db.prepare("INSERT INTO platform_membership_feature_policies VALUES ('trade_analyzer.analyses',?)").run(mode);
+  db.prepare("UPDATE platform_membership_feature_policies SET enforcement_mode=? WHERE feature_key='trade_analyzer.analyses'").run(mode);
   expect(read()).toBeNull();expect(new SharedAnalyzerAllowanceRepository(db).availability(user,at).selectableAvailable).toBe(10);
  });
  it('reserves the last use atomically across jobs and releases an unused reservation',()=>{
@@ -116,7 +117,7 @@ describe('plan-based Analyzer generation admission and accounting',()=>{
 describe('plan-based Levels Generator allowance',()=>{
  const levels=()=>readGenerationAllowance(db,user,'levels.generations',at);
  beforeEach(()=>db.exec('CREATE TABLE platform_stock_levels_usage(user_id,requested_at_ms)'));
- it('defaults enforced with no access and distinguishes included zero',()=>{
+ it('enforces the configured policy with no access and distinguishes included zero',()=>{
   expect(levels()).toMatchObject({included:false,remaining:0});
   grant(0);db.exec("UPDATE platform_membership_plan_features SET feature_key='levels.generations'");
   expect(levels()).toMatchObject({included:true,remaining:0});
@@ -136,7 +137,7 @@ describe('plan-based Levels Generator allowance',()=>{
   expect(levels()).toMatchObject({included:false,remaining:0});
  });
  it.each(['off','shadow'])('preserves explicit %s rollout',mode=>{
-  db.prepare("INSERT INTO platform_membership_feature_policies VALUES ('levels.generations',?)").run(mode);
+  db.prepare("UPDATE platform_membership_feature_policies SET enforcement_mode=? WHERE feature_key='levels.generations'").run(mode);
   expect(levels()).toBeNull();
  });
 });
