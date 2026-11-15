@@ -11,6 +11,7 @@ import IconButton from "@mui/material/IconButton";
 import GridViewOutlined from "@mui/icons-material/GridViewOutlined";
 import MenuBookOutlined from "@mui/icons-material/MenuBookOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import NetworkCheck from "@mui/icons-material/NetworkCheck";
 import {useChartPreferences} from "./use-chart-preferences";
 import {parseVwapSeedRequest,validVwapSeed,type VwapSeed} from "@/src/modules/scanner/alpaca/chart-vwap-seed";
 import {easternClock} from "@/src/modules/scanner/live/sessions";
@@ -959,7 +960,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       {CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
       <IconButton size="small" disabled={!ready} aria-label="Chart options" aria-haspopup="menu"
         onClick={event=>setMenuAnchor(event.currentTarget)} sx={{minWidth:44,minHeight:mainToolbar?34:44}}><SettingsOutlined fontSize="small"/></IconButton>
-      <Button size="small" disabled={!ready} onClick={()=>openIndicators()} sx={{minHeight:mainToolbar?34:44,minWidth:0,px:0.75,textTransform:"none"}}>Indicators</Button>
+      <IconButton size="small" aria-label="Indicators" title="Indicators" aria-haspopup="dialog"
+        disabled={!ready} onClick={()=>openIndicators()} sx={{width:mainToolbar?34:44,height:mainToolbar?34:44}}>
+        <NetworkCheck fontSize="small"/>
+      </IconButton>
       {drawingToolbar}
       {journalButton}
       {multiviewButton}
