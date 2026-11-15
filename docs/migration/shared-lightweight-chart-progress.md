@@ -353,3 +353,9 @@ The QA rerun found that a single pane was reopening its daily stream on each tim
 Design Services opens Drawing Tools on every shared chart. The left toolbar defaults to hidden, can be shown for the current chart from Drawing Tools, and opens by default on accounts that opt into the existing toolbar preference. Both entry points share the same tool choices and drawing state. Desktop has Measure and Undo shortcuts. The compact rail scrolls the tool groups and keeps Drawing options and Close in reach.
 
 Each of the 91 tools has a distinct outline icon. The tool submenus keep a separate sticky Back row with an arrow. Browser QA checked all 91 icons, keyboard and click navigation, drawing with the rail shown and hidden, undo, and the compact rail in mobile portrait and landscape with isolated market data. Opening, navigating and hiding the rail made no extra candle or stream requests in these checks.
+
+## Indicator widths on the price chart
+
+EMA, SMA, VWAP and Bollinger Band lines start at 1 px for every account. The price chart and Indicator settings ignore widths saved before this update, including old presets. The All charts section lets users set widths from 1 to 4 px and confirm replacing widths on their current overlays and in saved presets. Individual overlay adjustments can be made afterward. Lower-pane indicator styles are independent. Width-only changes use the live series options without rebuilding the chart.
+
+Scoped TypeScript, targeted ESLint, and 42 focused tests passed. The shared chart browser fixture verified the exact 1 px and 3 px series options on desktop and four-chart mobile portrait and landscape. Cancel preserved the old value. Apply persisted the new value without recreating charts, restarting data streams or requesting more candles. Reload kept the confirmed width.

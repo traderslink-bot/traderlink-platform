@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {expect,it} from 'vitest';
-import {DEFAULT_CHART_PREFERENCES,parseChartPreferences,type ChartIndicator} from './chart-preferences';
+import {DEFAULT_CHART_PREFERENCES,defaultVwapBands,parseChartPreferences,setAllIndicatorOverlayWidths,withoutOverlayWidthOverrides,type ChartIndicator} from './chart-preferences';
 import {indicatorValues,indicatorHistogramColor,indicatorPlotStyle,movingAverage,visibleSessionBars} from './chart-indicators';
 import type {Candle} from './candles';
 const study=(type:ChartIndicator['type'],options:Partial<ChartIndicator>={}):ChartIndicator=>({id:'test',type,period:3,color:'#ff9900',width:2,...options});
@@ -57,4 +57,46 @@ it("preserves valid crosshair choices and accepts existing preferences without a
     expect(parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, crosshairTarget }).crosshairTarget).toBe(crosshairTarget);
   }
   expect(() => parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, crosshairTarget: "indicator:" })).toThrow();
+});
+
+it('starts every existing price overlay plot and legacy saved preset at 1 px', () => {
+ const indicators = [
+  study('EMA', {id:'ema',plots:{main:{width:4,color:'#123456',style:2}}}),
+  study('SMA', {id:'sma',width:3}),
+  study('Bollinger', {id:'bb',plots:{upper:{width:3}, lower:{width:4}}}),
+  study('VWAP', {id:'vwap',vwapBands:defaultVwapBands(),plots:{main:{width:3},'upper-1':{width:4}}}),
+ ];
+ const legacy = parseChartPreferences({
+  ...DEFAULT_CHART_PREFERENCES, indicators,
+  savedIndicatorPresets:[{id:'saved-ema',name:'Old EMA',type:'EMA',indicators:[indicators[0]]}],
+ });
+ for (const indicator of legacy.indicators) {
+  for (const plot of indicatorValues([],indicator)) {
+   expect(indicatorPlotStyle(indicator,plot.key).width).toBe(1);
+  }
+ }
+ expect(indicatorPlotStyle(legacy.savedIndicatorPresets![0].indicators[0],'main'))
+  .toMatchObject({width:1,color:'#123456',style:2});
+});
+
+it('replaces current and saved overlay widths, keeps other styles and allows later line edits', () => {
+ const ema = study('EMA',{id:'ema',plots:{main:{overlayWidth:4,color:'#123456',style:2}}});
+ const rsi = study('RSI',{id:'rsi',plots:{main:{width:3}}});
+ const preferences = parseChartPreferences({
+  ...DEFAULT_CHART_PREFERENCES, indicators:[ema,rsi],
+  savedIndicatorPresets:[{id:'mine',name:'My EMA',type:'EMA',indicators:[ema]}],
+ });
+ expect(indicatorPlotStyle(preferences.indicators[0],'main').width).toBe(4);
+ const applied = parseChartPreferences(setAllIndicatorOverlayWidths(preferences,2));
+ expect(applied.indicatorOverlayLineWidth).toBe(2);
+ for (const indicator of [applied.indicators[0],applied.savedIndicatorPresets![0].indicators[0]]) {
+  expect(indicator.plots?.main.overlayWidth).toBeUndefined();
+  expect(indicatorPlotStyle(indicator,'main',applied.indicatorOverlayLineWidth))
+   .toMatchObject({width:2,color:'#123456',style:2});
+ }
+ expect(indicatorPlotStyle(applied.indicators[1],'main',applied.indicatorOverlayLineWidth).width).toBe(3);
+ expect(indicatorPlotStyle(ema,'main',applied.indicatorOverlayLineWidth).width).toBe(4);
+ expect(withoutOverlayWidthOverrides(ema)).toEqual(withoutOverlayWidthOverrides(applied.indicators[0]));
+ expect(() => parseChartPreferences({...preferences,indicatorOverlayLineWidth:5})).toThrow('invalid_preferences');
+ expect(() => parseChartPreferences({...preferences,indicators:[study('EMA',{plots:{main:{overlayWidth:0 as 1}}})]})).toThrow('invalid_preferences');
 });

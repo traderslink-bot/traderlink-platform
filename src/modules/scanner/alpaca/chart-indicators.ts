@@ -1,10 +1,10 @@
-import {VWAP_BAND_COLORS} from './chart-preferences';
+import {isPriceOverlayIndicator,VWAP_BAND_COLORS} from './chart-preferences';
 import {addVwapMoment} from './vwap-moments';
 import {rollingDeviation} from './rolling-deviation';
 import type {VwapSeed} from './chart-vwap-seed';
 import type {ChartSessionCalendar} from './chart-calendar';
 import type {Candle,ChartTimeframe} from './candles';
-import type {ChartIndicator,ChartPreferences,MaType,PriceSource} from './chart-preferences';
+import type {ChartIndicator,ChartPreferences,IndicatorLineWidth,MaType,PriceSource} from './chart-preferences';
 export type IndicatorPoint={time:number;value:number};
 const sessionClock=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit'});
 export function isVisibleSession(time:number,p:ChartPreferences,calendar?:ChartSessionCalendar){
@@ -103,9 +103,13 @@ function baseIndicatorValues(bars:readonly Candle[],i:ChartIndicator,timeframe?:
  const distance=rollingDeviation(values,i.period).map(value=>value===null?null:deviation*value);
  return [{key:'main',label:`BB ${i.period}, ${deviation}`,points:points(middle),pane:false},{key:'upper',label:'Upper band',points:points(middle.map((value,n)=>value===null||distance[n]===null?null:value+distance[n]!)),pane:false},{key:'lower',label:'Lower band',points:points(middle.map((value,n)=>value===null||distance[n]===null?null:value-distance[n]!)),pane:false}];
 }
-export function indicatorPlotStyle(indicator:ChartIndicator,key:string){
+// Price overlays use the new setting so old saved widths cannot change the 1 px default.
+export function indicatorOverlayWidth(indicator: ChartIndicator, key: string, defaultWidth: IndicatorLineWidth = 1): IndicatorLineWidth {
+ return indicator.plots?.[key]?.overlayWidth ?? defaultWidth;
+}
+export function indicatorPlotStyle(indicator:ChartIndicator,key:string,overlayWidth:IndicatorLineWidth=1){
  const reference=indicator.type==='RSI'&&['upper','middle','lower'].includes(key),band=indicator.type==='VWAP'&&/^(upper|lower)-[123]$/.test(key),bandEnabled=!band||indicator.vwapBands?.levels[Number(key.at(-1))-1]?.enabled===true;
- return {visible:indicator.visible!==false&&indicator.plots?.[key]?.visible!==false&&bandEnabled,color:indicator.plots?.[key]?.color??(band?VWAP_BAND_COLORS[Number(key.at(-1))-1]:reference?'#888888':key==='signal'?'#42a5f5':indicator.color),width:indicator.plots?.[key]?.width??(reference||band?1:indicator.width),style:indicator.plots?.[key]?.style??(reference?2:0)} as const;
+ return {visible:indicator.visible!==false&&indicator.plots?.[key]?.visible!==false&&bandEnabled,color:indicator.plots?.[key]?.color??(band?VWAP_BAND_COLORS[Number(key.at(-1))-1]:reference?'#888888':key==='signal'?'#42a5f5':indicator.color),width:isPriceOverlayIndicator(indicator.type)?indicatorOverlayWidth(indicator,key,overlayWidth):indicator.plots?.[key]?.width??(reference?1:indicator.width),style:indicator.plots?.[key]?.style??(reference?2:0)} as const;
 }
 export function indicatorHistogramColor(indicator:ChartIndicator,value:number,previous:number,up:string,down:string){
  const key=value>=0?(value>=previous?'positive-rising':'positive-falling'):(value>=previous?'negative-rising':'negative-falling');

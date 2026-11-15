@@ -14,7 +14,9 @@ export function defaultVwapBands(firstEnabled=true):VwapBands{
  const level=(index:number):VwapBandLevel=>({enabled:index===0&&firstEnabled,multiplier:index+1,fillVisible:true,fillColor:VWAP_BAND_COLORS[index],fillOpacity:5});
  return {mode:'Standard deviation',levels:[level(0),level(1),level(2)]};
 }
-export type PlotStyle={visible?:boolean;color?:string;width?:1|2|3|4;style?:0|1|2};
+export const INDICATOR_LINE_WIDTHS = [1, 2, 3, 4] as const;
+export type IndicatorLineWidth = typeof INDICATOR_LINE_WIDTHS[number];
+export type PlotStyle={visible?:boolean;color?:string;width?:IndicatorLineWidth;overlayWidth?:IndicatorLineWidth;style?:0|1|2};
 export type IndicatorOutput={precision?:number;priceScaleLabels?:boolean;statusLineValues:boolean};
 export type ChartIndicator={output?:IndicatorOutput;id:string;type:IndicatorType;period:number;color:string;width:1|2|3;anchor?:typeof VWAP_ANCHORS[number];hideOnDaily?:boolean;vwapBands?:VwapBands;offset?:number;calculationTimeframe?:ChartCalculationTimeframe;waitForClose?:boolean;timeframes?:ChartTimeframe[];source?:PriceSource;visible?:boolean;fastLength?:number;slowLength?:number;signalLength?:number;oscillatorMa?:"SMA"|"EMA";signalMa?:"SMA"|"EMA";deviation?:number;basisMa?:MaType;levels?:{upper:number;middle:number;lower:number};smoothing?:{type:MaType|"None"|"SMA+BB";length:number;deviation:number};plots?:Record<string,PlotStyle>};
 export const MAX_SAVED_INDICATOR_PRESETS = 20;
@@ -22,7 +24,7 @@ export const MAX_SAVED_INDICATOR_PRESET_BYTES = 32 * 1024;
 export const MAX_INDICATOR_PRESET_NAME_LENGTH = 60;
 export type SavedIndicatorPreset = { id: string; name: string; type: IndicatorType; indicators: ChartIndicator[] };
 export type CrosshairTarget = "price" | "normal" | "nearest" | `indicator:${string}:${string}`;
-export type ChartPreferences={version:1;alwaysShowDrawingToolbar?:boolean;autosaveDrawings?:boolean;crosshairTarget?:CrosshairTarget;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
+export type ChartPreferences={version:1;alwaysShowDrawingToolbar?:boolean;autosaveDrawings?:boolean;crosshairTarget?:CrosshairTarget;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;indicatorOverlayLineWidth?:IndicatorLineWidth;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
 export const DEFAULT_CHART_PREFERENCES:ChartPreferences={version:1,timeframe:'1m',theme:'auto',kind:'candles',grid:true,volume:true,volumeHeight:20,logarithmic:false,autoScale:true,timezone:'America/New_York',upColor:'#16a085',downColor:'#e45757',premarket:true,regular:true,postmarket:true,indicators:[]};
 export function indicatorPriceScaleLabels(preferences:ChartPreferences,indicator:ChartIndicator):boolean {
  return indicator.output?.priceScaleLabels??preferences.indicatorPriceScaleLabels??false;
@@ -31,6 +33,30 @@ export function setAllIndicatorPriceScaleLabels(preferences:ChartPreferences,vis
  return {...preferences,indicatorPriceScaleLabels:visible,indicators:preferences.indicators.map(indicator=>
   indicator.output?.priceScaleLabels===undefined?indicator:{...indicator,output:{...indicator.output,priceScaleLabels:undefined}})};
 }
+export function isPriceOverlayIndicator(type: IndicatorType): boolean {
+ return type === 'EMA' || type === 'SMA' || type === 'VWAP' || type === 'Bollinger';
+}
+
+export function withoutOverlayWidthOverrides(indicator: ChartIndicator): ChartIndicator {
+ if (!isPriceOverlayIndicator(indicator.type) || !indicator.plots) return indicator;
+ const plots = Object.fromEntries(Object.entries(indicator.plots).map(([key, plot]) => {
+  const style = { ...plot };
+  delete style.overlayWidth;
+  return [key, style] as const;
+ }).filter(([, plot]) => Object.keys(plot).length));
+ return { ...indicator, plots: Object.keys(plots).length ? plots : undefined };
+}
+
+export function setAllIndicatorOverlayWidths(preferences: ChartPreferences, width: IndicatorLineWidth): ChartPreferences {
+ return {
+  ...preferences,
+  indicatorOverlayLineWidth: width,
+  indicators: preferences.indicators.map(withoutOverlayWidthOverrides),
+  savedIndicatorPresets: preferences.savedIndicatorPresets?.map(preset =>
+   ({ ...preset, indicators: preset.indicators.map(withoutOverlayWidthOverrides) })),
+ };
+}
+
 export function parseChartPreferences(value:unknown):ChartPreferences{
  if(!value||typeof value!=='object')throw Error('invalid_preferences');const p=value as ChartPreferences;
  if(p.version!==1||!CHART_TIMEFRAMES.includes(p.timeframe)||!['auto','light','dark'].includes(p.theme)||!['candles','bars','line'].includes(p.kind)||!['America/New_York','America/Toronto','UTC'].includes(p.timezone)||!Number.isInteger(p.volumeHeight)||p.volumeHeight<10||p.volumeHeight>40)throw Error('invalid_preferences');
@@ -39,12 +65,13 @@ export function parseChartPreferences(value:unknown):ChartPreferences{
  const color=(s:unknown)=>typeof s==='string'&&/^#[a-f0-9]{6}$/i.test(s);
  if(p.autosaveDrawings!==undefined&&typeof p.autosaveDrawings!=='boolean')throw Error('invalid_preferences');
  if(p.alwaysShowDrawingToolbar!==undefined&&typeof p.alwaysShowDrawingToolbar!=='boolean')throw Error('invalid_preferences');
+ if(p.indicatorOverlayLineWidth!==undefined&&!INDICATOR_LINE_WIDTHS.includes(p.indicatorOverlayLineWidth))throw Error('invalid_preferences');
  if(p.indicatorPriceScaleLabels!==undefined&&typeof p.indicatorPriceScaleLabels!=='boolean')throw Error('invalid_preferences');
  if(p.crosshairTarget!==undefined&&(typeof p.crosshairTarget!=="string"||!/^(?:price|normal|nearest|indicator:[A-Za-z0-9_-]{1,80}:[A-Za-z0-9_-]{1,40})$/u.test(p.crosshairTarget)))throw Error('invalid_preferences');
  if(p.scalePriceOnly!==undefined&&typeof p.scalePriceOnly!=='boolean')throw Error('invalid_preferences');
  if(!color(p.upColor)||!color(p.downColor)||!Array.isArray(p.indicators)||p.indicators.length>20)throw Error('invalid_preferences');
  const presets = p.savedIndicatorPresets === undefined ? undefined : parseSavedIndicatorPresets(p.savedIndicatorPresets);
- return {version:1,...(p.autosaveDrawings!==undefined?{autosaveDrawings:p.autosaveDrawings}:{}),...(p.alwaysShowDrawingToolbar!==undefined?{alwaysShowDrawingToolbar:p.alwaysShowDrawingToolbar}:{}),...(p.crosshairTarget!==undefined?{crosshairTarget:p.crosshairTarget}:{}),timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,autoScale:p.autoScale,...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
+ return {version:1,...(p.autosaveDrawings!==undefined?{autosaveDrawings:p.autosaveDrawings}:{}),...(p.alwaysShowDrawingToolbar!==undefined?{alwaysShowDrawingToolbar:p.alwaysShowDrawingToolbar}:{}),...(p.crosshairTarget!==undefined?{crosshairTarget:p.crosshairTarget}:{}),timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,autoScale:p.autoScale,...(p.indicatorOverlayLineWidth!==undefined?{indicatorOverlayLineWidth:p.indicatorOverlayLineWidth}:{}),...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
 }
 
 function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {
@@ -66,7 +93,7 @@ function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {
  if(i.deviation!==undefined&&(!Number.isFinite(i.deviation)||i.deviation<=0||i.deviation>100))throw Error('invalid_preferences');
  if(i.levels!==undefined&&(!i.levels||typeof i.levels!=='object'||![i.levels.upper,i.levels.middle,i.levels.lower].every(v=>Number.isFinite(v)&&v>=0&&v<=100)||i.levels.lower>=i.levels.middle||i.levels.middle>=i.levels.upper))throw Error('invalid_preferences');
  if(i.smoothing!==undefined&&(!i.smoothing||typeof i.smoothing!=='object'||![...MA_TYPES,"None","SMA+BB"].includes(i.smoothing.type)||!Number.isInteger(i.smoothing.length)||i.smoothing.length<1||i.smoothing.length>10000||!Number.isFinite(i.smoothing.deviation)||i.smoothing.deviation<=0||i.smoothing.deviation>100))throw Error("invalid_preferences");
- if(i.plots!==undefined){if(!i.plots||typeof i.plots!=='object'||Array.isArray(i.plots)||Object.keys(i.plots).length>16)throw Error('invalid_preferences');for(const [key,plot]of Object.entries(i.plots)){if(!/^[a-z0-9-]{1,30}$/.test(key)||!plot||typeof plot!=='object'||plot.visible!==undefined&&typeof plot.visible!=='boolean'||plot.color!==undefined&&!color(plot.color)||plot.width!==undefined&&![1,2,3,4].includes(plot.width)||plot.style!==undefined&&![0,1,2].includes(plot.style))throw Error('invalid_preferences');}}
+ if(i.plots!==undefined){if(!i.plots||typeof i.plots!=='object'||Array.isArray(i.plots)||Object.keys(i.plots).length>16)throw Error('invalid_preferences');for(const [key,plot]of Object.entries(i.plots)){if(!/^[a-z0-9-]{1,30}$/.test(key)||!plot||typeof plot!=='object'||plot.visible!==undefined&&typeof plot.visible!=='boolean'||plot.color!==undefined&&!color(plot.color)||plot.width!==undefined&&!INDICATOR_LINE_WIDTHS.includes(plot.width)||plot.overlayWidth!==undefined&&(!isPriceOverlayIndicator(i.type)||!INDICATOR_LINE_WIDTHS.includes(plot.overlayWidth))||plot.style!==undefined&&![0,1,2].includes(plot.style))throw Error('invalid_preferences');}}
  }
  return indicators.map(i=>({id:i.id,type:i.type,period:i.period,color:i.color,width:i.width,
  ...(i.output?{output:{...(i.output.priceScaleLabels!==undefined?{priceScaleLabels:i.output.priceScaleLabels}:{}),statusLineValues:i.output.statusLineValues,...(i.output.precision!==undefined?{precision:i.output.precision}:{})}}:{}),
@@ -78,7 +105,7 @@ function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {
  ...Object.fromEntries((['fastLength','slowLength','signalLength','oscillatorMa','signalMa','deviation','basisMa'] as const).filter(key=>i[key]!==undefined).map(key=>[key,i[key]])),
  ...(i.smoothing?{smoothing:{type:i.smoothing.type,length:i.smoothing.length,deviation:i.smoothing.deviation}}:{}),
  ...(i.levels?{levels:{upper:i.levels.upper,middle:i.levels.middle,lower:i.levels.lower}}:{}),
- ...(i.plots?{plots:Object.fromEntries(Object.entries(i.plots).map(([key,value])=>[key,{...(value.visible!==undefined?{visible:value.visible}:{}),...(value.color!==undefined?{color:value.color}:{}),...(value.width!==undefined?{width:value.width}:{}),...(value.style!==undefined?{style:value.style}:{})}]))}:{})}));
+ ...(i.plots?{plots:Object.fromEntries(Object.entries(i.plots).map(([key,value])=>[key,{...(value.visible!==undefined?{visible:value.visible}:{}),...(value.color!==undefined?{color:value.color}:{}),...(value.width!==undefined?{width:value.width}:{}),...(value.overlayWidth!==undefined?{overlayWidth:value.overlayWidth}:{}),...(value.style!==undefined?{style:value.style}:{})}]))}:{})}));
 }
 
 function parseSavedIndicatorPresets(value: unknown): SavedIndicatorPreset[] {

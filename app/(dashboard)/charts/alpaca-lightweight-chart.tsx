@@ -23,20 +23,20 @@ import {calculationInterval,futureCalculationAxis} from "@/src/modules/scanner/a
 import {carryVwapPoints,offsetVwap,projectVwap,indicatorReadoutIndex,sampleCalendarVwap} from "@/src/modules/scanner/alpaca/chart-vwap-projection";
 import {readChartCalendarYear} from "@/src/modules/scanner/alpaca/chart-calendar-request";
 import {ChartSessionCalendar} from "@/src/modules/scanner/alpaca/chart-calendar";
-import {type IndicatorPlot,vwapAnchorKey,indicatorPlotStyle,indicatorHistogramColor,indicatorValues,isVisibleSession,visibleSessionBars} from "@/src/modules/scanner/alpaca/chart-indicators";
+import {type IndicatorPlot,vwapAnchorKey,indicatorOverlayWidth,indicatorPlotStyle,indicatorHistogramColor,indicatorValues,isVisibleSession,visibleSessionBars} from "@/src/modules/scanner/alpaca/chart-indicators";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { chartTickLabel, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
-import type { ISeriesMarkersPluginApi, Time } from "lightweight-charts";
+import type { ISeriesApi, ISeriesMarkersPluginApi, Time } from "lightweight-charts";
 import { aggregateCandles, candleBucket, displayCandles, easternDayStart, isCalendarChartTimeframe, nextChartCalendarPeriod, usesDailyCandles, CHART_TIMEFRAMES, type ChartCalculationTimeframe, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
 
 import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-view";
 import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorDisplay } from "./chart-view-memory";
-import { indicatorPriceScaleLabels, type ChartPreferences, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
+import { indicatorPriceScaleLabels, withoutOverlayWidthOverrides, type ChartIndicator, type ChartPreferences, type IndicatorLineWidth, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
 import { readChartCandleHistory, readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
 
 import { makeJournalMarkers, chartJournalDayAt, chartJournalFocusBounds } from "./chart-journal-model";
@@ -80,7 +80,23 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null), [frameAnchor, setFrameAnchor] = useState<HTMLElement | null>(null);
   // Toolbar visibility must not restart candles or subscriptions.
   const alwaysShowDrawingToolbar=accountPreferences.alwaysShowDrawingToolbar??false;
-  const chartOptionsKey=useMemo(()=>JSON.stringify({...accountPreferences,alwaysShowDrawingToolbar:undefined,autosaveDrawings:undefined}),[accountPreferences]);
+  const chartOptionsKey=useMemo(()=>JSON.stringify({
+    ...accountPreferences,alwaysShowDrawingToolbar:undefined,autosaveDrawings:undefined,savedIndicatorPresets:undefined,
+    indicatorOverlayLineWidth:undefined,indicators:accountPreferences.indicators.map(withoutOverlayWidthOverrides),
+  }),[accountPreferences]);
+  const overlayAppearance=useRef({width:1 as IndicatorLineWidth,indicators:new Map<string,ChartIndicator>()});
+  const overlaySeries=useRef<{series:ISeriesApi<"Line">;id:string;key:string}[]>([]);
+  useEffect(()=>{
+    const indicators=new Map(accountPreferences.indicators.map(indicator=>[indicator.id,indicator]));
+    const width=accountPreferences.indicatorOverlayLineWidth??1;
+    overlayAppearance.current={width,indicators};
+    for(const {series,id,key} of overlaySeries.current){
+      const indicator=indicators.get(id);
+      if(!indicator)continue;
+      const lineWidth=indicatorOverlayWidth(indicator,key,width);
+      if(series.options().lineWidth!==lineWidth)series.applyOptions({lineWidth});
+    }
+  },[accountPreferences.indicators,accountPreferences.indicatorOverlayLineWidth]);
   const preferences=useMemo(()=>JSON.parse(chartOptionsKey) as ChartPreferences,[chartOptionsKey]);
   const [drawingEngine,setDrawingEngine]=useState<ChartDrawings|null>(null);
   const {toolbar:drawingToolbar,leftToolbar:drawingLeftToolbar,leftToolbarShown,overlay:drawingOverlay,saveError:drawingSaveError}=useDrawingControls(
@@ -213,7 +229,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           (typeof time !== "number" || isChartDateStart(displayPoints, time, dayKey)), preferences.timezone) },
         localization: { timeFormatter: (time: Time) => typeof time === "number" ? formatChartTime(time) : String(time) },
       });
-      removeChart = () => chart.remove();
+      removeChart = () => { overlaySeries.current=[]; chart.remove(); };
       chart.priceScale("right").applyOptions({autoScale:restorePrice?savedView!.autoScale:preferences.autoScale,mode:preferences.logarithmic?PriceScaleMode.Logarithmic:PriceScaleMode.Normal});
       const candles = preferences.kind==="line" ? chart.addSeries(LineSeries,{color:preferences.upColor}) : preferences.kind==="bars" ? chart.addSeries(BarSeries,{upColor:preferences.upColor,downColor:preferences.downColor}) : chart.addSeries(CandlestickSeries, { upColor: preferences.upColor, downColor: preferences.downColor, borderVisible: false, wickUpColor: preferences.upColor, wickDownColor: preferences.downColor, priceFormat: { type: "price", precision: 4, minMove: 0.0001 } });
       const drawingInterval={"1m":60,"5m":300,"15m":900,"1h":3600,"4h":14400,"1D":86400}[vwapDisplayFrame];
@@ -261,9 +277,14 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         return parts.map((part,index)=>{const style=indicatorPlotStyle(indicator,part.key);
           const lastValueVisible=indicatorPriceScaleLabels(preferences,indicator);
           const labelOptions={title:lastValueVisible?part.label:"",lastValueVisible};
-          return {indicator,index,key:part.key,label:part.label,histogram:part.histogram,series:part.histogram
-          ?chart.addSeries(HistogramSeries,{visible:style.visible,...labelOptions,priceLineVisible:false},pane)
-          :chart.addSeries(LineSeries,{visible:style.visible,color:style.color,lineWidth:style.width,lineStyle:style.style,...labelOptions,priceLineVisible:false,...(preferences.scalePriceOnly&&pane===0?{autoscaleInfoProvider:()=>null}:{}),...(indicator.type==="RSI"?{autoscaleInfoProvider:()=>({priceRange:{minValue:0,maxValue:100}})}:{})},pane)};});
+          const study={indicator,index,key:part.key,label:part.label,histogram:part.histogram};
+          if(part.histogram)return {...study,series:chart.addSeries(HistogramSeries,{visible:style.visible,...labelOptions,priceLineVisible:false},pane)};
+          const {indicators,width}=overlayAppearance.current;
+          const lineWidth=pane===0?indicatorOverlayWidth(indicators.get(indicator.id)??indicator,part.key,width):style.width;
+          const series=chart.addSeries(LineSeries,{visible:style.visible,color:style.color,lineWidth,lineStyle:style.style,...labelOptions,priceLineVisible:false,...(preferences.scalePriceOnly&&pane===0?{autoscaleInfoProvider:()=>null}:{}),...(indicator.type==="RSI"?{autoscaleInfoProvider:()=>({priceRange:{minValue:0,maxValue:100}})}:{})},pane);
+          if(pane===0)overlaySeries.current.push({series,id:indicator.id,key:part.key});
+          return {...study,series};
+        });
       });
       const snapSeries=crosshairTarget.startsWith("indicator:")?studies.find(study=>
         `indicator:${study.indicator.id}:${study.key}`===crosshairTarget&&study.series.options().visible)?.series:undefined;

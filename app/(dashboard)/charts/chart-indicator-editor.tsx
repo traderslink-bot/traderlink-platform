@@ -20,7 +20,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import DeleteOutline from '@mui/icons-material/DeleteForeverOutlined';
 import {CHART_CALCULATION_TIMEFRAMES,CHART_TIMEFRAMES} from '@/src/modules/scanner/alpaca/candles';
-import {defaultVwapBands,type VwapBandLevel,type VwapBands,INDICATOR_TYPES,VWAP_ANCHORS,MA_TYPES,PRICE_SOURCES,MAX_SAVED_INDICATOR_PRESETS,MAX_SAVED_INDICATOR_PRESET_BYTES,MAX_INDICATOR_PRESET_NAME_LENGTH,type ChartIndicator,type PlotStyle,type SavedIndicatorPreset} from '@/src/modules/scanner/alpaca/chart-preferences';
+import {INDICATOR_LINE_WIDTHS,type IndicatorLineWidth,defaultVwapBands,type VwapBandLevel,type VwapBands,INDICATOR_TYPES,VWAP_ANCHORS,MA_TYPES,PRICE_SOURCES,MAX_SAVED_INDICATOR_PRESETS,MAX_SAVED_INDICATOR_PRESET_BYTES,MAX_INDICATOR_PRESET_NAME_LENGTH,type ChartIndicator,type PlotStyle,type SavedIndicatorPreset} from '@/src/modules/scanner/alpaca/chart-preferences';
 import {indicatorPresets, indicatorPresetRows, nextMovingAverageLine} from '@/src/modules/scanner/alpaca/chart-indicator-presets';
 import {indicatorPlotStyle,indicatorValues} from '@/src/modules/scanner/alpaca/chart-indicators';
 
@@ -31,12 +31,14 @@ function NumberInput({label,value,onChange,min=1,max=10000,integer=true,disabled
 function NumberSetting(props:Parameters<typeof NumberInput>[0]){return <NumberInput key={props.value} {...props}/>;}
 const name=(i:ChartIndicator)=>i.type==='EMA'||i.type==='SMA'||i.type==='RSI'?`${i.type} ${i.period}`:i.type==='MACD'?`MACD ${i.fastLength??12}, ${i.slowLength??26}, ${i.signalLength??9}`:i.type==='Bollinger'?`Bollinger Bands ${i.period}, ${i.deviation??2}`:'VWAP';
 const typeName = (type: ChartIndicator['type']) => type === 'Bollinger' ? 'Bollinger Bands' : type;
-export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresetsChange,initialType,defaultPriceScaleLabels,display,onDisplayChange}:{
+export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresetsChange,initialType,defaultPriceScaleLabels,display,onDisplayChange,overlayLineWidth,onOverlayLineWidthChange}:{
  indicators:ChartIndicator[];
  onChange:(value:ChartIndicator[])=>void;
  savedPresets:SavedIndicatorPreset[];
  initialType?: ChartIndicator['type'];
  defaultPriceScaleLabels: boolean;
+ overlayLineWidth: IndicatorLineWidth;
+ onOverlayLineWidthChange: (value: IndicatorLineWidth) => void;
  display: import('./chart-view-memory').ChartIndicatorDisplay;
  onDisplayChange: (type: ChartIndicator['type'], action: 'hidden' | 'enabled', value: boolean) => void;
  onPresetsChange:(presets:SavedIndicatorPreset[])=>void;
@@ -47,6 +49,10 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  const [removal,setRemoval]=useState<{kind:'line'|'indicator';id:string;type:ChartIndicator['type'];label?:string}>();
  const settingsId = useId();
  const confirmationId = useId();
+ const widthConfirmationId = useId();
+ const [pendingWidth, setPendingWidth] = useState<IndicatorLineWidth>();
+ const [widthChoice, setWidthChoice] = useState<{base:IndicatorLineWidth; value:IndicatorLineWidth}>();
+ const selectedWidth = widthChoice?.base === overlayLineWidth ? widthChoice.value : overlayLineWidth;
  const restoreSelectAfterRemoval = useRef(false);
  const indicatorSelectRef = useRef<{focus: () => void} | null>(null);
  const active=indicators.find(i=>i.id===selected);
@@ -123,11 +129,11 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     </>:null}
     {active.type==='RSI'?<Stack spacing={1}>{(['upper','middle','lower'] as const).map((key,index)=>{const levels=active.levels??{upper:70,middle:50,lower:30};return <NumberSetting key={key} label={['Upper level','Middle level','Lower level'][index]} value={levels[key]} min={key==='lower'?0:levels[key==='middle'?'lower':'middle']+0.01} max={key==='upper'?100:levels[key==='middle'?'upper':'middle']-0.01} integer={false} onChange={value=>edit({levels:{...levels,[key]:value}})}/>;})}</Stack>:null}
    </Stack>:activeTab==='visibility'?<Stack sx={{pt:1}}>{CHART_TIMEFRAMES.map(frame=><FormControlLabel key={frame} label={frame} control={<Checkbox checked={(active.timeframes??[...CHART_TIMEFRAMES]).includes(frame)} onChange={(_,checked)=>edit({timeframes:CHART_TIMEFRAMES.filter(value=>value===frame?checked:(active.timeframes??[...CHART_TIMEFRAMES]).includes(value))})}/>}/>)}</Stack>:<Stack spacing={2} sx={{pt:2}}>
-    {indicatorValues([],active).filter(plot=>active.type!=='VWAP'||plot.key==='main'||bands.levels[Number(plot.key.at(-1))-1]?.enabled).map(plot=>{const options=indicatorPlotStyle(active,plot.key);const inlineControls = movingAverage && plot.key === 'main'; return <Box key={plot.key} sx={{borderBottom:1,borderColor:'divider',pb:1}}>
+    {indicatorValues([],active).filter(plot=>active.type!=='VWAP'||plot.key==='main'||bands.levels[Number(plot.key.at(-1))-1]?.enabled).map(plot=>{const options=indicatorPlotStyle(active,plot.key,overlayLineWidth);const inlineControls = movingAverage && plot.key === 'main'; return <Box key={plot.key} sx={{borderBottom:1,borderColor:'divider',pb:1}}>
      {!inlineControls && <FormControlLabel label={plot.label} control={<Checkbox checked={options.visible} onChange={(_,visible)=>style(plot.key,{visible})}/>}/>}
      {!plot.histogram?<Stack direction="row" sx={{flexWrap:'wrap',gap:1}}>
       {!inlineControls && <TextField label={`${plot.label} color`} type="color" key={options.color} defaultValue={options.color} onBlur={e=>style(plot.key,{color:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:130}}/>}
-      <TextField select label="Width" value={options.width} onChange={e=>style(plot.key,{width:Number(e.target.value) as PlotStyle['width']})} size="small" sx={{width:95}}>{[1,2,3,4].map(value=><MenuItem key={value} value={value}>{value}px</MenuItem>)}</TextField>
+      <TextField select label="Width" value={options.width} onChange={e=>{const width=Number(e.target.value) as IndicatorLineWidth;style(plot.key,plot.pane?{width}:{overlayWidth:width});}} size="small" sx={{width:95}}>{INDICATOR_LINE_WIDTHS.map(value=><MenuItem key={value} value={value}>{value} px</MenuItem>)}</TextField>
       <TextField select label="Line style" value={options.style} onChange={e=>style(plot.key,{style:Number(e.target.value) as PlotStyle['style']})} size="small" sx={{width:120}}>{['Solid','Dotted','Dashed'].map((label,value)=><MenuItem key={value} value={value}>{label}</MenuItem>)}</TextField>
      </Stack>:<Stack spacing={1}>{['positive-rising','positive-falling','negative-rising','negative-falling'].map(key=><TextField key={`${key}-${active.plots?.[key]?.color}`} label={key.replace('-',' ')} type="color" defaultValue={active.plots?.[key]?.color??(key.startsWith('positive')?'#16a085':'#e45757')} onBlur={e=>style(key,{color:e.target.value})} size="small" slotProps={{inputLabel:{shrink:true}}}/>)}</Stack>}
     </Box>;})}
@@ -176,7 +182,7 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
    {movingAverage && <Stack spacing={1} sx={{mt:1,mb:1}}>
     {lines.map(line => {
      const label = name(line);
-     const options = indicatorPlotStyle(line, 'main');
+     const options = indicatorPlotStyle(line, 'main', overlayLineWidth);
      const expanded = openLine === line.id;
      const lineSettingsId = `${settingsId}-${line.id}`;
      return <Box key={line.id} sx={{border:1,borderColor:'divider',minWidth:0}}>
@@ -207,9 +213,9 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     {lines.map((line, index) => <MenuItem key={line.id} value={line.id}>{name(line)} ({index + 1})</MenuItem>)}
    </TextField>}
    {!movingAverage && plotSettings}
-   <Button variant="outlined" color="error" size="small" sx={{mt:2,textTransform:'none'}} onClick={()=>setRemoval({kind:'indicator',id:active.id,type:active.type})}>Remove from defaults</Button>
+   <Button variant="outlined" color="error" size="small" sx={{mt:2,textTransform:'none'}} onClick={()=>setRemoval({kind:'indicator',id:active.id,type:active.type})}>Remove indicator</Button>
   </Box> : null;
- const defaultsHeading = `${settingsId}-defaults`;
+ const allChartsHeading = `${settingsId}-defaults`;
  const chartHeading = `${settingsId}-chart`;
  return <>
   {indicators.length > 0 && <Stack component="section" aria-labelledby={chartHeading} spacing={1}>
@@ -232,9 +238,18 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
    })}
   </Stack>}
 
-  <Stack component="section" aria-labelledby={defaultsHeading} spacing={1}>
-  <Typography component="h3" id={defaultsHeading} sx={{fontWeight:700}}>Chart defaults</Typography>
-  <Typography variant="body2" color="text.secondary">Indicators you add here are saved to your account for Charts and Scanners.</Typography>
+  <Stack component="section" aria-labelledby={allChartsHeading} spacing={1}>
+  <Typography component="h3" id={allChartsHeading} sx={{fontWeight:700}}>All charts</Typography>
+  <Typography variant="body2" color="text.secondary">These indicator settings and presets are saved to your account.</Typography>
+  <Stack direction="row" sx={{alignItems:'center',gap:1,flexWrap:'wrap'}}>
+   <TextField select size="small" label="Line width over candles" value={selectedWidth}
+    onChange={event=>setWidthChoice({base:overlayLineWidth,value:Number(event.target.value) as IndicatorLineWidth})}
+    slotProps={{inputLabel:{shrink:true}}} sx={{width:165}}>
+    {INDICATOR_LINE_WIDTHS.map(value=><MenuItem key={value} value={value}>{value} px</MenuItem>)}
+   </TextField>
+   <Button color="inherit" variant="outlined" size="small" sx={{textTransform:'none'}}
+    onClick={()=>setPendingWidth(selectedWidth)}>Apply to all lines</Button>
+  </Stack>
   <TextField select fullWidth size="small" label="Add or edit indicator" inputRef={indicatorSelectRef} value="" onChange={event=>add(event.target.value as ChartIndicator['type'])}>
    {[...INDICATOR_TYPES].sort((a,b)=>Number(indicators.some(i=>i.type===b))-Number(indicators.some(i=>i.type===a))).map(type=>{
     const added=indicators.some(indicator=>indicator.type===type);
@@ -246,13 +261,28 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
   {settings}
   </Stack>
 
+  <Dialog open={pendingWidth!==undefined} onClose={()=>{setPendingWidth(undefined);setWidthChoice(undefined);}}
+   aria-labelledby={widthConfirmationId} fullWidth maxWidth="xs">
+   <DialogTitle id={widthConfirmationId}>Set all lines over the candles to {pendingWidth} px?</DialogTitle>
+   <DialogContent>This replaces individual line widths on all your charts and in your saved presets.</DialogContent>
+   <DialogActions>
+    <Button color="inherit" autoFocus onClick={()=>{setPendingWidth(undefined);setWidthChoice(undefined);}}>Cancel</Button>
+    <Button variant="outlined" color="warning" onClick={()=>{
+     if(pendingWidth===undefined)return;
+     onOverlayLineWidthChange(pendingWidth);
+     setPendingWidth(undefined);
+     setWidthChoice(undefined);
+    }}>Apply width</Button>
+   </DialogActions>
+  </Dialog>
+
   <Dialog open={Boolean(removal)} onClose={()=>setRemoval(undefined)} aria-labelledby={confirmationId} fullWidth maxWidth="xs" slotProps={{transition:{onExited:()=>{
    if(!restoreSelectAfterRemoval.current)return;
    restoreSelectAfterRemoval.current=false;
    indicatorSelectRef.current?.focus();
   }}}}>
-   <DialogTitle id={confirmationId}>{removal?.kind==='line' ? `Delete ${removal.label} line?` : removal ? `Remove ${typeName(removal.type)} from defaults?` : ''}</DialogTitle>
-   <DialogContent>{removal?.kind==='line' ? 'This removes the line from your saved indicator settings.' : 'This removes the entire indicator setup from your account defaults for Charts and Scanners.'}</DialogContent>
+   <DialogTitle id={confirmationId}>{removal?.kind==='line' ? `Delete ${removal.label} line?` : removal ? `Remove ${typeName(removal.type)} from all charts?` : ''}</DialogTitle>
+   <DialogContent>{removal?.kind==='line' ? 'This removes the line from your saved indicator settings.' : 'This removes the entire indicator setup from all of your charts.'}</DialogContent>
    <DialogActions>
     <Button color="inherit" onClick={()=>setRemoval(undefined)} autoFocus>Cancel</Button>
     <Button color="error" variant="outlined" onClick={()=>{
@@ -265,7 +295,7 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
      else if(selected===removal.id)choose(next.find(i=>i.type===removal.type)?.id??'');
      onChange(next);
      setRemoval(undefined);
-    }}>{removal?.kind==='line'?'Delete line':'Remove from defaults'}</Button>
+    }}>{removal?.kind==='line'?'Delete line':'Remove indicator'}</Button>
    </DialogActions>
   </Dialog>
  </>;
