@@ -1,4 +1,13 @@
 import Database from "better-sqlite3";
+import { vi } from "vitest";
+
+// These legacy generation tests exercise scheduling, issuance and reservations.
+// Membership admission is covered against the current schema by its own tests.
+vi.mock("@/src/modules/platform/server/membership/membership-ai-review-access", () => ({
+  hasAiReviewGenerationAccess: () => true,
+  assertAiReviewGenerationAccess: () => undefined,
+}));
+
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUuidV4, isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -18,7 +27,7 @@ type Fixture = Readonly<{
 function setup(): Fixture {
   const database = new Database(":memory:");
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => new Date(initialTime) });
+  runPlatformMigrations(database, { manifest: platformMigrationManifest.filter(migration => migration.executionOrder < 65), now: () => new Date(initialTime) });
   const userId = createCanonicalUuidV4();
   const workspaceId = createCanonicalUuidV4();
   const accountId = createCanonicalUuidV4();
@@ -50,7 +59,7 @@ WHERE type = 'table' AND name = 'coach_ai_review_budget_controls'`).get());
     fixture.database.prepare(`UPDATE coach_ai_review_budget_controls SET
   trailing_30_day_estimated_spend_cap_usd = '10',
   updated_at_utc = '2026-08-10T00:00:00.000Z'
-WHERE control_key = 'ai_reviews'`).run();
+WHERE control_key = 'ai_reviews' AND trailing_30_day_estimated_spend_cap_usd IS NULL`).run();
   }
   fixture.database.prepare(`UPDATE coach_ai_feature_controls SET enabled = 1, daily_request_cap = ?,
   daily_token_cap = 100000, daily_estimated_spend_cap_usd = '10', updated_at_utc = ?

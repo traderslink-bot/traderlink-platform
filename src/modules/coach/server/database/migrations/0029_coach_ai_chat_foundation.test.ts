@@ -17,7 +17,7 @@ function setup(): Database.Database {
   const database = new Database(":memory:");
   database.pragma("foreign_keys = ON");
   runPlatformMigrations(database, {
-    manifest: platformMigrationManifest,
+    manifest: platformMigrationManifest.filter(migration => migration.executionOrder <= 29),
     now: () => new Date(timestamp),
   });
   database.prepare(`INSERT INTO platform_users (

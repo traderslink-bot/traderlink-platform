@@ -12,15 +12,19 @@ const editor = source("app/(dashboard)/analytics/trade-explorer/trade-review-edi
 const actions = source("app/(dashboard)/analytics/trade-explorer/trade-review-actions.ts");
 const service = source("app/(dashboard)/analytics/trade-explorer/trade-review-service.ts");
 const annotations = source("src/modules/journal/server/annotations/journal-annotation-service.ts");
-const help = source("src/modules/help/core-analytics-guides.ts");
+const help = source("src/modules/help/trade-explorer-guides.ts");
+const detailsDrawer = source("app/(dashboard)/trades/trade-details-drawer.tsx");
+const workspace = source("app/(dashboard)/workspace/workspace-atomic-trade-edit-drawer.tsx");
 
 describe("Trade Explorer completed-trade review", () => {
-  it("keeps review editing separate from execution expansion", () => {
-    expect(client).toContain("TradeExplorerReviewEditor");
-    expect(client).toContain("Review notes, tags and rules for");
+  it("keeps Trade Details and execution expansion separate from Workspace editing", () => {
+    expect(client).toContain("<TradeDetailsDrawer");
+    expect(client).not.toContain("TradeExplorerReviewEditor");
+    expect(workspace).toContain("<TradeExplorerReviewEditor embedded");
+    expect(detailsDrawer).toContain("details.ruleReviews");
     expect(client).toContain("event.stopPropagation()");
     expect(client).toContain("toggleTradeExecutions(trade.roundTripId)");
-    expect(client).toContain("<TableCell>Review</TableCell>");
+    expect(client).toContain("<TableCell>Details</TableCell>");
   });
 
   it("provides the approved desktop and phone editor controls", () => {
@@ -33,9 +37,10 @@ describe("Trade Explorer completed-trade review", () => {
     expect(editor).toContain("Previous");
     expect(editor).toContain("Next");
     expect(editor).toContain("on this page");
-    expect(editor).toContain("Create or clear the new tag name");
-    expect(editor.match(/hasPendingTagName/gu)?.length ?? 0).toBeGreaterThanOrEqual(4);
-    expect(editor.match(/savingRef\.current/gu)?.length ?? 0).toBeGreaterThanOrEqual(6);
+    expect(editor).toContain("Create a reusable tag");
+    expect(editor).toContain("<TradeTagCreationDrawer");
+    expect(editor).toContain("savingRef.current = true");
+    expect(editor).toContain("savingRef.current = false");
   });
 
   it("keeps trader-authored and factual review data distinct", () => {
@@ -44,15 +49,15 @@ describe("Trade Explorer completed-trade review", () => {
     expect(editor).toContain("These results come from the recorded trade facts and cannot be edited here.");
     expect(editor).not.toContain("technicalNote");
     expect(editor).not.toMatch(/trading journal/iu);
-    expect(help).toContain("Automatic preset-rule results are calculated from the recorded facts and stay read-only");
+    expect(help).toContain("Journal notes, tags, saved rule results and exact");
   });
 
   it("derives account scope on the server and saves changed sections atomically", () => {
     expect(actions.startsWith('"use server";')).toBe(true);
     expect(service.startsWith('import "server-only";')).toBe(true);
-    expect(actions).toContain("requireTraderLinkPlatformPageScope()");
+    expect(actions).toContain("requireTraderLinkPlatformPageScope({ membershipFeatures: [\"analytics.trade_explorer\"] })");
     expect(service).toContain("requireExpectedJournalAccountSelection");
-    expect(service).toContain('candidate.projectionState === "ready_closed"');
+    expect(service).toContain('trade.projectionState !== "ready_closed"');
     expect(service).toContain('rule.sourceKind === "custom"');
     expect(annotations).toContain("saveTradeReview(");
     expect(annotations).toContain("this.annotations.immediate(() => {");

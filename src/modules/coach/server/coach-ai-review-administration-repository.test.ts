@@ -1,4 +1,6 @@
 import Database from "better-sqlite3";
+import { CoachReviewDeliveryScheduleRepository } from "./coach-weekly-review-schedule-repository";
+import { CoachAiReviewGenerationContractRepository } from "./coach-ai-review-generation-contract-repository";
 import { describe, expect, it } from "vitest";
 
 import type { JournalAdminScope } from "@/src/modules/platform/contracts/journal-admin-scope";
@@ -38,9 +40,15 @@ function setup(): Readonly<{ database: Database.Database; repository: CoachAiRev
 INSERT INTO platform_workspaces VALUES ('${workspaceId}', 'Review admin workspace', 'America/New_York', 'active', '${at}', '${at}');
 INSERT INTO platform_workspace_memberships VALUES ('${workspaceId}', '${userId}', 'owner', 'active', '${userId}', '${at}', '${at}');
 INSERT INTO journal_accounts VALUES ('${accountId}', '${workspaceId}', 'Primary', 'USD', 'America/New_York', 'active', '${userId}', '${at}', '${at}');
-INSERT INTO coach_review_delivery_settings VALUES ('${accountId}', 'friday', '16:00', '${at}');
 INSERT INTO coach_weekly_review_requests VALUES ('${weeklyRequestId}', '${userId}', '${workspaceId}', '${accountId}', '2026-08-03', '2026-08-07', 'traderlink_coach_weekly_ai_input_v1', '${"a".repeat(64)}', '{}', NULL, 'pending', NULL, NULL, '${at}', NULL);
 INSERT INTO coach_monthly_review_requests VALUES ('${monthlyRequestId}', '${userId}', '${workspaceId}', '${accountId}', '2026-08-01', '2026-08-31', 'complete_month', 'traderlink_coach_monthly_ai_input_v1', '${"b".repeat(64)}', '{}', NULL, 'pending', NULL, NULL, '${at}', NULL);`);
+  new CoachReviewDeliveryScheduleRepository(database).saveV2({
+    userId, workspaceId, workspaceRole: "owner", activeAccountId: accountId, allowedAccountIds: [accountId],
+  }, {
+    isEnabled: true, currentFrequency: "weekly", timingMode: "automatic_after_12_hours",
+    twoWeekAnchorMondayDate: null, pendingFrequency: null, pendingEffectiveMondayDate: null,
+    pendingTwoWeekAnchorMondayDate: null, expectedRevision: null,
+  }, new Date(at));
   new CoachAiProviderSettingsRepository(database).save({
     modelId: "gpt-review-test",
     inputCostUsdPerMillionTokens: "1",
@@ -103,6 +111,12 @@ describe("Coach AI review administration repository", () => {
   it("keeps weekly and monthly controls independent and reports privacy-safe aggregates", () => {
     const fixture = setup();
     try {
+      new CoachAiReviewGenerationContractRepository(fixture.database).activateV3({
+        requestIntakeStopped: true,
+        verifiedBackupCompleted: true,
+        oldProcessesStopped: true,
+        v2ReadReconciliationCompleted: true,
+      });
       fixture.repository.savePlatformControl({
         featureKey: "weekly_reviews", enabled: true, dailyRequestCap: 10, dailyTokenCap: 10_000, dailyEstimatedSpendCapUsd: "10",
       });

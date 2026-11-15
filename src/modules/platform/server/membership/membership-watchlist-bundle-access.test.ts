@@ -5,7 +5,7 @@ import { beforeEach,afterEach,describe,it,expect,vi } from 'vitest';
 import { amendmentFixture,amendmentAt as at } from './membership-addon-amendment.test-fixture';
 import { MembershipAddonAmendmentRepository } from './membership-addon-amendment-repository';
 import { readWatchlistPlanDecisions,saveWatchlistPlanPolicy,filterWatchlistPublicPlans } from '../../../watchlist/server/access/watchlist-plan-policy';
-beforeEach(()=>{vi.stubEnv('STRIPE_SECRET_KEY','sk_test_synthetic_only');vi.stubEnv('STRIPE_MEMBERSHIP_WEBHOOK_SECRET','synthetic_only')});afterEach(()=>vi.unstubAllEnvs());
+beforeEach(()=>{vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date(at));vi.stubEnv('STRIPE_SECRET_KEY','sk_test_synthetic_only');vi.stubEnv('STRIPE_MEMBERSHIP_WEBHOOK_SECRET','synthetic_only')});afterEach(()=>{vi.useRealTimers();vi.unstubAllEnvs()});
 describe('ticker-specific access from purchased bundles',()=>{
  it('recognizes purchased add-on and base plan identities without granting unpublished or expired access',()=>{
   const f=amendmentFixture();try{
