@@ -48,9 +48,9 @@ const candleSnapshotLifetime = 5 * 60_000;
 
 const indicatorName = (type: IndicatorType) => type === "Bollinger" ? "BOLL" : type;
 
-export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactIdentity, viewId, viewWorkspace = "main" }: {
+export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main" }: {
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
-  viewId?: string; viewWorkspace?: "main" | "scanner"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
+  viewId?: string; viewWorkspace?: "main" | "scanner"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
   const ticker = symbol.split(":").at(-1)!;
   const theme = useTheme();
@@ -697,7 +697,6 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
   }, [ticker, timeframe, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget]);
 
-  const compactToolbarHeight = 40;
   const mainToolbar = viewWorkspace === "main";
   const multiviewButton = onOpenMultiview && (
     <IconButton size="small" aria-label="Open Multiview for this chart view" title="Multiview" aria-haspopup="dialog" disabled={!ready}
@@ -712,6 +711,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       <Button aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready} sx={{ minWidth: 44, height: compactToolbarHeight, px: 0.5 }}>{timeframe}</Button>
       <IconButton aria-label={`${ticker} chart options`} aria-haspopup="menu" onClick={event => setMenuAnchor(event.currentTarget)} sx={{ width: 44, height: compactToolbarHeight }}><SettingsOutlined fontSize="small" /></IconButton>
       {multiviewButton}
+      {actions}
       {closeAction}
     </Stack> : <>    <Stack direction="row" sx={{ alignItems: "center", gap: 0.25, px: 0.5, minHeight: 27, flexWrap: "wrap" }}>
       <Typography sx={{ color:dark?"warning.main":"#354358",fontSize: 11, fontWeight: 700, mr: 0.5 }}>{ticker}</Typography>

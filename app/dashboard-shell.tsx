@@ -403,7 +403,7 @@ export function DashboardShell({
   const theme = useTheme();
   const pathname = usePathname();
   const chartWorkspacePage = pathname === "/charts";
-  const compactMarketPage = chartWorkspacePage || ["/scanners", "/screeners", "/admin/scanners"].includes(pathname);
+  const compactMarketPage = chartWorkspacePage || ["/trading-workspace", "/scanners", "/screeners", "/admin/scanners"].includes(pathname);
 
   const [loadedUnreadCounts, setLoadedUnreadCounts] = useState<{
     pathname: string; counts: PressReleaseUnreadCounts;
@@ -506,7 +506,7 @@ export function DashboardShell({
               (item.href !== "/scanner" || scannerEarlyAccess) &&
               (item.href !== "/market-news/general" || generalMarketNewsAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
-              (item.href !== "/scanners" || watchlistAdminNavigationAccess) &&
+              ((item.href !== "/scanners" && item.href !== "/trading-workspace") || watchlistAdminNavigationAccess) &&
               (item.href !== "/screeners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&
               (item.href !== "/admin/scanners" || watchlistAdminNavigationAccess) &&
@@ -871,7 +871,7 @@ export function DashboardShell({
               variant="outlined"
             />
           ) : null}
-          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : pathname === "/scanners" ? "dashboard-scanner-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
+          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : (pathname === "/scanners" || pathname === "/trading-workspace") ? "dashboard-scanner-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
           <NotificationCenter notifications={notifications} />
           <Tooltip title={helpLabel}>
             <IconButton
@@ -990,8 +990,9 @@ export function DashboardShell({
             minWidth: 0,
             pb: compactMarketPage ? { xs: "max(8px, env(safe-area-inset-bottom))", sm: 1 } : { xs: "max(16px, env(safe-area-inset-bottom))", sm: 2.5 },
             position: "relative",
-            px: compactMarketPage ? 1 : { xs: 1.5, sm: 2.5, xl: 3 },
-            pt: compactMarketPage ? 1 : { xs: 2, sm: 2.5 },
+            px: pathname === "/trading-workspace" ? { xs: "env(safe-area-inset-left, 0px)", sm: 0 } : compactMarketPage ? 1 : { xs: 1.5, sm: 2.5, xl: 3 },
+            pr: pathname === "/trading-workspace" ? { xs: "env(safe-area-inset-right, 0px)", sm: 0 } : undefined,
+            pt: pathname === "/trading-workspace" ? 0 : compactMarketPage ? 1 : { xs: 2, sm: 2.5 },
             ...(compactMarketPage ? {
               "--market-chart-height": "calc(100dvh - 80px - env(safe-area-inset-top, 0px) - max(0px, env(safe-area-inset-bottom, 0px) - 8px))",
               '& [data-traderlink-platform-dashboard-page] > :not(style) ~ :not(style)': { marginTop: 0 },

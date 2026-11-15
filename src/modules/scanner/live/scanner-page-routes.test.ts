@@ -9,6 +9,8 @@ vi.mock('next/navigation',()=>({notFound:()=>{throw Error('not_found')}}));
 vi.mock('@/app/dashboard-template',()=>({DashboardPage:({children}:{children:ReactNode})=>createElement('main',null,children),DashboardSecondaryAction:({children,href}:{children:ReactNode;href:string})=>createElement('a',{href},children),DashboardPanel:({children,title}:{children:ReactNode;title:string})=>createElement('section',null,createElement('h1',null,title),children)}));
 vi.mock('@/app/(dashboard)/screeners/live-screeners-client',()=>({LiveScreenersClient:({admin}:{admin?:boolean})=> createElement('div',null,admin?'scanner-admin-controls':'continuous-workspace')}));
 vi.mock('@/app/(dashboard)/admin/screeners/audit/scanner-audit-client',()=>({ScannerAuditClient:()=>createElement('div',null,'audit-controls')}));
+vi.mock('@/app/(dashboard)/screeners/workspace/live-screeners-client',()=>({LiveScreenersClient:()=>createElement('div',null,'trading-workspace')}));
+import TradingWorkspacePage from '@/app/(dashboard)/trading-workspace/page';
 import ScannerAdminPage,{metadata as adminMetadata} from '@/app/(dashboard)/admin/scanners/page';
 import ScannerAuditPage from '@/app/(dashboard)/admin/scanners/audit/page';
 import ScannersPage,{metadata as scannerMetadata} from '@/app/(dashboard)/scanners/page';
@@ -36,4 +38,13 @@ it('moves guarded admin and audit pages with navigation and keeps old page route
  for(const path of ['app/(dashboard)/admin/screeners/page.tsx','app/(dashboard)/admin/screeners/audit/page.tsx'])expect(existsSync(path)).toBe(false);
  auth.access.mockReturnValue(false);await expect(ScannerAdminPage()).rejects.toThrow('not_found');await expect(ScannerAuditPage()).rejects.toThrow('not_found');
  auth.identity.mockRejectedValue(Error('authentication_required'));await expect(ScannerAdminPage()).rejects.toThrow('authentication_required');await expect(ScannerAuditPage()).rejects.toThrow('authentication_required');
+});
+
+it('admits only the existing Watchlist admins to Trading Workspace',async()=>{
+ expect(renderToStaticMarkup(await TradingWorkspacePage())).toContain('trading-workspace');
+ auth.access.mockReturnValue(false);
+ await expect(TradingWorkspacePage()).rejects.toThrow('not_found');
+ auth.identity.mockRejectedValue(Error('authentication_required'));
+ await expect(TradingWorkspacePage()).rejects.toThrow('authentication_required');
+ expect(DASHBOARD_NAVIGATION_HREFS).toContain('/trading-workspace');
 });

@@ -33,10 +33,10 @@ describe("bounded scanner snapshot pacing", () => {
     expect(starts).toEqual([10000, 11500]);
   });
   it("defaults to a provisional 1.5s gap and permits bounded timing trials", () => {
-    expect(scannerSnapshotSpacing({})).toBe(1500);
-    expect(scannerSnapshotSpacing({ TRADERLINK_SCANNER_SNAPSHOT_SPACING_MS: "2000" })).toBe(2000);
+    expect(scannerSnapshotSpacing({NODE_ENV:"test"})).toBe(1500);
+    expect(scannerSnapshotSpacing({ NODE_ENV:"test", TRADERLINK_SCANNER_SNAPSHOT_SPACING_MS: "2000" })).toBe(2000);
     for (const value of ["0", "499", "5001", "NaN", "1000.5"]) {
-      expect(() => scannerSnapshotSpacing({ TRADERLINK_SCANNER_SNAPSHOT_SPACING_MS: value })).toThrow();
+      expect(() => scannerSnapshotSpacing({ NODE_ENV:"test", TRADERLINK_SCANNER_SNAPSHOT_SPACING_MS: value })).toThrow();
     }
   });
 });

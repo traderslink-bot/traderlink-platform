@@ -221,6 +221,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       label: "Trading Tools",
       icon: "marketCharts" as const,
       items: Object.freeze([
+        Object.freeze({ href: "/trading-workspace", label: "Trading Workspace", icon: "workspace" as const }),
         Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
         Object.freeze({ href: "/watchlist", label: "Watchlist", icon: "watchlist" as const }),
         Object.freeze({ href: "/scanners", label: "Scanners", icon: "scanner" as const }),
@@ -279,6 +280,7 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
+    "/trading-workspace": "Trading Workspace",
     "/workspace": "Welcome to TradersLink Beta App.",
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",

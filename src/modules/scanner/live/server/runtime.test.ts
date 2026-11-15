@@ -33,6 +33,7 @@ vi.mock("../../../watchlist/server/moomoo-watchlist-candle-bridge",()=>({
 }));
 
 function environment():NodeJS.ProcessEnv{return{
+  NODE_ENV:"test",
   TRADERLINK_PLATFORM_DB_PATH:`/tmp/scanner-runtime-unit-${randomUUID()}/platform.sqlite`,
   TRADERLINK_LIVE_SCREENERS_ENABLED:"true",TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED:"true",
 };}
