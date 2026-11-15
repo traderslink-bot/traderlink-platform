@@ -1,16 +1,16 @@
 import {calendarDate} from './chart-calendar';
 import type {VwapCorporateEvents} from './chart-vwap-events';
-import {chartSymbol,chartTimeframe,easternDayStart,type ChartTimeframe} from './candles';
+import {chartSymbol,chartTimeframe,easternDayStart,isCalendarChartTimeframe,type ChartCalculationTimeframe} from './candles';
 import {VWAP_ANCHORS,PRICE_SOURCES,type ChartIndicator,type PriceSource} from './chart-preferences';
 import {vwapAnchorKey} from './chart-indicators';
 import {easternClock} from '../live/sessions';
 import {CHART_HISTORY_FLOOR} from './chart-history';
 import type {VwapMoment} from './vwap-moments';
-export type VwapSeedRequest={symbol:string;timeframe:ChartTimeframe;anchor:NonNullable<ChartIndicator['anchor']>;before:number;premarket:boolean;regular:boolean;postmarket:boolean};
+export type VwapSeedRequest={symbol:string;timeframe:ChartCalculationTimeframe;anchor:NonNullable<ChartIndicator['anchor']>;before:number;premarket:boolean;regular:boolean;postmarket:boolean};
 export type VwapSeed={events?:VwapCorporateEvents;complete:true;request:VwapSeedRequest;basisDate:string;anchorKey:string;start:number;volume:number;sums:Record<Exclude<PriceSource,'hlcc4'>,number>&{hlcc4?:number};moments?:Record<PriceSource,VwapMoment>};
 export function parseVwapSeedRequest(query:URLSearchParams,now=Date.now()):VwapSeedRequest{
  const symbol=chartSymbol(query.get('symbol')??''),timeframe=chartTimeframe(query.get('timeframe')??''),anchor=query.get('anchor') as VwapSeedRequest['anchor'],before=Number(query.get('before'));
- if(!VWAP_ANCHORS.includes(anchor)||!Number.isSafeInteger(before)||before<CHART_HISTORY_FLOOR/1000||before*1000>now+60_000)throw Error('invalid_vwap_seed');
+ if(isCalendarChartTimeframe(timeframe)||!VWAP_ANCHORS.includes(anchor)||!Number.isSafeInteger(before)||before<CHART_HISTORY_FLOOR/1000||before*1000>now+60_000)throw Error('invalid_vwap_seed');
  const flags=['premarket','regular','postmarket'].map(key=>{const value=query.get(key);if(value!=='0'&&value!=='1')throw Error('invalid_vwap_seed');return value==='1';});
  if(!flags.some(Boolean))throw Error('invalid_vwap_seed');return {symbol,timeframe,anchor,before,premarket:flags[0],regular:flags[1],postmarket:flags[2]};
 }

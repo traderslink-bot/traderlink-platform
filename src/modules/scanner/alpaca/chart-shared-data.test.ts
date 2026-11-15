@@ -32,3 +32,40 @@ it("starts a fresh request after the last consumer aborts during a remount", asy
   const second=sharedChartFetch("/remount-bars",{signal:secondAbort.signal}).catch(error=>error.name);
   expect(transport).toHaveBeenCalledTimes(2);secondAbort.abort();expect(await second).toBe("AbortError");
 });
+
+it("reuses the daily stream and replays the current candle when changing views", async () => {
+  const connections: FixtureStream[] = [];
+  class FixtureStream extends EventTarget {
+    readonly close = vi.fn();
+    constructor() { super(); connections.push(this); }
+  }
+  vi.useFakeTimers();
+  vi.stubGlobal("EventSource", FixtureStream);
+  const url = "/api/screeners/charts/stream?symbol=HANDOFF&daily=1";
+  let nextView: ReturnType<typeof sharedChartStream> | undefined;
+  try {
+    const firstView = sharedChartStream(url, true);
+    const source = connections[0];
+    firstView.close();
+    vi.advanceTimersByTime(500);
+    const candle = JSON.stringify({ daily: true, bar: { time: 1793672400, close: 25 } });
+    source.dispatchEvent(new MessageEvent("bar", { data: candle }));
+
+    nextView = sharedChartStream(url, true);
+    const listener = vi.fn();
+    nextView.addEventListener("bar", listener);
+    await Promise.resolve();
+    expect(connections).toEqual([source]);
+    expect(listener).toHaveBeenCalledWith(expect.objectContaining({ data: candle }));
+    vi.advanceTimersByTime(1_000);
+    expect(source.close).not.toHaveBeenCalled();
+
+    nextView.close();
+    vi.advanceTimersByTime(1_000);
+    expect(source.close).toHaveBeenCalledOnce();
+  } finally {
+    nextView?.close();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  }
+});

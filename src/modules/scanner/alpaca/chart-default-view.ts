@@ -3,7 +3,7 @@ import type { ChartTimeframe } from "./candles";
 // Pixel spacing keeps candle bodies and wicks legible in a phone or grid pane.
 // Each interval can be tuned independently without changing saved chart views.
 export const DEFAULT_CANDLE_SPACING: Record<ChartTimeframe, number> = {
-  "1m": 9, "5m": 10, "15m": 10, "1h": 11, "4h": 11, "1D": 12,
+  "1m": 9, "5m": 10, "15m": 10, "1h": 11, "4h": 11, "1D": 12, "1W": 13, "1M": 14, "1Y": 14,
 };
 
 export function defaultChartView(timeframe: ChartTimeframe, plotWidth: number, count: number) {

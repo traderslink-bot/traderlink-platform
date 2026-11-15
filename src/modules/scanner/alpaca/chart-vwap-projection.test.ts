@@ -1,8 +1,8 @@
 import { indicatorReadoutIndex } from "./chart-vwap-projection";
 // @vitest-environment node
 import {expect,it} from 'vitest';
-import {CHART_TIMEFRAMES} from './candles';
-import {carryVwapPoints,offsetVwap,projectVwap} from './chart-vwap-projection';
+import {CHART_CALCULATION_TIMEFRAMES} from './candles';
+import {carryVwapPoints,offsetVwap,projectVwap,sampleCalendarVwap} from './chart-vwap-projection';
 
 it('holds the last computed value through quiet slots without changing a reset or a higher-frame gap',()=>{
  const points=[{time:100,value:10},{time:280,value:20}];
@@ -44,7 +44,7 @@ it('uses the developing lower-frame value on an open daily candle regardless of 
  for(const waitForClose of [true,false])expect(projectVwap(chart,values,{higherTimeframe:false,waitForClose,now:690})).toEqual([{time:0,value:20}]);
 });
 
-for(const chartFrame of CHART_TIMEFRAMES)for(const calculationFrame of CHART_TIMEFRAMES){
+for(const chartFrame of CHART_CALCULATION_TIMEFRAMES)for(const calculationFrame of CHART_CALCULATION_TIMEFRAMES){
  it(`projects ${calculationFrame} calculations on ${chartFrame} without lookahead`,()=>{
   const seconds={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400};
   const step=seconds[chartFrame],size=seconds[calculationFrame],end=Math.max(step,size)*2;
@@ -72,4 +72,16 @@ it("keeps the VWAP readout on carried halt candles, then uses the resumed value"
   expect(indicatorReadoutIndex(points,undefined,false)).toBe(1);
   expect(indicatorReadoutIndex(points,halt,false)).toBe(-1);
   expect(indicatorReadoutIndex(points,halt+86400,true)).toBe(-1);
+});
+
+it("uses the last daily VWAP calculation of each calendar period",()=>{
+ const date=(value:string)=>Date.parse(value)/1000;
+ const values=[
+  {time:date("2026-10-29T04:00Z"),value:11},
+  {time:date("2026-10-30T04:00Z"),value:12},
+  {time:date("2026-11-02T05:00Z"),value:20},
+ ];
+ expect(sampleCalendarVwap(values,"1W")).toEqual([{time:date("2026-10-26T04:00Z"),value:12},{time:date("2026-11-02T05:00Z"),value:20}]);
+ expect(sampleCalendarVwap(values,"1M")).toEqual([{time:date("2026-10-01T04:00Z"),value:12},{time:date("2026-11-01T04:00Z"),value:20}]);
+ expect(sampleCalendarVwap(values,"1Y")).toEqual([{time:date("2026-01-01T05:00Z"),value:20}]);
 });

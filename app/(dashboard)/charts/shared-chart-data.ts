@@ -1,8 +1,17 @@
 "use client";
+
+import type { Candle } from "@/src/modules/scanner/alpaca/candles";
 // Page-local only: neither a cross-user cache nor an additional provider connection.
-type SharedStream = { source: EventSource; clients: Set<ChartStreamHandle>; latest: Map<string, MessageEvent> };
+type SharedStream = {
+  source: EventSource;
+  clients: Set<ChartStreamHandle>;
+  latest: Map<string, MessageEvent>;
+  keepDuringTransition: boolean;
+  idleClose?: ReturnType<typeof setTimeout>;
+};
 const streams = new Map<string, SharedStream>();
 const eventTypes = ["status", "price", "bar", "trading-status"];
+const DAILY_STREAM_HANDOFF_MS = 1_000;
 export class ChartStreamHandle extends EventTarget {
   onerror: ((event: Event) => void) | null = null;
   private closed = false;
@@ -11,8 +20,19 @@ export class ChartStreamHandle extends EventTarget {
     if (!this.closed && this.shared.source.readyState === EventSource.CLOSED) connectStream(this.url, this.shared);
   }
   close() {
-    if (this.closed) return; this.closed = true; this.shared.clients.delete(this);
-    if (!this.shared.clients.size) { this.shared.source.close(); streams.delete(this.url); }
+    if (this.closed) return;
+    this.closed = true;
+    this.shared.clients.delete(this);
+    if (this.shared.clients.size) return;
+    const release = () => {
+      this.shared.idleClose = undefined;
+      if (this.shared.clients.size || streams.get(this.url) !== this.shared) return;
+      this.shared.source.close();
+      streams.delete(this.url);
+    };
+    // Daily-based views replace the renderer together. Keep the current bar and connection during that handoff.
+    if (this.shared.keepDuringTransition) this.shared.idleClose = setTimeout(release, DAILY_STREAM_HANDOFF_MS);
+    else release();
   }
 }
 function connectStream(url: string, current: SharedStream, source = new EventSource(url)) {
@@ -30,28 +50,30 @@ function connectStream(url: string, current: SharedStream, source = new EventSou
     for (const client of current.clients) client.onerror?.(event);
   };
 }
-export function sharedChartStream(url: string): ChartStreamHandle {
+export function sharedChartStream(url: string, keepDuringTransition = false): ChartStreamHandle {
   let shared = streams.get(url);
   if (!shared) {
     const source = new EventSource(url);
-    shared = { source, clients: new Set(), latest: new Map() };
+    shared = { source, clients: new Set(), latest: new Map(), keepDuringTransition };
     streams.set(url, shared);
     connectStream(url, shared, source);
   }
+  clearTimeout(shared.idleClose);
+  shared.idleClose = undefined;
   const client = new ChartStreamHandle(url, shared); shared.clients.add(client);
   const current = shared;
   queueMicrotask(() => { if (current.clients.has(client)) for (const [type, event] of current.latest) client.dispatchEvent(new MessageEvent(type, { data: event.data })); });
   return client;
 }
 const pending = new Map<string, { controller: AbortController; result: Promise<Response>; users: number }>();
-export async function sharedChartFetch(url: string, init: RequestInit = {}): Promise<Response> {
+export async function sharedChartFetch(url: string, init: RequestInit = {}, requestKey = url): Promise<Response> {
   if (init.signal?.aborted) throw new DOMException("Aborted", "AbortError");
-  let entry = pending.get(url);
+  let entry = pending.get(requestKey);
   if (!entry) {
     const controller = new AbortController();
     const created = { controller, users: 0, result: Promise.resolve(null as unknown as Response) };
-    created.result = fetch(url, { ...init, signal: controller.signal }).finally(() => { if (pending.get(url) === created) pending.delete(url); });
-    entry = created; pending.set(url, created);
+    created.result = fetch(url, { ...init, signal: controller.signal }).finally(() => { if (pending.get(requestKey) === created) pending.delete(requestKey); });
+    entry = created; pending.set(requestKey, created);
   }
   entry.users++; const current = entry;
   let abort: (() => void) | undefined;
@@ -62,8 +84,44 @@ export async function sharedChartFetch(url: string, init: RequestInit = {}): Pro
     return response.clone();
   } finally {
     if (abort) init.signal?.removeEventListener("abort", abort);
-    current.users--; if (!current.users && pending.get(url) === current) { pending.delete(url); current.controller.abort(); }
+    current.users--; if (!current.users && pending.get(requestKey) === current) { pending.delete(requestKey); current.controller.abort(); }
   }
+}
+
+type CandleHistory = {
+  bars: Candle[];
+  basisDate: string;
+  nextBefore: number | null;
+  catchUpFrom?: number;
+  calendar?: unknown;
+  calendars?: unknown[];
+};
+const dailyHistory = new Map<string, { history: CandleHistory; savedAt: number }>();
+const DAILY_HISTORY_LIFETIME = 60_000;
+const MAX_DAILY_HISTORY_WINDOWS = 8;
+
+/** Reuse the same adjusted daily rows across frames while each pane keeps its own viewport. */
+export async function readChartCandleHistory(
+  url: string,
+  signal: AbortSignal,
+  dailyScope?: { owner: string; basisDate: string; reuse: boolean },
+): Promise<CandleHistory> {
+  signal.throwIfAborted();
+  const key = dailyScope ? JSON.stringify([dailyScope.owner, dailyScope.basisDate, url]) : null;
+  const cached = key && dailyScope?.reuse ? dailyHistory.get(key) : undefined;
+  if (cached && Date.now() - cached.savedAt < DAILY_HISTORY_LIFETIME) return cached.history;
+  const response = await sharedChartFetch(url, { signal, credentials: "same-origin" }, key ?? url);
+  if (!response.ok) {
+    throw Error(response.status === 429 ? "Chart requests are busy. Try again shortly." : "Candles unavailable. Try again.");
+  }
+  const history = await response.json() as CandleHistory;
+  signal.throwIfAborted();
+  if (key && history.basisDate === dailyScope?.basisDate && Array.isArray(history.bars)) {
+    dailyHistory.delete(key);
+    dailyHistory.set(key, { history, savedAt: Date.now() });
+    while (dailyHistory.size > MAX_DAILY_HISTORY_WINDOWS) dailyHistory.delete(dailyHistory.keys().next().value!);
+  }
+  return history;
 }
 
 // The chart gateway can calculate two distinct VWAP seeds at a time.

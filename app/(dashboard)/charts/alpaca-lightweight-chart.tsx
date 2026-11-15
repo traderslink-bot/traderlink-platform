@@ -15,7 +15,7 @@ import {ChartBandFill} from "@/src/modules/scanner/alpaca/chart-band-fill";
 import {calculationDemand} from "@/src/modules/scanner/alpaca/chart-calculation-demand";
 import {ChartCalculationHistory,type CalculationHistory} from "@/src/modules/scanner/alpaca/chart-calculation-history";
 import {calculationInterval,futureCalculationAxis} from "@/src/modules/scanner/alpaca/chart-calculation-intervals";
-import {carryVwapPoints,offsetVwap,projectVwap,indicatorReadoutIndex} from "@/src/modules/scanner/alpaca/chart-vwap-projection";
+import {carryVwapPoints,offsetVwap,projectVwap,indicatorReadoutIndex,sampleCalendarVwap} from "@/src/modules/scanner/alpaca/chart-vwap-projection";
 import {readChartCalendarYear} from "@/src/modules/scanner/alpaca/chart-calendar-request";
 import {ChartSessionCalendar} from "@/src/modules/scanner/alpaca/chart-calendar";
 import {type IndicatorPlot,vwapAnchorKey,indicatorPlotStyle,indicatorHistogramColor,indicatorValues,isVisibleSession,visibleSessionBars} from "@/src/modules/scanner/alpaca/chart-indicators";
@@ -26,13 +26,13 @@ import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { chartTickLabel, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
 import type { Time } from "lightweight-charts";
-import { aggregateCandles, candleBucket, displayCandles, CHART_TIMEFRAMES, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
+import { aggregateCandles, candleBucket, displayCandles, isCalendarChartTimeframe, nextChartCalendarPeriod, usesDailyCandles, CHART_TIMEFRAMES, type ChartCalculationTimeframe, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
 
 import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-view";
 import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorDisplay } from "./chart-view-memory";
 import { indicatorPriceScaleLabels, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
-import { readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
+import { readChartCandleHistory, readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
 
 const ChartPreferencesPanel = lazy(() => import("./chart-preferences-panel").then(module => ({ default: module.ChartPreferencesPanel })));
 
@@ -90,16 +90,19 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const crosshairDetails = useRef<HTMLDivElement>(null);
   const [activeTimeframe,setActiveTimeframe]=useState<ChartTimeframe|null>(null);
   const timeframe=controlledTimeframe??activeTimeframe??preferences.timeframe;
+  const daily = usesDailyCandles(timeframe);
+  const calendarFrame = isCalendarChartTimeframe(timeframe) ? timeframe : null;
+  const vwapDisplayFrame = calendarFrame ? "1D" : timeframe as ChartCalculationTimeframe;
   const enabledOverrides=indicatorDisplay.enabled;
   const activeIndicators=useMemo(()=>{
     const visibleTypes=new Set(preferences.indicators.filter(indicator=>indicator.visible!==false).map(indicator=>indicator.type));
     return preferences.indicators.flatMap(indicator=>{
       const enabled=enabledOverrides[indicator.type];
-      if(enabled===false||indicator.type==="VWAP"&&indicator.timeframes&&!indicator.timeframes.includes(timeframe))return [];
+      if(enabled===false||indicator.type==="VWAP"&&(calendarFrame&&indicator.hideOnDaily||indicator.timeframes&&!indicator.timeframes.includes(timeframe)))return [];
       if(indicator.visible!==false)return [indicator];
       return enabled===true&&!visibleTypes.has(indicator.type)?[{...indicator,visible:true}]:[];
     });
-  },[preferences.indicators,enabledOverrides,timeframe]);
+  },[preferences.indicators,enabledOverrides,timeframe,calendarFrame]);
   const crosshairLines=useMemo(()=>activeIndicators.flatMap(indicator=>indicatorValues([],indicator,timeframe)
     .filter(plot=>!plot.pane&&!plot.histogram&&indicatorPlotStyle(indicator,plot.key).visible)
     .map(plot=>({value:`indicator:${indicator.id}:${plot.key}` as const,label:plot.label}))),[activeIndicators,timeframe]);
@@ -131,22 +134,31 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     marketCalendar.current = cached?.calendar ?? new ChartSessionCalendar();
     const displayTime=new Intl.DateTimeFormat("en-US",{timeZone:preferences.timezone,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
     const zoneLabel=preferences.timezone==="UTC"?"UTC":"ET";
+    const formatChartTime = (time: number) => calendarFrame
+      ? chartTickLabel(time, calendarFrame, true, preferences.timezone)
+      : displayTime.format(time * 1000) + " " + zoneLabel;
     let disposed = false, auxiliarySource: ChartStreamHandle | undefined, source: ChartStreamHandle | undefined, removeChart: (() => void) | undefined;
     const abort = new AbortController();
     setStatus("Loading candles…"); setError(null); setHistoryMessage("");
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
-    const useRecentHistory = timeframe !== "4h" && timeframe !== "1D";
+    const useRecentHistory = timeframe !== "4h" && !daily;
     const now = Date.now();
     const lastCached = cached?.bars.reduce((last, bar) => Math.max(last, bar.time), 0) ?? 0;
     const overlapStart = (lastCached - 300) * 1000;
-    const catchUpFrom = timeframe !== "1D" && lastCached && now - overlapStart < 20 * 60_000 &&
+    const catchUpFrom = !daily && lastCached && now - overlapStart < 20 * 60_000 &&
       overlapStart < Math.floor(now / 60_000) * 60_000 - 1 ? overlapStart : null;
-    const requestHistory = (recent = false, from: number | null = null) => sharedChartFetch(
-      `/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}${recent ? "&recent=1" : ""}${from !== null ? `&catchUpFrom=${from}` : ""}`,
-      { signal: abort.signal, credentials: "same-origin" },
+    const readHistory = (query: URLSearchParams, reuseDaily = true) => readChartCandleHistory(
+      `/api/screeners/charts/bars?${query}`, abort.signal,
+      daily && ownerKey ? { owner: ownerKey, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
     );
-    const initialHistory = requestHistory(useRecentHistory && !cached, catchUpFrom);
+    const requestHistory = (recent = false, from: number | null = null, reuseDaily = false) => {
+      const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0" });
+      if (recent) query.set("recent", "1");
+      if (from !== null) query.set("catchUpFrom", String(from));
+      return readHistory(query, reuseDaily);
+    };
+    const initialHistory = requestHistory(useRecentHistory && !cached, catchUpFrom, attempt === 0);
     // The request may settle before the lazy chart library finishes loading.
     void initialHistory.catch(() => {});
     async function start() {
@@ -160,9 +172,9 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         crosshair: { mode: crosshairTarget==="nearest"?CrosshairMode.Magnet:CrosshairMode.Normal },
         layout: { background: { type: ColorType.Solid, color: dark ? "#101722" : "#ffffff" }, textColor: dark ? "#c7d2df" : "#354358", fontSize: 11, attributionLogo: false },
         grid: { vertLines: { visible:preferences.grid,color: dark ? "#1d2939" : "#eef1f5" }, horzLines: { visible:preferences.grid,color: dark ? "#1d2939" : "#eef1f5" } },
-        timeScale: { minBarSpacing: 0.001, timeVisible: timeframe !== "1D", secondsVisible: false, rightOffset: 4, tickMarkFormatter: (time: Time, tickMarkType: number) => chartTickLabel(time, timeframe, tickMarkType <= TickMarkType.DayOfMonth &&
+        timeScale: { minBarSpacing: 0.001, timeVisible: !daily, secondsVisible: false, rightOffset: 4, tickMarkFormatter: (time: Time, tickMarkType: number) => chartTickLabel(time, timeframe, tickMarkType <= TickMarkType.DayOfMonth &&
           (typeof time !== "number" || isChartDateStart(displayPoints, time, dayKey)), preferences.timezone) },
-        localization: { timeFormatter: (time: Time) => typeof time === "number" ? displayTime.format(new Date(time * 1000)) + " "+zoneLabel : String(time) },
+        localization: { timeFormatter: (time: Time) => typeof time === "number" ? formatChartTime(time) : String(time) },
       });
       removeChart = () => chart.remove();
       chart.priceScale("right").applyOptions({autoScale:restorePrice?savedView!.autoScale:preferences.autoScale,mode:preferences.logarithmic?PriceScaleMode.Logarithmic:PriceScaleMode.Normal});
@@ -309,14 +321,14 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         activeCrosshair=event.point&&event.time!==undefined?event:undefined;updateIndicatorLegend();updateDateVisibility();
         if (!crosshairDetails.current) return;
         const bar = typeof event.time === "number" ? displayed.get(event.time) : undefined;
-        crosshairDetails.current.textContent = bar ? `${displayTime.format(new Date(bar.time * 1000))} ${zoneLabel} · ${bar.carried ? `Carried-forward price $${bar.close.toFixed(bar.close < 1 ? 4 : 2)} · No candle returned` : `O ${bar.open} H ${bar.high} L ${bar.low} C ${bar.close} · Vol ${bar.volume.toLocaleString()}`}` : "";
+        crosshairDetails.current.textContent = bar ? `${formatChartTime(bar.time)} · ${bar.carried ? `Carried-forward price $${bar.close.toFixed(bar.close < 1 ? 4 : 2)} · No candle returned` : `O ${bar.open} H ${bar.high} L ${bar.low} C ${bar.close} · Vol ${bar.volume.toLocaleString()}`}` : "";
       });
       const dateFormat = new Intl.DateTimeFormat("en-US",{timeZone:preferences.timezone,month:"short",day:"numeric"});
       const updateDates = () => {
         const axis=dateAxis.current,range=chart.timeScale().getVisibleLogicalRange();
         const right=Math.max(0,element!.clientWidth-chart.timeScale().width());
         if(axis)axis.style.right=`${right}px`;if(indicatorLegend.current)indicatorLegend.current.style.right=`${right}px`;
-        const firstTime = timeframe === "1D" ? undefined : firstVisibleChartTime(displayPoints, range);
+        const firstTime = daily ? undefined : firstVisibleChartTime(displayPoints, range);
         if (!axis || firstTime === undefined) { axis?.replaceChildren(); return; }
         const label = document.createElement("span");
         label.textContent = dateFormat.format(firstTime * 1000);
@@ -334,7 +346,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if(livePrice)livePrice.applyOptions(options);
         else livePrice=candles.createPriceLine({...options,lineWidth:1,lineStyle:2,axisLabelVisible:true});
       };
-      const seedFor=(indicator:typeof preferences.indicators[number],actual:Candle[],calculationFrame:ChartTimeframe=timeframe):VwapSeed|undefined=>{
+      const seedFor=(indicator:typeof preferences.indicators[number],actual:Candle[],calculationFrame:ChartCalculationTimeframe):VwapSeed|undefined=>{
         if(!actual.length||calculationFrame==='1D'&&indicator.hideOnDaily)return undefined;
         const basisDate=easternClock(Date.now()).date;
         if(historyBasisDate!==basisDate){seedError=true;return undefined;}
@@ -358,10 +370,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         return validCached;
       };
       const vwapParts=(indicator:typeof preferences.indicators[number],actual:Candle[],axis:DisplayCandle[]):IndicatorPlot[]=>{
-        const frame=indicator.calculationTimeframe??timeframe;
+        const frame=calendarFrame ? "1D" : indicator.calculationTimeframe ?? vwapDisplayFrame;
         if(indicator.hideOnDaily&&frame==='1D'||!actual.length)return [];
         let input=[...bars.values()],calendar=marketCalendar.current,projectionAxis=axis;
-        if((frame==='1D')!==(timeframe==='1D')){
+        if((frame==='1D')!==daily){
           const demand=calculationDemand(axis,calculationView);if(!demand)return [];
           const {before,through}=demand,daily=frame==='1D',key=`${historyBasisDate}:${daily}:${through??'live'}`,cached=calculationContexts.get(key);
           if(!cached||cached.basisDate!==historyBasisDate||(contextCoverage.get(key)??Infinity)>before){
@@ -387,19 +399,19 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         try{
           const parts=indicatorValues(calculation,indicator,frame,{vwapSeed:seed,calendar});
           if(parts.some(part=>part.unavailable))vwapProblem=parts.some(part=>part.unavailableReason==='numeric')?'VWAP band values exceed the supported numeric range.':'Some VWAP band history could not load.';
-          const interval=(time:number,tf:ChartTimeframe)=>{
+          const interval=(time:number,tf:ChartCalculationTimeframe)=>{
             if(tf!=='1D')return calculationInterval(time,tf,preferences,calendar);
             const row=calendar.sessionAt(time);if(!row)throw Error('daily_session_unavailable');
             return {time,close:row.start+row.closeMinute*60};
           };
-          const chartIntervals=frame===timeframe?[]:projectionAxis.map(bar=>interval(bar.time,timeframe));
+          const chartIntervals=calendarFrame||frame===vwapDisplayFrame?[]:projectionAxis.map(bar=>interval(bar.time,vwapDisplayFrame));
           const offset=indicator.offset??0,axisTimes=axis.map(bar=>bar.time),axisPositions=new Map(axisTimes.map((time,index)=>[time,index]));
           const positionsCache=new Map<number,{times:number[];available:Set<number>}>();
           const anchorCache=new Map<string,string>();
           const anchorFor=(time:number)=>{const date=calendar.sessionAt(time)?.session.date;if(!date)return undefined;let key=anchorCache.get(date);if(key===undefined){key=vwapAnchorKey(date,indicator.anchor??'Session',seed.events?.dates);anchorCache.set(date,key);}return key;};
           return parts.map(part=>{
             const values=part.points;
-            const projected=frame===timeframe?carryVwapPoints(values,axis,(a,b)=>{const key=anchorFor(a);return key!==undefined&&key===anchorFor(b);}):projectVwap(chartIntervals,values.map(point=>({...interval(point.time,frame),value:point.value})),{higherTimeframe:seconds[frame]>seconds[timeframe],waitForClose:indicator.waitForClose??true,now:Date.now()/1000});
+            const projected=calendarFrame?sampleCalendarVwap(values,calendarFrame):frame===timeframe?carryVwapPoints(values,axis,(a,b)=>{const key=anchorFor(a);return key!==undefined&&key===anchorFor(b);}):projectVwap(chartIntervals,values.map(point=>({...interval(point.time,frame),value:point.value})),{higherTimeframe:seconds[frame]>seconds[vwapDisplayFrame],waitForClose:indicator.waitForClose??true,now:Date.now()/1000});
             const lastPoint=projected.at(-1),neededFuture=lastPoint?Math.max(0,(axisPositions.get(lastPoint.time)??0)+offset-axis.length+1):0;
             let positions=positionsCache.get(neededFuture);
             if(!positions){let times:number[];try{times=futureCalculationAxis(axisTimes,neededFuture,timeframe,preferences,calendar);}catch(error){if(neededFuture&&requestFutureCalendar(calendar,axisTimes.at(-1)!))return {...part,points:[]};throw error;}for(const time of times.slice(axisTimes.length))futureIndicatorTimes.add(time);positions={times,available:new Set(times)};positionsCache.set(neededFuture,positions);}
@@ -413,10 +425,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       };
       const writeAll = (initial: boolean, prepend = false) => {
         seedLoading=false;seedError=false;vwapProblem="";vwapFrameCache.clear();futureIndicatorTimes.clear();
-        calendarReady=timeframe==="1D"||[...bars.values()].every(bar=>marketCalendar.current.covers(bar.time));
+        calendarReady=daily||[...bars.values()].every(bar=>marketCalendar.current.covers(bar.time));
         setSessionMessage(studies.some(study=>study.indicator.type==="VWAP")&&!calendarReady?"VWAP unavailable: trading-session data could not load.":"");
-        const actual = aggregateCandles(timeframe==="1D"?bars.values():visibleSessionBars([...bars.values()],preferences,calendarReady?marketCalendar.current:undefined), timeframe,regularOnly);
-        const data = displayCandles(actual, timeframe, connected ? candleBucket(Math.floor(Date.now() / 1000) - 60, timeframe,regularOnly) : undefined).filter(bar=>timeframe==="1D"||!bar.carried||isVisibleSession(bar.time,preferences,calendarReady?marketCalendar.current:undefined));
+        const actual = aggregateCandles(daily?bars.values():visibleSessionBars([...bars.values()],preferences,calendarReady?marketCalendar.current:undefined), timeframe,regularOnly);
+        const data = displayCandles(actual, timeframe, connected ? candleBucket(Math.floor(Date.now() / 1000) - 60, timeframe,regularOnly) : undefined).filter(bar=>daily||!bar.carried||isVisibleSession(bar.time,preferences,calendarReady?marketCalendar.current:undefined));
         const oldFirst = displayPoints[0]?.time;
         displayPoints = data;
         displayed = new Map(data.map(bar => [bar.time, bar]));
@@ -457,36 +469,32 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
       let recentHistory = useRecentHistory && !cached;
       let catchingUp = Boolean(cached);
-      const loadHistory = async (initialRequest?: Promise<Response>) => {
+      const loadHistory = async (initialRequest?: ReturnType<typeof requestHistory>) => {
         if (loading) { reloadAfter = true; return; }
         loading = true;
         // Every refresh after the first paint must finish any outstanding warm-up.
         const warmup = loaded && !indicatorsReady;
         try {
           let recent = !warmup && recentHistory && (!loaded || historyBasisDate === easternClock(Date.now()).date);
-          let response = await (initialRequest ?? requestHistory(recent));
           const deltaRequested = Boolean(initialRequest && catchUpFrom !== null);
-          if (deltaRequested && !response.ok) response = await requestHistory();
-          if (!response.ok) throw Error(response.status === 429 ? "Chart requests are busy. Try again shortly." : "Candles unavailable. Try again.");
-          let data = await response.json();
+          let data = { ...await (initialRequest ?? requestHistory(recent)).catch(error => {
+            if (!deltaRequested || abort.signal.aborted) throw error;
+            return requestHistory();
+          }) };
           if (disposed) return;
           const delta = deltaRequested && data.catchUpFrom === catchUpFrom && data.basisDate === cached?.basisDate &&
             data.basisDate === easternClock(Date.now()).date;
           if (deltaRequested && !delta && data.catchUpFrom !== undefined) {
-            const full = await requestHistory();
-            if (!full.ok) throw Error("Candles unavailable. Try again.");
-            data = await full.json();
+            data = { ...await requestHistory() };
             if (disposed) return;
           }
           if (recent && !visibleSessionBars(data.bars, preferences).length) {
             recentHistory = false;
             recent = false;
-            const full = await requestHistory();
-            if (!full.ok) throw Error("Candles unavailable. Try again.");
-            data = await full.json();
+            data = { ...await requestHistory() };
             if (disposed) return;
           }
-          if(!delta&&(!loaded||catchingUp)&&savedView&&data.bars.length&&savedView.anchor.time<data.bars[0].time){
+          if(!delta&&(!loaded||catchingUp)&&savedView&&data.bars.length&&savedView.anchor.time<candleBucket(data.bars[0].time,timeframe,regularOnly)){
             const history=await calculationHistory.read(timeframe,savedView.anchor.time);
             if(disposed)return;
             recent = false;
@@ -529,9 +537,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if(disposed||loading||loadingOlder||!indicatorsReady||nextBefore===null)return;
         loadingOlder=true;userPanned=false;setHistoryMessage("Loading older candles…");
         try {
-          const response=await sharedChartFetch(`/api/screeners/charts/bars?history=1&symbol=${encodeURIComponent(ticker)}&daily=${timeframe==="1D"?"1":"0"}&before=${nextBefore}`,{signal:abort.signal,credentials:"same-origin"});
-          if(!response.ok)throw Error("Older candles could not load. Pan left again to retry.");
-          const page=await response.json();if(disposed)return;if(page.basisDate!==historyBasisDate||historyBasisDate!==easternClock(Date.now()).date)throw Error("Price adjustments changed. Reload the chart.");marketCalendar.current.merge(page.calendar);if(Array.isArray(page.calendars))for(const value of page.calendars)marketCalendar.current.merge(value);
+          const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0", before: String(nextBefore) });
+          const page=await readHistory(query).catch(() => { throw Error("Older candles could not load. Pan left again to retry."); });if(disposed)return;if(page.basisDate!==historyBasisDate||historyBasisDate!==easternClock(Date.now()).date)throw Error("Price adjustments changed. Reload the chart.");marketCalendar.current.merge(page.calendar);if(Array.isArray(page.calendars))for(const value of page.calendars)marketCalendar.current.merge(value);
           const combined=new Map(bars);for(const bar of page.bars as Candle[])if(!combined.has(bar.time))combined.set(bar.time,bar);
           const projected=displayCandles(aggregateCandles(combined.values(),timeframe,regularOnly),timeframe);
           if(projected.length>80_000){nextBefore=null;setHistoryMessage("Chart history limit reached. Use a larger timeframe for older dates.");}
@@ -553,14 +560,14 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       }
       chart.timeScale().subscribeVisibleLogicalRangeChange(range=>{
         updateDates();if(range&&range.from<40&&userPanned&&!loadingOlder)void loadOlder();
-        if(range&&loaded&&studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??timeframe)==='1D')!==(timeframe==='1D'))){
+        if(range&&loaded&&!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??vwapDisplayFrame)==='1D')!==daily)){
           const key=range.from.toFixed(2)+':'+range.to.toFixed(2);
           if(key!==calculationViewKey){calculationViewKey=key;clearTimeout(calculationViewTimer);calculationViewTimer=setTimeout(()=>{if(!disposed&&loaded)writeAll(false);},50);}
         }
       });
       let lastBarReceivedAt = Date.now(), lastRecoveryAt = 0;
       let streamHasConnected = false;
-      source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${timeframe === "1D" ? "1" : "0"}`);
+      source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily ? "1" : "0"}`, daily);
       source.addEventListener("status", event => {
         if (disposed) return;
         const state = JSON.parse((event as MessageEvent).data).state;
@@ -570,7 +577,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           const reconnecting = streamHasConnected;
           streamHasConnected = true;
           // The first connection is already covered by the returning chart's history request.
-          if (loaded && (!catchingUp || reconnecting)) {
+          if (loaded && (reconnecting || !daily && !catchingUp)) {
             calculationHistory.invalidate();calculationContexts.clear();contextCoverage.clear();
             void loadHistory();
           }
@@ -596,7 +603,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       source.addEventListener("bar", event => {
         if (disposed) return;
         const message = JSON.parse((event as MessageEvent).data) as { bar: Candle; daily: boolean };
-        if (message.daily !== (timeframe === "1D")) return;
+        if (message.daily !== daily) return;
         const bar = message.bar;
         lastBarReceivedAt = Date.now();
         if (!loaded || loading || catchingUp) queued.set(bar.time, bar);
@@ -604,20 +611,26 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if (!loaded) return;
         bars.set(bar.time, bar);
         calculationHistory.acceptLive(bar,message.daily);
-        if(studies.some(study=>study.indicator.type==='VWAP'&&(study.indicator.offset||study.indicator.calculationTimeframe&&study.indicator.calculationTimeframe!==timeframe))){writeAll(false);return;}
-        if(timeframe!=="1D"&&!marketCalendar.current.covers(bar.time)&&Date.now()>=calendarRetryAt){calendarRetryAt=Date.now()+60_000;void loadHistory();}
+        if(studies.some(study=>study.indicator.type==='VWAP'&&(study.indicator.offset||!calendarFrame&&study.indicator.calculationTimeframe&&study.indicator.calculationTimeframe!==timeframe))){writeAll(false);return;}
+        if(!daily&&!marketCalendar.current.covers(bar.time)&&Date.now()>=calendarRetryAt){calendarRetryAt=Date.now()+60_000;void loadHistory();}
 
         const bucket = candleBucket(bar.time, timeframe,regularOnly);
         const last = displayPoints.at(-1);
         if (last && bucket === last.time) {
           // The active candle moves with trades; avoid replacing the full chart per tick.
-          const inputs = timeframe === "1D" ? [...bars.values()] : visibleSessionBars([...bars.values()], preferences,calendarReady?marketCalendar.current:undefined);
-          const current = aggregateCandles(inputs.filter(value => candleBucket(value.time, timeframe,regularOnly) === bucket), timeframe,regularOnly).at(-1);
+          const inputs = daily ? [...bars.values()] : visibleSessionBars([...bars.values()], preferences,calendarReady?marketCalendar.current:undefined);
+          const periodEnd = calendarFrame ? nextChartCalendarPeriod(bucket, calendarFrame) : 0;
+          const current = timeframe === "1D" ? bar : aggregateCandles(
+            inputs.filter(value => calendarFrame
+              ? value.time >= bucket && value.time < periodEnd
+              : candleBucket(value.time, timeframe, regularOnly) === bucket),
+            timeframe, regularOnly,
+          ).at(-1);
           if (current) {
             const updated = { ...current, carried: false };
             displayPoints[displayPoints.length - 1] = updated; displayed.set(bucket, updated);
             candles.update(point(updated)); volume?.update(volumePoint(updated));
-            const actual = studies.length ? aggregateCandles(inputs, timeframe,regularOnly) : [];
+            const actual = studies.length ? displayPoints.filter(value => !value.carried) : [];
             vwapFrameCache.clear();
             for (const study of indicatorsReady ? studies : []) {
               if(study.indicator.type==="VWAP"&&!calendarReady)continue;
@@ -634,9 +647,9 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           writeAll(false);
         }
       });
-      if(studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??timeframe)==='1D')!==(timeframe==='1D'))){
-        const daily=timeframe!=='1D';
-        auxiliarySource=sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily?'1':'0'}`);
+      if(!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??vwapDisplayFrame)==='1D')!==daily)){
+        const daily=!usesDailyCandles(timeframe);
+        auxiliarySource=sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily?'1':'0'}`, daily);
         auxiliarySource.addEventListener('bar',event=>{
           if(disposed)return;
           const message=JSON.parse((event as MessageEvent).data) as {bar:Candle;daily:boolean};
@@ -654,7 +667,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if(loaded && !catchingUp)setStatus("Reconnecting…");
       };
       let confirmationMinute=Math.floor(Date.now()/60_000);
-      const confirmationTimer=setInterval(()=>{const minute=Math.floor(Date.now()/60_000);if(minute!==confirmationMinute){confirmationMinute=minute;if(!disposed&&loaded&&studies.some(study=>study.indicator.type==='VWAP'&&study.indicator.calculationTimeframe&&study.indicator.calculationTimeframe!==timeframe))writeAll(false);}},1000);
+      const confirmationTimer=setInterval(()=>{const minute=Math.floor(Date.now()/60_000);if(minute!==confirmationMinute){confirmationMinute=minute;if(!disposed&&loaded&&!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&study.indicator.calculationTimeframe&&study.indicator.calculationTimeframe!==timeframe))writeAll(false);}},1000);
       const recoverHistory = () => {
         if(disposed||document.hidden)return;
         source?.reconnectIfClosed();
@@ -671,7 +684,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       };
       const gapTimer=setInterval(()=>{
         recoverHistory();
-        if(!disposed&&loaded&&connected&&!loading&&timeframe!=="1D"&&historyBasisDate===easternClock(Date.now()).date)writeAll(false);
+        if(!disposed&&loaded&&connected&&!loading&&!daily&&historyBasisDate===easternClock(Date.now()).date)writeAll(false);
       },60_000);
       document.addEventListener("visibilitychange",recoverHistory);
       window.addEventListener("online",recoverHistory);
@@ -695,7 +708,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [ticker, timeframe, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget]);
+  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget]);
 
   const mainToolbar = viewWorkspace === "main";
   const multiviewButton = onOpenMultiview && (

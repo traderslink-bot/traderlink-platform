@@ -1,4 +1,4 @@
-import type {Candle,ChartTimeframe} from './candles';
+import {usesDailyCandles,type Candle,type ChartTimeframe} from './candles';
 import {ChartSessionCalendar} from './chart-calendar';
 
 type HistoryPage={bars:Candle[];basisDate:string;nextBefore:number|null;calendar?:unknown;calendars?:unknown[]};
@@ -39,7 +39,7 @@ export class ChartCalculationHistory{
 
  async read(timeframe:ChartTimeframe,before:number,through?:number):Promise<CalculationHistory>{
   if(!Number.isFinite(before)||before<=0||through!==undefined&&(!Number.isSafeInteger(through)||through<before))throw Error('invalid_calculation_history_range');
-  const daily=timeframe==='1D',state=this.state(daily,through);
+  const daily=usesDailyCandles(timeframe),state=this.state(daily,through);
   while(state.pending)await state.pending;
   if(!state.loaded||firstTime(state.bars)>before&&state.nextBefore!==null){
    const job=this.load(state,daily,before);state.pending=job;

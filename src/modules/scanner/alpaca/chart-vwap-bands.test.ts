@@ -4,7 +4,7 @@ import {defaultVwapBands,DEFAULT_CHART_PREFERENCES,parseChartPreferences,PRICE_S
 import {indicatorValues,indicatorPlotStyle} from './chart-indicators';
 import {parseVwapSeedRequest,validVwapSeed,vwapSeedStart,type VwapSeed} from './chart-vwap-seed';
 import type {Candle} from './candles';
-import {CHART_TIMEFRAMES} from './candles';
+import {CHART_CALCULATION_TIMEFRAMES} from './candles';
 const time=Date.parse('2026-11-09T15:00:00Z')/1000;
 const bar=(offset:number,price:number,volume:number):Candle=>({time:time+offset,open:price,high:price,low:price,close:price,volume});
 const study=(changes:Partial<ChartIndicator>={}):ChartIndicator=>({id:'vwap',type:'VWAP',period:20,color:'#2962ff',width:1,vwapBands:defaultVwapBands(),...changes});
@@ -25,7 +25,7 @@ it('resets deviation at a new anchor and leaves disabled bands empty',()=>{
  expect(plots[1].points.at(-1)?.value).toBe(30);expect(plots[2].points.at(-1)?.value).toBe(30);
  expect(plots[3].points).toEqual([]);expect(plots[5].points).toEqual([]);
 });
-for(const frame of CHART_TIMEFRAMES)it(`keeps monthly weighted bands correct on ${frame}`,()=>{
+for(const frame of CHART_CALCULATION_TIMEFRAMES)it(`keeps monthly weighted bands correct on ${frame}`,()=>{
  const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
  const plots=indicatorValues([bar(0,10,100),bar(step,20,200)],study({anchor:'Month'}),frame);
  expect(plots[0].points.at(-1)?.value).toBeCloseTo(50/3,12);

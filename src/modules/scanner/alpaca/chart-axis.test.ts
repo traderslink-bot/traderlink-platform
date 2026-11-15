@@ -33,3 +33,10 @@ it("keeps a UTC midnight tick within the same displayed New York date", () => {
  expect(isChartDateStart(points, points[1].time, dayKey)).toBe(false);
  expect(isChartDateStart(points, points[2].time, dayKey)).toBe(true);
 });
+
+it("formats weekly, monthly and yearly ticks as periods", () => {
+ const timestamp = time("2026-11-02T05:00Z");
+ expect(chartTickLabel(timestamp,"1W",false)).toBe("Nov 2");
+ expect(chartTickLabel(timestamp,"1M",false)).toBe("Nov 2026");
+ expect(chartTickLabel(timestamp,"1Y",false)).toBe("2026");
+});

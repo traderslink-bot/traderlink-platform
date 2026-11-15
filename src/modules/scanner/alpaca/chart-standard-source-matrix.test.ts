@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {expect,it} from 'vitest';
-import {CHART_TIMEFRAMES,type Candle} from './candles';
+import {CHART_CALCULATION_TIMEFRAMES,type Candle} from './candles';
 import {PRICE_SOURCES,type PriceSource,type ChartIndicator} from './chart-preferences';
 import {indicatorValues} from './chart-indicators';
 const referenceSource=(b:Candle,s:PriceSource)=>{
@@ -23,7 +23,7 @@ const rsi=(x:readonly number[],p:number)=>{
   return [loss===0?100:100-100/(1+gain/loss)];
  });
 };
-for(const frame of CHART_TIMEFRAMES)for(const source of PRICE_SOURCES)it(`standard studies honour ${source} on ${frame}`,()=>{
+for(const frame of CHART_CALCULATION_TIMEFRAMES)for(const source of PRICE_SOURCES)it(`standard studies honour ${source} on ${frame}`,()=>{
  const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
  const bars:Candle[]=Array.from({length:45},(_,n)=>{const low=10+(n*17)%23;return {time:1700000000+n*step,low,high:low+9,open:low+n%7,close:low+(n*3)%8,volume:100+n};});
  const x=bars.map(bar=>referenceSource(bar,source));

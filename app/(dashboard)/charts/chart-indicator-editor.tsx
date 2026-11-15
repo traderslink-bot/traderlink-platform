@@ -19,7 +19,7 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import DeleteOutline from '@mui/icons-material/DeleteForeverOutlined';
-import {CHART_TIMEFRAMES} from '@/src/modules/scanner/alpaca/candles';
+import {CHART_CALCULATION_TIMEFRAMES,CHART_TIMEFRAMES} from '@/src/modules/scanner/alpaca/candles';
 import {defaultVwapBands,type VwapBandLevel,type VwapBands,INDICATOR_TYPES,VWAP_ANCHORS,MA_TYPES,PRICE_SOURCES,MAX_SAVED_INDICATOR_PRESETS,MAX_SAVED_INDICATOR_PRESET_BYTES,MAX_INDICATOR_PRESET_NAME_LENGTH,type ChartIndicator,type PlotStyle,type SavedIndicatorPreset} from '@/src/modules/scanner/alpaca/chart-preferences';
 import {indicatorPresets, indicatorPresetRows, nextMovingAverageLine} from '@/src/modules/scanner/alpaca/chart-indicator-presets';
 import {indicatorPlotStyle,indicatorValues} from '@/src/modules/scanner/alpaca/chart-indicators';
@@ -104,7 +104,7 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
      <TextField select label="Bands calculation mode" value={bands.mode} onChange={e=>edit({vwapBands:{...bands,mode:e.target.value as VwapBands['mode']}})} size="small">{['Standard deviation','Percentage'].map(mode=><MenuItem key={mode} value={mode}>{mode}</MenuItem>)}</TextField>
      {bands.levels.map((level,index)=><Stack key={index} direction="row" sx={{gap:1,alignItems:'center',flexWrap:'wrap'}}><FormControlLabel label={`Band #${index+1}`} control={<Checkbox checked={level.enabled} onChange={(_,enabled)=>band(index,{enabled})}/>}/><NumberSetting label={`Band multiplier #${index+1}`} value={level.multiplier} min={0} max={null} step={0.5} integer={false} disabled={!level.enabled} onChange={multiplier=>band(index,{multiplier})}/></Stack>)}
      <NumberSetting label="Offset" value={active.offset??0} min={-500} max={500} onChange={offset=>edit({offset})}/>
-     <TextField select label="Calculation timeframe" value={active.calculationTimeframe??''} onChange={e=>edit({calculationTimeframe:e.target.value?e.target.value as ChartIndicator['calculationTimeframe']:undefined})} size="small"><MenuItem value="">Chart</MenuItem>{CHART_TIMEFRAMES.map(frame=><MenuItem key={frame} value={frame}>{frame}</MenuItem>)}</TextField>
+     <TextField select label="Calculation timeframe" value={active.calculationTimeframe??''} onChange={e=>edit({calculationTimeframe:e.target.value?e.target.value as ChartIndicator['calculationTimeframe']:undefined})} size="small"><MenuItem value="">Chart</MenuItem>{CHART_CALCULATION_TIMEFRAMES.map(frame=><MenuItem key={frame} value={frame}>{frame}</MenuItem>)}</TextField>
      <FormControlLabel label="Wait for timeframe closes" control={<Checkbox checked={active.waitForClose??true} onChange={(_,waitForClose)=>edit({waitForClose})}/>}/>
      <FormControlLabel label="Hide VWAP on 1D or above" control={<Checkbox checked={active.hideOnDaily??false} onChange={(_,hideOnDaily)=>edit({hideOnDaily})}/>}/>
     </>:null}

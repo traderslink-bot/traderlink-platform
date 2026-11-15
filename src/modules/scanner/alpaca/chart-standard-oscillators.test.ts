@@ -1,11 +1,11 @@
 // @vitest-environment node
 import {expect,it} from 'vitest';
-import {CHART_TIMEFRAMES,type Candle} from './candles';
+import {CHART_CALCULATION_TIMEFRAMES,type Candle} from './candles';
 import type {ChartIndicator} from './chart-preferences';
 import {indicatorValues} from './chart-indicators';
 const bars=(values:number[],step:number):Candle[]=>values.map((close,n)=>({time:1700000000+n*step,open:close,high:close,low:close,close,volume:100}));
 const study=(type:ChartIndicator['type'],options:Partial<ChartIndicator>={}):ChartIndicator=>({id:'test',type,period:3,color:'#2962ff',width:2,...options});
-for(const frame of CHART_TIMEFRAMES){
+for(const frame of CHART_CALCULATION_TIMEFRAMES){
  const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
  it(`uses Wilder RSI changes and conventional zero-loss handling on ${frame}`,()=>{
   const values=indicatorValues(bars([1,2,1,3,2,5],step),study('RSI'),frame)[0].points.map(point=>point.value);

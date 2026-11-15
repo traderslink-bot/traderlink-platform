@@ -1,3 +1,4 @@
+import { candleBucket, type CalendarChartTimeframe } from "./candles";
 import {easternClock} from '../live/sessions';
 import type {IndicatorPoint} from './chart-indicators';
 
@@ -29,6 +30,19 @@ export function carryVwapPoints(points:readonly IndicatorPoint[],axis:readonly {
 }
 
 /** Real chart-axis positions, including verified future positions when supplied. */
+/** Sample the latest available daily calculation in each exchange-calendar period. */
+export function sampleCalendarVwap(
+  points: readonly IndicatorPoint[],
+  timeframe: CalendarChartTimeframe,
+): IndicatorPoint[] {
+  const samples = new Map<number, IndicatorPoint>();
+  for (const point of points) {
+    const time = candleBucket(point.time, timeframe);
+    samples.set(time, { time, value: point.value });
+  }
+  return [...samples.values()];
+}
+
 export function offsetVwap(points:readonly IndicatorPoint[],axis:readonly number[],offset:number):IndicatorPoint[]{
  if(!Number.isSafeInteger(offset))throw Error('invalid_vwap_offset');
  for(let n=0;n<axis.length;n++)if(!Number.isFinite(axis[n])||n>0&&axis[n]<=axis[n-1])throw Error('invalid_vwap_axis');

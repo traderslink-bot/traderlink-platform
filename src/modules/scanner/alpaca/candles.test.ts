@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateCandles, displayCandles, candleBucket, alpacaCandle, chartSymbol, chartTimeframe, type Candle } from "./candles";
+import { aggregateCandles, displayCandles, candleBucket, alpacaCandle, chartSymbol, chartCalendarPosition, chartCalendarTime, chartTimeframe, type Candle } from "./candles";
 
 const bar = (time: number, close: number, volume = 10): Candle => ({ time, open: close, high: close + 1, low: close - 1, close, volume });
 describe("Alpaca chart candles", () => {
@@ -67,4 +67,51 @@ it("extends connected chart positions through completed intervals only on the sa
 it("anchors daily trade construction to New York midnight across daylight saving changes",async()=>{
  const {easternDayStart}=await import('./candles');
  for(const [input,expected] of [["2026-03-08T14:30:00Z","2026-03-08T05:00:00Z"],["2026-11-01T14:30:00Z","2026-11-01T04:00:00Z"],["2026-11-09T14:30:00Z","2026-11-09T05:00:00Z"]])expect(easternDayStart(Date.parse(input)/1000)).toBe(Date.parse(expected)/1000);
+});
+
+describe("calendar chart candles", () => {
+  const utc = (value: string) => Date.parse(value) / 1000;
+  const friday = bar(utc("2026-10-30T04:00:00Z"), 4, 12);
+  const monday = bar(utc("2026-11-02T05:00:00Z"), 6, 18);
+  const tuesday = bar(utc("2026-11-03T05:00:00Z"), 3, 20);
+  const correctedMonday = { ...monday, open: 5, high: 8, volume: 30 };
+  const input = [tuesday, friday, monday, correctedMonday];
+
+  it.each([
+    ["1W", "2026-10-26T04:00:00Z", "2026-11-02T05:00:00Z"],
+    ["1M", "2026-10-01T04:00:00Z", "2026-11-01T04:00:00Z"],
+  ] as const)("aggregates %s across the fall clock change and replaces corrected daily bars", (frame, previous, current) => {
+    expect(chartTimeframe(frame)).toBe(frame);
+    const data = aggregateCandles(input, frame);
+    expect(data).toEqual([
+      { ...friday, time: utc(previous) },
+      { time: utc(current), open: 5, high: 8, low: 2, close: 3, volume: 50 },
+    ]);
+    expect(displayCandles(data, frame, utc("2027-01-05T05:00:00Z"))).toEqual(
+      data.map(candle => ({ ...candle, carried: false })),
+    );
+  });
+
+  it("recalculates the open year as daily candles arrive and preserves a separate new year", () => {
+    expect(chartTimeframe("1Y")).toBe("1Y");
+    const yearEnd = bar(utc("2026-12-31T05:00:00Z"), 7, 33);
+    const january = bar(utc("2027-01-04T05:00:00Z"), 2, 9);
+    expect(aggregateCandles([...input, yearEnd, january], "1Y")).toEqual([
+      { time: utc("2026-01-01T05:00:00Z"), open: 4, high: 8, low: 2, close: 7, volume: 95 },
+      { ...january, time: utc("2027-01-01T05:00:00Z") },
+    ]);
+    expect(aggregateCandles(input, "1D").map(candle => candle.time)).toEqual([friday.time, monday.time, tuesday.time]);
+  });
+});
+
+it.each([
+  ["1W", "2026-10-26T04:00:00Z", "2026-11-02T05:00:00Z"],
+  ["1M", "2026-11-01T04:00:00Z", "2026-12-01T05:00:00Z"],
+  ["1Y", "2026-01-01T05:00:00Z", "2027-01-01T05:00:00Z"],
+] as const)("uses actual %s boundaries for future drawing coordinates", (frame, from, next) => {
+  const first = Date.parse(from) / 1000, second = Date.parse(next) / 1000;
+  expect(chartCalendarTime(first, 1, frame)).toBe(second);
+  expect(chartCalendarTime(first, 0.5, frame)).toBe((first + second) / 2);
+  expect(chartCalendarPosition(first, second, frame)).toBe(1);
+  expect(chartCalendarPosition(first, (first + second) / 2, frame)).toBe(0.5);
 });

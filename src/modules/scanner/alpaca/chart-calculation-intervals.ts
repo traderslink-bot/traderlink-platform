@@ -1,10 +1,10 @@
-import {candleBucket,easternDayStart,type ChartTimeframe} from './candles';
+import {candleBucket,easternDayStart,isCalendarChartTimeframe,nextChartCalendarPeriod,type ChartCalculationTimeframe,type ChartTimeframe} from './candles';
 import type {ChartPreferences} from './chart-preferences';
 import type {ChartSessionCalendar} from './chart-calendar';
 import type {VwapChartSlot} from './chart-vwap-projection';
 
 /** Intraday interval ends use verified session closes, including shortened days. */
-export function calculationInterval(time:number,timeframe:Exclude<ChartTimeframe,'1D'>,sessions:Pick<ChartPreferences,'premarket'|'regular'|'postmarket'>,calendar:ChartSessionCalendar):VwapChartSlot{
+export function calculationInterval(time:number,timeframe:Exclude<ChartCalculationTimeframe,'1D'>,sessions:Pick<ChartPreferences,'premarket'|'regular'|'postmarket'>,calendar:ChartSessionCalendar):VwapChartSlot{
  if(!Number.isFinite(time)||!calendar.covers(time))throw Error('calculation_session_unavailable');
  const known=calendar.sessionAt(time);
  if(!known)throw Error('calculation_session_closed');
@@ -27,7 +27,11 @@ export function futureCalculationAxis(axis:readonly number[],count:number,timefr
  if(!Number.isInteger(count)||count<0||count>1000)throw Error('invalid_future_axis_count');
  const result=[...axis];if(!count||!axis.length)return result;
  const last=axis.at(-1)!,regularOnly=sessions.regular&&!sessions.premarket&&!sessions.postmarket;
- const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[timeframe];
+ if(isCalendarChartTimeframe(timeframe)){
+  for(let i=0;i<count;i++)result.push(nextChartCalendarPeriod(result.at(-1)!,timeframe));
+  return result;
+ }
+ const seconds={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400};
  for(const row of calendar.knownSessions()){
   const midnight=easternDayStart(Date.parse(row.date+'T12:00:00Z')/1000);
   if(timeframe==='1D'){
@@ -42,7 +46,7 @@ export function futureCalculationAxis(axis:readonly number[],count:number,timefr
      const bucket=candleBucket(time,timeframe,regularOnly);
      if(bucket>result.at(-1)!)result.push(bucket);
      if(result.length>=axis.length+count)return result;
-     time=bucket+step;
+     time=bucket+seconds[timeframe];
     }
    }
   }

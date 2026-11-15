@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {expect,it} from 'vitest';
-import {CHART_TIMEFRAMES,type Candle} from './candles';
+import {CHART_CALCULATION_TIMEFRAMES,type Candle} from './candles';
 import {defaultVwapBands,PRICE_SOURCES,type ChartIndicator,type PriceSource} from './chart-preferences';
 import {indicatorValues} from './chart-indicators';
 
@@ -20,7 +20,7 @@ function numerator(bar:Candle,source:PriceSource):bigint{
   case 'hlcc4':return BigInt(3)*(h+l+BigInt(2)*c);
  }
 }
-for(const frame of CHART_TIMEFRAMES)for(const source of PRICE_SOURCES){
+for(const frame of CHART_CALCULATION_TIMEFRAMES)for(const source of PRICE_SOURCES){
  it(`matches exact weighted rational reference for ${source} on ${frame}`,()=>{
   const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
   const start=Date.parse('2026-11-09T15:00:00Z')/1000;

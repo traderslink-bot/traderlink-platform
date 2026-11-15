@@ -1,4 +1,4 @@
-import {CHART_TIMEFRAMES,type ChartTimeframe} from './candles';
+import {CHART_CALCULATION_TIMEFRAMES,CHART_TIMEFRAMES,type ChartCalculationTimeframe,type ChartTimeframe} from './candles';
 export const MAX_CHART_PREFERENCE_BYTES=64*1024;
 export const INDICATOR_TYPES=['EMA','SMA','VWAP','RSI','MACD','Bollinger'] as const;
 export type IndicatorType=typeof INDICATOR_TYPES[number];
@@ -16,7 +16,7 @@ export function defaultVwapBands(firstEnabled=true):VwapBands{
 }
 export type PlotStyle={visible?:boolean;color?:string;width?:1|2|3|4;style?:0|1|2};
 export type IndicatorOutput={precision?:number;priceScaleLabels?:boolean;statusLineValues:boolean};
-export type ChartIndicator={output?:IndicatorOutput;id:string;type:IndicatorType;period:number;color:string;width:1|2|3;anchor?:typeof VWAP_ANCHORS[number];hideOnDaily?:boolean;vwapBands?:VwapBands;offset?:number;calculationTimeframe?:ChartTimeframe;waitForClose?:boolean;timeframes?:ChartTimeframe[];source?:PriceSource;visible?:boolean;fastLength?:number;slowLength?:number;signalLength?:number;oscillatorMa?:"SMA"|"EMA";signalMa?:"SMA"|"EMA";deviation?:number;basisMa?:MaType;levels?:{upper:number;middle:number;lower:number};smoothing?:{type:MaType|"None"|"SMA+BB";length:number;deviation:number};plots?:Record<string,PlotStyle>};
+export type ChartIndicator={output?:IndicatorOutput;id:string;type:IndicatorType;period:number;color:string;width:1|2|3;anchor?:typeof VWAP_ANCHORS[number];hideOnDaily?:boolean;vwapBands?:VwapBands;offset?:number;calculationTimeframe?:ChartCalculationTimeframe;waitForClose?:boolean;timeframes?:ChartTimeframe[];source?:PriceSource;visible?:boolean;fastLength?:number;slowLength?:number;signalLength?:number;oscillatorMa?:"SMA"|"EMA";signalMa?:"SMA"|"EMA";deviation?:number;basisMa?:MaType;levels?:{upper:number;middle:number;lower:number};smoothing?:{type:MaType|"None"|"SMA+BB";length:number;deviation:number};plots?:Record<string,PlotStyle>};
 export const MAX_SAVED_INDICATOR_PRESETS = 20;
 export const MAX_SAVED_INDICATOR_PRESET_BYTES = 32 * 1024;
 export const MAX_INDICATOR_PRESET_NAME_LENGTH = 60;
@@ -54,7 +54,7 @@ function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {
   if(i.type!=='VWAP'||!bands||!['Standard deviation','Percentage'].includes(bands.mode)||!Array.isArray(bands.levels)||bands.levels.length!==3)throw Error('invalid_preferences');
   for(const level of bands.levels)if(!level||typeof level.enabled!=='boolean'||!Number.isFinite(level.multiplier)||level.multiplier<0||typeof level.fillVisible!=='boolean'||!color(level.fillColor)||!Number.isFinite(level.fillOpacity)||level.fillOpacity<0||level.fillOpacity>100)throw Error('invalid_preferences');
  }
- if(i.offset!==undefined&&(!Number.isInteger(i.offset)||i.offset< -500||i.offset>500)||i.calculationTimeframe!==undefined&&!CHART_TIMEFRAMES.includes(i.calculationTimeframe)||i.waitForClose!==undefined&&typeof i.waitForClose!=='boolean')throw Error('invalid_preferences');
+ if(i.offset!==undefined&&(!Number.isInteger(i.offset)||i.offset< -500||i.offset>500)||i.calculationTimeframe!==undefined&&!CHART_CALCULATION_TIMEFRAMES.includes(i.calculationTimeframe)||i.waitForClose!==undefined&&typeof i.waitForClose!=='boolean')throw Error('invalid_preferences');
  if(i.timeframes!==undefined&&(!Array.isArray(i.timeframes)||i.timeframes.length>CHART_TIMEFRAMES.length||new Set(i.timeframes).size!==i.timeframes.length||i.timeframes.some(frame=>!CHART_TIMEFRAMES.includes(frame))))throw Error("invalid_preferences");
  if(i.anchor!==undefined&&!VWAP_ANCHORS.includes(i.anchor)||i.hideOnDaily!==undefined&&typeof i.hideOnDaily!=='boolean')throw Error('invalid_preferences');
  if(i.source!==undefined&&!PRICE_SOURCES.includes(i.source))throw Error('invalid_preferences');
