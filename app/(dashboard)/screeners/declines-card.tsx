@@ -50,7 +50,7 @@ function ChartButton({row,onOpenChart}:{row:DeclineRow;onOpenChart:(row:DeclineR
 function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly DeclineRow[];full:boolean;twoRows:boolean;onOpenChart:(row:DeclineRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const allowAdd=useSideCardChartControls();
   const [expanded,setExpanded]=useState<string|null>(null);
-  if(!rows.length)return <Alert severity="info">No stocks currently declining in this comparison.</Alert>;
+  if(!rows.length)return <Alert severity="info">No stocks currently qualify for this list.</Alert>;
   return <TableContainer role="region" aria-label="Top Losers list" tabIndex={0}
     sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 190px)":420})}>
     <Table size="small" stickyHeader aria-label="Top Losers stocks"

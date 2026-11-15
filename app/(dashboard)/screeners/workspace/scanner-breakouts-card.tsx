@@ -5,6 +5,7 @@ import { scannerPrice as price } from "../scanner-price";
 
 import { ScannerPageChartButton, ScannerPageTicker } from "./scanner-page-ticker";
 
+import Alert from "@mui/material/Alert";
 import { Fragment, useState } from "react";
 import { Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { DashboardPanel } from "@/app/dashboard-template";
@@ -42,9 +43,9 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
       <WorkspaceScannerTitle><Typography component="h2" variant="h2">Breakouts</Typography></WorkspaceScannerTitle>
       <ScannerViewSettings label="Breakouts" view={view} onViewChange={onViewChange??setLocalView}/>
     </Stack>
-    {notice ? <Typography variant="body2" color="text.secondary">{notice}</Typography> :
+    {notice ? <Alert severity="info">{notice}</Alert> :
       !rows ? <Skeleton height={160}/> :
-      rows.length===0 ? <Typography variant="body2" color="text.secondary">No premarket high breaks yet.</Typography> :
+      rows.length===0 ? <Alert severity="info">No stocks currently qualify for this list.</Alert> :
       view==="cards" ? <ScannerStockCards screen="breakouts" rows={rows} now={now} renderHalt={halt} renderTools={tools}
         renderSignal={row=><>PM high {price(row.breakoutLevel)} · <BreakoutStatus row={row}/></>}/> :
       <TableContainer sx={theme=>({...scannerScrollStyles(theme),maxHeight:420})}>
