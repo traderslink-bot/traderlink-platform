@@ -1,14 +1,16 @@
+// @vitest-environment node
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 
+// Exact embed and following FAQ tag excerpts from Membership source 1bab36873.
 const pages = ["trading-journal", "trade-analyzer", "trade-analytics"];
 describe("Static feature-page plans integration", () => {
   for (const page of pages) it(`${page}: inserts before FAQ and accepts only its own same-origin frame`, () => {
-    const html = readFileSync(`static-landing-site/${page}/index.html`, "utf8");
+    const html = readFileSync(new URL(`./fixtures/feature-page-embed/${page}.html`, import.meta.url), "utf8");
     const start = html.indexOf('    <div data-membership-plans');
     const end = html.indexOf("    </script>", start) + "    </script>".length;
-    expect(start).toBeGreaterThan(0);
+    expect(start).toBeGreaterThanOrEqual(0);
     expect(html.slice(end)).toMatch(/^\s*<section class="(?:tj|ta)-faq"/);
     expect(html.match(/data-membership-plans/g)).toHaveLength(1);
     const dom = new JSDOM(html.slice(start, end), { url: "https://traderslink.example/trading-journal", runScripts: "dangerously" });

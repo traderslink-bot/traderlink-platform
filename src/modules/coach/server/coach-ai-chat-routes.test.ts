@@ -18,6 +18,14 @@ const scope: WorkspaceAccessScope = Object.freeze({
   activeAccountId: "00000000-0000-4000-8000-000000000003",
 });
 
+const reportingContext = Object.freeze({
+  reportingCurrency: "USD",
+  requestedAtUtc: "2026-08-05T12:00:00.000Z",
+  ratesByCurrency: new Map(),
+  sourceCurrencyByRoundTrip: new Map(),
+  sourceDateByRoundTrip: new Map(),
+});
+
 const conversation: CoachAiChatConversation = Object.freeze({
   conversationId: "00000000-0000-4000-8000-000000000010",
   title: "Morning review",
@@ -69,6 +77,8 @@ const { mocks, FakeRepository } = vi.hoisted(() => {
     restoreConversation: vi.fn(),
     listMessages: vi.fn(),
     readMessageEvidence: vi.fn(),
+    readGenerationPair: vi.fn(),
+    captureQuality: vi.fn(),
     generateSavedAnswer: vi.fn(),
     reconcileStaleGenerations: vi.fn(),
     getDailyCompanionContext: vi.fn(),
@@ -84,6 +94,7 @@ const { mocks, FakeRepository } = vi.hoisted(() => {
     archiveConversation(...args: unknown[]) { return routeMocks.archiveConversation(...args); }
     restoreConversation(...args: unknown[]) { return routeMocks.restoreConversation(...args); }
     listMessages(...args: unknown[]) { return routeMocks.listMessages(...args); }
+    readGenerationPair(...args: unknown[]) { return routeMocks.readGenerationPair(...args); }
   }
   return { mocks: routeMocks, FakeRepository: Repository };
 });
@@ -100,6 +111,11 @@ vi.mock("@/src/modules/platform/server/database/open-platform-database", () => (
 vi.mock("@/src/modules/coach/server/coach-ai-chat-repository", () => ({
   CoachAiChatRepository: FakeRepository,
 }));
+vi.mock("@/src/modules/coach/server/coach-ai-chat-quality-feedback-repository", () => ({
+  CoachAiChatQualityFeedbackRepository: class {
+    capture(...args: unknown[]) { return mocks.captureQuality(...args); }
+  },
+}));
 vi.mock("@/src/modules/coach/server/coach-ai-chat-generation-runtime", () => ({
   generateCoachAiChatSavedAnswer: mocks.generateSavedAnswer,
   reconcileStaleCoachAiChatGenerations: mocks.reconcileStaleGenerations,
@@ -109,8 +125,14 @@ vi.mock("@/src/modules/coach/server/coach-ai-chat-evidence-service", () => ({
     readForMessages(...args: unknown[]) { return mocks.readMessageEvidence(...args); }
   },
 }));
+vi.mock("@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime", () => ({
+  withJournalAnalyticsReportingDashboardRuntime: async (scope: unknown, read: (context: { reportingContext: typeof reportingContext }) => unknown) => {
+    expect(scope).toEqual(mocks.requireScope.mock.results[0]?.value);
+    return read({ reportingContext });
+  },
+}));
 vi.mock("@/app/(dashboard)/trade-tracker/trade-tracker-platform-data", () => ({
-  getReplacementDailyCompanionResolvedContext: mocks.getDailyCompanionContext,
+  getReplacementReportingDailyCompanionResolvedContext: mocks.getDailyCompanionContext,
   getReplacementTradeTrackerAccount: mocks.getTradeTrackerAccount,
 }));
 
@@ -152,6 +174,11 @@ describe("private AI Chat persistence routes", () => {
       nextCursor: Object.freeze({ beforeSequence: 2 }),
     });
     mocks.readMessageEvidence.mockReturnValue(Object.freeze([]));
+    mocks.readGenerationPair.mockReturnValue({ assistantMessage: {
+      generationState: "completed",
+      assistantTextPrivate: "Synthetic saved response.",
+      failureCode: null,
+    } });
     mocks.generateSavedAnswer.mockResolvedValue({
       state: "completed",
       assistantMessageId: "00000000-0000-4000-8000-000000000012",
@@ -311,7 +338,8 @@ describe("private AI Chat persistence routes", () => {
       conversationId,
       question: "How did I trade this week?",
       intent: "answer_question",
-      analysisScope: { kind: "recent" },
+      analysisScope: { kind: "all" },
+      reportingContext,
       pageContext: null,
       idempotencySha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
       resolveTrustedContext: null,
@@ -517,6 +545,12 @@ describe("private AI Chat persistence routes", () => {
       assistantMessageId: "00000000-0000-4000-8000-000000000012",
       manualEntryDraft: null,
       dailyCompanionDraft: null,
+    });
+    if (state === "pending") expect(mocks.captureQuality).not.toHaveBeenCalled();
+    else expect(mocks.captureQuality).toHaveBeenCalledWith(scope, {
+      assistantMessageId: "00000000-0000-4000-8000-000000000012",
+      eventKind: "automatic_failure",
+      failureCode: null,
     });
   });
 

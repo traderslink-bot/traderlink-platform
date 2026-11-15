@@ -189,7 +189,9 @@ describe("Trader Intelligence route containment matrix", () => {
     expect(layoutSource).toContain("requireTraderIntelligenceOwnerPageAccess");
     expect(dashboardLayoutSource).toContain('dynamic = "force-dynamic"');
     expect(dashboardLayoutSource).toContain('fetchCache = "force-no-store"');
-    expect(dashboardLayoutSource).toContain("requireTraderLinkPlatformPageIdentity");
+    const dashboardFrameSource = readFileSync("app/dashboard-layout-frame.tsx", "utf8");
+    expect(dashboardLayoutSource).toContain("<TraderLinkPlatformDashboardFrame>");
+    expect(dashboardFrameSource).toContain("await requireTraderLinkPlatformServerComponentPageIdentity()");
     expect(nextConfigSource).toContain('"/intelligence/:path*"');
     expect(nextConfigSource).toContain('"/workspace/:path*"');
     expect(nextConfigSource).toContain('"/trades/:path*"');
