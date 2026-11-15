@@ -218,7 +218,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
     }),
     Object.freeze({
       id: "stockTools" as const,
-      label: "Stock Tools",
+      label: "Trading Tools",
       icon: "marketCharts" as const,
       items: Object.freeze([
         Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
@@ -252,7 +252,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
   ]);
 
 // Kept for dashboard-template compatibility. Scanner and Market Charts now live
-// in Stock Tools, so there are no standalone sidebar links.
+// in Trading Tools, so there are no standalone sidebar links.
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
   Object.freeze([]);
 
@@ -274,7 +274,7 @@ const tradeJournalGroup: DashboardNavigationGroup = Object.freeze({
 });
 
 export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNavigationSection[] =
-  Object.freeze([tradeJournalGroup, ...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(group => !journalGroupIds.has(group.id))]
+  Object.freeze([...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(group => !journalGroupIds.has(group.id)), tradeJournalGroup]
     .map(group => Object.freeze({ kind: "group" as const, group })));
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
