@@ -1,8 +1,8 @@
 {
-  "productionParent": "31b0e3a2e72c70e6a9554a2d90c286a32552de12",
-  "candidate": "a5fbcc41c14347812c24011683e954ac2ceb6e5f",
-  "predecessorSchemaSha256": "f8ee64f9b93b595929c764128b52e9f15fda6ea58cab9ecedc3bfb8d6061d33e",
-  "targetSchemaSha256": "36507a90f169612bc844c96da29a805abd1e69b139db1fb745316f2d18b805b2",
+  "scope": "Journal Chart 0187 on exact production 0186",
+  "productionParent": "57b15af43db4db81621d4c9be4cb5ea1b89b0fe8",
+  "predecessorSchemaSha256": "36507a90f169612bc844c96da29a805abd1e69b139db1fb745316f2d18b805b2",
+  "targetSchemaSha256": "d7439490f5bab8bee6d70b8fb1061360fbfae76b4b5446adfc8e431efe582d5a",
   "ledger": [
     {
       "migration_id": "0001_platform_identity",
@@ -903,7 +903,12 @@
       "module_namespace": "level_analysis",
       "execution_order": 223,
       "checksum_sha256": "dbe39dd8ab56152c2143a99e982efdbccc1acdb480cc6ef68a31b8d6e4c2b7bf"
+    },
+    {
+      "migration_id": "0187_journal_chart_entries",
+      "module_namespace": "journal",
+      "execution_order": 224,
+      "checksum_sha256": "63d05c70fa5023327ca0db43296e24926e9aa952633a165f4b46f363c5d3c946"
     }
-  ],
-  "scope": "synthetic exact-schema preflight"
+  ]
 }

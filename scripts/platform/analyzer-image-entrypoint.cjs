@@ -5,10 +5,12 @@ const path = require('node:path');
 
 function selectSchema(plan, role, rows, schema, latestDigest) {
   assert(['final', 'recovery', 'migration'].includes(role));
-  assert(rows.length === 150 || (['recovery', 'migration'].includes(role) && rows.length === 149));
+  const targetCount = plan.ledger.length;
+  const precedingCount = targetCount - 1;
+  assert(rows.length === targetCount || (['recovery', 'migration'].includes(role) && rows.length === precedingCount));
   assert.deepEqual(rows, plan.ledger.slice(0, rows.length));
   const digest = crypto.createHash('sha256').update(JSON.stringify(schema) + '\n').digest('hex');
-  assert.equal(digest, rows.length === 149 ? plan.predecessorSchemaSha256 : plan.targetSchemaSha256);
+  assert.equal(digest, rows.length === precedingCount ? plan.predecessorSchemaSha256 : plan.targetSchemaSha256);
   assert.equal(digest, latestDigest);
   return rows.length;
 }
@@ -35,7 +37,7 @@ function main() {
   } finally {
     db.close();
   }
-  if (role === 'migration' && count === 149) {
+  if (role === 'migration' && count === plan.ledger.length - 1) {
     const port = Number(env.PORT || 3000);
     require('node:http').createServer((request, response) => {
       response.setHeader('Cache-Control', 'no-store');
@@ -52,8 +54,8 @@ function main() {
   delete env.TRADERLINK_RECOVERY_SCHEMA_PREFIX;
   delete env.TRADERLINK_GENERAL_NEWS_MAINTENANCE_WINDOW;
   delete env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID;
-  if (count === 149) env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID = plan.ledger.at(-1).migration_id;
-  console.log(JSON.stringify({ stage: 'analyzer_schema_start', role, migrationCount: count }));
+  if (count === plan.ledger.length - 1) env.TRADERLINK_PLATFORM_RUNTIME_COMPATIBILITY_MIGRATION_ID = plan.ledger.at(-1).migration_id;
+  console.log(JSON.stringify({ stage: 'platform_schema_start', role, migrationCount: count }));
   require(path.join(__dirname, 'application-server.js'));
 }
 
