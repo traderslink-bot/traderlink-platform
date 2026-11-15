@@ -52,7 +52,7 @@ it("uses standard scanner alerts for an empty Top Losers list",async()=>{
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
   const emptyResults={rapid:[],losers:[],rapidTotal:0,loserTotal:0,controls:{enabled:true,minimumDropPercent:30,windowMinutes:5,retentionMinutes:15,displayLimit:20}};
   await act(async()=>root!.render(createElement(DeclinesCard,{results:emptyResults,notice:null,session:"regular",onOpenChart:vi.fn()})));
-  expect(container.querySelector('[role="alert"]')?.textContent).toContain("No stocks currently declining in this comparison.");
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain("No stocks currently qualify for this list.");
 });
 
 it("shows the session-high drop on flagged NCT without replacing it with the rapid-event drop",async()=>{
