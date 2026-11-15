@@ -1,15 +1,68 @@
 "use client";
 
-import EditOutlined from "@mui/icons-material/EditOutlined";
+import DesignServicesOutlined from "@mui/icons-material/DesignServicesOutlined";
+import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
+import TimelineOutlined from "@mui/icons-material/TimelineOutlined";
+import StairsOutlined from "@mui/icons-material/StairsOutlined";
+import PolylineOutlined from "@mui/icons-material/PolylineOutlined";
+import InterestsOutlined from "@mui/icons-material/InterestsOutlined";
+import TextFieldsOutlined from "@mui/icons-material/TextFieldsOutlined";
+import QueryStatsOutlined from "@mui/icons-material/QueryStatsOutlined";
+import StraightenOutlined from "@mui/icons-material/StraightenOutlined";
+import UndoOutlined from "@mui/icons-material/UndoOutlined";
+import TuneOutlined from "@mui/icons-material/TuneOutlined";
+import NearMeOutlined from "@mui/icons-material/NearMeOutlined";
+import CloseRounded from "@mui/icons-material/CloseRounded";
+import ZoomInOutlined from "@mui/icons-material/ZoomInOutlined";
+import BackspaceOutlined from "@mui/icons-material/BackspaceOutlined";
+import SaveOutlined from "@mui/icons-material/SaveOutlined";
+import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
+import LockOutlined from "@mui/icons-material/LockOutlined";
+import LockOpenOutlined from "@mui/icons-material/LockOpenOutlined";
+import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
+import ViewSidebarOutlined from "@mui/icons-material/ViewSidebarOutlined";
+import MyLocationOutlined from "@mui/icons-material/MyLocationOutlined";
+import LocationSearchingOutlined from "@mui/icons-material/LocationSearchingOutlined";
+import RepeatOutlined from "@mui/icons-material/RepeatOutlined";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, IconButton, Menu, MenuItem, TextField } from "@mui/material";
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type PointerEvent } from "react";
+import { Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, IconButton, ListItemIcon, Menu, MenuItem, TextField, Tooltip } from "@mui/material";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { anchorCounts, applyDrawingChanges, drawingStoragePrefix, positionDefaultColor, drawingsNeedSaving, drawingTools, drawingStamps, isDrawingStamp, isPatternTool, fibonacciStyleControls, fibonacciStyleValue, isFibonacciCurve, isFibonacciDrawing, isFibonacciProjection, validFibonacciBase, validFibonacciChannelWidth, validFibonacciCurveBase, validFibonacciWedge, gannFixedCorner, gannStyleControls, gannStyleValue, isGann, validGannAnchors, isAnnotation, isFreehand, isPolyline, isPosition, isPitchfork, isTextDrawing, positionLevels, validPositionAnchor, MAX_PATH_POINTS, MAX_STROKE_POINTS,
   persistDrawings, readDrawings, saveDrawings, serverDrawings, subscribeDrawings, viewportPosition,
   type Anchor, type ChartDrawings, type Drawing, type FibonacciStyle, type GannStyle, type Point, type Tool } from "./chart-drawings";
 
 import { drawingGroups } from "./chart-drawing-groups";
+import { DrawingToolIcon } from "./chart-drawing-icons";
+
+const groupIcons = {
+  "Trend lines and channels": TimelineOutlined,
+  "Fibonacci and Gann": StairsOutlined,
+  "Patterns and cycles": PolylineOutlined,
+  "Shapes and brush": InterestsOutlined,
+  "Notes and symbols": TextFieldsOutlined,
+  "Forecasts and measurements": QueryStatsOutlined,
+};
+
+function DrawingRailButton({ label, compact, onClick, children, disabled, expanded, active }: {
+  label: string;
+  compact: boolean;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+  children: ReactNode;
+  disabled?: boolean;
+  expanded?: boolean;
+  active?: boolean;
+}) {
+  const button=<IconButton aria-label={label} aria-haspopup={expanded === undefined ? undefined : "menu"}
+      aria-expanded={expanded} aria-pressed={expanded === undefined ? active : undefined} disabled={disabled} onClick={onClick}
+      sx={{ width: "100%", height: compact ? 44 : 32, borderRadius: 0, flexShrink: 0,
+        borderInlineStart: "2px solid", borderColor: active ? "warning.main" : "transparent",
+        bgcolor: active ? "action.selected" : undefined, color: active ? "warning.main" : "text.secondary" }}>
+      {children}
+    </IconButton>;
+  return <Tooltip title={label} placement="right">{disabled?<span>{button}</span>:button}</Tooltip>;
+}
 import { patternLabels } from "./chart-drawing-patterns";
 import { defaultRegression, regressionSources, validDeviation, type RegressionSettings } from "./chart-drawing-regression";
 
@@ -17,7 +70,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
   const key=`${drawingStoragePrefix}${owner??"local"}:${ticker.toUpperCase()}`;
   const drawings=useSyncExternalStore(subscribeDrawings,()=>readDrawings(key),serverDrawings);
   const drawingButton=useRef<HTMLButtonElement>(null);
-  const [menu,setMenu]=useState<HTMLElement|null>(null);
+  const [menu,setMenu]=useState<{ anchor: HTMLElement; side: boolean; section?: string }|null>(null);
   const [group,setGroup]=useState<string>();
   const [viewOptions,setViewOptions]=useState<{key:string;hidden?:boolean;locked?:boolean;keepDrawing?:boolean;magnet?:"off"|"weak"|"strong"}>();
   const options=viewOptions?.key===key?viewOptions:undefined;
@@ -27,11 +80,11 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
 
   const [localToolbar,setLocalToolbar]=useState<{key:string;shown:boolean;defaultShown:boolean}>();
   const hasLocalToolbar=localToolbar?.key===key&&localToolbar.defaultShown===alwaysShowToolbar;
-  const toolbarShown=hasLocalToolbar?localToolbar.shown:alwaysShowToolbar;
+  const leftToolbarShown=hasLocalToolbar?localToolbar.shown:alwaysShowToolbar;
   if(localToolbar&&!hasLocalToolbar)setLocalToolbar(undefined);
   const [session,setSession]=useState<{key:string;tool:Tool|"select";anchors?:Anchor[];selected?:string;draft?:Drawing;pattern?:Drawing;action?:"measure"|"zoom"|"erase"}|null>(null);
-  if(session&&(session.key!==key||!toolbarShown))setSession(null);
-  const current=toolbarShown&&session?.key===key?session:null;
+  if(session&&session.key!==key)setSession(null);
+  const current=session?.key===key?session:null;
   const draft=current?.draft;
   const selection=current?.action?undefined:draft??drawings.find(d=>d.id===current?.selected);
   const drag=useRef<({drawing:Drawing;index?:number;next:Drawing;origin:Point;pointerId:number}&
@@ -448,9 +501,10 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
     if(draft&&options?.keepDrawing)setSession({key,tool:drawing.tool});
     else done();
   };
-  const toggleToolbar=()=>{
-    if(toolbarShown){done();setMenu(null);}
-    setLocalToolbar({key,shown:!toolbarShown,defaultShown:alwaysShowToolbar});
+  const toggleLeftToolbar=()=>{
+    if(leftToolbarShown&&menu?.side)drawingButton.current?.focus({preventScroll:true});
+    setMenu(null);
+    setLocalToolbar({key,shown:!leftToolbarShown,defaultShown:alwaysShowToolbar});
   };
   const changeViewOptions=(change:Partial<NonNullable<typeof options>>)=>{
     done();
@@ -466,55 +520,117 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
   };
   const shownGroup=drawingGroups.find(([name])=>name===group);
   const magnet=options?.magnet??"off";
-  const toolbar=toolbarShown?<>
-    <IconButton ref={drawingButton} aria-label={`Drawings for ${ticker}`} title="Drawings" aria-haspopup="menu" disabled={!engine}
-      aria-pressed={Boolean(current)} onClick={event=>{setGroup(undefined);setMenu(event.currentTarget);}}
-      sx={{width:compact?30:34,height:compact?28:34,flexShrink:0}}>
-      <EditOutlined fontSize="small"/>
+  const canSelect=Boolean(drawings.length&&!options?.locked&&!options?.hidden);
+  const canUndo=undo.some(entry=>entry.key===key)&&!options?.locked;
+  const openDrawingMenu=(anchor:HTMLElement,side:boolean,section?:string)=>{
+    setGroup(section);
+    setMenu({anchor,side,section});
+  };
+  const undoLastDrawing=()=>{
+    const index=undo.findLastIndex(entry=>entry.key===key);
+    if(index>=0){
+      const entry=undo[index];
+      const restored=applyDrawingChanges(readDrawings(key),entry.after,entry.before);
+      const saved=saveDrawings(key,restored,autosave);
+      setSaveError(autosave&&!saved?"Drawings could not be saved in this browser.":"");
+      setUndo(undo.filter((_,i)=>i!==index));
+    }
+    setMenu(null);
+    done();
+  };
+  const toolbar=<>
+    <IconButton ref={drawingButton} aria-label={`Drawings for ${ticker}`} title="Drawing Tools" aria-haspopup="menu"
+      aria-expanded={Boolean(menu&&!menu.side)} disabled={!engine} aria-pressed={Boolean(current)}
+      onClick={event=>openDrawingMenu(event.currentTarget,false)}
+      sx={{width:compact?36:34,height:compact?32:34,flexShrink:0}}>
+      <DesignServicesOutlined fontSize="small"/>
     </IconButton>
-    <Menu anchorEl={menu} open={Boolean(menu)} transitionDuration={0} onClose={()=>setMenu(null)}>
-      {shownGroup||group==="Drawing options"?<MenuItem autoFocus onClick={()=>setGroup(undefined)}>Back to drawing tools</MenuItem>:null}
-      {shownGroup?.[1].map(tool=><MenuItem key={tool} onClick={()=>beginTool(tool)}>{drawingTools[tool]}</MenuItem>)}
-      {!group&&drawingGroups.map(([name],index)=><MenuItem key={name} autoFocus={index===0} onClick={()=>setGroup(name)}
-        sx={{display:"flex",justifyContent:"space-between",gap:2}}>{name}<ChevronRight fontSize="small"/></MenuItem>)}
+    <Menu anchorEl={menu?.anchor} open={Boolean(menu)} transitionDuration={0}
+      anchorOrigin={{vertical:menu?.side?"top":"bottom",horizontal:menu?.side?"right":"left"}}
+      transformOrigin={{vertical:"top",horizontal:"left"}}
+      onClose={(_,reason)=>{
+        if(reason==="escapeKeyDown"&&group)setGroup(undefined);
+        else setMenu(null);
+      }}
+      slotProps={{paper:{sx:{maxWidth:"calc(100vw - 16px)",maxHeight:"calc(100dvh - 24px)",
+        "& .MuiMenuItem-root":{whiteSpace:"normal",fontSize:compact?13:14,minHeight:compact?44:35,px:1.5,lineHeight:1.3},
+        "& .MuiListItemIcon-root":{minWidth:32}}}}}>
+      {group?<MenuItem autoFocus onClick={()=>setGroup(undefined)}
+        sx={{position:"sticky",top:0,zIndex:1,bgcolor:"background.paper",borderBottom:1,borderColor:"divider",fontWeight:700}}>
+        <ListItemIcon><ArrowBackRounded fontSize="small"/></ListItemIcon>Back to drawing tools
+      </MenuItem>:null}
+      {shownGroup?.[1].map(tool=><MenuItem key={tool} selected={current?.tool===tool}
+        onClick={()=>beginTool(tool)}>
+        <ListItemIcon><DrawingToolIcon tool={tool}/></ListItemIcon>{drawingTools[tool]}
+      </MenuItem>)}
+      {!group&&drawingGroups.map(([name],index)=>{
+        const GroupIcon=groupIcons[name];
+        return <MenuItem key={name} autoFocus={index===0} onClick={()=>setGroup(name)}
+          sx={{display:"flex",gap:.5}}>
+          <ListItemIcon><GroupIcon fontSize="small"/></ListItemIcon>
+          <Box component="span" sx={{flex:1}}>{name}</Box><ChevronRight fontSize="small"/>
+        </MenuItem>;
+      })}
       {!group&&<Divider/>}
-      {!group&&<MenuItem onClick={()=>beginTool("datePriceRange","measure")}>Measure</MenuItem>}
-      {!group&&<MenuItem onClick={()=>beginTool("dateRange","zoom")}>Zoom to range</MenuItem>}
-      {!group&&<MenuItem disabled={!drawings.length||options?.locked||options?.hidden} onClick={()=>beginTool("select")}>Select drawing</MenuItem>}
-      {!group&&<MenuItem disabled={!drawings.length||options?.locked||options?.hidden} onClick={()=>beginTool("select","erase")}>Eraser</MenuItem>}
+      {!group&&<MenuItem onClick={toggleLeftToolbar}>
+        <ListItemIcon><ViewSidebarOutlined fontSize="small" sx={{transform:"scaleX(-1)"}}/></ListItemIcon>
+        {leftToolbarShown?"Hide left drawing toolbar":"Show left drawing toolbar"}
+      </MenuItem>}
+      {!group&&<MenuItem onClick={()=>beginTool("datePriceRange","measure")}>
+        <ListItemIcon><StraightenOutlined fontSize="small"/></ListItemIcon>Measure
+      </MenuItem>}
+      {!group&&<MenuItem onClick={()=>beginTool("dateRange","zoom")}>
+        <ListItemIcon><ZoomInOutlined fontSize="small"/></ListItemIcon>Zoom to range
+      </MenuItem>}
+      {!group&&<MenuItem disabled={!canSelect} onClick={()=>beginTool("select")}>
+        <ListItemIcon><NearMeOutlined fontSize="small"/></ListItemIcon>Select drawing
+      </MenuItem>}
+      {!group&&<MenuItem disabled={!canSelect} onClick={()=>beginTool("select","erase")}>
+        <ListItemIcon><BackspaceOutlined fontSize="small"/></ListItemIcon>Eraser
+      </MenuItem>}
       {!group&&(!autosave||drawingsNeedSaving(key))&&<MenuItem disabled={!drawingsNeedSaving(key)} onClick={()=>{
         const saved=persistDrawings(key);
         setSaveError(saved?"":"Drawings could not be saved in this browser.");
         setMenu(null);
-      }}>Save drawings</MenuItem>}
-      {!group&&<MenuItem disabled={!undo.some(entry=>entry.key===key)||options?.locked} onClick={()=>{
-        const index=undo.findLastIndex(entry=>entry.key===key);
-        if(index>=0){
-          const entry=undo[index];
-          const restored=applyDrawingChanges(readDrawings(key),entry.after,entry.before);
-          const saved=saveDrawings(key,restored,autosave);
-          setSaveError(autosave&&!saved?"Drawings could not be saved in this browser.":"");
-          setUndo(undo.filter((_,i)=>i!==index));
-        }
-        setMenu(null);done();
-      }}>Undo drawing change</MenuItem>}
-      {!group&&<MenuItem onClick={()=>setGroup("Drawing options")}
-        sx={{display:"flex",justifyContent:"space-between",gap:2}}>Drawing options<ChevronRight fontSize="small"/></MenuItem>}
+      }}><ListItemIcon><SaveOutlined fontSize="small"/></ListItemIcon>Save drawings</MenuItem>}
+      {!group&&<MenuItem disabled={!canUndo} onClick={undoLastDrawing}>
+        <ListItemIcon><UndoOutlined fontSize="small"/></ListItemIcon>Undo drawing change
+      </MenuItem>}
+      {!group&&<MenuItem onClick={()=>setGroup("Drawing options")} sx={{display:"flex",gap:.5}}>
+        <ListItemIcon><TuneOutlined fontSize="small"/></ListItemIcon>
+        <Box component="span" sx={{flex:1}}>Drawing options</Box><ChevronRight fontSize="small"/>
+      </MenuItem>}
       {group==="Drawing options"&&[
-        <MenuItem key="hide" onClick={()=>changeViewOptions({hidden:!options?.hidden})}>{options?.hidden?"Show drawings":"Hide drawings"}</MenuItem>,
-        <MenuItem key="lock" onClick={()=>changeViewOptions({locked:!options?.locked})}>{options?.locked?"Unlock drawings":"Lock drawings"}</MenuItem>,
+        <MenuItem key="hide" onClick={()=>changeViewOptions({hidden:!options?.hidden})}>
+          <ListItemIcon>{options?.hidden?<VisibilityOutlined fontSize="small"/>:<VisibilityOffOutlined fontSize="small"/>}</ListItemIcon>
+          {options?.hidden?"Show drawings":"Hide drawings"}
+        </MenuItem>,
+        <MenuItem key="lock" onClick={()=>changeViewOptions({locked:!options?.locked})}>
+          <ListItemIcon>{options?.locked?<LockOpenOutlined fontSize="small"/>:<LockOutlined fontSize="small"/>}</ListItemIcon>
+          {options?.locked?"Unlock drawings":"Lock drawings"}
+        </MenuItem>,
         <MenuItem key="keep" role="menuitemcheckbox" aria-checked={Boolean(options?.keepDrawing)}
-          onClick={()=>changeViewOptions({keepDrawing:!options?.keepDrawing})}>Stay in drawing mode</MenuItem>,
+          onClick={()=>changeViewOptions({keepDrawing:!options?.keepDrawing})}>
+          <ListItemIcon><RepeatOutlined fontSize="small"/></ListItemIcon>Stay in drawing mode
+        </MenuItem>,
         <Divider key="separator"/>,
         <MenuItem key="off" role="menuitemradio" aria-checked={magnet==="off"} selected={magnet==="off"}
-          onClick={()=>changeViewOptions({magnet:"off"})}>Magnet off</MenuItem>,
+          onClick={()=>changeViewOptions({magnet:"off"})}>
+          <ListItemIcon><NearMeOutlined fontSize="small"/></ListItemIcon>Magnet off
+        </MenuItem>,
         <MenuItem key="weak" role="menuitemradio" aria-checked={magnet==="weak"} selected={magnet==="weak"}
-          onClick={()=>changeViewOptions({magnet:"weak"})}>Weak magnet</MenuItem>,
+          onClick={()=>changeViewOptions({magnet:"weak"})}>
+          <ListItemIcon><LocationSearchingOutlined fontSize="small"/></ListItemIcon>Weak magnet
+        </MenuItem>,
         <MenuItem key="strong" role="menuitemradio" aria-checked={magnet==="strong"} selected={magnet==="strong"}
-          onClick={()=>changeViewOptions({magnet:"strong"})}>Strong magnet</MenuItem>,
+          onClick={()=>changeViewOptions({magnet:"strong"})}>
+          <ListItemIcon><MyLocationOutlined fontSize="small"/></ListItemIcon>Strong magnet
+        </MenuItem>,
         <Divider key="remove-separator"/>,
         <MenuItem key="remove" disabled={!drawings.length||options?.locked} sx={{color:"error.main"}}
-          onClick={()=>{setMenu(null);setConfirmRemove(key);}}>Remove all drawings</MenuItem>,
+          onClick={()=>{setMenu(null);setConfirmRemove(key);}}>
+          <ListItemIcon sx={{color:"inherit"}}><DeleteOutlineRounded fontSize="small"/></ListItemIcon>Remove all drawings
+        </MenuItem>,
       ]}
     </Menu>
     <Dialog open={confirmRemove===key} onClose={()=>setConfirmRemove(undefined)} aria-labelledby={`confirm-drawings-${dialogId}`}>
@@ -525,7 +641,41 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
         <Button color="error" onClick={()=>{commit([]);done();setConfirmRemove(undefined);}}>Remove drawings</Button>
       </DialogActions>
     </Dialog>
-  </>:null;
+  </>;
+  const leftToolbar=leftToolbarShown?<Box role="group" aria-label={`Left drawing toolbar for ${ticker}`}
+    data-chart-drawing-rail={compact?"compact":"desktop"}
+    sx={{width:compact?44:40,flexShrink:0,display:"flex",flexDirection:"column",minHeight:0,
+      borderRight:1,borderColor:"divider",bgcolor:"background.paper",overflowY:"auto"}}>
+    <Box sx={{flex:1,minHeight:0,overflowY:"auto",scrollbarWidth:"thin",overscrollBehavior:"contain"}}>
+      <DrawingRailButton label="Select drawing" compact={compact} disabled={!engine||!canSelect}
+        active={current?.tool==="select"&&!current.action} onClick={()=>beginTool("select")}>
+        <NearMeOutlined fontSize="small"/>
+      </DrawingRailButton>
+      <Divider/>
+      {drawingGroups.map(([name,tools])=>{
+        const GroupIcon=groupIcons[name];
+        const expanded=Boolean(menu?.side&&menu.section===name);
+        const active=expanded||Boolean(current&&current.tool!=="select"&&tools.includes(current.tool));
+        return <DrawingRailButton key={name} label={name} compact={compact} disabled={!engine} expanded={expanded}
+          active={active} onClick={event=>openDrawingMenu(event.currentTarget,true,name)}>
+          <GroupIcon fontSize="small"/>
+        </DrawingRailButton>;
+      })}
+    </Box>
+    <Divider/>
+    {!compact&&<>
+      <DrawingRailButton label="Measure" compact={compact} disabled={!engine} active={current?.action==="measure"}
+        onClick={()=>beginTool("datePriceRange","measure")}><StraightenOutlined fontSize="small"/></DrawingRailButton>
+      <DrawingRailButton label="Undo drawing change" compact={compact} disabled={!canUndo}
+        onClick={undoLastDrawing}><UndoOutlined fontSize="small"/></DrawingRailButton>
+    </>}
+    <DrawingRailButton label="Drawing options" compact={compact} expanded={Boolean(menu?.side&&menu.section==="Drawing options")}
+      onClick={event=>openDrawingMenu(event.currentTarget,true,"Drawing options")}><TuneOutlined fontSize="small"/></DrawingRailButton>
+    <DrawingRailButton label="Hide left drawing toolbar" compact={compact} onClick={()=>{
+      drawingButton.current?.focus({preventScroll:true});
+      toggleLeftToolbar();
+    }}><CloseRounded fontSize="small"/></DrawingRailButton>
+  </Box>:null;
   const overlay=current&&engine?<Box
     onKeyDown={event=>{
       if(event.key!=="Escape"||event.defaultPrevented)return;
@@ -605,7 +755,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
       </Box>}
     </Box>
   </Box>:null;
-  return {toolbar,overlay,toolbarShown,toggleToolbar,saveError};
+  return {toolbar,leftToolbar,leftToolbarShown,overlay,saveError};
 }
 
 

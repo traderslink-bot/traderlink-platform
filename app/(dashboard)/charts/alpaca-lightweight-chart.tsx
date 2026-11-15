@@ -83,7 +83,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const chartOptionsKey=useMemo(()=>JSON.stringify({...accountPreferences,alwaysShowDrawingToolbar:undefined,autosaveDrawings:undefined}),[accountPreferences]);
   const preferences=useMemo(()=>JSON.parse(chartOptionsKey) as ChartPreferences,[chartOptionsKey]);
   const [drawingEngine,setDrawingEngine]=useState<ChartDrawings|null>(null);
-  const {toolbar:drawingToolbar,overlay:drawingOverlay,toolbarShown,toggleToolbar,saveError:drawingSaveError}=useDrawingControls(
+  const {toolbar:drawingToolbar,leftToolbar:drawingLeftToolbar,leftToolbarShown,overlay:drawingOverlay,saveError:drawingSaveError}=useDrawingControls(
     drawingEngine,ownerKey,ticker,compact,alwaysShowDrawingToolbar,accountPreferences.autosaveDrawings??true,
   );
   const dark = preferences.theme === "dark" || preferences.theme === "auto" && theme.palette.mode === "dark";
@@ -980,9 +980,6 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       {compact&&<MenuItem disabled={!ready} onClick={() => { setFrameAnchor(menuAnchor); setMenuAnchor(null); }}>Timeframe</MenuItem>}
       {compact&&<MenuItem disabled={!ready} onClick={() => { openIndicators(); setMenuAnchor(null); }}>Indicators</MenuItem>}
       <MenuItem disabled={!ready} onClick={() => { openPreferences("settings"); setMenuAnchor(null); }}>Chart settings</MenuItem>
-      <MenuItem disabled={!ready} onClick={() => { toggleToolbar(); setMenuAnchor(null); }}>
-        {toolbarShown?"Hide drawing toolbar":"Show drawing toolbar"}
-      </MenuItem>
     </Menu>
     {drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
@@ -990,7 +987,9 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     {sessionMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{sessionMessage}</Typography>:null}
     {historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
     {error ? <Stack role="alert" direction="row" sx={{ alignItems: "center", px: 1, gap: 1 }}><Typography sx={{ fontSize: 12 }}>{error}</Typography><Button size="small" onClick={() => setAttempt(value => value + 1)}>Retry</Button></Stack> : null}
-    <Box ref={crosshairDetails} data-chart-crosshair-details sx={{position:compact?"absolute":"static",top:compact?compactToolbarHeight:undefined,left:0,right:0,zIndex:2,pointerEvents:"none",minHeight:compact?0:16,px:0.5,fontSize:10,color:"text.secondary",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} />
+    <Box ref={crosshairDetails} data-chart-crosshair-details sx={{position:compact?"absolute":"static",top:compact?compactToolbarHeight:undefined,left:compact&&leftToolbarShown?44:0,right:0,zIndex:2,pointerEvents:"none",minHeight:compact?0:16,px:0.5,fontSize:10,color:"text.secondary",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} />
+    <Box sx={{display:"flex",flex:1,minHeight:0,minWidth:0}}>
+    {drawingLeftToolbar}
     <Box sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}><Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/><Box ref={indicatorLegend} data-chart-indicator-legend sx={{position:"absolute",zIndex:1,top:4,left:8,right:65,pointerEvents:"none",fontSize:11}}>
       {readoutTypes.map(type=><Box key={type} sx={{display:indicatorDisplay.hidden.has(type)?"none":"flex",alignItems:"center",gap:0.6,minWidth:0}}>
         <Button size="small" aria-haspopup="menu" aria-expanded={indicatorMenu?.type===type} aria-label={`${indicatorName(type)} options`}
@@ -1001,6 +1000,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         <Box data-indicator-readout={type} sx={{display:"flex",gap:0.75,flexWrap:"wrap",minWidth:0,fontVariantNumeric:"tabular-nums","& span":{whiteSpace:"nowrap"}}}/>
       </Box>)}
     </Box><Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/>{drawingOverlay}</Box>
+    </Box>
     <Menu anchorEl={indicatorMenu?.anchor} open={Boolean(indicatorMenu)} onClose={()=>setIndicatorMenu(null)}>
       {indicatorMenu?[
         <MenuItem key="settings" onClick={()=>{openIndicators(indicatorMenu.type);setIndicatorMenu(null);}}>Settings</MenuItem>,

@@ -1,3 +1,4 @@
+import { drawingToolPaths } from "@/app/(dashboard)/charts/chart-drawing-icons";
 import { drawingGroups } from "@/app/(dashboard)/charts/chart-drawing-groups";
 import { patternGeometry, patternMeasurements } from "@/app/(dashboard)/charts/chart-drawing-patterns";
 import { regressionTrend, validRegressionSettings } from "@/app/(dashboard)/charts/chart-drawing-regression";
@@ -5,6 +6,11 @@ import { AnchoredVwapValues, fixedRangeVolumeProfile } from "@/app/(dashboard)/c
 import { describe, expect, it } from "vitest";
 import { copyPattern, forecastOutcome, ghostCandles, ghostSettings, validGhostSettings, validPattern } from "@/app/(dashboard)/charts/chart-drawing-market-data";
 import { applyDrawingChanges, drawingStoragePrefix, subscribeDrawings, drawingTools, drawingDuration, drawingsNeedSaving, fibonacciLevels, fibonacciCurveShape, validFibonacciWedge, fibonacciProjectionShape, validFibonacciBase, validFibonacciChannelWidth, gannFixedCorner, gannShape, pitchforkGeometry, positionLevels, validPositionAnchor, persistDrawings, readDrawings, saveDrawings, type Drawing } from "@/app/(dashboard)/charts/chart-drawings";
+
+it("gives every drawing tool its own menu icon", () => {
+  expect(Object.keys(drawingToolPaths).sort()).toEqual(Object.keys(drawingTools).sort());
+  expect(new Set(Object.values(drawingToolPaths)).size).toBe(Object.keys(drawingTools).length);
+});
 
 describe("chart drawing calculations", () => {
   it("scales Fib Circles from opposing corners and speed arcs from the first anchor",()=>{

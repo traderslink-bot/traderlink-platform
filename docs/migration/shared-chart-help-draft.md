@@ -93,8 +93,8 @@ Use **Chart defaults** to edit indicator settings and presets for your account. 
 
 ## Draw on a chart
 
-Open **Chart options** and choose **Show drawing toolbar**. Open the pencil menu and choose a group, then a tool. Place the points requested on the chart. Choose **Select drawing** to move an existing drawing or edit its color and available settings. Click a pin to read its note.
+Open **Drawing Tools** beside Chart options and choose a group, then a tool. Choose **Show left drawing toolbar** to keep the groups beside the candles. Place the points requested on the chart. Choose **Select drawing** to move an existing drawing or edit its color and available settings. Click a pin to read its note.
 
-Drawings save by ticker in the current browser and appear when you open that ticker on another TraderLink chart in the same browser. In **Chart settings**, use **Drawing tools** to keep the toolbar visible or turn off automatic saving. With automatic saving off, choose **Save drawings** in the pencil menu before you refresh or close the browser.
+Drawings save by ticker in the current browser and appear when you open that ticker on another TraderLink chart in the same browser. In **Chart settings**, use **Drawing tools** to keep the toolbar visible or turn off automatic saving. With automatic saving off, choose **Save drawings** in Drawing Tools before you refresh or close the browser.
 
 Use **Measure** for a temporary price and time readout and **Zoom to range** to focus on two times. Open **Drawing options** to hide or lock drawings in the current view, snap new anchors to candle prices, place the same tool repeatedly, or remove the ticker’s drawings. **Undo drawing change** restores the previous set from the current chart session.
