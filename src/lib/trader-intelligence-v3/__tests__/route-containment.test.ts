@@ -83,6 +83,26 @@ describe("Trader Intelligence route containment matrix", () => {
     ).toEqual([]);
   });
 
+  it("recognizes the imported Journal admin guard on the raw delivery route", () => {
+    const path = "app/api/admin/level-analysis/deliveries/[deliveryId]/raw/route.ts";
+    const source = readFileSync(path, "utf8");
+    const matrix = TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX.filter(entry => entry.modulePath === path);
+    expect(matrix).toHaveLength(1);
+    const check = (testedSource: string) => scanTraderIntelligenceRouteContainment({
+      routeRecords: [{ path, source: testedSource }],
+      intelligenceClientRecords: [],
+      matrix,
+    });
+    expect(check(source)).toEqual([]);
+    const untrusted = source.replace(
+      "@/src/modules/platform/server/administration/platform-admin-authorization",
+      "./unrecognized-guard",
+    );
+    expect(check(untrusted)).toContainEqual(expect.objectContaining({
+      code: "ti_v3_route_method_unwrapped", path, method: "GET",
+    }));
+  });
+
   it("requires mutation classifications to include an unsafe HTTP method", () => {
     for (const entry of TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX) {
       if (entry.classification === "owner_mutation") {

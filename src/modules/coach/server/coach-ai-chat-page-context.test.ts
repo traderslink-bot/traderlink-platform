@@ -29,12 +29,12 @@ describe("AI Chat page context", () => {
     });
   });
 
-  it("keeps only a valid Daily Trade Tracker date", () => {
+  it("keeps only a valid Session Tracker date", () => {
     expect(parseCoachAiChatPageContext("/trade-tracker/2026-08-15")).toEqual({
       contractVersion: COACH_AI_CHAT_PAGE_CONTEXT_CONTRACT_VERSION,
       authority: COACH_AI_CHAT_PAGE_CONTEXT_AUTHORITY,
       feature: "daily_trade_tracker",
-      featureLabel: "Daily Trade Tracker",
+      featureLabel: "Session Tracker",
       canonicalPath: "/trade-tracker/2026-08-15",
       tradingDate: "2026-08-15",
     });

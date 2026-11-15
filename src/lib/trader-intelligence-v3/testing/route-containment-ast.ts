@@ -273,13 +273,21 @@ export function scanTraderIntelligenceRouteContainment(args: {
       });
     }
 
+    const dependencies = extractTraderIntelligenceModuleDependencies(path, record.source);
+    const importsJournalAdminGuard = dependencies.some(dependency =>
+      dependency.kind === "import" &&
+      dependency.specifier === "@/src/modules/platform/server/administration/platform-admin-authorization" &&
+      dependency.importedNames?.includes("requireJournalAdminScope"));
+    const platformRequestGuards = importsJournalAdminGuard
+      ? new Set([...PLATFORM_REQUEST_GUARDS, "requireJournalAdminScope"])
+      : PLATFORM_REQUEST_GUARDS;
     let wrapperCallCount = 0;
     for (const [method, initializer] of exportedMethods) {
       if (matrixEntry.authorizationBoundary === "public_oauth_entry") {
         continue;
       }
       if (matrixEntry.authorizationBoundary === "platform_request_scope") {
-        if (!containsCall(initializer, PLATFORM_REQUEST_GUARDS)) {
+        if (!containsCall(initializer, platformRequestGuards)) {
           findings.push({
             code: "ti_v3_route_method_unwrapped",
             path,
@@ -311,10 +319,7 @@ export function scanTraderIntelligenceRouteContainment(args: {
       }
     }
 
-    const importsWrapper = extractTraderIntelligenceModuleDependencies(
-      path,
-      record.source,
-    ).some(
+    const importsWrapper = dependencies.some(
       (dependency) =>
         dependency.kind === "import" &&
         dependency.importedNames?.includes("withTraderIntelligenceOwnerRoute"),
