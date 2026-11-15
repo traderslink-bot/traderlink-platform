@@ -151,3 +151,11 @@ export function validateDevelopmentDashboardRequest(
   }
   return authority;
 }
+
+export function isAuthorizedDevelopmentDashboardWorker(headers: Headers): boolean {
+  const token = process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_TOKEN_ENV];
+  return process.env.NODE_ENV === "development" &&
+    process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_RUNTIME_ENV] === "1" &&
+    typeof token === "string" && token.length > 0 &&
+    headers.get(TRADERLINK_PLATFORM_LOCAL_DASHBOARD_ASSERTION_HEADER) === token;
+}

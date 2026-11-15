@@ -1,3 +1,4 @@
+import { posix } from "node:path";
 import ts from "typescript";
 
 import type { TraderIntelligenceRouteContainmentEntry } from "../contracts";
@@ -163,18 +164,42 @@ function resolveStaticString(
 function containsCall(
   implementation: RouteMethodImplementation,
   acceptedNames: ReadonlySet<string>,
+  localFunctions: ReadonlyMap<string, ts.FunctionDeclaration>,
+  scannerSettingsHandler: string | null,
 ): boolean {
   if (!implementation) return false;
   let found = false;
+  const visited = new Set<string>();
+  const visitHelper = (name: string) => {
+    const helper = localFunctions.get(name);
+    if (helper?.body && !visited.has(name)) {
+      visited.add(name);
+      visit(helper.body);
+    }
+  };
   const visit = (node: ts.Node): void => {
     if (found) return;
-    if (
-      ts.isCallExpression(node) &&
-      ts.isIdentifier(node.expression) &&
-      acceptedNames.has(node.expression.text)
-    ) {
-      found = true;
-      return;
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+      const name = node.expression.text;
+      if (acceptedNames.has(name)) {
+        found = true;
+        return;
+      }
+      visitHelper(name);
+      const dependencies = node.arguments[1];
+      if (name === scannerSettingsHandler && dependencies && ts.isObjectLiteralExpression(dependencies)) {
+        const predicates = dependencies.properties.filter(property =>
+          property.name && ts.isIdentifier(property.name) && property.name.text === "owner",
+        );
+        if (predicates.length === 1 && dependencies.properties.every(property => !ts.isSpreadAssignment(property))) {
+          const predicate = predicates[0];
+          if (ts.isShorthandPropertyAssignment(predicate)) {
+            visitHelper(predicate.name.text);
+          } else if (ts.isPropertyAssignment(predicate) && ts.isIdentifier(predicate.initializer)) {
+            visitHelper(predicate.initializer.text);
+          }
+        }
+      }
     }
     ts.forEachChild(node, visit);
   };
@@ -182,10 +207,82 @@ function containsCall(
   return found;
 }
 
+const PLATFORM_SCOPE_MODULE =
+  "@/src/modules/platform/server/authentication/require-platform-request-scope";
 const PLATFORM_REQUEST_GUARDS = new Set([
   "requireTraderLinkPlatformRequestIdentity",
+  "requireTraderLinkPlatformAuthenticatedRequestIdentity",
   "requireTraderLinkPlatformRequestScope",
 ]);
+
+const DELEGATED_PLATFORM_GUARDS: Readonly<Record<string, readonly string[]>> = {
+  "@/src/modules/platform/server/administration/platform-admin-authorization": ["requireJournalAdminScope"],
+  "@/src/modules/watchlist/server/access/watchlist-admin-authorization": ["withWatchlistAdminDatabase"],
+  "@/src/modules/platform/server/authentication/platform-sign-out-request-security": ["isSameOriginPlatformSignOutRequest"],
+  "@/src/modules/scanner/alpaca/proxy": ["proxyAlpacaChart"],
+  "@/src/modules/news/server/general-market-news-http": ["generalNewsFeedResponse", "generalNewsArticleResponse"],
+  "app/api/admin/journal/admin-route-runtime": ["withJournalAdminRequest"],
+};
+
+const PLATFORM_WORKER_GUARDS = {
+  platform_cron_request: [
+    "@/src/modules/platform/server/authentication/platform-cron-request-authorization",
+    "isAuthorizedPlatformCronRequest",
+  ],
+  platform_development_worker: [
+    "@/src/modules/platform/server/authentication/development-dashboard-network-boundary",
+    "isAuthorizedDevelopmentDashboardWorker",
+  ],
+} as const;
+
+function importedScannerSettingsHandler(sourceFile: ts.SourceFile): string | null {
+  for (const statement of sourceFile.statements) {
+    if (!ts.isImportDeclaration(statement) ||
+        !ts.isStringLiteral(statement.moduleSpecifier) ||
+        statement.moduleSpecifier.text !== "@/src/modules/scanner/live/server/backend-http") continue;
+    const clause = statement.importClause;
+    const bindings = clause?.namedBindings;
+    if (!clause?.isTypeOnly && bindings && ts.isNamedImports(bindings)) {
+      const handler = bindings.elements.find(element =>
+        !element.isTypeOnly && (element.propertyName ?? element.name).text === "handleScannerSettings",
+      );
+      if (handler) return handler.name.text;
+    }
+  }
+  return null;
+}
+
+function importedPlatformGuards(
+  sourceFile: ts.SourceFile,
+  boundary: TraderIntelligenceRouteContainmentEntry["authorizationBoundary"],
+): ReadonlySet<string> {
+  const worker = boundary === "platform_cron_request" || boundary === "platform_development_worker"
+    ? PLATFORM_WORKER_GUARDS[boundary]
+    : null;
+  const guards = new Set<string>();
+  for (const statement of sourceFile.statements) {
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+    const specifier = statement.moduleSpecifier.text;
+    const modulePath = specifier.startsWith(".")
+      ? posix.normalize(posix.join(posix.dirname(sourceFile.fileName), specifier))
+      : specifier;
+    const bindings = statement.importClause?.namedBindings;
+    if (statement.importClause?.isTypeOnly || !bindings || !ts.isNamedImports(bindings)) continue;
+    for (const element of bindings.elements) {
+      if (element.isTypeOnly) continue;
+      const imported = (element.propertyName ?? element.name).text;
+      if (
+        worker
+          ? modulePath === worker[0] && imported === worker[1]
+          : (modulePath === PLATFORM_SCOPE_MODULE && PLATFORM_REQUEST_GUARDS.has(imported)) ||
+            DELEGATED_PLATFORM_GUARDS[modulePath]?.includes(imported)
+      ) {
+        guards.add(element.name.text);
+      }
+    }
+  }
+  return guards;
+}
 
 export function discoverTraderIntelligenceApiRoutes(args: {
   routeRecords: readonly TraderIntelligenceRouteSourceRecord[];
@@ -245,6 +342,10 @@ export function scanTraderIntelligenceRouteContainment(args: {
     }),
   );
 
+  for (const entry of args.matrix) {
+    if (entry.modulePath.endsWith("/route.ts")) discovered.add(entry.modulePath);
+  }
+
   for (const path of discovered) {
     const record = args.routeRecords.find(
       (candidate) => normalizedPath(candidate.path) === path,
@@ -274,20 +375,27 @@ export function scanTraderIntelligenceRouteContainment(args: {
     }
 
     const dependencies = extractTraderIntelligenceModuleDependencies(path, record.source);
-    const importsJournalAdminGuard = dependencies.some(dependency =>
-      dependency.kind === "import" &&
-      dependency.specifier === "@/src/modules/platform/server/administration/platform-admin-authorization" &&
-      dependency.importedNames?.includes("requireJournalAdminScope"));
-    const platformRequestGuards = importsJournalAdminGuard
-      ? new Set([...PLATFORM_REQUEST_GUARDS, "requireJournalAdminScope"])
-      : PLATFORM_REQUEST_GUARDS;
+    const localFunctions = new Map<string, ts.FunctionDeclaration>();
+    for (const statement of sourceFile.statements) {
+      if (ts.isFunctionDeclaration(statement) && statement.name) {
+        localFunctions.set(statement.name.text, statement);
+      }
+    }
+    const platformRequestGuards = importedPlatformGuards(sourceFile, matrixEntry.authorizationBoundary);
+    const scannerSettingsHandler = matrixEntry.authorizationBoundary === "platform_request_scope"
+      ? importedScannerSettingsHandler(sourceFile)
+      : null;
     let wrapperCallCount = 0;
     for (const [method, initializer] of exportedMethods) {
       if (matrixEntry.authorizationBoundary === "public_oauth_entry") {
         continue;
       }
-      if (matrixEntry.authorizationBoundary === "platform_request_scope") {
-        if (!containsCall(initializer, platformRequestGuards)) {
+      if (
+        matrixEntry.authorizationBoundary === "platform_request_scope" ||
+        matrixEntry.authorizationBoundary === "platform_cron_request" ||
+        matrixEntry.authorizationBoundary === "platform_development_worker"
+      ) {
+        if (!containsCall(initializer, platformRequestGuards, localFunctions, scannerSettingsHandler)) {
           findings.push({
             code: "ti_v3_route_method_unwrapped",
             path,

@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX } from "../lib/trader-intelligence-v3/contracts";
+import { TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX } from "../lib/trader-intelligence-v3/contracts";
 import {
   scanTraderIntelligenceArchitectureBoundaries,
   scanTraderIntelligenceRouteContainment,
@@ -44,7 +44,7 @@ const architectureFindings =
 const routeFindings = scanTraderIntelligenceRouteContainment({
   routeRecords,
   intelligenceClientRecords,
-  matrix: TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX,
+  matrix: TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX,
 });
 
 if (architectureFindings.length > 0 || routeFindings.length > 0) {
@@ -67,7 +67,7 @@ if (architectureFindings.length > 0 || routeFindings.length > 0) {
       scannedArchitectureFileCount: architectureRecords.length,
       scannedApiRouteCount: routeRecords.length,
       classifiedTraderIntelligenceRouteCount:
-        TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX.length,
+        TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.length,
     })}\n`,
   );
 }
