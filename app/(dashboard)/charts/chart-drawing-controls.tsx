@@ -465,6 +465,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
     setMenu(null);
   };
   const shownGroup=drawingGroups.find(([name])=>name===group);
+  const magnet=options?.magnet??"off";
   const toolbar=toolbarShown?<>
     <IconButton ref={drawingButton} aria-label={`Drawings for ${ticker}`} title="Drawings" aria-haspopup="menu" disabled={!engine}
       aria-pressed={Boolean(current)} onClick={event=>{setGroup(undefined);setMenu(event.currentTarget);}}
@@ -505,9 +506,12 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
         <MenuItem key="keep" role="menuitemcheckbox" aria-checked={Boolean(options?.keepDrawing)}
           onClick={()=>changeViewOptions({keepDrawing:!options?.keepDrawing})}>Stay in drawing mode</MenuItem>,
         <Divider key="separator"/>,
-        ...(["off","weak","strong"] as const).map(magnet=><MenuItem key={magnet} role="menuitemradio"
-          aria-checked={(options?.magnet??"off")===magnet} selected={(options?.magnet??"off")===magnet}
-          onClick={()=>changeViewOptions({magnet})}>{magnet==="off"?"Magnet off":magnet==="weak"?"Weak magnet":"Strong magnet"}</MenuItem>),
+        <MenuItem key="off" role="menuitemradio" aria-checked={magnet==="off"} selected={magnet==="off"}
+          onClick={()=>changeViewOptions({magnet:"off"})}>Magnet off</MenuItem>,
+        <MenuItem key="weak" role="menuitemradio" aria-checked={magnet==="weak"} selected={magnet==="weak"}
+          onClick={()=>changeViewOptions({magnet:"weak"})}>Weak magnet</MenuItem>,
+        <MenuItem key="strong" role="menuitemradio" aria-checked={magnet==="strong"} selected={magnet==="strong"}
+          onClick={()=>changeViewOptions({magnet:"strong"})}>Strong magnet</MenuItem>,
         <Divider key="remove-separator"/>,
         <MenuItem key="remove" disabled={!drawings.length||options?.locked} sx={{color:"error.main"}}
           onClick={()=>{setMenu(null);setConfirmRemove(key);}}>Remove all drawings</MenuItem>,

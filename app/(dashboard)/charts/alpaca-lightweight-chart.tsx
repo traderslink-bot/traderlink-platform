@@ -67,7 +67,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const {preferences:accountPreferences,ready,message,change,ownerKey,journalAccountRef}=useChartPreferences();
   const journalDisplay = useChartJournalDisplay(journalAccountRef);
   const journal = useChartJournalBridge(journalAccountRef, baseTicker);
-  const { refs: journalRefs, scope: journalScope } = journal;
+  const { engineBridge: journalEngineBridge, scope: journalScope } = journal;
   const ticker = journal.current?.reviewSymbol ?? baseTicker;
   const activeTradeContext = ticker === baseTicker ? tradeContext : undefined;
   const focusScope = journalScope || (activeTradeContext ? `trade-context:${baseTicker}` : "");
@@ -229,7 +229,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       chart.panes()[0].attachPrimitive(drawings);
       chart.subscribeClick(({ point, time, paneIndex, hoveredObjectId }) => {
         if (!point || paneIndex !== 0) return;
-        const listener = journalRefs.interaction.current;
+        const listener = journalEngineBridge.getInteraction();
         if (typeof hoveredObjectId === "string") {
           const marker = journalMarkerBuckets.get(hoveredObjectId);
           if (marker) {
@@ -545,7 +545,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       let journalMarkerBuckets: ReturnType<typeof makeJournalMarkers>["buckets"] = new Map();
 
       function renderJournalOverlay() {
-        const overlay = journalRefs.overlay.current;
+        const overlay = journalEngineBridge.getOverlay();
         const journalMarks = overlay?.scope === journalScope && overlay.symbol === ticker ? overlay.items : [];
         // The selected trade already supplies its executions. Keep personal note pins alongside the analysis.
         const items = activeTradeContext
@@ -586,7 +586,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       }
 
       async function focusJournal() {
-        const target = journalRefs.pendingFocus.current;
+        const target = journalEngineBridge.getFocus();
         if (!target || target.scope !== focusScope || target.symbol !== ticker || !loaded || loading || focusingJournal || disposed) return;
         focusingJournal = true;
         try {
@@ -596,7 +596,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
             const before = Math.min(Date.now(), through * 1000) - 1;
             const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0", before: String(before) });
             const result = await readHistory(query);
-            if (disposed || journalRefs.pendingFocus.current !== target) return;
+            if (disposed || journalEngineBridge.getFocus() !== target) return;
             if (result.basisDate !== historyBasisDate || !Array.isArray(result.bars)) throw Error();
             marketCalendar.current.merge(result.calendar);
             result.calendars?.forEach((value) => marketCalendar.current.merge(value));
@@ -608,19 +608,19 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
             }
             if (!moveToJournalCandles(target.from, target.to)) throw Error();
           }
-          if (journalRefs.pendingFocus.current === target) journalRefs.setStatus("");
+          if (journalEngineBridge.getFocus() === target) journalEngineBridge.setStatus("");
         } catch {
-          if (!disposed && journalRefs.pendingFocus.current === target) {
-            journalRefs.setStatus("Candles for this trade could not be shown in the selected timeframe and sessions.");
+          if (!disposed && journalEngineBridge.getFocus() === target) {
+            journalEngineBridge.setStatus("Candles for this trade could not be shown in the selected timeframe and sessions.");
           }
         } finally {
           focusingJournal = false;
-          if (journalRefs.pendingFocus.current === target && !disposed) journalRefs.pendingFocus.current = null;
+          if (journalEngineBridge.getFocus() === target && !disposed) journalEngineBridge.clearFocus(target);
           else if (!disposed) void focusJournal();
         }
       }
       const journalEngine = { symbol: ticker, renderOverlay: renderJournalOverlay, focus: focusJournal };
-      if (focusScope) journalRefs.engine.current = journalEngine;
+      const detachJournalEngine = focusScope ? journalEngineBridge.registerEngine(journalEngine) : undefined;
       const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
       let recentHistory = useRecentHistory && !cached;
       let catchingUp = Boolean(cached);
@@ -685,8 +685,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           if (!disposed && warmup) setSessionMessage("Indicator history could not load. Retrying shortly.");
           else if (!disposed && catchingUp) setStatus("Catching up…");
           else if (!disposed) setError(failure instanceof Error ? failure.message : "Candles unavailable.");
-          if (!disposed && !loaded && journalRefs.pendingFocus.current?.symbol === ticker) {
-            journalRefs.setStatus("Candles for this trade could not load.");
+          if (!disposed && !loaded && journalEngineBridge.getFocus()?.symbol === ticker) {
+            journalEngineBridge.setStatus("Candles for this trade could not load.");
           }
         }
         finally {
@@ -903,7 +903,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       window.addEventListener("pageshow",recoverHistory);
       const remove = removeChart;
       removeChart = () => {
-        if (journalRefs.engine.current === journalEngine) journalRefs.engine.current = null;
+        detachJournalEngine?.();
         journalMarkers?.detach();
  document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);if(cacheKey && loaded && !catchingUp && indicatorsReady && bars.size && bars.size<=20_000){
         recentChartCandles.delete(cacheKey);
@@ -923,17 +923,13 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget, journalRefs, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick]);
+  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick]);
 
   useEffect(() => {
     if (!activeTradeContext || !ready) return;
     const target = { symbol: ticker, from: activeTradeContext.from, to: activeTradeContext.to, scope: focusScope };
-    journalRefs.pendingFocus.current = target;
-    if (journalRefs.engine.current?.symbol === ticker) void journalRefs.engine.current.focus();
-    return () => {
-      if (journalRefs.pendingFocus.current === target) journalRefs.pendingFocus.current = null;
-    };
-  }, [activeTradeContext, focusScope, journalRefs, ready, ticker, timeframe, tradeFocusRevision]);
+    return journalEngineBridge.startFocus(target);
+  }, [activeTradeContext, focusScope, journalEngineBridge, ready, ticker, timeframe, tradeFocusRevision]);
 
   const mainToolbar = viewWorkspace === "main";
   const multiviewButton = onOpenMultiview && (

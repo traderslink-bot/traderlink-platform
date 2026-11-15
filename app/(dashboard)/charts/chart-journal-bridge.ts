@@ -10,6 +10,8 @@ export type JournalChartEvent =
   | Readonly<{ kind: "candle"; candle: ChartJournalSelection }>
   | Readonly<{ kind: "marker"; ids: readonly string[]; type: ChartJournalOverlay["kind"] }>;
 
+type ScopedJournalFocus = ChartJournalFocus & { scope: string };
+
 type JournalChartEngine = Readonly<{
   symbol: string;
   renderOverlay: () => void;
@@ -25,7 +27,7 @@ export function useChartJournalBridge(accountRef: string | undefined, baseSymbol
   const engine = useRef<JournalChartEngine | null>(null);
   const interaction = useRef<((event: JournalChartEvent) => boolean) | null>(null);
   const overlay = useRef<{ scope: string; symbol: string; items: readonly ChartJournalOverlay[] } | null>(null);
-  const pendingFocus = useRef<(ChartJournalFocus & { scope: string }) | null>(null);
+  const pendingFocus = useRef<ScopedJournalFocus | null>(null);
 
   const register = useCallback((listener: ((event: JournalChartEvent) => boolean) | null) => {
     interaction.current = listener;
@@ -54,6 +56,28 @@ export function useChartJournalBridge(accountRef: string | undefined, baseSymbol
     setPanel({ scope, open: true, reviewSymbol: target.symbol === baseSymbol ? undefined : target.symbol });
   }, [scope, baseSymbol]);
 
-  const refs = useMemo(() => ({ overlay, interaction, engine, pendingFocus, setStatus }), []);
-  return { scope, panelId, refs, register, setOverlay, open, close, review, status, current };
+  const engineBridge = useMemo(() => {
+    const clearFocus = (target: ScopedJournalFocus) => {
+      if (pendingFocus.current === target) pendingFocus.current = null;
+    };
+    return {
+      getOverlay: () => overlay.current,
+      getInteraction: () => interaction.current,
+      getFocus: () => pendingFocus.current,
+      clearFocus,
+      startFocus(target: ScopedJournalFocus) {
+        pendingFocus.current = target;
+        if (engine.current?.symbol === target.symbol) void engine.current.focus();
+        return () => clearFocus(target);
+      },
+      registerEngine(value: JournalChartEngine) {
+        engine.current = value;
+        return () => {
+          if (engine.current === value) engine.current = null;
+        };
+      },
+      setStatus,
+    };
+  }, []);
+  return { scope, panelId, engineBridge, register, setOverlay, open, close, review, status, current };
 }

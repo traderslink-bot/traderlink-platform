@@ -85,7 +85,8 @@ export default function ChartJournalPanel({
 }) {
   const [section, setSection] = useState<Section>("execution");
   const { showFills, showNotes } = display;
-  const day = display.day ?? chartJournalDayAt(Date.now() / 1000);
+  const [initialDay] = useState(() => chartJournalDayAt(Date.now() / 1000));
+  const day = display.day ?? initialDay;
   const setDay = (value: string) => display.change({ day: value });
   const resource = useChartJournalSession(accountRef, symbol, day, open);
   const plot = useChartJournalPlot(accountRef, symbol, day,
@@ -278,20 +279,20 @@ export default function ChartJournalPanel({
     }
   }
 
-  async function attachPlan() {
+  async function attachPlan(confirmedAt: number) {
     if (!planTrade || !selectedDrawing) return;
     const [entryAnchor, targetAnchor, stopAnchor] = selectedDrawing.anchors;
     const stringifyPrice = (value: number) => value.toFixed(12).replace(/0+$/u, "").replace(/\.$/u, "");
     const plan: ChartJournalPlan = {
       direction: planTrade.direction, drawingId: selectedDrawing.id,
       entry: stringifyPrice(entryAnchor.price), stop: stringifyPrice(stopAnchor.price), target: stringifyPrice(targetAnchor.price),
-      priceBasisDate: chartJournalDayAt(Date.now() / 1000),
+      priceBasisDate: chartJournalDayAt(confirmedAt / 1000),
     };
     const id = currentPlan?.id ?? pendingPlanId.current ?? crypto.randomUUID();
     pendingPlanId.current = id;
     const item = await saveItem({
       id, symbol, kind: "plan",
-      at: currentPlan?.at ?? new Date(Math.min(entryAnchor.time * 1000, Date.now())).toISOString(),
+      at: currentPlan?.at ?? new Date(Math.min(entryAnchor.time * 1000, confirmedAt)).toISOString(),
       text: "", roundTripId: currentPlan?.roundTripId ?? planTrade.roundTripId,
       expectedRevision: currentPlan?.revision ?? null, plan,
     });
@@ -504,7 +505,7 @@ export default function ChartJournalPanel({
                 </TextField>
                 {!plans.length && <Typography variant="body2" color="text.secondary">Draw a Long Position or Short Position on the chart to attach a plan.</Typography>}
                 {selectedDrawing && <Typography variant="body2">Entry {selectedDrawing.anchors[0].price.toFixed(4)} · Stop {selectedDrawing.anchors[2].price.toFixed(4)} · Target {selectedDrawing.anchors[1].price.toFixed(4)}</Typography>}
-                <Button size="small" variant="outlined" disabled={!selectedDrawing || busy} onClick={() => void attachPlan()} sx={{ alignSelf: "flex-start" }}>
+                <Button size="small" variant="outlined" disabled={!selectedDrawing || busy} onClick={() => void attachPlan(Date.now())} sx={{ alignSelf: "flex-start" }}>
                   {currentPlan ? "Replace plan" : "Attach plan"}
                 </Button>
                 {currentPlan?.plan && <Stack spacing={0.5} sx={{ border: 1, borderColor: "divider", p: 1 }}>
