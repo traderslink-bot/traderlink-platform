@@ -1,6 +1,6 @@
 import { drawingTools, isPatternTool, type Tool } from "./chart-drawings";
 
-const groups:Record<string,readonly Tool[]>={
+const groups={
   "Trend lines and channels": ["trendline","arrow","ray","infoLine","extendedLine","trendAngle","horizontal","horizontalRay",
     "vertical","crossline","parallel","flat","disjoint","regressionTrend"],
   "Fibonacci and Gann": ["fibRetracement","fibExtension","pitchfork","schiffPitchfork","modifiedSchiffPitchfork","insidePitchfork",
@@ -12,5 +12,6 @@ const groups:Record<string,readonly Tool[]>={
     "arrowUp","arrowDown","flagMark","pin","table","icon","sticker","emoji"],
   "Forecasts and measurements": ["longPosition","shortPosition","positionForecast","dateRange","priceRange","datePriceRange","barsPattern","ghostFeed",
     "projection","sector","anchoredVwap","fixedRangeProfile","anchoredVolumeProfile"],
-};
-export const drawingGroups=Object.entries(groups);
+} satisfies Record<string,readonly Tool[]>;
+type DrawingGroup=keyof typeof groups;
+export const drawingGroups=Object.entries(groups) as [DrawingGroup,readonly Tool[]][];

@@ -45,11 +45,11 @@ export function ChartPreferencesPanel({panel,onClose,preferences:p,crosshairLine
    {p.volume?<TextField select label="Volume pane height" value={p.volumeHeight} onChange={e=>set('volumeHeight',Number(e.target.value))} size="small">{[10,15,20,25,30,40].map(v=><MenuItem key={v} value={v}>{v}%</MenuItem>)}</TextField>:null}
    <Stack spacing={0.25}>
     <Typography component="h3" sx={{fontWeight:700}}>Drawing tools</Typography>
-    <FormControlLabel label="Always show drawing toolbar"
+    <FormControlLabel label="Show left drawing toolbar by default"
       control={<Switch checked={p.alwaysShowDrawingToolbar??false} onChange={(_,visible)=>set('alwaysShowDrawingToolbar',visible)}/>}/>
     <FormControlLabel label="Autosave drawings"
       control={<Switch checked={p.autosaveDrawings??true} onChange={(_,enabled)=>set('autosaveDrawings',enabled)}/>}/>
-    {p.autosaveDrawings===false&&<Typography variant="caption" color="text.secondary">Use Save drawings in the Drawings menu to keep changes after a refresh.</Typography>}
+    {p.autosaveDrawings===false&&<Typography variant="caption" color="text.secondary">Use Save drawings in the Drawing Tools menu to keep changes after a refresh.</Typography>}
    </Stack>
    <Typography component="h3" sx={{fontWeight:700}}>Trading sessions</Typography><Typography variant="caption">Session filters apply to intraday candles.</Typography>
    {(['premarket','regular','postmarket'] as const).map(key=><FormControlLabel key={key} label={{premarket:'Premarket · 4:00–9:30 ET',regular:'Regular · 9:30–16:00 ET',postmarket:'Postmarket · 16:00–20:00 ET'}[key]} control={<Checkbox checked={p[key]} disabled={p[key]&&[p.premarket,p.regular,p.postmarket].filter(Boolean).length===1} onChange={(_,v)=>set(key,v)}/>}/>)}
