@@ -151,7 +151,7 @@ function suggestedCoverage(row: DecisionRow): JournalDataDecisionItem["suggested
     const fields: unknown = JSON.parse(row.source_raw_fields_json);
     if (
       Array.isArray(fields) &&
-      fields[0] === "manual_execution_v1" &&
+      (fields[0] === "manual_execution_v1" || fields[0] === "manual_execution_v2") &&
       typeof fields[5] === "string" &&
       typeof fields[6] === "string" &&
       /^\d{4}-\d{2}-\d{2}$/u.test(fields[5])

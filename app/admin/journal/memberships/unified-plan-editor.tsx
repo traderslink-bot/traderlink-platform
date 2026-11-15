@@ -121,8 +121,8 @@ export function UnifiedPlanEditor({ initial, draftId, revision, features, provid
                   </> : null}
                   {feature.key === "analytics.trade_explorer" ? <EditorCheck label="Allow reports and exports" checked={plan.features.some(f => f.key === "analytics.exports")} onChange={enabled => setting("analytics.exports", enabled)} /> : null}
                   {feature.key === "private_watchlist.cost_microusd" ? <EditorBudget value={selected.limit} onChange={limit => updateFeature(feature.key, { limit })} />
-                    : feature.key.includes("delay_seconds") ? <EditorDelay value={selected.limit} onChange={limit => updateFeature(feature.key, { limit })} /> : feature.kind === "limit" ? <EditorCount label="Allowance"
-                    value={selected.limit} hint="Blank: unlimited. 0: none."
+                    : feature.key.includes("delay_seconds") ? <EditorDelay value={selected.limit} onChange={limit => updateFeature(feature.key, { limit })} /> : feature.kind === "limit" ? <EditorCount label={feature.key === "coaching.students" ? plan.packageType === "addon" ? "Additional students per batch" : "Maximum students" : "Allowance"}
+                    value={selected.limit} hint={feature.key === "coaching.students" ? plan.packageType === "addon" ? "Enter the number of students included in each batch. Set its price under Prices and access." : "Enter a student limit, or leave blank for Unlimited." : "Blank: unlimited. 0: none."}
                     onChange={limit => updateFeature(feature.key, { limit })} /> : null}
                   {dayMeter ? <EditorCount label="Reset every (days)" value={selected.resetDays} hint="Blank: no reset." onChange={resetDays => updateFeature(feature.key, { resetDays })} /> : null}
                   {privateMeter ? <>

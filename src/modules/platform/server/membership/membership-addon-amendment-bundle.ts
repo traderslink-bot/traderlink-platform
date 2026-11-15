@@ -8,6 +8,7 @@ import { readMembershipEditorChoices } from "./membership-plan-editor-read";
 import { writeMembershipPlanEditor } from "./membership-plan-editor-write";
 import { membershipUsageAnchor } from "./membership-plan-usage";
 import { PlatformMembershipCatalogRepository } from "./platform-membership-catalog-repository";
+import { isRepeatableCoachCapacityBatch } from "../../contracts/coach-student-capacity";
 
 type Component = { offer_id: string; plan_id: string; plan_version_id: string; published_at_utc: string; document_json: string;
   currency: string | null; renewal_amount_minor: number | null; initial_amount_minor: number | null; billing_kind: string;
@@ -28,7 +29,7 @@ function component(db: Database.Database, offerId: string): Component {
  */
 export function prepareMembershipAmendmentBundle(db: Database.Database, userId: string, originalOfferId: string, addonOfferIds: readonly string[], at: string, invitationSecret?: string) {
   if (!db.inTransaction) throw new Error("Amendment bundle needs a transaction.");
-  if (!addonOfferIds.length || new Set(addonOfferIds).size !== addonOfferIds.length) throw new Error("Choose distinct add-on packages.");
+  if (!addonOfferIds.length) throw new Error("Choose add-on packages.");
   const original = component(db, originalOfferId);
   const originalDoc = membershipPlanEditorSchema.parse(JSON.parse(original.document_json));
   if (originalDoc.packageType !== "plan" || originalDoc.displayOnly || original.provider !== "stripe" || original.billing_kind !== "recurring" ||
@@ -41,9 +42,13 @@ export function prepareMembershipAmendmentBundle(db: Database.Database, userId: 
   if (invitationSecret && !addonOfferIds.every(id=>invitedOffers?.has(id))) throw new Error("This private offer is no longer available. Reopen your invitation.");
   const selected = addonOfferIds.map(id => {
     const row = component(db, id), doc = membershipPlanEditorSchema.parse(JSON.parse(row.document_json));
+    if (isRepeatableCoachCapacityBatch(doc) && originalDoc.features.some(feature => feature.key === "coaching.students" && feature.limit === null)) {
+      throw new Error("This plan already includes unlimited student capacity.");
+    }
     if (row.status !== "active" || row.plan_status !== "active" || (!invitedOffers?.has(id) && (row.visibility !== "public" || !["website", "both"].includes(row.channel))) || row.lifecycle_state !== "published" ||
       !["test", "ready"].includes(row.configuration_state) || doc.packageType !== "addon" ||
-      doc.displayOnly || doc.bundleOfferIds.length || row.access_duration_days !== null || oldPlans.has(row.plan_id)) throw new Error("This add-on is unavailable or already included.");
+      doc.displayOnly || doc.bundleOfferIds.length || row.access_duration_days !== null ||
+      oldPlans.has(row.plan_id) && !isRepeatableCoachCapacityBatch(doc)) throw new Error("This add-on is unavailable or already included.");
     oldPlans.add(row.plan_id);
     if (row.billing_kind !== "free" && (row.provider !== "stripe" || row.billing_kind !== "recurring" || row.billing_interval !== "month" ||
       row.billing_interval_count !== 1 || row.currency !== original.currency || row.renewal_amount_minor === null ||

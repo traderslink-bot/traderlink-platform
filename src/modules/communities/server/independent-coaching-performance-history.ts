@@ -1,0 +1,18 @@
+import 'server-only';
+import type Database from 'better-sqlite3';
+import {parsePerformanceTemplate,validatePerformanceEvaluation,projectPerformanceHistory,type PerformanceSnapshot} from '../contracts/coaching-performance-evaluation';
+/** Internal trusted scope must come from an already authorized review/enrollment, never posted account IDs. */
+export function readPerformanceSnapshots(db:Database.Database,scope:{coachUserId:string;studentUserId:string;accountId:string}):readonly PerformanceSnapshot[]{
+ if(!scope.accountId)throw new Error('This review has no historical Journal account.');
+ const rows=db.prepare(`SELECT r.review_id reviewId,r.journal_account_id accountId,r.period_start periodStart,r.period_end periodEnd,r.delivered_at_utc deliveredAtUtc,r.delivered_json deliveredJson,r.plan_item_id planItemId,a.terms_json termsJson
+ FROM traderlink_coaching_reviews r JOIN traderlink_coaching_enrollments e ON e.enrollment_id=r.enrollment_id JOIN traderlink_coaching_contexts c ON c.context_id=e.context_id JOIN traderlink_coaching_accepted_terms a ON a.agreement_id=r.agreement_id AND a.enrollment_id=e.enrollment_id
+ WHERE c.coach_user_id=? AND e.student_user_id=? AND r.journal_account_id=? AND r.kind='performance' AND r.status='delivered' ORDER BY r.delivered_at_utc,r.review_id`).all(scope.coachUserId,scope.studentUserId,scope.accountId) as {reviewId:string;accountId:string;periodStart:string;periodEnd:string;deliveredAtUtc:string;deliveredJson:string;planItemId:string;termsJson:string}[];
+ return rows.flatMap(row=>{const delivered=JSON.parse(row.deliveredJson),raw=delivered.performanceSnapshot as PerformanceSnapshot|undefined;if(raw===undefined)return [];if(raw.version!==1||raw.reviewId!==row.reviewId||raw.accountId!==scope.accountId||raw.periodStart!==row.periodStart||raw.periodEnd!==row.periodEnd||raw.deliveredAtUtc!==row.deliveredAtUtc||!raw.eligibility||!Array.isArray(raw.events))throw new Error('Stored Performance evaluation is unavailable.');const template=parsePerformanceTemplate(raw.template),accepted=parsePerformanceTemplate(JSON.parse(row.termsJson).performanceEvaluationTemplates?.[row.planItemId]);if(JSON.stringify(template)!==JSON.stringify(accepted))throw new Error('Stored Performance definitions differ from the accepted snapshot.');const evaluation=validatePerformanceEvaluation(raw.evaluation,template);return [{...raw,template,evaluation}];});
+}
+/** Findings always use all observations; only the returned evidence rows are paginated. */
+export function performanceHistoryPage(snapshots:readonly PerformanceSnapshot[],key?:string,page=0){
+ const groups=projectPerformanceHistory(snapshots),group=groups.find(group=>group.key===key)??groups[0],size=20,total=group?.observations.length??0,safePage=Math.max(0,Math.min(Number.isSafeInteger(page)?page:0,Math.max(0,Math.ceil(total/size)-1)));
+ const storedEvents=snapshots.flatMap(snapshot=>snapshot.events).filter(event=>event.key===group?.key),currentIds=new Set(group?.events.map(event=>event.id)??[]),seen=new Set<string>();
+ const records=storedEvents.filter(event=>{if(seen.has(event.id))return false;seen.add(event.id);return true;}).sort((a,b)=>b.recordedAtUtc.localeCompare(a.recordedAtUtc)||b.periodEnd.localeCompare(a.periodEnd)||a.id.localeCompare(b.id));
+ return {groups:groups.map(group=>({key:group.key,criterion:group.criterion,basis:group.basis,status:group.status,numericCount:group.numeric.length,total:group.observations.length})),key:group?.key??null,page:safePage,total,rows:group?[...group.observations].reverse().slice(safePage*size,(safePage+1)*size):[],events:records.filter(event=>currentIds.has(event.id)),earlierEvents:records.filter(event=>!currentIds.has(event.id)),status:group?.status??null};
+}

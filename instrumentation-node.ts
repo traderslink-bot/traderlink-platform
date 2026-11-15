@@ -1,7 +1,14 @@
 export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
-  if (process.env.NODE_ENV !== "production") return;
+  if (process.env.NODE_ENV !== "production"
+    && [undefined, "enabled"].includes(process.env.TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE)) return;
 
   try {
+    // Private acceptance requests must qualify before maintenance can write.
+    // Default hosted startup retains the normal maintenance/readiness sequence.
+    const { resolvePlatformBackgroundWorkerMode } = await import(
+      "./src/modules/platform/server/runtime/platform-background-worker-mode"
+    );
+    const workerMode = resolvePlatformBackgroundWorkerMode();
     const { runHostedPlatformMigrationMaintenance } = await import(
       "./src/modules/platform/server/database/run-hosted-platform-migration-maintenance"
     );
@@ -23,6 +30,10 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
     console.info(
       `TraderLink hosted runtime verified ${readiness.migrationCount} migrations on ${readiness.storage}.`,
     );
+    if (workerMode === "disabled_private_acceptance") {
+      console.info("TraderLink private acceptance background workers disabled.");
+      return;
+    }
     const { startCommittedErasureRecovery } = await import(
       "./src/modules/platform/server/privacy/platform-erasure-worker-supervisor"
     );

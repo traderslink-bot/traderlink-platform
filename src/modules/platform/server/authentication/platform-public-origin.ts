@@ -8,6 +8,19 @@ import type { NextRequest } from "next/server";
  * The Discord callback is the existing canonical source for that shared host.
  */
 export function resolvePlatformPublicOrigin(request: NextRequest): string {
+  // Keep localhost desktop auth unchanged; never trust forwarded headers here.
+  if (process.env.NODE_ENV === "development" && process.env.TRADERLINK_PRIVATE_LIVE_PREVIEW === "coaching") {
+    const privateOrigin = process.env.TRADERLINK_PRIVATE_LIVE_PREVIEW_ORIGIN;
+    if (privateOrigin) {
+      const parsed = new URL(privateOrigin);
+      if (parsed.protocol !== "https:" || parsed.hostname !== "traderlink-live-preview.tail41b7ab.ts.net" ||
+        parsed.username || parsed.password || parsed.port || parsed.pathname !== "/" ||
+        parsed.search || parsed.hash || privateOrigin !== parsed.origin) {
+        throw new Error("Invalid private live preview origin");
+      }
+      if (request.headers.get("host")?.toLowerCase() === parsed.host) return parsed.origin;
+    }
+  }
   const configuredOrigin = process.env.TRADERLINK_PLATFORM_PUBLIC_ORIGIN;
   if (configuredOrigin) {
     const parsed = new URL(configuredOrigin);

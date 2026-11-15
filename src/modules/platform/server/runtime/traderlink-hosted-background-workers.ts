@@ -11,6 +11,8 @@ import { runWatchlistNotificationDelivery } from "@/src/modules/watchlist/server
 import { startWatchlistSetupSharedFeed } from "@/src/modules/watchlist/server/setups/setup-shared-feed-runtime";
 import { startConfiguredLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
 
+import { resolvePlatformBackgroundWorkerMode } from "@/src/modules/platform/server/runtime/platform-background-worker-mode";
+
 let workersStarted = false;
 
 /**
@@ -18,12 +20,21 @@ let workersStarted = false;
  * runtime. Atomic job claims keep each unit of SQLite work single-writer safe.
  */
 export function startTraderLinkHostedBackgroundWorkers(): void {
+  if (resolvePlatformBackgroundWorkerMode() !== "enabled") return;
   if (workersStarted) return;
   workersStarted = true;
   startMoomooConnectionMonitor();
   startWatchlistSetupSharedFeed();
   startConfiguredLiveScannerRuntime();
   startPlatformLoginMailWorker();
+
+  // Off until a separately authorized release enables Community delivery.
+  if (process.env.NODE_ENV === "production"
+    && process.env.TRADERLINK_COMMUNITY_DISCORD_DELIVERY_ENABLED === "true") {
+    void import("@/src/modules/communities/server/community-discord-delivery-runtime")
+      .then(({ startHostedCommunityDiscordDelivery }) => startHostedCommunityDiscordDelivery())
+      .catch(() => console.error("TraderLink community delivery could not start."));
+  }
 
   let analyzerRunning = false;
   const runAnalyzer = async (): Promise<void> => {

@@ -69,6 +69,25 @@ export class MembershipAddonAmendmentRepository {
         new PlatformMembershipClaims(this.db).release(id);
         return { row: this.read(userId,id), acquired: false };
       }
+      // A quote is not permission to charge after its original subscription or
+      // entitlement changes. Recheck the same eligibility used at reservation
+      // inside this confirmation transaction, before acquiring provider dispatch.
+      const eligible = this.db.prepare(`SELECT 1 FROM platform_membership_provider_subscriptions s
+        JOIN platform_membership_entitlements e ON e.entitlement_id=?
+        WHERE s.provider_subscription_id=? AND s.user_id=? AND s.provider='stripe'
+          AND s.offer_id=? AND s.external_subscription_ref=? AND s.external_customer_ref=?
+          AND s.lifecycle_state='active' AND s.cancel_at_period_end=0
+          AND s.current_period_end_utc=? AND s.current_period_end_utc>?
+          AND e.user_id=s.user_id AND e.source_type='subscription' AND e.source_ref=s.external_subscription_ref
+          AND e.status='active' AND e.plan_version_id=? AND e.starts_at_utc<=? AND e.ends_at_utc>?
+          AND NOT EXISTS (SELECT 1 FROM platform_membership_version_changes c
+            WHERE c.entitlement_id=e.entitlement_id AND c.applied_at_utc IS NULL)`)
+        .get(row.entitlement_id,row.provider_subscription_id,row.user_id,row.original_offer_id,
+          row.external_subscription_ref,row.external_customer_ref,row.period_end_utc,at,row.original_plan_version_id,at,at);
+      if (!eligible) {
+        this.fail(userId,id,"subscription_changed",at);
+        return { row: this.read(userId,id), acquired: false };
+      }
       assertAddonInvitation(this.db,id,at);
       this.db.prepare("UPDATE platform_membership_addon_amendments SET state='confirming',updated_at_utc=? WHERE amendment_id=? AND state='quoted'").run(at,id);
       return { row: this.read(userId,id), acquired: true };

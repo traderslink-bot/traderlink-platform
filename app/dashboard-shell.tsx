@@ -1,5 +1,10 @@
 "use client";
 
+import {installCoachingHistoryTracking} from "./coaching-review-history";
+
+import {CommunityNavigationProvider,useCommunityNavigation} from "./community-navigation-context";
+import {CommunitySidebar,CommunityBreadcrumbs} from "./community-sidebar";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import AirlineStopsIcon from "@mui/icons-material/AirlineStops";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
@@ -80,6 +85,7 @@ import {
   isDashboardNavigationItem,
   type DashboardNavigationDrawerItem,
   type DashboardNavigationGroup,
+  type DashboardNavigationGroupItem,
   type DashboardNavigationIconKey,
   type DashboardNavigationItem,
 } from "./dashboard-navigation";
@@ -106,6 +112,8 @@ import { WorkspaceTradeDrawer } from "./(dashboard)/workspace/workspace-trade-li
 import {
   TRADERLINK_OPEN_WORKSPACE_TRADE_DRAWER_EVENT,
 } from "./(dashboard)/workspace/workspace-trade-drawer-events";
+
+installCoachingHistoryTracking();
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
@@ -373,7 +381,11 @@ function NavigationDrawerButton({
   ) : button;
 }
 
-export function DashboardShell({
+export function DashboardShell(props:Parameters<typeof DashboardShellContent>[0]) {
+ return <CommunityNavigationProvider><DashboardShellContent {...props}/></CommunityNavigationProvider>;
+}
+
+function DashboardShellContent({
   children,
   initialMarketHaltAlertsEnabled = false,
   initialMutedMarketHaltTickers = [],
@@ -386,6 +398,8 @@ export function DashboardShell({
   ownerMarketDataAccess = false,
   generalMarketNewsAccess = false,
   watchlistAdminNavigationAccess = false,
+  communityNavigationHref = null,
+  coachingNavigationHref = null,
 }: {
   children: ReactNode;
   initialMarketHaltAlertsEnabled?: boolean;
@@ -399,6 +413,8 @@ export function DashboardShell({
   ownerMarketDataAccess?: boolean;
   generalMarketNewsAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
+  communityNavigationHref?: string | null;
+  coachingNavigationHref?: string | null;
 }) {
   const theme = useTheme();
   const pathname = usePathname();
@@ -466,7 +482,16 @@ export function DashboardShell({
     Readonly<Partial<Record<DashboardNavigationGroup["id"], boolean>>>
   >({});
 
-  const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
+  const communityContext=useCommunityNavigation();
+  const communityMenu=[...(communityContext?.menus.values()??[])].reverse().find(menu=>pathname===menu.base||pathname.startsWith(menu.base+"/"));
+  const [communityMode,setCommunityMode]=useState<{base:string;show:boolean}|null>(null);
+  const [navigationPreference,setNavigationPreference]=useState<{viewerId:string;showTraderLink:boolean}|null>(null);
+  const communityViewerId=communityMenu?.viewerId;
+  useEffect(()=>{if(!communityViewerId)return;let showTraderLink=false;try{showTraderLink=localStorage.getItem(`traderlink:community-navigation:${communityViewerId}`)==="traderlink";}catch{}setNavigationPreference({viewerId:communityViewerId,showTraderLink});},[communityViewerId]);
+  const prefersTraderLink=navigationPreference?.viewerId===communityViewerId&&navigationPreference?.showTraderLink;
+  const showCommunity=Boolean(communityMenu&&(communityMode?.base===communityMenu.base?communityMode.show:communityMenu.focused&&!prefersTraderLink));
+  const toggleNavigationPreference=()=>{if(!communityMenu)return;const showTraderLink=!prefersTraderLink;setNavigationPreference({viewerId:communityMenu.viewerId,showTraderLink});setCommunityMode(null);try{localStorage.setItem(`traderlink:community-navigation:${communityMenu.viewerId}`,showTraderLink?"traderlink":"community");}catch{}};
+  const desktopWidth = showCommunity ? expandedWidth : collapsed ? collapsedWidth : expandedWidth;
   const accountMenuOpen = Boolean(accountMenuAnchor);
   async function signOut() {
     if (signOutPending) return;
@@ -494,7 +519,7 @@ export function DashboardShell({
       setSignOutPending(false);
     }
   }
-  const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
+  const stockToolsNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
     section.group.id !== "stockTools" && section.group.id !== "pressReleases"
       ? section
       : Object.freeze({
@@ -515,6 +540,22 @@ export function DashboardShell({
             ))),
         }),
       }));
+  const sidebarNavigationSections = stockToolsNavigationSections
+    .filter(section => section.group.id === "communities" ? communityNavigationHref !== null : section.group.id === "coaching" ? watchlistAdminNavigationAccess && coachingNavigationHref === "/coaching" : true)
+    .map(section => section.group.id !== "communities" && section.group.id !== "coaching" ? section : Object.freeze({
+      ...section,
+      group: Object.freeze({
+        ...section.group,
+        items: Object.freeze(section.group.items.flatMap<DashboardNavigationGroupItem>(item => {
+          if (!isDashboardNavigationItem(item)) return [item];
+          if (item.href === "/communities") return communityNavigationHref ? [Object.freeze({ ...item, href: communityNavigationHref })] : [];
+          if (item.href === "/coaching") {
+            return watchlistAdminNavigationAccess && coachingNavigationHref === "/coaching" ? [item] : [];
+          }
+          return [item];
+        })),
+      }),
+    }));
   const closeMobile = () => setMobileOpen(false);
   const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
     setCollapsed(nextCollapsed);
@@ -601,7 +642,7 @@ export function DashboardShell({
   }, []);
 
   const navigation = (mobile: boolean) => {
-    const compact = mobile ? false : collapsed;
+    const compact = showCommunity ? false : mobile ? false : collapsed;
     const hasActiveRoute = (group: DashboardNavigationGroup): boolean =>
       group.items.some(item => isDashboardNavigationItem(item) && isActive(pathname, item.href)) ||
       Boolean(group.subgroups?.some(hasActiveRoute));
@@ -780,11 +821,14 @@ export function DashboardShell({
           }
           sx={{ flexGrow: 1, overflowY: "auto", py: 1.25 }}
         >
+          {showCommunity&&communityMenu?<CommunitySidebar key={`${communityMenu.base}:${pathname}`} menu={communityMenu} path={pathname} onNavigate={closeMobile} onShowTraderLink={()=>setCommunityMode({base:communityMenu.base,show:false})}/>:<>
+          {communityMenu?<Button onClick={()=>setCommunityMode({base:communityMenu.base,show:true})} sx={{mx:1,mb:1}}>{compact?(communityMenu.kind==="coaching"?"Coaching":"Community"):`${communityMenu.name} menu`}</Button>:null}
           <List disablePadding>
             {sidebarNavigationSections.map((section, index) => renderGroup(section.group,
               section.dividerBefore ? <Divider sx={{ my: 1.25 }} /> :
                 compact && index > 0 ? <Divider sx={{ mx: 2, my: 0.75 }} /> : null))}
           </List>
+          </>}
         </Box>
         <Stack spacing={0.5} sx={{ px: compact ? 1 : 2, py: 1 }}>
           <DashboardAppearanceSwitch compact={compact} />
@@ -827,7 +871,7 @@ export function DashboardShell({
           }}
         >
           <IconButton
-            aria-label="Open navigation"
+            aria-label={showCommunity?(communityMenu?.kind==="coaching"?"Open coaching menu":"Open community menu"):"Open navigation"}
             onClick={() => setMobileOpen(true)}
             sx={{ display: { lg: "none" } }}
           >
@@ -839,7 +883,7 @@ export function DashboardShell({
               aria-expanded={!collapsed}
               aria-label="Toggle sidebar"
               onClick={() => setDesktopNavigationCollapsed(!collapsed)}
-              sx={{ display: { xs: "none", lg: "inline-flex" } }}
+              sx={{ display: { xs: "none", lg: showCommunity ? "none" : "inline-flex" } }}
             >
               {collapsed ? <MenuRoundedIcon /> : <MenuOpenRoundedIcon />}
             </IconButton>
@@ -915,6 +959,7 @@ export function DashboardShell({
               <ListItemIcon><PersonRoundedIcon fontSize="small" /></ListItemIcon>
               Account settings
             </MenuItem>
+            {communityMenu?.focused?<MenuItem role="menuitemcheckbox" aria-checked={Boolean(prefersTraderLink)} onClick={toggleNavigationPreference}><ListItemIcon>{prefersTraderLink?<CheckRoundedIcon fontSize="small"/>:null}</ListItemIcon><ListItemText primary="Show TraderLink navigation" secondary="Saved in this browser"/></MenuItem>:null}
             <MenuItem component={Link} href="/account/security" onClick={() => setAccountMenuAnchor(null)} prefetch={false}>
               <ListItemIcon><LockRoundedIcon fontSize="small" /></ListItemIcon>
               Security
@@ -1004,6 +1049,7 @@ export function DashboardShell({
             enabled={!offline}
             pathname={pathname}
           />
+          {communityMenu?<CommunityBreadcrumbs menu={communityMenu} path={pathname}/>:null}
           {children}
         </Box>
       </Box>

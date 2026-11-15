@@ -1,10 +1,7 @@
 import { MembershipFeatureAccessNotice } from "../membership-feature-access-notice";
+import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-
-import { DashboardPage } from "@/app/dashboard-template";
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import {
@@ -15,10 +12,11 @@ import {
 } from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { buildJournalAnalyticsDashboardQuery, resolveJournalAnalyticsMoneyBasis, withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPageScope, requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
-import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
-import { ResultsTickerTable, type ResultsTickerRow } from "./results-ticker-table";
+import type { OverviewDateRange } from "./overview-date-range-control";
+import type { ResultsTickerRow } from "./results-ticker-table";
+import { ResultsAnalyticsView } from "./results-analytics-view";
 
 function metricsFor(moneyBasis: "gross" | "net") {
   return [
@@ -72,9 +70,8 @@ function range(input: Readonly<Record<string, string | string[] | undefined>>): 
     : { endDate: null, kind: "all", startDate: null };
 }
 
-export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = await requireMembershipPreviewPageScope("analytics.access");
-  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
+export async function loadResultsAnalyticsModel({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const scope = resourceScope ?? await requireMembershipPageScope("analytics.access");
   const selectedRange = range(searchParams);
   const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ pnlReportingBasis, service }) => {
     const moneyBasis = resolveJournalAnalyticsMoneyBasis(searchParams.basis, pnlReportingBasis);
@@ -115,6 +112,13 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
         winsValue: numberValue(read("win_count")?.value ?? null),
       };
     }));
+  return { selectedRange, moneyBasis, response, rows };
+}
+
+export async function ResultsAnalyticsPage({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const pageScope = resourceScope ?? await requireMembershipPreviewPageScope("analytics.access");
+  if (!pageScope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
+  const { selectedRange, moneyBasis, response, rows } = await loadResultsAnalyticsModel({ searchParams, resourceScope: pageScope });
   const offlineModel: JournalAnalyticsResultsOfflineViewModel = Object.freeze({
     dateRange: Object.freeze({ ...selectedRange }),
     kind: "analytics-results",
@@ -124,7 +128,7 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
   });
   return (
     <>
-      <OfflineSavedViewCapture
+      {resourceScope?null:<OfflineSavedViewCapture
         accountTimezone={response.partitions[0]?.timezone ?? null}
         calculationVersion={`journal-analytics-${response.registryVersion}`}
         coverage={journalAnalyticsOfflineRouteCoverage("analytics-results")}
@@ -135,17 +139,8 @@ export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Rea
         reportingCurrency={response.partitions[0]?.currency ?? null}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-results"]}
-      />
-      <DashboardPage>
-        <Box>
-          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography>
-          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Ticker</Typography>
-        </Box>
-        <Box sx={{ alignItems: { sm: "center" }, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 0.5 }}>
-          <OverviewDateRangeControl href="/analytics/results" value={selectedRange} />
-        </Box>
-        <ResultsTickerTable endDate={selectedRange.endDate} moneyBasis={moneyBasis} rows={rows} startDate={selectedRange.startDate} />
-      </DashboardPage>
+      />}
+      <ResultsAnalyticsView selectedRange={selectedRange} moneyBasis={moneyBasis} rows={rows} />
     </>
   );
 }

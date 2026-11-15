@@ -9,13 +9,15 @@ import { readMembershipPlanEditor, readMembershipEditorChoices } from "./members
 import { writeMembershipPlanEditor } from "./membership-plan-editor-write";
 import { PlatformMembershipClaims } from "./platform-membership-claims";
 import { membershipUsageAnchor } from "./membership-plan-usage";
+import { isRepeatableCoachCapacityBatch } from "../../contracts/coach-student-capacity";
 
 /** Build a buyer-bound immutable monthly bundle using existing versioned offer storage. */
 export function reserveMembershipAddonCheckout(db: Database.Database, userId: string, baseOfferId: string, addonOfferIds: readonly string[], at: string) {
   assertCanonicalUuidV4(userId, "userId"); assertCanonicalUtcTimestamp(at, "at");
   for (const id of [baseOfferId, ...addonOfferIds]) assertCanonicalUuidV4(id, "offerId");
-  if (new Set([baseOfferId, ...addonOfferIds]).size !== addonOfferIds.length + 1) throw new Error("This selection includes a package more than once.");
+  if (addonOfferIds.includes(baseOfferId)) throw new Error("This selection includes a package more than once.");
   return db.transaction(() => {
+    const selectedPlans = new Set<string>();
     const selected = [baseOfferId, ...addonOfferIds].map((offerId, index) => {
       const row = db.prepare(`SELECT p.plan_id,v.plan_version_id,v.published_at_utc,s.document_json FROM platform_membership_offers o
         JOIN platform_membership_plan_versions v USING(plan_version_id) JOIN platform_membership_plans p USING(plan_id)
@@ -25,13 +27,18 @@ export function reserveMembershipAddonCheckout(db: Database.Database, userId: st
       if (!row) throw new Error("This package is no longer available.");
       const doc = membershipPlanEditorSchema.parse(JSON.parse(row.document_json));
       if (doc.displayOnly || doc.bundleOfferIds.length || doc.packageType !== (index ? "addon" : "plan")) throw new Error("This package cannot be selected for this checkout.");
+      if (selectedPlans.has(row.plan_id) && !isRepeatableCoachCapacityBatch(doc)) throw new Error("This selection includes an add-on package more than once.");
+      selectedPlans.add(row.plan_id);
       const current = readMembershipPlanEditor(db, row.plan_id, row.plan_version_id);
       const price = current.prices.find(price => price.id === offerId && price.enabled);
       if (!price || (price.billing !== "free" && price.provider !== "stripe")) throw new Error("This combined checkout requires Stripe for paid packages.");
       if (price.accessDays !== null) throw new Error("This combined checkout needs access options without a separate expiry duration.");
       return { row, doc: current, price };
     });
-    if (new Set(selected.map(item => item.row.plan_id)).size !== selected.length) throw new Error("This selection includes an add-on package more than once.");
+    if (selected[0].doc.features.some(feature => feature.key === "coaching.students" && feature.limit === null) &&
+      selected.slice(1).some(item => isRepeatableCoachCapacityBatch(item.doc))) {
+      throw new Error("This plan already includes unlimited student capacity.");
+    }
     const total = combinedMembershipPrice(selected.map(item => editorPriceTerms(item.price)));
     const fingerprint = createHash("sha256").update(JSON.stringify({ userId, versions: selected.map(item => item.row.plan_version_id).sort(), offers: [baseOfferId, ...addonOfferIds].sort() })).digest("hex");
     const key = `bundle_${fingerprint}`;

@@ -1,0 +1,8 @@
+'use client';
+import {useState} from 'react';
+import {Box,MenuItem,Stack,TextField,Typography} from '@mui/material';
+import type {StudentReviewPreferences} from '@/src/modules/communities/contracts/coaching-student-review-preferences';
+export function CoachingStudentReviewPreferences({value,readOnly=false}:{value?:StudentReviewPreferences;readOnly?:boolean}){
+ const [mode,setMode]=useState(value?.olderTrades??'student_only');
+ return <Box sx={{border:1,borderColor:'divider',borderRadius:2,p:2,my:2}}><Stack spacing={1.5}><Typography sx={{fontWeight:700}}>Preferences for older trades</Typography>{readOnly?<Typography>{value?.olderTrades==='earliest_date'?`The coach may choose earlier unreviewed trades from ${value.earliestDate}.`:'Earlier trades are chosen by the student.'}</Typography>:<><TextField select fullWidth label="Who chooses older trades?" name="olderTrades" value={mode} onChange={event=>setMode(event.target.value as StudentReviewPreferences['olderTrades'])}><MenuItem value="student_only">I choose the older trades to send</MenuItem><MenuItem value="earliest_date">My coach may choose back to a date I approve</MenuItem></TextField>{mode==='earliest_date'?<TextField required type="date" name="earliestTradeDate" label="Earliest date my coach may choose" defaultValue={value?.earliestDate??''} slotProps={{inputLabel:{shrink:true}}}/>:null}<Typography variant="body2" color="text.secondary">These preferences apply to trades from before a review’s period. Your Journal sharing and the plan’s trade limits still apply. The same coach cannot review a trade twice.</Typography></>}</Stack></Box>;
+}

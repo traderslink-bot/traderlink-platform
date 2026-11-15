@@ -116,6 +116,9 @@ export function membershipPlanReadiness(plan: MembershipPlanEditor,
     const definition = features.find(item => item.key === feature.key);
     if (!definition) add(`features.${feature.key}`, "A selected feature is no longer available.");
     if (definition?.kind === "boolean" && feature.limit !== null) add(`features.${feature.key}`, "An on/off feature cannot contain a numeric allowance.");
+    if (feature.key === "coaching.students" && plan.packageType === "addon" && (feature.limit === null || feature.limit < 1)) {
+      add(`features.${feature.key}`, "Enter the positive number of additional students included in each capacity batch.");
+    }
     if (selected.has(feature.key)) add(`features.${feature.key}`, "A feature is selected more than once.");
     selected.add(feature.key);
     if (feature.resetDays !== null && feature.resetDays < 1) add(`features.${feature.key}`, "Reset periods must be at least one day.");
@@ -142,6 +145,10 @@ export function membershipPlanReadiness(plan: MembershipPlanEditor,
     const path = `prices.${price.id}`; unique(price.id, path);
     for (const item of [...price.trials, ...price.discord]) unique(item.id, path);
     if (!price.enabled) continue;
+    if (plan.packageType === "addon" && plan.features.some(feature => feature.key === "coaching.students") &&
+      (price.billing !== "recurring" || price.interval !== "month" || price.intervalCount !== 1)) {
+      add(path, "Student capacity batches use monthly recurring prices while active.");
+    }
     if (!price.name.trim()) add(path, "Name this price or access option.");
     const provider = providers.find(item => item.key === price.provider);
     if (membershipPriceRequiresProvider(price)) {

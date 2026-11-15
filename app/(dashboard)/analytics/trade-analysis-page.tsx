@@ -1,11 +1,12 @@
+import { TradeAnalysisLockedPreview } from "./trade-analysis-locked-preview";
+import type {ComponentProps,ReactElement} from 'react';
+import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 import { withSavedPatternRuntime } from "@/src/modules/level-analysis/server/trend-momentum-pattern-runtime";
 import { pageSavedAnalyzedTrades } from "@/src/modules/level-analysis/server/trend-momentum-analyzed-trades";
 import { readSavedPatternPopulation } from "@/src/modules/level-analysis/server/trend-momentum-pattern-service";
 import { summarizeSavedPatterns } from "@/src/lib/trade-candle-analysis/trend-momentum-patterns";
 import { readSavedTradeMovement } from "@/src/modules/level-analysis/server/trend-momentum-movement-service";
-
-import { TradeAnalysisLockedPreview } from "./trade-analysis-locked-preview";
 
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -140,16 +141,12 @@ function profitZoneMinimumHoldMinutes(
   return Number.isSafeInteger(value) && value >= 0 && value <= 120 ? value : 0;
 }
 
-export async function TradeAnalysisPage({
-  baseHref,
-  searchParams,
-  view,
-}: {
-  baseHref: string;
-  searchParams: Readonly<Record<string, string | string[] | undefined>>;
-  view: TradeAnalysisView;
-}) {
-  const scope = await requireMembershipPreviewPageScope("trade_analyzer.analysis");
+type TradeAnalysisPageInput={resourceScope?:WorkspaceAccessScope;baseHref:string;searchParams:Readonly<Record<string,string|string[]|undefined>>;view:TradeAnalysisView};
+export type TradeAnalysisResourceModel={kind:'trades';props:ComponentProps<typeof AnalyzedTradesIndex>}|{kind:'analysis';props:ComponentProps<typeof TradeAnalysisClient>};
+export function TradeAnalysisPage(input:TradeAnalysisPageInput&{resourceScope:WorkspaceAccessScope}):Promise<TradeAnalysisResourceModel>;
+export function TradeAnalysisPage(input:TradeAnalysisPageInput&{resourceScope?:undefined}):Promise<ReactElement>;
+export async function TradeAnalysisPage({resourceScope,baseHref,searchParams,view}:TradeAnalysisPageInput):Promise<ReactElement|TradeAnalysisResourceModel>{
+  const scope = resourceScope ?? await requireMembershipPreviewPageScope("trade_analyzer.analysis");
   if (!scope) return <TradeAnalysisLockedPreview title={VIEW_DETAILS[view].title} view={view} />;
   const accountTimezone = withReadonlyPlatformDatabase({}, (database) => {
     const accountId = scope.activeAccountId;
@@ -181,6 +178,7 @@ export async function TradeAnalysisPage({
       page: pageSavedAnalyzedTrades(trades, { query: indicatorQuery, timezone, scopeIdentity: `${scope.workspaceId}:${scope.activeAccountId}:${runtime.reportingCurrency}`,
         pageSize: 25, cursor: null, ticker: "" }),
     }));
+    if(resourceScope)return {kind:'trades',props:{indicatorQuery:indicatorQuery.toString(),currency:tradeIndex.currency,dateRange,endDate:dateRange.endDate,initialPage:tradeIndex.page,moneyBasis,startDate:dateRange.startDate}};
     const offlineModel = createJournalAnalyzedTradesOfflineViewModel({
       currency: tradeIndex.currency,
       dateRange,
@@ -189,7 +187,7 @@ export async function TradeAnalysisPage({
     });
     return (
       <>
-      <OfflineSavedViewCapture
+      {resourceScope?null:<OfflineSavedViewCapture
         accountTimezone={tradeIndex.page?.timezone ?? null}
         calculationVersion="daily-trade-analyzed-trades-v1"
         coverage={journalAnalyticsOfflineRouteCoverage("trade-analyzer-trades")}
@@ -200,7 +198,7 @@ export async function TradeAnalysisPage({
         reportingCurrency={tradeIndex.currency}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["trade-analyzer-trades"]}
-      />
+      />}
       <DashboardPage>
         <Stack spacing={1}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
@@ -317,6 +315,7 @@ export async function TradeAnalysisPage({
     rangeKind: dateRange.kind,
     startDate: dateRange.startDate,
   });
+  if(resourceScope)return {kind:'analysis',props:{indicatorSupportingPage:view==='trend-momentum'&&result.model.trendMomentum?buildIndicatorSupportingPage(result.model.trendMomentum,{get:key=>typeof searchParams[key]==='string'?searchParams[key] as string:null},evidenceQuery.direction):undefined,evidenceQuery,model:result.model,view}};
   const offlineModel = createJournalTradeAnalyzerOfflineViewModel({
     selectionQuery: new URLSearchParams(Object.entries(searchParams).flatMap(([key, value]) => typeof value === "string" ? [[key, value]] : [])).toString(),
     dateRange,
@@ -326,7 +325,7 @@ export async function TradeAnalysisPage({
   });
   return (
     <>
-    <OfflineSavedViewCapture
+    {resourceScope?null:<OfflineSavedViewCapture
       accountTimezone={result.model.timezone}
       calculationVersion={`daily-trade-analysis-${result.calculationVersion}`}
       coverage={journalAnalyticsOfflineRouteCoverage(offlineModel.kind)}
@@ -337,7 +336,7 @@ export async function TradeAnalysisPage({
       reportingCurrency={result.model.currency}
       routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
       viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS[offlineModel.kind]}
-    />
+    />}
     <DashboardPage>
       <Stack spacing={1}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>

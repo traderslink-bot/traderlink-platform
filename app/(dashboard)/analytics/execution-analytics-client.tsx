@@ -20,7 +20,8 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {useCoachingResourceNavigation} from "../communities/coaching-resource-context";
 
 import { financialOutcomeColor } from
   "@/src/modules/journal-analytics/presentation/financial-outcome-color";
@@ -177,17 +178,19 @@ function EntryPriceResults({ moneyBasis, results, resultsByDirection }: {
   </Stack></Paper>;
 }
 
-export function ExecutionAnalyticsClient({ chartData, currency, dateControls, moneyBasis, offline = false, priceResults, priceResultsByDirection, rows }: { chartData: ExecutionChartData; currency: string | null; dateControls?: ReactNode; moneyBasis: "gross" | "net"; offline?: boolean; priceComparison: EntryPriceComparison; priceInsights: EntryPriceInsights; priceResults: readonly EntryPriceResult[]; priceResultsByDirection?: Readonly<Record<"long" | "short", readonly EntryPriceResult[]>>; rows: readonly ExecutionTradeRow[] }) {
+export function ExecutionAnalyticsClient({ chartData, currency, dateControls, initialTicker="", moneyBasis, offline = false, priceResults, priceResultsByDirection, rows }: { chartData: ExecutionChartData; currency: string | null; dateControls?: ReactNode; initialTicker?:string; moneyBasis: "gross" | "net"; offline?: boolean; priceComparison: EntryPriceComparison; priceInsights: EntryPriceInsights; priceResults: readonly EntryPriceResult[]; priceResultsByDirection?: Readonly<Record<"long" | "short", readonly EntryPriceResult[]>>; rows: readonly ExecutionTradeRow[] }) {
   const pnlMetricId = moneyBasis === "gross" ? "gross_pnl" : "net_pnl";
   const [metricId, setMetricId] = useState<ExecutionMetricId>(pnlMetricId);
   const columnsForBasis = columns(moneyBasis);
-  const [ticker, setTicker] = useState("");
+  const [ticker, setTicker] = useState(initialTicker);
+  const coaching=useCoachingResourceNavigation();
   const [direction, setDirection] = useState<"all" | "long" | "short">("all");
   const [tradeType, setTradeType] = useState<"all" | "day_trade" | "multi_day_trade">("all");
   const [sortColumn, setSortColumn] = useState<SortColumn>("closed");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedTrade, setSelectedTrade] = useState<ExecutionTradeRow | null>(null);
   const [page, setPage] = useState(0);
+  useEffect(()=>{setTicker(initialTicker);setPage(0);},[initialTicker]);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const visibleRows = useMemo(() => rows.filter((row) => row.ticker.toUpperCase().includes(ticker.trim().toUpperCase()) && (direction === "all" || row.direction === direction) && (tradeType === "all" || row.tradeTypeValue === tradeType)).sort((left, right) => { const leftValue = sortValue(left, sortColumn); const rightValue = sortValue(right, sortColumn); const comparison = typeof leftValue === "string" ? leftValue.localeCompare(rightValue as string) : leftValue - (rightValue as number); return sortDirection === "asc" ? comparison : -comparison; }), [direction, rows, sortColumn, sortDirection, ticker, tradeType]);
   const paginatedRows = visibleRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -237,7 +240,7 @@ export function ExecutionAnalyticsClient({ chartData, currency, dateControls, mo
           <Typography color="text.secondary" sx={{ px: 2.25, pb: 3 }}>No completed trades match these filters.</Typography>
         ) : (
           <HorizontalScrollRegion label="Execution trade table" minTableWidth={1280} stickyFirstColumn>
-            <Table size="small"><TableHead><TableRow>{columnsForBasis.map((column) => <TableCell key={column.id}><TableSortLabel active={sortColumn === column.id} direction={sortColumn === column.id ? sortDirection : "asc"} hideSortIcon={false} onClick={() => changeSort(column.id)} slotProps={{ icon: { sx: { opacity: sortColumn === column.id ? 1 : 0.45 } } }}>{column.label}</TableSortLabel></TableCell>)}</TableRow></TableHead><TableBody>{paginatedRows.map((row) => <TableRow aria-label={offline ? undefined : `View ${row.ticker} trade details`} hover key={row.roundTripId} onClick={offline ? undefined : () => setSelectedTrade(row)} onKeyDown={(event) => { if (offline) return; if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedTrade(row); } }} role={offline ? undefined : "button"} sx={{ cursor: offline ? "default" : "pointer" }} tabIndex={offline ? undefined : 0}><TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.tradeType}</TableCell><TableCell>{row.opened}</TableCell><TableCell>{row.closed}</TableCell><TableCell>{row.executions}</TableCell><TableCell>{row.averageEntry}</TableCell><TableCell>{row.averageExit}</TableCell><TableCell>{row.maximumPosition}</TableCell><TableCell>{row.holdTime}</TableCell><TableCell sx={{ color: row.netPnlValue < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{row.netPnl}</TableCell></TableRow>)}</TableBody></Table>
+            <Table size="small"><TableHead><TableRow>{columnsForBasis.map((column) => <TableCell key={column.id}><TableSortLabel active={sortColumn === column.id} direction={sortColumn === column.id ? sortDirection : "asc"} hideSortIcon={false} onClick={() => changeSort(column.id)} slotProps={{ icon: { sx: { opacity: sortColumn === column.id ? 1 : 0.45 } } }}>{column.label}</TableSortLabel></TableCell>)}</TableRow></TableHead><TableBody>{paginatedRows.map((row) => <TableRow aria-label={offline ? undefined : `View ${row.ticker} trade details`} hover key={row.roundTripId} onClick={offline ? undefined : () => coaching?coaching.openTrade(row.roundTripId):setSelectedTrade(row)} onKeyDown={(event) => { if (offline) return; if (event.key === "Enter" || event.key === " ") { event.preventDefault(); if(coaching)coaching.openTrade(row.roundTripId);else setSelectedTrade(row); } }} role={offline ? undefined : "button"} sx={{ cursor: offline ? "default" : "pointer" }} tabIndex={offline ? undefined : 0}><TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.tradeType}</TableCell><TableCell>{row.opened}</TableCell><TableCell>{row.closed}</TableCell><TableCell>{row.executions}</TableCell><TableCell>{row.averageEntry}</TableCell><TableCell>{row.averageExit}</TableCell><TableCell>{row.maximumPosition}</TableCell><TableCell>{row.holdTime}</TableCell><TableCell sx={{ color: row.netPnlValue < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{row.netPnl}</TableCell></TableRow>)}</TableBody></Table>
           </HorizontalScrollRegion>
         )}
         <Box sx={{ borderTop: 1, borderColor: "divider" }}>
@@ -257,7 +260,7 @@ export function ExecutionAnalyticsClient({ chartData, currency, dateControls, mo
           />
         </Box>
       </Paper>
-      {offline ? null : <AnalyticsTradeDetailDrawer
+      {offline||coaching ? null : <AnalyticsTradeDetailDrawer
         currency={currency}
         moneyBasis={moneyBasis}
         onClose={() => setSelectedTrade(null)}

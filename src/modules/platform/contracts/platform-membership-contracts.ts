@@ -35,6 +35,8 @@ export const PLATFORM_MEMBERSHIP_FEATURES = Object.freeze([
   { key: "levels.generations", label: "Levels Generator", kind: "limit", module: "stock-levels" },
   { key: "community.access", label: "Community", kind: "boolean", module: "community" },
   { key: "coaching.access", label: "Coaching", kind: "boolean", module: "coaching" },
+  { key: "coaching.coach_account", label: "TraderLink coach account", kind: "boolean", module: "coaching" },
+  { key: "coaching.students", label: "Coach student capacity", kind: "limit", module: "coaching" },
   { key: "broker.connections", label: "Broker connections", kind: "limit", module: "platform" },
 ] as const);
 

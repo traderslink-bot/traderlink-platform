@@ -1,4 +1,5 @@
 import { MembershipFeatureAccessNotice } from "../membership-feature-access-notice";
+import type {WorkspaceAccessScope} from "@/src/modules/platform/contracts/workspace-access-scope";
 import "server-only";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
@@ -13,7 +14,7 @@ import {
   resolveJournalAnalyticsMoneyBasis,
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
+import { requireMembershipPageScope, requireMembershipPreviewPageScope } from "@/src/modules/platform/server/membership/platform-membership-page-access";
 
 import { analyticsOverviewMetrics, AnalyticsOverviewView } from "./analytics-overview-view";
 import type { OverviewDateRange } from "./overview-date-range-control";
@@ -45,9 +46,8 @@ function dateRangeFromSearchParams(searchParams: Readonly<Record<string, string 
   return { endDate: null, kind: "all", startDate: null };
 }
 
-export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
-  const scope = await requireMembershipPreviewPageScope("analytics.access");
-  if (!scope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
+export async function loadAnalyticsOverviewModel({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const scope = resourceScope ?? await requireMembershipPageScope("analytics.access");
   const dateRange = dateRangeFromSearchParams(searchParams);
   const { moneyBasis, response } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,
@@ -65,6 +65,13 @@ export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Re
     },
     { prefetchAllFactSet: dateRange.kind === "all" },
   );
+  return { dateRange, moneyBasis, response };
+}
+
+export async function AnalyticsOverviewPage({ searchParams, resourceScope }: { resourceScope?:WorkspaceAccessScope; searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const pageScope = resourceScope ?? await requireMembershipPreviewPageScope("analytics.access");
+  if (!pageScope) return <MembershipFeatureAccessNotice feature="analytics.access" title="Analytics" message="See the patterns in your performance. Unlock Analytics to explore results across dates, tickers and trading groups." />;
+  const { dateRange, moneyBasis, response } = await loadAnalyticsOverviewModel({ searchParams, resourceScope: pageScope });
   const offlineModel: JournalAnalyticsOverviewOfflineViewModel = Object.freeze({
     dateRange: Object.freeze({ ...dateRange }),
     kind: "analytics-overview",
@@ -74,7 +81,7 @@ export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Re
   });
   return (
     <>
-      <OfflineSavedViewCapture
+      {resourceScope?null:<OfflineSavedViewCapture
         accountTimezone={response.partitions[0]?.timezone ?? null}
         calculationVersion={`journal-analytics-${response.registryVersion}`}
         coverage={journalAnalyticsOfflineRouteCoverage("analytics-overview")}
@@ -85,7 +92,7 @@ export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Re
         reportingCurrency={response.partitions[0]?.currency ?? null}
         routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
         viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-overview"]}
-      />
+      />}
       <AnalyticsOverviewView dateRange={dateRange} moneyBasis={moneyBasis} response={response} />
     </>
   );

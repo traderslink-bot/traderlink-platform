@@ -8,6 +8,7 @@ import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import FactCheckRoundedIcon from "@mui/icons-material/FactCheckRounded";
 import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
+import ForumRoundedIcon from "@mui/icons-material/ForumRounded";
 import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
 import LoyaltyRoundedIcon from "@mui/icons-material/LoyaltyRounded";
 import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRounded";
@@ -41,6 +42,9 @@ const navigation = [
   { href: "/admin/journal", label: "Overview", icon: <DashboardRoundedIcon /> },
   { href: "/admin/journal/users", label: "Members", icon: <GroupRoundedIcon /> },
   { href: "/admin/journal/memberships", label: "Memberships", icon: <LoyaltyRoundedIcon /> },
+  { href: "/admin/journal/communities", label: "Communities", icon: <ForumRoundedIcon /> },
+  { href: "/admin/journal/communities/admission", label: "Community admission", icon: <FactCheckRoundedIcon /> },
+  { href: "/admin/journal/coaching", label: "Coaching", icon: <ForumRoundedIcon /> },
   { href: "/admin/journal/imports", label: "Imports", icon: <CloudUploadRoundedIcon /> },
   { href: "/admin/journal/statement-formats", label: "Statement Formats", icon: <SchemaRoundedIcon /> },
   { href: "/admin/journal/data-decisions", label: "Data Decisions", icon: <FactCheckRoundedIcon /> },
@@ -59,7 +63,9 @@ const navigation = [
 
 function active(pathname: string, href: string): boolean {
   if (href === "/admin/journal") return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+  const matches=navigation.filter(item=>pathname===item.href||pathname.startsWith(`${item.href}/`));
+  const selected=matches.sort((a,b)=>b.href.length-a.href.length)[0];
+  return selected?.href===href;
 }
 
 function title(pathname: string): string {
@@ -187,7 +193,7 @@ export function JournalAdminShell({
             <Typography component="div" noWrap sx={{ fontWeight: 800 }}>
               {title(pathname)}
             </Typography>
-            <Typography color="text.secondary" noWrap variant="caption">
+            <Typography color="text.secondary" component="div" noWrap variant="caption">
               Data as of {formatUtcTimestamp(dataAsOfUtc)}
             </Typography>
           </Box>

@@ -9,6 +9,7 @@ import { membershipInvoiceLinePrice, stripeReference } from "./membership-addon-
 import { writeMembershipPlanEditor } from "./membership-plan-editor-write";
 import { carryMembershipUsage, membershipUsageAnchor } from "./membership-plan-usage";
 import type { MembershipStripeRefundEvidence } from "./membership-stripe-refund-hydration";
+import { isRepeatableCoachCapacityBatch } from "../../contracts/coach-student-capacity";
 
 const record = z.record(z.string(), z.unknown());
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -265,10 +266,29 @@ export function applyMembershipStripeRefund(db: Database.Database, evidence: Mem
     }
   }
   const removedPlans = new Set(removed.map(item => item.plan_id));
+  // A recurring capacity plan can be purchased several times. Refunding one
+  // invoice must remove only its exact purchased offer occurrences, not every
+  // other paid batch from that plan. Ordinary add-on behavior remains unchanged.
+  const repeatedCapacityPlans = new Set<string>();
+  const ordinaryRemovedPlans = new Set<string>();
+  const removedCapacityUnits = new Map<string, number>();
+  for (const item of removed) {
+    if (item.document_json && isRepeatableCoachCapacityBatch(membershipPlanEditorSchema.parse(JSON.parse(item.document_json)))) {
+      repeatedCapacityPlans.add(item.plan_id);
+      removedCapacityUnits.set(item.offer_id, (removedCapacityUnits.get(item.offer_id) ?? 0) + 1);
+    } else ordinaryRemovedPlans.add(item.plan_id);
+  }
   // Refunding an older period must not erase separately paid newer coverage.
   if (entitlement?.status === "active" && !(coveredUntil && entitlement.ends_at_utc && entitlement.ends_at_utc > coveredUntil)) {
     const current = components(db, entitlement.plan_version_id, claim.offer_id);
-    const keep = current.filter(item => !removedPlans.has(item.plan_id));
+    const keep = current.filter(item => {
+      if (!removedPlans.has(item.plan_id)) return true;
+      if (!repeatedCapacityPlans.has(item.plan_id) || ordinaryRemovedPlans.has(item.plan_id)) return false;
+      const units = removedCapacityUnits.get(item.offer_id) ?? 0;
+      if (!units) return true;
+      removedCapacityUnits.set(item.offer_id, units - 1);
+      return false;
+    });
     if (!keep.length) db.prepare("UPDATE platform_membership_entitlements SET status='revoked',updated_at_utc=MAX(updated_at_utc,?) WHERE entitlement_id=? AND user_id=?")
       .run(at, entitlement.entitlement_id, claim.user_id);
     else if (keep.length !== current.length) {

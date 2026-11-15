@@ -183,12 +183,20 @@ function SurfaceSection({ children, outcomeTone, title }: Readonly<{ children: R
 
 export function TradeDetailsDrawer({
   analyzer,
+  presentation = "drawer",
+  coachingReadOnly = false,
   initialTab = "details",
+  initialAnalyzerInterval = "1m",
+  selectedAnalyzerEventId = null,
   onClose,
   open,
   roundTripId,
   showAnalyzer = true,
+  detailsUrl,
+  loadSavedAnalysis,
 }: Readonly<{
+  presentation?: "drawer" | "embedded";
+  coachingReadOnly?: boolean;
   analyzer: Readonly<{
     currency: string;
     direction: "long" | "short";
@@ -198,10 +206,14 @@ export function TradeDetailsDrawer({
     timezone: string;
   }> | null;
   initialTab?: DetailTab;
+  initialAnalyzerInterval?: "1m" | "5m";
+  selectedAnalyzerEventId?: string | null;
   onClose: () => void;
   open: boolean;
   roundTripId: string | null;
   showAnalyzer?: boolean;
+  detailsUrl?:string;
+  loadSavedAnalysis?:()=>Promise<import("../trade-tracker/[sessionDate]/day-session-types").DaySessionTradeAnalyzer|null>;
 }>) {
   const [state, setState] = useState<DetailState>({ status: "idle" });
   const [tab, setTab] = useState<DetailTab>(initialTab);
@@ -214,7 +226,7 @@ export function TradeDetailsDrawer({
       setState({ status: "loading" });
       setTab(showAnalyzer ? initialTab : "details");
     });
-    void fetch(`/api/platform/journal/trade-details?roundTripId=${encodeURIComponent(roundTripId)}`, {
+    void fetch(detailsUrl??`/api/platform/journal/trade-details?roundTripId=${encodeURIComponent(roundTripId)}`, {
       cache: "no-store",
       signal: controller.signal,
     }).then(async (response) => {
@@ -228,10 +240,11 @@ export function TradeDetailsDrawer({
       setState({ status: "error" });
     });
     return () => controller.abort();
-  }, [initialTab, open, roundTripId, showAnalyzer]);
+  }, [detailsUrl, initialTab, open, roundTripId, showAnalyzer]);
 
   const details = state.status === "ready" ? state.details : null;
   const performance = details?.performance ?? null;
+  const effectiveAnalyzer=loadSavedAnalysis&&details?.status==='ready'&&performance?{currency:performance.tradeCurrency,direction:details.direction,executionCount:details.executions.length,gainLossDecimal:performance.grossPnlDecimal,symbol:details.symbol,timezone:details.timezone}:analyzer;
   const resultColor = performance
     ? financialOutcomeColor(performance.grossPnlDecimal)
     : details?.projectionState === "legitimate_open" ? "warning.main" : "text.primary";
@@ -244,8 +257,8 @@ export function TradeDetailsDrawer({
     ? formatJournalAnalyticsMoney(performance.grossPnlDecimal, performance.tradeCurrency, { showPositiveSign: true })
     : details?.projectionState === "legitimate_open" ? "Open" : "—";
 
-  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { sx: { width: { xs: "100vw", sm: 680, lg: 720 }, maxWidth: "100vw" } } }}>
-    <Stack sx={{ height: "100%" }}>
+  return <TradeDetailsSurface embedded={presentation === "embedded"} onClose={onClose} open={open}>
+    <Stack sx={{ height: presentation === "embedded" ? "auto" : "100%" }}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", borderBottom: 1, borderColor: "divider", justifyContent: "space-between", p: 2 }}>
         <Box sx={{ minWidth: 0 }}>
           <Typography component="h2" sx={{ fontWeight: 900 }} variant="h6">Trade Details</Typography>
@@ -263,18 +276,18 @@ export function TradeDetailsDrawer({
             <Typography sx={{ color: resultColor, fontFamily: "var(--font-geist-mono)", fontWeight: 900 }} variant="h6">{resultValue}</Typography>
             <Typography color="text.secondary" variant="caption">{performance ? "Gross P/L" : "Position status"}</Typography>
           </> : null}
-          <IconButton aria-label="Close trade details" onClick={onClose} sx={{ minHeight: 44, minWidth: 44, mt: 0.25 }}>
+          {presentation !== "embedded" ? <IconButton aria-label="Close trade details" onClick={onClose} sx={{ minHeight: 44, minWidth: 44, mt: 0.25 }}>
             <CloseRoundedIcon />
-          </IconButton>
+          </IconButton> : null}
         </Stack>
       </Stack>
 
-      {showAnalyzer ? <Tabs aria-label="Trade details sections" onChange={(_event, value: DetailTab) => setTab(value)} sx={{ borderBottom: 1, borderColor: "divider", px: 1.5 }} value={tab} variant="fullWidth">
+      {showAnalyzer ? <Tabs aria-label="Trade details sections" onChange={(_event, value: DetailTab) => setTab(value)} sx={(theme) => ({ borderBottom: 1, borderColor: "divider", "& .MuiTab-root.Mui-selected": { color: theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.primary.main }, px: 1.5 })} value={tab} variant="fullWidth">
         <Tab label="Details" value="details" />
         <Tab label="Analyzer" value="analyzer" />
       </Tabs> : null}
 
-      {tab === "details" ? <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: 2 }}>
+      {tab === "details" ? <Box sx={{ flex: 1, minHeight: 0, overflowY: presentation === "embedded" ? "visible" : "auto", p: 2 }}>
         {state.status === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", minHeight: 220, justifyContent: "center" }}><CircularProgress size={28} /><Typography color="text.secondary">Loading trade details…</Typography></Stack> : null}
         {state.status === "error" ? <Alert severity="error">Trade details could not be loaded. Refresh and try again.</Alert> : null}
         {details ? <Stack spacing={1.5}>
@@ -298,20 +311,25 @@ export function TradeDetailsDrawer({
 
           <SurfaceSection outcomeTone={outcomeTone} title="Journal">
             <Stack spacing={1.25}>
+              {coachingReadOnly ? <Typography color="text.secondary" variant="caption">Only shared Journal details are shown. Unavailable or unshared notes, tags and rules remain hidden.</Typography> : null}
               {details.notes?.tradeNote.trim() ? <Box><Typography color="text.secondary" variant="caption">Trade note</Typography><Typography sx={{ whiteSpace: "pre-wrap" }} variant="body2">{details.notes.tradeNote}</Typography></Box> : null}
               {details.notes?.technicalNote.trim() ? <Box><Typography color="text.secondary" variant="caption">Technical note</Typography><Typography sx={{ whiteSpace: "pre-wrap" }} variant="body2">{details.notes.technicalNote}</Typography></Box> : null}
               {details.tags.length > 0 ? <Box><Typography color="text.secondary" variant="caption">Tags</Typography><Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>{details.tags.map((tag) => <JournalTagChip key={tag.name} label={tag.name} />)}</Stack></Box> : null}
               {details.ruleReviews.length > 0 ? <Box><Typography color="text.secondary" variant="caption">Rules</Typography><Stack spacing={0.5} sx={{ mt: 0.5 }}>{details.ruleReviews.map((review, index) => <Stack direction="row" key={`${review.ruleTitle}-${index}`} spacing={0.75} sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ minWidth: 0 }} variant="body2">{review.ruleTitle}</Typography><Chip color={reviewTone(review.status)} label={reviewLabel(review.status)} size="small" /></Stack>)}</Stack></Box> : null}
-              {!details.notes?.tradeNote.trim() && !details.notes?.technicalNote.trim() && details.tags.length === 0 && details.ruleReviews.length === 0 ? <Typography color="text.secondary" variant="body2">No notes, tags, or reviewed rules have been saved for this trade.</Typography> : null}
+              {!details.notes?.tradeNote.trim() && !details.notes?.technicalNote.trim() && details.tags.length === 0 && details.ruleReviews.length === 0 ? <Typography color="text.secondary" variant="body2">{coachingReadOnly ? "Notes, tags or reviewed rules are unavailable, not shared, or not yet recorded." : "No notes, tags, or reviewed rules have been saved for this trade."}</Typography> : null}
             </Stack>
           </SurfaceSection>
 
           <Accordion disableGutters elevation={0} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.08) : "background.paper", border: 1, borderColor: theme.palette.mode === "dark" || !outcomeTone ? "divider" : `${outcomeTone}.main`, borderRadius: 2, "&:before": { display: "none" }, overflow: "hidden" })}>
-            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.18) : outcomeTone ? `${outcomeTone}.main` : "action.hover", color: outcomeTone ? "common.white" : "text.primary", px: 1.5 })}><Typography sx={{ fontWeight: 850 }}>Exact executions {details.status === "ready" ? `(${details.executions.length})` : null}</Typography></AccordionSummary>
+            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={(theme) => ({ bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.18) : outcomeTone ? `${outcomeTone}.main` : "action.hover", color: outcomeTone ? "common.white" : "text.primary", "&.Mui-focusVisible": { bgcolor: theme.palette.mode === "dark" && outcomeTone ? alpha(theme.palette[outcomeTone].main, 0.18) : outcomeTone ? `${outcomeTone}.main` : "action.hover", outline: "2px solid", outlineColor: outcomeTone ? theme.palette.common.white : (theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.primary.main), outlineOffset: -2 }, px: 1.5 })}><Typography sx={{ fontWeight: 850 }}>Exact executions {details.status === "ready" ? `(${details.executions.length})` : null}</Typography></AccordionSummary>
             <AccordionDetails sx={{ p: details.status === "summary_only" ? 1.5 : 0 }}>{details.status === "summary_only" ? <Typography color="text.secondary" variant="body2">Exact executions are unavailable for this historical trade summary.</Typography> : <Stack divider={<Divider flexItem />}>{details.executions.map((execution, index) => <Stack direction="row" key={`${execution.executedAtUtc}-${execution.side}-${execution.quantityDecimal}-${index}`} sx={{ justifyContent: "space-between", p: 1.5 }}><Box><Typography sx={{ fontWeight: 800 }} variant="body2">{execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantityDecimal)} shares</Typography><Typography color="text.secondary" variant="caption">{dateTime(execution.executedAtUtc, details.timezone).date} · {dateTime(execution.executedAtUtc, details.timezone).time}</Typography></Box><Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }} variant="body2">{formatJournalAnalyticsMoney(execution.priceDecimal, performance?.tradeCurrency ?? null)}</Typography></Stack>)}</Stack>}</AccordionDetails>
           </Accordion>
         </Stack> : null}
-      </Box> : analyzer && roundTripId ? <WorkspaceTradeAnalyzerPanel currency={analyzer.currency} direction={analyzer.direction} executionCount={analyzer.executionCount} gainLossDecimal={analyzer.gainLossDecimal} onClose={() => setTab("details")} open roundTripId={roundTripId} symbol={analyzer.symbol} timezone={analyzer.timezone} /> : <Box sx={{ p: 2 }}><Alert severity="info">Analyzer is unavailable for this trade.</Alert></Box>}
+      </Box> : effectiveAnalyzer && roundTripId ? <WorkspaceTradeAnalyzerPanel initialInterval={initialAnalyzerInterval} selectedEventId={selectedAnalyzerEventId} loadSavedAnalysis={loadSavedAnalysis} currency={effectiveAnalyzer.currency} direction={effectiveAnalyzer.direction} executionCount={effectiveAnalyzer.executionCount} gainLossDecimal={effectiveAnalyzer.gainLossDecimal} onClose={() => setTab("details")} open roundTripId={roundTripId} symbol={effectiveAnalyzer.symbol} timezone={effectiveAnalyzer.timezone} /> : <Box sx={{ p: 2 }}><Alert severity="info">Analyzer is unavailable for this trade.</Alert></Box>}
     </Stack>
-  </Drawer>;
+  </TradeDetailsSurface>;
+}
+
+function TradeDetailsSurface({embedded,open,onClose,children}:Readonly<{embedded:boolean;open:boolean;onClose:()=>void;children:ReactNode}>){
+ return embedded?<Box sx={{border:1,borderColor:"divider",borderRadius:2,overflow:"hidden"}}>{children}</Box>:<Drawer anchor="right" onClose={onClose} open={open} slotProps={{paper:{sx:{width:{xs:"100vw",sm:680,lg:720},maxWidth:"100vw"}}}}>{children}</Drawer>;
 }

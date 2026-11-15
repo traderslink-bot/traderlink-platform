@@ -42,6 +42,8 @@ export function TraderLinkPlatformDashboardTemplate({
   ownerMarketDataAccess = false,
   generalMarketNewsAccess = false,
   watchlistAdminNavigationAccess = false,
+  communityNavigationHref = null,
+  coachingNavigationHref = null,
 }: {
   accountCurrency: string | null;
   accountSelectionRef: string | null;
@@ -60,6 +62,8 @@ export function TraderLinkPlatformDashboardTemplate({
   ownerMarketDataAccess?: boolean;
   generalMarketNewsAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
+  communityNavigationHref?: string | null;
+  coachingNavigationHref?: string | null;
 }) {
   return (
     <DashboardShell
@@ -73,6 +77,8 @@ export function TraderLinkPlatformDashboardTemplate({
       ownerMarketDataAccess={ownerMarketDataAccess}
       generalMarketNewsAccess={generalMarketNewsAccess}
       watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+      communityNavigationHref={communityNavigationHref}
+      coachingNavigationHref={coachingNavigationHref}
     >
       <DemoDataAccountIndicator
         expectedAccountSelectionRef={demoAccountSelectionRef}

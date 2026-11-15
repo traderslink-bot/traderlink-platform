@@ -470,6 +470,35 @@ FROM journal_logical_trade_rule_reviews WHERE workspace_id = ? AND account_id = 
  * read-only adapter: it neither rebuilds trades nor creates another P/L or
  * Analyzer calculation.
  */
+/** Shared native annotations only; does not construct reports, ledgers or analysis. */
+export function readJournalTradeStoryAnnotations(scope:WorkspaceAccessScope,roundTripId:string,knownLogicalTrade?:JournalLogicalTrade|null){
+ if(!scope.activeAccountId)platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+ const account=narrowWorkspaceAccessToAccount(scope,scope.activeAccountId);
+ const logicalTrade=knownLogicalTrade===undefined?withReadonlyPlatformDatabase({},database=>{
+  const repository=new JournalLogicalTradeRepository(database);
+  return repository.findByLogicalTradeId(account,roundTripId)??repository.findByRoundTripId(account,roundTripId);
+ }):knownLogicalTrade;
+ const memberIds=logicalTrade?.members.map(member=>member.roundTripId)??[roundTripId];
+    const annotationMembers = memberIds.map((memberId) => annotations(scope, memberId));
+    const groupAnnotations = logicalTrade?.logicalTradeId && logicalTrade.members.length > 1
+      ? logicalAnnotations(scope, logicalTrade.logicalTradeId) : null;
+    return Object.freeze({
+      notes: (() => {
+        const notes = annotationMembers.map((item) => item.notes).filter((item) => item !== null);
+        if (groupAnnotations?.notes) return groupAnnotations.notes;
+        if (notes.length === 0) return null;
+        return Object.freeze({ ...notes[0]!,
+          technicalNote: notes.map((item) => item.technicalNote.trim()).filter(Boolean).join("\n\n"),
+          tradeNote: notes.map((item) => item.tradeNote.trim()).filter(Boolean).join("\n\n"),
+        });
+      })(),
+      ruleReviews: Object.freeze([...(groupAnnotations?.ruleReviews ?? []),
+        ...annotationMembers.flatMap((item) => item.ruleReviews)]),
+      tags: Object.freeze([...new Map([...(groupAnnotations?.tags ?? []), ...annotationMembers.flatMap((item) => item.tags)]
+        .map((tag) => [tag.tagId, tag] as const)).values()]),
+    });
+ }
+
 export function readJournalTradeStory(
   scope: WorkspaceAccessScope,
   roundTripId: string,

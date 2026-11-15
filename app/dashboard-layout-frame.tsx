@@ -1,10 +1,11 @@
+import { readCommunityHistoryEntry } from "@/src/modules/communities/contracts/community-history-entry";
 import { headers } from "next/headers";
 import { DiscordConnectionNotice } from "./discord-connection-notice";
 import { readMembershipDiscordConnection } from "@/src/modules/platform/server/membership/membership-discord-connection";
 import { hasOwnerMarketDataAccess } from "@/src/modules/level-analysis/server/owner-market-data-access";
 import { hasGeneralMarketNewsAccess } from "@/src/modules/news/server/general-market-news-access";
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { TraderLinkPlatformDashboardTemplate } from "./dashboard-template";
 import {
@@ -32,6 +33,7 @@ import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-earl
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { DashboardMuiProviders } from "./mui-provider";
+import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
 
 type FrameTimingPhase = "headers" | "identity" | "connection" | "context";
 let lastSlowFrameTimingAt = Number.NEGATIVE_INFINITY;
@@ -127,6 +129,8 @@ async function TraderLinkPlatformDashboardFrameContent({
   try {
   const requestHeaders = await headers();
   const requestPath = requestHeaders.get("x-traderlink-page-path");
+  const historyEntry = readCommunityHistoryEntry(requestHeaders);
+  if (historyEntry === "invalid") notFound();
   timing.setCorrelation(
     requestHeaders.get("x-traderlink-speed-id"),
     requestHeaders.get("x-traderlink-speed-start-ms"),
@@ -135,6 +139,9 @@ async function TraderLinkPlatformDashboardFrameContent({
   );
   timing.next("identity");
   const workspaceLanding = requestPath === "/workspace" || requestPath === "/workspace/";
+  const communityRecoverySlug = requestPath?.match(/^\/communities\/([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\/recovery\/?$/u)?.[1];
+  const communityRecovery = communityRecoverySlug !== undefined
+    && communityRecoverySlug.length >= 3 && communityRecoverySlug.length <= 80;
   let identity;
   try {
     identity = (billingMemberAccess || workspaceLanding)
@@ -143,6 +150,8 @@ async function TraderLinkPlatformDashboardFrameContent({
       ? await requireTraderLinkPlatformAuthenticatedPageIdentity({
           membershipFeatures: ["watchlist.access"],
         })
+      : communityRecovery || historyEntry
+      ? await requireTraderLinkPlatformAuthenticatedPageIdentity()
       : await requireTraderLinkPlatformServerComponentPageIdentity();
   } catch (error) {
     if (
@@ -195,6 +204,19 @@ async function TraderLinkPlatformDashboardFrameContent({
         .requireAccountRecord(scope, scope.activeAccountId)
       : null;
     const marketHaltAlerts = new MarketHaltAlertRepository(database);
+    const communityRepository = new TraderLinkCommunityRepository(database);
+    const communityAccess = communityRepository.listForUser(scope.userId)
+      .map((community) => ({
+        community,
+        access: communityRepository.resolveAccess(community.communityId, scope.userId),
+      }))
+      .filter((entry) => entry.access.capabilities.includes("community.view"));
+    const firstCommunity = communityAccess[0] ?? null;
+    const independentCoachingAvailable=Boolean(database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='traderlink_coaching_contexts'").get());
+    const firstCoachingCommunity = communityAccess.find((entry) =>
+      entry.access.capabilities.includes("community.coaching.view") ||
+      entry.access.capabilities.includes("community.coaching.offer"),
+    ) ?? null;
     return Object.freeze({
       demoActivationPending,
       activeAccount,
@@ -206,6 +228,12 @@ async function TraderLinkPlatformDashboardFrameContent({
         scope,
       }),
       notifications: new PlatformNotificationRepository(database).list(scope, 5),
+      communityNavigationHref: firstCommunity
+        ? `/communities/${firstCommunity.community.slug}`
+        : null,
+      coachingNavigationHref: independentCoachingAvailable?'/coaching':firstCoachingCommunity
+        ? `/communities/${firstCoachingCommunity.community.slug}/coaching`
+        : null,
     });
   });
   timing.next(null);
@@ -238,6 +266,8 @@ async function TraderLinkPlatformDashboardFrameContent({
           ownerMarketDataAccess={ownerMarketDataAccess}
           generalMarketNewsAccess={generalMarketNewsAccess}
         watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+          communityNavigationHref={dashboardContext.communityNavigationHref}
+          coachingNavigationHref={dashboardContext.coachingNavigationHref}
         >
           {discordConnection && requestPath !== "/account/login" ? <DiscordConnectionNotice required={discordConnection.required} connected={discordConnection.connected} joined={discordConnection.joined} /> : null}
           {children}

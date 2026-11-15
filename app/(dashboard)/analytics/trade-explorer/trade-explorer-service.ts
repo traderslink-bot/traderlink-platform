@@ -1,3 +1,5 @@
+import {independentCoachingJournalAccess} from '@/src/modules/communities/server/independent-coaching-journal-access';
+import {coachingReviewResourceScope} from "@/src/modules/communities/server/coaching-review-resource-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import "server-only";
 
@@ -374,13 +376,14 @@ async function execute(
   input: TradeExplorerQuery,
   afterCursor: string | null = null,
   tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<AnalyticsLabPlatformPreview> {
-  assertExplorerAccess(scope);
+  if (!coachingAuthorization) assertExplorerAccess(scope);
   const asOfUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(
     scope,
     ({ service, verifiedReadonlyDatabase }) => {
-      assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
+      assertExplorerRead(verifiedReadonlyDatabase,scope,coachingAuthorization);
       const roundTripIds = hasAnnotationFilters(input)
         ? annotationRoundTripIds(
             verifiedReadonlyDatabase,
@@ -483,6 +486,7 @@ export async function runTradeExplorerQuery(
   input: unknown,
   afterCursor?: unknown,
   tradeSort?: unknown,
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<AnalyticsLabPlatformPreview> {
   const normalizedRequest = normalizeTradeExplorerQueryRequest(input, tradeSort);
   return execute(
@@ -490,6 +494,7 @@ export async function runTradeExplorerQuery(
     normalizedRequest.query,
     normalizeEvidenceCursor(afterCursor),
     normalizedRequest.tableOrder,
+    coachingAuthorization,
   );
 }
 
@@ -678,6 +683,7 @@ export async function runTradeExplorerGroupTradesQuery(
   input: unknown,
   group: unknown,
   afterCursor?: unknown,
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<AnalyticsLabPlatformPreview> {
   if (!group || typeof group !== "object" || Array.isArray(group)) {
     throw new TypeError("Invalid Trade Explorer group.");
@@ -710,7 +716,7 @@ export async function runTradeExplorerGroupTradesQuery(
       ? { startDate: groupKey, endDate: groupKey }
       : { symbol: groupKey }),
     evidenceRows: 100 as const,
-  }), afterCursor, "closed_desc");
+  }), afterCursor, "closed_desc",coachingAuthorization);
 }
 
 function comparisonRecord(value: unknown): Readonly<Record<string, unknown>> {
@@ -873,13 +879,13 @@ function difference(
 export async function runTradeExplorerComparison(
   scope: WorkspaceAccessScope,
   input: unknown,
+  coachingAuthorization?:CoachingExplorerAuthorization,
 ): Promise<TradeExplorerComparisonResult> {
-  assertExplorerAccess(scope, true);
+  if (!coachingAuthorization) assertExplorerAccess(scope, true);
   const normalized = normalizeTradeExplorerComparison(input);
   const generatedAtUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service, verifiedReadonlyDatabase }) => {
-    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
-    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.compare_trades");
+    assertExplorerRead(verifiedReadonlyDatabase,scope,coachingAuthorization,true);
     const groups = normalized.groups.map((group) => {
       const query = Object.freeze({
         ...group.query,
@@ -957,22 +963,44 @@ function measureTradeExplorerPagePhase<T>(
   }
 }
 
+export function readTradeExplorerPageModel(
+  scope: WorkspaceAccessScope,
+  initialView?: Readonly<{
+    endDate: string | null;
+    rank?: "pnl" | "trades";
+    startDate: string | null;
+  }>,
+  onTiming?: TradeExplorerPageTiming,
+): Promise<TradeExplorerPageModel>;
+export function readTradeExplorerPageModel(
+  scope: WorkspaceAccessScope,
+  initialView: Readonly<{
+    endDate: string | null;
+    rank?: "pnl" | "trades";
+    startDate: string | null;
+  }> | undefined,
+  coachingAuthorization: CoachingExplorerAuthorization,
+  onTiming?: TradeExplorerPageTiming,
+): Promise<TradeExplorerPageModel>;
 export async function readTradeExplorerPageModel(
   scope: WorkspaceAccessScope,
   initialView?: Readonly<{
     endDate: string | null;
-    rank: "pnl" | "trades";
+    rank?: "pnl" | "trades";
     startDate: string | null;
   }>,
+  authorizationOrTiming?: CoachingExplorerAuthorization | TradeExplorerPageTiming,
   onTiming?: TradeExplorerPageTiming,
 ): Promise<TradeExplorerPageModel> {
-  measureTradeExplorerPagePhase(onTiming, "access", () => assertExplorerAccess(scope));
+  const coachingAuthorization = typeof authorizationOrTiming === "function" ? undefined : authorizationOrTiming;
+  if (typeof authorizationOrTiming === "function") onTiming = authorizationOrTiming;
+  measureTradeExplorerPagePhase(onTiming, "access", () => { if (!coachingAuthorization) assertExplorerAccess(scope); });
   const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, pnlReportingBasis, service, verifiedReadonlyDatabase }) => {
-    assertMembershipFeature(verifiedReadonlyDatabase, scope.userId, "analytics.trade_explorer");
+    assertExplorerRead(verifiedReadonlyDatabase,scope,coachingAuthorization);
     const calendarInput = Object.freeze({
       currency: null,
-      startDate: null,
-      endDate: null,
+      startDate: coachingAuthorization ? initialView?.startDate??null : null,
+      endDate: coachingAuthorization ? initialView?.endDate??null : null,
       symbol: null,
       direction: null,
       performance: null,
@@ -999,7 +1027,7 @@ export async function readTradeExplorerPageModel(
     const initialQuery: TradeExplorerQuery = Object.freeze({
       expectedAccountSelectionRef: currentJournalAccountSelectionRef(scope),
       metricId: initialView?.rank === "pnl" ? `${pnlReportingBasis}_pnl` : "total_trades",
-      grouping: initialView ? "instrument" : "closing_month",
+      grouping: coachingAuthorization ? initialView?.rank ? "instrument" : "closing_month" : initialView ? "instrument" : "closing_month",
       moneyBasis: pnlReportingBasis,
       currency: calendar.currency,
       symbol: null,
@@ -1110,4 +1138,16 @@ export async function readTradeExplorerPageModel(
         label: label === "Entry notional" ? "Entry value" : label,
       }))),
   });
+}
+
+export type CoachingExplorerAuthorization=Readonly<{coachUserId:string;reviewId:string;communitySlug:string}>|Readonly<{kind:'independent';actorUserId:string;reviewId:string;enrollmentId:string}>;
+
+function assertExplorerRead(database:Database.Database,scope:WorkspaceAccessScope,authorization?:CoachingExplorerAuthorization,compare=false){
+ if(!authorization){
+  assertMembershipFeature(database,scope.userId,'analytics.trade_explorer');
+  if(compare)assertMembershipFeature(database,scope.userId,'analytics.compare_trades');
+  return;
+ }
+ const access='kind' in authorization?independentCoachingJournalAccess(database,{actorUserId:authorization.actorUserId,enrollmentId:authorization.enrollmentId,reviewId:authorization.reviewId,requiredScopes:['trades','analytics']}):coachingReviewResourceScope(database,authorization);
+ if(scope.userId!==access.scope.userId||scope.workspaceId!==access.scope.workspaceId||scope.activeAccountId!==access.scope.activeAccountId)throw new Error('Coaching Journal access changed.');
 }
