@@ -1,6 +1,6 @@
 import type { ScannerReadModel } from "./contracts";
 
-export const SCANNER_ACTIVE_HOURS_MESSAGE = "Active 4:00am - 8:00pm est";
+export const SCANNER_ACTIVE_HOURS_MESSAGE = "Scanners run from premarket open to post-market close (4 AM–8 PM ET).";
 export const SCANNER_UNAVAILABLE_MESSAGE = "Temporarily unavailable.";
 export const SCANNER_TRANSIENT_FAILURE_GRACE_MS = 30_000;
 const easternHour = new Intl.DateTimeFormat("en-US", {
@@ -10,6 +10,7 @@ const easternHour = new Intl.DateTimeFormat("en-US", {
 /** Member-facing presentation only; keep provider/coverage diagnostics in Admin. */
 export function memberScannerStatus(model: ScannerReadModel | null, loadError: boolean, checkedAt: number | null): string | null {
   if (model?.status === "disabled") return "Disabled";
+  if (model?.status === "closed") return SCANNER_ACTIVE_HOURS_MESSAGE;
   if (checkedAt !== null && Number.isFinite(checkedAt)) {
     const hour = Number(easternHour.format(checkedAt));
     if (hour >= 20 || hour < 4) return SCANNER_ACTIVE_HOURS_MESSAGE;

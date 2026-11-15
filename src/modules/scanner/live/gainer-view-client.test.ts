@@ -3,6 +3,7 @@ import { act, createElement, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { LiveScannerRow, ScannerReadModel } from "./contracts";
+import { SCANNER_ACTIVE_HOURS_MESSAGE } from "./member-status";
 import { EMPTY_MULTIVIEW, parseChartMultiview } from "../alpaca/chart-multiview";
 
 import { DEFAULT_CHART_PREFERENCES } from "../alpaca/chart-preferences";
@@ -275,11 +276,21 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
     const page = await mount({ ...model("regular"), status: "closed", session: null },{ now: "2026-11-03T08:59:58Z" });
     const cards = [page.container.querySelector('[data-scanner-workspace-card="gainers"] section')!,page.container.querySelector('[data-scanner-workspace-card="momentum"] section')!];
     expect(cards.length).toBe(2);
-    expect(cards.every(card => card.textContent?.includes("Active 4:00am - 8:00pm est"))).toBe(true);
+    expect(cards.every(card => card.textContent?.includes(SCANNER_ACTIVE_HOURS_MESSAGE))).toBe(true);
     expect(page.container.textContent).not.toContain("extended-hours scanning session is closed");
     await page.update({ ...model("regular"), session: "premarket", status: "warming" });
-    expect(page.container.textContent).not.toContain("Active 4:00am - 8:00pm est");
+    expect(page.container.textContent).not.toContain(SCANNER_ACTIVE_HOURS_MESSAGE);
     expect(page.stream).toHaveBeenCalledTimes(1);expectOnlyInitialChartRequests(page.fetch);
+  });
+  it.each([false, true])("shows the same notice on every stock scanner when the market is closed on Sunday (admin=%s)", async admin => {
+    const page = await mount({ ...model("regular"), status: "closed", session: null, tradingDate: "2026-11-15" },
+      { admin, now: "2026-11-15T19:00:00Z" });
+    const kinds = ["gainers", "momentum", "top-losers", "high-drops"];
+    if (!admin) kinds.push("breakouts");
+    for (const kind of kinds) {
+      const card = page.container.querySelector(`[data-scanner-workspace-card="${kind}"]`);
+      expect(card?.querySelector('[role="alert"]')?.textContent).toBe(SCANNER_ACTIVE_HOURS_MESSAGE);
+    }
   });
   it.each(["disabled", "unavailable", "universe_missing"] as const)("shows only the permitted member notice for %s", async status => {
     const page = await mount({ ...model("regular"), status });
@@ -296,7 +307,7 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
   it("retains the detailed provider notice on the Admin page", async () => {
     const page = await mount({ ...model("regular"), status: "partial" },{admin:true});
     expect(page.container.textContent).toContain("Some provider data is missing. Available rows are shown below.");
-    expect(page.container.textContent).not.toContain("Active 4:00am - 8:00pm est");
+    expect(page.container.textContent).not.toContain(SCANNER_ACTIVE_HOURS_MESSAGE);
   });
 });
 

@@ -8,8 +8,16 @@ const base: ScannerReadModel = { status: "ready", tradingDate: "2026-11-02", ses
   gainers: results, momentum: results, issues: ["missing_quote"] };
 const at = (text: string) => Date.parse(text);
 describe("member scanner notices", () => {
-  it.each(["ready", "partial", "warming", "closed"] as const)("keeps %s diagnostics quiet during the operating window", status => {
+  it.each(["ready", "partial", "warming"] as const)("keeps %s diagnostics quiet during the operating window", status => {
     expect(memberScannerStatus({ ...base, status },false,at("2026-11-02T20:30:00Z"))).toBeNull();
+  });
+  it.each([
+    ["weekend", "2026-11-15", "2026-11-15T19:00:00Z"],
+    ["market holiday", "2026-11-26", "2026-11-26T19:00:00Z"],
+    ["after an early close", "2026-11-27", "2026-11-27T22:00:00Z"],
+  ])("uses the schedule when the feed is closed on a %s during normal hours", (_reason, tradingDate, now) => {
+    const closed: ScannerReadModel = { ...base, status: "closed", session: null, tradingDate };
+    expect(memberScannerStatus(closed,false,at(now))).toBe(SCANNER_ACTIVE_HOURS_MESSAGE);
   });
   it("uses the exact overnight boundary in winter Eastern time", () => {
     expect(memberScannerStatus(base,false,at("2026-11-03T00:59:59Z"))).toBeNull();

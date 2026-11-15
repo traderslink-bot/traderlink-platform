@@ -80,7 +80,7 @@ import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-rel
 import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, marketEventsPressReleaseMaximumMarketCap, momentumDetectionControls, momentumLiquidityBypassControls } from "@/src/modules/scanner/live/settings";
 import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/gainer-view";
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
-import { memberScannerStatus, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
+import { memberScannerStatus, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { applyScannerDisplayContinuity, type ScannerDisplayContinuity } from "@/src/modules/scanner/live/display-continuity";
 
@@ -128,7 +128,7 @@ function floatValue(input: number | null): string {
 function statusMessage(model: ScannerReadModel): string {
   if (model.status === "disabled") return "Live scanners are currently disabled.";
   if (model.status === "universe_missing") return "Today’s stock universe has not arrived yet.";
-  if (model.status === "closed") return "The extended-hours scanning session is closed.";
+  if (model.status === "closed") return SCANNER_ACTIVE_HOURS_MESSAGE;
   if (model.status === "warming") return "The scanner is collecting enough recent activity to calculate momentum.";
   if (model.status === "unavailable") return "Live scanner data is temporarily unavailable.";
   return model.status === "partial" ? "Some provider data is missing. Available rows are shown below." : "";
@@ -690,7 +690,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
   const haltByTicker=useMemo(()=>new Map(activeHalts.map(halt=>[halt.ticker,halt])),[activeHalts]);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
-  const memberNotice=admin?null:memberScannerStatus(model,loadError,checkedAt);
+  const memberNotice=admin&&model?.status!=="closed"?null:memberScannerStatus(model,loadError,checkedAt);
   const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
   const gainerTitle=model?.session==="after_hours"?"Top Gainers Post Market":"Top Gainers";
   const gainerTabs=<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title={GAINERS_EXPLANATION}>

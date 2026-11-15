@@ -87,3 +87,10 @@ notification delivery has been changed by this planning record.
 ## November 11, 2026 — High Drops session-high correction
 
 High Drops uses Alpaca’s separate session highs and ranks qualifying rows by the current percentage below the greatest available session high. The entry and removal settings still govern membership. Rapid drops appear as a bolt and retain their expanded details. The NCT regression covers an observed $0.8505 quote against Alpaca’s $1.1101 regular high and a simulated recovery to about 4% below that high.
+
+
+## November 15, 2026 — Market-closed notices
+
+Scanner lists on Scanners and Trading Workspace share the operating-hours notice when the scanner feed reports a closure. This covers weekends, market holidays and early closes during the usual Eastern trading window. The after-hours fallback still follows the Eastern clock. Open sessions with no qualifying rows retain their empty-list message.
+
+Focused verification in the assigned checkout passed 24 tests, including the Sunday notice in all four stock lists on the member and admin views, a holiday, an early close and the return to premarket results. The production-source candidate is local.
