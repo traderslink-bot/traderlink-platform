@@ -101,6 +101,7 @@ export function MarketChartWorkspace() {
     onCloseView:closeInMenu?()=>changeBook(closeSelectedChartTab(book)):undefined,
     closeViewLabel:earlierActive?"Close earlier view":"Close ticker",
   };
+  const multiview = <ChartMultiviewMenu {...savedViewActions} chartTabs tickerOnly={tickerOnly} layout={layout} onChange={change} disabled={!chartOpeningReady} iconOnly />;
   const tabs=<ChartWorkspaceTabs book={book} onChange={changeBook} disabled={!chartOpeningReady} defaultTimeframe={defaultTimeframe}/>;
   const theme = useTheme(), narrow = useMediaQuery(theme.breakpoints.down("md")), landscape = useMediaQuery("(orientation: landscape) and (max-height: 600px) and (max-width: 1200px)");
   const compact = narrow || landscape;
@@ -153,8 +154,8 @@ export function MarketChartWorkspace() {
       <Stack data-chart-desktop-toolbar direction="row" sx={{ alignItems: "center", minWidth: 0, gap: 0.5 }}>
         {symbolForm}
         {tabs}
+        {multiview}
         <Box sx={{ display: "flex", flex: 1, minWidth: 0 }}>{viewRow}</Box>
-        <ChartMultiviewMenu {...savedViewActions} chartTabs tickerOnly={tickerOnly} layout={layout} onChange={change} disabled={!chartOpeningReady} iconOnly />
       </Stack>
     </Portal>}
     <Box ref={container} data-main-chart-workspace data-focus-mode={compact && focus ? "true" : "false"} sx={{ color: "text.primary", bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 0,
@@ -165,8 +166,8 @@ export function MarketChartWorkspace() {
         <IconButton aria-label="Open dashboard navigation" onClick={navigation} sx={{ width: 44, height: 44 }}><MenuRounded /></IconButton>
         <IconButton aria-label="Search chart symbol" onClick={()=>setSearch(true)} sx={{width:44,height:44,color:"warning.main"}}><SearchRounded/></IconButton>
         {tabs}
+        {multiview}
         {landscape ? <Box sx={{ flex: 1, minWidth: 0, display: "flex" }}>{viewRow}</Box> : <Box sx={{ flex: 1 }} />}
-        <ChartMultiviewMenu {...savedViewActions} chartTabs tickerOnly={tickerOnly} layout={layout} onChange={change} disabled={!chartOpeningReady} iconOnly />
         <IconButton aria-label="Enter focus mode" onClick={() => setFocus(true)} sx={{ width: 44, height: 44 }}><FullscreenRounded /></IconButton>
         <IconButton aria-label="Dashboard options" aria-haspopup="menu" onClick={event => setPageMenu(event.currentTarget)} sx={{ width: 44, height: 44 }}><PersonRounded /></IconButton>
       </Stack> : null}

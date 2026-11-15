@@ -359,3 +359,9 @@ Each of the 91 tools has a distinct outline icon. The tool submenus keep a separ
 EMA, SMA, VWAP and Bollinger Band lines start at 1 px for every account. The price chart and Indicator settings ignore widths saved before this update, including old presets. The All charts section lets users set widths from 1 to 4 px and confirm replacing widths on their current overlays and in saved presets. Individual overlay adjustments can be made afterward. Lower-pane indicator styles are independent. Width-only changes use the live series options without rebuilding the chart.
 
 Scoped TypeScript, targeted ESLint, and 42 focused tests passed. The shared chart browser fixture verified the exact 1 px and 3 px series options on desktop and four-chart mobile portrait and landscape. Cancel preserved the old value. Apply persisted the new value without recreating charts, restarting data streams or requesting more candles. Reload kept the confirmed width.
+
+## Multiview in the Charts toolbar
+
+The Charts page puts Multiview next to Add ticker view, before the ticker tabs or spacer, in the desktop and compact toolbars. Trading Workspace and Scanner drawer already group Multiview with their chart controls.
+
+Chromium checked desktop, phone portrait including 320 px, and phone landscape with ten open ticker views. The relocated icon stayed beside Add ticker view, ticker tabs remained scrollable, and the menu opened by mouse and keyboard. Cancel left the saved layout alone and Apply saved the additional timeframe to the active ticker. Targeted ESLint passed.

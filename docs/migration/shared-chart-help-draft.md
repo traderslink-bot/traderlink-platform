@@ -82,7 +82,7 @@ Each open ticker/timeframe remembers its zoom, horizontal position and price sca
 New charts start with readable candle spacing for their timeframe and available width. A wider chart shows more candles. Your saved zoom still takes priority. To inspect a fresh default, close the chart and reopen it; switching away and back restores your saved view.
 
 
-The top toolbar’s **Multiview** button opens settings for the view you are currently watching. Use the ticker tabs and **Multi-ticker** inside the settings dialog to edit any open view while your chart stays selected. **Apply** saves the changes together. **Cancel** discards the draft changes.
+The top toolbar’s **Multiview** button is next to **Add ticker view** and opens settings for the view you are currently watching. Use the ticker tabs and **Multi-ticker** inside the settings dialog to edit any open view while your chart stays selected. **Apply** saves the changes together. **Cancel** discards the draft changes.
 
 Choose **Multi-ticker** inside Multiview to set it up even when only one ticker is open. Edit a symbol to replace it, or use **+ Add ticker** to add another chart. The chart tab row appears once you add a second ticker or save a Multi-ticker setup. Tap a tab in that row to switch charts.
 
