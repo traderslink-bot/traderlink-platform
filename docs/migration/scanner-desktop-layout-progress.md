@@ -14,3 +14,7 @@ per version with fixture data. Focused TypeScript and lint passed.
 
 The desktop Edit layout entry uses the Dashboard Customize icon in the
 Scanner top navigation. Editing controls stay above the grid.
+
+## Trading Workspace top navigation actions
+
+Cancel has an outlined button and Save has a filled button with a contrasting border. Save remains visible while disabled and enables when the layout name is entered. Isolated Chromium checks with the production theme verified the labels, borders, disabled and enabled Save, and both actions in light and dark mode.

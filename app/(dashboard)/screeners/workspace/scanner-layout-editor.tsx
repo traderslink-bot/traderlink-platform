@@ -134,8 +134,22 @@ export function ScannerLayoutToolbar({editing,name,active,setName,saved,visible,
       </IconButton>
     </Tooltip>
     {editing&&<Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
-      <Button size="small" color="inherit" onClick={()=>{onCancel();close();}}>Cancel</Button>
-      <Button size="small" variant="outlined" onClick={()=>{onSave();close();}} disabled={!name.trim()}>Save</Button>
+      <Button size="small" variant="outlined" color="inherit" onClick={()=>{onCancel();close();}}
+        sx={theme=>({
+          color:theme.palette.text.primary,
+          borderColor:theme.palette.mode==="dark"?theme.palette.traderLink.chart.controlText:theme.palette.text.secondary,
+          "&:hover":{bgcolor:theme.palette.action.hover,borderColor:theme.palette.text.primary},
+        })}>Cancel</Button>
+      <Button size="small" variant="contained" onClick={()=>{onSave();close();}} disabled={!name.trim()}
+        sx={theme=>({
+          border:"1px solid",
+          borderColor:theme.palette.mode==="dark"?theme.palette.primary.light:theme.palette.primary.main,
+          "&.Mui-disabled":{
+            bgcolor:theme.palette.action.disabledBackground,
+            color:theme.palette.traderLink.chart.controlText,
+            borderColor:theme.palette.mode==="dark"?theme.palette.traderLink.chart.controlText:theme.palette.text.secondary,
+          },
+        })}>Save</Button>
     </Stack>}
     <Popper open={Boolean(anchor)} anchorEl={anchor} placement="bottom-end" sx={{zIndex:1299}}>
       <ClickAwayListener onClickAway={close}>
