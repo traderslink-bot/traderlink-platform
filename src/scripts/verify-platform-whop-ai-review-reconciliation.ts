@@ -24,7 +24,7 @@ const raw = Object.freeze({
 });
 
 const configuration: WhopAiReviewReconciliationConfiguration = Object.freeze({
-  apiKey: "fixture-api-key-never-sent",
+  apiKey: "test-key",
   companyId: raw.company,
   productIds: new Set([raw.product]),
   identityHmacKey: "fixture-reconciliation-hmac-key-at-least-32-characters",

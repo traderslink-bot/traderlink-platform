@@ -6,10 +6,10 @@ import { revalidatePath } from "next/cache";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
-import { PrivateWatchlistRepository } from "@/src/modules/watchlist/server/private/private-watchlist-repository";
+import { PrivateWatchlistRepository } from "@/src/modules/watchlist/server/member-watchlists/private-watchlist-repository";
 import type { MembershipActionState } from "../../admin/journal/memberships/membership-form";
-import { PrivateWatchlistGenerationService } from "@/src/modules/watchlist/server/private/private-watchlist-generation-service";
-import { PrivateWatchlistRuntimeClient } from "@/src/modules/watchlist/server/private/private-watchlist-runtime-client";
+import { PrivateWatchlistGenerationService } from "@/src/modules/watchlist/server/member-watchlists/private-watchlist-generation-service";
+import { PrivateWatchlistRuntimeClient } from "@/src/modules/watchlist/server/member-watchlists/private-watchlist-runtime-client";
 
 export async function generatePrivateWatchlist(_previous: MembershipActionState, form: FormData): Promise<MembershipActionState> {
   const identity = await requireTraderLinkPlatformPageIdentity();

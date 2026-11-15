@@ -25,7 +25,7 @@ import { archiveMembershipPlan } from "../modules/platform/server/membership/mem
 import { readGenerationAllowance } from "../modules/platform/server/membership/platform-membership-generation-allowance";
 import { PlatformRemoteNotificationDeliveryRepository } from "../modules/platform/server/notifications/platform-remote-notification-delivery-repository";
 import { PlatformRemoteNotificationDeliveryService } from "../modules/platform/server/notifications/platform-remote-notification-delivery-service";
-import { privateWatchlistRemaining } from "../modules/watchlist/server/private/private-watchlist-allowance";
+import { privateWatchlistRemaining } from "../modules/watchlist/server/member-watchlists/private-watchlist-allowance";
 import { WatchlistPublicationNotificationStore } from "../modules/watchlist/server/notifications/watchlist-publication-notification-store";
 import { readWatchlistNotificationCandidates } from "../modules/watchlist/server/notifications/watchlist-notification-candidates";
 

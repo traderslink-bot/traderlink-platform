@@ -8,7 +8,7 @@ import { MoomooConnectionRepository } from './moomoo-connection-repository';
 import { decryptMoomooCredentials } from './moomoo-connection-credentials';
 import { refreshMoomooAccessToken } from './moomoo-oauth';
 import { MoomooConnectionAccessService } from './moomoo-connection-access-service';
-vi.mock('./moomoo-connection-credentials',()=>({decryptMoomooCredentials:vi.fn(()=>({accessToken:'synthetic-access',refreshToken:'synthetic-refresh'})),loadMoomooCredentialKeyConfiguration:vi.fn(()=>({})),encryptMoomooCredentials:vi.fn()}));
+vi.mock('./moomoo-connection-credentials',()=>({decryptMoomooCredentials:vi.fn(()=>({accessToken:'test-token',refreshToken:'synthetic-refresh'})),loadMoomooCredentialKeyConfiguration:vi.fn(()=>({})),encryptMoomooCredentials:vi.fn()}));
 vi.mock('./moomoo-oauth',()=>({getMoomooOAuthConfig:vi.fn(),refreshMoomooAccessToken:vi.fn()}));
 let schema:Buffer;
 beforeAll(()=>{const db=new Database(':memory:');db.pragma('foreign_keys=ON');runPlatformMigrations(db);schema=db.serialize();db.close()},30000);
@@ -23,6 +23,6 @@ describe('broker membership admission',()=>{
   it.each([undefined,0])('denies missing/zero allowance before decrypting or refreshing (%s)',async limit=>{const f=fixture(limit);try{f.seed(0);await expect(new MoomooConnectionAccessService(f.repo).accessToken(f.scopes[0])).rejects.toThrow('TRADERLINK_ACCOUNT_ACCESS_DENIED');expect(()=>f.repo.assertAuthorizationAllowed(f.scopes[1])).toThrow('TRADERLINK_ACCOUNT_ACCESS_DENIED');expect(decryptMoomooCredentials).not.toHaveBeenCalled();expect(refreshMoomooAccessToken).not.toHaveBeenCalled();}finally{f.db.close()}});
   it('preserves old connections but limits use to the oldest allowed slot on downgrade',()=>{const f=fixture(1);try{f.seed(0);f.seed(1);expect(()=>f.repo.assertAccessAllowed(f.scopes[0])).not.toThrow();expect(()=>f.repo.assertAccessAllowed(f.scopes[1])).toThrow('TRADERLINK_ACCOUNT_ACCESS_DENIED');expect(f.db.prepare('SELECT COUNT(*) n FROM platform_broker_connections').get()).toEqual({n:2});}finally{f.db.close()}});
   it('allows unlimited slots and respects an explicit off rollout policy',()=>{const f=fixture(null);try{f.seed(0);f.seed(1);for(const scope of f.scopes)expect(()=>f.repo.assertAccessAllowed(scope)).not.toThrow();f.db.prepare("UPDATE platform_membership_entitlements SET status='revoked'").run();f.db.prepare("UPDATE platform_membership_feature_policies SET enforcement_mode='off',updated_by_user_id=?,updated_at_utc=? WHERE feature_key='broker.connections'").run(f.user,f.at);expect(()=>f.repo.assertAccessAllowed(f.scopes[1])).not.toThrow();}finally{f.db.close()}});
-  it('allows an included member to use its token without an unnecessary provider refresh',async()=>{const f=fixture(1);try{f.seed(0);expect(await new MoomooConnectionAccessService(f.repo).accessToken(f.scopes[0])).toBe('synthetic-access');expect(refreshMoomooAccessToken).not.toHaveBeenCalled()}finally{f.db.close()}});
+  it('allows an included member to use its token without an unnecessary provider refresh',async()=>{const f=fixture(1);try{f.seed(0);expect(await new MoomooConnectionAccessService(f.repo).accessToken(f.scopes[0])).toBe('test-token');expect(refreshMoomooAccessToken).not.toHaveBeenCalled()}finally{f.db.close()}});
 
 });
