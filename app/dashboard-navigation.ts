@@ -283,7 +283,7 @@ export type DashboardSidebarNavigationSection = Readonly<
   }
 >;
 
-const journalGroupIds = new Set<DashboardNavigationGroup["id"]>(["tradeEntry", "trades", "tradeAnalyzer", "analytics"]);
+const journalGroupIds = new Set<DashboardNavigationGroup["id"]>(["tradeEntry", "trades", "analytics"]);
 const tradeJournalGroup: DashboardNavigationGroup = Object.freeze({
   id: "tradeJournal",
   label: "Trade Journal",
@@ -293,8 +293,11 @@ const tradeJournalGroup: DashboardNavigationGroup = Object.freeze({
 });
 
 export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNavigationSection[] =
-  Object.freeze([...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(group => !journalGroupIds.has(group.id)), tradeJournalGroup]
-    .map(group => Object.freeze({ kind: "group" as const, group })));
+  Object.freeze([
+    ...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(({ id }) => id !== "tradeAnalyzer" && !journalGroupIds.has(id)),
+    ...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(({ id }) => id === "tradeAnalyzer"),
+    tradeJournalGroup,
+  ].map(group => Object.freeze({ kind: "group" as const, group })));
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({

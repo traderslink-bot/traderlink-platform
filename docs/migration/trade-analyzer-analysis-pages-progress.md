@@ -30,6 +30,15 @@ Future long-term analysis uses continuous stored peak, duration,
 realized/open-position, final-result and exact avoided-loss facts, with a
 separately defined population and visible sample count for every aggregate.
 
+## Standalone Trade Analyzer design and navigation — November 16, 2026
+
+- Put every existing `/analytics/trade-analyzer/…` page in the top-level Trade Analyzer sidebar group. The general Analytics group belongs to Trade Journal. Keep the existing Analyzer URLs available for saved links.
+- Use `/trade-analyzer` as the feature home and link to it and the analyzed-trade history from a dedicated Welcome card. Lead with manual execution entry in a trading account and use **Analyze trades** to submit one trade or a batch. Keep **To analyze** for saved trades awaiting analysis and **Your analyzed trades** for completed results. Open one trade's existing chart and Trade Analysis card at a time, with tabs to switch among trades in a small new batch.
+- With Demo selected, open the saved demo analyses and show the shared **Viewing demo data** notice and clear action at the upper left on the feature home and each Analyzer analysis page. Use the shared account scope and current demo behavior. Open the initial view over the available demo results.
+- Use saved Analyzer results from the selected account for the Analyzer reports and analyzed-trade history. Display any eligible-trade coverage count as coverage, with report metrics based on analyzed trades.
+
+The sidebar checkpoint implements the grouping for existing pages. The feature home and entry flow are in design.
+
 ## Current checkpoint - 2026-08-09
 
 - [x] Owner approved separating Trade Analyzer from generic historical
