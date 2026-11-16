@@ -251,3 +251,117 @@ All 38 focused tests passed, including volume cutoffs, sparse trading, up and do
 - Focused evidence covers Eastern sessions and early close, stale quotes, invalid filters and unknown-input coverage. Desktop browser exercised presets, pagination, sorting, drafts, views, column sets, explanation, set-default, duplicate, rename, delete and custom scope. Mobile widths of 320 and 390 pixels and 844-pixel landscape fit without page overflow. The protected mutation and unknown-run checks passed. `/screeners`, Help and `/scanners` returned HTTP 200 from the isolated loopback service.
 - Repository dashboard architecture guard reported five failures in existing shared layout, shell, feature help, configured routes and gainers code. It did not name a new Screener file. Full-repository TypeScript exhausted the default Node heap in this mixed workspace. The focused TypeScript check, targeted ESLint and four screener contract tests passed.
 - Integration requires the existing Scanner route split, Alpaca chart/calendar and scanner listing source from the integration checkout. Bring the feature changes over with a narrow allowlist and overlay the Screeners navigation and Help entries on the installed route split. Confirm the prepared-snapshot delivery path and no regressions in staged scanner and chart workloads, then get normal owner review before release.
+
+## Live Screeners cache integration
+
+The live SIP worker now fills its session VWAP from the prioritized VPS
+candle cache. Prices can publish during warm-up. Incomplete history only
+affects the VWAP for that symbol. The worker retries missing seeds after a
+busy response, preserves complete seeds, and starts a fresh candle boundary
+on reconnect. The seed ends immediately before the first eligible live
+minute so volume at that boundary is counted once. A correction clears the
+affected VWAP while the latest price remains available. This worker leaves
+the existing completed-five-minute-bar crossover definition in place.
+
+The private QA used the actual Screeners workspace and same request
+handlers as the app. The worker ran on the VPS with a real SIP subscription,
+the cache candidate and the eight saved Scanner definitions. A separate
+process inside Railway staging received the worker's live data over SSH and
+served the Screeners request handlers through a loopback browser relay.
+The two QA identities and screen saves used temporary data. Platform shell,
+sign-in and the chart drawer were isolated for the Screeners browser run.
+Chart history and live tape were sampled separately during the same test.
+The shared Railway staging service continued serving its existing build
+and data. That service returned HTTP 404 for the Screeners API with the
+previous staging test session, so it was not used for the candidate QA.
+
+The first browser comparison measured 4.87 s p95 from the newest sampled
+trade to the refreshed browser result for AAPL, AMD and NVDA. The snapshot
+reader reused the same file result for five seconds. With
+`TRADERLINK_STOCK_SCREENERS_LIVE_WORKER=1`, runs share a 250 ms snapshot check.
+Sorting and paging still use the original results and owner scope. The
+same eight-refresh sample measured 0.49 s p95 after the change. The staged
+regular-hours test used real prices and VWAP from the shared candle cache.
+The screen kept price data visible during VWAP warm-up.
+
+The final Railway staging run used the published Screeners source pinned
+at `ff5c3a741` with this worker and the live snapshot reader enabled.
+The 5,849-symbol worker returned a successful history seed for 5,848
+symbols in 97.1 s, including the wait for the next complete minute.
+One symbol lacked a usable seed during that run. The preceding run
+completed coverage for all 5,849 symbols. Browser results arrived in
+422 ms before VWAP coverage and the first fully warmed above-VWAP run
+returned 933 matches in 299 ms. The two isolated accounts exercised
+sorting, paging, preset details, saving, reload, privacy and a custom
+unsaved ticker list. The phone portrait and landscape checks exercised
+Table, Cards and Two rows without page-level horizontal overflow.
+The same active-symbol refresh sample on the published source gave
+491 ms p95 for newest observed trade age and 233 ms p95 for click to paint.
+
+All eight saved scans used the 1,753-stock universe through $200M and
+published a first match within 843 ms. Full scanner history was ready
+in 8.07 s. No quote requests or scanner history batches failed during
+the 144-observation run. The Scanner timed test used sampled gateway
+quotes, so it measured history priority and startup. Four concurrent
+Chart history requests moved from 190.5 to 197.1 ms median and from
+263.7 to 295.5 ms p95. The existing live Chart tape stayed connected
+and measured 245 to 262 ms p95, with 20 baseline and 233 load samples.
+The Railway receiver reached 269 MiB RSS. The VPS diagnostic, which
+ran the gateway, Scanner evaluator and Screeners worker together,
+reached 670 MiB RSS. It closed the candidate worker and the disposable
+staging receiver after testing. This checkpoint used no deployment.
+
+The scoped TypeScript check, changed-file lint, and 99 focused tests
+passed on the published Screeners source and the cache/Scanner
+candidate. The VPS gateway dependency is the prioritized cache
+checkpoint at `9ee03701f`. This checkpoint prepared the worker and
+the reader for a later hosted integration. QA used the temporary
+staging receiver and kept the existing Railway app in place.
+
+### Hosted integration candidate
+
+The VPS runner reads its configuration and credentials from private files.
+Its worker builds VWAP from the shared candle gateway and publishes
+coalesced updates over the target application's authenticated internal
+endpoint. The Railway application keeps one in-memory market book.
+It overlays price and current VWAP on the prepared snapshot for the same
+open market session, while completed-bar fields and the coarse snapshot
+collector continue supplying the rest of the results. Saved definitions
+and previously pinned runs retain their existing owner boundaries.
+
+The publisher has one request in flight, uses a full book on reconnect
+or after a server restart, and resends the latest values after ambiguous
+delivery. The application returns to its prepared snapshot if updates
+stop for four seconds, the market phase changes, or the live worker flag
+is disabled. No live delta is written to the Platform database or a
+persistent market-data file.
+
+Normal staging requires an approved slot on the shared Railway service,
+the same-date staging market snapshot, the existing two-account Screeners
+access gate, a staged Alpaca Chart gateway configuration, and a separate
+staging publisher token. The staged VPS gateway must include the
+prioritized cache code at `9ee03701f`. Use one staged worker targeting
+the staging origin. Point its private config to the staging gateway,
+the credential file and gateway token file. Enable
+`TRADERLINK_STOCK_SCREENERS_LIVE_WORKER` and the private
+`TRADERLINK_STOCK_SCREENERS_LIVE_PUSH_TOKEN` only on the selected staging
+service as part of its authorized release.
+
+Before production review, test the actual signed-in staging page, both
+reviewer accounts, sale timestamp and VWAP changes on fresh runs, access
+denial for other users, restart and snapshot fallback, and concurrent
+Scanner and Chart timing. The shared staging deployment
+`0f90f6e3-fb42-402a-89aa-36f2a03bbaea` is healthy and currently has
+Journal demo review settings without Screeners or Alpaca configuration.
+A previous reviewer session received HTTP 404 from its Screeners API.
+This checkpoint leaves that service and production in place.
+
+The integrated candidate passed 101 focused tests and scoped TypeScript
+and lint. A deterministic regular-session fixture verified the new
+publisher endpoint followed by the ordinary signed-in Screeners API
+for both local reviewer accounts, and signed-out access remained denied.
+Focused tests also covered authentication, frame ordering, resync after
+restart or timeout, same-session overlays, preserved completed metrics,
+and snapshot fallback. The standalone VPS runner loaded successfully in
+its missing-configuration smoke check. Real signed-in QA on the shared
+Railway deployment is still pending.

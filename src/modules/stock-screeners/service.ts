@@ -7,11 +7,14 @@ import type { TraderLinkPlatformRequestIdentity } from "../platform/server/authe
 import { easternClock } from "../scanner/live/sessions";
 import { screenRules, sortIncludes, type Candidate, type Definition, type MarketPack, type RunResult } from "./contracts";
 import { previewPack } from "./fixture";
+import { applyLiveScreenerBook } from "./live-screener-book";
 import { PAGE_SIZE, querySnapshot, sortRows } from "./query";
 import { MARKET_PACK_MAX_AGE_MS, readMarketPack } from "./snapshot-file";
 import { canReadPressReleaseRun, HOUR_MS, memberPressReleases } from "./press-releases";
 
 const REQUEST_WINDOW = 60_000;
+const SNAPSHOT_RECHECK_MS = 5_000;
+const LIVE_SNAPSHOT_RECHECK_MS = 250;
 type Run = {
   owner: string; header: Omit<RunResult, "rows" | "page" | "pageSize">;
   matches: Candidate[]; pressReleaseDelay?: number;
@@ -59,7 +62,7 @@ function resultPage(run: Run, page: number, sort: Definition["sort"]): RunResult
   return { ...run.header, rows: sorted.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE), page: current, pageSize: PAGE_SIZE };
 }
 
-let marketRead: { file: string; until: number; result: ReturnType<typeof readSharedMarket> } | undefined;
+let marketRead: { file: string; until: number; interval: number; result: ReturnType<typeof readSharedMarket> } | undefined;
 let lastMarket: { file: string; signature: string; pack: MarketPack } | undefined;
 let demo: { bucket: number; pack: ReturnType<typeof previewPack> } | undefined;
 
@@ -99,8 +102,10 @@ async function marketForRun(now: number, preview: boolean) {
     return { pack: previewMarket(now), fallback: false };
   }
   const file = join(directory, "market.json");
-  if (!marketRead || marketRead.file !== file || marketRead.until < now) {
-    marketRead = { file, until: now + 5_000, result: readSharedMarket(file, now) };
+  const interval = process.env.TRADERLINK_STOCK_SCREENERS_LIVE_WORKER === "1"
+    ? LIVE_SNAPSHOT_RECHECK_MS : SNAPSHOT_RECHECK_MS;
+  if (!marketRead || marketRead.file !== file || marketRead.interval !== interval || marketRead.until <= now) {
+    marketRead = { file, interval, until: now + interval, result: readSharedMarket(file, now) };
   }
   try {
     const result = await marketRead.result;
@@ -116,7 +121,9 @@ export async function createRun(identity: TraderLinkPlatformRequestIdentity, def
   const now = Date.now();
   const preview = identity.mode === "local_development" && process.env.NODE_ENV !== "production";
   const { pack, fallback } = await marketForRun(now, preview);
-  const { rows: snapshotRows, ...info } = pack.snapshots[definition.session === "latest" ? pack.latest : definition.session];
+  const selected = pack.snapshots[definition.session === "latest" ? pack.latest : definition.session];
+  const { rows: snapshotRows, ...info } = process.env.TRADERLINK_STOCK_SCREENERS_LIVE_WORKER === "1"
+    ? applyLiveScreenerBook(selected, now) : selected;
   const example = info.source === "Preview data";
   const marketClock = easternClock(now);
   const weekday = new Date(marketClock.date + "T12:00:00Z").getUTCDay();

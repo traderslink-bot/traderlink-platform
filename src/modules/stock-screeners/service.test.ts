@@ -94,3 +94,34 @@ it("keeps up to 64 runs per process and evicts the oldest when a new run needs s
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+it("picks up live worker updates within a quarter second without changing pinned results", async () => {
+  const root = mkdtempSync(join(tmpdir(), "stock-screeners-live-"));
+  const directory = join(root, "stock-screeners-v1");
+  const file = join(directory, "market.json");
+  const initial = Date.parse("2026-11-14T17:00:00Z");
+  const identity = { mode: "platform_session", scope: { userId: "live-market-fixture" } } as TraderLinkPlatformRequestIdentity;
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", join(root, "market-fixture.sqlite"));
+  vi.stubEnv("TRADERLINK_STOCK_SCREENERS_LIVE_WORKER", "1");
+  try {
+    vi.setSystemTime(initial);
+    mkdirSync(directory, { mode: 0o700 });
+    writeFileSync(file, market(3), { mode: 0o600 });
+    const first = await createRun(identity, DEFAULT_DEFINITION);
+    vi.setSystemTime(initial + 150);
+    writeFileSync(file + ".next", market(4), { mode: 0o600 });
+    renameSync(file + ".next", file);
+    expect((await createRun(identity, DEFAULT_DEFINITION)).capturedAt).toBe(initial);
+
+    vi.setSystemTime(initial + 250);
+    const fresh = await createRun(identity, DEFAULT_DEFINITION);
+    expect(fresh.capturedAt).toBe(initial + 150);
+    expect(fresh.total).toBe(3);
+    expect(getRun(identity, first.id, 1, DEFAULT_DEFINITION.sort).total).toBe(2);
+  } finally {
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+    rmSync(root, { recursive: true, force: true });
+  }
+});

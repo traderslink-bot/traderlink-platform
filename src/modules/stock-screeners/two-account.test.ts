@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it, vi } from "vitest";
 import ScreenersPage from "@/app/(dashboard)/screeners/page";
 import { GET, POST } from "@/app/api/stock-screeners/route";
+import { POST as receiveLiveFrame } from "@/app/api/internal/stock-screeners-live/route";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
@@ -218,6 +219,31 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
     }
     expect(await read(await memberGet(author))).toEqual(savedPublic);
     expect(await read(await memberGet(recipient))).toEqual(reopened);
+
+    const regularOpen = Date.parse("2026-11-16T14:30:00Z");
+    const regularNow = regularOpen + 45 * 60_000;
+    vi.setSystemTime(regularNow);
+    const prepared = preparedFixture();
+    prepared.latest = "regular";
+    prepared.snapshots.regular = {
+      ...prepared.snapshots.regular, date: "2026-11-16", asOf: regularNow - 60_000, capturedAt: regularNow, closed: false,
+    };
+    writeFileSync(join(directory, "market.json"), JSON.stringify(prepared), { mode: 0o600 });
+    vi.stubEnv("TRADERLINK_STOCK_SCREENERS_LIVE_WORKER", "1");
+    const publisherToken = "isolated-test-token-for-the-screener-worker";
+    vi.stubEnv("TRADERLINK_STOCK_SCREENERS_LIVE_PUSH_TOKEN", publisherToken);
+    const frame = await receiveLiveFrame(new Request(origin + "/api/internal/stock-screeners-live", {
+      method: "POST", headers: { authorization: "Bearer " + publisherToken },
+      body: JSON.stringify({ session: "regular", start: regularOpen, end: regularOpen + 390 * 60_000, generation: regularNow - 10,
+        sentAt: regularNow, sequence: 1, reset: true, rows: [{ symbol: "QAUP", price: 15, priceAt: regularNow - 50, vwap: 11 }] }),
+    }));
+    expect(frame.status).toBe(204);
+    const liveDefinition = { ...DEFAULT_DEFINITION, session: "latest", universe: "list", tickers: ["QAUP"] };
+    for (const testToken of [author, recipient]) {
+      const liveRun = await read<RunResult>(await memberPost(testToken, { action: "run", definition: liveDefinition }));
+      expect(liveRun.rows[0]).toMatchObject({ priceAt: regularNow - 50, values: { price: 15, sessionVwap: 11 } });
+    }
+    expect((await GET(new Request(endpoint))).status).toBe(404);
   } finally {
     vi.useRealTimers();
     vi.unstubAllEnvs();
