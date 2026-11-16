@@ -14,4 +14,4 @@ export const coachingProfilePhotoStatements=Object.freeze([
  ) STRICT;`,
 ]);
 
-export const traderLinkCoachingProfilePhotosMigration:PlatformMigration=Object.freeze({moduleNamespace:'community',migrationId:'0193_traderlink_coaching_profile_photos',executionOrder:231,statements:coachingProfilePhotoStatements});
+export const traderLinkCoachingProfilePhotosMigration:PlatformMigration=Object.freeze({moduleNamespace:'community',migrationId:'0193_traderlink_coaching_profile_photos',executionOrder:253,statements:coachingProfilePhotoStatements});

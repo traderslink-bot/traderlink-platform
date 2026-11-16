@@ -3,7 +3,7 @@ import type { PlatformMigration } from "@/src/modules/platform/server/database/p
 export const traderLinkCommunitiesDiscordFeatureAccessMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0123_traderlink_communities_discord_feature_access",
-  executionOrder: 123,
+  executionOrder: 227,
   statements: Object.freeze([
     `INSERT INTO traderlink_community_capability_catalog (capability_key, catalog_version, description)
 VALUES

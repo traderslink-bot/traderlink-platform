@@ -4,7 +4,7 @@ import type { PlatformMigration } from "../platform-migration-contract";
 export const platformCoachingCommissionTermsMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0159_platform_coaching_commission_terms",
-  executionOrder: 172,
+  executionOrder: 238,
   statements: Object.freeze([
     `ALTER TABLE traderlink_community_coach_fee_rules ADD COLUMN minimum_commission_minor INTEGER CHECK(minimum_commission_minor IS NULL OR (minimum_commission_minor>=0 AND minimum_commission_minor<=9007199254740991));`,
     `ALTER TABLE traderlink_community_coach_fee_rules ADD COLUMN currency TEXT CHECK(currency IS NULL OR currency IN ('USD','CAD'));`,

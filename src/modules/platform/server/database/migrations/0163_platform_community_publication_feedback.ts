@@ -4,7 +4,7 @@ import type { PlatformMigration } from "../platform-migration-contract";
 export const platformCommunityPublicationFeedbackMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0163_platform_community_publication_feedback",
-  executionOrder: 176,
+  executionOrder: 242,
   statements: Object.freeze([
     `ALTER TABLE traderlink_community_server_watchlists ADD COLUMN ticker_research_json TEXT NOT NULL DEFAULT '{}' CHECK(json_valid(ticker_research_json));`,
     `CREATE TABLE traderlink_community_publication_receipts (

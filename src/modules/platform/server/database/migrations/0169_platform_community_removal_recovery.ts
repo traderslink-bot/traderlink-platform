@@ -9,4 +9,4 @@ export const communityRemovalRecoveryStatements=Object.freeze([
  CHECK((removed_at_utc IS NULL AND recover_until_utc IS NULL) OR (removed_at_utc IS NOT NULL AND recover_until_utc IS NOT NULL))) STRICT;`,
 ]);
 // Coordinator reserved identity/order; never execute from this source lane.
-export const platformCommunityRemovalRecoveryMigration:PlatformMigration=Object.freeze({moduleNamespace:"community",migrationId:"0169_platform_community_removal_recovery",executionOrder:182,statements:communityRemovalRecoveryStatements});
+export const platformCommunityRemovalRecoveryMigration:PlatformMigration=Object.freeze({moduleNamespace:"community",migrationId:"0169_platform_community_removal_recovery",executionOrder:245,statements:communityRemovalRecoveryStatements});

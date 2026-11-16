@@ -6,7 +6,7 @@ const snowflake=(column:string)=>`CHECK (${column} IS NULL OR (length(${column})
 export const traderLinkCommunitiesCoachingPlanBuilderMigration:PlatformMigration=Object.freeze({
   moduleNamespace:"community",
   migrationId:"0129_traderlink_communities_coaching_plan_builder",
-  executionOrder:129,
+  executionOrder:232,
   statements:Object.freeze([`ALTER TABLE traderlink_community_coaching_plans ADD COLUMN price_amount_minor INTEGER CHECK(price_amount_minor IS NULL OR price_amount_minor BETWEEN 0 AND 1000000000);
 ALTER TABLE traderlink_community_coaching_plans ADD COLUMN currency TEXT NOT NULL DEFAULT 'USD' CHECK(length(currency)=3 AND currency=upper(currency));
 ALTER TABLE traderlink_community_coaching_plans ADD COLUMN billing_cadence TEXT NOT NULL DEFAULT 'monthly' CHECK(billing_cadence IN ('weekly','monthly','one_time','custom'));

@@ -26,4 +26,4 @@ export const coachingTradeEvaluationStatements=Object.freeze([
  `CREATE TRIGGER traderlink_coaching_trade_evaluation_immutable_update BEFORE UPDATE ON traderlink_coaching_trade_evaluations BEGIN SELECT RAISE(ABORT,'Delivered evaluations are immutable.'); END;`,
  `CREATE TRIGGER traderlink_coaching_trade_evaluation_immutable_delete BEFORE DELETE ON traderlink_coaching_trade_evaluations BEGIN SELECT RAISE(ABORT,'Delivered evaluations are immutable.'); END;`,
 ]);
-export const traderLinkCoachingTradeEvaluationTemplatesMigration:PlatformMigration=Object.freeze({moduleNamespace:'community',migrationId:'0192_traderlink_coaching_trade_evaluation_templates',executionOrder:230,statements:coachingTradeEvaluationStatements});
+export const traderLinkCoachingTradeEvaluationTemplatesMigration:PlatformMigration=Object.freeze({moduleNamespace:'community',migrationId:'0192_traderlink_coaching_trade_evaluation_templates',executionOrder:252,statements:coachingTradeEvaluationStatements});

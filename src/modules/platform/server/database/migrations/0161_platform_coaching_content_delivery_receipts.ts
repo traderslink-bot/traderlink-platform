@@ -4,7 +4,7 @@ import type { PlatformMigration } from "../platform-migration-contract";
 export const platformCoachingContentDeliveryReceiptsMigration: PlatformMigration = Object.freeze({
  moduleNamespace:"community",
  migrationId:"0161_platform_coaching_content_delivery_receipts",
- executionOrder:174,
+ executionOrder:240,
  statements:Object.freeze([
   `ALTER TABLE traderlink_community_content_deliveries ADD COLUMN discord_message_id TEXT CHECK(discord_message_id IS NULL OR (length(discord_message_id) BETWEEN 1 AND 32 AND discord_message_id NOT GLOB '*[^0-9]*'));`,
   `ALTER TABLE traderlink_community_content_deliveries ADD COLUMN next_attempt_at_utc TEXT CHECK(next_attempt_at_utc IS NULL OR (length(next_attempt_at_utc)=24 AND next_attempt_at_utc GLOB '????-??-??T??:??:??.???Z'));`,

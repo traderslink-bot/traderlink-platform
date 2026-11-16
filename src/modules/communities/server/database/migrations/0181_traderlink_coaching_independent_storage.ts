@@ -4,6 +4,6 @@ import {independentCoachingStatements} from "../../independent-coaching-storage"
 export const traderLinkCoachingIndependentStorageMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0181_traderlink_coaching_independent_storage",
-  executionOrder: 216,
+  executionOrder: 248,
   statements: independentCoachingStatements,
 });

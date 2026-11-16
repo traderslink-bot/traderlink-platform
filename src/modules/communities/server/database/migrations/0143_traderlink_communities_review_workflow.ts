@@ -4,7 +4,7 @@ const uuid=(column:string)=>`CHECK (${column} IS NULL OR (length(${column})=36 A
 const utc=(column:string)=>`CHECK (${column} IS NULL OR (length(${column})=24 AND ${column} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z'))`;
 
 export const traderLinkCommunitiesReviewWorkflowMigration:PlatformMigration=Object.freeze({
- moduleNamespace:"community",migrationId:"0143_traderlink_communities_review_workflow",executionOrder:143,
+ moduleNamespace:"community",migrationId:"0143_traderlink_communities_review_workflow",executionOrder:235,
  statements:Object.freeze([`ALTER TABLE traderlink_community_journal_grants ADD COLUMN shared_fields_json TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(shared_fields_json));
 ALTER TABLE traderlink_community_coaching_trade_reviews ADD COLUMN delivery_state TEXT NOT NULL DEFAULT 'draft' CHECK(delivery_state IN ('draft','delivered','viewed','follow_up','completed','cancelled'));
 ALTER TABLE traderlink_community_coaching_trade_reviews ADD COLUMN due_at_utc TEXT ${utc("due_at_utc")};

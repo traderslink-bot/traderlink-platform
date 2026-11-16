@@ -4,6 +4,6 @@ import {COMMUNITY_ADMISSION_STORAGE_DRAFT} from "../../community-admission-stora
 export const traderLinkCommunityAdmissionMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0182_traderlink_community_admission",
-  executionOrder: 217,
+  executionOrder: 249,
   statements: Object.freeze([COMMUNITY_ADMISSION_STORAGE_DRAFT]),
 });

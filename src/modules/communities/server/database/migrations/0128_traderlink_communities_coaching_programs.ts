@@ -4,7 +4,7 @@ const uuid=(column:string)=>`CHECK (length(${column})=36 AND ${column}=lower(${c
 const utc=(column:string)=>`CHECK (length(${column})=24 AND ${column} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9]Z')`;
 
 export const traderLinkCommunitiesCoachingProgramsMigration:PlatformMigration=Object.freeze({
- moduleNamespace:"community",migrationId:"0128_traderlink_communities_coaching_programs",executionOrder:128,
+ moduleNamespace:"community",migrationId:"0128_traderlink_communities_coaching_programs",executionOrder:231,
  statements:Object.freeze([`ALTER TABLE traderlink_community_coaching_plans ADD COLUMN student_capacity INTEGER NOT NULL DEFAULT 10 CHECK(student_capacity BETWEEN 1 AND 10000);
 ALTER TABLE traderlink_community_coaching_plans ADD COLUMN messaging_included INTEGER NOT NULL DEFAULT 0 CHECK(messaging_included IN (0,1));
 ALTER TABLE traderlink_community_coaching_plans ADD COLUMN trade_reviews_included INTEGER NOT NULL DEFAULT 0 CHECK(trade_reviews_included IN (0,1));

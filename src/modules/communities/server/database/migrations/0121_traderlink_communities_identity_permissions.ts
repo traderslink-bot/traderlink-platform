@@ -332,6 +332,6 @@ export const traderLinkCommunitiesIdentityPermissionsMigration: PlatformMigratio
   Object.freeze({
     moduleNamespace: "community",
     migrationId: "0121_traderlink_communities_identity_permissions",
-    executionOrder: 121,
+    executionOrder: 225,
     statements: Object.freeze([sql]),
   });

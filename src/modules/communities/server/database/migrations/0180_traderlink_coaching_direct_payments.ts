@@ -4,6 +4,6 @@ import {coachingDirectPaymentStatements} from "../../coaching-direct-payment-sto
 export const traderLinkCoachingDirectPaymentsMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0180_traderlink_coaching_direct_payments",
-  executionOrder: 215,
+  executionOrder: 247,
   statements: coachingDirectPaymentStatements,
 });

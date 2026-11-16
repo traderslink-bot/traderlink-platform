@@ -27,4 +27,4 @@ export const communityPublicationRevisionActionStatements=Object.freeze([
  `CREATE INDEX community_publication_action_attempt_history ON traderlink_community_publication_action_attempts(action_id,occurred_at_utc);`,
  `CREATE INDEX community_publication_action_pending ON traderlink_community_publication_actions(status,next_attempt_at_utc,requested_at_utc);`,
 ]);
-export const platformCommunityPublicationRevisionActionsMigration:PlatformMigration=Object.freeze({moduleNamespace:"community",migrationId:"0170_platform_community_publication_revision_actions",executionOrder:183,statements:communityPublicationRevisionActionStatements});
+export const platformCommunityPublicationRevisionActionsMigration:PlatformMigration=Object.freeze({moduleNamespace:"community",migrationId:"0170_platform_community_publication_revision_actions",executionOrder:246,statements:communityPublicationRevisionActionStatements});

@@ -173,6 +173,6 @@ WHEN NEW.relationship_id<>OLD.relationship_id OR NEW.community_id<>OLD.community
 BEGIN SELECT RAISE(ABORT,'traderlink_community_journal_grant_immutable_scope'); END;`;
 
 export const traderLinkCommunitiesPartnerPlatformMigration: PlatformMigration = Object.freeze({
-  moduleNamespace: "community", migrationId: "0122_traderlink_communities_partner_platform", executionOrder: 122,
+  moduleNamespace: "community", migrationId: "0122_traderlink_communities_partner_platform", executionOrder: 226,
   statements: Object.freeze([sql]),
 });

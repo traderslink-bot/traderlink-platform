@@ -7,7 +7,7 @@ const utc=(column:string)=>`CHECK (${column} IS NULL OR (length(${column})=24 AN
 export const traderLinkCommunitiesCoachingDeliveryWorkflowMigration:PlatformMigration=Object.freeze({
   moduleNamespace:"community",
   migrationId:"0145_traderlink_communities_coaching_delivery_workflow",
-  executionOrder:145,
+  executionOrder:237,
   statements:Object.freeze([
     `ALTER TABLE traderlink_community_coaching_relationships ADD COLUMN archived_at_utc TEXT ${utc("archived_at_utc")};`,
     `ALTER TABLE traderlink_community_coaching_plans ADD COLUMN builder_config_json TEXT NOT NULL DEFAULT '{}' CHECK(json_valid(builder_config_json) AND json_type(builder_config_json)='object');`,

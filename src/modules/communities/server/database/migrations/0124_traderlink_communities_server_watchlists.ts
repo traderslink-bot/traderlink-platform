@@ -6,7 +6,7 @@ const utc = (column: string) => `CHECK (length(${column}) = 24 AND ${column} GLO
 export const traderLinkCommunitiesServerWatchlistsMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0124_traderlink_communities_server_watchlists",
-  executionOrder: 124,
+  executionOrder: 228,
   statements: Object.freeze([`CREATE TABLE traderlink_community_server_watchlists (
   watchlist_id TEXT PRIMARY KEY ${uuid("watchlist_id")},
   community_id TEXT NOT NULL ${uuid("community_id")},

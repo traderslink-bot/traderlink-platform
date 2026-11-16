@@ -15,6 +15,6 @@ export const independentCoachingMailboxStatements = Object.freeze([
  `INSERT INTO traderlink_coaching_message_legacy(message_id) SELECT message_id FROM traderlink_coaching_messages;`,
 ]);
 export const traderLinkCoachingMailboxMigration:PlatformMigration=Object.freeze({
- moduleNamespace:'community',migrationId:'0188_traderlink_coaching_mailbox',executionOrder:226,
+ moduleNamespace:'community',migrationId:'0188_traderlink_coaching_mailbox',executionOrder:250,
  statements:independentCoachingMailboxStatements,
 });

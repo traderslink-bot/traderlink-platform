@@ -2,7 +2,7 @@ import type {PlatformMigration} from "../platform-migration-contract";
 
 // Coordinator-reserved successor of0161. No existing delivery is replayed.
 export const platformCoachingDeliveryAttemptHistoryMigration:PlatformMigration=Object.freeze({
- moduleNamespace:"community",migrationId:"0162_platform_coaching_delivery_attempt_history",executionOrder:175,
+ moduleNamespace:"community",migrationId:"0162_platform_coaching_delivery_attempt_history",executionOrder:241,
  statements:Object.freeze([
   `ALTER TABLE traderlink_community_content_deliveries ADD COLUMN current_attempt_key TEXT;`,
   `CREATE TABLE traderlink_community_delivery_attempt_history (

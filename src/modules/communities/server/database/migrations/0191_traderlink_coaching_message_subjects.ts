@@ -14,6 +14,6 @@ export const independentCoachingMessageSubjectStatements=Object.freeze([
 ]);
 
 export const traderLinkCoachingMessageSubjectsMigration:PlatformMigration=Object.freeze({
- moduleNamespace:'community',migrationId:'0191_traderlink_coaching_message_subjects',executionOrder:229,
+ moduleNamespace:'community',migrationId:'0191_traderlink_coaching_message_subjects',executionOrder:251,
  statements:independentCoachingMessageSubjectStatements,
 });

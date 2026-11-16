@@ -23,4 +23,4 @@ export const communityDestinationPublisherStatements=Object.freeze([
  `ALTER TABLE traderlink_community_content_deliveries ADD COLUMN publisher_user_id TEXT REFERENCES platform_users(user_id) ON DELETE SET NULL;`,
 ]);
 
-export const platformCommunityDestinationPublishersMigration:PlatformMigration=Object.freeze({moduleNamespace:"community",migrationId:"0168_platform_community_destination_publishers",executionOrder:181,statements:communityDestinationPublisherStatements});
+export const platformCommunityDestinationPublishersMigration:PlatformMigration=Object.freeze({moduleNamespace:"community",migrationId:"0168_platform_community_destination_publishers",executionOrder:244,statements:communityDestinationPublisherStatements});

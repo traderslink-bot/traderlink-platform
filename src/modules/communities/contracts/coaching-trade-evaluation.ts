@@ -55,7 +55,7 @@ function parseWrittenConfig(value:unknown):WrittenFeedbackConfig{
  const fields=raw.fields.map(value=>{const field=object(value),id=text(field.id,100,true),title=text(field.title,80,true).trim();
   if(Object.keys(field).some(key=>!['id','title','guidance','enabled','required','version'].includes(key))||ids.has(id)||titles.has(title.toLocaleLowerCase())||!builtinWrittenId(id)&&!WRITTEN_UUID.test(id)||typeof field.enabled!=='boolean'||typeof field.required!=='boolean')throw new Error('Use distinct written fields with valid enabled and required choices.');
   ids.add(id);titles.add(title.toLocaleLowerCase());
-  return {id,title,...(field.guidance===undefined?{}:{guidance:text(field.guidance,400)}),enabled:field.enabled,required:field.required,version:version(field.version)};
+  return {id,title,...(field.guidance===undefined?{}:{guidance:text(field.guidance,1000)}),enabled:field.enabled,required:field.required,version:version(field.version)};
  });
  if(!BUILTIN_WRITTEN_FIELDS.every(field=>ids.has(field.id)))throw new Error('Keep the three standard written fields; disable any you do not need.');
  return {version:version(raw.version),fields};

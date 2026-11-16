@@ -3,7 +3,7 @@ import type { PlatformMigration } from "@/src/modules/platform/server/database/p
 export const traderLinkCommunitiesReviewWorkspaceMetadataMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0144_traderlink_communities_review_workspace_metadata",
-  executionOrder: 144,
+  executionOrder: 236,
   statements: Object.freeze([
     `ALTER TABLE traderlink_community_coaching_trade_reviews ADD COLUMN workspace_kind TEXT
       CHECK(workspace_kind IS NULL OR workspace_kind IN ('trade','trading_day','performance','strategy','custom'));`,

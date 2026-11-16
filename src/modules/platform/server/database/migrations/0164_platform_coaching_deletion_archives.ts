@@ -2,7 +2,7 @@ import type { PlatformMigration } from "../platform-migration-contract";
 
 // Additive candidate: coordinator must reconcile the migration reservation before release.
 export const platformCoachingDeletionArchivesMigration: PlatformMigration = Object.freeze({
-  moduleNamespace: "community", migrationId: "0164_platform_coaching_deletion_archives", executionOrder: 177,
+  moduleNamespace: "community", migrationId: "0164_platform_coaching_deletion_archives", executionOrder: 243,
   statements: Object.freeze([
     `CREATE TABLE community_deletion_archives (
       archive_id TEXT PRIMARY KEY NOT NULL,

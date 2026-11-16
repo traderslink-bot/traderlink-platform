@@ -4,7 +4,7 @@ import type { PlatformMigration } from "../platform-migration-contract";
 export const platformCoachingReviewRequestAcceptanceMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0160_platform_coaching_review_request_acceptance",
-  executionOrder: 173,
+  executionOrder: 239,
   statements: Object.freeze([
     `ALTER TABLE traderlink_community_coaching_trade_reviews ADD COLUMN acceptance_state TEXT NOT NULL DEFAULT 'accepted' CHECK(acceptance_state IN ('pending','accepted'));`,
     `ALTER TABLE traderlink_community_coaching_trade_reviews ADD COLUMN accepted_at_utc TEXT;`,

@@ -6,7 +6,7 @@ const utc = (column: string) => `CHECK (length(${column}) = 24 AND ${column} GLO
 export const traderLinkCommunitiesWorkspaceToolsMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0126_traderlink_communities_workspace_tools",
-  executionOrder: 126,
+  executionOrder: 229,
   statements: Object.freeze([`ALTER TABLE traderlink_community_settings
   ADD COLUMN personal_alert_templates_enabled INTEGER NOT NULL DEFAULT 1
   CHECK(personal_alert_templates_enabled IN (0,1));
