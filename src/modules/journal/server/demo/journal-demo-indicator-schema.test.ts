@@ -26,7 +26,10 @@ test("real schema persists Demo indicators without changing executions or repeat
     new PlatformUserRepository(db,{allowedAuthProviders:["development_local"]}).createUser({userId,authProvider:"development_local",authSubject:"demo_schema_test",displayName:"Test",createdAtUtc:now.toISOString(),updatedAtUtc:now.toISOString()});
     new PlatformWorkspaceRepository(db).createWorkspaceWithOwner({workspaceId,ownerUserId:userId,displayName:"Test",defaultTradingTimezone:"America/New_York",createdAtUtc:now.toISOString()});
     // Immutable bundled base pack needs no external/database-only candle files.
-    const result=new JournalDemoMaterializer(db,{now:()=>now,resolvePack:()=>resolveCurrentJournalDemoFinancialPack()}).materializeForWorkspace({baseCurrency:"USD",createdForUserId:userId,tradingTimezone:"America/New_York",workspaceId});
+    const result=new JournalDemoMaterializer(db,{now:()=>now,resolvePack:()=>{
+      assert.equal(db.inTransaction,false,"fresh demo preparation must precede the write transaction");
+      return resolveCurrentJournalDemoFinancialPack();
+    }}).materializeForWorkspace({baseCurrency:"USD",createdForUserId:userId,tradingTimezone:"America/New_York",workspaceId});
     assert.equal(result.state,"materialized");assert.ok(result.accountId);
     const scope={userId,workspaceId,accountId:result.accountId,workspaceRole:"owner" as const};
     const candidate=db.prepare<[],{round_trip_id:string}>("SELECT round_trip_id FROM journal_round_trip_daily_trade_analyses ORDER BY round_trip_id LIMIT 1").get()!;

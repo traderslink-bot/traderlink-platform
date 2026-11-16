@@ -21,6 +21,13 @@ export type JournalDemoMaterializationResult = Readonly<{
   state: "cleared" | "materialized" | "unavailable";
 }>;
 
+type DemoMaterializationInput = Readonly<{
+  baseCurrency: string;
+  createdForUserId: string;
+  tradingTimezone: string;
+  workspaceId: string;
+}>;
+
 export class JournalDemoMaterializer {
   constructor(private readonly database: Database.Database, private readonly dependencies: Readonly<{
     createId?: () => string;
@@ -29,8 +36,26 @@ export class JournalDemoMaterializer {
     resolveUpgradePack?: (existingDemoPackVersionId: string) => JournalDemoFinancialPack | null;
   }> = {}) {}
 
-  materializeForWorkspace(input: Readonly<{ baseCurrency: string; createdForUserId: string; tradingTimezone: string; workspaceId: string }>): JournalDemoMaterializationResult {
-    return this.database.transaction(() => this.materializeLocked(input)).immediate();
+  materializeForWorkspace(input: DemoMaterializationInput): JournalDemoMaterializationResult {
+    assertCanonicalUuidV4(input.workspaceId, "workspaceId");
+    assertCanonicalUuidV4(input.createdForUserId, "createdForUserId");
+    const scope = { workspaceId: input.workspaceId, userId: input.createdForUserId };
+    const demos = new JournalDemoAccountRepository(this.database);
+    if (demos.findLifecycleForUser(scope)?.state === "cleared") {
+      return Object.freeze({ accountId: null, state: "cleared" });
+    }
+
+    let preparedPack: JournalDemoFinancialPack | null = null;
+    if (!demos.findAccountForUser(scope)) {
+      // Read and validate pinned candle evidence under a read snapshot, without
+      // reserving SQLite's writer slot for market-data preparation.
+      const pack = this.dependencies.resolvePack
+        ? this.dependencies.resolvePack()
+        : this.database.transaction(() => resolveCurrentJournalDemoFinancialPack(this.database)).deferred();
+      if (pack) preparedPack = assertJournalDemoFinancialPack(pack);
+    }
+    const pack = preparedPack;
+    return this.database.transaction(() => this.materializeLocked(input, pack)).immediate();
   }
 
   /** Existing fact packs stay immutable. Advance one saved-analysis candidate
@@ -78,9 +103,10 @@ export class JournalDemoMaterializer {
     return { changed, nextAfter: rows.length > 1 ? rows[0].id : null };
   }
 
-  private materializeLocked(input: Readonly<{ baseCurrency: string; createdForUserId: string; tradingTimezone: string; workspaceId: string }>): JournalDemoMaterializationResult {
-    assertCanonicalUuidV4(input.workspaceId, "workspaceId");
-    assertCanonicalUuidV4(input.createdForUserId, "createdForUserId");
+  private materializeLocked(
+    input: DemoMaterializationInput,
+    validatedPack: JournalDemoFinancialPack | null,
+  ): JournalDemoMaterializationResult {
     const demos = new JournalDemoAccountRepository(this.database);
     if (demos.findLifecycleForUser({
       userId: input.createdForUserId,
@@ -90,9 +116,7 @@ export class JournalDemoMaterializer {
     }
     const existing = demos.findAccountForUser({ workspaceId: input.workspaceId, userId: input.createdForUserId });
     if (existing) return this.upgradeExistingLocked({ demos, existing, input });
-    const pack = this.dependencies.resolvePack ? this.dependencies.resolvePack() : resolveCurrentJournalDemoFinancialPack(this.database);
-    if (!pack) return Object.freeze({ accountId: null, state: "unavailable" });
-    const validatedPack = assertJournalDemoFinancialPack(pack);
+    if (!validatedPack) return Object.freeze({ accountId: null, state: "unavailable" });
     const createId = this.dependencies.createId ?? createCanonicalUuidV4;
     const timestamp = createCanonicalUtcTimestamp(this.dependencies.now?.());
     const accountId = createId();
