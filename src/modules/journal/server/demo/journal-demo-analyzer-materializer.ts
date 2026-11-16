@@ -83,6 +83,7 @@ ORDER BY round_trip.round_trip_id`).all(
         requestedEndUtc: new Date(schedule.endTime * 1000).toISOString(),
         requestedStartUtc: new Date(schedule.startTime * 1000).toISOString(),
         sha256: session.normalizedBarsSha256,
+        reuseMatchingVersion: true,
         target,
       });
       sessionVersions.set(sessionKey, sessionVersionId);

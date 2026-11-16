@@ -295,6 +295,7 @@ DO NOTHING`).run(
     requestedEndUtc: string;
     requestedStartUtc: string;
     sha256: string;
+    reuseMatchingVersion?: boolean;
     target: DailyTradeAnalyzerTarget;
   }>): string {
     const timestamp = input.completedAtUtc;
@@ -318,6 +319,20 @@ WHERE provider_key = ? AND provider_adapter_version = ?
   AND session_policy = 'america_new_york_extended_0400_2000_v1'`)
       .get(input.provider.key, input.provider.adapterVersion, input.target.providerSymbol, input.target.tradingDateNewYork);
     if (!session) throw new Error("daily_trade_verified_session_missing");
+    if (input.reuseMatchingVersion && input.candles.length > 0) {
+      // The verified demo pack already checks the full ordered candle checksum.
+      // Bind the analysis to the immutable revision without changing the live session pointer.
+      const matching = this.database.prepare<[string, string, string, string, string, number], { market_session_set_version_id: string }>(`SELECT market_session_set_version_id
+FROM level_analysis_market_session_set_versions
+WHERE market_session_set_id = ? AND outcome = 'ready' AND candle_sha256 = ?
+  AND requested_start_utc = ? AND requested_end_utc = ?
+  AND provider_exchange_timezone = ? AND provider_utc_offset_seconds = ?
+ORDER BY revision_number DESC LIMIT 1`).get(
+        session.market_session_set_id, input.sha256, input.requestedStartUtc,
+        input.requestedEndUtc, input.providerExchangeTimezone, input.providerUtcOffsetSeconds,
+      );
+      if (matching) return matching.market_session_set_version_id;
+    }
     return this.persistMarketSession({
       candles: input.candles,
       completedAtUtc: input.completedAtUtc,

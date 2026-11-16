@@ -41,7 +41,11 @@ test("real schema persists Demo indicators without changing executions or repeat
     const previousDate=new Date(Date.parse(target.tradingDateNewYork+"T12:00:00Z")-86400000).toISOString().slice(0,10);
     const session=newYorkExtendedSession(previousDate)!;
     const bars=Array.from({length:960},(_,i)=>({time:session.startTime+(i+1)*60,openDecimal:"2",highDecimal:"2.1",lowDecimal:"1.9",closeDecimal:"2",volumeDecimal:"100",turnoverDecimal:"200"}));
-    legacy.materializeVerifiedSession({candles:bars,completedAtUtc:now.toISOString(),coverageEndUtc:new Date(session.endTime*1000).toISOString(),provider:{key:"moomoo_history_kline",adapterVersion:"moomoo_history_kline_v1"},providerExchangeTimezone:"America/New_York",providerUtcOffsetSeconds:-14400,requestedStartUtc:new Date(session.startTime*1000).toISOString(),requestedEndUtc:new Date(session.endTime*1000).toISOString(),sha256:createHash("sha256").update(JSON.stringify(bars)).digest("hex"),target:{...target,tradingDateNewYork:previousDate}});
+    const sessionInput = {candles:bars,completedAtUtc:now.toISOString(),coverageEndUtc:new Date(session.endTime*1000).toISOString(),provider:{key:"moomoo_history_kline",adapterVersion:"moomoo_history_kline_v1"},providerExchangeTimezone:"America/New_York",providerUtcOffsetSeconds:-14400,requestedStartUtc:new Date(session.startTime*1000).toISOString(),requestedEndUtc:new Date(session.endTime*1000).toISOString(),sha256:createHash("sha256").update(JSON.stringify(bars)).digest("hex"),target:{...target,tradingDateNewYork:previousDate}} as const;
+    const firstSession = legacy.materializeVerifiedSession(sessionInput);
+    const storedCandles = db.prepare("SELECT count(*) AS n FROM level_analysis_market_session_candles").get();
+    assert.equal(legacy.materializeVerifiedSession({ ...sessionInput, reuseMatchingVersion: true }), firstSession);
+    assert.deepEqual(db.prepare("SELECT count(*) AS n FROM level_analysis_market_session_candles").get(), storedCandles);
     assert.equal(run().status,"refreshed");
     const saved=new LogicalTradeAnalyzerRepository(db).readCurrentByRoundTrip(scope,candidate.round_trip_id);
     assert.equal(saved?.status,"ready");assert.equal(saved?.analyzed?.trendMomentum?.calculationVersion,"trade_indicator_context_v3");
