@@ -1,3 +1,8 @@
+import Database from "better-sqlite3";
+import { writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
+import { prepareAndPublishInitialDemo } from "./journal-demo-prepared-publication";
 import { parentPort, workerData } from "node:worker_threads";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -7,6 +12,25 @@ import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/
 import { withPlatformWorkerDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { JOURNAL_DEMO_CURRENT_VERSION_ID } from "@/src/modules/journal/server/demo/journal-demo-current-version";
 import { JournalDemoMaterializer } from "@/src/modules/journal/server/demo/journal-demo-materializer";
+
+function materializeDemo(database: Database.Database, scope: WorkspaceAccessScope, account: {
+  accountId: string; baseCurrency: string; tradingTimezone: string;
+}) {
+  const demos = new JournalDemoAccountRepository(database);
+  if (demos.findLifecycleForUser(scope)?.state === "cleared") {
+    return { state: "cleared", accountId: null } as const;
+  }
+  if (demos.findAccountForUser(scope)) {
+    return new JournalDemoAccountActivationService(database).activateForWorkspace({
+      baseCurrency: account.baseCurrency, tradingTimezone: account.tradingTimezone,
+      userId: scope.userId, workspaceId: scope.workspaceId,
+    });
+  }
+  return prepareAndPublishInitialDemo(database, {
+    userId: scope.userId, workspaceId: scope.workspaceId, activeAccountId: account.accountId,
+    baseCurrency: account.baseCurrency, tradingTimezone: account.tradingTimezone,
+  }, join(dirname(__filename), "journal-demo-schema.sqlite"));
+}
 
 function activate(scope: WorkspaceAccessScope, activeAccountId: string) {
   return withPlatformWorkerDatabase((database) => {
@@ -18,12 +42,7 @@ function activate(scope: WorkspaceAccessScope, activeAccountId: string) {
     if (!activeAccount) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
     return Object.freeze({
       activeAccountIsDemo: activeDemoAccount !== null,
-      result: new JournalDemoAccountActivationService(database).activateForWorkspace({
-        baseCurrency: activeAccount.baseCurrency,
-        tradingTimezone: activeAccount.tradingTimezone,
-        userId: scope.userId,
-        workspaceId: scope.workspaceId,
-      }),
+      result: materializeDemo(database, scope, activeAccount),
     });
   });
 }
@@ -40,10 +59,7 @@ export function ensureJournalDemo(scope: WorkspaceAccessScope, after: string | n
     if (!scope.activeAccountId) return { status: "unavailable", changed: false };
     const account = new JournalAccountRepository(database).findActiveAccount(scope.workspaceId, scope.activeAccountId);
     if (!account) return { status: "unavailable", changed: false };
-    const activation = new JournalDemoAccountActivationService(database).activateForWorkspace({
-      baseCurrency: account.baseCurrency, tradingTimezone: account.tradingTimezone,
-      userId: scope.userId, workspaceId: scope.workspaceId,
-    });
+    const activation = materializeDemo(database, scope, account);
     const refresh = activation.state === "materialized"
       ? new JournalDemoMaterializer(database).refreshExistingAnalysis(scope, after)
       : { nextAfter: null };
@@ -74,5 +90,18 @@ if (parentPort) {
     console.info("journal_demo_setup_timing", {
       operation: command.operation, durationMs: Math.round(performance.now() - started),
     });
+  }
+}
+
+
+// Image build only: migrate an empty disposable database, then package its schema.
+if (!parentPort && process.argv[2] === "--prepare-schema" && process.argv[3]) {
+  const scratch = new Database(":memory:");
+  try {
+    scratch.pragma("foreign_keys=ON");
+    runPlatformMigrations(scratch);
+    writeFileSync(process.argv[3], scratch.serialize(), { mode: 0o600 });
+  } finally {
+    scratch.close();
   }
 }

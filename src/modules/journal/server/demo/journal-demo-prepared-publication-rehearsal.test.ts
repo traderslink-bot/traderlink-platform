@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtempSync, rmSync, copyFileSync } from "node:fs";
+import { mkdtempSync, rmSync, copyFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -42,6 +42,8 @@ vi.mock("./packs/august-2026-additions.json", async (importOriginal) => {
 import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
 import { PlatformWorkspaceRepository } from "@/src/modules/platform/server/identity/platform-workspace-repository";
+import { JournalAccountRepository } from "../accounts/journal-account-repository";
+import { prepareAndPublishInitialDemo } from "./journal-demo-prepared-publication";
 import { JournalDemoMaterializer } from "./journal-demo-materializer";
 import { resolveCurrentJournalDemoFinancialPack } from "./journal-demo-pack-contract";
 
@@ -82,12 +84,16 @@ function adapt(connection: DatabaseSync): Database.Database {
 test("publishes the prepared demo atomically while separate reads stay responsive", async () => {
   const root = mkdtempSync(join(tmpdir(), "demo-prepared-publish-"));
   const liveFile = join(root, "target.sqlite"), scratchFile=join(root, "scratch.sqlite");
+  const moduleTarget = join(root, "module-target.sqlite");
+  const scratchSchema = join(root, "journal-demo-schema.sqlite");
+  const primaryAccountId = "10000000-0000-4000-8000-000000000005";
   const userId="10000000-0000-4000-8000-000000000001";
   const workspaceId="10000000-0000-4000-8000-000000000002";
   const now=new Date("2026-11-16T21:00:00.000Z");
   try {
     const base=new Database(liveFile);base.pragma("foreign_keys=ON");
     runPlatformMigrations(base,{now:()=>now});
+    writeFileSync(scratchSchema, base.serialize());
     new PlatformUserRepository(base,{allowedAuthProviders:["test"]}).createUser({
       userId, authProvider:"test",authSubject:"synthetic-demo-prepared-publish",displayName:"Synthetic demo",
       createdAtUtc:now.toISOString(),updatedAtUtc:now.toISOString(),
@@ -95,6 +101,11 @@ test("publishes the prepared demo atomically while separate reads stay responsiv
     new PlatformWorkspaceRepository(base).createWorkspaceWithOwner({
       workspaceId,ownerUserId:userId,displayName:"Synthetic workspace",defaultTradingTimezone:"America/New_York",
       createdAtUtc:now.toISOString(),
+    });
+    new JournalAccountRepository(base).createAccount({
+      accountId:primaryAccountId, workspaceId, displayName:"Primary Journal", baseCurrency:"USD",
+      tradingTimezone:"America/New_York", status:"active", createdByUserId:userId,
+      createdAtUtc:now.toISOString(), updatedAtUtc:now.toISOString(),
     });
     const seededUserId = "10000000-0000-4000-8000-000000000003";
     const seededWorkspaceId = "10000000-0000-4000-8000-000000000004";
@@ -112,6 +123,17 @@ test("publishes the prepared demo atomically while separate reads stay responsiv
     base.pragma("journal_mode=WAL");
     base.close();
     copyFileSync(liveFile,scratchFile);
+    copyFileSync(liveFile,moduleTarget);
+    const moduleDatabase = new Database(moduleTarget);
+    try {
+      const published = prepareAndPublishInitialDemo(moduleDatabase, {
+        userId, workspaceId, activeAccountId:primaryAccountId, baseCurrency:"USD", tradingTimezone:"America/New_York",
+      }, scratchSchema);
+      expect(published.state).toBe("materialized");
+      expect(moduleDatabase.prepare("SELECT account_id FROM journal_demo_accounts WHERE workspace_id=? AND created_for_user_id=?").get(workspaceId,userId))
+        .toMatchObject({account_id:published.accountId});
+      expect(moduleDatabase.pragma("foreign_key_check")).toEqual([]);
+    } finally { moduleDatabase.close(); }
     const scratch=new DatabaseSync(scratchFile), target=new DatabaseSync(liveFile);
     try {
       const capture=scratch.createSession();

@@ -1,11 +1,12 @@
 import { beforeEach, expect, test, vi } from "vitest";
-const mocks=vi.hoisted(()=>({security:vi.fn(),scope:vi.fn(),lifecycle:vi.fn(),account:vi.fn(),pack:vi.fn(),refresh:vi.fn(),activate:vi.fn(),findActive:vi.fn()}));
+const mocks=vi.hoisted(()=>({security:vi.fn(),scope:vi.fn(),lifecycle:vi.fn(),account:vi.fn(),pack:vi.fn(),refresh:vi.fn(),activate:vi.fn(),prepared:vi.fn(),findActive:vi.fn()}));
 vi.mock("@/src/modules/platform/server/authentication/journal-mutation-request-security",()=>({requireJournalMutationRequest:mocks.security}));
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope",()=>({requireTraderLinkPlatformRequestScope:mocks.scope}));
 vi.mock("@/src/modules/platform/server/database/open-platform-database",()=>({withPlatformWorkerDatabase:(callback:(db:unknown)=>unknown)=>callback({})}));
 vi.mock("./journal-demo-account-repository",()=>({JournalDemoAccountRepository:class{findLifecycleForUser=mocks.lifecycle;findAccountForUser=mocks.account;findPackApplication=mocks.pack;}}));
 vi.mock("./journal-demo-materializer",()=>({JournalDemoMaterializer:class{refreshExistingAnalysis=mocks.refresh;}}));
 vi.mock("./journal-demo-account-activation-service",()=>({JournalDemoAccountActivationService:class{activateForWorkspace=mocks.activate;}}));
+vi.mock("./journal-demo-prepared-publication",()=>({prepareAndPublishInitialDemo:mocks.prepared}));
 vi.mock("../accounts/journal-account-repository",()=>({JournalAccountRepository:class{findActiveAccount=mocks.findActive;}}));
 vi.mock("./journal-demo-setup", async () => {
   const { ensureJournalDemo } = await import("./journal-demo-setup-worker");
@@ -38,6 +39,6 @@ test("non-owner and failed mutation security cannot reach Demo refresh",async()=
 });
 test("new materialization starts the same saved-only bounded pass",async()=>{
   mocks.account.mockReturnValue(null);mocks.findActive.mockReturnValue({baseCurrency:"USD",tradingTimezone:"America/New_York"});
-  mocks.activate.mockReturnValue({state:"materialized"});expect((await POST(request())).status).toBe(200);
-  expect(mocks.activate).toHaveBeenCalledTimes(1);expect(mocks.refresh).toHaveBeenCalledWith(scope,"cursor");
+  mocks.prepared.mockReturnValue({state:"materialized"});expect((await POST(request())).status).toBe(200);
+  expect(mocks.prepared).toHaveBeenCalledTimes(1);expect(mocks.activate).not.toHaveBeenCalled();expect(mocks.refresh).toHaveBeenCalledWith(scope,"cursor");
 });

@@ -111,6 +111,13 @@ export function resolveJournalDemoAugustPack(input: Readonly<{
   const pack = createJournalDemoFinancialPack(source, verified, null, full, manifest([]));
   return {...pack, manifest: { ...pack.manifest, demoPackVersionId: JOURNAL_DEMO_CURRENT_VERSION_ID,
     packVersion: 12, materializerVersion: "demo_canonical_journal_v12", manifestSha256: revisedSource.derivedFactManifestSha256 },
+    ...(!input.existing ? {
+      initialPublicationInputs: {
+        manifestIds: [pack.manifest.demoPackVersionId, JOURNAL_DEMO_CURRENT_VERSION_ID],
+        sessions: verified.sessions.filter(session => analyzer.trades.some(trade =>
+          trade.symbol === session.symbol && trade.tradingDateNewYork === session.date)),
+      },
+    } : {}),
     materializeCanonicalFacts: (context: Parameters<typeof pack.materializeCanonicalFacts>[0]) => {
     const existingProvenance = input.existing ? correctJournalDemoFeeVersions(context.database, {
       workspaceId: context.workspaceId, accountId: context.accountId,

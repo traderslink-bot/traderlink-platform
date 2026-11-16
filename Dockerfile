@@ -39,7 +39,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=dependencies --chown=nextjs:nodejs /app/bin/traderlink-integrity-cache-release ./bin/traderlink-integrity-cache-release
 COPY --from=builder --chown=nextjs:nodejs /app/erasure-worker ./workers
-COPY --from=builder --chown=nextjs:nodejs /app/demo-worker/journal-demo-setup.cjs ./workers/journal-demo-setup.cjs
+COPY --from=builder --chown=nextjs:nodejs /app/demo-worker/ ./workers/
 COPY --from=builder --chown=nextjs:nodejs /app/news-maintenance/news-general-0185-maintenance.cjs ./workers/news-general-0185-maintenance.cjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/analyzer-maintenance/migrate.cjs ./analyzer-0186-migrate.cjs

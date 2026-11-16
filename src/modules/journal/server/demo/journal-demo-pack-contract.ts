@@ -38,6 +38,10 @@ export type JournalDemoPackManifest = Readonly<{
 
 export type JournalDemoFinancialPack = Readonly<{
   manifest: JournalDemoPackManifest;
+  initialPublicationInputs?: Readonly<{
+    manifestIds: readonly string[];
+    sessions: JournalDemoVerifiedMarketDaysInput["sessions"];
+  }>;
   materializeCanonicalFacts: (input: Readonly<{
     accountId: string;
     createdForUserId: string;

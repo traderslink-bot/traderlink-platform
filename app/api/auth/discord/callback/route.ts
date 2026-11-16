@@ -1,3 +1,4 @@
+import { runJournalDemoSetup } from "@/src/modules/journal/server/demo/journal-demo-setup";
 import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { PlatformLoginError, PlatformLoginService } from "@/src/modules/platform/server/authentication/platform-login-service";
 import { loginSession } from "@/src/modules/platform/server/authentication/platform-login-http";
@@ -270,6 +271,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       allowedAccountIds = signInResult.allowedAccountIds;
       demoAccountId = signInResult.demoAccountId;
       workspaceId = signInResult.workspaceId;
+      if (signInResult.provisioned && resolvedGuildMember && allowedAccountIds.length === 1) {
+        const activeAccountId = allowedAccountIds[0]!;
+        // Start preparing the newly provisioned demo while sign-in finishes.
+        // Ordinary dashboard activation handles contention or an interrupted worker.
+        void Promise.resolve().then(() => runJournalDemoSetup({
+          operation: "activate",
+          activeAccountId,
+          scope: {
+            activeAccountId, allowedAccountIds: [activeAccountId], workspaceRole: "owner",
+            userId: signInResult.userId, workspaceId: signInResult.workspaceId,
+          },
+        })).catch(() => console.warn("Initial Journal demo preparation deferred"));
+      }
       const verifiedAtUtc = createCanonicalUtcTimestamp();
       for (const guildId of new Set([config.guildId, ...membershipGuildIds])) {
         try {
