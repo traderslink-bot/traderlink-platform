@@ -71,9 +71,9 @@ function RapidMarker() {
 function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;twoRows:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="HOD Drops list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
-    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{...scannerStickyTickerSx,tableLayout:"fixed",minWidth:twoRows?350:394,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-      <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:72}} aria-label="Chart and news"/></>}<TableCell data-scanner-sticky-ticker sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
-        <TableCell sx={{width:48}}>Drop</TableCell><TableCell sx={{width:62}}>High</TableCell><TableCell sx={{width:58}}>Vol</TableCell>
+    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{...scannerStickyTickerSx,tableLayout:"fixed",minWidth:twoRows?380:438,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:72}} aria-label="Chart and news"/></>}<TableCell data-scanner-sticky-ticker sx={{width:"5.75rem"}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
+        <TableCell sx={{width:48}}>Drop</TableCell><TableCell sx={{width:"5.5rem"}}>High</TableCell><TableCell sx={{width:58}}>Vol</TableCell>
       {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
@@ -90,8 +90,8 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
           sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
           {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:0.4}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerPageChartButton symbol={row.symbol}/><ScannerRowNews news={row.news}/></Stack></TableCell>
           </>}
-          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25,flexWrap:"wrap"}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>{row.rapidDrop?<RapidMarker/>:null}</Stack></TableCell>
-          <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(-row.belowHighPercent),fontWeight:750}}>{wholePercent.format(row.belowHighPercent)}%</TableCell><TableCell><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.5,flexWrap:"nowrap",pr:0.75}}><ScannerPageTicker symbol={row.symbol}/>{row.rapidDrop?<RapidMarker/>:null}<ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(-row.belowHighPercent),fontWeight:750}}>{wholePercent.format(row.belowHighPercent)}%</TableCell><TableCell sx={{whiteSpace:"nowrap", "&&":{pr:0.85}}}><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
         {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
           </TableRow>
           {twoRows&&<TableRow data-two-row-tools={row.symbol}>
@@ -123,6 +123,7 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
         {rows.map(row=>row.drop&&<Stack key={row.symbol} role="listitem" direction="row"
           sx={{alignItems:"center",gap:0.6,minHeight:25,fontSize:"0.68rem"}}>
           <ChartButton row={row} onOpenChart={onOpenChart}/>
+          <ScannerPageChartButton symbol={row.symbol} showOnMobile/>
           <ScannerPageTicker symbol={row.symbol}/>
           <RapidMarker/>
           <ScannerCountryFlag country={row.country}/><ScannerRowNews news={row.news}/>

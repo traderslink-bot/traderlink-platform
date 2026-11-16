@@ -14,7 +14,8 @@ export function parseHistoryRequest(query: URLSearchParams): AlpacaHistoryReques
   if (!ALPACA_HISTORY_FRAMES.includes(timeframe) || !Number.isSafeInteger(start) || !Number.isSafeInteger(end)
     || start <= 0 || end <= start || end > Date.now() + 60_000 || end - start > (timeframe === "1Day" ? 3650 : 180) * 86_400_000) throw Error("invalid_history_request");
   const adjustment = query.get("adjustment");
-  if (adjustment !== null && (adjustment !== "raw" || timeframe !== "1Min" || end - start > 86_400_000)) {
+  const rawDays = timeframe === "1Min" ? 1 : timeframe === "1Day" ? 370 : 0;
+  if (adjustment !== null && (adjustment !== "raw" || end - start > rawDays * 86_400_000)) {
     throw Error("invalid_history_request");
   }
   return { symbol, timeframe, start, end, ...(adjustment === "raw" ? { adjustment } : {}) };

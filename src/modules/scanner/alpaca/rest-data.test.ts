@@ -26,6 +26,12 @@ describe("Alpaca shared history transport", () => {
     expect(analyzer.adjustment).toBe("raw");
     expect(transport.mock.calls.map(([url]) => new URL(String(url)).searchParams.get("adjustment"))).toEqual(["split", "raw"]);
     query.set("timeframe", "1Day");
+    const companyRange = await rest.history(parseHistoryRequest(query));
+    expect(companyRange.adjustment).toBe("raw");
+    query.set("end", String(371 * 86_400_000 + 1000));
+    expect(() => parseHistoryRequest(query)).toThrow("invalid_history_request");
+    query.set("timeframe", "1Hour");
+    query.set("end", "100000");
     expect(() => parseHistoryRequest(query)).toThrow("invalid_history_request");
   });
 

@@ -163,3 +163,10 @@ Added Market Events to side-card screener checkboxes with shared headline/float/
 ## Shared chart design page
 
 Owner approved using the existing Market Charts page as the full-size design workspace for the reusable Alpaca Lightweight Chart. See [shared chart progress](shared-lightweight-chart-progress.md).
+
+## Trading Workspace navigation and Company Details — November 16, 2026 Eastern
+
+- Trading Workspace groups Edit layout, Reopen chart drawer, and the mobile Tabs/Stacked toggle on the left of the top nav. Reopen shares the chart row's green candlestick styling. It stays visible on mobile and becomes available after saving a drawer chart. Mobile layout controls edit the active layout's visible cards and saved layout selection. Desktop retains the drag and resize handles.
+- The orange ticker in the stock scanner cards opens the separate Company Details drawer. The green candlestick opens the chart drawer. The blue chart button updates the Trading Workspace chart. Recent Rapid Drops also shows the blue action on mobile when the Workspace chart is visible. The HOD table reserves space for the inline rapid bolt and the session tag.
+- Restored the Company Details drawer previously reviewed on the company drawer branch. Its technicals, profile, financials, SEC filings, news, and Levels use the existing provider and access routes. The drawer loads on demand. Deployment verification needs the Company Data gateway and the gateway's raw daily candle support for the as-traded 52-week range.
+- Fixture Chromium checks passed at 1440×900, 320×730, and 844×390 for ticker routing and focus restoration, the six detail tabs, HOD spacing, saved chart reopening, and Save/Cancel with refresh for layout visibility. Scoped TypeScript, changed-file ESLint, and four focused suites passed. This slice was based on current main and kept local. The separate custom Scanners candidate is still available for continued work.

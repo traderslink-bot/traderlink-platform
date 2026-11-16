@@ -1,14 +1,15 @@
 import "server-only";
 import { chartSymbol, type Candle } from "@/src/modules/scanner/alpaca/candles";
 import type { ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
-import { indicatorDisplayRows } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
+import { indicatorDisplayRows, type IndicatorDisplayRow } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { historyCalendar, scannerIndicatorResults } from "../scanner-indicator-calculation";
 import { SCANNER_INDICATOR_FRAMES, prepareScannerIndicatorRows, type ScannerIndicatorRead } from "../scanner-indicator-read";
 
 const headers = { "Cache-Control": "private, no-store" };
-const reads = new Map<string, Promise<ScannerIndicatorRead>>();
+type DetailedRead = ScannerIndicatorRead & { readings: readonly IndicatorDisplayRow[] };
+const reads = new Map<string, Promise<DetailedRead>>();
 const limit = 300;
 
 export async function scannerIndicatorResponse(request: Request, loadBars: (request: Request) => Promise<Response>) {
@@ -20,6 +21,7 @@ export async function scannerIndicatorResponse(request: Request, loadBars: (requ
     return Response.json({ error: "unavailable" }, { status: 404, headers });
   }
   const url = new URL(request.url);
+  const includeDetails = url.searchParams.get("details") === "1";
   const frame = SCANNER_INDICATOR_FRAMES.find(value => value === url.searchParams.get("frame"));
   let symbol: string;
   try { symbol = chartSymbol(url.searchParams.get("symbol") ?? ""); }
@@ -41,15 +43,19 @@ export async function scannerIndicatorResponse(request: Request, loadBars: (requ
         throw Error("invalid_indicator_bars");
       }
       const { result, vwap } = scannerIndicatorResults(bars.bars, frame, Math.floor(now / 60_000) * 60_000, historyCalendar(bars.calendar));
-      const rows = prepareScannerIndicatorRows(indicatorDisplayRows({
+      const readings = indicatorDisplayRows({
         result, timeframe: frame, livePrice: null, vwap: vwap?.value ?? null, vwapSignals: vwap?.signals,
-      }), result);
-      return { symbol, frame, rows, vwap: vwap?.value ?? null };
+      });
+      const rows = prepareScannerIndicatorRows(readings, result);
+      return { symbol, frame, rows, readings, vwap: vwap?.value ?? null };
     })();
     reads.set(key, read);
     if (reads.size > limit) reads.delete(reads.keys().next().value!);
   }
-  try { return Response.json(await read, { headers }); }
+  try {
+    const { readings, ...compact } = await read;
+    return Response.json(includeDetails ? { ...compact, readings } : compact, { headers });
+  }
   catch {
     if (reads.get(key) === read) reads.delete(key);
     return Response.json({ error: "indicator_reads_unavailable" }, { status: 503, headers });

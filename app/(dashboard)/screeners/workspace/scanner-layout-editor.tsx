@@ -118,22 +118,15 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
   </Box>;
 }
 
-export function ScannerLayoutToolbar({editing,name,active,setName,saved,visible,onToggle,message,onEdit,onSelect,onSave,onCancel,onReset,onPreset,onUndo,canUndo}:{
-  editing:boolean;name:string;active:string;setName:(name:string)=>void;saved:NamedLayout[];
+export function ScannerLayoutToolbar({editing,name,active,setName,saved,visible,onToggle,message,onEdit,onSelect,onSave,onCancel,onReset,onPreset,onUndo,canUndo,mobile=false}:{
+  mobile?:boolean;editing:boolean;name:string;active:string;setName:(name:string)=>void;saved:NamedLayout[];
   visible:Widget[];onToggle:(widget:Widget)=>void;message:string;
   onPreset:(tile:Tile)=>void;onUndo:()=>void;canUndo:boolean;
   onEdit:()=>void;onSelect:(name:string)=>void;onSave:()=>void;onCancel:()=>void;onReset:()=>void;
 }) {
   const [anchor,setAnchor]=useState<HTMLButtonElement|null>(null);
   const close=()=>setAnchor(null);
-  return <>
-    <Tooltip title={editing?"Layout settings":"Edit layout"}>
-      <IconButton aria-label={editing?"Layout settings":"Edit layout"} aria-expanded={Boolean(anchor)}
-        onClick={event=>{if(!editing)onEdit();setAnchor(anchor?null:event.currentTarget);}}>
-        {editing?<ViewQuiltOutlined fontSize="small"/>:<DashboardCustomizeOutlined fontSize="small"/>}
-      </IconButton>
-    </Tooltip>
-    {editing&&<Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
+  const actions=<Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
       <Button size="small" variant="outlined" color="inherit" onClick={()=>{onCancel();close();}}
         sx={theme=>({
           color:theme.palette.text.primary,
@@ -150,8 +143,17 @@ export function ScannerLayoutToolbar({editing,name,active,setName,saved,visible,
             borderColor:theme.palette.mode==="dark"?theme.palette.traderLink.chart.controlText:theme.palette.text.secondary,
           },
         })}>Save</Button>
-    </Stack>}
-    <Popper open={Boolean(anchor)} anchorEl={anchor} placement="bottom-end" sx={{zIndex:1299}}>
+    </Stack>;
+  return <>
+    <Tooltip title={editing?"Layout settings":"Edit layout"}>
+      <IconButton aria-label={editing?"Layout settings":"Edit layout"} aria-expanded={Boolean(anchor)}
+        sx={{"@media(max-width:359px)":{"&&":{minWidth:34,width:34,p:0}}}}
+        onClick={event=>{if(!editing)onEdit();setAnchor(anchor?null:event.currentTarget);}}>
+        {editing?<ViewQuiltOutlined fontSize="small"/>:<DashboardCustomizeOutlined fontSize="small"/>}
+      </IconButton>
+    </Tooltip>
+    {editing&&!mobile&&actions}
+    <Popper open={Boolean(anchor)} anchorEl={anchor} placement="bottom-start" sx={{zIndex:1299}}>
       <ClickAwayListener onClickAway={close}>
         <Paper aria-label="Layout settings" role="region" onKeyDown={event=>{
           if(event.key==="Escape"){anchor?.focus();close();}
@@ -179,6 +181,7 @@ export function ScannerLayoutToolbar({editing,name,active,setName,saved,visible,
             </Stack>
             <Button size="small" disabled={!canUndo} color="inherit" onClick={onUndo} sx={{alignSelf:"flex-start"}}>Undo</Button>
             <Button size="small" variant="outlined" color="inherit" onClick={onReset} sx={{alignSelf:"flex-start"}}>Reset to default</Button>
+            {editing&&mobile&&actions}
           </Stack>
         </Paper>
       </ClickAwayListener>

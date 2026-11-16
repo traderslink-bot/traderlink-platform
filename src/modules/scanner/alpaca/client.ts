@@ -23,8 +23,8 @@ export async function requestAlpacaGateway(path: "scanner-listings" | "calendar"
   return response.json();
 }
 
-export async function readAlpacaHistory(input: { symbol: string; timeframe: AlpacaHistoryFrame; start: number; end: number }, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal): Promise<AlpacaHistoryResult> {
-  const result = await requestAlpacaGateway("history", new URLSearchParams({ symbol: chartSymbol(input.symbol), timeframe: input.timeframe, start: String(input.start), end: String(input.end) }), environment, signal) as AlpacaHistoryResult;
-  if (result.symbol !== chartSymbol(input.symbol) || result.feed !== "sip" || result.adjustment !== "split" || !result.complete || !Array.isArray(result.bars)) throw Error("alpaca_history_incomplete");
+export async function readAlpacaHistory(input: { symbol: string; timeframe: AlpacaHistoryFrame; start: number; end: number; adjustment?: "raw" }, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal): Promise<AlpacaHistoryResult> {
+  const result = await requestAlpacaGateway("history", new URLSearchParams({ symbol: chartSymbol(input.symbol), timeframe: input.timeframe, start: String(input.start), end: String(input.end), ...(input.adjustment ? { adjustment: input.adjustment } : {}) }), environment, signal) as AlpacaHistoryResult;
+  if (result.symbol !== chartSymbol(input.symbol) || result.feed !== "sip" || result.adjustment !== (input.adjustment ?? "split") || !result.complete || !Array.isArray(result.bars)) throw Error("alpaca_history_incomplete");
   return result;
 }

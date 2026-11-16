@@ -228,6 +228,7 @@ LIMIT ?`).all(input.scope.userId, ...tags, delaySeconds, delaySeconds, limit) as
   list(input: Readonly<{
     channel: PressReleaseChannel;
     limit?: number;
+    ticker?: string;
     scope: WorkspaceAccessScope;
   }>): readonly PressReleaseArticle[] {
     assertActiveUser(this.database, input.scope);
@@ -244,10 +245,11 @@ FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
 WHERE article.route_tag IN (${placeholders(tags)})
+  ${input.ticker ? "AND article.ticker = ?" : ""}
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
 ORDER BY article.published_at DESC, article.id
-LIMIT ?`).all(input.scope.userId, ...tags,
+LIMIT ?`).all(input.scope.userId, ...tags, ...(input.ticker ? [input.ticker] : []),
       ...Array(2).fill(readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds")), limit) as ArticleRow[];
     return Object.freeze(rows.map(rowToArticle));
   }

@@ -32,6 +32,20 @@ it("coalesces reads across authorized viewers, separates timeframes, and checks 
     expect(payload).toEqual(await second.json());
     expect(payload.rows).toEqual(expect.arrayContaining([expect.objectContaining({ name: "EMA", text: "9 above 20" })]));
     expect(payload).not.toHaveProperty("bars");
+    expect(payload).not.toHaveProperty("readings");
+    const detailedUrl = new URL(request("5m").url);
+    detailedUrl.searchParams.set("details", "1");
+    const detailed = await scannerIndicatorResponse(new Request(detailedUrl, { headers: { "x-test-viewer": "first" } }), load);
+    expect(detailed.status).toBe(200);
+    const { readings, ...compact } = await detailed.json();
+    expect(compact).toEqual(payload);
+    expect(readings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        label: "Moving averages", state: "Bullish alignment",
+        value: expect.stringContaining("EMA20"),
+        explanation: expect.stringContaining("price strength"),
+      }),
+    ]));
     expect(load).toHaveBeenCalledTimes(1);
     expect((await scannerIndicatorResponse(request("5m"), load)).status).toBe(404);
     expect((await scannerIndicatorResponse(request("1m", "first"), load)).status).toBe(200);

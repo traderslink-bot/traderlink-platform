@@ -22,9 +22,9 @@ import type { LiveScannerRow, ScannerNewsItem } from "@/src/modules/scanner/live
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 const stamp = (n: number | string) => new Date(n).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET";
 
-export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionTarget, active=true, onGenerate }: {
+export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionTarget, active=true, onGenerate, levelsOnly=false }: {
   symbol: string; stock: LiveScannerRow | undefined; quote?: {price:number;changePercent:number|null}; postMarket?: boolean;
-  actionTarget?:HTMLElement|null;active?:boolean;onGenerate?:()=>void;
+  actionTarget?:HTMLElement|null;active?:boolean;onGenerate?:()=>void;levelsOnly?:boolean;
 }) {
   const [map, setMap] = useState<StockLevelsMap | null>(null);
   const [busy, setBusy] = useState(false);
@@ -71,7 +71,7 @@ export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionT
   const priceGain = dayGain === undefined ? postGain : dayGain;
   const changeFact = (label: string, change: number | null): [string, string, string] =>
     [label, change == null ? "—" : `${change.toFixed(0)}%`, scannerGainColor(change)];
-  const facts: [string, string, string?][] = currentPrice === undefined ? [] : [
+  const facts: [string, string, string?][] = levelsOnly || currentPrice === undefined ? [] : [
     ["Price", price(currentPrice), scannerGainColor(priceGain)],
     ...(dayGain === undefined ? [] : [changeFact("Day change", dayGain)]),
     ...(postGain === undefined ? [] : [changeFact("Post-market change", postGain)]),
@@ -109,7 +109,7 @@ export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionT
       </> : null}
     </Box>
     </Box>
-    <Divider/>
+    {!levelsOnly&&<><Divider/>
     <Box>
       <Typography component="h3" sx={{fontSize:"0.8rem",fontWeight:800,mb:0.75}}>Recent News</Typography>
       {stock?.news.length ? <Stack spacing={0.75}>{stock.news.map(item => <Box key={item.id}>
@@ -122,6 +122,6 @@ export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionT
           </>}
         </Box> : null}
       </Box>)}</Stack> : <Typography sx={{ color: "text.secondary", fontSize: "0.75rem" }}>No news saved in the last five market days.</Typography>}
-    </Box>
+    </Box></>}
   </Stack>;
 }
