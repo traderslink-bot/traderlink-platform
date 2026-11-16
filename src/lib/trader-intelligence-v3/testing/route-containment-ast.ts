@@ -216,6 +216,7 @@ const PLATFORM_REQUEST_GUARDS = new Set([
 ]);
 
 const DELEGATED_PLATFORM_GUARDS: Readonly<Record<string, readonly string[]>> = {
+  "@/src/modules/communities/server/coaching-pilot-request-identity": ["requireCoachingPilotRequestIdentity"],
   "@/src/modules/platform/server/administration/platform-admin-authorization": ["requireJournalAdminScope"],
   "@/src/modules/watchlist/server/access/watchlist-admin-authorization": ["withWatchlistAdminDatabase"],
   "@/src/modules/platform/server/authentication/platform-sign-out-request-security": ["isSameOriginPlatformSignOutRequest"],

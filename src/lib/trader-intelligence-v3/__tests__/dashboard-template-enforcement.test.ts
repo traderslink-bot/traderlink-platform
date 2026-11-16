@@ -13,6 +13,12 @@ const retiredLegacyAnalyticsLabClient = join(
   "analytics-lab-client.tsx",
 );
 const reviewedFeaturePanelFiles = new Set([
+  join(dashboardRoot, "communities", "coach-trade-review-workspace-persistent.tsx"),
+  join(dashboardRoot, "communities", "coaching-calendar-page.tsx"),
+  join(dashboardRoot, "communities", "coaching-plan-builder.tsx"),
+  join(dashboardRoot, "communities", "coaching-review-layout.tsx"),
+  join(dashboardRoot, "communities", "coaching-student-side-panel.tsx"),
+
   join(dashboardRoot, "market-news", "general", "general-market-news-feed.tsx"),
   join(dashboardRoot, "ai-reviews", "trade-tracker-review-coverage.tsx"),
   join(dashboardRoot, "calendar", "calendar-client.tsx"),
@@ -86,7 +92,13 @@ describe("TraderLink Platform dashboard template enforcement", () => {
       .map(routeForPage);
     const pressReleaseRoute = "app/(dashboard)/press-releases/[[...channel]]/page.tsx";
     const channels = readFileSync(pressReleaseRoute, "utf8");
+    const shell = readFileSync("app/dashboard-shell.tsx", "utf8");
+    const frame = readFileSync("app/dashboard-layout-frame.tsx", "utf8");
     const resolves = (href: string) => routes.includes(href) ||
+      (href === "/communities" && routes.includes("/communities/[communitySlug]") &&
+        shell.includes('href: communityNavigationHref') &&
+        frame.includes('/communities/${firstCommunity.community.slug}')) ||
+      (href === "/coaching" && existsSync("app/(member)/coaching/[[...section]]/page.tsx")) ||
       (href === "/watchlist" && existsSync("app/watchlist/page.tsx")) ||
       (href.startsWith("/press-releases/") &&
         channels.includes(`case "${href.slice("/press-releases/".length)}":`));

@@ -131,6 +131,25 @@ const LOCAL_PAGE_MODULES = [
 
 // Pages served through the shared signed-in Platform frame.
 const PLATFORM_DASHBOARD_PAGE_MODULES = [
+  "app/(dashboard)/communities/[communitySlug]/[...section]/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/coaches/[coachSlug]/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/recovery/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/calendar/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/plans/[planId]/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/plans/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/requests/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/reviews/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/sessions/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/setup/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/setup/plans/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/students/[relationshipId]/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/students/[relationshipId]/reviews/[reviewId]/final/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/students/[relationshipId]/reviews/[reviewId]/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/students/page.tsx",
+  "app/(dashboard)/communities/[communitySlug]/workspace/teaching/page.tsx",
+  "app/(dashboard)/communities/coaching/page.tsx",
+  "app/(dashboard)/communities/onboarding/page.tsx",
   "app/(dashboard)/admin/demo-candle-exports/page.tsx",
   "app/(dashboard)/admin/scanners/audit/page.tsx",
   "app/(dashboard)/admin/scanners/page.tsx",
@@ -236,6 +255,8 @@ const PLATFORM_OWNER_API_ROUTES = [
 
 // Each method in this inventory directly imports and calls the Platform guard.
 const PLATFORM_SCOPED_API_ROUTES = [
+  ["app/api/coaching/action/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/coaching/review-resource/route.ts", ["GET"], "owner_read"],
   ["app/api/admin/journal/demo-daily-tracker-market-data/export/route.ts", ["POST"], "owner_mutation"],
   ["app/api/admin/screeners/audit/daily/route.ts", ["GET"], "owner_read"],
   ["app/api/admin/screeners/audit/health/route.ts", ["GET"], "owner_read"],
