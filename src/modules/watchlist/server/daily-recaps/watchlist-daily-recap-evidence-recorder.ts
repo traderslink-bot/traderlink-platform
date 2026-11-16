@@ -95,7 +95,10 @@ function statePostedPrice(state: LiveWatchlistSymbolState): number | null {
  * recap workflow. It never sends Discord, changes Watchlist state, or blocks
  * the publisher if recap storage is unavailable.
  */
-export function recordWatchlistDailyRecapEvidence(state: LiveWatchlistSymbolState): void {
+export function recordWatchlistDailyRecapEvidence(
+  state: LiveWatchlistSymbolState,
+  options: { waitForWriteLock?: boolean } = {},
+): void {
   if (!state.firstPostedAt || !validTimestamp(state.firstPostedAt)) return;
   const firstPostedAt = state.firstPostedAt;
   const postedPrice = statePostedPrice(state);
@@ -105,6 +108,7 @@ export function recordWatchlistDailyRecapEvidence(state: LiveWatchlistSymbolStat
 
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
+    if (options.waitForWriteLock === false) database.pragma("busy_timeout = 0");
     database.transaction(() => {
       let candidate = database.prepare<[string, number], CandidateRow>(`SELECT
   candidate_id, lifecycle_state, high_accepted_price_text, high_accepted_at_ms,
@@ -194,7 +198,7 @@ WHERE candidate_id = ? AND lifecycle_state = 'active'`).run(observedAt, observed
           symbol: state.symbol,
         });
       }
-    })();
+    }).immediate();
   } finally {
     database.close();
   }

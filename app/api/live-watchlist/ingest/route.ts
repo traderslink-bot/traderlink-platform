@@ -15,13 +15,23 @@ import type {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function captureDailyRecapEvidence(state: Awaited<ReturnType<LiveWatchlistStore["upsertPatch"]>>): void {
-  try {
-    recordWatchlistDailyRecapEvidence(state);
-  } catch (error) {
-    // Daily Recaps is an owner-reviewed optional record. Never prevent the
-    // existing publisher from updating the member-facing Watchlist.
-    console.error("watchlist_daily_recap_evidence_capture_failed", error);
+async function captureDailyRecapEvidence(
+  state: Awaited<ReturnType<LiveWatchlistStore["upsertPatch"]>>,
+): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  for (;;) {
+    try {
+      recordWatchlistDailyRecapEvidence(state, { waitForWriteLock: false });
+      return;
+    } catch (error) {
+      const code = error instanceof Error && "code" in error ? error.code : null;
+      if (typeof code !== "string" || !code.startsWith("SQLITE_BUSY") || Date.now() >= deadline) {
+        console.error("watchlist_daily_recap_evidence_capture_failed", error);
+        return;
+      }
+    }
+    // Keep serving requests while the Journal publisher holds the writer lock.
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
 }
 
@@ -197,7 +207,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (isTickerDataPatch(body)) {
     const state = await new LiveWatchlistStore().upsertTickerData(body);
-    captureDailyRecapEvidence(state);
+    await captureDailyRecapEvidence(state);
     broadcastLiveWatchlistUpdate(state);
     return NextResponse.json({ ok: true, symbol: state.symbol, state });
   }
@@ -207,7 +217,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const state = await new LiveWatchlistStore().upsertPatch(body);
-  captureDailyRecapEvidence(state);
+  await captureDailyRecapEvidence(state);
   broadcastLiveWatchlistUpdate(state);
   return NextResponse.json({ ok: true, symbol: state.symbol, state });
 }
