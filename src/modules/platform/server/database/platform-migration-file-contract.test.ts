@@ -14,7 +14,7 @@ describe("static platform migration file contract", () => {
         executionOrder: entry.migration.executionOrder,
       })),
     );
-    expect(platformMigrationFileEntries.slice(-2).map(({ migration }) => [
+    expect(platformMigrationFileEntries.slice(149, 151).map(({ migration }) => [
       migration.migrationId,
       migration.executionOrder,
     ])).toEqual([
