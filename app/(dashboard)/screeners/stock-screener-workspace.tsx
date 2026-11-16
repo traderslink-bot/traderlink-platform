@@ -21,26 +21,33 @@ import Link from "next/link";
 import { useRef, useState, type SubmitEvent } from "react";
 import { DashboardPanel, DashboardPrimaryAction, DashboardSecondaryAction } from "@/app/dashboard-template";
 import {
-  DEFAULT_DEFINITION, EXCHANGES, EXCHANGE_LABELS, MAX_RULES, MAX_SAVED, METRICS, METRIC_KEYS, OPENING_RANGE_MINUTES, OPERATORS, SESSIONS, UNIVERSES, VIEWS,
-  parseDefinition, parseThreshold, signalChoices,
+  DEFAULT_DEFINITION, MAX_RULES, MAX_SAVED, METRICS, OPENING_RANGE_MINUTES, OPERATORS, SESSIONS, UNIVERSES, VIEWS,
+  parseDefinition, parseThreshold, screenRules, signalChoices, sortIncludes,
   type Candidate, type Definition, type Metric, type NewsHeadline, type RunResult, type SavedScreens, type Session, type Universe, type View,
 } from "@/src/modules/stock-screeners/contracts";
 import { PRESETS } from "@/src/modules/stock-screeners/presets";
+import { matchesRule } from "@/src/modules/stock-screeners/query";
 import { sharedScreenPath, type SharedScreen } from "@/src/modules/stock-screeners/sharing-contracts";
 import { requestStockScreeners as request } from "./stock-screener-api";
-import { ColumnsDialog, FilterCatalog, FilterEditor, MarketCapControl, Picker, type DraftRule } from "./stock-screener-controls";
+import { ColumnsDialog, ExchangesPicker, FilterCatalog, FilterEditor, MarketCapControl, Picker, SortControls, type DraftRule } from "./stock-screener-controls";
 import { StockScreenerResults, displayTime, displayValue, exactValue, type Inspect } from "./stock-screener-results";
 import { CommunityPresetsDialog, ScreenShareDialog } from "./stock-screener-sharing";
 
 const Chart = dynamic(() => import("../charts/alpaca-lightweight-chart").then(module => module.AlpacaLightweightChart),
   { ssr: false, loading: () => <LinearProgress aria-label="Loading chart" /> });
 
-const toDraft = (definition: Definition): DraftRule[] => definition.rules.map((rule, index) => ({
+type DraftGroup = { key: string; rules: DraftRule[] };
+const toDraft = (rules: Definition["rules"]): DraftRule[] => rules.map((rule, index) => ({
   ...rule, key: String(index), value: String(rule.value), upper: rule.upper === undefined ? "" : String(rule.upper),
 }));
+const draftGroups = (definition: Definition): DraftGroup[] =>
+  (definition.groups ?? []).map((rules, index) => ({ key: String(index), rules: toDraft(rules) }));
 const equals = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-const ruleFields = ({ metric, operator, value, upper }: DraftRule) =>
-  [metric, operator, parseThreshold(value, metric), operator === "between" ? parseThreshold(upper, metric) : undefined];
+const ruleFields = ({ metric, operator, value, upper, exclude }: DraftRule) => ({
+  metric, operator, value: parseThreshold(value, metric),
+  ...(operator === "between" ? { upper: parseThreshold(upper, metric) } : {}),
+  ...(exclude ? { exclude } : {}),
+});
 const parseTickers = (input: string) => [...new Set(input.toUpperCase().split(/[\s,]+/).filter(Boolean))];
 
 function resultError(error: unknown, fallback: string) {
@@ -53,8 +60,9 @@ function resultError(error: unknown, fallback: string) {
 }
 
 function rulesLabel(rules: DraftRule) {
+  const prefix = rules.exclude ? "Exclude " : "";
   const choices = signalChoices(rules.metric);
-  if (choices) return METRICS[rules.metric].label + " · " + (choices[Number(rules.value)] ?? "…");
+  if (choices) return prefix + METRICS[rules.metric].label + " · " + (choices[Number(rules.value)] ?? "…");
   function format(value: string) {
     const parsed = parseThreshold(value, rules.metric);
     if (Number.isFinite(parsed)) {
@@ -63,7 +71,7 @@ function rulesLabel(rules: DraftRule) {
     }
     return value || "…";
   }
-  return METRICS[rules.metric].label + " " + OPERATORS[rules.operator].toLowerCase() + " " + format(rules.value)
+  return prefix + METRICS[rules.metric].label + " " + OPERATORS[rules.operator].toLowerCase() + " " + format(rules.value)
     + (rules.operator === "between" ? " and " + format(rules.upper) : "");
 }
 
@@ -73,9 +81,10 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
   const initial = initialSaved.screens.find(screen => screen.id === initialSaved.defaultId);
   const [saved, setSaved] = useState(initialSaved);
   const [showSharedUnavailable, setShowSharedUnavailable] = useState(sharedUnavailable);
-  const [selected, setSelected] = useState(sharedScreen ? "shared" : initial ? "saved:" + initial.id : "preset:active");
-  const [draft, setDraft] = useState<Definition>(sharedScreen?.definition ?? initial?.definition ?? PRESETS.find(preset => preset.id === "active")!.definition);
-  const [rules, setRules] = useState(() => toDraft(draft));
+  const [selected, setSelected] = useState(sharedScreen ? "shared" : initial ? "saved:" + initial.id : "new");
+  const [draft, setDraft] = useState<Definition>(sharedScreen?.definition ?? initial?.definition ?? DEFAULT_DEFINITION);
+  const [rules, setRules] = useState(() => toDraft(draft.rules));
+  const [groups, setGroups] = useState(() => draftGroups(draft));
   const [tickerText, setTickerText] = useState(() => draft.tickers.join(", "));
   const [edit, setEdit] = useState(false);
   const [columnsOpen, setColumnsOpen] = useState(false);
@@ -102,22 +111,27 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
   const selectedPreset = PRESETS.find(preset => selected === "preset:" + preset.id);
   const selectedShared = selected === "shared" ? sharedScreen : null;
   const currentDefinition = selectedScreen?.definition ?? selectedPreset?.definition ?? selectedShared?.definition ?? DEFAULT_DEFINITION;
-  const singleCapRule = rules.filter(rule => rule.metric === "cap").length === 1;
-  const dirty = applied !== null && (!equals(toDraft(applied).map(ruleFields), rules.map(ruleFields)) || !equals(draft.sort, applied.sort)
+  const singleCapRule = rules.filter(rule => rule.metric === "cap" && !rule.exclude).length === 1;
+  const groupRuleCount = groups.reduce((count, group) => count + group.rules.length, 0);
+  const atRuleLimit = groupRuleCount + rules.length >= MAX_RULES;
+  const dirty = applied !== null && (!equals(applied.rules, rules.map(ruleFields))
+    || !equals(applied.groups ?? [], groups.map(group => group.rules.map(ruleFields))) || !equals(draft.sort, applied.sort)
     || draft.universe !== applied.universe || draft.session !== applied.session || !equals(draft.exchanges, applied.exchanges)
     || (draft.universe === "list" && !equals(parseTickers(tickerText), applied.tickers)));
 
   function definition(overrides?: Partial<Definition>) {
     return parseDefinition({ ...draft,
       tickers: draft.universe === "list" ? parseTickers(tickerText) : [],
-      rules: rules.map(rule => ({ ...rule, value: parseThreshold(rule.value, rule.metric), upper: parseThreshold(rule.upper, rule.metric) })),
+      rules: rules.map(ruleFields),
+      groups: groups.map(group => group.rules.map(ruleFields)),
       ...overrides,
     });
   }
 
   function load(next: Definition) {
     setDraft(next);
-    setRules(toDraft(next));
+    setRules(toDraft(next.rules));
+    setGroups(draftGroups(next));
     setTickerText(next.tickers.join(", "));
     setProblem("");
   }
@@ -140,20 +154,27 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
     setSavedNotice("");
   }
 
-  function addFilter(metric: Metric) {
-    if (rules.length >= MAX_RULES) return;
+  function changeGroup(key: string, next: DraftRule[]) {
+    setGroups(current => current.map(group => group.key === key ? { ...group, rules: next } : group));
+  }
+
+  function addFilter(metric: Metric, group?: DraftGroup) {
+    if (atRuleLimit) return;
     const signal = signalChoices(metric);
-    setRules([...rules, {
+    const next: DraftRule = {
       key: crypto.randomUUID(), metric, operator: signal ? "eq" : metric === "pressReleaseAge" ? "lte" : "gte", upper: "",
       value: signal ? "1" : metric === "pressReleaseAge" ? "24" : metric === "relativeVolume" ? "2" : "",
-    }]);
+    };
+    if (group) changeGroup(group.key, [...group.rules, next]);
+    else setRules(current => [...current, next]);
     setEdit(true);
   }
 
   async function runScreen() {
     let selection;
     try { selection = definition(); } catch {
-      setProblem("Check the ticker list and enter a valid value for every filter.");
+      setProblem(groups.some(group => !group.rules.length) ? "Add a filter to each OR group or remove the empty group."
+        : "Check the ticker list and enter a valid value for every filter.");
       setEdit(true);
       return;
     }
@@ -178,6 +199,10 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
     setProblem("");
     try {
       const query = new URLSearchParams({ run: run.id, page: String(page), sort: sort.metric, dir: sort.dir });
+      if (sort.secondary) {
+        query.set("thenBy", sort.secondary.metric);
+        query.set("thenDir", sort.secondary.dir);
+      }
       const result = await request<RunResult>("?" + query);
       setApplied({ ...applied, sort });
       if (!dirty && !equals(draft.sort, sort)) {
@@ -190,7 +215,7 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
   }
 
   function changeDraftSort(sort: Definition["sort"]) {
-    if (!run || dirty || (sort.metric === "pressReleaseAge" && !run.pressReleases?.available)) {
+    if (!run || dirty || (sortIncludes(sort, "pressReleaseAge") && !run.pressReleases?.available)) {
       setDraft(current => ({ ...current, sort }));
     } else void changePage(1, sort);
   }
@@ -290,7 +315,7 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
   }
 
   const inspect: Inspect = (row, kind) => {
-    setInspected({ row, kind, run, rules: applied?.rules ?? [] });
+    setInspected({ row, kind, run, rules: applied ? screenRules(applied).filter(rule => matchesRule(row, rule) === true) : [] });
     setNews(null);
     setNewsError(false);
     const stamp = ++newsRequest.current;
@@ -309,11 +334,10 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
   return <Box sx={{ "& [data-traderlink-platform-dashboard-card='panel']": { borderRadius: 0 } }}>
     <DashboardPanel title="Screeners">
       {showSharedUnavailable && <Alert severity="info" sx={{ mb: 1 }}>This shared screen is unavailable.</Alert>}
-      <Box component="form" onSubmit={event => { event.preventDefault(); if (!busy) void runScreen(); }}
-        sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1.2 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center", mb: 1.2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap", maxWidth: "100%" }}>
           <Picker label="Screen" width={178} value={selected} onChange={select}>
-            {selected === "new" && <MenuItem value="new" disabled>Untitled screen</MenuItem>}
+            {selected === "new" && <MenuItem value="new" disabled>Custom filters</MenuItem>}
             {sharedScreen && <MenuItem value="shared">{sharedScreen.name} · Shared</MenuItem>}
             <ListSubheader>TraderLink presets</ListSubheader>
             {PRESETS.map(preset => <MenuItem key={preset.id} value={"preset:" + preset.id} onClick={dismissSharedWarning}>
@@ -337,7 +361,6 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
         <Picker label="Session" value={draft.session} onChange={value => setDraft({ ...draft, session: value as Session })} width={184}>
           {Object.entries(SESSIONS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}
         </Picker>
-        <DashboardPrimaryAction type="submit" disabled={busy}>{busy ? "Working…" : run && !dirty ? "Refresh results" : "Run screen"}</DashboardPrimaryAction>
         <DashboardSecondaryAction type="button" onClick={() => openSave(selectedShared ? "copy" : "save")} disabled={saving}>
           {selectedShared ? "Save a copy" : "Save screen"}
         </DashboardSecondaryAction>
@@ -353,22 +376,36 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
       {draft.universe === "list" && <TextField label="Tickers" placeholder="ABC, XYZ" helperText="Up to 100 covered U.S. tickers."
         size="small" value={tickerText} onChange={event => setTickerText(event.target.value)} sx={{ mb: 1.2, width: 330, maxWidth: "100%" }} />}
       <Box role="group" aria-label="Screen filters" sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.75, mb: 1 }}>
-        <FilterCatalog onAdd={addFilter} disabled={rules.length >= MAX_RULES} />
-        <MarketCapControl rules={rules} onRules={setRules} />
-        <Picker label="Exchange" width={148} value={draft.exchanges[0] ?? "all"}
-          onChange={value => setDraft({ ...draft, exchanges: value === "all" ? [] : [value as Definition["exchanges"][number]] })}>
-          <MenuItem value="all">All exchanges</MenuItem>
-          {EXCHANGES.map(value => <MenuItem key={value} value={value}>{EXCHANGE_LABELS[value] ?? value}</MenuItem>)}
-        </Picker>
-        {rules.length === MAX_RULES && !edit && <Typography variant="caption">This screen uses all {MAX_RULES} filters.</Typography>}
-        {rules.filter(rule => rule.metric !== "cap" || !singleCapRule)
+        <FilterCatalog onAdd={addFilter} disabled={atRuleLimit} />
+        <MarketCapControl rules={rules} groupRuleCount={groupRuleCount} onRules={setRules} />
+        <ExchangesPicker exchanges={draft.exchanges} onChange={exchanges => setDraft(current => ({ ...current, exchanges }))} />
+        <Button variant="outlined" size="small" startIcon={<AddRounded />}
+          disabled={atRuleLimit || groups.some(group => !group.rules.length)} onClick={() => {
+            const group = { key: crypto.randomUUID(), rules: [] };
+            setGroups(current => [...current, group]);
+            setEdit(true);
+          }}>OR group</Button>
+        <DashboardPrimaryAction type="button" disabled={busy} onClick={() => void runScreen()}>
+          {busy ? "Working…" : run && !dirty ? "Refresh results" : "Run screen"}
+        </DashboardPrimaryAction>
+        {atRuleLimit && <Typography variant="caption">This screen uses all {MAX_RULES} filters.</Typography>}
+        {rules.filter(rule => rule.metric !== "cap" || rule.exclude || !singleCapRule)
           .map(rule => <Chip size="small" key={rule.key} label={rulesLabel(rule)} onClick={() => setEdit(true)}
           onDelete={() => setRules(rules.filter(item => item.key !== rule.key))} />)}
+        {!edit && groups.map((group, index) => <Chip size="small" key={group.key} label={`OR group ${index + 1} · ${group.rules.length} filters`}
+          onClick={() => setEdit(true)} />)}
         {dirty && <Typography variant="caption" color="warning.main">Unapplied changes</Typography>}
       </Box>
-      {edit && <Box sx={{ mb: 1 }}>
-        {rules.length > 0 && <FilterEditor rules={rules} onRules={setRules} />}
-        <Box sx={{ mt: 0.8, display: "flex", gap: 0.65, flexWrap: "wrap", alignItems: "center" }}>
+      {edit && <Box sx={{ mb: 1, display: "grid", gap: 0.8 }}>
+        {rules.length > 0 && <FilterEditor label="Match all filters" rules={rules} onRules={setRules} />}
+        {groups.map((group, index) => <FilterEditor key={group.key} label={`OR group ${index + 1} · Match any`}
+          rules={group.rules} onRules={next => changeGroup(group.key, next)} actions={<>
+            <FilterCatalog onAdd={metric => addFilter(metric, group)} disabled={atRuleLimit} />
+            <Button variant="outlined" size="small" onClick={() => setGroups(current => current.filter(item => item.key !== group.key))}>
+              Remove group
+            </Button>
+          </>} />)}
+        <Box sx={{ display: "flex", gap: 0.65, flexWrap: "wrap", alignItems: "center" }}>
           <Button variant="outlined" size="small" onClick={() => {
             load(applied ? { ...applied, view: draft.view, columns: draft.columns } : currentDefinition);
             if (appliedSelection) setSelected(
@@ -381,18 +418,14 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
           <Button variant="outlined" size="small" onClick={() => setEdit(false)}>Done editing</Button>
         </Box>
       </Box>}
+      <Box role="group" aria-label="Results sorting" sx={{ display: "flex", gap: 0.75, alignItems: "center", flexWrap: "wrap", mb: 0.85 }}>
+        <SortControls sort={draft.sort} onSort={changeDraftSort} disabled={busy} />
+      </Box>
       <Box sx={{ display: "flex", gap: 0.75, alignItems: "center", flexWrap: "wrap", mb: 0.85 }}>
         <Picker label="View" value={draft.view} onChange={view => setDraft({ ...draft, view: view as View })} width={111}>
           {Object.entries(VIEWS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}
         </Picker>
         <Button variant="outlined" size="small" onClick={() => setColumnsOpen(true)}>Columns</Button>
-        <Picker label="Sort" value={draft.sort.metric} width={150} disabled={busy} onChange={metric => changeDraftSort({ metric: metric as Metric | "ticker", dir: metric === "ticker" || metric === "pressReleaseAge" ? "asc" : "desc" })}>
-          <MenuItem value="ticker">Ticker</MenuItem>
-          {METRIC_KEYS.map(metric => <MenuItem key={metric} value={metric}>{METRICS[metric].label}</MenuItem>)}
-        </Picker>
-        <Button variant="outlined" size="small" disabled={busy} onClick={() => changeDraftSort({ ...draft.sort, dir: draft.sort.dir === "asc" ? "desc" : "asc" })}>
-          {draft.sort.dir === "asc" ? "Ascending" : "Descending"}
-        </Button>
         {selectedScreen && <Box sx={{ display: "flex", gap: 0.55, flexWrap: "wrap" }}>
           <Button size="small" variant="outlined" disabled={saving} onClick={() => openSave("rename")}>Rename</Button>
           <Button size="small" variant="outlined" disabled={saving} onClick={() => openSave("copy")}>Duplicate</Button>
@@ -407,9 +440,13 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
       {problem && !saveMode && <Alert severity="error" sx={{ mb: 1 }} onClose={() => setProblem("")}>{problem}</Alert>}
       {savedNotice && <Typography role="status" variant="body2" color="success.main" sx={{ mb: 0.8 }}>{savedNotice}</Typography>}
       {busy && <LinearProgress aria-label="Loading results" />}
-      {run ? <StockScreenerResults result={run} definition={{ ...draft, rules: applied?.rules ?? draft.rules, sort: applied?.sort ?? draft.sort }} busy={busy} inspect={inspect} onPage={page => void changePage(page)}
-        onSort={metric => void changePage(1, { metric, dir: applied?.sort.metric === metric && applied.sort.dir === "desc" ? "asc" : "desc" })} />
-        : <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>Choose a screen and run it to see matching stocks.</Typography>}
+      {run ? <StockScreenerResults result={run} definition={{ ...draft, rules: applied?.rules ?? draft.rules, groups: applied?.groups, sort: applied?.sort ?? draft.sort }} busy={busy} inspect={inspect} onPage={page => void changePage(page)}
+        onSort={metric => {
+          const secondary = applied?.sort.secondary;
+          void changePage(1, { metric, dir: applied?.sort.metric === metric && applied.sort.dir === "desc" ? "asc" : "desc",
+            ...(secondary && secondary.metric !== metric ? { secondary } : {}) });
+        }} />
+        : <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>Run the screen to see matching stocks.</Typography>}
     </DashboardPanel>
     {columnsOpen && <ColumnsDialog definition={draft} onClose={() => setColumnsOpen(false)}
       onChange={columns => { setDraft({ ...draft, columns }); setColumnsOpen(false); }} />}
@@ -449,10 +486,14 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
             const period = OPENING_RANGE_MINUTES.find(minutes => rule.metric === `or${minutes}Position`);
             return <Typography key={index} variant="body2" sx={{ py: 0.6 }}>
               <strong>{METRICS[rule.metric].label} {displayValue(rule.metric, values[rule.metric])}</strong>
-              {!signalChoices(rule.metric) && <>
-                {" · "}{OPERATORS[rule.operator]} {exactValue(rule.metric, rule.value)}{rule.upper !== undefined ? " and " + exactValue(rule.metric, rule.upper) : ""}
-              </>}
+              {rule.exclude ? " · Excludes " + (signalChoices(rule.metric)?.[rule.value] ?? (OPERATORS[rule.operator].toLowerCase()
+                + " " + exactValue(rule.metric, rule.value) + (rule.upper !== undefined ? " and " + exactValue(rule.metric, rule.upper) : "")))
+                : !signalChoices(rule.metric) && <>
+                  {" · "}{OPERATORS[rule.operator]} {exactValue(rule.metric, rule.value)}{rule.upper !== undefined ? " and " + exactValue(rule.metric, rule.upper) : ""}
+                </>}
               {period !== undefined && <> {" · "}{displayValue(`or${period}Low`, values[`or${period}Low`])}–{displayValue(`or${period}High`, values[`or${period}High`])}</>}
+              {rule.metric === "gapFillStatus" && values.openGap !== undefined && <> {" · Open gap "}{displayValue("openGap", values.openGap)}</>}
+              {rule.metric === "premarketHighBreak" && values.premarketHigh !== undefined && <> {" · Premarket high "}{displayValue("premarketHigh", values.premarketHigh)}</>}
               {(rule.metric === "vwapPosition" || rule.metric === "vwapDistance" || rule.metric === "vwapCross") && values.sessionVwap !== undefined
                 && <> {" · VWAP "}{displayValue("sessionVwap", values.sessionVwap)}</>}
               {inspected.row.quoteAt && ["bid", "ask", "spread", "spreadDollar"].includes(rule.metric) ? " · Quote " + displayTime(inspected.row.quoteAt) : ""}

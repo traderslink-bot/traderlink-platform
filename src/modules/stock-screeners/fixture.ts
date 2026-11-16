@@ -1,5 +1,6 @@
 import { OPENING_RANGE_MINUTES, type Candidate, type MarketPack, type MarketSession, type Values } from "./contracts";
 import { marketWindows, type Window } from "./market-metrics";
+import { SCREENER_BAR_MS } from "./intraday-structure";
 
 function exampleStructure(window: Window, price: number, index: number): Values {
   const elapsed = (window.asOf - window.from) / 60_000;
@@ -43,6 +44,12 @@ export function previewPack(now: number, size = 79): MarketPack {
       const price = index < stocks.length ? initialPrice : Number((0.68 + ((index * 157) % 3200) / 100).toFixed(2));
       const change = (index < stocks.length ? initialChange : (index * 17 % 45) - 16) * (key === "after_hours" ? 0.5 : 1);
       const volume = 62_000 + ((index * 91_727 + 821_000) % 1_810_000);
+      const buckets = Math.floor((window.asOf - window.from) / SCREENER_BAR_MS);
+      const open = price * 0.96, high = price * 1.03, low = price * 0.91;
+      const isRegular = key === "regular" || key === "last_regular";
+      const openGap = change * 0.7;
+      const priorClose = open / (1 + openGap / 100);
+      const premarketHigh = price * (index % 3 === 0 ? 1.01 : 1.06);
       const bid = price * (1 - (index + 5) / 10_000), ask = price * (1 + (index + 5) / 10_000);
       const dist50 = index % 4 ? 8.8 : -6.3, dist200 = index % 3 ? 12.7 : -9.5;
       const spread = key === "last_regular" ? {} : { bid, ask, spread: (index + 5) * 2, spreadDollar: ask - bid };
@@ -54,12 +61,18 @@ export function previewPack(now: number, size = 79): MarketPack {
         priceAt: window.asOf,
         values: {
           price, change, ...(capValue === undefined ? {} : { cap: capValue }), volume,
+          ...(buckets >= 1 ? { recentVolume5: Math.floor(volume / buckets) } : {}),
+          ...(buckets >= 3 ? { recentVolume15: Math.floor(3 * volume / buckets) } : {}),
           ...exampleStructure(window, price, index),
           relativeVolume: 0.25 + index % 45 / 10,
           ...(index % 13 === 0 ? { pressReleaseAge: 1 + index % 47 } : {}),
           dollarVolume: price * volume, avg10: volume / 2, avg20: volume / 3, avg50: volume / 4, avgDollar: price * volume / 3, trades: 100 + index * 17,
-          open: price * 0.96, high: price * 1.03, low: price * 0.91, range: 13.2, fromHigh: 2.91, fromLow: 9.89,
-          ...(key === "regular" || key === "last_regular" ? { openGap: change * 0.7 } : {}),
+          open, high, low, range: 13.2, fromHigh: 2.91, fromLow: 9.89,
+          ...(isRegular ? { openGap } : {}),
+          ...(isRegular && buckets >= 1 ? {
+            gapFillStatus: openGap === 0 ? -1 : Number(openGap > 0 ? low <= priorClose : high >= priorClose),
+            premarketHigh, premarketHighBreak: Number(high > premarketHigh),
+          } : {}),
           week: change / 2, month: change * 1.25, quarter: change * 1.6, halfYear: change * 1.9, year: change * 2.2, ytd: change * 2,
           week52high: price * 1.04, week52low: price * 0.55, below52High: 3.846, above52Low: 81.818,
           sma20: price / 1.04, sma50: price / (1 + dist50 / 100), sma200: price / (1 + dist200 / 100),

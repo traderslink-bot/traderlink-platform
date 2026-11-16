@@ -20,7 +20,8 @@ import Select from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useId, useState, type ReactNode } from "react";
-import { CAP_SHORTCUTS, METRICS, METRIC_KEYS, MAX_RULES, OPERATORS, parseThreshold, signalChoices, type Definition, type Metric, type Rule } from "@/src/modules/stock-screeners/contracts";
+import { CAP_SHORTCUTS, EXCHANGES, EXCHANGE_LABELS, METRICS, METRIC_KEYS, MAX_RULES, OPERATORS, parseThreshold, signalChoices,
+  type Definition, type Exchange, type Metric, type Rule, type Sort, type SortKey } from "@/src/modules/stock-screeners/contracts";
 import { COLUMN_SETS } from "@/src/modules/stock-screeners/presets";
 import { displayValue } from "./stock-screener-results";
 
@@ -34,13 +35,15 @@ export function Picker({ label, value, onChange, children, width, disabled }: {
   </FormControl>;
 }
 
-export type DraftRule = { key: string; metric: Metric; operator: Rule["operator"]; value: string; upper: string };
+export type DraftRule = Omit<Rule, "value" | "upper"> & { key: string; value: string; upper: string };
 
-export function MarketCapControl({ rules, onRules }: { rules: DraftRule[]; onRules: (rules: DraftRule[]) => void }) {
+export function MarketCapControl({ rules, groupRuleCount, onRules }: {
+  rules: DraftRule[]; groupRuleCount: number; onRules: (rules: DraftRule[]) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [lower, setLower] = useState("");
   const [upper, setUpper] = useState("");
-  const capRules = rules.filter(rule => rule.metric === "cap");
+  const capRules = rules.filter(rule => rule.metric === "cap" && !rule.exclude);
   const first = capRules[0];
   const shortcut = capRules.length === 1 && first.operator === "lt"
     ? CAP_SHORTCUTS.find(value => value === parseThreshold(first.value, "cap")) : undefined;
@@ -61,8 +64,8 @@ export function MarketCapControl({ rules, onRules }: { rules: DraftRule[]; onRul
   const invalid = (from !== undefined && (!Number.isFinite(from) || from < 0))
     || (to !== undefined && (!Number.isFinite(to) || to < 0))
     || (from !== undefined && to !== undefined && from > to);
-  const otherRules = rules.filter(rule => rule.metric !== "cap");
-  const full = otherRules.length >= MAX_RULES;
+  const otherRules = rules.filter(rule => rule.metric !== "cap" || rule.exclude);
+  const full = otherRules.length + groupRuleCount >= MAX_RULES;
   const min = capRules.find(rule => ["between", "gte", "gt", "eq"].includes(rule.operator));
   const max = capRules.find(rule => ["between", "lte", "lt", "eq"].includes(rule.operator));
   const initialLower = min?.value ?? "";
@@ -128,6 +131,8 @@ const filterOptions = groups.flatMap(group => METRIC_KEYS.filter(metric => METRI
 const filterByName = createFilterOptions<Metric>({ stringify: metric => {
   const label = METRICS[metric].label;
   if (metric === "relativeVolume") return label + " RVOL";
+  if (metric === "recentVolume5" || metric === "recentVolume15") return label + " recent volume";
+  if (metric === "premarketHighBreak") return label + " premarket breakout PMH";
   if (metric === "pressReleaseAge") return label + " recent press releases PR";
   if (METRICS[metric].group === "Opening range") return label + " ORB";
   if (metric === "vwapCross") return label + " reclaim rejection crossover";
@@ -164,18 +169,76 @@ export function FilterCatalog({ onAdd, disabled }: { onAdd: (metric: Metric) => 
   />;
 }
 
-export function FilterEditor({ rules, onRules }: { rules: DraftRule[]; onRules: (rules: DraftRule[]) => void }) {
+export function ExchangesPicker({ exchanges, onChange }: { exchanges: Exchange[]; onChange: (exchanges: Exchange[]) => void }) {
+  const id = useId();
+  return <FormControl size="small" sx={{ width: 148, maxWidth: "100%" }}>
+    <InputLabel id={id} shrink>Exchanges</InputLabel>
+    <Select<Exchange[]> multiple displayEmpty value={exchanges} label="Exchanges" labelId={id} notched
+      renderValue={selected => selected.length === 0 ? "All exchanges"
+        : selected.length === 1 ? EXCHANGE_LABELS[selected[0]] ?? selected[0] : selected.length + " selected"}
+      onChange={event => {
+        const value = event.target.value;
+        const selected: string[] = typeof value === "string" ? value.split(",") : value;
+        onChange(selected.includes("all") ? [] : EXCHANGES.filter(exchange => selected.includes(exchange)));
+      }}>
+      <MenuItem value="all">All exchanges</MenuItem>
+      {EXCHANGES.map(exchange => <MenuItem key={exchange} value={exchange}>
+        <Checkbox checked={exchanges.includes(exchange)} size="small" tabIndex={-1} aria-hidden />
+        {EXCHANGE_LABELS[exchange] ?? exchange}
+      </MenuItem>)}
+    </Select>
+  </FormControl>;
+}
+
+const sortDirection = (metric: SortKey["metric"]) => metric === "ticker" || metric === "pressReleaseAge" ? "asc" : "desc";
+const sortOptions: SortKey["metric"][] = ["ticker", ...METRIC_KEYS];
+const sortOption = (metric: SortKey["metric"]) => <MenuItem key={metric} value={metric}>
+  {metric === "ticker" ? "Ticker" : METRICS[metric].label}
+</MenuItem>;
+
+export function SortControls({ sort, onSort, disabled }: { sort: Sort; onSort: (sort: Sort) => void; disabled: boolean }) {
+  const { secondary, ...primary } = sort;
+  return <>
+    <Picker label="Sort" value={primary.metric} width={150} disabled={disabled} onChange={value => {
+      const metric = value as SortKey["metric"];
+      onSort({ metric, dir: sortDirection(metric), ...(secondary?.metric !== metric && secondary ? { secondary } : {}) });
+    }}>{sortOptions.map(sortOption)}</Picker>
+    <Button variant="outlined" size="small" disabled={disabled} aria-label={"Primary sort " + (primary.dir === "asc" ? "ascending" : "descending")}
+      onClick={() => onSort({ ...sort, dir: primary.dir === "asc" ? "desc" : "asc" })}>
+      {primary.dir === "asc" ? "Ascending" : "Descending"}
+    </Button>
+    <Picker label="Then by" value={secondary?.metric ?? "none"} width={150} disabled={disabled} onChange={value => {
+      const metric = value as SortKey["metric"];
+      onSort(value === "none" ? primary : { ...primary, secondary: { metric, dir: sortDirection(metric) } });
+    }}>
+      <MenuItem value="none">None</MenuItem>
+      {sortOptions.filter(metric => metric !== primary.metric).map(sortOption)}
+    </Picker>
+    {secondary && <Button variant="outlined" size="small" disabled={disabled} aria-label={"Secondary sort " + (secondary.dir === "asc" ? "ascending" : "descending")}
+      onClick={() => onSort({ ...sort, secondary: { ...secondary, dir: secondary.dir === "asc" ? "desc" : "asc" } })}>
+      {secondary.dir === "asc" ? "Ascending" : "Descending"}
+    </Button>}
+  </>;
+}
+
+export function FilterEditor({ rules, onRules, label, actions }: {
+  rules: DraftRule[]; onRules: (rules: DraftRule[]) => void; label: string; actions?: ReactNode;
+}) {
   function edit(key: string, patch: Partial<DraftRule>) {
     onRules(rules.map(rule => rule.key === key ? { ...rule, ...patch } : rule));
   }
-  return <Box sx={{ border: 1, borderColor: "divider", bgcolor: "action.hover", p: 1.2, display: "grid", gap: 1 }}>
-    <Typography variant="body2" sx={{ fontWeight: 650 }}>Match all filters</Typography>
+  return <Box role="group" aria-label={label} sx={{ border: 1, borderColor: "divider", bgcolor: "action.hover", p: 1.2, display: "grid", gap: 1 }}>
+    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.75 }}>
+      <Typography variant="body2" sx={{ fontWeight: 650 }}>{label}</Typography>
+      {actions}
+    </Box>
     {rules.map((rule, index) => {
       const choices = signalChoices(rule.metric);
       return <Box key={rule.key} sx={{ display: "flex", gap: 0.8, flexWrap: "wrap", alignItems: "center" }}>
         <Typography variant="body2" sx={{ fontWeight: 650, minWidth: { xs: "100%", sm: 170 } }}>{METRICS[rule.metric].label}</Typography>
         {choices ? <Picker label={"Signal " + (index + 1)} value={rule.value} onChange={value => edit(rule.key, { value })} width={160}>
-          {[1, 0, -1].map(value => <MenuItem key={value} value={String(value)}>{choices[value]}</MenuItem>)}
+          {[1, 0, -1].filter(value => Object.hasOwn(choices, value))
+            .map(value => <MenuItem key={value} value={String(value)}>{choices[value]}</MenuItem>)}
         </Picker> : <>
           <Picker label={"Condition " + (index + 1)} value={rule.operator} onChange={operator => edit(rule.key, { operator: operator as Rule["operator"] })} width={135}>
             {Object.entries(OPERATORS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}
@@ -186,13 +249,15 @@ export function FilterEditor({ rules, onRules }: { rules: DraftRule[]; onRules: 
           {rule.operator === "between" && <TextField label={"Maximum " + (index + 1)} size="small" value={rule.upper}
             onChange={event => edit(rule.key, { upper: event.target.value })} sx={{ width: 104 }} />}
         </>}
+        <Button variant={rule.exclude ? "contained" : "outlined"} size="small" aria-pressed={!!rule.exclude}
+          aria-label={"Exclude " + METRICS[rule.metric].label + " filter " + (index + 1)}
+          onClick={() => edit(rule.key, { exclude: rule.exclude ? undefined : true })}>Exclude</Button>
         <IconButton aria-label={"Remove " + METRICS[rule.metric].label + " filter " + (index + 1)}
           onClick={() => onRules(rules.filter(item => item.key !== rule.key))} sx={{ width: 44, height: 44 }}>
           <CloseRounded fontSize="small" />
         </IconButton>
       </Box>;
     })}
-    {rules.length === MAX_RULES && <Typography variant="caption">This screen uses all {MAX_RULES} filters.</Typography>}
   </Box>;
 }
 

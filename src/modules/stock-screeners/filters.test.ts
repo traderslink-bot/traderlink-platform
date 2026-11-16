@@ -69,7 +69,8 @@ describe("same-time relative volume", () => {
   it("paginates SIP baselines, keeps them out of user requests, and reuses them on a warm collection", async () => {
     const cache: BarCache = { key: "", daily: new Map(), intraday: new Map() };
     const { windows } = marketWindows(calendar, recent);
-    const providerBar = (point: ProviderBar) => ({ t: new Date(point.time * 1000).toISOString(), o: 10, h: 10, l: 10, c: 10, v: point.volume });
+    const providerBar = (point: ProviderBar, price = 10) => ({ t: new Date(point.time * 1000).toISOString(),
+      o: price, h: price, l: price, c: price, v: point.volume });
     const historical = calendar.slice(-11, -1).map(day => providerBar(bar(sessionBounds(day, "regular").from, 100)));
     let historyRequests = 0;
     const source = {
@@ -84,13 +85,17 @@ describe("same-time relative volume", () => {
           return { bars: { AAA: next ? historical.slice(5) : historical.slice(0, 5) }, next_page_token: next ? null : "more" };
         }
         return { bars: { AAA: timeframe === "5Min"
-          ? [providerBar(bar(windows.last_regular.from, 150)), providerBar(bar(windows.regular.from, 300))]
-          : [providerBar(bar(windows.last_regular.from - 5.5 * HOUR_MS, 100))] } };
+          ? [providerBar(bar(windows.last_regular.from - HOUR_MS, 50), 9), providerBar(bar(windows.last_regular.from, 150)),
+            providerBar(bar(windows.regular.from - HOUR_MS, 50), 11), providerBar(bar(windows.regular.from, 300))]
+          : [providerBar(bar(windows.last_regular.from - 9.5 * HOUR_MS, 100))] } };
       },
     };
     const input = { data: source, calendar, stocks: [{ symbol: "AAA", name: "Example", exchange: "NASDAQ" as const }], universeDate: calendar.at(-1)!.date, now: recent, cache };
-    expect((await collectMarketPack(input)).snapshots.regular.rows[0].values.relativeVolume).toBe(3);
-    expect((await collectMarketPack(input)).snapshots.regular.rows[0].values.relativeVolume).toBe(3);
+    const { snapshots } = await collectMarketPack(input);
+    expect(snapshots.regular.rows[0].values).toMatchObject({ relativeVolume: 3, recentVolume5: 0, recentVolume15: 0,
+      gapFillStatus: -1, premarketHigh: 11, premarketHighBreak: 0 });
+    expect(snapshots.last_regular.rows[0].values).toMatchObject({ premarketHigh: 9, premarketHighBreak: 1 });
+    expect((await collectMarketPack(input)).snapshots).toEqual(snapshots);
     expect(historyRequests).toBe(2);
   });
 

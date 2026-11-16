@@ -116,6 +116,33 @@ function asEasternDate(bar: ProviderBar) {
   return date;
 }
 
+function regularSessionSignals(
+  window: Window, day: ChartMarketSession, session: readonly ProviderBar[], intraday: readonly ProviderBar[],
+  priorClose: number | undefined,
+): Values {
+  const values: Values = {};
+  const traded = session.filter(bar => bar.volume > 0);
+  if (!traded.length) return values;
+  const first = session[0];
+  if (priorClose !== undefined && first.volume > 0 && first.time * 1000 === window.from) {
+    const open = first.open;
+    if (open === priorClose) values.gapFillStatus = -1;
+    else values.gapFillStatus = Number(traded.some(bar => open > priorClose ? bar.low <= priorClose : bar.high >= priorClose));
+  }
+
+  const premarketStart = sessionBounds(day, "premarket").from;
+  let premarketHigh = 0;
+  for (const bar of intraday) {
+    const start = bar.time * 1000;
+    if (bar.volume > 0 && start >= premarketStart && start + FRAME <= window.from) premarketHigh = Math.max(premarketHigh, bar.high);
+  }
+  if (premarketHigh > 0) {
+    values.premarketHigh = premarketHigh;
+    values.premarketHighBreak = Number(traded.some(bar => bar.high > premarketHigh));
+  }
+  return values;
+}
+
 export function sessionMetrics(input: {
   window: Window; daily: readonly ProviderBar[]; intraday: readonly ProviderBar[]; days: readonly ChartMarketSession[];
   quote?: unknown; captureAt: number; intradayComplete: boolean; dailyComplete: boolean; cap?: number;
@@ -148,13 +175,24 @@ export function sessionMetrics(input: {
     values.range = percent(values.high, values.low);
     values.fromHigh = -percent(price, values.high);
     values.fromLow = percent(price, values.low);
-    values.volume = session.reduce((sum, bar) => sum + bar.volume, 0);
+    let volume = 0, recent5 = 0, recent15 = 0;
+    for (const bar of session) {
+      volume += bar.volume;
+      const age = window.asOf - bar.time * 1000;
+      if (age <= FRAME) recent5 += bar.volume;
+      if (age <= 3 * FRAME) recent15 += bar.volume;
+    }
+    values.volume = volume;
+    const elapsed = window.asOf - window.from;
+    if (volume > 0 && elapsed >= FRAME) values.recentVolume5 = recent5;
+    if (volume > 0 && elapsed >= 3 * FRAME) values.recentVolume15 = recent15;
     if (session.every(bar => bar.trades !== undefined)) values.trades = session.reduce((sum, bar) => sum + bar.trades!, 0);
     const traded = barNotional(session);
     if (traded !== undefined) values.dollarVolume = traded;
     Object.assign(values, intradayStructureMetrics(window, session, price, priceAt));
     // An observed first five-minute bar only qualifies as a regular opening bucket at 9:30.
     if (regular && reference && session[0].time * 1000 === window.from) values.openGap = percent(values.open, reference.close);
+    if (regular) Object.assign(values, regularSessionSignals(window, day, session, input.intraday, reference?.close));
   }
 
   const baseline = days.slice(Math.max(0, dayIndex - 50), dayIndex).map(item => byDate.get(item.date));

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DEFINITION, parseDefinition, parseThreshold } from "./contracts";
+import { DEFAULT_DEFINITION, MAX_RULES, parseDefinition, parseThreshold, type Candidate } from "./contracts";
 import { previewPack } from "./fixture";
 import { decodeBar, marketWindows, sessionMetrics } from "./market-metrics";
 import { querySnapshot, sortRows } from "./query";
@@ -99,5 +99,54 @@ describe("stock screener session and evaluation contracts", () => {
     expect(screens.map(screen => screen.definition.rules)).toEqual(
       Array.from({ length: 2 }, () => [{ metric: "cap", operator: "lt", value: 200e6 }]),
     );
+  });
+
+  it("combines required filters with any-of groups and keeps unknown exclusions unavailable", () => {
+    const row = (symbol: string, exchange: Candidate["exchange"], values: Candidate["values"]): Candidate => ({ symbol, exchange, values: { price: 5, ...values } });
+    const snapshot = { ...previewPack(Date.parse("2026-11-14T21:00:00Z"), 1).snapshots.last_regular, rows: [
+      row("FIRST", "NASDAQ", { volume: 500, vwapPosition: 1 }),
+      row("SECOND", "NYSE", { volume: 500, vwapPosition: -1, or15Position: 1 }),
+      row("UNKNOWN", "NASDAQ", { vwapPosition: 1 }),
+      row("UNKNOWNBRANCH", "NYSE", { volume: 500, vwapPosition: -1 }),
+      row("REJECTED", "NASDAQ", { volume: 100, vwapPosition: 1 }),
+      row("BELOW", "NYSE", { volume: 500, vwapPosition: -1, or15Position: -1 }),
+      row("LOWPRICE", "NYSE", { price: 4, volume: 500, vwapPosition: 1, change: 1 }),
+      row("OUTSIDE", "IEX", { volume: 500, vwapPosition: 1 }),
+    ] };
+    const definition = parseDefinition({ ...DEFAULT_DEFINITION, exchanges: ["NASDAQ", "NYSE"],
+      rules: [{ metric: "volume", operator: "between", value: 50, upper: 100, exclude: true }],
+      groups: [
+        [{ metric: "vwapPosition", operator: "eq", value: 1 }, { metric: "or15Position", operator: "eq", value: 1 }],
+        [{ metric: "change", operator: "gt", value: 2 }, { metric: "price", operator: "gte", value: 5 }],
+      ],
+    });
+    const result = querySnapshot(snapshot, definition);
+    expect(result.rows.map(item => item.symbol)).toEqual(["FIRST", "SECOND"]);
+    expect(result).toMatchObject({ eligible: 7, evaluated: 5, unavailable: 2 });
+  });
+
+  it("caps the total rules and validates groups, exclusions and both sorts", () => {
+    const rule = { metric: "price", operator: "gte", value: 1 };
+    expect(parseDefinition({ ...DEFAULT_DEFINITION, rules: [rule], groups: [], sort: DEFAULT_DEFINITION.sort })).toEqual({
+      ...DEFAULT_DEFINITION, rules: [rule],
+    });
+    expect(() => parseDefinition({ ...DEFAULT_DEFINITION, rules: Array(MAX_RULES).fill(rule), groups: [[rule]] })).toThrow("invalid_screen");
+    expect(() => parseDefinition({ ...DEFAULT_DEFINITION, groups: [[]] })).toThrow("invalid_screen");
+    expect(() => parseDefinition({ ...DEFAULT_DEFINITION, groups: [[{ ...rule, exclude: "true" }]] })).toThrow("invalid_rule");
+    expect(() => parseDefinition({ ...DEFAULT_DEFINITION, sort: { ...DEFAULT_DEFINITION.sort, secondary: DEFAULT_DEFINITION.sort } })).toThrow("invalid_screen");
+  });
+
+  it("sorts ties by a second metric and leaves missing values last at each level", () => {
+    const rows: Candidate[] = [
+      { symbol: "A", exchange: "NYSE", values: { price: 1, volume: 40 } },
+      { symbol: "B", exchange: "NYSE", values: { price: 1, volume: 80 } },
+      { symbol: "C", exchange: "NYSE", values: { price: 1 } },
+      { symbol: "D", exchange: "NYSE", values: { volume: 100 } },
+      { symbol: "E", exchange: "NYSE", values: { price: 1, volume: 80 } },
+    ];
+    expect(sortRows(rows, { metric: "price", dir: "asc", secondary: { metric: "volume", dir: "desc" } }).map(row => row.symbol))
+      .toEqual(["B", "E", "A", "C", "D"]);
+    expect(sortRows(rows, { metric: "price", dir: "desc", secondary: { metric: "volume", dir: "asc" } }).map(row => row.symbol))
+      .toEqual(["A", "B", "E", "C", "D"]);
   });
 });

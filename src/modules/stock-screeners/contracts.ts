@@ -38,6 +38,8 @@ export const METRICS = {
   above52Low: { label: "Above 52-week low", unit: "percent", group: "Price & performance" },
   cap: { label: "Market cap", unit: "money", group: "Listing" },
   volume: { label: "Volume", unit: "count", group: "Liquidity" },
+  recentVolume5: { label: "Volume · last 5m", unit: "count", group: "Liquidity" },
+  recentVolume15: { label: "Volume · last 15m", unit: "count", group: "Liquidity" },
   relativeVolume: { label: "Relative volume at time", unit: "ratio", group: "Liquidity" },
   dollarVolume: { label: "Dollar volume (est.)", unit: "money", group: "Liquidity" },
   avg10: { label: "Avg. volume · 10d", unit: "count", group: "Liquidity" },
@@ -80,6 +82,9 @@ export const METRICS = {
   vwapPosition: { label: "Price vs session VWAP", unit: "vwapPosition", group: "VWAP" },
   vwapDistance: { label: "Distance from VWAP", unit: "percent", group: "VWAP" },
   vwapCross: { label: "VWAP cross · last 5m bar", unit: "vwapCross", group: "VWAP" },
+  gapFillStatus: { label: "Gap fill status", unit: "gapFillStatus", group: "Regular session" },
+  premarketHigh: { label: "Premarket high", unit: "price", group: "Regular session" },
+  premarketHighBreak: { label: "Premarket high break", unit: "premarketHighBreak", group: "Regular session" },
   pressReleaseAge: { label: "Press release age", unit: "hours", group: "Catalysts" },
 } as const;
 export type Metric = keyof typeof METRICS;
@@ -90,14 +95,18 @@ const SIGNAL_LABELS = {
   openingPosition: { 1: "Above range", 0: "Inside range", [-1]: "Below range" },
   vwapPosition: { 1: "Above VWAP", 0: "At VWAP", [-1]: "Below VWAP" },
   vwapCross: { 1: "Crossed above", 0: "No cross", [-1]: "Crossed below" },
+  gapFillStatus: { 1: "Filled", 0: "Open gap", [-1]: "No opening gap" },
+  premarketHighBreak: { 1: "Broke above", 0: "No break" },
 } as const;
 
 export function signalChoices(metric: Metric): Readonly<Record<number, string>> | undefined {
   const unit = METRICS[metric].unit;
-  return unit === "openingPosition" || unit === "vwapPosition" || unit === "vwapCross" ? SIGNAL_LABELS[unit] : undefined;
+  return Object.hasOwn(SIGNAL_LABELS, unit) ? SIGNAL_LABELS[unit as keyof typeof SIGNAL_LABELS] : undefined;
 }
 export const OPERATORS = { gte: "At least", lte: "At most", between: "Between", gt: "Above", lt: "Below", eq: "Exactly" } as const;
-export type Rule = { metric: Metric; operator: keyof typeof OPERATORS; value: number; upper?: number };
+export type Rule = { metric: Metric; operator: keyof typeof OPERATORS; value: number; upper?: number; exclude?: true };
+export type SortKey = { metric: Metric | "ticker"; dir: "asc" | "desc" };
+export type Sort = SortKey & { secondary?: SortKey };
 export const EXCHANGES = ["NASDAQ", "NYSE", "AMEX", "ARCA", "BATS", "IEX", "TXSE"] as const;
 export type Exchange = typeof EXCHANGES[number];
 export const EXCHANGE_LABELS: Partial<Record<Exchange, string>> = { AMEX: "NYSE American", ARCA: "NYSE Arca", BATS: "Cboe BZX" };
@@ -106,8 +115,16 @@ export const VIEWS = { table: "Table", two: "Two rows", cards: "Cards" } as cons
 export type View = keyof typeof VIEWS;
 export type Definition = {
   session: Session; universe: Universe; tickers: string[]; exchanges: Exchange[]; rules: Rule[];
-  sort: { metric: Metric | "ticker"; dir: "asc" | "desc" }; columns: Metric[]; view: View;
+  groups?: Rule[][]; sort: Sort; columns: Metric[]; view: View;
 };
+
+export function screenRules(definition: Pick<Definition, "rules" | "groups">): Rule[] {
+  return definition.groups ? definition.rules.concat(...definition.groups) : definition.rules;
+}
+
+export function sortIncludes(sort: Sort, metric: SortKey["metric"]) {
+  return sort.metric === metric || sort.secondary?.metric === metric;
+}
 export type NewsHeadline = { publishedAt: number; headline: string; url: string };
 export type Candidate = {
   symbol: string; exchange: Exchange; name?: string; priceAt?: number; quoteAt?: number;
@@ -146,8 +163,41 @@ export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function parseDefinition(input: unknown): Definition {
+function parseSortKey(input: unknown): SortKey {
+  if (!isObject(input) || typeof input.metric !== "string"
+    || (input.metric !== "ticker" && !Object.hasOwn(METRICS, input.metric))
+    || (input.dir !== "asc" && input.dir !== "desc")) throw Error("invalid_screen");
+  return { metric: input.metric as SortKey["metric"], dir: input.dir };
+}
+
+export function parseSort(input: unknown): Sort {
+  const primary = parseSortKey(input);
+  if (!isObject(input) || input.secondary === undefined) return primary;
+  const secondary = parseSortKey(input.secondary);
+  if (secondary.metric === primary.metric) throw Error("invalid_screen");
+  return { ...primary, secondary };
+}
+
+function parseRule(rule: unknown): Rule {
   const validNumber = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n);
+  if (!isObject(rule) || typeof rule.metric !== "string" || !Object.hasOwn(METRICS, rule.metric)
+    || typeof rule.operator !== "string" || !Object.hasOwn(OPERATORS, rule.operator) || !validNumber(rule.value)
+    || (rule.operator === "between" && (!validNumber(rule.upper) || rule.upper < rule.value))
+    || (rule.exclude !== undefined && typeof rule.exclude !== "boolean")) throw Error("invalid_rule");
+  const metric = rule.metric as Metric;
+  const unit = METRICS[metric].unit;
+  const choices = signalChoices(metric);
+  if (choices ? rule.operator !== "eq" || !Object.hasOwn(choices, rule.value) : unit !== "percent" && rule.value < 0) {
+    throw Error("invalid_rule");
+  }
+  if (unit === "hours" && (rule.value > PRESS_RELEASE_LOOKBACK_HOURS
+    || (rule.operator === "between" && Number(rule.upper) > PRESS_RELEASE_LOOKBACK_HOURS))) throw Error("invalid_rule");
+  return { metric, operator: rule.operator as Rule["operator"], value: rule.value,
+    ...(rule.operator === "between" ? { upper: rule.upper as number } : {}),
+    ...(rule.exclude === true ? { exclude: true } : {}) };
+}
+
+export function parseDefinition(input: unknown): Definition {
   if (!isObject(input) || typeof input.session !== "string" || !Object.hasOwn(SESSIONS, input.session)
     || typeof input.universe !== "string" || !Object.hasOwn(UNIVERSES, input.universe)
     || typeof input.view !== "string" || !Object.hasOwn(VIEWS, input.view)
@@ -158,31 +208,23 @@ export function parseDefinition(input: unknown): Definition {
     || input.exchanges.some(exchange => !EXCHANGES.includes(exchange))
     || !Array.isArray(input.columns) || !input.columns.length || input.columns.length > 10
     || input.columns.some(metric => typeof metric !== "string" || !Object.hasOwn(METRICS, metric))
-    || !Array.isArray(input.rules) || input.rules.length > MAX_RULES
-    || !isObject(input.sort) || typeof input.sort.metric !== "string"
-    || (input.sort.metric !== "ticker" && !Object.hasOwn(METRICS, input.sort.metric))
-    || (input.sort.dir !== "asc" && input.sort.dir !== "desc")) throw Error("invalid_screen");
+    || !Array.isArray(input.rules) || input.rules.length > MAX_RULES) throw Error("invalid_screen");
 
-  const rules = input.rules.map(rule => {
-    if (!isObject(rule) || typeof rule.metric !== "string" || !Object.hasOwn(METRICS, rule.metric)
-      || typeof rule.operator !== "string" || !Object.hasOwn(OPERATORS, rule.operator) || !validNumber(rule.value)
-      || (rule.operator === "between" && (!validNumber(rule.upper) || rule.upper < rule.value))) throw Error("invalid_rule");
-    const metric = rule.metric as Metric;
-    const unit = METRICS[metric].unit;
-    const choices = signalChoices(metric);
-    if (choices ? rule.operator !== "eq" || !Object.hasOwn(choices, rule.value) : unit !== "percent" && rule.value < 0) {
-      throw Error("invalid_rule");
+  const groups: Rule[][] = [];
+  if (input.groups !== undefined) {
+    if (!Array.isArray(input.groups) || input.groups.length > MAX_RULES) throw Error("invalid_screen");
+    let count = input.rules.length;
+    for (const group of input.groups) {
+      if (!Array.isArray(group) || !group.length || (count += group.length) > MAX_RULES) throw Error("invalid_screen");
+      groups.push(group.map(parseRule));
     }
-    if (unit === "hours" && (rule.value > PRESS_RELEASE_LOOKBACK_HOURS
-      || (rule.operator === "between" && Number(rule.upper) > PRESS_RELEASE_LOOKBACK_HOURS))) throw Error("invalid_rule");
-    return { metric, operator: rule.operator as Rule["operator"], value: rule.value,
-      ...(rule.operator === "between" ? { upper: rule.upper as number } : {}) };
-  });
+  }
   return {
     session: input.session as Session, universe: input.universe as Universe, view: input.view as View,
     exchanges: [...new Set(input.exchanges as Exchange[])], tickers: [...new Set(input.tickers as string[])],
-    columns: [...new Set(input.columns as Metric[])], rules,
-    sort: { metric: input.sort.metric as Definition["sort"]["metric"], dir: input.sort.dir },
+    columns: [...new Set(input.columns as Metric[])], rules: input.rules.map(parseRule),
+    ...(groups.length ? { groups } : {}),
+    sort: parseSort(input.sort),
   };
 }
 

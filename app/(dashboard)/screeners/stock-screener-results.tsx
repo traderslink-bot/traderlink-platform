@@ -16,7 +16,7 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useLayoutEffect, useRef } from "react";
-import { METRICS, SESSIONS, signalChoices, type Candidate, type Definition, type Metric, type RunResult } from "@/src/modules/stock-screeners/contracts";
+import { METRICS, SESSIONS, screenRules, signalChoices, type Candidate, type Definition, type Metric, type RunResult } from "@/src/modules/stock-screeners/contracts";
 
 const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 2 });
@@ -94,12 +94,15 @@ export function StockScreenerResults({ result, definition, busy, inspect, onSort
   const scrollRegion = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (scrollRegion.current) scrollRegion.current.scrollTop = 0;
-  }, [result.id, result.page, definition.sort.metric, definition.sort.dir]);
+  }, [result.id, result.page, definition.sort.metric, definition.sort.dir, definition.sort.secondary?.metric, definition.sort.secondary?.dir]);
 
   const metrics = definition.columns, first = metrics.slice(0, 2), next = metrics.slice(2);
   const extendedHours = result.session === "premarket" || result.session === "after_hours";
-  const usesOpeningRange = metrics.some(metric => METRICS[metric].group === "Opening range")
-    || definition.rules.some(rule => METRICS[rule.metric].group === "Opening range");
+  const visibleGroups = new Set([...metrics, ...screenRules(definition).map(rule => rule.metric)].map(metric => METRICS[metric].group));
+  const regularOnly = [
+    ...(visibleGroups.has("Opening range") ? ["opening ranges"] : []),
+    ...(visibleGroups.has("Regular session") ? ["gap fills and premarket-high breaks"] : []),
+  ];
   const pages = Math.max(1, Math.ceil(result.total / result.pageSize));
   const emptyState = result.eligible === 0
     ? { title: "No stocks in this selection", detail: "Check your ticker list or choose a different exchange." }
@@ -108,11 +111,14 @@ export function StockScreenerResults({ result, definition, busy, inspect, onSort
       : { title: "No stocks matched", detail: "Change a filter and run again." };
   function header(metric: Metric | "ticker") {
     const on = definition.sort.metric === metric;
+    const secondary = definition.sort.secondary?.metric === metric ? definition.sort.secondary : undefined;
     return <TableCell key={metric} sortDirection={on ? definition.sort.dir : false} align={metric === "ticker" ? "left" : "right"}
       sx={metric === "ticker" ? { position: "sticky", left: 0, zIndex: 3, bgcolor: "background.paper" } : undefined}>
-      <TableSortLabel active={on} direction={on ? definition.sort.dir : "asc"} onClick={() => onSort(metric)}
+      <TableSortLabel active={on || !!secondary} direction={on ? definition.sort.dir : secondary?.dir ?? "asc"} onClick={() => onSort(metric)}
         disabled={busy || (metric === "pressReleaseAge" && !result.pressReleases?.available)}
-        sx={{ whiteSpace: "nowrap" }}>{metric === "ticker" ? "Ticker" : METRICS[metric].label}</TableSortLabel>
+        sx={{ whiteSpace: "nowrap" }}>{metric === "ticker" ? "Ticker" : METRICS[metric].label}
+        {secondary && <Box component="span" sx={{ ml: 0.5, fontSize: "0.72rem" }} aria-label="Secondary sort">2</Box>}
+      </TableSortLabel>
     </TableCell>;
   }
   return <>
@@ -130,8 +136,8 @@ export function StockScreenerResults({ result, definition, busy, inspect, onSort
       {result.snapshotFallback ? "The latest snapshot is unavailable. Showing the last available data."
         : "Some data is missing or older. Check the snapshot time before using these results."}
     </Typography>}
-    {extendedHours && usesOpeningRange && <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
-      Choose Regular or Last completed regular to use opening ranges.
+    {extendedHours && regularOnly.length > 0 && <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
+      Choose Regular or Last completed regular to use {regularOnly.join(", ")}.
     </Typography>}
     {result.pressReleases ? <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
       {result.pressReleases.available

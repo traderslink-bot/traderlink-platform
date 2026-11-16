@@ -39,7 +39,7 @@ function preparedFixture(): MarketPack {
   const calendar = ["2026-11-12", "2026-11-13"].map(date => ({ date, open: "09:30", close: "16:00" }));
   const { latest, windows } = marketWindows(calendar, now.getTime());
   const extraRows = Array.from({ length: 50 }, (_, index): Candidate => ({
-    symbol: `QAFILL${String(index).padStart(2, "0")}`, exchange: "NASDAQ", values: { price: 20 + index },
+    symbol: `QAFILL${String(index).padStart(2, "0")}`, exchange: "NASDAQ", values: { price: 20 + Math.min(index, 48) },
   }));
   const snapshots = Object.fromEntries(Object.values(windows).map(window => {
     const rows = ([["QAUP", 13], ["QADOWN", 7], ["QAINSIDE", 9.5]] as const).map(([symbol, price]) => {
@@ -48,7 +48,8 @@ function preparedFixture(): MarketPack {
         return { time: (window.from + minutes * 60_000) / 1000, open: close, close, high: close + 1, low: close - 1, volume: 100, vwap: close };
       });
       const priceAt = window.from + 25 * 60_000;
-      return { symbol, exchange: "NASDAQ", values: { price, ...intradayStructureMetrics(window, completedSessionBars(window, bars), price, priceAt) }, priceAt };
+      return { symbol, exchange: symbol === "QAUP" ? "NYSE" : "NASDAQ",
+        values: { price, ...intradayStructureMetrics(window, completedSessionBars(window, bars), price, priceAt) }, priceAt };
     });
     return [window.session, { version: 2, source: "Alpaca SIP", session: window.session, date: window.date, universeDate: window.date,
       asOf: window.asOf, capturedAt: now.getTime(), closed: window.closed, partial: false, rows: [...rows, ...extraRows] }];
@@ -89,8 +90,8 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(now);
   vi.stubEnv("NODE_ENV", "production");
-  vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", databasePath);
   vi.stubEnv("TRADERLINK_PLATFORM_PUBLIC_ORIGIN", origin);
+  vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", databasePath);
   vi.stubEnv("TRADERLINK_STOCK_SCREENERS_ENABLED", "1");
   vi.stubEnv("DISCORD_GUILD_ID", guild);
   vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", premium);
@@ -115,7 +116,10 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
 
     const original: SavedScreen = { id: randomUUID(), name: "Author's opening range and VWAP", definition: {
       ...DEFAULT_DEFINITION, session: "last_regular", columns: ["price", "or15Position", "sessionVwap", "vwapPosition"],
-      rules: [{ metric: "or15Position", operator: "eq", value: 1 }, { metric: "vwapPosition", operator: "eq", value: 1 }],
+      exchanges: ["NASDAQ", "NYSE"],
+      rules: [{ metric: "price", operator: "lt", value: 10, exclude: true }, { metric: "vwapPosition", operator: "eq", value: 1 }],
+      groups: [[{ metric: "or15Position", operator: "eq", value: 1 }, { metric: "price", operator: "gt", value: 100 }]],
+      sort: { ...DEFAULT_DEFINITION.sort, secondary: { metric: "price", dir: "asc" } },
     } };
 
     const savedAuthor = await read<SavedScreens>(await memberPost(author, { action: "save", saved: { revision: 0, defaultId: null, screens: [original] } }));
@@ -191,7 +195,8 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
     const runAll = (token: string) => memberPost(token, { action: "run", definition: { ...DEFAULT_DEFINITION, session: "last_regular" } });
     const authorRun = await read<RunResult>(await runAll(author));
     const recipientRun = await read<RunResult>(await runAll(recipient));
-    const sortedPage = (token: string, runId: string, page: number) => memberGet(token, `?run=${runId}&page=${page}&sort=price&dir=asc`);
+    const sortedPage = (token: string, runId: string, page: number) =>
+      memberGet(token, `?run=${runId}&page=${page}&sort=price&dir=asc&thenBy=ticker&thenDir=desc`);
     vi.setSystemTime(now.getTime() + 31 * 60_000);
     for (const [token, pinned] of [[author, authorRun], [recipient, recipientRun]] as const) {
       const sorted = await read<RunResult>(await sortedPage(token, pinned.id, 1));
@@ -199,7 +204,7 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
       expect(sorted.rows[0].symbol).toBe("QADOWN");
       const nextPage = await read<RunResult>(await sortedPage(token, pinned.id, 2));
       expect(nextPage).toMatchObject({ id: pinned.id, capturedAt: pinned.capturedAt, page: 2 });
-      expect(nextPage.rows.map(row => row.symbol)).toEqual(["QAFILL47", "QAFILL48", "QAFILL49"]);
+      expect(nextPage.rows.map(row => row.symbol)).toEqual(["QAFILL47", "QAFILL49", "QAFILL48"]);
 
       for (let index = 0; index < 5; index++) await read<RunResult>(await runAll(token));
       expect((await sortedPage(token, pinned.id, 2)).status).toBe(200);

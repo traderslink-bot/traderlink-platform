@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
-import { DEFAULT_DEFINITION, isObject, MAX_LISTINGS, parseDefinition, tickerPattern } from "@/src/modules/stock-screeners/contracts";
+import { isObject, MAX_LISTINGS, parseDefinition, parseSort, tickerPattern } from "@/src/modules/stock-screeners/contracts";
 import { memberRecentArticles } from "@/src/modules/stock-screeners/press-releases";
 import { PAGE_SIZE } from "@/src/modules/stock-screeners/query";
 import { parseSaved, readSaved, SAVED_SCREEN_ID, writeSaved } from "@/src/modules/stock-screeners/saved-store";
@@ -83,12 +83,15 @@ export async function GET(request: Request) {
   const id = query.get("run");
   if (id !== null) {
     const page = Number(query.get("page") ?? "1");
-    const sort = { metric: query.get("sort"), dir: query.get("dir") };
+    const sort = {
+      metric: query.get("sort"), dir: query.get("dir"),
+      ...(query.has("thenBy") || query.has("thenDir") ? { secondary: { metric: query.get("thenBy"), dir: query.get("thenDir") } } : {}),
+    };
     if (!/^[a-f0-9-]{36}$/.test(id) || !Number.isSafeInteger(page) || page < 1 || page > Math.ceil(MAX_LISTINGS / PAGE_SIZE)) {
       return reply({ error: "invalid_request" }, 400);
     }
     try {
-      return reply(getRun(identity, id, page, parseDefinition({ ...DEFAULT_DEFINITION, sort }).sort));
+      return reply(getRun(identity, id, page, parseSort(sort)));
     } catch (error) {
       const expired = error instanceof Error && error.message === "run_expired";
       return reply({ error: expired ? "run_expired" : "invalid_request" }, expired ? 404 : 400);

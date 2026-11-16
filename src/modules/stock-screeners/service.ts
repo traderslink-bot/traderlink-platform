@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { resolvePlatformDatabaseConfig } from "../platform/server/database/platform-database-config";
 import type { TraderLinkPlatformRequestIdentity } from "../platform/server/authentication/require-platform-request-scope";
 import { easternClock } from "../scanner/live/sessions";
-import { type Candidate, type Definition, type MarketPack, type RunResult } from "./contracts";
+import { screenRules, sortIncludes, type Candidate, type Definition, type MarketPack, type RunResult } from "./contracts";
 import { previewPack } from "./fixture";
 import { PAGE_SIZE, querySnapshot, sortRows } from "./query";
 import { MARKET_PACK_MAX_AGE_MS, readMarketPack } from "./snapshot-file";
@@ -123,8 +123,8 @@ export async function createRun(identity: TraderLinkPlatformRequestIdentity, def
   const businessHours = weekday > 0 && weekday < 6 && marketClock.minute >= 240 && marketClock.minute < 1200;
   const stale = !example && ((!info.closed || (businessHours && definition.session === "latest"))
     && now - info.capturedAt > 7 * 60_000);
-  const includePressReleases = definition.rules.some(rule => rule.metric === "pressReleaseAge")
-    || definition.sort.metric === "pressReleaseAge" || definition.columns.includes("pressReleaseAge");
+  const includePressReleases = screenRules(definition).some(rule => rule.metric === "pressReleaseAge")
+    || sortIncludes(definition.sort, "pressReleaseAge") || definition.columns.includes("pressReleaseAge");
   const recentPressReleases = includePressReleases && !example
     ? memberPressReleases(identity, snapshotRows.map(row => row.symbol), now)
     : undefined;

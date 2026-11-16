@@ -99,3 +99,66 @@ describe("session VWAP", () => {
     expect(matchesRule({ ...row, values: { or15Position: 0 } }, rule)).toBe(false);
   });
 });
+
+describe("recent volume and regular-session signals", () => {
+  const priorDay = { date: "2026-11-12", open: "09:30", close: "16:00" };
+  const priorClose = bar(Date.parse("2026-11-12T05:00:00Z"), 10);
+  const premarket = sessionBounds(day, "premarket");
+
+  function calculate(window: Window, intraday: ProviderBar[], dailyComplete = true, intradayComplete = true) {
+    return sessionMetrics({
+      window, intraday, daily: [priorClose], days: [priorDay, day],
+      dailyComplete, intradayComplete, captureAt: window.asOf,
+    }).values;
+  }
+
+  it("counts completed bars in the trailing window without crossing session boundaries", () => {
+    const bars = [
+      bar(regular.from - 5 * minute, 11, 11, 9_000),
+      bar(regular.from, 11, 11, 100),
+      bar(regular.from + 5 * minute, 11, 11, 200),
+      bar(regular.from + 15 * minute, 11, 11, 400),
+      bar(regular.from + 20 * minute, 11, 11, 8_000),
+    ];
+    const opening = calculate(windowAt(10), bars);
+    expect(opening.recentVolume5).toBe(200);
+    expect(opening.recentVolume15).toBeUndefined();
+    expect(calculate(windowAt(15), bars)).toMatchObject({ recentVolume5: 0, recentVolume15: 300 });
+    expect(calculate(windowAt(20), bars)).toMatchObject({ recentVolume5: 400, recentVolume15: 600 });
+    expect(calculate(windowAt(20), bars, true, false).recentVolume5).toBeUndefined();
+
+    const afterHours = windowAt(15, "after_hours");
+    expect(calculate(afterHours, [
+      bar(afterHours.from - 5 * minute, 11, 11, 5_000), bar(afterHours.from, 11, 11, 250),
+    ])).toMatchObject({ recentVolume5: 0, recentVolume15: 250 });
+  });
+
+  it("recognizes up and down fills at the prior close and requires an observed regular open", () => {
+    const up = bar(regular.from, 11);
+    const down = bar(regular.from, 9);
+    const fill = bar(regular.from + 5 * minute, 10);
+    const premarketTouch = bar(regular.from - 5 * minute, 10);
+    const noVolume = { ...fill, volume: 0 };
+    expect(calculate(windowAt(5), [premarketTouch, up, fill]).gapFillStatus).toBe(0);
+    expect(calculate(windowAt(10), [up, noVolume]).gapFillStatus).toBe(0);
+    expect(calculate(windowAt(10), [up, fill]).gapFillStatus).toBe(1);
+    expect(calculate(windowAt(10), [down, fill]).gapFillStatus).toBe(1);
+    expect(calculate(windowAt(10), [bar(regular.from, 10), fill]).gapFillStatus).toBe(-1);
+    expect(calculate(windowAt(10), [fill]).gapFillStatus).toBeUndefined();
+    expect(calculate(windowAt(10), [up, fill], false).gapFillStatus).toBeUndefined();
+  });
+
+  it("recognizes a premarket-high break from the same market date and keeps it after a fade", () => {
+    const priorPremarket = bar(sessionBounds(priorDay, "premarket").from, 99);
+    const beforePremarket = bar(premarket.from - 5 * minute, 98);
+    const high = bar(regular.from - 5 * minute, 12);
+    const touch = bar(regular.from, 11, 11, 100, 12);
+    const breakAbove = bar(regular.from + 5 * minute, 11, 11, 100, 12.5);
+    const fade = bar(regular.from + 10 * minute, 10);
+    const bars = [priorPremarket, beforePremarket, high, touch, breakAbove, fade];
+    expect(calculate(windowAt(5), bars)).toMatchObject({ premarketHigh: 12, premarketHighBreak: 0 });
+    expect(calculate(windowAt(15, "last_regular"), bars)).toMatchObject({ price: 10, premarketHigh: 12, premarketHighBreak: 1 });
+    expect(calculate(windowAt(15), bars.filter(point => point !== high)).premarketHighBreak).toBeUndefined();
+    expect(calculate(windowAt(330, "premarket"), bars).premarketHighBreak).toBeUndefined();
+  });
+});

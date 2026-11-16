@@ -2,7 +2,7 @@ import { parseCalendarSessions } from "../scanner/alpaca/chart-calendar";
 import { easternDayStart } from "../scanner/alpaca/candles";
 import { easternClock } from "../scanner/live/sessions";
 import { isObject, MAX_LISTINGS, type Candidate, type Listing, type MarketPack, type MarketSession, type Snapshot } from "./contracts";
-import { decodeBar, marketWindows, sessionMetrics, type ProviderBar } from "./market-metrics";
+import { decodeBar, marketWindows, sessionBounds, sessionMetrics, type ProviderBar } from "./market-metrics";
 import { relativeVolumeAtTime, relativeVolumeHistory, relativeVolumeSchedule } from "./relative-volume";
 
 type Data = { get(path: string, params: URLSearchParams): Promise<unknown> };
@@ -69,7 +69,8 @@ export async function collectMarketPack(input: {
   if (!stocks.length || stocks.length > MAX_LISTINGS || new Set(stocks.map(stock => stock.symbol)).size !== stocks.length) throw Error("universe_unavailable");
   const asOfDate = easternClock(now).date;
   const dayEnd = easternDayStart(Date.parse(windows.last_regular.date + "T12:00:00Z") / 1000) * 1000;
-  const minimum = Math.min(...entries.map(([, window]) => window.from));
+  const lastRegularDay = days.find(day => day.date === windows.last_regular.date)!;
+  const minimum = Math.min(sessionBounds(lastRegularDay, "premarket").from, ...entries.map(([, window]) => window.from));
   const maximum = Math.max(...entries.map(([, window]) => window.asOf)) - 1;
   const historyStart = dayEnd - 435 * DAY;
   const dailyKey = asOfDate + "/" + dayEnd;
