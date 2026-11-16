@@ -46,3 +46,13 @@ it("identifies HOD on the visible card and ladder without leaking concealed leve
   expect(locked).not.toContain("24.74");
   expect(locked).not.toContain("A new high alone");
 });
+
+it("links locked Premium levels to Whop and preserves an explicit custom-plan link", () => {
+  const locked = { ...symbol, premiumLevelsAllowed: false };
+  const markup = renderToStaticMarkup(createElement(WatchlistV2PotentialPathCard, { symbol: locked }));
+  expect(markup).toContain('href="https://whop.com/traderslink-1049/premium-access-2026"');
+  const custom = { ...locked, watchlistUpgradeLinks: { levels: "/plans?feature=watchlist.levels" } };
+  const customMarkup = renderToStaticMarkup(createElement(WatchlistV2PotentialPathCard, { symbol: custom }));
+  expect(customMarkup).toContain('href="/plans?feature=watchlist.levels"');
+  expect(customMarkup).not.toContain("whop.com");
+});

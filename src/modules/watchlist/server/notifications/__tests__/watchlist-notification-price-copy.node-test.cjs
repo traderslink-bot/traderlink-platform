@@ -76,7 +76,7 @@ test('existing Free Chat and category destinations remain price-free; transports
   // Deliberately stub every dependency: only pure text builders may execute.
   const { freeChatPayload } = load(`${directory}watchlist-free-chat-delivery.ts`, true);
   for (const updated of [false, true]) {
-    const { content, images } = freeChatPayload({ symbol: 'TEST', cycleId: 'test-cycle', approvalRevision: 1, updated, images: [] });
+    const { content, images } = freeChatPayload({ symbol: 'TEST', cycleId: 'test-cycle', approvalRevision: 1, updated, images: [] }, { ticker: false, analysis: false, levels: false });
     assertNoPrice(content);
     assert.match(content, /Free \$TEST TradersLink Analysis/);
     assert.match(content, /@everyone/);

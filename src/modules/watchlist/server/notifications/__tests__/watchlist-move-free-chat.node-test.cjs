@@ -13,6 +13,7 @@ function setup(t){
   '../runtime/watchlist-runtime-admin-client':{requestWatchlistRuntimeRaw:async input=>{requests.push(input);return {ok:true,body:JSON.stringify(input.path.includes('/category-move?')?{moves:[{id:operation,cycleId:'cycle',current,destination,freeChat:choice,approvalRevision:3}]}:input.path.includes('/free-chat-publication?')?{publication:{symbol:'TEST',cycleId:'cycle',approvalRevision:3,updated:false,images:[]}}:{review:review()})};}},
   './watchlist-automatic-notifications':{readAutomaticAnalysisEvents:async()=>[]},
   './watchlist-free-chat-store':store,
+  './watchlist-free-chat-visibility':{readFreeChatVisibility:()=>({ticker:false,analysis:false,levels:false})},
   './watchlist-free-chat-delivery':{deliverFreeChatPublication:async()=>{sent++;return result;}}
  });
  const input={symbol:'TEST',cycleId:'cycle',id:operation,to:'postmarket',notify:true,freeChat:true};

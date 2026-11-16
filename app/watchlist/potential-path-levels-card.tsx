@@ -291,7 +291,7 @@ export function WatchlistV2PotentialPathCard({
 
         {symbol.premiumLevelsAllowed === false ? (
           <div>
-            <WatchlistPlanUpgrade href={symbol.watchlistUpgradeLinks?.levels} feature="Support and Resistance" />
+            <WatchlistPlanUpgrade href={symbol.watchlistUpgradeLinks?.levels} feature="Support and Resistance" premium />
             <div className="watchlist-v2-level-columns">
               {['Support','Resistance'].map(title=><section key={title} aria-label={title+' requires feature access'}><h3>{title}</h3><div aria-hidden="true" style={{filter:'blur(5px)',userSelect:'none'}}>{[1,2,3].map(row=><p key={row}>$••.•• — ••••••</p>)}</div></section>)}
             </div>

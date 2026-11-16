@@ -4,10 +4,28 @@ import { withPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { readFreeChatReview, publishedFreeChatApprovals } from "./watchlist-free-chat-runtime";
 import { setFreeChatAutomatic, queueFreeChatPublication } from "./watchlist-free-chat-store";
 
+import { freeChatPreview } from "./watchlist-free-chat-delivery";
+import { readFreeChatVisibility } from "./watchlist-free-chat-visibility";
+
 /** The caller must complete Journal owner + mutation authorization first. */
 export async function handleFreeChatAdmin(method: "GET" | "POST", url: URL, body: string | undefined, ownerUserId: string) {
   const input = method === "GET" ? { symbol: url.searchParams.get("symbol") } : JSON.parse(body ?? "{}");
   if (!input || !/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(input.symbol ?? "")) throw Error("Invalid ticker.");
+  if (method === "GET" && url.searchParams.has("preview")) {
+    const mode = url.searchParams.get("preview");
+    if (mode !== "published" && mode !== "approval" && mode !== "move") throw Error("Invalid preview.");
+    const review = await readFreeChatReview(input.symbol, ownerUserId);
+    const approved = publishedFreeChatApprovals(review);
+    const revision = Number(url.searchParams.get("approvalRevision")) || Math.max(0, ...approved.map(event => event.revision));
+    if (mode === "published" && !approved.some(event => event.revision === revision)) {
+      throw Error("Publish an analysis before sharing it to Free Chat.");
+    }
+    const earlier = review.events.some(event => (mode === "approval" || event.revision < revision)
+      && event.body.kind === "approve" && review.events.some(receipt => receipt.body.kind === "delivery"
+        && receipt.body.channel === "website" && receipt.body.status === "acknowledged"
+        && receipt.body.approvalRevision === event.revision));
+    return { preview: freeChatPreview(input.symbol, earlier, readFreeChatVisibility(input.symbol, false)) };
+  }
   if(isPrivateWatchlistTicker(input.symbol)) throw new Error("Move this ticker out of Private before publishing.");
   const review = await readFreeChatReview(input.symbol,ownerUserId);
   if (method === "POST" && input.cycleId !== review.cycleId) throw Error("Ticker changed. Reload its controls.");

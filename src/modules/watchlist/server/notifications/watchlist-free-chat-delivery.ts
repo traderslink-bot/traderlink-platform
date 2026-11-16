@@ -1,4 +1,3 @@
-import { isPrivateWatchlistTicker } from "../access/watchlist-analysis-visibility";
 import "server-only";
 
 /** Only server-exported, published approvals may be passed to this transport. */
@@ -25,26 +24,41 @@ export function freeChatWebhook(environment = process.env): URL | null {
   } catch { return null; }
 }
 
-export function freeChatPayload(publication: FreeChatPublication) {
+export type FreeChatVisibility = { ticker: boolean; analysis: boolean; levels: boolean };
+
+export function freeChatPreview(symbol: string, updated: boolean, visibility: FreeChatVisibility) {
+  if (visibility.ticker) return {
+    content: "**$•••• — Premium ticker**\n\nNew idea on the TradersLink Watchlist.\n\nView Watchlist ↓\nhttps://app.traderslink.pro/watchlist\n\n@everyone",
+    includeImages: false,
+  };
+  if (visibility.analysis || visibility.levels) return {
+    content: `**$${symbol} added to the Watchlist**\n\nSee what’s available on the ticker page.\n\nView $${symbol} ↓\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\n\n@everyone`,
+    includeImages: false,
+  };
+  return {
+    content: `Free $${symbol} TradersLink Analysis${updated ? " — Updated" : ""}\n\nImages show part of the analysis. View full analysis in the app 👇\n\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\nhttps://app.traderslink.pro/watchlist\n\n@everyone`,
+    includeImages: true,
+  };
+}
+
+export function freeChatPayload(publication: FreeChatPublication, visibility: FreeChatVisibility) {
   if (!/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(publication.symbol)
     || !publication.cycleId || !Number.isSafeInteger(publication.approvalRevision)
     || publication.approvalRevision < 1 || publication.images.length > 4) throw Error("Invalid approved analysis.");
   const symbol = publication.symbol;
-  const images = publication.images.map((image, index) => {
+  const preview = freeChatPreview(symbol, publication.updated, visibility);
+  const images = (preview.includeImages ? publication.images : []).map((image, index) => {
     const bytes = Buffer.from(image.base64, "base64");
     if (bytes.length < 33 || bytes.length > 8 * 1024 * 1024 || bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") {
       throw Error("Invalid approved analysis image.");
     }
     return { bytes, filename: `${symbol}-analysis-${index + 1}.png`, description: `${symbol} approved analysis, part ${index + 1}` };
   });
-  const content = `Free $${symbol} TradersLink Analysis${publication.updated ? " — Updated" : ""}\n\nImages show part of the analysis. View full analysis in the app 👇\n\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\nhttps://app.traderslink.pro/watchlist\n\n@everyone`;
-  return { content, images };
+  return { content: preview.content, images, suppressEmbeds: !preview.includeImages };
 }
 
 /** Caller claims a durable receipt BEFORE invoking this function. Never auto-retry uncertain delivery. */
-export async function deliverFreeChatPublication(publication: FreeChatPublication, transport: typeof fetch = fetch, environment = process.env): Promise<FreeChatDeliveryResult> {
-  if(isPrivateWatchlistTicker(publication.symbol)) throw new Error("Move this ticker out of Private before publishing.");
-  const payload = freeChatPayload(publication);
+export async function deliverFreeChatPublication(publication: FreeChatPublication, readVisibility: () => FreeChatVisibility, transport: typeof fetch = fetch, environment = process.env): Promise<FreeChatDeliveryResult> {
   const webhook = freeChatWebhook(environment);
   if (!webhook) return { state: "failed", message: "Free Chat webhook is not configured." };
   try {
@@ -52,8 +66,14 @@ export async function deliverFreeChatPublication(publication: FreeChatPublicatio
     const metadata = response.ok ? await response.json() : null;
     if (metadata?.channel_id !== "1433570741068234795") return { state: "failed", message: "Free Chat channel could not be verified." };
   } catch { return { state: "failed", message: "Free Chat connection could not be verified. Try again." }; }
+  let payload: ReturnType<typeof freeChatPayload>;
+  try {
+    payload = freeChatPayload(publication, readVisibility());
+  } catch {
+    return { state: "failed", message: "Free Chat post could not be prepared. Check its Premium settings and try again." };
+  }
   const form = new FormData();
-  form.set("payload_json", JSON.stringify({ content: payload.content, allowed_mentions: { parse: ["everyone"] },
+  form.set("payload_json", JSON.stringify({ content: payload.content, ...(payload.suppressEmbeds ? { flags: 4 } : {}), allowed_mentions: { parse: ["everyone"] },
     attachments: payload.images.map((image, id) => ({ id, filename: image.filename, description: image.description })) }));
   payload.images.forEach((image, index) => form.set(`files[${index}]`, new Blob([new Uint8Array(image.bytes)], { type: "image/png" }), image.filename));
   webhook.searchParams.set("wait", "true");

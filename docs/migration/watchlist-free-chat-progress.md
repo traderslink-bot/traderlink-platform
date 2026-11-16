@@ -13,3 +13,10 @@
 - Help update included in exact-parent integration patch; existing mixed checkout files are not staged wholesale.
 - Focused offline checkpoint passed: TypeScript transpile and row-script syntax, dedicated destination validation, post copy, successful delivery, 429 wait, uncertain transport, disposable SQLite duplicate claims, default-off/no history backfill, opt-out cancellation and manual delivery independence. No real webhook/AI requests.
 - Still required: final package review, exact local commits, Coordinator reconciliation, owner-authorized production deployment and hosted end-to-end acceptance. No production readiness claim from syntax/fixture checks alone.
+
+## 2026-11-16 · Premium-aware sharing
+
+- The owner preview and the dedicated Free Chat worker use the same three variants. Premium-only ticker uses a masked heading and generic Watchlist link. A visible ticker with either restricted card gets text and a detail link. Unrestricted shares retain the existing text and images.
+- Restricted sends suppress Discord embeds and omit all attachments. The delivery port reads the three saved settings and confirms member visibility immediately before every attempt, including retry and automatic sends. An unavailable policy prevents the Free Chat attempt. The locked Watchlist views link to Whop for the existing Premium controls, while explicit custom-plan destinations are preserved.
+- The corresponding Runtime change previews the post before manual share, approval or move with Free Chat selected, and explicit Free Chat move retry.
+- Offline evidence: 20 delivery, move, and copy tests, 6 Potential Path/upgrade tests, and all eight variants in an isolated Chromium fixture running the owner script and preview handler. The browser confirmed the manual send begins only after confirmation, and cancel leaves the queue untouched. Transport payloads and rate-limit retries were intercepted. Zero Discord requests or posts. Production was not changed.

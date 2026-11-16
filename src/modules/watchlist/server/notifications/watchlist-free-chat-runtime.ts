@@ -5,6 +5,8 @@ import { readAutomaticAnalysisEvents } from "./watchlist-automatic-notifications
 import { claimFreeChatPost, finishFreeChatPost, queueFreeChatPublication, queueFreeChatMove } from "./watchlist-free-chat-store";
 import { deliverFreeChatPublication, type FreeChatPublication } from "./watchlist-free-chat-delivery";
 
+import { readFreeChatVisibility } from "./watchlist-free-chat-visibility";
+
 type Pending = { post_key: string; cycle_id: string; ticker: string; owner_user_id: string; draft_revision: number | null; approval_revision: number | null; requested_at_ms:number };
 type ReviewEvent = { revision: number; at: number; actor: string; body: { kind: string; draftRevision?: number; approvalRevision?: number; channel?: string; status?: string;
   publication?: { website?: { cards?: { tradersLinkAiRead?: { body?: string } } } } } };
@@ -115,7 +117,7 @@ export async function reconcileFreeChatPublications() {
         const publication = JSON.parse(response.body).publication as FreeChatPublication;
         if (publication.symbol !== post.ticker || publication.cycleId !== post.cycle_id || publication.approvalRevision !== approval.revision) throw Error("Publication mismatch.");
         deliveryStarted = true;
-        const result = await deliverFreeChatPublication(publication);
+        const result = await deliverFreeChatPublication(publication, () => readFreeChatVisibility(post.ticker, true));
         withPlatformDatabase({mode:"runtime"}, db => finishFreeChatPost(db,post.post_key,result));
       } catch {
         withPlatformDatabase({mode:"runtime"}, db => db.prepare(`UPDATE platform_watchlist_free_chat_posts
