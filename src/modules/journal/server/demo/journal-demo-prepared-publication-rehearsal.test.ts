@@ -1,10 +1,11 @@
 // @vitest-environment node
 import { mkdtempSync, rmSync, copyFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { once } from "node:events";
 import { createServer } from "node:http";
+import { execFileSync } from "node:child_process";
 import { Worker } from "node:worker_threads";
 import Database from "better-sqlite3";
 import { test, expect, vi } from "vitest";
@@ -124,11 +125,16 @@ test("publishes the prepared demo atomically while separate reads stay responsiv
     base.close();
     copyFileSync(liveFile,scratchFile);
     copyFileSync(liveFile,moduleTarget);
+    const workerPath = join(root, "journal-demo-setup.cjs");
+    execFileSync(process.execPath, ["scripts/platform/build-journal-demo-worker.cjs", workerPath]);
     const moduleDatabase = new Database(moduleTarget);
     try {
       const published = prepareAndPublishInitialDemo(moduleDatabase, {
         userId, workspaceId, activeAccountId:primaryAccountId, baseCurrency:"USD", tradingTimezone:"America/New_York",
-      }, scratchSchema);
+      }, scratchSchema, input => JSON.parse(execFileSync(process.execPath, [workerPath, "--publish-prepared-demo"], {
+        input: JSON.stringify(input), encoding: "utf8",
+        env: { ...process.env, NODE_PATH: resolve("node_modules"), TRADERLINK_PLATFORM_DB_PATH: moduleTarget },
+      })));
       expect(published.state).toBe("materialized");
       expect(moduleDatabase.prepare("SELECT account_id FROM journal_demo_accounts WHERE workspace_id=? AND created_for_user_id=?").get(workspaceId,userId))
         .toMatchObject({account_id:published.accountId});

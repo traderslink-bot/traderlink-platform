@@ -1,8 +1,9 @@
 import Database from "better-sqlite3";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
-import { prepareAndPublishInitialDemo } from "./journal-demo-prepared-publication";
+import { prepareAndPublishInitialDemo, publishPreparedDemo, type PreparedDemoPublication } from "./journal-demo-prepared-publication";
 import { parentPort, workerData } from "node:worker_threads";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -29,7 +30,19 @@ function materializeDemo(database: Database.Database, scope: WorkspaceAccessScop
   return prepareAndPublishInitialDemo(database, {
     userId: scope.userId, workspaceId: scope.workspaceId, activeAccountId: account.accountId,
     baseCurrency: account.baseCurrency, tradingTimezone: account.tradingTimezone,
-  }, join(dirname(__filename), "journal-demo-schema.sqlite"));
+  }, join(dirname(__filename), "journal-demo-schema.sqlite"), input => {
+    // Node SQLite and better-sqlite3 must not open the same file in the same
+    // PID. SQLite's POSIX file-lock bookkeeping is local to each library.
+    const result = execFileSync(process.execPath, [__filename, "--publish-prepared-demo"], {
+      input: JSON.stringify(input), encoding: "utf8", maxBuffer: 64 * 1024,
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        NODE_PATH: process.env.NODE_PATH,
+        TRADERLINK_PLATFORM_DB_PATH: process.env.TRADERLINK_PLATFORM_DB_PATH,
+      },
+    });
+    return JSON.parse(result);
+  });
 }
 
 function activate(scope: WorkspaceAccessScope, activeAccountId: string) {
@@ -104,4 +117,15 @@ if (!parentPort && process.argv[2] === "--prepare-schema" && process.argv[3]) {
   } finally {
     scratch.close();
   }
+}
+
+
+// Only a worker-owned child enters this path. The web process and its worker
+// keep using better-sqlite3. This child is the only native handle on the file.
+if (!parentPort && process.argv[2] === "--publish-prepared-demo") {
+  const input = JSON.parse(readFileSync(0, "utf8")) as PreparedDemoPublication;
+  if (input.databasePath !== process.env.TRADERLINK_PLATFORM_DB_PATH) {
+    throw new Error("prepared_demo_database_path");
+  }
+  process.stdout.write(JSON.stringify(publishPreparedDemo(input)));
 }

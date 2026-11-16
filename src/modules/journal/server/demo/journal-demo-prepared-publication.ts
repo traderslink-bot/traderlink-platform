@@ -44,6 +44,15 @@ const publicationTables = new Set([
 type ReferenceTable = "journal_demo_pack_versions" | "level_analysis_market_session_sets" | "level_analysis_market_session_set_versions";
 type ReferenceRow = Record<string, SQLInputValue>;
 type Reference = Readonly<{ table: ReferenceTable; row: ReferenceRow }>;
+export type PreparedDemoPublication = Readonly<{
+  databasePath: string;
+  device: number;
+  inode: number;
+  scope: InitialDemoScope;
+  bytes: string;
+  accountId: string;
+  references: readonly Reference[];
+}>;
 
 function seedReference(database: DatabaseSync, { table, row }: Reference): void {
   const columns = Object.keys(row);
@@ -86,15 +95,18 @@ ORDER BY v.revision_number DESC LIMIT 1`);
   return { pack, references };
 }
 
-function publish(
-  databasePath: string,
-  scope: InitialDemoScope,
-  bytes: Uint8Array,
-  accountId: string,
-  references: readonly Reference[],
-): JournalDemoMaterializationResult {
+export function publishPreparedDemo(input: PreparedDemoPublication): JournalDemoMaterializationResult {
+  const { databasePath, device, inode, scope, accountId, references } = input;
+  const bytes = Buffer.from(input.bytes, "base64");
+  if (bytes.byteLength === 0 || bytes.byteLength > 8 * 1024 * 1024) return unavailable;
+  const matchesFile = () => {
+    const current = statSync(databasePath);
+    return current.dev === device && current.ino === inode;
+  };
+  if (!matchesFile()) return unavailable;
   const database = new DatabaseSync(databasePath);
   try {
+    if (!matchesFile()) return unavailable;
     database.exec("PRAGMA busy_timeout=250; BEGIN IMMEDIATE");
     const owner = database.prepare(`SELECT 1 FROM platform_workspace_memberships m
 JOIN platform_users u ON u.user_id=m.user_id
@@ -140,6 +152,7 @@ export function prepareAndPublishInitialDemo(
   authoritative: Database.Database,
   scope: InitialDemoScope,
   scratchSchemaPath: string,
+  publish: (input: PreparedDemoPublication) => JournalDemoMaterializationResult,
 ): JournalDemoMaterializationResult {
   const before = statSync(authoritative.name);
   let inputs: ReturnType<typeof readInitialInputs>;
@@ -179,7 +192,10 @@ export function prepareAndPublishInitialDemo(
       if (before.dev !== after.dev || before.ino !== after.ino) return unavailable;
       const started = performance.now();
       try {
-        return publish(authoritative.name, scope, bytes, result.accountId, inputs.references);
+        return publish({
+          databasePath: authoritative.name, device: before.dev, inode: before.ino, scope,
+          bytes: Buffer.from(bytes).toString("base64"), accountId: result.accountId, references: inputs.references,
+        });
       } finally {
         console.info("journal_demo_publication_timing", { durationMs: Math.round(performance.now() - started) });
       }
