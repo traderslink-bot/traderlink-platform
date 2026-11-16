@@ -6,6 +6,7 @@ import { createJournalDemoFinancialPack } from "./journal-demo-canonical-fact-ma
 import {
   createJournalDemoDailyTrackerFinancialPackSource,
   type JournalDemoFinancialPackSource,
+  type JournalDemoVerifiedMarketDaysInput,
 } from "./journal-demo-financial-pack-source";
 import { readJournalDemoImmutableMarketDataPack } from "./journal-demo-immutable-market-data-pack";
 import { createJournalDemoV2JournalOnlyPackSource } from "./journal-demo-v2-journal-only-pack-source";
