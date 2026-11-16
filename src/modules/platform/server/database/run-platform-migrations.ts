@@ -130,6 +130,8 @@ type PlatformMigrationRunOptions = Readonly<{
   beforeMigrationBoundary?: (phase: "begin" | "statements" | "commit") => void;
   /** Commit the entire pending suffix together. Requires foreign keys to stay enabled. */
   atomicSuffix?: boolean;
+  /** Validate release-specific invariants while the atomic suffix can still roll back. */
+  verifyAtomicSuffix?: (result: PlatformMigrationRunResult) => void;
 }>;
 
 export function runPlatformMigrations(
@@ -147,6 +149,7 @@ export function runPlatformMigrations(
       platformFailure("TRADERLINK_MIGRATION_FAILED", { migrationPhase: "atomic_suffix_foreign_keys" });
     }
     const result = applyPlatformMigrations(database, options);
+    options.verifyAtomicSuffix?.(result);
     options.beforeMigrationBoundary?.("commit");
     return result;
   }).immediate();

@@ -34,18 +34,24 @@ function advance(file, liveWrite, deadline) {
     const readLedger = () => db.prepare('SELECT migration_id,module_namespace,execution_order,checksum_sha256 FROM platform_schema_migrations ORDER BY execution_order').all();
     assert.deepEqual(readLedger(), plan.ledger.slice(0, prefix.length));
     let admitted = false;
-    const result = runPlatformMigrations(db, { manifest, atomicSuffix: true, beforeMigrationBoundary(phase) {
-      assert(Date.now() < deadline, 'migration deadline reached');
-      if (liveWrite && !admitted && phase === 'statements') {
-        assert(Date.now() + 30 * 60000 < deadline, 'insufficient recovery time before live statements');
-        save('live-admission', { at: new Date().toISOString(), pendingIds });
-        admitted = true;
-      }
-    } });
-    assert.deepEqual([...result.appliedMigrationIds], pendingIds);
-    assert.deepEqual(readLedger(), plan.ledger);
-    assert.equal(result.finalSchemaSha256, targetDigest);
-    assert.deepEqual(counts(), before);
+    const result = runPlatformMigrations(db, {
+      manifest,
+      atomicSuffix: true,
+      beforeMigrationBoundary(phase) {
+        assert(Date.now() < deadline, 'migration deadline reached');
+        if (liveWrite && !admitted && phase === 'statements') {
+          assert(Date.now() + 30 * 60000 < deadline, 'insufficient recovery time before live statements');
+          save('live-admission', { at: new Date().toISOString(), pendingIds });
+          admitted = true;
+        }
+      },
+      verifyAtomicSuffix(result) {
+        assert.deepEqual([...result.appliedMigrationIds], pendingIds);
+        assert.deepEqual(readLedger(), plan.ledger);
+        assert.equal(result.finalSchemaSha256, targetDigest);
+        assert.deepEqual(counts(), before);
+      },
+    });
     db.pragma('wal_checkpoint(TRUNCATE)');
     return { schema: result.finalSchemaSha256, counts: before };
   } finally {
