@@ -2,7 +2,8 @@
 
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { isWorkspaceSignInNavigation } from "./workspace-sign-in-navigation";
 
 function subscribe(listener: () => void): () => void {
   window.addEventListener("popstate", listener);
@@ -21,12 +22,28 @@ function destination(): string | null {
     ? url.pathname + url.search : "/workspace";
 }
 
-export function NavigationRecoveryNotice() {
+export function NavigationRecoveryNotice({ children }: { children: ReactNode }) {
   const path = useSyncExternalStore(subscribe, destination, () => null);
-  if (!path) return null;
-  return <Alert severity="info" sx={{ mb: 2 }} action={
-    <Button color="inherit" href={path}>Try again</Button>
-  }>
-    The live page could not load. Try again, or use any saved information below.
-  </Alert>;
+  const recoveredUrl = path ? new URL(path, window.location.origin) : null;
+  const signInRecovery = recoveredUrl !== null && isWorkspaceSignInNavigation(recoveredUrl);
+  const alreadyRetried = recoveredUrl?.searchParams.get("workspaceRetry") === "1";
+  if (signInRecovery) recoveredUrl.searchParams.set("workspaceRetry", "1");
+  const retryPath = signInRecovery ? recoveredUrl.pathname + recoveredUrl.search : path;
+
+  useEffect(() => {
+    if (!signInRecovery || alreadyRetried || !retryPath || !navigator.onLine) return;
+    const timer = window.setTimeout(() => window.location.replace(retryPath), 750);
+    return () => window.clearTimeout(timer);
+  }, [alreadyRetried, retryPath, signInRecovery]);
+
+  return <>
+    {retryPath && <Alert severity="info" role="status" sx={{ mb: 2 }} action={
+      <Button color="inherit" href={retryPath}>Try again</Button>
+    }>
+      {signInRecovery
+        ? "You’re signed in. Workspace is taking longer than expected to load."
+        : "The live page could not load. Try again, or use any saved information below."}
+    </Alert>}
+    {!signInRecovery && children}
+  </>;
 }

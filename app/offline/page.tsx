@@ -13,8 +13,9 @@ export default function OfflinePage() {
   return (
     <OfflineAppearanceBoundary>
       <DashboardShell offline>
-        <NavigationRecoveryNotice />
-        <OfflineRouteContent />
+        <NavigationRecoveryNotice>
+          <OfflineRouteContent />
+        </NavigationRecoveryNotice>
       </DashboardShell>
     </OfflineAppearanceBoundary>
   );

@@ -4,6 +4,7 @@ import type {
   SerwistPlugin,
 } from "serwist";
 import { NetworkOnly, Serwist } from "serwist";
+import { isWorkspaceSignInNavigation } from "./pwa/workspace-sign-in-navigation";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -131,6 +132,14 @@ const serwist = new Serwist({
     cleanupOutdatedCaches: true,
   },
   runtimeCaching: [
+    {
+      matcher: ({ request, sameOrigin, url }) =>
+        sameOrigin && request.mode === "navigate" && isWorkspaceSignInNavigation(url),
+      handler: new NetworkOnly({
+        networkTimeoutSeconds: 8,
+        plugins: [offlineNavigationPlugin],
+      }),
+    },
     {
       matcher: ({ request, sameOrigin }) =>
         sameOrigin && request.mode === "navigate",
