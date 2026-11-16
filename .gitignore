@@ -70,3 +70,4 @@ public/swe-worker-*.js.map
 
 # Isolated registered feature preview output
 /.next-feature-previews/
+/workers/journal-demo-setup.cjs

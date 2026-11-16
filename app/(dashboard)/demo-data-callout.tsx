@@ -123,6 +123,23 @@ function ClearDemoDataAction({
   );
 }
 
+async function activateDemoTradeTracker(signal?: AbortSignal): Promise<void> {
+  // A different request can already be preparing demo data on the worker.
+  for (let attempt = 0; attempt <= 60; attempt++) {
+    const response = await fetch("/api/platform/journal/demo/activate", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
+      signal,
+    });
+    if (response.ok) return;
+    if (response.status !== 503 || !response.headers.has("retry-after")) break;
+    await new Promise(resolve => setTimeout(resolve, 3_000));
+    signal?.throwIfAborted();
+  }
+  throw new Error("demo_unavailable");
+}
+
 function OpenDemoTradeTrackerAction() {
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -132,15 +149,7 @@ function OpenDemoTradeTrackerAction() {
     setWorking(true);
     setError(null);
     try {
-      const response = await fetch("/api/platform/journal/demo/activate", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
-      });
-      if (!response.ok) {
-        setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
-        return;
-      }
+      await activateDemoTradeTracker();
       window.location.assign("/workspace");
     } catch {
       setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
@@ -168,33 +177,22 @@ export function DemoTradeTrackerInvitation({
   const [working, setWorking] = useState(true);
 
   useEffect(() => {
-    let active = true;
-    void (async () => {
-      try {
-        const response = await fetch("/api/platform/journal/demo/activate", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
-        });
-        if (!response.ok) {
-          if (active) {
-            setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
-            setWorking(false);
-          }
-          return;
-        }
-        window.location.assign("/workspace");
-      } catch {
-        if (active) {
-          setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
-          setWorking(false);
-        }
-      }
-    })();
-    return () => { active = false; };
+    const controller = new AbortController();
+    void activateDemoTradeTracker(controller.signal).then(() => {
+      if (!controller.signal.aborted) window.location.assign("/workspace");
+    }).catch(() => {
+      if (controller.signal.aborted) return;
+      setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
+      setWorking(false);
+    });
+    return () => controller.abort();
   }, []);
 
-  if (working) return null;
+  if (working) return (
+    <Alert severity="info" role="status">
+      Preparing your Demo Trade Tracker. You can use the menu while it loads.
+    </Alert>
+  );
 
   return (
     <Box

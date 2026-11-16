@@ -1,7 +1,5 @@
+import { runJournalDemoSetup } from "@/src/modules/journal/server/demo/journal-demo-setup";
 import { deriveJournalAccountSelectionRef } from "@/src/modules/platform/contracts/journal-account-selection";
-import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
-import { JournalDemoAccountActivationService } from "@/src/modules/journal/server/demo/journal-demo-account-activation-service";
-import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {
   serializeJournalAccountSelectionCookie,
@@ -12,7 +10,6 @@ import {
   isTraderLinkPlatformError,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,23 +22,12 @@ export async function POST(request: Request): Promise<Response> {
     if (scope.workspaceRole !== "owner" || !activeAccountId) {
       platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
     }
-    const activation = withPlatformDatabase({ mode: "runtime" }, (database) => {
-      const activeDemoAccount = new JournalDemoAccountRepository(database).findActiveAccount(scope);
-      const activeAccount = new JournalAccountRepository(database).findActiveAccount(
-        scope.workspaceId,
-        activeAccountId,
-      );
-      if (!activeAccount) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-      return Object.freeze({
-        activeAccountIsDemo: activeDemoAccount !== null,
-        result: new JournalDemoAccountActivationService(database).activateForWorkspace({
-          baseCurrency: activeAccount.baseCurrency,
-          tradingTimezone: activeAccount.tradingTimezone,
-          userId: scope.userId,
-          workspaceId: scope.workspaceId,
-        }),
+    const activation = await runJournalDemoSetup({ operation: "activate", scope, activeAccountId });
+    if (!activation) {
+      return Response.json({ status: "pending" }, {
+        status: 503, headers: { "cache-control": "no-store", "retry-after": "3" },
       });
-    });
+    }
     const result = activation.result;
     if (result.state !== "materialized" || !result.accountId) {
       return Response.json(

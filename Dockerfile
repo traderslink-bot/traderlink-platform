@@ -21,6 +21,7 @@ COPY . .
 RUN npm run build
 RUN node scripts/platform/analyzer-0186-bundle.cjs
 RUN node scripts/platform/build-erasure-worker.cjs --out-dir /app/erasure-worker
+RUN node scripts/platform/build-journal-demo-worker.cjs /app/demo-worker/journal-demo-setup.cjs
 RUN node scripts/platform/build-news-maintenance-command-20261028.cjs
 
 FROM base AS runtime
@@ -38,6 +39,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=dependencies --chown=nextjs:nodejs /app/bin/traderlink-integrity-cache-release ./bin/traderlink-integrity-cache-release
 COPY --from=builder --chown=nextjs:nodejs /app/erasure-worker ./workers
+COPY --from=builder --chown=nextjs:nodejs /app/demo-worker/journal-demo-setup.cjs ./workers/journal-demo-setup.cjs
 COPY --from=builder --chown=nextjs:nodejs /app/news-maintenance/news-general-0185-maintenance.cjs ./workers/news-general-0185-maintenance.cjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/analyzer-maintenance/migrate.cjs ./analyzer-0186-migrate.cjs

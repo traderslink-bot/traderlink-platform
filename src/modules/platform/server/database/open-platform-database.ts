@@ -1108,6 +1108,26 @@ export function openPlatformDatabase(
   }
 }
 
+/** A short-lived writer shares the web process's integrity scan lane. */
+export function withPlatformWorkerDatabase<T>(operation: (database: Database.Database) => T): T {
+  const { databasePath } = resolvePlatformDatabaseConfig();
+  const before = statSync(databasePath);
+  if (before.size === 0) platformFailure("TRADERLINK_PLATFORM_DATABASE_EMPTY");
+  const database = new Database(databasePath, { fileMustExist: true, timeout: 5000 });
+  try {
+    configurePlatformDatabaseConnection(database, "runtime");
+    verifyPlatformDatabaseConnectionPragmas(database);
+    verifyPlatformDatabaseStructureAfterDataChange(database, runtimeVerificationManifest(database, process.env));
+    const after = statSync(databasePath);
+    if (before.dev !== after.dev || before.ino !== after.ino) {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "database_identity_changed" });
+    }
+    return operation(database);
+  } finally {
+    database.close();
+  }
+}
+
 export function withPlatformDatabase<T>(
   options: Parameters<typeof openPlatformDatabase>[0],
   operation: (database: Database.Database) => T,

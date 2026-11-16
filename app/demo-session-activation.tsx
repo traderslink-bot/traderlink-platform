@@ -13,6 +13,7 @@ export function DemoSessionActivation({ scopeRef }: { scopeRef: string }) {
     let completed = false;
     let after: string | null = null;
     let changed = false;
+    let busyRetries = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const controller = new AbortController();
     const ensure = async () => {
@@ -24,7 +25,13 @@ export function DemoSessionActivation({ scopeRef }: { scopeRef: string }) {
           signal: controller.signal,
           headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
         });
+        if (response.status === 503 && response.headers.has("retry-after") && active && busyRetries < 60) {
+          busyRetries += 1;
+          timer = setTimeout(() => void ensure(), 3_000);
+          return;
+        }
         if (!response.ok) return;
+        busyRetries = 0;
         const result = await response.json() as { status?: string; changed?: boolean; nextAfter?: string | null };
         if (!active) return;
         changed ||= result.changed === true;

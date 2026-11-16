@@ -2,11 +2,16 @@ import { beforeEach, expect, test, vi } from "vitest";
 const mocks=vi.hoisted(()=>({security:vi.fn(),scope:vi.fn(),lifecycle:vi.fn(),account:vi.fn(),pack:vi.fn(),refresh:vi.fn(),activate:vi.fn(),findActive:vi.fn()}));
 vi.mock("@/src/modules/platform/server/authentication/journal-mutation-request-security",()=>({requireJournalMutationRequest:mocks.security}));
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope",()=>({requireTraderLinkPlatformRequestScope:mocks.scope}));
-vi.mock("@/src/modules/platform/server/database/open-platform-database",()=>({withPlatformDatabase:(_options:unknown,callback:(db:unknown)=>unknown)=>callback({})}));
+vi.mock("@/src/modules/platform/server/database/open-platform-database",()=>({withPlatformWorkerDatabase:(callback:(db:unknown)=>unknown)=>callback({})}));
 vi.mock("./journal-demo-account-repository",()=>({JournalDemoAccountRepository:class{findLifecycleForUser=mocks.lifecycle;findAccountForUser=mocks.account;findPackApplication=mocks.pack;}}));
 vi.mock("./journal-demo-materializer",()=>({JournalDemoMaterializer:class{refreshExistingAnalysis=mocks.refresh;}}));
 vi.mock("./journal-demo-account-activation-service",()=>({JournalDemoAccountActivationService:class{activateForWorkspace=mocks.activate;}}));
 vi.mock("../accounts/journal-account-repository",()=>({JournalAccountRepository:class{findActiveAccount=mocks.findActive;}}));
+vi.mock("./journal-demo-setup", async () => {
+  const { ensureJournalDemo } = await import("./journal-demo-setup-worker");
+  return { runJournalDemoSetup: (command: { scope: Parameters<typeof ensureJournalDemo>[0]; after: string | null }) =>
+    ensureJournalDemo(command.scope, command.after) };
+});
 import { POST } from "@/app/api/platform/journal/demo/ensure/route";
 import { JOURNAL_DEMO_CURRENT_VERSION_ID } from "./journal-demo-current-version";
 const scope={userId:"owner",workspaceId:"workspace",workspaceRole:"owner",activeAccountId:"real"};
