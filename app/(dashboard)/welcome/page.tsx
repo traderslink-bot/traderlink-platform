@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { DashboardPage, DashboardPanel } from "@/app/dashboard-template";
+import { pressReleaseChannelDefinition } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { PLATFORM_HOME_PAGES } from "@/src/modules/platform/contracts/platform-home-page";
 import { hasGeneralMarketNewsAccess } from "@/src/modules/news/server/general-market-news-access";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
@@ -56,10 +57,18 @@ export default async function WelcomePage() {
     ...(homePages.screeners ? [PLATFORM_HOME_PAGES.screeners] : []),
     ...(dashboard ? [{ href: "/charts", label: "Market Charts" }] : [{ href: "/plans", label: "Explore Trading Tools plans" }]),
   ];
+  const pressReleaseLinks = dashboard && hasPressReleaseDashboardAccess(identity)
+    ? ([
+        "news_filtered",
+        "market_cap_under_30m",
+        "market_cap_30m_to_50m",
+        "market_cap_50m_to_100m",
+      ] as const).map(pressReleaseChannelDefinition)
+    : [];
   const newsLinks = [
     ...(weekAhead ? [{ href: "/market-news/week-ahead", label: "The Week Ahead" }] : []),
     ...(dashboard && hasGeneralMarketNewsAccess(identity) ? [{ href: "/market-news/general", label: "General Market News" }] : []),
-    ...(dashboard && hasPressReleaseDashboardAccess(identity) ? [{ href: "/press-releases/news-filtered", label: "News Scanner" }] : []),
+    ...pressReleaseLinks,
   ];
   const journalLinks = [
     ...(journal ? [PLATFORM_HOME_PAGES["journal-workspace"]] : [{ href: "/plans?feature=journal.access", label: "Explore Trading Journal plans" }]),

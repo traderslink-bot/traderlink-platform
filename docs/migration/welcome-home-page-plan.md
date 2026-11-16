@@ -17,6 +17,7 @@ Trading Tools comes first visually and in keyboard order. The Settings field sta
 - [x] Verified the assigned branch and production-base commit. Mapped app entry, login returns, route access and offline navigation.
 - [x] Owner approved the proposed first pass, with Trading Tools first.
 - [x] Implement and verify isolated routing, migration, persistence, permissions and UI.
+- [x] Add the three market-cap Press Releases links to the Welcome Market News card for users with existing Press Releases access.
 - [ ] Owner review of the preview.
 
 ## Verification
@@ -24,6 +25,8 @@ Trading Tools comes first visually and in keyboard order. The Settings field sta
 - Focused auth, return-target, dashboard-template and migration checks passed. The final migration and access run passed 17 tests across three files. The existing migration suite needed a 20-second per-test timeout on the VPS.
 - Isolated Chromium passed Light desktop and 320px Navy Dark portrait. It exercised keyboard selection, a failed save and retry, persistence, signed-out entry and fresh email sign-in, remembered entry, manifest URL launch, fallback after an unavailable setting, and a direct Journal Workspace query while Scanners was the saved home. Demo API calls were intercepted with an unavailable response during the browser run.
 - Scoped lint passed. The changed Workspace and shared shell still report existing timing-purity and hook-dependency diagnostics. The full type check reported the existing missing `jsdom` declaration in `feature-page-embed-host.test.ts`. The production build, browser-specific updates of older installations and hosted staging review remain pending.
+
+- The market-cap link addition passed scoped lint, all seven dashboard-template checks and isolated Chromium navigation to each channel. The card fits a 320px viewport, and an account without Press Releases access retains the public Market News link. The existing Help Center instructions for these channels still apply.
 
 ## Hosted integration
 
