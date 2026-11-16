@@ -1,8 +1,8 @@
 "use server";
+import {requireCoachingPilotPageIdentity} from "@/src/modules/communities/server/coaching-pilot-request-identity";
 import {TradeAnalysisPage,type TradeAnalysisResourceModel} from '../analytics/trade-analysis-page';
 import {readScopedCoachingAnalyzerEvidence} from "./coaching-analyzer-evidence-reader";
 import type {ReactNode} from "react";
-import {requireTraderLinkPlatformPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {coachingReviewResourceScope} from "@/src/modules/communities/server/coaching-review-resource-scope";
@@ -23,7 +23,7 @@ export type CoachingExplorerModel={kind:'explorer'|'compare';model:TradeExplorer
 
 export async function loadCoachingReviewResource(communitySlug:string,reviewId:string,resourceId:CoachingResourceId,parameters:Record<string,string>={}):Promise<{content:ReactNode;analyzerModel:TradeAnalysisResourceModel|null;analyticsModel:CoachingAnalyticsModel|null;explorerModel:CoachingExplorerModel|null;rulesModel:Awaited<ReturnType<typeof readRuleResults>>|null;error:string|null}>{
  try{
-  const identity=await requireTraderLinkPlatformPageIdentity();
+  const identity=await requireCoachingPilotPageIdentity();
   await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,reviewId,existingCoachingOnly:true});
   const access=withReadonlyPlatformDatabase({},db=>coachingReviewResourceScope(db,{coachUserId:identity.scope.userId,reviewId,communitySlug}));
   const resource=coachingResource(resourceId);if(!resource)throw new Error("Resource unavailable.");
@@ -63,7 +63,7 @@ export async function loadCoachingReviewResource(communitySlug:string,reviewId:s
 }
 
 async function verifiedAccess(communitySlug:string,reviewId:string){
- const identity=await requireTraderLinkPlatformPageIdentity();await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,reviewId,existingCoachingOnly:true});
+ const identity=await requireCoachingPilotPageIdentity();await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,reviewId,existingCoachingOnly:true});
  return withReadonlyPlatformDatabase({},db=>coachingReviewResourceScope(db,{coachUserId:identity.scope.userId,reviewId,communitySlug}));
 }
 function permittedQuery(access:Awaited<ReturnType<typeof verifiedAccess>>,input:unknown){

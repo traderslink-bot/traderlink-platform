@@ -1,3 +1,4 @@
+import {hasWatchlistDashboardNavigationAccess} from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import {headers} from "next/headers";
 import {readCommunityHistoryEntry} from "@/src/modules/communities/contracts/community-history-entry";
 import {requireTraderLinkPlatformAuthenticatedPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -19,6 +20,7 @@ export async function loadCommunityDashboard(communitySlug:string,path?:string):
 }
 async function loadAuthorizedCoachingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot;isReview:boolean}>>{
  const identity=await requireTraderLinkPlatformServerComponentPageIdentity(),requested=path??`/communities/${communitySlug}`,suffix=requested.slice(`/communities/${communitySlug}`.length);
+ if (/^\/(workspace|coaches|coaching)(?:\/|$)/.test(suffix)&&!hasWatchlistDashboardNavigationAccess(identity))notFound();
  const historyPath=suffix==="/coaching"||suffix==="/workspace"||suffix==="/workspace/students"||/^\/workspace\/students\/[^/?#]+(?:\/reviews\/[^/?#]+(?:\/final)?)?$/.test(suffix);
  const existingCoachingPage=historyPath||/^\/workspace\/(coachingwork|reviews|sessions|teaching)$/.test(suffix);let historyOnly=false;
  try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,existingCoachingOnly:existingCoachingPage,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}catch(error){if(!historyPath)throw error;historyOnly=true;}
@@ -50,6 +52,7 @@ export async function loadCommunityRetainedHistory() {
  if(entry==="invalid")notFound();
  if(!entry)return null;
  const identity=await requireTraderLinkPlatformAuthenticatedPageIdentity();
+ if(!hasWatchlistDashboardNavigationAccess(identity))notFound();
  try{return withReadonlyPlatformDatabase({},db=>new TraderLinkCommunityPlatformRepository(db).readRetainedHistory(entry,identity.scope.userId));}
  catch(error){if(isTraderLinkPlatformError(error)&&(error.code==="TRADERLINK_WORKSPACE_ACCESS_DENIED"||error.code==="TRADERLINK_WORKSPACE_NOT_FOUND"))notFound();throw error;}
 }

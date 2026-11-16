@@ -1,6 +1,7 @@
 "use server";
+import {requireCoachingPilotPageIdentity} from "@/src/modules/communities/server/coaching-pilot-request-identity";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
-import {requireTraderLinkPlatformPageIdentity,currentJournalAccountSelectionRef} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {currentJournalAccountSelectionRef} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {TraderLinkCommunityCoachJournalReadService} from "@/src/modules/communities/server/traderlink-community-coach-journal-read-service";
 import {readTradeExplorerPageModel,runTradeExplorerQuery} from "../analytics/trade-explorer/trade-explorer-service";
@@ -8,7 +9,7 @@ import {coachingReviewResourceScope} from "@/src/modules/communities/server/coac
 import {getReplacementDailyTradeAnalyzerReplay} from "../trade-tracker/trade-tracker-platform-data";
 
 async function analysisScope(relationshipId:string){
- const identity=await requireTraderLinkPlatformPageIdentity();
+ const identity=await requireCoachingPilotPageIdentity();
  await requireCommunityRequestAccess({userId:identity.scope.userId,relationshipId,existingCoachingOnly:true});
  return withReadonlyPlatformDatabase({},db=>new TraderLinkCommunityCoachJournalReadService(db).readAnalysisScope({coachUserId:identity.scope.userId,relationshipId}));
 }
@@ -25,7 +26,7 @@ export async function loadCoachingAnalysisAction(relationshipId:string,input?:un
 }
 export async function loadCoachingAnalyzerAction(communitySlug:string,reviewId:string,roundTripId:string){
  try{
-  const identity=await requireTraderLinkPlatformPageIdentity();
+  const identity=await requireCoachingPilotPageIdentity();
   const request={userId:identity.scope.userId,slug:communitySlug,reviewId,existingCoachingOnly:true} as const;
   await requireCommunityRequestAccess(request);
   const input={coachUserId:identity.scope.userId,reviewId,communitySlug};

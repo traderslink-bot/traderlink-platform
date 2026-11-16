@@ -1,4 +1,5 @@
 "use server";
+import {requireCoachingPilotIdentity} from "@/src/modules/communities/server/coaching-pilot-request-identity";
 import {JournalRuleRepository} from '@/src/modules/journal/server/annotations/journal-rule-repository';
 import {narrowWorkspaceAccessToAccount} from '@/src/modules/platform/contracts/workspace-access-scope';
 import {JOURNAL_RULE_TEMPLATE_CATALOG} from '@/src/modules/journal/server/annotations/journal-trading-rules-dashboard';
@@ -20,7 +21,7 @@ import {matchesIndependentCoachingTrade} from '@/src/modules/communities/contrac
 import {independentCoachingReviewPeriod} from '@/src/modules/communities/contracts/independent-coaching-review-period';
 
 async function accessFor(reviewId:string,rules:boolean){
- const identity=await requireTraderLinkPlatformBillingPageIdentity();
+ const identity=requireCoachingPilotIdentity(await requireTraderLinkPlatformBillingPageIdentity());
  return withReadonlyPlatformDatabase({},db=>{
   const review=new IndependentCoachingRepository(db).review(reviewId,identity.scope.userId);
   if(!['ready','draft','delivered'].includes(review.status))throw new Error('Submit the review work before opening reports.');
@@ -148,7 +149,7 @@ export async function loadIndependentCoachingStudentRules(reviewId:string,view:'
 export async function loadIndependentPerformanceHistory(reviewId:string,key?:string,page=0){
  try{
   if(typeof reviewId!=='string'||key!==undefined&&(typeof key!=='string'||key.length>20000)||!Number.isSafeInteger(page)||page<0)throw new Error('Choose an available history page.');
-  const identity=await requireTraderLinkPlatformBillingPageIdentity();
+  const identity=requireCoachingPilotIdentity(await requireTraderLinkPlatformBillingPageIdentity());
   const {readPerformanceSnapshots,performanceHistoryPage}=await import('@/src/modules/communities/server/independent-coaching-performance-history');
   return withReadonlyPlatformDatabase({},db=>{const repository=new IndependentCoachingRepository(db),review=repository.review(reviewId,identity.scope.userId),enrollment=repository.enrollment(review.enrollmentId,identity.scope.userId);if(!review.journalAccountId)throw new Error('This review has no historical account.');const history=performanceHistoryPage(readPerformanceSnapshots(db,{coachUserId:enrollment.coach_user_id,studentUserId:enrollment.student_user_id,accountId:review.journalAccountId}),key,page);return {available:true as const,...JSON.parse(JSON.stringify(history)) as typeof history};});
  }catch{return {available:false as const,error:'Performance history is unavailable for this review.'};}
