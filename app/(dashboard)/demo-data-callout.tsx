@@ -16,6 +16,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
+import { isTradeJournalNavigationPath } from "../dashboard-navigation";
+
 const CLEAR_CONFIRMATION = "DELETE ACCOUNT";
 
 function normalizedConfirmation(value: string): string {
@@ -259,13 +261,10 @@ export function DemoDataCallout({
           Viewing Demo Data
         </Typography>
         <Typography sx={{ color: demoBodyColor }} variant="body2">
-          Your account has been preloaded with demo data so you can explore the dashboard and see how everything looks with real trading activity. The demo contains August trades only. You can explore the available trading days throughout August, and the Session Tracker opens to August 27 by default.
+          Your Trade Journal account is preloaded with sample trades from August. Explore the sample trade history, notes, and performance summaries to see how the Journal works. Session Tracker opens to August 27 by default, and you can switch to any available trading day in August.
         </Typography>
         <Typography sx={{ color: demoBodyColor }} variant="body2">
-          Take a tour, explore the features, and get familiar with the platform. When you&apos;re ready, you can start adding your own trades.
-        </Typography>
-        <Typography sx={{ color: demoBodyColor }} variant="body2">
-          Ready to start tracking your own journey? Use the Session Tracker to record trades, review your performance, and learn from every decision.
+          When you’re ready to track your own trades, clear the demo data and start fresh.
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
           <Button href="/trade-tracker" variant="contained">
@@ -284,7 +283,7 @@ export function DemoDataAccountIndicator({
   expectedAccountSelectionRef: string | null;
 }) {
   const pathname = usePathname();
-  if (!expectedAccountSelectionRef || pathname === "/workspace") return null;
+  if (!expectedAccountSelectionRef || pathname === "/workspace" || !isTradeJournalNavigationPath(pathname)) return null;
   return (
     <Box sx={{ mb: 1.5, maxWidth: 980 }}>
       <DemoDataCallout
