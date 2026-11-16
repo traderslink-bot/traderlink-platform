@@ -1,4 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import {
   applyPatch,
@@ -155,6 +160,35 @@ describe("LiveWatchlistStore", () => {
     process.env.LIVE_WATCHLIST_DB_PATH = originalPath;
     resetLiveWatchlistStoreForTests();
   });
+
+  it("yields the app thread while another connection holds the SQLite writer lock", async () => {
+    const root = mkdtempSync(join(tmpdir(), "watchlist-writer-yield-"));
+    const databasePath = join(root, "test.sqlite");
+    const otherWriter = openPlatformDatabase({ mode: "initializer", databasePath });
+    try {
+      runPlatformMigrations(otherWriter);
+      process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+      process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
+      const store = new LiveWatchlistStore();
+      const base = { type: "tickerData", symbol: "ABCD", status: "live", updatedAt: 1000 } as const;
+      await store.upsertTickerData({ ...base, latestPrice: 1 });
+      otherWriter.exec("BEGIN IMMEDIATE");
+      const started = performance.now();
+      const next = store.upsertTickerData({ ...base, updatedAt: 2000, latestPrice: 2 });
+      const release = setTimeout(() => otherWriter.exec("COMMIT"), 75);
+      try {
+        expect((await next).latestPrice).toBe(2);
+        expect(performance.now() - started).toBeLessThan(1500);
+      } finally {
+        clearTimeout(release);
+      }
+    } finally {
+      if (otherWriter.inTransaction) otherWriter.exec("ROLLBACK");
+      otherWriter.close();
+      resetLiveWatchlistStoreForTests();
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 15_000);
 
   it("normalizes Neon bigint timestamp strings for archive rows", () => {
     expect(normalizeLiveWatchlistTimestamp("1782069488260")).toBe(1782069488260);

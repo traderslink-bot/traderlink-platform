@@ -1067,7 +1067,7 @@ export class LiveWatchlistStore {
     }
 
     const db = await getSqliteDatabase();
-    const next = db.transaction(() => {
+    const write = db.transaction(() => {
       const row = db.prepare("SELECT state_json FROM live_watchlist_symbols WHERE symbol = ?").get(symbol) as { state_json: string } | undefined;
       const existing = row ? parseState(row.state_json) : null;
     const next = applyTickerDataPatch(existing, { ...patch, symbol });
@@ -1083,8 +1083,23 @@ export class LiveWatchlistStore {
       `,
     ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
       return next;
-    })();
-    return next;
+    });
+    const deadline = Date.now() + 5_000;
+    // SQLite's synchronous busy wait would freeze unrelated requests on the
+    // app thread. Retry the entire transaction after yielding to that thread.
+    for (;;) {
+      const originalTimeout = db.pragma("busy_timeout", { simple: true });
+      db.pragma("busy_timeout = 0");
+      try {
+        return write.immediate();
+      } catch (error) {
+        const code = error instanceof Error && "code" in error ? error.code : null;
+        if (typeof code !== "string" || !code.startsWith("SQLITE_BUSY") || Date.now() >= deadline) throw error;
+      } finally {
+        db.pragma(`busy_timeout = ${Number(originalTimeout)}`);
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
   }
 
   async setGainStartingPoint(symbolInput: string, input: Parameters<typeof changeGainStart>[1]): Promise<LiveWatchlistSymbolState> {

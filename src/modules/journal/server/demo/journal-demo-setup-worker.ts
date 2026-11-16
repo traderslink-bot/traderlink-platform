@@ -35,6 +35,7 @@ function materializeDemo(database: Database.Database, scope: WorkspaceAccessScop
     // PID. SQLite's POSIX file-lock bookkeeping is local to each library.
     const result = execFileSync(process.execPath, [__filename, "--publish-prepared-demo"], {
       input: JSON.stringify(input), encoding: "utf8", maxBuffer: 64 * 1024,
+      stdio: ["pipe", "pipe", "inherit"],
       env: {
         NODE_ENV: process.env.NODE_ENV,
         NODE_PATH: process.env.NODE_PATH,

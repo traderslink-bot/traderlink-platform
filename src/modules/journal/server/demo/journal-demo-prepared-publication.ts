@@ -107,7 +107,12 @@ export function publishPreparedDemo(input: PreparedDemoPublication): JournalDemo
   const database = new DatabaseSync(databasePath);
   try {
     if (!matchesFile()) return unavailable;
-    database.exec("PRAGMA busy_timeout=250; BEGIN IMMEDIATE");
+    if (database.prepare("PRAGMA journal_mode").get()?.journal_mode !== "wal") return unavailable;
+    // Match the platform's WAL durability policy and retain this bounded
+    // publication's pages in the worker cache until commit.
+    database.exec("PRAGMA synchronous=NORMAL; PRAGMA cache_size=-32768; PRAGMA cache_spill=OFF; PRAGMA busy_timeout=250");
+    const writeStarted = performance.now();
+    database.exec("BEGIN IMMEDIATE");
     const owner = database.prepare(`SELECT 1 FROM platform_workspace_memberships m
 JOIN platform_users u ON u.user_id=m.user_id
 JOIN journal_accounts a ON a.workspace_id=m.workspace_id
@@ -131,6 +136,7 @@ WHERE m.workspace_id=? AND m.user_id=? AND m.role='owner' AND m.status='active' 
       )) return unavailable;
     }
     let unexpected = false;
+    const applyStarted = performance.now();
     const applied = database.applyChangeset(bytes, {
       filter(table) {
         if (publicationTables.has(table)) return true;
@@ -140,7 +146,13 @@ WHERE m.workspace_id=? AND m.user_id=? AND m.role='owner' AND m.status='active' 
       onConflict: () => constants.SQLITE_CHANGESET_ABORT,
     });
     if (!applied || unexpected || lookup.get(...scopeParameters)?.account_id !== accountId) return unavailable;
+    const commitStarted = performance.now();
     database.exec("COMMIT");
+    console.error("journal_demo_publish_phases", {
+      admissionMs: Math.round(applyStarted - writeStarted),
+      applyMs: Math.round(commitStarted - applyStarted),
+      commitMs: Math.round(performance.now() - commitStarted),
+    });
     return { accountId, state: "materialized" };
   } finally {
     if (database.isTransaction) database.exec("ROLLBACK");
