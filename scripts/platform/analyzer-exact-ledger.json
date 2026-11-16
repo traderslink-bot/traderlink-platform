@@ -1,8 +1,9 @@
 {
-  "scope": "Journal Chart 0187 on exact production 0186",
-  "productionParent": "57b15af43db4db81621d4c9be4cb5ea1b89b0fe8",
-  "predecessorSchemaSha256": "36507a90f169612bc844c96da29a805abd1e69b139db1fb745316f2d18b805b2",
-  "targetSchemaSha256": "d7439490f5bab8bee6d70b8fb1061360fbfae76b4b5446adfc8e431efe582d5a",
+  "scope": "Coaching 30-migration append",
+  "productionParent": "120db9f224b2043fa76b68ddf56bfded87e3119d",
+  "predecessorCount": 151,
+  "predecessorSchemaSha256": "d7439490f5bab8bee6d70b8fb1061360fbfae76b4b5446adfc8e431efe582d5a",
+  "targetSchemaSha256": "c2bd1603af2f12a103e0348af7ef7a7f46b73ed550ef15910b487d37d1eaa756",
   "ledger": [
     {
       "migration_id": "0001_platform_identity",
@@ -909,6 +910,186 @@
       "module_namespace": "journal",
       "execution_order": 224,
       "checksum_sha256": "63d05c70fa5023327ca0db43296e24926e9aa952633a165f4b46f363c5d3c946"
+    },
+    {
+      "migration_id": "0121_traderlink_communities_identity_permissions",
+      "module_namespace": "community",
+      "execution_order": 225,
+      "checksum_sha256": "f99821f279d6468940d6f97b2c1d268a527fea54f1356115eb07df7e6433e1e4"
+    },
+    {
+      "migration_id": "0122_traderlink_communities_partner_platform",
+      "module_namespace": "community",
+      "execution_order": 226,
+      "checksum_sha256": "90eb501961e064691d50be9c4886dc21b0d6f2ef80bba485b23efce88cbfb51a"
+    },
+    {
+      "migration_id": "0123_traderlink_communities_discord_feature_access",
+      "module_namespace": "community",
+      "execution_order": 227,
+      "checksum_sha256": "4c56e6c8340da418f9d671cae6ca33a08ab6ec755c23177655a17b53b3fbed0f"
+    },
+    {
+      "migration_id": "0124_traderlink_communities_server_watchlists",
+      "module_namespace": "community",
+      "execution_order": 228,
+      "checksum_sha256": "c9ef1df3e74a831436045a46f3b8233732b44758cff961ec24c013804388fbdd"
+    },
+    {
+      "migration_id": "0126_traderlink_communities_workspace_tools",
+      "module_namespace": "community",
+      "execution_order": 229,
+      "checksum_sha256": "ce06fb6c5363fa5d33c65c09b85c6680d71abd78ac1a11d9c602a488c65e4a94"
+    },
+    {
+      "migration_id": "0127_traderlink_communities_coaching_workspace",
+      "module_namespace": "community",
+      "execution_order": 230,
+      "checksum_sha256": "831716b905d6a5926fb5e0c73a9d89887893ad098497a44f579fd82e03f053d7"
+    },
+    {
+      "migration_id": "0128_traderlink_communities_coaching_programs",
+      "module_namespace": "community",
+      "execution_order": 231,
+      "checksum_sha256": "e00510417d0d06e7c83ca1dc54bd2f094c2285936b574a328e1554ba8f41f071"
+    },
+    {
+      "migration_id": "0129_traderlink_communities_coaching_plan_builder",
+      "module_namespace": "community",
+      "execution_order": 232,
+      "checksum_sha256": "801e363530cd244588eb8aeb94f7b89a4af7982358d907ab10724a917e79135d"
+    },
+    {
+      "migration_id": "0130_traderlink_communities_coaching_service_measurement",
+      "module_namespace": "community",
+      "execution_order": 233,
+      "checksum_sha256": "adb055637912305dc4a44d364f7afabe42a5dade7ef65a16d4e466535ca193dd"
+    },
+    {
+      "migration_id": "0131_traderlink_communities_review_coaching_sections",
+      "module_namespace": "community",
+      "execution_order": 234,
+      "checksum_sha256": "3d4d7f554e3330a66ed9d1892393bdf6c0c8437b80a0586968becbc6f107444b"
+    },
+    {
+      "migration_id": "0143_traderlink_communities_review_workflow",
+      "module_namespace": "community",
+      "execution_order": 235,
+      "checksum_sha256": "d48bf6d7d2e2fac8957afe131973e8fa1322d1977153569a905cffc1b72ebf4d"
+    },
+    {
+      "migration_id": "0144_traderlink_communities_review_workspace_metadata",
+      "module_namespace": "community",
+      "execution_order": 236,
+      "checksum_sha256": "b62e7ced8b8e9a592fbb54fa67ec46361788f173e018adff985b93fac0d49c9d"
+    },
+    {
+      "migration_id": "0145_traderlink_communities_coaching_delivery_workflow",
+      "module_namespace": "community",
+      "execution_order": 237,
+      "checksum_sha256": "34fa1cee33f895509f862dd208df64e0beba86c0d5f2104eca2065734563a0a1"
+    },
+    {
+      "migration_id": "0159_platform_coaching_commission_terms",
+      "module_namespace": "community",
+      "execution_order": 238,
+      "checksum_sha256": "5d78c3bc58e707b76e3bc47a1ee45734e75924f233ed0cbfda640a2cd7869a29"
+    },
+    {
+      "migration_id": "0160_platform_coaching_review_request_acceptance",
+      "module_namespace": "community",
+      "execution_order": 239,
+      "checksum_sha256": "816667e0786c3ed26a23f2ae0df7d28bbf5c7e8b1824c3ce791f6d5d2b2859c6"
+    },
+    {
+      "migration_id": "0161_platform_coaching_content_delivery_receipts",
+      "module_namespace": "community",
+      "execution_order": 240,
+      "checksum_sha256": "3395732bfd31218bfbf6585395630e466138ed730fe44790f68f50b68fe7f856"
+    },
+    {
+      "migration_id": "0162_platform_coaching_delivery_attempt_history",
+      "module_namespace": "community",
+      "execution_order": 241,
+      "checksum_sha256": "9a3581fc0681053d9a6e29ccb57965ff80909a016b289e8c2493848e4bb39c11"
+    },
+    {
+      "migration_id": "0163_platform_community_publication_feedback",
+      "module_namespace": "community",
+      "execution_order": 242,
+      "checksum_sha256": "4097b270f84d264d363d178a52be9200064e4a512950ae6995138db2a0902fdc"
+    },
+    {
+      "migration_id": "0164_platform_coaching_deletion_archives",
+      "module_namespace": "community",
+      "execution_order": 243,
+      "checksum_sha256": "b61f28e1486de0f7baa49d9992603de4216e4f694c4874b01ccc915d25477547"
+    },
+    {
+      "migration_id": "0168_platform_community_destination_publishers",
+      "module_namespace": "community",
+      "execution_order": 244,
+      "checksum_sha256": "e2d7d3aefbee0a4c33407c37352496038d7a0084106551ee50ef7e88d4808fcd"
+    },
+    {
+      "migration_id": "0169_platform_community_removal_recovery",
+      "module_namespace": "community",
+      "execution_order": 245,
+      "checksum_sha256": "315cac2e1b6f0a674417d770fd1b12f33044977ee45acac5b649ad98bd97025a"
+    },
+    {
+      "migration_id": "0170_platform_community_publication_revision_actions",
+      "module_namespace": "community",
+      "execution_order": 246,
+      "checksum_sha256": "1cbd7f2c0d5a932fed2d50ebc710529d87057edf287bb2818e7aca6d331e8242"
+    },
+    {
+      "migration_id": "0180_traderlink_coaching_direct_payments",
+      "module_namespace": "community",
+      "execution_order": 247,
+      "checksum_sha256": "4b171dce6c91427cce6e34f13d7b8821cc88605c1e14ee7d87dfcd18b4571730"
+    },
+    {
+      "migration_id": "0181_traderlink_coaching_independent_storage",
+      "module_namespace": "community",
+      "execution_order": 248,
+      "checksum_sha256": "624be6c598e0d102a531c797e66511edc6fa4b6505f6578987aee80cf657bdfc"
+    },
+    {
+      "migration_id": "0182_traderlink_community_admission",
+      "module_namespace": "community",
+      "execution_order": 249,
+      "checksum_sha256": "ccbcfd952ec4baedd67e6bf5ec8f04e39acb1ea713d0beee7f5768d069fc9571"
+    },
+    {
+      "migration_id": "0188_traderlink_coaching_mailbox",
+      "module_namespace": "community",
+      "execution_order": 250,
+      "checksum_sha256": "4b0ee6e9d9324167f394c00634085ae899fe1c5246230240710c66ac14898ea5"
+    },
+    {
+      "migration_id": "0191_traderlink_coaching_message_subjects",
+      "module_namespace": "community",
+      "execution_order": 251,
+      "checksum_sha256": "13a7b04fc731ef247f27e797f4c3e61cb2d934cdc55200fc00d38d2fefbcb07e"
+    },
+    {
+      "migration_id": "0192_traderlink_coaching_trade_evaluation_templates",
+      "module_namespace": "community",
+      "execution_order": 252,
+      "checksum_sha256": "2e4c3f575a1127220b6eae0b097d2935cee25b2352903e2db495a8fed0dac426"
+    },
+    {
+      "migration_id": "0193_traderlink_coaching_profile_photos",
+      "module_namespace": "community",
+      "execution_order": 253,
+      "checksum_sha256": "9956beec061ac519abae49f816d24d8d4b9480bdb6e447abed38d965ad3c7366"
+    },
+    {
+      "migration_id": "0194_traderlink_coaching_review_selection_lifecycle",
+      "module_namespace": "community",
+      "execution_order": 254,
+      "checksum_sha256": "b46f47f1f9023e71cb4981ddd91720b1f86ae8df60912de177363f0994efea2a"
     }
   ]
 }

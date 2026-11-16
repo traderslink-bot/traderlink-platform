@@ -11,12 +11,13 @@ const { loadAccountIdentityConfiguration } = require('../../src/modules/journal/
 const { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS: canonicalizers, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION: defaultVersion } = require('../../src/modules/journal/server/accounts/journal-source-account-canonicalizers.ts');
 
 const live = '/data/traderlink-platform.sqlite';
-const checkpoint = '/data/backups/journal-chart-0187-20261115';
+const checkpoint = '/data/backups/coaching-production-20261115';
 const backup = path.join(checkpoint, 'backup.sqlite');
 const restore = path.join(checkpoint, 'restore-verification.sqlite');
-const migration = '0187_journal_chart_entries';
-const targetDigest = require('./analyzer-exact-ledger.json').targetSchemaSha256;
-const prefix = manifest.slice(0, -1);
+const plan = require('./analyzer-exact-ledger.json');
+const targetDigest = plan.targetSchemaSha256;
+const prefix = manifest.slice(0, plan.predecessorCount);
+const pendingIds = manifest.slice(prefix.length).map(entry => entry.migrationId);
 const save = (name, data) => fs.writeFileSync(path.join(checkpoint, name + '.json'), JSON.stringify(data, null, 2) + '\n', { flag: 'wx', mode: 0o600, flush: true });
 const open = file => {
   const db = new Database(file, { fileMustExist: true, timeout: 5000 });
@@ -27,20 +28,24 @@ const open = file => {
 function advance(file, liveWrite, deadline) {
   const db = open(file);
   try {
-    const counts = () => ['journal_accounts', 'level_analysis_logical_trade_jobs'].map(table =>
+    const counts = () => ['journal_accounts', 'level_analysis_logical_trade_jobs', 'journal_chart_entries'].map(table =>
       db.prepare('SELECT count(*) AS n FROM ' + table).get().n);
     const before = counts();
-    const result = runPlatformMigrations(db, { manifest, beforeMigrationBoundary(phase) {
+    const readLedger = () => db.prepare('SELECT migration_id,module_namespace,execution_order,checksum_sha256 FROM platform_schema_migrations ORDER BY execution_order').all();
+    assert.deepEqual(readLedger(), plan.ledger.slice(0, prefix.length));
+    let admitted = false;
+    const result = runPlatformMigrations(db, { manifest, atomicSuffix: true, beforeMigrationBoundary(phase) {
       assert(Date.now() < deadline, 'migration deadline reached');
-      if (liveWrite && phase === 'statements') {
+      if (liveWrite && !admitted && phase === 'statements') {
         assert(Date.now() + 30 * 60000 < deadline, 'insufficient recovery time before live statements');
-        save('live-admission', { at: new Date().toISOString(), migration });
+        save('live-admission', { at: new Date().toISOString(), pendingIds });
+        admitted = true;
       }
     } });
-    assert.deepEqual([...result.appliedMigrationIds], [migration]);
+    assert.deepEqual([...result.appliedMigrationIds], pendingIds);
+    assert.deepEqual(readLedger(), plan.ledger);
     assert.equal(result.finalSchemaSha256, targetDigest);
     assert.deepEqual(counts(), before);
-    assert.equal(db.prepare('SELECT count(*) AS n FROM journal_chart_entries').get().n, 0);
     db.pragma('wal_checkpoint(TRUNCATE)');
     return { schema: result.finalSchemaSha256, counts: before };
   } finally {
@@ -57,12 +62,13 @@ async function main() {
   assert.equal(process.env.RAILWAY_DEPLOYMENT_ID, expectedDeployment);
   const deadline = Number(deadlineText);
   assert(Number.isSafeInteger(deadline) && deadline > Date.now() && deadline - Date.now() < 12 * 3600000);
-  assert.equal(manifest.length, 151);
-  assert.equal(manifest.at(-1).migrationId, migration);
+  assert.equal(prefix.length, 151);
+  assert.equal(manifest.length, 181);
   assert.equal(fs.realpathSync(live), live);
   assert(!fs.existsSync(checkpoint));
   const ready = JSON.parse(await (await fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/platform/health', { signal: AbortSignal.timeout(5000) })).text());
   assert.equal(ready.status, 'maintenance_ready');
+  assert.equal(ready.migrationCount, prefix.length);
   assert.equal(ready.deployment, expectedDeployment);
   assert.equal(ready.pid, Number(expectedPid));
   assert.notEqual(ready.pid, process.pid);
@@ -80,7 +86,7 @@ async function main() {
   assert(volume.bavail * volume.bsize >= size * 2 + 2 * 1024 ** 3);
   fs.mkdirSync('/data/backups', { recursive: true, mode: 0o700 });
   fs.mkdirSync(checkpoint, { mode: 0o700 });
-  save('intent', { live, backup, restore, migration, deployment: expectedDeployment, deadline, removal: 'Healthy final or recovered app and verified exact-file disposition' });
+  save('intent', { live, backup, restore, pendingIds, deployment: expectedDeployment, deadline, removal: 'Healthy final or recovered app and verified exact-file disposition' });
   const evidence = await createAndRestoreVerifyPlatformDatabaseBackup({
     sourcePath: live, backupPath: backup, restoreVerificationPath: restore, verificationManifest: prefix,
     verifyRecoveryAuthority(requirements) {
@@ -95,11 +101,11 @@ async function main() {
   assert(Date.now() + 30 * 60000 < deadline, 'insufficient remaining live verification and recovery time');
   const result = advance(live, true, deadline);
   save('completed', result);
-  console.log(JSON.stringify({ stage: 'journal_chart_migration_complete', ...result }));
+  console.log(JSON.stringify({ stage: 'coaching_migration_complete', ...result }));
 }
 
 if (require.main === module) main().catch(error => {
-  console.error(JSON.stringify({ stage: 'journal_chart_migration_error', code: error.code ?? 'guard_failure', message: error.message }));
+  console.error(JSON.stringify({ stage: 'coaching_migration_error', code: error.code ?? 'guard_failure', message: error.message }));
   process.exitCode = 1;
 });
 module.exports = { advance };

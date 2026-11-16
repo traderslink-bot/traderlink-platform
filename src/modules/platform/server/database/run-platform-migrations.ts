@@ -123,14 +123,38 @@ function verifyCompletedPlatformDatabaseUnmeasured(
 
 export const PLATFORM_MIGRATION_BOUNDARY_HOOK_VERSION = 1 as const;
 
+type PlatformMigrationRunOptions = Readonly<{
+  manifest?: readonly PlatformMigration[];
+  now?: () => Date;
+  /** Trusted orchestration guard. Throwing aborts the active migration. */
+  beforeMigrationBoundary?: (phase: "begin" | "statements" | "commit") => void;
+  /** Commit the entire pending suffix together. Requires foreign keys to stay enabled. */
+  atomicSuffix?: boolean;
+}>;
+
 export function runPlatformMigrations(
   database: Database.Database,
-  options: Readonly<{
-    manifest?: readonly PlatformMigration[];
-    now?: () => Date;
-    /** Trusted orchestration guard; throwing rolls back an active migration. */
-    beforeMigrationBoundary?: (phase: "begin" | "statements" | "commit") => void;
-  }> = {},
+  options: PlatformMigrationRunOptions = {},
+): PlatformMigrationRunResult {
+  if (!options.atomicSuffix) return applyPlatformMigrations(database, options);
+  if (database.inTransaction || database.pragma("foreign_keys", { simple: true }) !== 1) {
+    platformFailure("TRADERLINK_MIGRATION_FAILED", { migrationPhase: "atomic_suffix_preflight" });
+  }
+  return database.transaction(() => {
+    const pending = (options.manifest ?? platformMigrationManifest)
+      .slice(readAppliedPlatformMigrations(database).length);
+    if (pending.some(migration => migration.requiresForeignKeysDisabled)) {
+      platformFailure("TRADERLINK_MIGRATION_FAILED", { migrationPhase: "atomic_suffix_foreign_keys" });
+    }
+    const result = applyPlatformMigrations(database, options);
+    options.beforeMigrationBoundary?.("commit");
+    return result;
+  }).immediate();
+}
+
+function applyPlatformMigrations(
+  database: Database.Database,
+  options: PlatformMigrationRunOptions,
 ): PlatformMigrationRunResult {
   const manifest = validatePlatformMigrationManifest(
     options.manifest ?? platformMigrationManifest,
@@ -163,7 +187,7 @@ export function runPlatformMigrations(
       if (restoreForeignKeys) database.pragma("foreign_keys = OFF");
       migrationPhase = "begin";
       options.beforeMigrationBoundary?.("begin");
-      database.exec("BEGIN IMMEDIATE");
+      database.exec(options.atomicSuffix ? "SAVEPOINT platform_atomic_migration" : "BEGIN IMMEDIATE");
       migrationPhase = "registry";
       if (!platformMigrationRegistryExists(database)) createPlatformMigrationRegistry(database);
       options.beforeMigrationBoundary?.("statements");
@@ -200,11 +224,11 @@ export function runPlatformMigrations(
       );
       migrationPhase = "commit";
       options.beforeMigrationBoundary?.("commit");
-      database.exec("COMMIT");
+      database.exec(options.atomicSuffix ? "RELEASE SAVEPOINT platform_atomic_migration" : "COMMIT");
       if (restoreForeignKeys) database.pragma("foreign_keys = ON");
       appliedMigrationIds.push(migration.migrationId);
     } catch (error) {
-      if (database.inTransaction) {
+      if (!options.atomicSuffix && database.inTransaction) {
         try {
           database.exec("ROLLBACK");
         } catch {

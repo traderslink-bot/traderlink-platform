@@ -6,7 +6,7 @@ const path = require('node:path');
 function selectSchema(plan, role, rows, schema, latestDigest) {
   assert(['final', 'recovery', 'migration'].includes(role));
   const targetCount = plan.ledger.length;
-  const precedingCount = targetCount - 1;
+  const precedingCount = plan.predecessorCount ?? targetCount - 1;
   assert(rows.length === targetCount || (['recovery', 'migration'].includes(role) && rows.length === precedingCount));
   assert.deepEqual(rows, plan.ledger.slice(0, rows.length));
   const digest = crypto.createHash('sha256').update(JSON.stringify(schema) + '\n').digest('hex');
@@ -37,7 +37,7 @@ function main() {
   } finally {
     db.close();
   }
-  if (role === 'migration' && count === plan.ledger.length - 1) {
+  if (role === 'migration' && count === (plan.predecessorCount ?? plan.ledger.length - 1)) {
     const port = Number(env.PORT || 3000);
     require('node:http').createServer((request, response) => {
       response.setHeader('Cache-Control', 'no-store');
