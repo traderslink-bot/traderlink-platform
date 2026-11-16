@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 
-import { analyzeDailyTrade } from "@/src/modules/level-analysis/server/daily-trade-analyzer";
+import { createDailyTradeSessionAnalyzer } from "@/src/modules/level-analysis/server/daily-trade-analyzer";
 import {
   DailyTradeAnalyzerRepository,
   type DailyTradeAnalyzerTarget,
@@ -42,7 +42,10 @@ export function materializeJournalDemoAnalyzerFacts(input: Readonly<{
   ]));
   const repository = new DailyTradeAnalyzerRepository(input.database);
   const now = new Date();
-  const sessionVersions = new Map<string, string>();
+  const preparedSessions = new Map<string, {
+    versionId: string;
+    analyze: ReturnType<typeof createDailyTradeSessionAnalyzer>;
+  }>();
   for (const trade of input.source.trades) {
     const sessionKey = `${trade.tradingDateNewYork}:${trade.symbol}`;
     const session = sessions.get(sessionKey);
@@ -71,9 +74,9 @@ ORDER BY round_trip.round_trip_id`).all(
     const target: DailyTradeAnalyzerTarget | null = repository.findEligibleTarget(scope, rows[0].round_trip_id);
     if (!target || target.direction !== "long" || target.providerSymbol !== trade.symbol ||
       target.tradingDateNewYork !== trade.tradingDateNewYork) failure("demoAnalyzerTarget");
-    let sessionVersionId = sessionVersions.get(sessionKey);
-    if (!sessionVersionId) {
-      sessionVersionId = repository.materializeVerifiedSession({
+    let prepared = preparedSessions.get(sessionKey);
+    if (!prepared) {
+      const versionId = repository.materializeVerifiedSession({
         candles: session.bars,
         completedAtUtc: now.toISOString(),
         coverageEndUtc: new Date(schedule.endTime * 1000).toISOString(),
@@ -86,11 +89,12 @@ ORDER BY round_trip.round_trip_id`).all(
         reuseMatchingVersion: true,
         target,
       });
-      sessionVersions.set(sessionKey, sessionVersionId);
+      prepared = { versionId, analyze: createDailyTradeSessionAnalyzer({ candles: session.bars, dailyRanges: [] }) };
+      preparedSessions.set(sessionKey, prepared);
     }
     repository.persistAnalysis({
-      analyzed: analyzeDailyTrade({ candles: session.bars, dailyRanges: [], direction: target.direction, events: target.events }),
-      marketSessionSetVersionId: sessionVersionId,
+      analyzed: prepared.analyze({ direction: target.direction, events: target.events }),
+      marketSessionSetVersionId: prepared.versionId,
       now,
       scope,
       status: "ready",

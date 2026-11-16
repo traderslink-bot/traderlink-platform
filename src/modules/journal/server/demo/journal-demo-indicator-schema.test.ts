@@ -8,6 +8,7 @@ import { PlatformWorkspaceRepository } from "@/src/modules/platform/server/ident
 import { JournalDemoMaterializer } from "./journal-demo-materializer";
 import { resolveCurrentJournalDemoFinancialPack } from "./journal-demo-pack-contract";
 import { refreshJournalDemoTradeIndicators } from "./journal-demo-indicator-refresh";
+import { analyzeDailyTrade, createDailyTradeSessionAnalyzer } from "@/src/modules/level-analysis/server/daily-trade-analyzer";
 import { DailyTradeAnalyzerRepository } from "@/src/modules/level-analysis/server/daily-trade-analyzer-repository";
 import { LogicalTradeAnalyzerRepository } from "@/src/modules/level-analysis/server/logical-trade-analyzer-repository";
 import { newYorkExtendedSession } from "@/src/modules/level-analysis/server/daily-trade-analyzer-session";
@@ -42,6 +43,11 @@ test("real schema persists Demo indicators without changing executions or repeat
     const session=newYorkExtendedSession(previousDate)!;
     const bars=Array.from({length:960},(_,i)=>({time:session.startTime+(i+1)*60,openDecimal:"2",highDecimal:"2.1",lowDecimal:"1.9",closeDecimal:"2",volumeDecimal:"100",turnoverDecimal:"200"}));
     const sessionInput = {candles:bars,completedAtUtc:now.toISOString(),coverageEndUtc:new Date(session.endTime*1000).toISOString(),provider:{key:"moomoo_history_kline",adapterVersion:"moomoo_history_kline_v1"},providerExchangeTimezone:"America/New_York",providerUtcOffsetSeconds:-14400,requestedStartUtc:new Date(session.startTime*1000).toISOString(),requestedEndUtc:new Date(session.endTime*1000).toISOString(),sha256:createHash("sha256").update(JSON.stringify(bars)).digest("hex"),target:{...target,tradingDateNewYork:previousDate}} as const;
+    const prepared = createDailyTradeSessionAnalyzer({ candles: bars, dailyRanges: [] });
+    for (const direction of ["long", "short"] as const) {
+      const trade = { direction, events: target.events };
+      assert.deepEqual(prepared(trade), analyzeDailyTrade({ candles: bars, dailyRanges: [], ...trade }));
+    }
     const firstSession = legacy.materializeVerifiedSession(sessionInput);
     const storedCandles = db.prepare("SELECT count(*) AS n FROM level_analysis_market_session_candles").get();
     assert.equal(legacy.materializeVerifiedSession({ ...sessionInput, reuseMatchingVersion: true }), firstSession);

@@ -8,7 +8,7 @@ import {
 } from "@/src/lib/trade-candle-analysis/indicator-context";
 import {
   aggregateCompleteExecutionTimeframeCandles,
-  detectExecutionPatternContexts,
+  createExecutionPatternContextReader,
   executionTimeframeBucketTime,
 } from "@/src/lib/trade-candle-analysis/execution-pattern-context";
 
@@ -460,13 +460,36 @@ function postExitPath(
  * Produces only derived market facts. It never changes a Journal execution,
  * round trip, rule, tag, note, or trading-day review.
  */
-export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAnalyzerResult {
-  const events = Object.freeze([...input.events].sort((left, right) => left.sequence - right.sequence));
+type SessionInput = Pick<DailyTradeAnalyzerInput, "candles" | "dailyRanges">;
+
+function prepareDailyTradeSession(input: SessionInput) {
   const candles = numericCandles(input.candles);
   const adr20 = calculateAdr20(input.dailyRanges);
   const indicatorPoints = calculateIndicatorPoints(candles, { vwapSource: "turnover" });
   const fiveMinuteCandles = aggregateCompleteExecutionTimeframeCandles(candles, "5m");
   const fiveMinuteIndicatorPoints = calculateIndicatorPoints(fiveMinuteCandles, { vwapSource: "turnover" });
+  const readPatternContexts = createExecutionPatternContextReader(candles);
+  return { candles, adr20, indicatorPoints, fiveMinuteCandles, fiveMinuteIndicatorPoints, readPatternContexts };
+}
+
+export function createDailyTradeSessionAnalyzer(session: SessionInput) {
+  const preparedSession = prepareDailyTradeSession(session);
+  return (trade: Omit<DailyTradeAnalyzerInput, keyof SessionInput>): DailyTradeAnalyzerResult =>
+    analyzePreparedDailyTrade({ ...session, ...trade }, preparedSession);
+}
+
+export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAnalyzerResult {
+  return analyzePreparedDailyTrade(input, prepareDailyTradeSession(input));
+}
+
+function analyzePreparedDailyTrade(
+  input: DailyTradeAnalyzerInput,
+  preparedSession: ReturnType<typeof prepareDailyTradeSession>,
+): DailyTradeAnalyzerResult {
+  const {
+    candles, adr20, indicatorPoints, fiveMinuteCandles, fiveMinuteIndicatorPoints, readPatternContexts,
+  } = preparedSession;
+  const events = Object.freeze([...input.events].sort((left, right) => left.sequence - right.sequence));
   const states = positionStates(events);
   const positionCycles: { openedAt: number; closedAt: number; closingPrice: number }[] = [];
   let cycleOpenedAt: number | null = null;
@@ -497,7 +520,7 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
         fiveMinuteIndicatorPoints,
         input.direction,
       ),
-      detectExecutionPatternContexts(candles, Date.parse(event.executedAtUtc) / 1000),
+      readPatternContexts(Date.parse(event.executedAtUtc) / 1000),
       eventMetrics(event, events, candles, indicatorPoints, input.direction, state),
     );
   }));

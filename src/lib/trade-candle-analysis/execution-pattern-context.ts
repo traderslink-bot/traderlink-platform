@@ -107,31 +107,47 @@ export function detectExecutionPatternContexts(
   executedAtUtcSeconds: number,
 ): readonly ExecutionPatternContext[] {
   if (!Number.isFinite(executedAtUtcSeconds)) return Object.freeze([]);
-  const executionMinute = Math.floor(executedAtUtcSeconds / 60) * 60;
-  const contexts = EXECUTION_PATTERN_TIMEFRAMES.flatMap((timeframe) => {
+  return createExecutionPatternContextReader(candles)(executedAtUtcSeconds);
+}
+
+export function createExecutionPatternContextReader(candles: readonly TradeCandle[]) {
+  const timeframes = EXECUTION_PATTERN_TIMEFRAMES.map(timeframe => {
     const intervalSeconds = TIMEFRAME_SECONDS[timeframe];
     const timeframeCandles = aggregateCompleteExecutionTimeframeCandles(candles, timeframe);
-    const executionBucket = executionTimeframeBucketTime(executionMinute, timeframe);
-    const executionIndex = timeframeCandles.findIndex((candle) => candle.time === executionBucket);
-    if (executionIndex < 0) return [];
-    const patternsByTime = new Map(detectContinuousPatterns(timeframeCandles, intervalSeconds)
-      .map((pattern) => [pattern.time, pattern] as const));
-    return ([0, 1, 2] as const).flatMap((candlesBeforeExecution) => {
-      const candle = timeframeCandles[executionIndex - candlesBeforeExecution];
-      const pattern = candle ? patternsByTime.get(candle.time) : null;
-      if (!pattern) return [];
-      const knownAtTime = pattern.time + intervalSeconds *
-        (FOLLOWING_CANDLE_CONFIRMATION.has(pattern.kind) ? 2 : 1);
-      return [Object.freeze({
-        availableAtExecution: knownAtTime <= executedAtUtcSeconds,
-        candlesBeforeExecution,
-        kind: pattern.kind,
-        knownAtTime,
-        score: 1 - candlesBeforeExecution * 0.15,
-        time: pattern.time,
-        timeframe,
-      })];
-    });
+    let patternsByTime: Map<number, ReturnType<typeof detectContinuousPatterns>[number]> | undefined;
+    const readPatterns = () => patternsByTime ??= new Map(
+      detectContinuousPatterns(timeframeCandles, intervalSeconds).map(pattern => [pattern.time, pattern]),
+    );
+    return { timeframe, intervalSeconds, timeframeCandles, readPatterns };
   });
-  return Object.freeze(contexts);
+
+  return (executedAtUtcSeconds: number): readonly ExecutionPatternContext[] => {
+    if (!Number.isFinite(executedAtUtcSeconds)) return Object.freeze([]);
+    const executionMinute = Math.floor(executedAtUtcSeconds / 60) * 60;
+    const contexts = timeframes.flatMap(({
+      timeframe, intervalSeconds, timeframeCandles, readPatterns,
+    }) => {
+      const executionBucket = executionTimeframeBucketTime(executionMinute, timeframe);
+      const executionIndex = timeframeCandles.findIndex(candle => candle.time === executionBucket);
+      if (executionIndex < 0) return [];
+      const patternsByTime = readPatterns();
+      return ([0, 1, 2] as const).flatMap((candlesBeforeExecution) => {
+        const candle = timeframeCandles[executionIndex - candlesBeforeExecution];
+        const pattern = candle ? patternsByTime.get(candle.time) : null;
+        if (!pattern) return [];
+        const knownAtTime = pattern.time + intervalSeconds *
+          (FOLLOWING_CANDLE_CONFIRMATION.has(pattern.kind) ? 2 : 1);
+        return [Object.freeze({
+          availableAtExecution: knownAtTime <= executedAtUtcSeconds,
+          candlesBeforeExecution,
+          kind: pattern.kind,
+          knownAtTime,
+          score: 1 - candlesBeforeExecution * 0.15,
+          time: pattern.time,
+          timeframe,
+        })];
+      });
+    });
+    return Object.freeze(contexts);
+  };
 }

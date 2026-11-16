@@ -65,11 +65,13 @@ function scopeFor(input: Readonly<{ accountId: string; createdForUserId: string;
     workspaceId: input.workspaceId, workspaceRole: "owner" });
 }
 
+const demoTimestampFormatter = new Intl.DateTimeFormat("en-CA", {
+  day: "2-digit", hour: "2-digit", hour12: false, minute: "2-digit", second: "2-digit",
+  month: "2-digit", timeZone: "America/New_York", year: "numeric",
+});
+
 function sourceTimestampText(executedAtUtc: string): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit", hour: "2-digit", hour12: false, minute: "2-digit", second: "2-digit",
-    month: "2-digit", timeZone: "America/New_York", year: "numeric",
-  }).formatToParts(new Date(executedAtUtc));
+  const parts = demoTimestampFormatter.formatToParts(new Date(executedAtUtc));
   const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   if (!value.year || !value.month || !value.day || !value.hour || !value.minute || !value.second) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "demoExecutionTimestamp" });
@@ -209,6 +211,16 @@ function materializeAnnotations(input: Readonly<{
       now: input.timestamp,
     });
   }
+  const workspaceScope = Object.freeze({
+    activeAccountId: input.scope.accountId,
+    allowedAccountIds: Object.freeze([input.scope.accountId]),
+    userId: input.scope.userId,
+    workspaceId: input.scope.workspaceId,
+    workspaceRole: input.scope.workspaceRole,
+  });
+  const dashboard = new JournalDashboardReadModelService(
+    new JournalAnalyticsFactSetService(new JournalAnalyticsFactSetRepository(input.database)),
+  );
   for (const date of [...new Set(input.trades.map((trade) => trade.tradingDateNewYork))].sort()) {
     const tradingDayId = annotations.ensureTradingDayId(input.scope, date, input.timestamp);
     const roundTripIds = new Set(input.trades
@@ -239,16 +251,6 @@ function materializeAnnotations(input: Readonly<{
         expectedRevision: null, now: input.timestamp,
       });
     }
-    const workspaceScope = Object.freeze({
-      activeAccountId: input.scope.accountId,
-      allowedAccountIds: Object.freeze([input.scope.accountId]),
-      userId: input.scope.userId,
-      workspaceId: input.scope.workspaceId,
-      workspaceRole: input.scope.workspaceRole,
-    });
-    const dashboard = new JournalDashboardReadModelService(
-      new JournalAnalyticsFactSetService(new JournalAnalyticsFactSetRepository(input.database)),
-    );
     const model = dashboard.getTradingDay(workspaceScope, {
       requestedDate: date,
       currency: "USD",
