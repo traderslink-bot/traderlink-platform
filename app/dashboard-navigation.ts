@@ -147,6 +147,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       icon: "tradeAnalyzer" as const,
       items: Object.freeze([
         Object.freeze({
+          href: "/trade-analyzer",
+          label: "Open Trade Analyzer",
+          icon: "tradeAnalyzer" as const,
+        }),
+        Object.freeze({
           href: "/analytics/trade-analyzer/day",
           label: "Day Trade Analysis",
           icon: "dayTradeAnalysis" as const,
@@ -320,6 +325,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/admin/journal/communities": "Communities Administration",
     "/admin/journal/communities/admission": "Community admission",
     "/admin/journal/coaching": "Coaching commercial settings",
+    "/trade-analyzer": "Trade Analyzer",
     "/trade-tracker": "Session Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
     "/quick-trade-entry": "Quick Trade Entry",
@@ -380,6 +386,7 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
   Object.freeze([
     Object.freeze({ route: "/admin/scanners", href: "/help/tools/live-screeners", label: "Scanner Admin" }),
     Object.freeze({ route: "/scanners", href: "/help/tools/live-screeners", label: "Scanners" }),
+    Object.freeze({ route: "/trade-analyzer", href: "/help/trade-analyzer/analyzed-trades#enter-trades", label: "Trade Analyzer" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),
     Object.freeze({ route: "/reverse-splits", href: "/reverse-splits/help", label: "Reverse Splits" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/trend-momentum", href: "/help/trade-analyzer/trend-momentum", label: "Trend & Momentum" }),

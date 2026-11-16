@@ -58,10 +58,16 @@ collection and into an expandable **Trade Analyzer** product group. Replace the
 single growing Trade Analysis page with a lightweight **Day Trade Analysis**
 landing page and four focused capability pages.
 
-The Trade Analyzer remains embedded in the Daily Trade Tracker for same-day
+The Trade Analyzer is also embedded in the Daily Trade Tracker for same-day
 trade review. These pages are the long-term view over saved eligible Analyzer
 results; they are not a second Journal analytics engine and do not analyze all
 historical imports.
+
+The standalone [Trade Analyzer home](trade-analyzer-analysis-pages-progress.md#standalone-trade-analyzer-implementation--november-17-2026)
+supports direct entry of one or more day trades, one trade result at a time,
+saved trades waiting for analysis, and links to completed analyses. It uses the
+selected trading account and the existing Analyzer service. With Demo active,
+the home opens on saved sample analyses and offers the shared clear action.
 
 ## Naming and navigation
 
@@ -79,6 +85,7 @@ The dashboard receives one collapsible left-navigation group:
 
 ```text
 Trade Analyzer
+  Open Trade Analyzer
   Day Trade Analysis
   Entry & Exit
   Green-to-Red
@@ -95,6 +102,7 @@ eligibility and market-data boundaries.
 
 | Route | Job |
 | --- | --- |
+| `/trade-analyzer` | Trade entry, pending trades and individual analyses |
 | `/analytics/trade-analyzer/day` | Day Trade Analysis landing page |
 | `/analytics/trade-analyzer/day/entry-exit` | Entry and exit behavior |
 | `/analytics/trade-analyzer/day/green-to-red` | Profit protection, reversal and recovery behavior |

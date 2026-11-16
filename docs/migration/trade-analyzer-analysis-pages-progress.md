@@ -38,7 +38,16 @@ separately defined population and visible sample count for every aggregate.
 - On the Analyzer home, show the **Explore Trade Analyzer with demo data** card at the upper left above the page title. Identify the August trades as samples for demonstration, point out the chart, entry and exit markers, and Trade Analysis card, and explain that users clear demo data before entering their own trades. Place the existing **Clear demo data and start fresh** action at the lower left of the card with space between the text and button. Keep the card specific to Trade Analyzer.
 - Use saved Analyzer results from the selected account for the Analyzer reports and analyzed-trade history. Display any eligible-trade coverage count as coverage, with report metrics based on analyzed trades.
 
-The sidebar checkpoint implements the grouping for existing pages. The feature home and entry flow are in design.
+The sidebar checkpoint implemented the grouping for existing pages.
+
+## Standalone Trade Analyzer implementation — November 17, 2026
+
+- Scope QA confirmed that the existing manual-entry preview supplies a deterministic trade boundary per group and that the commit service queues each selected eligible group in the same transaction as the executions. Trade Analyzer uses those day-entry routes and the selected trading account. It keeps per-trade outcomes separate from the save receipt so saved executions are visible even when analysis cannot start.
+- The home adds shared-date manual entry, To analyze, and one result at a time for saved executions, current analysis, or a new batch. A batch uses tabs for up to six trades and a picker for larger batches. The analyzed-trade history opens the exact trade in the new home. A connection failure during commit uses the existing receipt check before permitting another write.
+- The same demo data and clear flow are used on the new home. Older Analyzer reports retain the shared demo notice, their separate plan gate, date filters, and candle-backed analysis population.
+- The signed-in home menu keeps Trading Tools first and adds Trade Analyzer and analyzed history links. Sidebar navigation and the Trade Analyzer Help guide include the direct entry and analysis flow.
+- Discord onboarding in this checkout defers Demo provisioning and preserves the initial account selection. The isolated Demo browser test used an active sample account to exercise the Analyzer’s Demo view. First-login account selection belongs to the existing Demo onboarding flow.
+- Verification passed 37 focused tests covering dashboard structure, manual entry, Analyzer reads, and demo behavior. Isolated Chromium exercised Light desktop entry for one trade and a batch, exact saved prices, per-trade queueing, tab switching, selecting an existing trade in To analyze, and recovery after a lost commit response. Navy Dark mobile exercised the saved demo chart and Analysis card, trade selection, confirmation dialog, report notice, the history link into a saved analysis, and account isolation. The form also fit at 320 px. New requests were verified through their queued state with the market-data workers disabled. The full TypeScript check reports the existing missing `jsdom` declaration in `feature-page-embed-host.test.ts`.
 
 ## Current checkpoint - 2026-08-09
 

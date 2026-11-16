@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { ANALYZED_TRADES_HREF } from "../trade-analyzer/analyzer-trade";
 import { DashboardPage, DashboardPanel } from "@/app/dashboard-template";
 import { pressReleaseChannelDefinition } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { PLATFORM_HOME_PAGES } from "@/src/modules/platform/contracts/platform-home-page";
@@ -86,6 +87,14 @@ export default async function WelcomePage() {
       links: newsLinks.length > 0 ? newsLinks : [{ href: "/news", label: "Read Market News" }],
     },
     {
+      title: "Trade Analyzer",
+      description: "Enter your executions and see the trade on a chart with entry and exit markers and a breakdown of the trade.",
+      links: [
+        { href: "/trade-analyzer", label: "Open Trade Analyzer" },
+        { href: ANALYZED_TRADES_HREF, label: "Your analyzed trades" },
+      ],
+    },
+    {
       title: "Trading Journal",
       description: "Log your trades, review your sessions, and track your performance.",
       links: journalLinks,
@@ -95,7 +104,7 @@ export default async function WelcomePage() {
   return (
     <DashboardPage>
       <Typography component="h1" variant="h1">Welcome</Typography>
-      <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
+      <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", xl: "repeat(4, minmax(0, 1fr))" } }}>
         {cards.map(({ title, description, links }) => (
           <DashboardPanel key={title} title={title}>
             <Typography color="text.secondary" variant="body2" sx={{ mb: 1 }}>{description}</Typography>

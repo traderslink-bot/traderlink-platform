@@ -75,6 +75,7 @@ export type WorkspaceTradeLibraryGroup = "none" | "day" | "ticker";
 
 export type WorkspaceTradeLibraryQuery = Readonly<{
   afterCursor: string | null;
+  awaitingAnalysis?: true;
   endDate: string | null;
   filter: WorkspaceTradeLibraryFilter;
   followDashboardPeriod: boolean;
@@ -206,6 +207,7 @@ function activeAccountId(scope: WorkspaceAccessScope): string {
 function canonicalQuery(value: WorkspaceTradeLibraryQuery): WorkspaceTradeLibraryQuery {
   const query = {
     afterCursor: value.afterCursor ?? null,
+    ...(value.awaitingAnalysis === true ? { awaitingAnalysis: true as const } : {}),
     endDate: value.endDate || null,
     filter: value.filter,
     followDashboardPeriod: value.followDashboardPeriod,
@@ -569,6 +571,41 @@ WHERE workspace_id = ? AND account_id = ?
   }))));
 }
 
+const currentAnalyzerResultSql = `(EXISTS (
+    SELECT 1
+    FROM journal_round_trip_daily_trade_analyses analysis
+    JOIN journal_round_trip_daily_trade_analysis_versions analysis_version
+      ON analysis_version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
+     AND analysis_version.revision_number = analysis.current_revision
+    JOIN journal_round_trip_versions analyzed_version
+      ON analyzed_version.workspace_id = analysis.workspace_id
+     AND analyzed_version.account_id = analysis.account_id
+     AND analyzed_version.round_trip_version_id = analysis.round_trip_version_id
+    WHERE analysis.workspace_id = projection.workspace_id
+      AND analysis.account_id = projection.account_id
+      AND analysis.round_trip_id = projection.round_trip_id
+      AND analysis.round_trip_version_id = projection.round_trip_version_id
+      AND analysis.status = 'ready'
+      AND analysis_version.status = 'ready'
+      AND analyzed_version.projection_fingerprint_sha256 = version.projection_fingerprint_sha256
+  ) OR EXISTS (
+    SELECT 1
+    FROM journal_active_logical_trade_memberships analyzer_membership
+    JOIN journal_logical_trade_daily_analyses logical_analysis
+      ON logical_analysis.workspace_id = analyzer_membership.workspace_id
+     AND logical_analysis.account_id = analyzer_membership.account_id
+     AND logical_analysis.logical_trade_id = analyzer_membership.logical_trade_id
+     AND logical_analysis.logical_trade_version_id = analyzer_membership.logical_trade_version_id
+    JOIN journal_logical_trade_daily_analysis_versions logical_analysis_version
+      ON logical_analysis_version.logical_trade_analysis_id = logical_analysis.logical_trade_analysis_id
+     AND logical_analysis_version.revision_number = logical_analysis.current_revision
+    WHERE analyzer_membership.workspace_id = projection.workspace_id
+      AND analyzer_membership.account_id = projection.account_id
+      AND analyzer_membership.round_trip_id = projection.round_trip_id
+      AND logical_analysis.status = 'ready'
+      AND logical_analysis_version.status = 'ready'
+  ))`;
+
 export function readWorkspaceTradeLibrary(
   database: Database.Database,
   scope: WorkspaceAccessScope,
@@ -607,6 +644,7 @@ WHERE workspace_id = ? AND account_id = ?`).get(scope.workspaceId, accountId)) a
   if (query.endDate) { clauses.push("projection.activity_local_date <= ?"); parameters.push(query.endDate); }
   if (query.filter === "open") clauses.push("projection.projection_state = 'legitimate_open'");
   if (query.filter === "closed") clauses.push("projection.projection_state = 'ready_closed' AND coalesce(logical_version.trade_style, style.trade_style, 'other') <> 'swing'");
+  if (query.awaitingAnalysis) clauses.push(`NOT ${currentAnalyzerResultSql}`);
   if (query.filter === "swing") clauses.push("coalesce(logical_version.trade_style, style.trade_style) = 'swing'");
   if (query.filter === "fees_not_entered") clauses.push(`EXISTS (
     SELECT 1
@@ -686,40 +724,7 @@ LEFT JOIN journal_logical_trade_versions logical_version
   projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
   projection.projection_state, projection.round_trip_id, projection.round_trip_version_id,
   version.created_at_utc AS recorded_at_utc, instrument.normalized_symbol AS symbol,
-  (EXISTS (
-    SELECT 1
-    FROM journal_round_trip_daily_trade_analyses analysis
-    JOIN journal_round_trip_daily_trade_analysis_versions analysis_version
-      ON analysis_version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
-     AND analysis_version.revision_number = analysis.current_revision
-    JOIN journal_round_trip_versions analyzed_version
-      ON analyzed_version.workspace_id = analysis.workspace_id
-     AND analyzed_version.account_id = analysis.account_id
-     AND analyzed_version.round_trip_version_id = analysis.round_trip_version_id
-    WHERE analysis.workspace_id = projection.workspace_id
-      AND analysis.account_id = projection.account_id
-      AND analysis.round_trip_id = projection.round_trip_id
-      AND analysis.round_trip_version_id = projection.round_trip_version_id
-      AND analysis.status = 'ready'
-      AND analysis_version.status = 'ready'
-      AND analyzed_version.projection_fingerprint_sha256 = version.projection_fingerprint_sha256
-  ) OR EXISTS (
-    SELECT 1
-    FROM journal_active_logical_trade_memberships analyzer_membership
-    JOIN journal_logical_trade_daily_analyses logical_analysis
-      ON logical_analysis.workspace_id = analyzer_membership.workspace_id
-     AND logical_analysis.account_id = analyzer_membership.account_id
-     AND logical_analysis.logical_trade_id = analyzer_membership.logical_trade_id
-     AND logical_analysis.logical_trade_version_id = analyzer_membership.logical_trade_version_id
-    JOIN journal_logical_trade_daily_analysis_versions logical_analysis_version
-      ON logical_analysis_version.logical_trade_analysis_id = logical_analysis.logical_trade_analysis_id
-     AND logical_analysis_version.revision_number = logical_analysis.current_revision
-    WHERE analyzer_membership.workspace_id = projection.workspace_id
-      AND analyzer_membership.account_id = projection.account_id
-      AND analyzer_membership.round_trip_id = projection.round_trip_id
-      AND logical_analysis.status = 'ready'
-      AND logical_analysis_version.status = 'ready'
-  )) AS has_current_analyzer_result,
+  ${currentAnalyzerResultSql} AS has_current_analyzer_result,
   version.trade_currency,
   COALESCE(CASE logical_version.trade_style WHEN 'day' THEN 'day_trade' ELSE logical_version.trade_style END,
     style.trade_style) AS trade_style,
@@ -753,40 +758,7 @@ export function readWorkspaceTradeLibrarySavedTrade(
   projection.exit_price_decimal, projection.exit_price_sort_key, projection.maximum_position_quantity_decimal, projection.gross_pnl_decimal, projection.gross_pnl_sort_key, projection.net_pnl_decimal, projection.net_pnl_sort_key, projection.hold_duration_seconds, projection.hold_duration_sort_key,
   projection.buy_quantity_decimal, projection.buy_quantity_sort_key, projection.position_decimal, projection.position_sort_key,
   projection.projection_state, projection.round_trip_id, projection.round_trip_version_id, instrument.normalized_symbol AS symbol,
-  (EXISTS (
-    SELECT 1
-    FROM journal_round_trip_daily_trade_analyses analysis
-    JOIN journal_round_trip_daily_trade_analysis_versions analysis_version
-      ON analysis_version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
-     AND analysis_version.revision_number = analysis.current_revision
-    JOIN journal_round_trip_versions analyzed_version
-      ON analyzed_version.workspace_id = analysis.workspace_id
-     AND analyzed_version.account_id = analysis.account_id
-     AND analyzed_version.round_trip_version_id = analysis.round_trip_version_id
-    WHERE analysis.workspace_id = projection.workspace_id
-      AND analysis.account_id = projection.account_id
-      AND analysis.round_trip_id = projection.round_trip_id
-      AND analysis.round_trip_version_id = projection.round_trip_version_id
-      AND analysis.status = 'ready'
-      AND analysis_version.status = 'ready'
-      AND analyzed_version.projection_fingerprint_sha256 = version.projection_fingerprint_sha256
-  ) OR EXISTS (
-    SELECT 1
-    FROM journal_active_logical_trade_memberships analyzer_membership
-    JOIN journal_logical_trade_daily_analyses logical_analysis
-      ON logical_analysis.workspace_id = analyzer_membership.workspace_id
-     AND logical_analysis.account_id = analyzer_membership.account_id
-     AND logical_analysis.logical_trade_id = analyzer_membership.logical_trade_id
-     AND logical_analysis.logical_trade_version_id = analyzer_membership.logical_trade_version_id
-    JOIN journal_logical_trade_daily_analysis_versions logical_analysis_version
-      ON logical_analysis_version.logical_trade_analysis_id = logical_analysis.logical_trade_analysis_id
-     AND logical_analysis_version.revision_number = logical_analysis.current_revision
-    WHERE analyzer_membership.workspace_id = projection.workspace_id
-      AND analyzer_membership.account_id = projection.account_id
-      AND analyzer_membership.round_trip_id = projection.round_trip_id
-      AND logical_analysis.status = 'ready'
-      AND logical_analysis_version.status = 'ready'
-  )) AS has_current_analyzer_result,
+  ${currentAnalyzerResultSql} AS has_current_analyzer_result,
   version.trade_currency, style.trade_style, projection.unique_execution_count
 FROM journal_workspace_trade_library_projections projection
 JOIN journal_round_trip_versions version ON version.workspace_id = projection.workspace_id

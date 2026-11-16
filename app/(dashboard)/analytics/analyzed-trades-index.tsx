@@ -34,6 +34,7 @@ import { TradeAnalysisRangeAndBasisControls } from "./trade-analysis-range-and-b
 import { AnalyzerHelpTooltip } from "./analyzer-help-tooltip";
 import { TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
+import { analyzerTradeHref } from "../trade-analyzer/analyzer-trade";
 
 type PageResponse = Readonly<{
   page?: DailyTradeAnalyzedTradePage;
@@ -87,6 +88,7 @@ export function AnalyzedTradesIndex({
   dateRange,
   endDate,
   initialPage = null,
+  openInAnalyzer = false,
   moneyBasis,
   offline = false,
   startDate,
@@ -99,6 +101,7 @@ export function AnalyzedTradesIndex({
   initialPage?: DailyTradeAnalyzedTradePage | null;
   moneyBasis: "gross" | "net";
   offline?: boolean;
+  openInAnalyzer?: boolean;
   startDate: string | null;
 }) {
   const theme = useTheme();
@@ -267,7 +270,9 @@ export function AnalyzedTradesIndex({
                       <TableCell align="right" sx={{ color: financialOutcomeColor(row.returnPercentDecimal) }}>{percent(row.returnPercentDecimal)}</TableCell>
                       <TableCell align="right">{row.executionCount}</TableCell>
                       <TableCell align="right">
-                        <Button endIcon={<OpenInNewIcon />} href={offline ? `/trade-tracker/${row.trackerDate}` : analyzedTradeTrackerHref(row, new URLSearchParams(indicatorQuery).get("indicator_interval") === "5m" ? "5m" : "1m", moneyBasis)} size="small" variant="outlined">
+                        <Button endIcon={<OpenInNewIcon />} href={offline ? `/trade-tracker/${row.trackerDate}` : openInAnalyzer
+                          ? analyzerTradeHref(row.roundTripId, new URLSearchParams(indicatorQuery).get("indicator_interval") ?? "1m", row.firstExecutionId, moneyBasis)
+                          : analyzedTradeTrackerHref(row, new URLSearchParams(indicatorQuery).get("indicator_interval") === "5m" ? "5m" : "1m", moneyBasis)} size="small" variant="outlined">
                           {offline ? "Open saved day" : "View full analysis"}
                         </Button>
                       </TableCell>

@@ -20,7 +20,10 @@ describe("Demo data callout appearance contract", () => {
     expect(callout).toContain("Your account has been preloaded with demo data");
     expect(callout).toContain("Take a tour, explore the features");
     expect(callout).toContain("Ready to start tracking your own journey?");
-    expect(callout).toContain('if (!expectedAccountSelectionRef || pathname === "/workspace") return null');
+    expect(callout).toContain('pathname === "/workspace" || pathname === "/trade-analyzer"');
+    const analyzer = source("app/(dashboard)/trade-analyzer/page.tsx");
+    expect(analyzer).toContain("Explore Trade Analyzer with demo data");
+    expect(analyzer.match(/<ClearDemoDataAction\b/g)).toHaveLength(1);
     expect(template).toContain("<DemoDataAccountIndicator");
   });
 });

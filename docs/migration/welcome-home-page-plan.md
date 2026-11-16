@@ -1,8 +1,10 @@
-# Welcome and home page preference
+# Signed-in home menu and home page preference
+
+The owner is still deciding the user-facing name of the signed-in home page. It may grow beyond menu cards to include general market data, market updates, and app updates. “Welcome” in this plan refers to the current route and label.
 
 ## Scope
 
-- Open the signed-in Welcome page by default. Show Trading Tools, Market News and Trading Journal cards with direct links the signed-in user can use.
+- Open the signed-in Welcome page by default. Show Trading Tools, Market News, Trade Analyzer and Trading Journal cards with direct links the signed-in user can use.
 - In Account Settings → Preferences, show a Home page dropdown and Save button above Appearance. Offer Welcome, Trading Workspace, Scanners, Screeners and Journal Workspace. Keep unavailable choices visible and disabled. Use the shared dashboard theme and stack cards on small screens.
 - Keep the preference with the Platform user. A missing or unavailable preference resolves to Welcome. A Journal Workspace home requires a selectable trading account. The Welcome card can still link eligible users to Journal onboarding.
 - Use the dashboard entry route for ordinary web opens, default sign-in returns and installed app launches. Keep the installed app ID, explicit destination URLs and OAuth account-link returns. Existing installs pick up the new launch URL through the browser's manifest update.

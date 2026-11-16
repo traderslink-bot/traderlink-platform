@@ -6,11 +6,11 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 
 import type {
-  JournalManualTradeEntry,
   JournalManualTrackerKind,
 } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
 import {
   ExecutionEntryCard,
+  manualTradeEntry,
   type ExecutionDraft,
   type ExecutionSaveResult,
 } from "./execution-entry-card";
@@ -41,25 +41,6 @@ function friendlyFailure(code: string | undefined): string {
     return "The selected account or an open trade changed. Review the executions again.";
   }
   return "The trades could not be saved. Your executions are still in the form.";
-}
-
-function tradeEntry(
-  execution: ExecutionDraft,
-  accountCurrency: string,
-  accountTimezone: string,
-): JournalManualTradeEntry {
-  return Object.freeze({
-    clientRowRef: `row-${execution.id}`,
-    localDate: execution.date,
-    localTime: execution.time.length === 5 ? `${execution.time}:00` : execution.time,
-    sourceTimezone: accountTimezone,
-    normalizedSymbol: execution.symbol,
-    tradeCurrency: accountCurrency,
-    side: execution.side.toLowerCase() as "buy" | "sell",
-    quantityDecimal: execution.quantity,
-    priceDecimal: execution.price,
-    feesDecimal: execution.fees || null,
-  });
 }
 
 export function ManualExecutionEntry({
@@ -150,7 +131,7 @@ export function ManualExecutionEntry({
     idempotencyKey.current = currentIdempotencyKey;
     const entryTimezone = tracker === "swing" ? accountTimezone : "America/New_York";
     const entries = executions.map((execution) =>
-      tradeEntry(execution, accountCurrency, entryTimezone));
+      manualTradeEntry(execution, accountCurrency, entryTimezone));
     const submission = Object.freeze({
       entries,
       expectedAccountSelectionRef,

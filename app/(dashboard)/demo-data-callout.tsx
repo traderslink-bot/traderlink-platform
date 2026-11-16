@@ -22,7 +22,7 @@ function normalizedConfirmation(value: string): string {
   return value.trim().replace(/\s+/gu, " ").toUpperCase();
 }
 
-function ClearDemoDataAction({
+export function ClearDemoDataAction({
   expectedAccountSelectionRef,
 }: {
   expectedAccountSelectionRef: string;
@@ -284,7 +284,7 @@ export function DemoDataAccountIndicator({
   expectedAccountSelectionRef: string | null;
 }) {
   const pathname = usePathname();
-  if (!expectedAccountSelectionRef || pathname === "/workspace") return null;
+  if (!expectedAccountSelectionRef || (pathname === "/workspace" || pathname === "/trade-analyzer")) return null;
   return (
     <Box sx={{ mb: 1.5, maxWidth: 980 }}>
       <DemoDataCallout
