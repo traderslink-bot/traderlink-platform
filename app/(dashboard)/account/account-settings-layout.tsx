@@ -42,7 +42,7 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
     label: "General",
   }),
   Object.freeze({
-    description: "Appearance, push notifications and Discord messages",
+    description: "Home page, appearance and notifications",
     href: "/account/preferences",
     id: "preferences",
     label: "Preferences",

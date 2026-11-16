@@ -1,3 +1,4 @@
+import { platformHomePagePreferenceMigration } from "./migrations/0195_platform_home_page_preference";
 import { traderLinkCommunitiesIdentityPermissionsMigration } from "@/src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
 import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
 import { traderLinkCommunitiesDiscordFeatureAccessMigration } from "@/src/modules/communities/server/database/migrations/0123_traderlink_communities_discord_feature_access";
@@ -739,6 +740,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0192_traderlink_coaching_trade_evaluation_templates.ts", migration: traderLinkCoachingTradeEvaluationTemplatesMigration }),
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0193_traderlink_coaching_profile_photos.ts", migration: traderLinkCoachingProfilePhotosMigration }),
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0194_traderlink_coaching_review_selection_lifecycle.ts", migration: traderLinkCoachingReviewSelectionLifecycleMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0195_platform_home_page_preference.ts", migration: platformHomePagePreferenceMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(

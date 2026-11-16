@@ -82,6 +82,7 @@ const privateNoStoreHeaders: { key: string; value: string }[] = [
 const privateTraderLinkRoutes = [
   "/intelligence/:path*",
   "/workspace/:path*",
+  "/welcome",
   "/calendar/:path*",
   "/quick-trade-entry",
   "/trade-tracker/:path*",

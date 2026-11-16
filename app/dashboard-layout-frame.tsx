@@ -5,6 +5,8 @@ import { readMembershipDiscordConnection } from "@/src/modules/platform/server/m
 import { hasOwnerMarketDataAccess } from "@/src/modules/level-analysis/server/owner-market-data-access";
 import { hasGeneralMarketNewsAccess } from "@/src/modules/news/server/general-market-news-access";
 import type { ReactNode } from "react";
+import { isPlatformSignedInLandingPath, PLATFORM_ENTRY_PATH } from "@/src/modules/platform/contracts/platform-home-page";
+import { loginReturnTo as safeLoginReturnTo } from "@/src/modules/platform/server/authentication/platform-login-http";
 import { notFound, redirect } from "next/navigation";
 
 import { TraderLinkPlatformDashboardTemplate } from "./dashboard-template";
@@ -116,7 +118,7 @@ function createFrameTiming() {
 
 async function TraderLinkPlatformDashboardFrameContent({
   children,
-  loginReturnTo = "/workspace",
+  loginReturnTo = PLATFORM_ENTRY_PATH,
   watchlistMemberAccess = false,
   billingMemberAccess = false,
 }: {
@@ -138,13 +140,12 @@ async function TraderLinkPlatformDashboardFrameContent({
     requestHeaders.get("x-railway-request-id"),
   );
   timing.next("identity");
-  const workspaceLanding = requestPath === "/workspace" || requestPath === "/workspace/";
   const communityRecoverySlug = requestPath?.match(/^\/communities\/([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\/recovery\/?$/u)?.[1];
   const communityRecovery = communityRecoverySlug !== undefined
     && communityRecoverySlug.length >= 3 && communityRecoverySlug.length <= 80;
   let identity;
   try {
-    identity = (billingMemberAccess || workspaceLanding)
+    identity = (billingMemberAccess || isPlatformSignedInLandingPath(requestPath))
       ? await requireTraderLinkPlatformBillingPageIdentity()
       : watchlistMemberAccess
       ? await requireTraderLinkPlatformAuthenticatedPageIdentity({
@@ -162,11 +163,13 @@ async function TraderLinkPlatformDashboardFrameContent({
       redirect("/plans");
     }
     if (
-      process.env.NODE_ENV === "production" &&
-      isTraderLinkPlatformError(error) &&
-      error.code === "TRADERLINK_DASHBOARD_ACCESS_DENIED"
+      isTraderLinkPlatformError(error) && (
+        error.safeContext.reason === "dashboard_membership_required" ||
+        (process.env.NODE_ENV === "production" && error.code === "TRADERLINK_DASHBOARD_ACCESS_DENIED")
+      )
     ) {
-      redirect("/access-required");
+      const returnTo = safeLoginReturnTo(requestHeaders.get("x-traderlink-page-return-to"), loginReturnTo);
+      redirect(`/access-required?returnTo=${encodeURIComponent(returnTo)}`);
     }
     if (
       (process.env.NODE_ENV === "production" ||
@@ -175,7 +178,8 @@ async function TraderLinkPlatformDashboardFrameContent({
       isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED"
     ) {
-      redirect(`/login?returnTo=${encodeURIComponent(requestPath?.startsWith("/account/") ? requestPath : loginReturnTo)}`);
+      const returnTo = safeLoginReturnTo(requestHeaders.get("x-traderlink-page-return-to"), loginReturnTo);
+      redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`);
     }
     throw error;
   }
@@ -287,7 +291,7 @@ async function TraderLinkPlatformDashboardFrameContent({
 
 export function TraderLinkPlatformDashboardFrame({
   children,
-  loginReturnTo = "/workspace",
+  loginReturnTo = PLATFORM_ENTRY_PATH,
   watchlistMemberAccess = false,
   billingMemberAccess = false,
 }: {

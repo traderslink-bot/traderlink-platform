@@ -78,11 +78,13 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { PLATFORM_ENTRY_PATH } from "@/src/modules/platform/contracts/platform-home-page";
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
   DASHBOARD_MARKET_HALT_ALERTS_ITEM,
   DASHBOARD_NAVIGATION_HREFS,
   DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
+  DASHBOARD_STANDALONE_ITEMS,
   isDashboardNavigationItem,
   type DashboardNavigationDrawerItem,
   type DashboardNavigationGroup,
@@ -781,11 +783,10 @@ function DashboardShellContent({
                 px: 2,
               }}
             >
-              <Link
-                aria-label="TradersLink workspace"
-                href="/workspace"
+              <a
+                aria-label={offline ? "TradersLink workspace" : "TradersLink home"}
+                href={offline ? "/workspace" : PLATFORM_ENTRY_PATH}
                 onClick={closeMobile}
-                prefetch={false}
               >
                 <Image
                   alt="TradersLink"
@@ -801,7 +802,7 @@ function DashboardShellContent({
                   unoptimized
                   width={170}
                 />
-              </Link>
+              </a>
               <Tooltip title="Close navigation">
                 <IconButton
                   aria-label="Close navigation"
@@ -825,6 +826,19 @@ function DashboardShellContent({
           {showCommunity&&communityMenu?<CommunitySidebar key={`${communityMenu.base}:${pathname}`} menu={communityMenu} path={pathname} onNavigate={closeMobile} onShowTraderLink={()=>setCommunityMode({base:communityMenu.base,show:false})}/>:<>
           {communityMenu?<Button onClick={()=>setCommunityMode({base:communityMenu.base,show:true})} sx={{mx:1,mb:1}}>{compact?(communityMenu.kind==="coaching"?"Coaching":"Community"):`${communityMenu.name} menu`}</Button>:null}
           <List disablePadding>
+            {offline ? null : DASHBOARD_STANDALONE_ITEMS.map(item => (
+              <Box component="li" key={item.href}>
+                <NavigationLink
+                  collapsed={compact}
+                  item={item}
+                  offline={false}
+                  onNavigate={closeMobile}
+                  onOpenAiChat={openAiChat}
+                  onOpenTradeDrawer={openWorkspaceTradeDrawer}
+                  pathname={pathname}
+                />
+              </Box>
+            ))}
             {sidebarNavigationSections.map((section, index) => renderGroup(section.group,
               section.dividerBefore ? <Divider sx={{ my: 1.25 }} /> :
                 compact && index > 0 ? <Divider sx={{ mx: 2, my: 0.75 }} /> : null))}
@@ -890,7 +904,7 @@ function DashboardShellContent({
             </IconButton>
           </Tooltip>
           <Box sx={{ display: { xs: "none", lg: "block" }, flexShrink: 0 }}>
-            <Link aria-label="TradersLink workspace" href="/workspace" prefetch={false}>
+            <a aria-label={offline ? "TradersLink workspace" : "TradersLink home"} href={offline ? "/workspace" : PLATFORM_ENTRY_PATH}>
               <Image
                 alt="TradersLink"
                 height={35}
@@ -905,7 +919,7 @@ function DashboardShellContent({
                 unoptimized
                 width={170}
               />
-            </Link>
+            </a>
           </Box>
           {offline ? (
             <Chip

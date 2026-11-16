@@ -1,3 +1,5 @@
+import { PLATFORM_HOME_PAGES } from "@/src/modules/platform/contracts/platform-home-page";
+
 export type DashboardNavigationIconKey =
   | "admin"
   | "account"
@@ -268,10 +270,10 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
     }),
   ]);
 
-// Kept for dashboard-template compatibility. Scanner and Market Charts now live
-// in Trading Tools, so there are no standalone sidebar links.
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
-  Object.freeze([]);
+  Object.freeze([
+    Object.freeze({ ...PLATFORM_HOME_PAGES.welcome, icon: "overview" as const }),
+  ]);
 
 export type DashboardSidebarNavigationSection = Readonly<
   {
@@ -297,7 +299,8 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
     "/trading-workspace": "Trading Workspace",
-    "/workspace": "Welcome to TradersLink Beta App.",
+    "/workspace": "Journal Workspace",
+    [PLATFORM_HOME_PAGES.welcome.href]: PLATFORM_HOME_PAGES.welcome.label,
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/scanner": "Scanner",
@@ -359,6 +362,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
   DASHBOARD_HOME_ITEM.href,
+  ...DASHBOARD_STANDALONE_ITEMS.map(item => item.href),
   ...DASHBOARD_MAIN_NAVIGATION_GROUPS.flatMap((group) =>
     group.items.filter(isDashboardNavigationItem).map((item) => item.href),
   ),

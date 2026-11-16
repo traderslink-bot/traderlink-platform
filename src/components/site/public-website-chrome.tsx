@@ -66,7 +66,7 @@ function HomepageNavigation() {
         <div id="public-feature-links" className={styles.featureLinks} hidden={!featuresOpen}>{featureLinks.map(([href,label])=><a key={href} href={href}>{label}</a>)}</div>
       </div>
       <a href="/academy">Academy</a><a href="/help">Help</a>
-      <a href="https://app.traderslink.pro/login?returnTo=%2Fworkspace">Log in</a>
+      <a href="https://app.traderslink.pro/login?returnTo=%2Fdashboard-entry">Log in</a>
       <a className={styles.signup} href="https://traderslink.pro/beta">Sign up free</a>
     </nav>
   </header>;
