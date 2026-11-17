@@ -12,7 +12,7 @@ import { PARTNER_ALERT_CONTEXT_SCHEMA_STATEMENTS } from "../../../../partner-ale
 export const platformPaidCorePartnerPrerequisitesMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0190_platform_paid_core_partner_prerequisites",
-  executionOrder: 255,
+  executionOrder: 278,
   statements: Object.freeze([
     ...platformErasureAdmissionSchemaStatements,
     ...platformPremiumAuthoritySchemaStatementsV2,

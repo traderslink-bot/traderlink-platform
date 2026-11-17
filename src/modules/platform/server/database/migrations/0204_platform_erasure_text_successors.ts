@@ -5,6 +5,6 @@ import { PLATFORM_ERASURE_TEXT_SUCCESSOR_STATEMENTS } from "../../privacy/platfo
 export const platformErasureTextSuccessorMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0204_platform_erasure_text_successors",
-  executionOrder: 259,
+  executionOrder: 282,
   statements: PLATFORM_ERASURE_TEXT_SUCCESSOR_STATEMENTS,
 });

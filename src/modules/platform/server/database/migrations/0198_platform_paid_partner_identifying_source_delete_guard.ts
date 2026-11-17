@@ -9,6 +9,6 @@ import { PARTNER_ALERT_IDENTIFYING_SOURCE_DELETE_GUARD_REPLACEMENT_STATEMENTS } 
 export const platformPaidPartnerIdentifyingSourceDeleteGuardMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0198_platform_paid_partner_identifying_source_delete_guard",
-  executionOrder: 258,
+  executionOrder: 281,
   statements: PARTNER_ALERT_IDENTIFYING_SOURCE_DELETE_GUARD_REPLACEMENT_STATEMENTS,
 });

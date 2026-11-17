@@ -5,6 +5,6 @@ import type { PlatformMigration } from "../platform-migration-contract";
 export const platformPaidWhopCoverageEvidenceMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0208_platform_paid_whop_coverage_evidence",
-  executionOrder: 262,
+  executionOrder: 285,
   statements: PARTNER_ALERT_WHOP_EVIDENCE_STATEMENTS,
 });

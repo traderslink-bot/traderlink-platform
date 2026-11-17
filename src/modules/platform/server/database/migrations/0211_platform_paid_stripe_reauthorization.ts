@@ -3,7 +3,7 @@ import type { PlatformMigration } from "../platform-migration-contract";
 export const platformPaidStripeReauthorizationMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0211_platform_paid_stripe_reauthorization",
-  executionOrder: 265,
+  executionOrder: 288,
   statements: Object.freeze([
     `CREATE TABLE partner_alert_stripe_authorizations (
       seller_id TEXT NOT NULL REFERENCES partner_alert_stripe_sellers(seller_id) ON DELETE RESTRICT,

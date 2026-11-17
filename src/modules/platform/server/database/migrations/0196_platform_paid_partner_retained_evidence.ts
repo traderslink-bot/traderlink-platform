@@ -5,6 +5,6 @@ import { PARTNER_ALERT_RETAINED_EVIDENCE_SCHEMA_STATEMENTS } from "../../../../p
 export const platformPaidPartnerRetainedEvidenceMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0196_platform_paid_partner_retained_evidence",
-  executionOrder: 256,
+  executionOrder: 279,
   statements: PARTNER_ALERT_RETAINED_EVIDENCE_SCHEMA_STATEMENTS,
 });

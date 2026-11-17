@@ -3,7 +3,7 @@ import type { PlatformMigration } from "../platform-migration-contract";
 export const platformPaidStripeCheckoutReviewedVersionMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0212_platform_paid_stripe_checkout_reviewed_version",
-  executionOrder: 267,
+  executionOrder: 289,
   statements: Object.freeze([
     "DROP TRIGGER partner_alert_stripe_checkout_ready",
     `CREATE TRIGGER partner_alert_stripe_checkout_ready BEFORE INSERT ON partner_alert_stripe_checkout_claims

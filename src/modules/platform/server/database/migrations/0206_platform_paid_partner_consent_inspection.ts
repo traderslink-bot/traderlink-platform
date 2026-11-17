@@ -4,7 +4,7 @@ import type { PlatformMigration } from "../platform-migration-contract";
 export const platformPaidPartnerConsentInspectionMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0206_platform_paid_partner_consent_inspection",
-  executionOrder: 261,
+  executionOrder: 284,
   statements: Object.freeze([
     `ALTER TABLE partner_alert_partners ADD COLUMN submitted_application_revision INTEGER
       CHECK(submitted_application_revision >= 1)`,

@@ -13,7 +13,7 @@ import {
 export const platformPaidPartnerRetentionSuccessorsMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "platform",
   migrationId: "0197_platform_paid_partner_retention_successors",
-  executionOrder: 257,
+  executionOrder: 280,
   statements: Object.freeze([
     ...PARTNER_ALERT_POST_RETAINED_EVIDENCE_SCHEMA_STATEMENTS,
     ...PARTNER_ALERT_RETENTION_SCHEMA_BACKFILL_STATEMENTS,
