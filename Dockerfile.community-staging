@@ -55,6 +55,11 @@ COPY --from=builder /app/src/scripts/render-public-gainers-request.py /app/src/s
 
 RUN mkdir -p /data && chown nextjs:nodejs /data
 
+COPY --from=builder --chown=nextjs:nodejs /app/src/modules/platform/server/membership/platform-premium-authority-repository.ts ./src/modules/platform/server/membership/platform-premium-authority-repository.ts
+COPY --from=builder --chown=nextjs:nodejs /app/src/modules/platform/server/membership/platform-premium-whop-native.ts ./src/modules/platform/server/membership/platform-premium-whop-native.ts
+COPY --from=builder --chown=nextjs:nodejs /app/src/modules/platform/server/privacy/platform-premium-signer-redaction.ts ./src/modules/platform/server/privacy/platform-premium-signer-redaction.ts
+COPY --from=builder --chown=nextjs:nodejs /app/docs/migration/partner-alert-erasure-profile-qualification.json ./docs/migration/partner-alert-erasure-profile-qualification.json
+
 USER nextjs
 EXPOSE 3000
 
