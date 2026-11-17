@@ -51,6 +51,6 @@ The Railway startup wrapper pins the exact 181-entry production ledger. Coordina
 
 ## Private VPS preview
 
-The managed `welcome-home-preference-20261116` lane serves this checkout on loopback port 3010 with its own 182-migration SQLite database and background workers disabled. The launcher accepts database diagnostics around the setup result. This lane requests Webpack and uses a 2.5 GiB Node heap to leave memory for route compilation within the preview service's memory target.
+The managed `welcome-home-preference-20261116` lane serves this checkout on loopback port 3010 with its own 182-migration SQLite database and background workers disabled. The launcher accepts database diagnostics around the setup result and builds the on-demand Demo setup worker before starting. This lane runs Webpack with a 3 GiB Node heap, a 5 GiB soft service target and a 6 GiB hard service limit.
 
-Open the VPS preview shortcut, then visit `/home` or `/trade-analyzer`. The Primary Trading Account shows manual entry. In `/account/trading`, switch to Demo Trade Tracker to see the bundled sample charts, analysis cards and analyzed trades. The Coordinator handoff is on hold for owner review.
+Open the VPS preview shortcut, then visit `/home` or `/trade-analyzer`. Home opens immediately. The Journal Workspace and Trade Analyzer open the isolated sample account automatically on first visit. The Coordinator handoff is on hold for owner review.

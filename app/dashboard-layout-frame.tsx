@@ -2,6 +2,7 @@ import { readCommunityHistoryEntry } from "@/src/modules/communities/contracts/c
 import { headers } from "next/headers";
 import { DiscordConnectionNotice } from "./discord-connection-notice";
 import { readMembershipDiscordConnection } from "@/src/modules/platform/server/membership/membership-discord-connection";
+import { evaluateMembershipFeature, hasJournalWorkspaceAccess } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { hasOwnerMarketDataAccess } from "@/src/modules/level-analysis/server/owner-market-data-access";
 import { hasGeneralMarketNewsAccess } from "@/src/modules/news/server/general-market-news-access";
 import type { ReactNode } from "react";
@@ -23,7 +24,7 @@ import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/
 import { JournalAccountService } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
 import { JOURNAL_DEMO_CURRENT_VERSION_ID } from "@/src/modules/journal/server/demo/journal-demo-current-version";
-import { DemoSessionActivation } from "./demo-session-activation";
+import { DashboardDemoSetup } from "./demo-session-activation";
 import { PwaLifecycle } from "./pwa/pwa-lifecycle";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
@@ -198,11 +199,20 @@ async function TraderLinkPlatformDashboardFrameContent({
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const demos = new JournalDemoAccountRepository(database);
     const demo = demos.findAccountForUser(scope);
-    const demoActivationPending = identity.mode === "platform_session" && scope.workspaceRole === "owner" &&
-      demos.findLifecycleForUser(scope)?.state !== "cleared" &&
+    const activeDemoAccount = demos.findActiveAccount(scope);
+    const demoAvailable = scope.workspaceRole === "owner" && demos.findLifecycleForUser(scope)?.state !== "cleared";
+    const demoActivationPending = identity.mode === "platform_session" && demoAvailable &&
       (!demo || (demo.demoPackVersionId !== JOURNAL_DEMO_CURRENT_VERSION_ID && !demos.findPackApplication({
         accountId: demo.accountId, workspaceId: scope.workspaceId, demoPackVersionId: JOURNAL_DEMO_CURRENT_VERSION_ID,
       })) || demos.hasPendingIndicatorAnalysis(scope));
+    let autoOpenDemo = null;
+    if (demoAvailable && scope.activeAccountId && !activeDemoAccount && !demos.hasRealAcceptedExecution(scope)) {
+      const journal = identity.mode === "local_development" || hasJournalWorkspaceAccess(database, scope.userId);
+      autoOpenDemo = {
+        journal,
+        analyzer: journal || evaluateMembershipFeature(database, scope.userId, "analytics.access").allowed,
+      };
+    }
     const activeAccount = scope.activeAccountId
       ? new JournalAccountService(new JournalAccountRepository(database))
         .requireAccountRecord(scope, scope.activeAccountId)
@@ -223,8 +233,9 @@ async function TraderLinkPlatformDashboardFrameContent({
     ) ?? null;
     return Object.freeze({
       demoActivationPending,
+      autoOpenDemo,
       activeAccount,
-      activeDemoAccount: new JournalDemoAccountRepository(database).findActiveAccount(scope),
+      activeDemoAccount,
       appearance: new PlatformUserPreferenceRepository(database).getActiveWorkspaceAppearance(scope),
       marketHaltAlerts: marketHaltAlerts.read(scope),
       mutedMarketHaltTickers: marketHaltAlerts.listMutedTickers({
@@ -274,13 +285,18 @@ async function TraderLinkPlatformDashboardFrameContent({
           coachingNavigationHref={dashboardContext.coachingNavigationHref}
         >
           {discordConnection && requestPath !== "/account/login" ? <DiscordConnectionNotice required={discordConnection.required} connected={discordConnection.connected} joined={discordConnection.joined} /> : null}
-          {children}
+          <DashboardDemoSetup
+            autoOpenDemo={dashboardContext.autoOpenDemo}
+            ensureDemo={dashboardContext.demoActivationPending}
+            scopeRef={offlineScopeRef}
+          >
+            {children}
+          </DashboardDemoSetup>
         </TraderLinkPlatformDashboardTemplate>
         <PwaLifecycle
           accountSelectionRef={accountSelectionRef}
           offlineScopeRef={offlineScopeRef}
         />
-          {dashboardContext.demoActivationPending ? <DemoSessionActivation scopeRef={offlineScopeRef} /> : null}
       </>
     </DashboardMuiProviders>
   );

@@ -17,10 +17,9 @@ describe("Demo data callout appearance contract", () => {
     expect(callout).toContain('sx={{ color: demoHeadingColor, fontWeight: 800 }}');
     expect(callout).toContain('component="h2" sx={{ color: demoHeadingColor,');
     expect(callout).toContain('sx={{ color: demoBodyColor }} variant="body2"');
-    expect(callout).toContain("Your account has been preloaded with demo data");
-    expect(callout).toContain("Take a tour, explore the features");
-    expect(callout).toContain("Ready to start tracking your own journey?");
-    expect(callout).toContain('pathname === "/workspace" || pathname === "/trade-analyzer"');
+    expect(callout).toContain("Your Trade Journal account is preloaded with sample trades from August.");
+    expect(callout).toContain("When you’re ready to track your own trades, clear the demo data and start fresh.");
+    expect(callout).toContain('pathname === "/home" || pathname === "/workspace" || pathname === "/trade-analyzer"');
     const analyzer = source("app/(dashboard)/trade-analyzer/page.tsx");
     expect(analyzer).toContain("Explore Trade Analyzer with demo data");
     expect(analyzer.match(/<ClearDemoDataAction\b/g)).toHaveLength(1);

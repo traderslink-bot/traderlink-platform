@@ -369,8 +369,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
   const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
     ? currentJournalAccountSelectionRef(scope)
     : undefined;
-  const showDemoTradeTrackerInvitation = !onboardingStatus.activeAccountIsDemo &&
-    onboardingStatus.demoLifecycleState !== "cleared";
   const analyticsMetrics = response ? [...WORKSPACE_METRICS.map(([label, metricId, caption]) => {
     const selectedMetricId = workspaceMetricId(metricId, pnlReportingBasis);
     const metrics = findJournalAnalyticsMetric(response, selectedMetricId);
@@ -418,8 +416,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         analyticsMetrics={analyticsMetrics}
         demoAccountSelectionRef={demoAccountSelectionRef}
         expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-        showDemoTradeTrackerInvitation={showDemoTradeTrackerInvitation}
-        hasRealAcceptedExecution={onboardingStatus.hasRealAcceptedExecution}
         newsScannerAvailable={hasPressReleaseDashboardAccess(identity)}
         prScannerCardPreference={prScannerCardPreference}
         reviewSummary={reviewSummary}

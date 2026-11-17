@@ -24,7 +24,7 @@ import {
   DashboardPanel,
   DashboardSecondaryAction,
 } from "../../dashboard-template";
-import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callout";
+import { DemoDataCallout } from "../demo-data-callout";
 import type { FinancialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import type { WorkspaceTradeLibraryModel } from "./workspace-trade-library";
@@ -87,7 +87,6 @@ type WorkspaceDashboardProps = Readonly<{
   analyticsAccessDenied?: boolean;
   analyticsMetrics?: readonly WorkspaceMetric[];
   demoAccountSelectionRef?: string;
-  hasRealAcceptedExecution?: boolean;
   newsScannerAvailable?: boolean;
   offlineSavedAtUtc?: string;
   period?: "today" | "week" | "month" | "all";
@@ -95,7 +94,6 @@ type WorkspaceDashboardProps = Readonly<{
   ruleResultsCard?: Readonly<{ brokenRuleCount: number; recentBrokenRuleTitles: readonly string[] }>;
   ruleResultsCardPreference?: Readonly<{ revision: number | null; showInWorkspace: boolean }>;
   reviewSummary?: WorkspaceReviewSummary;
-  showDemoTradeTrackerInvitation?: boolean;
 }> & (WorkspaceLiveTradeLibraryProps | WorkspaceOfflineTradeLibraryProps);
 
 const unavailableMetrics: readonly WorkspaceMetric[] = [
@@ -175,7 +173,6 @@ export function WorkspaceDashboard({
   analyticsAccessDenied = false,
   analyticsMetrics,
   demoAccountSelectionRef,
-  hasRealAcceptedExecution,
   newsScannerAvailable = false,
   offlineSavedAtUtc,
   period = "all",
@@ -183,7 +180,6 @@ export function WorkspaceDashboard({
   ruleResultsCard,
   ruleResultsCardPreference,
   reviewSummary,
-  showDemoTradeTrackerInvitation,
   ...tradeLibraryProps
 }: WorkspaceDashboardProps) {
   const router = useRouter();
@@ -215,9 +211,6 @@ export function WorkspaceDashboard({
   useEffect(() => { setShowRuleResultsCard(ruleResultsCardPreference?.showInWorkspace ?? false); }, [ruleResultsCardPreference?.showInWorkspace]);
   useEffect(() => { setShowPrScannerCard(prScannerCardPreference?.showInWorkspace ?? true); }, [prScannerCardPreference?.showInWorkspace]);
   useEffect(() => { setRulesOpen(false); setRulesAccountSelectionRef(null); }, [activeAccountSelectionRef]);
-  if (showDemoTradeTrackerInvitation) {
-    return <DashboardPage><DemoTradeTrackerInvitation hasRealAcceptedExecution={hasRealAcceptedExecution ?? false} /></DashboardPage>;
-  }
   return (
     <DashboardChartProvider>
       <DashboardPage>

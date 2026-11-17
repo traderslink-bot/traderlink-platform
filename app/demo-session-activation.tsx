@@ -1,12 +1,47 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import Typography from "@mui/material/Typography";
+import { useEffect, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
-/** Existing sessions receive demo upgrades without another OAuth login. */
-export function DemoSessionActivation({ scopeRef }: { scopeRef: string }) {
+const ANALYZER_PAGE = /^\/(?:trade-analyzer|analytics\/trade-analyzer)(?:\/|$)/u;
+const JOURNAL_PAGE = /^\/(?:workspace|trade-tracker|quick-trade-entry|trades|calendar|analytics|imports|data-decisions|rules)(?:\/|$)/u;
+
+export function DashboardDemoSetup({
+  autoOpenDemo,
+  ensureDemo,
+  scopeRef,
+  children,
+}: {
+  autoOpenDemo: Readonly<{ journal: boolean; analyzer: boolean }> | null;
+  ensureDemo: boolean;
+  scopeRef: string;
+  children?: ReactNode;
+}) {
+  const pathname = usePathname();
+  const openDemo = autoOpenDemo && (ANALYZER_PAGE.test(pathname)
+    ? autoOpenDemo.analyzer
+    : autoOpenDemo.journal && JOURNAL_PAGE.test(pathname));
+  return openDemo || ensureDemo ? (
+    <DemoSessionActivation key={openDemo ? "open" : "ensure"} openDemo={Boolean(openDemo)} scopeRef={scopeRef}>
+      {children}
+    </DemoSessionActivation>
+  ) : <>{children}</>;
+}
+
+/** Select Demo on first Journal entry or refresh saved samples in the background. */
+export function DemoSessionActivation({
+  scopeRef,
+  openDemo = false,
+  children,
+}: {
+  scopeRef: string;
+  openDemo?: boolean;
+  children?: ReactNode;
+}) {
   const router = useRouter();
+  const [showPage, setShowPage] = useState(!openDemo);
   useEffect(() => {
     let active = true;
     let running = false;
@@ -20,7 +55,8 @@ export function DemoSessionActivation({ scopeRef }: { scopeRef: string }) {
       if (!active || running || completed || !navigator.onLine || document.visibilityState !== "visible") return;
       running = true;
       try {
-        const response = await fetch(`/api/platform/journal/demo/ensure${after ? `?after=${encodeURIComponent(after)}` : ""}`, {
+        const endpoint = openDemo ? "/api/platform/journal/demo/activate" : "/api/platform/journal/demo/ensure";
+        const response = await fetch(`${endpoint}${after ? `?after=${encodeURIComponent(after)}` : ""}`, {
           method: "POST", credentials: "same-origin", cache: "no-store",
           signal: controller.signal,
           headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
@@ -30,7 +66,16 @@ export function DemoSessionActivation({ scopeRef }: { scopeRef: string }) {
           timer = setTimeout(() => void ensure(), 3_000);
           return;
         }
-        if (!response.ok) return;
+        if (!active) return;
+        if (!response.ok) {
+          if (openDemo) setShowPage(true);
+          return;
+        }
+        if (openDemo) {
+          completed = true;
+          router.refresh();
+          return;
+        }
         busyRetries = 0;
         const result = await response.json() as { status?: string; changed?: boolean; nextAfter?: string | null };
         if (!active) return;
@@ -43,6 +88,7 @@ export function DemoSessionActivation({ scopeRef }: { scopeRef: string }) {
         else if (result.status === "ready" && after) timer = setTimeout(() => void ensure(), 500);
       } catch {
         // Keep normal account access usable; retry on reconnect/focus.
+        if (active && openDemo) setShowPage(true);
       } finally { running = false; }
     };
     const onFocus = () => { if (document.visibilityState === "visible") void ensure(); };
@@ -56,6 +102,6 @@ export function DemoSessionActivation({ scopeRef }: { scopeRef: string }) {
       window.removeEventListener("online", ensure);
       document.removeEventListener("visibilitychange", onFocus);
     };
-  }, [router, scopeRef]);
-  return null;
+  }, [openDemo, router, scopeRef]);
+  return showPage ? <>{children}</> : <Typography role="status">Loading demo data…</Typography>;
 }
