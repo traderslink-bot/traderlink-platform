@@ -1,6 +1,7 @@
 // @vitest-environment node
 import {describe,expect,it} from "vitest";
-import {createHash} from "node:crypto";
+import {createHash,createHmac} from "node:crypto";
+import Database from "better-sqlite3";
 import {PartnerAlertErasureClaimSuccessors} from "./partner-alert-erasure-claim-successors";
 
 const operation="11111111-1111-4111-8111-111111111111";
@@ -177,4 +178,43 @@ describe("Partner Channel erasure claim successor accounting",()=>{
         verifiedAtUtc:"2026-11-02T12:01:00.000Z"})).not.toThrow();
     expect(stored).toMatchObject({successor_kind:"transport_quiescence",successor_ref:"outcome"});
   });
+});
+
+
+it.each([true,false,null])("binds private disposition to the exact nullable native event original (%s)", paidEligible => {
+  const db = new Database(":memory:");
+  try {
+    db.exec(`CREATE TABLE platform_erasure_module_operations(operation_ref PRIMARY KEY,phase);
+      CREATE TABLE platform_erasure_operation_claims(operation_ref,participant,claim_ref,original_json,original_sha256,state);
+      CREATE TABLE platform_premium_paid_events(guild_id,paid_role_id,authority_key,authority_revision,observed_at_utc,event_json);
+      CREATE TABLE partner_alert_erasure_claim_successors(operation_ref,participant,claim_binding_hmac_sha256,
+        original_binding_hmac_sha256,binding_key_ref,successor_kind,successor_ref,verified_at_utc,retain_until_utc,
+        UNIQUE(operation_ref,participant,claim_binding_hmac_sha256));`);
+    const eventJson = JSON.stringify({ protocol: "platform_premium_current_access_event_v1",basis: "current_provider_access",
+      state: paidEligible === null ? "unknown" : paidEligible ? "paid" : "not_paid",paidEligible,paidThroughUtc: null,
+      ticket: { authorityRevision: 4,admissionRef: "original_admission",factsSha256: "a".repeat(64) } },null,2);
+    const source = { guild_id: "12345",paid_role_id: "12346",authority_key: "authority",authority_revision: 4,
+      observed_at_utc: "2026-11-17T20:00:00.000Z",paid_eligible: paidEligible === null ? null : Number(paidEligible),event_json: eventJson };
+    const text = JSON.stringify(source),key = new Uint8Array(32).fill(7);
+    db.prepare("INSERT INTO platform_erasure_module_operations VALUES(?,'ready')").run(operation);
+    db.prepare("INSERT INTO platform_erasure_operation_claims VALUES(?,'premium_event','claim',?,?,'captured')")
+      .run(operation,text,createHash("sha256").update(text).digest("hex"));
+    db.prepare("INSERT INTO platform_premium_paid_events VALUES(?,?,?,?,?,?)")
+      .run(source.guild_id,source.paid_role_id,source.authority_key,4,source.observed_at_utc,eventJson);
+    const successors = new PartnerAlertErasureClaimSuccessors(db,{ keyRef: "unit_key",key });
+    const record = () => db.transaction(() => successors.recordPrivateDisposition({ operationRef: operation,
+      participant: "premium_event",claimRef: "claim",verifiedAtUtc: "2026-11-17T20:01:00.000Z" }))();
+    expect(record).toThrow();
+    db.exec("UPDATE platform_erasure_module_operations SET phase='logical_deleted'");
+    expect(record).toThrow(); // An unknown/null event is still a real source row.
+    db.prepare("DELETE FROM platform_premium_paid_events WHERE event_json=?").run(eventJson);
+    expect(record).not.toThrow();
+    const stored = db.prepare("SELECT original_binding_hmac_sha256,successor_kind FROM partner_alert_erasure_claim_successors").get();
+    expect(stored).toEqual({ original_binding_hmac_sha256: createHmac("sha256",key).update("original\u0000"+text).digest("hex"),
+      successor_kind: "private_disposition" });
+    // Retained provenance never substitutes a canonicalized or coerced body.
+    db.prepare("UPDATE platform_erasure_operation_claims SET original_json=?")
+      .run(JSON.stringify({ ...source,event_json: JSON.stringify(JSON.parse(eventJson)) }));
+    expect(record).toThrow();
+  } finally { db.close(); }
 });

@@ -1,7 +1,7 @@
 {
   "version": "core_partner_erasure_profiles_v1",
-  "reviewStatus": "INDEPENDENTLY_REVIEWED",
-  "technicalRefsAndExpiryStatus": "independently_reviewed",
+  "reviewStatus": "UNQUALIFIED",
+  "technicalRefsAndExpiryStatus": "unqualified_pending_current_source_schema_review",
   "qualificationValidUntilUtc": "2026-11-24T18:55:13.040Z",
   "schemaSha256": "bd8a006dd68b2244b385fcccd88733511008dce12650389141d8fb714ff687b4",
   "authoritySchemaSha256": "b8a968de4880cf6e5574906a2b569a502bdfd16b7519ddaf41cadab9c77a0961",
@@ -13,7 +13,7 @@
     "artifactPath": "/home/traderlink/projects/traderslink-coordinator/operations/community-staging-actual-schema-20261117.json",
     "artifactSha256": "5466f471321383df07f7bdb9d91661b93a611e8ddad73ce8cd202d14e79f6959",
     "sourceCommit": "afc7848a869ae9a31e2fb317cd5e4b8b5805e2ad",
-    "reviewStatus": "INDEPENDENTLY_REVIEWED",
+    "reviewStatus": "UNQUALIFIED",
     "observedSchemaSha256": "bd8a006dd68b2244b385fcccd88733511008dce12650389141d8fb714ff687b4",
     "reviewedCodeVectorSha256": "0e892ebe924440e1df53db4e49c437a6142fba77de0963c06c1f274cb85dc2ab",
     "actualInitializerSourceCommit": "0c2b6010d05784788c32a7f84697f489291ebeee"

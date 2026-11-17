@@ -3,6 +3,7 @@ import type Database from "better-sqlite3";
 import type { PartnerAlertAccessInput } from "../contracts/partner-alert-access-policy";
 import { requirePlatformErasureWriter, type PlatformErasureAdmission } from "../../platform/server/privacy/platform-erasure-admission";
 import type { PremiumOwnedHistoryReader } from "../../platform/server/membership/platform-premium-current-authority";
+import type { PlatformPremiumRuntimeAuthorityBinding } from "../../platform/server/membership/platform-premium-runtime-authority";
 import { SqlitePlatformPremiumRoleStore } from "../../platform/server/membership/platform-premium-role-store";
 import { PlatformDiscordMembershipRepository } from "../../platform/server/authentication/platform-discord-membership-repository";
 import { partnerAlertSnowflake } from "../contracts/partner-alert-validation";
@@ -84,7 +85,12 @@ export function resolvePartnerAlertRegisteredPremiumRole(db: Database.Database, 
 
 export function bindPartnerAlertNativeSubscriber(db: Database.Database, core: PlatformErasureAdmission,
   target: PartnerAlertSubscriberOffer, guildId: string, stripeEnvironment?: "sandbox" | "live", registeredPremiumRoleId?: string | null,
-  provider?: Readonly<{ whopTransport?: PartnerAlertWhopTransport; observeDiscord?: PartnerAlertSubscriberRoleObserver }>) {
+  provider?: Readonly<{ whopTransport?: PartnerAlertWhopTransport; observeDiscord?: PartnerAlertSubscriberRoleObserver;
+    /** Controlled server-case inputs, never request JSON or a global token registry.
+     * Compose native refresh then outside-writer owner issuance in this hook. */
+    refreshPremium?: (authorityKey: string) => Promise<void>;
+    runtimeAuthority?: PlatformPremiumRuntimeAuthorityBinding | null;
+  }>) {
   const whopEnvironment = resolvePartnerAlertWhopReadEnvironment(stripeEnvironment);
   if (!isCommunityReviewDiscordGuild(guildId)) return null;
   if (whopEnvironment === "sandbox" && guildId !== process.env.PARTNER_STRIPE_DISCORD_GUILD_ID) return null;
@@ -116,7 +122,11 @@ export function bindPartnerAlertNativeSubscriber(db: Database.Database, core: Pl
   }) : () => null;
   return createPartnerAlertPaidAuthority({
     enabled: true, guildId, paidRoleId, complimentaryRoleId: input?.complimentaryRoleId ?? null,
-    nowUtc, writer, producer, history: input?.history ?? new SqlitePlatformPremiumRoleStore(db, { enabled: true, guildId, paidRoleId }),
+    nowUtc, writer, producer,
+    refreshPremium: provider?.refreshPremium, runtimeAuthority: provider?.runtimeAuthority ?? null,
+    history: input?.history ?? new SqlitePlatformPremiumRoleStore(db, {
+      enabled: true, guildId, paidRoleId, runtimeAuthority: provider?.runtimeAuthority ?? null,
+    }),
     prepareExistingWhopAccess: whop || provider?.observeDiscord ? async (scope, premium) => {
       const discordUserId = premium.scope.discordUserId;
       if (provider?.observeDiscord && discordUserId && (!observedDiscord || observedDiscord.discordUserId !== discordUserId

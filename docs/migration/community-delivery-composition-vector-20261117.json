@@ -1,0 +1,66 @@
+{
+  "baseCommit": "2da26268912ee1a31e4d1017d1e005bb2966b5cb",
+  "runtimeVectorSha256": "14b386995cd1466a4e451ffe1aa6545b0a2e58f32d613ff170928f80eac80649",
+  "files": [
+    {
+      "path": "src/modules/communities/server/community-discord-delivery-pass.ts",
+      "beforeSha256": null,
+      "afterSha256": "ffd47058fc9484fbcb219c49e5f54fc0a4e006a11c70923cb8f7b0743d4ba462"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-storage-readiness.ts",
+      "beforeSha256": null,
+      "afterSha256": "46fa2c0543feb9c64278ffdcf09e3c28653dbd50ef9083c49fd20ad55647d4b0"
+    },
+    {
+      "path": "src/modules/communities/server/community-discord-delivery-runtime.ts",
+      "beforeSha256": "9230a73ebf73f295cb5c23c2a2ced7a83f8550155b6a5f8e0892663e22d176f7",
+      "afterSha256": "c7e1b0eb2eb79ab6a0ae28965e583941208ae1d377833daf22aa5c3fef827fca"
+    },
+    {
+      "path": "src/modules/communities/server/traderlink-community-discord-delivery-service.ts",
+      "beforeSha256": "47aaf9f2e3305f28c91f86afbf7d34d703ae7ce671bc6ae7aa7c7044204f8c62",
+      "afterSha256": "c9624b2783cda4d010981ecc9cad9fd130d169c4f5e4c6f26de3595d092dcc34"
+    },
+    {
+      "path": "src/modules/communities/server/community-publication-action-delivery.ts",
+      "beforeSha256": "a573a055ecbaaaa08de1843490157f17f3f4d965846fac708bb9a8ebbd4c67ea",
+      "afterSha256": "49cb5b4c0338af57e7cd09cbed17cdf82195d509aed4ebbef22f56f00b6e4117"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-source-dispatch.ts",
+      "beforeSha256": "2810b67e3523f51d2ba34255a3bcf0ca85ff7fd8a485d047d651f35d9adad3e3",
+      "afterSha256": "faf5271063e55601c0dbfc059110e74b8190ce2b3b6306cfad9d08c2bf2ace7f"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-source-original-delivery.ts",
+      "beforeSha256": "e65694d12fe24fbfad74e05c25a932604faa71480561557d2007c9bc0c0e9232",
+      "afterSha256": "b78427999b8e00840813af7e58b4f6718bc599c106de94662c51d214ffab1c53"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-source-revision-delivery.ts",
+      "beforeSha256": "cbc414586d0689116ee401895ee428e2725b61221661e2994d4fe5108aaeca95",
+      "afterSha256": "e2894e9a3be4d7ace467965d3122c529d3896d49f10ff32a7fcb8c18b95c3719"
+    },
+    {
+      "path": "src/modules/communities/server/community-staging-qa-runner.ts",
+      "beforeSha256": "69f0ee96118b10f4829e407f96e5cb884717bf33fd0970ef4023a7701bb75284",
+      "afterSha256": "5ec0313e4d009fafde9eff75879213627fed94fefdcb66829a1b340fa04c517c"
+    },
+    {
+      "path": "src/modules/communities/server/community-publication-service.ts",
+      "beforeSha256": "1b84ba8d94f933b17ff5112438e30f9dcd0d7f102a026b7df28132491f2c3a03",
+      "afterSha256": "6c9f8ff3b88068187207c49daad728a0a64de6d8331bcf4c9ae91a1cdf912be5"
+    },
+    {
+      "path": "src/modules/communities/server/traderlink-community-platform-repository.ts",
+      "beforeSha256": "e439468f6e3417c2298fe2dbf685d124510cf8eec6afea5769687559360089ed",
+      "afterSha256": "faa6e623d13fb44cd12b6b7f7315c280f1c468a66dae4eb2ed8533f35b349585"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-source-publication.ts",
+      "beforeSha256": "6e269e95746ee84f1653fbeedc00b3c3ea7c4fb83d471784ea63233ef010d562",
+      "afterSha256": "b0cfbb6416bec914b3098887161891cbac28e19e10f93c0349b8f0dbf07fcc6b"
+    }
+  ]
+}

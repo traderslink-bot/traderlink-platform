@@ -1,12 +1,13 @@
 import type Database from "better-sqlite3";
 import { currentPlatformErasureAdmission, requirePlatformErasureWriter,
   type PlatformErasureAdmission } from "../../platform/server/privacy/platform-erasure-admission";
-import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL } from "../../platform/server/membership/platform-premium-role-schema";
+import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS } from "../../platform/server/membership/platform-premium-role-current-access-schema";
 import { PARTNER_ALERT_SCHEMA_STATEMENTS } from "./database/partner-alert-schema";
 import { PARTNER_ALERT_CONTEXT_SCHEMA_STATEMENTS, PartnerAlertCurrentContext } from "./partner-alert-current-context";
 import { PartnerAlertValidationError, type PartnerAlertAccessTicket } from "../contracts/partner-alert-contracts";
 import { partnerAlertId } from "../contracts/partner-alert-validation";
-import type { PlatformPremiumTicket } from "../../platform/contracts/platform-premium-access";
+import { premiumTicket, type PlatformPremiumTicket } from "../../platform/contracts/platform-premium-access";
+import { parsePlatformPremiumEligibilityEvent } from "../../platform/server/membership/platform-premium-eligibility-event";
 
 export type PartnerAlertCommunityFence = Readonly<{ communityId: string; ownerUserId: string;
   admissionRef: string; erasureGeneration: number; revision: number; providerGeneration: number;
@@ -20,7 +21,7 @@ export class PartnerAlertAdmission {
   static bind(database: Database.Database): PartnerAlertAdmission {
     const core = currentPlatformErasureAdmission(database);
     if (!core || bound.has(database)) throw new PartnerAlertValidationError("admissionUnbound");
-    core.qualifyAdditionalStatements([...PARTNER_ALERT_SCHEMA_STATEMENTS, ...PLATFORM_PREMIUM_ROLE_SCHEMA_SQL,
+    core.qualifyAdditionalStatements([...PARTNER_ALERT_SCHEMA_STATEMENTS, ...PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS,
       ...PARTNER_ALERT_CONTEXT_SCHEMA_STATEMENTS]);
     const admission = new PartnerAlertAdmission(database, core); bound.set(database, admission); return admission;
   }
@@ -80,7 +81,10 @@ export class PartnerAlertAdmission {
       const sources = this.database.prepare(`SELECT event_json FROM platform_premium_paid_events WHERE authority_key=?
         UNION ALL SELECT event_json FROM partner_alert_premium_refresh_events WHERE authority_key=? LIMIT 10001`)
         .all(original.scope.authorityKey,original.scope.authorityKey) as { event_json: string }[];
-      return sources.length <= 10_000 && sources.some(source => JSON.stringify(JSON.parse(source.event_json).ticket) === JSON.stringify(original));
+      const originalText = JSON.stringify(premiumTicket(original));
+      return sources.length <= 10_000 && sources.some(source =>
+        source.event_json.length <= 262144
+        && JSON.stringify(parsePlatformPremiumEligibilityEvent(JSON.parse(source.event_json)).ticket) === originalText);
     } catch { return false; }
   }
   writerForUsers(userIds: readonly string[]) {

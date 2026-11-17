@@ -1,3 +1,5 @@
+import {planCommunitySharedRevisions} from "./shared-alerts-storage-readiness";
+import {queuePublicationActions} from "./community-publication-revisions";
 import type Database from "better-sqlite3";
 import { createHash } from "node:crypto";
 import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4, createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
@@ -97,6 +99,19 @@ export class SharedAlertsSourcePublication {
           captureSharedAlertChange(new SharedAlertsRepository(this.database, () => input.atUtc), { alertId, kind: input.status === "archived" ? "withdrawal" : "correction", actorUserId: input.actorUserId, atUtc: input.atUtc });
         }
       }
+      if(previous?.publishedAtUtc&&current.status==="published"&&(previous.title!==title||previous.symbol!==symbol||previous.body!==body||previous.publishingMode!==current.publishingMode)){
+        // Preserve known legacy receipts; never adopt them into a new renderer.
+        const legacy=this.database.prepare("SELECT d.destination_id FROM traderlink_community_content_deliveries d WHERE d.community_id=? AND d.object_type='alert' AND d.object_id=? AND d.status='delivered' AND d.delivery_outcome='confirmed' AND NOT EXISTS(SELECT 1 FROM traderlink_community_publication_receipts p WHERE p.community_id=d.community_id AND p.request_id='shared-source-original:'||d.delivery_id)").all(input.communityId,alertId) as {destination_id:string}[];
+        const revision=this.database.prepare("SELECT revision_id FROM traderlink_community_publication_revisions WHERE community_id=? AND object_type='alert' AND object_id=? ORDER BY rowid DESC LIMIT 1").get(input.communityId,alertId) as {revision_id:string}|undefined;
+        const selected=this.policy.intent(input.communityId,"alert",alertId)?.destinationIds??[];
+        const destinations=legacy.filter(row=>selected.includes(row.destination_id));
+        if(destinations.length&&revision){
+          const slug=(this.database.prepare("SELECT slug FROM traderlink_communities WHERE community_id=?").get(input.communityId) as {slug:string}).slug;
+          queuePublicationActions(this.database,{communityId:input.communityId,slug,kind:"alert",objectId:alertId,actorUserId:input.actorUserId,revisionId:revision.revision_id,action:"edit",destinationIds:destinations.map(row=>row.destination_id),summary:"",atUtc:input.atUtc});
+          this.database.prepare("UPDATE traderlink_community_publication_actions SET payload_json=json_set(payload_json,'$.sourcePolicy','shared-source-legacy') WHERE community_id=? AND object_type='alert' AND object_id=? AND revision_id=? AND publisher_user_id=? AND action_kind='edit' AND status='pending' AND attempt_count=0").run(input.communityId,alertId,revision.revision_id,input.actorUserId);
+        }
+      }
+      planCommunitySharedRevisions(this.database,alertId,input.atUtc);
       return Object.freeze(current);
     }).immediate();
   }

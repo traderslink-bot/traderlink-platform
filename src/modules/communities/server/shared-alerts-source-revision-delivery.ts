@@ -1,3 +1,4 @@
+import {sharedCooldownSql} from "./shared-alerts-storage-readiness";
 import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import { createHash } from "node:crypto";
 import { createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
@@ -18,24 +19,24 @@ function record(context: SharedSourceDispatchContext, row: ActionRow, outcome: "
 }
 
 /** Build edit plans only from confirmed source receipts of this adapter, never inferred legacy messages. */
-function queueCurrent(context: SharedSourceDispatchContext): void {
+export function queueSharedSourceRevisions(context:Pick<SharedSourceDispatchContext,"database"|"now"|"limit"|"notBeforeUtc"|"trackedPageUrl">,alertId?:string):void {
   const db = context.database;
   const rows = db.prepare(`SELECT d.delivery_id,d.community_id,d.object_id,d.destination_id,d.publisher_user_id,x.discord_channel_id,c.discord_guild_id,c.slug,a.author_user_id,a.status source_status,
-    d.discord_message_id original_message_id,d.status original_status,d.delivery_outcome,r.revision_id,r.content_json,r.content_hash,r.actor_user_id
+    d.discord_message_id original_message_id,d.status original_status,d.delivery_outcome,r.revision_id,r.content_json,r.content_hash,CASE WHEN a.status='archived' THEN coalesce((SELECT intent.user_id FROM traderlink_community_publication_receipts intent WHERE intent.community_id=d.community_id AND intent.request_id='shared-source-capture:'||d.object_id||':'||r.revision_id||':withdrawal' LIMIT 1),r.actor_user_id) ELSE r.actor_user_id END actor_user_id
     FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id AND x.content_type='alerts' AND x.status='active'
     JOIN traderlink_communities c ON c.community_id=d.community_id AND c.status='active'
     JOIN traderlink_community_alerts a ON a.alert_id=d.object_id AND a.community_id=d.community_id AND a.status IN ('published','archived')
     JOIN traderlink_community_publication_receipts frozen ON frozen.community_id=d.community_id AND frozen.user_id=d.publisher_user_id AND frozen.request_id=('shared-source-original:'||d.delivery_id) AND json_extract(frozen.result_json,'$.kind')='shared-source-original-v1'
     JOIN traderlink_community_publication_revisions r ON r.revision_id=(SELECT latest.revision_id FROM traderlink_community_publication_revisions latest WHERE latest.community_id=d.community_id AND latest.object_type='alert' AND latest.object_id=d.object_id ORDER BY latest.rowid DESC LIMIT 1)
-    WHERE d.object_type='alert' AND d.publisher_user_id IS NOT NULL AND r.actor_user_id IS NOT NULL AND d.discord_message_id IS NOT NULL
-    AND ((a.status='published' AND d.status='delivered' AND d.delivery_outcome='confirmed' AND r.revision_id<>json_extract(frozen.result_json,'$.revisionId')) OR (a.status='archived' AND d.delivery_outcome<>'uncertain'))
+    WHERE (? IS NULL OR d.object_id=?) AND (a.status='archived' OR json_extract(r.content_json,'$.status')='published' OR EXISTS(SELECT 1 FROM traderlink_community_publication_receipts intent WHERE intent.community_id=d.community_id AND intent.request_id='shared-source-capture:'||d.object_id||':'||r.revision_id||':correction' AND json_extract(intent.result_json,'$.outboundAction')='edit') OR EXISTS(SELECT 1 FROM traderlink_community_publication_actions req WHERE req.community_id=d.community_id AND req.object_type='alert' AND req.object_id=d.object_id AND req.destination_id=d.destination_id AND req.revision_id=r.revision_id AND req.action_kind='edit' AND req.status='pending' AND json_extract(req.payload_json,'$.kind') IS NOT 'shared-source-edit-v1')) AND d.object_type='alert' AND d.publisher_user_id IS NOT NULL AND r.actor_user_id IS NOT NULL AND d.discord_message_id IS NOT NULL
+    AND ((a.status='published' AND d.status='delivered' AND d.delivery_outcome='confirmed' AND (r.revision_id<>json_extract(frozen.result_json,'$.revisionId') OR EXISTS(SELECT 1 FROM traderlink_community_publication_actions req WHERE req.community_id=d.community_id AND req.object_type='alert' AND req.object_id=d.object_id AND req.destination_id=d.destination_id AND req.revision_id=r.revision_id AND req.action_kind='edit' AND req.status='pending' AND json_extract(req.payload_json,'$.kind') IS NOT 'shared-source-edit-v1'))) OR (a.status='archived' AND d.delivery_outcome<>'uncertain'))
     AND NOT EXISTS(SELECT 1 FROM traderlink_community_publication_actions existing WHERE existing.community_id=d.community_id AND existing.object_type='alert' AND existing.object_id=d.object_id AND existing.destination_id=d.destination_id
       AND json_extract(existing.payload_json,'$.kind')='shared-source-edit-v1' AND (existing.status IN ('pending','sending','uncertain') OR (existing.revision_id=r.revision_id AND json_extract(existing.payload_json,'$.sourceStatus')=a.status)))
     AND (? IS NULL OR d.requested_at_utc>=?) ORDER BY a.updated_at_utc,d.delivery_id LIMIT ?`)
-    .all(context.notBeforeUtc ?? null, context.notBeforeUtc ?? null, context.limit) as RevisionRow[];
+    .all(alertId??null,alertId??null,context.notBeforeUtc ?? null, context.notBeforeUtc ?? null, context.limit) as RevisionRow[];
   for (const row of rows) {
     const original = readSourceOriginalPlan(db, row);
-    if (!original || original.channelId !== row.discord_channel_id || (row.source_status === "published" && row.revision_id === original.revisionId)) continue;
+    if (!original || original.channelId !== row.discord_channel_id) continue;
     const confirmed = confirmedSourceParts(db, row.delivery_id);
     if (!confirmed.length || confirmed[0].messageId !== row.original_message_id) continue;
     if (row.source_status === "published" && (row.original_status !== "delivered" || row.delivery_outcome !== "confirmed" || confirmed.length !== original.parts.length)) continue;
@@ -53,9 +54,16 @@ function queueCurrent(context: SharedSourceDispatchContext): void {
     if (!messageIds.length || messageIds.some(id => !id || !/^\d{1,32}$/u.test(id))) continue;
     const content = JSON.parse(row.content_json) as { title: string; symbol?: string | null; body: string; publishingMode: "tracked_page" | "discord_post" };
     const parts = sourceAlertParts(db, row.object_id, content, content.publishingMode === "tracked_page" ? context.trackedPageUrl(row.slug, row.object_id) : "", row.source_status === "archived");
-    const actionId = createCanonicalUuidV4();
+    const generic=db.prepare("SELECT action_id,status,attempt_count,revision_id,publisher_user_id,initiating_publisher_user_id,target_message_id FROM traderlink_community_publication_actions WHERE community_id=? AND object_type='alert' AND object_id=? AND destination_id=? AND action_kind='edit' AND status IN('pending','sending','uncertain') AND json_extract(payload_json,'$.kind') IS NOT 'shared-source-edit-v1'").all(row.community_id,row.object_id,row.destination_id) as {action_id:string;status:string;attempt_count:number;revision_id:string;publisher_user_id:string;initiating_publisher_user_id:string;target_message_id:string}[];
+    const handoff=generic[0];
+    if(generic.length&&(generic.length!==1||handoff.status!=="pending"||handoff.attempt_count!==0||handoff.revision_id!==row.revision_id||handoff.publisher_user_id!==row.actor_user_id||handoff.initiating_publisher_user_id!==row.publisher_user_id||handoff.target_message_id!==messageIds[0]||db.prepare("SELECT 1 FROM traderlink_community_publication_action_attempts WHERE action_id=? LIMIT 1").get(handoff.action_id)))continue;
+    const actionId=handoff?.action_id??createCanonicalUuidV4();
     const plan: EditPlan = { kind: "shared-source-edit-v1", deliveryId: row.delivery_id, channelId: original.channelId, originalPublisherId: row.publisher_user_id, sourceStatus: row.source_status,
       parts: Array.from({ length: Math.max(parts.length, messageIds.length) }, (_, index) => ({ operation: index >= parts.length ? "DELETE" : index >= messageIds.length ? "POST" : "PATCH", content: parts[index] ?? "", messageId: messageIds[index] ?? null, status: "pending", attempts: 0, nonce: sourceAlertNonce(`source-edit:${actionId}:${index + 1}`) })) };
+    if(handoff){
+      db.prepare("UPDATE traderlink_community_publication_actions SET payload_json=?,updated_at_utc=? WHERE action_id=? AND status='pending' AND attempt_count=0 AND NOT EXISTS(SELECT 1 FROM traderlink_community_publication_action_attempts h WHERE h.action_id=traderlink_community_publication_actions.action_id)").run(JSON.stringify(plan),context.now(),actionId);
+      continue;
+    }
     db.prepare(`INSERT INTO traderlink_community_publication_actions(action_id,community_id,revision_id,object_type,object_id,destination_id,publisher_user_id,initiating_publisher_user_id,action_kind,target_message_id,payload_json,requested_at_utc,updated_at_utc)
       VALUES(?,?,?,'alert',?,?,?,?,'edit',?,?,?,?)`).run(actionId, row.community_id, row.revision_id, row.object_id, row.destination_id, row.actor_user_id, row.publisher_user_id, messageIds[0], JSON.stringify(plan), context.now(), context.now());
   }
@@ -72,14 +80,14 @@ export const sharedAlertsSourceRevisionDelivery: SharedSourceDispatchBindings["e
       const status = plan.parts.every(part => part.status === "confirmed") ? "confirmed" : plan.parts.some(part => part.status === "uncertain") ? "uncertain" : "pending";
       db.prepare("UPDATE traderlink_community_publication_actions SET status=?,updated_at_utc=? WHERE action_id=? AND status='sending'").run(status, now, row.action_id);
     }
-    queueCurrent(context);
+    queueSharedSourceRevisions(context);
     const rows = db.prepare(`SELECT action.action_id,action.payload_json,action.attempt_count,action.publisher_user_id,action.initiating_publisher_user_id,action.target_message_id,action.revision_id,action.community_id,action.object_id,action.destination_id,
       c.discord_guild_id,c.slug,x.discord_channel_id,a.author_user_id,a.status source_status,r.content_json,r.content_hash,r.actor_user_id
       FROM traderlink_community_publication_actions action JOIN traderlink_community_publication_revisions r ON r.revision_id=action.revision_id AND r.community_id=action.community_id
       JOIN traderlink_communities c ON c.community_id=action.community_id AND c.status='active'
       JOIN traderlink_community_discord_destinations x ON x.destination_id=action.destination_id AND x.community_id=action.community_id AND x.content_type='alerts' AND x.status='active'
       JOIN traderlink_community_alerts a ON a.alert_id=action.object_id AND a.community_id=action.community_id
-      WHERE action.object_type='alert' AND action.action_kind='edit' AND action.status='pending' AND action.attempt_count<5 AND json_extract(action.payload_json,'$.kind')='shared-source-edit-v1'
+      WHERE ${sharedCooldownSql(db,'x.discord_channel_id',now)} AND action.object_type='alert' AND action.action_kind='edit' AND action.status='pending' AND action.attempt_count<5 AND json_extract(action.payload_json,'$.kind')='shared-source-edit-v1'
       AND action.publisher_user_id IS NOT NULL AND action.initiating_publisher_user_id IS NOT NULL
       AND (action.next_attempt_at_utc IS NULL OR action.next_attempt_at_utc<=?) ORDER BY action.requested_at_utc,action.rowid LIMIT ?`).all(now, context.limit) as ActionRow[];
     let delivered = 0, failed = 0, writes = 0;

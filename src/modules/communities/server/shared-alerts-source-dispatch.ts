@@ -2,6 +2,7 @@ import "server-only";
 import type Database from "better-sqlite3";
 import { assertCanonicalUuidV4, createCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
 import { resolvePlatformBackgroundWorkerMode } from "../../platform/server/runtime/platform-background-worker-mode";
+import {sharedAlertsStorageReady} from "./shared-alerts-storage-readiness";
 import { verifyCommunityRequestMember } from "./community-request-verification";
 import { SharedAlertsDelivery } from "./shared-alerts-delivery";
 import { SharedAlertError } from "./shared-alerts-errors";
@@ -49,6 +50,12 @@ export async function runSharedAlertsSourceDispatch(database: Database.Database,
   // Preserve current canonical production/global delivery/worker-mode gates.
   // Disabled calls do not inspect a DB or require any unregistered Shared table.
   if (config.enabled !== true || process.env.NODE_ENV !== "production" || process.env.TRADERLINK_COMMUNITY_DISCORD_DELIVERY_ENABLED !== "true" || resolvePlatformBackgroundWorkerMode() !== "enabled") return { delivered: 0, failed: 0 };
+  return runSharedAlertsSourcePass(database,config,bindings,transport);
+}
+
+/** Native composition shared by hosted and explicitly admitted finite staging. */
+export async function runSharedAlertsSourcePass(database:Database.Database,config:Readonly<{enabled?:boolean;sharedEnabled?:boolean;botToken:string;publicOrigin:string;notBeforeUtc?:string;limit?:number;now?:()=>string}>,bindings:SharedSourceDispatchBindings,transport:typeof fetch=fetch):Promise<Counts>{
+  if(!sharedAlertsStorageReady(database))throw new SharedAlertError("unavailable");
   if (!config.botToken.trim() || !bindings || bindings.originals?.kind !== "alert-original-multipart" || typeof bindings.originals.run !== "function" || bindings.edits?.kind !== "alert-revision-multipart" || typeof bindings.edits.run !== "function" || bindings.tracker?.readBoundary !== "authenticated-community-audience-and-channel" || typeof bindings.tracker.url !== "function") throw new SharedAlertError("unavailable");
   const origin = new URL(config.publicOrigin);
   if (!["http:", "https:"].includes(origin.protocol) || origin.username || origin.password) throw new SharedAlertError("invalid");

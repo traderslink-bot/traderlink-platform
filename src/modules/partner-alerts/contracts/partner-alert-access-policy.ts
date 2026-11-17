@@ -167,9 +167,17 @@ export function evaluatePartnerAlertChannelAccess(input: PartnerAlertAccessInput
       input.policy.maximumEvidenceAgeMs);
     if (premiumDeadline === null) return denied(mapping, "premium_unverified");
     if (input.premium.state === "inactive" && input.premium.basis === "none") return denied(mapping, "premium_required");
-    if (input.premium.state !== "active" || input.premium.basis !== "paid_live" || input.premium.paidThroughUtc === null
-      || partnerAlertUtc(input.premium.paidThroughUtc, "paidThroughUtc") <= now) return denied(mapping, "premium_unverified");
-    premiumDeadline = Math.min(premiumDeadline, Date.parse(input.premium.paidThroughUtc), Date.parse(input.ticket.premium.validUntilUtc));
+    if (input.premium.state !== "active") return denied(mapping, "premium_unverified");
+    if (input.premium.basis === "current_provider_access") {
+      if (input.premium.paidThroughUtc !== null || input.premium.providerRealm !== input.policy.environment) {
+        return denied(mapping, "premium_unverified");
+      }
+      premiumDeadline = Math.min(premiumDeadline, Date.parse(input.ticket.premium.validUntilUtc));
+    } else {
+      if (input.premium.basis !== "paid_live" || input.premium.paidThroughUtc === null
+        || partnerAlertUtc(input.premium.paidThroughUtc, "paidThroughUtc") <= now) return denied(mapping, "premium_unverified");
+      premiumDeadline = Math.min(premiumDeadline, Date.parse(input.premium.paidThroughUtc), Date.parse(input.ticket.premium.validUntilUtc));
+    }
   } catch { return denied(mapping, "premium_unverified"); }
 
   let discordDeadline: number | null;

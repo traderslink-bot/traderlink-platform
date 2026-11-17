@@ -43,12 +43,20 @@ export type PlatformPremiumPaidEvidence = Readonly<{
   /** All qualifying independent purchases; never replace one with a cancelled sibling. */
   terms: readonly PlatformPremiumPaidTerm[];
 }> | Readonly<{
+  kind: "current_paid_access";
+  purchase: PlatformPremiumPurchase;
+  observedAtUtc: string;
+  validUntilUtc: string;
+  /** Actual paid basis plus current provider access, with no inferred period. */
+  memberships: readonly Readonly<{ membershipRef: string; paymentRef: string }>[];
+}> | Readonly<{
   kind: "not_paid" | "unknown";
+  basis?: "current_provider_access";
   purchase: PlatformPremiumPurchase;
   observedAtUtc: string;
   validUntilUtc: string;
   reason: "no_current_paid_term" | "invalidated" | "provider_unavailable" | "incomplete"
-    | "unqualified_coverage" | "scope_mismatch" | "conflicting_facts";
+    | "unqualified_coverage" | "scope_mismatch" | "conflicting_facts" | "no_current_provider_access";
 }>;
 /** Structural counterpart of the actual V6 producer's named V2 receipt. Shape
  * validation is not issuer qualification; captureV2/isCurrentV2 bind its facts. */
@@ -99,8 +107,8 @@ export type PlatformPremiumSnapshot = Readonly<{
   complimentaryRoleId: string | null;
   /** Offers remain real even when a native payer/coverage cannot be bound. */
   payer: PlatformPremiumPayer;
-  coverage: readonly (Readonly<{ kind: "evidence"; offer: PlatformPremiumOfferScope; evidence: PlatformPremiumPaidEvidence }>
-    | Readonly<{ kind: "unknown"; offer: PlatformPremiumOfferScope; reason: string }>)[];
+  coverage: readonly (Readonly<{ kind: "evidence"; offer: PlatformPremiumOfferScope; evidence: PlatformPremiumPaidEvidence; nativeObservationRef?: string }>
+    | Readonly<{ kind: "unknown"; offer: PlatformPremiumOfferScope; reason: string; basis?: "current_provider_access" }>)[];
   complimentary: PlatformPremiumComplimentaryEvidence;
   assignmentReview: PlatformPremiumAssignmentReview;
   /** Previously complete paid coverage, from the fenced authority ledger, not a role. */
@@ -120,6 +128,7 @@ export type PlatformPremiumDecision = Readonly<{
     | "evidence_unknown" | "identity_unlinked" | "evidence_invalid";
   validUntilUtc: string | null;
   paidThroughUtc: string | null;
+  basis?: "payment_period" | "current_provider_access";
 }>;
 
 export class PlatformPremiumError extends Error {
@@ -260,11 +269,19 @@ export function premiumFresh(observed: string, until: string, at: string): boole
 
 /** Pure commercial decision. Existing membership enforcement/owner bypasses are not consulted. */
 export function evaluatePlatformPremium(snapshot: PlatformPremiumSnapshot, nowUtc: string): PlatformPremiumDecision {
+  return evaluatePlatformPremiumForQualifiedRealm(snapshot, nowUtc, "live");
+}
+/** @internal Pure scoring is not authorization. Server sandbox consumers MUST
+ * use the opaque runtime authority wrapper and recheck it at admitted effects.
+ * The ordinary public evaluator above always remains live-only. */
+export function evaluatePlatformPremiumForQualifiedRealm(snapshot: PlatformPremiumSnapshot, nowUtc: string,
+  realm: "live" | "sandbox"): PlatformPremiumDecision {
   const hold = (reason: PlatformPremiumDecision["reason"]): PlatformPremiumDecision => Object.freeze({
     ordinaryAccess: "unknown", partnerPaidEligible: false, paidRole: "hold", complimentaryRole: "unchanged",
     reason, validUntilUtc: null, paidThroughUtc: null,
   });
   try {
+    if (!["live","sandbox"].includes(realm)) return hold("evidence_invalid");
     if (snapshot.apiVersion !== "platform_premium_authority_v2") return hold("evidence_invalid");
     const at = premiumUtc(nowUtc); premiumScope(snapshot.scope); premiumInteger(snapshot.authorityRevision);
     premiumSnowflake(snapshot.paidRoleId);
@@ -293,9 +310,9 @@ export function evaluatePlatformPremium(snapshot: PlatformPremiumSnapshot, nowUt
       const evidence = item.evidence; const p = validatePremiumPurchase(evidence.purchase);
       if (p.environment !== offer.environment || p.accountId !== offer.accountId || p.productId !== offer.productId
         || p.planId !== offer.planId || p.whopUserId !== payer.whopUserId
-        || !["paid", "not_paid", "unknown"].includes(evidence.kind)) return hold("evidence_invalid");
-      // Sandbox observations remain UNKNOWN for this live-access consumer.
-      if (offer.environment === "live") paid.push(evidence);
+        || !["paid", "current_paid_access", "not_paid", "unknown"].includes(evidence.kind)) return hold("evidence_invalid");
+      // Ordinary callers always supply live via the public wrapper above.
+      if (offer.environment === realm) paid.push(evidence);
     }
     const gift = premiumComplimentaryEvidence(snapshot.complimentary, ticket);
     const complimentary = gift.kind === "active" && premiumFresh(gift.observedAtUtc, gift.validUntilUtc, at)
@@ -322,6 +339,23 @@ export function evaluatePlatformPremium(snapshot: PlatformPremiumSnapshot, nowUt
         positive.push({ through, until: [through, snapshot.validUntilUtc, evidence.validUntilUtc].sort()[0]! });
       }
     }
+    const currentAccess = paid.filter(evidence => evidence.kind === "current_paid_access"
+      && premiumFresh(evidence.observedAtUtc, evidence.validUntilUtc, at));
+    for (const evidence of currentAccess) {
+      if (evidence.kind !== "current_paid_access" || !Array.isArray(evidence.memberships)
+        || evidence.memberships.length < 1 || evidence.memberships.length > 250) return hold("evidence_invalid");
+      const members = new Set<string>(), payments = new Set<string>();
+      for (const member of evidence.memberships) {
+        premiumRef(member.membershipRef); premiumRef(member.paymentRef);
+        if (members.has(member.membershipRef) || payments.has(member.paymentRef)) return hold("evidence_invalid");
+        members.add(member.membershipRef); payments.add(member.paymentRef);
+      }
+    }
+    if (currentAccess.length) return Object.freeze({ ordinaryAccess: "allowed", partnerPaidEligible: true,
+      paidRole: "present", complimentaryRole: "unchanged", reason: "paid", paidThroughUtc: null,
+      basis: "current_provider_access", validUntilUtc: [snapshot.validUntilUtc,
+        currentAccess.map(evidence => evidence.validUntilUtc).sort().at(-1)!].sort()[0]!,
+    });
     if (positive.length) return Object.freeze({ ordinaryAccess: "allowed", partnerPaidEligible: true, paidRole: "present",
       complimentaryRole: "unchanged", reason: "paid", paidThroughUtc: positive.map(value => value.through).sort().at(-1)!,
       validUntilUtc: positive.map(value => value.until).sort().at(-1)!,
@@ -333,7 +367,12 @@ export function evaluatePlatformPremium(snapshot: PlatformPremiumSnapshot, nowUt
     const endedPaidTerms = complete && paid.every(evidence => premiumFresh(evidence.observedAtUtc, evidence.validUntilUtc, at)
       && (evidence.kind === "not_paid" || (evidence.kind === "paid" && evidence.terms.length > 0
         && evidence.terms.every(term => premiumUtc(term.endsAtUtc) <= at))));
-    const absent = removable && (knownUnpaid || priorEnded || endedPaidTerms);
+    // A previous invoice end cannot end a current-access grace observation.
+    // Stale/unknown current-access facts hold until a current provider read ends them.
+    const hasCurrentAccessFacts = snapshot.coverage.some(item => item.kind === "unknown"
+      ? item.basis === "current_provider_access" : item.evidence.kind === "current_paid_access"
+        || ((item.evidence.kind === "unknown" || item.evidence.kind === "not_paid") && item.evidence.basis === "current_provider_access"));
+    const absent = removable && (knownUnpaid || (!hasCurrentAccessFacts && priorEnded) || endedPaidTerms);
     return Object.freeze({ ordinaryAccess: complimentary ? "allowed" : gift.kind === "unknown" ? "unknown" : absent ? "denied" : "unknown",
       partnerPaidEligible: false, paidRole: absent ? "absent" : "hold", complimentaryRole: "unchanged",
       reason: complimentary ? "complimentary" : gift.kind === "unknown" ? "evidence_unknown" : absent ? priorEnded || endedPaidTerms ? "paid_ended" : "unpaid"

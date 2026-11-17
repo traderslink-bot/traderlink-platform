@@ -1,3 +1,4 @@
+import {captureCommunityAlertPublication,planCommunitySharedRevisions} from "./shared-alerts-storage-readiness";
 import {publicationContent,recordPublicationRevision,queuePublicationActions} from "./community-publication-revisions";
 import {readDistribution} from "./community-publishing-access";
 import { createHash } from "node:crypto";
@@ -70,7 +71,7 @@ export function saveCommunityPublication(db: Database.Database, input: {
       const audienceId = previousAudience || repository.ensureDefaultAudience({ communityId, actorUserId: actor.userId, atUtc });
       if (!db.prepare(`SELECT 1 FROM traderlink_community_audiences WHERE audience_id=? AND community_id=? `).get(audienceId, communityId)) throw new CommunityPublicationInputError("Choose an available audience for this server.");
       const details = { communityId, actor, title, symbol, body, audienceId, publishingMode: mode as "tracked_page" | "discord_post", selection:readDistribution(form), atUtc };
-      if (existingId) { repository.updateAlert({ ...details, alertId: existingId, status }); id = existingId; }
+      if (existingId) { repository.updateAlert({ ...details, alertId: existingId, status,outboundAction:discordAction as "save"|"edit"|"announce",deferSharedPlanning:true }); id = existingId; }
       else { id = repository.createAlert({ ...details, publish: status === "published" }); }
       const row = db.prepare(`SELECT slug FROM traderlink_community_alerts WHERE alert_id=? AND community_id=?`).get(id, communityId) as { slug: string };
       href = `/communities/${encodeURIComponent(input.communitySlug)}/alerts/${encodeURIComponent(row.slug)}`;
@@ -97,11 +98,13 @@ export function saveCommunityPublication(db: Database.Database, input: {
     else for(const pageId of pageIds)branded.placeContent({communityId,pageId,actorUserId:actor.userId,contentType:kind,contentId:id,publish:status==="published",atUtc});
     if(status==="published"&&pageIds.length){const page=db.prepare("SELECT slug,secondary_slug FROM traderlink_community_content_pages WHERE community_id=? AND page_id=? AND page_type=? AND status='active'").get(communityId,pageIds[0],kind) as {slug:string;secondary_slug:string|null}|undefined;if(page){const route=[page.slug,page.secondary_slug].filter((value):value is string=>Boolean(value)).map(encodeURIComponent).join("/");href=`/communities/${encodeURIComponent(input.communitySlug)}/${kind}/${route}${kind==="alert"?`?focus=${encodeURIComponent(id)}`:""}`;}}
     const revisionId=recordPublicationRevision(db,{communityId,kind,objectId:id,actorUserId:actor.userId,atUtc,summary,original:!previousContent?.publishedAtUtc});
+    if(kind==="alert")captureCommunityAlertPublication(db,{communityId,alertId:id,actorUserId:actor.userId,atUtc,before:previousContent?{published_at_utc:previousContent.publishedAtUtc,title:previousContent.title,symbol:previousContent.symbol??null,body:previousContent.body??"",status:"published"}:undefined,outboundAction:discordAction as "save"|"edit"|"announce"});
     if(discordAction!=="save"){
       if(readDistribution(form)?.distribution!=="discord")throw new CommunityPublicationInputError("Select Send to Discord before requesting a Discord action.");
       if(!revisionId)throw new CommunityPublicationInputError("Publication evidence unavailable.");
       queuePublicationActions(db,{communityId,slug:input.communitySlug,kind,objectId:id,actorUserId:actor.userId,revisionId,action:discordAction as "edit"|"announce",destinationIds:readDistribution(form)?.destinationIds??[],summary,confirmUncertain:form.get("confirmUncertainUpdate")==="on",atUtc});
     }
+    if(kind==="alert")planCommunitySharedRevisions(db,id,atUtc);
     const name = kind === "alert" ? "Alert" : "Watchlist";
     const message = status === "draft" ? `${name} draft saved.` : status === "archived" ? `${name} archived.` : existingId ? `${name} saved.` : `${name} published.`;
     const result: CommunityPublicationFeedback = { status: "success", message:discordAction==="save"?message:`${message} Discord ${discordAction==="edit"?"post update":"change announcement"} queued for the selected channels; delivery is not yet confirmed.`, href,objectId:id };

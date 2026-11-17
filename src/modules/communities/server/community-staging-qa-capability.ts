@@ -25,7 +25,7 @@ export type CommunityStagingQaRun=Readonly<{
  kind:"community-staging-qa-run-v1";runId:string;nonce:string;principalManifestSha256:string;principalSchemaLineageSha256?:string;
  pins:Readonly<{origin:string;sourceCommit:string;sourceVectorSha256:string;sourceArchiveSha256:string;schemaSha256:string;buildId:string;artifactSha256:string}>;
  communityId:string;guildId:string;channelIds:readonly string[];settingsVersion:number;
- pipeline:"stats"|"common-delivery"|"shared-delivery";cutoffUtc:string;
+ pipeline:"stats"|"common-delivery"|"shared-delivery"|"shared-fixture";fixtureManifestSha256?:string;cutoffUtc:string;
  jobs:readonly Readonly<{table:"traderlink_community_content_deliveries"|"traderlink_community_publication_actions"|"community_shared_alert_deliveries";id:string;createdAtUtc:string}>[];
  bounds:Readonly<{durationMs:number;requests:number;writes:number;gatewayFrames:number;historyTicks:number;collectorTicks:number}>;
 }>;
@@ -37,8 +37,8 @@ export type CommunityStagingQaCapability=Readonly<{
  remainingMs:()=>number;onStop:(callback:()=>void)=>()=>void;finish:(outcome:"completed"|"cancelled"|"failed")=>void;
 }>;
 const admitted=new WeakMap<object,Database.Database>();
-export function assertCommunityStagingQaCapability(value:CommunityStagingQaCapability|undefined,database?:Database.Database):asserts value is CommunityStagingQaCapability{
- if(!value||!admitted.has(value)||(database&&admitted.get(value)!==database))refused();value.assertActive();
+export function assertCommunityStagingQaCapability(value:CommunityStagingQaCapability|undefined,database?:Database.Database,purpose?:"shared-fixture"):asserts value is CommunityStagingQaCapability{
+ if(!value||!admitted.has(value)||(database&&admitted.get(value)!==database)||(purpose==="shared-fixture"?value.run.pipeline!=="shared-fixture":value.run.pipeline==="shared-fixture"))refused();value.assertActive();
 }
 
 type SchemaLineagePin=Readonly<{migrationId:string;moduleNamespace:string;executionOrder:number;checksumSha256:string;postSchemaSha256:string}>;
@@ -66,11 +66,13 @@ function readPrivate(path:string,expectedHash:string):string{
  try{const opened=fstatSync(fd);if(opened.dev!==before.dev||opened.ino!==before.ino||opened.size!==before.size||opened.mode!==before.mode||opened.uid!==before.uid||opened.nlink!==1)refused();const bytes=readFileSync(fd);const after=fstatSync(fd);if(after.size!==opened.size||after.mtimeMs!==opened.mtimeMs||after.ctimeMs!==opened.ctimeMs||bytes.length!==opened.size||!equal(hash(bytes),expectedHash))refused();return bytes.toString("utf8");}finally{closeSync(fd);}
 }
 function validateRun(run:CommunityStagingQaRun):void{
- if(run.kind!=="community-staging-qa-run-v1"||!uuid(run.runId)||!/^[0-9a-f]{32}$/.test(run.nonce)||!digest(run.principalManifestSha256)||run.guildId!==COMMUNITY_REVIEW_DISCORD_GUILD_ID||!uuid(run.communityId)||!Array.isArray(run.channelIds)||!run.channelIds.length||run.channelIds.length>50||run.channelIds.some(x=>!id(x))||new Set(run.channelIds).size!==run.channelIds.length||!Number.isSafeInteger(run.settingsVersion)||run.settingsVersion<0||!["stats","common-delivery","shared-delivery"].includes(run.pipeline))refused();
+ if(run.kind!=="community-staging-qa-run-v1"||!uuid(run.runId)||!/^[0-9a-f]{32}$/.test(run.nonce)||!digest(run.principalManifestSha256)||run.guildId!==COMMUNITY_REVIEW_DISCORD_GUILD_ID||!uuid(run.communityId)||!Array.isArray(run.channelIds)||!run.channelIds.length||run.channelIds.length>50||run.channelIds.some(x=>!id(x))||new Set(run.channelIds).size!==run.channelIds.length||!Number.isSafeInteger(run.settingsVersion)||run.settingsVersion<0||!["stats","common-delivery","shared-delivery","shared-fixture"].includes(run.pipeline))refused();
  if(!run.pins||new URL(run.pins.origin).origin!==run.pins.origin||!run.pins.origin.startsWith("https://")||!/^[0-9a-f]{40}$/.test(run.pins.sourceCommit)||![run.pins.sourceVectorSha256,run.pins.sourceArchiveSha256,run.pins.schemaSha256,run.pins.artifactSha256].every(digest)||!/^[A-Za-z0-9_-]{1,128}$/.test(run.pins.buildId))refused();
  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(run.cutoffUtc)||!Number.isFinite(Date.parse(run.cutoffUtc))||!Array.isArray(run.jobs)||run.jobs.length>3||new Set(run.jobs.map(x=>x.id)).size!==run.jobs.length)refused();
  for(const job of run.jobs)if(!["traderlink_community_content_deliveries","traderlink_community_publication_actions","community_shared_alert_deliveries"].includes(job.table)||!uuid(job.id)||!Number.isFinite(Date.parse(job.createdAtUtc))||job.createdAtUtc<run.cutoffUtc)refused();
- if(run.pipeline==="stats"&&run.jobs.length||run.pipeline!=="stats"&&!run.jobs.length)refused();
+ if((run.pipeline==="stats"||run.pipeline==="shared-fixture")?run.jobs.length:!run.jobs.length)refused();
+ if(run.pipeline==="shared-fixture"?!digest(run.fixtureManifestSha256):run.fixtureManifestSha256!==undefined)refused();
+ if(run.pipeline==="shared-fixture"&&(run.bounds?.gatewayFrames!==0||run.bounds?.historyTicks!==0||run.bounds?.collectorTicks!==0))refused();
  for(const [key,max]of Object.entries({durationMs:120000,requests:32,writes:6,gatewayFrames:32,historyTicks:12,collectorTicks:4}))if(!Number.isSafeInteger(run.bounds?.[key as keyof typeof run.bounds])||run.bounds[key as keyof typeof run.bounds]<0||run.bounds[key as keyof typeof run.bounds]>max)refused();
  if(run.bounds.durationMs<1000||run.bounds.requests<1)refused();
 }

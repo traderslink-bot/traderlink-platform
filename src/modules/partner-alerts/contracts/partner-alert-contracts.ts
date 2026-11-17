@@ -143,13 +143,22 @@ export type PartnerAlertContentDecision =
 
 export type PartnerAlertPremiumEvidence = Readonly<{
   ticket: PlatformPremiumTicket;
-  basis: "paid_live" | "none" | "unknown";
-  paidThroughUtc: string | null;
   userId: string;
   state: "active" | "inactive" | "unknown";
   observedAtUtc: string;
   validUntilUtc: string;
-}>;
+}> & (Readonly<{
+  basis: "paid_live" | "none" | "unknown";
+  paidThroughUtc: string | null;
+}> | Readonly<{
+  /** Emitted only by the qualified server authority, never from request JSON.
+   * Sandbox consumption requires Core's exact artifact-bound runtime authority.
+   * This freshness fact does not assert a per-payment billing period. */
+  basis: "current_provider_access";
+  paidThroughUtc: null;
+  providerRealm: "live" | "sandbox";
+  state: "active";
+}>);
 
 export type PartnerAlertDiscordEvidence = Readonly<{
   userId: string;

@@ -1,0 +1,31 @@
+{
+  "baseCommit": "d6239d88ba96a5471aea99b1c9ce8360e6db7ee2",
+  "runtimeVectorSha256": "12f19b8ff04ac23c1fb2ca78d1e4e786d7fda21c0ac9d7541b71acead18768fa",
+  "files": [
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-authority.ts",
+      "beforeSha256": null,
+      "afterSha256": "bad2ea12c5c719b9a2e0aab22c37f366aef63bdb1bbf5c4ea98bf67f436ac6d4"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-model.ts",
+      "beforeSha256": null,
+      "afterSha256": "86697af789d566ce03a4007dae97051e7fc93225dec990b00c5108442784ff46"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-transport.ts",
+      "beforeSha256": null,
+      "afterSha256": "83b29acca63d9b2f4bffa3491976ba532afb600c53621375a9624d49782268a5"
+    },
+    {
+      "path": "src/modules/communities/server/community-staging-qa-capability.ts",
+      "beforeSha256": "e8b388d5e7c89f61f6cfecd69838a85dfc28bcf2f9ea139d5d4c385057937826",
+      "afterSha256": "1d71d29868c00b9f6535a3fea0067fbbe05dbbfd4bacaf09623bb49316555825"
+    },
+    {
+      "path": "src/modules/communities/server/community-staging-qa-runner.ts",
+      "beforeSha256": "5ec0313e4d009fafde9eff75879213627fed94fefdcb66829a1b340fa04c517c",
+      "afterSha256": "5b575b6fdcd802e2681f29ece4661754924584ebb085d7a358dd78b09651ca0e"
+    }
+  ]
+}

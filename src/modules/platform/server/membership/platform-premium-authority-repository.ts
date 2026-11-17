@@ -10,6 +10,10 @@ import {
   type PlatformPremiumPreparedWhopCoverage,
 } from "./platform-premium-whop-native";
 
+import { isPreparedPlatformPremiumWhopCurrentAccess, readStoredPlatformPremiumWhopCurrentAccess,
+  type PlatformPremiumNativeCurrentAccessCollection, type PlatformPremiumPreparedWhopCurrentAccess } from "./platform-premium-whop-current-access";
+type StoredPremiumNativeCollection = PlatformPremiumNativeCollection | PlatformPremiumNativeCurrentAccessCollection;
+
 export class PlatformPremiumAuthorityError extends Error {
   constructor(readonly code: "unbound" | "invalid" | "conflict" | "transaction_required",
     readonly reason?: "canonical_signer_entitlement_disposition_unqualified" | "gift_signer_reference_unqualified") {
@@ -83,8 +87,8 @@ export type PlatformPremiumAuthoritySnapshot = Readonly<{
   policy: PlatformPremiumAuthorityPolicy;
   payer: PlatformPremiumNativePayer;
   coverage: readonly (Readonly<{ kind: "native_coverage"; offer: PlatformPremiumOfferScope;
-    collection: PlatformPremiumNativeCollection; observationRef: string }>
-    | Readonly<{ kind: "unknown"; offer: PlatformPremiumOfferScope; reason: string }>)[];
+    collection: StoredPremiumNativeCollection; observationRef: string }>
+    | Readonly<{ kind: "unknown"; offer: PlatformPremiumOfferScope; reason: string; basis?: "current_provider_access" }>)[];
   complimentary: Readonly<{ kind: "active"; grantRef: string; actorUserId: string;
     authorizationRef: string; startsAtUtc: string; endsAtUtc: string | null }>
     | Readonly<{ kind: "none" | "unknown" }>;
@@ -685,7 +689,12 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
     const conflict = links.some(link => link.link_state === "conflict") || activeLinks.length > 1;
     const canonicalLink = conflict ? undefined : activeLinks[0];
     const binding = this.db.prepare<[string], BindingRow>("SELECT * FROM platform_premium_native_bindings WHERE authority_key=?").get(authorityKey);
-    const bound = binding && canonicalLink && /^[a-f0-9]{64}$/u.test(binding.whop_user_ref_hmac) && binding.link_id === canonicalLink.link_id
+    let nativeIdentityMatches = !deps.whopSubjectReference;
+    if (binding && deps.whopSubjectReference) {
+      try { nativeIdentityMatches = deps.whopSubjectReference(binding.whop_user_id) === binding.whop_user_ref_hmac; }
+      catch { nativeIdentityMatches = false; }
+    }
+    const bound = nativeIdentityMatches && binding && canonicalLink && /^[a-f0-9]{64}$/u.test(binding.whop_user_ref_hmac) && binding.link_id === canonicalLink.link_id
       && binding.whop_user_ref_hmac === canonicalLink.whop_user_ref_hmac;
     const payer: PlatformPremiumNativePayer = bound && binding ? Object.freeze({ kind: "bound", linkId: uuid(binding.link_id),
       whopUserRefHmac: binding.whop_user_ref_hmac, whopUserId: ref(binding.whop_user_id) })
@@ -702,9 +711,17 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
     const deadlines = [utc(admission.validUntilUtc), new Date(Date.parse(now) + policy.maximumEvidenceAgeMs).toISOString()];
     const boundary = (value: string | null) => { if (value !== null && utc(value) > now) deadlines.push(value); };
     const coverage: PlatformPremiumAuthoritySnapshot["coverage"] = Object.freeze(policy.offerScopes.map(offer => {
-      const unknown = (reason: string) => Object.freeze({ kind: "unknown" as const, offer, reason });
-      if (payer.kind !== "bound") return unknown(payer.reason);
+      let currentAccessObserved = false;
+      const unknown = (reason: string) => Object.freeze({ kind: "unknown" as const, offer, reason,
+        ...(currentAccessObserved ? { basis: "current_provider_access" as const } : {}) });
       const observation = observations.find(item => item.offer_scope_ref === offer.scopeRef);
+      // A historical mode tag can only force a hold. It never adopts an old
+      // observation across epochs or qualifies JSON for paid access.
+      const modeObservation = observation ?? this.db.prepare<[string, string], { collection_json: string }>(
+        "SELECT collection_json FROM platform_premium_paid_observations WHERE authority_key=? AND offer_scope_ref=? ORDER BY observed_at_utc DESC,observation_ref DESC LIMIT 1")
+        .get(authorityKey, offer.scopeRef);
+      try { currentAccessObserved = JSON.parse(modeObservation?.collection_json ?? "null")?.protocol === "platform_premium_current_paid_access_v1"; } catch { /* Remain unqualified. */ }
+      if (payer.kind !== "bound") return unknown(payer.reason);
       const qualification = policy.nativeQualification;
       if (!observation || !qualification) return unknown("native_coverage_unqualified");
       boundary(observation.valid_until_utc);
@@ -712,15 +729,15 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
         || Date.parse(observation.valid_until_utc) - Date.parse(observation.observed_at_utc) > policy.maximumEvidenceAgeMs
         || observation.qualification_ref !== qualification.reviewRef || observation.schema_sha256 !== qualification.schemaSha256
         || observation.api_version !== qualification.apiVersion) return unknown("native_coverage_stale_or_unqualified");
-      let collection: PlatformPremiumNativeCollection | null = null;
-      try { collection = readStoredPlatformPremiumWhopCollection(JSON.parse(observation.collection_json)); } catch { /* Unknown, never unpaid. */ }
+      let collection: StoredPremiumNativeCollection | null = null;
+      try { const value: unknown = JSON.parse(observation.collection_json); collection = readStoredPlatformPremiumWhopCurrentAccess(value) ?? readStoredPlatformPremiumWhopCollection(value); } catch { /* Unknown, never unpaid. */ }
       if (!collection || sha(collection) !== observation.collection_sha256 || sha(collection.purchase.offer) !== sha(offer)
         || collection.purchase.payer.linkId !== payer.linkId || collection.purchase.payer.whopUserId !== payer.whopUserId
         || collection.purchase.payer.whopUserRefHmac !== payer.whopUserRefHmac
         || collection.observedAtUtc !== observation.observed_at_utc || collection.validUntilUtc !== observation.valid_until_utc) {
         return unknown("native_coverage_scope_or_integrity");
       }
-      for (const member of collection.members) for (const term of member.terms) {
+      for (const member of ("protocol" in collection ? [] : collection.members)) for (const term of member.terms) {
         if (term.coverage) { boundary(term.coverage.startsAtUtc); boundary(term.coverage.endsAtUtc); }
       }
       return Object.freeze({ kind: "native_coverage" as const, offer, collection, observationRef: observation.observation_ref });
@@ -765,7 +782,7 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
     const periodPhase = (start: string, end: string) => now < start ? "future" : now >= end ? "ended" : "current";
     const timedCoverage = coverage.map(item => item.kind === "unknown" ? item : {
       offer: item.offer, kind: item.kind, observationRef: item.observationRef,
-      members: item.collection.members.map(member => ({ membershipRef: member.membershipRef, accessKind: member.accessKind, state: member.state,
+      members: "protocol" in item.collection ? item.collection.members : item.collection.members.map(member => ({ membershipRef: member.membershipRef, accessKind: member.accessKind, state: member.state,
         terms: member.terms.map(term => ({ paymentRef: term.paymentRef, coverageKind: term.coverageKind,
           phase: term.coverage ? periodPhase(term.coverage.startsAtUtc, term.coverage.endsAtUtc) : "unqualified" })) })),
     });
@@ -1056,9 +1073,20 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
   nativePurchase(ticket: PlatformPremiumAuthorityTicket, offerScopeRef: string, knownNativeSubject?: string):
   Readonly<{ kind: "purchase"; purchase: PlatformPremiumNativePurchase }>
     | Readonly<{ kind: "unbound" }> {
+    return this.nativePurchaseForTicket(ticket, offerScopeRef, knownNativeSubject, false);
+  }
+
+  nativePurchaseV2(ticket: PlatformPremiumAuthorityTicket, offerScopeRef: string, knownNativeSubject?: string):
+    Readonly<{ kind: "purchase"; purchase: PlatformPremiumNativePurchase }> | Readonly<{ kind: "unbound" }> {
+    return this.nativePurchaseForTicket(ticket, offerScopeRef, knownNativeSubject, true);
+  }
+
+  private nativePurchaseForTicket(ticket: PlatformPremiumAuthorityTicket, offerScopeRef: string,
+    knownNativeSubject: string | undefined, v2: boolean):
+    Readonly<{ kind: "purchase"; purchase: PlatformPremiumNativePurchase }> | Readonly<{ kind: "unbound" }> {
     ticket = ticketCopy(ticket);
-    if (!this.isCurrent(ticket)) return Object.freeze({ kind: "unbound" });
-    const snapshot = this.capture(ticket.scope.authorityKey);
+    if (!(v2 ? this.isCurrentV2(ticket) : this.isCurrent(ticket))) return Object.freeze({ kind: "unbound" });
+    const snapshot = v2 ? this.captureV2(ticket.scope.authorityKey) : this.capture(ticket.scope.authorityKey);
     if (snapshot.kind !== "snapshot") return Object.freeze({ kind: "unbound" });
     const offer = snapshot.policy.offerScopes.find(item => item.scopeRef === ref(offerScopeRef));
     if (!offer || !snapshot.policy.nativeQualification) return Object.freeze({ kind: "unbound" });
@@ -1084,17 +1112,29 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
    * Hydration is outside SQLite; all real authority is rechecked here. */
   recordWhopCoverage(ticket: PlatformPremiumAuthorityTicket, observationRef: string,
     proof: PlatformPremiumPreparedWhopCoverage): Readonly<{ kind: "recorded" | "duplicate" }> {
+    if (!isPreparedPlatformPremiumWhopCoverage(proof)) invalid();
+    return this.recordWhopObservation(ticket, observationRef, proof);
+  }
+
+  recordWhopCurrentAccess(ticket: PlatformPremiumAuthorityTicket, observationRef: string,
+    proof: PlatformPremiumPreparedWhopCurrentAccess): Readonly<{ kind: "recorded" | "duplicate" }> {
+    if (!isPreparedPlatformPremiumWhopCurrentAccess(proof)) invalid();
+    return this.recordWhopObservation(ticket, observationRef, proof, true);
+  }
+
+  private recordWhopObservation(ticket: PlatformPremiumAuthorityTicket, observationRef: string,
+    proof: PlatformPremiumPreparedWhopCoverage | PlatformPremiumPreparedWhopCurrentAccess, v2 = false): Readonly<{ kind: "recorded" | "duplicate" }> {
     return this.atomic(() => {
     ticket = ticketCopy(ticket);
     const deps = this.write(); ref(observationRef);
-    if (!isPreparedPlatformPremiumWhopCoverage(proof)) invalid();
+    if (!isPreparedPlatformPremiumWhopCoverage(proof) && !isPreparedPlatformPremiumWhopCurrentAccess(proof)) invalid();
     const prior = this.db.prepare<[string], ObservationRow>("SELECT * FROM platform_premium_paid_observations WHERE observation_ref=?").get(observationRef);
     if (prior) {
       if (prior.authority_key !== ticket.scope.authorityKey || prior.collection_sha256 !== proof.digest) throw new PlatformPremiumAuthorityError("conflict");
       return Object.freeze({ kind: "duplicate" });
     }
-    if (!this.isCurrent(ticket)) throw new PlatformPremiumAuthorityError("conflict");
-    const snapshot = this.capture(ticket.scope.authorityKey);
+    if (!(v2 ? this.isCurrentV2(ticket) : this.isCurrent(ticket))) throw new PlatformPremiumAuthorityError("conflict");
+    const snapshot = v2 ? this.captureV2(ticket.scope.authorityKey) : this.capture(ticket.scope.authorityKey);
     if (snapshot.kind !== "snapshot") throw new PlatformPremiumAuthorityError("unbound");
     const collection = proof.collection, scope = snapshot.policy.offerScopes.find(item => sha(item) === sha(collection.purchase.offer));
     const q = snapshot.policy.nativeQualification, now = utc(deps.nowUtc());
@@ -1102,7 +1142,7 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
       || proof.apiVersion !== q.apiVersion || sha(collection) !== proof.digest || collection.observedAtUtc > now
       || collection.validUntilUtc <= now
       || Date.parse(collection.validUntilUtc) - Date.parse(collection.observedAtUtc) > snapshot.policy.maximumEvidenceAgeMs) invalid();
-    const selected = this.nativePurchase(ticket, scope.scopeRef, collection.purchase.payer.whopUserId);
+    const selected = this.nativePurchaseForTicket(ticket, scope.scopeRef, collection.purchase.payer.whopUserId, v2);
     if (selected.kind !== "purchase" || sha(selected.purchase) !== sha(collection.purchase)) throw new PlatformPremiumAuthorityError("unbound");
     const latest = this.db.prepare<[string, string], ObservationRow>(`SELECT * FROM platform_premium_paid_observations
       WHERE authority_key=? AND offer_scope_ref=? ORDER BY observed_at_utc DESC,observation_ref DESC LIMIT 1`)
@@ -1112,7 +1152,7 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
       throw new PlatformPremiumAuthorityError("conflict");
     }
     const payer = collection.purchase.payer;
-    if (!this.isCurrent(ticket)) throw new PlatformPremiumAuthorityError("conflict");
+    if (!(v2 ? this.isCurrentV2(ticket) : this.isCurrent(ticket))) throw new PlatformPremiumAuthorityError("conflict");
     this.db.prepare(`INSERT INTO platform_premium_native_bindings VALUES (?,?,?,?)
       ON CONFLICT(authority_key) DO UPDATE SET link_id=excluded.link_id,whop_user_ref_hmac=excluded.whop_user_ref_hmac,
       whop_user_id=excluded.whop_user_id`).run(ticket.scope.authorityKey, payer.linkId, payer.whopUserRefHmac, payer.whopUserId);

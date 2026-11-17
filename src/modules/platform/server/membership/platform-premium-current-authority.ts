@@ -1,3 +1,6 @@
+import { assertPlatformPremiumRuntimeAuthority, preparePlatformPremiumCurrentPaidEvidenceWithRuntimeAuthority, type PlatformPremiumRuntimeAuthorityBinding } from "./platform-premium-runtime-authority";
+import { preparePlatformPremiumCurrentPaidEvidence } from "./platform-premium-current-paid-evidence";
+import type { PlatformPremiumNativeCurrentAccessCollection } from "./platform-premium-whop-current-access";
 import { PlatformPremiumError, premiumComplimentaryEvidence, premiumFresh, premiumInteger, premiumOffer, premiumRef, premiumScope, premiumSnowflake,
   premiumTicket, premiumUtc, type PlatformPremiumAssignmentReview, type PlatformPremiumComplimentaryEvidence,
   type PlatformPremiumOfferScope, type PlatformPremiumPayer, type PlatformPremiumScope, type PlatformPremiumSnapshot,
@@ -19,9 +22,9 @@ export type MembershipPremiumRead = Readonly<{ kind: "unbound"; reason: string }
     offerScopes: readonly PlatformPremiumOfferScope[]; premiumPlanIds: readonly string[]; maximumEvidenceAgeMs: number;
     generation: number; nativeQualification: Readonly<{ reviewRef: string; schemaSha256: string; apiVersion: string }> | null }>;
   payer: PlatformPremiumPayer;
-  coverage: readonly (Readonly<{ kind: "unknown"; offer: PlatformPremiumOfferScope; reason: string }>
+  coverage: readonly (Readonly<{ kind: "unknown"; offer: PlatformPremiumOfferScope; reason: string; basis?: "current_provider_access" }>
     | Readonly<{ kind: "native_coverage"; offer: PlatformPremiumOfferScope;
-      collection: MembershipPremiumNativeCollection; observationRef: string }>)[];
+      collection: MembershipPremiumNativeCollection | PlatformPremiumNativeCurrentAccessCollection; observationRef: string }>)[];
   complimentary: Omit<Extract<PlatformPremiumComplimentaryEvidence, { kind: "active" }>, "observedAtUtc" | "validUntilUtc">
     | Readonly<{ kind: "none" | "unknown" }>;
   retiredSubjectFacts: readonly Readonly<{ discordUserId: string; identityGeneration: number }>[];
@@ -80,7 +83,8 @@ export class PlatformPremiumCurrentAuthority implements PlatformPremiumAuthority
     private readonly producer: MembershipPremiumProducerReadPort | null = null,
     private readonly writer: PremiumAdmittedImmediateWriter | null = null,
     private readonly history: PremiumOwnedHistoryReader | null = null,
-    private readonly reviews: PremiumHistoricalAssignmentReviewReader | null = null) {
+    private readonly reviews: PremiumHistoricalAssignmentReviewReader | null = null,
+    readonly runtimeAuthority: PlatformPremiumRuntimeAuthorityBinding | null = null) {
     premiumSnowflake(configuration.guildId); premiumSnowflake(configuration.paidRoleId);
     if (configuration.complimentaryRoleId !== null) premiumSnowflake(configuration.complimentaryRoleId);
     if (configuration.guildId === configuration.paidRoleId || (configuration.complimentaryRoleId !== null
@@ -106,7 +110,14 @@ export class PlatformPremiumCurrentAuthority implements PlatformPremiumAuthority
         || !premiumFresh(ticket.observedAtUtc, ticket.validUntilUtc, premiumUtc(this.configuration.nowUtc()))) return false;
       // Pass the ORIGINAL full ticket to its paired V2 checker. Old V1 fact
       // digests fail this check; never capture or upgrade an outstanding intent.
-      return this.producer.isCurrentV2(ticket);
+      if (!this.producer.isCurrentV2(ticket)) return false;
+      const read = this.producer.captureV2(ticket.scope.authorityKey);
+      if (read.kind !== "snapshot") return false;
+      if (read.policy.offerScopes.length > 0 && read.policy.offerScopes.every(offer => offer.environment === "sandbox")) {
+        if (!this.runtimeAuthority) return false;
+        assertPlatformPremiumRuntimeAuthority(this.runtimeAuthority,ticket,this.configuration.paidRoleId,this.configuration.nowUtc());
+      }
+      return true;
     } catch { return false; }
   }
   /** Actual V4 existing-key lookup only. No initialization, guessed UUID/guild,
@@ -147,7 +158,10 @@ export class PlatformPremiumCurrentAuthority implements PlatformPremiumAuthority
           const items = raw.coverage.filter(item => item.offer.scopeRef === offer.scopeRef);
           if (items.length !== 1 || !sameOffer(premiumOffer(items[0]!.offer), offer)) throw new PlatformPremiumError("invalid");
           const item = items[0]!;
-          const unknown = (reason: string) => Object.freeze({ kind: "unknown" as const, offer, reason: premiumRef(reason) });
+          const unknown = (reason: string) => Object.freeze({ kind: "unknown" as const, offer, reason: premiumRef(reason),
+            ...((item.kind === "unknown" && item.basis === "current_provider_access")
+              || (item.kind === "native_coverage" && "protocol" in item.collection)
+              ? { basis: "current_provider_access" as const } : {}) });
           if (item.kind === "unknown") return unknown(item.reason);
           if (item.kind !== "native_coverage" || payer.kind !== "bound" || !raw.policy.nativeQualification) return unknown("native_unqualified");
           premiumRef(item.observationRef);
@@ -157,11 +171,15 @@ export class PlatformPremiumCurrentAuthority implements PlatformPremiumAuthority
             || !premiumFresh(c.observedAtUtc, c.validUntilUtc, at) || !Array.isArray(c.members) || c.members.length > 250) return unknown("native_scope_or_freshness");
           const purchase = Object.freeze({ environment: offer.environment, accountId: offer.accountId,
             whopUserId: payer.whopUserId, productId: offer.productId, planId: offer.planId });
-          const evidence = preparePlatformPremiumPaidEvidence({ purchase, observedAtUtc: c.observedAtUtc,
+          const evidence = "protocol" in c ? (offer.environment === "sandbox" && this.runtimeAuthority
+            ? preparePlatformPremiumCurrentPaidEvidenceWithRuntimeAuthority(c, purchase, at, age, this.runtimeAuthority, ticket, this.configuration.paidRoleId)
+            : preparePlatformPremiumCurrentPaidEvidence(c, purchase, at, age))
+            : preparePlatformPremiumPaidEvidence({ purchase, observedAtUtc: c.observedAtUtc,
             validUntilUtc: [ticket.validUntilUtc, c.validUntilUtc].sort()[0]!, discovery: c.discovery,
             coverageQualification: "native_bound", members: c.members.map(member => ({ ...member,
               purchase, observedAtUtc: c.observedAtUtc })) }, purchase, at, age);
-          return Object.freeze({ kind: "evidence" as const, offer, evidence });
+          return Object.freeze({ kind: "evidence" as const, offer, evidence,
+            ...("protocol" in c ? { nativeObservationRef: item.observationRef } : {}) });
         }));
         const gift = raw.complimentary;
         const complimentary = premiumComplimentaryEvidence(gift.kind === "active" ? {

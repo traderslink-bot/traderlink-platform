@@ -8,8 +8,10 @@ import type { PartnerAlertAccessInput } from "../contracts/partner-alert-access-
 import { partnerAlertId, partnerAlertInteger, partnerAlertSnowflake, partnerAlertUtc } from "../contracts/partner-alert-validation";
 import type { PartnerAlertAuthority, PartnerAlertCommunityOwnerActor, PartnerAlertCommunityReceipt,
   PartnerAlertOperatorActor, PartnerAlertCommunityAccessReader } from "./partner-alert-authority";
-import { evaluatePlatformPremium, premiumFresh, premiumUtc, type PlatformPremiumTicket } from "../../platform/contracts/platform-premium-access";
+import { premiumFresh, premiumUtc, type PlatformPremiumTicket } from "../../platform/contracts/platform-premium-access";
 import type { PlatformPremiumAuthority } from "../../platform/server/membership/platform-premium-role-reconciliation";
+import { assertPlatformPremiumRuntimeAuthority, evaluatePlatformPremiumWithRuntimeAuthority,
+  type PlatformPremiumRuntimeAuthorityBinding } from "../../platform/server/membership/platform-premium-runtime-authority";
 import { PlatformPremiumCurrentAuthority, type PremiumAdmittedImmediateWriter, type MembershipPremiumProducerReadPort,
   type PremiumOwnedHistoryReader } from "../../platform/server/membership/platform-premium-current-authority";
 import { partnerAlertAccessTicket, type PartnerAlertAccessTicket, type PartnerAlertPremiumEvidence } from "../contracts/partner-alert-contracts";
@@ -158,7 +160,11 @@ export class PartnerAlertCombinedRoleAuthority implements PartnerAlertRoleAuthor
     private readonly principals: Pick<MembershipPremiumProducerReadPort, "resolveUserAuthority"> | null = null,
     private readonly prepareExistingWhopAccess?: (input: Readonly<{ communityId: string; mappingId: string; userId: string }>,
       premium: PlatformPremiumTicket) =>
-      Promise<(() => PartnerAlertAccessInput["existingWhopAccess"]) | null>) {
+      Promise<(() => PartnerAlertAccessInput["existingWhopAccess"]) | null>,
+    /** Qualified native hydration runs outside the admitted SQLite writer.
+     * A refusal must stop this refresh, never reuse an earlier paid snapshot. */
+    private readonly refreshPremium?: (authorityKey: string) => Promise<void>,
+    private readonly runtimeAuthority: PlatformPremiumRuntimeAuthorityBinding | null = null) {
     partnerAlertSnowflake(configuration.guildId, "guildId");
     if (typeof configuration.nowUtc !== "function") throw new PartnerAlertValidationError("clock");
     this.configuration = Object.freeze({ enabled: configuration.enabled === true, guildId: configuration.guildId, nowUtc: configuration.nowUtc });
@@ -190,6 +196,13 @@ export class PartnerAlertCombinedRoleAuthority implements PartnerAlertRoleAuthor
     partnerAlertId(input.communityId, "communityId"); partnerAlertId(input.mappingId, "mappingId"); partnerAlertId(input.userId, "userId");
     const mapped = this.inCurrentWriter(() => this.principals!.resolveUserAuthority(input.userId, this.configuration.guildId));
     if (mapped.kind !== "linked") throw new PartnerAlertValidationError("principalMapperUnbound");
+    if (this.refreshPremium) {
+      await this.refreshPremium(mapped.authorityKey);
+      const current = this.inCurrentWriter(() => this.principals!.resolveUserAuthority(input.userId, this.configuration.guildId));
+      if (current.kind !== "linked" || current.authorityKey !== mapped.authorityKey) {
+        throw new PartnerAlertValidationError("premiumChanged");
+      }
+    }
     const loaded = await this.premium.loadCurrent(partnerAlertId(mapped.authorityKey, "authorityKey"));
     if (loaded.kind !== "snapshot") throw new PartnerAlertValidationError("premiumUnbound");
     const p = structuredClone(loaded.snapshot);
@@ -207,17 +220,29 @@ export class PartnerAlertCombinedRoleAuthority implements PartnerAlertRoleAuthor
         || !Array.isArray(own.previousDiscordUserIds) || own.previousDiscordUserIds.length > 100
         || !this.isCurrent(ticket)) throw new PartnerAlertValidationError("contextChanged");
       own.previousDiscordUserIds.forEach(id => partnerAlertSnowflake(id, "previousDiscordUserId"));
-      const decision = evaluatePlatformPremium(p, at);
-      const priorEnded = p.previousPaidThroughUtc !== null && premiumUtc(p.previousPaidThroughUtc) <= at;
+      if (this.runtimeAuthority) assertPlatformPremiumRuntimeAuthority(this.runtimeAuthority,p.ticket,p.paidRoleId,at);
+      const realm = this.runtimeAuthority ? "sandbox" : "live";
+      const decision = evaluatePlatformPremiumWithRuntimeAuthority(p, at, this.runtimeAuthority);
+      const hasCurrentAccessFacts = p.coverage.some(item => item.kind === "unknown"
+        ? item.basis === "current_provider_access" : item.evidence.kind === "current_paid_access"
+          || ((item.evidence.kind === "unknown" || item.evidence.kind === "not_paid") && item.evidence.basis === "current_provider_access"));
+      // An old invoice endpoint cannot end current-provider grace or turn an
+      // unavailable current read into nonpayment. Legacy period handling stays.
+      const priorEnded = !hasCurrentAccessFacts && p.previousPaidThroughUtc !== null && premiumUtc(p.previousPaidThroughUtc) <= at;
       const knownUnpaid = p.payer.kind === "bound" && p.coverage.length > 0 && p.coverage.every(item => item.kind === "evidence"
-        && item.offer.environment === "live" && item.evidence.kind === "not_paid"
+        && item.offer.environment === realm && item.evidence.kind === "not_paid"
         && premiumFresh(item.evidence.observedAtUtc, item.evidence.validUntilUtc, at));
       const paid = decision.partnerPaidEligible && decision.reason === "paid";
-      const evidence: PartnerAlertPremiumEvidence = Object.freeze({ ticket: p.ticket, userId: input.userId,
-        state: paid ? "active" : priorEnded || knownUnpaid ? "inactive" : "unknown",
-        basis: paid ? "paid_live" : priorEnded || knownUnpaid ? "none" : "unknown",
-        paidThroughUtc: paid ? decision.paidThroughUtc : null,
-        observedAtUtc: p.ticket.observedAtUtc, validUntilUtc: p.ticket.validUntilUtc });
+      const currentPaid = paid && decision.basis === "current_provider_access";
+      const evidence: PartnerAlertPremiumEvidence = currentPaid
+        ? Object.freeze({ ticket: p.ticket, userId: input.userId, state: "active", basis: "current_provider_access",
+          providerRealm: realm, paidThroughUtc: null, observedAtUtc: p.ticket.observedAtUtc,
+          validUntilUtc: [p.ticket.validUntilUtc, premiumUtc(decision.validUntilUtc!)].sort()[0]! })
+        : Object.freeze({ ticket: p.ticket, userId: input.userId,
+          state: paid ? "active" : priorEnded || knownUnpaid ? "inactive" : "unknown",
+          basis: paid ? "paid_live" : priorEnded || knownUnpaid ? "none" : "unknown",
+          paidThroughUtc: paid ? decision.paidThroughUtc : null,
+          observedAtUtc: p.ticket.observedAtUtc, validUntilUtc: p.ticket.validUntilUtc });
       const existingWhopAccess = readExistingWhopAccess?.();
       return Object.freeze({ ticket, authorityRevision: c.authorityRevision, linkedDiscordUserId: c.linkedDiscordUserId,
         previousDiscordUserIds: Object.freeze([...new Set(own.previousDiscordUserIds)]),
@@ -241,10 +266,12 @@ export function createPartnerAlertPaidAuthority(binding: Readonly<{
   history: PremiumOwnedHistoryReader;
   community: PartnerAlertCommunityAccessReader;
   prepareExistingWhopAccess?: ConstructorParameters<typeof PartnerAlertCombinedRoleAuthority>[5];
+  refreshPremium?: ConstructorParameters<typeof PartnerAlertCombinedRoleAuthority>[6];
+  runtimeAuthority?: PlatformPremiumRuntimeAuthorityBinding | null;
 }> | null): PartnerAlertCombinedRoleAuthority | null {
   if (!binding?.enabled) return null;
-  const premium = new PlatformPremiumCurrentAuthority(binding, binding.producer, binding.writer, binding.history);
-  return new PartnerAlertCombinedRoleAuthority(binding, premium, binding.community, binding.writer, binding.producer, binding.prepareExistingWhopAccess);
+  const premium = new PlatformPremiumCurrentAuthority(binding, binding.producer, binding.writer, binding.history, null, binding.runtimeAuthority ?? null);
+  return new PartnerAlertCombinedRoleAuthority(binding, premium, binding.community, binding.writer, binding.producer, binding.prepareExistingWhopAccess, binding.refreshPremium, binding.runtimeAuthority ?? null);
 }
 
 /** Diagnostic projection ONLY, never Premium/Discord access evidence. Existing

@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { WhopAiReviewOAuthConfiguration } from
   "./whop-ai-review-configuration";
 
+export const WHOP_OAUTH_FLOW_COOKIE = "traderlink_whop_oauth_flow";
 export const WHOP_OAUTH_STATE_COOKIE = "traderlink_whop_oauth_state";
 export const WHOP_OAUTH_VERIFIER_COOKIE = "traderlink_whop_oauth_verifier";
 export const WHOP_OAUTH_USER_BINDING_COOKIE = "traderlink_whop_oauth_user";

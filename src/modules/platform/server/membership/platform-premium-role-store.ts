@@ -1,3 +1,5 @@
+import { assertPlatformPremiumRuntimeAuthority, type PlatformPremiumRuntimeAuthorityBinding } from "./platform-premium-runtime-authority";
+import { parsePlatformPremiumEligibilityEvent } from "./platform-premium-eligibility-event";
 import type Database from "better-sqlite3";
 import { PlatformPremiumError, premiumInteger, premiumRef, premiumScope, premiumSnowflake, premiumUtc,
   premiumTicket, samePremiumScope, type PlatformPremiumTicket, type PlatformPremiumScope } from "../../contracts/platform-premium-access";
@@ -7,7 +9,7 @@ import { PLATFORM_PREMIUM_DISCOVERY_SOURCES, type PlatformPremiumDiscoveryEpoch,
   type PlatformPremiumRoleTransaction } from "./platform-premium-role-repository";
 import { requirePlatformErasureWriter } from "../privacy/platform-erasure-admission";
 
-type Configuration = Readonly<{ enabled: boolean; guildId: string; paidRoleId: string }>;
+type Configuration = Readonly<{ enabled: boolean; guildId: string; paidRoleId: string; runtimeAuthority?: PlatformPremiumRuntimeAuthorityBinding | null }>;
 type RecordValue = Record<string, unknown>;
 function record(value: unknown): RecordValue {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new PlatformPremiumError("invalid");
@@ -55,9 +57,14 @@ function ticket(value: unknown): PlatformPremiumTicket {
     whopGeneration: r.whopGeneration as number, admissionRef: r.admissionRef as string, factsSha256: r.factsSha256 as string,
     observedAtUtc: r.observedAtUtc as string, validUntilUtc: r.validUntilUtc as string });
 }
+function copyObservationRefs(value: unknown): readonly string[] {
+  if (!Array.isArray(value) || value.length > 50) throw new PlatformPremiumError("invalid");
+  const refs=value.map(item=>premiumRef(item as string));if(new Set(refs).size!==refs.length)throw new PlatformPremiumError("invalid");return Object.freeze(refs);
+}
 function intent(value: unknown): PlatformPremiumRoleIntent {
   const i = record(value); const t = target(i.target); const s = scope(i.scope); const proof = ticket(i.ticket);
   if (t.authorityKey !== s.authorityKey || t.guildId !== s.guildId) throw new PlatformPremiumError("invalid");
+  if (i.basis === "current_provider_access" && (!Array.isArray(i.nativeObservationRefs) || !["live","sandbox"].includes(i.realm as string))) throw new PlatformPremiumError("invalid");
   const desired = choice(i.desired, ["present", "absent", "hold"] as const);
   const at = premiumUtc(i.atUtc as string); const until = nullableUtc(i.validUntilUtc);
   const revision = premiumInteger(i.authorityRevision as number);
@@ -67,7 +74,10 @@ function intent(value: unknown): PlatformPremiumRoleIntent {
     || (until !== null && until > proof.validUntilUtc)
     || (desired === "hold" ? until !== null : until === null || until <= at)) throw new PlatformPremiumError("invalid");
   return Object.freeze({ ticket: proof, managedAssignmentRef, target: t, scope: s, authorityRevision: revision, desired, validUntilUtc: until,
-    atUtc: at, reason: premiumRef(i.reason as string) });
+    atUtc: at, reason: premiumRef(i.reason as string), ...(i.basis === undefined ? {} : {
+      basis: choice(i.basis, ["payment_period","current_provider_access"] as const) }),
+    ...(i.realm === undefined ? {} : {realm:choice(i.realm,["live","sandbox"] as const)}),
+    ...(i.nativeObservationRefs === undefined ? {} : {nativeObservationRefs:copyObservationRefs(i.nativeObservationRefs)}) });
 }
 function job(value: unknown): PlatformPremiumRoleJob {
   const j = record(value); const i = intent(j.intent);
@@ -108,16 +118,7 @@ function job(value: unknown): PlatformPremiumRoleJob {
   nextAttemptAtUtc: premiumUtc(j.nextAttemptAtUtc as string), lease,
   error: j.error === null ? null : choice(j.error, ["temporary", "rate_limited", "permission", "rate_limit_unqualified", "unknown_outcome", "authority_changed"] as const) });
 }
-function event(value: unknown): PlatformPremiumEligibilityEvent {
-  const e = record(value); const s = scope(e.scope); const at = premiumUtc(e.observedAtUtc as string);
-  const until = nullableUtc(e.validUntilUtc); const proof = ticket(e.ticket); const through = nullableUtc(e.paidThroughUtc);
-  if (typeof e.paidEligible !== "boolean" || premiumRef(e.authorityKey as string) !== s.authorityKey
-    || !samePremiumScope(proof.scope, s) || proof.authorityRevision !== e.authorityRevision
-    || at < proof.observedAtUtc || at >= proof.validUntilUtc || (until !== null && until > proof.validUntilUtc)
-    || (e.paidEligible ? until === null || until <= at || through === null || through <= at : until !== null || through !== null)) throw new PlatformPremiumError("invalid");
-  return Object.freeze({ ticket: proof, authorityKey: s.authorityKey, authorityRevision: premiumInteger(e.authorityRevision as number),
-    scope: s, paidEligible: e.paidEligible, paidThroughUtc: through, validUntilUtc: until, observedAtUtc: at });
-}
+function event(value: unknown): PlatformPremiumEligibilityEvent { return parsePlatformPremiumEligibilityEvent(value); }
 function cursor(value: unknown): string | null {
   if (value !== null && (typeof value !== "string" || !value || value.length > 1024 || /[\u0000-\u001f\u007f]/u.test(value))) {
     throw new PlatformPremiumError("invalid");
@@ -217,6 +218,7 @@ export class SqlitePlatformPremiumRoleStore extends SqlitePremiumBase implements
       });
       const events = this.db.prepare(`SELECT event_json FROM platform_premium_paid_events
         WHERE guild_id=? AND paid_role_id=? AND authority_key=? AND paid_eligible=1
+          AND (json_type(event_json,'$.basis') IS NULL OR json_extract(event_json,'$.basis')='payment_period')
           AND json_extract(event_json,'$.ticket.scope.identityGeneration')=?
           AND json_extract(event_json,'$.ticket.scope.erasureGeneration')=?
           AND json_extract(event_json,'$.ticket.scope.policyGeneration')=?
@@ -224,7 +226,7 @@ export class SqlitePlatformPremiumRoleStore extends SqlitePremiumBase implements
         s.identityGeneration, s.erasureGeneration, s.policyGeneration) as { event_json: string }[];
       const through = events.map(row => {
         const e = event(decode(row.event_json));
-        if (e.authorityKey !== s.authorityKey || !e.paidEligible) throw new PlatformPremiumError("conflict");
+        if (e.authorityKey !== s.authorityKey || !e.paidEligible || e.basis === "current_provider_access") throw new PlatformPremiumError("conflict");
         return e.paidThroughUtc!;
       }).sort().at(-1) ?? null;
       return Object.freeze({ previousPaidThroughUtc: through, assignments: Object.freeze(assignments) });
@@ -260,7 +262,7 @@ export class SqlitePlatformPremiumRoleStore extends SqlitePremiumBase implements
         due: (now: string, maximum: number): readonly PlatformPremiumRoleJob[] => {
           guard(); const at = premiumUtc(now); premiumInteger(maximum, 1, 1000);
           const rows = this.db.prepare(`SELECT job_json FROM platform_premium_role_jobs WHERE guild_id=? AND role_id=? AND (
-            (state IN ('pending','retry') AND next_attempt_at_utc<=? AND attempts<8)
+            (((state IN ('pending','retry') AND attempts<8) OR (state='held' AND desired='hold' AND json_extract(job_json,'$.intent.basis')='current_provider_access' AND json_extract(job_json,'$.error') IS NULL)) AND next_attempt_at_utc<=?)
             OR (state='applying' AND lease_until_utc<=?)
             OR (state='confirmed' AND desired='present' AND valid_until_utc<=?))
             ORDER BY CASE desired WHEN 'absent' THEN 0 ELSE 1 END,next_attempt_at_utc,discord_user_id LIMIT ?`)
@@ -269,6 +271,10 @@ export class SqlitePlatformPremiumRoleStore extends SqlitePremiumBase implements
         },
         appendEligibility: (input: PlatformPremiumEligibilityEvent): void => {
           guard(); const e = event(input);
+          if(e.basis === "current_provider_access" && e.realm === "sandbox"){
+            if(!this.config.runtimeAuthority)throw new PlatformPremiumError("unbound");
+            assertPlatformPremiumRuntimeAuthority(this.config.runtimeAuthority,e.ticket,this.config.paidRoleId,e.observedAtUtc);
+          }
           requirePlatformErasureWriter(this.db,e.scope.userId);
           if (e.scope.guildId !== this.config.guildId) throw new PlatformPremiumError("invalid");
           const key = [this.config.guildId, this.config.paidRoleId, e.authorityKey, e.authorityRevision, e.observedAtUtc];
@@ -279,7 +285,7 @@ export class SqlitePlatformPremiumRoleStore extends SqlitePremiumBase implements
           if (previous) { if (encode(event(decode(previous.event_json))) !== text) throw new PlatformPremiumError("conflict"); return; }
           this.db.prepare(`INSERT INTO platform_premium_paid_events
             (guild_id,paid_role_id,authority_key,authority_revision,observed_at_utc,paid_eligible,valid_until_utc,event_json)
-            VALUES (?,?,?,?,?,?,?,?)`).run(...key, e.paidEligible ? 1 : 0, e.validUntilUtc, text);
+            VALUES (?,?,?,?,?,?,?,?)`).run(...key, e.paidEligible === null ? null : Number(e.paidEligible), e.validUntilUtc, text);
         },
         cooldownUntilUtc: (): string | null => {
           guard(); const row = this.db.prepare(`SELECT until_utc FROM platform_premium_role_cooldowns WHERE guild_id=? AND paid_role_id=?`)
@@ -300,19 +306,55 @@ export class SqlitePlatformPremiumRoleStore extends SqlitePremiumBase implements
    * Membership/erasure fences; a stored paidEligible bit is not grant authority.
    * No async/native I/O under this transaction. Deferred events remain pending. */
   projectPaidEvents(nowUtc: string, maximum: number,
-    apply: (input: Readonly<{ event: PlatformPremiumEligibilityEvent; expired: boolean }>) => "applied" | "defer"): number {
+    apply: (input: Readonly<{ event: PlatformPremiumEligibilityEvent; expired: boolean }>) => "applied" | "defer",
+    currentAccess?: Readonly<{
+      isCurrentOriginalTicket(ticket: PlatformPremiumTicket): boolean;
+      allowsRealm(realm: "live" | "sandbox", ticket: PlatformPremiumTicket): boolean;
+      /** Durable bounded refresh notification only. No provider I/O in this writer. */
+      refreshRequired?(event: PlatformPremiumEligibilityEvent): void;
+    }>): number {
     const at = premiumUtc(nowUtc); premiumInteger(maximum, 1, 100);
     return this.inTransaction(guard => {
       const rows = this.db.prepare(`SELECT event_json,applied FROM platform_premium_paid_events
-        WHERE guild_id=? AND paid_role_id=? AND (applied=0 OR (paid_eligible=1 AND valid_until_utc<=? AND expiry_applied=0))
-        ORDER BY observed_at_utc,authority_revision LIMIT ?`).all(this.config.guildId, this.config.paidRoleId, at, maximum) as { event_json: string; applied: number }[];
+        WHERE guild_id=? AND paid_role_id=? AND (applied=0 OR ((paid_eligible=1 OR json_extract(event_json,'$.basis')='current_provider_access') AND valid_until_utc<=? AND expiry_applied=0))
+        ORDER BY CASE WHEN json_extract(event_json,'$.basis')='current_provider_access' THEN 0 ELSE 1 END,
+          CASE WHEN json_extract(event_json,'$.basis')='current_provider_access' THEN observed_at_utc END DESC,observed_at_utc,authority_revision LIMIT ?`).all(this.config.guildId, this.config.paidRoleId, at, maximum) as { event_json: string; applied: number }[];
       let count = 0;
       for (const row of rows) {
         guard(); const e = event(decode(row.event_json));
         const admission = requirePlatformErasureWriter(this.db);
         if (!admission.admittedUserIds().includes(e.scope.userId) || !admission.principalIsLive(e.scope.userId)) continue;
         if (e.scope.guildId !== this.config.guildId) throw new PlatformPremiumError("invalid");
-        const expired = e.paidEligible && e.validUntilUtc !== null && e.validUntilUtc <= at;
+        // A newer current-access observation owns this decision, including an
+        // explicit unknown. Retire the older event without generating a false
+        // unpaid/expiry callback; retain its original raw evidence unchanged.
+        const newer = this.db.prepare(`SELECT 1 FROM platform_premium_paid_events
+          WHERE guild_id=? AND paid_role_id=? AND authority_key=?
+            AND json_extract(event_json,'$.basis')='current_provider_access'
+            AND (observed_at_utc>? OR (observed_at_utc=? AND authority_revision>?)) LIMIT 1`)
+          .get(this.config.guildId,this.config.paidRoleId,e.authorityKey,e.observedAtUtc,e.observedAtUtc,e.authorityRevision);
+        if(newer){
+          this.db.prepare(`UPDATE platform_premium_paid_events SET applied=1,expiry_applied=1
+            WHERE guild_id=? AND paid_role_id=? AND authority_key=? AND authority_revision=? AND observed_at_utc=?`)
+            .run(this.config.guildId,this.config.paidRoleId,e.authorityKey,e.authorityRevision,e.observedAtUtc);
+          count+=1;continue;
+        }
+        if(e.basis==="current_provider_access"){
+          if(!currentAccess||!currentAccess.allowsRealm(e.realm,e.ticket))continue;
+          if(e.validUntilUtc<=at||!currentAccess.isCurrentOriginalTicket(e.ticket)){
+            const result:unknown=currentAccess.refreshRequired?.(e);
+            if(result&&typeof result==="object"&&typeof(result as {then?:unknown}).then==="function")throw new PlatformPremiumError("invalid");
+            continue;
+          }
+          if(e.state==="unknown"){
+            this.db.prepare(`UPDATE platform_premium_paid_events SET applied=1 WHERE guild_id=? AND paid_role_id=?
+              AND authority_key=? AND authority_revision=? AND observed_at_utc=?`)
+              .run(this.config.guildId,this.config.paidRoleId,e.authorityKey,e.authorityRevision,e.observedAtUtc);
+            count+=1;continue;
+          }
+        }
+        if(e.basis!=="current_provider_access"&&currentAccess&&!currentAccess.isCurrentOriginalTicket(e.ticket))continue;
+        const expired = e.paidEligible === true && e.validUntilUtc !== null && e.validUntilUtc <= at;
         const outcome = apply(Object.freeze({ event: e, expired }));
         if (outcome !== "applied" && outcome !== "defer") throw new PlatformPremiumError("invalid");
         if (outcome === "defer") continue;

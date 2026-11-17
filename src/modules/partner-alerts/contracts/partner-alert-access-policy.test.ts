@@ -315,3 +315,29 @@ describe("Fee-free Partner Channel activation readiness", () => {
     expect(evaluatePartnerAlertActivationReadiness({ ...ready, ...change })).toBe(reason);
   });
 });
+
+
+it("uses qualified current paid Premium freshness without fabricating a billing period", () => {
+  const base = qualifiedPaidInput();
+  const premium = { ...base.premium!,basis: "current_provider_access" as const,state: "active" as const,
+    paidThroughUtc: null,providerRealm: "live" as const,validUntilUtc: "2026-11-02T12:00:30.000Z" };
+  const input = { ...base,premium };
+  expect(evaluatePartnerAlertChannelAccess(input)).toMatchObject({ allowed: true,desiredRole: "present",validUntilUtc: premium.validUntilUtc });
+  expect(evaluatePartnerAlertChannelAccess({ ...input,nowUtc: premium.validUntilUtc }))
+    .toMatchObject({ allowed: false,desiredRole: "hold",reason: "premium_unverified" });
+  expect(evaluatePartnerAlertChannelAccess({ ...input,premium: { ...premium,providerRealm: "sandbox" } }))
+    .toMatchObject({ allowed: false,desiredRole: "hold",reason: "premium_unverified" });
+  expect(evaluatePartnerAlertChannelAccess({ ...input,premium: { ...premium,paidThroughUtc: "2026-12-01T00:00:00.000Z" } as never }))
+    .toMatchObject({ allowed: false,desiredRole: "hold",reason: "premium_unverified" });
+  expect(base.premium!.paidThroughUtc).not.toBeNull();
+});
+it("applies the same Premium freshness gate before a new Stripe checkout", async () => {
+  const base = qualifiedPaidInput();
+  let now = base.nowUtc;
+  const input = { ...base,memberships: [],premium: { ...base.premium!,basis: "current_provider_access" as const,state: "active" as const,
+    paidThroughUtc: null,providerRealm: "live" as const,validUntilUtc: "2026-11-02T12:00:30.000Z" } };
+  const authority = { inCurrentWriter: <T>(operation: () => T) => operation(),isCurrent: () => true,
+    refresh: async () => ({ input,ticket: base.ticket,authorityRevision: 1,linkedDiscordUserId: discordUserId,previousDiscordUserIds: [] }) };
+  const recheck = await preparePartnerAlertStripeCheckoutEligibility({ userId,communityId,offerId,offerVersion: 1,mappingIds: [mappingId] },authority,() => now);
+  expect(recheck).not.toThrow();now = input.premium.validUntilUtc;expect(recheck).toThrow();
+});

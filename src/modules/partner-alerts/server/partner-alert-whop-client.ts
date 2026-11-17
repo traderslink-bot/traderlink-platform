@@ -10,6 +10,12 @@ export type PartnerAlertWhopClientConfiguration = Readonly<{
   accountId: string;
   bearerToken: string;
 }>;
+export type PartnerAlertWhopAdjustmentPage = Readonly<{
+  /** Minimal native references only: no card, contact or dispute evidence body. */
+  items: readonly Readonly<{ id: string; accountId: string; paymentId: string; status: string }>[];
+  hasNextPage: boolean;
+  endCursor: string | null;
+}>;
 
 export class PartnerAlertWhopReadError extends Error {
   constructor(readonly kind: "unavailable" | "authorisation" | "not_found" | "scope" | "shape") {
@@ -157,7 +163,8 @@ export class PartnerAlertWhopReadClient {
   }
 
   /** Discover receipt references for an existing purchase; return no buyer/card fields. */
-  async listMembershipPayments(input: Readonly<{ whopUserId: string; membershipId: string; after?: string }>): Promise<Readonly<{
+  async listMembershipPayments(input: Readonly<{ whopUserId: string; membershipId: string; after?: string }>,
+    signal?: AbortSignal): Promise<Readonly<{
     paymentIds: readonly string[]; hasNextPage: boolean; endCursor: string | null;
   }>> {
     const userId = resourceId(input.whopUserId, "user_");
@@ -168,7 +175,7 @@ export class PartnerAlertWhopReadClient {
     url.searchParams.set("user_id", userId); url.searchParams.set("membership_id", membershipId);
     url.searchParams.set("include_connected_accounts", "false"); url.searchParams.set("first", "100");
     if (input.after) url.searchParams.set("after", input.after);
-    const result = await this.request(url);
+    const result = await this.request(url, signal);
     try {
       if (!Array.isArray(result.data) || result.data.length > 100) throw new PartnerAlertWhopReadError("shape");
       const page = partnerAlertRecord(result.page_info, "pageInfo");
@@ -181,7 +188,56 @@ export class PartnerAlertWhopReadClient {
           || partnerAlertRecord(row.user, "user").id !== userId) throw new PartnerAlertWhopReadError("scope");
         return resourceId(row.id as string, "pay_");
       });
-      return Object.freeze({ paymentIds: Object.freeze([...new Set(paymentIds)]), hasNextPage: page.has_next_page,
+      if (new Set(paymentIds).size !== paymentIds.length) throw new PartnerAlertWhopReadError("shape");
+      return Object.freeze({ paymentIds: Object.freeze(paymentIds), hasNextPage: page.has_next_page,
+        endCursor: page.end_cursor as string | null });
+    } catch (error) {
+      if (error instanceof PartnerAlertWhopReadError) throw error;
+      throw new PartnerAlertWhopReadError("shape");
+    }
+  }
+
+  async listPaymentRefunds(input: Readonly<{ paymentId: string; after?: string }>, signal?: AbortSignal): Promise<PartnerAlertWhopAdjustmentPage> {
+    return this.adjustments("refunds", input, signal);
+  }
+
+  async listPaymentDisputes(input: Readonly<{ paymentId: string; after?: string }>, signal?: AbortSignal): Promise<PartnerAlertWhopAdjustmentPage> {
+    return this.adjustments("disputes", input, signal);
+  }
+
+  private async adjustments(resource: "refunds" | "disputes", input: Readonly<{ paymentId: string; after?: string }>,
+    signal?: AbortSignal): Promise<PartnerAlertWhopAdjustmentPage> {
+    const paymentId = resourceId(input.paymentId, "pay_");
+    if (input.after !== undefined && !/^[A-Za-z0-9_+/=-]{1,2048}$/u.test(input.after)) throw new PartnerAlertValidationError("cursor");
+    const url = new URL(`/api/v1/${resource}`, this.origin);
+    url.searchParams.set("account_id", this.configuration.accountId);
+    // The pinned current API exposes a payment filter for refunds. Disputes use
+    // query; every returned native payment relationship is still checked below.
+    url.searchParams.set(resource === "refunds" ? "payment_id" : "query", paymentId);
+    if (resource === "disputes") url.searchParams.set("include_subaccounts", "false");
+    url.searchParams.set("first", "100");
+    if (input.after) url.searchParams.set("after", input.after);
+    const result = await this.request(url, signal);
+    try {
+      if (!Array.isArray(result.data) || result.data.length > 100) throw new PartnerAlertWhopReadError("shape");
+      const page = partnerAlertRecord(result.page_info, "pageInfo");
+      if (typeof page.has_next_page !== "boolean"
+        || !(page.end_cursor === null || (typeof page.end_cursor === "string"
+          && /^[A-Za-z0-9_+/=-]{1,2048}$/u.test(page.end_cursor)))
+        || (page.has_next_page && (!page.end_cursor || page.end_cursor === input.after))) throw new PartnerAlertWhopReadError("shape");
+      const ids = new Set<string>();
+      const items = result.data.map(value => {
+        const item = partnerAlertRecord(value, "adjustment");
+        const linkedPayment = resource === "refunds" ? item.payment_id : partnerAlertRecord(item.payment, "payment").id;
+        if (item.account_id !== this.configuration.accountId || linkedPayment !== paymentId) throw new PartnerAlertWhopReadError("scope");
+        if (typeof item.id !== "string" || !/^[A-Za-z][A-Za-z0-9_]{1,127}$/u.test(item.id)
+          || ids.has(item.id) || typeof item.status !== "string" || !/^[a-z_]{1,80}$/u.test(item.status)) {
+          throw new PartnerAlertWhopReadError("shape");
+        }
+        ids.add(item.id);
+        return Object.freeze({ id: item.id, accountId: this.configuration.accountId, paymentId, status: item.status });
+      });
+      return Object.freeze({ items: Object.freeze(items), hasNextPage: page.has_next_page,
         endCursor: page.end_cursor as string | null });
     } catch (error) {
       if (error instanceof PartnerAlertWhopReadError) throw error;

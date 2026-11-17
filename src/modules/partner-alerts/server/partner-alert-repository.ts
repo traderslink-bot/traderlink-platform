@@ -13,9 +13,9 @@ import type {
   PartnerAlertActorReceipt, PartnerAlertAuthority, PartnerAlertCommunityOwnerActor,
   PartnerAlertOperatorActor, PartnerAlertRepositoryConfiguration,
 } from "./partner-alert-authority";
-import { premiumScope, premiumTicket, premiumUtc, samePremiumScope,
-  type PlatformPremiumTicket } from "../../platform/contracts/platform-premium-access";
-import type { PlatformPremiumEligibilityEvent } from "../../platform/server/membership/platform-premium-role-repository";
+import type { PlatformPremiumTicket } from "../../platform/contracts/platform-premium-access";
+import { parsePlatformPremiumEligibilityEvent, type PlatformPremiumEligibilityEvent } from
+  "../../platform/server/membership/platform-premium-eligibility-event";
 import type { PremiumAdmittedImmediateWriter } from "../../platform/server/membership/platform-premium-current-authority";
 import { requirePlatformErasureWriter } from "../../platform/server/privacy/platform-erasure-admission";
 import type { PartnerAlertRoleReview, PartnerAlertReviewAssignment } from "./partner-alert-manual-role-review";
@@ -853,20 +853,9 @@ export class PartnerAlertPremiumRefreshRepository {
       return this.db.transaction(operation)();
     });
   }
-  private event(input: PlatformPremiumEligibilityEvent): PlatformPremiumEligibilityEvent {
-    const ticket = premiumTicket(input.ticket); const scope = premiumScope(input.scope);
-    const at = premiumUtc(input.observedAtUtc);
-    const until = input.validUntilUtc === null ? null : premiumUtc(input.validUntilUtc);
-    const through = input.paidThroughUtc === null ? null : premiumUtc(input.paidThroughUtc);
-    if (!samePremiumScope(ticket.scope, scope) || ticket.authorityRevision !== input.authorityRevision
-      || scope.authorityKey !== input.authorityKey || at < ticket.observedAtUtc || at >= ticket.validUntilUtc
-      || typeof input.paidEligible !== "boolean" || (until !== null && until > ticket.validUntilUtc)
-      || (input.paidEligible ? until === null || until <= at || through === null || through <= at : until !== null || through !== null)) {
-      throw new PartnerAlertValidationError("premiumEvent");
-    }
-    return Object.freeze({ ticket, scope: ticket.scope, authorityKey: ticket.scope.authorityKey,
-      authorityRevision: ticket.authorityRevision, paidEligible: input.paidEligible,
-      paidThroughUtc: through, observedAtUtc: at, validUntilUtc: until });
+  private event(input: unknown): PlatformPremiumEligibilityEvent {
+    try { return parsePlatformPremiumEligibilityEvent(input); }
+    catch { throw new PartnerAlertValidationError("premiumEvent"); }
   }
   enqueue(input: PlatformPremiumEligibilityEvent, reason: "observation" | "expiry"): boolean {
     if (this.configuration.enabled !== true || !this.writer || !this.admitRefresh) return false;
@@ -882,7 +871,12 @@ export class PartnerAlertPremiumRefreshRepository {
       const old = this.db.prepare(`SELECT event_json FROM partner_alert_premium_refresh_events
         WHERE authority_key=? AND authority_revision=? AND observed_at_utc=? AND reason=?`).get(...key) as { event_json: string } | undefined;
       if (old) {
-        if (old.event_json !== text) throw new PartnerAlertValidationError("eventConflict");
+        // Compare the canonical meaning without rewriting historical raw JSON.
+        // This admits legacy key order while retaining protocol/state and the
+        // exact original ticket; current unknown never becomes period false.
+        if (JSON.stringify(this.event(JSON.parse(old.event_json))) !== text) {
+          throw new PartnerAlertValidationError("eventConflict");
+        }
         return true;
       }
       this.db.prepare(`INSERT INTO partner_alert_premium_refresh_events

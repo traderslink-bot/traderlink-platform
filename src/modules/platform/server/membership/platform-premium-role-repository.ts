@@ -1,3 +1,6 @@
+import { assertPlatformPremiumRuntimeAuthority, type PlatformPremiumRuntimeAuthorityBinding } from "./platform-premium-runtime-authority";
+import { parsePlatformPremiumEligibilityEvent, type PlatformPremiumEligibilityEvent } from "./platform-premium-eligibility-event";
+export type { PlatformPremiumEligibilityEvent } from "./platform-premium-eligibility-event";
 import { PlatformPremiumError, premiumInteger, premiumRef, premiumScope, premiumSnowflake, premiumUtc, samePremiumScope,
   premiumTicket, samePremiumTicket, type PlatformPremiumScope, type PlatformPremiumTicket } from "../../contracts/platform-premium-access";
 
@@ -15,6 +18,9 @@ export type PlatformPremiumRoleIntent = Readonly<{
   validUntilUtc: string | null;
   atUtc: string;
   reason: string;
+  basis?: "payment_period" | "current_provider_access";
+  realm?: "live" | "sandbox";
+  nativeObservationRefs?: readonly string[];
 }>;
 export type PlatformPremiumRoleJob = Readonly<{
   intent: PlatformPremiumRoleIntent;
@@ -29,17 +35,6 @@ export type PlatformPremiumRoleJob = Readonly<{
   lastOutcome: Readonly<{ token: string; intent: PlatformPremiumRoleIntent; kind: PlatformPremiumRoleOutcome["kind"];
     actualPresent: boolean | null; receivedAtUtc: string }> | null;
   error: "temporary" | "rate_limited" | "permission" | "rate_limit_unqualified" | "unknown_outcome" | "authority_changed" | null;
-}>;
-export type PlatformPremiumEligibilityEvent = Readonly<{
-  ticket: PlatformPremiumTicket;
-  authorityKey: string;
-  authorityRevision: number;
-  scope: PlatformPremiumScope;
-  paidEligible: boolean;
-  validUntilUtc: string | null;
-  /** Exact paid-period endpoint, distinct from observation/admission freshness. */
-  paidThroughUtc: string | null;
-  observedAtUtc: string;
 }>;
 /** No schema/table/migration is allocated here. This port MUST be a durable
  * single-writer transactional implementation, not an in-memory job queue.
@@ -81,28 +76,37 @@ function validateTarget(target: PlatformPremiumRoleTarget): void {
 function sameIntent(a: PlatformPremiumRoleIntent, b: PlatformPremiumRoleIntent): boolean {
   return samePremiumRoleTarget(a.target, b.target) && samePremiumTicket(a.ticket, b.ticket)
     && a.desired === b.desired && a.validUntilUtc === b.validUntilUtc && a.atUtc === b.atUtc
-    && a.reason === b.reason && a.managedAssignmentRef === b.managedAssignmentRef;
+    && a.reason === b.reason && a.basis === b.basis && a.realm === b.realm && JSON.stringify(a.nativeObservationRefs) === JSON.stringify(b.nativeObservationRefs) && a.managedAssignmentRef === b.managedAssignmentRef;
 }
 
 /** Dormant queue business rules over an UNIMPLEMENTED durable store port.
  * No DB opener/SQL, registration, schedule or current-authority implementation. */
 export class PlatformPremiumRoleRepository {
   constructor(private readonly store: PlatformPremiumRoleStore,
-    private readonly current: (ticket: PlatformPremiumTicket) => boolean) {}
+    private readonly current: (ticket: PlatformPremiumTicket) => boolean,
+    private readonly runtimeAuthority: PlatformPremiumRuntimeAuthorityBinding | null = null) {}
+
+  private assertRealm(intent: PlatformPremiumRoleIntent, atUtc: string): void {
+    if (intent.realm === "sandbox") {
+      if (!this.runtimeAuthority) throw new PlatformPremiumError("unbound");
+      assertPlatformPremiumRuntimeAuthority(this.runtimeAuthority,intent.ticket,intent.target.roleId,atUtc);
+    }
+  }
 
   stage(intents: readonly PlatformPremiumRoleIntent[], eligibility: PlatformPremiumEligibilityEvent): boolean {
+    eligibility = parsePlatformPremiumEligibilityEvent(eligibility);
     if (intents.length > 101) throw new PlatformPremiumError("invalid");
     premiumScope(eligibility.scope); premiumInteger(eligibility.authorityRevision); premiumUtc(eligibility.observedAtUtc);
     const ticket = premiumTicket(eligibility.ticket);
     if (!samePremiumScope(ticket.scope, eligibility.scope) || ticket.authorityRevision !== eligibility.authorityRevision
       || eligibility.observedAtUtc < ticket.observedAtUtc
       || eligibility.observedAtUtc >= ticket.validUntilUtc
-      || (eligibility.validUntilUtc !== null && eligibility.validUntilUtc > ticket.validUntilUtc)
-      || (eligibility.paidEligible ? eligibility.paidThroughUtc === null
-        || premiumUtc(eligibility.paidThroughUtc) <= eligibility.observedAtUtc : eligibility.paidThroughUtc !== null)) throw new PlatformPremiumError("invalid");
-    if (eligibility.authorityKey !== eligibility.scope.authorityKey || (eligibility.paidEligible
-      && (eligibility.validUntilUtc === null || premiumUtc(eligibility.validUntilUtc) <= eligibility.observedAtUtc))) {
-      throw new PlatformPremiumError("invalid");
+      || (eligibility.validUntilUtc !== null && eligibility.validUntilUtc > ticket.validUntilUtc)) throw new PlatformPremiumError("invalid");
+    if (eligibility.basis === "current_provider_access" && eligibility.realm === "sandbox") {
+      if (!this.runtimeAuthority) throw new PlatformPremiumError("unbound");
+      const own = intents.find(intent => intent.target.discordUserId === eligibility.scope.discordUserId);
+      if (!own) throw new PlatformPremiumError("invalid");
+      assertPlatformPremiumRuntimeAuthority(this.runtimeAuthority,eligibility.ticket,own.target.roleId,eligibility.observedAtUtc);
     }
     const keys = new Set<string>();
     for (const intent of intents) {
@@ -119,6 +123,11 @@ export class PlatformPremiumRoleRepository {
         || !samePremiumScope(intent.scope, eligibility.scope)
         || intent.atUtc !== eligibility.observedAtUtc || (intent.desired !== "hold"
           && (intent.validUntilUtc === null || premiumUtc(intent.validUntilUtc) <= intent.atUtc))) throw new PlatformPremiumError("invalid");
+      if (eligibility.basis === "current_provider_access" && intent.target.discordUserId === eligibility.scope.discordUserId
+        && (intent.basis !== "current_provider_access" || intent.realm !== eligibility.realm
+          || JSON.stringify(intent.nativeObservationRefs) !== JSON.stringify(eligibility.nativeObservationRefs) || intent.desired !== (eligibility.state === "paid" ? "present" : eligibility.state === "not_paid" ? "absent" : "hold"))) {
+        throw new PlatformPremiumError("invalid");
+      }
       const key = `${intent.target.guildId}:${intent.target.discordUserId}:${intent.target.roleId}`;
       if (keys.has(key)) throw new PlatformPremiumError("invalid"); keys.add(key);
     }
@@ -138,13 +147,13 @@ export class PlatformPremiumRoleRepository {
           && (old.state !== "confirmed" || old.actualPresent !== false || old.lease !== null)) return false;
       }
       for (const input of intents) {
-        const intent = Object.freeze({ ...input, ticket: premiumTicket(input.ticket), target: Object.freeze({ ...input.target }), scope: premiumScope(input.scope) });
+        const intent = Object.freeze({ ...input, ...(input.nativeObservationRefs ? {nativeObservationRefs:Object.freeze([...input.nativeObservationRefs])} : {}), ticket: premiumTicket(input.ticket), target: Object.freeze({ ...input.target }), scope: premiumScope(input.scope) });
         const old = tx.findTarget(intent.target);
         if (old && old.intent.authorityRevision === intent.authorityRevision && old.intent.atUtc === intent.atUtc
           && samePremiumRoleTarget(old.intent.target, intent.target)) {
           if (old.intent.desired !== intent.desired || old.intent.validUntilUtc !== intent.validUntilUtc
             || !samePremiumScope(old.intent.scope, intent.scope) || !samePremiumTicket(old.intent.ticket, intent.ticket)
-            || old.intent.managedAssignmentRef !== intent.managedAssignmentRef || old.intent.reason !== intent.reason) throw new PlatformPremiumError("conflict");
+            || old.intent.managedAssignmentRef !== intent.managedAssignmentRef || old.intent.reason !== intent.reason || old.intent.basis !== intent.basis || old.intent.realm !== intent.realm || JSON.stringify(old.intent.nativeObservationRefs) !== JSON.stringify(intent.nativeObservationRefs)) throw new PlatformPremiumError("conflict");
           continue;
         }
         const inFlight = old?.state === "applying" || old?.state === "uncertain";
@@ -157,7 +166,8 @@ export class PlatformPremiumRoleRepository {
           actualPresent: old?.actualPresent ?? null, managedAssignment: samePrincipal ? old?.managedAssignment ?? null : null,
           lastOutcome: samePrincipal ? old?.lastOutcome ?? null : null,
           attempts: inFlight || sameDesired ? old!.attempts : 0,
-          nextAttemptAtUtc: sameDesired && old!.nextAttemptAtUtc > intent.atUtc ? old!.nextAttemptAtUtc : intent.atUtc,
+          nextAttemptAtUtc: eligibility.basis === "current_provider_access" && eligibility.state === "unknown" && intent.desired === "hold"
+            ? eligibility.validUntilUtc : sameDesired && old!.nextAttemptAtUtc > intent.atUtc ? old!.nextAttemptAtUtc : intent.atUtc,
           lease: inFlight ? old!.lease : null, error: inFlight || permissionHold ? old!.error : null };
         tx.put(Object.freeze(next));
       }
@@ -170,7 +180,8 @@ export class PlatformPremiumRoleRepository {
     const at = premiumUtc(nowUtc);
     return this.store.transaction(tx => {
       const cooldown = tx.cooldownUntilUtc(); if (cooldown !== null && premiumUtc(cooldown) > at) return null;
-      return tx.due(at, 20).find(job => job.state === "applying"
+      return tx.due(at, 20).find(job => (job.state === "held" && job.intent.desired === "hold"
+        && job.intent.basis === "current_provider_access" && job.error === null && job.nextAttemptAtUtc <= at) || job.state === "applying"
         || (job.state === "confirmed" && job.intent.desired === "present" && job.intent.validUntilUtc !== null && job.intent.validUntilUtc <= at)
         || (["pending", "retry"].includes(job.state)
         && job.attempts < 8 && job.nextAttemptAtUtc <= at))?.intent.target.authorityKey ?? null;
@@ -192,6 +203,7 @@ export class PlatformPremiumRoleRepository {
           // Freshness expiry is not proof of nonpayment; schedule authority refresh externally.
           tx.put({ ...job, state: "held", error: "authority_changed" }); continue;
         }
+        this.assertRealm(job.intent,at);
         const lease = Object.freeze({ token, untilUtc: new Date(Date.parse(at) + 60_000).toISOString(),
           version: job.version, present: job.intent.desired === "present", intent: job.intent });
         const applying: PlatformPremiumRoleJob = Object.freeze({ ...job, state: "applying", lease, attempts: job.attempts + 1 });
@@ -205,6 +217,7 @@ export class PlatformPremiumRoleRepository {
   canApply(claim: PlatformPremiumRoleClaim, nowUtc: string): boolean {
     const at = premiumUtc(nowUtc);
     return this.store.transaction(tx => {
+      this.assertRealm(claim.job.intent,at);
       const job = tx.findTarget(claim.job.intent.target);
       return Boolean(job && job.state === "applying" && job.lease?.token === claim.token
         && job.lease.untilUtc > at && job.lease.version === claim.job.version

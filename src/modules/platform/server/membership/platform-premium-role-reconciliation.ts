@@ -1,4 +1,6 @@
-import { PlatformPremiumError, evaluatePlatformPremium, premiumFresh, premiumInteger, premiumRef, premiumScope, premiumSnowflake, premiumUtc,
+import { evaluatePlatformPremiumWithRuntimeAuthority, type PlatformPremiumRuntimeAuthorityBinding } from "./platform-premium-runtime-authority";
+import { createPlatformPremiumCurrentAccessEvent } from "./platform-premium-current-access-event";
+import { PlatformPremiumError, premiumFresh, premiumInteger, premiumRef, premiumScope, premiumSnowflake, premiumUtc,
   type PlatformPremiumDecision, type PlatformPremiumTicket, type PlatformPremiumSnapshot } from "../../contracts/platform-premium-access";
 import { PlatformPremiumDiscoveryRepository, PlatformPremiumRoleRepository,
   type PlatformPremiumDiscoveryCandidate, type PlatformPremiumDiscoveryPage, type PlatformPremiumDiscoverySource,
@@ -19,6 +21,7 @@ export const PLATFORM_PREMIUM_UNBOUND_DEPENDENCIES = Object.freeze([
  * readEffectiveAccess, owner_grant or a caller-supplied role list cannot implement
  * this authority without the missing subject/generation/payment bindings. */
 export interface PlatformPremiumAuthority {
+  readonly runtimeAuthority?: PlatformPremiumRuntimeAuthorityBinding | null;
   loadCurrent(authorityKey: string): Promise<Readonly<{ kind: "unbound" }>
     | Readonly<{ kind: "snapshot"; snapshot: PlatformPremiumSnapshot }>>;
   /** Current writer-transaction view, including unlink/erasure and all generations. */
@@ -169,13 +172,15 @@ export class PlatformPremiumRoleReconciliation {
         || !premiumFresh(snapshot.observedAtUtc, snapshot.validUntilUtc, at)
         || !Array.isArray(snapshot.retiredSubjects) || snapshot.retiredSubjects.length > 100
         || !this.authority.inCurrentWriter) return { state: "held", decision: null };
-      const decision = evaluatePlatformPremium(snapshot, at);
+      const decision = evaluatePlatformPremiumWithRuntimeAuthority(snapshot, at, this.authority.runtimeAuthority ?? null);
+      const currentAccessEvent = createPlatformPremiumCurrentAccessEvent(snapshot, decision, at);
       const intents: PlatformPremiumRoleIntent[] = [];
       if (scope.discordUserId) intents.push({ ticket: snapshot.ticket, managedAssignmentRef: null, target: { authorityKey, guildId: scope.guildId,
         discordUserId: scope.discordUserId, roleId: snapshot.paidRoleId }, scope,
         authorityRevision: snapshot.authorityRevision, desired: decision.paidRole,
         validUntilUtc: decision.paidRole === "hold" ? null : decision.validUntilUtc,
-        atUtc: at, reason: decision.reason });
+        atUtc: at, reason: decision.reason,
+        ...(currentAccessEvent ? { basis: "current_provider_access" as const,realm:currentAccessEvent.realm,nativeObservationRefs:currentAccessEvent.nativeObservationRefs } : {}) });
       const retired = new Set<string>();
       for (const subject of snapshot.retiredSubjects) {
         premiumSnowflake(subject.discordUserId); premiumRef(subject.priorManagedAssignmentRef);
@@ -186,7 +191,7 @@ export class PlatformPremiumRoleReconciliation {
           roleId: snapshot.paidRoleId }, scope, authorityRevision: snapshot.authorityRevision,
           desired: "absent", validUntilUtc: snapshot.validUntilUtc, atUtc: at, reason: "retired_managed_subject" });
       }
-      const staged = this.authority.inCurrentWriter(() => this.repository.stage(intents, {
+      const staged = this.authority.inCurrentWriter(() => this.repository.stage(intents, currentAccessEvent ?? {
         ticket: snapshot.ticket, authorityKey, authorityRevision: snapshot.authorityRevision,
         scope, paidEligible: decision.partnerPaidEligible,
         paidThroughUtc: decision.partnerPaidEligible ? decision.paidThroughUtc : null,
@@ -203,7 +208,7 @@ export class PlatformPremiumRoleReconciliation {
   async runOnce(): Promise<boolean> {
     if (this.configuration.enabled !== true) return false;
     if (!this.authority.inCurrentWriter) { this.notify("authority_unbound"); return false; }
-    const key = this.repository.nextDueAuthority(premiumUtc(this.configuration.nowUtc()));
+    const key = this.authority.inCurrentWriter(() => this.repository.nextDueAuthority(premiumUtc(this.configuration.nowUtc())));
     if (!key) return false;
     const refreshed = await this.refresh(key);
     if (refreshed.state !== "staged") return false;

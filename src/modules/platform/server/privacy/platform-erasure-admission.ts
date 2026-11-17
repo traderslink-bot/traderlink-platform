@@ -1,3 +1,8 @@
+import { calculatePlatformMigrationChecksum } from "../database/platform-migration-contract";
+import { platformPremiumCurrentAccessEventsMigration } from "../database/migrations/0216_platform_premium_current_access_events";
+import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS } from "../membership/platform-premium-role-current-access-schema";
+import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL } from "../membership/platform-premium-role-schema";
+import { createWhopPrivacyReference } from "../billing/whop-ai-review-identity";
 import { platformErasureParticipants } from "./platform-erasure-participants";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync, realpathSync } from "node:fs";
@@ -56,7 +61,7 @@ type ReviewedProfile = Readonly<{ profileRef: string; retentionPolicyRef: string
 type ReviewedCatalog = Readonly<{ schemaSha256: string; profiles: readonly ReviewedProfile[] }>;
 function verifyNativeArtifacts(): void {
   const pins: Readonly<Record<string,string>> = {
-    "membership/platform-premium-authority-repository.ts": "edefd45ba867203fe62df0937880c358167b4e8839382c791cda0ec34d94241f",
+    "membership/platform-premium-authority-repository.ts": "3f70cff198d945ae911866899d60278fe10eb844f3862dcf11019acb4efab6a9",
     "membership/platform-premium-whop-native.ts": "0c6e1ad9b402e5bde926284865c38de1f7a7502dcf72c623d6300b8b85637718",
     "privacy/platform-premium-signer-redaction.ts": "364aa7982a87f4cee623dbcc1d50b3c53a94825a1c964278de18c1481bdc9f76",
   };
@@ -122,6 +127,9 @@ const contexts = new WeakMap<Database.Database, Context>();
 /** An exact registered schema is necessary, including trigger bodies and the
  * complete managed-table list. Installing component DDL or copying a ledger is
  * insufficient. Current source has NO registered successor and cannot bind. */
+function currentPremiumEventsTableSql(database: Database.Database): string | undefined {
+  return (database.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name='platform_premium_paid_events'").get() as {sql:string}|undefined)?.sql;
+}
 function qualifyRegisteredSchema(database: Database.Database, required: readonly string[]): string {
   const rows = readAppliedPlatformMigrations(database);
   validateAppliedPlatformMigrationPrefix(rows, platformMigrationManifest);
@@ -129,7 +137,25 @@ function qualifyRegisteredSchema(database: Database.Database, required: readonly
   const expected = [...expectedPlatformTableNamesForPrefix(rows.length)].sort();
   if (JSON.stringify(listPlatformUserTableNames(database)) !== JSON.stringify(expected)) return fail();
   const registered = new Set(platformMigrationManifest.flatMap(m => [...m.statements]));
-  if (required.some(statement => !registered.has(statement))) return fail();
+  const rebuildId = "0216_platform_premium_current_access_events";
+  const installed = rows.find(row => row.migration_id === rebuildId);
+  const currentTable = PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS.find(statement => statement.startsWith('CREATE TABLE "platform_premium_paid_events" ('));
+  const legacyTable = PLATFORM_PREMIUM_ROLE_SCHEMA_SQL.find(statement => statement.startsWith("CREATE TABLE platform_premium_paid_events ("));
+  if (!installed && required.some(statement => statement === legacyTable || statement === currentTable)) return fail();
+  if (installed) {
+    const known = platformPremiumCurrentAccessEventsMigration;
+    const declared = platformMigrationManifest.find(migration => migration.migrationId === rebuildId);
+    const checksum = "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539";
+    const created = known.statements.find(statement => statement.startsWith("CREATE TABLE platform_premium_paid_events_next_v3 ("));
+    if (rows.length !== 204 || rows.at(-1) !== installed || !declared || declared.moduleNamespace !== "platform"
+      || declared.executionOrder !== 291 || installed.execution_order !== 291 || installed.module_namespace !== "platform"
+      || installed.checksum_sha256 !== checksum || calculatePlatformMigrationChecksum(declared) !== checksum
+      || calculatePlatformMigrationChecksum(known) !== checksum || !created || !registered.has(created)
+      || !registered.has("ALTER TABLE platform_premium_paid_events_next_v3 RENAME TO platform_premium_paid_events")
+      || currentTable !== created.replace("CREATE TABLE platform_premium_paid_events_next_v3 (", 'CREATE TABLE "platform_premium_paid_events" (')
+      || currentPremiumEventsTableSql(database) !== currentTable || required.some(statement => statement === legacyTable)) return fail();
+  }
+  if (required.some(statement => !registered.has(statement) && !(installed && statement === currentTable))) return fail();
   return requirePlatformSchemaDigest(database, rows[rows.length - 1]!.post_schema_sha256);
 }
 
@@ -439,7 +465,9 @@ export class PlatformErasureAdmission {
   /** Exact native dependencies, no Member epoch writes or policy copies. */
   memberRepository(forUserId?: string): PlatformPremiumAuthorityRepository {
     const deps: PlatformPremiumAuthorityDependenciesV2 = {
-      nowUtc: () => this.now(), schemaIsQualified: (db, descriptor) => {
+      nowUtc: () => this.now(),
+      whopSubjectReference: raw => createWhopPrivacyReference(raw, "user", (process.env.TRADERLINK_PLATFORM_WHOP_IDENTITY_HMAC_KEY ?? "").trim()),
+      schemaIsQualified: (db, descriptor) => {
         try { this.assertCurrent(); return db === this.database && [platformPremiumAuthoritySchemaDescriptor.sha256,
           platformPremiumAuthoritySchemaDescriptorV2.sha256].includes(descriptor); } catch { return false; }
       },

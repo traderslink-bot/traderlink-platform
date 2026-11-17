@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
+import { readPartnerAlertIsolatedStaging } from "@/src/modules/partner-alerts/server/partner-alert-isolated-staging";
 import { partnerAlertStripeSandbox } from "@/src/modules/partner-alerts/server/partner-alert-stripe-sandbox-runtime";
 import { withPartnerAlertRequestRuntime } from "@/src/modules/partner-alerts/server/partner-alert-request-runtime";
 import { readPartnerAlertStripeBillingConfiguration } from "@/src/modules/partner-alerts/server/partner-alert-stripe-billing-runtime";
@@ -28,6 +29,10 @@ export default async function PartnerChannelsPage() {
       ...item, billingProvider: "stripe", stripeCheckout: stripeSandbox!.canOfferCheckout(scope.userId, item.communityId, item.offerKey),
     }))} />;
   }
+  const billing = readPartnerAlertStripeBillingConfiguration();
+  if (readPartnerAlertIsolatedStaging() && billing?.environment !== "sandbox") {
+    return <PartnerChannelCatalog catalogStatus="unavailable" premiumStatus="unavailable" items={[]} />;
+  }
   // Authentication always completes before runtime configuration, credential
   // lookup or provider work. The feature remains disabled unless every
   // server-only checkout variable is explicitly installed.
@@ -40,7 +45,6 @@ export default async function PartnerChannelsPage() {
   const stripeCards = new Map<string, Card>();
   const cardKey = (item: Pick<Card, "communityId" | "offerKey">) => JSON.stringify([item.communityId, item.offerKey]);
   try {
-    const billing = readPartnerAlertStripeBillingConfiguration();
     const buyer = { userId: scope.userId, environment: billing?.environment ?? "live" } as const;
     const candidates = readPartnerAlertCatalogCandidates(database, scope.userId, buyer.environment,
       resolvePartnerAlertWhopReadEnvironment(billing?.environment));

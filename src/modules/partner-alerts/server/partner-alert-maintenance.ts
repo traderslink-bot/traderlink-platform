@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { openPlatformDatabase } from "../../platform/server/database/open-platform-database";
-import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL } from "../../platform/server/membership/platform-premium-role-schema";
+import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS } from "../../platform/server/membership/platform-premium-role-current-access-schema";
 import { PlatformErasureAdmission } from "../../platform/server/privacy/platform-erasure-admission";
 import { PARTNER_ALERT_SCHEMA_STATEMENTS } from "./database/partner-alert-schema";
 import { PARTNER_ALERT_WHOP_EVIDENCE_STATEMENTS } from "./database/partner-alert-whop-evidence-schema";
@@ -48,7 +48,7 @@ export function startPartnerAlertMaintenance(input: Readonly<{
     const runtime = input.erasureRuntime;
     const core = PlatformErasureAdmission.bind(db, {
       nowUtc: runtime.nowUtc, maximumAdmissionMs: 30_000, profileCatalogSha256: input.profileCatalogSha256,
-      participantStatements: [...PARTNER_ALERT_SCHEMA_STATEMENTS, ...PLATFORM_PREMIUM_ROLE_SCHEMA_SQL,
+      participantStatements: [...PARTNER_ALERT_SCHEMA_STATEMENTS, ...PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS,
         ...PARTNER_ALERT_CONTEXT_SCHEMA_STATEMENTS, ...PARTNER_ALERT_WHOP_EVIDENCE_STATEMENTS],
     });
     PartnerAlertAdmission.bind(db);
