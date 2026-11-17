@@ -1,5 +1,6 @@
 import type { PartnerAlertEnvironment } from "../contracts/partner-alert-contracts";
 import type { PartnerAlertCredentialKeys } from "./partner-alert-credentials";
+import { readPartnerAlertIsolatedStaging } from "./partner-alert-isolated-staging";
 
 export type PartnerAlertCatalogRuntimeConfiguration = Readonly<{
   credentialKeys: PartnerAlertCredentialKeys;
@@ -21,6 +22,10 @@ export function resolvePartnerAlertWhopReadEnvironment(
   stripeEnvironment: PartnerAlertEnvironment | undefined,
   environment: NodeJS.ProcessEnv = process.env,
 ): PartnerAlertEnvironment {
+  if (readPartnerAlertIsolatedStaging(environment)) {
+    if (stripeEnvironment !== "sandbox") throw new Error("Paid staging sandbox billing is unavailable.");
+    return "sandbox";
+  }
   return stripeEnvironment === "sandbox" && environment.NODE_ENV === "development"
     && environment.TRADERLINK_PAID_OWNER_PREVIEW === "1" && environment.PARTNER_ALERT_WHOP_READ_ENVIRONMENT === "sandbox"
     && environment.PARTNER_STRIPE_DISCORD_GUILD_ID !== undefined

@@ -1,4 +1,5 @@
 import type { PartnerAlertSubscriberOffer } from "./partner-alert-subscriber-access";
+import { readPartnerAlertIsolatedStaging } from "./partner-alert-isolated-staging";
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
 import { requirePlatformMutationRequest } from "../../platform/server/authentication/platform-mutation-request-security";
@@ -391,6 +392,8 @@ export class PartnerAlertRequestWriter {
       partnerAlertSnowflake(configuration.outputBotUserId, "outputBotUserId");
       partnerAlertRef(configuration.outputConfigurationRef, "outputConfigurationRef");
       const environment = configuration.environment;
+      const staging = readPartnerAlertIsolatedStaging(environment);
+      if (staging && (configuration.stripeEnvironment !== "sandbox" || configuration.whopEnvironment !== "sandbox")) return rejected();
       const sandboxOrigin = "http://127.0.0.1:3039";
       const requestOrigin = new URL(request.url).origin;
       const sandboxSession = configuration.stripeEnvironment === "sandbox"
@@ -456,6 +459,7 @@ export class PartnerAlertRequestWriter {
         };
         const verify = (): string => {
           assertOwned();
+          if (staging && readPartnerAlertIsolatedStaging(environment)?.fingerprint !== staging.fingerprint) return rejected();
           const at = clock();
           if (Date.parse(at) - Date.parse(startedAtUtc) >= configuration.maximumActorAgeMs
             || tokenDigest(request.headers) !== digest) return rejected();

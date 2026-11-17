@@ -3,7 +3,12 @@ import { createHash, generateKeyPairSync, sign, type KeyObject } from "node:cryp
 import { mkdtempSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import Database from "better-sqlite3";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+const stagingCore = vi.hoisted(() => ({ resolve: vi.fn<() => "enabled" | "disabled_isolated_staging">() }));
+vi.mock("../../platform/server/runtime/platform-background-worker-mode", () => ({
+  PLATFORM_BACKGROUND_WORKER_MODE_ENV: "TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE",
+  resolvePlatformBackgroundWorkerMode: stagingCore.resolve,
+}));
 import { platformMigrationManifest } from "../../platform/server/database/platform-migration-manifest";
 import { calculatePlatformMigrationChecksum } from "../../platform/server/database/platform-migration-contract";
 import { calculatePlatformSchemaDigest } from "../../platform/server/database/platform-schema-digest";
@@ -16,6 +21,7 @@ import { COMMUNITY_REVIEW_DISCORD_GUILD_ID as guild } from "@/src/modules/commun
 import { readPartnerAlertStripeErasureWorkerInputs } from "./partner-alert-stripe-erasure-worker-input";
 
 const cleanup: (() => void)[] = [];
+beforeEach(() => { stagingCore.resolve.mockReturnValue("enabled"); });
 afterEach(() => { while (cleanup.length) cleanup.pop()!(); });
 const sha = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
 const pem = (key: KeyObject) => key.export({ type: "spki", format: "pem" }).toString();
@@ -135,4 +141,43 @@ it("rejects unsigned profile or mode changes", () => {
   envelope.fields[23] = "unsigned_profile";
   writeFileSync(path, JSON.stringify(envelope));
   expect(f.read).toThrow("unqualified");
+});
+
+function selectStaging(f: ReturnType<typeof fixture>) {
+  stagingCore.resolve.mockReturnValue("disabled_isolated_staging");
+  Object.assign(f.env, { NODE_ENV: "production", TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE: "disabled_isolated_staging",
+    PARTNER_ALERT_ISOLATED_STAGING_ORIGIN: "https://combined-staging.example.invalid",
+    TRADERLINK_PLATFORM_PUBLIC_ORIGIN: "https://combined-staging.example.invalid",
+    DISCORD_GUILD_ID: guild, PARTNER_STRIPE_DISCORD_GUILD_ID: guild, PARTNER_ALERT_WHOP_READ_ENVIRONMENT: "sandbox" });
+}
+it("accepts signed v5 sandbox under independently guarded production-mode staging", () => {
+  const f = fixture(); selectStaging(f);
+  const input = f.read();
+  expect(input.releaseFormat).toBe("v5");
+  expect(input.effectMode).toBe("no_discord_effects");
+  expect(input.readCurrentConfiguration()).toBeNull();
+  expect(() => input.assertCurrentRelease()).not.toThrow();
+  expect(stagingCore.resolve).toHaveBeenCalledWith(f.env);
+});
+it("refuses a signed live review for isolated sandbox staging", () => {
+  const f = fixture(); selectStaging(f); f.fields[1] = "live"; f.resign();
+  expect(f.read).toThrow("unqualified");
+});
+it("does not admit legacy release formats into isolated staging", () => {
+  const f = fixture("discord_roles"); selectStaging(f);
+  f.fields[0] = "traderlink:paid-stripe-erasure-release:v4"; f.fields.splice(23); f.resign();
+  expect(f.read).toThrow("unqualified");
+});
+it("rechecks Core artifact qualification on an already prepared signed input", () => {
+  const f = fixture(); selectStaging(f); const input = f.read();
+  stagingCore.resolve.mockImplementation(() => { throw new Error("Isolated staging artifact changed."); });
+  expect(() => input.assertCurrentRelease()).toThrow("artifact changed");
+  expect(() => input.readCurrentConfiguration()).toThrow("artifact changed");
+});
+it.each(["PARTNER_ALERT_ISOLATED_STAGING_ORIGIN", "TRADERLINK_PLATFORM_ISOLATED_STAGING_BUILD_ID",
+  "TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE"])("holds a running v5 input after staging binding changes: %s", key => {
+  const f = fixture(); selectStaging(f); const input = f.read();
+  f.env[key] = "changed";
+  expect(() => input.assertCurrentRelease()).toThrow();
+  expect(() => input.readCurrentConfiguration()).toThrow();
 });

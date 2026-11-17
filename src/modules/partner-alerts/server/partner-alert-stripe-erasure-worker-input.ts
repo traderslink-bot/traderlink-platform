@@ -1,4 +1,5 @@
 import "server-only";
+import { readPartnerAlertIsolatedStaging } from "./partner-alert-isolated-staging";
 
 import { createHash, createPrivateKey, createPublicKey, randomUUID, verify, type KeyObject } from "node:crypto";
 import { dirname, isAbsolute } from "node:path";
@@ -56,7 +57,8 @@ function secret(value: string | undefined) {
 export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database, env: NodeJS.ProcessEnv = process.env) {
   if (env.PARTNER_ALERT_STRIPE_ERASURE_ENABLED !== "true") return null;
   if (db.inTransaction || db.readonly || db.memory || env.TRADERLINK_PLATFORM_DB_PATH !== db.name) return fail();
-  const stage = env.NODE_ENV === "production" ? "live"
+  const staging = readPartnerAlertIsolatedStaging(env);
+  const stage = staging ? "sandbox" : env.NODE_ENV === "production" ? "live"
     : env.NODE_ENV === "development" && env.TRADERLINK_PAID_OWNER_PREVIEW === "1" ? "sandbox" : fail();
   const reviewKey = publicKey(env.PARTNER_ALERT_STRIPE_ERASURE_REVIEW_PUBLIC_KEY);
   const backupKey = publicKey(env.PARTNER_ALERT_STRIPE_ERASURE_BACKUP_PUBLIC_KEY);
@@ -82,6 +84,7 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
   const reauthorization = platformPaidStripeReauthorizationMigration;
   const reviewedCheckout = platformPaidStripeCheckoutReviewedVersionMigration;
   const hasV5 = format === releaseV5;
+  if (staging && !hasV5) return fail();
   const noDiscordEffects = hasV5 && effectMode === "no_discord_effects";
   if (hasV5 && (typeof erasureProfileRef !== "string" || !ref.test(erasureProfileRef)
     || (effectMode !== "discord_roles" && effectMode !== "no_discord_effects"))) return fail();
@@ -110,6 +113,7 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
       : !protectedRoles.length || protectedRoles.some(role => typeof role !== "string" || !/^[1-9][0-9]{0,19}$/u.test(role))
         || !env.TRADERLINK_DISCORD_PREMIUM_MEMBER_ROLE_ID || !protectedRoles.includes(env.TRADERLINK_DISCORD_PREMIUM_MEMBER_ROLE_ID))) return fail();
   const readCurrentConfiguration = () => {
+    if (readPartnerAlertIsolatedStaging(env)?.fingerprint !== staging?.fingerprint) return fail();
     if (noDiscordEffects) return null;
     if (typeof botId !== "string" || typeof outputRef !== "string") return fail();
     const provider = readPartnerAlertDiscordOutputConfiguration(env,botId,outputRef);
@@ -118,6 +122,7 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
   };
   let verifiedSchemaVersion: number | undefined;
   const assertCurrentRelease = () => {
+    if (readPartnerAlertIsolatedStaging(env)?.fingerprint !== staging?.fingerprint) return fail();
     const ledger = readAppliedPlatformMigrations(db), tail = ledger.at(-1);
     const matchingBilling = (row: typeof tail) => row?.migration_id === billing.migrationId
       && row.execution_order === billing.executionOrder && row.checksum_sha256 === descriptorChecksum;

@@ -2,6 +2,7 @@ import "server-only";
 
 import { requirePartnerAlertStripeKey } from "./partner-alert-stripe-onboarding";
 import { stripeSandboxCredentials } from "./partner-alert-stripe-onboarding-runtime";
+import { readPartnerAlertIsolatedStaging } from "./partner-alert-isolated-staging";
 import type { PartnerAlertEnvironment } from "../contracts/partner-alert-contracts";
 
 type StripeBillingConfiguration = Readonly<{
@@ -14,12 +15,14 @@ type StripeBillingConfiguration = Readonly<{
 
 export function readPartnerAlertStripeBillingConfiguration(): StripeBillingConfiguration | null {
   const env = process.env;
+  const staging = readPartnerAlertIsolatedStaging(env);
   const sandbox = stripeSandboxCredentials();
   if (sandbox) {
     const signingSecret = env.PARTNER_STRIPE_NATIVE_SANDBOX_SIGNING_SECRET;
     return signingSecret && /^whsec_[A-Za-z0-9_]+$/u.test(signingSecret)
       ? { key: sandbox.key, clientId: sandbox.clientId, origin: sandbox.origin, environment: "sandbox", signingSecret } : null;
   }
+  if (staging) return null;
   if (env.NODE_ENV !== "production" || env.PARTNER_STRIPE_NATIVE_LIVE_ENABLED !== "true") return null;
 
   const origin = env.TRADERLINK_PLATFORM_PUBLIC_ORIGIN;
