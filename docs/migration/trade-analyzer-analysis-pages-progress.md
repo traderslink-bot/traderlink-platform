@@ -58,6 +58,18 @@ multi-line chart icon, verified in the desktop sidebar and mobile drawer.
 - Reproduced a saved trade with no action after its allowance request failed. Try again reloads the saved trade and rechecks its allowance before showing Analyze trade.
 - Isolated Chromium passed both regressions. The 102-test focused suite covered routing, permissions, migration, manual-entry recovery, saved analysis, and Demo clearing. The full TypeScript check reported the existing `jsdom` declaration gap in `feature-page-embed-host.test.ts`.
 
+### Saved indicator display
+
+The saved-analysis notice explains unavailable indicator history without
+asking traders viewing read-only samples to run another analysis. The Help
+Center scopes **Refresh indicator history** to the trader’s own account. The
+Trade Analyzer chart draws Session VWAP, EMA 9, EMA 20, and RSI 14 at one CSS
+pixel.
+
+Verified all four series settings and measured the rendered sample overlays
+at one CSS pixel in desktop and mobile Chromium. Both views displayed the
+saved-data notice. The focused Analyzer and dashboard suite passed 18 tests.
+
 ### Follow-up QA
 
 - The trade picker used opening times rounded to the minute. It now formats the saved opening timestamp to the second in the selected account’s timezone, so trades in the same ticker and minute can be distinguished.
