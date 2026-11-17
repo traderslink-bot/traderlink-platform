@@ -390,7 +390,7 @@ export function TradeAnalyzerResult({
                 ) : null}
               </>
             ) : null}
-            {(!inline || loadState === "error") ? (
+            {(!inline || loadState === "error" || (!readOnly && !availability)) ? (
               <Button onClick={() => void loadAnalysis()} sx={{ alignSelf: "flex-start" }} variant="outlined">Try again</Button>
             ) : null}
           </Stack>

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { DashboardPanel, DashboardSecondaryAction } from "@/app/dashboard-template";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import type { SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
+import { isSameAnalyzerMarketDay, type SharedAnalyzerAvailability } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 import {
   commitManualTradeOnline,
   ManualTradeNeedsReviewError,
@@ -24,10 +24,6 @@ import {
 } from "../trade-tracker/execution-entry-card";
 import { TradeAnalyzerResult } from "../workspace/workspace-trade-analyzer-panel";
 import { ANALYZED_TRADES_HREF, type AnalyzerTrade } from "./analyzer-trade";
-
-const easternMarketDate = new Intl.DateTimeFormat("en-CA", {
-  day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/New_York",
-});
 
 type Batch = Readonly<{
   trades: readonly AnalyzerTrade[];
@@ -131,7 +127,7 @@ export function TradeAnalyzerHome({
       const preview = await previewManualTradeOnline(submission);
       const analyzerGroupRefs = preview.groups
         .filter((group) => (group.state === "complete_trade" || group.state === "existing_position_closed") &&
-          easternMarketDate.format(new Date(group.openedAtUtc)) === easternMarketDate.format(new Date(group.lastExecutionAtUtc)))
+          isSameAnalyzerMarketDay(group.openedAtUtc, group.lastExecutionAtUtc))
         .map((group) => group.groupRef);
       const result = await commitManualTradeOnline(submission, preview, { analyzerGroupRefs, includeAnalyzerTrades: true });
       const trades = result.savedTrades as readonly AnalyzerTrade[];
@@ -304,7 +300,7 @@ export function TradeAnalyzerHome({
                     </Stack>
                   </Box>
                 ) : null}
-                {selected.closed && !selected.swing ? (
+                {selected.canAnalyze ? (
                   <TradeAnalyzerResult
                     key={selected.id}
                     inline

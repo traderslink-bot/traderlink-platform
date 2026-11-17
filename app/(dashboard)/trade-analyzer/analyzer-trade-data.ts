@@ -2,6 +2,7 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 
+import { isSameAnalyzerMarketDay } from "@/src/modules/level-analysis/contracts/shared-analyzer-beta-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   readWorkspaceTradeLibrarySavedTrades,
@@ -18,7 +19,8 @@ export function toAnalyzerTrade(row: WorkspaceTradeLibraryRow): AnalyzerTrade {
     entryDate: row.entryDate,
     entryTime: row.entryTime,
     closed: row.status === "Closed" || row.status === "Closed swing",
-    swing: row.tradeStyle === "swing" || row.status === "Closed swing",
+    canAnalyze: row.status === "Closed" && row.tradeStyle !== "swing" && row.closedAtUtc !== null &&
+      isSameAnalyzerMarketDay(row.openedAtUtc, row.closedAtUtc),
     executions: row.editableExecutions.map(({ localDate, localTime, sourceTimezone, side, quantity, price }) => ({
       localDate, localTime, sourceTimezone, side, quantity, price,
     })),

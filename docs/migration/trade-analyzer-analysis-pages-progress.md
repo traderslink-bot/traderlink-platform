@@ -49,6 +49,13 @@ The sidebar checkpoint implemented the grouping for existing pages.
 - Discord onboarding in this checkout defers Demo provisioning and preserves the initial account selection. The isolated Demo browser test used an active sample account to exercise the Analyzer’s Demo view. First-login account selection belongs to the existing Demo onboarding flow.
 - Verification passed 37 focused tests covering dashboard structure, manual entry, Analyzer reads, and demo behavior. Isolated Chromium exercised Light desktop entry for one trade and a batch, exact saved prices, per-trade queueing, tab switching, selecting an existing trade in To analyze, and recovery after a lost commit response. Navy Dark mobile exercised the saved demo chart and Analysis card, trade selection, confirmation dialog, report notice, the history link into a saved analysis, and account isolation. The form also fit at 320 px. New requests were verified through their queued state with the market-data workers disabled. The full TypeScript check reports the existing missing `jsdom` declaration in `feature-page-embed-host.test.ts`.
 
+
+## Integrated Home and Trade Analyzer QA
+
+- Reproduced an overnight position appearing in To analyze after its closing execution was saved. The list now filters to complete day trades using the opening and final closing date in New York before pagination. A grouped trade stays eligible when only one member has an older analysis.
+- Reproduced a saved trade with no action after its allowance request failed. Try again reloads the saved trade and rechecks its allowance before showing Analyze trade.
+- Isolated Chromium passed both regressions. The 102-test focused suite covered routing, permissions, migration, manual-entry recovery, saved analysis, and Demo clearing. The full TypeScript check reported the existing `jsdom` declaration gap in `feature-page-embed-host.test.ts`.
+
 ## Current checkpoint - 2026-08-09
 
 - [x] Owner approved separating Trade Analyzer from generic historical

@@ -110,7 +110,7 @@ export default async function TradeAnalyzerPage({ searchParams }: {
       timeZone: model.account.tradingTimezone,
     }).format(new Date(trade.openedAtUtc)),
     closed: true,
-    swing: false,
+    canAnalyze: true,
     executions: [],
   })) ?? [];
   const detail = model.detail ?? demoTrades.find((trade) => trade.id === tradeId) ?? null;

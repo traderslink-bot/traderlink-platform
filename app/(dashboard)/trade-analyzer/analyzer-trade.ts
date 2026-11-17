@@ -8,7 +8,7 @@ export type AnalyzerTrade = Readonly<{
   entryDate: string;
   entryTime: string;
   closed: boolean;
-  swing: boolean;
+  canAnalyze: boolean;
   executions: readonly Readonly<{
     localDate: string;
     localTime: string;

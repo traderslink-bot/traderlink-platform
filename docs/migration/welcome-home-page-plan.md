@@ -27,6 +27,8 @@ Trading Tools comes first visually and in keyboard order. The Settings field sta
 
 ## Verification
 
+- Integrated QA confirmed that the light desktop and Navy Dark mobile sidebars show Home first with the house icon. The browser exercised saved and unavailable start-page choices, the legacy redirect, installed-app launch, and all three Market News links with eligible and restricted accounts. A fresh isolated database matched the pinned predecessor and the documented Home migration.
+
 - Home naming and routing passed 32 focused tests and scoped lint. Isolated Chromium verified the title and sidebar label, the permanent legacy redirect with query preservation, signed-out sign-in return, direct Home navigation with a different start page saved, default and unavailable-preference fallback, and installed-app launch. The existing Home preference is carried forward under its persisted key without another migration.
 
 - Focused auth, return-target, dashboard-template and migration checks passed. The final migration and access run passed 17 tests across three files. The existing migration suite needed a 20-second per-test timeout on the VPS.
