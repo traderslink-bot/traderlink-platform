@@ -17,7 +17,7 @@ Owner visual review remains open. Deployment is outside this task; the latest ow
   `/tmp/traderlink-paid-qa-route-h9zabhuj/main-local-app` matched the preserved
   commit. All twelve files in the final Whop sandbox change matched both that
   composition and the assigned feature worktree.
-- The current saved Partner and hosted-startup regression contains477 passes
+- The current saved Partner and hosted-startup regression contains492 passes
   and four gated skips. The four exact cases and the independently completed
   capture replay are listed below. They are not four failed provider checks or
   four completed new provider runs. The latest scoped TypeScript check covers241
@@ -220,10 +220,13 @@ canonical helper from `fe5892683f3343ae1a8189d6ded6a64ade65ad5f`.
 Configured Paid catalog, provider verification, member observation, role REST,
 name refresh, mirroring and erasure observer/runtime now use guarded native
 adapters. Source and destination bindings are rechecked at execution, including
-historical/queued roles and old message cleanup. Channel-only endpoints first
-resolve current Discord channel metadata, confirm the exact channel ID and
-approved guild, then permit message I/O. Wrong guilds, numeric/missing IDs,
-unknown endpoints, changed channel metadata and foreign origins fail closed.
+historical/queued roles and old message cleanup. Channel-only endpoints now
+resolve metadata solely from the fresh approved-guild channel inventory. No
+submitted channel is contacted to discover its guild. Exact membership, identity,
+guild and supported type must pass before channel/message I/O. Per-operation
+mapping and caller authorization are rechecked after the inventory await. Wrong
+guilds, numeric/missing IDs, missing/duplicate channels, unsupported types,
+unknown endpoints, changed metadata and foreign origins fail closed.
 Redirects are refused. No caller-provided label or configuration overrides the
 approved guild. The explicit Discord QA helper also refuses any other guild
 before reading bot identity or creating temporary roles.
@@ -388,3 +391,34 @@ page or user step was introduced, and the Help audit needs no guide change.
 The seven-day alert-text limit and removed backup-rotation policy are unchanged.
 The old preview remains off and no deployment or release-coordinator contact
 was performed by this task.
+
+## Approved-guild-only channel discovery correction
+
+A concrete follow-up source review found that the native wrapper's initial
+channel metadata lookup could contact a foreign channel before rejecting its
+guild. The correction uses only
+`GET /guilds/1559172784813514803/channels` for discovery. A direct channel
+metadata request is satisfied from its single verified inventory entry. Every
+message operation gets a fresh inventory; retries cannot reuse prior membership.
+Missing or duplicate IDs, wrong guild/type, malformed or oversized inventories,
+failed responses and expired signals refuse before channel/message dispatch.
+
+The new awaited discovery is also inside each native message operation's
+current mapping/caller check. Scope or authorization changes during that await
+prevent the actual message write. Existing ownership, permission and receipt
+checks stay in the underlying message adapter; no producer contract or worker
+scope was relaxed. The shared Community helper's guild-inventory approach was
+inspected for consistency without editing its owner-controlled source.
+
+All37 focused boundary tests passed. The full Paid/startup regression passed492
+with the same four gated external skips.241 integrated files have zero type
+diagnostics and changed-file lint is clean. Tests use synthetic transports with
+global fetch forbidden, including explicit proof that rejected foreign channel
+IDs cause only approved-guild inventory reads. Current create/edit/delete still
+pass, and each refuses writes when authorization changes during final inventory
+verification. Combined source5673b0878's two preimages exactly match the preserved
+Paid parent, so the follow-up can be applied narrowly while preserving migration
+orders. The plan's product scope, UI, Help, schema and migration files did not
+change. No Discord/provider call, production configuration, preview or deployment
+was performed. Evidence logs use `paid-approved-channel-inventory-*` in the
+retained isolated QA directory.

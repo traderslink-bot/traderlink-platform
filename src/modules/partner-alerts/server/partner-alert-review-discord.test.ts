@@ -10,6 +10,8 @@ import { createPartnerAlertStripeRolePorts } from "./partner-alert-stripe-role-p
 const other = "1559172784813514804", channel = "850000000000000001", role = "850000000000000002";
 const member = "850000000000000003", bot = "850000000000000004";
 const api = "https://discord.com/api/v10";
+const inventoryPath = `${api}/guilds/${guild}/channels`;
+const channelData = { id: channel, guild_id: guild, type: 0, permission_overwrites: [] };
 const target = { communityId: "10000000-0000-4000-8000-000000000001", sourceGuildId: guild,
   sourceChannelId: "850000000000000005", destinationGuildId: guild, destinationChannelId: channel, destinationRoleId: role };
 type Transport = (url: string, init: RequestInit) => Promise<Response>;
@@ -39,37 +41,111 @@ describe("Paid native Discord review boundary", () => {
     }
     expect(transport).not.toHaveBeenCalled();
   });
-  it.each([other, undefined, Number(guild)])("denies channel-only message access whose actual guild is %s", async actualGuild => {
-    const transport = vi.fn<Transport>(async () => Response.json({ id: channel, guild_id: actualGuild }));
+  it.each([other, undefined, Number(guild)])("denies unverified channel guild %s without reading that channel", async actualGuild => {
+    const transport = vi.fn<Transport>(async () => Response.json([{ ...channelData, guild_id: actualGuild }]));
     const request = createPartnerAlertReviewDiscordTransport(transport);
     for (const method of ["GET", "POST", "PATCH", "DELETE"]) {
       await expect(request(`${api}/channels/${channel}/messages/123`, { method })).rejects.toThrow();
     }
-    expect(transport.mock.calls.map(([url]) => url)).toEqual(Array(4).fill(`${api}/channels/${channel}`));
+    expect(transport.mock.calls.map(([url]) => url)).toEqual(Array(4).fill(inventoryPath));
   });
-  it("resolves the actual channel guild immediately before each message request", async () => {
-    const transport = vi.fn<Transport>(async (url: string) => url.endsWith(`/channels/${channel}`)
-      ? Response.json({ id: channel, guild_id: guild }) : new Response(null, { status: 204 }));
+  it("rejects a foreign channel absent from the approved inventory without foreign HTTP reads", async () => {
+    const transport = vi.fn<Transport>(async () => Response.json([{ ...channelData, id: role }]));
+    const request = createPartnerAlertReviewDiscordTransport(transport);
+    await expect(request(`${api}/channels/${channel}`, { method: "GET" })).rejects.toThrow();
+    await expect(request(`${api}/channels/${channel}/messages/123`, { method: "DELETE" })).rejects.toThrow();
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([inventoryPath, inventoryPath]);
+  });
+  it("checks approved-guild inventory immediately before each message request", async () => {
+    const transport = vi.fn<Transport>(async (url: string) => url === inventoryPath
+      ? Response.json([channelData]) : new Response(null, { status: 204 }));
     const request = createPartnerAlertReviewDiscordTransport(transport);
     await request(`${api}/channels/${channel}/messages/123`, { method: "DELETE" });
     expect(transport.mock.calls.map(([url]) => url)).toEqual([
-      `${api}/channels/${channel}`, `${api}/channels/${channel}/messages/123`,
+      inventoryPath, `${api}/channels/${channel}/messages/123`,
     ]);
+    expect(transport.mock.calls.every(([, init]) => init.redirect === "manual" && init.cache === "no-store")).toBe(true);
   });
-  it("does not treat a changed channel identity as approval", async () => {
-    const transport = vi.fn<Transport>(async () => Response.json({ id: role, guild_id: guild }));
+  it("returns verified channel metadata from the inventory without another channel HTTP read", async () => {
+    const transport = vi.fn<Transport>(async () => Response.json([channelData]));
+    const response = await createPartnerAlertReviewDiscordTransport(transport)(`${api}/channels/${channel}`, { method: "GET" });
+    expect(await response.json()).toEqual(channelData);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([inventoryPath]);
+  });
+  it.each([{}, [null], [channelData, channelData], [{ ...channelData, type: 11 }],
+    Array(501).fill(channelData)].map(inventory => ({ inventory })))
+  ("denies malformed, duplicate, unsupported or oversized inventory %#", async ({ inventory }) => {
+    const transport = vi.fn<Transport>(async () => Response.json(inventory));
     await expect(createPartnerAlertReviewDiscordTransport(transport)(`${api}/channels/${channel}/messages`, { method: "POST" })).rejects.toThrow();
-    expect(transport).toHaveBeenCalledOnce();
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([inventoryPath]);
   });
-  it("rechecks channel metadata on retries rather than trusting a prior observation", async () => {
-    let actualGuild = guild;
-    const transport = vi.fn<Transport>(async (url: string) => url.endsWith(`/channels/${channel}`)
-      ? Response.json({ id: channel, guild_id: actualGuild }) : new Response(null, { status: 204 }));
+  it("rechecks the inventory on retries rather than trusting prior membership", async () => {
+    let present = true;
+    const transport = vi.fn<Transport>(async (url: string) => url === inventoryPath
+      ? Response.json(present ? [channelData] : []) : new Response(null, { status: 204 }));
     const request = createPartnerAlertReviewDiscordTransport(transport);
     await request(`${api}/channels/${channel}/messages/123`, { method: "DELETE" });
-    actualGuild = other;
+    present = false;
     await expect(request(`${api}/channels/${channel}/messages/123`, { method: "DELETE" })).rejects.toThrow();
     expect(transport.mock.calls.filter(([url]) => url.includes("/messages"))).toHaveLength(1);
+    expect(transport.mock.calls.filter(([url]) => url === inventoryPath)).toHaveLength(2);
+  });
+  it("refuses dispatch after the inventory request is aborted", async () => {
+    const controller = new AbortController();
+    const transport = vi.fn<Transport>(async () => {
+      controller.abort();
+      return Response.json([channelData]);
+    });
+    await expect(createPartnerAlertReviewDiscordTransport(transport)(`${api}/channels/${channel}/messages`, {
+      method: "POST", signal: controller.signal,
+    })).rejects.toThrow();
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([inventoryPath]);
+  });
+  it.each(["create", "edit", "delete"] as const)("retains the scope check across the final inventory await before %s", async action => {
+    let current = true, inventories = 0;
+    const transport = vi.fn<Transport>(async (url: string) => {
+      if (url === inventoryPath) {
+        inventories++;
+        if (inventories === (action === "create" ? 1 : 2)) current = false;
+        return Response.json([channelData]);
+      }
+      return Response.json({ id: member, channel_id: channel, author: { id: bot } });
+    });
+    const rest = createPartnerAlertReviewDiscordMessageRest(config(transport), {
+      canReadSource: () => true, readDestination: () => target, verifyPrivateDestination: async () => {},
+    });
+    const outcome = await rest[action]({ mappingId: "mapping", channelId: channel, messageId: member,
+      content: "test", nonce: "a".repeat(25), suppressMentions: true, stillCurrent: () => current });
+    expect(outcome.kind).not.toBe("confirmed");
+    expect(inventories).toBe(action === "create" ? 1 : 2);
+    expect(transport.mock.calls.filter(([, init]) => init.method !== "GET")).toEqual([]);
+  });
+  it.each(["replacement", "in-place"])("rechecks %s mapping changes after inventory with a live caller ticket", async change => {
+    let currentTarget = { ...target };
+    const transport = vi.fn<Transport>(async () => {
+      if (change === "replacement") currentTarget = { ...target, destinationRoleId: member };
+      else currentTarget.destinationRoleId = member;
+      return Response.json([channelData]);
+    });
+    const rest = createPartnerAlertReviewDiscordMessageRest(config(transport), {
+      canReadSource: () => true, readDestination: () => currentTarget, verifyPrivateDestination: async () => {},
+    });
+    const outcome = await rest.create({ mappingId: "mapping", channelId: channel,
+      content: "test", nonce: "a".repeat(25), suppressMentions: true, stillCurrent: () => true });
+    expect(outcome.kind).not.toBe("confirmed");
+    expect(transport.mock.calls.map(([url]) => url)).toEqual([inventoryPath]);
+  });
+  it.each(["create", "edit", "delete"] as const)("still permits a current approved %s", async action => {
+    const transport = vi.fn<Transport>(async (url: string, init) => url === inventoryPath
+      ? Response.json([channelData]) : init.method === "DELETE" ? new Response(null, { status: 204 })
+        : Response.json({ id: member, channel_id: channel, author: { id: bot } }));
+    const rest = createPartnerAlertReviewDiscordMessageRest(config(transport), {
+      canReadSource: () => true, readDestination: () => target, verifyPrivateDestination: async () => {},
+    });
+    expect(await rest[action]({ mappingId: "mapping", channelId: channel, messageId: member,
+      content: "test", nonce: "a".repeat(25), suppressMentions: true, stillCurrent: () => true }))
+      .toMatchObject({ kind: "confirmed", channelId: channel, messageId: member });
   });
   it("rejects source catalogs and provider verification before the identity read", async () => {
     const transport = vi.fn<Transport>(async () => Response.json({}));

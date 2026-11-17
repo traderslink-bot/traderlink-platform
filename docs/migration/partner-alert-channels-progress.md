@@ -5643,3 +5643,25 @@ qualification. No external provider or Discord operation was performed by this
 rehearsal. The existing477/4 Paid regression is not re-counted as thirteen more
 provider passes. The old preview remains off and this task neither contacted
 the new release coordinator nor deployed. No new UI or Help flow was introduced.
+
+## November 17: channel discovery restricted to the approved guild inventory
+
+Follow-up review found that the earlier native guard discovered a submitted
+channel through its guild-less metadata endpoint before checking its guild.
+The coherent correction now discovers channels only through the exact approved
+server's channel inventory. Missing, duplicate, foreign, malformed or unsupported
+entries never reach a channel/message HTTP endpoint. Direct metadata reads are
+answered from the verified inventory. Every operation/retry gets a fresh list.
+The native message adapter also rechecks its exact mapping and caller state after
+the awaited inventory before any write, retaining existing ownership/permission
+and receipt handling. Shared Community source was inspected, not changed.
+
+Focused boundary37/37, full Paid/startup492 passed with four unchanged external
+skips,241-file types zero diagnostics and changed-file lint clean. Synthetic
+transport assertions prove no foreign HTTP read and safe create/edit/delete
+behavior across authorization changes. Global fetch was forbidden. The exact
+two code/test preimages match both preserved parent1ddada288 and combined
+source5673b0878. No migration, UI/Help change, provider effect, preview startup or
+deployment occurred. Secure existing bot binding was inspected locally only;
+its reference was recorded without printing the credential, and no production
+configuration or expanded authorization was inferred.
