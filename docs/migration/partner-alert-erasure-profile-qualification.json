@@ -12,10 +12,10 @@
   "schemaEvidence": {
     "artifactPath": "/home/traderlink/projects/traderslink-coordinator/operations/community-staging-actual-schema-20261117.json",
     "artifactSha256": "5466f471321383df07f7bdb9d91661b93a611e8ddad73ce8cd202d14e79f6959",
-    "sourceCommit": "23438344fd49f6de78089ced23a389b48e11b6e1",
+    "sourceCommit": "6a550da9f578f23cc0d33d65127ec90c64051ef4",
     "reviewStatus": "INDEPENDENTLY_REVIEWED",
     "observedSchemaSha256": "bd8a006dd68b2244b385fcccd88733511008dce12650389141d8fb714ff687b4",
-    "reviewedCodeVectorSha256": "04ecbecc3e5b7878c6bce53fdb1f5f9a2c4093781cae8d6541fc6a28011e4117",
+    "reviewedCodeVectorSha256": "fef729b17009fb805625cf3a5fcad8e6ed0f5eceafa5cd527963e51b73594946",
     "actualInitializerSourceCommit": "0c2b6010d05784788c32a7f84697f489291ebeee"
   },
   "retentionPolicy": {
@@ -46,8 +46,8 @@
   "independentReview": {
     "status": "accepted",
     "reviewerRef": "paid_worker_01a19f82_1ef7_7e31_8757_f360fbe7af76",
-    "receiptRef": "paid_combined_staging_23438344_20261117",
-    "reviewedAtUtc": "2026-11-17T19:13:58.630Z",
-    "catalogContentSha256": "140eaadc99988c5f49ec0c1b8c801c3e6f5d821f29c0d7875eb623cddaa4b258"
+    "receiptRef": "paid_combined_staging_6a550da9_20261117",
+    "reviewedAtUtc": "2026-11-17T20:42:29.715Z",
+    "catalogContentSha256": "8836211b23cda12b9ab30a42f8b815239018ee1ffbc505c6c6fdb961a0a57aed"
   }
 }
