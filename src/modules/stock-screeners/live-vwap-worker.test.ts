@@ -24,14 +24,14 @@ describe("live Screeners VWAP worker", () => {
     worker.observe("AAA", boundary - 1, 90, 100);
     worker.observe("AAA", boundary, 12, 100);
     worker.observe("AAA", end, 90, 100);
-    expect(worker.value("AAA")).toBeNull();
+    expect(worker.reading("AAA")).toBeNull();
     await worker.warm(published, abort.signal);
     expect(read.mock.calls[0]?.[1]).toEqual({ startMs: start, endMs: boundary });
     expect(published).toHaveBeenCalledExactlyOnceWith(["AAA"]);
-    expect(worker.value("AAA")).toBe(11);
-    expect(worker.value("BBB")).toBeNull();
+    expect(worker.reading("AAA")).toEqual({ vwap: 11, vwapAt: boundary });
+    expect(worker.reading("BBB")).toBeNull();
     worker.invalidate("AAA");
-    expect(worker.value("AAA")).toBeNull();
+    expect(worker.reading("AAA")).toBeNull();
   });
 
   it("keeps completed seeds on a busy reply and retries only missing symbols", async () => {
@@ -45,10 +45,10 @@ describe("live Screeners VWAP worker", () => {
     const worker = new LiveScreenerVwapWorker(["AAA", "BBB"], start, boundary, end, { NODE_ENV: "test" }, seed);
     await worker.warm(() => {}, abort.signal);
     expect(seed.mock.calls.map(([symbols]) => symbols)).toEqual([["AAA", "BBB"], ["BBB"]]);
-    expect(worker.value("AAA")).toBe(12.34);
-    expect(worker.value("BBB")).toBeNull();
+    expect(worker.reading("AAA")).toEqual({ vwap: 12.34, vwapAt: boundary });
+    expect(worker.reading("BBB")).toBeNull();
     worker.observe("BBB", boundary, 4, 2);
-    expect(worker.value("BBB")).toBe(4);
+    expect(worker.reading("BBB")).toEqual({ vwap: 4, vwapAt: boundary });
   });
 
   it("can start directly at the opening boundary and discards interrupted session totals on reconnect", async () => {
@@ -59,9 +59,9 @@ describe("live Screeners VWAP worker", () => {
     connected.observe("AAA", start, 20, 20);
     await connected.warm(() => {}, abort.signal);
     expect(seed).not.toHaveBeenCalled();
-    expect(connected.value("AAA")).toBe(20);
+    expect(connected.reading("AAA")).toEqual({ vwap: 20, vwapAt: start });
     const reconnected = new LiveScreenerVwapWorker(["AAA"], start, boundary, end, { NODE_ENV: "test" }, seed);
     await reconnected.warm(() => {}, abort.signal);
-    expect(reconnected.value("AAA")).toBe(10);
+    expect(reconnected.reading("AAA")).toEqual({ vwap: 10, vwapAt: boundary });
   });
 });

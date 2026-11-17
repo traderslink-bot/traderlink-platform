@@ -1,6 +1,6 @@
 import "server-only";
 import { easternClock } from "../scanner/live/sessions";
-import { isObject, MAX_LISTINGS, tickerPattern, type Candidate, type MarketSession, type Snapshot, type Values } from "./contracts";
+import { isObject, MAX_LISTINGS, tickerPattern, type Candidate, type LiveScreenerFreshness, type MarketSession, type Snapshot, type Values } from "./contracts";
 import type { ScreenerLiveUpdate } from "./live-market-worker";
 
 export const LIVE_SCREENER_MAX_BYTES = 3 * 1024 * 1024;
@@ -29,12 +29,14 @@ export function parseLiveScreenerFrame(value: unknown, now: number): LiveScreene
   const symbols = new Set<string>();
   const updates = rows.map(row => {
     if (!isObject(row)) throw Error("invalid_live_row");
-    const { symbol, price, priceAt, vwap } = row;
+    const { symbol, price, priceAt, vwap, vwapAt } = row;
     if (typeof symbol !== "string" || !tickerPattern.test(symbol) || symbols.has(symbol)
       || (price === null ? priceAt !== null : !isPrice(price) || !isTime(priceAt) || priceAt < start || priceAt >= end || priceAt > sentAt + CLOCK_TOLERANCE)
-      || (vwap !== null && !isPrice(vwap))) throw Error("invalid_live_row");
+      || (vwap !== null && !isPrice(vwap))
+      || (vwapAt !== undefined && (vwap === null || !isTime(vwapAt) || vwapAt < start || vwapAt >= end || vwapAt > sentAt + CLOCK_TOLERANCE)))
+      throw Error("invalid_live_row");
     symbols.add(symbol);
-    return { symbol, price, priceAt, vwap } as ScreenerLiveUpdate;
+    return { symbol, price, priceAt, vwap, ...(vwapAt !== undefined ? { vwapAt } : {}) } as ScreenerLiveUpdate;
   });
   return { session, start, end, generation, sequence, sentAt, reset, rows: updates };
 }
@@ -113,12 +115,20 @@ function withLiveValues(row: Candidate, update: ScreenerLiveUpdate): Candidate {
 }
 
 /** The prepared snapshot still supplies the universe, daily data and completed-bar reads. */
-export function applyLiveScreenerBook(snapshot: Snapshot, now: number): Snapshot {
+export function applyLiveScreenerBook(snapshot: Snapshot, now: number) {
+  const freshness = new Map<string, LiveScreenerFreshness>();
   const book = state.traderlinkScreenersLiveBook;
   if (!book || snapshot.source !== "Alpaca SIP" || snapshot.closed || snapshot.session !== book.session
-    || snapshot.date !== book.date || now < book.start || now >= book.end || now - book.updatedAt > LIVE_MAX_AGE) return snapshot;
-  return { ...snapshot, rows: snapshot.rows.map(row => {
+    || snapshot.date !== book.date || now < book.start || now >= book.end || now - book.updatedAt > LIVE_MAX_AGE)
+    return { snapshot, freshness };
+  const rows = snapshot.rows.map(row => {
     const update = book.rows.get(row.symbol);
-    return update ? withLiveValues(row, update) : row;
-  }) };
+    if (!update) return row;
+    const applied = withLiveValues(row, update);
+    const priceAt = update.priceAt !== null && applied.priceAt === update.priceAt ? update.priceAt : undefined;
+    const vwapAt = applied.values.sessionVwap !== undefined ? update.vwapAt : undefined;
+    if (priceAt !== undefined || vwapAt !== undefined) freshness.set(row.symbol, { priceAt, vwapAt });
+    return applied;
+  });
+  return { snapshot: { ...snapshot, rows }, freshness };
 }

@@ -2,12 +2,16 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
+import { StockScreenerResults } from "@/app/(dashboard)/screeners/stock-screener-results";
 import { POST } from "@/app/api/internal/stock-screeners-live/route";
 import { type TraderLinkPlatformRequestIdentity } from "../platform/server/authentication/require-platform-request-scope";
 import { DEFAULT_DEFINITION, type Candidate, type MarketPack, type MarketSession, type Snapshot } from "./contracts";
 import type { LiveScreenerFrame } from "./live-screener-book";
 import { LiveScreenerPublisher } from "./live-screener-publisher";
+import { querySnapshot } from "./query";
 import { createRun, getRun } from "./service";
 
 const start = Date.parse("2026-11-17T14:30:00Z");
@@ -22,7 +26,7 @@ const ingress = (body?: unknown, key = token) => POST(new Request("https://stagi
   method:"POST", headers:{ Authorization:"Bearer " + key, "Content-Type":"application/json" }, body: JSON.stringify(body),
 }));
 const first: LiveScreenerFrame = { ...window, generation:now-100, sequence:1, sentAt:now, reset:true,
-  rows:[{ symbol:"ABC",price:12,priceAt:now-1_000,vwap:9 }] };
+  rows:[{ symbol:"ABC",price:12,priceAt:now-1_000,vwap:9,vwapAt:now-2_000 }] };
 
 afterEach(() => {
   vi.useRealTimers();
@@ -46,6 +50,7 @@ it("delivers live deltas to the ordinary run, keeps completed fields, and falls 
     writeFileSync(join(dir,"market.json"),JSON.stringify({latest:"regular",snapshots} satisfies MarketPack));
     expect((await ingress(first,"wrong")).status).toBe(404);
     expect((await ingress({...first, rows:[first.rows[0],first.rows[0]]})).status).toBe(400);
+    expect((await ingress({...first, rows:[{...first.rows[0], vwapAt:start-1}]})).status).toBe(400);
     expect((await ingress({...first, reset:false})).status).toBe(409);
     expect((await ingress(first)).status).toBe(204);
 
@@ -53,24 +58,53 @@ it("delivers live deltas to the ordinary run, keeps completed fields, and falls 
     expect(run.rows[0].values).toMatchObject({ price:12,change:50,high:12,low:7,fromHigh:0,
       cap:50_000_000,volume:25000,sessionVwap:9,vwapPosition:1,vwapCross:1 });
     expect(run.rows[0].priceAt).toBe(now-1_000);
+    expect(run).toMatchObject({ asOf:start+1_000, live:{ priceAt:now-1_000, vwapAt:now-2_000 } });
+    const header = renderToStaticMarkup(createElement(StockScreenerResults, {
+      result: run, definition: DEFAULT_DEFINITION, busy: false, inspect() {}, onSort() {}, onPage() {},
+    }));
+    const stamp = (time: number) => new Date(time).toISOString();
+    expect(header).toContain("Snapshot · <time dateTime=\"" + stamp(start+1_000));
+    expect(header).toContain("Latest live price · <time dateTime=\"" + stamp(now-1_000));
+    expect(header).toContain("Latest live VWAP · <time dateTime=\"" + stamp(now-2_000));
     expect((await ingress({...first,reset:false,sequence:3})).status).toBe(409);
 
-    expect((await ingress({...first,reset:false,sequence:2,rows:[{symbol:"ABC",price:null,priceAt:null,vwap:null}]})).status).toBe(204);
+    expect((await ingress({...first,reset:false,sequence:2,rows:[]})).status).toBe(204);
+    expect((await createRun(identity,DEFAULT_DEFINITION)).live).toEqual(run.live);
+    const legacyUpdate = { ...first.rows[0], vwapAt: undefined };
+    expect((await ingress({...first,reset:false,sequence:3,rows:[legacyUpdate]})).status).toBe(204);
+    const legacy = await createRun(identity,DEFAULT_DEFINITION);
+    expect(legacy.rows[0].values.sessionVwap).toBe(9);
+    expect(legacy.live).toEqual({ priceAt:now-1_000 });
+
+    expect((await ingress({...first,reset:false,sequence:4,rows:[{symbol:"ABC",price:null,priceAt:null,vwap:null}]})).status).toBe(204);
     const cleared = await createRun(identity,DEFAULT_DEFINITION);
     expect(cleared.rows[0].values.sessionVwap).toBeUndefined();
     expect(cleared.rows[0].values.price).toBe(10);
     expect(cleared.rows[0].values.vwapCross).toBe(1);
+    expect(cleared.live).toEqual({});
     expect(getRun(identity,run.id,1,DEFAULT_DEFINITION.sort).rows[0].values.price).toBe(12);
+    expect(getRun(identity,run.id,1,DEFAULT_DEFINITION.sort).live).toEqual(run.live);
     expect((await createRun(identity,{...DEFAULT_DEFINITION,session:"last_regular"})).rows[0].values.price).toBe(10);
 
     vi.setSystemTime(now+4_001);
-    expect((await createRun(identity,DEFAULT_DEFINITION)).rows[0].values.sessionVwap).toBe(8);
+    const fallback = await createRun(identity,DEFAULT_DEFINITION);
+    expect(fallback.rows[0].values.sessionVwap).toBe(8);
+    expect(fallback.live).toEqual({});
     vi.stubEnv("TRADERLINK_STOCK_SCREENERS_LIVE_WORKER","0");
     expect((await ingress(first)).status).toBe(404);
     expect((await createRun(identity,DEFAULT_DEFINITION)).rows[0].values.price).toBe(10);
   } finally {
     rmSync(root,{recursive:true,force:true});
   }
+});
+
+it("reports the latest live clocks in the selected ticker and exchange scope", () => {
+  const snapshot = { rows: [baseRow, { ...baseRow, symbol: "DEF", exchange: "NASDAQ" }] } as Snapshot;
+  const freshness = new Map([["ABC", { priceAt: now-1_000 }], ["DEF", { priceAt: now, vwapAt: now-200 }]]);
+  expect(querySnapshot(snapshot,DEFAULT_DEFINITION,freshness).live).toEqual({priceAt:now,vwapAt:now-200});
+  expect(querySnapshot(snapshot,{...DEFAULT_DEFINITION,exchanges:["NYSE"]},freshness).live).toEqual({priceAt:now-1_000});
+  expect(querySnapshot(snapshot,{...DEFAULT_DEFINITION,universe:"list",tickers:["ABC"]},freshness).live).toEqual({priceAt:now-1_000});
+  expect(querySnapshot(snapshot,{...DEFAULT_DEFINITION,universe:"list",tickers:["MISSING"]},freshness).live).toEqual({});
 });
 
 it("resends the latest full book after an ambiguous timeout or a Railway restart", async () => {

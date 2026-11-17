@@ -5,7 +5,9 @@ import { LiveScreenerVwapWorker } from "./live-vwap-worker";
 
 const MINUTE = 60_000;
 const PUBLISH_INTERVAL = 125;
-export type ScreenerLiveUpdate = { symbol: string; price: number | null; priceAt: number | null; vwap: number | null };
+export type ScreenerLiveUpdate = {
+  symbol: string; price: number | null; priceAt: number | null; vwap: number | null; vwapAt?: number;
+};
 type Price = { value: number; at: number; subMillisecond: string };
 const subMillisecond = (timestamp: string) => (/\.(\d+)/.exec(timestamp)?.[1] ?? "").padEnd(9, "0").slice(3, 9);
 
@@ -40,7 +42,8 @@ function socketSession(options: LiveSession) {
     if (!pending.size || work.aborted) return;
     const rows = [...pending].map(symbol => {
       const price = prices.get(symbol);
-      return { symbol, price: price?.value ?? null, priceAt: price?.at ?? null, vwap: vwap?.value(symbol) ?? null };
+      const reading = vwap?.reading(symbol);
+      return { symbol, price: price?.value ?? null, priceAt: price?.at ?? null, ...(reading ?? { vwap: null }) };
     });
     if (publish(rows)) pending.clear();
   }, PUBLISH_INTERVAL);

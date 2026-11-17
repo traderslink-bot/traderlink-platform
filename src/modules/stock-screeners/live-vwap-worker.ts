@@ -2,7 +2,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { easternClock } from "../scanner/live/sessions";
 import { readScreenerVwapSeeds, screenerSessionVwap, type LiveVwapTotals, type ScreenerVwapSeed } from "./candle-cache-reader";
 
-type TickerVwap = { quantity: number; notional: number; seed: ScreenerVwapSeed | null; invalid: boolean };
+type TickerVwap = { quantity: number; notional: number; tradeAt: number; seed: ScreenerVwapSeed | null; invalid: boolean };
 const MAX_ATTEMPTS = 3;
 const MINUTE = 60_000;
 
@@ -27,6 +27,7 @@ export class LiveScreenerVwapWorker {
     this.rows = new Map(symbols.map(symbol => [symbol, {
       quantity: 0,
       notional: 0,
+      tradeAt: 0,
       invalid: false,
       seed: sessionStart === liveFrom ? { volume: 0, notional: 0, basisDate: this.basisDate, completedThroughMs: liveFrom } : null,
     }]));
@@ -38,6 +39,7 @@ export class LiveScreenerVwapWorker {
       || !Number.isFinite(price) || price <= 0 || !Number.isSafeInteger(quantity) || quantity <= 0) return;
     row.quantity += quantity;
     row.notional += quantity * price;
+    row.tradeAt = Math.max(row.tradeAt, timestamp);
   }
 
   invalidate(symbol: string) {
@@ -45,13 +47,14 @@ export class LiveScreenerVwapWorker {
     if (row) row.invalid = true;
   }
 
-  value(symbol: string) {
+  reading(symbol: string) {
     const row = this.rows.get(symbol);
-    if (!row || row.invalid) return null;
+    if (!row?.seed || row.invalid) return null;
     const live: LiveVwapTotals = {
       basisDate: this.basisDate, fromMs: this.liveFrom, volume: row.quantity, notional: row.notional,
     };
-    return screenerSessionVwap(row.seed, live);
+    const vwap = screenerSessionVwap(row.seed, live);
+    return vwap === null ? null : { vwap, vwapAt: Math.max(row.seed.completedThroughMs, row.tradeAt) };
   }
 
   async warm(onBatch: (symbols: readonly string[]) => void, signal: AbortSignal) {

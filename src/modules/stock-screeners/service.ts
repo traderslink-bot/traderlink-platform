@@ -127,8 +127,9 @@ export async function createRun(identity: TraderLinkPlatformRequestIdentity, def
     lastAfterHours.rows.some(row => row.values.price !== undefined);
   const session = definition.session === "latest" ? (hasClosedAfterHours ? "after_hours" : pack.latest) : definition.session;
   const selected = pack.snapshots[session];
-  const { rows: snapshotRows, ...info } = process.env.TRADERLINK_STOCK_SCREENERS_LIVE_WORKER === "1"
-    ? applyLiveScreenerBook(selected, now) : selected;
+  const liveMarket = process.env.TRADERLINK_STOCK_SCREENERS_LIVE_WORKER === "1" && selected.source === "Alpaca SIP" && !selected.closed
+    ? applyLiveScreenerBook(selected, now) : undefined;
+  const { rows: snapshotRows, ...info } = liveMarket?.snapshot ?? selected;
   const example = info.source === "Preview data";
   const marketClock = easternClock(now);
   const weekday = new Date(marketClock.date + "T12:00:00Z").getUTCDay();
@@ -156,7 +157,7 @@ export async function createRun(identity: TraderLinkPlatformRequestIdentity, def
       }
       return { ...row, values, pressRelease, quoteAt: staleQuote ? undefined : row.quoteAt };
     }) };
-  const { rows, ...coverage } = querySnapshot(snapshot, definition);
+  const { rows, ...coverage } = querySnapshot(snapshot, definition, liveMarket?.freshness);
   const owner = identity.scope.userId;
   const own = Array.from(runs).filter(([, run]) => run.owner === owner);
   for (const [id] of own.slice(0, Math.max(0, own.length - 5))) runs.delete(id);

@@ -1,4 +1,4 @@
-import { type Candidate, type Definition, type Rule, type Snapshot, type Sort, type SortKey } from "./contracts";
+import { type Candidate, type Definition, type LiveScreenerFreshness, type Rule, type Snapshot, type Sort, type SortKey } from "./contracts";
 
 export const PAGE_SIZE = 50;
 
@@ -30,7 +30,7 @@ function matchesGroup(row: Candidate, group: Rule[]): boolean | null {
   return unknown ? null : false;
 }
 
-export function querySnapshot(snapshot: Snapshot, definition: Definition) {
+export function querySnapshot(snapshot: Snapshot, definition: Definition, freshness?: ReadonlyMap<string, LiveScreenerFreshness>) {
   const selected = new Set(definition.tickers);
   const scoped = snapshot.rows.filter(row =>
     (!definition.exchanges.length || definition.exchanges.includes(row.exchange))
@@ -39,14 +39,18 @@ export function querySnapshot(snapshot: Snapshot, definition: Definition) {
   const missingTickers = definition.universe === "list" ? definition.tickers.filter(ticker => !seen.has(ticker)) : [];
   const rows: Candidate[] = [];
   let unavailable = 0;
+  const live: LiveScreenerFreshness | undefined = freshness ? {} : undefined;
   for (const row of scoped) {
+    const times = freshness?.get(row.symbol);
+    if (live && times?.priceAt !== undefined) live.priceAt = Math.max(live.priceAt ?? 0, times.priceAt);
+    if (live && times?.vwapAt !== undefined) live.vwapAt = Math.max(live.vwapAt ?? 0, times.vwapAt);
     const rules = definition.rules.map(rule => matchesRule(row, rule));
     for (const group of definition.groups ?? []) rules.push(matchesGroup(row, group));
     if (rules.includes(false)) continue;
     if (row.values.price === undefined || rules.includes(null)) unavailable++;
     else rows.push(row);
   }
-  return { rows, eligible: scoped.length, evaluated: scoped.length - unavailable, unavailable, missingTickers };
+  return { rows, eligible: scoped.length, evaluated: scoped.length - unavailable, unavailable, missingTickers, ...(live ? { live } : {}) };
 }
 
 function compareRows(a: Candidate, b: Candidate, { metric, dir }: SortKey): number {

@@ -80,7 +80,7 @@ describe("live Screeners worker", () => {
       await vi.advanceTimersByTimeAsync(minute+3_000);
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(onState).toHaveBeenLastCalledWith("connected",1);
-      expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:20,priceAt:start+1123,vwap:10}]);
+      expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:20,priceAt:start+1123,vwap:10,vwapAt:start+minute}]);
       sockets[0]!.close();
       await vi.advanceTimersByTimeAsync(600);
       expect(sockets).toHaveLength(2);
@@ -90,7 +90,10 @@ describe("live Screeners worker", () => {
       expect(fetch.mock.calls.map(([url]) => Number(url.searchParams.get("end")))).toEqual([start+minute,start+2*minute]);
       sockets[1]!.frame(trade("2026-11-16T14:32:00.000Z",14,100));
       await vi.advanceTimersByTimeAsync(125);
-      expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:14,priceAt:start+2*minute,vwap:12}]);
+      expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:14,priceAt:start+2*minute,vwap:12,vwapAt:start+2*minute}]);
+      sockets[1]!.frame({ ...trade("2026-11-16T14:32:03.000Z", 18, 100), c:["I"] });
+      await vi.advanceTimersByTimeAsync(125);
+      expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:14,priceAt:start+2*minute,vwap:14,vwapAt:start+2*minute+3_000}]);
     } finally {
       abort.abort();
       await run;

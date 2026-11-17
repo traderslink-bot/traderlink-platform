@@ -23,6 +23,9 @@ const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFra
 const marketTime = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short",
 });
+const liveTime = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit", timeZoneName: "short",
+});
 
 export function displayValue(metric: Metric, value: number | undefined) {
   if (value === undefined) return "—";
@@ -48,6 +51,13 @@ export function exactValue(metric: Metric, value: number) {
 
 export function displayTime(value: number) {
   return marketTime.format(value);
+}
+
+function LiveResultTime({ label, value }: { label: string; value?: number }) {
+  return <Typography variant="body2" color="text.secondary" title="Latest update in the selected universe and exchanges">
+    {label} · {value === undefined ? "Time unavailable"
+      : <time dateTime={new Date(value).toISOString()} title={displayTime(value)}>{liveTime.format(value)}</time>}
+  </Typography>;
 }
 
 export type Inspect = (row: Candidate, kind: "match" | "chart" | "news") => void;
@@ -128,13 +138,20 @@ export function StockScreenerResults({ result, definition, busy, inspect, onSort
         {" · "}{result.evaluated.toLocaleString()} of {result.eligible.toLocaleString()} evaluated
         {result.unavailable > 0 && " · " + result.unavailable.toLocaleString() + " unavailable"}
       </Typography>
-      <Typography variant="body2" color="text.secondary" title={"Listing directory as of " + result.universeDate + " · Snapshot prepared " + displayTime(result.capturedAt)}>
-        {SESSIONS[result.session]}{result.closed && result.session === "after_hours" ? " snapshot" : ""} · {displayTime(result.asOf)} · {result.source}
-      </Typography>
+      <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 0.25 }}>
+        <Typography variant="body2" color="text.secondary" title={"Listing directory as of " + result.universeDate + " · Snapshot prepared " + displayTime(result.capturedAt)}>
+          {SESSIONS[result.session]}{result.closed && result.session === "after_hours" ? " snapshot" : " · Snapshot"}
+          {" · "}<time dateTime={new Date(result.asOf).toISOString()}>{displayTime(result.asOf)}</time> · {result.source}
+        </Typography>
+        {result.live && <>
+          <LiveResultTime label="Latest live price" value={result.live.priceAt} />
+          <LiveResultTime label="Latest live VWAP" value={result.live.vwapAt} />
+        </>}
+      </Box>
     </Box>
     {result.partial && <Typography role="status" color="warning.main" variant="body2" sx={{ mb: 0.75 }}>
       {result.snapshotFallback ? "The latest snapshot is unavailable. Showing the last available data."
-        : "Some data is missing or older. Check the snapshot time before using these results."}
+        : "Some data is missing or older."}
     </Typography>}
     {extendedHours && regularOnly.length > 0 && <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
       Choose Regular or Last completed regular to use {regularOnly.join(", ")}.
