@@ -1,3 +1,4 @@
+import { watchlistFreeChatOwnerCopyMigration } from "./migrations/0213_watchlist_free_chat_owner_copy";
 import { platformHomePagePreferenceMigration } from "./migrations/0214_platform_home_page_preference";
 import { traderLinkCommunitiesIdentityPermissionsMigration } from "@/src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
 import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
@@ -741,6 +742,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0193_traderlink_coaching_profile_photos.ts", migration: traderLinkCoachingProfilePhotosMigration }),
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0194_traderlink_coaching_review_selection_lifecycle.ts", migration: traderLinkCoachingReviewSelectionLifecycleMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0214_platform_home_page_preference.ts", migration: platformHomePagePreferenceMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0213_watchlist_free_chat_owner_copy.ts", migration: watchlistFreeChatOwnerCopyMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(

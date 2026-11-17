@@ -2,6 +2,7 @@ import { isPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/
 import { recordCategoryMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-x-admin";
 import { recordXApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-x-runtime";
+import { FreeChatInputError } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-delivery";
 import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
 import { recordFreeChatApprovalIntent, recordFreeChatMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
 import { readFreeChatMoveDelivery, retryFreeChatMoveDelivery } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-store";
@@ -186,7 +187,7 @@ async function relay(
   let xPostingWarning: string | null = null;
   if (pathname === "/api/watchlist/analysis-review/free-chat" && reviewActor) {
     try { return Response.json(await handleFreeChatAdmin(method,incomingUrl,body,reviewActor.slice("platform-owner:".length)), { headers: { "cache-control": "private, no-store" } }); }
-    catch { return Response.json({ error: "Free Chat controls are unavailable. Reload and try again." }, { status: 409, headers: { "cache-control": "private, no-store" } }); }
+    catch (error) { return Response.json({ error: error instanceof FreeChatInputError ? error.message : "Free Chat controls are unavailable. Reload and try again." }, { status: 409, headers: { "cache-control": "private, no-store" } }); }
   }
   if (pathname === "/api/watchlist/analysis-review/approve" && reviewActor && body) {
     try { xPostingWarning = recordXApprovalIntent(body,reviewActor); } catch { xPostingWarning = "X selection could not be saved. Analysis approval is unchanged."; }
