@@ -203,6 +203,9 @@ export function createTraderMaterialTheme(appearance: PlatformAppearance) {
       },
       MuiCssBaseline: {
         styleOverrides: dark ? {
+          // globals.css paints the body from this token. Set it on the body so
+          // dashboard text inherits the dark palette even outside Material surfaces.
+          body: { "--foreground": palette.text.primary },
           "*:focus-visible": { outline: "2px solid #79aaf1", outlineOffset: 2 },
         } : undefined,
       },

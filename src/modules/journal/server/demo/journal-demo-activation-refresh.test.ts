@@ -13,7 +13,7 @@ const scope={userId:"owner",workspaceId:"workspace",workspaceRole:"owner" as con
 test("dashboard checks indicator refresh independently of the financial pack upgrade",()=>{
   const source=readFileSync("app/dashboard-layout-frame.tsx","utf8");
   assert.match(source,/\}\)\) \|\| demos\.hasPendingIndicatorAnalysis\(scope\)\)/);
-  assert.match(source,/dashboardContext\.demoActivationPending \? <DemoSessionActivation/);
+  assert.match(source,/ensureDemo=\{dashboardContext\.demoActivationPending\}/);
 });
 
 test("current Demo pack can need indicators, while completed, cleared and unrelated accounts do not",()=>{

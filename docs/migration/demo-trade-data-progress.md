@@ -68,6 +68,24 @@
 - The separate synthetic micro-cap Dashboard inventory remains out of this
       Analyzer-backed Daily Tracker implementation slice.
 
+## Private preview and first Journal entry
+
+Journal and Trade Analyzer pages share the short **Loading demo data…** status
+while Demo opens. Home displays its cards during setup. Workspace shows the
+approved **Viewing Demo Data** notice with the August sample-trades copy. The
+old invitation and its error message were removed.
+
+The preview launcher builds the on-demand Demo setup worker before serving the
+checkout. Opening a saved Demo account uses its existing samples. The
+background setup path remains responsible for pack updates.
+
+In isolated Chromium, Home rendered its cards without waiting for Demo.
+Workspace opened Demo through the setup worker and then showed **Viewing Demo
+Data**. A fresh mobile Trade Analyzer visit loaded the sample chart, and a
+direct Day Trade Analysis visit loaded its Demo notice. The existing Demo
+sample executions stayed intact. The Help Center's sample-trade instructions
+still apply.
+
 Version 10: source implementation complete; 170 trades / 817 executions / 5 red days expected. Coordinator reserved migration 0132; [exact handoff and pending production QA](demo-v10-release-handoff-20260909.md). No local tests/build/staging or provider requests.
 
 Version11 source complete:four append-only execution corrections,two notes,saved Analyzer refresh; no migration. All3peaks above20%,WETO27.34%,YXT49.93%. [Release handoff](demo-v11-release-handoff-20260909.md); production acceptance pending; owner controls browser.

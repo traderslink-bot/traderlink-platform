@@ -7,7 +7,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import { Alert, Box, Button, CircularProgress, Drawer, IconButton, Stack, Typography } from "@mui/material";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
@@ -16,6 +16,7 @@ import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/p
 
 import type { DailyTradeChartInterval } from "../trade-tracker/[sessionDate]/daily-trade-analyzer-chart";
 import type { DaySessionTradeAnalyzer } from "../trade-tracker/[sessionDate]/day-session-types";
+import { withWrittenReviewBasis } from "../trade-tracker/analyzer-written-review-model";
 import { WrittenTradeAnalysis } from "../trade-tracker/written-trade-analysis";
 
 const DailyTradeAnalyzerChart = dynamic(
@@ -188,19 +189,53 @@ function AnalysisSection({ section }: Readonly<{ section: TradeAnalysisSection }
 }
 
 
-function FullAnalysisEvidence({ analysis, currency, timezone, direction, interval }: Readonly<{ analysis: DaySessionTradeAnalyzer; currency: string; timezone: string; direction: "long" | "short"; interval: DailyTradeChartInterval }>) {
+function FullAnalysisEvidence({ analysis, currency, timezone, direction, interval, showHeading = false }: Readonly<{ analysis: DaySessionTradeAnalyzer; currency: string; timezone: string; direction: "long" | "short"; interval: DailyTradeChartInterval; showHeading?: boolean }>) {
   const timeframe = interval === "5m" ? "5m" : "1m";
   const sections = combinedTradeAnalysisSections(analysis, currency, timezone, timeframe);
-  return <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.5, md: 2 } }}><WrittenTradeAnalysis analysis={analysis} currency={currency} timezone={timezone} direction={direction} timeframe={timeframe}><Stack spacing={1.25}>{sections.map(section => <AnalysisSection key={section.title} section={section} />)}</Stack></WrittenTradeAnalysis></Box>;
+  return (
+    <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.5, md: 2 } }}>
+      {showHeading ? <Typography component="h3" variant="h6" sx={{ mb: 1 }}>Trade Analysis</Typography> : null}
+      <WrittenTradeAnalysis analysis={analysis} currency={currency} timezone={timezone} direction={direction} timeframe={timeframe}>
+        <Stack spacing={1.25}>
+          {sections.map(section => <AnalysisSection key={section.title} section={section} />)}
+        </Stack>
+      </WrittenTradeAnalysis>
+    </Box>
+  );
 }
 
-export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCount, expectedAccountSelectionRef, gainLossDecimal, highlightExecution, loadSavedAnalysis, initialInterval = "1m", selectedEventId = null, onClose, open, roundTripId, symbol, timezone }: WorkspaceTradeAnalyzerPanelProps) {
+type TradeAnalyzerResultProps = Omit<WorkspaceTradeAnalyzerPanelProps, "onClose"> & Readonly<{
+  basis?: "gross" | "net";
+  inline?: boolean;
+  readOnly?: boolean;
+}>;
+
+export function WorkspaceTradeAnalyzerPanel({ onClose, ...props }: WorkspaceTradeAnalyzerPanelProps) {
+  return (
+    <Drawer
+      anchor="right"
+      onClose={onClose}
+      open={props.open}
+      slotProps={{ paper: { role: "dialog", "aria-modal": true, "aria-label": "Trade Analyzer", sx: { maxWidth: "none", width: "100vw" } } }}
+    >
+      <TradeAnalyzerResult {...props} onClose={onClose} />
+    </Drawer>
+  );
+}
+
+export function TradeAnalyzerResult({
+  basis, currency, direction, executionCount, expectedAccountSelectionRef, gainLossDecimal,
+  highlightExecution, inline = false, loadSavedAnalysis, initialInterval = "1m",
+  selectedEventId = null, onClose, open, readOnly = false, roundTripId, symbol, timezone,
+}: TradeAnalyzerResultProps & { onClose?: () => void }) {
   const [reportedCurrency, setReportedCurrency] = useState<string>();
-  const [analysis, setAnalysis] = useState<DaySessionTradeAnalyzer | null>(null);
+  const [savedAnalysis, setAnalysis] = useState<DaySessionTradeAnalyzer | null>(null);
+  const analysis = useMemo(() => withWrittenReviewBasis(savedAnalysis, basis), [savedAnalysis, basis]);
   const [interval, setInterval] = useState<DailyTradeChartInterval>(initialInterval);
   const [loadState, setLoadState] = useState<AnalyzerLoadState>("idle");
   const [availability, setAvailability] = useState<SharedAnalyzerAvailability | null>(null);
   const [requesting, setRequesting] = useState(false);
+  const [collecting, setCollecting] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const loadRequestRef = useRef(0);
   async function loadAnalysis(): Promise<void> {
@@ -224,10 +259,11 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
       }
       const [response, uses] = await Promise.all([
         fetch(`/api/platform/trade-analyzer/trade?${new URLSearchParams({ direction, roundTripId, ...(expectedAccountSelectionRef ? { expectedAccountSelectionRef } : {}) })}`, { cache: "no-store" }),
-        fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" }).then(async response => response.ok ? await response.json() as { availability?: SharedAnalyzerAvailability } : null).catch(() => null),
+        readOnly ? null : fetch("/api/platform/daily-trade-analyzer/allowance", { cache: "no-store" }).then(async response => response.ok ? await response.json() as { availability?: SharedAnalyzerAvailability } : null).catch(() => null),
       ]);
       const payload = await response.json().catch(() => null) as AnalyzerPayload | null;
       if (request !== loadRequestRef.current) return;
+      setCollecting(response.ok && payload?.analysis?.status === "pending");
       setAvailability(uses?.availability?.enabled === false ? null : uses?.availability ?? null);
       if (response.ok && payload?.status === "ready" && payload.analysis?.status === "pending") {
         setAnalysis(null); setLoadState("loading");
@@ -240,9 +276,14 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
         setAnalysis(payload.analysis); setLoadState("idle");
         return;
       }
+      if (inline && !response.ok && response.status !== 404) {
+        setAnalysis(null);
+        setLoadState("error");
+        return;
+      }
       if (!response.ok || payload?.status !== "ready" || !payload.analysis || payload.analysis.candles.length === 0) {
         setAnalysis(null); setLoadState("unavailable");
-        if (payload?.analysis?.status === "no_coverage") setRequestError("Not enough candle data was returned to analyze this trade. This can happen with very low trading volume.");
+        if (payload?.analysis?.status === "no_coverage") setRequestError("Not enough candle data was returned to analyze this trade.");
         else if (payload?.analysis?.status === "provider_unavailable") setRequestError("Market data could not be retrieved. Your saved trade is unchanged. Try again later.");
         else if (payload?.analysis?.status === "expired") setRequestError("This analysis needs to be requested again. Your saved trade is unchanged.");
 
@@ -255,14 +296,14 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
   }
   useEffect(() => {
     if (!open) { loadRequestRef.current += 1; return; }
-    setInterval(initialInterval); setAnalysis(null); setReportedCurrency(undefined); setAvailability(null); void loadAnalysis();
+    setInterval(initialInterval); setCollecting(false); setAnalysis(null); setReportedCurrency(undefined); setAvailability(null); void loadAnalysis();
     return () => { loadRequestRef.current += 1; };
     // Saved-reader identity also marks a review/account authorization context
     // change. Cleanup invalidates any old in-flight load or normal polling timer.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [direction, expectedAccountSelectionRef, open, roundTripId, loadSavedAnalysis, initialInterval]);
+  }, [direction, expectedAccountSelectionRef, open, roundTripId, loadSavedAnalysis, initialInterval, readOnly]);
   async function requestAnalysis(refreshIndicators = false): Promise<void> {
-    if (loadSavedAnalysis) return;
+    if (loadSavedAnalysis || readOnly) return;
     if (requesting || !availability?.enabled) {
       setLoadState("unavailable");
       return;
@@ -283,7 +324,9 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
         ? "This trade has used its three free candle-data retries for today. You can try again after midnight New York time."
         : payload.outcome === "usage_exhausted"
           ? "No Analyzer uses remain for a new candle download. Analysis using sufficient saved candles remains free."
-          : "The analysis could not be requested. Try again.");
+          : payload.outcome === "not_eligible"
+            ? "Analyzer needs a completed same-day trade with eligible executions."
+            : "The analysis could not be requested. Try again.");
     } catch {
       if (request === loadRequestRef.current) setRequestError("The analysis could not be requested. Try again.");
     } finally { setRequesting(false); }
@@ -292,11 +335,93 @@ export function WorkspaceTradeAnalyzerPanel({ currency, direction, executionCoun
   const exactHighlight = analysis?.events.find(event => event.eventId === highlightExecution?.id);
   const timeHighlights = highlightExecution ? analysis?.events.filter(event => event.executedAt === highlightExecution.at) : undefined;
   const highlightedEventId = exactHighlight?.eventId ?? (timeHighlights?.length === 1 ? timeHighlights[0].eventId : null);
-  const message = requestError ?? unavailableMessage(loadState);
+  const message = requestError ?? (inline && !readOnly && loadState === "unavailable"
+    ? "This trade is waiting for analysis."
+    : unavailableMessage(loadState));
   const refreshControl = !loadSavedAnalysis && analysis?.status === "ready" && !hasCurrentTradeIndicatorContext(analysis.trendMomentum) && availability?.enabled
     ? <Stack spacing={1} sx={{ p: { xs: 1.5, md: 2 } }}>
         <Button disabled={requesting} onClick={() => void requestAnalysis(true)} sx={{ alignSelf: "flex-start" }} variant="outlined">Refresh indicator history</Button>
         <Typography color="text.secondary" variant="body2">{availability.unlimited ? "Your trade details stay unchanged. Saved candles are reused when sufficient; your account has unlimited retries." : "Your trade details stay unchanged. Saved candles are reused when sufficient; new candle downloads use your free retry allowance."}</Typography>
       </Stack> : null;
-  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{ paper: { role: "dialog", "aria-modal": true, "aria-label": "Trade Analyzer", sx: { maxWidth: "none", width: "100vw" } } }}><Stack sx={{ height: "100%" }}><Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.25, md: 2 } }}><Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><InsightsRoundedIcon color="primary" /><Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Trade Analyzer</Typography><Typography color="text.secondary" variant="body2">{symbol} · {direction === "long" ? "Long" : "Short"}{executionCount !== undefined && ` · ${executionCount} execution${executionCount === 1 ? "" : "s"}`}</Typography></Box></Stack><IconButton aria-label="Close Trade Analyzer" onClick={onClose}><CloseRoundedIcon /></IconButton></Stack>{!loadSavedAnalysis && availability ? <Box sx={{ mt: 1 }}><TradeAnalyzerAllowanceSummary availability={availability} selected={0} /></Box> : null}</Box><Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>{loadState === "loading" ? <Stack spacing={1} sx={{ alignItems: "center", justifyContent: "center", minHeight: 320, p: 3 }}><CircularProgress /><Typography color="text.secondary" variant="body2">Loading saved chart analysis…</Typography></Stack> : null}{message && loadState !== "loading" ? <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity={loadState === "error" ? "error" : "info"}>{message}</Alert>{!loadSavedAnalysis && availability ? <><Button disabled={requesting} onClick={() => void requestAnalysis()} sx={{ alignSelf: "flex-start" }} variant="contained">Analyze Trade</Button>{!hasSharedAnalyzerAllowance(availability) ? <Typography color="error.main" variant="body2">No uses remain for new downloads. Analysis using sufficient saved candles remains free.</Typography> : null}</> : null}<Button onClick={() => void loadAnalysis()} sx={{ alignSelf: "flex-start" }} variant="outlined">Try again</Button></Stack> : null}{analysis?.status === "execution_mismatch" && loadState !== "loading" ? <Stack spacing={1} sx={{ p: { xs: 1.5, md: 2 } }}><Alert severity="warning">Review the execution details and correct the highlighted time or price before Analyzer runs again.</Alert>{analysis.executionMismatches.map((mismatch) => <Typography key={mismatch.executionId} variant="body2">{mismatch.side.toUpperCase()} · {mismatch.executedAt} · entered {mismatch.enteredPrice} · candle {mismatch.candleLow}–{mismatch.candleHigh}</Typography>)}</Stack> : null}{analysis && analysis.status !== "execution_mismatch" && loadState !== "loading" ? <>{refreshControl}<DailyTradeAnalyzerChart analysis={analysis} timezone={timezone} currency={analysisCurrency} direction={direction} interval={interval} onIntervalChange={setInterval} selectedEventId={selectedEventId ?? highlightedEventId} symbol={symbol} tradeLabelColor={panelOutcomeColor(gainLossDecimal ?? analysis.greenToRed.finalPnlDecimal)} tradeNumber={1} /><FullAnalysisEvidence analysis={analysis} currency={analysisCurrency} timezone={timezone} direction={direction} interval={interval} /></> : null}</Box></Stack></Drawer>;
+  return (
+    <Stack sx={{ height: inline ? undefined : "100%", minWidth: 0 }}>
+      {!inline ? (
+        <Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.25, md: 2 } }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <InsightsRoundedIcon color="primary" />
+              <Box>
+                <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Trade Analyzer</Typography>
+                <Typography color="text.secondary" variant="body2">
+                  {symbol} · {direction === "long" ? "Long" : "Short"}
+                  {executionCount !== undefined && ` · ${executionCount} execution${executionCount === 1 ? "" : "s"}`}
+                </Typography>
+              </Box>
+            </Stack>
+            <IconButton aria-label="Close Trade Analyzer" onClick={onClose}><CloseRoundedIcon /></IconButton>
+          </Stack>
+          {!loadSavedAnalysis && availability ? (
+            <Box sx={{ mt: 1 }}><TradeAnalyzerAllowanceSummary availability={availability} selected={0} /></Box>
+          ) : null}
+        </Box>
+      ) : null}
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: inline ? undefined : "auto" }}>
+        {loadState === "loading" ? (
+          <Stack role="status" direction={inline ? "row" : "column"} spacing={1} sx={{
+            alignItems: "center", justifyContent: "center", minHeight: inline ? 100 : 320, p: 3,
+          }}>
+            <CircularProgress size={inline ? 20 : undefined} />
+            <Typography color="text.secondary" variant="body2">
+              {inline && collecting ? "Collecting market data. You can leave this page while analysis completes." : "Loading saved chart analysis…"}
+            </Typography>
+          </Stack>
+        ) : null}
+        {message && loadState !== "loading" ? (
+          <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2 } }}>
+            <Alert severity={loadState === "error" ? "error" : "info"}>{message}</Alert>
+            {!readOnly && !loadSavedAnalysis && availability ? (
+              <>
+                {inline ? <TradeAnalyzerAllowanceSummary availability={availability} selected={0} /> : null}
+                <Button disabled={requesting} onClick={() => void requestAnalysis()} sx={{ alignSelf: "flex-start" }} variant="contained">
+                  {inline ? "Analyze trade" : "Analyze Trade"}
+                </Button>
+                {!hasSharedAnalyzerAllowance(availability) ? (
+                  <Typography color="error.main" variant="body2">No uses remain for new downloads. Analysis using sufficient saved candles remains free.</Typography>
+                ) : null}
+              </>
+            ) : null}
+            {(!inline || loadState === "error" || (!readOnly && !availability)) ? (
+              <Button onClick={() => void loadAnalysis()} sx={{ alignSelf: "flex-start" }} variant="outlined">Try again</Button>
+            ) : null}
+          </Stack>
+        ) : null}
+        {analysis?.status === "execution_mismatch" && loadState !== "loading" ? (
+          <Stack spacing={1} sx={{ p: { xs: 1.5, md: 2 } }}>
+            <Alert severity="warning">
+              {inline ? "Correct the highlighted execution time or price in the Trading Journal before running Analyzer again." : "Review the execution details and correct the highlighted time or price before Analyzer runs again."}
+            </Alert>
+            {inline && !readOnly ? <Button href="/workspace" sx={{ alignSelf: "flex-start" }} variant="outlined">Open Trading Journal</Button> : null}
+            {analysis.executionMismatches.map((mismatch) => (
+              <Typography key={mismatch.executionId} variant="body2">
+                {mismatch.side.toUpperCase()} · {inline ? timeLabel(mismatch.executedAt, timezone) : mismatch.executedAt}
+                {" · entered "}{inline ? formatJournalAnalyticsDecimal(mismatch.enteredPrice) : mismatch.enteredPrice}
+                {" · candle "}{inline ? price(mismatch.candleLow, analysisCurrency) : mismatch.candleLow}–{inline ? price(mismatch.candleHigh, analysisCurrency) : mismatch.candleHigh}
+              </Typography>
+            ))}
+          </Stack>
+        ) : null}
+        {analysis && analysis.status !== "execution_mismatch" && loadState !== "loading" ? (
+          <>
+            {refreshControl}
+            <DailyTradeAnalyzerChart
+              analysis={analysis} timezone={timezone} currency={analysisCurrency} direction={direction}
+              interval={interval} onIntervalChange={setInterval} selectedEventId={selectedEventId ?? highlightedEventId}
+              symbol={symbol} tradeLabelColor={panelOutcomeColor(gainLossDecimal ?? analysis.greenToRed.finalPnlDecimal)} tradeNumber={1}
+            />
+            <FullAnalysisEvidence analysis={analysis} currency={analysisCurrency} timezone={timezone} direction={direction} interval={interval} showHeading={inline} />
+          </>
+        ) : null}
+      </Box>
+    </Stack>
+  );
 }

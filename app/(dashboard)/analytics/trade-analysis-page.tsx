@@ -213,6 +213,7 @@ export async function TradeAnalysisPage({resourceScope,baseHref,searchParams,vie
             endDate={dateRange.endDate}
             initialPage={tradeIndex.page}
             moneyBasis={moneyBasis}
+            openInAnalyzer
             startDate={dateRange.startDate}
           />
         </Stack>

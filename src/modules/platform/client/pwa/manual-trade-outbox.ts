@@ -317,12 +317,13 @@ export async function commitManualTradeOnline(
   options: Readonly<{
     offlineDuplicateResolution?: JournalManualTradeOfflineDuplicateResolution;
     analyzerGroupRefs?: readonly string[];
+    includeAnalyzerTrades?: boolean;
     logicalTradeMerges?: readonly Readonly<{ groupRefs: readonly string[]; tradeStyle: "day" | "swing" }>[];
   }> = {},
 ): Promise<ManualTradeSubmitResult> {
   const commitResponse = await requestWithNetworkBoundary(
     "commit",
-    `${manualTradeBasePath(submission)}/commit`,
+    `${manualTradeBasePath(submission)}/commit${options.includeAnalyzerTrades ? "?include=analyzer-trades" : ""}`,
     {
       body: JSON.stringify({
         confirmations: confirmations(preview),
@@ -379,6 +380,30 @@ export async function commitManualTradeOnline(
   });
 }
 
+export async function readManualTradeCommitStatus(
+  submission: ManualTradeSubmission,
+): Promise<JournalManualTradeCommitStatus> {
+  const statusResponse = await requestWithNetworkBoundary(
+    "status",
+    `${manualTradeBasePath(submission)}/status`,
+    {
+      body: JSON.stringify(submission),
+      credentials: "same-origin",
+      headers: manualTradeHeaders(),
+      method: "POST",
+    },
+  );
+  const statusBody = await responseBody<StatusResponse>(statusResponse);
+  if (!statusResponse.ok || statusBody?.status !== "ready" || !statusBody.result) {
+    reviewOrNetworkFailure(
+      statusResponse,
+      statusBody?.code,
+      "status",
+    );
+  }
+  return statusBody.result;
+}
+
 export async function submitManualTradeOnline(
   submission: ManualTradeSubmission,
   options: Readonly<{
@@ -387,36 +412,17 @@ export async function submitManualTradeOnline(
     analyzerGroupRefs?: readonly string[];
   }> = {},
 ): Promise<ManualTradeSubmitResult> {
-  const headers = manualTradeHeaders();
-  const basePath = manualTradeBasePath(submission);
   if (options.checkCommittedFirst) {
-    const statusResponse = await requestWithNetworkBoundary(
-      "status",
-      `${basePath}/status`,
-      {
-        body: JSON.stringify(submission),
-        credentials: "same-origin",
-        headers,
-        method: "POST",
-      },
-    );
-    const statusBody = await responseBody<StatusResponse>(statusResponse);
-    if (!statusResponse.ok || statusBody?.status !== "ready" || !statusBody.result) {
-      reviewOrNetworkFailure(
-        statusResponse,
-        statusBody?.code,
-        "status",
-      );
-    }
-    if (statusBody.result.committed) {
+    const status = await readManualTradeCommitStatus(submission);
+    if (status.committed) {
       return Object.freeze({
-        acceptedExecutionCount: statusBody.result.acceptedExecutionCount,
-        affectedDates: statusBody.result.affectedDates,
+        acceptedExecutionCount: status.acceptedExecutionCount,
+        affectedDates: status.affectedDates,
         affectedTradeIds: Object.freeze([]),
         affectedTradeRefs: Object.freeze([]),
         analyzerQueueOutcome: null,
         analyzerSelectionOutcomes: Object.freeze([]),
-        pendingDecisionCount: statusBody.result.pendingDecisionCount,
+        pendingDecisionCount: status.pendingDecisionCount,
         savedTrade: null,
         savedTrades: Object.freeze([]),
       });

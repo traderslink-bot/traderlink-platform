@@ -5,12 +5,12 @@ import { NextRequest } from "next/server";
 import { loginReturnTo, readLoginBody } from "./platform-login-http";
 describe("login HTTP boundary", () => {
   it("blocks cross-origin mutations, unexpected bodies and open redirects", async () => {
-    expect(loginReturnTo(undefined)).toBe("/workspace");
+    expect(loginReturnTo(undefined)).toBe("/dashboard-entry");
     expect(loginReturnTo("/account/login")).toBe("/account/login");
-    expect(loginReturnTo("//other.example/path")).toBe("/workspace");
-    expect(loginReturnTo("/\\other.example")).toBe("/workspace");
-    expect(loginReturnTo("/workspace?view=journal")).toBe(
-      "/workspace?view=journal",
+    expect(loginReturnTo("//other.example/path")).toBe("/dashboard-entry");
+    expect(loginReturnTo("/\\other.example")).toBe("/dashboard-entry");
+    expect(loginReturnTo("/workspace?view=journal#trade-library")).toBe(
+      "/workspace?view=journal#trade-library",
     );
     await expect(
       readLoginBody(

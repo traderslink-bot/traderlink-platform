@@ -36,3 +36,11 @@ export type SharedAnalyzerSelectionOutcome =
   | "retry_limit_reached"
   | "disabled"
   | "demo_unavailable";
+
+const analyzerMarketDate = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+});
+
+export function isSameAnalyzerMarketDay(openedAtUtc: string, closedAtUtc: string): boolean {
+  return analyzerMarketDate.format(new Date(openedAtUtc)) === analyzerMarketDate.format(new Date(closedAtUtc));
+}

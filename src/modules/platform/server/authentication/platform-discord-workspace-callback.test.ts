@@ -45,15 +45,16 @@ describe("Discord callback admission without a plan or server membership", () =>
     expect(new URL(response.headers.get("location")!).pathname).toBe("/sign-in-help");
     expect(fetch).not.toHaveBeenCalled();
   });
-  it.each(["/workspace", "/workspace?panel=journal", "/rules"])("retains the session and applies the landing boundary for %s", async returnTo => {
+  it.each(["/dashboard-entry", "/home", "/welcome", "/workspace", "/workspace?panel=journal", "/rules"])("retains the session and applies the landing boundary for %s", async returnTo => {
     const databasePath = fixture();
     const response = await GET(new NextRequest("https://app.traderslink.pro/api/auth/discord/callback?code=synthetic-code&state=synthetic-state", {
       headers: { cookie: `${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_STATE_COOKIE)}=synthetic-state; ${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE)}=consent; ${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE)}=${encodeURIComponent(returnTo)}` },
     }));
     const location = new URL(response.headers.get("location")!);
-    expect(location.pathname).toBe(returnTo.startsWith("/workspace") ? "/workspace" : "/access-required");
+    expect(location.pathname).toBe(returnTo === "/rules" ? "/access-required" : returnTo.split("?")[0]);
     if (returnTo === "/rules") expect(location.searchParams.get("returnTo")).toBe("/rules");
     if (returnTo.includes("panel=")) expect(location.searchParams.get("panel")).toBe("journal");
+    expect(location.searchParams.get("auth")).toBe("connected");
     const cookie = response.headers.get("set-cookie")!;
     const token = cookie.match(/tl_platform_session=([^; ,]+)/)?.[1]; expect(token).toBeTruthy();
     const database = openPlatformDatabase({ mode: "runtime", databasePath, forbiddenRepositoryRoots: [] });

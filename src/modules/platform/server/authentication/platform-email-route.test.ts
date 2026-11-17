@@ -82,7 +82,7 @@ describe("email HTTP route integration", () => {
 
     const login = await POST(request({ action: "login", email, password, returnTo: "https://foreign.example.test" }));
     expect(login.status).toBe(200);
-    expect(await login.json()).toEqual({ redirect: "/workspace" });
+    expect(await login.json()).toEqual({ redirect: "/dashboard-entry" });
     const setCookie = login.headers.get("set-cookie")!;
     expect(setCookie).toContain("HttpOnly");
     expect(setCookie).toContain("Secure");

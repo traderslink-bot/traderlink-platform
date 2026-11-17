@@ -12,11 +12,10 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
-
-import { isTradeJournalNavigationPath } from "../dashboard-navigation";
+import { isTradeAnalyzerNavigationPath, isTradeJournalNavigationPath } from "../dashboard-navigation";
 
 const CLEAR_CONFIRMATION = "DELETE ACCOUNT";
 
@@ -24,7 +23,7 @@ function normalizedConfirmation(value: string): string {
   return value.trim().replace(/\s+/gu, " ").toUpperCase();
 }
 
-function ClearDemoDataAction({
+export function ClearDemoDataAction({
   expectedAccountSelectionRef,
 }: {
   expectedAccountSelectionRef: string;
@@ -125,103 +124,6 @@ function ClearDemoDataAction({
   );
 }
 
-async function activateDemoTradeTracker(signal?: AbortSignal): Promise<void> {
-  // A different request can already be preparing demo data on the worker.
-  for (let attempt = 0; attempt <= 60; attempt++) {
-    const response = await fetch("/api/platform/journal/demo/activate", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
-      signal,
-    });
-    if (response.ok) return;
-    if (response.status !== 503 || !response.headers.has("retry-after")) break;
-    await new Promise(resolve => setTimeout(resolve, 3_000));
-    signal?.throwIfAborted();
-  }
-  throw new Error("demo_unavailable");
-}
-
-function OpenDemoTradeTrackerAction() {
-  const [error, setError] = useState<string | null>(null);
-  const [working, setWorking] = useState(false);
-
-  const openDemoTradeTracker = useCallback(async (): Promise<void> => {
-    if (working) return;
-    setWorking(true);
-    setError(null);
-    try {
-      await activateDemoTradeTracker();
-      window.location.assign("/workspace");
-    } catch {
-      setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
-    } finally {
-      setWorking(false);
-    }
-  }, [working]);
-
-  return (
-    <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
-      <Button disabled={working} onClick={() => void openDemoTradeTracker()} variant="contained">
-        {working ? "Opening demo..." : "Open Demo Trade Tracker"}
-      </Button>
-      {error ? <Alert severity="error">{error}</Alert> : null}
-    </Stack>
-  );
-}
-
-export function DemoTradeTrackerInvitation({
-  hasRealAcceptedExecution,
-}: {
-  hasRealAcceptedExecution: boolean;
-}) {
-  const [error, setError] = useState<string | null>(null);
-  const [working, setWorking] = useState(true);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void activateDemoTradeTracker(controller.signal).then(() => {
-      if (!controller.signal.aborted) window.location.assign("/workspace");
-    }).catch(() => {
-      if (controller.signal.aborted) return;
-      setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
-      setWorking(false);
-    });
-    return () => controller.abort();
-  }, []);
-
-  if (working) return (
-    <Alert severity="info" role="status">
-      Preparing your Demo Trade Tracker. You can use the menu while it loads.
-    </Alert>
-  );
-
-  return (
-    <Box
-      sx={{
-        border: 1,
-        borderColor: "divider",
-        borderRadius: 1.5,
-        maxWidth: 980,
-        p: { xs: 2, sm: 2.5 },
-      }}
-    >
-      <Stack spacing={1.25} sx={{ alignItems: "flex-start" }}>
-        <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">
-          Explore the Demo Trade Tracker
-        </Typography>
-        <Typography color="text.primary" variant="body2">
-          {hasRealAcceptedExecution
-            ? "Your real trades stay exactly where they are. Open a separate Demo Trade Tracker to explore populated trades, notes, rules, analytics, and the Trade Analyzer."
-            : "Open a separate Demo Trade Tracker to explore populated trades, notes, rules, analytics, and the Trade Analyzer before adding your own trades."}
-        </Typography>
-        <OpenDemoTradeTrackerAction />
-        {error ? <Alert severity="error">{error}</Alert> : null}
-      </Stack>
-    </Box>
-  );
-}
-
 export function DemoDataCallout({
   expectedAccountSelectionRef,
   variant,
@@ -283,7 +185,8 @@ export function DemoDataAccountIndicator({
   expectedAccountSelectionRef: string | null;
 }) {
   const pathname = usePathname();
-  if (!expectedAccountSelectionRef || pathname === "/workspace" || !isTradeJournalNavigationPath(pathname)) return null;
+  if (!expectedAccountSelectionRef || pathname === "/workspace" || pathname === "/trade-analyzer") return null;
+  if (!isTradeJournalNavigationPath(pathname) && !isTradeAnalyzerNavigationPath(pathname)) return null;
   return (
     <Box sx={{ mb: 1.5, maxWidth: 980 }}>
       <DemoDataCallout
