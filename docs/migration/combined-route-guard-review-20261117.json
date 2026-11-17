@@ -1,0 +1,186 @@
+{
+  "codeHead": "6a550da9f578f23cc0d33d65127ec90c64051ef4",
+  "pages": [
+    {
+      "path": "app/(dashboard)/admin/communities/page.tsx",
+      "authorization": "Redirect only to /admin/journal/communities; no data access here; destination requires current Core admin scope."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/alert/[...feed]/page.tsx",
+      "authorization": "CommunityBrandedFeedPage: two-account review identity, fresh Community request access, active community membership and scoped destination resolution."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/alert/page.tsx",
+      "authorization": "CommunityDestinationHubPage delegates to guarded publishing loader/current membership before scoped destination hub read."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/alerts/[alertSlug]/page.tsx",
+      "authorization": "Publishing loader review identity/current membership and alert view/create or verified channel readership; scoped alert must exist."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/alerts/page.tsx",
+      "authorization": "Qualified Shared carrier and two-account review identity/current membership with individual publishing grant; otherwise guarded Community section loader; denial renders no private data."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/content/[...feed]/page.tsx",
+      "authorization": "CommunityContentRoutePage guarded publishing loader/current membership, scoped page/document resolution; collection delegates to guarded branded feed."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/content/page.tsx",
+      "authorization": "CommunityDestinationHubPage delegates to guarded publishing loader/current membership before scoped destination hub read."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/manage/alerts/[alertSlug]/page.tsx",
+      "authorization": "Publishing loader review identity/current membership; alerts.create and own alert or alerts.manage_all."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/manage/pages/page.tsx",
+      "authorization": "Publishing loader review identity/current membership and community.manage; exact community owner for destination configuration."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/manage/shared-alerts/page.tsx",
+      "authorization": "Community review identity then sharedOwnerContext actual server ownership and verified participant access."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/manage/watchlists/[pageId]/page.tsx",
+      "authorization": "Publishing loader review identity/current membership/community.manage plus destination permissions.canPublish for exact page."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/partner-channels/page.tsx",
+      "authorization": "Two-account Community review identity plus exact active community owner_user_id before seller setup/status reads."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/publish/page.tsx",
+      "authorization": "Publishing loader review identity/current membership; only destinations with permissions.canPublish, otherwise notFound."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/stats/analysts/page.tsx",
+      "authorization": "Publishing loader review identity/membership; owner, analytics.view or explicit own-content access; no synthetic review mode."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/stats/settings/page.tsx",
+      "authorization": "Publishing loader review identity and current membership; exact community owner, no synthetic review mode."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/stats/team/page.tsx",
+      "authorization": "Publishing loader review identity/membership; owner or all team.manage, member_activity.view and analytics.view capabilities; no synthetic review mode."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/swing/[...feed]/page.tsx",
+      "authorization": "Guarded publishing loader/current membership before scoped legacy swing lookup and canonical redirect."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/watchlist/[...feed]/page.tsx",
+      "authorization": "CommunityBrandedFeedPage: two-account review identity, fresh Community request access, active community membership and scoped destination resolution."
+    },
+    {
+      "path": "app/(dashboard)/communities/[communitySlug]/watchlist/page.tsx",
+      "authorization": "CommunityDestinationHubPage delegates to guarded publishing loader/current membership before scoped destination hub read."
+    },
+    {
+      "path": "app/(dashboard)/communities/page.tsx",
+      "authorization": "Two-account Community owner-review identity before listing this user\u2019s memberships and relationship history."
+    },
+    {
+      "path": "app/(dashboard)/partner-channels/page.tsx",
+      "authorization": "Two-account Community review identity before private catalog and qualified subscriber runtime reads."
+    }
+  ],
+  "apis": [
+    {
+      "path": "app/api/communities/[communitySlug]/shared-alerts/source/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "classification": "owner_mutation",
+      "module": "Shared Alerts",
+      "authorization": "Platform request identity and Community review gate before source/schema access; qualified carrier, current community/publisher authorization and same-origin POST through source adapter."
+    },
+    {
+      "path": "app/api/communities/[communitySlug]/stats/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "classification": "owner_mutation",
+      "module": "Community Stats",
+      "authorization": "Platform request identity and Community review gate; authorizeCommunityStats read/own-content/export grants; settings POST requires same-origin and exact owner with revision check."
+    },
+    {
+      "path": "app/api/communities/[communitySlug]/stats/visits/route.ts",
+      "methods": [
+        "POST"
+      ],
+      "classification": "owner_mutation",
+      "module": "Community Stats",
+      "authorization": "Same-origin bounded POST, Platform request identity plus Community review gate, fresh community visit authorization; tracking flag and scoped telemetry only."
+    },
+    {
+      "path": "app/api/company/details/route.ts",
+      "methods": [
+        "GET"
+      ],
+      "classification": "owner_read",
+      "module": "Scanner Company",
+      "authorization": "Platform request identity and two-account Watchlist navigation gate before company/provider reads; symbol/universe checks and scoped Press Release entitlement before news."
+    },
+    {
+      "path": "app/api/company/technicals/route.ts",
+      "methods": [
+        "GET"
+      ],
+      "classification": "owner_read",
+      "module": "Scanner Company",
+      "authorization": "Platform request identity plus two-account Watchlist gate, validated Scanner-universe symbol, private readonly technical/year-range response."
+    },
+    {
+      "path": "app/api/partner-channels/communities/[communityId]/offers/[offerKey]/access/route.ts",
+      "methods": [
+        "POST"
+      ],
+      "classification": "owner_mutation",
+      "module": "Paid Channels",
+      "authorization": "Exact partnerAlertOwnerReviewRequestDenied gate before qualified runtime; writer.run authorizes current subscriber offer and reviewed provider/role observations."
+    },
+    {
+      "path": "app/api/partner-channels/communities/[communityId]/offers/[offerKey]/checkout/route.ts",
+      "methods": [
+        "POST"
+      ],
+      "classification": "owner_mutation",
+      "module": "Paid Channels",
+      "authorization": "Exact partnerAlertOwnerReviewRequestDenied gate; separately qualified sandbox/native billing service performs authenticated same-origin checkout and subscriber-offer checks."
+    },
+    {
+      "path": "app/api/partner-channels/communities/[communityId]/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "classification": "owner_mutation",
+      "module": "Paid Channels",
+      "authorization": "Exact partnerAlertOwnerReviewRequestDenied gate; qualified runtime private-read/mutation adapter enforces scoped owner/subscriber and mutation Origin."
+    },
+    {
+      "path": "app/api/partner-channels/communities/[communityId]/source-channels/route.ts",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "classification": "owner_mutation",
+      "module": "Paid Channels",
+      "authorization": "Exact partnerAlertOwnerReviewRequestDenied gate; qualified runtime verifies source owner/guild; refreshing POST requires requirePlatformMutationRequest."
+    },
+    {
+      "path": "app/api/partner-channels/communities/[communityId]/stripe-onboarding/route.ts",
+      "methods": [
+        "POST"
+      ],
+      "classification": "owner_mutation",
+      "module": "Paid Channels",
+      "authorization": "Exact partnerAlertOwnerReviewRequestDenied gate plus Platform mutation/Origin checks, active Platform request scope and exact community owner query before qualified seller setup."
+    }
+  ],
+  "pageNotes": "Member content may record already-authorized visit telemetry. Authored content/policy writes stay in guarded POST/server actions. Synthetic review fixture exists only outside production or in named staging, never normal production private data."
+}

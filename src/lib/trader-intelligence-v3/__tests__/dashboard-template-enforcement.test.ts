@@ -17,6 +17,8 @@ const retiredLegacyAnalyticsLabClient = join(
   "analytics-lab-client.tsx",
 );
 const reviewedFeaturePanelFiles = new Set([
+  // Existing published Scanner company detail panel; never an application shell.
+  join(dashboardRoot, "screeners", "workspace", "scanner-company-drawer.tsx"),
   join(dashboardRoot, "communities", "coach-trade-review-workspace-persistent.tsx"),
   join(dashboardRoot, "communities", "coaching-calendar-page.tsx"),
   join(dashboardRoot, "communities", "coaching-plan-builder.tsx"),

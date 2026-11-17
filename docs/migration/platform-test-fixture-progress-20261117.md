@@ -25,3 +25,5 @@ The original incomplete consumer run and helper recovery are discovery evidence,
 All heavy QA acquires the shared exclusive owner record and common flock, checks current resources, and releases only the owning inode/child process group. No preview was started, no hosted account created and no Discord write/send occurred.
 
 No UI or Help content changed; no corresponding guide update is required.
+
+The subsequent complete combined discovery and bounded correction are tracked in [combined-qa-correction-progress-20261117.md](combined-qa-correction-progress-20261117.md).

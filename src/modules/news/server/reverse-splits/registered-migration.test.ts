@@ -1,15 +1,17 @@
+import { createHash } from "node:crypto";
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
 import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
 import { calculatePlatformMigrationChecksum } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { runPlatformMigrations, verifyCompletedPlatformDatabase } from "@/src/modules/platform/server/database/run-platform-migrations";
+import { PlatformErasureAdmissionError } from "@/src/modules/platform/server/privacy/platform-erasure-admission";
 import { PlatformErasureService } from "@/src/modules/platform/server/privacy/platform-erasure-service";
 import { ReverseSplitNotificationStore } from "./notification-store";
 import { ReverseSplitRepository } from "./repository";
 import { ReverseSplitDiscordOutbox } from "./discord-outbox";
 import type { SplitSource } from "./contracts";
 
-it("registers only 0142 after the real predecessor and erases only one synthetic user's private split rows", () => {
+it("preserves 0142 legacy erasure and requires admission after upgrading to the current schema", () => {
   const database = new Database(":memory:");
   database.pragma("foreign_keys = ON");
   const at = "2026-09-25T23:00:00.000Z";
@@ -29,9 +31,9 @@ it("registers only 0142 after the real predecessor and erases only one synthetic
     });
     expect(result.appliedMigrationIds).toEqual(["0142_news_reverse_split_alerts"]);
     expect(database.prepare("SELECT * FROM platform_schema_migrations WHERE execution_order < 142 ORDER BY execution_order").all()).toEqual(originalRegistry);
-    const currentResult = runPlatformMigrations(database, { now: () => new Date(at) });
-    expect(verifyCompletedPlatformDatabase(database).finalSchemaSha256).toBe(currentResult.finalSchemaSha256);
-    expect(runPlatformMigrations(database).appliedMigrationIds).toEqual([]);
+    // Exercise the historical migration contract on its actual schema.
+    const historicalManifest = platformMigrationManifest.slice(0, migrationIndex + 1);
+    expect(verifyCompletedPlatformDatabase(database, historicalManifest).finalSchemaSha256).toBe(result.finalSchemaSha256);
 
     const users = ["11111111-1111-4111-8111-111111111111", "22222222-2222-4222-8222-222222222222"];
     const workspaces = ["33333333-3333-4333-8333-333333333333", "44444444-4444-4444-8444-444444444444"];
@@ -73,7 +75,34 @@ it("registers only 0142 after the real predecessor and erases only one synthetic
     expect(database.prepare("SELECT * FROM news_reverse_split_notification_deliveries WHERE user_id = ? ORDER BY channel").all(users[1])).toEqual(otherBefore);
     expect(sharedTables.map(table => database.prepare(`SELECT * FROM ${table}`).all())).toEqual(sharedBefore);
     expect(database.pragma("foreign_key_check")).toEqual([]);
+    // The integrated schema adds real admission participants. A direct call must
+    // hold before changing any rows; successful current erasure belongs to the
+    // qualified admission/Account-handler suite, not this migration fixture.
+    const currentResult = runPlatformMigrations(database, { now: () => new Date(at) });
     expect(verifyCompletedPlatformDatabase(database).finalSchemaSha256).toBe(currentResult.finalSchemaSha256);
+    expect(runPlatformMigrations(database).appliedMigrationIds).toEqual([]);
+    const principal = {
+      user_id: "00000000-0000-4000-8000-000000000195", auth_provider: "erasure",
+      auth_subject: "paid-partner-retained-principal-v1", display_name: "Removed Partner owner",
+      status: "disabled", created_at_utc: "2026-11-02T00:00:00.000Z", updated_at_utc: "2026-11-02T00:00:00.000Z",
+    };
+    const usersBefore = database.prepare("SELECT * FROM platform_users ORDER BY user_id").all();
+    expect(usersBefore).toEqual([principal, {
+      user_id: users[1], auth_provider: "synthetic", auth_subject: "fixture-1", display_name: "Synthetic user",
+      status: "active", created_at_utc: at, updated_at_utc: at,
+    }]);
+    const databaseBefore = createHash("sha256").update(database.serialize()).digest("hex");
+    let held: unknown;
+    try {
+      new PlatformErasureService(database).eraseTraderLinkAccount({ userId: users[1], workspaceId: workspaces[1], workspaceRole: "owner", allowedAccountIds: [], activeAccountId: null });
+    } catch (error) { held = error; }
+    expect(held).toBeInstanceOf(PlatformErasureAdmissionError);
+    expect((held as PlatformErasureAdmissionError).code).toBe("held");
+    expect(createHash("sha256").update(database.serialize()).digest("hex")).toBe(databaseBefore);
+    expect(database.prepare("SELECT * FROM platform_users ORDER BY user_id").all()).toEqual(usersBefore);
+    expect(database.prepare("SELECT * FROM news_reverse_split_notification_deliveries WHERE user_id = ? ORDER BY channel").all(users[1])).toEqual(otherBefore);
+    expect(sharedTables.map(table => database.prepare(`SELECT * FROM ${table}`).all())).toEqual(sharedBefore);
+    expect(database.pragma("foreign_key_check")).toEqual([]);
     console.info(JSON.stringify({ syntheticOnly: true, migrations: platformMigrationManifest.length, schemaSha256: currentResult.finalSchemaSha256, preservedOtherUserDeliveries: otherBefore.length, foreignKeyViolations: 0 }));
   } finally { database.close(); }
 }, 30_000);

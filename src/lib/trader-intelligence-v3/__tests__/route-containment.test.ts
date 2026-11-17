@@ -120,6 +120,24 @@ describe("Trader Intelligence route containment matrix", () => {
       }));
   });
 
+  it("requires the exact imported Paid owner-review gate, including aliases", () => {
+    const path = "app/api/partner-channels/communities/[communityId]/offers/[offerKey]/access/route.ts";
+    const gateModule = "@/src/modules/partner-alerts/server/partner-alert-owner-review-request";
+    const source = `import {partnerAlertOwnerReviewRequestDenied as gate} from '${gateModule}';
+      export async function POST(request:Request) { const denied=gate(request); if(denied)return denied; return Response.json({ok:true}); }`;
+    const check = (testedSource: string) => scanTraderIntelligenceRouteContainment({
+      routeRecords: [{ path, source: testedSource }], intelligenceClientRecords: [],
+      matrix: TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(entry => entry.modulePath === path),
+    });
+    expect(check(source)).toEqual([]);
+    for (const untrusted of [
+      source.replace(gateModule, "@/untrusted/owner-review"),
+      source.replace("const denied=gate(request);", "const denied=null;"),
+      source.replace("import {", "import type {"),
+      source.replace("const denied=gate(request);", "/* gate(request) */ const denied=null;"),
+    ]) expect(check(untrusted)).toContainEqual(expect.objectContaining({code:"ti_v3_route_method_unwrapped",path,method:"POST"}));
+  });
+
   it("requires an imported worker gate on scheduled routes", () => {
     const path = "app/api/cron/ai-reviews/route.ts";
     const source = readFileSync(path, "utf8");
