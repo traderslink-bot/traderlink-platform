@@ -12,7 +12,7 @@ The owner chose **Home** for the page title and sidebar label and `/home` for th
 
 ## Design
 
-Home is the first link in the main sidebar and uses a simple house icon.
+Home is the first link in the main sidebar and uses a simple house icon. On phones, the Home page setting sits directly below the Preferences heading, above the account settings navigation.
 
 Trading Tools comes first visually and in keyboard order. The Settings field stays near the width of its longest choice on desktop and wraps with Save when space is limited. Use a visible label, keyboard operation, and feedback beside the field. The owner accepted this direction for the first review on November 16, 2026. [Material UI Select guidance](https://mui.com/material-ui/react-select/), [W3C Reflow guidance](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)
 
@@ -26,6 +26,8 @@ Trading Tools comes first visually and in keyboard order. The Settings field sta
 - [ ] Owner review of the preview.
 
 ## Verification
+
+- Follow-up QA confirmed all four Trading Tools links open their intended pages. An account without tool access sees the plans link. The start-page setting was below the initial 320 × 667 mobile viewport. After moving it above the account menu, the selector and Save were visible without scrolling, and reopening Preferences showed the saved choice. The selector also fit with an active Demo account. The desktop selector still sits to the right of account navigation.
 
 - Integrated QA confirmed that the light desktop and Navy Dark mobile sidebars show Home first with the house icon. The browser exercised saved and unavailable start-page choices, the legacy redirect, installed-app launch, and all three Market News links with eligible and restricted accounts. A fresh isolated database matched the pinned predecessor and the documented Home migration.
 

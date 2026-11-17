@@ -76,11 +76,13 @@ export default async function AccountPreferencesPage() {
     <AccountSettingsLayout
       activeSection="preferences"
       description="Set your home page, dashboard appearance and notifications."
+      firstPanel={(
+        <DashboardPanel title="Home page">
+          <HomePageSettings available={homePages} homePage={homePage} />
+        </DashboardPanel>
+      )}
       title="Preferences"
     >
-      <DashboardPanel title="Home page">
-        <HomePageSettings available={homePages} homePage={homePage} />
-      </DashboardPanel>
       <DashboardPanel title="Appearance">
         <AppearanceSettings appearance={appearance} />
       </DashboardPanel>
