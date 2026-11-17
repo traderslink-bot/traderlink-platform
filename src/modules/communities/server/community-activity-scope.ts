@@ -5,5 +5,7 @@ export function isCommunityContentActivityPath(slug: string, path: string): bool
   if (path === prefix) return true;
   if (!path.startsWith(`${prefix}/`)) return false;
   const relative = path.slice(prefix.length);
-  return /^\/(?:alerts|watchlists|server-watchlists|coaches)(?:\/[a-zA-Z0-9_-]+)?$/u.test(relative);
+  return /^\/(?:alerts|watchlists|server-watchlists|coaches)(?:\/[a-zA-Z0-9_-]+)?$/u.test(relative)||
+    /^\/(?:alert|watchlist|content)(?:\/[a-zA-Z0-9_-]+)*$/u.test(relative)||
+    /^\/swing(?:\/[a-zA-Z0-9_-]+){1,3}$/u.test(relative);
 }

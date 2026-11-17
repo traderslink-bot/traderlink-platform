@@ -1,0 +1,2 @@
+import {CommunityBrandedFeedPage} from "../../../community-branded-feed-page";
+export default async function Page({params,searchParams}:{params:Promise<{communitySlug:string;feed:string[]}>;searchParams:Promise<{focus?:string}>}){const [{communitySlug,feed},{focus}]=await Promise.all([params,searchParams]);return <CommunityBrandedFeedPage communitySlug={communitySlug} pageType="alert" segments={feed} focus={focus??null}/>;}
