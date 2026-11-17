@@ -1,7 +1,7 @@
 // @vitest-environment node
 import Database from 'better-sqlite3';
 import {randomUUID} from 'node:crypto';
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {platformMigrationManifest} from '../../platform/server/database/platform-migration-manifest';
 import {TraderLinkCommunityRepository} from '../server/traderlink-community-repository';
 import {TraderLinkCommunityPlatformRepository} from '../server/traderlink-community-platform-repository';
@@ -18,6 +18,21 @@ import * as studentPlatformAccess from '../server/coaching-student-platform-acce
 import * as studentAdmission from '../server/coaching-coach-student-admission';
 const NOW='2026-10-19T20:00:00.000Z';
 let db:Database.Database;
+let emptySchema:Buffer;
+let schemaUsers:unknown[];
+beforeAll(()=>{
+ // Build the complete current schema once; each case restores its own writable
+ // in-memory copy, never another case's users, agreements, grants or reviews.
+ const schema=new Database(':memory:');
+ try{
+  schema.pragma('foreign_keys=ON');
+  for(const migration of platformMigrationManifest)for(const statement of migration.statements)schema.exec(statement);
+  expect(schema.pragma('quick_check')).toEqual([{quick_check:'ok'}]);
+  expect(schema.pragma('foreign_key_check')).toEqual([]);
+  schemaUsers=schema.prepare('SELECT user_id FROM platform_users ORDER BY user_id').all();
+  emptySchema=schema.serialize();
+ }finally{schema.close();}
+});
 afterEach(()=>{vi.restoreAllMocks();db?.close();});
 function fixture(){
  // Isolate the review lifecycle from independently tested signup and payment admission.
@@ -25,8 +40,10 @@ function fixture(){
  vi.spyOn(studentPlatformAccess,'requireStudentPlatformCoachingAccess').mockImplementation(()=>undefined);
  vi.spyOn(studentAdmission,'requireCoachStudentAdmission').mockImplementation(()=>undefined);
 
- db=new Database(':memory:');db.pragma('foreign_keys=ON');
- for(const migration of platformMigrationManifest)for(const statement of migration.statements)db.exec(statement);
+ db=new Database(emptySchema);db.pragma('foreign_keys=ON');
+ expect(db.pragma('foreign_keys',{simple:true})).toBe(1);
+ // Keep migration-owned system users, but never inherit a previous test user.
+ expect(db.prepare('SELECT user_id FROM platform_users ORDER BY user_id').all()).toEqual(schemaUsers);
  const owner=randomUUID(),coach=randomUUID(),workspace=randomUUID(),account=randomUUID(),guild='100000001';
  for(const [id,subject] of [[owner,'100000002'],[coach,'100000003']]){
  db.prepare("INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc) VALUES(?,'discord',?,?,'active',?,?)").run(id,subject,id,NOW,NOW);
