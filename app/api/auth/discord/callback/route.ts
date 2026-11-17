@@ -1,4 +1,5 @@
 import { runJournalDemoSetup } from "@/src/modules/journal/server/demo/journal-demo-setup";
+import { isPlatformSignedInLandingPath, PLATFORM_ENTRY_PATH } from "@/src/modules/platform/contracts/platform-home-page";
 import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { PlatformLoginError, PlatformLoginService } from "@/src/modules/platform/server/authentication/platform-login-service";
 import { loginSession } from "@/src/modules/platform/server/authentication/platform-login-http";
@@ -354,8 +355,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       returnTo.startsWith("/academy?");
     const membershipReturnAccess = membershipDashboardAccess ||
       (watchlistReturn && membershipWatchlistAccess);
-    const workspaceWelcomeReturn = returnTo === "/workspace" || returnTo.startsWith("/workspace?");
-    const destination = workspaceWelcomeReturn || billingReturn || academyReturn || membershipReturnAccess || dashboardAccessAllowed
+    const returnPath = new URL(returnTo, resolvePlatformPublicOrigin(request)).pathname;
+    const signedInLandingReturn = returnPath === PLATFORM_ENTRY_PATH || isPlatformSignedInLandingPath(returnPath);
+    const destination = signedInLandingReturn || billingReturn || academyReturn || membershipReturnAccess || dashboardAccessAllowed
       ? returnTo
       : `/access-required?returnTo=${encodeURIComponent(returnTo)}`;
     const response = authRedirect(request, destination, "connected");

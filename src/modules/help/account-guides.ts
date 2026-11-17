@@ -54,6 +54,16 @@ export const ACCOUNT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         ]),
       }),
       Object.freeze({
+        id: "choose-home-page",
+        title: "Choose where TraderLink opens",
+        summary: "Accounts with early access to Home can change where TraderLink opens.",
+        keywords: Object.freeze(["home page", "start page", "preferences", "startup", "installed app"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "If your account has early access to Home, open Account settings and select Preferences. Choose a Home page and select Save. Your choice applies on the web and in the installed TraderLink app. Links to specific features still open those features." }),
+          Object.freeze({ kind: "paragraph", text: "Choose from Home, Trading Workspace, Scanners, Screeners and Journal Workspace. TraderLink opens Home for early-access accounts when a saved choice is missing or unavailable. The Home link in the sidebar opens the feature cards directly. Other accounts continue to open Journal Workspace." }),
+        ]),
+      }),
+      Object.freeze({
         id: "end-one-sign-in",
         title: "End one sign-in",
         summary: "Review each active browser or device sign-in and end only the one you no longer want to use.",

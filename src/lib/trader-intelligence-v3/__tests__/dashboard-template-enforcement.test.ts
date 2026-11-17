@@ -3,7 +3,11 @@ import { join, relative, sep } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { DASHBOARD_NAVIGATION_HREFS } from "@/app/dashboard-navigation";
+import {
+  DASHBOARD_NAVIGATION_HREFS,
+  DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
+  isDashboardNavigationItem,
+} from "@/app/dashboard-navigation";
 
 const dashboardRoot = join(process.cwd(), "app", "(dashboard)");
 const retiredLegacyAnalyticsLabClient = join(
@@ -48,7 +52,6 @@ const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "workspace", "workspace-atomic-trade-edit-drawer.tsx"),
   join(dashboardRoot, "workspace", "workspace-calendar-panel.tsx"),
   join(dashboardRoot, "workspace", "workspace-more-filters-drawer.tsx"),
-  join(dashboardRoot, "workspace", "workspace-news-scanner-panel.tsx"),
   join(dashboardRoot, "workspace", "workspace-trade-analyzer-panel.tsx"),
   join(dashboardRoot, "workspace", "workspace-trade-library-client.tsx"),
 ]);
@@ -105,6 +108,23 @@ describe("TraderLink Platform dashboard template enforcement", () => {
       (href.startsWith("/press-releases/") &&
         channels.includes(`case "${href.slice("/press-releases/".length)}":`));
     expect(DASHBOARD_NAVIGATION_HREFS.filter(href => !resolves(href))).toEqual([]);
+  });
+
+  it("places all Analyzer analysis routes in the top-level Trade Analyzer sidebar group", () => {
+    const analyzerRoot = join(dashboardRoot, "analytics", "trade-analyzer");
+    const routes = filesBelow(analyzerRoot)
+      .filter((path) => path.endsWith(`${sep}page.tsx`))
+      .map(routeForPage);
+    const groups = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map(({ group }) => group);
+    const analyzer = groups.find(({ id }) => id === "tradeAnalyzer");
+    const journal = groups.find(({ id }) => id === "tradeJournal");
+    expect(routes.length).toBeGreaterThan(0);
+    expect(analyzer?.items.filter(isDashboardNavigationItem)
+      .map(({ href }) => href).filter((href) => href.startsWith("/analytics/trade-analyzer/"))
+      .sort()).toEqual(routes.sort());
+    const journalGroupIds = journal?.subgroups?.map(({ id }) => id);
+    expect(journalGroupIds).toContain("analytics");
+    expect(journalGroupIds).not.toContain("tradeAnalyzer");
   });
 
   it("rejects local dashboard shells, headers, sidebars, and page containers", () => {

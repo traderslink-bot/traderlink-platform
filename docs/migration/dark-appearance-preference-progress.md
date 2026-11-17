@@ -49,6 +49,27 @@ offline mode behavior without a dashboard refresh. Fresh navigation/reload
 remains server-authoritative. No authentication, data, migration, service
 worker, background job or other PWA capture behavior changed.
 
+## 2026-11-17 dashboard text inheritance
+
+The global `body` rule draws its color from `--foreground`. It previously
+kept the Light value beneath the Navy Dark dashboard because the unlayered
+global rule takes precedence over the Material baseline's layered `color`
+declaration. Plain dashboard text inherited `#171717`, while Material cards
+already set their own foreground. This reproduced on Workspace's Demo Trade
+Tracker invitation and on the Trade Analyzer allowance and reset messages.
+
+The shared Navy Dark baseline now sets `--foreground` from the active theme's
+primary text token. Plain HTML and Material text that inherits its color use
+white across dashboard routes. The Light baseline keeps the existing
+foreground. Components that set their own semantic colors use those colors.
+
+Chromium confirmed white text on Workspace and Trade Analyzer at desktop and
+390px mobile widths, including a plain paragraph rendered outside a card. The
+appearance switch restored the approved Light foreground and then restored
+Navy Dark. The public Privacy page retained its public foreground. The focused
+theme, dashboard, demo, and allowance suite passed 16 tests. The affected
+Help Center instructions for the two features still apply.
+
 ## Guardrails
 
 - The task is source-only. No migration is applied and no local database,

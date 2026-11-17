@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import withSerwistInit from "@serwist/next";
 
 import { legacyIntelligenceRedirects } from "./src/modules/platform/contracts/legacy-intelligence-route-disposition";
+import { PLATFORM_HOME_PAGES, PLATFORM_LEGACY_WELCOME_PATH } from "./src/modules/platform/contracts/platform-home-page";
 
 type WebpackCompilation = Readonly<{
   getAssets: () => readonly Readonly<{
@@ -82,6 +83,8 @@ const privateNoStoreHeaders: { key: string; value: string }[] = [
 const privateTraderLinkRoutes = [
   "/intelligence/:path*",
   "/workspace/:path*",
+  PLATFORM_HOME_PAGES.welcome.href,
+  PLATFORM_LEGACY_WELCOME_PATH,
   "/calendar/:path*",
   "/quick-trade-entry",
   "/trade-tracker/:path*",
@@ -235,6 +238,7 @@ const nextConfig: NextConfig = {
         destination: "https://traderslink.pro/:path*",
         permanent: true,
       },
+      { source: PLATFORM_LEGACY_WELCOME_PATH, destination: PLATFORM_HOME_PAGES.welcome.href, permanent: true },
       ...legacyIntelligenceRedirects(),
       ...legacyTopLevelReplacementRedirects,
       {

@@ -285,7 +285,7 @@ function TradersLinkBetaPromotion() {
         </span>
         <Link
           className="news-traderslink-beta-action-button"
-          href="/login?returnTo=%2Fworkspace"
+          href="/login?returnTo=%2Fdashboard-entry"
         >
           LOG IN NOW!
         </Link>

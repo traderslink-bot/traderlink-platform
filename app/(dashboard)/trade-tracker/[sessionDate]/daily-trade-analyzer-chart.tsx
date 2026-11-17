@@ -556,7 +556,7 @@ export function DailyTradeAnalyzerChart({
         color: chartSemanticColors.vwap,
         crosshairMarkerVisible: false,
         lastValueVisible: false,
-        lineWidth: 2,
+        lineWidth: 1,
         priceLineVisible: false,
         title: "Session VWAP",
       });
@@ -569,7 +569,7 @@ export function DailyTradeAnalyzerChart({
         color: chartSemanticColors.ema,
         crosshairMarkerVisible: false,
         lastValueVisible: false,
-        lineWidth: 2,
+        lineWidth: 1,
         priceLineVisible: false,
         title: `${chartInterval} EMA 9${savedIndicators ? "" : " (older calculation)"}`,
       });
@@ -578,7 +578,7 @@ export function DailyTradeAnalyzerChart({
       ));
       if (savedIndicators) {
         const ema20 = chart.addSeries(LineSeries, { color: chartSemanticColors.ema, lineStyle: LineStyle.Dashed,
-          crosshairMarkerVisible: false, lastValueVisible: false, lineWidth: 2, priceLineVisible: false,
+          crosshairMarkerVisible: false, lastValueVisible: false, lineWidth: 1, priceLineVisible: false,
           title: `${chartInterval} EMA 20` });
         ema20.setData(savedIndicators.ema20.map((point) => ({ ...point, time: point.time as Time })));
       }
@@ -598,7 +598,7 @@ export function DailyTradeAnalyzerChart({
     }
     if (layers.rsi && rsiAvailable && savedIndicators) {
       const pane = layers.volume ? 2 : 1;
-      const rsi = chart.addSeries(LineSeries, { color: chartSemanticColors.vwap, lineWidth: 2,
+      const rsi = chart.addSeries(LineSeries, { color: chartSemanticColors.vwap, lineWidth: 1,
         priceLineVisible: false, title: `${chartInterval} RSI 14`,
         priceFormat: { type: "price", precision: 1, minMove: 0.1 } }, pane);
       rsi.setData(savedIndicators.rsi14.map((point) => ({ ...point, time: point.time as Time })));

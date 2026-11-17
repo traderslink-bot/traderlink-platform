@@ -1,3 +1,5 @@
+import { PLATFORM_HOME_PAGES } from "@/src/modules/platform/contracts/platform-home-page";
+
 export type DashboardNavigationIconKey =
   | "admin"
   | "account"
@@ -15,6 +17,7 @@ export type DashboardNavigationIconKey =
   | "execution"
   | "halt"
   | "help"
+  | "home"
   | "import"
   | "lab"
   | "manualEntry"
@@ -40,6 +43,7 @@ export type DashboardNavigationIconKey =
   | "tradeExplorer"
   | "tradeGroup"
   | "trades"
+  | "trendMomentum"
   | "watchlist"
   | "workspace";
 
@@ -146,6 +150,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       icon: "tradeAnalyzer" as const,
       items: Object.freeze([
         Object.freeze({
+          href: "/trade-analyzer",
+          label: "Trade Analyzer",
+          icon: "tradeAnalyzer" as const,
+        }),
+        Object.freeze({
           href: "/analytics/trade-analyzer/day",
           label: "Day Trade Analysis",
           icon: "dayTradeAnalysis" as const,
@@ -181,7 +190,12 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "marketCharts" as const,
           depth: 2 as const,
         }),
-        Object.freeze({ href: "/analytics/trade-analyzer/day/trend-momentum", label: "Trend & Momentum", icon: "marketCharts" as const, depth: 2 as const }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/trend-momentum",
+          label: "Trend & Momentum",
+          icon: "trendMomentum" as const,
+          depth: 2 as const,
+        }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/trades",
           label: "Your analyzed trades",
@@ -270,10 +284,10 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
     }),
   ]);
 
-// Kept for dashboard-template compatibility. Scanner and Market Charts now live
-// in Trading Tools, so there are no standalone sidebar links.
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
-  Object.freeze([]);
+  Object.freeze([
+    Object.freeze({ ...PLATFORM_HOME_PAGES.welcome, icon: "home" as const }),
+  ]);
 
 export type DashboardSidebarNavigationSection = Readonly<
   {
@@ -283,7 +297,7 @@ export type DashboardSidebarNavigationSection = Readonly<
   }
 >;
 
-const journalGroupIds = new Set<DashboardNavigationGroup["id"]>(["tradeEntry", "trades", "tradeAnalyzer", "analytics"]);
+const journalGroupIds = new Set<DashboardNavigationGroup["id"]>(["tradeEntry", "trades", "analytics"]);
 const tradeJournalGroup: DashboardNavigationGroup = Object.freeze({
   id: "tradeJournal",
   label: "Trade Journal",
@@ -293,13 +307,17 @@ const tradeJournalGroup: DashboardNavigationGroup = Object.freeze({
 });
 
 export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNavigationSection[] =
-  Object.freeze([...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(group => !journalGroupIds.has(group.id)), tradeJournalGroup]
-    .map(group => Object.freeze({ kind: "group" as const, group })));
+  Object.freeze([
+    ...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(({ id }) => id !== "tradeAnalyzer" && !journalGroupIds.has(id)),
+    ...DASHBOARD_MAIN_NAVIGATION_GROUPS.filter(({ id }) => id === "tradeAnalyzer"),
+    tradeJournalGroup,
+  ].map(group => Object.freeze({ kind: "group" as const, group })));
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
     "/trading-workspace": "Trading Workspace",
-    "/workspace": "Welcome to TradersLink Beta App.",
+    "/workspace": "Journal Workspace",
+    [PLATFORM_HOME_PAGES.welcome.href]: PLATFORM_HOME_PAGES.welcome.label,
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/scanner": "Scanner",
@@ -317,6 +335,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/admin/journal/communities": "Communities Administration",
     "/admin/journal/communities/admission": "Community admission",
     "/admin/journal/coaching": "Coaching commercial settings",
+    "/trade-analyzer": "Trade Analyzer",
     "/trade-tracker": "Session Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
     "/quick-trade-entry": "Quick Trade Entry",
@@ -362,6 +381,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
   DASHBOARD_HOME_ITEM.href,
+  ...DASHBOARD_STANDALONE_ITEMS.map(item => item.href),
   ...DASHBOARD_MAIN_NAVIGATION_GROUPS.flatMap((group) =>
     group.items.filter(isDashboardNavigationItem).map((item) => item.href),
   ),
@@ -380,6 +400,10 @@ export function isTradeJournalNavigationPath(pathname: string): boolean {
   return activeHref !== undefined && tradeJournalHrefs.has(activeHref);
 }
 
+export function isTradeAnalyzerNavigationPath(pathname: string): boolean {
+  return /^\/(?:trade-analyzer|analytics\/trade-analyzer)(?:\/|$)/u.test(pathname);
+}
+
 export type DashboardHelpTarget = Readonly<{
   href: string;
   label: string;
@@ -390,6 +414,7 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
     Object.freeze({ route: "/partner-channels", href: "/help/paid-plan/partner-channels", label: "Partner Channels" }),
     Object.freeze({ route: "/admin/scanners", href: "/help/tools/live-screeners", label: "Scanner Admin" }),
     Object.freeze({ route: "/scanners", href: "/help/tools/live-screeners", label: "Scanners" }),
+    Object.freeze({ route: "/trade-analyzer", href: "/help/trade-analyzer/analyzed-trades#enter-trades", label: "Trade Analyzer" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),
     Object.freeze({ route: "/reverse-splits", href: "/reverse-splits/help", label: "Reverse Splits" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/trend-momentum", href: "/help/trade-analyzer/trend-momentum", label: "Trend & Momentum" }),
