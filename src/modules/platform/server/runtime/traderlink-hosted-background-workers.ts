@@ -27,6 +27,11 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
   startWatchlistSetupSharedFeed();
   startConfiguredLiveScannerRuntime();
   startPlatformLoginMailWorker();
+  if(process.env.NODE_ENV==="production"&&process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"){
+    void import("@/src/modules/communities/server/stats/community-stats-runtime")
+      .then(({startHostedCommunityStats})=>startHostedCommunityStats())
+      .catch(()=>console.error("TraderLink Community Stats could not start."));
+  }
 
   // Off until a separately authorized release enables Community delivery.
   if (process.env.NODE_ENV === "production"

@@ -1,4 +1,5 @@
 import "server-only";
+import {isCommunityReviewDiscordGuild} from "../community-review-discord-guild";
 import type Database from "better-sqlite3";
 import {CommunityStatsRepository} from "./community-stats-repository";
 import {statsBotChannels} from "./community-stats-channel-selection";
@@ -13,7 +14,7 @@ const text=(value:unknown):string|null=>typeof value==="string"?value.slice(0,80
 import {statsHistoryIdentityHash,statsHistoryReady,ensureStatsHistoryJob} from "./community-stats-history-storage";
 type Community={communityId:string;guildId:string;version:number;selected:string[];ownerId:string;topologyAt:string};
 type Job={channel_id:string;parent_id:string|null;kind:"messages"|"archived"|"active";cursor:string|null;snapshot_at_utc:string};
-type Topology={roles:unknown;channels:Map<string,{name:string;type:number}>;at:number;topologyAt:string;member?:unknown;phase:"guild"|"member"|"channels"|"ready"};
+type Topology={threads:Set<string>;roles:unknown;channels:Map<string,{name:string;type:number}>;at:number;topologyAt:string;member?:unknown;phase:"guild"|"member"|"channels"|"ready"};
 /** History must be readable by everyone, not only by the bot's elevated role. */
 export function statsPublicHistoryChannels(guildId:string,roles:unknown,channels:unknown){
   const result=statsPublicChannels(guildId,roles,channels);
@@ -52,11 +53,13 @@ export class CommunityStatsHistory {
       WHERE c.community_id=? AND c.status='active' AND d.checked_at_utc>=? AND m.checked_at_utc>=?
       AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL)`)
       .get(communityId,new Date(Date.now()-90_000).toISOString(),new Date(Date.now()-90_000).toISOString()) as {guildId:string;version:number;channels:string;ownerId:string;topologyAt:string}|undefined;
-    if(!row)return null;
+    if(!row||!isCommunityReviewDiscordGuild(row.guildId))return null;
     const selected=JSON.parse(row.channels) as string[];
     return selected.length&&selected.every(id)?{communityId,guildId:row.guildId,version:row.version,selected,ownerId:row.ownerId,topologyAt:row.topologyAt}:null;
   }
-  private async get(path:string,token:string):Promise<unknown>{
+  private async get(path:string,token:string,community:Community):Promise<unknown>{
+    const current=this.eligible(community.communityId);
+    if(!current||current.guildId!==community.guildId||current.version!==community.version||current.ownerId!==community.ownerId)throw new HistoryRequestError("Community collection access changed.",300,true);
     const response=await this.request(`https://discord.com/api/v10${path}`,{headers:{Authorization:`Bot ${token}`},signal:AbortSignal.timeout(10_000),redirect:"error",cache:"no-store"});
     if(!response.ok){
       const retry=Number(response.headers.get("retry-after"));
@@ -76,7 +79,7 @@ export class CommunityStatsHistory {
     if(!Array.isArray(raw))throw new Error("Invalid public thread response.");
     const threads=raw.map(object);
     for(const thread of threads){
-      if(![10,11].includes(Number(thread.type))||!id(thread.id)||!id(thread.parent_id)||!community.selected.includes(thread.parent_id)||!publicChannels.has(thread.parent_id))continue;
+      if((thread.guild_id!==undefined&&thread.guild_id!==community.guildId)||![10,11].includes(Number(thread.type))||!id(thread.id)||!id(thread.parent_id)||!community.selected.includes(thread.parent_id)||!publicChannels.has(thread.parent_id))continue;
       this.job(community,thread.id,"messages",at,thread.parent_id);
     }
     return threads;
@@ -106,7 +109,7 @@ export class CommunityStatsHistory {
     return inserted;
   }
   async tick(communityIds:readonly string[],token:string):Promise<void>{
-    if(this.busy||!statsHistoryReady(this.db))return;
+    if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||this.busy||!statsHistoryReady(this.db))return;
     this.busy=true;
     let community:Community|null=null,job:Job|undefined,refresh:StatsReactionRefresh|undefined;
     try{
@@ -126,19 +129,22 @@ export class CommunityStatsHistory {
       }
       if(!community)return;
       if(this.botToken!==token){this.botId=null;this.botToken=token;this.topology.clear();}
-      if(!this.botId){const bot=object(await this.get("/users/@me",token));if(!id(bot.id))throw new Error("Bot identity unavailable.");this.botId=bot.id;return;}
+      if(!this.botId){const bot=object(await this.get("/users/@me",token,community));if(!id(bot.id))throw new Error("Bot identity unavailable.");this.botId=bot.id;return;}
       const key=`${community.communityId}:${community.version}`;
       let topology=this.topology.get(key);
-      if(!topology||topology.topologyAt!==community.topologyAt||Date.now()-topology.at>600_000){topology={roles:[],channels:new Map(),at:Date.now(),topologyAt:community.topologyAt,phase:"guild"};this.topology.set(key,topology);}
+      if(!topology||topology.topologyAt!==community.topologyAt||Date.now()-topology.at>600_000){topology={threads:new Set(),roles:[],channels:new Map(),at:Date.now(),topologyAt:community.topologyAt,phase:"guild"};this.topology.set(key,topology);}
       if(topology.phase==="guild"){
-        const guild=object(await this.get(`/guilds/${community.guildId}`,token));
+        const guild=object(await this.get(`/guilds/${community.guildId}`,token,community));
         if(guild.id!==community.guildId||guild.owner_id!==community.ownerId)throw new HistoryRequestError("Community ownership could not be verified.",300);
         topology.roles=guild.roles;topology.phase="member";return;
       }
-      if(topology.phase==="member"){topology.member=await this.get(`/guilds/${community.guildId}/members/${this.botId}`,token);if(object(object(topology.member).user).id!==this.botId)throw new Error("Bot membership unavailable.");topology.phase="channels";return;}
+      if(topology.phase==="member"){topology.member=await this.get(`/guilds/${community.guildId}/members/${this.botId}`,token,community);if(object(object(topology.member).user).id!==this.botId)throw new Error("Bot membership unavailable.");topology.phase="channels";return;}
       if(topology.phase==="channels"){
-        const channels=await this.get(`/guilds/${community.guildId}/channels`,token);
+        const channels=await this.get(`/guilds/${community.guildId}/channels`,token,community);
         topology.channels=statsBotChannels(community.guildId,topology.roles,channels,topology.member,true);
+        // A persisted thread ID is not current guild evidence. Rediscover thread
+        // inventories after refreshing topology; completed message scans stay intact.
+        this.db.prepare("UPDATE community_stats_history_jobs SET status='pending',cursor=NULL,retry_at_utc=? WHERE community_id=? AND configuration_version=? AND kind IN('active','archived')").run(at,community.communityId,community.version);
         topology.phase="ready";topology.at=Date.now();return;
       }
       new CommunityStatsRepository(this.db).transaction(()=>{
@@ -158,10 +164,10 @@ export class CommunityStatsHistory {
         this.refreshNext=false;
         const selected=community.selected;
         const parent=selected.includes(refresh.channel_id)?refresh.channel_id:(this.db.prepare(`SELECT parent_id FROM community_stats_history_jobs WHERE community_id=? AND channel_id=? AND parent_id IN(SELECT value FROM json_each(?)) ORDER BY configuration_version DESC LIMIT 1`).get(community.communityId,refresh.channel_id,JSON.stringify(selected)) as {parent_id:string}|undefined)?.parent_id;
-        if(!parent||!topology.channels.has(parent)){
+        if(!parent||!topology.channels.has(parent)||(!topology.channels.has(refresh.channel_id)&&!topology.threads.has(refresh.channel_id))){
           this.db.prepare(`DELETE FROM community_stats_reaction_refresh WHERE community_id=? AND message_id=? AND version=?`).run(community.communityId,refresh.message_id,refresh.version);return;
         }
-        const response=object(await this.get(`/channels/${refresh.channel_id}/messages/${refresh.message_id}`,token));
+        const response=object(await this.get(`/channels/${refresh.channel_id}/messages/${refresh.message_id}`,token,community));
         const current=this.eligible(community.communityId);
         if(!current||current.version!==community.version||current.ownerId!==community.ownerId||current.topologyAt!==community.topologyAt||JSON.stringify(current.selected)!==JSON.stringify(selected))return;
         if(response.id!==refresh.message_id||response.channel_id!==refresh.channel_id)throw new Error("Invalid reaction refresh response.");
@@ -176,8 +182,10 @@ export class CommunityStatsHistory {
       if(!job)return;
       const parent=job.parent_id??job.channel_id;
       if(job.kind!=="active"&&(!community.selected.includes(parent)||!topology.channels.has(parent)))throw new HistoryRequestError("Selected channel is no longer accessible.",300,true);
+      if(job.kind!=="active"&&job.channel_id!==parent&&!topology.threads.has(job.channel_id))throw new HistoryRequestError("Thread needs fresh server inventory verification.",300,true);
+      if(job.kind==="active"&&job.channel_id!==community.guildId)throw new HistoryRequestError("Server history target changed.",300,true);
       const path=job.kind==="active"?`/guilds/${community.guildId}/threads/active`:job.kind==="archived"?`/channels/${job.channel_id}/threads/archived/public?limit=100${job.cursor?`&before=${encodeURIComponent(job.cursor)}`:""}`:`/channels/${job.channel_id}/messages?limit=100${job.cursor?`&before=${job.cursor}`:""}`;
-      const response=await this.get(path,token);
+      const response=await this.get(path,token,community);
       const current=this.eligible(community.communityId);
       if(!current||current.version!==community.version||current.ownerId!==community.ownerId||current.topologyAt!==community.topologyAt||JSON.stringify(current.selected)!==JSON.stringify(community.selected))return;
       new CommunityStatsRepository(this.db).transaction(()=>{
@@ -193,6 +201,7 @@ export class CommunityStatsHistory {
           this.db.prepare(`UPDATE community_stats_events AS e SET reply_delay_seconds=(SELECT max(0,cast(round((julianday(e.occurred_at_utc)-julianday(p.occurred_at_utc))*86400) AS INTEGER)) FROM community_stats_events p WHERE p.community_id=e.community_id AND p.event_id=e.reply_to_event_id AND p.discord_user_id!=e.discord_user_id AND p.occurred_at_utc<=e.occurred_at_utc) WHERE e.community_id=? AND e.evidence='imported_message' AND e.reply_to_event_id IS NOT NULL AND e.reply_delay_seconds IS NULL AND(e.event_id IN(SELECT value FROM json_each(?)) OR e.reply_to_event_id IN(SELECT value FROM json_each(?)))`).run(community!.communityId,messageIds,messageIds);
         }else{
           const data=object(response),threads=this.importThreads(community!,data.threads,at,topology!.channels);scanned=threads.length;
+          for(const thread of threads)if([10,11].includes(Number(thread.type))&&id(thread.id)&&id(thread.parent_id)&&community!.selected.includes(thread.parent_id)&&topology!.channels.has(thread.parent_id)&&(thread.guild_id===undefined||thread.guild_id===community!.guildId))topology!.threads.add(thread.id);
           complete=job!.kind==="active"||data.has_more===false;
           if(!complete){const times=threads.map(thread=>instant(object(thread.thread_metadata).archive_timestamp)).filter((time):time is string=>!!time).sort();cursor=times[0]??null;if(!cursor||job!.cursor&&cursor>=job!.cursor)throw new Error("Archived-thread cursor did not advance.");}
         }

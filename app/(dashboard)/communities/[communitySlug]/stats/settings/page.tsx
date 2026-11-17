@@ -1,7 +1,7 @@
 import {notFound} from "next/navigation";
 import {DashboardPage} from "@/app/dashboard-ui";
 import {CommunityNavigation} from "../../../community-navigation";
-import {loadCommunityDashboard} from "../../../community-dashboard-loader";
+import {loadCommunityPublishingDashboard as loadCommunityDashboard} from "../../../community-publication-dashboard-loader";
 import {CommunityStatsSettings} from "../../../community-stats-settings";
 
 export default async function CommunityStatsSettingsPage({params}:{params:Promise<{communitySlug:string}>}){

@@ -2,6 +2,7 @@ import {readStatsOlderPageCounts} from "@/src/modules/communities/server/stats/c
 import {readCommunityStatsCatalog} from "@/src/modules/communities/server/stats/community-stats-catalog";
 import {readStatsTrackingStatus} from "@/src/modules/communities/server/stats/community-stats-tracking-status";
 import {randomUUID} from "node:crypto";
+import {requireCommunityOwnerReviewIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {requireTraderLinkPlatformRequestIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {openReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {openPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
@@ -33,7 +34,7 @@ function csvCell(value:unknown):string{
 export async function GET(request:Request,context:Context):Promise<Response>{
   let database:ReturnType<typeof openReadonlyPlatformDatabase>|null=null;
   try{
-    const identity=requireTraderLinkPlatformRequestIdentity(request.headers),{communitySlug}=await context.params;
+    const identity=requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers)),{communitySlug}=await context.params;
     database=openReadonlyPlatformDatabase();
     const query=new URL(request.url).searchParams;
     const scope=await authorizeCommunityStats(database,communitySlug,identity.scope.userId,query.get("personal")==="1"?"visit":"read");
@@ -130,7 +131,7 @@ export async function POST(request:Request,context:Context):Promise<Response>{
   let database:ReturnType<typeof openPlatformDatabase>|null=null;
   try{
     assertStatsSameOrigin(request);
-    const identity=requireTraderLinkPlatformRequestIdentity(request.headers),{communitySlug}=await context.params;
+    const identity=requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers)),{communitySlug}=await context.params;
     const body=await readCommunityStatsJson(request,131_072) as Record<string,unknown>;
     if(!body||Array.isArray(body)||typeof body!=="object"||Object.keys(body).some(key=>!["discordEnabled","channelIds","ownContentUserIds","exportUserIds","retryConnection","expectedRevision"].includes(key))||typeof body.discordEnabled!=="boolean"||(body.retryConnection!==undefined&&typeof body.retryConnection!=="boolean")||(body.expectedRevision!==null&&(!Number.isSafeInteger(body.expectedRevision)||Number(body.expectedRevision)<0)))return new Response(null,{status:400,headers});
     const arrays=[body.channelIds,body.ownContentUserIds,body.exportUserIds];

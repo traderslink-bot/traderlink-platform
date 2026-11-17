@@ -12,7 +12,7 @@ export function statsBotChannels(guildId:string,roles:unknown,channels:unknown,m
  const assigned=new Set(bot.roles);let base=BigInt(String(everyone.permissions));for(const r of all)if(assigned.has(String(r.id)))base|=BigInt(String(r.permissions));
  const admin=Boolean(base&BigInt(8));
  for(const c of channels.map(object)){
-  if(!numeric(c.id)||![0,2,5,13,15,16].includes(Number(c.type))||!Array.isArray(c.permission_overwrites))continue;
+  if((c.guild_id!==undefined&&c.guild_id!==guildId)||!numeric(c.id)||![0,2,5,13,15,16].includes(Number(c.type))||!Array.isArray(c.permission_overwrites))continue;
   const overwrites=c.permission_overwrites.map(object);if(overwrites.some(o=>!numeric(o.id)||![0,1].includes(Number(o.type))||!numeric(o.allow)||!numeric(o.deny)))continue;
   let permissions=base;const apply=(deny:bigint,allow:bigint)=>{permissions=(permissions&~deny)|allow;};
   const e=overwrites.find(o=>o.id===guildId&&o.type===0);if(e)apply(BigInt(String(e.deny)),BigInt(String(e.allow)));

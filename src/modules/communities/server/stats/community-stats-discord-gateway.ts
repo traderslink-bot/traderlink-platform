@@ -1,4 +1,6 @@
 import "server-only";
+import {isCommunityReviewDiscordGuild} from "../community-review-discord-guild";
+import {resolvePlatformBackgroundWorkerMode} from "../../../platform/server/runtime/platform-background-worker-mode";
 import type Database from "better-sqlite3";
 import {ensureStatsHistoryJob} from "./community-stats-history-storage";
 import {statsBotChannels} from "./community-stats-channel-selection";
@@ -7,7 +9,7 @@ import {randomUUID} from "node:crypto";
 import {CommunityStatsRepository} from "./community-stats-repository";
 import {CommunityStatsDiscordEvents,statsDiscordMember} from "./community-stats-discord-events";
 
-type Guild={topology:{roles:unknown;channels:unknown;threads:unknown}|null;communityId:string;guildId:string;selected:Set<string>;channels:Set<string>;ready:boolean;readyAt:string|null;chunks:Set<number>;chunkCount:number;seen:Set<string>;nonce:string;threadIds:Set<string>;forumThreadIds:Set<string>;forumParents:Set<string>;baselineChanged:Set<string>;gapSince:string|null;ownerVerified:boolean;awaitingRoster:boolean;requestedAt:string|null};
+type Guild={ownerDiscordId:string|null;configurationVersion:number;topology:{roles:unknown;channels:unknown;threads:unknown}|null;communityId:string;guildId:string;selected:Set<string>;channels:Set<string>;ready:boolean;readyAt:string|null;chunks:Set<number>;chunkCount:number;seen:Set<string>;nonce:string;threadIds:Set<string>;forumThreadIds:Set<string>;forumParents:Set<string>;baselineChanged:Set<string>;gapSince:string|null;ownerVerified:boolean;awaitingRoster:boolean;requestedAt:string|null};
 type Packet={op:number;s?:number;t?:string;d?:unknown};
 type Data=Record<string,unknown>;
 const object=(value:unknown):Data=>value&&typeof value==="object"&&!Array.isArray(value)?value as Data:{};
@@ -30,9 +32,9 @@ export class CommunityStatsDiscordGateway{
   private retry=0;
   private lastConfirmed:string|null=null;
   private guilds=new Map<string,Guild>();
-  constructor(private readonly database:()=>Database.Database,private readonly token:string,communities:readonly {communityId:string;guildId:string;channelIds:readonly string[]}[]){
+  constructor(private readonly database:()=>Database.Database,private readonly token:string,communities:readonly {communityId:string;guildId:string;channelIds:readonly string[];configurationVersion?:number}[]){
     this.invites=new CommunityStatsInvites(this.database(),this.token);
-    for(const community of communities)this.guilds.set(community.guildId,{...community,topology:null,selected:new Set(community.channelIds),channels:new Set(),ready:false,readyAt:null,chunks:new Set(),chunkCount:0,seen:new Set(),nonce:`stats-${community.communityId}`.slice(0,32),threadIds:new Set(),forumThreadIds:new Set(),forumParents:new Set(),baselineChanged:new Set(),gapSince:null,ownerVerified:false,awaitingRoster:false,requestedAt:null});
+    for(const community of communities.filter(item=>isCommunityReviewDiscordGuild(item.guildId)))this.guilds.set(community.guildId,{...community,ownerDiscordId:null,configurationVersion:community.configurationVersion??(this.database().prepare("SELECT discord_configuration_version AS version FROM community_stats_settings WHERE community_id=?").get(community.communityId) as {version:number}|undefined)?.version??-1,topology:null,selected:new Set(community.channelIds),channels:new Set(),ready:false,readyAt:null,chunks:new Set(),chunkCount:0,seen:new Set(),nonce:`stats-${community.communityId}`.slice(0,32),threadIds:new Set(),forumThreadIds:new Set(),forumParents:new Set(),baselineChanged:new Set(),gapSince:null,ownerVerified:false,awaitingRoster:false,requestedAt:null});
     const repo=this.repository(),cutoff="2015-01-01T00:00:00.000Z";
     for(const guild of this.guilds.values()){const last=repo.db.prepare(`SELECT max(until_utc) AS at FROM community_stats_coverage WHERE community_id=? AND source='discord' AND state='observed'`).get(guild.communityId) as {at:string|null};if(last.at)guild.gapSince=last.at<cutoff?cutoff:last.at;}
   }
@@ -57,7 +59,12 @@ export class CommunityStatsDiscordGateway{
     const settings=db.prepare(`SELECT discord_configuration_version AS version FROM community_stats_settings WHERE community_id=?`).get(guild.communityId) as {version:number}|undefined;
     if(settings)ensureStatsHistoryJob(db,guild.communityId,settings.version,String(thread.id),"messages",at,String(thread.parent_id));
   }
-  private requestRoster(guild:Guild,atUtc:string):void{guild.nonce=randomUUID().replaceAll("-","");guild.awaitingRoster=true;guild.requestedAt=atUtc;guild.chunkCount=0;this.send(8,{guild_id:guild.guildId,query:"",limit:0,nonce:guild.nonce});}
+  private currentGuild(guild:Guild):boolean{
+    if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||!isCommunityReviewDiscordGuild(guild.guildId))return false;
+    const owner=this.database().prepare("SELECT i.auth_subject AS id FROM traderlink_communities c JOIN community_stats_settings s ON s.community_id=c.community_id JOIN platform_users u ON u.user_id=c.owner_user_id AND u.status='active' JOIN platform_auth_identities i ON i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.status='active' WHERE c.community_id=? AND c.discord_guild_id=? AND c.status='active' AND s.discord_enabled=1 AND s.discord_configuration_version=?").get(guild.communityId,guild.guildId,guild.configurationVersion) as {id:string}|undefined;
+    return !!owner&&(!guild.ownerVerified||owner.id===guild.ownerDiscordId);
+  }
+  private requestRoster(guild:Guild,atUtc:string):void{if(!this.currentGuild(guild))return;guild.nonce=randomUUID().replaceAll("-","");guild.awaitingRoster=true;guild.requestedAt=atUtc;guild.chunkCount=0;this.send(8,{guild_id:guild.guildId,query:"",limit:0,nonce:guild.nonce});}
   private disconnect(reason:string):void{
     const at=now(),repo=this.repository(),lastConfirmed=this.lastConfirmed;
     this.lastConfirmed=null;
@@ -72,7 +79,7 @@ export class CommunityStatsDiscordGateway{
     }});
   }
   private connect():void{
-    if(this.stopped||this.fatal)return;
+    if(this.stopped||this.fatal||process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||resolvePlatformBackgroundWorkerMode()!=="enabled"||![...this.guilds.values()].some(guild=>this.currentGuild(guild)))return;
     const base=this.sessionId&&this.resumeUrl?this.resumeUrl:"wss://gateway.discord.gg";
     const socket=new WebSocket(`${base}/?v=10&encoding=json`);this.socket=socket;
     socket.onmessage=event=>{
@@ -122,7 +129,7 @@ export class CommunityStatsDiscordGateway{
       // Re-identify to obtain GUILD_CREATE before claiming complete collection again.
       this.sessionId=null;this.resumeUrl=null;this.sequence=null;this.fail("refresh_snapshot_after_resume");return;
     }
-    const guild=this.guilds.get(String(["GUILD_CREATE","GUILD_UPDATE","GUILD_DELETE"].includes(packet.t)?data.id:data.guild_id));if(!guild)return;
+    const guild=this.guilds.get(String(["GUILD_CREATE","GUILD_UPDATE","GUILD_DELETE"].includes(packet.t)?data.id:data.guild_id));if(!guild||!this.currentGuild(guild))return;
     const repo=this.repository(),at=now();
     if(packet.t==="GUILD_CREATE"&&data.unavailable===true){
       this.invites.invalidate(guild.communityId);
@@ -138,6 +145,7 @@ export class CommunityStatsDiscordGateway{
     }
     if(packet.t==="GUILD_CREATE"||packet.t==="GUILD_UPDATE"&&typeof data.owner_id==="string"){
       const owner=repo.db.prepare(`SELECT i.auth_subject AS id FROM traderlink_communities c JOIN platform_auth_identities i ON i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.status='active' JOIN platform_users u ON u.user_id=i.user_id AND u.status='active' WHERE c.community_id=? AND c.discord_guild_id=? AND c.status='active'`).get(guild.communityId,guild.guildId) as {id:string}|undefined;
+      guild.ownerDiscordId=owner?.id??null;
       guild.ownerVerified=typeof data.owner_id==="string"&&owner?.id===data.owner_id;
       if(!guild.ownerVerified){
         guild.ready=false;guild.readyAt=null;
@@ -175,7 +183,7 @@ export class CommunityStatsDiscordGateway{
 
         });guild.ready=guild.selected.size>0&&[...guild.selected].every(channel=>guild.channels.has(channel));guild.readyAt=at;guild.seen.clear();
         guild.awaitingRoster=false;guild.requestedAt=null;guild.chunks.clear();guild.baselineChanged.clear();
-        this.invites.start({communityId:guild.communityId,guildId:guild.guildId,valid:()=>!this.stopped&&guild.ownerVerified&&!!guild.readyAt});
+        this.invites.start({communityId:guild.communityId,guildId:guild.guildId,valid:()=>!this.stopped&&this.currentGuild(guild)&&guild.ownerVerified&&!!guild.readyAt});
       }return;
     }
     if(packet.t==="GUILD_DELETE"||packet.t.startsWith("CHANNEL_")||packet.t.startsWith("GUILD_ROLE_")){
@@ -196,6 +204,7 @@ export class CommunityStatsDiscordGateway{
   private confirm():void{
     const at=now(),repo=this.repository();
     repo.transaction(()=>{for(const guild of this.guilds.values()){
+      if(!this.currentGuild(guild)){this.invites.invalidate(guild.communityId);continue;}
       if(guild.awaitingRoster&&guild.requestedAt&&Date.parse(at)-Date.parse(guild.requestedAt)>120_000){guild.awaitingRoster=false;guild.requestedAt=null;guild.ready=false;guild.readyAt=null;for(const source of ["discord","membership"] as const)repo.source(guild.communityId,source,"unavailable",at,"The complete guild roster is unavailable. Check the member intent and reconnect collection.");continue;}
       if(guild.readyAt){
         this.retry=0;

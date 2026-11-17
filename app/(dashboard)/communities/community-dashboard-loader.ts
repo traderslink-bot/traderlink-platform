@@ -1,3 +1,5 @@
+import {hasCommunityStatsOwnAccess} from "@/src/modules/communities/server/stats/community-stats-access";
+import type {CommunityStatsNavigationAccess} from "@/src/modules/communities/contracts/community-stats-contracts";
 import {headers} from "next/headers";
 import {readCommunityHistoryEntry} from "@/src/modules/communities/contracts/community-history-entry";
 import {requireCommunityOwnerReviewAuthenticatedPageIdentity,requireCommunityOwnerReviewServerComponentPageIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
@@ -11,12 +13,12 @@ import {isCommunityContentActivityPath} from "@/src/modules/communities/server/c
 import {notFound} from "next/navigation";
 
 /** Selected Coaching and owner management route loader; stock projections remain separate. */
-export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot;isReview:boolean}>>{
+export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
  try{return await loadAuthorizedCoachingDashboard(communitySlug,path);}catch(error){
   if(isTraderLinkPlatformError(error)&&(error.code==="TRADERLINK_WORKSPACE_ACCESS_DENIED"||error.code==="TRADERLINK_WORKSPACE_NOT_FOUND"))notFound();throw error;
  }
 }
-async function loadAuthorizedCoachingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot;isReview:boolean}>>{
+async function loadAuthorizedCoachingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
  const identity=await requireCommunityOwnerReviewServerComponentPageIdentity(),requested=path??`/communities/${communitySlug}`,suffix=requested.slice(`/communities/${communitySlug}`.length);
  const historyPath=suffix==="/coaching"||suffix==="/workspace"||suffix==="/workspace/students"||/^\/workspace\/students\/[^/?#]+(?:\/reviews\/[^/?#]+(?:\/final)?)?$/.test(suffix);
  const existingCoachingPage=historyPath||/^\/workspace\/(coachingwork|reviews|sessions|teaching)$/.test(suffix);let historyOnly=false;
@@ -38,7 +40,8 @@ async function loadAuthorizedCoachingDashboard(communitySlug:string,path?:string
    if(!existingCoachingPage||!ownRelationships.some(row=>row.status==='active'&&!row.archivedAtUtc))notFound();
    current={...current,publishing:undefined,relationships:ownRelationships,plans:[],coaches:[],audiences:[],coachingRoleOptions:[],community:{...current.community,isOwner:false,memberCount:0},viewer:{...current.viewer,capabilities:current.viewer.capabilities.filter(key=>key.startsWith('community.coaching.')&&key!=='community.coaching.manage_all')}};
   }
-  return {...current,lifecycle:database.prepare("SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?").get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0})),viewer:{...current.viewer,activeJournalAccountId:identity.scope.activeAccountId??null,activeJournalAccountName}};
+  const statsOwnContentAccess=!historyOnly&&!deletedOwner&&hasCommunityStatsOwnAccess(database,current.community.communityId,viewer.userId);
+  return {...current,statsOwnContentAccess,lifecycle:database.prepare("SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?").get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0})),viewer:{...current.viewer,activeJournalAccountId:identity.scope.activeAccountId??null,activeJournalAccountName}};
  });
  return Object.freeze({snapshot,isReview:false});
 }

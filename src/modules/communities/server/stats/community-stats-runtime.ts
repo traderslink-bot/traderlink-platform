@@ -1,4 +1,6 @@
 import "server-only";
+import {isCommunityReviewDiscordGuild} from "../community-review-discord-guild";
+import {resolvePlatformBackgroundWorkerMode} from "../../../platform/server/runtime/platform-background-worker-mode";
 import type Database from "better-sqlite3";
 import {openPlatformDatabase} from "../../../platform/server/database/open-platform-database";
 import {approvedCommunityGuildIds} from "../community-launch-policy";
@@ -12,7 +14,7 @@ const key="__traderlinkCommunityStatsRuntime";
 type Global=typeof globalThis&{[key]?:State};
 /** Called only from the hosted single-writer worker bootstrap, never from a page. */
 export function startHostedCommunityStats():void{
-  if((globalThis as Global)[key])return;
+  if(resolvePlatformBackgroundWorkerMode()!=="enabled"||process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||(globalThis as Global)[key])return;
   const database=openPlatformDatabase({mode:"runtime"});
   if(!communityStatsStorageReady(database)){database.close();return;}
   const state:State={database,gateway:null,signature:"",lastWeb:null,historyCommunities:[],historyTimer:undefined as unknown as ReturnType<typeof setInterval>,timer:undefined as unknown as ReturnType<typeof setInterval>};
@@ -26,8 +28,9 @@ export function startHostedCommunityStats():void{
       }
       const communities=database.prepare(`SELECT c.community_id,c.discord_guild_id,s.discord_enabled,s.channel_ids_json,s.discord_configuration_version FROM traderlink_communities c JOIN platform_users owner ON owner.user_id=c.owner_user_id AND owner.status='active' LEFT JOIN community_stats_settings s ON s.community_id=c.community_id WHERE c.status='active' AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL) ORDER BY c.community_id`)
         .all() as {community_id:string;discord_guild_id:string;discord_enabled:number|null;channel_ids_json:string|null;discord_configuration_version:number|null}[];
-      const approved=approvedCommunityGuildIds();
+      const approved=approvedCommunityGuildIds().filter(isCommunityReviewDiscordGuild);
       repo.transaction(()=>{for(const community of communities){
+        if(!isCommunityReviewDiscordGuild(community.discord_guild_id))continue;
         repo.ensureCommunity(community.community_id,at);
         // Close revoked/relinked web eligibility at the first observed change; never relabel history.
         database.prepare(`UPDATE community_stats_identity_links SET until_utc=max(from_utc,?) WHERE community_id=? AND until_utc IS NULL AND NOT EXISTS(

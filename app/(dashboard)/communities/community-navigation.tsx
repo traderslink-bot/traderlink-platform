@@ -4,7 +4,7 @@ import {useEffect,useMemo,useRef} from "react";
 import {useCommunityNavigation,type CommunityMenuItem} from "@/app/community-navigation-context";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 
-type CommunityNavigationSnapshot=Pick<TraderLinkCommunityDashboardSnapshot,"community"|"viewer"|"relationships"> & Partial<Pick<TraderLinkCommunityDashboardSnapshot,"teamMembers"|"contentPages">> & Readonly<{sharedAlertsUnreadCount?:number}>;
+type CommunityNavigationSnapshot=Pick<TraderLinkCommunityDashboardSnapshot,"community"|"viewer"|"relationships"> & Partial<Pick<TraderLinkCommunityDashboardSnapshot,"teamMembers"|"contentPages">> & Readonly<{sharedAlertsUnreadCount?:number;statsOwnContentAccess?:boolean}>;
 type Item={label:string;href:string};
 function buildCommunityMenu(snapshot:CommunityNavigationSnapshot,base:string,scope?:"shared-alerts"){
  if(scope==="shared-alerts"){
@@ -30,7 +30,7 @@ function buildCommunityMenu(snapshot:CommunityNavigationSnapshot,base:string,sco
  const coachingItems:CommunityMenuItem[]=coaching.filter(item=>item.label!=="Coach setup");
  if(has("community.coaching.offer"))coachingItems.push({label:"Coach setup",children:setupItems});
  if(coachingItems.length)items.push({label:"Coaching",children:coachingItems});
- if(has("community.analytics.view"))items.push({label:"Stats",children:[{label:"Activity",href:`${base}/stats/activity`}]});
+ if(snapshot.community.isOwner||has("community.analytics.view")||snapshot.statsOwnContentAccess===true)items.push({label:"Stats",children:[{label:"Overview",href:`${base}/stats/activity`},{label:"Analysts",href:`${base}/stats/analysts`},...(snapshot.community.isOwner||(has("community.team.manage")&&has("community.member_activity.view")&&has("community.analytics.view"))?[{label:"Team",href:`${base}/stats/team`}]:[]),...(snapshot.community.isOwner?[{label:"Settings",href:`${base}/stats/settings`}]:[])]});
  if(snapshot.community.isOwner)manage.push({label:"Shared Alerts",href:`${base}/manage/shared-alerts`},{label:"Publish partner channels",href:`${base}/partner-channels`});
  if(manage.length)items.push({label:"Manage",children:manage});
  const focused=snapshot.community.isOwner||Boolean(snapshot.teamMembers?.some(member=>member.userId===snapshot.viewer.userId))||snapshot.viewer.capabilities.some(capability=>["community.manage","community.team.manage","community.roles.manage","community.members.view","community.member_activity.view","community.analytics.view","community.discord.manage","community.alerts.create","community.alerts.manage_all","community.watchlists.publish_staff","community.watchlists.manage_all","community.coaching.offer","community.coaching.students","community.coaching.manage_all","community.referrals.view"].includes(capability));

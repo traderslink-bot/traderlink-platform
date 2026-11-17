@@ -1,3 +1,5 @@
+import {hasCommunityStatsOwnAccess} from "@/src/modules/communities/server/stats/community-stats-access";
+import type {CommunityStatsNavigationAccess} from "@/src/modules/communities/contracts/community-stats-contracts";
 import {readCommunityViewerChannels} from "@/src/modules/communities/server/community-channel-readership";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import { requireCommunityOwnerReviewServerComponentPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
@@ -10,7 +12,7 @@ import { resolveTraderLinkCommunityViewer } from "@/src/modules/communities/serv
 import { notFound } from "next/navigation";
 import { isCommunityContentActivityPath } from "@/src/modules/communities/server/community-activity-scope";
 
-async function loadAuthorizedCommunityPublishingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}>>{
+async function loadAuthorizedCommunityPublishingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
   try {
     return await loadAuthorizedCommunityDashboard(communitySlug,path);
   } catch (error) {
@@ -19,7 +21,7 @@ async function loadAuthorizedCommunityPublishingDashboard(communitySlug:string,p
   }
 }
 
-async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot;isReview:boolean}>>{
+async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
   if(communitySlug==="review") {
     if(process.env.NODE_ENV==="production"&&process.env.RAILWAY_ENVIRONMENT_NAME!=="staging") notFound();
     const role=path?.includes("/workspace")?"coach":"owner";
@@ -41,6 +43,7 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
     const viewer=historyOnly?{userId:identity.scope.userId,displayName:identity.displayName??"Member",discordRoleIds:[]}:resolveTraderLinkCommunityViewer(database,identity,communitySlug);
     const repository=new TraderLinkCommunityPlatformRepository(database);
     let current=repository.readSnapshot(communitySlug,viewer,{historyOnly,readableChannelIds,detailPath:requested});
+    const statsOwnContentAccess=!historyOnly&&hasCommunityStatsOwnAccess(database,current.community.communityId,viewer.userId);
     const capabilities=new Set(current.viewer.capabilities);
     const requestedPath=path??"";
     const permitted=requestedPath.includes("/manage/alerts")
@@ -62,7 +65,7 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
                 : requestedPath.includes("/manage/members")
                   ? capabilities.has("community.members.view")
                   : (requestedPath.includes("/manage/activity")||requestedPath.includes("/stats"))
-                    ? capabilities.has("community.analytics.view")
+                    ? capabilities.has("community.analytics.view")||statsOwnContentAccess
                     : requestedPath.includes("/manage/channels")
                       ? capabilities.has("community.discord.manage")
                       : requestedPath.includes("/manage")
@@ -96,7 +99,7 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
         community:{...current.community,isOwner:false,memberCount:0},viewer:{...current.viewer,capabilities:current.viewer.capabilities.filter(capability=>capability.startsWith('community.coaching.')&&capability!=='community.coaching.manage_all')},
         settings:{description:'',personalAlertTemplatesEnabled:false},contentPages:[],analytics:{views30Days:0,uniqueMembers30Days:0,alertViews30Days:0,watchlistViews30Days:0,coachingViews30Days:0,topPages:[],namedMemberPages:[],brandedPages:[]},referrals:{attributedMembers:0,tier2Members:0,estimatedEarningsMinor:0,currency:'USD',commissionLabel:'Not configured'}};
     }
-    return {...current,lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
+    return {...current,statsOwnContentAccess,lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
   return Object.freeze({snapshot:{...snapshot,viewer:{...snapshot.viewer,activeJournalAccountId:identity.scope.activeAccountId??null,activeJournalAccountName}},isReview:false});
 }

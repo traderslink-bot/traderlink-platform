@@ -1,3 +1,4 @@
+import {eraseCommunityStatsIdentity} from "../../../communities/server/stats/community-stats-retention";
 import { assertBoundStripeErasureAvailable, hasStripeErasureSchema, runBoundStripeErasure } from "./platform-stripe-erasure-runtime-binding";
 import type Database from "better-sqlite3";
 import { captureErasureClosure, type ErasureRoot } from "./platform-erasure-closure";
@@ -320,6 +321,7 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
       const accountIds = this.database.prepare<[string], { account_id: string }>(`SELECT account_id
 FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) => row.account_id);
       const artifacts = readPrivateArtifacts(this.database, accountIds);
+      eraseCommunityStatsIdentity(this.database,scope.userId);
       const closure = captureScopedRows(this.database, scope);
       try { closure.deleteRows(); } finally { closure.dispose(); }
       if (this.database.prepare("SELECT 1 FROM platform_users WHERE user_id=?").get(scope.userId)) {

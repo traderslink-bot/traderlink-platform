@@ -1,5 +1,5 @@
 // Also used by the existing Node account-erasure workflow, without a Next.js import condition.
-import {statsAttributionReady} from "./community-stats-invites";
+import {statsAttributionReady} from "./community-stats-attribution-ready";
 import type Database from "better-sqlite3";
 import {CommunityStatsRepository,communityStatsStorageReady} from "./community-stats-repository";
 import {statsUtcMs} from "./community-stats-coverage";
