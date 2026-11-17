@@ -121,7 +121,12 @@ export async function createRun(identity: TraderLinkPlatformRequestIdentity, def
   const now = Date.now();
   const preview = identity.mode === "local_development" && process.env.NODE_ENV !== "production";
   const { pack, fallback } = await marketForRun(now, preview);
-  const selected = pack.snapshots[definition.session === "latest" ? pack.latest : definition.session];
+  const lastAfterHours = pack.snapshots.after_hours;
+  const hasClosedAfterHours = pack.latest === "last_regular" && lastAfterHours.closed &&
+    lastAfterHours.date === pack.snapshots.last_regular.date &&
+    lastAfterHours.rows.some(row => row.values.price !== undefined);
+  const session = definition.session === "latest" ? (hasClosedAfterHours ? "after_hours" : pack.latest) : definition.session;
+  const selected = pack.snapshots[session];
   const { rows: snapshotRows, ...info } = process.env.TRADERLINK_STOCK_SCREENERS_LIVE_WORKER === "1"
     ? applyLiveScreenerBook(selected, now) : selected;
   const example = info.source === "Preview data";

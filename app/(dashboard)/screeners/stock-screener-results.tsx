@@ -129,7 +129,7 @@ export function StockScreenerResults({ result, definition, busy, inspect, onSort
         {result.unavailable > 0 && " · " + result.unavailable.toLocaleString() + " unavailable"}
       </Typography>
       <Typography variant="body2" color="text.secondary" title={"Listing directory as of " + result.universeDate + " · Snapshot prepared " + displayTime(result.capturedAt)}>
-        {SESSIONS[result.session]} · {displayTime(result.asOf)} · {result.source}
+        {SESSIONS[result.session]}{result.closed && result.session === "after_hours" ? " snapshot" : ""} · {displayTime(result.asOf)} · {result.source}
       </Typography>
     </Box>
     {result.partial && <Typography role="status" color="warning.main" variant="body2" sx={{ mb: 0.75 }}>

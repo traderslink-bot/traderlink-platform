@@ -125,3 +125,36 @@ it("picks up live worker updates within a quarter second without changing pinned
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+it("offers the completed after-hours snapshot overnight while retaining the regular close", async () => {
+  const root = mkdtempSync(join(tmpdir(), "stock-screeners-overnight-"));
+  const directory = join(root, "stock-screeners-v1");
+  const file = join(directory, "market.json");
+  const now = Date.parse("2026-11-17T02:00:00Z");
+  const identity = { mode: "platform_session", scope: { userId: "overnight-fixture" } } as TraderLinkPlatformRequestIdentity;
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(now);
+  vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", join(root, "market.sqlite"));
+  try {
+    mkdirSync(directory, { mode: 0o700 });
+    const pack = JSON.parse(market(4));
+    expect(pack.latest).toBe("last_regular");
+    expect(pack.snapshots.after_hours.date).toBe(pack.snapshots.last_regular.date);
+    writeFileSync(file, JSON.stringify(pack));
+    expect(await createRun(identity, DEFAULT_DEFINITION)).toMatchObject({
+      session: "after_hours", closed: true, partial: false, asOf: Date.parse("2026-11-17T01:00:00Z"),
+    });
+    expect(await createRun(identity, { ...DEFAULT_DEFINITION, session: "last_regular" })).toMatchObject({
+      session: "last_regular", closed: true, partial: false, asOf: Date.parse("2026-11-16T21:00:00Z"),
+    });
+    for (const row of pack.snapshots.after_hours.rows) delete row.values.price;
+    writeFileSync(file + ".next", JSON.stringify(pack));
+    renameSync(file + ".next", file);
+    vi.setSystemTime(now + 6500);
+    expect(await createRun(identity, DEFAULT_DEFINITION)).toMatchObject({ session: "last_regular", closed: true });
+  } finally {
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
