@@ -103,7 +103,7 @@ export function DeclinesCard({results,view="table",onViewChange,now=0,notice,ses
   const title=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">{losersTitle}</Typography></WorkspaceScannerTitle>
     <Tooltip title="Top Losers during premarket and regular hours are calculated from yesterday’s regular-session close. During post-market, they are calculated from today’s regular-session close."><IconButton aria-label="Explain Top Losers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
   </Stack>;
-  const contents=(wide:boolean)=><Stack spacing={1}>
+  const contents=(wide:boolean)=><Stack data-scanner-results spacing={1}>
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>
       :!results?<Skeleton height={260}/>:view==="cards"&&results.losers.length?<ScannerStockCards screen="top-losers" rows={results.losers} now={now}
         renderHalt={symbol=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>}

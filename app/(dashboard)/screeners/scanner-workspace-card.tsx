@@ -29,7 +29,20 @@ export function ScannerWorkspaceCard({children,slot,widget}:{children:ReactNode;
       minHeight:0,
       minWidth:0,
       overflow:{md:"hidden"},
-      '& > :not(.MuiTableContainer-root):not([role="list"])':{flexShrink:0},
+      // Scanner bodies grow with the layout slot. Intrinsic controls and rapid
+      // drop rows keep their height while the results use the remaining space.
+      '& > :not(.MuiTableContainer-root):not([role="list"]):not([data-momentum-sections]):not([data-scanner-results])':{flexShrink:0},
+      '& > [role="list"], & > [data-momentum-sections], & > [data-scanner-results]':{
+        flex:{md:"1 1 0"},
+        maxHeight:{md:"none"},
+        minHeight:0,
+      },
+      '& > [data-scanner-results]':{
+        overflow:{md:"hidden"},
+        '& > :not(.MuiTableContainer-root):not([role="list"])':{flexShrink:0},
+        '& > [role="list"]':{flex:{md:"1 1 0"},maxHeight:{md:"none"},minHeight:0},
+      },
+      '& [data-momentum-sections] [role="list"]':{maxHeight:{md:"none"}},
     },
     '& .MuiTableContainer-root':{
       flex:{md:"1 1 auto"},
