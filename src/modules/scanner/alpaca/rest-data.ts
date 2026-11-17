@@ -5,7 +5,7 @@ export const ALPACA_HISTORY_FRAMES = ["1Min", "5Min", "15Min", "1Hour", "4Hour",
 export type AlpacaHistoryFrame = typeof ALPACA_HISTORY_FRAMES[number];
 type HistoryAdjustment = "split" | "raw";
 export type AlpacaHistoryRequest = { adjustment?: HistoryAdjustment; symbol: string; timeframe: AlpacaHistoryFrame; start: number; end: number };
-export type AlpacaHistoryResult = { basisDate?: string; symbol: string; feed: "sip"; adjustment: HistoryAdjustment; bars: Candle[]; complete: boolean; nextPageToken: string | null };
+export type AlpacaHistoryResult = { basisDate?: string; symbol: string; feed: "sip" | "boats"; adjustment: HistoryAdjustment; bars: Candle[]; complete: boolean; nextPageToken: string | null };
 
 export function parseHistoryRequest(query: URLSearchParams): AlpacaHistoryRequest {
   const symbol = chartSymbol(query.get("symbol") ?? "");
@@ -27,7 +27,7 @@ export class AlpacaRestData {
   private requests = 0;
   private readonly cache = new Map<string, { at: number; result: AlpacaHistoryResult }>();
   private readonly pending = new Map<string, Promise<AlpacaHistoryResult>>();
-  constructor(private readonly credentials: { keyId: string; secretKey: string }, private readonly transport: typeof fetch = fetch) {}
+  constructor(private readonly credentials: { keyId: string; secretKey: string }, private readonly transport: typeof fetch = fetch, private readonly feed: "sip" | "boats" = "sip") {}
   async get(path: string, parameters: URLSearchParams): Promise<unknown> {
     if (Date.now() - this.windowStart >= 60_000) { this.windowStart = Date.now(); this.requests = 0; }
     if (++this.requests > 8000) throw Error("busy");
@@ -47,7 +47,7 @@ export class AlpacaRestData {
     const load = async () => {
       const bars = new Map<number, Candle>(); let token: string | null = null;
       for (let page = 0; page < 20; page++) {
-        const query = new URLSearchParams({ symbols: request.symbol, timeframe: request.timeframe, start: new Date(request.start).toISOString(), end: new Date(request.end).toISOString(), feed: "sip", adjustment, sort: "asc", limit: "10000" });
+        const query = new URLSearchParams({ symbols: request.symbol, timeframe: request.timeframe, start: new Date(request.start).toISOString(), end: new Date(request.end).toISOString(), feed: this.feed, adjustment, sort: "asc", limit: "10000" });
         if (token) query.set("page_token", token);
         const payload = await this.get("/v2/stocks/bars", query) as { bars?: Record<string, unknown[]>; next_page_token?: unknown };
         if (!payload.bars || !Array.isArray(payload.bars[request.symbol] ?? [])) throw Error("provider_unavailable");
@@ -62,7 +62,7 @@ export class AlpacaRestData {
         if (!token) break;
       }
       if(easternClock(Date.now()).date!==basisDate)throw Error("adjustment_basis_changed");
-      const result: AlpacaHistoryResult = { basisDate, symbol: request.symbol, feed: "sip", adjustment, bars: [...bars.values()].sort((a, b) => a.time - b.time), complete: !token, nextPageToken: token };
+      const result: AlpacaHistoryResult = { basisDate, symbol: request.symbol, feed: this.feed, adjustment, bars: [...bars.values()].sort((a, b) => a.time - b.time), complete: !token, nextPageToken: token };
       this.cache.set(key, { at: Date.now(), result });
       while (this.cache.size > 32 || [...this.cache.values()].reduce((sum, value) => sum + value.result.bars.length, 0) > 150_000) this.cache.delete(this.cache.keys().next().value!);
       return result;

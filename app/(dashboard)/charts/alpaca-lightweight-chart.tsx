@@ -23,6 +23,7 @@ import {calculationInterval,futureCalculationAxis} from "@/src/modules/scanner/a
 import {carryVwapPoints,offsetVwap,projectVwap,indicatorReadoutIndex,sampleCalendarVwap} from "@/src/modules/scanner/alpaca/chart-vwap-projection";
 import {readChartCalendarYear} from "@/src/modules/scanner/alpaca/chart-calendar-request";
 import {ChartSessionCalendar} from "@/src/modules/scanner/alpaca/chart-calendar";
+import { chartOvernightTradingDate, chartShowsOvernight } from "@/src/modules/scanner/alpaca/chart-overnight-session";
 import {type IndicatorPlot,vwapAnchorKey,indicatorOverlayWidth,indicatorPlotStyle,indicatorHistogramColor,indicatorValues,isVisibleSession,visibleSessionBars} from "@/src/modules/scanner/alpaca/chart-indicators";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
@@ -50,6 +51,7 @@ const ChartPreferencesPanel = lazy(() => import("./chart-preferences-panel").the
 type ChartCandleSnapshot = {
   basisDate: string;
   bars: Candle[];
+  overnightBars?: Candle[];
   nextBefore: number | null;
   calendar: ChartSessionCalendar;
   savedAt: number;
@@ -153,7 +155,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     .map(plot=>({value:`indicator:${indicator.id}:${plot.key}` as const,label:plot.label}))),[activeIndicators,timeframe]);
   const crosshairTarget=preferences.crosshairTarget??"price";
   const readoutTypes=[...new Set(activeIndicators.map(indicator=>indicator.type))];
-  const regularOnly=preferences.regular&&!preferences.premarket&&!preferences.postmarket;
+  const showOvernight = !daily && chartShowsOvernight(preferences);
+  const regularOnly = preferences.regular && !preferences.premarket && !preferences.postmarket && !showOvernight;
   if(ready&&controlledTimeframe===undefined&&activeTimeframe===null)setActiveTimeframe(preferences.timeframe);
   const changePreferences = (next: ChartPreferences) => {
     change(next);
@@ -166,14 +169,17 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   useEffect(() => {
     const element = container.current;
     if (!element || !ready) return;
-    const sessionKey=JSON.stringify([preferences.premarket,preferences.regular,preferences.postmarket]);
+    const sipSessions = [preferences.premarket, preferences.regular, preferences.postmarket];
+    const sipSessionKey = JSON.stringify(sipSessions);
+    const sessionKey = showOvernight ? JSON.stringify([...sipSessions, true]) : sipSessionKey;
     const basis = easternClock(Date.now()).date;
     const cacheKey = ownerKey && viewId && viewWorkspace === "main"
       ? JSON.stringify([ownerKey, viewId, ticker, timeframe, sessionKey])
       : null;
     const snapshot = cacheKey ? recentChartCandles.get(cacheKey) : undefined;
     const cached = snapshot && snapshot.basisDate === basis && Date.now() - snapshot.savedAt < candleSnapshotLifetime ? snapshot : undefined;
-    const savedView=ownerKey&&viewId?chartViews.read(ownerKey,viewWorkspace,viewId,ticker,timeframe,sessionKey):null;
+    const savedView = ownerKey && viewId ? chartViews.read(ownerKey, viewWorkspace, viewId, ticker, timeframe, sessionKey)
+      ?? (showOvernight ? chartViews.read(ownerKey, viewWorkspace, viewId, ticker, timeframe, sipSessionKey) : null) : null;
     const restorePrice=canRestoreChartPrice(savedView,preferences,basis);
     const restore=savedView?{...savedView,priceRange:restorePrice?savedView.priceRange:null}:null;
     marketCalendar.current = cached?.calendar ?? new ChartSessionCalendar();
@@ -189,7 +195,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     dateAxis.current?.replaceChildren();
     const useRecentHistory = !activeTradeContext && timeframe !== "4h" && !daily;
     const now = Date.now();
-    const lastCached = cached?.bars.reduce((last, bar) => Math.max(last, bar.time), 0) ?? 0;
+    const lastCached = cached ? [...cached.bars, ...(cached.overnightBars ?? [])].reduce((last, bar) => Math.max(last, bar.time), 0) : 0;
     const overlapStart = (lastCached - 300) * 1000;
     const catchUpFrom = !daily && lastCached && now - overlapStart < 20 * 60_000 &&
       overlapStart < Math.floor(now / 60_000) * 60_000 - 1 ? overlapStart : null;
@@ -200,10 +206,21 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         : Math.floor(activeTradeContext.to * 1000) + 5 * 86_400_000
       : null;
     let contextThrough = tradeThrough === null ? null : Math.min(latestHistoryBar, tradeThrough);
-    const readHistory = (query: URLSearchParams, reuseDaily = true) => readChartCandleHistory(
-      `/api/screeners/charts/bars?${query}`, abort.signal,
-      daily && ownerKey ? { owner: ownerKey, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
-    );
+    const overnightHistoryRequests = new Set<string>();
+    let readOvernightHistory = (query: string) => { overnightHistoryRequests.add(query); };
+    const readHistory = (query: URLSearchParams, reuseDaily = true) => {
+      const history = readChartCandleHistory(
+        `/api/screeners/charts/bars?${query}`, abort.signal,
+        daily && ownerKey ? { owner: ownerKey, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
+      );
+      if (showOvernight) void history.then(() => {
+        if (disposed) return;
+        const from = Number(query.get("catchUpFrom"));
+        if (from && !chartOvernightTradingDate(from) && !chartOvernightTradingDate(Date.now())) return;
+        readOvernightHistory(String(query));
+      }, () => {});
+      return history;
+    };
     const requestHistory = (recent = false, from: number | null = null, reuseDaily = false) => {
       const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0" });
       if (recent) query.set("recent", "1");
@@ -383,6 +400,21 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       let indicatorsReady = !useRecentHistory || !studies.length;
       let warmupTimer: ReturnType<typeof setTimeout> | undefined;
       let loaded = false, loading = false, reloadAfter = false, connected = false, loadingOlder = false;
+      const overnightBars = new Map<number, Candle>();
+      const overnightLiveRevisions = new Map<number, number>();
+      let overnightRevision = 0;
+      const overnightBuckets = new Set<number>();
+      const recordOvernight = (bar: Candle) => {
+        overnightBars.set(bar.time, bar);
+        overnightBuckets.add(candleBucket(bar.time, timeframe, regularOnly));
+      };
+      if (showOvernight) for (const bar of cached?.overnightBars ?? []) recordOvernight(bar);
+      let overnightBasis = cached?.overnightBars?.length ? cached.basisDate : null;
+      let overnightUnavailable = false;
+      const visibleChartBars = () => [
+        ...visibleSessionBars([...bars.values()], preferences, calendarReady ? marketCalendar.current : undefined),
+        ...overnightBars.values(),
+      ];
       let nextBefore: number | null = cached?.nextBefore??null, userPanned = false;
       const scheduleView = () => { clearTimeout(viewSaveTimer); viewSaveTimer=setTimeout(saveView,250); };
       const markPan = () => {userPanned=true;scheduleView();};
@@ -467,6 +499,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       const vwapParts=(indicator:typeof preferences.indicators[number],actual:Candle[],axis:DisplayCandle[]):IndicatorPlot[]=>{
         const frame=calendarFrame ? "1D" : indicator.calculationTimeframe ?? vwapDisplayFrame;
         if(indicator.hideOnDaily&&frame==='1D'||!actual.length)return [];
+        // Existing VWAP uses SIP sessions and seeds. BOATS has separate price and volume.
+        if (overnightBars.size) axis = axis.filter(bar => !overnightBuckets.has(bar.time));
+        if (!axis.length) return [];
+        const vwapRegularOnly = preferences.regular && !preferences.premarket && !preferences.postmarket;
         let input=[...bars.values()],calendar=marketCalendar.current,projectionAxis=axis;
         if((frame==='1D')!==daily){
           const demand=calculationDemand(axis,calculationView);if(!demand)return [];
@@ -487,7 +523,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           projectionAxis=axis.filter(bar=>bar.time>=before&&(through===undefined||bar.time<=through));
         }
         if(input.some(bar=>!calendar.covers(bar.time)||!calendar.sessionAt(bar.time))){vwapProblem='VWAP unavailable: trading-session data could not load.';return [];}
-        const calculation=aggregateCandles(frame==='1D'?input:visibleSessionBars(input,preferences,calendar),frame,regularOnly);
+        const calculation=aggregateCandles(frame==='1D'?input:visibleSessionBars(input,preferences,calendar),frame,vwapRegularOnly);
         const seed=seedFor(indicator,calculation,frame);if(!seed)return [];
         if(seed.volume===0&&calculation.every(bar=>bar.volume===0))vwapProblem='VWAP unavailable: no volume data.';
         else if(seed.events&&!seed.events.dates.length)vwapProblem=`VWAP: no ${seed.events.anchor==='Splits'?'split':'dividend'} events in available data.`;
@@ -518,19 +554,21 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         let parts=vwapFrameCache.get(indicator.id);if(!parts){parts=vwapParts(indicator,actual,axis);vwapFrameCache.set(indicator.id,parts);}
         return parts[index]?.points??[];
       };
-      const writeAll = (initial: boolean, prepend = false) => {
+      const writeAll = (initial: boolean, prepend = false, keepView = false) => {
         drawingVolumeBars=undefined;
         seedLoading=false;seedError=false;vwapProblem="";vwapFrameCache.clear();futureIndicatorTimes.clear();
         calendarReady=daily||[...bars.values()].every(bar=>marketCalendar.current.covers(bar.time));
         setSessionMessage(studies.some(study=>study.indicator.type==="VWAP")&&!calendarReady?"VWAP unavailable: trading-session data could not load.":"");
-        const actual = aggregateCandles(daily?bars.values():visibleSessionBars([...bars.values()],preferences,calendarReady?marketCalendar.current:undefined), timeframe,regularOnly);
+        const actual = aggregateCandles(daily ? bars.values() : visibleChartBars(), timeframe, regularOnly);
         const data = displayCandles(actual, timeframe, connected ? candleBucket(Math.floor(Date.now() / 1000) - 60, timeframe,regularOnly) : undefined).filter(bar=>daily||!bar.carried||isVisibleSession(bar.time,preferences,calendarReady?marketCalendar.current:undefined));
         const oldFirst = displayPoints[0]?.time;
+        const range = chart.timeScale().getVisibleLogicalRange();
+        const oldIndex = range ? Math.max(0, Math.floor(range.from)) : 0;
+        const anchor = keepView ? displayPoints[oldIndex]?.time : undefined;
         displayPoints = data;
         displayed = new Map(data.map(bar => [bar.time, bar]));
         const defaultView = defaultChartView(timeframe, chart.timeScale().width(), data.length);
         const previousCount = candles.data().length;
-        const range = chart.timeScale().getVisibleLogicalRange();
         calculationView=initial?null:range;
         candles.setData(data.map(point));
         renderPriceGuide();
@@ -557,7 +595,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           else chart.timeScale().setVisibleLogicalRange(defaultView.range);
         }
         else if (range) {
-          const added = prepend && oldFirst !== undefined ? Math.max(0,data.findIndex(bar=>bar.time===oldFirst)) : range.to >= previousCount - 1 ? data.length - previousCount : 0;
+          const newIndex = anchor === undefined ? -1 : candleIndexAtOrAfter(data, anchor);
+          const added = prepend && oldFirst !== undefined ? Math.max(0,data.findIndex(bar=>bar.time===oldFirst))
+            : range.to >= previousCount - 1 ? data.length - previousCount
+            : newIndex >= 0 && newIndex < data.length ? newIndex - oldIndex : 0;
           chart.timeScale().setVisibleLogicalRange({from:range.from + added,to:range.to + added});
         }
         updateDates();
@@ -792,59 +833,85 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       });
       let lastBarReceivedAt = Date.now(), lastRecoveryAt = 0;
       let streamHasConnected = false;
-      if (!activeTradeContext) {
-      source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily ? "1" : "0"}`, daily);
-      source.addEventListener("status", event => {
-        if (disposed) return;
-        const state = JSON.parse((event as MessageEvent).data).state;
-        if(state!=="connected"&&!chartHalted&&livePrice){candles.removePriceLine(livePrice);livePrice=undefined;lastGuidePrice=null;}
-        const wasConnected = connected; connected = state === "connected";
-        if (connected && !wasConnected) {
-          const reconnecting = streamHasConnected;
-          streamHasConnected = true;
-          // The first connection is already covered by the returning chart's history request.
-          if (loaded && (reconnecting || !daily && !catchingUp)) {
-            calculationHistory.invalidate();calculationContexts.clear();contextCoverage.clear();
-            void loadHistory();
-          }
+      const recentOvernight = String(new URLSearchParams({ history: "1", symbol: ticker, daily: "0", recent: "1" }));
+      const overnightPending = new Set<string>();
+      function selectOvernightBasis(date: string) {
+        if (overnightBasis === date) return;
+        if (overnightBasis !== null) {
+          overnightBars.clear();
+          overnightLiveRevisions.clear();
+          overnightBuckets.clear();
         }
-        if (loaded && !catchingUp) setStatus(connected ? idleStatus() : state === "unavailable" ? "Feed unavailable." : "Connecting…");
-      });
-      source.addEventListener("price",event=>{
-        if(disposed)return;
-        const message=JSON.parse((event as MessageEvent).data) as {price:number;time:string};
-        const at=Date.parse(message.time);
-        if(!Number.isFinite(message.price)||message.price<=0||!Number.isFinite(at)||at<livePriceAt)return;
-        livePriceAt=at;
-        lastGuidePrice=message.price;renderPriceGuide();
-      });
-      source.addEventListener("trading-status",event=>{
-        if(disposed)return;
-        const message=JSON.parse((event as MessageEvent).data) as {symbol:string;available:boolean;status?:{symbol:string;halted:boolean;observedAt:string}|null};
-        if(!message.available||message.symbol!==ticker||message.status?.symbol!==ticker||typeof message.status.halted!=="boolean")return;
-        const at=Date.parse(message.status.observedAt);
-        if(!Number.isFinite(at)||at<haltStatusAt)return;
-        haltStatusAt=at;chartHalted=message.status.halted;renderPriceGuide();updateIndicatorLegend();
-      });
-      source.addEventListener("bar", event => {
+        overnightBasis = date;
+      }
+      readOvernightHistory = query => {
+        if (disposed || overnightUnavailable || overnightPending.size >= 4 || overnightPending.has(query)) return;
+        const params = new URLSearchParams(query);
+        params.set("overnight", "1");
+        overnightPending.add(query);
+        const requestedAt = overnightRevision;
+        void sharedChartFetch(`/api/screeners/charts/bars?${params}`, { signal: abort.signal, credentials: "same-origin" })
+          .then(async response => {
+            if (response.status === 404) { overnightUnavailable = true; return; }
+            if (!response.ok || disposed) return;
+            const result = await response.json() as { bars: Candle[]; basisDate: string };
+            if (disposed || !Array.isArray(result.bars) || result.basisDate !== easternClock(Date.now()).date) return;
+            selectOvernightBasis(result.basisDate);
+            for (const bar of result.bars) {
+              if ((overnightLiveRevisions.get(bar.time) ?? 0) <= requestedAt && (overnightBars.has(bar.time) || overnightBars.size < 80_000)) {
+                recordOvernight(bar);
+              }
+            }
+            if (loaded && overnightBars.size) writeAll(false, false, true);
+          }).catch(() => { /* Ordinary session candles are already available. */ })
+          .finally(() => overnightPending.delete(query));
+      };
+      for (const query of overnightHistoryRequests) readOvernightHistory(query);
+      overnightHistoryRequests.clear();
+
+      let overnightState: string | undefined;
+      const overnightActive = () => Boolean(overnightState && overnightState !== "closed" && chartOvernightTradingDate(Date.now()));
+      const receivePrice = (event: Event, overnight: boolean) => {
+        if (disposed || overnightActive() !== overnight) return;
+        const message = JSON.parse((event as MessageEvent).data) as {price:number;time:string};
+        const at = Date.parse(message.time);
+        if (!Number.isFinite(message.price) || message.price <= 0 || !Number.isFinite(at) || at < livePriceAt) return;
+        livePriceAt = at;
+        lastGuidePrice = message.price;
+        renderPriceGuide();
+      };
+
+      const receiveBar = (event: Event, overnight: boolean) => {
         if (disposed) return;
         const message = JSON.parse((event as MessageEvent).data) as { bar: Candle; daily: boolean };
         if (message.daily !== daily) return;
         const bar = message.bar;
-        lastBarReceivedAt = Date.now();
-        if (!loaded || loading || catchingUp) queued.set(bar.time, bar);
-        if(historyBasisDate&&historyBasisDate!==easternClock(Date.now()).date){queued.set(bar.time,bar);if(!loading)void loadHistory();return;}
-        if (!loaded) return;
-        bars.set(bar.time, bar);
-        calculationHistory.acceptLive(bar,message.daily);
+        if (overnight) {
+          if (!chartOvernightTradingDate(bar.time * 1000)) return;
+          selectOvernightBasis(easternClock(Date.now()).date);
+          recordOvernight(bar);
+          overnightLiveRevisions.set(bar.time, ++overnightRevision);
+          if (!loaded) return;
+        } else {
+          lastBarReceivedAt = Date.now();
+          if (!loaded || loading || catchingUp) queued.set(bar.time, bar);
+          if (historyBasisDate && historyBasisDate !== easternClock(Date.now()).date) {
+            queued.set(bar.time, bar);
+            if (!loading) void loadHistory();
+            return;
+          }
+          if (!loaded) return;
+          bars.set(bar.time, bar);
+          calculationHistory.acceptLive(bar, message.daily);
+        }
         if(studies.some(study=>study.indicator.type==='VWAP'&&(study.indicator.offset||!calendarFrame&&study.indicator.calculationTimeframe&&study.indicator.calculationTimeframe!==timeframe))){writeAll(false);return;}
-        if(!daily&&!marketCalendar.current.covers(bar.time)&&Date.now()>=calendarRetryAt){calendarRetryAt=Date.now()+60_000;void loadHistory();}
+        if(!overnight&&!daily&&!marketCalendar.current.covers(bar.time)&&Date.now()>=calendarRetryAt){calendarRetryAt=Date.now()+60_000;void loadHistory();}
 
         const bucket = candleBucket(bar.time, timeframe,regularOnly);
         const last = displayPoints.at(-1);
         if (last && bucket === last.time) {
           // The active candle moves with trades; avoid replacing the full chart per tick.
-          const inputs = daily ? [...bars.values()] : visibleSessionBars([...bars.values()], preferences,calendarReady?marketCalendar.current:undefined);
+          const inputs = daily ? [...bars.values()] : visibleChartBars();
           const periodEnd = calendarFrame ? nextChartCalendarPeriod(bucket, calendarFrame) : 0;
           const current = timeframe === "1D" ? bar : aggregateCandles(
             inputs.filter(value => calendarFrame
@@ -855,7 +922,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           if (current) {
             const updated = { ...current, carried: false };
             displayPoints[displayPoints.length - 1] = updated; displayed.set(bucket, updated);
-            if(drawingVolumeBars&&(daily||isVisibleSession(bar.time,preferences,
+            if(drawingVolumeBars&&(overnight||daily||isVisibleSession(bar.time,preferences,
               calendarReady?marketCalendar.current:undefined))){
               const index=candleIndexAtOrAfter(drawingVolumeBars,bar.time);
               if(index<drawingVolumeBars.length-1||index===drawingVolumeBars.length-1&&drawingVolumeBars[index].time!==bar.time){
@@ -879,7 +946,48 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           // New buckets and corrected old bars must also reconcile carried positions.
           writeAll(false);
         }
+      };
+      if (!activeTradeContext) {
+      source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily ? "1" : "0"}${showOvernight ? "&overnight=1" : ""}`, daily);
+      source.addEventListener("status", event => {
+        if (disposed) return;
+        const state = JSON.parse((event as MessageEvent).data).state;
+        if (state !== "connected" && !chartHalted && livePrice && !overnightActive()) {
+          candles.removePriceLine(livePrice);
+          livePrice = undefined;
+          lastGuidePrice = null;
+        }
+        const wasConnected = connected;
+        connected = state === "connected";
+        if (connected && !wasConnected) {
+          const reconnecting = streamHasConnected;
+          streamHasConnected = true;
+          if (loaded && (reconnecting || !daily && !catchingUp)) {
+            if (!loading) void loadHistory();
+            else reloadAfter = true;
+          }
+        }
+        if (loaded && !catchingUp) setStatus(connected ? idleStatus() : state === "unavailable" ? "Feed unavailable." : "Connecting…");
       });
+      source.addEventListener("price", event => receivePrice(event, false));
+      source.addEventListener("trading-status", event => {
+        if (disposed) return;
+        const message = JSON.parse((event as MessageEvent).data) as {symbol:string;available:boolean;status?:{symbol:string;halted:boolean;observedAt:string}|null};
+        if (!message.available || message.symbol !== ticker || message.status?.symbol !== ticker || typeof message.status.halted !== "boolean") return;
+        const at=Date.parse(message.status.observedAt);
+        if (!Number.isFinite(at)||at<haltStatusAt) return;
+        haltStatusAt=at;chartHalted=message.status.halted;renderPriceGuide();updateIndicatorLegend();
+      });
+      source.addEventListener("bar", event => receiveBar(event, false));
+      if (showOvernight) {
+        source.addEventListener("overnight-price", event => receivePrice(event, true));
+        source.addEventListener("overnight-bar", event => receiveBar(event, true));
+        source.addEventListener("overnight-status", event => {
+          const state = JSON.parse((event as MessageEvent).data).state;
+          if (state === "connected" && overnightState !== "connected") readOvernightHistory(recentOvernight);
+          overnightState = state;
+        });
+      }
       if(!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??vwapDisplayFrame)==='1D')!==daily)){
         const daily=!usesDailyCandles(timeframe);
         auxiliarySource=sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily?'1':'0'}`, daily);
@@ -896,6 +1004,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       source.onerror = () => {
         if(disposed)return;
         connected=false;
+        overnightState=undefined;
         if(livePrice&&!chartHalted){candles.removePriceLine(livePrice);livePrice=undefined;lastGuidePrice=null;}
         if(loaded && !catchingUp)setStatus("Reconnecting…");
       };
@@ -927,9 +1036,11 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       removeChart = () => {
         detachJournalEngine?.();
         journalMarkers?.detach();
- document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);if(cacheKey && loaded && !catchingUp && indicatorsReady && bars.size && bars.size<=20_000){
+ document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);if(cacheKey && loaded && !catchingUp && indicatorsReady && bars.size && bars.size+overnightBars.size<=20_000){
         recentChartCandles.delete(cacheKey);
-        recentChartCandles.set(cacheKey,{basisDate:historyBasisDate,bars:[...bars.values()],nextBefore,calendar:marketCalendar.current,savedAt:Date.now()});
+        recentChartCandles.set(cacheKey,{basisDate:historyBasisDate,bars:[...bars.values()],
+          ...(overnightBars.size && overnightBasis === historyBasisDate ? {overnightBars:[...overnightBars.values()]} : {}),
+          nextBefore,calendar:marketCalendar.current,savedAt:Date.now()});
         while(recentChartCandles.size>4)recentChartCandles.delete(recentChartCandles.keys().next().value!);
       } element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
       if (cached) {
@@ -945,7 +1056,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick]);
+  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick]);
 
   useEffect(() => {
     if (!activeTradeContext || !ready) return;

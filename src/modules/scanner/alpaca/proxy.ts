@@ -15,6 +15,10 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
     try { symbol = chartSymbol(query.get("symbol") ?? ""); } catch { return Response.json({ error: "invalid_symbol" }, { status: 400, headers: safeHeaders }); }
     const paged = !stream && query.get("history") === "1";
     const daily = query.get("daily") === "1";
+    const overnight = query.get("overnight") === "1";
+    if (overnight && (daily || !stream && !paged)) {
+      return Response.json({ error: "invalid_history_range" }, { status: 400, headers: safeHeaders });
+    }
     const from = paged ? query.get("catchUpFrom") : null;
     let window: ReturnType<typeof chartHistoryWindow> | undefined;
     if (paged) { try {
@@ -29,12 +33,14 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
     if (!configured || !token) return Response.json({ error: "not_configured" }, { status: 503, headers: safeHeaders });
     const base = new URL(configured);
     if (base.username || base.password || base.search || base.hash || (base.protocol !== "https:" && !(local && base.protocol === "http:" && base.hostname === "127.0.0.1"))) throw Error("invalid_gateway");
-    const upstreamUrl = new URL(stream ? "stream" : paged ? "history" : "bars", configured.endsWith("/") ? configured : `${configured}/`);
+    const endpoint = stream ? "stream" : overnight ? "chart-overnight-history" : paged ? "history" : "bars";
+    const upstreamUrl = new URL(endpoint, configured.endsWith("/") ? configured : `${configured}/`);
     upstreamUrl.searchParams.set("symbol", symbol);
     if (paged && window) {
       upstreamUrl.searchParams.set("timeframe",daily?"1Day":"1Min");
       upstreamUrl.searchParams.set("start",String(window.start));upstreamUrl.searchParams.set("end",String(window.end));
     } else if (daily) upstreamUrl.searchParams.set("daily", "1");
+    if (stream && overnight) upstreamUrl.searchParams.set("overnight", "1");
     const cancellation = new AbortController();
     const abort = () => cancellation.abort();
     request.signal.addEventListener("abort", abort, { once: true });
@@ -46,12 +52,13 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
     clearTimeout(timeout);
     if (!upstream.ok || !upstream.body) {
       request.signal.removeEventListener("abort", abort); await upstream.body?.cancel();
+      if (overnight && upstream.status === 404) return Response.json({ error: "overnight_unavailable" }, { status: 404, headers: safeHeaders });
       return Response.json({ error: upstream.status === 429 ? "busy" : "gateway_unavailable" }, { status: upstream.status === 429 ? 429 : 502, headers: safeHeaders });
     }
     if (!stream) { try {
       const payload=await upstream.json();
       if(paged&&window){
-        if(payload.complete!==true||payload.adjustment!=="split"||payload.feed!=="sip"||!Array.isArray(payload.bars))throw Error("incomplete_history");
+        if(payload.complete!==true||payload.adjustment!=="split"||payload.feed!==(overnight?"boats":"sip")||!Array.isArray(payload.bars))throw Error("incomplete_history");
         return Response.json({...chartHistoryPage(payload.bars as Candle[],window,daily),basisDate:payload.basisDate,...(from !== null ? {catchUpFrom:window.start} : {}),...(!daily?{calendar:payload.calendar??{available:false}}:{calendars:payload.calendars??[]})},{headers:safeHeaders});
       }
       return Response.json(payload, { headers: safeHeaders });

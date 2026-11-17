@@ -29,7 +29,7 @@ export class ChartLiveBook {
   private historyLoading = false;
   private retryAt = 0;
   private dirty = new Set<number>();
-  constructor(private readonly symbol: string, private readonly rest: Pick<AlpacaRestData, "get">, private readonly daily=false) {}
+  constructor(private readonly symbol: string, private readonly rest: Pick<AlpacaRestData, "get">, private readonly daily=false, private readonly feed: "sip" | "boats" = "sip") {}
 
   invalidate() { this.generation++; this.ready = false; this.warming = false; this.buffered = []; this.minutes.clear(); this.seen.clear(); this.recentKeys=[];this.nextKey=0;this.dirty.clear(); }
   seal(time: number) { this.closedThrough = Math.max(this.closedThrough, time); this.minutes.delete(time); this.dirty.delete(time); }
@@ -81,14 +81,14 @@ export class ChartLiveBook {
     const generation = this.generation;
     this.start = this.daily ? easternDayStart(now/1000)*1000 : Math.floor(now / 60_000) * 60_000;
     this.dayEnd=this.daily?easternDayStart(this.start/1000+36*3600)*1000:0;
-    const rebuilt = new ChartLiveBook(this.symbol,this.rest,this.daily);
+    const rebuilt = new ChartLiveBook(this.symbol,this.rest,this.daily,this.feed);
     rebuilt.start=this.start;rebuilt.dayEnd=this.dayEnd;rebuilt.closedThrough=this.closedThrough;rebuilt.ready=true;rebuilt.historyLoading=true;
     const cutoff=priceObservationOrder(new Date(now).toISOString());
     const tokens = new Set<string>();
     let token: string | null = null;
     try {
       for (let page = 0; page < (this.daily?200:20); page++) {
-        const query = new URLSearchParams({ symbols: this.symbol, start: new Date(this.start).toISOString(), end: new Date(now).toISOString(), feed: "sip", sort: "asc", limit: "10000" });
+        const query = new URLSearchParams({ symbols: this.symbol, start: new Date(this.start).toISOString(), end: new Date(now).toISOString(), feed: this.feed, sort: "asc", limit: "10000" });
         if (token) query.set("page_token", token);
         const result = await this.rest.get("/v2/stocks/trades", query) as { trades?: Record<string, Trade[]>; next_page_token?: unknown };
         if (generation !== this.generation) return;

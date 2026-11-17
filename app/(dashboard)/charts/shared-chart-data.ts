@@ -10,7 +10,7 @@ type SharedStream = {
   idleClose?: ReturnType<typeof setTimeout>;
 };
 const streams = new Map<string, SharedStream>();
-const eventTypes = ["status", "price", "bar", "trading-status"];
+const eventTypes = ["status", "price", "bar", "trading-status", "overnight-status", "overnight-price", "overnight-bar"];
 const DAILY_STREAM_HANDOFF_MS = 1_000;
 export class ChartStreamHandle extends EventTarget {
   onerror: ((event: Event) => void) | null = null;

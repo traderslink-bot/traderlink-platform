@@ -15,11 +15,13 @@ import { ScannerStreamHub } from "./scanner-stream-hub";
 import { easternClock } from "../live/sessions";
 import { AlpacaPreviousCloseBook } from "./previous-close";
 import { ChartLiveBook } from "./chart-live-book";
+import { ChartOvernightFeed } from "./chart-overnight-feed";
+import { chartOvernightTradingDate } from "./chart-overnight-session";
 import { AlpacaTradingStatusBook } from "./trading-status";
 import { LivePriceHub, priceObservationOrder } from "./live-price-hub";
 
 type Client = { symbol: string; daily:boolean; response: ServerResponse };
-type GatewayOptions = { keyId: string; secretKey: string; token: string; haltSource?: "alpaca" | "official"; haltStatusJournal?: string };
+type GatewayOptions = { keyId: string; secretKey: string; token: string; haltSource?: "alpaca" | "official"; haltStatusJournal?: string; overnightCharts?: boolean };
 
 // This service deliberately knows no trading/account-management API URL.
 export function createAlpacaGateway(options: GatewayOptions) {
@@ -40,6 +42,11 @@ export function createAlpacaGateway(options: GatewayOptions) {
   const pending = new Map<string, Promise<Candle[]>>();
   const rest = new AlpacaRestData(options);
   const chartCalendar = new AlpacaChartCalendar(options);
+  const overnightRest = options.overnightCharts ? new AlpacaRestData(options, fetch, "boats") : null;
+  const overnightFeed = overnightRest && new ChartOvernightFeed(options, overnightRest, async date => {
+    const calendar = await chartCalendar.forYear(Number(date.slice(0, 4)));
+    return calendar.available ? calendar.sessions.some(row => row.date === date) : undefined;
+  });
   const corporateEvents = new AlpacaVwapCorporateEvents(options);
   const vwapHistory = new AlpacaVwapHistory(rest, chartCalendar, Date.now, corporateEvents);
   const listings = new AlpacaScannerListings(options);
@@ -307,6 +314,20 @@ export function createAlpacaGateway(options: GatewayOptions) {
         response.end(JSON.stringify(result));
         return;
       }
+      if (url.pathname === "/chart-overnight-history" && request.method === "GET") {
+        if (!overnightRest) { response.writeHead(404); response.end(); return; }
+        const window = parseHistoryRequest(url.searchParams);
+        if (window.timeframe !== "1Min" || window.adjustment === "raw") throw Error("invalid_history_request");
+        const relevant = window.end - window.start >= 8 * 3600_000 ||
+          chartOvernightTradingDate(window.start) || chartOvernightTradingDate(window.end);
+        const result = relevant ? await overnightRest.history(window) : {
+          symbol: window.symbol, feed: "boats", adjustment: "split", basisDate: easternClock(Date.now()).date,
+          bars: [], complete: true, nextPageToken: null,
+        };
+        response.setHeader("Content-Type", "application/json");
+        response.end(JSON.stringify({ ...result, bars: result.bars.filter(bar => bar.low > 0 && chartOvernightTradingDate(bar.time * 1000)) }));
+        return;
+      }
       if (url.pathname === "/history") {
         const result = await rest.history(parseHistoryRequest(url.searchParams));
         if (result.adjustment === "raw") {
@@ -355,6 +376,11 @@ export function createAlpacaGateway(options: GatewayOptions) {
         response.write("retry: 3000\n\n");
         const daily=url.searchParams.get("daily")==="1",bookKey=`${symbol}|${daily}`;
         const client = { symbol, daily, response }; clients.add(client);
+        const detachOvernight = !daily && url.searchParams.get("overnight") === "1" ? overnightFeed?.add(symbol, {
+          status: state => send(client, "overnight-status", { state }),
+          price: price => send(client, "overnight-price", price),
+          bar: (bar, provisional) => send(client, "overnight-bar", { bar, daily: false, provisional }),
+        }) : undefined;
         if(!chartBooks.has(bookKey))chartBooks.set(bookKey,new ChartLiveBook(symbol,rest,daily));
         for(const bar of chartBooks.get(bookKey)!.snapshot())send(client,"bar",{bar,daily,provisional:true});
         send(client, "status", { state: authenticated ? "connected" : "connecting" });
@@ -362,7 +388,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
         subscribe(); connect();
         const heartbeat = setInterval(() => response.write(": heartbeat\n\n"), 15_000);
         response.on("close", () => {
-          clearInterval(heartbeat); clients.delete(client);
+          clearInterval(heartbeat); detachOvernight?.(); clients.delete(client);
           if(![...clients].some(item=>item.symbol===symbol&&item.daily===daily)){chartBooks.get(bookKey)?.invalidate();chartBooks.delete(bookKey);}
           if (!needsSocket()) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
           else if (!symbols().includes(symbol) && authenticated && socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ action: "unsubscribe", trades:[symbol],quotes:[symbol],bars: [symbol], updatedBars: [symbol], dailyBars: [symbol] }));
@@ -377,7 +403,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
     }
   });
   server.on("listening",()=>{if(options.haltSource === "alpaca")connect();});
-  return { server, close() { stopped = true; clearTimeout(statusAttemptTimer);statusJournal?.close(); clearInterval(priceTimer); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
+  return { server, close() { stopped = true; overnightFeed?.close(); clearTimeout(statusAttemptTimer);statusJournal?.close(); clearInterval(priceTimer); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
 }
 
 export async function readPrivateJson(path: string): Promise<Record<string, string>> {

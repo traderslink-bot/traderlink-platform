@@ -6,7 +6,7 @@ async function main() {
   const credentials = await readPrivateJson(`${homedir()}/.config/traderlink/alpaca-owner-test.json`);
   const configuration = await readPrivateJson(`${homedir()}/.config/traderlink/alpaca-gateway.json`);
   if (!credentials.keyId || !credentials.secretKey || !configuration.token || configuration.token.length < 32) throw Error("Private configuration incomplete");
-  const gateway = createAlpacaGateway({ keyId: credentials.keyId, secretKey: credentials.secretKey, token: configuration.token, haltSource: marketHaltSource(), haltStatusJournal: `${homedir()}/.config/traderlink/alpaca-halt-status.jsonl` });
+  const gateway = createAlpacaGateway({ keyId: credentials.keyId, secretKey: credentials.secretKey, token: configuration.token, overnightCharts: configuration.overnightCharts === "1", haltSource: marketHaltSource(), haltStatusJournal: `${homedir()}/.config/traderlink/alpaca-halt-status.jsonl` });
   gateway.server.listen(3041, "127.0.0.1", () => console.log("Alpaca owner-test gateway listening on loopback 3041"));
   for (const signal of ["SIGTERM", "SIGINT"] as const) process.on(signal, () => { gateway.close(); setTimeout(() => process.exit(), 1000).unref(); });
 }

@@ -1,4 +1,6 @@
 "use client";
+
+import { chartShowsOvernight } from "@/src/modules/scanner/alpaca/chart-overnight-session";
 import Checkbox from '@mui/material/Checkbox';
 import Drawer from '@mui/material/Drawer';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -53,6 +55,8 @@ export function ChartPreferencesPanel({panel,onClose,preferences:p,crosshairLine
    </Stack>
    <Typography component="h3" sx={{fontWeight:700}}>Trading sessions</Typography><Typography variant="caption">Session filters apply to intraday candles.</Typography>
    {(['premarket','regular','postmarket'] as const).map(key=><FormControlLabel key={key} label={{premarket:'Premarket · 4:00–9:30 ET',regular:'Regular · 9:30–16:00 ET',postmarket:'Postmarket · 16:00–20:00 ET'}[key]} control={<Checkbox checked={p[key]} disabled={p[key]&&[p.premarket,p.regular,p.postmarket].filter(Boolean).length===1} onChange={(_,v)=>set(key,v)}/>}/>)}
+   <FormControlLabel label="Overnight · 20:00–4:00 ET"
+     control={<Checkbox checked={chartShowsOvernight(p)} onChange={(_,visible)=>set('overnight',visible)}/>}/>
   </>}
   </Stack><Typography role="status" sx={{px:2,py:1,fontSize:12,borderTop:1,borderColor:'divider',flexShrink:0}}>{message||'Changes save automatically to your account.'}</Typography>
  </Drawer>;
