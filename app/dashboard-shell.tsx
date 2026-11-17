@@ -22,6 +22,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FileUploadOffIcon from "@mui/icons-material/FileUploadOff";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import LeaderboardIcon from "@mui/icons-material/Leaderboard";
 import LegendToggleIcon from "@mui/icons-material/LegendToggle";
@@ -150,6 +151,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     greenToRed: <FileUploadOffIcon />,
     halt: <PauseCircleOutlineRoundedIcon />,
     help: <HelpOutlineRoundedIcon />,
+    home: <HomeRoundedIcon />,
     import: <FileDownloadIcon />,
     lab: <ScienceRoundedIcon />,
     manualEntry: <NoteAltRoundedIcon />,

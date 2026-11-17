@@ -17,6 +17,7 @@ export type DashboardNavigationIconKey =
   | "execution"
   | "halt"
   | "help"
+  | "home"
   | "import"
   | "lab"
   | "manualEntry"
@@ -277,7 +278,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
 
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
   Object.freeze([
-    Object.freeze({ ...PLATFORM_HOME_PAGES.welcome, icon: "overview" as const }),
+    Object.freeze({ ...PLATFORM_HOME_PAGES.welcome, icon: "home" as const }),
   ]);
 
 export type DashboardSidebarNavigationSection = Readonly<

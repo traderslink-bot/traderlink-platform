@@ -12,6 +12,8 @@ The owner chose **Home** for the page title and sidebar label and `/home` for th
 
 ## Design
 
+Home is the first link in the main sidebar and uses a simple house icon.
+
 Trading Tools comes first visually and in keyboard order. The Settings field stays near the width of its longest choice on desktop and wraps with Save when space is limited. Use a visible label, keyboard operation, and feedback beside the field. The owner accepted this direction for the first review on November 16, 2026. [Material UI Select guidance](https://mui.com/material-ui/react-select/), [W3C Reflow guidance](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)
 
 ## Progress
