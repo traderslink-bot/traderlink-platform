@@ -1,0 +1,14 @@
+'use strict';
+const fs=require('fs'),assert=require('assert/strict'),crypto=require('crypto');
+const plan=require('./community-staging-release-plan.json');
+assert.equal(plan.projectId,'49fc9197-07c9-45c7-b528-57d0393c2cca');
+assert.equal(plan.environmentId,'9e079dd4-f3f3-4872-9b00-adbd3000c485');
+assert.equal(plan.serviceId,'4d264aca-510c-4f5e-bc28-e89e526b8008');
+assert.equal(plan.databasePath,'/data/community-combined-review-20261117/platform.sqlite');
+for(const k of ['sourceVectorSha256','schemaSha256'])assert(/^[a-f0-9]{64}$/.test(plan[k]));
+assert(/^[a-f0-9]{40}$/.test(plan.sourceCommit));
+require('esbuild').buildSync({entryPoints:['scripts/platform/community-staging-bootstrap.ts'],outfile:'/app/community-staging/bootstrap.cjs',bundle:true,platform:'node',format:'cjs',conditions:['react-server'],external:['better-sqlite3'],define:{'import.meta.url':'__platform_config_url'},banner:{js:'const __platform_config_url=require("node:url").pathToFileURL("/app/src/modules/platform/server/database/platform-database-config.ts").href;'}});
+const buildId=fs.readFileSync('/app/.next/BUILD_ID','utf8').trim();
+const artifact={kind:'traderlink-isolated-staging-artifact-v1',role:'community-combined-review',projectId:plan.projectId,environmentId:plan.environmentId,serviceId:plan.serviceId,databasePath:plan.databasePath,sourceCommit:plan.sourceCommit,sourceVectorSha256:plan.sourceVectorSha256,schemaSha256:plan.schemaSha256,buildId};
+fs.writeFileSync('/app/isolated-staging-artifact.json',JSON.stringify(artifact)+'\n',{mode:0o444});
+console.log(JSON.stringify({stage:'isolated_staging_artifact_built',...artifact,artifactSha256:crypto.createHash('sha256').update(fs.readFileSync('/app/isolated-staging-artifact.json')).digest('hex')}));
