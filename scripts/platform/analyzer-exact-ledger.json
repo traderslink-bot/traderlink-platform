@@ -1,9 +1,9 @@
 {
-  "scope": "Coaching 30-migration append",
-  "productionParent": "120db9f224b2043fa76b68ddf56bfded87e3119d",
-  "predecessorCount": 151,
-  "predecessorSchemaSha256": "d7439490f5bab8bee6d70b8fb1061360fbfae76b4b5446adfc8e431efe582d5a",
-  "targetSchemaSha256": "c2bd1603af2f12a103e0348af7ef7a7f46b73ed550ef15910b487d37d1eaa756",
+  "scope": "Home page preference append",
+  "productionParent": "174fdb1f21256effe9de9a12c466f3b07c5dec56",
+  "predecessorCount": 181,
+  "predecessorSchemaSha256": "c2bd1603af2f12a103e0348af7ef7a7f46b73ed550ef15910b487d37d1eaa756",
+  "targetSchemaSha256": "9de32e9030284aeeafc2d8a10dcecfff3d800dabdfecef02fa8598d33113dda9",
   "ledger": [
     {
       "migration_id": "0001_platform_identity",
@@ -1090,6 +1090,12 @@
       "module_namespace": "community",
       "execution_order": 254,
       "checksum_sha256": "b46f47f1f9023e71cb4981ddd91720b1f86ae8df60912de177363f0994efea2a"
+    },
+    {
+      "migration_id": "0214_platform_home_page_preference",
+      "module_namespace": "platform",
+      "execution_order": 269,
+      "checksum_sha256": "885490dff11dc6ec0cb9ca45af104f3569c3156007a7b457e16b7a76dd508088"
     }
   ]
 }
