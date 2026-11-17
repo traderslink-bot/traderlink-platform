@@ -57,10 +57,10 @@ export const ACCOUNT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "choose-home-page",
         title: "Choose where TraderLink opens",
         summary: "Save a home page in Account settings under Preferences.",
-        keywords: Object.freeze(["home page", "welcome", "preferences", "startup", "installed app"]),
+        keywords: Object.freeze(["home page", "start page", "preferences", "startup", "installed app"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Open Account settings, select Preferences, then choose a Home page and select Save. Your choice applies on the web and in the installed TraderLink app. Links to specific features still open those features." }),
-          Object.freeze({ kind: "paragraph", text: "Choose from Welcome, Trading Workspace, Scanners, Screeners and Journal Workspace. Available choices depend on your access. TraderLink opens Welcome when you haven't saved a choice or your saved page becomes unavailable." }),
+          Object.freeze({ kind: "paragraph", text: "Choose from Home, Trading Workspace, Scanners, Screeners and Journal Workspace. Available choices depend on your access. TraderLink opens Home when you haven't saved a choice or your saved page becomes unavailable. The Home link in the sidebar opens the feature cards directly." }),
         ]),
       }),
       Object.freeze({

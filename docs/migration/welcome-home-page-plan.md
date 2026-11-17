@@ -1,14 +1,14 @@
 # Signed-in home menu and home page preference
 
-The owner is still deciding the user-facing name of the signed-in home page. It may grow beyond menu cards to include general market data, market updates, and app updates. “Welcome” in this plan refers to the current route and label.
+The owner chose **Home** for the page title and sidebar label and `/home` for the page address. Home can grow beyond menu cards to include general market data, market updates, and app updates. The previous `/welcome` address redirects to `/home`.
 
 ## Scope
 
-- Open the signed-in Welcome page by default. Show Trading Tools, Market News, Trade Analyzer and Trading Journal cards with direct links the signed-in user can use.
-- In Account Settings → Preferences, show a Home page dropdown and Save button above Appearance. Offer Welcome, Trading Workspace, Scanners, Screeners and Journal Workspace. Keep unavailable choices visible and disabled. Use the shared dashboard theme and stack cards on small screens.
-- Keep the preference with the Platform user. A missing or unavailable preference resolves to Welcome. A Journal Workspace home requires a selectable trading account. The Welcome card can still link eligible users to Journal onboarding.
+- Open the signed-in Home page by default. Show Trading Tools, Market News, Trade Analyzer and Trading Journal cards with direct links the signed-in user can use.
+- In Account Settings → Preferences, show a Home page dropdown and Save button above Appearance. Offer Home, Trading Workspace, Scanners, Screeners and Journal Workspace. Keep unavailable choices visible and disabled. Use the shared dashboard theme and stack cards on small screens.
+- Keep the preference with the Platform user. A missing or unavailable preference resolves to Home. A Journal Workspace home requires a selectable trading account. The Trading Journal card on Home can link eligible users to Journal onboarding.
 - Use the dashboard entry route for ordinary web opens, default sign-in returns and installed app launches. Keep the installed app ID, explicit destination URLs and OAuth account-link returns. Existing installs pick up the new launch URL through the browser's manifest update.
-- Keep the existing demo lifecycle with the Coordinator. The Welcome route does not read Journal analytics or wait for demo provisioning.
+- Keep the existing demo lifecycle with the Coordinator. The Home route reads card access from the signed-in account.
 
 ## Design
 
@@ -20,9 +20,12 @@ Trading Tools comes first visually and in keyboard order. The Settings field sta
 - [x] Owner approved the proposed first pass, with Trading Tools first.
 - [x] Implement and verify isolated routing, migration, persistence, permissions and UI.
 - [x] Add the three market-cap Press Releases links to the Welcome Market News card for users with existing Press Releases access.
+- [x] Apply the Home name and legacy redirect while preserving existing start-page preferences.
 - [ ] Owner review of the preview.
 
 ## Verification
+
+- Home naming and routing passed 32 focused tests and scoped lint. Isolated Chromium verified the title and sidebar label, the permanent legacy redirect with query preservation, signed-out sign-in return, direct Home navigation with a different start page saved, default and unavailable-preference fallback, and installed-app launch. The existing Home preference is carried forward under its persisted key without another migration.
 
 - Focused auth, return-target, dashboard-template and migration checks passed. The final migration and access run passed 17 tests across three files. The existing migration suite needed a 20-second per-test timeout on the VPS.
 - Isolated Chromium passed Light desktop and 320px Navy Dark portrait. It exercised keyboard selection, a failed save and retry, persistence, signed-out entry and fresh email sign-in, remembered entry, manifest URL launch, fallback after an unavailable setting, and a direct Journal Workspace query while Scanners was the saved home. Demo API calls were intercepted with an unavailable response during the browser run.

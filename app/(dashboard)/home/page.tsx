@@ -21,11 +21,11 @@ import { readPlatformHomeAccess } from "@/src/modules/platform/server/identity/p
 import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 
 export const metadata: Metadata = {
-  title: "Welcome | TraderLink Platform",
+  title: `${PLATFORM_HOME_PAGES.welcome.label} | TraderLink Platform`,
   robots: { index: false, follow: false },
 };
 
-export default async function WelcomePage() {
+export default async function HomePage() {
   const requestHeaders = await headers();
   let identity;
   try {
@@ -103,7 +103,7 @@ export default async function WelcomePage() {
 
   return (
     <DashboardPage>
-      <Typography component="h1" variant="h1">Welcome</Typography>
+      <Typography component="h1" variant="h1">{PLATFORM_HOME_PAGES.welcome.label}</Typography>
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", xl: "repeat(4, minmax(0, 1fr))" } }}>
         {cards.map(({ title, description, links }) => (
           <DashboardPanel key={title} title={title}>

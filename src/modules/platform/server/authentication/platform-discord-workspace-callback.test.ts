@@ -45,7 +45,7 @@ describe("Discord callback admission without a plan or server membership", () =>
     expect(new URL(response.headers.get("location")!).pathname).toBe("/sign-in-help");
     expect(fetch).not.toHaveBeenCalled();
   });
-  it.each(["/dashboard-entry", "/welcome", "/workspace", "/workspace?panel=journal", "/rules"])("retains the session and applies the landing boundary for %s", async returnTo => {
+  it.each(["/dashboard-entry", "/home", "/welcome", "/workspace", "/workspace?panel=journal", "/rules"])("retains the session and applies the landing boundary for %s", async returnTo => {
     const databasePath = fixture();
     const response = await GET(new NextRequest("https://app.traderslink.pro/api/auth/discord/callback?code=synthetic-code&state=synthetic-state", {
       headers: { cookie: `${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_STATE_COOKIE)}=synthetic-state; ${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE)}=consent; ${platformAuthCookieName(PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE)}=${encodeURIComponent(returnTo)}` },

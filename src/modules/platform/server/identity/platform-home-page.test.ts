@@ -72,7 +72,7 @@ describe("Platform home page", () => {
       runPlatformMigrations(database);
       expect(preferences.getActiveUserAppearance(member.session.userId)).toBe("dark");
       expect(preferences.getActiveUserHomePage(member.session.userId)).toBe("welcome");
-      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/welcome");
+      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/home");
 
       const trader = new PlatformDiscordSignInService(database).signIn({
         authSubject: discordSubject,
@@ -117,7 +117,7 @@ describe("Platform home page", () => {
       expect((await entry("invalid-token")).headers.get("location")).toBe("https://traderslink.pro/beta");
 
       vi.stubEnv("TRADERLINK_STOCK_SCREENERS_ENABLED", "0");
-      expect((await entry(trader.session.token)).headers.get("location")).toBe(origin + "/welcome");
+      expect((await entry(trader.session.token)).headers.get("location")).toBe(origin + "/home");
       expect(preferences.getActiveUserHomePage(trader.userId)).toBe("screeners");
       expect(await saveHomePage("screeners")).toMatchObject({ ok: false });
       expect(await saveHomePage("/admin/journal")).toMatchObject({ ok: false });
@@ -129,15 +129,15 @@ describe("Platform home page", () => {
       expect(afterSignIn.pathname + afterSignIn.search).toBe("/workspace?auth=connected&workspaceRetry=1");
       expect(isDashboardSignInNavigation(afterSignIn)).toBe(true);
 
-      requestState.headers = new Headers({ cookie: cookie(member.token), "x-traderlink-page-path": "/welcome" });
-      expect(await DashboardAdmissionTemplate({ children: "welcome" })).toBe("welcome");
+      requestState.headers = new Headers({ cookie: cookie(member.token), "x-traderlink-page-path": "/home" });
+      expect(await DashboardAdmissionTemplate({ children: "Home" })).toBe("Home");
       requestState.headers.set("x-traderlink-page-path", "/scanners");
       requestState.headers.set("x-traderlink-page-return-to", "/scanners?view=all");
       await expect(DashboardAdmissionTemplate({ children: "scanners" })).rejects.toMatchObject({
         digest: expect.stringContaining("/access-required?returnTo=%2Fscanners%3Fview%3Dall"),
       });
       expect(await saveHomePage("trading-workspace")).toMatchObject({ ok: false });
-      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/welcome");
+      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/home");
       expect(preferences.getActiveUserHomePage(trader.userId)).toBe("journal-workspace");
 
       requestState.headers = new Headers();

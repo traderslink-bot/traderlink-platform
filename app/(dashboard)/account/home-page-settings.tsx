@@ -10,6 +10,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { DashboardPrimaryAction } from "@/app/dashboard-template";
 import {
   isPlatformHomePage,
+  PLATFORM_DEFAULT_HOME_PAGE,
   PLATFORM_HOME_PAGES,
   type PlatformHomePage,
 } from "@/src/modules/platform/contracts/platform-home-page";
@@ -80,7 +81,7 @@ export function HomePageSettings({
       </Stack>
       {!available[saved] ? (
         <Typography color="text.secondary" variant="body2">
-          {PLATFORM_HOME_PAGES[saved].label} is currently unavailable. TraderLink opens Welcome.
+          {PLATFORM_HOME_PAGES[saved].label} is currently unavailable. TraderLink opens {PLATFORM_HOME_PAGES[PLATFORM_DEFAULT_HOME_PAGE].label}.
         </Typography>
       ) : null}
       {feedback ? <Alert severity={feedback.severity}>{feedback.message}</Alert> : null}

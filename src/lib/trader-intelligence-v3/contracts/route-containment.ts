@@ -188,10 +188,11 @@ const PLATFORM_DASHBOARD_PAGE_MODULES = [
   "app/(dashboard)/scanners/page.tsx",
   "app/(dashboard)/screeners/page.tsx",
   "app/(dashboard)/stock-tools/gainers/page.tsx",
+  "app/(dashboard)/trade-analyzer/page.tsx",
   "app/(dashboard)/trade-tracker/swings/[positionRef]/page.tsx",
   "app/(dashboard)/trade-tracker/swings/page.tsx",
   "app/(dashboard)/trading-workspace/page.tsx",
-  "app/(dashboard)/welcome/page.tsx",
+  "app/(dashboard)/home/page.tsx",
 ] as const;
 
 const OWNER_API_ROUTES = [

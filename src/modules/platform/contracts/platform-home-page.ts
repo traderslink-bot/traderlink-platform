@@ -1,8 +1,11 @@
 export const PLATFORM_ENTRY_PATH = "/dashboard-entry";
 export const PLATFORM_PWA_START_PATH = `${PLATFORM_ENTRY_PATH}?launch=pwa`;
 
+export const PLATFORM_LEGACY_WELCOME_PATH = "/welcome";
+
 export const PLATFORM_HOME_PAGES = {
-  welcome: { label: "Welcome", href: "/welcome" },
+  // "welcome" is the persisted preference key for Home.
+  welcome: { label: "Home", href: "/home" },
   "trading-workspace": { label: "Trading Workspace", href: "/trading-workspace" },
   scanners: { label: "Scanners", href: "/scanners" },
   screeners: { label: "Screeners", href: "/screeners" },
@@ -19,7 +22,9 @@ export function isPlatformHomePage(value: unknown): value is PlatformHomePage {
 // These landing pages perform their own signed-in check. Product routes
 // still require the dashboard admission policy and their individual checks.
 export function isPlatformSignedInLandingPath(path: string | null): boolean {
-  const welcome = PLATFORM_HOME_PAGES.welcome.href;
+  const home = PLATFORM_HOME_PAGES.welcome.href;
   const journal = PLATFORM_HOME_PAGES["journal-workspace"].href;
-  return path === welcome || path === `${welcome}/` || path === journal || path === `${journal}/`;
+  return path === home || path === `${home}/` ||
+    path === PLATFORM_LEGACY_WELCOME_PATH || path === `${PLATFORM_LEGACY_WELCOME_PATH}/` ||
+    path === journal || path === `${journal}/`;
 }
