@@ -6,8 +6,8 @@ import DragIndicator from "@mui/icons-material/DragIndicator";
 import ViewQuiltOutlined from "@mui/icons-material/ViewQuiltOutlined";
 import { useRef, useState, type PointerEvent } from "react";
 import { widgetNames, widgets } from "./scanner-desktop-layout";
-import { presets, type Edge, type Rect, type Tile } from "./scanner-split-layout";
-import { cardEntries, cardFits, layoutSize, type CardLayout } from "./scanner-free-layout";
+import { minimum, presets, type Edge, type Rect, type Tile } from "./scanner-split-layout";
+import { cardAtPoint, cardEntries, cardFits, layoutSize, moveCard, type CardLayout } from "./scanner-free-layout";
 import type { ScannerWorkspaceWidget as Widget } from "../scanner-workspace-layout";
 
 import type { ScannerView } from "./scanner-stock-cards";
@@ -26,25 +26,25 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
   rectangles:CardLayout; onChange:(next:CardLayout)=>void; onMessage:(message:string)=>void;
 }) {
   const layer = useRef<HTMLDivElement>(null);
-  const gesture = useRef<{ widget:Widget; edge?:Edge; start:Rect; x:number; y:number; next?:Rect } | null>(null);
-  const [preview,setPreview] = useState<Rect|null>(null);
-  const stop = (commit:boolean) => {
+  const gesture = useRef<{ widget:Widget; edge?:Edge; start:Rect; x:number; y:number; pointerId:number; next?:CardLayout|null } | null>(null);
+  const [preview,setPreview] = useState<CardLayout|null>(null);
+  const stop = (commit:boolean,pointerId?:number) => {
     const active=gesture.current;
+    if(!active||(pointerId!==undefined&&active.pointerId!==pointerId))return;
     gesture.current=null;
     setPreview(null);
-    if(commit&&active?.next)onChange({...rectangles,[active.widget]:active.next});
+    if(commit&&active.next&&active.next!==rectangles)onChange(active.next);
   };
   const start = (event:PointerEvent<HTMLButtonElement>,widget:Widget,rect:Rect,edge?:Edge) => {
-    if(event.button!==0)return;
+    if(event.button!==0||gesture.current)return;
     onMessage("");
-    gesture.current={widget,start:rect,edge,x:event.clientX,y:event.clientY};
+    gesture.current={widget,start:rect,edge,x:event.clientX,y:event.clientY,pointerId:event.pointerId};
     event.currentTarget.setPointerCapture(event.pointerId);
   };
-  const candidate = (widget:Widget, r:Rect, dx:number, dy:number, edge?:Edge) => {
-    if(!edge)return {...r,x:clamp(r.x+dx,0,layoutSize-r.w),y:clamp(r.y+dy,0,layoutSize-r.h)};
-    const bounds=layer.current!.getBoundingClientRect();
-    const minW=Math.min(r.w,(widget==="ticker-workspace"?300:180)/bounds.width*layoutSize);
-    const minH=Math.min(r.h,(widget==="ticker-workspace"?200:124)/bounds.height*layoutSize);
+  const resize = (widget:Widget,r:Rect,dx:number,dy:number,edge:Edge,bounds:DOMRect) => {
+    const size=minimum(widget);
+    const minW=Math.min(r.w,size.w/bounds.width*layoutSize);
+    const minH=Math.min(r.h,size.h/bounds.height*layoutSize);
     const next={...r};
     if(edge==="top"){next.y=clamp(r.y+dy,0,r.y+r.h-minH);next.h=r.h+r.y-next.y;}
     if(edge==="bottom")next.h=clamp(r.h+dy,minH,layoutSize-r.y);
@@ -64,19 +64,26 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
   };
   const update = (event:PointerEvent<HTMLButtonElement>) => {
     const active=gesture.current;
-    if(!active)return;
-    const box=layer.current!.getBoundingClientRect();
+    const box=layer.current?.getBoundingClientRect();
+    if(!active||active.pointerId!==event.pointerId||!box?.width||!box.height)return false;
     const dx=(event.clientX-active.x)/box.width*layoutSize;
     const dy=(event.clientY-active.y)/box.height*layoutSize;
-    const next=candidate(active.widget,active.start,dx,dy,active.edge);
-    active.next=cardFits(rectangles,active.widget,next)?next:undefined;
-    setPreview(active.next??null);
+    if(active.edge){
+      const rect=resize(active.widget,active.start,dx,dy,active.edge,box);
+      active.next=cardFits(rectangles,active.widget,rect)?{...rectangles,[active.widget]:rect}:null;
+    }else{
+      const target=cardAtPoint(rectangles,(event.clientX-box.left)/box.width*layoutSize,(event.clientY-box.top)/box.height*layoutSize);
+      active.next=moveCard(rectangles,active.widget,active.start.x+dx,active.start.y+dy,{w:box.width,h:box.height},target);
+    }
+    setPreview(active.next);
+    return true;
   };
   const pointer={onPointerMove:update,onPointerUp:(event:PointerEvent<HTMLButtonElement>)=>{
-    update(event);
-    if(!gesture.current?.next)onMessage("This card needs an open space to move there.");
-    stop(true);
-  },onPointerCancel:()=>stop(false),onLostPointerCapture:()=>stop(false)};
+    if(!update(event))return;
+    if(!gesture.current?.next)onMessage("Choose an open space or a slot that fits both cards.");
+    stop(true,event.pointerId);
+  },onPointerCancel:(event:PointerEvent<HTMLButtonElement>)=>stop(false,event.pointerId),
+  onLostPointerCapture:(event:PointerEvent<HTMLButtonElement>)=>stop(false,event.pointerId)};
   return <Box ref={layer} onKeyDown={event=>{if(event.key==="Escape")stop(false);}}
     sx={{position:"absolute",inset:0,zIndex:5,pointerEvents:"none",outline:"1px dashed",outlineColor:"divider"}}>
     {cardEntries(rectangles).map(([widget,rect])=><Box key={widget} sx={placement(rect)}>
@@ -86,10 +93,15 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
           onKeyDown={event=>{
             const dx=Number(event.key==="ArrowRight")-Number(event.key==="ArrowLeft");
             const dy=Number(event.key==="ArrowDown")-Number(event.key==="ArrowUp");
-            if(!dx&&!dy)return;
+            const box=layer.current?.getBoundingClientRect();
+            if((!dx&&!dy)||!box?.width||!box.height)return;
             event.preventDefault();
-            const next=candidate(widget,rect,dx*8,dy*8);
-            if(cardFits(rectangles,widget,next))onChange({...rectangles,[widget]:next});
+            const bounds={w:box.width,h:box.height};
+            const x=rect.x+dx*8,y=rect.y+dy*8;
+            const target=cardAtPoint(rectangles,rect.x+(dx<0?-8:dx>0?rect.w+8:rect.w/2),
+              rect.y+(dy<0?-8:dy>0?rect.h+8:rect.h/2));
+            const next=moveCard(rectangles,widget,x,y,bounds)??moveCard(rectangles,widget,x,y,bounds,target);
+            if(next&&next!==rectangles)onChange(next);
           }}
           sx={{position:"absolute",top:0,left:0,width:30,height:30,zIndex:1,cursor:"grab",
             pointerEvents:"auto",touchAction:"none",bgcolor:"background.paper",border:1,borderColor:"divider",borderRadius:0}}>
@@ -104,9 +116,10 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
           onKeyDown={event=>{
             const delta=vertical?Number(event.key==="ArrowRight")-Number(event.key==="ArrowLeft"):
               Number(event.key==="ArrowDown")-Number(event.key==="ArrowUp");
-            if(!delta)return;
+            const box=layer.current?.getBoundingClientRect();
+            if(!delta||!box?.width||!box.height)return;
             event.preventDefault();
-            const next=candidate(widget,rect,vertical?delta*8:0,vertical?0:delta*8,edge);
+            const next=resize(widget,rect,vertical?delta*8:0,vertical?0:delta*8,edge,box);
             onChange({...rectangles,[widget]:next});
           }}
           sx={{position:"absolute",[edge]:0,...(vertical?{top:16,bottom:16,width:8}:{left:16,right:16,height:8}),
@@ -114,7 +127,8 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
             p:0,border:0,bgcolor:"transparent","&:hover,&:focus-visible":{bgcolor:"primary.main"}}}/>;
       })}
     </Box>)}
-    {preview&&<Box sx={{...placement(preview),boxSizing:"border-box",border:"2px solid",borderColor:"primary.main"}}/>}
+    {preview&&cardEntries(preview).filter(([widget,rect])=>rect!==rectangles[widget]).map(([widget,rect])=>
+      <Box key={widget} sx={{...placement(rect),boxSizing:"border-box",border:"2px solid",borderColor:"primary.main"}}/>)}
   </Box>;
 }
 

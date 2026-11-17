@@ -1,5 +1,5 @@
 import { widgets } from "./scanner-desktop-layout";
-import { defaultTile, GAP, geometry, presets, type Rect, type Tile } from "./scanner-split-layout";
+import { defaultTile, GAP, geometry, minimum, presets, type Rect, type Tile } from "./scanner-split-layout";
 import type { ScannerWorkspaceWidget as Widget } from "../scanner-workspace-layout";
 
 export const layoutSize = 1000;
@@ -31,6 +31,32 @@ export function cardFits(layout: CardLayout, widget: Widget, rect: Rect) {
   return rect.x >= 0 && rect.y >= 0 && rect.x + rect.w <= layoutSize &&
     rect.y + rect.h <= layoutSize && cardEntries(layout).every(([key, other]) =>
       key === widget || !overlaps(rect, other));
+}
+
+export function cardAtPoint(layout: CardLayout, x: number, y: number) {
+  return cardEntries(layout).find(([, rect]) =>
+    x >= rect.x && x < rect.x + rect.w && y >= rect.y && y < rect.y + rect.h)?.[0];
+}
+
+export function moveCard(layout: CardLayout, widget: Widget, x: number, y: number,
+  bounds: Pick<Rect, "w" | "h">, target?: Widget): CardLayout | null {
+  const current = layout[widget];
+  if (!current) return null;
+  if (target && target !== widget) {
+    const slot = layout[target];
+    if (!slot || bounds.w <= 0 || bounds.h <= 0) return null;
+    const fitsSlot = (card: Widget, previous: Rect, next: Rect) => {
+      const size = minimum(card);
+      return next.w >= Math.min(previous.w, size.w / bounds.w * layoutSize)
+        && next.h >= Math.min(previous.h, size.h / bounds.h * layoutSize);
+    };
+    return fitsSlot(widget, current, slot) && fitsSlot(target, slot, current)
+      ? { ...layout, [widget]: slot, [target]: current } : null;
+  }
+  const rect = { ...current, x: Math.max(0, Math.min(layoutSize - current.w, x)),
+    y: Math.max(0, Math.min(layoutSize - current.h, y)) };
+  if (rect.x === current.x && rect.y === current.y) return layout;
+  return cardFits(layout, widget, rect) ? { ...layout, [widget]: rect } : null;
 }
 
 export function placeAddedCard(layout: CardLayout, widget: Widget, size: Pick<Rect, "w" | "h">) {
