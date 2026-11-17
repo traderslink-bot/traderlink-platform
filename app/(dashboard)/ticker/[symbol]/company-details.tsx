@@ -11,8 +11,9 @@ import { CompanyTechnicalsPanel } from "./company-technicals-panel";
 type Company = Awaited<ReturnType<typeof readCompanySnapshot>>;
 type News = {id:string;title:string;date:string;href:string};
 const companyTabs = [
-  ["technicals", "Technicals"], ["profile", "Company Profile"], ["financials", "Financials"],
-  ["filings", "SEC Filings"], ["news", "News"], ["levels", "Levels"],
+  ["technicals", "Technicals"], ["levels", "Levels"], ["chart", "Chart"],
+  ["profile", "Profile"], ["financials", "Financials"],
+  ["filings", "SEC Filings"], ["news", "News"],
 ] as const;
 type CompanyTab = typeof companyTabs[number][0];
 const number=new Intl.NumberFormat("en-US",{maximumFractionDigits:4});
@@ -47,7 +48,9 @@ function MetricColumns({rows}:{rows:readonly (readonly [string,ReactNode])[]}){
   </Box>;
 }
 
-export function CompanyDetails({company,news,technicalSample,levels}:{company:Company;news:News[];technicalSample?:CompanyTechnicals;levels?:ReactNode}){
+export function CompanyDetails({company,news,technicalSample,levels,chart}:{
+  company:Company;news:News[];technicalSample?:CompanyTechnicals;levels?:ReactNode;chart?:ReactNode;
+}){
   const [tab,setTab]=useState<CompanyTab>("technicals");
   const [limit,setLimit]=useState(10);
   const profile=company.profile;
@@ -87,7 +90,8 @@ export function CompanyDetails({company,news,technicalSample,levels}:{company:Co
   const financialMetrics=rowsFor(false);
   const visible=tab==="filings"?company.filings:news;
   return <Stack spacing={1.5} sx={{minWidth:0}}>
-    <CompanyTechnicalsPanel key={company.symbol} symbol={company.symbol} sample={technicalSample} active={tab==="technicals"} averageVolumes={averageVolumes}
+    <CompanyTechnicalsPanel key={company.symbol} symbol={company.symbol} sample={technicalSample} active={tab==="technicals"}
+      inDrawer={Boolean(chart)} averageVolumes={averageVolumes}
       header={(latestPrice, change)=><>
         <Stack direction="row" sx={theme=>({alignItems:"baseline",gap:1,flexWrap:"wrap",...theme.applyStyles("dark",{"& .company-identity":{color:"#fff"}})})}>
           <Typography className="company-identity" component="h1" variant="h4" color="warning.main">{company.symbol}</Typography>
@@ -99,8 +103,12 @@ export function CompanyDetails({company,news,technicalSample,levels}:{company:Co
         <Tabs value={tab} onChange={(_,value:CompanyTab)=>{setTab(value);setLimit(10);}}
           variant="scrollable" scrollButtons={false} aria-label="Company details"
           sx={{minHeight:42,"& .MuiTab-root":{minHeight:42,minWidth:0,px:{xs:1.25,sm:2},textTransform:"none"}}}>
-          {companyTabs.filter(([value])=>value!=="levels"||Boolean(levels)).map(([value,label])=><Tab key={value} id={`company-${value}-tab`}
-            aria-controls={`company-${value}-panel`} value={value} label={label}/>)}
+          {companyTabs.filter(([value])=>{
+            if(value==="levels")return Boolean(levels);
+            if(value==="chart")return Boolean(chart);
+            return true;
+          }).map(([value,label])=><Tab key={value} id={`company-${value}-tab`}
+            aria-controls={`company-${value}-panel`} value={value} label={value==="profile"&&!chart?"Company Profile":label}/>)}
         </Tabs>
       </>}>
       {technicals.length>0&&<MetricColumns rows={technicals}/>}
@@ -135,6 +143,9 @@ export function CompanyDetails({company,news,technicalSample,levels}:{company:Co
       </DashboardPanel>}
     </Box>
     {levels&&<Box id="company-levels-panel" role="tabpanel" aria-labelledby="company-levels-tab" hidden={tab!=="levels"}>{levels}</Box>}
+    {chart&&<Box id="company-chart-panel" role="tabpanel" aria-labelledby="company-chart-tab" hidden={tab!=="chart"}>
+      {tab==="chart"&&chart}
+    </Box>}
     {(["filings","news"] as const).map(section=><Box key={section} id={`company-${section}-panel`}
       role="tabpanel" aria-labelledby={`company-${section}-tab`} hidden={tab!==section}>
       {tab===section&&<DashboardPanel title={section==="filings"?"SEC Filings":"News"}>

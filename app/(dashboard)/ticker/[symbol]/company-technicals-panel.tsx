@@ -3,16 +3,21 @@
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useEffect, useId, useState, type ReactNode } from "react";
-import { Accordion, AccordionSummary, AccordionDetails, Box, IconButton, MenuItem, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip, Typography } from "@mui/material";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Accordion, AccordionSummary, AccordionDetails, Box, IconButton, MenuItem, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import type { CompanyTechnicals } from "@/src/modules/company/company-technicals";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { DashboardPanel } from "@/app/dashboard-ui";
 import { sessionNames } from "@/src/modules/company/company-technicals";
 import { indicatorDisplayRows, type IndicatorDisplayRow } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
 import indicatorStyles from "@/app/watchlist/watchlist-indicators-card.module.css";
+import { sharedChartStream, type ChartStreamHandle } from "../../charts/shared-chart-data";
 
 type IndicatorRead = {frame:string;vwap:number|null;readings:IndicatorDisplayRow[]};
+const technicalSections = [
+  ["stats", "Stats"], ["indicators", "Indicators"], ["sessions", "Sessions"],
+] as const;
+type TechnicalSection = typeof technicalSections[number][0];
 const indicatorNames = [
   ["Trend","Trend"],["Moving averages","EMA"],["RSI","RSI"],["Momentum","RSI momentum"],
   ["VWAP","VWAP"],["Volume","Volume"],["ATR","ATR"],
@@ -67,23 +72,36 @@ function sampleReads(frame:Frame): CompanyIndicatorReading[] {
   ];
 }
 
-export function CompanyTechnicalsPanel({symbol,sample,active,header,children,averageVolumes}:{
-  symbol:string;sample?:CompanyTechnicals;active:boolean;
+export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,children,averageVolumes}:{
+  symbol:string;sample?:CompanyTechnicals;active:boolean;inDrawer:boolean;
   header:(latestPrice:string|null, change:number|null)=>ReactNode;
   children?:ReactNode;
   averageVolumes:readonly (number|null)[];
 }){
   const indicatorId=useId();
+  const theme=useTheme();
+  const narrow=useMediaQuery(theme.breakpoints.down("md"));
+  const phoneLandscape=useMediaQuery("(orientation: landscape) and (max-height: 600px) and (max-width: 1200px) and (pointer: coarse)");
+  const sectionTabs=inDrawer&&(narrow||phoneLandscape);
+  const [section,setSection]=useState<TechnicalSection>("stats");
+  const statsActive=active&&(!sectionTabs||section==="stats");
+  const indicatorsActive=active&&(!sectionTabs||section==="indicators");
+  const snapshotActive=!inDrawer||active&&(!sectionTabs||section!=="indicators");
+  const sectionProps=(id:TechnicalSection)=>sectionTabs?{
+    id:`${indicatorId}-${id}-panel`, role:"tabpanel",
+    "aria-labelledby":`${indicatorId}-${id}-tab`, hidden:section!==id,
+  }:{};
   const [dateHelpOpen,setDateHelpOpen]=useState(false);
   const [marketClock,setMarketClock]=useState<ReturnType<typeof easternClock>>();
   const [ranges,setRanges]=useState<Partial<Record<"raw"|"split",CompanyTechnicals["yearRange"]>>>({});
   const displayedRanges=sample?{raw:sample.yearRange,split:sample.splitAdjustedYearRange}:ranges;
   const [snapshot,setSnapshot]=useState<CompanyTechnicals|null>(sample??null);
+  const snapshotDate=useRef<string>(undefined);
   const [livePrice,setLivePrice]=useState<{price:number;time:number}>();
   const [frame,setFrame]=useState<Frame>("5m");
   const [reads,setReads]=useState<IndicatorRead|null>(null);
   useEffect(()=>{
-    if(sample||!active)return;
+    if(sample||!statsActive)return;
     const controller=new AbortController();
     const load=async()=>{
       if(document.hidden)return;
@@ -99,52 +117,57 @@ export function CompanyTechnicalsPanel({symbol,sample,active,header,children,ave
     void load();
     const timer=setInterval(()=>void load(),15*60_000);
     return ()=>{controller.abort();clearInterval(timer);};
-  },[symbol,sample,active]);
+  },[symbol,sample,statsActive]);
 
   useEffect(()=>{
     if(sample)return;
     const controller=new AbortController();
     let timer:ReturnType<typeof setTimeout>;
     const read=async()=>{
-      if(!document.hidden){
-        setMarketClock(easternClock(Date.now()));
+      const clock=easternClock(Date.now());
+      // Other tabs only need a fresh baseline when the Eastern date changes.
+      if(!document.hidden&&(snapshotActive||snapshotDate.current!==clock.date)){
+        setMarketClock(clock);
         try{
           const r=await fetch(`/api/company/technicals?symbol=${encodeURIComponent(symbol)}`,{signal:controller.signal});
           if(r.ok&&!controller.signal.aborted){
             const next=await r.json() as CompanyTechnicals;
-            if(!controller.signal.aborted)setSnapshot(current=>({...next,days:next.days.length?next.days:current?.days??[]}));
+            if(!controller.signal.aborted){
+              snapshotDate.current=clock.date;
+              setSnapshot(current=>({...next,days:next.days.length?next.days:current?.days??[]}));
+            }
           }else if(!controller.signal.aborted)setSnapshot(current=>current??{days:[],row:null,scannerSignals:[]});
         }catch{if(!controller.signal.aborted)setSnapshot(current=>current??{days:[],row:null,scannerSignals:[]});}
       }
-      if(!controller.signal.aborted)timer=setTimeout(read,5000);
+      if(!controller.signal.aborted)timer=setTimeout(read,snapshotActive?5000:60_000);
     };
     void read();
     return ()=>{controller.abort();clearTimeout(timer);};
-  },[symbol,sample]);
+  },[symbol,sample,snapshotActive]);
 
   useEffect(()=>{
     if(sample)return;
-    let stream:EventSource|undefined;
+    let stream:ChartStreamHandle|undefined;
     const open=()=>{
       stream?.close();stream=undefined;
       if(document.hidden)return;
-      stream=new EventSource(`/api/screeners/charts/stream?symbol=${encodeURIComponent(symbol)}&daily=0`);
+      stream=sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(symbol)}&daily=0`);
       stream.addEventListener("price",event=>{
+        if(!(event instanceof MessageEvent)||typeof event.data!=="string")return;
         try{
           const {price,time}=JSON.parse(event.data);
           const at=Date.parse(time);
           if(Number.isFinite(price)&&price>0&&Number.isFinite(at))setLivePrice(current=>!current||at>=current.time?{price,time:at}:current);
         }catch{/* Wait for the next valid tick. */}
       });
-      stream.addEventListener("error",()=>{stream?.close();stream=undefined;setLivePrice(undefined);});
     };
-    const retry=setInterval(()=>{if(!stream&&!document.hidden)open();},15_000);
+    const retry=setInterval(()=>{if(!document.hidden)stream?.reconnectIfClosed();},15_000);
     open();document.addEventListener("visibilitychange",open);
     return ()=>{stream?.close();clearInterval(retry);document.removeEventListener("visibilitychange",open);};
   },[symbol,sample]);
 
   useEffect(()=>{
-    if(sample||!active)return;
+    if(sample||!indicatorsActive)return;
     const controller=new AbortController();
     let timer:ReturnType<typeof setTimeout>;
     const load=async()=>{
@@ -159,7 +182,7 @@ export function CompanyTechnicalsPanel({symbol,sample,active,header,children,ave
     };
     void load();
     return ()=>{controller.abort();clearTimeout(timer);};
-  },[symbol,frame,sample,active]);
+  },[symbol,frame,sample,indicatorsActive]);
 
   const row=snapshot?.row;
   const days=snapshot?.days??[];
@@ -220,7 +243,13 @@ export function CompanyTechnicalsPanel({symbol,sample,active,header,children,ave
     {header(current==null?null:price(current),dayChange)}
     <div role="tabpanel" id="company-technicals-panel" aria-labelledby="company-technicals-tab" hidden={!active}>
       <Stack spacing={2}>
-        <Box sx={{display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",lg:"minmax(0,3fr) minmax(0,2fr)"},gap:2,alignItems:"start"}}>
+        {sectionTabs&&<Tabs value={section} onChange={(_,value:TechnicalSection)=>setSection(value)}
+          aria-label="Technical sections" sx={{minHeight:40,"& .MuiTab-root":{minHeight:40,minWidth:0,px:1.5,textTransform:"none"}}}>
+          {technicalSections.map(([id,label])=><Tab key={id} value={id} label={label}
+            id={`${indicatorId}-${id}-tab`} aria-controls={`${indicatorId}-${id}-panel`}/>)}
+        </Tabs>}
+        <Box sx={{display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",lg:inDrawer?"minmax(0,1fr)":"minmax(0,3fr) minmax(0,2fr)"},gap:sectionTabs?0:2,alignItems:"start"}}>
+        <Box {...sectionProps("stats")}>
         <DashboardPanel hideHeader>
           <Stack spacing={1.25}>
             {sample&&<Typography variant="caption" color="text.secondary">Sample market data</Typography>}
@@ -269,6 +298,8 @@ export function CompanyTechnicalsPanel({symbol,sample,active,header,children,ave
             </Stack>
           </Stack>
         </DashboardPanel>
+        </Box>
+        <Box {...sectionProps("indicators")}>
           <DashboardPanel hideHeader>
             <Stack spacing={1} sx={{minWidth:0}}>
       <Stack direction="row" sx={{alignItems:"center",gap:1.5}}>
@@ -282,7 +313,8 @@ export function CompanyTechnicalsPanel({symbol,sample,active,header,children,ave
         <AccordionSummary id={`${indicatorId}-${read.name}-summary`} aria-controls={`${indicatorId}-${read.name}-details`} expandIcon={<ExpandMoreIcon fontSize="small"/>}
           sx={{minHeight:40,"& .MuiAccordionSummary-content":{my:0.75,justifyContent:"space-between",gap:1,pr:1}}}>
           <Typography component="span" variant="body2" sx={{fontWeight:700}}>{read.name}</Typography>
-          <Box component="span" sx={{display:"flex",flexWrap:"wrap",justifyContent:"flex-end",gap:0.5,textAlign:"right"}}>
+          <Box component="span" sx={{display:"flex",flexWrap:"wrap",justifyContent:"flex-end",gap:0.5,textAlign:"right",
+            "& > span":{whiteSpace:"nowrap"}}}>
             {read.state&&<span className={indicatorStyles.state} data-tone={read.tone} style={{marginBottom:0}}>{read.state}</span>}
             {read.conditionState&&<span className={indicatorStyles.state} data-tone="neutral" style={{marginBottom:0}}>{read.conditionState}</span>}
             {!read.state&&!read.conditionState&&<Typography component="span" variant="caption" color="text.secondary">{read.value==="Unavailable"?"—":read.value}</Typography>}
@@ -300,6 +332,8 @@ export function CompanyTechnicalsPanel({symbol,sample,active,header,children,ave
           </Stack>
           </DashboardPanel>
         </Box>
+        </Box>
+        <Box {...sectionProps("sessions")}>
           <Stack spacing={1} sx={{minWidth:0}}>
       <Typography component="h3" variant="subtitle2" sx={theme=>theme.applyStyles("dark",{color:"#fff"})}>Session levels</Typography>
       <TableContainer role="region" aria-label="Session levels table" tabIndex={0} sx={{maxWidth:"100%",overflowX:"auto",bgcolor:"background.default"}}><Table size="small" aria-label="Trading session highs and lows">
@@ -331,6 +365,7 @@ export function CompanyTechnicalsPanel({symbol,sample,active,header,children,ave
       </Table></TableContainer>
       {!days.length&&<Typography variant="body2" color="text.secondary">—</Typography>}
           </Stack>
+        </Box>
       </Stack>
     </div>
   </>;
