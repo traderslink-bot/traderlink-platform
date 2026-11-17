@@ -5,6 +5,19 @@ Related plan:
 
 ## Current state
 
+Journal Workspace no longer includes the PR Scanner card, toolbar button,
+sidecard, or display toggle. The dedicated Workspace stream and preference
+routes were removed. The shared article endpoint still serves Scanners and
+Trading Workspace. Help Center instructions describe those separate surfaces
+and still apply.
+
+Chromium confirmed the Demo Journal controls on desktop and mobile without
+PR Scanner UI or requests. Home rendered the Market News links, and Trade
+Analyzer rendered a sample chart. The focused dashboard, API routing, Demo,
+and Scanners suite passed 62 tests.
+
+## Historical implementation
+
 | Item | Status |
 | --- | --- |
 | Shared article reader extraction | Implemented locally |

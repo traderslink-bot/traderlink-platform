@@ -16,8 +16,6 @@ import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, Workspace
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { readWorkspaceTopTickersCard } from "./workspace-top-tickers-card";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
-import { JournalWorkspacePrScannerCardPreferenceService } from "@/src/modules/journal/server/news/journal-workspace-pr-scanner-card-preference";
-import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import {
   findJournalAnalyticsMetric,
   formatJournalAnalyticsPartitionedMetric,
@@ -271,7 +269,7 @@ export default async function WorkspacePage({
     recoverLegacyDemoWorkspaceTradeLibraryProjection(scope));
   async function WorkspaceContent() {
     await new Promise<void>((resolve) => setImmediate(resolve));
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCard, ruleResultsCardPreference, topTickersCard, tradeLibrary } = await measureWorkspacePhaseAsync(
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, response, reviewSummary, ruleResultsCard, ruleResultsCardPreference, topTickersCard, tradeLibrary } = await measureWorkspacePhaseAsync(
     timings,
     "dashboard_runtime",
     () => withJournalAnalyticsReportingDashboardRuntime(
@@ -330,7 +328,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         periodEndDate: periodDateRange.endDate,
         periodStartDate: periodDateRange.startDate,
         pnlReportingBasis,
-        prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
         ruleResultsCard,
         ruleResultsCardPreference,
         response: evaluateMembershipFeature(database, scope.userId, "analytics.access").allowed
@@ -416,8 +413,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         analyticsMetrics={analyticsMetrics}
         demoAccountSelectionRef={demoAccountSelectionRef}
         expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-        newsScannerAvailable={hasPressReleaseDashboardAccess(identity)}
-        prScannerCardPreference={prScannerCardPreference}
         reviewSummary={reviewSummary}
         offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
         period={period}

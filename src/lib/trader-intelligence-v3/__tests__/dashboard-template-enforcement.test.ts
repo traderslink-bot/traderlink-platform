@@ -50,7 +50,6 @@ const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "workspace", "workspace-atomic-trade-edit-drawer.tsx"),
   join(dashboardRoot, "workspace", "workspace-calendar-panel.tsx"),
   join(dashboardRoot, "workspace", "workspace-more-filters-drawer.tsx"),
-  join(dashboardRoot, "workspace", "workspace-news-scanner-panel.tsx"),
   join(dashboardRoot, "workspace", "workspace-trade-analyzer-panel.tsx"),
   join(dashboardRoot, "workspace", "workspace-trade-library-client.tsx"),
 ]);

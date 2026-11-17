@@ -332,8 +332,6 @@ const PLATFORM_SCOPED_API_ROUTES = [
   ["app/api/platform/journal/workspace-trades/status/route.ts", ["POST"], "owner_mutation"],
   ["app/api/platform/market-halts/status/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/moomoo-market-data-access/route.ts", ["GET"], "owner_read"],
-  ["app/api/platform/news/workspace-scanner/card-preference/route.ts", ["PUT"], "owner_mutation"],
-  ["app/api/platform/news/workspace-scanner/stream/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/notes/categorized/route.ts", ["GET", "PUT"], "owner_mutation"],
   ["app/api/platform/notes/current-focuses/route.ts", ["GET", "PUT"], "owner_mutation"],
   ["app/api/platform/notes/session-review/[sessionDate]/route.ts", ["GET", "PUT"], "owner_mutation"],
