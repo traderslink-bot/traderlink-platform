@@ -7,14 +7,17 @@ const easternHour = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York", hour: "2-digit", hourCycle: "h23",
 });
 
+export function scannerOutsideActiveHours(model: ScannerReadModel | null, checkedAt: number | null): boolean {
+  if (model?.status === "closed") return true;
+  if (checkedAt === null || !Number.isFinite(checkedAt)) return false;
+  const hour = Number(easternHour.format(checkedAt));
+  return hour >= 20 || hour < 4;
+}
+
 /** Member-facing presentation only; keep provider/coverage diagnostics in Admin. */
 export function memberScannerStatus(model: ScannerReadModel | null, loadError: boolean, checkedAt: number | null): string | null {
   if (model?.status === "disabled") return "Disabled";
-  if (model?.status === "closed") return SCANNER_ACTIVE_HOURS_MESSAGE;
-  if (checkedAt !== null && Number.isFinite(checkedAt)) {
-    const hour = Number(easternHour.format(checkedAt));
-    if (hour >= 20 || hour < 4) return SCANNER_ACTIVE_HOURS_MESSAGE;
-  }
+  if (scannerOutsideActiveHours(model, checkedAt)) return SCANNER_ACTIVE_HOURS_MESSAGE;
   if (loadError) {
     const updatedAt = model?.updatedAtUtc ? Date.parse(model.updatedAtUtc) : NaN;
     const hasRows = Boolean(model && (

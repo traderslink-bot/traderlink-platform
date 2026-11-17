@@ -83,7 +83,7 @@ import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-rel
 import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, marketEventsPressReleaseMaximumMarketCap, momentumDetectionControls, momentumLiquidityBypassControls } from "@/src/modules/scanner/live/settings";
 import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/gainer-view";
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
-import { memberScannerStatus, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
+import { memberScannerStatus, scannerOutsideActiveHours, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { applyScannerDisplayContinuity, type ScannerDisplayContinuity } from "@/src/modules/scanner/live/display-continuity";
 
@@ -765,7 +765,8 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";
   const selectedGainers=gainerViewResults(model,gainerView);
-  const compactChartSymbol=model ? selectedGainers?.rows[0]?.symbol ?? momentumStocks[0]?.symbol ?? "SPY" : loadError ? "SPY" : null;
+  const compactChartSymbol=!model&&!loadError ? null : scannerOutsideActiveHours(model,checkedAt) ? "IWM"
+    : selectedGainers?.rows[0]?.symbol ?? momentumStocks[0]?.symbol ?? "SPY";
   const marketEventsData=useMarketEventsData(true,!scannersOnly&&(!desktopLayout||visible.includes("market-events")||(drawerOpen&&workspaceScreenersSelected.events)));
   const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
   const haltWindow=model?{date:model.tradingDate,closed:model.status==="closed",checkedAt}:undefined;

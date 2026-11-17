@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScannerReadModel } from "./contracts";
-import { memberScannerStatus, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_TRANSIENT_FAILURE_GRACE_MS, SCANNER_UNAVAILABLE_MESSAGE } from "./member-status";
+import { memberScannerStatus, scannerOutsideActiveHours, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_TRANSIENT_FAILURE_GRACE_MS, SCANNER_UNAVAILABLE_MESSAGE } from "./member-status";
 
 const results = { rows: [], focus: [], total: 0 };
 const base: ScannerReadModel = { status: "ready", tradingDate: "2026-11-02", session: "regular",
@@ -32,6 +32,13 @@ describe("member scanner notices", () => {
   });
   it("shows Disabled even overnight, without exposing configuration diagnostics", () => {
     expect(memberScannerStatus({ ...base, status: "disabled" },false,at("2026-11-03T01:00:00Z"))).toBe("Disabled");
+  });
+  it("still identifies the off-hours chart default while scanner rows are stale, disabled, or unavailable", () => {
+    const afterClose = at("2026-11-03T01:00:00Z");
+    for (const model of [base, { ...base, status: "disabled" } as const, null]) {
+      expect(scannerOutsideActiveHours(model, afterClose)).toBe(true);
+      expect(scannerOutsideActiveHours(model, at("2026-11-03T09:00:00Z"))).toBe(false);
+    }
   });
   it.each(["unavailable", "universe_missing"] as const)("uses only the generic notice for %s during operating hours", status => {
     expect(memberScannerStatus({ ...base, status },false,at("2026-11-02T20:30:00Z"))).toBe(SCANNER_UNAVAILABLE_MESSAGE);
