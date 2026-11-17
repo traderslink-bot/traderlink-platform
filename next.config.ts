@@ -196,11 +196,6 @@ const legacyTopLevelReplacementRedirects = [
     destination: "/imports?mode=mapping",
     permanent: false,
   },
-  {
-    source: "/coaching",
-    destination: "/reflection-loop",
-    permanent: false,
-  },
 ] as const;
 
 const nextConfig: NextConfig = {

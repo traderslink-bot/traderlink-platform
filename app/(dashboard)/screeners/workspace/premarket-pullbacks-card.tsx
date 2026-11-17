@@ -138,7 +138,7 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
 export function PremarketPullbacksCard({results,view="table",onViewChange,now=0,rapid=[],notice,onOpenChart,haltByTicker=new Map()}:{view?:ScannerView;onViewChange?:(view:ScannerView)=>void;now?:number;results:PremarketPullbackResults|undefined;rapid?:readonly DeclineRow[];notice:string|null;onOpenChart:(row:DropChartTarget)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
   const [full,setFull]=useState(false);
   const viewSettings=onViewChange&&<ScannerViewSettings label="HOD Drops" view={view} onViewChange={onViewChange}/>;
-  const contents=(wide:boolean)=><Stack spacing={1}>
+  const contents=(wide:boolean)=><Stack data-scanner-results spacing={1}>
     {!notice&&results?.controls.enabled&&<RecentRapidDrops rows={rapid} onOpenChart={onOpenChart} haltByTicker={haltByTicker}/>}
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>:!results?<Skeleton height={260}/>
       :results.rows.length?(view==="cards"?<ScannerStockCards screen="high-drops" rows={results.rows} now={now}

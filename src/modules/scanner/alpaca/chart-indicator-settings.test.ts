@@ -51,12 +51,12 @@ it('uses plain VWAP with cumulative HLC3/volume from visible session start, befo
  }
 });
 
-it("preserves valid crosshair choices and accepts existing preferences without a target", () => {
-  expect(parseChartPreferences(DEFAULT_CHART_PREFERENCES).crosshairTarget).toBeUndefined();
-  for (const crosshairTarget of ["price", "normal", "nearest", "indicator:ema9:main"] as const) {
-    expect(parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, crosshairTarget }).crosshairTarget).toBe(crosshairTarget);
+it("defaults to free movement and preserves new crosshair choices", () => {
+  expect(parseChartPreferences(DEFAULT_CHART_PREFERENCES).crosshairMode).toBe("normal");
+  for (const crosshairMode of ["price", "normal", "nearest", "indicator:ema9:main"] as const) {
+    expect(parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, crosshairMode }).crosshairMode).toBe(crosshairMode);
   }
-  expect(() => parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, crosshairTarget: "indicator:" })).toThrow();
+  expect(() => parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, crosshairMode: "indicator:" })).toThrow();
 });
 
 it('starts every existing price overlay plot and legacy saved preset at 1 px', () => {

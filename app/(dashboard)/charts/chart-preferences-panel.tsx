@@ -16,7 +16,7 @@ import {useTheme} from '@mui/material/styles';
 import {ChartIndicatorEditor} from './chart-indicator-editor';
 import {CHART_TIMEFRAMES} from '@/src/modules/scanner/alpaca/candles';
 import type { ChartIndicatorDisplay } from './chart-view-memory';
-import {setAllIndicatorOverlayWidths,setAllIndicatorPriceScaleLabels,type ChartPreferences,type IndicatorType} from '@/src/modules/scanner/alpaca/chart-preferences';
+import {DEFAULT_CHART_CROSSHAIR_MODE,setAllIndicatorOverlayWidths,setAllIndicatorPriceScaleLabels,type ChartPreferences,type IndicatorType} from '@/src/modules/scanner/alpaca/chart-preferences';
 export function ChartPreferencesPanel({panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange}:{panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:ChartIndicatorDisplay;onIndicatorDisplayChange:(type:IndicatorType,action:'hidden'|'enabled',value:boolean)=>void}){
  const theme=useTheme(),mobile=useMediaQuery(theme.breakpoints.down('md'));
  const set=<K extends keyof ChartPreferences>(key:K,value:ChartPreferences[K])=>onChange({...p,[key]:value});
@@ -28,13 +28,13 @@ export function ChartPreferencesPanel({panel,onClose,preferences:p,crosshairLine
    <TextField select label="Chart type" value={p.kind} onChange={e=>set('kind',e.target.value as ChartPreferences['kind'])} size="small">{[['candles','Candlesticks'],['bars','OHLC bars'],['line','Line']].map(([v,label])=><MenuItem key={v} value={v}>{label}</MenuItem>)}</TextField>
    <TextField select label="Chart theme" value={p.theme} onChange={e=>set('theme',e.target.value as ChartPreferences['theme'])} size="small">{[['auto','Follow app theme'],['light','Light'],['dark','Dark']].map(([v,label])=><MenuItem key={v} value={v}>{label}</MenuItem>)}</TextField>
    <Stack direction="row" spacing={1}>{color('Up color',p.upColor,v=>set('upColor',v))}{color('Down color',p.downColor,v=>set('downColor',v))}</Stack>
-   <TextField select label="Crosshair" size="small" value={p.crosshairTarget??"price"}
-     onChange={event=>set("crosshairTarget",event.target.value as ChartPreferences["crosshairTarget"])}>
+   <TextField select label="Crosshair" size="small" value={p.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE}
+     onChange={event=>set("crosshairMode",event.target.value as ChartPreferences["crosshairMode"])}>
+     <MenuItem value="normal">Free movement</MenuItem>
      <MenuItem value="price">Snap to price</MenuItem>
-     <MenuItem value="normal">Normal</MenuItem>
      <MenuItem value="nearest">Snap to nearest line</MenuItem>
-     {p.crosshairTarget?.startsWith("indicator:")&&!crosshairLines.some(line=>line.value===p.crosshairTarget)
-       ? <MenuItem value={p.crosshairTarget} disabled>Saved line unavailable · snapping to price</MenuItem> : null}
+     {p.crosshairMode?.startsWith("indicator:")&&!crosshairLines.some(line=>line.value===p.crosshairMode)
+       ? <MenuItem value={p.crosshairMode} disabled>Saved line unavailable · snapping to price</MenuItem> : null}
      {crosshairLines.map(line=><MenuItem value={line.value} key={line.value}>Snap to {line.label}</MenuItem>)}
    </TextField>
    <TextField select label="Default timeframe" value={p.timeframe} onChange={e=>set('timeframe',e.target.value as ChartPreferences['timeframe'])} size="small">{CHART_TIMEFRAMES.map(v=><MenuItem key={v} value={v}>{v}</MenuItem>)}</TextField>

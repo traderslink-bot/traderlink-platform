@@ -37,7 +37,7 @@ import { aggregateCandles, candleBucket, displayCandles, easternDayStart, isCale
 
 import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-view";
 import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorDisplay } from "./chart-view-memory";
-import { indicatorPriceScaleLabels, withoutOverlayWidthOverrides, type ChartIndicator, type ChartPreferences, type IndicatorLineWidth, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
+import { DEFAULT_CHART_CROSSHAIR_MODE, indicatorPriceScaleLabels, withoutOverlayWidthOverrides, type ChartIndicator, type ChartPreferences, type IndicatorLineWidth, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
 import { readChartCandleHistory, readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
 
 import { makeJournalMarkers, chartJournalDayAt, chartJournalFocusBounds } from "./chart-journal-model";
@@ -153,7 +153,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const crosshairLines=useMemo(()=>activeIndicators.flatMap(indicator=>indicatorValues([],indicator,timeframe)
     .filter(plot=>!plot.pane&&!plot.histogram&&indicatorPlotStyle(indicator,plot.key).visible)
     .map(plot=>({value:`indicator:${indicator.id}:${plot.key}` as const,label:plot.label}))),[activeIndicators,timeframe]);
-  const crosshairTarget=preferences.crosshairTarget??"price";
+  const crosshairTarget=preferences.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE;
   const readoutTypes=[...new Set(activeIndicators.map(indicator=>indicator.type))];
   const showOvernight = !daily && chartShowsOvernight(preferences);
   const regularOnly = preferences.regular && !preferences.premarket && !preferences.postmarket && !showOvernight;
