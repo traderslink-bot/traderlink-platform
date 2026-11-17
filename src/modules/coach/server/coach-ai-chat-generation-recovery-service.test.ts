@@ -1,10 +1,9 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
@@ -39,9 +38,9 @@ function scopeFixture(database: Database.Database): WorkspaceAccessScope {
 }
 
 function fixture() {
-  const database = new Database(":memory:");
+  const database = openPristinePlatformTestDatabase();
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => base });
+  setPlatformTestFixtureMigrationTime(database, () => base);
   const scope = scopeFixture(database);
   const chat = new CoachAiChatRepository(database);
   const controls = new CoachAiChatProviderControlsRepository(database);

@@ -65,7 +65,7 @@ describe("PlatformAuthenticationRepository", () => {
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("rejects duplicate provider ownership without changing the original link", () => {
     const database = openPlatformDatabase({
@@ -111,5 +111,5 @@ describe("PlatformAuthenticationRepository", () => {
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 });

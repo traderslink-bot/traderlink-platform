@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { createHash, randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -13,8 +14,6 @@ import { PlatformAdminAuditRepository } from "@/src/modules/platform/server/admi
 import { PlatformAdminAuditService } from "@/src/modules/platform/server/administration/platform-admin-audit-service";
 import { PlatformAdminSystemService } from "@/src/modules/platform/server/administration/platform-admin-system-service";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { JournalAdminDecisionService } from "./journal-admin-decision-service";
 import { JournalImportAttemptRepository } from "./journal-import-attempt-repository";
 import { JournalAdminImportService } from "./journal-admin-import-service";
@@ -38,12 +37,12 @@ afterEach(() => {
 function setup() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-admin-read-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "test.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => new Date(NOW) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(NOW));
   const signIn = new PlatformDiscordSignInService(database, {
     now: () => new Date(NOW),
   }).signIn({

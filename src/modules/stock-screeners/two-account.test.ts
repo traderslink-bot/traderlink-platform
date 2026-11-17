@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { randomUUID } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -13,8 +14,6 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contrac
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "@/src/modules/platform/server/authentication/platform-session-service";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { DEFAULT_DEFINITION, type Candidate, type MarketPack, type RunResult, type SavedScreen, type SavedScreens } from "./contracts";
 import { completedSessionBars, intradayStructureMetrics } from "./intraday-structure";
 import { marketWindows, type ProviderBar } from "./market-metrics";
@@ -98,10 +97,10 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
   vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", premium);
   vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", `${authorSubject},${recipientSubject}`);
   try {
-    const database = openPlatformDatabase({ mode: "initializer", databasePath });
+    const database = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
     let author: string, recipient: string;
     try {
-      runPlatformMigrations(database);
+
       const signIn = new PlatformDiscordSignInService(database);
       function testMember(authSubject: string, name: string) {
         return signIn.signIn({ authSubject, username: name, globalDisplayName: name, avatarHash: null,

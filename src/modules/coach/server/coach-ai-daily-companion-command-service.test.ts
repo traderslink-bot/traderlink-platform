@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 
@@ -9,8 +10,6 @@ import type {
   AccountScope,
   WorkspaceAccessScope,
 } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { JournalAnnotationRepository } from "@/src/modules/journal/server/annotations/journal-annotation-repository";
 import { JournalAnnotationService } from "@/src/modules/journal/server/annotations/journal-annotation-service";
 import { JournalRuleRepository } from "@/src/modules/journal/server/annotations/journal-rule-repository";
@@ -39,9 +38,9 @@ function context(): Readonly<{
   sourceMessageId: string;
   roundTripId: string;
 }> {
-  const database = new Database(":memory:");
+  const database = openPristinePlatformTestDatabase();
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => now });
+  setPlatformTestFixtureMigrationTime(database, () => now);
   const userId = id(1);
   const workspaceId = id(2);
   const accountId = id(3);

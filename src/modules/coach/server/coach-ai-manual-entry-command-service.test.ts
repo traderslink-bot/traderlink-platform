@@ -1,12 +1,10 @@
-import Database from "better-sqlite3";
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { describe, expect, it, vi } from "vitest";
 
 import type { JournalManualTradePreview } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { currentJournalAccountSelectionRef } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiManualEntryCommandService } from "./coach-ai-manual-entry-command-service";
@@ -15,9 +13,9 @@ import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft
 const now = new Date("2026-08-05T14:00:00.000Z");
 
 function fixture() {
-  const database = new Database(":memory:");
+  const database = openPristinePlatformTestDatabase();
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => now });
+  setPlatformTestFixtureMigrationTime(database, () => now);
   const userId = createCanonicalUuidV4();
   const workspaceId = createCanonicalUuidV4();
   const accountId = createCanonicalUuidV4();

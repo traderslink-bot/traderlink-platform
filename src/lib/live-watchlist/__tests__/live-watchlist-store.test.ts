@@ -1,9 +1,8 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import {
   applyPatch,
@@ -164,9 +163,9 @@ describe("LiveWatchlistStore", () => {
   it("yields the app thread while another connection holds the SQLite writer lock", async () => {
     const root = mkdtempSync(join(tmpdir(), "watchlist-writer-yield-"));
     const databasePath = join(root, "test.sqlite");
-    const otherWriter = openPlatformDatabase({ mode: "initializer", databasePath });
+    const otherWriter = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
     try {
-      runPlatformMigrations(otherWriter);
+
       process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
       process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
       const store = new LiveWatchlistStore();

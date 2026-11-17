@@ -1,11 +1,10 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type Database from "better-sqlite3";
 
-import { openPlatformDatabase } from "../database/open-platform-database";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import {
   authorizeDevelopmentOwnerSeed,
   type DevelopmentOwnerSeedAuthorization,
@@ -29,14 +28,12 @@ afterEach(() => {
 function setup(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-development-owner-seed-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "seed.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, {
-    now: () => new Date("2026-08-01T13:00:00.000Z"),
-  });
+  setPlatformTestFixtureMigrationTime(database, () => new Date("2026-08-01T13:00:00.000Z"));
   return database;
 }
 

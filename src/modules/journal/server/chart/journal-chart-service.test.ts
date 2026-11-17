@@ -1,8 +1,8 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { chartJournalDay, readChartJournal, readChartJournalPlot, saveChartJournalItem } from "./journal-chart-service";
 
@@ -12,9 +12,9 @@ const owner = { userId: id(1), workspaceId: id(2), accountId: id(3), workspaceRo
 
 function fixture(run: (db: ReturnType<typeof openPlatformDatabase>) => void) {
   const dir = mkdtempSync(join(tmpdir(), "traderlink-chart-journal-"));
-  const db = openPlatformDatabase({ mode: "initializer", databasePath: join(dir, "scratch.sqlite"), forbiddenRepositoryRoots: [] });
+  const db = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: join(dir, "scratch.sqlite"), forbiddenRepositoryRoots: [] });
   try {
-    runPlatformMigrations(db, { now: () => new Date(at) });
+    setPlatformTestFixtureMigrationTime(db, () => new Date(at));
     db.prepare(`INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc)
       VALUES (?, 'test','chart-journal','Test','active',?,?)`).run(owner.userId, at, at);
     db.prepare(`INSERT INTO platform_workspaces(workspace_id,display_name,default_trading_timezone,status,created_at_utc,updated_at_utc)

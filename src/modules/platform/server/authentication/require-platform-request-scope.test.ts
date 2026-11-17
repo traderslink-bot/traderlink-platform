@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,8 +7,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { openPlatformDatabase } from "../database/open-platform-database";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformDiscordSignInService } from "./platform-discord-sign-in-service";
 import { PlatformLoginService } from "./platform-login-service";
 import { PlatformMembershipRepository } from "../membership/platform-membership-repository";
@@ -36,11 +35,11 @@ describe("unified Platform request scope", () => {
     const root = mkdtempSync(join(tmpdir(), "traderlink-multi-provider-scope-"));
     roots.push(root);
     const databasePath = join(root, "test.sqlite");
-    const database = openPlatformDatabase({ mode: "initializer", databasePath, forbiddenRepositoryRoots: [] });
+    const database = openPristinePlatformTestDatabase({ mode: "initializer", databasePath, forbiddenRepositoryRoots: [] });
     const now = new Date();
     const at = now.toISOString();
     try {
-      runPlatformMigrations(database, { now: () => now });
+      setPlatformTestFixtureMigrationTime(database, () => now);
       const service = new PlatformLoginService(database, { now: () => now });
       const google = service.signInOAuth({ provider: "google", subject: "synthetic-google-member", displayName: "Google trader" });
       const hash = "$argon2id$synthetic-service-test-proof";
@@ -94,7 +93,7 @@ describe("unified Platform request scope", () => {
     const root = mkdtempSync(join(tmpdir(), "traderlink-platform-request-"));
     roots.push(root);
     const databasePath = join(root, "test.sqlite");
-    const database = openPlatformDatabase({
+    const database = openPristinePlatformTestDatabase({
       mode: "initializer",
       databasePath,
       forbiddenRepositoryRoots: [],
@@ -102,9 +101,7 @@ describe("unified Platform request scope", () => {
     let token: string;
     let expectedUserId: string;
     try {
-      runPlatformMigrations(database, {
-        now: () => new Date("2026-08-02T12:00:00.000Z"),
-      });
+      setPlatformTestFixtureMigrationTime(database, () => new Date("2026-08-02T12:00:00.000Z"));
       database.prepare("UPDATE platform_dashboard_member_access_settings SET allow_all_discord_members=1 WHERE settings_key='member_dashboard_access'").run();
       const signIn = new PlatformDiscordSignInService(database, {
         now: () => new Date("2026-08-02T12:10:00.000Z"),
@@ -171,7 +168,7 @@ describe("unified Platform request scope", () => {
     const root = mkdtempSync(join(tmpdir(), "traderlink-platform-request-"));
     roots.push(root);
     const databasePath = join(root, "test.sqlite");
-    const database = openPlatformDatabase({
+    const database = openPristinePlatformTestDatabase({
       mode: "initializer",
       databasePath,
       forbiddenRepositoryRoots: [],
@@ -179,9 +176,7 @@ describe("unified Platform request scope", () => {
     let token: string;
     let workspaceId: string;
     try {
-      runPlatformMigrations(database, {
-        now: () => new Date("2026-08-02T12:00:00.000Z"),
-      });
+      setPlatformTestFixtureMigrationTime(database, () => new Date("2026-08-02T12:00:00.000Z"));
       database.prepare("UPDATE platform_dashboard_member_access_settings SET allow_all_discord_members=1 WHERE settings_key='member_dashboard_access'").run();
       const signIn = new PlatformDiscordSignInService(database, {
         now: () => new Date("2026-08-02T12:10:00.000Z"),
@@ -247,10 +242,10 @@ describe("unified Platform request scope", () => {
 describe("security: effective membership and account authorization", () => {
   it("keeps historical Discord evidence but excludes absence and stale snapshots; members get no account authority", () => {
     const root = mkdtempSync(join(tmpdir(), "security-effective-scope-")); roots.push(root);
-    const db = openPlatformDatabase({ mode: "initializer", databasePath: join(root, "test.sqlite"), forbiddenRepositoryRoots: [] });
+    const db = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: join(root, "test.sqlite"), forbiddenRepositoryRoots: [] });
     const at = new Date("2026-10-31T12:00:00.000Z");
     try {
-      runPlatformMigrations(db, { now: () => at });
+      setPlatformTestFixtureMigrationTime(db, () => at);
       const owner = new PlatformDiscordSignInService(db, { now: () => at }).signIn({ authSubject: SUBJECT, username: "owner", globalDisplayName: null, avatarHash: null, guildId: GUILD, roleIds: ["5"], guildOwner: true, joinedAtUtc: null });
       const memberships = new PlatformDiscordMembershipRepository(db);
       expect(memberships.findEffective(owner.userId, GUILD, at, 1000)).not.toBeNull();

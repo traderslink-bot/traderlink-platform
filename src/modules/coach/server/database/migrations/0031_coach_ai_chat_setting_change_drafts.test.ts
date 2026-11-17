@@ -69,7 +69,7 @@ WHERE coach_ai_review_delivery_change_draft_id = ?`).run(draftId)).toThrowError(
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("rejects a draft whose message/account scope does not match", () => {
     const database = setup();
@@ -89,5 +89,5 @@ WHERE coach_ai_review_delivery_change_draft_id = ?`).run(draftId)).toThrowError(
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 });

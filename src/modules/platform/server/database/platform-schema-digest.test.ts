@@ -1,16 +1,16 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type Database from "better-sqlite3";
 
-import { openPlatformDatabase } from "./open-platform-database";
 import {
   calculatePlatformSchemaDigest,
   calculatePlatformSchemaDigestFromRows,
   readPlatformSchemaRows,
 } from "./platform-schema-digest";
-import { runPlatformMigrations, verifyCompletedPlatformDatabase } from "./run-platform-migrations";
+import { verifyCompletedPlatformDatabase } from "./run-platform-migrations";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -20,12 +20,12 @@ afterEach(() => {
 function initializedDatabase(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-schema-digest-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "digest.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database);
+
   return database;
 }
 

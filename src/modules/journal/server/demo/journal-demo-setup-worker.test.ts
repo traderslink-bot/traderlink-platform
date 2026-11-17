@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 // @vitest-environment node
 import { execFileSync } from "node:child_process";
 import { createServer } from "node:http";
@@ -8,9 +9,7 @@ import { join, resolve } from "node:path";
 import { Worker } from "node:worker_threads";
 
 import { JournalAccountRepository } from "../accounts/journal-account-repository";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
 import { PlatformWorkspaceRepository } from "@/src/modules/platform/server/identity/platform-workspace-repository";
 
@@ -18,14 +17,14 @@ test("the packaged demo writer can wait for SQLite without blocking page reads",
   const root = mkdtempSync(join(tmpdir(), "traderlink-demo-worker-test-"));
   const databasePath = join(root, "demo.sqlite");
   const workerPath = join(root, "journal-demo-setup.cjs");
-  const database = openPlatformDatabase({ mode: "initializer", databasePath });
+  const database = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
   const server = createServer((_request, response) => {
     const reading = database.prepare("SELECT 1 AS ready").get() as { ready: number };
     response.end(String(reading.ready));
   });
   let completion: Promise<unknown> | undefined;
   try {
-    runPlatformMigrations(database);
+
     const createdAtUtc = "2026-11-16T20:00:00.000Z";
     const userId = createCanonicalUuidV4();
     const workspaceId = createCanonicalUuidV4();

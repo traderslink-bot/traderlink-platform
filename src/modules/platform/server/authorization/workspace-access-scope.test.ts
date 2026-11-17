@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,11 +7,9 @@ import type Database from "better-sqlite3";
 
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalAccountService } from "@/src/modules/journal/server/accounts/journal-account-service";
-import { openPlatformDatabase } from "../database/open-platform-database";
 import {
   createCanonicalUuidV4,
 } from "../database/platform-migration-contract";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformUserRepository } from "../identity/platform-user-repository";
 import { PlatformAuthenticationRepository } from "../authentication/platform-authentication-repository";
 import { PlatformWorkspaceRepository } from "../identity/platform-workspace-repository";
@@ -32,12 +31,12 @@ function setup(): {
 } {
   const root = mkdtempSync(join(tmpdir(), "traderlink-workspace-scope-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "scope.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database);
+
   const users = new PlatformUserRepository(database, { allowedAuthProviders: ["test"] });
   const workspaces = new PlatformWorkspaceRepository(database);
   const accounts = new JournalAccountService(new JournalAccountRepository(database));

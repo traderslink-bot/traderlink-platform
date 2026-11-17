@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -7,7 +8,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import { PlatformDiscordSignInService } from "../authentication/platform-discord-sign-in-service";
 import { createAndRestoreVerifyPlatformDatabaseBackup } from "../database/platform-database-backup";
 import { openPlatformDatabase } from "../database/open-platform-database";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import {
   executePlatformOperatorChange,
   previewPlatformOperatorChange,
@@ -31,13 +31,13 @@ function setup(): Readonly<{
   const root = mkdtempSync(join(tmpdir(), "traderlink-admin-operator-"));
   roots.push(root);
   const databasePath = join(root, "development.sqlite");
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath,
     forbiddenRepositoryRoots: [],
   });
   try {
-    runPlatformMigrations(database, { now: () => NOW });
+    setPlatformTestFixtureMigrationTime(database, () => NOW);
     const service = new PlatformDiscordSignInService(database, { now: () => NOW });
     const first = service.signIn({
       authSubject: "123456789012345678",

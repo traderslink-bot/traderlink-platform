@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { createHash } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -6,8 +7,6 @@ import { join } from "node:path";
 import type Database from "better-sqlite3";
 
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import type {
   MarketDataProvider,
   MarketDataRequest,
@@ -40,12 +39,12 @@ function scope(accountId: string): AccountScope {
 function setup(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-candle-review-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "journal.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => new Date(at) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(at));
   database.transaction(() => {
     database.prepare(`INSERT INTO platform_users (
   user_id, auth_provider, auth_subject, display_name, status, created_at_utc, updated_at_utc

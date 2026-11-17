@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,8 +11,6 @@ import {
   assertCanonicalUtcTimestamp,
   createCanonicalUuidV4,
 } from "./platform-migration-contract";
-import { openPlatformDatabase } from "./open-platform-database";
-import { runPlatformMigrations } from "./run-platform-migrations";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -21,12 +20,12 @@ afterEach(() => {
 function database(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-storage-validation-"));
   roots.push(root);
-  const db = openPlatformDatabase({
+  const db = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "storage.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(db);
+
   return db;
 }
 

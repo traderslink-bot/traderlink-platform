@@ -1,3 +1,4 @@
+import {countCreatedPlatformTestUsers,openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
@@ -5,8 +6,6 @@ import { copyFileSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 vi.mock("server-only", () => ({}));
-import { openPlatformDatabase } from "../database/open-platform-database";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { prepareHostedTransfer } from "./hosted-transfer-preview-service";
 import { executeHostedTransfer } from "./hosted-transfer-service";
 import { hostedTransferSha256, type HostedTransferModule } from "./hosted-transfer-contract";
@@ -19,9 +18,9 @@ describe("whole hosted transfer transaction", () => {
   it.each(["later_module", "reconciliation", "success"])("handles %s without partial identities", (variant) => {
     const root = mkdtempSync(join(tmpdir(), "security-transfer-")); roots.push(root);
     const path = join(root, "target.sqlite");
-    const db = openPlatformDatabase({ mode: "initializer", databasePath: path, forbiddenRepositoryRoots: [] });
+    const db = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: path, forbiddenRepositoryRoots: [] });
     try {
-      runPlatformMigrations(db, { now: () => now });
+      setPlatformTestFixtureMigrationTime(db, () => now);
       const base = {
         academy: { users: [{ authSubject: "123456789012345678", username: "synthetic", globalDisplayName: null }], completions: [] },
         watchlist: { symbols: [{ symbol: "ABCD", status: "live", updated_at: 1, state_json: "{}", revision: 1 }], health: [], archives: [] },
@@ -48,10 +47,10 @@ describe("whole hosted transfer transaction", () => {
       } });
       if (variant === "success") {
         expect(execute().status).toBe("executed_and_reconciled");
-        expect(db.prepare("SELECT COUNT(*) AS count FROM platform_users").get()).toEqual({ count: 1 });
+        expect(countCreatedPlatformTestUsers(db, 'count')).toEqual({ count: 1 });
       } else {
         expect(execute).toThrowError(variant === "later_module" ? "synthetic_later_module_failure" : "synthetic_reconciliation_failure");
-        expect(db.prepare("SELECT COUNT(*) AS count FROM platform_users").get()).toEqual({ count: 0 });
+        expect(countCreatedPlatformTestUsers(db, 'count')).toEqual({ count: 0 });
         expect(db.prepare("SELECT COUNT(*) AS count FROM platform_auth_identities").get()).toEqual({ count: 0 });
         expect(db.prepare("SELECT COUNT(*) AS count FROM live_watchlist_symbols").get()).toEqual({ count: 0 });
         expect(db.prepare("SELECT COUNT(*) AS count FROM platform_hosted_transfer_events").get()).toEqual({ count: 0 });

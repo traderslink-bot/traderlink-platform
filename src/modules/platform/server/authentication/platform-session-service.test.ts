@@ -1,11 +1,10 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { openPlatformDatabase } from "../database/open-platform-database";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformUserRepository } from "../identity/platform-user-repository";
 import { PlatformAuthenticationRepository } from "./platform-authentication-repository";
 import { PlatformSessionRepository } from "./platform-session-repository";
@@ -24,15 +23,13 @@ describe("PlatformSessionService", () => {
   it("resolves, expires and revokes only hashed server-side sessions", () => {
     const root = mkdtempSync(join(tmpdir(), "traderlink-platform-session-"));
     roots.push(root);
-    const database = openPlatformDatabase({
+    const database = openPristinePlatformTestDatabase({
       mode: "initializer",
       databasePath: join(root, "test.sqlite"),
       forbiddenRepositoryRoots: [],
     });
     try {
-      runPlatformMigrations(database, {
-        now: () => new Date("2026-08-02T12:00:00.000Z"),
-      });
+      setPlatformTestFixtureMigrationTime(database, () => new Date("2026-08-02T12:00:00.000Z"));
       new PlatformUserRepository(database, { allowedAuthProviders: ["discord"] })
         .createUser({
           userId: USER_ID,

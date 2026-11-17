@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -5,8 +6,6 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { AcademyProgressRepository } from "./academy-progress-repository";
 import { AcademyProgressService } from "./academy-progress-service";
@@ -26,12 +25,12 @@ afterEach(() => {
 function createFixture() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-academy-progress-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "test.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => new Date(NOW) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(NOW));
   const users = new PlatformUserRepository(database, {
     allowedAuthProviders: ["development_local"],
   });
