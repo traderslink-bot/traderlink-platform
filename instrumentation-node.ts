@@ -21,6 +21,12 @@ export async function registerTraderLinkHostedNodeRuntime(partnerProvider?: Part
       );
       assertPlatformRestoreStartup(databasePath, process.env);
     }
+    if (workerMode === "disabled_isolated_staging") {
+      // The staging-only entrypoint already initialized and verified the pinned
+      // synthetic database. Never load production maintenance or worker modules.
+      console.info("TraderLink isolated staging background workers disabled.");
+      return;
+    }
     const { runHostedPlatformMigrationMaintenance } = await import(
       "./src/modules/platform/server/database/run-hosted-platform-migration-maintenance"
     );
