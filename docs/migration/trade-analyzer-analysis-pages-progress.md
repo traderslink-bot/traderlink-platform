@@ -39,6 +39,8 @@ separately defined population and visible sample count for every aggregate.
 - Use saved Analyzer results from the selected account for the Analyzer reports and analyzed-trade history. Display any eligible-trade coverage count as coverage, with report metrics based on analyzed trades.
 
 The sidebar checkpoint implemented the grouping for existing pages.
+The feature link reads **Trade Analyzer**. **Trend & Momentum** has its own
+multi-line chart icon, verified in the desktop sidebar and mobile drawer.
 
 ## Standalone Trade Analyzer implementation — November 17, 2026
 

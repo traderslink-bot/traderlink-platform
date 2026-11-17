@@ -85,7 +85,7 @@ The dashboard receives one collapsible left-navigation group:
 
 ```text
 Trade Analyzer
-  Open Trade Analyzer
+  Trade Analyzer
   Day Trade Analysis
   Entry & Exit
   Green-to-Red

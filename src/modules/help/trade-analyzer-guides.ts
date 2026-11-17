@@ -541,7 +541,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Submit one or more trades for analysis directly from Trade Analyzer.",
         keywords: ["manual trade entry", "executions", "batch", "to analyze", "demo data"],
         blocks: [
-          { kind: "paragraph", text: "Open Trade Analyzer from Welcome or the sidebar. In Manual trade entry, choose a trading date and enter each buy and sell as it appears with your broker. Use Add execution to enter more fills, then select Analyze trades. Eligible same-day trades are submitted together. Use the trade tabs or picker to see one trade at a time." },
+          { kind: "paragraph", text: "Select Trade Analyzer in the sidebar, or choose Open Trade Analyzer on Home. In Manual trade entry, choose a trading date and enter each buy and sell as it appears with your broker. Use Add execution to enter more fills, then select Analyze trades. Eligible same-day trades are submitted together. Use the trade tabs or picker to see one trade at a time." },
           { kind: "paragraph", text: "The executions save to your selected trading account. To analyze lists saved day trades awaiting analysis. Your analyzed trades lists completed results. Open a result to see its chart, execution markers, and Trade Analysis card." },
           { kind: "paragraph", text: "When Demo is active, choose a sample trade to explore its finished analysis. Select Clear demo data and start fresh when you are ready to set up your own trading account." },
         ],

@@ -29,6 +29,7 @@ import LegendToggleIcon from "@mui/icons-material/LegendToggle";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import MenuOpenRoundedIcon from "@mui/icons-material/MenuOpenRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import MultilineChartRoundedIcon from "@mui/icons-material/MultilineChartRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import NewspaperRoundedIcon from "@mui/icons-material/NewspaperRounded";
@@ -172,6 +173,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     tradeExplorer: <TravelExploreRoundedIcon />,
     tradeGroup: <SwapVertRoundedIcon />,
     trades: <TableRowsRoundedIcon />,
+    trendMomentum: <MultilineChartRoundedIcon />,
     mfeMae: <TroubleshootIcon />,
     workspace: <DashboardRoundedIcon />,
     watchlist: <BookmarksRoundedIcon />,

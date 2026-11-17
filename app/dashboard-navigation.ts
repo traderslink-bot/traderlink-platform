@@ -42,6 +42,7 @@ export type DashboardNavigationIconKey =
   | "tradeExplorer"
   | "tradeGroup"
   | "trades"
+  | "trendMomentum"
   | "watchlist"
   | "workspace";
 
@@ -149,7 +150,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       items: Object.freeze([
         Object.freeze({
           href: "/trade-analyzer",
-          label: "Open Trade Analyzer",
+          label: "Trade Analyzer",
           icon: "tradeAnalyzer" as const,
         }),
         Object.freeze({
@@ -188,7 +189,12 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "marketCharts" as const,
           depth: 2 as const,
         }),
-        Object.freeze({ href: "/analytics/trade-analyzer/day/trend-momentum", label: "Trend & Momentum", icon: "marketCharts" as const, depth: 2 as const }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/trend-momentum",
+          label: "Trend & Momentum",
+          icon: "trendMomentum" as const,
+          depth: 2 as const,
+        }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/trades",
           label: "Your analyzed trades",
