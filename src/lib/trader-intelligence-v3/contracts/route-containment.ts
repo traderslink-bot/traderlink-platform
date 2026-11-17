@@ -188,10 +188,11 @@ const PLATFORM_DASHBOARD_PAGE_MODULES = [
   "app/(dashboard)/scanners/page.tsx",
   "app/(dashboard)/screeners/page.tsx",
   "app/(dashboard)/stock-tools/gainers/page.tsx",
+  "app/(dashboard)/trade-analyzer/page.tsx",
   "app/(dashboard)/trade-tracker/swings/[positionRef]/page.tsx",
   "app/(dashboard)/trade-tracker/swings/page.tsx",
   "app/(dashboard)/trading-workspace/page.tsx",
-  "app/(dashboard)/welcome/page.tsx",
+  "app/(dashboard)/home/page.tsx",
 ] as const;
 
 const OWNER_API_ROUTES = [
@@ -331,8 +332,6 @@ const PLATFORM_SCOPED_API_ROUTES = [
   ["app/api/platform/journal/workspace-trades/status/route.ts", ["POST"], "owner_mutation"],
   ["app/api/platform/market-halts/status/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/moomoo-market-data-access/route.ts", ["GET"], "owner_read"],
-  ["app/api/platform/news/workspace-scanner/card-preference/route.ts", ["PUT"], "owner_mutation"],
-  ["app/api/platform/news/workspace-scanner/stream/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/notes/categorized/route.ts", ["GET", "PUT"], "owner_mutation"],
   ["app/api/platform/notes/current-focuses/route.ts", ["GET", "PUT"], "owner_mutation"],
   ["app/api/platform/notes/session-review/[sessionDate]/route.ts", ["GET", "PUT"], "owner_mutation"],

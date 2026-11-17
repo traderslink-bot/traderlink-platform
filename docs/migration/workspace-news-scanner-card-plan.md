@@ -1,5 +1,12 @@
 # Workspace News Scanner Card Plan
 
+## Current direction
+
+The owner removed live news from Journal Workspace. Remove the compact PR
+Scanner card, toolbar action, article sidecard, display toggle, and their
+dedicated API endpoints. Keep the shared news reads used by Scanners and
+Trading Workspace. Preserve the recorded preference migration.
+
 ## September 19 side-card alignment
 
 The owner approved changing only the expanded Workspace PR Scanner and Calendar

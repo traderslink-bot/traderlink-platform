@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { hasSharedAnalyzerAllowance, type SharedAnalyzerAvailability } from "./shared-analyzer-beta-contracts";
+import { hasSharedAnalyzerAllowance, isSameAnalyzerMarketDay, type SharedAnalyzerAvailability } from "./shared-analyzer-beta-contracts";
 import { ManualTradePostEntryReview } from "@/app/(dashboard)/trade-tracker/manual-trade-post-entry-review";
 
 const unlimited: SharedAnalyzerAvailability = { enabled: true, unlimited: true,
@@ -56,4 +56,11 @@ test("trade-entry Analyze control stays visible with a nearby upgrade link when 
   }));
   assert.match(html,/Analyze/);assert.match(html,/disabled=""/);
   assert.match(html,/Upgrade for Trade Analyzer/);assert.match(html,/plans\?feature=trade_analyzer.analyses/);
+});
+
+test("Analyzer compares execution dates in New York across UTC midnight and daylight saving time", () => {
+  assert.equal(isSameAnalyzerMarketDay("2026-11-12T21:30:00Z", "2026-11-13T00:55:00Z"), true);
+  assert.equal(isSameAnalyzerMarketDay("2026-11-13T04:59:00Z", "2026-11-13T05:00:00Z"), false);
+  assert.equal(isSameAnalyzerMarketDay("2026-08-12T23:59:00Z", "2026-08-13T00:00:00Z"), true);
+  assert.equal(isSameAnalyzerMarketDay("2026-08-13T03:59:00Z", "2026-08-13T04:00:00Z"), false);
 });

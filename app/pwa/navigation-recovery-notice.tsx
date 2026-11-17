@@ -1,9 +1,10 @@
 "use client";
 
+import { PLATFORM_ENTRY_PATH } from "@/src/modules/platform/contracts/platform-home-page";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
-import { isWorkspaceSignInNavigation } from "./workspace-sign-in-navigation";
+import { isDashboardSignInNavigation } from "./dashboard-sign-in-navigation";
 
 function subscribe(listener: () => void): () => void {
   window.addEventListener("popstate", listener);
@@ -25,7 +26,7 @@ function destination(): string | null {
 export function NavigationRecoveryNotice({ children }: { children: ReactNode }) {
   const path = useSyncExternalStore(subscribe, destination, () => null);
   const recoveredUrl = path ? new URL(path, window.location.origin) : null;
-  const signInRecovery = recoveredUrl !== null && isWorkspaceSignInNavigation(recoveredUrl);
+  const signInRecovery = recoveredUrl !== null && isDashboardSignInNavigation(recoveredUrl);
   const alreadyRetried = recoveredUrl?.searchParams.get("workspaceRetry") === "1";
   if (signInRecovery) recoveredUrl.searchParams.set("workspaceRetry", "1");
   const retryPath = signInRecovery ? recoveredUrl.pathname + recoveredUrl.search : path;
@@ -41,7 +42,9 @@ export function NavigationRecoveryNotice({ children }: { children: ReactNode }) 
       <Button color="inherit" href={retryPath}>Try again</Button>
     }>
       {signInRecovery
-        ? "You’re signed in. Workspace is taking longer than expected to load."
+        ? recoveredUrl.pathname === PLATFORM_ENTRY_PATH
+          ? "You’re signed in. Your home page is taking longer than expected to load."
+          : "You’re signed in. Workspace is taking longer than expected to load."
         : "The live page could not load. Try again, or use any saved information below."}
     </Alert>}
     {!signInRecovery && children}

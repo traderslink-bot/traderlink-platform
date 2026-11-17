@@ -42,7 +42,7 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
     label: "General",
   }),
   Object.freeze({
-    description: "Appearance, push notifications and Discord messages",
+    description: "Home page, appearance and notifications",
     href: "/account/preferences",
     id: "preferences",
     label: "Preferences",
@@ -78,11 +78,13 @@ export function AccountSettingsLayout({
   activeSection,
   children,
   description,
+  firstPanel,
   title,
 }: {
   activeSection: AccountSettingsSection;
   children: ReactNode;
   description: string;
+  firstPanel?: ReactNode;
   title: string;
 }) {
   return (
@@ -122,35 +124,46 @@ export function AccountSettingsLayout({
         </Typography>
       </Box>
 
-      <Box sx={{ alignItems: "start", display: "grid", gap: 2.5, gridTemplateColumns: { xs: "1fr", md: "220px minmax(0, 1fr)" } }}>
-        <DashboardPanel hideHeader>
-          <Stack component="nav" spacing={0.5} aria-label="Account settings">
-            {ACCOUNT_SETTINGS_SECTIONS.map((section) => {
-              const active = section.id === activeSection;
-              return (
-                <Button
-                  component={Link}
-                  href={section.href}
-                  key={section.id}
-                  prefetch={false}
-                  sx={{ alignItems: "flex-start", justifyContent: "flex-start", px: 1.25, py: 1, textAlign: "left" }}
-                  variant={active ? "contained" : "text"}
-                >
-                  <Stack spacing={0.25}>
-                    <Typography component="span" sx={{ fontSize: "0.875rem", fontWeight: 800 }}>
-                      {section.label}
-                    </Typography>
-                    <Typography component="span" sx={{ fontSize: "0.75rem", fontWeight: 500, opacity: active ? 0.86 : 0.7 }}>
-                      {section.description}
-                    </Typography>
-                  </Stack>
-                </Button>
-              );
-            })}
-          </Stack>
-        </DashboardPanel>
+      <Box sx={{
+        alignItems: "start",
+        display: "grid",
+        gap: 2.5,
+        gridTemplateAreas: firstPanel
+          ? { xs: '"first" "navigation" "details"', md: '"navigation first" "navigation details"' }
+          : { xs: '"navigation" "details"', md: '"navigation details"' },
+        gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "220px minmax(0, 1fr)" },
+      }}>
+        {firstPanel ? <Box sx={{ gridArea: "first", minWidth: 0 }}>{firstPanel}</Box> : null}
+        <Box sx={{ alignSelf: "stretch", gridArea: "navigation" }}>
+          <DashboardPanel hideHeader>
+            <Stack component="nav" spacing={0.5} aria-label="Account settings">
+              {ACCOUNT_SETTINGS_SECTIONS.map((section) => {
+                const active = section.id === activeSection;
+                return (
+                  <Button
+                    component={Link}
+                    href={section.href}
+                    key={section.id}
+                    prefetch={false}
+                    sx={{ alignItems: "flex-start", justifyContent: "flex-start", px: 1.25, py: 1, textAlign: "left" }}
+                    variant={active ? "contained" : "text"}
+                  >
+                    <Stack spacing={0.25}>
+                      <Typography component="span" sx={{ fontSize: "0.875rem", fontWeight: 800 }}>
+                        {section.label}
+                      </Typography>
+                      <Typography component="span" sx={{ fontSize: "0.75rem", fontWeight: 500, opacity: active ? 0.86 : 0.7 }}>
+                        {section.description}
+                      </Typography>
+                    </Stack>
+                  </Button>
+                );
+              })}
+            </Stack>
+          </DashboardPanel>
+        </Box>
 
-        <Stack spacing={2.5} sx={{ minWidth: 0 }}>
+        <Stack spacing={2.5} sx={{ gridArea: "details", minWidth: 0 }}>
           {children}
         </Stack>
       </Box>

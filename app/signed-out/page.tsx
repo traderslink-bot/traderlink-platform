@@ -26,7 +26,7 @@ export default function SignedOutPage() {
               Your TraderLink session has ended on this device.
             </Typography>
           </Box>
-          <Button href="/login?returnTo=%2Fworkspace" size="large" variant="contained">
+          <Button href="/login?returnTo=%2Fdashboard-entry" size="large" variant="contained">
             Sign in
           </Button>
         </Stack>

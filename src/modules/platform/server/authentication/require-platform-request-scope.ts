@@ -275,7 +275,7 @@ function resolveTraderLinkPlatformRequestIdentity(
         options.requireDiscordMembership !== false &&
         !membershipDashboardAccess
       ) {
-        platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+        platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED", { reason: "dashboard_membership_required" });
       }
       if (
         options.requireDashboardAccess &&

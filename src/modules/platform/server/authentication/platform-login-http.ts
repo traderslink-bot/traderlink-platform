@@ -6,6 +6,7 @@ import {
 import "server-only";
 import { createHmac } from "node:crypto";
 import type { NextRequest } from "next/server";
+import { PLATFORM_ENTRY_PATH } from "../../contracts/platform-home-page";
 import {
   PlatformLoginError,
   PlatformLoginService,
@@ -16,7 +17,7 @@ import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "./platform-session-service";
 export function loginSession(request: NextRequest) {
   return request.cookies.get(platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE))?.value ?? null;
 }
-export function loginReturnTo(value: unknown, fallback = "/workspace") {
+export function loginReturnTo(value: unknown, fallback: string = PLATFORM_ENTRY_PATH) {
   if (
     typeof value !== "string" ||
     !value.startsWith("/") ||
@@ -26,8 +27,9 @@ export function loginReturnTo(value: unknown, fallback = "/workspace") {
     return fallback;
   const parsed = new URL(value, "https://traderslink.pro");
   return parsed.origin === "https://traderslink.pro" &&
+    !parsed.pathname.startsWith("//") &&
     !parsed.pathname.startsWith("/api/auth/")
-    ? parsed.pathname + parsed.search
+    ? parsed.pathname + parsed.search + parsed.hash
     : fallback;
 }
 export async function readLoginBody(

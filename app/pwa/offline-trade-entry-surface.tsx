@@ -39,6 +39,7 @@ import {
   PLATFORM_OFFLINE_DATA_CHANGED_EVENT,
   readPlatformOfflineDeviceState,
 } from "@/src/modules/platform/client/pwa/offline-projection-store";
+import { PLATFORM_ENTRY_PATH, PLATFORM_HOME_PAGES } from "@/src/modules/platform/contracts/platform-home-page";
 import { syncManualTradeOutbox } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
 import type { JournalManualTrackerKind } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
 
@@ -79,7 +80,9 @@ function browserPathnameSnapshot(): string {
   if (pathname === "/analytics/trade-analysis") return "/analytics/trade-analyzer/day";
   if (pathname === "/upload-csv" || pathname === "/import-dry-run" || pathname === "/import-health" || pathname === "/onboarding" || pathname === "/first-run" || pathname === "/admin/broker-mappings") return "/imports";
   if (pathname === "/repair-wizard") return "/data-decisions";
-  if (pathname === "/trader-intelligence") return "/workspace";
+  if (pathname === "/trader-intelligence" || pathname === PLATFORM_ENTRY_PATH) {
+    return PLATFORM_HOME_PAGES["journal-workspace"].href;
+  }
   return pathname;
 }
 

@@ -16,8 +16,6 @@ import type { WorkspaceTradeLibraryFilter, WorkspaceTradeLibraryGroup, Workspace
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { readWorkspaceTopTickersCard } from "./workspace-top-tickers-card";
 import { JournalWorkspaceRuleResultsCardPreferenceService } from "@/src/modules/journal/server/rules/journal-workspace-rule-results-card-preference";
-import { JournalWorkspacePrScannerCardPreferenceService } from "@/src/modules/journal/server/news/journal-workspace-pr-scanner-card-preference";
-import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import {
   findJournalAnalyticsMetric,
   formatJournalAnalyticsPartitionedMetric,
@@ -31,7 +29,7 @@ import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformAuthenticatedPageIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { evaluateMembershipFeature, hasJournalWorkspaceAccess } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import {
   createPlatformWorkspaceOfflineViewModel,
@@ -255,10 +253,8 @@ export default async function WorkspacePage({
     () => requireTraderLinkPlatformAuthenticatedPageIdentity(),
   );
   const scope = identity.scope;
-  const journalAvailable = identity.mode === "local_development" || withReadonlyPlatformDatabase({}, database =>
-    evaluateMembershipFeature(database, scope.userId, "journal.access").allowed || Boolean(database.prepare(
-      "SELECT 1 FROM platform_operator_grants WHERE user_id=? AND authority_key='journal_administration' AND grant_state='active'",
-    ).get(scope.userId)));
+  const journalAvailable = identity.mode === "local_development" ||
+    withReadonlyPlatformDatabase({}, database => hasJournalWorkspaceAccess(database, scope.userId));
   if (!journalAvailable) return <DashboardPage><WorkspaceWelcomeHeading /><DashboardPanel title="Trading Journal">
     <Typography sx={{ mb: 2 }}>Choose a plan to start using your Trading Journal and its included tools.</Typography>
     <DashboardPrimaryAction href="/plans">View plans</DashboardPrimaryAction>
@@ -273,7 +269,7 @@ export default async function WorkspacePage({
     recoverLegacyDemoWorkspaceTradeLibraryProjection(scope));
   async function WorkspaceContent() {
     await new Promise<void>((resolve) => setImmediate(resolve));
-  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, prScannerCardPreference, response, reviewSummary, ruleResultsCard, ruleResultsCardPreference, topTickersCard, tradeLibrary } = await measureWorkspacePhaseAsync(
+  const { account, customEndDate, customStartDate, onboardingStatus, periodEndDate, periodStartDate, pnlReportingBasis, response, reviewSummary, ruleResultsCard, ruleResultsCardPreference, topTickersCard, tradeLibrary } = await measureWorkspacePhaseAsync(
     timings,
     "dashboard_runtime",
     () => withJournalAnalyticsReportingDashboardRuntime(
@@ -332,7 +328,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         periodEndDate: periodDateRange.endDate,
         periodStartDate: periodDateRange.startDate,
         pnlReportingBasis,
-        prScannerCardPreference: new JournalWorkspacePrScannerCardPreferenceService(database).read(scope),
         ruleResultsCard,
         ruleResultsCardPreference,
         response: evaluateMembershipFeature(database, scope.userId, "analytics.access").allowed
@@ -371,8 +366,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
   const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
     ? currentJournalAccountSelectionRef(scope)
     : undefined;
-  const showDemoTradeTrackerInvitation = !onboardingStatus.activeAccountIsDemo &&
-    onboardingStatus.demoLifecycleState !== "cleared";
   const analyticsMetrics = response ? [...WORKSPACE_METRICS.map(([label, metricId, caption]) => {
     const selectedMetricId = workspaceMetricId(metricId, pnlReportingBasis);
     const metrics = findJournalAnalyticsMetric(response, selectedMetricId);
@@ -420,10 +413,6 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
         analyticsMetrics={analyticsMetrics}
         demoAccountSelectionRef={demoAccountSelectionRef}
         expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-        showDemoTradeTrackerInvitation={showDemoTradeTrackerInvitation}
-        hasRealAcceptedExecution={onboardingStatus.hasRealAcceptedExecution}
-        newsScannerAvailable={hasPressReleaseDashboardAccess(identity)}
-        prScannerCardPreference={prScannerCardPreference}
         reviewSummary={reviewSummary}
         offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
         period={period}
