@@ -627,9 +627,6 @@ export function TradersLinkAiReadCard({
                 ))}
               </ul>
             ) : null}
-            <p className="watchlist-ai-read-relevance">
-              <strong>Day-trade impact:</strong> {read.catalystRealityCheck.dayTradeRelevance}
-            </p>
           </section>
         ) : null}
         {/* Dilution monitoring is not available. Preserve saved fields, but do

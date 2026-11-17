@@ -1,4 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { TradersLinkAiReadCard } from "@/app/watchlist/live-watchlist-client";
+import { SimpleAnalysisCard } from "@/app/watchlist/simple-analysis-card";
+import { buildPremiumAnalysisPreview } from "../premium-analysis-preview";
+import { makeAnalysisEdit } from "../analysis-inline-edit";
 
 import {
   deriveTradersLinkAiPullbackPlan,
@@ -96,6 +102,26 @@ function validBody() {
     },
   });
 }
+
+it("saved catalyst facts remain visible without retired day-trade impact in both formats or premium preview", () => {
+  const read = parseTradersLinkAiRead(validBody())!;
+  read.catalystRealityCheck.status = "confirmed";
+  const before = JSON.stringify(read);
+  const card = { title: "Analysis", body: before, source: "test", updatedAt: 3000, priceWhenPosted: 1.36 };
+  const detailed = renderToStaticMarkup(createElement(TradersLinkAiReadCard, { card, symbol: { marketDataStatus: "live" }, livePrice: 1.36 }));
+  const simpleRead = { ...read, analysisFormat: "simple" as const, simpleAnalysis: { setup: "Test setup", pullbacks: [], upside: [], invalidation: null } };
+  const simple = renderToStaticMarkup(createElement(SimpleAnalysisCard, { read: simpleRead }));
+  for (const html of [detailed, simple]) {
+    expect(html).toContain(read.catalystRealityCheck.summary);
+    expect(html).not.toContain("Day-trade impact");
+    expect(html).not.toContain(read.catalystRealityCheck.dayTradeRelevance);
+  }
+  for (const value of [read, simpleRead]) {
+    expect(JSON.stringify(buildPremiumAnalysisPreview(value))).not.toContain(value.catalystRealityCheck.dayTradeRelevance);
+    expect(makeAnalysisEdit(value as unknown as Record<string, unknown>).catalystRealityCheck).toEqual({ summary: value.catalystRealityCheck.summary });
+  }
+  expect(JSON.stringify(read)).toBe(before);
+});
 
 function validV3Body() {
   const value = JSON.parse(validBody());

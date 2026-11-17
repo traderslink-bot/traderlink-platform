@@ -6,6 +6,7 @@ export type FreeChatPublication = {
   cycleId: string;
   approvalRevision: number;
   updated: boolean;
+  listingOnly?: boolean;
   images: { filename: string; description: string; base64: string }[];
 };
 
@@ -26,9 +27,13 @@ export function freeChatWebhook(environment = process.env): URL | null {
 
 export type FreeChatVisibility = { ticker: boolean; analysis: boolean; levels: boolean };
 
-export function freeChatPreview(symbol: string, updated: boolean, visibility: FreeChatVisibility) {
+export function freeChatPreview(symbol: string, updated: boolean, visibility: FreeChatVisibility, listingOnly = false) {
   if (visibility.ticker) return {
     content: "**$•••• — Premium ticker**\n\nNew idea on the TradersLink Watchlist.\n\nView Watchlist ↓\nhttps://app.traderslink.pro/watchlist\n\n@everyone",
+    includeImages: false,
+  };
+  if (listingOnly) return {
+    content: `**$${symbol} on the TradersLink Watchlist**\n\nSee the ticker page for available details.\n\nView $${symbol} ↓\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\n\n@everyone`,
     includeImages: false,
   };
   if (visibility.analysis || visibility.levels) return {
@@ -46,7 +51,7 @@ export function freeChatPayload(publication: FreeChatPublication, visibility: Fr
     || !publication.cycleId || !Number.isSafeInteger(publication.approvalRevision)
     || publication.approvalRevision < 1 || publication.images.length > 4) throw Error("Invalid approved analysis.");
   const symbol = publication.symbol;
-  const preview = freeChatPreview(symbol, publication.updated, visibility);
+  const preview = freeChatPreview(symbol, publication.updated, visibility, publication.listingOnly);
   const images = (preview.includeImages ? publication.images : []).map((image, index) => {
     const bytes = Buffer.from(image.base64, "base64");
     if (bytes.length < 33 || bytes.length > 8 * 1024 * 1024 || bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") {

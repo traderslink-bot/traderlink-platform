@@ -29,7 +29,7 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
     const simple = read.simpleAnalysis;
     add("currentRead", "", [simple.setup]);
     if (simple.breakout) add("breakoutContinuation", "Breakout", [simple.breakout.explanation, simple.breakout.confirmation], true);
-    if (read.catalystRealityCheck.sourceUrls.length) add("catalystRealityCheck", "Catalyst / recent news", [read.catalystRealityCheck.summary, read.catalystRealityCheck.dayTradeRelevance]);
+    if (read.catalystRealityCheck.sourceUrls.length) add("catalystRealityCheck", "Catalyst / recent news", [read.catalystRealityCheck.summary]);
     add("riskSummary", "Risk notes", read.riskSummary);
     sortPullbacksByPrice(simple.pullbacks.map((zone,index)=>({...zone,hidden:zone.hidden ?? hidden.has(index===0?"shallow":index===1?"deep":"")}))).forEach((zone, index) => {
       if(zone.hidden) return;
@@ -56,7 +56,7 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
         "First reclaim: " + HIDDEN_ANALYSIS_PRICE, "Setup restored: " + HIDDEN_ANALYSIS_PRICE], true);
     }
     read.downsideCheckpoints?.forEach(level => add("downsideCheckpoints", "Downside levels", [level.condition], level.price !== null));
-    add("catalystRealityCheck", "Catalyst / recent news", [read.catalystRealityCheck.summary, read.catalystRealityCheck.dayTradeRelevance]);
+    add("catalystRealityCheck", "Catalyst / recent news", [read.catalystRealityCheck.summary]);
     add("riskSummary", "Risk", read.riskSummary);
   }
   return { sections };

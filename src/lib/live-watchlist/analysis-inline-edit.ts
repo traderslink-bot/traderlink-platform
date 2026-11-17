@@ -29,7 +29,7 @@ export function makeAnalysisEdit(payload: Record<string, unknown>): EditRecord {
     simple.pullbacks=sortPullbacksByPrice((simple.pullbacks as EditValue[]).map((plan,index)=>({...editRecord(plan),hidden:editRecord(plan).hidden ?? hidden.includes(index===0?"shallow":index===1?"deep":"")})));
     return {
     simpleAnalysis:simple,
-    catalystRealityCheck:pick(payload.catalystRealityCheck,["summary","dayTradeRelevance"]),
+    catalystRealityCheck:pick(payload.catalystRealityCheck,["summary"]),
     riskSummary:structuredClone(payload.riskSummary ?? []) as EditValue,
     ownerHiddenSections:hidden.filter(key=>key!=="shallow"&&key!=="deep"),
   }; }
@@ -45,7 +45,7 @@ export function makeAnalysisEdit(payload: Record<string, unknown>): EditRecord {
     : ["shallow","deep"].flatMap(key=>plans[key]?[{...pick(plans[key],pullbackEditFields),hidden:hidden.includes(key)}]:[]);
   result.failureRecovery = payload.failureRecovery ? pick(payload.failureRecovery, recoveryEditFields) : null;
   result.ownerPullbacks = sortPullbacksByPrice(result.ownerPullbacks as EditValue[],"zoneLow","zoneHigh");
-  for (const key of ["catalystRealityCheck", "dilutionRisk", "listingStatus"]) result[key] = pick(payload[key], ["summary", "dayTradeRelevance"]);
+  for (const key of ["catalystRealityCheck", "dilutionRisk", "listingStatus"]) result[key] = pick(payload[key], key === "catalystRealityCheck" ? ["summary"] : ["summary", "dayTradeRelevance"]);
   return result;
 }
 export function mergeAnalysisEdit(original: Record<string, unknown>, patch: EditRecord): Record<string, unknown> {

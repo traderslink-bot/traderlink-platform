@@ -284,3 +284,20 @@ Help reviewed; existing workflow is unchanged, so no guide change is needed.
 Preserve the AGENTS assignment overlay. This slice is not deployed and is separate
 from the queued catalyst Day-trade-impact removal. Coordinator was not contacted
 for coding/testing; ordinary integration/release remains its responsibility.
+
+## November 10 — remove Day-trade impact
+
+Remove only the catalyst's Day-trade impact subsection from detailed and simple
+cards, premium previews and the analysis editor. Catalyst summary/status and risk
+notes remain. Saved JSON fields, original history and owner edits are preserved;
+no migration is required. New runtime requests omit the retired field and keep
+an empty compatibility value when normalized. Both formats' stored cards use
+the updated renderer without regenerating analyses. No existing image/post was
+regenerated or sent. React review preserves existing composition, theme tokens,
+hooks and access behavior; no SDK/provider/dependency migration was introduced.
+
+The 17-test parser/card suite passes, including actual static markup for both
+formats and premium/editor regression assertions. Focused changed-graph type
+check and targeted ESLint results are recorded at the local checkpoint; lint has
+zero errors and one existing unused-helper warning in live-watchlist-client.
+No deployment or production data change has occurred for this slice.

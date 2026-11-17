@@ -57,7 +57,6 @@ export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, render
         <p>{read.catalystRealityCheck.summary}</p>
         {olderArticleDate ? <p><strong>Older article:</strong> {olderArticleDate}</p> : null}
         {read.sources.filter(source=>source.evidence?.excerptKind==="article_title").map(source=><p key={source.url}>{source.title}</p>)}
-        {read.catalystRealityCheck.dayTradeRelevance.trim() ? <p><strong>Day-trade impact:</strong> {read.catalystRealityCheck.dayTradeRelevance}</p> : null}
       </section> : null}
       {renderSectionEditor?.(["riskSummary"])}
       {!hidden.has("riskSummary") && read.riskSummary.some(risk=>risk.trim()) ? <section className="watchlist-ai-read-section"><h3>Risk notes</h3><ul>{read.riskSummary.filter(risk=>risk.trim()).map((risk,index)=><li key={index}>{risk}</li>)}</ul></section> : null}

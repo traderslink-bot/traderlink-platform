@@ -7,9 +7,9 @@ import { deliverFreeChatPublication, type FreeChatPublication } from "./watchlis
 
 import { readFreeChatVisibility } from "./watchlist-free-chat-visibility";
 
-type Pending = { post_key: string; cycle_id: string; ticker: string; owner_user_id: string; draft_revision: number | null; approval_revision: number | null; requested_at_ms:number };
+type Pending = { post_key: string; cycle_id: string; ticker: string; owner_user_id: string; draft_revision: number | null; origin: "approval" | "automatic" | "manual"; approval_revision: number | null; requested_at_ms:number };
 type ReviewEvent = { revision: number; at: number; actor: string; body: { kind: string; draftRevision?: number; approvalRevision?: number; channel?: string; status?: string;
-  publication?: { website?: { cards?: { tradersLinkAiRead?: { body?: string } } } } } };
+  publication?: { notificationKind?: string; website?: { cards?: { tradersLinkAiRead?: { body?: string } } } } } };
 type Review = { symbol: string; cycleId: string; cancelled: boolean; events: ReviewEvent[] };
 
 export function recordFreeChatMoveIntent(body:string,actor:string) {
@@ -28,9 +28,17 @@ export async function readFreeChatReview(symbol: string, ownerUserId: string): P
   return review;
 }
 
-export function publishedFreeChatApprovals(review: Review) {
-  return review.events.filter(event => event.body.kind === "approve" && event.body.publication?.website?.cards?.tradersLinkAiRead?.body && review.events.some(receipt => receipt.body.kind === "delivery"
-    && receipt.body.channel === "website" && receipt.body.status === "acknowledged" && receipt.body.approvalRevision === event.revision));
+export function isFreeChatListingOnly(event: ReviewEvent) {
+  return event.body.kind === "approve" && event.body.draftRevision === 0 &&
+    event.body.publication?.notificationKind === "listing" && Boolean(event.body.publication.website);
+}
+
+export function publishedFreeChatApprovals(review: Review, includeListingOnly = false) {
+  const websiteReceipts = new Set(review.events.filter(receipt =>
+    receipt.body.kind === "delivery" && receipt.body.channel === "website" && receipt.body.status === "acknowledged",
+  ).map(receipt => receipt.body.approvalRevision));
+  return review.events.filter(event => event.body.kind === "approve" && websiteReceipts.has(event.revision) &&
+    (Boolean(event.body.publication?.website?.cards?.tradersLinkAiRead?.body) || (includeListingOnly && isFreeChatListingOnly(event))));
 }
 
 /** Called independently before approval; its failure must never veto approval. */
@@ -74,6 +82,7 @@ export async function reconcileFreeChatPublications() {
       if(moveId&&Date.now()-post.requested_at_ms>86400000) {
         withPlatformDatabase({mode:'runtime'},db=>db.prepare("UPDATE platform_watchlist_free_chat_posts SET state='cancelled',status_message='This move notification expired.' WHERE post_key=?").run(post.post_key));continue;
       }
+      const standaloneShare = !moveId && post.origin === "manual" && post.approval_revision !== null;
       let deliveryStarted = false;
       try {
         const review = await readFreeChatReview(post.ticker,post.owner_user_id);
@@ -99,7 +108,7 @@ export async function reconcileFreeChatPublications() {
           moveApproval=move.approvalRevision??null;
           if(moveApproval===null)throw Error('No published analysis for this move.');
         }
-        const approval = publishedFreeChatApprovals(review).find(event => moveId ? event.revision===moveApproval : post.approval_revision !== null ? event.revision === post.approval_revision
+        const approval = publishedFreeChatApprovals(review, standaloneShare).find(event => moveId ? event.revision===moveApproval : post.approval_revision !== null ? event.revision === post.approval_revision
           : event.body.draftRevision === post.draft_revision && event.actor === `platform-owner:${post.owner_user_id}`);
         if (!approval) {
           withPlatformDatabase({mode:"runtime"}, db => db.prepare("UPDATE platform_watchlist_free_chat_posts SET next_attempt_at_ms=? WHERE post_key=?").run(Date.now()+30000,post.post_key));
@@ -111,11 +120,17 @@ export async function reconcileFreeChatPublications() {
           return claimFreeChatPost(db,post.post_key);
         });
         if (!claimed) continue;
-        const response = await requestWatchlistRuntimeRaw({ method:"GET",reviewActor:`platform-owner:${post.owner_user_id}`,timeoutMs:30000,
-          path:`/api/watchlist/analysis-review/free-chat-publication?symbol=${encodeURIComponent(post.ticker)}&cycleId=${encodeURIComponent(post.cycle_id)}&approvalRevision=${approval.revision}` });
-        if (!response.ok) throw Error("Approved analysis export unavailable.");
-        const publication = JSON.parse(response.body).publication as FreeChatPublication;
-        if (publication.symbol !== post.ticker || publication.cycleId !== post.cycle_id || publication.approvalRevision !== approval.revision) throw Error("Publication mismatch.");
+        let publication: FreeChatPublication;
+        if (standaloneShare && isFreeChatListingOnly(approval)) {
+          publication = { symbol: post.ticker, cycleId: post.cycle_id, approvalRevision: approval.revision,
+            updated: false, listingOnly: true, images: [] };
+        } else {
+          const response = await requestWatchlistRuntimeRaw({ method:"GET",reviewActor:`platform-owner:${post.owner_user_id}`,timeoutMs:30000,
+            path:`/api/watchlist/analysis-review/free-chat-publication?symbol=${encodeURIComponent(post.ticker)}&cycleId=${encodeURIComponent(post.cycle_id)}&approvalRevision=${approval.revision}` });
+          if (!response.ok) throw Error("Approved analysis export unavailable.");
+          publication = JSON.parse(response.body).publication as FreeChatPublication;
+          if (publication.symbol !== post.ticker || publication.cycleId !== post.cycle_id || publication.approvalRevision !== approval.revision) throw Error("Publication mismatch.");
+        }
         deliveryStarted = true;
         const result = await deliverFreeChatPublication(publication, () => readFreeChatVisibility(post.ticker, true));
         withPlatformDatabase({mode:"runtime"}, db => finishFreeChatPost(db,post.post_key,result));

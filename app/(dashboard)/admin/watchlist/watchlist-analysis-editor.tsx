@@ -119,7 +119,7 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
           <Button disabled={busy} onClick={()=>change(["simpleAnalysis","breakout"],simple.breakout?null:{price:null,explanation:"",confirmation:""})}>{simple.breakout?"Remove breakout":"Add breakout"}</Button>
           {simple.breakout?simpleFields(editRecord(simple.breakout),["price","explanation","confirmation"],["simpleAnalysis","breakout"]):null}</details>;
         if(key==="catalystRealityCheck") return <details key={key}><summary>Edit catalyst / recent news</summary>{visibility(key,"catalyst / recent news")}
-          {simpleFields(editRecord(patch[key]),["summary","dayTradeRelevance"],[key])}</details>;
+          {simpleFields(editRecord(patch[key]),["summary"],[key])}</details>;
         if(key==="riskSummary") { const risks=(patch.riskSummary ?? []) as EditValue[]; return <details key={key}><summary>Edit risk notes</summary>{visibility(key,"risk notes")}
           {risks.map((item,index)=><div key={index}><TextField label="Risk note" value={item??""} fullWidth multiline disabled={busy} onChange={event=>change([key,index],event.target.value)} /><Button disabled={busy} onClick={()=>change([key],risks.filter((_,i)=>i!==index))}>Remove</Button></div>)}
           <Button disabled={busy || risks.length>=20} onClick={()=>change([key],[...risks,""])}>Add risk note</Button></details>; }
@@ -153,7 +153,7 @@ export function WatchlistAnalysisEditor({ symbol, onClose, onSaved }: { symbol: 
       const path = key === "shallow" || key === "deep" ? ["pullbackPlans", key] : [key];
       const value = path.length === 2 ? editRecord(patch.pullbackPlans)[key] : patch[key];
       const optional = ["shallow", "deep", "failureRecovery"].includes(key);
-      const names = key === "failureRecovery" ? recoveryEditFields : optional ? pullbackEditFields : ["summary", "dayTradeRelevance"];
+      const names = key === "failureRecovery" ? recoveryEditFields : optional ? pullbackEditFields : key === "catalystRealityCheck" ? ["summary"] : ["summary", "dayTradeRelevance"];
       return <details key={key} style={{ margin: "8px 0" }}><summary>Edit {analysisEditSections[key]}{hidden ? " (hidden)" : ""}</summary>
         <label><input type="checkbox" checked={!hidden} disabled={busy} onChange={event => change(["ownerHiddenSections"], event.target.checked ? (patch.ownerHiddenSections as string[]).filter(item => item !== key) : [...patch.ownerHiddenSections as string[], key])} /> Show this section</label>
         {key === "targets" && Array.isArray(value) ? <Button disabled={busy || value.length < 2} onClick={() => change(path,editLevelRows(value,"sort",0,null,Infinity))}>Sort by price</Button> : null}
