@@ -560,7 +560,7 @@ function DashboardShellContent({
         items: Object.freeze(section.group.items.flatMap<DashboardNavigationGroupItem>(item => {
           if (!isDashboardNavigationItem(item)) return [item];
           if (item.href === "/communities") return communityNavigationHref ? [Object.freeze({ ...item, href: communityNavigationHref })] : [];
-          if (item.href === "/partner-channels") return partnerChannelsNavigationAccess ? [item] : [];
+          if (item.href === "/partner-channels") return partnerChannelsNavigationAccess && watchlistAdminNavigationAccess ? [item] : [];
           if (item.href === "/coaching") {
             return watchlistAdminNavigationAccess && coachingNavigationHref === "/coaching" ? [item] : [];
           }

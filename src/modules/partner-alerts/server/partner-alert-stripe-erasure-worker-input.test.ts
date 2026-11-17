@@ -66,6 +66,8 @@ it("binds the worker to the reviewed migration, protected roles, ledger and curr
     expect(readPartnerAlertStripeErasureWorkerInputs(db, { ...env, PARTNER_ALERT_CATALOG_CHECKOUT_ENABLED: undefined,
       PARTNER_ALERT_WHOP_CREDENTIAL_KEYS_JSON: undefined, PARTNER_ALERT_DISCORD_MESSAGE_CONTENT_INTENT_ENABLED: undefined })
       ?.readCurrentConfiguration()?.outputBindings).toEqual(registry);
+    expect(input).not.toHaveProperty("releaseFormat");
+    expect(input).not.toHaveProperty("erasureProfileRef");
     expect(input.forbiddenRoleIds).toEqual(protectedRoles);
     expect(input.erasureRuntime.lastAffectedBackupExpiresAtUtc()).toBe(inventory[5]);
     expect(() => readPartnerAlertStripeErasureWorkerInputs(db,{...env,NODE_ENV:"production"})).toThrow("unqualified");

@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe,expect,it } from "vitest";
 import type Database from "better-sqlite3";
+import type { PartnerAlertWhopPreparation } from "./partner-alert-whop-reconciliation";
+import type { PartnerAlertWhopInboxClaim } from "./partner-alert-whop-inbox";
 import { PartnerAlertWhopCommercialApply } from "./partner-alert-whop-commercial-apply";
 import type { PartnerAlertRetainedOperationEvidence,PartnerAlertRetainedProviderEvidence } from "./partner-alert-retained-evidence";
 
@@ -10,17 +12,21 @@ const offerId="33333333-3333-4333-8333-333333333333";
 const lifecycleRef="44444444-4444-4444-8444-444444444444";
 const offer={offerId,communityId,version:1,kind:"channel",title:"Alerts",mappingIds:["55555555-5555-4555-8555-555555555555"],
   currency:{code:"USD",minorUnitDigits:2},amountMinor:2500,cadence:{unit:"day",count:30},
-  whop:{environment:"live",accountId:"biz_one",productId:"prod_one",planId:"plan_one"}};
+  whop:{environment:"live",accountId:"biz_one",productId:"prod_one",planId:"plan_one"}} as const;
 const fact={environment:"live",paymentId:"pay_one",accountId:"biz_one",membershipId:"mem_one",productId:"prod_one",
   planId:"plan_one",whopUserRef:"a".repeat(64),state:"paid",paidAtUtc:"2026-11-02T10:00:00.000Z",amountMinor:2500,
   refundState:"partial",disputeState:"observed",observedAtUtc:"2026-11-02T12:00:00.000Z",
-  validUntilUtc:"2026-11-02T13:00:00.000Z"};
-const claim={event:{communityId,environment:"live",accountId:"biz_one",apiVersionDate:"2026-10-27-2",eventId:"evt_one",
+  validUntilUtc:"2026-11-02T13:00:00.000Z"} as const;
+const claim:PartnerAlertWhopInboxClaim={event:{communityId,environment:"live",accountId:"biz_one",apiVersionDate:"2026-10-27-2",eventId:"evt_one",
   eventType:"payment.updated",resourceKind:"payment",resourceId:"pay_one",payloadSha256:"b".repeat(64),
   occurredAtUtc:"2026-11-02T11:00:00.000Z"},leaseToken:"66666666-6666-4666-8666-666666666666",attempts:1,
-  admissionFence:{}} as never;
+  admissionFence:{} as never};
 const preparation={status:"prepared",canApply:false,provenance:"current_runtime_unbound",
-  requiresRuntimeQualification:[],discoveryComplete:true,discoveredMembershipCount:1,issues:[],readCount:5,
+  requiresRuntimeQualification:["authenticated_current_whop_identity_and_complete_server_owned_target",
+    "actual_get_client_environment_account_and_credential_binding",
+    "current_identity_connection_and_erasure_generation_fence",
+    "current_reviewed_offer_and_policy_and_per_merchant_read_coordination",
+    "transactional_fact_application_and_inbox_lease_fencing"],discoveryComplete:true,discoveredMembershipCount:1,issues:[],readCount:5,
   startedAtUtc:"2026-11-02T11:00:00.000Z",finishedAtUtc:"2026-11-02T12:00:00.000Z",
   context:{userId,communityId,offerId,offerVersion:1,environment:"live",accountId:"biz_one",productId:"prod_one",
     planId:"plan_one",currencyCode:"USD",verifiedWhopUserRef:"a".repeat(64),
@@ -28,7 +34,7 @@ const preparation={status:"prepared",canApply:false,provenance:"current_runtime_
       evidence:{membershipId:"mem_one",userId,whopUserRef:"a".repeat(64),communityId,offerId,offerVersion:1,
         whop:offer.whop,state:"active",basis:"paid",observedAtUtc:"2026-11-02T11:00:00.000Z",
         startsAtUtc:"2026-11-01T00:00:00.000Z",validUntilUtc:"2026-11-02T12:30:00.000Z"},
-      paymentIds:["pay_one"],paymentFacts:[fact]}]} as never;
+      paymentIds:["pay_one"],paymentFacts:[fact]}]} as const satisfies PartnerAlertWhopPreparation;
 
 function fixture(input:Readonly<{inTransaction?:boolean;leaseUntilUtc?:string;authority?:Record<string,unknown>}>= {}){
   const operations:PartnerAlertRetainedOperationEvidence[]=[];

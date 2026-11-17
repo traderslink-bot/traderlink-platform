@@ -1,6 +1,8 @@
+import { isCommunityReviewDiscordGuild } from "@/src/modules/communities/server/community-review-discord-guild";
+import { createPartnerAlertReviewDiscordRoleRest as createPartnerAlertDiscordRoleRest } from "./partner-alert-review-discord";
 import { randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
-import { createPartnerAlertDiscordRoleRest } from "./partner-alert-discord-role-rest";
+
 import { createPartnerAlertManagedRoleTransport } from "./partner-alert-managed-role-transport";
 import { partnerAlertOutputBindingMatches, type PartnerAlertProviderOutputBinding } from "./partner-alert-provider-runtime-configuration";
 import { PartnerAlertRoleWorker, type PartnerAlertRoleAuthority } from "./partner-alert-role-worker";
@@ -36,6 +38,7 @@ export function createPartnerAlertStripeRolePorts(db: Database.Database, input: 
           destination_channel_id: string | null; destination_role_id: string | null;
           review_state: string; revision: number; approved_revision: number | null; status: string } | undefined;
       if (!target?.destination_role_id || !target.destination_channel_id
+        || !isCommunityReviewDiscordGuild(target.source_guild_id) || !isCommunityReviewDiscordGuild(target.destination_guild_id)
         || !partnerAlertOutputBindingMatches(output.outputBindings, {
           communityId: intent.scope.communityId, sourceGuildId: target.source_guild_id, sourceChannelId: target.source_channel_id,
           destinationGuildId: target.destination_guild_id, destinationChannelId: target.destination_channel_id,

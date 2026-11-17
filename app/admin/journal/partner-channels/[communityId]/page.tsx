@@ -1,3 +1,4 @@
+import { requireCommunityOwnerReviewAuthenticatedPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import type { Metadata } from "next";
 
 import { PartnerChannelReviewDetail } from "./partner-channel-review-detail";
@@ -11,6 +12,7 @@ export default async function PartnerChannelReviewDetailPage({
 }: {
   params: Promise<{ communityId: string }>;
 }) {
+  await requireCommunityOwnerReviewAuthenticatedPageIdentity();
   const { communityId } = await params;
   return <PartnerChannelReviewDetail communityId={communityId} />;
 }

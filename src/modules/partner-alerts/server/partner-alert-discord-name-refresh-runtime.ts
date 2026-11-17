@@ -1,11 +1,13 @@
 import "server-only";
 
+import { createPartnerAlertReviewDiscordChannelCatalog as createPartnerAlertDiscordChannelCatalog } from "./partner-alert-review-discord";
+
 import { openPlatformDatabase } from "../../platform/server/database/open-platform-database";
 import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL } from "../../platform/server/membership/platform-premium-role-schema";
 import { PlatformErasureAdmission } from "../../platform/server/privacy/platform-erasure-admission";
 import { PARTNER_ALERT_SCHEMA_STATEMENTS } from "./database/partner-alert-schema";
 import { PARTNER_ALERT_CONTEXT_SCHEMA_STATEMENTS } from "./partner-alert-current-context";
-import { createPartnerAlertDiscordChannelCatalog } from "./partner-alert-discord-channel-catalog";
+
 import { refreshPartnerAlertDiscordNamesPage } from "./partner-alert-discord-name-refresh";
 
 const intervalMs = 60_000;

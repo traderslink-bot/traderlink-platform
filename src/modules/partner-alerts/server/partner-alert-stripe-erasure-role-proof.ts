@@ -1,8 +1,8 @@
+import { createPartnerAlertReviewDiscordRoleObserver as createPartnerAlertDiscordRoleObserver, createPartnerAlertReviewDiscordRoleRest as createPartnerAlertDiscordRoleRest } from "./partner-alert-review-discord";
 import { createHash, randomUUID, sign, type KeyObject } from "node:crypto";
 import type Database from "better-sqlite3";
-import { createPartnerAlertDiscordRoleObserver,
-  type PartnerAlertDiscordChannelCatalogConfiguration } from "./partner-alert-discord-channel-catalog";
-import { createPartnerAlertDiscordRoleRest } from "./partner-alert-discord-role-rest";
+import { type PartnerAlertDiscordChannelCatalogConfiguration } from "./partner-alert-discord-channel-catalog";
+
 import { readPartnerAlertStripeErasureRoleScopes, type StripeErasureRoleScope } from "./database/partner-alert-stripe-connect-lifecycle";
 
 export const stripeErasureRoleProofDomain = "traderlink:stripe-erasure-role-disposition:v1";

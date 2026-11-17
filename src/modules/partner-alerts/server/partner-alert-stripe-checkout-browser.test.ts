@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, rmSync, readFileSync } from "node:fs";
@@ -145,7 +146,7 @@ it.skipIf(!testKey || !stripeCli || !discordToken)("completes Stripe channel and
       if (incoming.method !== "POST") { outgoing.writeHead(405); outgoing.end(); return; }
       const buffers: Buffer[] = [];
       for await (const chunk of incoming) buffers.push(Buffer.from(chunk));
-      const request = new Request(`${origin}${path}`, { method: incoming.method, headers,
+      const request = new NextRequest(`${origin}${path}`, { method: incoming.method, headers,
         ...(buffers.length ? { body: new Uint8Array(Buffer.concat(buffers)) } : {}) });
       let result: Response;
       if (path === webhookPath) {

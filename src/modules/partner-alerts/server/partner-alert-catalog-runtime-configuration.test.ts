@@ -3,14 +3,14 @@ import { describe, expect, it } from "vitest";
 import { readPartnerAlertCatalogRuntimeConfiguration } from "./partner-alert-catalog-runtime-configuration";
 
 const key = Buffer.alloc(32, 4).toString("base64");
-const configured = () => ({ PARTNER_ALERT_CATALOG_CHECKOUT_ENABLED: "true",
+const configured = () => ({ NODE_ENV: "test" as const, PARTNER_ALERT_CATALOG_CHECKOUT_ENABLED: "true",
   PARTNER_ALERT_WHOP_CREDENTIAL_ACTIVE_KEY_VERSION: "current",
   PARTNER_ALERT_WHOP_CREDENTIAL_KEYS_JSON: JSON.stringify({ current: key }),
   PARTNER_ALERT_WHOP_EVIDENCE_MAX_AGE_MS: "60000" });
 
 describe("Partner Channel catalog runtime configuration", () => {
   it("is disabled by default and rejects partial or malformed secret configuration", () => {
-    expect(readPartnerAlertCatalogRuntimeConfiguration({})).toBeNull();
+    expect(readPartnerAlertCatalogRuntimeConfiguration({ NODE_ENV: "test" })).toBeNull();
     expect(readPartnerAlertCatalogRuntimeConfiguration({ ...configured(),
       PARTNER_ALERT_WHOP_CREDENTIAL_KEYS_JSON: "{}" })).toBeNull();
     expect(readPartnerAlertCatalogRuntimeConfiguration({ ...configured(),

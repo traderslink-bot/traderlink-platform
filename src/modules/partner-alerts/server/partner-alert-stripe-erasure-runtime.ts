@@ -1,9 +1,12 @@
+import { isCommunityReviewDiscordGuild } from "@/src/modules/communities/server/community-review-discord-guild";
 import "server-only";
+
+import { createPartnerAlertReviewDiscordRoleRest as createPartnerAlertDiscordRoleRest } from "./partner-alert-review-discord";
 
 import { createPublicKey, type KeyObject } from "node:crypto";
 import type Database from "better-sqlite3";
 import { requirePlatformErasureWriter } from "../../platform/server/privacy/platform-erasure-admission";
-import { createPartnerAlertDiscordRoleRest } from "./partner-alert-discord-role-rest";
+
 import { createPartnerAlertManagedRoleTransport } from "./partner-alert-managed-role-transport";
 import { partnerAlertOutputBindingMatches, type PartnerAlertDiscordOutputConfiguration } from "./partner-alert-provider-runtime-configuration";
 import { createPartnerAlertStripeErasureDiscordObserver, issuePartnerAlertStripeErasureRoleProof, readPartnerAlertStripeErasureRoleFacts,
@@ -69,7 +72,8 @@ export function createPartnerAlertStripeErasureRuntime(db: Database.Database, in
   const registeredRole = (configuration: PartnerAlertDiscordOutputConfiguration, facts: StripeErasureRoleFacts) => {
     const mappingId = facts.scope.mapping_id;
     const row = readMapping.get(mappingId) as RegisteredMapping | undefined;
-    if (!row || row.community_id !== facts.scope.community_id || row.destination_guild_id !== facts.guildId
+    if (!row || !isCommunityReviewDiscordGuild(row.source_guild_id) || !isCommunityReviewDiscordGuild(row.destination_guild_id)
+      || row.community_id !== facts.scope.community_id || row.destination_guild_id !== facts.guildId
       || row.destination_role_id !== facts.roleId || row.destination_role_id === row.destination_guild_id
       || input.forbiddenRoleIds.includes(row.destination_role_id) || !partnerAlertOutputBindingMatches(configuration.outputBindings,{
         communityId:row.community_id,sourceGuildId:row.source_guild_id,sourceChannelId:row.source_channel_id,

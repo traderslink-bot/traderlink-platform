@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "@/src/modules/communities/server/community-review-discord-guild";
 import type Database from "better-sqlite3";
 import type { PartnerAlertAccessInput } from "../contracts/partner-alert-access-policy";
 import { requirePlatformErasureWriter, type PlatformErasureAdmission } from "../../platform/server/privacy/platform-erasure-admission";
@@ -85,6 +86,7 @@ export function bindPartnerAlertNativeSubscriber(db: Database.Database, core: Pl
   target: PartnerAlertSubscriberOffer, guildId: string, stripeEnvironment?: "sandbox" | "live", registeredPremiumRoleId?: string | null,
   provider?: Readonly<{ whopTransport?: PartnerAlertWhopTransport; observeDiscord?: PartnerAlertSubscriberRoleObserver }>) {
   const whopEnvironment = resolvePartnerAlertWhopReadEnvironment(stripeEnvironment);
+  if (!isCommunityReviewDiscordGuild(guildId)) return null;
   if (whopEnvironment === "sandbox" && guildId !== process.env.PARTNER_STRIPE_DISCORD_GUILD_ID) return null;
   const input = whopEnvironment === "sandbox" ? null : state[slot]?.bindSubscriber(db, core, target);
   if ((input && (input.policy.destinationGuildId !== guildId || input.policy.environment !== "live"))

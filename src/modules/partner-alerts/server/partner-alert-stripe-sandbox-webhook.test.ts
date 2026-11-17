@@ -82,6 +82,7 @@ it.skipIf(!fixture)("replays real Stripe sandbox events and removes only the rev
     const guildId = realGuild?.guildId ?? ticket.context.guildId;
     const roleId = realGuild?.roleId ?? ticket.context.roleId;
     const memberId = realGuild?.memberId ?? ticket.context.linkedDiscordUserId;
+    if (!memberId) throw new Error("The sandbox role fixture requires a linked Discord member.");
     const channelId = realGuild?.channelId ?? "810000000000000006";
     const botId = realGuild?.botId ?? "810000000000000004";
     const botRole = "810000000000000005";

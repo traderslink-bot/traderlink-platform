@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createPartnerAlertReviewDiscordRoleObserver as createPartnerAlertDiscordRoleObserver } from "./partner-alert-review-discord";
+
 import { resolveTraderLinkDiscordGuildId } from "../../platform/server/authentication/platform-discord-configuration";
 import { platformPaidStripeConnectBillingMigration } from "../../platform/server/database/migrations/0209_platform_paid_stripe_connect_billing";
 import { openPlatformDatabase } from "../../platform/server/database/open-platform-database";
@@ -14,7 +16,7 @@ import { readPartnerAlertDiscordOutputConfiguration } from "./partner-alert-prov
 import { readPartnerAlertStripeBillingConfiguration } from "./partner-alert-stripe-billing-runtime";
 import { createPartnerAlertStripeRolePorts } from "./partner-alert-stripe-role-ports";
 import { startPartnerAlertStripeRoleReconciliation } from "./partner-alert-stripe-role-reconciliation";
-import { createPartnerAlertDiscordRoleObserver } from "./partner-alert-discord-channel-catalog";
+
 
 const slot = Symbol.for("traderlink.partner-alert.stripe-role-runtime");
 const state = globalThis as typeof globalThis & { [slot]?: () => Promise<void> };

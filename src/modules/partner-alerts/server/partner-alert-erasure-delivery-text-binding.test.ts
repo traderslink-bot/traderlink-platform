@@ -43,7 +43,14 @@ function fixture() {
   db.prepare("INSERT INTO platform_erasure_operation_claims VALUES (?,'partner_delivery',?,?,?,'in_flight',NULL)")
     .run(operation,claimRef,raw,sha(raw));
   const core = { lifecycle: () => ({operation_ref:operation,phase:"settling"}), now: () => at };
-  const recovery = new PartnerAlertErasureRecovery(db,core as never,{binding} as PartnerAlertErasureRuntime);
+  const runtime: PartnerAlertErasureRuntime = { binding, nowUtc: () => at, createId: () => id(99),
+    lastAffectedBackupCreatedAtUtc: () => at, lastAffectedBackupExpiresAtUtc: () => at,
+    tombstoneLedger: {
+      read: () => ({ generation: 0, sha256: "a".repeat(64), committed: [], unresolvedPrepared: [] }),
+      prepare: () => { throw new Error("Tombstone preparation is outside the delivery-settlement fixture."); },
+      transition: () => { throw new Error("Tombstone transition is outside the delivery-settlement fixture."); },
+    } };
+  const recovery = new PartnerAlertErasureRecovery(db,core as never,runtime);
   const successors = new PartnerAlertErasureClaimSuccessors(db,binding);
   const sweep = () => db.transaction(() => sweepPlatformErasureTextPage(db,{ref:binding.keyRef,bytes:binding.key},at))();
   const job = {...source,destination_channel_id:"850000000000000123"};

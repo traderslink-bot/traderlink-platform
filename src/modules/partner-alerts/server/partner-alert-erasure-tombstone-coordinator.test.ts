@@ -1,5 +1,6 @@
 // @vitest-environment node
 import {describe,expect,it} from "vitest";
+import type {PartnerAlertErasureTombstone} from "./partner-alert-restore-tombstones";
 import {PartnerAlertErasureTombstoneCoordinator} from "./partner-alert-erasure-tombstone-coordinator";
 
 const id=(d:string)=>`${d.repeat(8)}-${d.repeat(4)}-4${d.repeat(3)}-8${d.repeat(3)}-${d.repeat(12)}`;
@@ -7,9 +8,9 @@ const id=(d:string)=>`${d.repeat(8)}-${d.repeat(4)}-4${d.repeat(3)}-8${d.repeat(
 describe("Partner Channel erasure tombstone coordination",()=>{
   it("prepares externally before deletion and commits the same tombstone after logical deletion",()=>{
     let claim:{original_json:string;original_sha256:string}|undefined,stored:Record<string,unknown>|undefined;
-    let generation=0,committed:unknown[]=[],unresolved:unknown[]=[];
+    let generation=0,committed:PartnerAlertErasureTombstone[]=[],unresolved:PartnerAlertErasureTombstone[]=[];
     const view=()=>({generation,sha256:"a".repeat(64),committed,unresolvedPrepared:unresolved});
-    const ledger={read:view,prepare:(row:unknown)=>{unresolved=[row];generation+=1;return view();},
+    const ledger={read:view,prepare:(row:PartnerAlertErasureTombstone)=>{unresolved=[row];generation+=1;return view();},
       transition:(_ref:string,state:string)=>{if(state==="committed"){committed=[...unresolved];unresolved=[];}generation+=1;return view();}};
     const db={inTransaction:true,prepare:(sql:string)=>({get:()=>sql.includes("operation_claims")?claim
       :sql.includes("module_operations")?{lifecycle_ref:id("2")}

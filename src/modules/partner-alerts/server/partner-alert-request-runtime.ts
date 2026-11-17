@@ -1,4 +1,7 @@
+import { isPartnerAlertReviewDiscordTarget } from "./partner-alert-review-discord";
 import "server-only";
+
+import { createPartnerAlertReviewDiscordRoleRest as createPartnerAlertDiscordRoleRest, createPartnerAlertReviewDiscordResourceVerifier as createPartnerAlertDiscordResourceVerifier, createPartnerAlertReviewDiscordChannelCatalog as createPartnerAlertDiscordChannelCatalog, createPartnerAlertReviewDiscordRoleObserver as createPartnerAlertDiscordRoleObserver } from "./partner-alert-review-discord";
 
 import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
@@ -20,7 +23,7 @@ import type { PartnerAlertContextTicket } from "../contracts/partner-alert-contr
 import { partnerAlertSnowflake, partnerAlertText } from "../contracts/partner-alert-validation";
 import { parsePartnerAlertRoleReview, removeReviewedPartnerAlertRole } from "./partner-alert-manual-role-review";
 import { createPartnerAlertManagedRoleTransport } from "./partner-alert-managed-role-transport";
-import { createPartnerAlertDiscordRoleRest } from "./partner-alert-discord-role-rest";
+
 import { resolvePartnerAlertWhopReadEnvironment } from "./partner-alert-catalog-runtime-configuration";
 import { resolvePartnerAlertWhopVerificationContext } from "./partner-alert-catalog-checkout";
 import { PartnerAlertWhopInbox } from "./partner-alert-whop-inbox";
@@ -29,9 +32,9 @@ import { PartnerAlertAdmission } from "./partner-alert-admission";
 import { PartnerAlertHttpAdapter } from "./partner-alert-http";
 import { PartnerAlertRequestWriter, type PartnerAlertPrivateRequestScope } from "./partner-alert-request-writer";
 import { createPartnerAlertProviderVerifier } from "./partner-alert-provider-adapter";
-import { createPartnerAlertDiscordResourceVerifier } from "./partner-alert-discord-provider-verification";
+
 import type { PartnerAlertRoleAuthority } from "./partner-alert-role-worker";
-import { createPartnerAlertDiscordChannelCatalog, createPartnerAlertDiscordRoleObserver } from "./partner-alert-discord-channel-catalog";
+
 import { partnerAlertOutputBindingMatches,
   readPartnerAlertDiscordOutputConfiguration, readPartnerAlertProviderRuntimeConfiguration,
   readPartnerAlertPublishingPricingCapabilities, type PartnerAlertDiscordOutputConfiguration } from "./partner-alert-provider-runtime-configuration";
@@ -381,7 +384,8 @@ export async function withPartnerAlertRequestRuntime<T>(
         const registryTarget = { communityId: assignment.communityId, sourceGuildId: assignment.sourceGuildId,
           sourceChannelId: assignment.sourceChannelId, destinationGuildId: assignment.guildId,
           destinationChannelId: assignment.channelId, destinationRoleId: assignment.roleId };
-        if (!partnerAlertOutputBindingMatches(providerConfiguration.outputBindings, registryTarget)) return unavailable();
+        if (!isPartnerAlertReviewDiscordTarget(registryTarget)
+          || !partnerAlertOutputBindingMatches(providerConfiguration.outputBindings, registryTarget)) return unavailable();
         if (assignment.resourceKind === "payment") {
           const context = await resolvePartnerAlertWhopVerificationContext({ database: database!,
             credentialKeys: providerConfiguration.credentialKeys, maximumEvidenceAgeMs: providerConfiguration.maximumEvidenceAgeMs,

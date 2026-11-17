@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { NextRequest } from "next/server";
 
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireCommunityOwnerReviewPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { stripeOnboardingConfiguration, withStripeOnboarding } from "@/src/modules/partner-alerts/server/partner-alert-stripe-onboarding-runtime";
 import { readPartnerAlertStripeBillingConfiguration } from "@/src/modules/partner-alerts/server/partner-alert-stripe-billing-runtime";
@@ -20,7 +20,7 @@ export default async function CommunityPartnerChannelsPage({
   params: Promise<{ communitySlug: string }>;
   searchParams: Promise<{ stripe?: string | string[] }>;
 }) {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireCommunityOwnerReviewPageIdentity();
   const { communitySlug } = await params;
   const community = withReadonlyPlatformDatabase({}, (database) => database.prepare<
     [string, string],

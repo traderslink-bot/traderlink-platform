@@ -329,8 +329,10 @@ it.runIf(process.env.PARTNER_STRIPE_QA_NATIVE_DISCORD === "1")("the native Strip
       premium: { ...base.ticket.premium, scope: { ...base.ticket.premium.scope, guildId: fixture.guildId, discordUserId: fixture.memberId } },
       context: { ...base.ticket.context, guildId: fixture.guildId, roleId: fixture.roleId, linkedDiscordUserId: fixture.memberId },
     };
-    const sourceGuildId = "1560477414445031464";
-    const sourceChannelId = "810000000000000006";
+    // This role-only fixture uses the exact guild/channel read by the bot.
+    // It does not approve or exercise message syndication.
+    const sourceGuildId = fixture.guildId;
+    const sourceChannelId = fixture.channelId;
     const scope = { userId, communityId, mappingId };
     let stillCovered = true;
     const authority = {
@@ -339,7 +341,8 @@ it.runIf(process.env.PARTNER_STRIPE_QA_NATIVE_DISCORD === "1")("the native Strip
         input: { ...base, ticket, premium: { ...base.premium!, ticket: ticket.premium },
           discord: { ...base.discord!, guildId: fixture.guildId, discordUserId: fixture.memberId },
           policy: { ...base.policy, destinationGuildId: fixture.guildId },
-          mappings: [{ ...base.mappings[0]!, destinationGuildId: fixture.guildId, destinationRoleId: fixture.roleId }],
+          mappings: [{ ...base.mappings[0]!, sourceGuildId, sourceChannelId,
+            destinationGuildId: fixture.guildId, destinationRoleId: fixture.roleId }],
           memberships: stillCovered ? base.memberships : [],
           stripeFunding: { paidOffers: [], holdRemoval: false } } }),
       isCurrent: () => true,

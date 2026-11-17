@@ -5,7 +5,7 @@ import { partnerAlertStripeSandbox } from "@/src/modules/partner-alerts/server/p
 import { withPartnerAlertRequestRuntime } from "@/src/modules/partner-alerts/server/partner-alert-request-runtime";
 import { readPartnerAlertStripeBillingConfiguration } from "@/src/modules/partner-alerts/server/partner-alert-stripe-billing-runtime";
 
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireCommunityOwnerReviewPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { createPartnerAlertCatalogCheckoutRuntime } from "@/src/modules/partner-alerts/server/partner-alert-catalog-checkout";
 import { qualifyPartnerAlertCatalogCheckout,
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function PartnerChannelsPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const { scope } = await requireCommunityOwnerReviewPageIdentity();
   const request = new NextRequest(new URL("/partner-channels",
     process.env.TRADERLINK_PLATFORM_PUBLIC_ORIGIN ?? "http://localhost"), { headers: new Headers([...await headers()]) });
   const stripeSandbox = partnerAlertStripeSandbox(request);

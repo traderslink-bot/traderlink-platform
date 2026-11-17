@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { NextRequest } from "next/server";
+import { partnerAlertOwnerReviewRequestDenied } from "./partner-alert-owner-review-request";
 
 import { withPartnerAlertRequestRuntime } from "./partner-alert-request-runtime";
 import { readPartnerAlertStripeBillingConfiguration } from "./partner-alert-stripe-billing-runtime";
@@ -10,6 +11,8 @@ import { withReadonlyPlatformDatabase } from "../../platform/server/database/ope
 import type { PartnerAlertEnvironment } from "../contracts/partner-alert-contracts";
 
 export async function partnerAlertStripeConnectCallback(request: NextRequest, environment: PartnerAlertEnvironment): Promise<Response> {
+  const denied = partnerAlertOwnerReviewRequestDenied(request);
+  if (denied) return denied;
   const native = readPartnerAlertStripeBillingConfiguration();
   const preview = environment === "sandbox" && !native && !process.env.PARTNER_STRIPE_NATIVE_SANDBOX_SIGNING_SECRET
     ? stripeOnboardingConfiguration() : null;

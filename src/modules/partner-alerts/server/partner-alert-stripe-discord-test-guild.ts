@@ -1,3 +1,4 @@
+import { assertCommunityReviewDiscordGuild } from "@/src/modules/communities/server/community-review-discord-guild";
 import { randomUUID } from "node:crypto";
 import { partnerAlertRecord, partnerAlertSnowflake } from "../contracts/partner-alert-validation";
 
@@ -12,6 +13,7 @@ function sameRoles(actual: readonly string[], expected: readonly string[]) {
 /** Explicit QA helper. Exposes no deployment or application entry point. */
 export async function createPartnerAlertStripeDiscordTestGuild(configuration: GuildConfiguration) {
   const guildId = partnerAlertSnowflake(configuration.guildId, "testGuildId");
+  assertCommunityReviewDiscordGuild(guildId);
   const memberId = partnerAlertSnowflake(configuration.memberId, "testMemberId");
   const unrelated = configuration.unrelatedMemberId === undefined ? null
     : partnerAlertSnowflake(configuration.unrelatedMemberId,"unrelatedTestMemberId");

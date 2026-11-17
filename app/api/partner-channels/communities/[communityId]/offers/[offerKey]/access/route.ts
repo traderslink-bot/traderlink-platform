@@ -1,3 +1,4 @@
+import { partnerAlertOwnerReviewRequestDenied } from "@/src/modules/partner-alerts/server/partner-alert-owner-review-request";
 import type { NextRequest } from "next/server";
 
 import { withPartnerAlertRequestRuntime } from "@/src/modules/partner-alerts/server/partner-alert-request-runtime";
@@ -8,6 +9,8 @@ export const revalidate = 0;
 
 export async function POST(request: NextRequest,
   context: { params: Promise<{ communityId: string; offerKey: string }> }): Promise<Response> {
+  const denied = partnerAlertOwnerReviewRequestDenied(request);
+  if (denied) return denied;
   const { communityId, offerKey } = await context.params;
   return withPartnerAlertRequestRuntime(request,
     runtime => runtime.checkSubscriberAccess(request, communityId, offerKey));

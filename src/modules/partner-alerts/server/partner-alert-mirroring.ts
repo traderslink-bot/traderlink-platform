@@ -1,11 +1,13 @@
+import { isCommunityReviewDiscordGuild } from "@/src/modules/communities/server/community-review-discord-guild";
+import { createPartnerAlertReviewDiscordMessageRest as createPartnerAlertDiscordMessageRest, createPartnerAlertReviewDiscordResourceVerifier as createPartnerAlertDiscordResourceVerifier } from "./partner-alert-review-discord";
 import type Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
 import { partnerAlertRecord } from "../contracts/partner-alert-validation";
 import { readPartnerAlertDiscordJson, cancelPartnerAlertDiscordBody } from "./partner-alert-discord-channel-catalog";
 import { PartnerAlertDeliveryWorker } from "./partner-alert-delivery-worker";
 import { PartnerAlertDiscordGateway, validatePartnerAlertGatewayUrl, type PartnerAlertGatewaySocket } from "./partner-alert-discord-gateway";
-import { createPartnerAlertDiscordMessageRest } from "./partner-alert-discord-message-rest";
-import { createPartnerAlertDiscordResourceVerifier } from "./partner-alert-discord-provider-verification";
+
+
 import { PartnerAlertGatewaySessionStore } from "./partner-alert-gateway-session-store";
 import { PartnerAlertIngressService } from "./partner-alert-ingress-service";
 import { partnerAlertOutputBindingMatches, type PartnerAlertDiscordOutputConfiguration } from "./partner-alert-provider-runtime-configuration";
@@ -24,6 +26,7 @@ export function startPartnerAlertMirroring(db: Database.Database, input: Readonl
   reportAttention: (reason: string) => void;
   onStopped: () => void;
 }>): (() => Promise<void>) | null {
+  if (!isCommunityReviewDiscordGuild(input.destinationGuildId)) return null;
   const output = input.readOutput();
   if (!output || !output.outputBindings.some(binding => binding.destinationGuildId === input.destinationGuildId)) return null;
   input.assertCurrentStorage();
@@ -67,9 +70,11 @@ export function startPartnerAlertMirroring(db: Database.Database, input: Readonl
   };
   const isRegistered = (target: PartnerAlertResourceVerificationTarget) => {
     const bindings = currentOutput()?.outputBindings;
-    return target.destinationGuildId === input.destinationGuildId && Boolean(bindings && partnerAlertOutputBindingMatches(bindings, target));
+    return isCommunityReviewDiscordGuild(target.sourceGuildId) && isCommunityReviewDiscordGuild(target.destinationGuildId)
+      && target.destinationGuildId === input.destinationGuildId && Boolean(bindings && partnerAlertOutputBindingMatches(bindings, target));
   };
   const matchingSource = (guildId: string, channelId: string, allowOld: boolean) => {
+    if (!isCommunityReviewDiscordGuild(guildId)) return false;
     const bindings = currentOutput()?.outputBindings;
     return Boolean(bindings?.some(binding => binding.destinationGuildId === input.destinationGuildId
       && binding.sourceGuildId === guildId && binding.sourceChannelId === channelId

@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { createHash } from "node:crypto";
+import { COMMUNITY_REVIEW_DISCORD_GUILD_ID } from "@/src/modules/communities/server/community-review-discord-guild";
 import Database from "better-sqlite3";
 import { expect, it, vi } from "vitest";
 import { readAppliedPlatformMigrations } from "../../platform/server/database/platform-migration-registry";
@@ -13,14 +14,14 @@ import type { StripeErasureRoleFacts, StripeErasureRoleProofScope } from "./part
 import {createPartnerAlertStripeErasureDiscordObserver} from "./partner-alert-stripe-erasure-role-proof";
 
 it("confirms a departed Discord member without a role write and holds on an unknown guild", async () => {
-  const target = {guildId:"100",discordUserId:"141",roleId:"120"};
+  const target = {guildId:COMMUNITY_REVIEW_DISCORD_GUILD_ID,discordUserId:"141",roleId:"120"};
   const at = "2026-11-15T12:00:05.000Z";
   let code = 10007;
   const transport:typeof fetch = async (url, init) => {
     expect(init?.method ?? "GET").toBe("GET");
     const path = new URL(String(url)).pathname;
     if (path === "/api/v10/users/@me") return Response.json({id:"900",bot:true});
-    expect(path).toBe("/api/v10/guilds/100/members/141");
+    expect(path).toBe(`/api/v10/guilds/${COMMUNITY_REVIEW_DISCORD_GUILD_ID}/members/141`);
     return Response.json({code},{status:404});
   };
   const observe = createPartnerAlertStripeErasureDiscordObserver({botUserId:"900",botToken:"synthetic-bot-token-only",

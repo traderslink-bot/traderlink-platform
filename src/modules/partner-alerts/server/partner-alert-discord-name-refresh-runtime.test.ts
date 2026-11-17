@@ -7,7 +7,7 @@ const ports = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("../../platform/server/database/open-platform-database", () => ({ openPlatformDatabase: ports.open }));
 vi.mock("../../platform/server/privacy/platform-erasure-admission", () => ({ PlatformErasureAdmission: { bind: ports.bind } }));
-vi.mock("./partner-alert-discord-channel-catalog", () => ({ createPartnerAlertDiscordChannelCatalog: ports.catalog }));
+vi.mock("./partner-alert-review-discord", () => ({ createPartnerAlertReviewDiscordChannelCatalog: ports.catalog }));
 vi.mock("./partner-alert-discord-name-refresh", () => ({ refreshPartnerAlertDiscordNamesPage: ports.refresh }));
 
 afterEach(() => {

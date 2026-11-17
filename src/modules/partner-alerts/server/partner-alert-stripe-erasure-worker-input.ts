@@ -8,11 +8,13 @@ import { platformPaidPartnerGatewaySessionMigration } from "../../platform/serve
 import { platformPaidStripeReauthorizationMigration } from "../../platform/server/database/migrations/0211_platform_paid_stripe_reauthorization";
 import { platformPaidStripeCheckoutReviewedVersionMigration } from "../../platform/server/database/migrations/0212_platform_paid_stripe_checkout_reviewed_version";
 import { calculatePlatformMigrationChecksum } from "../../platform/server/database/platform-migration-contract";
+import { platformMigrationManifest } from "../../platform/server/database/platform-migration-manifest";
 import { readAppliedPlatformMigrations, requirePlatformSchemaDigest } from "../../platform/server/database/platform-migration-registry";
 import { readPartnerAlertDiscordOutputConfiguration } from "./partner-alert-provider-runtime-configuration";
 import { createPartnerAlertErasedBuyerCoverage } from "./partner-alert-stripe-erasure-runtime";
 import { PartnerAlertTombstoneLedger } from "./partner-alert-tombstone-ledger";
 import { readPartnerAlertTombstoneLedgerBytes } from "./partner-alert-tombstone-ledger-bounded-reader";
+import { isPartnerAlertReviewDiscordTarget } from "./partner-alert-review-discord";
 
 const hex = /^[a-f0-9]{64}$/u;
 const ref = /^[A-Za-z0-9_-]{1,128}$/u;
@@ -66,19 +68,24 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
   const releaseV2 = "traderlink:paid-stripe-erasure-release:v2";
   const releaseV3 = "traderlink:paid-stripe-erasure-release:v3";
   const releaseV4 = "traderlink:paid-stripe-erasure-release:v4";
+  const releaseV5 = "traderlink:paid-stripe-erasure-release:v5";
   const readReview = () => signedFields(reviewPath, reviewKey, {
-    "traderlink:paid-stripe-erasure-release:v1": 16, [releaseV2]: 19, [releaseV3]: 21, [releaseV4]: 23,
+    "traderlink:paid-stripe-erasure-release:v1": 16, [releaseV2]: 19, [releaseV3]: 21, [releaseV4]: 23, [releaseV5]: 25,
   });
   const reviewed = readReview();
   const [format, reviewedStage, schemaSha256, profileCatalogSha256, descriptorChecksum, signedLedgerSha256,
     keyId, roleKeySha256, backupKeySha256, backupInventoryId, botId, outputRef, outputBindingsSha256, protectedRoles,
     ledgerBindingSha256, expires, billingOrder, gatewayOrder, gatewayChecksum, reauthorizationOrder, reauthorizationChecksum,
-    checkoutReviewedVersionOrder, checkoutReviewedVersionChecksum] = reviewed;
+    checkoutReviewedVersionOrder, checkoutReviewedVersionChecksum, erasureProfileRef, effectMode] = reviewed;
   const gateway = platformPaidPartnerGatewaySessionMigration;
   const billing = platformPaidStripeConnectBillingMigration;
   const reauthorization = platformPaidStripeReauthorizationMigration;
   const reviewedCheckout = platformPaidStripeCheckoutReviewedVersionMigration;
-  const hasReviewedCheckout = format === releaseV4;
+  const hasV5 = format === releaseV5;
+  const noDiscordEffects = hasV5 && effectMode === "no_discord_effects";
+  if (hasV5 && (typeof erasureProfileRef !== "string" || !ref.test(erasureProfileRef)
+    || (effectMode !== "discord_roles" && effectMode !== "no_discord_effects"))) return fail();
+  const hasReviewedCheckout = format === releaseV4 || hasV5;
   const hasReauthorization = format === releaseV3 || hasReviewedCheckout;
   const hasGateway = format === releaseV2 || hasReauthorization;
   const nowUtc = () => new Date().toISOString();
@@ -95,14 +102,19 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
       || checkoutReviewedVersionChecksum !== calculatePlatformMigrationChecksum(reviewedCheckout)))
     || typeof keyId !== "string" || !ref.test(keyId) || keySha(rolePublicKey) !== roleKeySha256
     || keySha(backupKey) !== backupKeySha256 || typeof backupInventoryId !== "string" || !ref.test(backupInventoryId)
-    || typeof botId !== "string" || typeof outputRef !== "string" || typeof outputBindingsSha256 !== "string"
+    || (!noDiscordEffects && (typeof botId !== "string" || typeof outputRef !== "string")) || typeof outputBindingsSha256 !== "string"
     || !hex.test(outputBindingsSha256) || env.PARTNER_ALERT_ERASURE_PROFILE_CATALOG_SHA256 !== profileCatalogSha256
-    || !Array.isArray(protectedRoles) || !protectedRoles.length || protectedRoles.length > 250
-    || protectedRoles.some(role => typeof role !== "string" || !/^[1-9][0-9]{0,19}$/u.test(role))
-    || !env.TRADERLINK_DISCORD_PREMIUM_MEMBER_ROLE_ID || !protectedRoles.includes(env.TRADERLINK_DISCORD_PREMIUM_MEMBER_ROLE_ID)) return fail();
+    || !Array.isArray(protectedRoles) || protectedRoles.length > 250
+    || (noDiscordEffects ? botId !== null || outputRef !== null || protectedRoles.length !== 0
+      || outputBindingsSha256 !== sha(JSON.stringify([]))
+      : !protectedRoles.length || protectedRoles.some(role => typeof role !== "string" || !/^[1-9][0-9]{0,19}$/u.test(role))
+        || !env.TRADERLINK_DISCORD_PREMIUM_MEMBER_ROLE_ID || !protectedRoles.includes(env.TRADERLINK_DISCORD_PREMIUM_MEMBER_ROLE_ID))) return fail();
   const readCurrentConfiguration = () => {
+    if (noDiscordEffects) return null;
+    if (typeof botId !== "string" || typeof outputRef !== "string") return fail();
     const provider = readPartnerAlertDiscordOutputConfiguration(env,botId,outputRef);
-    return provider && sha(JSON.stringify(provider.outputBindings)) === outputBindingsSha256 ? provider : null;
+    return provider && sha(JSON.stringify(provider.outputBindings)) === outputBindingsSha256
+      && (!hasV5 || provider.outputBindings.every(isPartnerAlertReviewDiscordTarget)) ? provider : null;
   };
   let verifiedSchemaVersion: number | undefined;
   const assertCurrentRelease = () => {
@@ -110,8 +122,21 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
     const matchingBilling = (row: typeof tail) => row?.migration_id === billing.migrationId
       && row.execution_order === billing.executionOrder && row.checksum_sha256 === descriptorChecksum;
     if (expiry <= nowUtc() || JSON.stringify(readReview()) !== JSON.stringify(reviewed)
-      || tail?.post_schema_sha256 !== schemaSha256 || !readCurrentConfiguration()) return fail();
-    if (hasGateway) {
+      || tail?.post_schema_sha256 !== schemaSha256 || (!noDiscordEffects && !readCurrentConfiguration())) return fail();
+    if (hasV5) {
+      // Every installed descriptor must match this source, including its order.
+      // The signed digest also pins every recorded prefix schema and timestamp.
+      if (ledger.length !== platformMigrationManifest.length || ledger.some((row, index) => {
+        const expected = platformMigrationManifest[index];
+        return !expected || row.migration_id !== expected.migrationId || row.module_namespace !== expected.moduleNamespace
+          || row.execution_order !== expected.executionOrder || row.checksum_sha256 !== calculatePlatformMigrationChecksum(expected);
+      }) || sha(JSON.stringify(ledger)) !== signedLedgerSha256) return fail();
+      const schemaVersion = db.pragma("schema_version", { simple: true }) as number;
+      if (verifiedSchemaVersion !== schemaVersion) {
+        requirePlatformSchemaDigest(db, schemaSha256);
+        verifiedSchemaVersion = schemaVersion;
+      }
+    } else if (hasGateway) {
       const offset = Number(hasReviewedCheckout);
       const gatewayRow = hasReauthorization ? ledger.at(-2 - offset) : tail;
       const reauthorizationRow = ledger.at(-1 - offset);
@@ -152,6 +177,8 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
   horizon();
   const forbiddenRoleIds = Object.freeze([...protectedRoles] as string[]);
   return Object.freeze({schemaSha256,profileCatalogSha256,descriptorChecksum,assertCurrentRelease,readCurrentConfiguration,
+    ...(hasV5 ? { releaseFormat: "v5" as const, erasureProfileRef: String(erasureProfileRef),
+      effectMode: effectMode as "discord_roles" | "no_discord_effects" } : {}),
     appliedLedgerSha256: hasGateway ? signedLedgerSha256 : undefined,
     gatewayDescriptorChecksum: hasGateway ? String(gatewayChecksum) : undefined,
     reauthorizationDescriptorChecksum: hasReauthorization ? String(reauthorizationChecksum) : undefined,

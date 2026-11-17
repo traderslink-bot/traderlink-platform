@@ -1,3 +1,4 @@
+import { partnerAlertOwnerReviewRequestDenied } from "@/src/modules/partner-alerts/server/partner-alert-owner-review-request";
 import type { NextRequest } from "next/server";
 import { withPartnerAlertRequestRuntime } from "@/src/modules/partner-alerts/server/partner-alert-request-runtime";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
@@ -9,6 +10,8 @@ import { stripeOnboardingConfiguration, withStripeOnboarding } from "@/src/modul
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest, context: { params: Promise<{ communityId: string }> }) {
+  const denied = partnerAlertOwnerReviewRequestDenied(request);
+  if (denied) return denied;
   const native = readPartnerAlertStripeBillingConfiguration();
   const preview = !native && !process.env.PARTNER_STRIPE_NATIVE_SANDBOX_SIGNING_SECRET ? stripeOnboardingConfiguration() : null;
   const configuration = native ?? preview;

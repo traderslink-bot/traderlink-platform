@@ -283,7 +283,7 @@ async function TraderLinkPlatformDashboardFrameContent({
           generalMarketNewsAccess={generalMarketNewsAccess}
         watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
           communityNavigationHref={dashboardContext.communityNavigationHref}
-          partnerChannelsNavigationAccess={process.env.PARTNER_ALERT_REQUEST_RUNTIME_ENABLED === "true"}
+          partnerChannelsNavigationAccess={watchlistAdminNavigationAccess}
           coachingNavigationHref={dashboardContext.coachingNavigationHref}
         >
           {discordConnection && requestPath !== "/account/login" ? <DiscordConnectionNotice required={discordConnection.required} connected={discordConnection.connected} joined={discordConnection.joined} /> : null}

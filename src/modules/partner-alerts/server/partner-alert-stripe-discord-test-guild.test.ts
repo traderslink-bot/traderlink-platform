@@ -1,3 +1,4 @@
+import { COMMUNITY_REVIEW_DISCORD_GUILD_ID } from "@/src/modules/communities/server/community-review-discord-guild";
 // @vitest-environment node
 import { afterEach, expect, it, vi } from "vitest";
 import { createPartnerAlertStripeDiscordTestGuild } from "./partner-alert-stripe-discord-test-guild";
@@ -5,7 +6,7 @@ import { createPartnerAlertStripeDiscordTestGuild } from "./partner-alert-stripe
 afterEach(() => vi.unstubAllGlobals());
 
 it("creates disposable Discord fixtures, checks the full member role set, and restores the baseline", async () => {
-  const guildId = "810000000000000001";
+  const guildId = COMMUNITY_REVIEW_DISCORD_GUILD_ID;
   const memberId = "810000000000000002";
   const botId = "810000000000000003";
   const channelId = "810000000000000004";
@@ -56,4 +57,12 @@ it("creates disposable Discord fixtures, checks the full member role set, and re
   } finally { await fixture.cleanup(); }
   expect(removedFixtures).toEqual([sentinel, channelRole]);
   expect([...members]).toEqual([originalRole]);
+});
+
+it("rejects a wrong-guild QA binding before any Discord read or role fixture", async () => {
+  const transport = vi.fn();
+  vi.stubGlobal("fetch", transport);
+  await expect(createPartnerAlertStripeDiscordTestGuild({ guildId: "810000000000000001",
+    memberId: "810000000000000002", botToken: "synthetic-test-bot-token-only" })).rejects.toThrow();
+  expect(transport).not.toHaveBeenCalled();
 });
