@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type { SharedAlertChannel } from "../contracts/shared-alerts-contracts";
 import { SharedAlertError } from "./shared-alerts-errors";
 import { createCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
@@ -27,6 +28,7 @@ export class SharedAlertsDiscord {
   }
 
   async verifyOwner(guildId: string, discordUserId: string): Promise<boolean> {
+    if (!isCommunityReviewDiscordGuild(guildId)) throw new SharedAlertError("unavailable");
     if (!SNOWFLAKE.test(guildId) || !SNOWFLAKE.test(discordUserId)) throw new SharedAlertError("invalid");
     const guild = await this.get<{ id: string; owner_id: string }>(`/guilds/${guildId}`);
     if (guild.id !== guildId) throw new SharedAlertError("discord_unavailable");
@@ -34,6 +36,7 @@ export class SharedAlertsDiscord {
   }
 
   async channels(guildId: string): Promise<readonly SharedAlertChannel[]> {
+    if (!isCommunityReviewDiscordGuild(guildId)) throw new SharedAlertError("unavailable");
     if (!SNOWFLAKE.test(guildId)) throw new SharedAlertError("invalid");
     if (!this.botId) this.botId = (await this.get<{ id: string }>("/users/@me")).id;
     const botId = this.botId;

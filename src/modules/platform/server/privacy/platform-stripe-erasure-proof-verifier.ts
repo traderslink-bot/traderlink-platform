@@ -1,3 +1,4 @@
+import { assertCommunityReviewDiscordGuild } from "../../../communities/server/community-review-discord-guild";
 import { verify, type KeyObject } from "node:crypto";
 import type Database from "better-sqlite3";
 import { encodePartnerAlertStripeErasureRoleProof, readPartnerAlertStripeErasureRoleFacts,
@@ -35,6 +36,12 @@ export function verifyPlatformStripeErasureRoleProof(db: Database.Database, inpu
   const confirmed = new Set<string>();
   for (const [index,f] of facts.entries.entries()) {
     const entry=proof.entries[index]!;
+    const mapping = db.prepare(`SELECT source_guild_id FROM partner_alert_mappings
+      WHERE community_id=? AND mapping_id=?`).get(f.scope.community_id, f.scope.mapping_id) as
+      { source_guild_id: string } | undefined;
+    if (!mapping) return hold();
+    assertCommunityReviewDiscordGuild(mapping.source_guild_id);
+    assertCommunityReviewDiscordGuild(f.guildId);
     if (tuple(entry.scope)!==tuple(f.scope) || entry.guildId!==f.guildId || entry.roleId!==f.roleId
       || entry.stripeAuthoritySha256!==f.stripeAuthoritySha256 || entry.whopAuthoritySha256!==f.whopAuthoritySha256
       || entry.mappingSha256!==f.mappingSha256) return hold();

@@ -14,7 +14,8 @@ function invalid() { return Response.json({ status: "error", message: "The commu
 
 /** Source registration is authored only; flag, selected manifest and actual read-only schema must all qualify. */
 async function handle(request: Request, context: Context): Promise<Response> {
-  if (process.env.TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED !== "1") return unavailable();
+  if (process.env.TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED !== "1"
+    && process.env.TRADERLINK_SHARED_ALERTS_OWNER_REVIEW_ENABLED !== "1") return unavailable();
   try {
     const { communitySlug } = await context.params;
     if (communitySlug.length > 100 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(communitySlug)) return invalid();

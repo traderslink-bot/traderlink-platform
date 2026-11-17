@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type Database from "better-sqlite3";
 import { assertCanonicalUuidV4, createCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
 import { verifyCommunityRequestMember } from "./community-request-verification";
@@ -16,6 +17,8 @@ export async function readSharedAlertsSourceTracker(database: Database.Database,
 }>, request: typeof fetch = fetch) {
   assertCanonicalUuidV4(input.userId, "userId"); assertCanonicalUuidV4(input.alertId, "alertId");
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(input.communitySlug) || input.communitySlug.length > 100 || !input.botToken.trim()) throw new SharedAlertError("unavailable");
+  const reviewCommunity = database.prepare("SELECT discord_guild_id FROM traderlink_communities WHERE slug=? AND status='active'").get(input.communitySlug) as { discord_guild_id: string } | undefined;
+  if (!reviewCommunity || !isCommunityReviewDiscordGuild(reviewCommunity.discord_guild_id)) throw new SharedAlertError("unavailable");
   if (!await verifyCommunityRequestMember(database, { slug: input.communitySlug, userId: input.userId, botToken: input.botToken, atUtc: createCanonicalUtcTimestamp() }, request)) throw new SharedAlertError("unavailable");
   const target = database.prepare(`SELECT c.community_id,c.discord_guild_id,i.auth_subject FROM traderlink_communities c
     JOIN platform_auth_identities i ON i.user_id=? AND i.auth_provider='discord' AND i.status='active'

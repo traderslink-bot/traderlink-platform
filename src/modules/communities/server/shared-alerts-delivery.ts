@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type { SharedAlertPublishingContext } from "./shared-alerts-publishing-authorization";
 import { isSharedAlertPublisher } from "./shared-alerts-publisher-permissions";
 import type Database from "better-sqlite3";
@@ -51,6 +52,7 @@ export class SharedAlertsDelivery {
         const agreement=this.database.prepare("SELECT * FROM community_shared_alert_requests WHERE request_id=?").get(job.request_id) as SharedAlertRequestRow|undefined;
         if(!agreement){this.cancel(job,"The agreement is unavailable.");continue;}
         const source=repository.ownerContext(agreement.source_community_id),receiver=repository.ownerContext(agreement.receiver_community_id);
+        if(!isCommunityReviewDiscordGuild(source.guildId)||!isCommunityReviewDiscordGuild(receiver.guildId))continue;
         await Promise.all([verifySharedAlertOwner(repository,discord,source),verifySharedAlertOwner(repository,discord,receiver)]);
         const publication:SharedAlertPublishingContext={authorUserId:job.author_user_id,publisherUserId:job.publisher_user_id,changeActorUserId:job.change_actor_user_id,kind:job.kind,sourceDestinationIds:JSON.parse(job.source_destination_ids_json) as string[]};
         if(this.config.preparePublication&&!await this.config.preparePublication(source.communityId,job.alert_id,publication)){this.failBeforeSend(job,"Source publisher verification is unavailable.");failed++;continue;}
@@ -84,6 +86,7 @@ export class SharedAlertsDelivery {
           if(!claimed)break;
           inFlight=part;sends++;
           let response:Response;
+          if(!isCommunityReviewDiscordGuild(receiver.guildId))throw new Error("Discord destination is outside the review test server.");
           try{response=await this.request(`https://discord.com/api/v10/channels/${job.channel_id}/messages`,{
             method:"POST",headers:{Authorization:`Bot ${this.config.botToken}`,"Content-Type":"application/json"},
             body:JSON.stringify({content:part.content,allowed_mentions:{parse:[],replied_user:false},...(replyId?{message_reference:{message_id:replyId,channel_id:job.channel_id,guild_id:receiver.guildId,fail_if_not_exists:true}}:{}),nonce:part.nonce,enforce_nonce:true}),signal:AbortSignal.timeout(10000),

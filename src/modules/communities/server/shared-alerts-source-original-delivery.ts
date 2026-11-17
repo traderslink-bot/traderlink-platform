@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type Database from "better-sqlite3";
 import { createHash } from "node:crypto";
 import { partitionDiscordAlertText } from "../contracts/discord-alert-message-parts";
@@ -69,6 +70,7 @@ export function confirmedSourceParts(database: Database.Database, deliveryId: st
 }
 
 export function assertSourceWriteCurrent(context: SharedSourceDispatchContext, row: Pick<SourceOriginalRow, "community_id" | "author_user_id" | "publisher_user_id" | "destination_id" | "discord_channel_id" | "discord_guild_id">): void {
+  if (!isCommunityReviewDiscordGuild(row.discord_guild_id)) throw new SharedAlertError("changed");
   const repository = new SharedAlertsRepository(context.database, context.now), owner = repository.ownerContext(row.community_id);
   if (owner.guildId !== row.discord_guild_id || !repository.ownerIsFresh(owner)) throw new SharedAlertError("changed");
   if (!context.database.prepare("SELECT 1 FROM traderlink_community_discord_destinations WHERE community_id=? AND destination_id=? AND content_type='alerts' AND status='active' AND discord_channel_id=?").get(row.community_id, row.destination_id, row.discord_channel_id)) throw new SharedAlertError("changed");
@@ -109,6 +111,7 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
     let delivered = 0, failed = 0, writes = 0;
     for (const row of rows) {
       if (writes >= context.limit) break;
+      if (!isCommunityReviewDiscordGuild(row.discord_guild_id)) continue;
       if (new SharedAlertRateLimits(db, context.now).current(row.discord_channel_id)) continue;
       if (!db.prepare("UPDATE traderlink_community_content_deliveries SET status='sending',attempt_count=attempt_count+1,updated_at_utc=? WHERE delivery_id=? AND status IN ('pending','failed') AND delivery_outcome='pending'").run(context.now(), row.delivery_id).changes) continue;
       let uncertain = false;

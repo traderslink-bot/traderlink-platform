@@ -1,3 +1,4 @@
+import { assertCommunityReviewDiscordGuild } from "../../../communities/server/community-review-discord-guild";
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
 import { readPartnerAlertStripeErasureWorkerInputs } from "../../../partner-alerts/server/partner-alert-stripe-erasure-worker-input";
@@ -15,6 +16,16 @@ export function bootstrapStripeErasureWorker(db:Database.Database) {
   if (!hasStripeErasureSchema(db)) return null;
   const input=readPartnerAlertStripeErasureWorkerInputs(db);
   if (!input) return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+  const readCurrentConfiguration = () => {
+    const configuration = input.readCurrentConfiguration();
+    if (!configuration) return null;
+    for (const binding of configuration.outputBindings) {
+      assertCommunityReviewDiscordGuild(binding.sourceGuildId);
+      assertCommunityReviewDiscordGuild(binding.destinationGuildId);
+    }
+    return configuration;
+  };
+  readCurrentConfiguration();
   const core=PlatformErasureAdmission.bind(db,{nowUtc:input.nowUtc,maximumAdmissionMs:30000,
     profileCatalogSha256:input.profileCatalogSha256,participantStatements:[]});
   bindPartnerAlertErasureRuntime(db,input.erasureRuntime);
@@ -33,7 +44,7 @@ export function bootstrapStripeErasureWorker(db:Database.Database) {
           schemaSha256:input.schemaSha256,catalogSha256:input.profileCatalogSha256,
           appliedLedgerSha256:createHash("sha256").update(JSON.stringify(readAppliedPlatformMigrations(db))).digest("hex"),
           writerFenceRef:fence.fenceRef,writerFenceGeneration:fence.generation};
-        const runtime=createPartnerAlertStripeErasureRuntime(db,{...input,
+        const runtime=createPartnerAlertStripeErasureRuntime(db,{...input,readCurrentConfiguration,
           inRootWriter:operation=>core.runStripeRootPreflight(ref,command,fence,operation)});
         const attested=await runtime.prepareRoot(scope,input.roleKeys);
         if (!attested) return false;

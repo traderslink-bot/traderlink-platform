@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import { createHash } from "node:crypto";
 import { createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
 import { SharedAlertError } from "./shared-alerts-errors";
@@ -84,6 +85,7 @@ export const sharedAlertsSourceRevisionDelivery: SharedSourceDispatchBindings["e
     let delivered = 0, failed = 0, writes = 0;
     for (const row of rows) {
       if (writes >= context.limit) break;
+      if (!isCommunityReviewDiscordGuild(row.discord_guild_id)) continue;
       if (new SharedAlertRateLimits(db, context.now).current(row.discord_channel_id)) continue;
       if (!db.prepare("UPDATE traderlink_community_publication_actions SET status='sending',attempt_count=attempt_count+1,updated_at_utc=? WHERE action_id=? AND status='pending'").run(context.now(), row.action_id).changes) continue;
       const plan = JSON.parse(row.payload_json) as EditPlan;
