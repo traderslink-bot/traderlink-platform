@@ -2,11 +2,13 @@ import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
 import { currentPlatformErasureAdmission, erasureHold } from "./platform-erasure-admission";
 import { dispatchQualifiedStripeRootErasure } from "./platform-stripe-erasure-dispatch";
-import { readAppliedPlatformMigrations } from "../database/platform-migration-registry";
+import { platformMigrationManifest } from "../database/platform-migration-manifest";
+import { readAppliedPlatformMigrations, validateAppliedPlatformMigrationPrefix } from "../database/platform-migration-registry";
 
 type Dispatch = Parameters<typeof dispatchQualifiedStripeRootErasure>[1];
 type Runtime = Readonly<{
   schemaSha256:string; profileCatalogSha256:string; descriptorChecksum:string;
+  releaseFormat?: "v5";
   appliedLedgerSha256?: string;
   gatewayDescriptorChecksum?: string;
   reauthorizationDescriptorChecksum?: string;
@@ -31,6 +33,24 @@ function assertCurrent(db:Database.Database,runtime:Runtime): void {
 
   const ledger = readAppliedPlatformMigrations(db);
   const tail = ledger.at(-1);
+  if (runtime.releaseFormat === "v5") {
+    try {
+      validateAppliedPlatformMigrationPrefix(ledger, platformMigrationManifest);
+    } catch { return erasureHold(); }
+    if (ledger.length !== platformMigrationManifest.length || tail?.post_schema_sha256 !== runtime.schemaSha256 ||
+      createHash("sha256").update(JSON.stringify(ledger)).digest("hex") !== runtime.appliedLedgerSha256) return erasureHold();
+    const components = [
+      ["0209_platform_paid_stripe_connect_billing", runtime.descriptorChecksum],
+      ["0210_platform_paid_partner_gateway_session", runtime.gatewayDescriptorChecksum],
+      ["0211_platform_paid_stripe_reauthorization", runtime.reauthorizationDescriptorChecksum],
+      ["0212_platform_paid_stripe_checkout_reviewed_version", runtime.checkoutReviewedVersionDescriptorChecksum],
+    ] as const;
+    for (const [migrationId, checksum] of components) {
+      const row = ledger.find(applied => applied.migration_id === migrationId);
+      if (!row || row.checksum_sha256 !== checksum) return erasureHold();
+    }
+    return;
+  }
   const hasCheckoutReview = runtime.checkoutReviewedVersionDescriptorChecksum !== undefined;
   const hasReauthorizationReview = hasCheckoutReview || runtime.reauthorizationDescriptorChecksum !== undefined;
   const hasGatewayReview = hasReauthorizationReview || runtime.appliedLedgerSha256 !== undefined ||

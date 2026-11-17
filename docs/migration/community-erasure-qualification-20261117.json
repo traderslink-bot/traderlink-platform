@@ -1,0 +1,65 @@
+{
+  "state": "UNQUALIFIED_PREPARATION",
+  "baseCommit": "1ae3de0ff861d979d835ec6aca49fd4370fba3cd",
+  "nativeArtifactDirectory": "/tmp/community-erasure-qualification-20261117.YMOwkd",
+  "files": [
+    {
+      "path": "src/modules/platform/server/privacy/platform-erasure-admission.ts",
+      "sha256": "efb01724c710bf5b539bc99d7781430525ac963f842744d9060a168a7b01c25d"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-stripe-erasure-worker-bootstrap.ts",
+      "sha256": "8d831135778481e7c2b0de641637afee4879e56b33cce92a97720e5ee742b94d"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-stripe-erasure-runtime-binding.ts",
+      "sha256": "d030be61dffec7597b84ec2c857ae1e635c6595e43466d8fde840a880db0c7b2"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-stripe-erasure-worker-guild.test.ts",
+      "sha256": "c3575fe81a3592cc1ff9643bd309d8652ff946685d672cb53b3b5da6c3fbaead"
+    },
+    {
+      "path": "scripts/qa/prepare-community-erasure-qualification.cjs",
+      "sha256": "5c84c4c455c465eea53532dbafa2fd99a4c2df011b132ef344371afa4898de25"
+    },
+    {
+      "path": "scripts/qa/community-erasure-deletion-onboarding.cjs",
+      "sha256": "03f458115ba2bf5da92b95459caea049fe9b41c173a6eeba9f4fbe263423fdc0"
+    },
+    {
+      "path": "scripts/qa/community-erasure-unqualified-regression.cjs",
+      "sha256": "ac744917f3318ce2dc045559ce57341f1db08261384d1eee473ff88a6f8aa319"
+    }
+  ],
+  "checks": {
+    "focusedSyntheticTests": 16,
+    "nativeDriver": "better-sqlite3 12.9.0 / SQLite 3.53.0",
+    "actualCombinedManifestEntries": 183,
+    "historicalFixtureEntries": 193,
+    "zeroDataAndSellerUnqualifiedRefusal": "reproduced",
+    "commandLifecycleNoPremium": "passed",
+    "v5BindingWrongLedgerAndDescriptor": "rejected",
+    "actualCombinedRootAndReplay": "pending frozen canonical schema and signed reader"
+  },
+  "paidReview": "Read-only source ordering review found no blocker; no final catalog qualification",
+  "validityRenewalProposal": {
+    "status": "INDEPENDENTLY_ACCEPTED_MAXIMUM_WITH_CONDITIONS_FINAL_DATES_UNSET",
+    "proposedValidityDays": 90,
+    "maintenanceWindowIsExpiry": false,
+    "actualCatalogExpiry": null,
+    "actualProfileExpiry": null,
+    "renewalOwner": "Coordinator",
+    "proposedReviewLeadDays": 30,
+    "proposedEscalationLeadDays": 14,
+    "proposedCompletionLeadDays": 7,
+    "automaticRenewal": false,
+    "pendingRoots": "preserve original scope; resolve or independently approve explicit transition before selected profile/generation change",
+    "retirement": "durable exact source/receipt and verified recall; no active release/incident/pending/audit dependency",
+    "backupRotationCadence": "not_prescribed",
+    "reviewerTask": "01a19f82-1ef7-7e31-8757-f360fbe7af76",
+    "ordinaryReadmitIntegration": "Existing confirmed account-erasure POST now invokes signed-profile current-principal readmission before worker dispatch; native handler and production cookie cases passed",
+    "privateKeyRetention": "only while actual pending/recovery evidence requires custody"
+  },
+  "accountRequestIntegrationReceipt": "community-erasure-account-request-20261117.json"
+}

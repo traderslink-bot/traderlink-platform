@@ -16,8 +16,17 @@ export function bootstrapStripeErasureWorker(db:Database.Database) {
   if (!hasStripeErasureSchema(db)) return null;
   const input=readPartnerAlertStripeErasureWorkerInputs(db);
   if (!input) return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+  const v5 = "releaseFormat" in input && input.releaseFormat === "v5";
+  if (v5 && (!("erasureProfileRef" in input) || typeof input.erasureProfileRef !== "string" ||
+    !("effectMode" in input) || !["discord_roles", "no_discord_effects"].includes(String(input.effectMode)))) {
+    return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+  }
   const readCurrentConfiguration = () => {
     const configuration = input.readCurrentConfiguration();
+    if (v5 && "effectMode" in input &&
+      (input.effectMode === "no_discord_effects" ? configuration !== null : configuration === null)) {
+      return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+    }
     if (!configuration) return null;
     for (const binding of configuration.outputBindings) {
       assertCommunityReviewDiscordGuild(binding.sourceGuildId);
@@ -36,6 +45,17 @@ export function bootstrapStripeErasureWorker(db:Database.Database) {
   }});
   return async (store:ErasureObjectStore,command:ErasureCommand)=>{
     try {
+      input.assertCurrentRelease();
+      readCurrentConfiguration();
+      if ("erasureProfileRef" in input) {
+        if (typeof input.erasureProfileRef !== "string") return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+        // Pending operations retain their existing admission and retry protocol.
+        if (!core.pendingFor(command.scope.userId, command.scope.workspaceId)) {
+          core.admitRootErasureCommand(command, input.erasureProfileRef);
+        } else if (core.lifecycle(command.scope.userId).profile_ref !== input.erasureProfileRef) {
+          return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+        }
+      }
       return await executeStripePreparedErasureCommand(db,store,command,async (ref,fence)=>{
         input.assertCurrentRelease();
         const life=core.lifecycle(command.scope.userId);

@@ -3,14 +3,15 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveJournalAccountSelectionRef } from "../../contracts/journal-account-selection";
 import { platformFailure } from "../database/platform-migration-contract";
-const mocks = vi.hoisted(() => ({ identity: vi.fn(), mutation: vi.fn(), expected: vi.fn(), worker: vi.fn() }));
+const mocks = vi.hoisted(() => ({ identity: vi.fn(), mutation: vi.fn(), expected: vi.fn(), worker: vi.fn(), prepare: vi.fn(), idle: vi.fn() }));
 vi.mock("../authentication/require-platform-request-scope", () => ({
   requireTraderLinkPlatformAuthenticatedRequestIdentity: mocks.identity,
   requireExpectedJournalAccountSelection: mocks.expected,
 }));
 vi.mock("../authentication/journal-mutation-request-security", () => ({ requireJournalMutationRequest: mocks.mutation }));
 vi.mock("../database/platform-database-config", () => ({ resolvePlatformDatabaseConfig: () => ({ databasePath: "/synthetic.sqlite" }) }));
-vi.mock("./platform-erasure-worker-supervisor", () => ({ runErasureWorker: mocks.worker }));
+vi.mock("./platform-erasure-worker-supervisor", () => ({ runErasureWorker: mocks.worker, assertErasureWorkerIdle: mocks.idle }));
+vi.mock("./platform-erasure-request-preparation", () => ({ prepareAuthenticatedErasureRequest: mocks.prepare }));
 import { POST } from "@/app/api/platform/account-erasure/route";
 
 const scope = { userId: "00000000-0000-4000-8000-000000000001", workspaceId: "00000000-0000-4000-8000-000000000002",
@@ -51,6 +52,29 @@ describe("completion-based account erasure HTTP contract", () => {
     expect(response.headers.get("set-cookie")).toContain("tl_platform_session=;");
     expect(response.headers.get("set-cookie")).toContain("traderlink_journal_account=;");
     expect(mocks.expected).not.toHaveBeenCalled();
+  });
+  it("passes only the authenticated command to request preparation before the worker", async () => {
+    await POST(request("traderlink_account", "DELETE MY TRADERLINK ACCOUNT"));
+    expect(mocks.prepare).toHaveBeenCalledOnce();
+    const args = mocks.prepare.mock.calls[0]!;
+    expect(args[3]).toBe("/synthetic.sqlite");
+    expect(args[2].scope).toBe(scope);
+    expect(args[2]).not.toHaveProperty("profileRef");
+    expect(mocks.prepare.mock.invocationCallOrder[0]).toBeLessThan(mocks.worker.mock.invocationCallOrder[0]!);
+  });
+  it("refuses a failed request preparation before starting the deletion worker", async () => {
+    mocks.prepare.mockImplementationOnce(() => platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT"));
+    const response = await POST(request("traderlink_account", "DELETE MY TRADERLINK ACCOUNT"));
+    expect(response.status).toBe(409);
+    expect(mocks.worker).not.toHaveBeenCalled();
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
+  it("refuses an occupied writer before opening request-side renewal", async () => {
+    mocks.idle.mockImplementationOnce(() => platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT"));
+    const response = await POST(request("traderlink_account", "DELETE MY TRADERLINK ACCOUNT"));
+    expect(response.status).toBe(409);
+    expect(mocks.prepare).not.toHaveBeenCalled();
+    expect(mocks.worker).not.toHaveBeenCalled();
   });
   it("sets the demo replacement selection and removes the demo-return cookie", async () => {
     const selection = deriveJournalAccountSelectionRef(scope.workspaceId, scope.activeAccountId);

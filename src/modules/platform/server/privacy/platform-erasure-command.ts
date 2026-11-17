@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
+import type { TraderLinkPlatformRequestIdentity } from "../authentication/require-platform-request-scope";
+import type { PlatformErasureAdmission } from "./platform-erasure-admission";
 import type { WorkspaceAccessScope } from "../../contracts/workspace-access-scope";
 import { resolveJournalAccountSelection, type JournalAccountSelectionRef } from "../../contracts/journal-account-selection";
 import { requireExpectedJournalAccountSelection } from "../authentication/journal-account-selection-authorization";
@@ -64,6 +66,35 @@ function requireAdmittedMember(database: Database.Database, command: ErasureComm
 export function revalidatePlatformRootErasureCommand(database: Database.Database, command: ErasureCommand): void {
   if (!database.inTransaction || command.action !== "traderlink_account") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   requireAdmittedMember(database, command);
+}
+
+/** Request-side renewal for the existing confirmed delete command. Profile
+ * selection and review verification belong to the trusted server caller. */
+export function readmitAuthenticatedErasureCommand(database: Database.Database, input: Readonly<{
+  core: PlatformErasureAdmission; request: Request; identity: TraderLinkPlatformRequestIdentity;
+  command: ErasureCommand; profileRef: string; environment: NodeJS.ProcessEnv; verify: () => void;
+}>): void {
+  const { core, identity, command } = input;
+  if (command.action !== "traderlink_account" || identity.mode !== "platform_session" ||
+    command.mode !== identity.mode || command.sessionId !== identity.sessionId ||
+    JSON.stringify(command.scope) !== JSON.stringify(identity.scope)) {
+    return platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+  }
+  core.withRequestAuditFrame(input.request, input.environment, () => {
+    core.attachRequestPrincipal(identity, input.verify);
+    revalidatePlatformRootErasureCommand(database, command);
+    const current = database.prepare("SELECT phase,operation_ref,profile_ref,profile_generation,valid_until_utc FROM platform_erasure_lifecycles WHERE user_id=?")
+      .get(command.scope.userId) as { phase: string; operation_ref: string | null; profile_ref: string;
+        profile_generation: number; valid_until_utc: string } | undefined;
+    // Missing subjects are admitted by the command worker. Pending/held roots
+    // retain the exact existing transition and can never renew through here.
+    if (!current || current.phase !== "live" || current.operation_ref !== null) return;
+    const profile = core.profile(input.profileRef);
+    if (current.profile_ref !== profile.profile_ref || current.profile_generation !== profile.generation ||
+      current.valid_until_utc <= core.now()) {
+      core.readmitMember(input.profileRef);
+    }
+  });
 }
 
 /** Server-only command: the HTTP boundary never accepts scope/session fields

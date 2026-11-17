@@ -544,6 +544,33 @@ export class PlatformErasureAdmission {
       this.event(row, "settling");
     }).immediate();
   }
+  /** Explicit deletion command onboarding. The worker selects the profile from
+   * its current signed release input. No Membership/Premium authority is created. */
+  admitRootErasureCommand(command: ErasureCommand, profileRef: string): void {
+    if (this.database.inTransaction || contexts.has(this.database)) return fail();
+    this.database.transaction(() => {
+      this.schemaCurrent();
+      revalidatePlatformRootErasureCommand(this.database, command);
+      const profile = this.profile(profileRef);
+      const existing = this.database.prepare("SELECT * FROM platform_erasure_lifecycles WHERE user_id=?")
+        .get(command.scope.userId) as Lifecycle | undefined;
+      if (existing) {
+        // A different, expired or held lifecycle requires its own explicit
+        // reviewed transition. This command never repairs or renews it.
+        if (existing.profile_ref !== profile.profile_ref || existing.profile_generation !== profile.generation
+          || existing.valid_until_utc <= this.now() || existing.phase !== "live" || existing.operation_ref) return erasureHold();
+        return;
+      }
+      const row: Lifecycle = { lifecycle_ref: randomUUID(), user_id: command.scope.userId,
+        generation: 1, admission_ref: randomUUID(), erasure_generation: 1, phase: "live",
+        profile_ref: profile.profile_ref, profile_generation: profile.generation,
+        valid_until_utc: profile.valid_until_utc, operation_ref: null };
+      this.database.prepare("INSERT INTO platform_erasure_lifecycles VALUES(?,?,?,?,?,?,?,?,?,?)")
+        .run(row.lifecycle_ref, row.user_id, row.generation, row.admission_ref, row.erasure_generation,
+          row.phase, row.profile_ref, row.profile_generation, row.valid_until_utc, row.operation_ref);
+      this.event(row, "onboarded");
+    }).immediate();
+  }
   prepare(command: ErasureCommand, operationRef: string): void {
     if (this.database.inTransaction || contexts.has(this.database)) return fail();
     this.database.transaction(() => {
