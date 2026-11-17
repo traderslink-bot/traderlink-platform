@@ -2,7 +2,7 @@ import type { TraderLinkCommunityCapability } from "./traderlink-community-contr
 
 export const TRADERLINK_COMMUNITY_SECTIONS = Object.freeze([
   "home", "alerts", "watchlists", "coaches", "coaching", "workspace",
-  "manage", "team", "roles", "members", "activity", "channels", "settings", "templates",
+  "manage", "alert-management", "team", "roles", "members", "activity", "channels", "settings", "templates",
 ] as const);
 
 export type TraderLinkCommunitySection =
@@ -32,6 +32,7 @@ export type TraderLinkCommunityAlert = Readonly<{
   slug: string;
   authorUserId: string;
   authorName: string;
+  authorAvatarUrl: string | null;
   title: string;
   symbol: string | null;
   body: string;
@@ -323,6 +324,7 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
     assignments: Readonly<Record<string,readonly {kind:"user"|"role";id:string}[]>>;
     intents: Readonly<Record<string,{distribution:"website"|"discord";destinationIds:readonly string[]}>>;
   }>;
+  contentPages?:readonly Readonly<{pageId:string;pageType:"alert"|"watchlist"|"swing"|"content";templateKey:"standard_alert"|"watchlist_list"|"research_swing"|"article"|"research_report"|"guide"|"brief_update"|"custom";permissionMode:"inherit"|"restricted";discordDestinationId:string|null;title:string;slug:string;secondarySlug:string|null;categoryId:string|null;canPublish:boolean}>[];
   channels: readonly TraderLinkCommunityChannel[];
   deliveries?:readonly Readonly<{deliveryId:string;attemptKey:string;objectType:string;channelName:string;publisherName?:string|null;status:string;outcome:string;messageId:string|null;error:string|null;updatedAtUtc:string;multipart?:number}>[];
   members: readonly TraderLinkCommunityMemberSummary[];
@@ -342,6 +344,7 @@ export type TraderLinkCommunityDashboardSnapshot = Readonly<{
     coachingViews30Days: number;
     topPages: readonly Readonly<{ path: string; views: number; uniqueMembers: number }>[];
     namedMemberPages: readonly Readonly<{userId:string;displayName:string;path:string;views:number;lastViewedAtUtc:string}>[];
+    brandedPages:readonly Readonly<{pageId:string;pageTitle:string;pageType:"alert"|"watchlist"|"swing"|"content";categoryName:string|null;publisherName:string|null;visits:number;uniqueMembers:number;contentOpens:number}>[];
   }>;
   referrals: Readonly<{
     attributedMembers: number;

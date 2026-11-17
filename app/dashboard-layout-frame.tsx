@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "@/src/modules/communities/server/community-review-discord-guild";
 import { readCommunityHistoryEntry } from "@/src/modules/communities/contracts/community-history-entry";
 import { headers } from "next/headers";
 import { DiscordConnectionNotice } from "./discord-connection-notice";
@@ -219,13 +220,15 @@ async function TraderLinkPlatformDashboardFrameContent({
       : null;
     const marketHaltAlerts = new MarketHaltAlertRepository(database);
     const communityRepository = new TraderLinkCommunityRepository(database);
-    const communityAccess = communityRepository.listForUser(scope.userId)
+    const communityAccess = (watchlistAdminNavigationAccess ? communityRepository.listForUser(scope.userId) : [])
+      .filter((community) => isCommunityReviewDiscordGuild(community.discordGuildId))
       .map((community) => ({
         community,
         access: communityRepository.resolveAccess(community.communityId, scope.userId),
       }))
       .filter((entry) => entry.access.capabilities.includes("community.view"));
     const firstCommunity = communityAccess[0] ?? null;
+    const defaultCommunityHref = firstCommunity ? `/communities/${firstCommunity.community.slug}` : "/communities";
     const independentCoachingAvailable=Boolean(database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='traderlink_coaching_contexts'").get());
     const firstCoachingCommunity = communityAccess.find((entry) =>
       entry.access.capabilities.includes("community.coaching.view") ||
@@ -243,9 +246,7 @@ async function TraderLinkPlatformDashboardFrameContent({
         scope,
       }),
       notifications: new PlatformNotificationRepository(database).list(scope, 5),
-      communityNavigationHref: watchlistAdminNavigationAccess && firstCommunity
-        ? `/communities/${firstCommunity.community.slug}`
-        : null,
+      communityNavigationHref: watchlistAdminNavigationAccess ? defaultCommunityHref : null,
       coachingNavigationHref: independentCoachingAvailable?'/coaching':firstCoachingCommunity
         ? `/communities/${firstCoachingCommunity.community.slug}/coaching`
         : null,

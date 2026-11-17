@@ -10,7 +10,7 @@ import type {CommunityContentDocument,CommunityContentPage} from "@/src/modules/
 import {CommunityBrandedContentRepository} from "@/src/modules/communities/server/community-branded-content-repository";
 import {withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {CommunityNavigation} from "../../community-navigation";
-import {loadCommunityDashboard} from "../../community-dashboard-loader";
+import {loadCommunityPublishingDashboard as loadCommunityDashboard} from "../../community-publication-dashboard-loader";
 import {moderateCommunityContentPlacementAction,publishCommunitySwingAction,saveCommunityContentDocumentAction} from "../../community-branded-content-actions";
 
 const contentTemplates=[["article","Article"],["research_report","Research report"],["guide","Guide / tutorial"],["brief_update","Brief update"]] as const;

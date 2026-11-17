@@ -3,6 +3,8 @@ import type Database from "better-sqlite3";
 import {TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES,TRADERLINK_COMMUNITY_CAPABILITIES,TRADERLINK_COMMUNITY_MEMBER_BASELINE_CAPABILITIES,isTraderLinkCommunityCapability,type TraderLinkCommunity,type TraderLinkCommunityAccess,type TraderLinkCommunityCapability,type TraderLinkCommunityMembership,type TraderLinkCommunityMembershipStatus,type TraderLinkCommunityFixedResponsibility,type TraderLinkCommunityRole} from "../contracts/traderlink-community-contracts";
 import {assertCanonicalUtcTimestamp,assertCanonicalUuidV4,createCanonicalUuidV4,platformFailure} from "../../platform/server/database/platform-migration-contract";
 
+
+
 const DISCORD_SNOWFLAKE_PATTERN = /^[0-9]{1,32}$/u;
 
 const COMMUNITY_SLUG_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u;
@@ -611,5 +613,203 @@ requireCapability(
     }
     if(capability==="community.coaching.offer"||capability==="community.coaching.students")requireCoachCommercialAccess(this.database,{coachUserId:userId,scope:"community",communityId,atUtc:new Date().toISOString()});
     return access;
+  }
+
+createRole(input: Readonly<{
+    communityId: string;
+    actorUserId: string;
+    name: string;
+    capabilities: readonly TraderLinkCommunityCapability[];
+    timestamp: string;
+  }>): TraderLinkCommunityRole {
+    this.requireCapability(input.communityId, input.actorUserId, "community.roles.manage");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    const name = normalizeText(input.name, "name", 80);
+    const capabilities = canonicalCapabilities(input.capabilities);
+    const roleId = createCanonicalUuidV4();
+    return this.runWrite(() => {
+      this.database.prepare(`INSERT INTO traderlink_community_roles (
+  role_id, community_id, name, status, created_by_user_id,
+  created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, 'active', ?, ?, ?)`).run(
+        roleId,
+        input.communityId,
+        name,
+        input.actorUserId,
+        input.timestamp,
+        input.timestamp,
+      );
+      const insertCapability = this.database.prepare(`INSERT INTO traderlink_community_role_capabilities (
+  community_id, role_id, capability_key, granted_by_user_id, granted_at_utc
+) VALUES (?, ?, ?, ?, ?)`);
+      for (const capability of capabilities) {
+        insertCapability.run(
+          input.communityId,
+          roleId,
+          capability,
+          input.actorUserId,
+          input.timestamp,
+        );
+      }
+      this.insertAudit({
+        communityId: input.communityId,
+        actorUserId: input.actorUserId,
+        eventType: "role.created",
+        objectType: "role",
+        objectRef: roleId,
+        detail: { name, capabilityCount: capabilities.length },
+        timestamp: input.timestamp,
+      });
+      return mapRole(
+        this.database.prepare<[string, string], RoleRow>(`SELECT *
+FROM traderlink_community_roles
+WHERE community_id = ? AND role_id = ?`).get(input.communityId, roleId) as RoleRow,
+      );
+    });
+  }
+
+replaceRoleCapabilities(input: Readonly<{
+    communityId: string;
+    actorUserId: string;
+    roleId: string;
+    capabilities: readonly TraderLinkCommunityCapability[];
+    timestamp: string;
+  }>): void {
+    this.requireCapability(input.communityId, input.actorUserId, "community.roles.manage");
+    assertCanonicalUuidV4(input.roleId, "roleId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    const capabilities = canonicalCapabilities(input.capabilities);
+    this.runWrite(() => {
+      const role = this.database.prepare<[string, string], RoleRow>(`SELECT *
+FROM traderlink_community_roles
+WHERE community_id = ? AND role_id = ? AND status = 'active'`)
+        .get(input.communityId, input.roleId);
+      if (!role) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      this.database.prepare(`DELETE FROM traderlink_community_role_capabilities
+WHERE community_id = ? AND role_id = ?`).run(input.communityId, input.roleId);
+      const insertCapability = this.database.prepare(`INSERT INTO traderlink_community_role_capabilities (
+  community_id, role_id, capability_key, granted_by_user_id, granted_at_utc
+) VALUES (?, ?, ?, ?, ?)`);
+      for (const capability of capabilities) {
+        insertCapability.run(
+          input.communityId,
+          input.roleId,
+          capability,
+          input.actorUserId,
+          input.timestamp,
+        );
+      }
+      this.database.prepare(`UPDATE traderlink_community_roles
+SET updated_at_utc = ? WHERE community_id = ? AND role_id = ?`).run(
+        input.timestamp,
+        input.communityId,
+        input.roleId,
+      );
+      this.insertAudit({
+        communityId: input.communityId,
+        actorUserId: input.actorUserId,
+        eventType: "role.capabilities_replaced",
+        objectType: "role",
+        objectRef: input.roleId,
+        detail: { capabilityCount: capabilities.length },
+        timestamp: input.timestamp,
+      });
+    });
+  }
+
+assignRole(input: Readonly<{
+    communityId: string;
+    actorUserId: string;
+    userId: string;
+    roleId: string;
+    timestamp: string;
+  }>): void {
+    this.requireCapability(input.communityId, input.actorUserId, "community.roles.manage");
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUuidV4(input.roleId, "roleId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    this.runWrite(() => {
+      const eligible = this.database.prepare<
+        [string, string, string],
+        { present: number }
+      >(`SELECT 1 AS present
+FROM traderlink_community_roles role
+JOIN traderlink_community_memberships membership
+  ON membership.community_id = role.community_id
+WHERE role.community_id = ? AND role.role_id = ? AND role.status = 'active'
+  AND membership.user_id = ? AND membership.status = 'active'`)
+        .get(input.communityId, input.roleId, input.userId);
+      if (!eligible) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      const active = this.database.prepare<[string, string, string], { assignment_id: string }>(`SELECT assignment_id
+FROM traderlink_community_member_role_assignments
+WHERE community_id = ? AND role_id = ? AND user_id = ? AND status = 'active'`)
+        .get(input.communityId, input.roleId, input.userId);
+      if (!active) {
+        this.database.prepare(`INSERT INTO traderlink_community_member_role_assignments (
+  assignment_id, community_id, role_id, user_id, status,
+  assigned_by_user_id, assigned_at_utc, revoked_at_utc
+) VALUES (?, ?, ?, ?, 'active', ?, ?, NULL)`).run(
+          createCanonicalUuidV4(),
+          input.communityId,
+          input.roleId,
+          input.userId,
+          input.actorUserId,
+          input.timestamp,
+        );
+      }
+      this.insertAudit({
+        communityId: input.communityId,
+        actorUserId: input.actorUserId,
+        targetUserId: input.userId,
+        eventType: "role.assigned",
+        objectType: "role",
+        objectRef: input.roleId,
+        timestamp: input.timestamp,
+      });
+    });
+  }
+
+mapDiscordRole(input: Readonly<{
+    communityId: string;
+    actorUserId: string;
+    discordRoleId: string;
+    roleId: string;
+    timestamp: string;
+  }>): void {
+    this.requireCapability(input.communityId, input.actorUserId, "community.roles.manage");
+    assertDiscordSnowflake(input.discordRoleId, "discordRoleId");
+    assertCanonicalUuidV4(input.roleId, "roleId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    this.runWrite(() => {
+      const activeRole = this.database.prepare<[string, string], { present: number }>(`SELECT 1 AS present
+FROM traderlink_community_roles
+WHERE community_id = ? AND role_id = ? AND status = 'active'`)
+        .get(input.communityId, input.roleId);
+      if (!activeRole) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      this.database.prepare(`INSERT INTO traderlink_community_discord_role_mappings (
+  mapping_id, community_id, discord_role_id, role_id, status,
+  mapped_by_user_id, created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
+ON CONFLICT(community_id, discord_role_id, role_id) DO UPDATE SET
+  status = 'active', mapped_by_user_id = excluded.mapped_by_user_id,
+  updated_at_utc = excluded.updated_at_utc`).run(
+        createCanonicalUuidV4(),
+        input.communityId,
+        input.discordRoleId,
+        input.roleId,
+        input.actorUserId,
+        input.timestamp,
+        input.timestamp,
+      );
+      this.insertAudit({
+        communityId: input.communityId,
+        actorUserId: input.actorUserId,
+        eventType: "discord_role.mapped",
+        objectType: "discord_role",
+        objectRef: input.discordRoleId,
+        detail: { roleId: input.roleId },
+        timestamp: input.timestamp,
+      });
+    });
   }
 }

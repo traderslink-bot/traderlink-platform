@@ -6,7 +6,7 @@ import {CommunityBrandedContentRepository} from "@/src/modules/communities/serve
 import {withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {communityHubCacheScope,readCommunityContentCache} from "@/src/modules/communities/server/community-content-read-cache";
 import {CommunityNavigation} from "./community-navigation";
-import {loadCommunityDashboard} from "./community-dashboard-loader";
+import {loadCommunityPublishingDashboard as loadCommunityDashboard} from "./community-publication-dashboard-loader";
 import {CommunityDestinationHubList} from "./community-destination-hub-list";
 
 const titles:Record<CommunityDestinationFamily,string>={alert:"Alerts",watchlist:"Watchlists",content:"Content"};

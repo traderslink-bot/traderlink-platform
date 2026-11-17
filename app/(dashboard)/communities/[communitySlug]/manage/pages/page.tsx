@@ -12,7 +12,7 @@ import {DashboardPage,DashboardPanel,DashboardUnavailableState} from "@/app/dash
 import {CommunityBrandedContentRepository} from "@/src/modules/communities/server/community-branded-content-repository";
 import {withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {CommunityNavigation} from "../../../community-navigation";
-import {loadCommunityDashboard} from "../../../community-dashboard-loader";
+import {loadCommunityPublishingDashboard as loadCommunityDashboard} from "../../../community-publication-dashboard-loader";
 import {CommunityPageCreateForm} from "./community-page-create-form";
 import {
  assignCommunityContentGroupAction,assignCommunityContentPublisherAction,assignCommunityPageTemplateAction,createCommunityContentCategoryAction,createCommunityContentPageAction,createCommunityContentTemplateAction,removeCommunityContentGroupAction,removeCommunityContentPublisherAction,setCommunityContentCategoryStatusAction,setCommunityContentPageStatusAction,setCommunityContentTemplateStatusAction,updateCommunityContentCategoryAction,updateCommunityContentPageAction,

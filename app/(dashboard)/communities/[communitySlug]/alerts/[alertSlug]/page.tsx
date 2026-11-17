@@ -8,7 +8,7 @@ import Typography from "@mui/material/Typography";
 import { notFound } from "next/navigation";
 
 import { DashboardPage, DashboardPanel } from "@/app/dashboard-ui";
-import { loadCommunityDashboard } from "../../../community-dashboard-loader";
+import { loadCommunityPublishingDashboard as loadCommunityDashboard } from "../../../community-publication-dashboard-loader";
 
 export default async function CommunityAlertPage({params}:{params:Promise<{communitySlug:string;alertSlug:string}>}) {
   const {communitySlug,alertSlug}=await params;
