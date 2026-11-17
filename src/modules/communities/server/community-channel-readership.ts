@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type Database from "better-sqlite3";
 
 type Role={id:string;permissions:string};
@@ -7,7 +8,7 @@ const bits=/^\d{1,32}$/;
 /** Fresh Discord membership + roles + channel overwrites. No app audience override. */
 export async function readCommunityViewerChannels(db:Database.Database,slug:string,userId:string,token:string,request:typeof fetch=fetch):Promise<readonly string[]>{
  const target=db.prepare(`SELECT c.discord_guild_id,i.auth_subject FROM traderlink_communities c JOIN traderlink_community_memberships m ON m.community_id=c.community_id AND m.user_id=? AND m.status='active' JOIN platform_auth_identities i ON i.user_id=m.user_id AND i.auth_provider='discord' AND i.status='active' WHERE c.slug=? AND c.status='active'`).get(userId,slug) as {discord_guild_id:string;auth_subject:string}|undefined;
- if(!target||!token||!id.test(target.discord_guild_id)||!id.test(target.auth_subject))return [];
+ if(!target||!isCommunityReviewDiscordGuild(target.discord_guild_id)||!token||!id.test(target.discord_guild_id)||!id.test(target.auth_subject))return [];
  const guildId=target.discord_guild_id,memberId=target.auth_subject;
  async function get(path:string){const response=await request(`https://discord.com/api/v10/${path}`,{headers:{Authorization:`Bot ${token}`},cache:"no-store",signal:AbortSignal.timeout(8000)});if(!response.ok)throw new Error("Discord viewing access unavailable");return response.json();}
  try{

@@ -1,3 +1,4 @@
+import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type Database from "better-sqlite3";
 import { PlatformDiscordMembershipRepository } from "../../platform/server/authentication/platform-discord-membership-repository";
 import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4,createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
@@ -10,7 +11,7 @@ type Target = { community_id:string; discord_guild_id:string; auth_subject:strin
 export async function verifyCommunityRequestMember(db:Database.Database,input:{slug:string;userId:string;botToken:string;atUtc:string;existingCoachingOnly?:boolean;relationshipId?:string},request:typeof fetch=fetch):Promise<boolean>{
  assertCanonicalUuidV4(input.userId,"userId");assertCanonicalUtcTimestamp(input.atUtc,"atUtc");
  const target=db.prepare(`SELECT c.community_id,c.discord_guild_id,i.auth_subject,m.last_verified_at_utc,cm.status membership_status FROM traderlink_communities c JOIN platform_auth_identities i ON i.user_id=? AND i.auth_provider='discord' AND i.status='active' LEFT JOIN platform_discord_memberships m ON m.user_id=i.user_id AND m.guild_id=c.discord_guild_id LEFT JOIN traderlink_community_memberships cm ON cm.community_id=c.community_id AND cm.user_id=i.user_id WHERE c.slug=?`).get(input.userId,input.slug) as Target|undefined;
- if(!target||target.membership_status==='suspended')return false;
+ if(!target||!isCommunityReviewDiscordGuild(target.discord_guild_id)||target.membership_status==='suspended')return false;
  const owner=db.prepare("SELECT i.auth_subject,c.updated_at_utc,u.auth_provider owner_provider,u.status owner_status FROM traderlink_communities c JOIN platform_users u ON u.user_id=c.owner_user_id LEFT JOIN platform_auth_identities i ON i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.status='active' WHERE c.community_id=?").get(target.community_id) as {auth_subject:string|null;updated_at_utc:string;owner_provider:string;owner_status:string};
  const deletedOwner=owner.owner_provider==='deleted'&&owner.owner_status==='disabled';
  // Explicit server-side coaching intent is required even with fresh cached
@@ -30,6 +31,7 @@ export async function verifyCommunityRequestMember(db:Database.Database,input:{s
    request(`https://discord.com/api/v10/guilds/${target.discord_guild_id}/members/${target.auth_subject}`,{...options,signal:AbortSignal.timeout(8000)}),
   ]);
   if(!guildResponse.ok)return false;
+  if(!db.prepare("SELECT 1 FROM traderlink_communities WHERE community_id=? AND discord_guild_id=?").get(target.community_id,target.discord_guild_id))return false;
   const guild=await guildResponse.json() as {id?:string;owner_id?:string};
   if(guild.id!==target.discord_guild_id||!guild.owner_id||!/^\d{1,32}$/.test(guild.owner_id))return false;
   if(!deletedOwner&&owner.updated_at_utc<=input.atUtc&&owner.auth_subject!==guild.owner_id){
