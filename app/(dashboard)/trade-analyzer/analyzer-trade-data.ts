@@ -17,7 +17,7 @@ export function toAnalyzerTrade(row: WorkspaceTradeLibraryRow): AnalyzerTrade {
     direction: row.direction,
     currency: row.tradeCurrency,
     entryDate: row.entryDate,
-    entryTime: row.entryTime,
+    openedAtUtc: row.openedAtUtc,
     closed: row.status === "Closed" || row.status === "Closed swing",
     canAnalyze: row.status === "Closed" && row.tradeStyle !== "swing" && row.closedAtUtc !== null &&
       isSameAnalyzerMarketDay(row.openedAtUtc, row.closedAtUtc),

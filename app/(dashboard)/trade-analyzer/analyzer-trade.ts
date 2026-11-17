@@ -6,7 +6,7 @@ export type AnalyzerTrade = Readonly<{
   direction: "long" | "short";
   currency: string;
   entryDate: string;
-  entryTime: string;
+  openedAtUtc: string;
   closed: boolean;
   canAnalyze: boolean;
   executions: readonly Readonly<{

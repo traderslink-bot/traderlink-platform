@@ -105,10 +105,7 @@ export default async function TradeAnalyzerPage({ searchParams }: {
     direction: trade.direction,
     currency: model.account.baseCurrency,
     entryDate: trade.trackerDate,
-    entryTime: new Intl.DateTimeFormat("en-CA", {
-      hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
-      timeZone: model.account.tradingTimezone,
-    }).format(new Date(trade.openedAtUtc)),
+    openedAtUtc: trade.openedAtUtc,
     closed: true,
     canAnalyze: true,
     executions: [],

@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, Box, Button, MenuItem, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { DashboardPanel, DashboardSecondaryAction } from "@/app/dashboard-template";
@@ -52,8 +52,9 @@ type Props = Readonly<{
   selectedEventId: string | null;
 }>;
 
-function tradeLabel(trade: AnalyzerTrade, includeDate: boolean) {
-  const when = includeDate ? `${trade.entryDate} · ${trade.entryTime.slice(0, 8)}` : trade.entryTime.slice(0, 8);
+function tradeLabel(trade: AnalyzerTrade, includeDate: boolean, timeFormat: Intl.DateTimeFormat) {
+  const time = timeFormat.format(new Date(trade.openedAtUtc));
+  const when = includeDate ? `${trade.entryDate} · ${time}` : time;
   return `${trade.symbol} · ${when}`;
 }
 
@@ -85,6 +86,9 @@ export function TradeAnalyzerHome({
   const moreHref = continuationCursor ? `${listHref}${demo ? "?" : "&"}cursor=${encodeURIComponent(continuationCursor)}` : null;
   const timezoneLabel = accountTimezone === "America/New_York" || accountTimezone === "America/Toronto"
     ? "Eastern Time" : accountTimezone.replaceAll("_", " ");
+  const timeFormat = useMemo(() => new Intl.DateTimeFormat("en-CA", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", timeZone: accountTimezone,
+  }), [accountTimezone]);
 
   useEffect(() => {
     if (showBatch && batch) batchHeading.current?.focus();
@@ -246,7 +250,7 @@ export function TradeAnalyzerHome({
                   scrollButtons="auto"
                   allowScrollButtonsMobile
                 >
-                  {selectorTrades.map((trade) => <Tab aria-controls="analyzer-selected-trade" id={`analyzer-tab-${trade.id}`} key={trade.id} label={tradeLabel(trade, false)} value={trade.id} />)}
+                  {selectorTrades.map((trade) => <Tab aria-controls="analyzer-selected-trade" id={`analyzer-tab-${trade.id}`} key={trade.id} label={tradeLabel(trade, false, timeFormat)} value={trade.id} />)}
                 </Tabs>
               ) : (
                 <TextField
@@ -257,7 +261,7 @@ export function TradeAnalyzerHome({
                   value={selectorTrades.some((trade) => trade.id === selected.id) ? selected.id : ""}
                   sx={{ alignSelf: "flex-start", width: "min(100%, 330px)" }}
                 >
-                  {selectorTrades.map((trade) => <MenuItem key={trade.id} value={trade.id}>{tradeLabel(trade, !showBatch)}</MenuItem>)}
+                  {selectorTrades.map((trade) => <MenuItem key={trade.id} value={trade.id}>{tradeLabel(trade, !showBatch, timeFormat)}</MenuItem>)}
                 </TextField>
               )
             ) : null}
@@ -287,7 +291,7 @@ export function TradeAnalyzerHome({
                 sx={{ minWidth: 0 }}
               >
                 <Typography component="h2" variant="h6" sx={{ mb: 0.5 }}>{selected.symbol} · {selected.direction === "long" ? "Long" : "Short"}</Typography>
-                <Typography color="text.secondary" variant="body2">{selected.entryDate} at {selected.entryTime.slice(0, 5)} · {timezoneLabel}</Typography>
+                <Typography color="text.secondary" variant="body2">{selected.entryDate} at {timeFormat.format(new Date(selected.openedAtUtc))} · {timezoneLabel}</Typography>
                 {selected.executions.length ? (
                   <Box component="details" sx={{ mt: 1, "& > summary": { cursor: "pointer", color: "primary.main" } }}>
                     <summary>{selected.executions.length} saved executions</summary>

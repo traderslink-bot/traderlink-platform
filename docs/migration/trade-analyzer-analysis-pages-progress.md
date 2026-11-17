@@ -56,6 +56,12 @@ The sidebar checkpoint implemented the grouping for existing pages.
 - Reproduced a saved trade with no action after its allowance request failed. Try again reloads the saved trade and rechecks its allowance before showing Analyze trade.
 - Isolated Chromium passed both regressions. The 102-test focused suite covered routing, permissions, migration, manual-entry recovery, saved analysis, and Demo clearing. The full TypeScript check reported the existing `jsdom` declaration gap in `feature-page-embed-host.test.ts`.
 
+### Follow-up QA
+
+- The trade picker used opening times rounded to the minute. It now formats the saved opening timestamp to the second in the selected account’s timezone, so trades in the same ticker and minute can be distinguished.
+- The expanded 139-test suite included analysis selection, worker completion with synthetic market data, and retry behavior.
+- Chromium verified a seven-trade mobile batch with fourteen executions, including two AAPL trades in one minute. The picker distinguished both and displayed the selected trade. Entry rejected a future date while preserving the draft. The overnight and allowance-retry regressions also passed again. Separate isolated cases verified Demo history and keyboard navigation, and that a lost save response can be recovered without another write.
+
 ## Current checkpoint - 2026-08-09
 
 - [x] Owner approved separating Trade Analyzer from generic historical
