@@ -1,3 +1,4 @@
+import {marketDataSelection} from "@/src/modules/market-data/server/provider-settings";
 import "server-only";
 import { chartSymbol, type Candle } from "@/src/modules/scanner/alpaca/candles";
 import type { ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
@@ -30,16 +31,17 @@ export async function scannerIndicatorResponse(request: Request, loadBars: (requ
 
   const now = Date.now();
   const window = Number.parseInt(frame, 10) * 60_000;
-  const key = `${symbol}:${frame}:${Math.floor(now / window)}`;
+  const selection=marketDataSelection("scanners");
+  const key = `${selection.provider}:${selection.revision}:${symbol}:${frame}:${Math.floor(now / window)}`;
   let read = reads.get(key);
   if (!read) {
-    url.search = new URLSearchParams({ symbol, scannerIndicators: "1" }).toString();
+    url.search = new URLSearchParams({ symbol, scannerIndicators: "1", provider:selection.provider,providerRevision:String(selection.revision) }).toString();
     // The first viewer's cancellation must not cancel a read shared by other viewers.
     read = (async () => {
       const response = await loadBars(new Request(url, { headers: request.headers }));
       if (!response.ok) throw Error("indicator_bars_unavailable");
       const bars = await response.json() as { symbol?: string; feed?: string; adjustment?: string; bars?: Candle[]; calendar?: ChartCalendar };
-      if (bars.symbol !== symbol || bars.feed !== "sip" || bars.adjustment !== "split" || !Array.isArray(bars.bars)) {
+      if (bars.symbol !== symbol || bars.feed !== (selection.provider==="alpaca"?"sip":"moomoo") || bars.adjustment !== "split" || !Array.isArray(bars.bars)) {
         throw Error("invalid_indicator_bars");
       }
       const { result, vwap } = scannerIndicatorResults(bars.bars, frame, Math.floor(now / 60_000) * 60_000, historyCalendar(bars.calendar));
@@ -54,6 +56,8 @@ export async function scannerIndicatorResponse(request: Request, loadBars: (requ
   }
   try {
     const { readings, ...compact } = await read;
+    const latest=marketDataSelection("scanners");
+    if(latest.provider!==selection.provider||latest.revision!==selection.revision)return Response.json({error:"provider_changed"},{status:409,headers});
     return Response.json(includeDetails ? { ...compact, readings } : compact, { headers });
   }
   catch {

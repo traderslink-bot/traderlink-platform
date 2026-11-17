@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { test } from "vitest";
 import Database from "better-sqlite3";
 import { dailyTradeAnalyzerManualRetryRequestsMigration as migration } from "./database/migrations/0135_daily_trade_analyzer_manual_retry_requests";
@@ -112,7 +113,9 @@ VALUES(?,?,?,?,1800000000,1800003600,1,'requested',?)`);
 test("manual retry uses separate free acquisitions and history without rewriting the original charge",()=>{
   const db=fixture();
   try {
-    db.exec(`CREATE TABLE level_analysis_shared_analyzer_settings(settings_key,enabled,default_daily_limit,default_period_limit,global_rolling_24h_limit,request_spacing_seconds,designated_user_id,designated_workspace_id,designated_account_id,revision);
+    db.exec(`CREATE TABLE level_analysis_market_session_sets(market_session_set_id,provider_adapter_version);
+INSERT INTO level_analysis_market_session_sets VALUES ('00000000-0000-4000-8000-000000000005','moomoo_history_kline_v1');
+CREATE TABLE level_analysis_shared_analyzer_settings(settings_key,enabled,default_daily_limit,default_period_limit,global_rolling_24h_limit,request_spacing_seconds,designated_user_id,designated_workspace_id,designated_account_id,revision);
 CREATE TABLE level_analysis_user_allowance_cycles(allowance_cycle_id,user_id,starts_on_new_york_date,ends_on_new_york_date,created_at_utc);
 CREATE TABLE level_analysis_user_allowance_overrides(user_id,daily_limit,period_limit);
 CREATE TABLE level_analysis_user_allowance_resets(user_id,allowance_cycle_id,reset_kind,created_at_utc);
@@ -146,4 +149,40 @@ VALUES(?,?,?,1800000000,1800003600,1,'provider_failure',?,?,'fixture_failure')`)
     assert.equal(history.completedEvidence(scope,id(10)).ranges.length,1);
     assert.deepEqual(db.pragma("foreign_key_check"),[]);
   } finally {db.close();}
+});
+
+
+test("history stays with the acquisition provider when the same job changes providers", () => {
+  const db = fixture();
+  try {
+    db.exec(`CREATE TABLE level_analysis_market_session_sets(market_session_set_id,provider_adapter_version,provider_symbol)`);
+    const start = 1800000000;
+    for (const [index, source, price, label] of [
+      [0, "alpaca_sip_raw_v1", "0.14", start],
+      [1, "moomoo_history_kline_v1", "0.15", start + 60],
+    ] as const) {
+      const sessionId=id(600+index), acquisitionId=id(610+index);
+      db.prepare("INSERT INTO level_analysis_market_session_sets VALUES(?,?,'TEST')").run(sessionId,source);
+      db.prepare("INSERT INTO level_analysis_analyzer_acquisitions VALUES(?,?,?,'user_charged',?,?,?,'ready')")
+        .run(acquisitionId,scope.userId,sessionId,id(620+index),now.toISOString(),now.toISOString());
+      const candles=JSON.stringify([{time:label,openDecimal:price,highDecimal:price,lowDecimal:price,
+        closeDecimal:price,volumeDecimal:"100",turnoverDecimal:null}]);
+      db.prepare(`INSERT INTO level_analysis_indicator_history_requests(history_request_id,logical_trade_job_id,
+        acquisition_id,requested_start_seconds,requested_end_seconds,attempt_number,status,created_at_utc,
+        completed_at_utc,candles_json,candle_sha256) VALUES(?,?,?,?,?,?,'complete',?,?,?,?)`)
+        .run(id(630+index),id(10),acquisitionId,start,start+3600,index+1,now.toISOString(),now.toISOString(),
+          candles,createHash("sha256").update(candles).digest("hex"));
+    }
+    const history=new TrendMomentumHistoryRepository(db);
+    for (const latest of [id(600),id(601)]) {
+      db.prepare("UPDATE level_analysis_logical_trade_jobs SET market_session_set_id=? WHERE logical_trade_job_id=?")
+        .run(latest,id(10));
+      assert.deepEqual(history.compatibleEvidence(scope,"TEST",start,start+3600,"alpaca_sip_raw_v1").candles
+        .map(c=>[c.time,c.closeDecimal]),[[start,"0.14"]]);
+      assert.deepEqual(history.compatibleEvidence(scope,"TEST",start,start+3600,"moomoo_history_kline_v1").candles
+        .map(c=>[c.time,c.closeDecimal]),[[start,"0.15"]]);
+      assert.equal(history.read(scope,id(10),false,"alpaca_sip_raw_v1").length,1);
+      assert.equal(history.read(scope,id(10),false,"moomoo_history_kline_v1").length,1);
+    }
+  } finally { db.close(); }
 });

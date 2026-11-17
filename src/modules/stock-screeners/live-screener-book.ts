@@ -1,6 +1,6 @@
 import "server-only";
 import { easternClock } from "../scanner/live/sessions";
-import { isObject, MAX_LISTINGS, tickerPattern, type Candidate, type LiveScreenerFreshness, type MarketSession, type Snapshot, type Values } from "./contracts";
+import { isObject, MAX_LISTINGS, tickerPattern, type Candidate, type LiveScreenerFreshness, type MarketSession, type Snapshot, type Values, type ScreenerProviderSelection } from "./contracts";
 import type { ScreenerLiveUpdate } from "./live-market-worker";
 
 export const LIVE_SCREENER_MAX_BYTES = 3 * 1024 * 1024;
@@ -9,6 +9,8 @@ const CLOCK_TOLERANCE = 5_000;
 type Phase = Exclude<MarketSession, "last_regular">;
 export type LiveScreenerWindow = { session: Phase; start: number; end: number };
 export type LiveScreenerFrame = LiveScreenerWindow & {
+  provider?: ScreenerProviderSelection["provider"];
+  revision?: number;
   generation: number;
   sequence: number;
   sentAt: number;
@@ -19,9 +21,13 @@ const isPrice = (value: unknown): value is number => typeof value === "number" &
 const isTime = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 const isPhase = (value: unknown): value is Phase => value === "premarket" || value === "regular" || value === "after_hours";
 
-export function parseLiveScreenerFrame(value: unknown, now: number): LiveScreenerFrame {
+export function parseLiveScreenerFrame(value: unknown, now: number, selection?: ScreenerProviderSelection): LiveScreenerFrame {
   if (!isObject(value)) throw Error("invalid_live_frame");
   const { session, start, end, generation, sequence, sentAt, reset, rows } = value;
+  const provider = value.provider ?? "alpaca";
+  const revision = value.revision ?? 0;
+  if ((provider !== "alpaca" && provider !== "moomoo") || !Number.isSafeInteger(revision) || Number(revision) < 0
+    || (selection && (provider !== selection.provider || revision !== selection.revision))) throw Error("invalid_live_provider");
   if (!isPhase(session) || !isTime(start) || !isTime(end) || start > now || now >= end || end - start > 7 * 3_600_000
     || !isTime(generation) || generation < start || !isTime(sequence) || !isTime(sentAt)
     || generation > sentAt || Math.abs(sentAt - now) > CLOCK_TOLERANCE || typeof reset !== "boolean"
@@ -38,10 +44,12 @@ export function parseLiveScreenerFrame(value: unknown, now: number): LiveScreene
     symbols.add(symbol);
     return { symbol, price, priceAt, vwap, ...(vwapAt !== undefined ? { vwapAt } : {}) } as ScreenerLiveUpdate;
   });
-  return { session, start, end, generation, sequence, sentAt, reset, rows: updates };
+  return { session, start, end, generation, sequence, sentAt, reset, rows: updates, provider, revision: Number(revision) };
 }
 
 type Book = LiveScreenerWindow & {
+  provider: ScreenerProviderSelection["provider"];
+  revision: number;
   date: string;
   generation: number;
   sequence: number;
@@ -53,11 +61,13 @@ const state = globalThis as BookState;
 
 export function acceptLiveScreenerFrame(frame: LiveScreenerFrame, now: number): "accepted" | "resync" {
   let book = state.traderlinkScreenersLiveBook;
+  const provider = frame.provider ?? "alpaca", revision = frame.revision ?? 0;
+  if (book && (book.provider !== provider || book.revision !== revision)) book = undefined;
   if (book && frame.generation < book.generation) return "resync";
   if (book?.generation === frame.generation && frame.sequence <= book.sequence) return "accepted";
   if (!book || book.generation !== frame.generation) {
     if (!frame.reset) return "resync";
-    book = { session: frame.session, start: frame.start, end: frame.end, date: easternClock(frame.start).date,
+    book = { session: frame.session, start: frame.start, end: frame.end, provider, revision, date: easternClock(frame.start).date,
       generation: frame.generation, sequence: 0, updatedAt: 0, rows: new Map() };
   }
   if (book.session !== frame.session || book.start !== frame.start || book.end !== frame.end
@@ -115,10 +125,11 @@ function withLiveValues(row: Candidate, update: ScreenerLiveUpdate): Candidate {
 }
 
 /** The prepared snapshot still supplies the universe, daily data and completed-bar reads. */
-export function applyLiveScreenerBook(snapshot: Snapshot, now: number) {
+export function applyLiveScreenerBook(snapshot: Snapshot, now: number, selection: ScreenerProviderSelection = { provider: "alpaca", revision: 0 }) {
   const freshness = new Map<string, LiveScreenerFreshness>();
   const book = state.traderlinkScreenersLiveBook;
-  if (!book || snapshot.source !== "Alpaca SIP" || snapshot.closed || snapshot.session !== book.session
+  if (!book || book.provider !== selection.provider || book.revision !== selection.revision
+    || snapshot.source !== (selection.provider === "alpaca" ? "Alpaca SIP" : "Moomoo") || snapshot.closed || snapshot.session !== book.session
     || snapshot.date !== book.date || now < book.start || now >= book.end || now - book.updatedAt > LIVE_MAX_AGE)
     return { snapshot, freshness };
   const rows = snapshot.rows.map(row => {

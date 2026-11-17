@@ -131,11 +131,12 @@ export type Candidate = {
   values: Values; pressRelease?: NewsHeadline;
 };
 export type Snapshot = {
-  version: 2; source: "Alpaca SIP" | "Preview data"; date: string; universeDate: string;
+  version: 2; source: "Alpaca SIP" | "Moomoo" | "Preview data"; date: string; universeDate: string;
   session: MarketSession; asOf: number; capturedAt: number; closed: boolean; partial: boolean;
   rows: Candidate[];
 };
-export type MarketPack = { latest: MarketSession; snapshots: Record<MarketSession, Snapshot> };
+export type ScreenerProviderSelection = { provider: "alpaca" | "moomoo"; revision: number };
+export type MarketPack = { latest: MarketSession; snapshots: Record<MarketSession, Snapshot>; selection?: ScreenerProviderSelection };
 export type LiveScreenerFreshness = { priceAt?: number; vwapAt?: number };
 export type RunResult = Omit<Snapshot, "rows"> & {
   id: string; total: number; eligible: number; evaluated: number; unavailable: number;

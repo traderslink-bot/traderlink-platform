@@ -5,6 +5,10 @@ import { randomUUID } from "node:crypto";
 import { registerHooks, stripTypeScriptTypes } from "node:module";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 registerHooks({ resolve(specifier, context, next) {
+  // The recorded-candle service imports the real history-budget helper, not its network transport.
+  if (specifier === "@/src/modules/platform/server/broker-connections/moomoo-shared-transport") {
+    return { url: "data:text/javascript,export async function sharedMoomooFetch(){throw Error('unexpected provider transport in isolated test')}", shortCircuit: true };
+  }
   try { return next(specifier, context); } catch (error) {
     if (error.code === "ERR_MODULE_NOT_FOUND" && specifier.startsWith(".") && !/\.[a-z]+$/u.test(specifier)) return next(`${specifier}.ts`, context);
     throw error;
@@ -15,12 +19,13 @@ const { IndicatorRequestCoordinator } = await import("../lib/live-watchlist/indi
 const demand = await import("../lib/live-watchlist/setups/setup-demand.ts");
 const calendar = JSON.parse(await readFile(new URL("../modules/coach/server/market-calendar/us-equities-review-calendar.v1.json", import.meta.url), "utf8"));
 const id = "00000000-0000-4000-8000-000000000001", replacement = "00000000-0000-4000-8000-000000000002";
+let selection = { provider: "moomoo", revision: 1 };
 let now = Date.parse("2026-10-09T16:00:05Z"), oauthCalls = 0, sourceCalls = [], classifications = [], accepted = [], retained = null, assertions = 0;
 let ticker = { symbol: "BDAI", status: "live", firstPostedAt: now - 100000, indicatorPublicationIdentity: id, indicatorCardVisible: false };
 let configuration = { version: 1, revision: 1, tickerOverrides: {}, settings: { enabled: true,
   enabledDetectors: ["vwap-reclaim-hold", "ema9-pullback-bounce", "ema20-pullback-bounce", "higher-low-reversal"],
   sessions: ["premarket", "regular", "postmarket"], showMemberCard: true, notifyForming: false, notifyConfirmed: false } };
-const records = (await readFile(new URL("../../data/scanner-verification-candles.jsonl", import.meta.url), "utf8")).trim().split(/\r?\n/u).map(JSON.parse);
+const records = (await readFile(process.env.WATCHLIST_RECORDED_CANDLES_PATH || new URL("../../data/scanner-verification-candles.jsonl", import.meta.url), "utf8")).trim().split(/\r?\n/u).map(JSON.parse);
 const minutes = records.find(record => record.symbol === "BDAI").rows.filter(row => Number.isFinite(row.open) && row.open > 0)
   .map(row => ({ start: row.time_key - 60000, end: row.time_key, open: row.open, high: row.high, low: row.low, close: row.close, volume: row.volume }));
 function barsFor(frame) {
@@ -43,6 +48,17 @@ const synthetic = exports => new SyntheticModule(Object.keys(exports), function 
 }, { context });
 const mocks = {
   "server-only": {},
+  "@/src/modules/platform/server/broker-connections/moomoo-shared-transport": {
+    TRADERLINK_MOOMOO_SHARED_BUDGET_ENV: "TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED",
+    sharedMoomooFetch: async () => { throw Error("unexpected live transport in isolated QA"); },
+  },
+  "@/src/modules/scanner/alpaca/watchlist-adapter": { fetchAlpacaIndicatorHistory: async input => {
+    if (!await input.isCurrent()) return { provider: "alpaca", adjustment: "alpaca-split", bars: [], pages: 0, transportIds: [], outcome: "permission", nextEnd: null };
+    sourceCalls.push({ provider: "alpaca", frame: input.request.timeframe });
+    const bars = barsFor(input.request.timeframe);
+    return { provider: "alpaca", adjustment: "alpaca-split", bars, pages: 1, transportIds: [], outcome: bars.length ? "complete" : "no_data", nextEnd: null };
+  } },
+  "@/src/modules/market-data/server/provider-settings": { marketDataSelection: () => selection },
   "node:fs/promises": Object.fromEntries(Object.entries({ mkdir, open, rename, unlink }).map(([name, fn]) => [name, async (...args) => {
     try { return await fn(...args); } catch (error) { if (error.code !== "ENOENT") console.log("Isolated ledger operation failed", name, error.code ?? error.name); throw error; }
   }])),
@@ -122,6 +138,23 @@ await shared.namespace.refreshPublishedWatchlistMarketData("BDAI", id);
 equal(sourceCalls.filter(call => call.frame === "1m").length, 1); equal(sourceCalls.filter(call => call.frame === "5m").length, 1);
 equal(sourceCalls.some(call => call.frame === "15m"), true);
 equal(classifications.slice(2).every(value => value === false), true);
+const priorService = runtime.watchlistIndicatorRefreshService();
+const beforeSwitchCalls = sourceCalls.length, beforeSwitchOauth = oauthCalls;
+selection = { provider: "alpaca", revision: 2 };
+equal(runtime.readCachedWatchlistIndicators("BDAI", id), null);
+equal(runtime.readSharedWatchlistIndicatorCandles("BDAI", id), null);
+equal(sourceCalls.length, beforeSwitchCalls); // Reading cannot start a provider request.
+equal(runtime.watchlistIndicatorRefreshService() === priorService, false);
+await shared.namespace.refreshPublishedWatchlistMarketData("BDAI", id);
+equal(oauthCalls, beforeSwitchOauth);
+equal(sourceCalls.slice(beforeSwitchCalls).every(call => call.provider === "alpaca"), true);
+equal(runtime.readSharedWatchlistIndicatorCandles("BDAI", id).provider, "alpaca");
+selection = { provider: "alpaca", revision: 3 };
+equal(runtime.readCachedWatchlistIndicators("BDAI", id), null); // A new revision also invalidates same-provider state.
+selection = { provider: "moomoo", revision: 4 };
+await shared.namespace.refreshPublishedWatchlistMarketData("BDAI", id);
+equal(runtime.readSharedWatchlistIndicatorCandles("BDAI", id).provider, "moomoo");
+equal(oauthCalls, beforeSwitchOauth + 1);
 ticker = { ...ticker, indicatorPublicationIdentity: replacement };
 const before = sourceCalls.length;
 equal(await shared.namespace.refreshPublishedWatchlistMarketData("BDAI", id), null); equal(sourceCalls.length, before);

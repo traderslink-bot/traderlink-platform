@@ -1,4 +1,6 @@
 import "server-only";
+import { sharedMoomooFetch, TRADERLINK_MOOMOO_SHARED_BUDGET_ENV } from "@/src/modules/platform/server/broker-connections/moomoo-shared-transport";
+import { marketDataEnvironment } from "@/src/modules/market-data/server/provider-settings";
 import { alpacaMarketDataEnabled } from "@/src/modules/scanner/alpaca/client";
 import { fetchAlpacaWatchlistCandles } from "@/src/modules/scanner/alpaca/watchlist-adapter";
 import { createHash } from "node:crypto";
@@ -26,39 +28,51 @@ function configuredWatchlistOwnerSubjects(environment: NodeJS.ProcessEnv): reado
   return Object.freeze(subjects);
 }
 
-/**
- * Indicator transport access. The callback stays on the server; it must never
- * return credentials in a response, cache, event or audit snapshot. The existing
- * AI candle route below intentionally keeps its current provider behavior.
- */
-export async function withWatchlistIndicatorMoomooAccess<T>(
+/** One server-side shared connection, selected in configured owner order. */
+function sharedMoomooConnection(database: ReturnType<typeof openPlatformDatabase>, environment: NodeJS.ProcessEnv) {
+  const users = new PlatformUserRepository(database, { allowedAuthProviders: ["discord"] });
+  const connections = new MoomooConnectionRepository(database);
+  for (const subject of configuredWatchlistOwnerSubjects(environment)) {
+    const user = users.findActiveByAuthIdentity("discord", subject);
+    if (!user) continue;
+    const scope = deriveAuthenticatedUserJournalScope(database, user.userId);
+    const connection = connections.find(scope);
+    if (connection?.state === "active" && connection.authorizedScopes.includes("quote:read")) {
+      return { connections, scope, connectionId: connection.connectionId };
+    }
+  }
+  return null;
+}
+
+/** Reads local authorization only: no token refresh or provider request. */
+export function readSharedMoomooConnectionStatus(environment: NodeJS.ProcessEnv = process.env): Readonly<{ ready: boolean }> {
+  const database = openPlatformDatabase({ mode: "runtime", environment });
+  try { return { ready: sharedMoomooConnection(database, environment) !== null }; }
+  finally { database.close(); }
+}
+
+/** Credentials remain inside this authorized server callback. */
+export async function withSharedMoomooMarketDataAccess<T>(
   consume: (access: Readonly<{ token: string; requestScope: string }>) => Promise<T>,
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<T> {
   const database = openPlatformDatabase({ mode: "runtime", environment });
   try {
-    const users = new PlatformUserRepository(database, { allowedAuthProviders: ["discord"] });
-    const connections = new MoomooConnectionRepository(database);
-    const eligible = configuredWatchlistOwnerSubjects(environment).flatMap(subject => {
-      const user = users.findActiveByAuthIdentity("discord", subject);
-      if (!user) return [];
-      const scope = deriveAuthenticatedUserJournalScope(database, user.userId);
-      const connection = connections.find(scope);
-      return connection?.state === "active" && connection.authorizedScopes.includes("quote:read")
-        ? [{ scope, connectionId: connection.connectionId }] : [];
-    });
-    if (eligible.length !== 1) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", { stage: "indicator_connection_cardinality" });
-    const selected = eligible[0]!;
-    const token = await new MoomooConnectionAccessService(connections).accessToken(selected.scope);
-    const refreshed = connections.find(selected.scope);
+    const selected = sharedMoomooConnection(database, environment);
+    if (!selected) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", { stage: "shared_quote_connection" });
+    const token = await new MoomooConnectionAccessService(selected.connections).accessToken(selected.scope);
+    const refreshed = selected.connections.find(selected.scope);
     if (refreshed?.state !== "active" || !refreshed.authorizedScopes.includes("quote:read") || refreshed.connectionId !== selected.connectionId) {
-      platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", { stage: "indicator_quote_scope_after_refresh" });
+      platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", { stage: "shared_quote_scope_after_refresh" });
     }
-    // An opaque internal admission scope, not an exported account identifier.
+    // Keep the existing admission scope so all consumers share the same budget.
     const requestScope = createHash("sha256").update(`watchlist-indicators:${selected.connectionId}`).digest("hex");
     return await consume({ token, requestScope });
   } finally { database.close(); }
 }
+
+/** Compatibility entry point; the signature and shared admission scope are unchanged. */
+export const withWatchlistIndicatorMoomooAccess = withSharedMoomooMarketDataAccess;
 
 /**
  * Fetches same-day candles for the local official Watchlist runtime. The runtime
@@ -69,35 +83,14 @@ export async function fetchWatchlistMoomooCandles(
   request: MarketDataRequest,
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<MarketDataProviderResult> {
-  if (alpacaMarketDataEnabled(environment)) return fetchAlpacaWatchlistCandles(request, environment);
-  const database = openPlatformDatabase({ mode: "runtime", environment });
-  try {
-    const users = new PlatformUserRepository(database, {
-      allowedAuthProviders: ["discord"],
-    });
-    const connections = new MoomooConnectionRepository(database);
-    const eligibleScopes = configuredWatchlistOwnerSubjects(environment).flatMap((subject) => {
-      const user = users.findActiveByAuthIdentity("discord", subject);
-      if (!user) return [];
-      const scope = deriveAuthenticatedUserJournalScope(database, user.userId);
-      const connection = connections.find(scope);
-      return connection?.state === "active" && connection.authorizedScopes.includes("quote:read")
-        ? [scope]
-        : [];
-    });
-    const scope = eligibleScopes[0];
-    if (eligibleScopes.length !== 1 || !scope) {
-      platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", {
-        stage: "watchlist_moomoo_connection_cardinality",
-      });
-    }
-    const access = new MoomooConnectionAccessService(connections);
-    return await new MoomooDailyTradeKlineMarketDataProvider(
-      () => access.accessToken(scope),
-      fetch,
+  const effectiveEnvironment = marketDataEnvironment("watchlist", environment);
+  if (alpacaMarketDataEnabled(effectiveEnvironment)) return fetchAlpacaWatchlistCandles(request, effectiveEnvironment);
+  return withSharedMoomooMarketDataAccess(async access => {
+    return new MoomooDailyTradeKlineMarketDataProvider(
+      async () => access.token,
+      (url, init) => sharedMoomooFetch(url, init, { priority: "watchlist", requireEnabled: true,
+        environment: { ...effectiveEnvironment, [TRADERLINK_MOOMOO_SHARED_BUDGET_ENV]: "true" } }),
       { completeHistory: true },
     ).fetch(request);
-  } finally {
-    database.close();
-  }
+  }, environment);
 }

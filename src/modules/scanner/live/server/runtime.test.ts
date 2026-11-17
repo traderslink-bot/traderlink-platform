@@ -29,7 +29,8 @@ vi.mock("./settings-store",()=>({ScannerSettingsStore:class {
 }}));
 vi.mock("./universe-store",()=>({UniverseStore:class {}}));
 vi.mock("../../../watchlist/server/moomoo-watchlist-candle-bridge",()=>({
-  withWatchlistIndicatorMoomooAccess:()=>{calls.providers++;throw Error("No provider effects authorized in unit tests");},
+  withWatchlistIndicatorMoomooAccess:async(callback:()=>unknown)=>{calls.providers++;return callback();},
+  readSharedMoomooConnectionStatus:()=>({ready:true}),
 }));
 
 function environment():NodeJS.ProcessEnv{return{
@@ -44,7 +45,7 @@ describe("scanner runtime across independently loaded Next bundles",()=>{
     runtime.startConfiguredLiveScannerRuntime(env);
     expect(runtime.readLiveScannerRuntime(env).status).toBe("ready");
     expect(calls.providers).toBe(before.providers);
-    expect(()=>runtime.readLiveScannerRuntime({...env,TRADERLINK_MARKET_DATA_PROVIDER:"moomoo"})).toThrow("scanner_provider_change_requires_restart");
+    expect(runtime.readLiveScannerRuntime({...env,TRADERLINK_MARKET_DATA_PROVIDER:"moomoo"}).status).toBe("ready");
   });
   it("returns the worker's running feed to a reloaded API module without a second worker or audit writer",async()=>{
     const env=environment(),before={...calls};
@@ -119,4 +120,18 @@ it('changing a stopped provider selection does not start a worker',async()=>{
  const {mkdtemp,rm}=await import('node:fs/promises');const {tmpdir}=await import('node:os');const {join}=await import('node:path');
  const directory=await mkdtemp(join(tmpdir(),'scanner-stopped-provider-test-'));const env={...environment(),TRADERLINK_PLATFORM_DB_PATH:join(directory,'platform.sqlite'),TRADERLINK_MARKET_DATA_PROVIDER:'moomoo'};
  try{const runtime=await import('./runtime');const before=calls.starts;await runtime.changeScannerConnection('alpaca',0,env);expect(calls.starts).toBe(before);}finally{await rm(directory,{recursive:true,force:true});}
+});
+
+
+it("activates the shared Moomoo queue through a saved admin selection and returns to Alpaca",async()=>{
+ const runtime=await import("./runtime");
+ const env={...environment(),TRADERLINK_MARKET_DATA_PROVIDER:"alpaca",TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED:"false"};
+ runtime.startConfiguredLiveScannerRuntime(env);
+ const prior=calls.providers;
+ expect((await runtime.changeScannerConnection("moomoo",0,env)).provider).toBe("moomoo");
+ expect(calls.providers).toBe(prior+1);
+ expect(runtime.readLiveScannerRuntime(env).status).toBe("ready");
+ expect((await runtime.changeScannerConnection("alpaca",1,env)).provider).toBe("alpaca");
+ expect(env.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED).toBe("false");
+ expect(runtime.readLiveScannerRuntime(env).status).toBe("ready");
 });

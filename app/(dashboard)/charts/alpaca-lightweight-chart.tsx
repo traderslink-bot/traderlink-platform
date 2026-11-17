@@ -1,5 +1,6 @@
 "use client";
 
+import { useChartMarketData } from "./use-chart-market-data";
 import { ChartDrawings } from "./chart-drawings";
 import { candleIndexAtOrAfter } from "./chart-drawing-volume";
 import { useDrawingControls } from "./chart-drawing-controls";
@@ -67,6 +68,9 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   viewId?: string; viewWorkspace?: "main" | "scanner"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
   const baseTicker = symbol.split(":").at(-1)!.toUpperCase();
+  const marketData = useChartMarketData();
+  const providerKey = `${marketData.provider}:${marketData.revision}`;
+  const providerQuery = `provider=${marketData.provider}&providerRevision=${marketData.revision}`;
   const {preferences:accountPreferences,ready,message,change,ownerKey,journalAccountRef}=useChartPreferences();
   const journalDisplay = useChartJournalDisplay(journalAccountRef);
   const journal = useChartJournalBridge(journalAccountRef, baseTicker);
@@ -168,10 +172,10 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
 
   useEffect(() => {
     const element = container.current;
-    if (!element || !ready) return;
+    if (!element || !ready || !marketData.ready) return;
     const sipSessions = [preferences.premarket, preferences.regular, preferences.postmarket];
-    const sipSessionKey = JSON.stringify(sipSessions);
-    const sessionKey = showOvernight ? JSON.stringify([...sipSessions, true]) : sipSessionKey;
+    const sipSessionKey = JSON.stringify([...sipSessions, providerKey]);
+    const sessionKey = showOvernight ? JSON.stringify([...sipSessions, true, providerKey]) : sipSessionKey;
     const basis = easternClock(Date.now()).date;
     const cacheKey = ownerKey && viewId && viewWorkspace === "main"
       ? JSON.stringify([ownerKey, viewId, ticker, timeframe, sessionKey])
@@ -210,8 +214,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     let readOvernightHistory = (query: string) => { overnightHistoryRequests.add(query); };
     const readHistory = (query: URLSearchParams, reuseDaily = true) => {
       const history = readChartCandleHistory(
-        `/api/screeners/charts/bars?${query}`, abort.signal,
-        daily && ownerKey ? { owner: ownerKey, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
+        `/api/screeners/charts/bars?${query}&${providerQuery}`, abort.signal,
+        daily && ownerKey ? { owner: `${ownerKey}:${providerKey}`, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
       );
       if (showOvernight) void history.then(() => {
         if (disposed) return;
@@ -314,7 +318,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       const legendStudies=[...studies].sort((a,b)=>a.indicator.id===b.indicator.id&&a.indicator.type==="Bollinger"
         ? (bandOrder[a.key]??3)-(bandOrder[b.key]??3) : 0);
       const legendValues=new Map<typeof studies[number],HTMLSpanElement>();
-      const cacheOwner=ownerKey??"";
+      const cacheOwner=`${ownerKey??""}:${providerKey}`;
       const vwapReadoutKeys=new Map(studies.filter(study=>study.indicator.type==="VWAP").map(study=>
         [study,JSON.stringify([ticker,timeframe,sessionKey,study.indicator,study.key])]));
       const flushVwap=()=>chartVwapCache.flush(cacheOwner);
@@ -389,7 +393,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         while(year<=axisYear+3&&calendar.covers(Date.parse(`${year}-07-01T12:00:00Z`)/1000))year++;
         if(year>axisYear+3||year>9999||Date.now()-(calendarYearFailures.get(year)??0)<30_000)return false;
         seedLoading=true;if(pendingCalendarYears.has(year))return true;pendingCalendarYears.add(year);
-        void sharedChartFetch('/api/charts/calendar?year='+year,{credentials:'same-origin',signal:abort.signal,cache:'no-store'}).then(async response=>{
+        void sharedChartFetch('/api/charts/calendar?year='+year+'&'+providerQuery,{credentials:'same-origin',signal:abort.signal,cache:'no-store'}).then(async response=>{
           if(!response.ok)throw Error('calendar_year_unavailable');const value=readChartCalendarYear(await response.json(),year);
           calendar.merge(value);marketCalendar.current.merge(value);for(const context of calculationContexts.values())context.calendar.merge(value);
         }).catch(()=>{if(!abort.signal.aborted){calendarYearFailures.set(year,Date.now());while(calendarYearFailures.size>8)calendarYearFailures.delete(calendarYearFailures.keys().next().value!);}}).finally(()=>{pendingCalendarYears.delete(year);if(!disposed)writeAll(false);});
@@ -488,7 +492,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if(!pendingSeeds.has(key)){
           if(missingMoments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
           pendingSeeds.add(key);
-          void readChartVwapSeed('/api/charts/vwap-seed?'+query.toString(),abort.signal,async response=>{
+          void readChartVwapSeed('/api/charts/vwap-seed?'+query.toString()+'&'+providerQuery,abort.signal,async response=>{
             if(!response.ok)throw Error();const value=await response.json();if(!validVwapSeed(value,request,basisDate))throw Error();
             if(needsMoments&&value.volume>0&&!value.moments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
             chartVwapCache.writeSeed(cacheOwner,key,value);
@@ -948,7 +952,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         }
       };
       if (!activeTradeContext) {
-      source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily ? "1" : "0"}${showOvernight ? "&overnight=1" : ""}`, daily);
+      source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily ? "1" : "0"}&${providerQuery}${showOvernight ? "&overnight=1" : ""}`, daily);
       source.addEventListener("status", event => {
         if (disposed) return;
         const state = JSON.parse((event as MessageEvent).data).state;
@@ -990,7 +994,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       }
       if(!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??vwapDisplayFrame)==='1D')!==daily)){
         const daily=!usesDailyCandles(timeframe);
-        auxiliarySource=sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily?'1':'0'}`, daily);
+        auxiliarySource=sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily?'1':'0'}&${providerQuery}`, daily);
         auxiliarySource.addEventListener('bar',event=>{
           if(disposed)return;
           const message=JSON.parse((event as MessageEvent).data) as {bar:Candle;daily:boolean};
@@ -1056,7 +1060,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick]);
+  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready]);
 
   useEffect(() => {
     if (!activeTradeContext || !ready) return;

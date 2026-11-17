@@ -69,6 +69,8 @@ test("saved v1 history is normalized on scoped reads without changing immutable 
       CREATE TABLE level_analysis_manual_retry_history_requests AS SELECT *, NULL AS retry_request_id FROM level_analysis_indicator_history_requests WHERE 0;
       CREATE TABLE level_analysis_logical_trade_jobs(logical_trade_job_id,user_id,workspace_id,account_id,market_session_set_id);
       CREATE TABLE level_analysis_market_session_sets(market_session_set_id,provider_symbol,provider_key,provider_adapter_version);
+      CREATE TABLE level_analysis_analyzer_acquisitions(acquisition_id,market_session_set_id);
+      INSERT INTO level_analysis_analyzer_acquisitions VALUES('acquisition','session');
       INSERT INTO level_analysis_logical_trade_jobs VALUES('job','user','workspace','account','session');
       INSERT INTO level_analysis_market_session_sets VALUES('session','TEST','moomoo_history_kline','moomoo_history_kline_v1');`);
     const raw = JSON.stringify([receipt(1), receipt(5), receipt(15)]);

@@ -22,9 +22,9 @@ export type RuntimeRawResponse = Readonly<{
 const RUNTIME_URL_ENV = "TRADERLINK_WATCHLIST_RUNTIME_URL" as const;
 const RUNTIME_TOKEN_ENV = "TRADERLINK_WATCHLIST_RUNTIME_ACCESS_TOKEN" as const;
 
-function runtimeConfiguration(): Readonly<{ token: string; url: URL }> | null {
-  const configuredUrl = process.env[RUNTIME_URL_ENV]?.trim();
-  const token = process.env[RUNTIME_TOKEN_ENV]?.trim();
+function runtimeConfiguration(environment: NodeJS.ProcessEnv = process.env): Readonly<{ token: string; url: URL }> | null {
+  const configuredUrl = environment[RUNTIME_URL_ENV]?.trim();
+  const token = environment[RUNTIME_TOKEN_ENV]?.trim();
   if (!configuredUrl || !token) return null;
   try {
     const url = new URL(configuredUrl);
@@ -37,8 +37,9 @@ function runtimeConfiguration(): Readonly<{ token: string; url: URL }> | null {
 
 export async function requestWatchlistRuntimeRaw(
   request: RuntimeRawRequest,
+  environment: NodeJS.ProcessEnv = process.env,
 ): Promise<RuntimeRawResponse> {
-  const configuration = runtimeConfiguration();
+  const configuration = runtimeConfiguration(environment);
   if (!configuration) {
     return Object.freeze({
       body: JSON.stringify({ error: "The private Watchlist runtime connection is not configured." }),
