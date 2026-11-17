@@ -37,5 +37,7 @@ it("keeps all Coaching mutations behind the canonical Community gate adapter", (
 it("hides Community navigation from identities outside the owner review gate", () => {
   const frame = readFileSync(resolve(process.cwd(), "app/dashboard-layout-frame.tsx"), "utf8");
   expect(frame).toContain("const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity)");
-  expect(frame).toContain("communityNavigationHref: watchlistAdminNavigationAccess && firstCommunity");
+  // Owners without a joined Community still need the gated directory entry.
+  expect(frame).toContain('const defaultCommunityHref = firstCommunity ? `/communities/${firstCommunity.community.slug}` : "/communities"');
+  expect(frame).toContain("communityNavigationHref: watchlistAdminNavigationAccess ? defaultCommunityHref : null");
 });
