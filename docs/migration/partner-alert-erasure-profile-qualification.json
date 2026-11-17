@@ -1,0 +1,53 @@
+{
+  "version": "core_partner_erasure_profiles_v1",
+  "reviewStatus": "INDEPENDENTLY_REVIEWED",
+  "technicalRefsAndExpiryStatus": "independently_reviewed",
+  "qualificationValidUntilUtc": "2026-11-24T18:55:13.040Z",
+  "schemaSha256": "bd8a006dd68b2244b385fcccd88733511008dce12650389141d8fb714ff687b4",
+  "authoritySchemaSha256": "b8a968de4880cf6e5574906a2b569a502bdfd16b7519ddaf41cadab9c77a0961",
+  "privacySchemaSha256": "b53da413ac0cc52615171ed4ad337eec41464c553e866995953a96687b7a2c2f",
+  "nativeSourceArtifactSha256": "364aa7982a87f4cee623dbcc1d50b3c53a94825a1c964278de18c1481bdc9f76",
+  "referencePolicy": "hold_signer_and_shared_owner",
+  "payloadDisposition": "policy_bound_text_expiry_hold_minimal_unresolved",
+  "schemaEvidence": {
+    "artifactPath": "/home/traderlink/projects/traderslink-coordinator/operations/community-staging-actual-schema-20261117.json",
+    "artifactSha256": "5466f471321383df07f7bdb9d91661b93a611e8ddad73ce8cd202d14e79f6959",
+    "sourceCommit": "23438344fd49f6de78089ced23a389b48e11b6e1",
+    "reviewStatus": "INDEPENDENTLY_REVIEWED",
+    "observedSchemaSha256": "bd8a006dd68b2244b385fcccd88733511008dce12650389141d8fb714ff687b4",
+    "reviewedCodeVectorSha256": "04ecbecc3e5b7878c6bce53fdb1f5f9a2c4093781cae8d6541fc6a28011e4117",
+    "actualInitializerSourceCommit": "0c2b6010d05784788c32a7f84697f489291ebeee"
+  },
+  "retentionPolicy": {
+    "ref": "paid_partner_retention_7d_v2",
+    "deliveredOrSettledMessageTextDays": 7,
+    "rejectedModerationTextDays": 7,
+    "textClock": "first_local_receipt_no_restart",
+    "unresolvedExternalOperationPayloads": "minimal_identifiers_status_only_after_text_expiry",
+    "credentialRemoval": "immediate_on_disconnect_or_erasure",
+    "pseudonymizedAuditAndIdempotencyYears": 2,
+    "agreementPaymentRefundDisputeYears": 7
+  },
+  "backupPolicy": {
+    "ref": "paid_partner_restore_safety_v2",
+    "rotationPeriod": "not_prescribed",
+    "localAlertTextDays": 7,
+    "erasureTombstonesReappliedAfterRestore": true,
+    "restoredCredentialsRemainDisabled": true
+  },
+  "profiles": [
+    {
+      "profileRef": "community_account_erasure_v1",
+      "retentionPolicyRef": "paid_partner_retention_7d_v2",
+      "backupPolicyRef": "paid_partner_restore_safety_v2",
+      "validUntilUtc": "2026-11-24T18:55:13.040Z"
+    }
+  ],
+  "independentReview": {
+    "status": "accepted",
+    "reviewerRef": "paid_worker_01a19f82_1ef7_7e31_8757_f360fbe7af76",
+    "receiptRef": "paid_combined_staging_23438344_20261117",
+    "reviewedAtUtc": "2026-11-17T19:13:58.630Z",
+    "catalogContentSha256": "140eaadc99988c5f49ec0c1b8c801c3e6f5d821f29c0d7875eb623cddaa4b258"
+  }
+}
