@@ -42,6 +42,8 @@ export default async function HomePage() {
   }
   const { dashboard, homePages, journal, weekAhead, sessionTracker } = withReadonlyPlatformDatabase({}, database => {
     const access = readPlatformHomeAccess(database, identity, requestHeaders);
+    if (!access.homePages.welcome) redirect(PLATFORM_HOME_PAGES["journal-workspace"].href);
+
     const hasFeature = (feature: string) => identity.mode === "local_development" ||
       evaluateMembershipFeature(database, identity.scope.userId, feature).allowed;
 

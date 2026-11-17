@@ -830,7 +830,7 @@ function DashboardShellContent({
           {showCommunity&&communityMenu?<CommunitySidebar key={`${communityMenu.base}:${pathname}`} menu={communityMenu} path={pathname} onNavigate={closeMobile} onShowTraderLink={()=>setCommunityMode({base:communityMenu.base,show:false})}/>:<>
           {communityMenu?<Button onClick={()=>setCommunityMode({base:communityMenu.base,show:true})} sx={{mx:1,mb:1}}>{compact?(communityMenu.kind==="coaching"?"Coaching":"Community"):`${communityMenu.name} menu`}</Button>:null}
           <List disablePadding>
-            {offline ? null : DASHBOARD_STANDALONE_ITEMS.map(item => (
+            {offline || !watchlistAdminNavigationAccess ? null : DASHBOARD_STANDALONE_ITEMS.map(item => (
               <Box component="li" key={item.href}>
                 <NavigationLink
                   collapsed={compact}

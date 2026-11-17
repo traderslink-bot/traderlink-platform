@@ -4,9 +4,10 @@ The owner chose **Home** for the page title and sidebar label and `/home` for th
 
 ## Scope
 
-- Open the signed-in Home page by default. Show Trading Tools, Market News, Trade Analyzer and Trading Journal cards with direct links the signed-in user can use.
+- Open Home by default for the two early-access accounts. Reuse the same verified account allowlist as Scanners, Screeners and Trading Workspace for the Home route, sidebar link and start-page preference. Other signed-in accounts continue to open Journal Workspace.
+- Show Trading Tools, Market News, Trade Analyzer and Trading Journal cards with direct links the signed-in user can use.
 - In Account Settings → Preferences, show a Home page dropdown and Save button above Appearance. Offer Home, Trading Workspace, Scanners, Screeners and Journal Workspace. Keep unavailable choices visible and disabled. Use the shared dashboard theme and stack cards on small screens.
-- Keep the preference with the Platform user. A missing or unavailable preference resolves to Home. A Journal Workspace home requires a selectable trading account. The Trading Journal card on Home can link eligible users to Journal onboarding.
+- Keep the preference with the Platform user. A missing or unavailable early-access preference resolves to Home. A Journal Workspace preference requires a selectable trading account. The Trading Journal card on Home can link eligible users to Journal onboarding.
 - Use the dashboard entry route for ordinary web opens, default sign-in returns and installed app launches. Keep the installed app ID, explicit destination URLs and OAuth account-link returns. Existing installs pick up the new launch URL through the browser's manifest update.
 - Keep the existing demo lifecycle with the Coordinator. The Home route reads card access from the signed-in account.
 
@@ -38,6 +39,8 @@ Trading Tools comes first visually and in keyboard order. The Settings field sta
 - Scoped lint passed. The changed Workspace and shared shell still report existing timing-purity and hook-dependency diagnostics. The full type check reported the existing missing `jsdom` declaration in `feature-page-embed-host.test.ts`. The production build, browser-specific updates of older installations and hosted staging review remain pending.
 
 - The market-cap link addition passed scoped lint, all seven dashboard-template checks and isolated Chromium navigation to each channel. The card fits a 320px viewport, and an account without Press Releases access retains the public Market News link. The existing Help Center instructions for these channels still apply.
+
+- The private rollout checks passed in three focused files with 10 tests. Both allowed accounts open Home, while an ordinary signed-in account and an account removed from the list open Journal Workspace on launch, cannot open Home directly and cannot save Home as a preference. The sidebar and Preferences use the same access decision. The Account Help guide explains early access.
 
 ## Hosted integration
 

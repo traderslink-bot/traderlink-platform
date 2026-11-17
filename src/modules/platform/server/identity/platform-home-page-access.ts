@@ -37,10 +37,11 @@ export function readPlatformHomeAccess(
   requestHeaders: Headers,
 ) {
   const dashboard = hasPlatformHomeDashboardAccess(identity, requestHeaders);
-  const tradingTools = dashboard && hasWatchlistDashboardNavigationAccess(identity);
+  const homeTrial = hasWatchlistDashboardNavigationAccess(identity);
+  const tradingTools = dashboard && homeTrial;
   const journal = identity.mode === "local_development" || hasJournalWorkspaceAccess(database, identity.scope.userId);
   const homePages: Record<PlatformHomePage, boolean> = {
-    welcome: true,
+    welcome: homeTrial,
     "trading-workspace": tradingTools,
     scanners: tradingTools,
     screeners: tradingTools && stockScreenersEnabled(identity.mode),

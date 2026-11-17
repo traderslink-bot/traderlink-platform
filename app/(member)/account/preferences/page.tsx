@@ -33,8 +33,10 @@ export default async function AccountPreferencesPage() {
   const requestHeaders = await headers();
   const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders);
   const { scope } = identity;
-  const { upgradePlans, allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, homePage, homePages, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) =>
-    Object.freeze({
+  const { upgradePlans, allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, homePage, homePages, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) => {
+    const { homePages } = readPlatformHomeAccess(database, identity, requestHeaders);
+
+    return Object.freeze({
       upgradePlans: Object.fromEntries([...PLATFORM_NOTIFICATION_CATEGORIES, "market_halt", "press_release", "watchlist"].map(category => [
         category, isPlatformMembershipCatalogAvailable(database) ? new PlatformMembershipCatalogRepository(database)
           .readPublicPlans(`notifications.${category}`).map(plan => plan.name) : [],
@@ -46,8 +48,8 @@ export default async function AccountPreferencesPage() {
       marketHaltAlertsEnabled: new MarketHaltAlertRepository(database).read(scope).enabled,
       watchlistPreferences: new WatchlistPublicationNotificationStore(database).readPreferences(scope.userId),
       appearance: new PlatformUserPreferenceRepository(database).getActiveWorkspaceAppearance(scope),
-      homePage: new PlatformUserPreferenceRepository(database).getActiveUserHomePage(scope.userId),
-      homePages: readPlatformHomeAccess(database, identity, requestHeaders).homePages,
+      homePage: homePages.welcome ? new PlatformUserPreferenceRepository(database).getActiveUserHomePage(scope.userId) : null,
+      homePages,
       notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
       notificationEmailStatus: (() => {
         try {
@@ -64,7 +66,8 @@ export default async function AccountPreferencesPage() {
         }
       })(),
       pressReleasePushChannels: new PressReleaseDashboardRepository(database).readPushPreferences(scope),
-    }));
+    });
+  });
   const preferencesKey = JSON.stringify({
     // Reset when authorization/destination readiness changes, not after a save.
     // A save must preserve feedback and unsaved choices in the other channels.
@@ -75,12 +78,12 @@ export default async function AccountPreferencesPage() {
   return (
     <AccountSettingsLayout
       activeSection="preferences"
-      description="Set your home page, dashboard appearance and notifications."
-      firstPanel={(
+      description={homePage ? "Set your home page, dashboard appearance and notifications." : "Set your dashboard appearance and notifications."}
+      firstPanel={homePage ? (
         <DashboardPanel title="Home page">
           <HomePageSettings available={homePages} homePage={homePage} />
         </DashboardPanel>
-      )}
+      ) : null}
       title="Preferences"
     >
       <DashboardPanel title="Appearance">

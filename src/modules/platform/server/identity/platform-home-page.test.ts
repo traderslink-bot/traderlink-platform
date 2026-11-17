@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import DashboardAdmissionTemplate from "@/app/(dashboard)/template";
 import { saveHomePage } from "@/app/(dashboard)/account/home-page-actions";
+import HomePage from "@/app/(dashboard)/home/page";
 import { GET } from "@/app/dashboard-entry/route";
 import manifest from "@/app/manifest";
 import { isDashboardSignInNavigation } from "@/app/pwa/dashboard-sign-in-navigation";
@@ -26,7 +27,7 @@ vi.mock("next/headers", () => ({ headers: async () => requestState.headers }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const origin = "https://app.traderslink.pro";
-const discordSubject = "123456789012345678";
+const discordSubjects = ["123456789012345678", "123456789012345679"] as const;
 const discordGuild = "987654321098765432";
 const roots: string[] = [];
 
@@ -43,7 +44,7 @@ function fixture() {
   vi.stubEnv("NODE_ENV", "production");
   vi.stubEnv("TRADERLINK_PLATFORM_PUBLIC_ORIGIN", origin);
   vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", databasePath);
-  vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", discordSubject);
+  vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", discordSubjects.join(","));
   vi.stubEnv("DISCORD_GUILD_ID", discordGuild);
   vi.stubEnv("TRADERLINK_STOCK_SCREENERS_ENABLED", "1");
   const database = openPlatformDatabase({ mode: "initializer", databasePath, forbiddenRepositoryRoots: [] });
@@ -72,10 +73,11 @@ describe("Platform home page", () => {
       runPlatformMigrations(database);
       expect(preferences.getActiveUserAppearance(member.session.userId)).toBe("dark");
       expect(preferences.getActiveUserHomePage(member.session.userId)).toBe("welcome");
-      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/home");
+      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/workspace");
 
-      const trader = new PlatformDiscordSignInService(database).signIn({
-        authSubject: discordSubject,
+      const discordSignIn = new PlatformDiscordSignInService(database);
+      const [trader, otherTrader] = discordSubjects.map(authSubject => discordSignIn.signIn({
+        authSubject,
         username: "fixture-trader",
         globalDisplayName: "Trader",
         avatarHash: null,
@@ -83,7 +85,10 @@ describe("Platform home page", () => {
         joinedAtUtc: null,
         roleIds: [],
         guildOwner: false,
-      }, { deferDemoActivation: true });
+      }, { deferDemoActivation: true }));
+      for (const owner of [trader, otherTrader]) {
+        expect((await entry(owner.session.token)).headers.get("location")).toBe(origin + "/home");
+      }
 
       const at = new Date().toISOString();
       const memberships = new PlatformMembershipRepository(database);
@@ -130,15 +135,28 @@ describe("Platform home page", () => {
       expect(isDashboardSignInNavigation(afterSignIn)).toBe(true);
 
       requestState.headers = new Headers({ cookie: cookie(member.token), "x-traderlink-page-path": "/home" });
-      expect(await DashboardAdmissionTemplate({ children: "Home" })).toBe("Home");
+      await expect(HomePage()).rejects.toMatchObject({
+        digest: expect.stringContaining(";/workspace;"),
+      });
+      expect(await saveHomePage("welcome")).toMatchObject({ ok: false });
       requestState.headers.set("x-traderlink-page-path", "/scanners");
       requestState.headers.set("x-traderlink-page-return-to", "/scanners?view=all");
       await expect(DashboardAdmissionTemplate({ children: "scanners" })).rejects.toMatchObject({
         digest: expect.stringContaining("/access-required?returnTo=%2Fscanners%3Fview%3Dall"),
       });
       expect(await saveHomePage("trading-workspace")).toMatchObject({ ok: false });
-      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/home");
+      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/workspace");
       expect(preferences.getActiveUserHomePage(trader.userId)).toBe("journal-workspace");
+
+      requestState.headers = new Headers({ cookie: cookie(otherTrader.session.token) });
+      expect(await saveHomePage("welcome")).toEqual({ ok: true, homePage: "welcome" });
+      vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", discordSubjects[0]);
+      expect((await entry(otherTrader.session.token, installed.start_url)).headers.get("location")).toBe(origin + "/workspace");
+      await expect(HomePage()).rejects.toMatchObject({
+        digest: expect.stringContaining(";/workspace;"),
+      });
+      expect(await saveHomePage("welcome")).toMatchObject({ ok: false });
+      expect(preferences.getActiveUserHomePage(otherTrader.userId)).toBe("welcome");
 
       requestState.headers = new Headers();
       expect(await saveHomePage("welcome")).toMatchObject({ ok: false });

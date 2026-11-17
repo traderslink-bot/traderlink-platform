@@ -38,11 +38,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   const page = withReadonlyPlatformDatabase({}, (database) => {
+    const { homePages } = readPlatformHomeAccess(database, identity, request.headers);
+    if (!homePages.welcome) return "journal-workspace";
+
     const storedPage = new PlatformUserPreferenceRepository(database)
       .getActiveUserHomePage(identity.scope.userId);
-    if (storedPage === PLATFORM_DEFAULT_HOME_PAGE) return storedPage;
-
-    const { homePages } = readPlatformHomeAccess(database, identity, request.headers);
     return homePages[storedPage] ? storedPage : PLATFORM_DEFAULT_HOME_PAGE;
   });
   const destination = new URL(PLATFORM_HOME_PAGES[page].href, resolvePlatformPublicOrigin(request));

@@ -19,7 +19,8 @@ export async function saveHomePage(value: unknown): Promise<
     const requestHeaders = await headers();
     const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders);
     const saved = withPlatformDatabase({ mode: "runtime" }, database => {
-      if (!readPlatformHomeAccess(database, identity, requestHeaders).homePages[value]) return false;
+      const { homePages } = readPlatformHomeAccess(database, identity, requestHeaders);
+      if (!homePages.welcome || !homePages[value]) return false;
 
       new PlatformUserPreferenceRepository(database).updateActiveUserHomePage({
         homePage: value,
