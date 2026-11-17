@@ -6,7 +6,7 @@ import type { PlatformMigration } from "@/src/modules/platform/server/database/p
 export const traderLinkCommunitySharedAlertIndividualsMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "community",
   migrationId: "0177_traderlink_community_shared_alert_individuals",
-  executionOrder: 190,
+  executionOrder: 272,
   requiresForeignKeysDisabled: true,
   statements: Object.freeze([`
 CREATE TABLE community_alert_publisher_permissions (
