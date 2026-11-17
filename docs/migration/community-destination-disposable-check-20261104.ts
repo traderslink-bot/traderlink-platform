@@ -40,7 +40,7 @@ const result={
  target:targetPath,ledgerBefore:{count:ledgerBefore.length,last:ledgerBefore.at(-1)},
  collision:{legacySwingPageId:swing.page_id,migrated,legacy},urls,
  activity:{scope:[...publicPaths,privatePath].map(path=>({path,allowed:isCommunityContentActivityPath(community.slug,path)})),prune,retained},
- quickCheck:db.pragma("quick_check",{simple:true}),foreignKeyViolations:db.pragma("foreign_key_check").length,
+ quickCheck:db.pragma("quick_check",{simple:true}),foreignKeyViolations:(db.pragma("foreign_key_check") as unknown[]).length,
  };
 db.close();
 console.log(JSON.stringify(result,null,2));

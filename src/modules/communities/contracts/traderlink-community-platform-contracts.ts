@@ -89,6 +89,9 @@ export type TraderLinkCommunityCoach = Readonly<{
   headline: string;
   biography: string;
   deliverySummary: string;
+  socialLinks?: import("./independent-coaching-profile").IndependentCoachSocialLinks;
+  photoAvailable?: boolean;
+  photoUpdatedAtUtc?: string | null;
   capacity: number;
   activeStudents: number;
   status: "draft" | "active" | "paused" | "archived";

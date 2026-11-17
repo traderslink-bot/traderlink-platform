@@ -1,5 +1,4 @@
 "use server";
-import { requireCommunityRequestAccess } from "@/src/modules/communities/server/community-request-access";
 
 import {revalidatePath} from "next/cache";
 import {redirect} from "next/navigation";
