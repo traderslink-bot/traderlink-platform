@@ -39,6 +39,7 @@ export function bootstrapIsolatedCommunityStaging(plan: { ledger: readonly unkno
   const db = new Database(file, { readonly: exists, fileMustExist: true });
   try {
     if (exists) {
+      assert.equal(db.pragma("journal_mode", { simple: true }), "wal");
       db.pragma("query_only = ON");
       db.pragma("foreign_keys = ON");
     } else {
