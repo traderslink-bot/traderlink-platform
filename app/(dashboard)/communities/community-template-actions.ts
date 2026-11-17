@@ -1,7 +1,7 @@
 "use server";
 import {createHash} from "node:crypto";
 import {revalidatePath} from "next/cache";
-import {requireTraderLinkPlatformPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {requireCommunityOwnerReviewPageIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import {resolveTraderLinkCommunityViewer} from "@/src/modules/communities/server/traderlink-community-viewer";
@@ -9,7 +9,7 @@ import {TraderLinkCommunityPlatformRepository} from "@/src/modules/communities/s
 import type {CommunityPublicationFeedback} from "@/src/modules/communities/contracts/community-publication-feedback";
 import type {TraderLinkCommunityAlertTemplate} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 export async function saveCommunityTemplateWithFeedback(form:FormData):Promise<CommunityPublicationFeedback>{
- const identity=await requireTraderLinkPlatformPageIdentity();const slug=String(form.get("communitySlug")??"");
+ const identity=await requireCommunityOwnerReviewPageIdentity();const slug=String(form.get("communitySlug")??"");
  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))return {status:"error",message:"Community unavailable."};
  try{
   await requireCommunityRequestAccess({userId:identity.scope.userId,slug});

@@ -3,7 +3,7 @@ import {PublishingAccessError} from "@/src/modules/communities/server/community-
 
 
 import { revalidatePath } from "next/cache";
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireCommunityOwnerReviewPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { requireCommunityRequestAccess } from "@/src/modules/communities/server/community-request-access";
@@ -17,7 +17,7 @@ import {CommunityBrandedContentRepository} from "@/src/modules/communities/serve
 import {communityDestinationCacheScope,invalidateCommunityContentCache} from "@/src/modules/communities/server/community-content-read-cache";
 
 async function save(kind: "alert" | "watchlist", form: FormData): Promise<CommunityPublicationFeedback> {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await requireCommunityOwnerReviewPageIdentity();
   const slug = String(form.get("communitySlug") ?? "");
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return { status: "error", message: "Community unavailable. Refresh this page." };
   try { await requireCommunityRequestAccess({ userId: identity.scope.userId, slug }); }

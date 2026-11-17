@@ -1,4 +1,5 @@
 "use server";
+import { requireCommunityRequestAccess } from "@/src/modules/communities/server/community-request-access";
 
 import {revalidatePath} from "next/cache";
 import {redirect} from "next/navigation";
@@ -7,7 +8,7 @@ import {CommunityBrandedContentRepository} from "@/src/modules/communities/serve
 import {CommunityBrandedContentService} from "@/src/modules/communities/server/community-branded-content-service";
 import {communityDestinationCacheScope,communityHubCacheScope,invalidateCommunityContentCache} from "@/src/modules/communities/server/community-content-read-cache";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
-import {requireTraderLinkPlatformPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {requireCommunityOwnerReviewPageIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {openPlatformDatabase,withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {createCanonicalUtcTimestamp} from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -15,7 +16,7 @@ function required(data:FormData,key:string):string{const value=String(data.get(k
 function optional(data:FormData,key:string):string|null{return String(data.get(key)??"").trim()||null;}
 function checked(data:FormData,key:string):boolean{return data.get(key)==="on";}
 function metadata(data:FormData):CommunityContentMetadataSettings{return {publicationPrice:checked(data,"publicationPrice"),company:checked(data,"company"),exchange:checked(data,"exchange"),industry:checked(data,"industry"),website:checked(data,"website"),marketCap:checked(data,"marketCap")};}
-async function context(data:FormData){const identity=await requireTraderLinkPlatformPageIdentity();const communitySlug=required(data,"communitySlug");return {identity,communitySlug};}
+async function context(data:FormData){const identity=await requireCommunityOwnerReviewPageIdentity();const communitySlug=required(data,"communitySlug");await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug});return {identity,communitySlug};}
 function mutate(communitySlug:string,userId:string,operation:(repository:CommunityBrandedContentRepository,communityId:string,atUtc:string)=>void){withPlatformDatabase({mode:"runtime"},database=>{const community=database.prepare("SELECT community_id FROM traderlink_communities WHERE slug=? AND status='active'").get(communitySlug) as {community_id:string}|undefined;if(!community)throw new Error("Community not found.");operation(new CommunityBrandedContentRepository(database),community.community_id,createCanonicalUtcTimestamp());});invalidateCommunityContentCache(communityHubCacheScope(communitySlug));revalidatePath(`/communities/${communitySlug}/manage/pages`);}
 function done(communitySlug:string,message:string):never{redirect(`/communities/${communitySlug}/manage/pages?notice=${encodeURIComponent(message)}`);}
 function watchlistDone(communitySlug:string,pageId:string,message:string):never{redirect(`/communities/${communitySlug}/manage/watchlists/${pageId}?notice=${encodeURIComponent(message)}`);}

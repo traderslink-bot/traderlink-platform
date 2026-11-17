@@ -24,7 +24,6 @@ import {TraderLinkCommunityCoachingProgramService} from "@/src/modules/communiti
 import {CoachingAgreementService} from "@/src/modules/communities/server/coaching-agreement-service";
 import { readDistribution } from "@/src/modules/communities/server/community-publishing-access";
 import { CommunityDeliveryRetryService } from "@/src/modules/communities/server/community-delivery-retry-service";
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { TRADERLINK_COMMUNITY_FIXED_RESPONSIBILITIES } from "@/src/modules/communities/contracts/traderlink-community-contracts";
 import { type TraderLinkCommunityFixedResponsibility } from "@/src/modules/communities/contracts/traderlink-community-contracts";
 import { readCommunityDiscordResources } from "@/src/modules/communities/server/community-discord-resources";
@@ -439,7 +438,7 @@ export async function disconnectCommunityAction(formData:FormData):Promise<void>
  revalidatePath(`/communities/${communitySlug}`,'layout');redirect(`/communities/${communitySlug}/manage/settings`);
 }
 
-async function discordSetupResources(slug:string,identity:Awaited<ReturnType<typeof requireTraderLinkPlatformPageIdentity>>,capability:"community.roles.manage"|"community.discord.manage") {
+async function discordSetupResources(slug:string,identity:Awaited<ReturnType<typeof requireCoachingPilotPageIdentity>>,capability:"community.roles.manage"|"community.discord.manage") {
   const guildId=withPlatformDatabase({mode:"runtime"},database=>{
     const community=database.prepare(`SELECT community_id,discord_guild_id FROM traderlink_communities WHERE slug=?`).get(slug) as {community_id:string;discord_guild_id:string}|undefined;
     if(!community)throw new Error("Community not found.");

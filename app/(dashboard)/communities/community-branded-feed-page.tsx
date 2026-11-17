@@ -1,3 +1,4 @@
+import { requireCommunityRequestAccess } from "@/src/modules/communities/server/community-request-access";
 import Box from "@mui/material/Box";
 import Avatar from "@mui/material/Avatar";
 import Chip from "@mui/material/Chip";
@@ -7,7 +8,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {notFound,redirect} from "next/navigation";
 import {DashboardPage,DashboardPanel,DashboardUnavailableState} from "@/app/dashboard-ui";
-import {requireTraderLinkPlatformServerComponentPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {requireCommunityOwnerReviewServerComponentPageIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {createCanonicalUtcTimestamp} from "@/src/modules/platform/server/database/platform-migration-contract";
 import type {CommunityContentPageType} from "@/src/modules/communities/contracts/community-branded-content";
@@ -17,7 +18,8 @@ import {TraderLinkCommunityRepository} from "@/src/modules/communities/server/tr
 import {CommunityAlertFocus} from "./community-alert-focus";
 
 export async function CommunityBrandedFeedPage({communitySlug,pageType,segments,focus}:{communitySlug:string;pageType:CommunityContentPageType;segments:readonly string[];focus?:string|null}){
- const identity=await requireTraderLinkPlatformServerComponentPageIdentity();
+ const identity=await requireCommunityOwnerReviewServerComponentPageIdentity();
+ await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug});
  const atUtc=createCanonicalUtcTimestamp();
  const result=withPlatformDatabase({mode:"runtime"},database=>{
   const community=database.prepare("SELECT community_id FROM traderlink_communities WHERE slug=? AND status='active'").get(communitySlug) as {community_id:string}|undefined;if(!community)notFound();
