@@ -75,8 +75,8 @@ it("rejects a different compiled BUILD_ID", () => {
 });
 it("keeps default/enabled production unchanged and rejects unrecognized modes", () => {
   expect(resolvePlatformBackgroundWorkerMode({ NODE_ENV: "production" })).toBe("enabled");
-  expect(resolvePlatformBackgroundWorkerMode({ TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE: "enabled" })).toBe("enabled");
-  expect(() => resolvePlatformBackgroundWorkerMode({ TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE: "disabled" })).toThrow();
+  expect(resolvePlatformBackgroundWorkerMode({ NODE_ENV: "production", TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE: "enabled" })).toBe("enabled");
+  expect(() => resolvePlatformBackgroundWorkerMode({ NODE_ENV: "production", TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE: "disabled" })).toThrow();
 });
 
 it("preserves the existing fully qualified private acceptance mode", () => {
