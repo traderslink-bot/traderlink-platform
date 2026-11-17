@@ -9,5 +9,5 @@ export function alpacaHaltRow(status: AlpacaTradingStatus, includeResumed=false)
   const market = status.tape === "C" || status.tape === "O" ? "NASDAQ" : "NYSE";
   const time=(at:string|null|undefined)=>at?new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"2-digit",minute:"2-digit",second:"2-digit",fractionalSecondDigits:3,hourCycle:"h23"}).format(Date.parse(at)):null;
   return {source:"alpaca",halted:status.halted,id:`alpaca:${status.symbol}:${status.haltedAt ?? `unknown:${status.pauseObservedAt ?? status.observedAt}`}`,ticker:status.symbol,market,chartExchange:market,
-    haltTimeEt,reasonCode:status.reasonCode,reason:status.reason,quoteTimeEt:time(status.quoteResumedAt),tradeTimeEt:time(status.tradeResumedAt)};
+    haltedAtUtc:new Date(haltedAt).toISOString(),haltTimeEt,reasonCode:status.reasonCode,reason:status.reason,quoteTimeEt:time(status.quoteResumedAt),tradeTimeEt:time(status.tradeResumedAt)};
 }

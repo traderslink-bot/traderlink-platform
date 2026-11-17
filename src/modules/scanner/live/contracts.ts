@@ -97,6 +97,7 @@ export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt
 export type ScannerActiveHalt = Readonly<{
   source?: "alpaca" | "nasdaq" | "nyse"; halted?: boolean;
   quoteTimeScheduled?: boolean; tradeTimeScheduled?: boolean;
+  haltedAtUtc?: string;
   id:string; ticker:string; market:string; haltTimeEt:string; reasonCode:string; reason:string;
   quoteTimeEt:string|null; tradeTimeEt:string|null; chartExchange?:"NASDAQ"|"NYSE"|"AMEX"|null;
 }>;

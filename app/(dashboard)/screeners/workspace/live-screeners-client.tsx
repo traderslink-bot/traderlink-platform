@@ -768,6 +768,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   const compactChartSymbol=model ? selectedGainers?.rows[0]?.symbol ?? momentumStocks[0]?.symbol ?? "SPY" : loadError ? "SPY" : null;
   const marketEventsData=useMarketEventsData(true,!scannersOnly&&(!desktopLayout||visible.includes("market-events")||(drawerOpen&&workspaceScreenersSelected.events)));
   const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
+  const haltWindow=model?{date:model.tradingDate,closed:model.status==="closed",checkedAt}:undefined;
   const haltByTicker=useMemo(()=>new Map(activeHalts.map(halt=>[halt.ticker,halt])),[activeHalts]);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin&&model?.status!=="closed"?null:memberScannerStatus(model,loadError,checkedAt);
@@ -814,7 +815,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     {(['gainers','momentum'] as const).filter(kind=>workspaceScreenersSelected[kind]).map(kind=><SidebarScreenerCard key={kind}><DashboardPanel title={SCREEN_LABELS[kind]} action={viewSettings(kind)}>{contents(kind,true,true)}</DashboardPanel></SidebarScreenerCard>)}
     {workspaceScreenersSelected.declines?<SidebarScreenerCard><DeclinesCard now={checkedAt} view={displayModes["top-losers"]} onViewChange={view=>setDisplayModes(previous=>({...previous,"top-losers":view}))} results={model?.declines} notice={memberNotice} session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     {workspaceScreenersSelected.pullbacks?<SidebarScreenerCard><PremarketPullbacksCard now={checkedAt} view={displayModes["high-drops"]} onViewChange={view=>setDisplayModes(previous=>({...previous,"high-drops":view}))} rapid={model?.declines?.rapid} results={model?.premarketPullbacks} notice={memberNotice} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
-    {!scannersOnly&&workspaceScreenersSelected.events?<SidebarScreenerCard><ScreenerPressReleaseBoard compact data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
+    {!scannersOnly&&workspaceScreenersSelected.events?<SidebarScreenerCard><ScreenerPressReleaseBoard compact data={marketEventsData} managedActiveHalts={activeHalts} haltWindow={haltWindow} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     </Box>
     {Object.values(workspaceScreenersSelected).some(Boolean)?null:<Typography color="text.secondary" sx={{fontSize:"0.75rem"}}>Select scanners to display their cards.</Typography>}
   </Stack></ScannerNewsDrawerProvider></SideCardChartControls>;
@@ -950,7 +951,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
           </WorkspaceScannerTitleContext.Provider>
         </ScannerWorkspaceCard>;
       })}
-      {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
+      {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltWindow={haltWindow} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
       {!admin&&showScanner("ticker-workspace")&&<ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={compactChartSymbol} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} keepMounted={!mobile&&draft!==null}/>}
       {draft&&tiled&&<ScannerLayoutHandles rectangles={draft} onChange={changeLayout} onMessage={setVisibilityMessage}/>}
     </Box></Box></ScannerNewsDrawerProvider>
