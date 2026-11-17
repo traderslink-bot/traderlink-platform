@@ -384,6 +384,23 @@ export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
   ),
 ]);
 
+const tradeJournalHrefs = new Set(
+  [tradeJournalGroup, ...(tradeJournalGroup.subgroups ?? [])].flatMap(group =>
+    group.items.filter(isDashboardNavigationItem).map(item => item.href),
+  ),
+);
+
+export function isTradeJournalNavigationPath(pathname: string): boolean {
+  const activeHref = DASHBOARD_NAVIGATION_HREFS
+    .filter(href => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((left, right) => right.length - left.length)[0];
+  return activeHref !== undefined && tradeJournalHrefs.has(activeHref);
+}
+
+export function isTradeAnalyzerNavigationPath(pathname: string): boolean {
+  return /^\/(?:trade-analyzer|analytics\/trade-analyzer)(?:\/|$)/u.test(pathname);
+}
+
 export type DashboardHelpTarget = Readonly<{
   href: string;
   label: string;

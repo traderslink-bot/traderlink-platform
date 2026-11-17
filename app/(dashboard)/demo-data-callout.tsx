@@ -15,6 +15,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { isTradeAnalyzerNavigationPath, isTradeJournalNavigationPath } from "../dashboard-navigation";
 
 const CLEAR_CONFIRMATION = "DELETE ACCOUNT";
 
@@ -184,7 +185,8 @@ export function DemoDataAccountIndicator({
   expectedAccountSelectionRef: string | null;
 }) {
   const pathname = usePathname();
-  if (!expectedAccountSelectionRef || pathname === "/home" || pathname === "/workspace" || pathname === "/trade-analyzer") return null;
+  if (!expectedAccountSelectionRef || pathname === "/workspace" || pathname === "/trade-analyzer") return null;
+  if (!isTradeJournalNavigationPath(pathname) && !isTradeAnalyzerNavigationPath(pathname)) return null;
   return (
     <Box sx={{ mb: 1.5, maxWidth: 980 }}>
       <DemoDataCallout

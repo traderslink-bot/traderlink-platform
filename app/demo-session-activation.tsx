@@ -4,8 +4,8 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { isTradeAnalyzerNavigationPath } from "./dashboard-navigation";
 
-const ANALYZER_PAGE = /^\/(?:trade-analyzer|analytics\/trade-analyzer)(?:\/|$)/u;
 const JOURNAL_PAGE = /^\/(?:workspace|trade-tracker|quick-trade-entry|trades|calendar|analytics|imports|data-decisions|rules)(?:\/|$)/u;
 
 export function DashboardDemoSetup({
@@ -20,7 +20,7 @@ export function DashboardDemoSetup({
   children?: ReactNode;
 }) {
   const pathname = usePathname();
-  const openDemo = autoOpenDemo && (ANALYZER_PAGE.test(pathname)
+  const openDemo = autoOpenDemo && (isTradeAnalyzerNavigationPath(pathname)
     ? autoOpenDemo.analyzer
     : autoOpenDemo.journal && JOURNAL_PAGE.test(pathname));
   return openDemo || ensureDemo ? (

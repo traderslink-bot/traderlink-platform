@@ -23,7 +23,7 @@ Trading Tools comes first visually and in keyboard order. The Settings field sta
 - [x] Implement and verify isolated routing, migration, persistence, permissions and UI.
 - [x] Add the three market-cap Press Releases links to the Welcome Market News card for users with existing Press Releases access.
 - [x] Apply the Home name and legacy redirect while preserving existing start-page preferences.
-- [ ] Owner review of the preview.
+- [x] Owner reviewed the preview and requested final QA and the Coordinator handoff.
 
 ## Verification
 
@@ -49,8 +49,34 @@ The isolated initialization produced 182 ledger rows. The first 181 match the ex
 
 The Railway startup wrapper pins the exact 181-entry production ledger. Coordinate a staging-compatible build and an explicit backed-up migration before any new runtime reads the home-page column. Recheck the predecessor and migration order at integration.
 
+The deployed Demo changes on `main` must carry forward. Keep separate-process
+prepared publication, the compiled empty schema, and the existing background
+upgrade flow. Merge the saved-Demo selection in `activate` around those
+changes. Keep the deployed Journal notice filter and include the new Analyzer
+routes in it. Apply the Discord callback’s Home return-path change without
+changing Demo provisioning or account-selection cookies.
+
 ## Private VPS preview
 
-The managed `welcome-home-preference-20261116` lane serves this checkout on loopback port 3010 with its own 182-migration SQLite database and background workers disabled. The launcher accepts database diagnostics around the setup result and builds the on-demand Demo setup worker before starting. This lane runs Webpack with a 3 GiB Node heap, a 5 GiB soft service target and a 6 GiB hard service limit.
+The managed `welcome-home-preference-20261116` lane serves this checkout on loopback port 3010 with its own 182-migration SQLite database and background workers disabled. The launcher uses that loopback origin for redirects, accepts database diagnostics around the setup result, and builds the on-demand Demo setup worker before starting. This lane runs Webpack with a 3.5 GiB Node heap, a 5 GiB soft service target and a 6 GiB hard service limit.
 
-Open the VPS preview shortcut, then visit `/home` or `/trade-analyzer`. Home opens immediately. The Journal Workspace and Trade Analyzer open the isolated sample account automatically on first visit. The Coordinator handoff is on hold for owner review.
+Open the VPS preview shortcut, then visit `/home` or `/trade-analyzer`. Home displays its cards without waiting for Demo. The Journal Workspace and Trade Analyzer open the isolated sample account automatically on first visit.
+
+## Final private QA
+
+- The focused run passed 132 tests in 22 files. The follow-up to preserve the
+  deployed Demo notice scope passed 22 tests.
+- Chromium checked Home at desktop and 320 px, the house icon, card and link
+  destinations, the legacy redirect, the mobile start-page control, and saved
+  preference resolution through the installed-app launch route. The test
+  restored the preview account’s original preference.
+- Workspace opened Demo, kept the Journal controls, required clear
+  confirmation, and made no PR Scanner requests. Trade Analyzer rendered its
+  saved sample chart, switched between trades and opened the analyzed history.
+- The isolated manual-entry browser rejected a future date without losing the
+  draft, saved 14 executions into seven trades, and kept two same-minute AAPL
+  trades distinct. No jobs were sent to a live market-data provider.
+- The standalone type check reported one existing missing `jsdom` declaration
+  in an unchanged test. Next’s production type checker excludes test files.
+  A production build and staging acceptance are release-candidate checks after
+  the Coordinator reconciles the donor with current `main`.
