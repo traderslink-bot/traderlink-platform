@@ -31,6 +31,11 @@ open a separate demo account without changing the real account.
 
 ## Approved experience
 
+On the first eligible Journal or Trade Analyzer visit, show **Loading demo
+data…** while the app opens Demo automatically. Home renders its cards
+immediately. After Demo has been cleared, or once the trader has real trades,
+the app opens the selected trading account.
+
 1. `/workspace` shows the approved red-bordered **Viewing Demo Data** callout
    immediately below the title while the active account is demo data.
 2. Every trading-data screen shows the compact **Viewing demo data** indicator

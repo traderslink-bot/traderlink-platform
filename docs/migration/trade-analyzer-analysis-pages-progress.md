@@ -30,6 +30,52 @@ Future long-term analysis uses continuous stored peak, duration,
 realized/open-position, final-result and exact avoided-loss facts, with a
 separately defined population and visible sample count for every aggregate.
 
+## Standalone Trade Analyzer design and navigation — November 16, 2026
+
+- Put every existing `/analytics/trade-analyzer/…` page in the top-level Trade Analyzer sidebar group. The general Analytics group belongs to Trade Journal. Keep the existing Analyzer URLs available for saved links.
+- Use `/trade-analyzer` as the feature home and link to it and the analyzed-trade history from a dedicated Welcome card. Lead with manual execution entry in a trading account and use **Analyze trades** to submit one trade or a batch. Keep **To analyze** for saved trades awaiting analysis and **Your analyzed trades** for completed results. Open one trade's existing chart and Trade Analysis card at a time, with tabs to switch among trades in a small new batch.
+- At first sign-in the existing flow automatically loads the Demo account and its trades. While Demo is active, open the Analyzer home on its saved demo analyses with one trade's chart and analysis in view. Use the shared **Viewing demo data** notice and clear action at the upper left of every Analyzer analysis page. The existing clear confirmation returns to Workspace onboarding. Once onboarding has a trading account ready, Trade Analyzer opens on manual entry.
+- On the Analyzer home, show the **Explore Trade Analyzer with demo data** card at the upper left above the page title. Identify the August trades as samples for demonstration, point out the chart, entry and exit markers, and Trade Analysis card, and explain that users clear demo data before entering their own trades. Place the existing **Clear demo data and start fresh** action at the lower left of the card with space between the text and button. Keep the card specific to Trade Analyzer.
+- Use saved Analyzer results from the selected account for the Analyzer reports and analyzed-trade history. Display any eligible-trade coverage count as coverage, with report metrics based on analyzed trades.
+
+The sidebar checkpoint implemented the grouping for existing pages.
+The feature link reads **Trade Analyzer**. **Trend & Momentum** has its own
+multi-line chart icon, verified in the desktop sidebar and mobile drawer.
+
+## Standalone Trade Analyzer implementation — November 17, 2026
+
+- Scope QA confirmed that the existing manual-entry preview supplies a deterministic trade boundary per group and that the commit service queues each selected eligible group in the same transaction as the executions. Trade Analyzer uses those day-entry routes and the selected trading account. It keeps per-trade outcomes separate from the save receipt so saved executions are visible even when analysis cannot start.
+- The home adds shared-date manual entry, To analyze, and one result at a time for saved executions, current analysis, or a new batch. A batch uses tabs for up to six trades and a picker for larger batches. The analyzed-trade history opens the exact trade in the new home. A connection failure during commit uses the existing receipt check before permitting another write.
+- The same demo data and clear flow are used on the new home. Older Analyzer reports retain the shared demo notice, their separate plan gate, date filters, and candle-backed analysis population.
+- The signed-in home menu keeps Trading Tools first and adds Trade Analyzer and analyzed history links. Sidebar navigation and the Trade Analyzer Help guide include the direct entry and analysis flow.
+- Discord onboarding in this checkout defers Demo provisioning and preserves the initial account selection. The isolated Demo browser test used an active sample account to exercise the Analyzer’s Demo view. First-login account selection belongs to the existing Demo onboarding flow.
+- Verification passed 37 focused tests covering dashboard structure, manual entry, Analyzer reads, and demo behavior. Isolated Chromium exercised Light desktop entry for one trade and a batch, exact saved prices, per-trade queueing, tab switching, selecting an existing trade in To analyze, and recovery after a lost commit response. Navy Dark mobile exercised the saved demo chart and Analysis card, trade selection, confirmation dialog, report notice, the history link into a saved analysis, and account isolation. The form also fit at 320 px. New requests were verified through their queued state with the market-data workers disabled. The full TypeScript check reports the existing missing `jsdom` declaration in `feature-page-embed-host.test.ts`.
+
+
+## Integrated Home and Trade Analyzer QA
+
+- Reproduced an overnight position appearing in To analyze after its closing execution was saved. The list now filters to complete day trades using the opening and final closing date in New York before pagination. A grouped trade stays eligible when only one member has an older analysis.
+- Reproduced a saved trade with no action after its allowance request failed. Try again reloads the saved trade and rechecks its allowance before showing Analyze trade.
+- Isolated Chromium passed both regressions. The 102-test focused suite covered routing, permissions, migration, manual-entry recovery, saved analysis, and Demo clearing. The full TypeScript check reported the existing `jsdom` declaration gap in `feature-page-embed-host.test.ts`.
+
+### Saved indicator display
+
+The saved-analysis notice explains unavailable indicator history without
+asking traders viewing read-only samples to run another analysis. The Help
+Center scopes **Refresh indicator history** to the trader’s own account. The
+Trade Analyzer chart draws Session VWAP, EMA 9, EMA 20, and RSI 14 at one CSS
+pixel.
+
+Verified all four series settings and measured the rendered sample overlays
+at one CSS pixel in desktop and mobile Chromium. Both views displayed the
+saved-data notice. The focused Analyzer and dashboard suite passed 18 tests.
+
+### Follow-up QA
+
+- The trade picker used opening times rounded to the minute. It now formats the saved opening timestamp to the second in the selected account’s timezone, so trades in the same ticker and minute can be distinguished.
+- The expanded 139-test suite included analysis selection, worker completion with synthetic market data, and retry behavior.
+- Chromium verified a seven-trade mobile batch with fourteen executions, including two AAPL trades in one minute. The picker distinguished both and displayed the selected trade. Entry rejected a future date while preserving the draft. The overnight and allowance-retry regressions also passed again. Separate isolated cases verified Demo history and keyboard navigation, and that a lost save response can be recovered without another write.
+
 ## Current checkpoint - 2026-08-09
 
 - [x] Owner approved separating Trade Analyzer from generic historical

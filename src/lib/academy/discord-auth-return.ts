@@ -11,7 +11,7 @@ export function normalizeDiscordAuthReturnTo(
 
   try {
     const parsed = new URL(candidate, "https://traderslink.pro");
-    if (parsed.origin !== "https://traderslink.pro") {
+    if (parsed.origin !== "https://traderslink.pro" || parsed.pathname.startsWith("//")) {
       return DEFAULT_DISCORD_AUTH_RETURN_TO;
     }
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;

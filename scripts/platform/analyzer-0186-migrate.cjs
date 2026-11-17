@@ -11,7 +11,7 @@ const { loadAccountIdentityConfiguration } = require('../../src/modules/journal/
 const { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS: canonicalizers, DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION: defaultVersion } = require('../../src/modules/journal/server/accounts/journal-source-account-canonicalizers.ts');
 
 const live = '/data/traderlink-platform.sqlite';
-const checkpoint = '/data/backups/coaching-production-20261115';
+const checkpoint = '/data/backups/home-preference-0214-production';
 const backup = path.join(checkpoint, 'backup.sqlite');
 const restore = path.join(checkpoint, 'restore-verification.sqlite');
 const plan = require('./analyzer-exact-ledger.json');
@@ -68,8 +68,8 @@ async function main() {
   assert.equal(process.env.RAILWAY_DEPLOYMENT_ID, expectedDeployment);
   const deadline = Number(deadlineText);
   assert(Number.isSafeInteger(deadline) && deadline > Date.now() && deadline - Date.now() < 12 * 3600000);
-  assert.equal(prefix.length, 151);
-  assert.equal(manifest.length, 181);
+  assert.equal(prefix.length, 181);
+  assert.equal(manifest.length, 182);
   assert.equal(fs.realpathSync(live), live);
   assert(!fs.existsSync(checkpoint));
   const ready = JSON.parse(await (await fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/platform/health', { signal: AbortSignal.timeout(5000) })).text());
@@ -107,11 +107,11 @@ async function main() {
   assert(Date.now() + 30 * 60000 < deadline, 'insufficient remaining live verification and recovery time');
   const result = advance(live, true, deadline);
   save('completed', result);
-  console.log(JSON.stringify({ stage: 'coaching_migration_complete', ...result }));
+  console.log(JSON.stringify({ stage: 'home_preference_migration_complete', ...result }));
 }
 
 if (require.main === module) main().catch(error => {
-  console.error(JSON.stringify({ stage: 'coaching_migration_error', code: error.code ?? 'guard_failure', message: error.message }));
+  console.error(JSON.stringify({ stage: 'home_preference_migration_error', code: error.code ?? 'guard_failure', message: error.message }));
   process.exitCode = 1;
 });
 module.exports = { advance };

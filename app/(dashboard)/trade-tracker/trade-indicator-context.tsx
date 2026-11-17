@@ -32,7 +32,7 @@ export function TradeIndicatorContext({ analysis, timeframe, currency, timezone 
     <Stack spacing={1.5}>
       {!analysis.trendMomentum ? <Typography color="text.secondary">{analysis.trendMomentumUnavailableReason
         ? "Earlier candle history could not be retrieved. The available trade analysis is still shown."
-        : "This saved analysis does not include the newer indicator history. Analyze the trade again to request it."}</Typography> : <>
+        : "This saved analysis does not include the newer indicator history."}</Typography> : <>
         {event ? <TextField select size="small" label="Execution" value={event.eventId} onChange={(e) => setSelectedEvent(e.target.value)}>
           {analysis.events.map((candidate, index) => <MenuItem key={candidate.eventId} value={candidate.eventId}>{label(candidate, index)}</MenuItem>)}
         </TextField> : null}
