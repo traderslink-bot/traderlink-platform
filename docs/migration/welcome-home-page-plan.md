@@ -47,4 +47,10 @@ The isolated initialization produced 182 ledger rows. The first 181 match the ex
 - Statements checksum `885490dff11dc6ec0cb9ca45af104f3569c3156007a7b457e16b7a76dd508088`.
 - Post-migration schema digest `9de32e9030284aeeafc2d8a10dcecfff3d800dabdfecef02fa8598d33113dda9`.
 
-The Railway startup wrapper pins the exact 181-entry production ledger. Coordinate a staging-compatible build and an explicit backed-up migration before any new runtime reads the home-page column. Recheck the predecessor and migration order at integration. The managed VPS launcher does not currently list this worktree.
+The Railway startup wrapper pins the exact 181-entry production ledger. Coordinate a staging-compatible build and an explicit backed-up migration before any new runtime reads the home-page column. Recheck the predecessor and migration order at integration.
+
+## Private VPS preview
+
+The managed `welcome-home-preference-20261116` lane serves this checkout on loopback port 3010 with its own 182-migration SQLite database and background workers disabled. The launcher accepts database diagnostics around the setup result. This lane requests Webpack and uses a 3 GiB Node heap to keep route compilation within the preview service's memory target.
+
+Open the VPS preview shortcut, then visit `/home` or `/trade-analyzer`. The Primary Trading Account shows manual entry. In `/account/trading`, switch to Demo Trade Tracker to see the bundled sample charts, analysis cards and analyzed trades. The Coordinator handoff is on hold for owner review.

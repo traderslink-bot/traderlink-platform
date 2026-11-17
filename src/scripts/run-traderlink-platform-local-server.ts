@@ -156,11 +156,13 @@ async function main(): Promise<void> {
   process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_RUNTIME_ENV] = "1";
   process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_TOKEN_ENV] = token;
   process.env[TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS_ENV] ??= "ibkr";
+  const useWebpack = process.argv.includes("--webpack");
   const application = next({
     dev: true,
     hostname: listenerHost,
     port: listenerPort,
-    turbopack: !process.argv.includes("--webpack"),
+    webpack: useWebpack,
+    turbopack: !useWebpack,
   });
   const handler = application.getRequestHandler();
   await application.prepare();
