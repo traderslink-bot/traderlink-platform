@@ -4,9 +4,13 @@ import {useEffect,useMemo,useRef} from "react";
 import {useCommunityNavigation,type CommunityMenuItem} from "@/app/community-navigation-context";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
 
-type CommunityNavigationSnapshot=Pick<TraderLinkCommunityDashboardSnapshot,"community"|"viewer"|"relationships"> & Partial<Pick<TraderLinkCommunityDashboardSnapshot,"teamMembers">>;
+type CommunityNavigationSnapshot=Pick<TraderLinkCommunityDashboardSnapshot,"community"|"viewer"|"relationships"> & Partial<Pick<TraderLinkCommunityDashboardSnapshot,"teamMembers">> & Readonly<{sharedAlertsUnreadCount?:number}>;
 type Item={label:string;href:string};
-function buildCommunityMenu(snapshot:CommunityNavigationSnapshot,base:string){
+function buildCommunityMenu(snapshot:CommunityNavigationSnapshot,base:string,scope?:"shared-alerts"){
+ if(scope==="shared-alerts"){
+  const unread=snapshot.sharedAlertsUnreadCount??0;
+  return {base,name:snapshot.community.displayName,viewerId:snapshot.viewer.userId,focused:true,items:snapshot.community.isOwner?[{label:unread?`Shared alerts (${unread} unread)`:"Shared alerts",href:`${base}/manage/shared-alerts`}]:[]};
+ }
  const has=(key:string)=>snapshot.viewer.capabilities.some(capability=>capability===key);
  const coach=isCoachingStaff(snapshot.viewer.capabilities);
  const student=!coach&&snapshot.relationships.some(item=>item.studentUserId===snapshot.viewer.userId);
@@ -20,15 +24,16 @@ function buildCommunityMenu(snapshot:CommunityNavigationSnapshot,base:string){
  const coachingItems:CommunityMenuItem[]=coaching.filter(item=>item.label!=="Coach setup");
  if(has("community.coaching.offer"))coachingItems.push({label:"Coach setup",children:setupItems});
  if(coachingItems.length)items.push({label:"Coaching",children:coachingItems});
+ if(snapshot.community.isOwner)items.push({label:"Shared Alerts",href:`${base}/manage/shared-alerts`});
  const focused=snapshot.community.isOwner||Boolean(snapshot.teamMembers?.some(member=>member.userId===snapshot.viewer.userId))||snapshot.viewer.capabilities.some(capability=>["community.manage","community.team.manage","community.roles.manage","community.members.view","community.member_activity.view","community.analytics.view","community.discord.manage","community.alerts.create","community.alerts.manage_all","community.watchlists.publish_staff","community.watchlists.manage_all","community.coaching.offer","community.coaching.students","community.coaching.manage_all","community.referrals.view"].includes(capability));
  return {base,name:snapshot.community.displayName,viewerId:snapshot.viewer.userId,focused,items};
 }
-export function CommunityNavigation({snapshot,baseOverride}:{snapshot:CommunityNavigationSnapshot;baseOverride?:string}){
+export function CommunityNavigation({snapshot,baseOverride,scope}:{snapshot:CommunityNavigationSnapshot;baseOverride?:string;scope?:"shared-alerts"}){
  const base=baseOverride??`/communities/${snapshot.community.slug}`;
  const context=useCommunityNavigation();
  const register=context?.register;
  const token=useRef(Symbol("community-navigation"));
- const model=useMemo(()=>buildCommunityMenu(snapshot,base),[snapshot,base]);
+ const model=useMemo(()=>buildCommunityMenu(snapshot,base,scope),[snapshot,base,scope]);
  useEffect(()=>{if(!register)return;const key=token.current;register(key,model);return()=>register(key,null);},[register,model]);
  return null;
 }

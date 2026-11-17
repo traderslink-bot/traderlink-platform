@@ -1,4 +1,4 @@
-import { sharedAlertsMigrationCarrier } from "../../platform/server/database/platform-shared-alerts-migration-carrier";
+import { sharedAlertsMigrationCarrier, sharedProductionPrerequisitesReady, sharedProductionRequiredTables } from "../../platform/server/database/platform-shared-alerts-production-carrier";
 import "server-only";
 import type Database from "better-sqlite3";
 import { headers } from "next/headers";
@@ -77,6 +77,7 @@ async function access(communitySlug: string) {
   }
   const identity = requireCommunityOwnerReviewIdentity(await requireTraderLinkPlatformServerComponentPageIdentity());
   const ready = withReadonlyPlatformDatabase({}, database => {
+    if (!sharedProductionPrerequisitesReady(database, platformMigrationManifest, carrier.prerequisiteMigrations, sharedProductionRequiredTables)) return false;
     for (const migration of requirements) {
       const applied = database.prepare("SELECT module_namespace,execution_order,checksum_sha256 FROM platform_schema_migrations WHERE migration_id=?").get(migration.migrationId) as { module_namespace: string; execution_order: number; checksum_sha256: string } | undefined;
       if (!applied || applied.module_namespace !== "community" || applied.execution_order !== migration.executionOrder || applied.checksum_sha256 !== migration.checksumSha256) return false;

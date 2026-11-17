@@ -2,6 +2,41 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "shared-alerts",
+    title: "Shared alerts",
+    description: "Agree which individual publishers can share alerts and choose their receiving channels.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "sharing-requests", title: "Find a community and agree to sharing",
+        summary: "Both server owners agree before sharing starts.",
+        keywords: Object.freeze(["Find communities", "sharing request", "owner", "consent"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "link", href: "/communities", label: "Open My Communities", text: "Choose one of your connected Discord communities." }),
+          Object.freeze({ kind: "paragraph", text: "Find communities lists connected TraderLink communities. To offer your alerts, select analysts inside the request before sending. Sending authorizes that offer; there is no separate agreement checkbox. If you ask to receive alerts instead, the other owner first offers analysts and you review that offer before accepting. Messages alone never accept sharing." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "publishers-and-channels", title: "Choose people and receiving channels",
+        summary: "The source owner grants individual publishing permission; the receiving owner selects each person and channel.",
+        keywords: Object.freeze(["publisher", "individual permission", "receiving channel", "Require approval before posting"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "The source owner gives Publish alerts permission to individual TraderLink members, including an owner who will publish alerts, and offers the selected people for sharing. A Discord role alone does not grant this publishing permission. The receiving owner chooses which people to accept and selects a receiving Discord channel for each person." }),
+          Object.freeze({ kind: "paragraph", text: "Publisher permissions and blocked communities are under Settings. Pending offers appear in Requests; accepted connections appear in Connections, including connections with changes awaiting acceptance. Closed requests stay in History and are not automatically deleted. Activity shows unread messages and status updates, including pauses and resumptions. Opening the list does not mark updates read. View the latest message and status update in the request to clear its unread count. For each accepted publisher, the receiving owner can turn Require approval before posting on or off, change their channel, pause their posts or remove the selection. Approval covers the complete alert, including every message part. An edit before delivery needs a new approval. Giving a source publishing permission again does not restore a removed receiving selection." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "posts-and-updates", title: "Read alerts and delivery results",
+        summary: "Partners receive the full alert with the actual author's Discord name.",
+        keywords: Object.freeze(["bot", "community name", "long alert", "correction", "withdrawal", "delivery log"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Only alerts published through TraderLink are shared. Posts come from the TraderLink bot and show the actual author's Discord name. Only the receiving owner chooses whether Discord posts in their server show the source community’s name. This setting does not hide either community’s identity in TraderLink. Original posts in the source server keep their community attribution." }),
+          Object.freeze({ kind: "paragraph", text: "Partners receive the full alert even when the source uses a tracker webpage link in its own server. That source webpage is for the source owner's own-server tracking statistics. New alerts and corrections can contain up to 500 characters of alert text. Shared delivery does not grant access to the source community's private pages or anyone's Journal." }),
+          Object.freeze({ kind: "paragraph", text: "Corrections and withdrawals appear as labelled updates linked to the original confirmed partner post and follow the receiving settings. Both owners can inspect delivery results, confirmed links, partial progress and failures. A confirmed part is not sent again; an uncertain result needs review before another send. Earlier alerts and ordinary Discord messages are not forwarded." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
     slug: "login-and-connected-accounts", title: "Sign in and connect login methods",
     description: "Use Google, email and password, or Discord with the same TradersLink account.",
     sections: Object.freeze([
