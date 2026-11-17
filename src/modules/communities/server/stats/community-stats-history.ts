@@ -1,4 +1,5 @@
 import "server-only";
+import {assertCommunityStagingQaCapability,type CommunityStagingQaCapability} from "../community-staging-qa-capability";
 import {isCommunityReviewDiscordGuild} from "../community-review-discord-guild";
 import type Database from "better-sqlite3";
 import {CommunityStatsRepository} from "./community-stats-repository";
@@ -41,8 +42,9 @@ export class CommunityStatsHistory {
   private nextCommunity=0;
   private refreshNext=true;
   private topology=new Map<string,Topology>();
-  constructor(private readonly db:Database.Database,private readonly request:typeof fetch=fetch){}
+  constructor(private readonly db:Database.Database,private readonly request:typeof fetch=fetch,private readonly review?:CommunityStagingQaCapability){if(review)assertCommunityStagingQaCapability(review,db);}
   private eligible(communityId:string):Community|null{
+    if(this.review&&communityId!==this.review.run.communityId)return null;
     const row=this.db.prepare(`SELECT c.discord_guild_id AS guildId,s.discord_configuration_version AS version,s.channel_ids_json AS channels,i.auth_subject AS ownerId,
       coalesce((SELECT max(last_observed_at_utc) FROM community_stats_channels WHERE community_id=c.community_id),'') AS topologyAt
       FROM traderlink_communities c JOIN platform_users u ON u.user_id=c.owner_user_id AND u.status='active'
@@ -58,6 +60,7 @@ export class CommunityStatsHistory {
     return selected.length&&selected.every(id)?{communityId,guildId:row.guildId,version:row.version,selected,ownerId:row.ownerId,topologyAt:row.topologyAt}:null;
   }
   private async get(path:string,token:string,community:Community):Promise<unknown>{
+    this.review?.assertActive();
     const current=this.eligible(community.communityId);
     if(!current||current.guildId!==community.guildId||current.version!==community.version||current.ownerId!==community.ownerId)throw new HistoryRequestError("Community collection access changed.",300,true);
     const response=await this.request(`https://discord.com/api/v10${path}`,{headers:{Authorization:`Bot ${token}`},signal:AbortSignal.timeout(10_000),redirect:"error",cache:"no-store"});
@@ -70,6 +73,7 @@ export class CommunityStatsHistory {
     const reader=response.body?.getReader();if(!reader)throw new Error("Missing Discord response.");
     const decoder=new TextDecoder();let body="",bytes=0;
     try{for(;;){const chunk=await reader.read();if(chunk.done)break;bytes+=chunk.value.length;if(bytes>4_000_000)throw new Error("History response exceeded budget.");body+=decoder.decode(chunk.value,{stream:true});}body+=decoder.decode();}finally{await reader.cancel();}
+    this.review?.assertActive();
     return JSON.parse(body);
   }
   private job(community:Community,channel:string,kind:Job["kind"],at:string,parent:string|null=null):void{
@@ -110,6 +114,7 @@ export class CommunityStatsHistory {
   }
   async tick(communityIds:readonly string[],token:string):Promise<void>{
     if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||this.busy||!statsHistoryReady(this.db))return;
+    this.review?.historyTick();
     this.busy=true;
     let community:Community|null=null,job:Job|undefined,refresh:StatsReactionRefresh|undefined;
     try{

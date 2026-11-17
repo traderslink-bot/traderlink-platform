@@ -1,3 +1,4 @@
+import {assertCommunityStagingQaCapability,type CommunityStagingQaCapability} from "../community-staging-qa-capability";
 import {isCommunityReviewDiscordGuild} from "../community-review-discord-guild";
 import type Database from 'better-sqlite3';
 import {createHash} from 'node:crypto';
@@ -16,8 +17,9 @@ const hash=(community:string,code:string)=>createHash('sha256').update(community
 /** A single serialized REST queue, attached to the verified Gateway lifetime. No import-time requests. */
 export class CommunityStatsInvites{
   private sessions=new Map<string,Session>();private busy=false;private stopped=false;private globalRetry=0;
-  constructor(private readonly db:Database.Database,private readonly token:string,private readonly request:typeof fetch=fetch){}
+  constructor(private readonly db:Database.Database,private readonly token:string,private readonly request:typeof fetch=fetch,private readonly review?:CommunityStagingQaCapability){if(review)assertCommunityStagingQaCapability(review,db);}
   start(guild:Guild):void{
+    if(this.review&&(guild.communityId!==this.review.run.communityId||guild.guildId!==this.review.run.guildId))return;
     if(!isCommunityReviewDiscordGuild(guild.guildId)||process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||!statsAttributionReady(this.db)||this.stopped)return;
     const old=this.sessions.get(guild.communityId);if(old?.timer)clearTimeout(old.timer);
     const config=this.db.prepare(`SELECT s.discord_configuration_version AS version,c.owner_user_id AS owner,i.auth_subject AS ownerDiscord FROM community_stats_settings s JOIN traderlink_communities c ON c.community_id=s.community_id JOIN platform_users u ON u.user_id=c.owner_user_id AND u.status='active' JOIN platform_auth_identities i ON i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.status='active' WHERE s.community_id=? AND s.discord_enabled=1`).get(guild.communityId) as {version:number;owner:string;ownerDiscord:string}|undefined;
@@ -53,10 +55,13 @@ export class CommunityStatsInvites{
   private schedule(s:Session,delay:number):void{if(s.timer)clearTimeout(s.timer);s.timer=setTimeout(()=>{s.timer=null;void this.refresh(s).catch(()=>{if(this.current(s)){s.baseline=null;this.state(s,'Connection interrupted');this.schedule(s,60000);}});},delay);s.timer.unref?.();}
   private current(s:Session):boolean{return isCommunityReviewDiscordGuild(s.guild.guildId)&&process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"&&!this.stopped&&this.sessions.get(s.guild.communityId)===s&&s.guild.valid()&&!!this.db.prepare(`SELECT 1 FROM community_stats_settings s JOIN traderlink_communities c ON c.community_id=s.community_id WHERE s.community_id=? AND s.discord_enabled=1 AND s.discord_configuration_version=? AND c.discord_guild_id=? AND c.status='active' AND c.owner_user_id=? AND EXISTS(SELECT 1 FROM platform_users u WHERE u.user_id=c.owner_user_id AND u.status='active') AND EXISTS(SELECT 1 FROM platform_auth_identities i WHERE i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.auth_subject=? AND i.status='active')`).get(s.guild.communityId,s.version,s.guild.guildId,s.owner,s.ownerDiscord);}
   private async get(path:string,s:Session):Promise<{status:number;body:unknown}>{
+    this.review?.assertActive();
     if(!this.current(s))throw new Error("Community collection access changed.");
     const response=await this.request('https://discord.com/api/v10'+path,{headers:{Authorization:'Bot '+this.token},signal:AbortSignal.timeout(10000),redirect:'error'});
     if(response.status===429){let retry=60;try{const data=object(await response.json());retry=Math.max(1,Math.min(86400,Number(data.retry_after)||60));if(data.global===true)this.globalRetry=Date.now()+retry*1000;}catch{/* bounded retry below */}s.retry=Date.now()+retry*1000;return {status:429,body:null};}
-    return {status:response.status,body:response.ok?await response.json():null};
+    const body=response.ok?await response.json():null;
+    this.review?.assertActive();
+    return {status:response.status,body};
   }
   private async refresh(s:Session):Promise<void>{
     if(!this.current(s))return;

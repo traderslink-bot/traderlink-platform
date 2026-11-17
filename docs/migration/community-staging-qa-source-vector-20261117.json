@@ -1,0 +1,107 @@
+{
+  "kind": "community-staging-qa-source-vector-v2",
+  "baseCommit": "bd7ee0067c7b42a637850c9fc07aa21349e15e7d",
+  "reviewedRootCommit": "6a550da9f578f23cc0d33d65127ec90c64051ef4",
+  "runtimeVectorSha256": "48c8e1b3237d12274bdfaf74b9f37dd39ab1fc74e3ecaf7a864b6fed1edcb94c",
+  "runtimeInputsUnchangedDuringFinalChecks": true,
+  "runtime": [
+    {
+      "path": "src/modules/communities/server/community-staging-qa-target.ts",
+      "baseSha256": "d1849c638b6e0c790ca87ec78b2bf6d02ae01c26d59eb0ed529d044598394c7b",
+      "sha256": "d1849c638b6e0c790ca87ec78b2bf6d02ae01c26d59eb0ed529d044598394c7b",
+      "bytes": 2148
+    },
+    {
+      "path": "src/modules/communities/server/community-staging-qa-capability.ts",
+      "baseSha256": "68b344f1fe9adc7ca385e9e1a05e04147295c87342dadeb122af404c51acec6c",
+      "sha256": "e8b388d5e7c89f61f6cfecd69838a85dfc28bcf2f9ea139d5d4c385057937826",
+      "bytes": 23459
+    },
+    {
+      "path": "src/modules/communities/server/community-staging-qa-runner.ts",
+      "baseSha256": "69f0ee96118b10f4829e407f96e5cb884717bf33fd0970ef4023a7701bb75284",
+      "sha256": "69f0ee96118b10f4829e407f96e5cb884717bf33fd0970ef4023a7701bb75284",
+      "bytes": 5866
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-collector.ts",
+      "baseSha256": "0c58b5c3b37e3e8a760ae2ead72d957a3f8fdc5c39d9ee5ee66775cf575bc91c",
+      "sha256": "0c58b5c3b37e3e8a760ae2ead72d957a3f8fdc5c39d9ee5ee66775cf575bc91c",
+      "bytes": 9499
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-runtime.ts",
+      "baseSha256": "8b801922866e47a808f56201d755b1bd857796779623ef3c6896aecaeef3fbae",
+      "sha256": "8b801922866e47a808f56201d755b1bd857796779623ef3c6896aecaeef3fbae",
+      "bytes": 1422
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-discord-gateway.ts",
+      "baseSha256": "3d297cd2b0a0e0e090eb94855cd73a6fef2f4b32601221286de691e55934dab2",
+      "sha256": "3d297cd2b0a0e0e090eb94855cd73a6fef2f4b32601221286de691e55934dab2",
+      "bytes": 22994
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-history.ts",
+      "baseSha256": "9162a09844c34eab0c2b70e63d4094cb3fb3051458ef1d3d0197a0b5b41920b1",
+      "sha256": "9162a09844c34eab0c2b70e63d4094cb3fb3051458ef1d3d0197a0b5b41920b1",
+      "bytes": 24069
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-invites.ts",
+      "baseSha256": "e4a3d28b3886d61ff3170f22477ce5a70ef76d84e1433ec9d81f23b0e6a39c62",
+      "sha256": "e4a3d28b3886d61ff3170f22477ce5a70ef76d84e1433ec9d81f23b0e6a39c62",
+      "bytes": 13537
+    }
+  ],
+  "testInputs": [
+    {
+      "path": "scripts/qa/community-staging-qa-capability.test.cjs",
+      "sha256": "66425d5e450a3b87da225af7c48976ecdd63cfcc138dc05e89d2eaa33fe105b1",
+      "bytes": 25430
+    },
+    {
+      "path": "scripts/qa/community-operator-stage-controller.test.cjs",
+      "sha256": "49d54d7f7055c419659a2e9bbfaea117abc1b0da572ceb68e821a9e39994e654",
+      "bytes": 15324
+    },
+    {
+      "path": "scripts/qa/community-stats-current-source.cjs",
+      "sha256": "008355f49f3c39d4bc0e73242a6981943ed9bbbf348a42bd55e0cf2d68c01e02",
+      "bytes": 14283
+    },
+    {
+      "path": "scripts/qa/community-review-delivery.cjs",
+      "sha256": "3aead4b894f17a352bcc5377dfe464e25828e20360f0160672b902c611f1ae44",
+      "bytes": 23749
+    }
+  ],
+  "actualCoreAuthorizationSha256": "383e73ab1cf60ec4539b32239db10cbe53e2d451e6040ea574b5023e3fe59340",
+  "checks": {
+    "capabilityCases": 34,
+    "operatorCases": 20,
+    "statsCases": 15,
+    "commonDeliveryCases": 21,
+    "strictRuntimeAndTransitiveTypes": "passed",
+    "lint": "passed",
+    "diffCheck": "passed",
+    "nativeSqlite": "3.53.0"
+  },
+  "limits": [
+    "Target filesystem/guard, clock, provider and selected business permission adapters are synthetic in native driver.",
+    "No actual staged HTTP, Discord REST/WebSocket or provider writes performed.",
+    "Whole combined build/privacy/source catalog and real browser acceptance remain Coordinator checkpoints.",
+    "Cross-community positives remain blocked by unique guild plus Tests-only policy.",
+    "No CSV tests."
+  ],
+  "previousRuntimeVectorSha256": "b76891585b7b1661c927c5cd159c8f304afe9bb6f134a7c2d26e10063f505c5c",
+  "schemaLineageFollowup": {
+    "fromCount": 203,
+    "toCount": 204,
+    "appendPrefix": "0216_",
+    "appendOrder": 291,
+    "actualRoot204Receipt": "pending",
+    "fixture": "Synthetic descriptors/native ledger; real canonical checksum and SQLite schema functions",
+    "currentTargetSchemaGuard": "unchanged"
+  }
+}
