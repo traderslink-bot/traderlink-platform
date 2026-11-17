@@ -1,14 +1,12 @@
-import {hasWatchlistDashboardNavigationAccess} from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { isCoachingStaff } from "@/src/modules/communities/contracts/coaching-audience";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
-import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireCommunityOwnerReviewServerComponentPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
 export default async function CommunityCoachingIndexPage() {
-  const identity = await requireTraderLinkPlatformServerComponentPageIdentity();
-  if (!hasWatchlistDashboardNavigationAccess(identity)) notFound();
+  const identity = await requireCommunityOwnerReviewServerComponentPageIdentity();
   const destination = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new TraderLinkCommunityRepository(database);
     for (const item of repository.listForUser(identity.scope.userId)) {

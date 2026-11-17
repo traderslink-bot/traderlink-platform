@@ -10,6 +10,7 @@ import { PlatformErasureService } from "./platform-erasure-service";
 import { erasureTargetBinding, PlatformErasureRecovery, type ErasureAction, type ErasureObjectStore } from "./platform-erasure-recovery";
 import { observeErasurePhase } from "./platform-erasure-observability";
 import { PlatformErasureHistory } from "./platform-erasure-history";
+import { platformErasureParticipants } from "./platform-erasure-participants";
 
 export type ErasureCommand = Readonly<{
   action: ErasureAction;
@@ -58,6 +59,13 @@ function requireAdmittedMember(database: Database.Database, command: ErasureComm
   return membership.display_name;
 }
 
+/** Core participant admission uses the same real command validator. No injected
+ * boolean/callback can substitute for current member/session/selection checks. */
+export function revalidatePlatformRootErasureCommand(database: Database.Database, command: ErasureCommand): void {
+  if (!database.inTransaction || command.action !== "traderlink_account") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+  requireAdmittedMember(database, command);
+}
+
 /** Server-only command: the HTTP boundary never accepts scope/session fields
  * from JSON. Revalidate the authenticated snapshot under the writer lock.
  */
@@ -69,14 +77,28 @@ export function executeErasureCommand(
   const recovery = new PlatformErasureRecovery(database, store);
   if (recovery.pending()) platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
   const history = new PlatformErasureHistory(database);
-  const receiptId = randomUUID();
+  const participants = command.action === "traderlink_account" ? platformErasureParticipants(database) : null;
+  const existingReceipt = participants?.core.pendingFor(command.scope.userId, command.scope.workspaceId) ?? null;
+  const receiptId = existingReceipt ?? randomUUID();
   database.transaction(() => {
     const displayName = requireAdmittedMember(database, command);
-    history.accept({ receiptId, memberUserId: command.scope.userId, displayName, action: command.action });
+    if (!existingReceipt) history.accept({ receiptId, memberUserId: command.scope.userId, displayName, action: command.action });
   }).immediate();
   let operationId: string | null = null;
   try {
-    const result = observeErasurePhase("logical_delete_and_commit", () => database.transaction(() => {
+    if (participants) {
+      if (!existingReceipt) participants.core.prepare(command, receiptId);
+      else if (participants.core.operation(receiptId).valid_until_utc <= participants.core.now()) {
+        participants.core.readmitErasureCommand(receiptId, command);
+      }
+      const preparation = participants.core.runErasureCommand(receiptId,
+        command, () => participants.partner.prepare(receiptId, command.scope.userId));
+      if (!preparation.ready) {
+        participants.core.recordHold(receiptId, preparation.holdCode ?? "participant_unqualified");
+        platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+      }
+    }
+    const run = () => {
       const outcome = (() => {
         const scope = command.scope;
         requireAdmittedMember(database, command);
@@ -117,7 +139,9 @@ export function executeErasureCommand(
       })();
       if (!operationId) throw new Error("erasure_missing_obligation_record");
       return outcome;
-    }).immediate());
+    };
+    const result = observeErasurePhase("logical_delete_and_commit", () => participants
+      ? participants.core.runErasureCommand(receiptId,command,run) : database.transaction(run).immediate());
     observeErasurePhase("private_file_cleanup", () => recovery.finish(operationId!));
     return result;
   } catch (error) {
@@ -125,4 +149,34 @@ export function executeErasureCommand(
     catch { /* Keep the last durable phase if an outcome cannot be recorded. */ }
     throw error;
   }
+}
+
+
+/** Worker-local async preparation. The trusted worker bootstrap supplies the
+ * transport driver on this connection; no proof or secrets arrive via IPC. */
+export async function executeStripePreparedErasureCommand(
+  database: Database.Database, store: ErasureObjectStore, command: ErasureCommand,
+  prepareOutsideSql: (operationRef:string, fence:Readonly<{fenceRef:string;generation:number}>) => Promise<boolean>,
+): Promise<ErasureCompletion> {
+  const participants=platformErasureParticipants(database);
+  if (database.inTransaction || command.action!=="traderlink_account" || !participants
+    || new PlatformErasureRecovery(database,store).pending()) return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+  const {core}=participants;
+  const {userId,workspaceId}=command.scope;
+  let ref=core.pendingFor(userId,workspaceId);
+  if (!ref) {
+    ref=randomUUID();
+    const receiptId=ref;
+    database.transaction(()=>new PlatformErasureHistory(database).accept({
+      receiptId,memberUserId:userId,displayName:requireAdmittedMember(database,command),action:command.action,
+    })).immediate();
+    core.prepare(command,ref);
+  }
+  const operation=core.operation(ref), lifecycle=core.lifecycle(userId);
+  const expected=operation.phase==="ready" && operation.quiescence_ref
+    ? {fenceRef:operation.quiescence_ref,generation:lifecycle.generation}:null;
+  const fence=core.runStripeRootPreflight(ref,command,expected,value=>value);
+  if (await prepareOutsideSql(ref,fence)!==true || database.inTransaction) return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+  core.runStripeRootPreflight(ref,command,fence,()=>undefined);
+  return executeErasureCommand(database,store,command);
 }

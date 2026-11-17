@@ -19,6 +19,7 @@ export type DashboardNavigationIconKey =
   | "lab"
   | "manualEntry"
   | "newspaper"
+  | "notifications"
   | "overview"
   | "openPositions"
   | "tradeAnalyzer"
@@ -256,6 +257,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       icon: "account" as const,
       items: Object.freeze([
         Object.freeze({ href: "/communities", label: "My Communities", icon: "account" as const }),
+        Object.freeze({ href: "/partner-channels", label: "Partner Channels", icon: "notifications" as const }),
       ]),
     }),
     Object.freeze({
@@ -311,6 +313,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/admin/scanners": "Scanner Admin",
     "/market-data": "Market Data",
     "/communities": "Communities",
+    "/partner-channels": "Partner Channels",
     "/admin/journal/communities": "Communities Administration",
     "/admin/journal/communities/admission": "Community admission",
     "/admin/journal/coaching": "Coaching commercial settings",
@@ -384,6 +387,7 @@ export type DashboardHelpTarget = Readonly<{
 
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
+    Object.freeze({ route: "/partner-channels", href: "/help/paid-plan/partner-channels", label: "Partner Channels" }),
     Object.freeze({ route: "/admin/scanners", href: "/help/tools/live-screeners", label: "Scanner Admin" }),
     Object.freeze({ route: "/scanners", href: "/help/tools/live-screeners", label: "Scanners" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),

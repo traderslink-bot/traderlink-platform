@@ -33,6 +33,8 @@ const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "charts", "chart-preferences-panel.tsx"),
   join(dashboardRoot, "charts", "trade-market-chart-drawer.tsx"),
   join(dashboardRoot, "notes", "journal-notes-drawer.tsx"),
+  // Catalog filters use a mobile bottom sheet inside the shared dashboard layout.
+  join(dashboardRoot, "partner-channels", "partner-channel-catalog.tsx"),
   join(dashboardRoot, "scanner", "scanner-client.tsx"),
   join(dashboardRoot, "screeners", "declines-card.tsx"),
   join(dashboardRoot, "screeners", "live-screeners-client.tsx"),

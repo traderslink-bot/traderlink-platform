@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireCommunityOwnerReviewPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { isApprovedCommunityGuild } from "@/src/modules/communities/server/community-launch-policy";
@@ -16,7 +16,7 @@ function value(formData: FormData, key: string) {
 }
 
 export async function onboardDiscordCommunityAction(formData: FormData): Promise<void> {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await requireCommunityOwnerReviewPageIdentity();
   const discordGuildId = value(formData, "discordGuildId");
   if (!withPlatformDatabase({ mode: "runtime" }, db => canConnectCommunity(db, discordGuildId, identity.scope.userId, isApprovedCommunityGuild(discordGuildId)))) throw new Error("This community needs TraderLink owner approval before it can connect.");
   const linked = withPlatformDatabase({ mode: "runtime" }, database => database.prepare(

@@ -170,7 +170,7 @@ describe("LiveWatchlistStore", () => {
       process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
       process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
       const store = new LiveWatchlistStore();
-      const base = { type: "tickerData", symbol: "ABCD", status: "live", updatedAt: 1000 } as const;
+      const base = { type: "tickerData", symbol: "ABCD", status: "live", updatedAt: 1000, nearestSupport: null, nearestResistance: null } as const;
       await store.upsertTickerData({ ...base, latestPrice: 1 });
       otherWriter.exec("BEGIN IMMEDIATE");
       const started = performance.now();

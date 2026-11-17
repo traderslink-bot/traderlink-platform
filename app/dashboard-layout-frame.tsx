@@ -228,7 +228,7 @@ async function TraderLinkPlatformDashboardFrameContent({
         scope,
       }),
       notifications: new PlatformNotificationRepository(database).list(scope, 5),
-      communityNavigationHref: firstCommunity
+      communityNavigationHref: watchlistAdminNavigationAccess && firstCommunity
         ? `/communities/${firstCommunity.community.slug}`
         : null,
       coachingNavigationHref: independentCoachingAvailable?'/coaching':firstCoachingCommunity
@@ -267,6 +267,7 @@ async function TraderLinkPlatformDashboardFrameContent({
           generalMarketNewsAccess={generalMarketNewsAccess}
         watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
           communityNavigationHref={dashboardContext.communityNavigationHref}
+          partnerChannelsNavigationAccess={process.env.PARTNER_ALERT_REQUEST_RUNTIME_ENABLED === "true"}
           coachingNavigationHref={dashboardContext.coachingNavigationHref}
         >
           {discordConnection && requestPath !== "/account/login" ? <DiscordConnectionNotice required={discordConnection.required} connected={discordConnection.connected} joined={discordConnection.joined} /> : null}

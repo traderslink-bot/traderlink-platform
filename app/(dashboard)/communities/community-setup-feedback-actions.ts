@@ -1,6 +1,6 @@
 "use server";
 import {revalidatePath} from "next/cache";
-import {requireTraderLinkPlatformPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {requireCommunityOwnerReviewPageIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {onboardApprovedCommunity,verifyCommunityOwner} from "@/src/modules/communities/server/community-onboarding-service";
 import {isApprovedCommunityGuild} from "@/src/modules/communities/server/community-launch-policy";
@@ -11,7 +11,7 @@ function failure(message: string): CommunityPublicationFeedback { return { statu
 function refreshSafely(path: string) { try { revalidatePath(path); } catch { /* The saved result remains valid. */ } }
 
 export async function connectCommunityWithFeedback(form: FormData): Promise<CommunityPublicationFeedback> {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await requireCommunityOwnerReviewPageIdentity();
   const guildId = String(form.get("discordGuildId") ?? "");
   if (!withPlatformDatabase({ mode: "runtime" }, db => canConnectCommunity(db, guildId, identity.scope.userId, isApprovedCommunityGuild(guildId)))) return failure("This community needs TraderLink owner approval before it can connect.");
   const linked = withPlatformDatabase({ mode: "runtime" }, db => db.prepare(`SELECT auth_subject FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'`).get(identity.scope.userId) as { auth_subject: string } | undefined);
