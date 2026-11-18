@@ -1,5 +1,5 @@
 "use client";
-import {createContext,useContext,useActionState,useEffect,type ReactNode} from "react";
+import {createContext,useContext,useActionState,useEffect,useRef,type ReactNode} from "react";
 import {useRouter} from "next/navigation";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
@@ -16,8 +16,9 @@ export function useSharedAlertsBindings(){return useContext(Bindings);}
 const initial:SharedAlertsDraftResult={error:null,destination:null};
 export function SharedAlertsActionForm({children,...props}:BoxProps<"form">){
  const bindings=useSharedAlertsBindings(),router=useRouter(),[state,action,pending]=useActionState(bindings.draft,initial);
- useEffect(()=>{if(bindings.navigation&&state.destination)router.push(state.destination);},[bindings.navigation,state.destination,router]);
- const fixture=Boolean(bindings.navigation);
+ const fixture=Boolean(bindings.navigation),navigated=useRef<SharedAlertsDraftResult|null>(null);
+ // A new binding/router object is not a new action result. Navigate once per result.
+ useEffect(()=>{if(fixture&&state.destination&&navigated.current!==state){navigated.current=state;router.push(state.destination);}},[fixture,state,router]);
  return <Box {...props} component="form" action={fixture?action:bindings.mutate}>
   {fixture&&state.error?<Alert severity="error">{state.error}</Alert>:null}
   {fixture&&state.testNotice?<Alert severity="success">{state.testNotice}{state.testReceipt?<Button component="a" href={`https://discord.com/channels/${state.testReceipt.guildId}/${state.testReceipt.channelId}/${state.testReceipt.messageId}`} target="_blank" rel="noopener noreferrer">Open Tests Discord post</Button>:null}</Alert>:null}
