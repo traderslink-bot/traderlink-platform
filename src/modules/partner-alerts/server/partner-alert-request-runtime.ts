@@ -34,7 +34,7 @@ import { resolvePartnerAlertWhopVerificationContext } from "./partner-alert-cata
 import { PartnerAlertWhopInbox } from "./partner-alert-whop-inbox";
 import type { PartnerAlertWhopWebhookScope } from "./partner-alert-whop-webhook";
 import { PartnerAlertAdmission } from "./partner-alert-admission";
-import { PartnerAlertHttpAdapter, partnerAlertPrivateReadFailure } from "./partner-alert-http";
+import { PartnerAlertHttpAdapter, partnerAlertOwnerMutationRequestDenied, partnerAlertPrivateReadFailure } from "./partner-alert-http";
 import { PartnerAlertRequestWriter, type PartnerAlertPrivateRequestScope } from "./partner-alert-request-writer";
 import { createPartnerAlertProviderVerifier } from "./partner-alert-provider-adapter";
 
@@ -193,6 +193,10 @@ export async function withPartnerAlertRequestRuntime<T>(
     const discordConfiguration = readDiscordConfiguration();
     const ownerTarget = partnerAlertOwnerEvidenceTarget(request);
     if (ownerTarget && discordConfiguration) {
+      if (request.method === "POST") {
+        const denied = partnerAlertOwnerMutationRequestDenied(request);
+        if (denied) return denied;
+      }
       const fingerprint = discordConfiguration ? providerConfigurationFingerprint(discordConfiguration) : null;
       const refreshed = await refreshPartnerAlertOwnerEvidence({ database,admission,request,environment,target: ownerTarget,
         botToken: discordConfiguration?.discordBotToken ?? "",configurationIsCurrent: () => {

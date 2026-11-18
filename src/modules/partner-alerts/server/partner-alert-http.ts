@@ -1,6 +1,7 @@
 import { PartnerAlertValidationError } from "../contracts/partner-alert-contracts";
 import { partnerAlertExactKeys, partnerAlertId, partnerAlertInteger, partnerAlertRecord, partnerAlertSnowflake } from "../contracts/partner-alert-validation";
 import { isTraderLinkPlatformError } from "../../platform/server/database/platform-migration-contract";
+import { requirePlatformMutationRequest } from "../../platform/server/authentication/platform-mutation-request-security";
 import { partnerAlertPrivateResponseHeaders, readPartnerAlertMutation, type PartnerAlertRequestBindings } from "./partner-alert-request-boundary";
 import { projectPartnerAlertPrivateRead, projectPartnerAlertReviewRequests } from "./partner-alert-read-model";
 import { PartnerAlertRepositoryError } from "./partner-alert-repository";
@@ -20,6 +21,22 @@ function response(status: number, body: unknown, allowedMethod: "GET" | "POST" =
 function unavailable(): Response {
   return response(503, { ok: false, code: "unavailable", message: "Partner alert settings are temporarily unavailable." });
 }
+
+/** Run before the owner-evidence refresh, whose unavailable result must not
+ * disguise a rejection from this exact browser-request security check.
+ * This grants no identity or writer authority; later checks still run. */
+export function partnerAlertOwnerMutationRequestDenied(request: Request): Response | null {
+  try {
+    requirePlatformMutationRequest(request);
+    return null;
+  } catch (error) {
+    if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED") {
+      return response(403, { ok: false, code: "forbidden", message: "This action could not be authorized." });
+    }
+    throw error;
+  }
+}
+
 function outcome(result: PartnerAlertWorkflowResult): Response {
   switch (result.kind) {
     case "applied": return response(200, { ok: true, result: result.result });
