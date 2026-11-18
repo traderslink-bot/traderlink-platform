@@ -147,7 +147,13 @@ function qualifyRegisteredSchema(database: Database.Database, required: readonly
     const declared = platformMigrationManifest.find(migration => migration.migrationId === rebuildId);
     const checksum = "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539";
     const created = known.statements.find(statement => statement.startsWith("CREATE TABLE platform_premium_paid_events_next_v3 ("));
-    if (rows.length !== 204 || rows.at(-1) !== installed || !declared || declared.moduleNamespace !== "platform"
+    const appended = rows[204], canonicalAppend = platformMigrationManifest[204];
+    const reviewedBoundary = rows.length === 204 && rows.at(-1) === installed
+      || rows.length === 205 && rows[203] === installed && appended?.migration_id === "0217_traderlink_community_stats_forward_checkpoints"
+        && appended.module_namespace === "community" && appended.execution_order === 292
+        && canonicalAppend?.migrationId === appended.migration_id && canonicalAppend.moduleNamespace === "community"
+        && canonicalAppend.executionOrder === 292 && appended.checksum_sha256 === calculatePlatformMigrationChecksum(canonicalAppend);
+    if (!reviewedBoundary || !declared || declared.moduleNamespace !== "platform"
       || declared.executionOrder !== 291 || installed.execution_order !== 291 || installed.module_namespace !== "platform"
       || installed.checksum_sha256 !== checksum || calculatePlatformMigrationChecksum(declared) !== checksum
       || calculatePlatformMigrationChecksum(known) !== checksum || !created || !registered.has(created)

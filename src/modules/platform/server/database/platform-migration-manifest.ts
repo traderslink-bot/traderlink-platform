@@ -1,3 +1,4 @@
+import { traderLinkCommunityStatsForwardCheckpointsMigration } from "@/src/modules/communities/server/database/migrations/0217_traderlink_community_stats_forward_checkpoints";
 import { platformPremiumCurrentAccessEventsMigration } from "./migrations/0216_platform_premium_current_access_events";
 import { traderLinkCommunityStatsAttributionMigration } from "@/src/modules/communities/server/database/migrations/0215_traderlink_community_stats_attribution";
 import { traderLinkCommunityStatsMigration } from "@/src/modules/communities/server/database/migrations/0173_traderlink_community_stats";
@@ -785,6 +786,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({sourcePath:"src/modules/communities/server/database/migrations/0174_traderlink_community_stats_history.ts",migration:traderLinkCommunityStatsHistoryMigration}),
     Object.freeze({sourcePath:"src/modules/communities/server/database/migrations/0215_traderlink_community_stats_attribution.ts",migration:traderLinkCommunityStatsAttributionMigration}),
     Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0216_platform_premium_current_access_events.ts",migration:platformPremiumCurrentAccessEventsMigration}),
+    Object.freeze({sourcePath:"src/modules/communities/server/database/migrations/0217_traderlink_community_stats_forward_checkpoints.ts",migration:traderLinkCommunityStatsForwardCheckpointsMigration}),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -794,6 +796,7 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
     "0216_platform_premium_current_access_events": Object.freeze([]),
+    "0217_traderlink_community_stats_forward_checkpoints": Object.freeze(["community_stats_forward_checkpoints"]),
     "0171_traderlink_community_shared_alerts": Object.freeze(["community_alert_discord_authors", "community_shared_alert_blocks", "community_shared_alert_deliveries", "community_shared_alert_events", "community_shared_alert_messages", "community_shared_alert_owner_checks", "community_shared_alert_rate_limits", "community_shared_alert_read_positions", "community_shared_alert_requests", "community_shared_alert_settings"]),
     "0177_traderlink_community_shared_alert_individuals": Object.freeze(["community_alert_publisher_permissions", "community_shared_alert_delivery_parts", "community_shared_alert_routes"]),
     "0173_traderlink_community_stats": Object.freeze(["community_stats_channels", "community_stats_coverage", "community_stats_events", "community_stats_identity_links", "community_stats_members", "community_stats_memberships", "community_stats_roles", "community_stats_settings", "community_stats_settings_audit", "community_stats_source_state", "community_stats_voice_state"]),

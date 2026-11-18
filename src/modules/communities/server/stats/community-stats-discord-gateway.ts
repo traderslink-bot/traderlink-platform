@@ -49,13 +49,16 @@ export class CommunityStatsDiscordGateway{
   private updateChannels(guild:Guild,member:unknown,at:string):void{
     if(!guild.topology)return;
     const channels=statsBotChannels(guild.guildId,guild.topology.roles,guild.topology.channels,member);
+    const metadataChannels=new Map(channels);
     if(this.review)for(const id of channels.keys())if(!this.review.run.channelIds.includes(id))channels.delete(id);
     guild.channels=new Set([...channels.keys()].filter(id=>guild.selected.has(id)));
     guild.threadIds.clear();guild.forumThreadIds.clear();guild.forumParents=new Set([...channels].filter(([id,c])=>[15,16].includes(c.type)&&guild.selected.has(id)).map(([id])=>id));
     for(const raw of Array.isArray(guild.topology.threads)?guild.topology.threads:[]){const thread=object(raw);if(thread.guild_id!==undefined&&thread.guild_id!==guild.guildId)continue;if([10,11].includes(Number(thread.type))&&guild.channels.has(String(thread.parent_id))&&typeof thread.id==="string"){guild.channels.add(thread.id);guild.threadIds.add(thread.id);if(guild.forumParents.has(String(thread.parent_id)))guild.forumThreadIds.add(thread.id);this.threadJob(guild,thread,at);}}
+    this.review?.assertActive();
     const repo=this.repository();repo.transaction(()=>{
+      if(!this.currentGuild(guild)||!guild.ownerVerified)return;
       repo.db.prepare(`DELETE FROM community_stats_channels WHERE community_id=?`).run(guild.communityId);
-      for(const [id,channel] of channels)repo.db.prepare(`INSERT INTO community_stats_channels(community_id,channel_id,name,channel_type,public_readable,last_observed_at_utc) VALUES(?,?,?,?,1,?)`).run(guild.communityId,id,channel.name,channel.type,at);
+      for(const [id,channel] of metadataChannels)repo.db.prepare(`INSERT INTO community_stats_channels(community_id,channel_id,name,channel_type,public_readable,last_observed_at_utc) VALUES(?,?,?,?,1,?)`).run(guild.communityId,id,channel.name,channel.type,at);
     });
   }
   private threadJob(guild:Guild,thread:Data,at:string):void{

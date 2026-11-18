@@ -42,18 +42,30 @@ export function assertCommunityStagingQaCapability(value:CommunityStagingQaCapab
 }
 
 type SchemaLineagePin=Readonly<{migrationId:string;moduleNamespace:string;executionOrder:number;checksumSha256:string;postSchemaSha256:string}>;
-type SchemaLineage=Readonly<{kind:"community-staging-qa-schema-lineage-v1";principalManifestSha256:string;fromSchemaSha256:string;toSchemaSha256:string;fromMigrationCount:203;toMigrationCount:204;prefix:readonly SchemaLineagePin[];append:SchemaLineagePin}>;
+type SchemaLineageBase=Readonly<{principalManifestSha256:string;fromSchemaSha256:string;toSchemaSha256:string;fromMigrationCount:203;prefix:readonly SchemaLineagePin[]}>;
+type SchemaLineage=SchemaLineageBase & (Readonly<{kind:"community-staging-qa-schema-lineage-v1";toMigrationCount:204;append:SchemaLineagePin}>
+ | Readonly<{kind:"community-staging-qa-schema-lineage-v2";toMigrationCount:205;appends:readonly [SchemaLineagePin,SchemaLineagePin]}>);
 function assertPrincipalSchemaLineage(database:Database.Database,run:CommunityStagingQaRun,principals:Principals,lineage:SchemaLineage|undefined):void{
  if(principals.pins.schemaSha256===run.pins.schemaSha256){if(lineage||run.principalSchemaLineageSha256)refused();return;}
- if(!lineage||lineage.kind!=="community-staging-qa-schema-lineage-v1"||lineage.principalManifestSha256!==run.principalManifestSha256||lineage.fromSchemaSha256!==principals.pins.schemaSha256||lineage.toSchemaSha256!==run.pins.schemaSha256||lineage.fromMigrationCount!==203||lineage.toMigrationCount!==204||!Array.isArray(lineage.prefix)||lineage.prefix.length!==203||platformMigrationManifest.length!==204||!lineage.append||!/^0216_[a-z0-9_]+$/.test(lineage.append.migrationId)||lineage.append.executionOrder!==291)refused();
+ if(!lineage||lineage.principalManifestSha256!==run.principalManifestSha256||lineage.fromSchemaSha256!==principals.pins.schemaSha256||lineage.toSchemaSha256!==run.pins.schemaSha256||lineage.fromMigrationCount!==203||!Array.isArray(lineage.prefix)||lineage.prefix.length!==203)refused();
+ let suffix:readonly SchemaLineagePin[];
+ if(lineage.kind==="community-staging-qa-schema-lineage-v1"){
+  if(lineage.toMigrationCount!==204||platformMigrationManifest.length!==204||!lineage.append)refused();
+  suffix=[lineage.append];
+ }else if(lineage.kind==="community-staging-qa-schema-lineage-v2"){
+  if(lineage.toMigrationCount!==205||platformMigrationManifest.length!==205||!Array.isArray(lineage.appends)||lineage.appends.length!==2)refused();
+  suffix=lineage.appends;
+ }else return refused();
+ if(suffix[0]?.migrationId!=="0216_platform_premium_current_access_events"||suffix[0].moduleNamespace!=="platform"||suffix[0].executionOrder!==291)refused();
+ if(suffix.length===2&&(suffix[1]?.migrationId!=="0217_traderlink_community_stats_forward_checkpoints"||suffix[1].moduleNamespace!=="community"||suffix[1].executionOrder!==292))refused();
  const rows=database.prepare("SELECT migration_id,module_namespace,execution_order,checksum_sha256,post_schema_sha256 FROM platform_schema_migrations ORDER BY execution_order").all() as {migration_id:string;module_namespace:string;execution_order:number;checksum_sha256:string;post_schema_sha256:string}[];
- if(rows.length!==204)refused();
- const pins=[...lineage.prefix,lineage.append];
- for(let index=0;index<204;index++){
+ const pins=[...lineage.prefix,...suffix];
+ if(rows.length!==pins.length||platformMigrationManifest.length!==pins.length)refused();
+ for(let index=0;index<pins.length;index++){
   const pin=pins[index],native=rows[index],canonical=platformMigrationManifest[index];
   if(!pin||!digest(pin.checksumSha256)||!digest(pin.postSchemaSha256)||pin.migrationId!==canonical.migrationId||pin.moduleNamespace!==canonical.moduleNamespace||pin.executionOrder!==canonical.executionOrder||pin.checksumSha256!==calculatePlatformMigrationChecksum(canonical)||native.migration_id!==pin.migrationId||native.module_namespace!==pin.moduleNamespace||native.execution_order!==pin.executionOrder||native.checksum_sha256!==pin.checksumSha256||native.post_schema_sha256!==pin.postSchemaSha256)refused();
  }
- if(lineage.prefix[202].postSchemaSha256!==principals.pins.schemaSha256||lineage.append.postSchemaSha256!==run.pins.schemaSha256)refused();
+ if(lineage.prefix[202].postSchemaSha256!==principals.pins.schemaSha256||suffix[suffix.length-1].postSchemaSha256!==run.pins.schemaSha256)refused();
 }
 
 /** Private controller inputs, never HTTP fields. The issuer opens no worker and performs no provider request. */

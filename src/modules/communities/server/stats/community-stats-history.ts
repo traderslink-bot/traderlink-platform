@@ -7,6 +7,8 @@ import {statsBotChannels} from "./community-stats-channel-selection";
 import {statsPublicChannels} from "./community-stats-discord-events";
 import {recordStatsBotMessage,nextStatsReactionRefresh,statsReactionRefreshReady,type StatsReactionRefresh} from "./community-stats-message-populations";
 
+import {statsForwardReady,prepareStatsForward,commitStatsForwardPage,type StatsForwardCheckpoint} from "./community-stats-forward";
+
 type Data=Record<string,unknown>;
 const object=(value:unknown):Data=>value&&typeof value==="object"&&!Array.isArray(value)?value as Data:{};
 const id=(value:unknown):value is string=>typeof value==="string"&&/^\d{1,32}$/u.test(value);
@@ -41,6 +43,7 @@ export class CommunityStatsHistory {
   private busy=false;
   private nextCommunity=0;
   private refreshNext=true;
+  private forwardNext=true;
   private topology=new Map<string,Topology>();
   constructor(private readonly db:Database.Database,private readonly request:typeof fetch=fetch,private readonly review?:CommunityStagingQaCapability){if(review)assertCommunityStagingQaCapability(review,db);}
   private eligible(communityId:string):Community|null{
@@ -116,7 +119,7 @@ export class CommunityStatsHistory {
     if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||this.busy||!statsHistoryReady(this.db))return;
     this.review?.historyTick();
     this.busy=true;
-    let community:Community|null=null,job:Job|undefined,refresh:StatsReactionRefresh|undefined;
+    let community:Community|null=null,job:Job|undefined,refresh:StatsReactionRefresh|undefined,forward:StatsForwardCheckpoint|undefined;
     try{
       const at=new Date().toISOString();
       const ordered=[...communityIds.slice(this.nextCommunity),...communityIds.slice(0,this.nextCommunity)];
@@ -129,7 +132,8 @@ export class CommunityStatsHistory {
         if(waiting.retry&&waiting.retry>at&&!reactionDue)continue;
         const unfinished=this.db.prepare(`SELECT 1 FROM community_stats_history_jobs WHERE community_id=? AND configuration_version=? AND status IN('pending','running','blocked') LIMIT 1`).get(communityId,candidate.version);
         const exists=this.db.prepare(`SELECT 1 FROM community_stats_history_jobs WHERE community_id=? AND configuration_version=? LIMIT 1`).get(communityId,candidate.version);
-        if(exists&&!unfinished&&!reactionDue)continue;
+        const forwardPossible=statsForwardReady(this.db)&&!!this.db.prepare("SELECT 1 FROM community_stats_history_jobs WHERE community_id=? AND configuration_version=? AND kind='messages' AND status='complete' LIMIT 1").get(communityId,candidate.version);
+        if(exists&&!unfinished&&!reactionDue&&!forwardPossible)continue;
         community=candidate;break;
       }
       if(!community)return;
@@ -165,6 +169,24 @@ export class CommunityStatsHistory {
       });
       job=this.db.prepare(`SELECT channel_id,parent_id,kind,cursor,snapshot_at_utc FROM community_stats_history_jobs WHERE community_id=? AND configuration_version=? AND status!='complete' AND retry_at_utc<=? ORDER BY CASE status WHEN 'blocked' THEN 1 ELSE 0 END,checked_at_utc,CASE kind WHEN 'active' THEN 0 WHEN 'messages' THEN 1 ELSE 2 END,channel_id LIMIT 1`).get(community.communityId,community.version,at) as Job|undefined;
       refresh=nextStatsReactionRefresh(this.db,community.communityId,at);
+      if(statsForwardReady(this.db)&&(this.forwardNext||!job&&!refresh)){
+        const completed=this.db.prepare(`SELECT h.channel_id,h.parent_id,h.snapshot_at_utc FROM community_stats_history_jobs h LEFT JOIN community_stats_forward_checkpoints f ON f.community_id=h.community_id AND f.channel_id=h.channel_id WHERE h.community_id=? AND h.configuration_version=? AND h.kind='messages' AND h.status='complete' ORDER BY coalesce(f.updated_at_utc,h.checked_at_utc),h.channel_id`).all(community.communityId,community.version) as {channel_id:string;parent_id:string|null;snapshot_at_utc:string}[];
+        for(const candidate of completed){
+          const direct=community.selected.includes(candidate.channel_id),parent=direct?candidate.channel_id:candidate.parent_id;
+          if(!parent||!community.selected.includes(parent)||!topology.channels.has(parent)||!direct&&!topology.threads.has(candidate.channel_id))continue;
+          const pending=prepareStatsForward(this.db,{communityId:community.communityId,channelId:candidate.channel_id,parentId:direct?null:parent,version:community.version,snapshot:candidate.snapshot_at_utc,at});
+          if(!pending)continue;
+          forward=pending;this.forwardNext=false;
+          const response=await this.get(`/channels/${pending.channel_id}/messages?limit=100&before=${pending.before_message_id}`,token,community);
+          this.review?.assertActive();
+          commitStatsForwardPage(this.db,pending,response,at,()=>{
+            const current=this.eligible(community!.communityId);
+            if(!current||current.version!==community!.version||current.ownerId!==community!.ownerId||current.topologyAt!==community!.topologyAt||JSON.stringify(current.selected)!==JSON.stringify(community!.selected))throw new Error("Incremental collection authority changed.");
+          },message=>{this.importMessage(community!,{channel_id:pending.channel_id,parent_id:pending.parent_id,kind:"messages",cursor:null,snapshot_at_utc:pending.scan_until_utc},message,at,topology!.channels);},()=>{this.db.prepare(`UPDATE community_stats_events AS e SET reply_delay_seconds=(SELECT max(0,cast(round((julianday(e.occurred_at_utc)-julianday(p.occurred_at_utc))*86400) AS INTEGER)) FROM community_stats_events p WHERE p.community_id=e.community_id AND p.event_id=e.reply_to_event_id AND p.discord_user_id!=e.discord_user_id AND p.occurred_at_utc<=e.occurred_at_utc) WHERE e.community_id=? AND e.evidence='imported_message' AND e.reply_to_event_id IS NOT NULL AND e.reply_delay_seconds IS NULL AND(e.event_id IN(SELECT value FROM json_each(?)) OR e.reply_to_event_id IN(SELECT value FROM json_each(?)))`).run(community!.communityId,JSON.stringify((response as Data[]).map(message=>`message:${message.id}`)),JSON.stringify((response as Data[]).map(message=>`message:${message.id}`)));});
+          return;
+        }
+      }
+      this.forwardNext=true;
       if(refresh&&(this.refreshNext||!job)){
         this.refreshNext=false;
         const selected=community.selected;
@@ -216,6 +238,7 @@ export class CommunityStatsHistory {
       const at=new Date().toISOString(),failure=error instanceof HistoryRequestError?error:new HistoryRequestError("History paused after an invalid response or connection failure.",300);
       if(community){
         const retry=new Date(Date.now()+Math.max(1,Number.isFinite(failure.retrySeconds)?failure.retrySeconds:300)*1000).toISOString();
+        if(forward){this.db.prepare("UPDATE community_stats_forward_checkpoints SET retry_at_utc=?,updated_at_utc=? WHERE community_id=? AND channel_id=?").run(retry,at,community.communityId,forward.channel_id);return;}
         if(refresh){
           this.db.prepare(`UPDATE community_stats_reaction_refresh SET retry_at_utc=? WHERE community_id=? AND message_id=?`).run(retry,community.communityId,refresh.message_id);
         }
