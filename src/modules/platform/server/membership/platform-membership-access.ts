@@ -67,6 +67,12 @@ export function evaluateMembershipFeature(database: Database.Database, userId: s
   return { mode, allowed: mode !== "enforced" || wouldAllow, wouldAllow, ownerBypass, limit };
 }
 
+export function hasJournalWorkspaceAccess(database: Database.Database, userId: string): boolean {
+  return evaluateMembershipFeature(database, userId, "journal.access").allowed ||
+    Boolean(database.prepare(`SELECT 1 FROM platform_operator_grants
+WHERE user_id = ? AND authority_key = 'journal_administration' AND grant_state = 'active'`).get(userId));
+}
+
 export function assertMembershipFeature(database: Database.Database, userId: string, feature: string, requestedTotal?: number): void {
   if (!evaluateMembershipFeature(database, userId, feature, requestedTotal).allowed) {
     platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED", { reason: "membership_feature_required", feature });

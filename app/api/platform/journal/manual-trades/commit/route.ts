@@ -13,6 +13,11 @@ import {
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { readWorkspaceTradeLibrarySavedTrades } from "@/app/(dashboard)/workspace/workspace-trade-library";
+import { toAnalyzerTrade } from "@/app/(dashboard)/trade-analyzer/analyzer-trade-data";
+import type { AnalyzerTrade } from "@/app/(dashboard)/trade-analyzer/analyzer-trade";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -42,6 +47,16 @@ export async function POST(request: Request): Promise<Response> {
     );
     const result = withWritableJournalIntegrityRuntime(requestScope, (journal) =>
       journal.manualTrades.commit(requestScope, accountSelectionRef, parsedCommitRequest));
+    let savedTrades: readonly AnalyzerTrade[] = [];
+    if (new URL(request.url).searchParams.get("include") === "analyzer-trades" && result.affectedTradeTargets.length > 0) {
+      try {
+        savedTrades = withReadonlyPlatformDatabase({}, (database) =>
+          readWorkspaceTradeLibrarySavedTrades(database, requestScope, result.affectedTradeTargets).map(toAnalyzerTrade));
+      } catch {
+        // Return the successful write receipt even if the display read fails.
+        console.error("[manual-trade-commit] Could not read saved Analyzer trade details.");
+      }
+    }
     return Response.json({
       status: "ready",
       result: {
@@ -58,7 +73,7 @@ export async function POST(request: Request): Promise<Response> {
         affectedPositionRefs: result.affectedPositionRefs,
         analyzerQueueOutcome: result.analyzerQueueOutcome,
         analyzerSelectionOutcomes: result.analyzerSelectionOutcomes,
-        savedTrades: [],
+        savedTrades,
       },
     });
   } catch (error) {

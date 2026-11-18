@@ -48,14 +48,26 @@ function materializeDemo(database: Database.Database, scope: WorkspaceAccessScop
 
 function activate(scope: WorkspaceAccessScope, activeAccountId: string) {
   return withPlatformWorkerDatabase((database) => {
-    const activeDemoAccount = new JournalDemoAccountRepository(database).findActiveAccount(scope);
+    const demos = new JournalDemoAccountRepository(database);
+    const activeAccountIsDemo = demos.findActiveAccount(scope) !== null;
     const activeAccount = new JournalAccountRepository(database).findActiveAccount(
       scope.workspaceId,
       activeAccountId,
     );
     if (!activeAccount) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    const existingDemo = demos.findAccountForUser(scope);
+    if (existingDemo && demos.findLifecycleForUser(scope)?.state !== "cleared") {
+      if (!scope.allowedAccountIds.includes(existingDemo.accountId)) {
+        platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+      }
+      // The existing samples are already usable. Upgrades run through ensure.
+      return Object.freeze({
+        activeAccountIsDemo,
+        result: { accountId: existingDemo.accountId, state: "materialized" as const },
+      });
+    }
     return Object.freeze({
-      activeAccountIsDemo: activeDemoAccount !== null,
+      activeAccountIsDemo,
       result: materializeDemo(database, scope, activeAccount),
     });
   });

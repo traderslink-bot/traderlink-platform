@@ -4,6 +4,11 @@ import {
   isPlatformAppearance,
   type PlatformAppearance,
 } from "@/src/modules/platform/contracts/platform-appearance";
+import {
+  isPlatformHomePage,
+  PLATFORM_DEFAULT_HOME_PAGE,
+  type PlatformHomePage,
+} from "@/src/modules/platform/contracts/platform-home-page";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   assertCanonicalUtcTimestamp,
@@ -81,6 +86,34 @@ export function parsePlatformAppearance(value: unknown): PlatformAppearance {
 
 export class PlatformUserPreferenceRepository {
   constructor(private readonly database: Database.Database) {}
+
+  getActiveUserHomePage(userId: string): PlatformHomePage {
+    assertCanonicalUuidV4(userId, "userId");
+    const row = this.database.prepare<[string], { home_page: unknown }>(`SELECT preference.home_page
+FROM platform_user_preferences preference
+JOIN platform_users user ON user.user_id = preference.user_id
+WHERE preference.user_id = ? AND user.status = 'active'`).get(userId);
+    return isPlatformHomePage(row?.home_page) ? row.home_page : PLATFORM_DEFAULT_HOME_PAGE;
+  }
+
+  updateActiveUserHomePage(input: Readonly<{
+    userId: string;
+    homePage: PlatformHomePage;
+    updatedAtUtc: string;
+  }>): void {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.updatedAtUtc, "updatedAtUtc");
+    const result = this.database.prepare(`UPDATE platform_user_preferences
+SET home_page = ?, updated_at_utc = ?
+WHERE user_id = ?
+  AND EXISTS (
+    SELECT 1 FROM platform_users
+    WHERE user_id = platform_user_preferences.user_id AND status = 'active'
+  )`).run(input.homePage, input.updatedAtUtc, input.userId);
+    if (result.changes !== 1) {
+      platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+    }
+  }
 
   getActiveUserAppearance(userId: string): PlatformAppearance {
     assertCanonicalUuidV4(userId, "userId");

@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import {
   DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
   isDashboardNavigationItem,
+  isTradeAnalyzerNavigationPath,
   isTradeJournalNavigationPath,
 } from "@/app/dashboard-navigation";
 
@@ -24,10 +25,23 @@ describe("Demo data callout appearance contract", () => {
     expect(callout).toContain('component="h2" sx={{ color: demoHeadingColor,');
     expect(callout).toContain('sx={{ color: demoBodyColor }} variant="body2"');
     expect(callout).toContain("Your Trade Journal account is preloaded with sample trades from August.");
-    expect(callout).toContain("Explore the sample trade history, notes, and performance summaries");
     expect(callout).toContain("When you’re ready to track your own trades, clear the demo data and start fresh.");
-    expect(callout).toContain('if (!expectedAccountSelectionRef || pathname === "/workspace" || !isTradeJournalNavigationPath(pathname)) return null');
+    expect(callout).toContain('pathname === "/workspace" || pathname === "/trade-analyzer"');
+    expect(callout).toContain("!isTradeJournalNavigationPath(pathname) && !isTradeAnalyzerNavigationPath(pathname)");
+    const analyzer = source("app/(dashboard)/trade-analyzer/page.tsx");
+    expect(analyzer).toContain("Explore Trade Analyzer with demo data");
+    expect(analyzer.match(/<ClearDemoDataAction\b/g)).toHaveLength(1);
     expect(template).toContain("<DemoDataAccountIndicator");
+  });
+
+  it("scopes the Demo indicator to Journal and Analyzer routes", () => {
+    expect(isTradeJournalNavigationPath("/workspace")).toBe(true);
+    expect(isTradeJournalNavigationPath("/trade-tracker/2026-08-27")).toBe(true);
+    expect(isTradeJournalNavigationPath("/analytics/trade-analyzer/day")).toBe(false);
+    expect(isTradeAnalyzerNavigationPath("/analytics/trade-analyzer/day")).toBe(true);
+    for (const pathname of ["/home", "/trading-workspace", "/screeners", "/charts", "/press-releases"]) {
+      expect(isTradeJournalNavigationPath(pathname) || isTradeAnalyzerNavigationPath(pathname)).toBe(false);
+    }
   });
 });
 

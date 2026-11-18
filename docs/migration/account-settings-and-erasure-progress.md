@@ -73,3 +73,5 @@ the separate admin feature owner. No unsupported historical outcome is inferred.
 - Focused ESLint passes for the erasure service, route, Privacy UI, empty
   account state and disposable verifier. The proof command passed on
   2026-08-10 with `{ "status": "passed", "fixture": "disposable_synthetic_only" }`.
+
+The home-page preference has its own [implementation and verification record](welcome-home-page-plan.md).

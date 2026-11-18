@@ -22,6 +22,7 @@ import {
   DashboardSecondaryAction,
 } from "../../dashboard-template";
 import { FeatureHelpLink } from "../feature-help-link";
+import type { JournalManualTradeEntry } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
 
 export type ExecutionDraft = {
   date: string;
@@ -33,6 +34,25 @@ export type ExecutionDraft = {
   symbol: string;
   time: string;
 };
+
+export function manualTradeEntry(
+  execution: ExecutionDraft,
+  accountCurrency: string,
+  accountTimezone: string,
+): JournalManualTradeEntry {
+  return Object.freeze({
+    clientRowRef: `row-${execution.id}`,
+    localDate: execution.date,
+    localTime: execution.time.length === 5 ? `${execution.time}:00` : execution.time,
+    sourceTimezone: accountTimezone,
+    normalizedSymbol: execution.symbol,
+    tradeCurrency: accountCurrency,
+    side: execution.side.toLowerCase() as "buy" | "sell",
+    quantityDecimal: execution.quantity,
+    priceDecimal: execution.price,
+    feesDecimal: execution.fees || null,
+  });
+}
 
 export type ExecutionSaveResult =
   Readonly<{
@@ -78,6 +98,7 @@ export function ExecutionEntryCard({
   savingEnabled = true,
   sessionDate,
   submittedCount,
+  timeZoneLabel = "Eastern Time",
 }: {
   collapsed: boolean;
   initialExecutions?: ExecutionDraft[];
@@ -89,11 +110,13 @@ export function ExecutionEntryCard({
   onStartAnother?: () => void;
   onSubmitted: (count: number, executions: ExecutionDraft[]) => void;
   allowMultipleTradingDates?: boolean;
-  entryMode?: "day" | "quick" | "swing";
+  entryMode?: "day" | "quick" | "swing" | "analyzer";
   savingEnabled?: boolean;
   sessionDate: string;
   submittedCount: number | null;
+  timeZoneLabel?: string;
 }) {
+  const analyzer = entryMode === "analyzer";
   const [nextId, setNextId] = useState(() =>
     initialExecutions.length > 0
       ? Math.max(...initialExecutions.map((execution) => execution.id)) + 1
@@ -142,6 +165,11 @@ export function ExecutionEntryCard({
         row.id === id ? { ...row, [field]: value } : row,
       ),
     );
+    setState({ kind: "idle" });
+  }
+
+  function updateTradingDate(date: string) {
+    setRows((current) => current.map((row) => ({ ...row, date })));
     setState({ kind: "idle" });
   }
 
@@ -211,7 +239,8 @@ export function ExecutionEntryCard({
         count: recordedCount,
       });
       onSubmitted(recordedCount, normalizedRows);
-      onCollapsedChange(true);
+      if (analyzer) startAnotherTrade();
+      else onCollapsedChange(true);
     } catch (error) {
       setState({
         kind: "error",
@@ -225,8 +254,8 @@ export function ExecutionEntryCard({
 
   function startAnotherTrade() {
     setRows([
-      newExecution(nextId, "BUY", sessionDate),
-      newExecution(nextId + 1, "SELL", sessionDate),
+      newExecution(nextId, "BUY", analyzer ? rows[0]?.date ?? sessionDate : sessionDate),
+      newExecution(nextId + 1, "SELL", analyzer ? rows[0]?.date ?? sessionDate : sessionDate),
     ]);
     setNextId((current) => current + 2);
     setState({ kind: "idle" });
@@ -285,11 +314,26 @@ export function ExecutionEntryCard({
 
   return (
     <DashboardPanel
-      action={<FeatureHelpLink href={entryMode === "quick" ? "/help/quick-trade-entry/enter-executions" : "/help/daily-trade-tracker/add-edit-trades#enter-executions"} label="manual execution entry" />}
-      eyebrow={entryMode === "day" ? undefined : "Manual execution entry"}
-      title={entryMode === "day" ? "Manual Trade Entry" : "Enter trades"}
+      action={<FeatureHelpLink href={analyzer ? "/help/trade-analyzer/analyzed-trades#enter-trades" : entryMode === "quick" ? "/help/quick-trade-entry/enter-executions" : "/help/daily-trade-tracker/add-edit-trades#enter-executions"} label="manual execution entry" />}
+      eyebrow={entryMode === "day" || analyzer ? undefined : "Manual execution entry"}
+      title={analyzer ? "Manual trade entry" : entryMode === "day" ? "Manual Trade Entry" : "Enter trades"}
     >
-      {entryMode === "day" ? (
+      {analyzer ? (
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
+          <TextField
+            disabled={state.kind === "saving"}
+            label="Trading date"
+            onChange={(event) => updateTradingDate(event.target.value)}
+            size="small"
+            slotProps={{ inputLabel: { shrink: true } }}
+            type="date"
+            value={rows[0]?.date ?? sessionDate}
+          />
+          <Typography color="text.secondary" variant="body2">
+            Enter the buy and sell executions for one or more trades. Use {timeZoneLabel} and the exact details shown by your broker.
+          </Typography>
+        </Stack>
+      ) : entryMode === "day" ? (
         <>
           <Typography color="text.secondary" variant="body2">
             Enter your day’s buy and sell executions. Your trades will appear below, grouped by ticker.
@@ -326,6 +370,8 @@ export function ExecutionEntryCard({
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
         {rows.map((row, index) => (
           <Box
+            component={analyzer ? "fieldset" : "div"}
+            disabled={analyzer ? state.kind === "saving" : undefined}
             key={row.id}
             sx={{
               alignItems: { md: "center" },
@@ -335,7 +381,12 @@ export function ExecutionEntryCard({
               borderRadius: 1,
               display: "grid",
               gap: 1.25,
-              gridTemplateColumns: {
+              ...(analyzer ? { m: 0, minWidth: 0, "& .MuiTextField-root": { minWidth: 0 } } : {}),
+              gridTemplateColumns: analyzer ? {
+                xs: "repeat(2, minmax(0, 1fr))",
+                sm: "repeat(3, minmax(0, 1fr))",
+                lg: "minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1.2fr) repeat(3, minmax(0, 1fr)) 32px",
+              } : {
                 xs: "1fr 1fr",
                 md: "80px minmax(132px, .9fr) minmax(95px, .7fr) 88px minmax(105px, .7fr) minmax(90px, .6fr) minmax(90px, .6fr) minmax(80px, .5fr) 40px",
               },
@@ -346,20 +397,20 @@ export function ExecutionEntryCard({
               color="text.secondary"
               sx={{
                 fontWeight: 700,
-                gridColumn: { xs: "1 / -1", md: "auto" },
+                gridColumn: analyzer ? "1 / -1" : { xs: "1 / -1", md: "auto" },
               }}
               variant="caption"
             >
               Execution {index + 1}
             </Typography>
-            <TextField
+            {analyzer ? null : <TextField
               label="Trading date"
               onChange={(event) => update(row.id, "date", event.target.value)}
               size="small"
               slotProps={{ inputLabel: { shrink: true } }}
               type="date"
               value={row.date}
-            />
+            />}
             <TextField
               label="Ticker"
               onChange={(event) =>
@@ -382,13 +433,14 @@ export function ExecutionEntryCard({
               <MenuItem value="SELL">Sell</MenuItem>
             </TextField>
             <TextField
-              label="Time (Eastern Time)"
+              label={analyzer ? "Time" : "Time (Eastern Time)"}
               onChange={(event) => update(row.id, "time", event.target.value)}
               size="small"
               slotProps={{
                 htmlInput: { step: 1 },
                 inputLabel: { shrink: true },
               }}
+              sx={analyzer ? { gridColumn: { xs: "1 / -1", sm: "auto" } } : undefined}
               type="time"
               value={row.time}
             />
@@ -418,7 +470,8 @@ export function ExecutionEntryCard({
             />
             <IconButton
               aria-label={`Remove execution ${index + 1}`}
-              disabled={rows.length === 1}
+              disabled={rows.length === 1 || (analyzer && state.kind === "saving")}
+              sx={analyzer ? { justifySelf: "end" } : undefined}
               onClick={() => removeExecution(row.id)}
               size="small"
             >
@@ -429,6 +482,7 @@ export function ExecutionEntryCard({
       </Stack>
 
       <DashboardSecondaryAction
+        disabled={analyzer && state.kind === "saving"}
         onClick={addExecution}
         startIcon={<AddRoundedIcon />}
         sx={{
@@ -461,16 +515,15 @@ export function ExecutionEntryCard({
             onClick={() => void saveExecutions()}
           >
             {state.kind === "saving"
-              ? "Saving executions..."
+              ? analyzer ? "Submitting trades…" : "Saving executions..."
               : state.kind === "queued"
               ? "Waiting for Trade sync"
-              : !savingEnabled
-              ? "Saving not connected yet"
-              : "Save executions"}
+              : analyzer ? "Analyze trades"
+              : !savingEnabled ? "Saving not connected yet" : "Save executions"}
           </DashboardPrimaryAction>
         </Stack>
       </Box>
-      {!savingEnabled ? (
+      {!savingEnabled && !analyzer ? (
         <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="caption">
           This preview does not save executions.
         </Typography>
