@@ -1,6 +1,9 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
+import type { NextRequest } from "next/server";
+import { resolvePlatformPublicOrigin } from "../authentication/platform-public-origin";
+import { readAppliedPlatformMigrations } from "../database/platform-migration-registry";
 import { assertCommunityStagingQaTarget, type CommunityStagingQaTargetPins } from "../../../communities/server/community-staging-qa-target";
 import { currentPlatformErasureAdmission, type PlatformErasureAdmission } from "../privacy/platform-erasure-admission";
 import { requireTraderLinkPlatformAuthenticatedRequestIdentity } from "../authentication/require-platform-request-scope";
@@ -101,6 +104,61 @@ export function issuePlatformPremiumStagingRuntimeAuthority(input:Readonly<{data
  if(!state)return refused();
  if(actorBinding(state)!==state.actorBinding||targetBinding(readTarget(core,state.targetUserId,ticket))!==state.targetBinding)return refused();
  const result:PlatformPremiumRuntimeAuthority=Object.freeze({kind:"platform_premium_staging_runtime_authority_v1",authorityKey:state.authorityKey,expiresAtUtc:state.expiresAtUtc});
+ issued.set(result,state);return result;
+}
+/** Actual HTTP buyer consumption only. This does not install a policy, authorize
+ * an owner operation or act for another user. The separately authorized native
+ * policy/decoder/payer/receipt must already exist. Negative and incomplete native
+ * collections remain negative/unknown; issuance is never a paid=true predicate. */
+export function issuePlatformPremiumSelfSubscriberRuntimeAuthority(input:Readonly<{database:Database.Database;request:Request;
+ pins:CommunityStagingQaTargetPins;originalTicket:PlatformPremiumTicket}>):PlatformPremiumRuntimeAuthority{
+ const db=input.database,request=input.request,pins=Object.freeze({...input.pins}),ticket=premiumTicket(input.originalTicket),now=new Date().toISOString();
+ assertCommunityStagingQaTarget(db,pins);
+ if(db.inTransaction||!["GET","POST"].includes(request.method)||request.signal.aborted
+  ||resolvePlatformPublicOrigin(request as NextRequest)!==pins.origin
+  ||(request.headers.has("origin")&&request.headers.get("origin")!==pins.origin)||request.headers.get("sec-fetch-site")==="cross-site"
+  ||resolveTraderLinkDiscordGuildId(process.env)!==guildId)return refused();
+ const core=currentPlatformErasureAdmission(db),ledger=readAppliedPlatformMigrations(db),last=ledger.at(-1);
+ if(!core||core.schemaSha256!==pins.schemaSha256||ledger.length!==204||last?.migration_id!=="0216_platform_premium_current_access_events"
+  ||last.module_namespace!=="platform"||last.execution_order!==291||last.checksum_sha256!=="a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539")return refused();
+ const identity=requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers,{environment:process.env,databasePath:db.name});
+ if(identity.mode!=="platform_session"||!identity.sessionId||identity.scope.userId!==ticket.scope.userId)return refused();
+ const subjects=db.prepare("SELECT auth_subject FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").all(identity.scope.userId) as {auth_subject:string}[];
+ if(subjects.length!==1||!selectedSubjects().includes(subjects[0]!.auth_subject)||subjects[0]!.auth_subject!==ticket.scope.discordUserId)return refused();
+ const cookieName=platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE);
+ const cookies=(request.headers.get("cookie")??"").split(";").map(value=>value.trim()).filter(value=>value.startsWith(cookieName+"="));
+ if(cookies.length!==1)return refused();
+ let digest:string;try{digest=hashPlatformSessionToken(decodeURIComponent(cookies[0]!.slice(cookieName.length+1)));}catch{return refused();}
+ const session=new PlatformSessionRepository(db).findActiveByTokenDigest(digest,now);
+ if(!session||session.sessionId!==identity.sessionId||session.userId!==identity.scope.userId)return refused();
+ const paidRoleId=premiumSnowflake(process.env.TRADERLINK_DISCORD_PREMIUM_MEMBER_ROLE_ID??"");
+ const target=core.runForUsers([identity.scope.userId],()=>{
+  core.assertLivePrincipal(identity.scope.userId);
+  const repo=core.memberRepository(identity.scope.userId);if(!repo.isCurrentV2(ticket))return refused();
+  const read=repo.captureV2(ticket.scope.authorityKey);if(read.kind!=="snapshot")return refused();return read;
+ });
+ policyChecks(target,paidRoleId);
+ const scope=target.policy.offerScopes[0]!;
+ if(db.prepare("SELECT 1 FROM partner_alert_mappings WHERE destination_guild_id=? AND destination_role_id=? LIMIT 1").get(guildId,paidRoleId)
+  ||db.prepare("SELECT 1 FROM partner_alert_offers WHERE whop_environment='sandbox' AND whop_account_id=? AND (whop_product_id=? OR whop_plan_id=?) LIMIT 1").get(scope.accountId,scope.productId,scope.planId))return refused();
+ const coverage=target.coverage[0];
+ if(target.coverage.length!==1||coverage?.kind!=="native_coverage"||!("protocol" in coverage.collection)
+  ||coverage.collection.protocol!=="platform_premium_current_paid_access_v1"||coverage.collection.observedAtUtc>now||coverage.collection.validUntilUtc<=now)return refused();
+ premiumRef(coverage.observationRef);
+ const expiresAtUtc=new Date(Math.min(Date.parse(now)+120000,Date.parse(ticket.validUntilUtc),Date.parse(session.expiresAtUtc),
+  Date.parse(coverage.collection.validUntilUtc),Date.parse(coverage.collection.observedAtUtc)+target.policy.maximumEvidenceAgeMs)).toISOString();
+ if(expiresAtUtc<=now)return refused();
+ const state:State={revoked:false,database:db,core,request,pins,actorUserId:identity.scope.userId,actorWorkspaceId:identity.scope.workspaceId,
+  actorSessionId:identity.sessionId,actorTokenDigest:digest,actorBinding:"",headersBinding:JSON.stringify([...request.headers]),issuedAtUtc:now,
+  expiresAtUtc,lastAtUtc:now,targetUserId:identity.scope.userId,authorityKey:ticket.scope.authorityKey,targetBinding:targetBinding(target),paidRoleId};
+ state.actorBinding=actorBinding(state);
+ // A second genuine normal resolver and native read close changes during issuance.
+ const current=requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers,{environment:process.env,databasePath:db.name});
+ if(current.mode!=="platform_session"||current.sessionId!==identity.sessionId||current.scope.userId!==identity.scope.userId
+  ||current.scope.workspaceId!==identity.scope.workspaceId||current.scope.workspaceRole!==identity.scope.workspaceRole
+  ||actorBinding(state)!==state.actorBinding||targetBinding(readTarget(core,state.targetUserId,ticket))!==state.targetBinding
+  ||request.signal.aborted)return refused();
+ const result:PlatformPremiumRuntimeAuthority=Object.freeze({kind:"platform_premium_staging_runtime_authority_v1",authorityKey:state.authorityKey,expiresAtUtc});
  issued.set(result,state);return result;
 }
 function qualifiedRead(binding:PlatformPremiumRuntimeAuthorityBinding,ticket:PlatformPremiumTicket,paidRoleId:string,at:string):PlatformPremiumAuthoritySnapshotV2{

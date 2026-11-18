@@ -1108,6 +1108,43 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
     }) }) });
   }
 
+  /** Identity-only proof consumption for an actual OAuth callback. The canonical
+   * active link/HMAC, qualified policy and full original V2 must already be real.
+   * No provider observation/payment/role is created. A successful INSERT advances
+   * native identity epochs; retry with that old intent stays stale. */
+  recordVerifiedWhopSubjectBindingV2(originalTicket: PlatformPremiumAuthorityTicket, offerScopeRef: string,
+    justVerifiedSubject: string): Readonly<{ kind: "bound" | "duplicate" }> {
+    return this.atomic(() => {
+      this.write(); const ticket = ticketCopy(originalTicket), raw = ref(justVerifiedSubject);
+      const ledger = this.db.prepare("SELECT migration_id,module_namespace,execution_order,checksum_sha256 FROM platform_schema_migrations ORDER BY execution_order DESC LIMIT 1").get() as {
+        migration_id:string;module_namespace:string;execution_order:number;checksum_sha256:string } | undefined;
+      const count = this.db.prepare("SELECT count(*) n FROM platform_schema_migrations").get() as { n:number };
+      if (count.n !== 204 || ledger?.migration_id !== "0216_platform_premium_current_access_events" || ledger.module_namespace !== "platform"
+        || ledger.execution_order !== 291 || ledger.checksum_sha256 !== "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539"
+        || !this.isCurrentV2(ticket)) throw new PlatformPremiumAuthorityError("unbound");
+      const snapshot = this.captureV2(ticket.scope.authorityKey);
+      if (snapshot.kind !== "snapshot" || snapshot.policy.state !== "active" || snapshot.policy.guildId !== "1559172784813514803"
+        || snapshot.policy.offerScopes.length !== 1 || snapshot.policy.offerScopes[0]?.environment !== "sandbox"
+        || snapshot.policy.offerScopes[0].scopeRef !== ref(offerScopeRef) || !snapshot.policy.nativeQualification) throw new PlatformPremiumAuthorityError("unbound");
+      const purchase = this.nativePurchaseForTicket(ticket, offerScopeRef, raw, true);
+      if (purchase.kind !== "purchase") throw new PlatformPremiumAuthorityError("unbound");
+      const payer = purchase.purchase.payer;
+      const old = this.db.prepare<[string], BindingRow>("SELECT * FROM platform_premium_native_bindings WHERE authority_key=?").get(ticket.scope.authorityKey);
+      if (old) {
+        if (old.link_id !== payer.linkId || old.whop_user_ref_hmac !== payer.whopUserRefHmac || old.whop_user_id !== raw) throw new PlatformPremiumAuthorityError("conflict");
+        return Object.freeze({ kind: "duplicate" });
+      }
+      if (!this.isCurrentV2(ticket)) throw new PlatformPremiumAuthorityError("conflict");
+      const before = this.row(ticket.scope.authorityKey)!;
+      this.db.prepare("INSERT INTO platform_premium_native_bindings VALUES (?,?,?,?)").run(ticket.scope.authorityKey, payer.linkId, payer.whopUserRefHmac, raw);
+      const after = this.row(ticket.scope.authorityKey)!;
+      if (after.identity_generation !== before.identity_generation + 1 || after.authority_revision !== before.authority_revision + 1
+        || after.entitlement_generation !== before.entitlement_generation || after.whop_generation !== before.whop_generation
+        || after.erasure_generation !== before.erasure_generation) throw new PlatformPremiumAuthorityError("conflict");
+      return Object.freeze({ kind: "bound" });
+    });
+  }
+
   /** Only the native module's in-process prepared receipt can be persisted.
    * Hydration is outside SQLite; all real authority is rechecked here. */
   recordWhopCoverage(ticket: PlatformPremiumAuthorityTicket, observationRef: string,

@@ -58,8 +58,9 @@ export function assertSharedFixtureContext(context:SharedFixtureContext,database
  if(a.manifest.principals.some(p=>!principalActive(a.database,p)))refused();
  return a;
 }
-export function requireSharedFixtureActor(context:SharedFixtureContext,request:Request,key:FixtureKey):Principal{
- const a=assertSharedFixtureContext(context),p=a.manifest.principals.find(x=>x.key===key);if(!p)refused();
+export function requireSharedFixtureActor(context:SharedFixtureContext,request:Request,key:FixtureKey):Principal & Readonly<{fixtureKeys:readonly FixtureKey[]}>{
+ const a=admitted.get(context);if(!a||!a.database.open||a.parent.signal.aborted||Date.now()>=Date.parse(a.manifest.expiresAtUtc))refused();
+ const p=a.manifest.principals.find(x=>x.key===key);if(!p)refused();
  const url=new URL(request.url);
  if(url.origin!==a.manifest.pins.origin||url.pathname!==`/__private/shared-alerts-fixture/${context.runId}/${key}`||url.search||url.hash||url.username||url.password||request.signal.aborted||!["GET","POST"].includes(request.method)||request.headers.get("sec-fetch-site")==="cross-site"||request.method==="POST"&&request.headers.get("origin")!==url.origin)refused();
  const identity=requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers,{databasePath:a.database.name});
@@ -67,5 +68,5 @@ export function requireSharedFixtureActor(context:SharedFixtureContext,request:R
  if(cookies.length!==1)refused();
  const session=new PlatformSessionService(new PlatformSessionRepository(a.database)).resolve(cookies[0].slice(TRADERLINK_PLATFORM_SESSION_COOKIE.length+1));
  if(identity.mode!=="platform_session"||identity.scope.userId!==p.userId||identity.sessionId!==p.sessionId||!session||session.sessionId!==p.sessionId||session.userId!==p.userId||session.authProvider!=="discord")refused();
- assertSharedFixtureContext(context);return p;
+ assertSharedFixtureContext(context);return Object.freeze({...p,fixtureKeys:Object.freeze(a.manifest.principals.map(x=>x.key))});
 }

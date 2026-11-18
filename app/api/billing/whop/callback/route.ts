@@ -16,6 +16,8 @@ import {
   WHOP_OAUTH_USER_BINDING_COOKIE,
   WHOP_OAUTH_VERIFIER_COOKIE,
 } from "@/src/modules/platform/server/billing/whop-ai-review-oauth";
+import { bindWhopAiReviewStagingNativeLink } from
+  "@/src/modules/platform/server/billing/whop-ai-review-staging-native-link";
 import { withPlatformDatabase } from
   "@/src/modules/platform/server/database/open-platform-database";
 
@@ -29,8 +31,8 @@ function equal(left: string, right: string): boolean {
 }
 
 function finish(request: NextRequest, status: "connected" | "conflict" |
-"invalid-state" | "unavailable"): NextResponse {
-  const response = NextResponse.redirect(new URL(`/account?whop=${status}`,
+"invalid-state" | "unavailable", nativeHeld = false): NextResponse {
+  const response = NextResponse.redirect(new URL(`/account?whop=${status}${nativeHeld ? "&whopNative=held" : ""}`,
     request.nextUrl.origin));
   for (const name of [WHOP_OAUTH_FLOW_COOKIE, WHOP_OAUTH_STATE_COOKIE, WHOP_OAUTH_VERIFIER_COOKIE,
     WHOP_OAUTH_USER_BINDING_COOKIE]) {
@@ -67,12 +69,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const latestConfiguration = loadWhopOAuthRequestConfiguration(request, latestIdentity.scope.userId);
     if (latestIdentity.scope.userId !== identity.scope.userId || !equal(currentFlow,
       createWhopOAuthFlowBinding(latestConfiguration, latestIdentity.scope.userId))) return finish(request, "invalid-state");
-    const result = withPlatformDatabase({ mode: "runtime" }, (database) =>
-      new WhopAiReviewEntitlementRepository(database).linkUser(
+    const result = withPlatformDatabase({ mode: "runtime" }, (database) => {
+      const link = new WhopAiReviewEntitlementRepository(database).linkUser(
         identity.scope.userId,
         createWhopPrivacyReference(subject, "user", configuration.identityHmacKey),
-      ));
-    return finish(request, result === "conflict" ? "conflict" : "connected");
+      );
+      if (link === "conflict") return { status: "conflict" as const, nativeHeld: false };
+      const native = configuration.realm === "sandbox" ? bindWhopAiReviewStagingNativeLink({
+        database, request, linkedUserId: identity.scope.userId, justVerifiedSubject: subject,
+      }) : null;
+      return { status: "connected" as const, nativeHeld: native?.kind === "held" };
+    });
+    return finish(request, result.status, result.nativeHeld);
   } catch {
     return finish(request, "unavailable");
   }

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { markSharedAlertRead } from "./shared-alerts-actions";
+import {useSharedAlertsBindings} from "./shared-alerts-bindings";
 
 /** Only mounted, visible content advances read state; prefetching never does. */
 export function SharedAlertsReadMarker({ communitySlug, requestId, messageSequence, eventSequence, onRead }: { communitySlug: string; requestId: string; messageSequence: number; eventSequence: number; onRead: () => void }) {
+  const {markRead}=useSharedAlertsBindings();
   const pending = useRef<{ key: string; result: Promise<boolean> } | null>(null);
   useEffect(() => {
     const detail = document.getElementById("sharing-detail");
@@ -20,7 +21,7 @@ export function SharedAlertsReadMarker({ communitySlug, requestId, messageSequen
       if (seen.size !== targets.length) return;
       subscribed = true;
       // Reuse the same idempotent request across development effect remounts.
-      if (pending.current?.key !== key) pending.current = { key, result: markSharedAlertRead({ communitySlug, requestId, messageSequence, eventSequence }) };
+      if (pending.current?.key !== key) pending.current = { key, result: markRead({ communitySlug, requestId, messageSequence, eventSequence }) };
       void pending.current.result.then(saved => {
         if (!saved) { subscribed = false; if (pending.current?.key === key) pending.current = null; return; }
         // A read acknowledgement updates badges locally. Refreshing the route
@@ -38,6 +39,6 @@ export function SharedAlertsReadMarker({ communitySlug, requestId, messageSequen
     targets.forEach(target => observer.observe(target));
     document.addEventListener("visibilitychange", mark);
     return () => { mounted = false; observer.disconnect(); document.removeEventListener("visibilitychange", mark); };
-  }, [communitySlug, requestId, messageSequence, eventSequence, onRead]);
+  }, [communitySlug, requestId, messageSequence, eventSequence, onRead, markRead]);
   return null;
 }

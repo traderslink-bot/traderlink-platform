@@ -1,0 +1,61 @@
+{
+  "baseCommit": "cc81185257d43e52ea97921f3a2051214a6fc713",
+  "runtimeVectorSha256": "5949603d24fbe551f9f379e0a505e0779cbd086d198cc30c3fa12bc23814d715",
+  "files": [
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-controller.ts",
+      "beforeSha256": null,
+      "afterSha256": "3eedd381bcfd7548cd57306b8ac80fee74434bcf3a02927d929fbfc7a6e58db8"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-snapshot.ts",
+      "beforeSha256": null,
+      "afterSha256": "f0a2fe511dd3507aa93df41e42c03b672dfd4b95e9006a1c9d4d55e849da064c"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-model.ts",
+      "beforeSha256": "86697af789d566ce03a4007dae97051e7fc93225dec990b00c5108442784ff46",
+      "afterSha256": "3f6a600ec6671a1ad2a5beeb1b483008fc154135a3073c3e20f765b6fd6e450e"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-authority.ts",
+      "beforeSha256": "bad2ea12c5c719b9a2e0aab22c37f366aef63bdb1bbf5c4ea98bf67f436ac6d4",
+      "afterSha256": "e7fbc1942591372866ac4b3afa2cb3e31e5cfe9095968e4ab6b09c46db656f7b"
+    },
+    {
+      "path": "app/(dashboard)/communities/shared-alerts/shared-alerts-client.tsx",
+      "beforeSha256": "335bd7ba562c49c1f37ab03c6cc354919c553b5c3f538899a5c8800907ad1f8f",
+      "afterSha256": "2783accb49eb8450333c52cdd3847fddadbb29e65764204e470ebc79417b7cfd"
+    },
+    {
+      "path": "app/(dashboard)/communities/shared-alerts/shared-alerts-read-marker.tsx",
+      "beforeSha256": "7fdefa2a4b7dbcd915331bcafbb297679404db96b70379a2670928dc681bc6f6",
+      "afterSha256": "8b4681365cde806e9fafe5b9ec896732dd308e8e16a209d260e5c849bde191b8"
+    },
+    {
+      "path": "app/(dashboard)/communities/shared-alerts/shared-alerts-bindings.tsx",
+      "beforeSha256": null,
+      "afterSha256": "4219343eeaa1e24784957070f515e8ce8b7faa7733db086f085d75a4f8f6dea1"
+    },
+    {
+      "path": "app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-community.tsx",
+      "beforeSha256": null,
+      "afterSha256": "907777d88821b27bc96e15a0069460b7b8a66a2d5f6699cace8a13e491ac5acb"
+    },
+    {
+      "path": "app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-actions.ts",
+      "beforeSha256": null,
+      "afterSha256": "2cbad61a22e1f125244c756dc0677285fed81a5fb2445abf8ee9f4f82390a7c4"
+    },
+    {
+      "path": "app/%5F%5Fprivate/community-staging-qa/[nonce]/route.ts",
+      "beforeSha256": null,
+      "afterSha256": "db3e4d7793ea8922bf390a3ec4c50fa8018f73a498bb121fa22030c92854b5ca"
+    },
+    {
+      "path": "app/(dashboard)/%5F%5Fprivate/shared-alerts-fixture/[runId]/[key]/page.tsx",
+      "beforeSha256": null,
+      "afterSha256": "82caeaee02f08e2f2c24faa25989fdeab16240aa3a8f82d216e85ddf75c8d082"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,11 +23,11 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DashboardPage, DashboardPanel } from "@/app/dashboard-ui";
 import type { SharedAlertDraftState, SharedAlertRequest, SharedAlertRoute, SharedAlertsSnapshot } from "@/src/modules/communities/contracts/shared-alerts-contracts";
-import { mutateSharedAlertDraft, mutateSharedAlerts } from "./shared-alerts-actions";
+import {SharedAlertsBindingsProvider,SharedAlertsActionForm,useSharedAlertsBindings,type SharedAlertsBindings,type SharedAlertsNavigation} from "./shared-alerts-bindings";
 import { SharedAlertsReadMarker } from "./shared-alerts-read-marker";
 
 type View = "find" | "requests" | "connections" | "history" | "activity" | "settings";
-type Snapshot = SharedAlertsSnapshot;
+type Snapshot = SharedAlertsSnapshot & {navigation?:SharedAlertsNavigation};
 const panelBorder = { border: 1, borderColor: "divider", borderRadius: 2, p: 2 } as const;
 const subscribeToHydration = () => () => {};
 const clientReady = () => true;
@@ -35,11 +35,12 @@ const serverReady = () => false;
 const initialDraftState: SharedAlertDraftState = { error: null, destination: null };
 
 function useSharedMessageAction() {
+  const bindings=useSharedAlertsBindings();
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [state, action, pending] = useActionState(async (previous: SharedAlertDraftState, data: FormData) => {
     const origin = window.location.href;
-    const next = await mutateSharedAlertDraft(previous, data);
+    const next = await bindings.draft(previous, data);
     if (next.destination) { setMessage(""); if (window.location.href === origin) router.push(next.destination); }
     return next;
   }, initialDraftState);
@@ -49,7 +50,7 @@ function useSharedMessageAction() {
 function url(snapshot: Snapshot, values: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(values)) if (value !== undefined && value !== "") query.set(key, String(value));
-  return `/communities/${snapshot.community.slug}/manage/shared-alerts?${query}`;
+  return `${snapshot.navigation?.basePath??`/communities/${snapshot.community.slug}/manage/shared-alerts`}?${query}`;
 }
 function date(value: string) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(new Date(value)) + " UTC";
@@ -132,6 +133,7 @@ function Compose({ snapshot }: { snapshot: Snapshot }) {
   const other = snapshot.composeCommunity!;
   const draft = useSharedMessageAction();
   const [direction, setDirection] = useState("send");
+  const bindings=useSharedAlertsBindings();
   const [publishers, setPublishers] = useState<string[]>([]);
   const eligible = snapshot.publishers.filter(person => person.canPublish);
   return <DashboardPanel title="Send sharing request">
@@ -142,7 +144,7 @@ function Compose({ snapshot }: { snapshot: Snapshot }) {
         {draft.state.error ? <Alert severity="error" role="alert">{draft.state.error}</Alert> : null}
         <Typography><strong>{snapshot.community.name}</strong> and <strong>{other.name}</strong></Typography>
         <TextField label="Sharing direction" name="direction" onChange={event => setDirection(event.target.value)} select value={direction}>
-          <MenuItem value="send">Send our alerts to {other.name}</MenuItem><MenuItem value="receive">Ask {other.name} to offer their analysts</MenuItem>
+          <MenuItem value="send">Send our alerts to {other.name}</MenuItem>{!bindings.navigation?.outboundOnly?<MenuItem value="receive">Ask {other.name} to offer their analysts</MenuItem>:null}
         </TextField>
         {direction === "send" ? <Box><Typography component="h3" variant="subtitle1">Analysts to offer</Typography>
           {eligible.map(person => <FormControlLabel key={person.userId} control={<Checkbox name="publisherId" value={person.userId} checked={publishers.includes(person.userId)} onChange={event => { const checked = event.target.checked; setPublishers(current => checked ? [...current,person.userId] : current.filter(id => id !== person.userId)); }} />} label={person.name} />)}
@@ -180,7 +182,7 @@ function ReviewAgreement({ snapshot, request }: { snapshot: Snapshot; request: S
   const [showName,setShowName]=useState(request.showSourceCommunityName);
   const [selected,setSelected]=useState<string[]>(receiving ? request.routes.filter(route=>route.selected && route.offered && route.canPublish).map(route=>route.userId) : request.routes.filter(route=>route.offered && route.canPublish).map(route=>route.userId));
   const routes=receiving?request.routes.filter(r=>r.offered && r.canPublish):snapshot.publishers.filter(p=>p.canPublish).map(p=>request.routes.find(r=>r.userId===p.userId)??{...p,offered:false,selected:false,channelId:null,channelName:null,revision:1,requireApproval:false,paused:false});
-  return <Box action={mutateSharedAlerts} component="form"><Fields snapshot={snapshot} command="agree" request={request} tab={request.isConnection?"connections":"requests"} />
+  return <SharedAlertsActionForm><Fields snapshot={snapshot} command="agree" request={request} tab={request.isConnection?"connections":"requests"} />
     <input type="hidden" name="agreed" value="on" />
     <Stack spacing={2}>
       <Typography component="h3" variant="h6">{receiving?"Choose analysts to receive":"Offer analysts"}</Typography>
@@ -193,7 +195,7 @@ function ReviewAgreement({ snapshot, request }: { snapshot: Snapshot; request: S
       {receiving?<FormControlLabel control={<Checkbox checked={showName} name="showSourceCommunityName" onChange={event=>setShowName(event.target.checked)} />} label={`Show ${request.source.name}’s community name in Discord posts sent to our server`} />:<input name="showSourceCommunityName" type="hidden" value={showName?"on":""} />}
       <Submit disabled={!selected.length}>{receiving?"Accept selected analysts":"Send analyst offer"}</Submit>
     </Stack>
-  </Box>;
+  </SharedAlertsActionForm>;
 }
 function ReceivingChannelChoice({ snapshot, route }: {snapshot: Snapshot; route: SharedAlertRoute}) {
   const [channel,setChannel]=useState(route.channelId??"");
@@ -201,19 +203,20 @@ function ReceivingChannelChoice({ snapshot, route }: {snapshot: Snapshot; route:
 }
 function Lifecycle({ snapshot, request, command, label, danger = false }: { snapshot: Snapshot; request: SharedAlertRequest; command: string; label: string; danger?: boolean }) {
   const [confirmed, setConfirmed] = useState(false);
-  return <Box action={mutateSharedAlerts} component="form"><Fields snapshot={snapshot} command={command} request={request} tab={request.isConnection ? "connections" : "requests"} />
+  return <SharedAlertsActionForm><Fields snapshot={snapshot} command={command} request={request} tab={request.isConnection ? "connections" : "requests"} />
     <Stack spacing={1}>
       {danger ? <FormControlLabel control={<Checkbox checked={confirmed} onChange={event => setConfirmed(event.target.checked)} />} label={<Typography variant="body2">Confirm {label.toLowerCase()}</Typography>} /> : null}
       <Submit color={danger ? "error" : "primary"} disabled={danger && !confirmed} variant="outlined">{label}</Submit>
     </Stack>
-  </Box>;
+  </SharedAlertsActionForm>;
 }
 function ReceivingPublisher({ snapshot, request, route }: { snapshot:Snapshot; request:SharedAlertRequest; route:SharedAlertRoute }) {
   const [channel,setChannel]=useState(route.channelId??"");
   const [channelName, setChannelName] = useState(route.channelName);
   const [requireApproval, setRequireApproval] = useState(route.requireApproval);
   const errorRef = useRef<HTMLDivElement>(null);
-  const [result, save] = useActionState(mutateSharedAlertDraft, initialDraftState);
+  const bindings=useSharedAlertsBindings();
+  const [result, save] = useActionState(bindings.draft, initialDraftState);
   useEffect(() => { if (result.error) errorRef.current?.focus(); }, [result]);
   const router = useRouter();
   useEffect(() => { if (result.destination) router.replace(result.destination, { scroll: false }); }, [result.destination, router]);
@@ -229,25 +232,25 @@ function ReceivingPublisher({ snapshot, request, route }: { snapshot:Snapshot; r
         <Submit disabled={!snapshot.channels.some(c=>c.channelId===channel)} variant="outlined">Save settings</Submit>
       </Stack>
     </Box>
-    <Stack direction="row" spacing={1}>{[route.paused?"resume":"pause","remove"].map(command=><Box key={command} action={mutateSharedAlerts} component="form"><Fields snapshot={snapshot} request={request} command="route" tab="connections" /><input type="hidden" name="userId" value={route.userId} /><input type="hidden" name="routeRevision" value={route.revision} /><input type="hidden" name="routeCommand" value={command} /><Submit variant="outlined" color={command==="remove"?"error":"primary"}>{command==="resume"?"Resume":command==="pause"?"Pause":"Stop sharing this analyst"}</Submit></Box>)}</Stack>
+    <Stack direction="row" spacing={1}>{[route.paused?"resume":"pause","remove"].map(command=><SharedAlertsActionForm key={command}><Fields snapshot={snapshot} request={request} command="route" tab="connections" /><input type="hidden" name="userId" value={route.userId} /><input type="hidden" name="routeRevision" value={route.revision} /><input type="hidden" name="routeCommand" value={command} /><Submit variant="outlined" color={command==="remove"?"error":"primary"}>{command==="resume"?"Resume":command==="pause"?"Pause":"Stop sharing this analyst"}</Submit></SharedAlertsActionForm>)}</Stack>
   </Stack></Box>;
 }
 function ReceiverSettings({ snapshot, request }: { snapshot: Snapshot; request: SharedAlertRequest }) {
   const [showName,setShowName]=useState(request.showSourceCommunityName);
   return <Stack spacing={3}>
     {request.routes.filter(r=>r.selected).map(route=><ReceivingPublisher key={`${route.userId}-${route.revision}`} snapshot={snapshot} request={request} route={route} />)}
-    <Box action={mutateSharedAlerts} component="form"><Fields snapshot={snapshot} command="presentation" request={request} /><Stack spacing={1.5}>
+    <SharedAlertsActionForm><Fields snapshot={snapshot} command="presentation" request={request} /><Stack spacing={1.5}>
       <FormControlLabel control={<Checkbox checked={showName} name="showSourceCommunityName" onChange={event=>setShowName(event.target.checked)} />} label={`Show ${request.source.name}’s community name in Discord posts sent to our server`} />
       <input type="hidden" name="agreed" value="on" />
       <Submit disabled={showName===request.showSourceCommunityName}>Save post attribution</Submit>
-    </Stack></Box>
+    </Stack></SharedAlertsActionForm>
   </Stack>;
 }
 function PublisherPermissions({ snapshot }: { snapshot:Snapshot }) {
-  return <DashboardPanel title="Publishers"><Stack spacing={1.5}>{snapshot.publishers.map(p=><Box key={p.userId} action={mutateSharedAlerts} component="form" sx={panelBorder}>
+  return <DashboardPanel title="Publishers"><Stack spacing={1.5}>{snapshot.publishers.map(p=><SharedAlertsActionForm key={p.userId} sx={panelBorder}>
     <Fields snapshot={snapshot} command="publisher" tab="settings" /><input type="hidden" name="userId" value={p.userId} />
     <Stack spacing={1}><Typography variant="subtitle1">{p.name}</Typography><FormControlLabel control={<Checkbox defaultChecked={p.canPublish} name="enabled" />} label="Publish alerts" /><Submit variant="outlined">Save permission</Submit></Stack>
-  </Box>)}{!snapshot.publishers.length?<Typography color="text.secondary">No connected team members.</Typography>:null}</Stack></DashboardPanel>;
+  </SharedAlertsActionForm>)}{!snapshot.publishers.length?<Typography color="text.secondary">No connected team members.</Typography>:null}</Stack></DashboardPanel>;
 }
 function Conversation({ snapshot, request }: { snapshot: Snapshot; request: SharedAlertRequest }) {
   const selected = snapshot.selected!;
@@ -307,27 +310,32 @@ function SelectedRequest({ snapshot, onRead }: { snapshot: Snapshot; onRead: () 
       {delivery.status==="awaiting_approval" && receiving ? <Stack spacing={1.5}>
         {delivery.parts.map(part=><Box key={part.number} sx={panelBorder}><Typography variant="body2" sx={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{part.content}</Typography></Box>)}
         {!delivery.reviewable?<Typography variant="body2" color="text.secondary">Waiting for the original Discord post.</Typography>:null}
-        <Box action={mutateSharedAlerts} component="form"><Fields snapshot={snapshot} request={request} command="review" tab="connections" /><input type="hidden" name="deliveryId" value={delivery.deliveryId} />
+        <SharedAlertsActionForm><Fields snapshot={snapshot} request={request} command="review" tab="connections" /><input type="hidden" name="deliveryId" value={delivery.deliveryId} />
           <ReviewDecisionButtons contentRevision={delivery.contentRevision} canApprove={delivery.reviewable && request.status === "active" && !request.sourcePaused && !request.receiverPaused} />
-        </Box>
+        </SharedAlertsActionForm>
       </Stack>:null}
       {delivery.error ? <Typography variant="body2" sx={{ mt: 1 }}>{delivery.error}</Typography> : null}
       {delivery.status === "uncertain" ? <Typography variant="body2" sx={{ mt: 1 }}>Discord may have accepted this alert. It will not be resent automatically. Check the receiving channel.</Typography> : null}
-      {delivery.status === "failed" && request.status === "active" && !request.sourcePaused && !request.receiverPaused ? <Box action={mutateSharedAlerts} component="form" sx={{ mt: 1 }}><Fields snapshot={snapshot} command="retry" request={request} tab="connections" /><input name="deliveryId" type="hidden" value={delivery.deliveryId} /><Submit variant="outlined">Retry delivery</Submit></Box> : null}
+      {delivery.status === "failed" && request.status === "active" && !request.sourcePaused && !request.receiverPaused ? <SharedAlertsActionForm sx={{ mt: 1 }}><Fields snapshot={snapshot} command="retry" request={request} tab="connections" /><input name="deliveryId" type="hidden" value={delivery.deliveryId} /><Submit variant="outlined">Retry delivery</Submit></SharedAlertsActionForm> : null}
     </Box>)}</Stack><Pages total={selected.deliveryTotal} page={selected.deliveryPage} snapshot={snapshot} tab="connections" parameter="deliveryPage" requestId={request.requestId} /></Box></> : null}
     {request.status === "pending" ? <Lifecycle snapshot={snapshot} request={request} command={request.initiatorCommunityId === snapshot.community.communityId ? "withdraw" : "decline"} label={request.initiatorCommunityId === snapshot.community.communityId ? "Withdraw request" : "Decline request"} danger /> : null}
     {request.status === "active" ? <Lifecycle snapshot={snapshot} request={request} command="end" label="End connection" danger /> : null}
-    <Box action={mutateSharedAlerts} component="form"><Fields snapshot={snapshot} command="block" /><input name="otherCommunityId" type="hidden" value={other.communityId} /><Stack spacing={1}><Typography variant="body2" color="text.secondary">Block future requests from {other.name}. Existing agreements must be paused or ended separately.</Typography><Submit variant="text">Block future requests</Submit></Stack></Box>
+    <SharedAlertsActionForm><Fields snapshot={snapshot} command="block" /><input name="otherCommunityId" type="hidden" value={other.communityId} /><Stack spacing={1}><Typography variant="body2" color="text.secondary">Block future requests from {other.name}. Existing agreements must be paused or ended separately.</Typography><Submit variant="text">Block future requests</Submit></Stack></SharedAlertsActionForm>
   </Stack></DashboardPanel></Box>;
 }
 function ContactSettings({ snapshot }: { snapshot: Snapshot }) {
   return <DashboardPanel title="Sharing request settings"><Stack spacing={2}>
-    <Box action={mutateSharedAlerts} component="form"><Fields snapshot={snapshot} command="settings" tab="settings" /><Stack spacing={1}><FormControlLabel control={<Checkbox defaultChecked={snapshot.community.requestsOpen} name="requestsOpen" />} label="Allow sharing requests from connected communities" /><Submit variant="outlined">Save settings</Submit></Stack></Box>
-    <Box><Typography component="h3" variant="h6">Blocked communities</Typography>{!snapshot.blockedCommunities.length?<Typography color="text.secondary">No blocked communities.</Typography>:null}{snapshot.blockedCommunities.map(community => <Box action={mutateSharedAlerts} component="form" key={community.communityId} sx={{ mt: 1 }}><Fields snapshot={snapshot} command="unblock" tab="settings" /><input name="otherCommunityId" type="hidden" value={community.communityId} /><Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography variant="body2">{community.name}</Typography><Submit variant="text">Unblock</Submit></Stack></Box>)}</Box>
+    <SharedAlertsActionForm><Fields snapshot={snapshot} command="settings" tab="settings" /><Stack spacing={1}><FormControlLabel control={<Checkbox defaultChecked={snapshot.community.requestsOpen} name="requestsOpen" />} label="Allow sharing requests from connected communities" /><Submit variant="outlined">Save settings</Submit></Stack></SharedAlertsActionForm>
+    <Box><Typography component="h3" variant="h6">Blocked communities</Typography>{!snapshot.blockedCommunities.length?<Typography color="text.secondary">No blocked communities.</Typography>:null}{snapshot.blockedCommunities.map(community => <SharedAlertsActionForm key={community.communityId} sx={{ mt: 1 }}><Fields snapshot={snapshot} command="unblock" tab="settings" /><input name="otherCommunityId" type="hidden" value={community.communityId} /><Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography variant="body2">{community.name}</Typography><Submit variant="text">Unblock</Submit></Stack></SharedAlertsActionForm>)}</Box>
   </Stack></DashboardPanel>;
 }
 
-export function SharedAlertsClient({ snapshot: incoming, tab, error, saved }: { snapshot: Snapshot; tab: View; error: string | null; saved: boolean }) {
+type SharedAlertsClientProps={snapshot:Snapshot;tab:View;error:string|null;saved:boolean;bindings?:SharedAlertsBindings};
+export function SharedAlertsClient({bindings,snapshot,...props}:SharedAlertsClientProps){
+  const incoming=useMemo(()=>bindings?.navigation?{...snapshot,navigation:bindings.navigation}:snapshot,[snapshot,bindings]);
+  return <SharedAlertsBindingsProvider bindings={bindings}><SharedAlertsClientContent {...props} snapshot={incoming}/></SharedAlertsBindingsProvider>;
+}
+function SharedAlertsClientContent({ snapshot: incoming, tab, error, saved }: Omit<SharedAlertsClientProps,"bindings">) {
   const interactive = useSyncExternalStore(subscribeToHydration, clientReady, serverReady);
   const router = useRouter();
   const [navigating, startNavigation] = useTransition();
@@ -367,9 +375,10 @@ export function SharedAlertsClient({ snapshot: incoming, tab, error, saved }: { 
     selected: incoming.selected ? { ...incoming.selected, request: { ...readRequest, unread: 0 } } : null,
   } : incoming;
   return <DashboardPage>
+    {snapshot.navigation?<Alert severity="info">{snapshot.navigation.testLabel}</Alert>:null}
     {!interactive ? <Typography role="status" variant="body2">Loading sharing controls…</Typography> : null}
     <Stack aria-busy={!interactive} inert={!interactive} data-shared-alerts-ready={interactive ? "true" : "false"} spacing={2.5} sx={{ minWidth: 0 }}>
-    <DashboardPanel hideHeader><Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, alignItems: { sm: "center" }, justifyContent: "space-between" }}><Box><Typography component="h1" variant="h1">Shared alerts</Typography><Typography color="text.secondary" sx={{ mt: 1 }}>{snapshot.community.name}</Typography></Box><Stack direction="row" spacing={1}><Button component={Link} href="/help/traderslink-app/shared-alerts" aria-label="Help for Shared alerts">Help</Button><Button component={Link} href="/communities">My communities</Button><Button component={Link} href={`/communities/${snapshot.community.slug}/manage`}>Back to community</Button></Stack></Stack>
+    <DashboardPanel hideHeader><Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, alignItems: { sm: "center" }, justifyContent: "space-between" }}><Box><Typography component="h1" variant="h1">Shared alerts</Typography><Typography color="text.secondary" sx={{ mt: 1 }}>{snapshot.community.name}</Typography></Box><Stack direction="row" spacing={1}><Button component={Link} href="/help/traderslink-app/shared-alerts" aria-label="Help for Shared alerts">Help</Button><Button component={Link} href="/communities">My communities</Button><Button component={Link} href={snapshot.navigation?.communityHref??`/communities/${snapshot.community.slug}/manage`}>Back to community</Button></Stack></Stack>
       <Tabs aria-label="Shared alert sections" allowScrollButtonsMobile scrollButtons slotProps={{ scroller: { ref: tabScroller } }} value={tab} variant="scrollable" sx={{ mt: 2, borderBottom: 1, borderColor: "divider", "& .MuiTab-root.Mui-selected": { color: "text.primary" }, "& .MuiTabs-indicator": { bgcolor: "text.primary" } }}>
         <Tab component={Link} onNavigate={navigate("find")} href={url(snapshot, { tab: "find" })} label="Find communities" value="find" />
         <Tab component={Link} onNavigate={navigate("requests")} href={url(snapshot, { tab: "requests" })} label={<Badge badgeContent={snapshot.requestUnreadCount??0} color="error" max={99} sx={{ pr: 1.5 }}>Requests</Badge>} value="requests" />

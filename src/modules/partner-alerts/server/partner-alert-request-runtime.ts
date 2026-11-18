@@ -16,7 +16,9 @@ import { platformPaidStripeConnectBillingMigration } from "../../platform/server
 import { calculatePlatformMigrationChecksum } from "../../platform/server/database/platform-migration-contract";
 import { readAppliedPlatformMigrations } from "../../platform/server/database/platform-migration-registry";
 import { PlatformErasureAdmission } from "../../platform/server/privacy/platform-erasure-admission";
-import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL } from "../../platform/server/membership/platform-premium-role-schema";
+import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS as PLATFORM_PREMIUM_ROLE_SCHEMA_SQL } from "../../platform/server/membership/platform-premium-role-current-access-schema";
+import { createPartnerAlertRequestPremiumBinder } from "./partner-alert-request-premium-binding";
+import { readPartnerAlertIsolatedStaging } from "./partner-alert-isolated-staging";
 import { checkPartnerAlertSubscriberAccess, verifyPartnerAlertSubscriberOffer, type PartnerAlertDiscordDestination,
   type PartnerAlertSubscriberOffer, type PartnerAlertSubscriberRoleObserver } from "./partner-alert-subscriber-access";
 import type { PartnerAlertContextTicket } from "../contracts/partner-alert-contracts";
@@ -143,6 +145,7 @@ export async function withPartnerAlertRequestRuntime<T>(
     || (outputBotUserId.length === 20 && outputBotUserId > "18446744073709551615")
     || !outputConfigurationRef || !REF.test(outputConfigurationRef)) return unavailableResult();
   let database: ReturnType<typeof openPlatformDatabase> | null = null;
+  let premiumRequestBinder: ReturnType<typeof createPartnerAlertRequestPremiumBinder> | null = null;
   try {
     database = openPlatformDatabase({ mode: "runtime", environment });
     const admission = PlatformErasureAdmission.bind(database, {
@@ -280,8 +283,13 @@ export async function withPartnerAlertRequestRuntime<T>(
         return observed && current && providerConfigurationFingerprint(current) === providerConfigurationFingerprint(discordConfiguration)
           ? observed : null;
       } : undefined;
+    if (!bindSubscriberAuthority && stripeFundingEnvironment === "sandbox" && readPartnerAlertIsolatedStaging(environment)) {
+      premiumRequestBinder = createPartnerAlertRequestPremiumBinder({ database,admission,request,environment,
+        guildId: destinationGuildId,paidRoleId: stripePremiumRole,observeDiscord: observable });
+    }
     const subscriberAuthority = (target: PartnerAlertSubscriberOffer) => bindSubscriberAuthority
-      ? bound ?? null : bindPartnerAlertNativeSubscriber(database!, admission, target, destinationGuildId, stripeFundingEnvironment,
+      ? bound ?? null : premiumRequestBinder ? premiumRequestBinder.bind(target)
+      : bindPartnerAlertNativeSubscriber(database!, admission, target, destinationGuildId, stripeFundingEnvironment,
         stripePremiumRole, stripeFundingEnvironment === "live" || whopEnvironment === "sandbox"
           ? { observeDiscord: observable } : undefined);
     const authorize = (incoming: Request, communityId: string, offerKey: string, includeExistingPurchase = false) =>
@@ -608,6 +616,7 @@ export async function withPartnerAlertRequestRuntime<T>(
   } catch {
     return unavailableResult();
   } finally {
+    premiumRequestBinder?.clear();
     database?.close();
   }
 }

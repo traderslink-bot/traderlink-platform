@@ -2,7 +2,8 @@
 import { expect,it,vi } from "vitest";
 import { PlatformPremiumWhopCurrentAccessPreparation,
   type PlatformPremiumNativeCurrentAccessCollection } from "../../platform/server/membership/platform-premium-whop-current-access";
-import { createPartnerAlertPremiumWhopRefresh, createPartnerAlertPremiumWhopSubscriberBinding } from "./partner-alert-premium-whop-refresh";
+import { createPartnerAlertPremiumWhopRefresh, createPartnerAlertPremiumWhopSubscriberBinding,
+  createPartnerAlertPremiumWhopRequestSubscriberBinding } from "./partner-alert-premium-whop-refresh";
 vi.mock("server-only",() => ({}));
 const at = "2026-11-17T20:00:00.000Z",until = "2026-11-17T20:00:30.000Z";
 function fixture() {
@@ -84,6 +85,39 @@ it("refreshes an observation approaching expiry rather than extending its lifeti
   f.setNow("2026-11-17T20:00:20.000Z");await createPartnerAlertPremiumWhopRefresh(f.input)(f.scope.authorityKey);
   expect(f.input.provider.prepare).toHaveBeenCalledOnce();expect(f.input.producer.recordWhopCurrentAccess).toHaveBeenCalledOnce();
   expect(f.collection.validUntilUtc).toBe(until);
+});
+
+it("does not capture or hydrate an already cancelled buyer request",async () => {
+  const f = fixture(),controller = new AbortController();controller.abort();
+  await expect(createPartnerAlertPremiumWhopRefresh({ ...f.input,signal: controller.signal })(f.scope.authorityKey)).rejects.toThrow();
+  expect(f.input.producer.captureV2).not.toHaveBeenCalled();
+  expect(f.input.provider.prepare).not.toHaveBeenCalled();
+  expect(f.input.producer.recordWhopCurrentAccess).not.toHaveBeenCalled();
+});
+
+it("propagates buyer cancellation to hydration and refuses its late receipt",async () => {
+  const f = fixture(),controller = new AbortController();
+  f.input.provider.prepare.mockImplementation(async () => { controller.abort();return f.proof(); });
+  await expect(createPartnerAlertPremiumWhopRefresh({ ...f.input,signal: controller.signal })(f.scope.authorityKey)).rejects.toThrow();
+  expect(f.input.provider.prepare).toHaveBeenCalledWith({ purchase: f.collection.purchase,
+    knownMembershipIds: ["mem_known"],signal: controller.signal });
+  expect(f.input.producer.recordWhopCurrentAccess).not.toHaveBeenCalled();
+});
+
+it("does not retain a request token when actual self issuance refuses an unqualified image",async () => {
+  const f = fixture();
+  vi.stubEnv("TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE","enabled");
+  try {
+    const binding = createPartnerAlertPremiumWhopRequestSubscriberBinding({ ...f.input,database: {} as never,
+      request: new Request("https://isolated.example.invalid/partner-channels"),
+      pins: { origin: "https://isolated.example.invalid",sourceCommit: "a".repeat(40),sourceVectorSha256: "b".repeat(64),
+        schemaSha256: "c".repeat(64),buildId: "unit",artifactSha256: "d".repeat(64) } });
+    await expect(binding.refreshPremium(f.scope.authorityKey)).rejects.toThrow();
+    expect(f.input.producer.recordWhopCurrentAccess).toHaveBeenCalledWith(f.ticket,"observation_ref",expect.anything());
+    expect(f.input.producer.captureV2).toHaveBeenCalledTimes(2);
+    expect(binding.runtimeAuthority.current()).toBeNull();binding.clear();
+    expect(binding.runtimeAuthority.current()).toBeNull();
+  } finally { vi.unstubAllEnvs(); }
 });
 
 

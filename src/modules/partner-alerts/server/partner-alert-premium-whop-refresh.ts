@@ -2,7 +2,7 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 import type { CommunityStagingQaTargetPins } from "../../communities/server/community-staging-qa-target";
-import { issuePlatformPremiumStagingRuntimeAuthority, type PlatformPremiumRuntimeAuthority,
+import { issuePlatformPremiumSelfSubscriberRuntimeAuthority, issuePlatformPremiumStagingRuntimeAuthority, type PlatformPremiumRuntimeAuthority,
   type PlatformPremiumRuntimeAuthorityBinding } from "../../platform/server/membership/platform-premium-runtime-authority";
 
 import { premiumFresh, premiumRef, premiumSnowflake, premiumTicket, premiumUtc,
@@ -43,6 +43,7 @@ export function createPartnerAlertPremiumWhopRefresh(input: Readonly<{
   /** Optional raw subject from the normal verified identity service only.
    * The repository still checks it against the canonical link HMAC. */
   readVerifiedNativeSubject?: (original: PlatformPremiumTicket) => string | undefined;
+  signal?: AbortSignal;
 }>): (authorityKey: string) => Promise<void> {
   const guildId = premiumSnowflake(input.guildId), offer = Object.freeze({ ...input.offer });
   if (offer.environment !== "sandbox" || input.provider.qualification.environment !== "sandbox"
@@ -52,6 +53,7 @@ export function createPartnerAlertPremiumWhopRefresh(input: Readonly<{
     return operation();
   });
   return async authorityKey => {
+    if (input.signal?.aborted) return refused();
     premiumRef(authorityKey); input.provider.assertCurrent();
     const captured = inWriter(() => {
       const snapshot = input.producer.captureV2(authorityKey);
@@ -83,7 +85,9 @@ export function createPartnerAlertPremiumWhopRefresh(input: Readonly<{
     });
     input.provider.assertCurrent();
     if (captured.reusable) return;
-    const prepared = await input.provider.prepare({ purchase: captured.purchase,knownMembershipIds: captured.knownMembershipIds });
+    const prepared = await input.provider.prepare({ purchase: captured.purchase,knownMembershipIds: captured.knownMembershipIds,
+      ...(input.signal ? { signal: input.signal } : {}) });
+    if (input.signal?.aborted) return refused();
     input.provider.assertCurrent();
     if (!isPreparedPlatformPremiumWhopCurrentAccess(prepared)) return refused();
     inWriter(() => {
@@ -109,10 +113,32 @@ export function createPartnerAlertPremiumWhopSubscriberBinding(input:
     runtimeAuthority: PlatformPremiumRuntimeAuthorityBinding;
     clear: () => void;
   }> {
+  return createSubscriberBinding(input, current => issuePlatformPremiumStagingRuntimeAuthority({
+    database: input.database,request: input.ownerRequest,pins: input.pins,originalTicket: current,
+  }));
+}
+
+/** Normal buyer HTTP composition. Native Core issuance authenticates this exact
+ * request and accepts only its own current authority, including confirmed loss.
+ * Owner/controller issuance above remains a separate boundary. */
+export function createPartnerAlertPremiumWhopRequestSubscriberBinding(input:
+  Parameters<typeof createPartnerAlertPremiumWhopRefresh>[0] & Readonly<{
+    database: Database.Database; request: Request; pins: CommunityStagingQaTargetPins;
+  }>) {
+  return createSubscriberBinding({ ...input,signal: input.request.signal }, current =>
+    issuePlatformPremiumSelfSubscriberRuntimeAuthority({ database: input.database,request: input.request,
+      pins: input.pins,originalTicket: current }));
+}
+
+function createSubscriberBinding(input: Parameters<typeof createPartnerAlertPremiumWhopRefresh>[0]
+  & Readonly<{ database: Database.Database }>, issue: (ticket: PlatformPremiumTicket) => PlatformPremiumRuntimeAuthority) {
   const refresh = createPartnerAlertPremiumWhopRefresh(input);
   let token: PlatformPremiumRuntimeAuthority | null = null;
-  const runtimeAuthority: PlatformPremiumRuntimeAuthorityBinding = Object.freeze({ database: input.database,current: () => token });
-  return Object.freeze({ runtimeAuthority,clear: () => { token = null; },refreshPremium: async authorityKey => {
+  const runtimeAuthority: PlatformPremiumRuntimeAuthorityBinding = Object.freeze({ database: input.database,current: () => {
+    if (input.signal?.aborted) token = null;
+    return token;
+  } });
+  return Object.freeze({ runtimeAuthority,clear: () => { token = null; },refreshPremium: async (authorityKey: string) => {
     token = null;
     await refresh(authorityKey);
     const current = input.writer.run(() => {
@@ -123,7 +149,6 @@ export function createPartnerAlertPremiumWhopSubscriberBinding(input:
       return premiumTicket(read.ticket);
     });
     input.provider.assertCurrent();
-    token = issuePlatformPremiumStagingRuntimeAuthority({ database: input.database,request: input.ownerRequest,
-      pins: input.pins,originalTicket: current });
+    token = issue(current);
   } });
 }
