@@ -7,6 +7,7 @@ import { PartnerAlertHttpAdapter, partnerAlertOwnerMutationRequestDenied, partne
 import { PartnerAlertRequestWriter } from "./partner-alert-request-writer";
 import { parsePartnerAlertWorkflowCommand } from "./partner-alert-workflow";
 import { platformFailure } from "../../platform/server/database/platform-migration-contract";
+import { PartnerAlertRepositoryError } from "./partner-alert-repository";
 
 const origin = "https://app.example.test";
 const communityId = "11111111-1111-4111-8111-111111111111";
@@ -121,5 +122,39 @@ describe("Partner Channel trusted route target", () => {
     expect(parsePartnerAlertWorkflowCommand(command, { kind: "operator" })).toEqual({ ...command, reason: "Review access required" });
     expect(() => parsePartnerAlertWorkflowCommand(command, { kind: "community_owner", communityId })).toThrow();
     expect(() => parsePartnerAlertWorkflowCommand({ ...command, reason: "x".repeat(501) }, { kind: "operator" })).toThrow();
+  });
+});
+
+describe("Partner source revision verifier response", () => {
+  const failures: { label: string; error: unknown; status: number }[] = [
+    { label: "actual nominal revision conflict", error: new PartnerAlertRepositoryError("conflict", "Private revision detail"), status: 409 },
+    { label: "unknown error", error: new Error("Private provider detail"), status: 503 },
+    { label: "unavailable repository", error: new PartnerAlertRepositoryError("unavailable", "Private availability detail"), status: 503 },
+    { label: "other repository rejection", error: new PartnerAlertRepositoryError("forbidden", "Private authorization detail"), status: 503 },
+    { label: "conflict lookalike", error: { name: "PartnerAlertRepositoryError", kind: "conflict" }, status: 503 },
+  ];
+  it.each(failures)("classifies $label without broadening unknown failures", async ({ error, status }) => {
+    // HTTP translation unit only: bypass replay authorization explicitly here.
+    // This is not evidence of a native owner/session or database admission.
+    const writer = new PartnerAlertRequestWriter({} as Database.Database, {
+      environment: { NODE_ENV: "production", DISCORD_GUILD_ID: "100000000000000001" },
+      now: () => new Date("2026-11-02T12:00:00.000Z"), createId: () => communityId,
+      destinationGuildId: "100000000000000001", maximumActorAgeMs: 30_000,
+      maximumDiscordEvidenceAgeMs: 300_000, outputBotUserId: "200000000000000002",
+      outputConfigurationRef: "synthetic_output_v1",
+    });
+    const replay = vi.spyOn(writer, "tryMutationReplay").mockReturnValue(null);
+    const mutation = vi.spyOn(writer, "executeMutation");
+    const provider = vi.fn();
+    const sourceName = vi.fn(async () => { throw error; });
+    const adapter = new PartnerAlertHttpAdapter({ enabled: true }, { configuredOrigin: origin }, writer, provider, sourceName);
+    const response = await adapter.handleMutation(ownerRequest(), { kind: "community_owner", communityId }, communityId);
+    expect(response.status).toBe(status);
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    await expect(response.json()).resolves.toMatchObject({ ok: false, code: status === 409 ? "conflict" : "unavailable" });
+    expect(replay).toHaveBeenCalledOnce();
+    expect(sourceName).toHaveBeenCalledOnce();
+    expect(mutation).not.toHaveBeenCalled();
+    expect(provider).not.toHaveBeenCalled();
   });
 });

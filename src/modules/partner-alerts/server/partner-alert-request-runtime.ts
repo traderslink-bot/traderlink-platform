@@ -35,6 +35,7 @@ import { PartnerAlertWhopInbox } from "./partner-alert-whop-inbox";
 import type { PartnerAlertWhopWebhookScope } from "./partner-alert-whop-webhook";
 import { PartnerAlertAdmission } from "./partner-alert-admission";
 import { PartnerAlertHttpAdapter, partnerAlertOwnerMutationRequestDenied, partnerAlertPrivateReadFailure } from "./partner-alert-http";
+import { PartnerAlertRepositoryError } from "./partner-alert-repository";
 import { PartnerAlertRequestWriter, type PartnerAlertPrivateRequestScope } from "./partner-alert-request-writer";
 import { createPartnerAlertProviderVerifier } from "./partner-alert-provider-adapter";
 
@@ -256,7 +257,7 @@ export async function withPartnerAlertRequestRuntime<T>(
       const configurationFingerprint = providerConfigurationFingerprint(discordConfiguration);
       const target = writer.preauthorizeSourceChannelCatalog(incoming, communityId);
       if (expectedRevision !== undefined && target.partnerRevision !== expectedRevision) {
-        throw new Error("Discord source revision changed");
+        throw new PartnerAlertRepositoryError("conflict", "Discord source revision changed");
       }
       const source = await channelCatalog(target.sourceGuildId, incoming.signal);
       const currentConfiguration = readDiscordConfiguration();

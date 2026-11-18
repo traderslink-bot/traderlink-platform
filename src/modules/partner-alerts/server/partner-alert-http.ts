@@ -180,6 +180,9 @@ export class PartnerAlertHttpAdapter {
       return outcome(this.writer.executeMutation(request, prepared, { plan, facts }));
     } catch (error) {
       if (isTraderLinkPlatformError(error)) return partnerAlertPrivateReadFailure(error);
+      if (error instanceof PartnerAlertRepositoryError && error.kind === "conflict") {
+        return outcome({ kind: "conflict" });
+      }
       if (error instanceof PartnerAlertValidationError) {
         const forbidden = ["identity", "sessionId", "verifiedCommand", "communityOwner", "requestAuthority", "requestOrigin"].includes(error.field);
         return response(forbidden ? 403 : 400, { ok: false, code: forbidden ? "forbidden" : "invalid_request",
