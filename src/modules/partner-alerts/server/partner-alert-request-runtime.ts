@@ -7,6 +7,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 
 import { resolvePlatformPublicOrigin } from "../../platform/server/authentication/platform-public-origin";
+import { partnerAlertStripeSandboxOriginMatches } from "./partner-alert-stripe-request-origin";
 import { resolveTraderLinkDiscordGuildId } from "../../platform/server/authentication/platform-discord-configuration";
 import { requireJournalAdminMutationRequest } from "../../platform/server/administration/platform-admin-request-security";
 import { readPartnerAlertRequestJson } from "./partner-alert-request-boundary";
@@ -208,7 +209,7 @@ export async function withPartnerAlertRequestRuntime<T>(
         throw new Error("Whop offer verification is unavailable.");
       },
       verifyStripeOffer: async (target, signal) => {
-        const stripe = configuredStripeBilling(request);
+        const stripe = configuredStripeBilling();
         if (!stripe || !stripeFundingEnvironment || signal.aborted) throw new Error("Stripe offer verification is unavailable.");
         const seller = database!.prepare(`SELECT s.stripe_account_id,s.owner_user_id FROM partner_alert_stripe_sellers s
           JOIN traderlink_communities c ON c.community_id=s.community_id AND c.owner_user_id=s.owner_user_id
@@ -438,16 +439,15 @@ export async function withPartnerAlertRequestRuntime<T>(
         return runtimeResponse(confirmed ? 200 : 409, { ok: confirmed, operationId });
       } catch { return unavailable(); }
     };
-    const configuredStripeBilling = (incoming: Request) => {
+    const configuredStripeBilling = () => {
       if (!billing || !stripeFundingEnvironment) return null;
       if (billing.environment === "sandbox") {
-        const incomingOrigin = new URL(incoming.url).origin;
-        if (incomingOrigin !== billing.origin && incomingOrigin !== "http://localhost:3039") return null;
+        if (!partnerAlertStripeSandboxOriginMatches(request, billing.origin)) return null;
       }
       return { config: billing, connect: createPartnerAlertStripeConnect(billing.key, billing.environment) };
     };
     const receiveStripeBillingEvent = async (incoming: Request): Promise<Response> => {
-      const stripe = configuredStripeBilling(incoming);
+      const stripe = configuredStripeBilling();
       if (!stripe) return new Response(null, { status: 404 });
       return createPartnerAlertStripeInvoiceWebhook({
         database: database!, environment: stripe.config.environment, signingSecret: stripe.config.signingSecret, nowMs: Date.now,
@@ -459,7 +459,7 @@ export async function withPartnerAlertRequestRuntime<T>(
       })(incoming);
     };
     const startStripeCheckout = async (incoming: Request, communityId: string, offerKey: string): Promise<Response> => {
-      const stripe = configuredStripeBilling(incoming);
+      const stripe = configuredStripeBilling();
       if (!stripe) return new Response(null, { status: 404 });
       const readTarget = () => authorize(incoming, communityId, offerKey);
       let selected: PartnerAlertSubscriberOffer;
@@ -501,7 +501,7 @@ export async function withPartnerAlertRequestRuntime<T>(
         seller: readPartnerStripeSetupSeller(database!, { communityId, ownerUserId, environment: stripeMode }) ?? null,
       }));
     const readStripeSeller: PartnerAlertRequestRuntime["readStripeSeller"] = async (incoming, communityId, ownerUserId) => {
-      const stripe = configuredStripeBilling(incoming);
+      const stripe = configuredStripeBilling();
       if (!stripe || incoming.signal.aborted) return null;
       const read = () => readStripeOwner(incoming, communityId, ownerUserId, stripe.config.environment);
       const current = read();
@@ -527,7 +527,7 @@ export async function withPartnerAlertRequestRuntime<T>(
     const startStripeSellerSetup: PartnerAlertRequestRuntime["startStripeSellerSetup"] = async (
       incoming, communityId, ownerUserId, method, country, returnUrl,
     ) => {
-      const stripe = configuredStripeBilling(incoming);
+      const stripe = configuredStripeBilling();
       if (!stripe || incoming.signal.aborted) throw new Error("Stripe seller setup is unavailable.");
       const { environment: stripeMode, origin, key, clientId } = stripe.config;
       if (new URL(returnUrl).origin !== origin) throw new Error("Invalid Stripe seller setup.");
@@ -563,7 +563,7 @@ export async function withPartnerAlertRequestRuntime<T>(
         `${returnUrl}?stripe=refresh`, stillOwner, stripeMode) };
     };
     const completeStripeSellerSetup: PartnerAlertRequestRuntime["completeStripeSellerSetup"] = async (incoming, ownerUserId, state, code) => {
-      const stripe = configuredStripeBilling(incoming);
+      const stripe = configuredStripeBilling();
       if (!stripe?.config.clientId || incoming.signal.aborted || (code !== null && !validPartnerStripeOAuthCode(code))) return null;
       const { environment: stripeMode, key, origin } = stripe.config;
       admission.qualifyAdditionalStatements(PARTNER_ALERT_STRIPE_ONBOARDING_ATTEMPT_STATEMENTS);
@@ -588,7 +588,7 @@ export async function withPartnerAlertRequestRuntime<T>(
       return page.href;
     };
     const reviewStripeAdjustment = async (incoming: Request, communityId: string): Promise<Response> => {
-      const stripe = configuredStripeBilling(incoming);
+      const stripe = configuredStripeBilling();
       if (!stripe) return new Response(null, { status: 404 });
       try {
         requireJournalAdminMutationRequest(incoming);

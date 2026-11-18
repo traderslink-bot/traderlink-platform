@@ -42,3 +42,15 @@ it("never calls native binding for live or conflicting canonical links",async()=
  fixture.realm=undefined;await GET(request({flow:""},"state"));expect(fixture.native).not.toHaveBeenCalled();
  fixture.realm="sandbox";fixture.link.mockReturnValue("conflict");await GET(request());expect(fixture.native).not.toHaveBeenCalled();
 });
+
+it.each(["connected","conflict","invalid-state","unavailable"] as const)("uses configured public origin and clears cookies for %s behind Railway",async status=>{
+ vi.stubEnv("NODE_ENV","production");vi.stubEnv("TRADERLINK_PLATFORM_PUBLIC_ORIGIN","https://stage.example.com");
+ if(status==="conflict")fixture.link.mockReturnValue("conflict");
+ if(status==="unavailable")fixture.provider.mockRejectedValue(Error("provider"));
+ const source=request(status==="invalid-state"?{state:""}:{});
+ const req=new NextRequest("http://0.0.0.0:8080/api/billing/whop/callback"+source.nextUrl.search,{headers:{cookie:source.headers.get("cookie")!,"x-forwarded-host":"attacker.example","x-forwarded-proto":"http"}});
+ const response=await GET(req);
+ expect(response.headers.get("location")).toBe("https://stage.example.com/account?whop="+status);
+ for(const name of ["state","verifier","user","flow"])expect(response.headers.get("set-cookie")).toContain("__Host-traderlink_whop_oauth_"+name+"=;");
+ if(status==="invalid-state")expect(fixture.provider).not.toHaveBeenCalled();
+});

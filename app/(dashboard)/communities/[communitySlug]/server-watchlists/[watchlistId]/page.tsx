@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {notFound} from "next/navigation";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -26,11 +25,11 @@ export default async function CommunityServerWatchlistPage({params}:{params:Prom
   const research=isReview?{}:withReadonlyPlatformDatabase({},database=>{
     const row=database.prepare("SELECT ticker_research_json FROM traderlink_community_server_watchlists WHERE community_id=? AND watchlist_id=?").get(snapshot.community.communityId,watchlistId) as {ticker_research_json:string}|undefined;
     if(!row)notFound();
-    return parseWatchlistResearch(row.ticker_research_json,symbols);
+    return {...parseWatchlistResearch(row.ticker_research_json,symbols)};
   });
   return <DashboardPage><CommunityNavigation snapshot={snapshot}/>
     {!isReview&&watchlist.status==="published"&&watchlist.publishingMode==="tracked_page"?<CommunityStatsVisitRecorder communitySlug={communitySlug}/>:null}
-    <Typography component={Link} href={`/communities/${communitySlug}/watchlist`} sx={{color:"primary.main",fontWeight:800,textDecoration:"none"}}>← Back to watchlists</Typography>
+    <Typography component="a" href={`/communities/${communitySlug}/watchlist`} sx={{color:"primary.main",fontWeight:800,textDecoration:"none"}}>← Back to watchlists</Typography>
     <DashboardPanel hideHeader><Stack spacing={2}>
       <Typography component="h1" variant="h1">{watchlist.title}</Typography>
       <Typography sx={{whiteSpace:"pre-wrap"}}>{watchlist.description}</Typography>

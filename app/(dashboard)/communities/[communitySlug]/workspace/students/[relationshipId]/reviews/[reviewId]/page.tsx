@@ -1,3 +1,5 @@
+import { loadCommunityRetainedHistory } from "@/app/(dashboard)/communities/community-dashboard-loader";
+import { CommunityRetainedHistoryPage } from "@/app/(dashboard)/communities/community-retained-history";
 import {coachingTradeFeedbackComplete} from '@/src/modules/communities/contracts/coaching-trade-feedback';
 import {coachingReviewSelectionStart} from '@/src/modules/communities/server/coaching-review-selection-start';
 import {coachTradeDateAllowed} from '@/src/modules/communities/contracts/coaching-student-review-preferences';
@@ -39,6 +41,8 @@ import {CoachTradeReviewWorkspacePersistent} from "../../../../../../coach-trade
 import {CommunityTypography as Typography} from "../../../../../../community-typography";
 
 export default async function CoachReviewWorkspacePage({params}:{params:Promise<{communitySlug:string;relationshipId:string;reviewId:string}>}){
+ const retainedHistory = await loadCommunityRetainedHistory();
+ if (retainedHistory) return <CommunityRetainedHistoryPage history={retainedHistory}/>;
  const {communitySlug,relationshipId,reviewId}=await params;
  const isReview=communitySlug==="review";
  const snapshot=(await loadCommunityDashboard(communitySlug,`/communities/${communitySlug}/workspace/students/${relationshipId}/reviews/${reviewId}`)).snapshot;

@@ -1,3 +1,4 @@
+import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { setPlatformAuthCookie } from
@@ -41,6 +42,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       createWhopOAuthFlowBinding(configuration, identity.scope.userId), WHOP_OAUTH_COOKIE_MAX_AGE_SECONDS);
     return response;
   } catch {
-    return NextResponse.redirect(new URL("/account?whop=unavailable", request.nextUrl.origin));
+    return NextResponse.redirect(new URL("/account?whop=unavailable", resolvePlatformPublicOrigin(request)));
   }
 }

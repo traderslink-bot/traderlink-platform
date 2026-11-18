@@ -1,3 +1,4 @@
+import {headers} from "next/headers";
 import { requireCommunityRequestAccess } from "@/src/modules/communities/server/community-request-access";
 import Box from "@mui/material/Box";
 import Avatar from "@mui/material/Avatar";
@@ -20,14 +21,15 @@ import {CommunityAlertFocus} from "./community-alert-focus";
 export async function CommunityBrandedFeedPage({communitySlug,pageType,segments,focus}:{communitySlug:string;pageType:CommunityContentPageType;segments:readonly string[];focus?:string|null}){
  const identity=await requireCommunityOwnerReviewServerComponentPageIdentity();
  await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug});
+ const requestHeaders=await headers();
+ const prefetch=["next-router-prefetch","x-middleware-prefetch"].some(key=>requestHeaders.get(key)==="1")||requestHeaders.has("next-router-segment-prefetch")||["purpose","sec-purpose"].some(key=>/\bprefetch\b/i.test(requestHeaders.get(key)??""));
  const atUtc=createCanonicalUtcTimestamp();
  const result=withPlatformDatabase({mode:"runtime"},database=>{
   const community=database.prepare("SELECT community_id FROM traderlink_communities WHERE slug=? AND status='active'").get(communitySlug) as {community_id:string}|undefined;if(!community)notFound();
   const access=new TraderLinkCommunityRepository(database).resolveAccess(community.community_id,identity.scope.userId);if(!access.isOwner&&access.membershipStatus!=="active")notFound();
   const repository=new CommunityBrandedContentRepository(database);const page=repository.resolvePage(community.community_id,pageType,segments);if(!page)notFound();const canonical=[page.slug,...(page.secondarySlug?[page.secondarySlug]:[])];const redirectTo=canonical.join("/")!==segments.join("/")?`/communities/${communitySlug}/${pageType}/${canonical.join("/")}`:null;
   const memberContent=readCommunityContentCache(`${communityDestinationCacheScope(page.pageId)}member`,()=>({feed:repository.readFeed(page),documents:page.pageType==="content"?repository.readDocuments(community.community_id,page.pageId,identity.scope.userId):[],watchlistItems:page.pageType==="watchlist"?repository.readWatchlistItems(community.community_id,page.pageId,identity.scope.userId):[]}));const {feed,documents,watchlistItems}=memberContent;
-  const discord=(database.prepare("SELECT discord_user_id FROM community_stats_identity_links WHERE community_id=? AND platform_user_id=? AND until_utc IS NULL").get(community.community_id,identity.scope.userId) as {discord_user_id:string}|undefined)?.discord_user_id??null;
-  const path=`/communities/${communitySlug}/${pageType}/${segments.join("/")}`;const focused=focus?feed.items.find(item=>item.contentId===focus||item.placementId===focus):undefined;if(!redirectTo)repository.recordVisit({communityId:community.community_id,page,userId:identity.scope.userId,discordUserId:discord,path,contentId:focused?.contentId,publisherUserId:focused?.publisherUserId,atUtc});return {feed,documents,watchlistItems,redirectTo,focusedContentId:focused?.contentId??null};
+  const path=`/communities/${communitySlug}/${pageType}/${segments.join("/")}`;const focused=focus?feed.items.find(item=>item.contentId===focus||item.placementId===focus):undefined;if(!redirectTo&&!prefetch)repository.recordVisit({communityId:community.community_id,page,userId:identity.scope.userId,path,contentId:focused?.contentId,placementId:focused?.placementId,atUtc});return {feed,documents,watchlistItems,redirectTo,focusedContentId:focused?.contentId??null};
  });
  if(result.redirectTo)redirect(result.redirectTo);
  const feed=result.feed;

@@ -3,7 +3,7 @@ import {statsTrafficProjection,readStatsInviteReports} from "./community-stats-a
 import {statsSelectedChannels,statsChannelSql,statsChannelIdSql} from "./community-stats-channel-selection";
 import type Database from "better-sqlite3";
 import type {CommunityStatsActivityPoint,CommunityStatsCoverage,CommunityStatsEligibility,CommunityStatsMemberEvidence,CommunityStatsReport,CommunityStatsRequestScope,CommunityStatsTab,CommunityStatsTableRow,CommunityStatsWindow} from "../../contracts/community-stats-contracts";
-import {readCommunityStatsCatalog,communityStatsContentMatchesSearch,communityStatsIsAnalystPost} from "./community-stats-catalog";
+import {readCommunityStatsCatalog,communityStatsContentMatchesSearch,communityStatsIsAnalystPost,communityStatsPageCategory} from "./community-stats-catalog";
 import {communityStatsStorageReady} from "./community-stats-repository";
 import {calculateCommunityStatsParticipation} from "./community-stats-participation";
 import {resolveStatsWindow,statsSourceObserved,statsMedian} from "./community-stats-coverage";
@@ -106,10 +106,12 @@ export function readCommunityStats(db:Database.Database,scope:CommunityStatsRequ
     sections.push({title:"Analyst engagement",columns:["Analyst","Viewers","Views"],rows:analysts.slice(0,5)});
   }
   if(tab==="pages"){
-    const categorySql=`CASE WHEN placement_id IS NOT NULL THEN 'member_watchlist' ELSE content_type END`;
-    const categories=db.prepare(`SELECT ${categorySql} AS category,count(*) AS visits,count(DISTINCT discord_user_id) AS viewers,max(occurred_at_utc) AS last FROM community_stats_events WHERE ${channelScope} AND ${where} AND surface='web' GROUP BY category`).all(params) as {category:string;visits:number;viewers:number;last:string}[];
+    // Join only the authorized catalog identities; placement presence alone does
+    // not distinguish branded alert posts from member watchlist publications.
+    const categoryCatalog=JSON.stringify([...new Map(allowed.map(content=>[content.id,{id:content.id,category:communityStatsPageCategory(content)}])).values()]);
+    const categories=db.prepare(`SELECT json_extract(category_item.value,'$.category') AS category,count(*) AS visits,count(DISTINCT discord_user_id) AS viewers,max(occurred_at_utc) AS last FROM community_stats_events JOIN json_each(@categoryCatalog) category_item ON json_extract(category_item.value,'$.id')=content_id WHERE ${channelScope} AND ${where} AND surface='web' GROUP BY category`).all({...params,categoryCatalog}) as {category:string;visits:number;viewers:number;last:string}[];
     const labels:Record<string,string>={community:"Community home",alerts:"Alerts list",alert:"Alert pages",watchlists:"Watchlists list",watchlist:"Server watchlist pages",member_watchlist:"Member watchlist pages",coaches:"Coaches list",coach:"Coach profiles"};
-    const keys=[...new Set(allowed.map(content=>content.placementId?"member_watchlist":content.type))];
+    const keys=[...new Set(allowed.map(communityStatsPageCategory))];
     sections.push({title:"Webpage categories",columns:["Category","Visits","Viewers","Last visit UTC"],rows:keys.map(key=>{const data=categories.find(category=>category.category===key);return {Category:labels[key]??key,Visits:data?.visits??(webAvailable?0:null),Viewers:data?.viewers??(webAvailable?0:null),"Last visit UTC":data?.last??null};})});
   }
   if(tab==="pages"||tab==="authors"||scope.ownContentOnly&&tab==="overview"){

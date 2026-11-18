@@ -1,3 +1,4 @@
+import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -33,7 +34,7 @@ function equal(left: string, right: string): boolean {
 function finish(request: NextRequest, status: "connected" | "conflict" |
 "invalid-state" | "unavailable", nativeHeld = false): NextResponse {
   const response = NextResponse.redirect(new URL(`/account?whop=${status}${nativeHeld ? "&whopNative=held" : ""}`,
-    request.nextUrl.origin));
+    resolvePlatformPublicOrigin(request)));
   for (const name of [WHOP_OAUTH_FLOW_COOKIE, WHOP_OAUTH_STATE_COOKIE, WHOP_OAUTH_VERIFIER_COOKIE,
     WHOP_OAUTH_USER_BINDING_COOKIE]) {
     deletePlatformAuthCookie(response, request, name);

@@ -13,6 +13,11 @@ export function communityStatsIsAnalystPost(item:CommunityStatsContent):boolean{
   return !!item.authorUserId&&["alert","watchlist"].includes(item.type)&&item.state!=="draft"&&(item.state==="published"||item.publishedAtUtc!==null);
 }
 
+/** Only the native member-watchlist catalog identity represents a member placement. */
+export function communityStatsPageCategory(content:CommunityStatsContent):string{
+  return content.type==="watchlist"&&content.placementId&&content.id===`placement:${content.placementId}`?"member_watchlist":content.type;
+}
+
 /** Metadata-only catalog. No private Coaching/Journal queries and no content-body reads. */
 export function readCommunityStatsCatalog(db:Database.Database, scope:CommunityStatsRequestScope):readonly CommunityStatsContent[] {
   const base=`/communities/${scope.slug}`, result:CommunityStatsContent[]=[];
@@ -45,6 +50,31 @@ export function readCommunityStatsCatalog(db:Database.Database, scope:CommunityS
     const coaches=db.prepare(`SELECT coach_profile_id,coach_slug,display_name,user_id,status FROM traderlink_community_coach_profiles
       WHERE community_id=? AND status IN ('active','archived')`).all(scope.communityId) as {coach_profile_id:string;coach_slug:string;display_name:string;user_id:string;status:string}[];
     coaches.forEach(row=>result.push({id:row.coach_profile_id,type:"coach",title:row.display_name,path:`${base}/coaches/${row.coach_slug}`,authorUserId:row.user_id,authorName:row.display_name,state:row.status==="active"?"published":"archived",mode:"tracked_page"}));
+  }
+  // A branded landing is a page, never evidence that an arbitrary post was read.
+  // General Stats readers already have the active community membership boundary;
+  // author-only reports cannot attribute an authorless landing to their publications.
+  if(!scope.ownContentOnly&&db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='traderlink_community_content_pages'").get()){
+    const pages=db.prepare(`SELECT page_id,page_type,slug,secondary_slug,title,status FROM traderlink_community_content_pages WHERE community_id=? AND status IN ('active','archived')`).all(scope.communityId) as {page_id:string;page_type:string;slug:string;secondary_slug:string|null;title:string;status:string}[];
+    for(const page of pages){
+      if(page.status!=="active"&&!scope.isOwner)continue;
+      const type=page.page_type==="alert"?"alerts":page.page_type==="watchlist"?"watchlists":"community";
+      result.push({id:page.page_id,type,title:page.title,path:`${base}/${page.page_type}/${[page.slug,page.secondary_slug].filter(Boolean).join("/")}`,authorUserId:null,authorName:null,state:page.status==="active"?"published":"archived",mode:page.status==="active"?"tracked_page":"not_collected"});
+    }
+  }
+  // Existing branded feeds can also focus native swing ideas/general content.
+  // Keep their metadata and native author, without counting them as alert/watchlist posts.
+  if(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='traderlink_community_content_placements'").get()){
+    const focused=db.prepare(`SELECT placement.content_id,native.title,native.author_user_id,user.display_name,native.published_at_utc,page.page_type,page.slug,page.secondary_slug
+      FROM traderlink_community_content_placements placement
+      JOIN traderlink_community_content_pages page ON page.community_id=placement.community_id AND page.page_id=placement.page_id
+      JOIN (SELECT community_id,swing_id AS content_id,'swing' AS kind,title,author_user_id,status,published_at_utc FROM traderlink_community_swing_posts
+        UNION ALL SELECT community_id,content_id,'content' AS kind,title,author_user_id,status,published_at_utc FROM traderlink_community_general_content) native
+        ON native.community_id=placement.community_id AND native.content_id=placement.content_id AND native.kind=placement.content_type
+      JOIN platform_users user ON user.user_id=native.author_user_id
+      WHERE placement.community_id=? AND placement.status='published' AND page.status='active' AND native.status='published'
+      ORDER BY page.page_id,placement.placement_id`).all(scope.communityId) as {content_id:string;title:string;author_user_id:string;display_name:string;published_at_utc:string|null;page_type:string;slug:string;secondary_slug:string|null}[];
+    for(const row of focused)if(!result.some(content=>content.id===row.content_id))result.push({id:row.content_id,canonicalId:row.content_id,type:"community",title:row.title,path:`${base}/${row.page_type}/${[row.slug,row.secondary_slug].filter(Boolean).join("/")}`,authorUserId:row.author_user_id,authorName:row.display_name,state:"published",publishedAtUtc:row.published_at_utc,mode:"tracked_page"});
   }
   if(communityStatsStorageReady(db)&&(scope.isOwner||scope.ownContentOnly)){
     const removed=db.prepare(`SELECT content_id,content_type,author_user_id FROM community_stats_events WHERE community_id=? AND surface='web' AND (?=1 OR author_user_id=?) GROUP BY content_id,content_type,author_user_id`).all(scope.communityId,scope.isOwner?1:0,scope.actorUserId) as {content_id:string;content_type:CommunityStatsContent["type"];author_user_id:string|null}[];
