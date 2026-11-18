@@ -1116,12 +1116,16 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
     justVerifiedSubject: string): Readonly<{ kind: "bound" | "duplicate" }> {
     return this.atomic(() => {
       this.write(); const ticket = ticketCopy(originalTicket), raw = ref(justVerifiedSubject);
-      const ledger = this.db.prepare("SELECT migration_id,module_namespace,execution_order,checksum_sha256 FROM platform_schema_migrations ORDER BY execution_order DESC LIMIT 1").get() as {
-        migration_id:string;module_namespace:string;execution_order:number;checksum_sha256:string } | undefined;
-      const count = this.db.prepare("SELECT count(*) n FROM platform_schema_migrations").get() as { n:number };
-      if (count.n !== 204 || ledger?.migration_id !== "0216_platform_premium_current_access_events" || ledger.module_namespace !== "platform"
-        || ledger.execution_order !== 291 || ledger.checksum_sha256 !== "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539"
-        || !this.isCurrentV2(ticket)) throw new PlatformPremiumAuthorityError("unbound");
+      const ledger = this.db.prepare("SELECT migration_id,module_namespace,execution_order,checksum_sha256 FROM platform_schema_migrations ORDER BY execution_order").all() as {
+        migration_id:string;module_namespace:string;execution_order:number;checksum_sha256:string }[];
+      const last = ledger.at(-1);
+      const reviewedLedger = ledger.length === 204 && last?.migration_id === "0216_platform_premium_current_access_events" && last.module_namespace === "platform"
+    && last.execution_order === 291 && last.checksum_sha256 === "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539"
+   || ledger.length === 205 && ledger[203]?.migration_id === "0216_platform_premium_current_access_events" && ledger[203].module_namespace === "platform"
+    && ledger[203].execution_order === 291 && ledger[203].checksum_sha256 === "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539"
+    && last?.migration_id === "0217_traderlink_community_stats_forward_checkpoints" && last.module_namespace === "community"
+    && last.execution_order === 292 && last.checksum_sha256 === "d0d493935a53c473a73d164101c1bab6193487ca56a4b678ea26cff4d9f7dbec";
+      if (!reviewedLedger || !this.isCurrentV2(ticket)) throw new PlatformPremiumAuthorityError("unbound");
       const snapshot = this.captureV2(ticket.scope.authorityKey);
       if (snapshot.kind !== "snapshot" || snapshot.policy.state !== "active" || snapshot.policy.guildId !== "1559172784813514803"
         || snapshot.policy.offerScopes.length !== 1 || snapshot.policy.offerScopes[0]?.environment !== "sandbox"

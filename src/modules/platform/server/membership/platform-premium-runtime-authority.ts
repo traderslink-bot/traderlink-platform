@@ -119,8 +119,13 @@ export function issuePlatformPremiumSelfSubscriberRuntimeAuthority(input:Readonl
   ||(request.headers.has("origin")&&request.headers.get("origin")!==pins.origin)||request.headers.get("sec-fetch-site")==="cross-site"
   ||resolveTraderLinkDiscordGuildId(process.env)!==guildId)return refused();
  const core=currentPlatformErasureAdmission(db),ledger=readAppliedPlatformMigrations(db),last=ledger.at(-1);
- if(!core||core.schemaSha256!==pins.schemaSha256||ledger.length!==204||last?.migration_id!=="0216_platform_premium_current_access_events"
-  ||last.module_namespace!=="platform"||last.execution_order!==291||last.checksum_sha256!=="a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539")return refused();
+ const reviewedLedger = ledger.length === 204 && last?.migration_id === "0216_platform_premium_current_access_events" && last.module_namespace === "platform"
+    && last.execution_order === 291 && last.checksum_sha256 === "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539"
+   || ledger.length === 205 && ledger[203]?.migration_id === "0216_platform_premium_current_access_events" && ledger[203].module_namespace === "platform"
+    && ledger[203].execution_order === 291 && ledger[203].checksum_sha256 === "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539"
+    && last?.migration_id === "0217_traderlink_community_stats_forward_checkpoints" && last.module_namespace === "community"
+    && last.execution_order === 292 && last.checksum_sha256 === "d0d493935a53c473a73d164101c1bab6193487ca56a4b678ea26cff4d9f7dbec";
+ if(!core||core.schemaSha256!==pins.schemaSha256||!reviewedLedger)return refused();
  const identity=requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers,{environment:process.env,databasePath:db.name});
  if(identity.mode!=="platform_session"||!identity.sessionId||identity.scope.userId!==ticket.scope.userId)return refused();
  const subjects=db.prepare("SELECT auth_subject FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").all(identity.scope.userId) as {auth_subject:string}[];
