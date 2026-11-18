@@ -1,4 +1,4 @@
-import {communityStatsStorageReady} from "./stats/community-stats-repository";
+import {CommunityStatsRepository,communityStatsStorageReady} from "./stats/community-stats-repository";
 import {resolveOwnCommunityStatsIdentity} from "./stats/community-stats-identity";
 import type Database from "better-sqlite3";
 import {assertCanonicalUtcTimestamp,assertCanonicalUuidV4,createCanonicalUuidV4,platformFailure} from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -96,6 +96,7 @@ export class CommunityBrandedContentRepository{
       const identity=resolveOwnCommunityStatsIdentity(this.db,{communityId:input.communityId,authenticatedUserId:input.userId,atUtc:input.atUtc});
       if(identity.state!=="verified")return;
       const observed=identity.identity;
+      new CommunityStatsRepository(this.db).identityLink(observed,input.atUtc);
       this.db.prepare(`INSERT INTO community_stats_events(community_id,event_id,discord_user_id,platform_user_id,surface,kind,occurred_at_utc,received_at_utc,content_id,canonical_content_id,placement_id,content_type,title,path,author_user_id,username,display_name,nickname,nickname_state,identity_observed_at_utc,duration_seconds,page_id,category_id,publisher_user_id,evidence) VALUES(?,?,?,?,'web','web_visit',?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,'live')`).run(input.communityId,eventId,observed.discordUserId,input.userId,input.atUtc,input.atUtc,contentId,contentId,focused?.placement_id??null,contentType,focused?.title??input.page.title,input.path,focused?.authorUserId??null,observed.username,observed.globalDisplayName,observed.guildNickname,observed.nicknameAvailability,observed.observedAtUtc,input.page.pageId,categoryId,publisher);
     });
   }
