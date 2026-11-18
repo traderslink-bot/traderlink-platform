@@ -8,7 +8,7 @@ import {resolvePlatformBackgroundWorkerMode} from "../../platform/server/runtime
 import {openPlatformDatabase} from "../../platform/server/database/open-platform-database";
 import {issueCommunityStagingQaCapability,type CommunityStagingQaCapability,type CommunityStagingQaRun} from "./community-staging-qa-capability";
 import {COMMUNITY_STAGING_QA_DATABASE} from "./community-staging-qa-target";
-import {issueSharedFixtureContext,assertSharedFixtureContext,requireSharedFixtureActor,type SharedFixtureContext,type FixtureKey} from "./shared-alerts-staging-fixture-authority";
+import {issueSharedFixtureContext,assertSharedFixtureContext,requireSharedFixtureActor,withSharedFixtureActorOperation,type SharedFixtureContext,type FixtureKey} from "./shared-alerts-staging-fixture-authority";
 import {SharedAlertsDiscord} from "./shared-alerts-discord";
 import {readFixtureState} from "./shared-alerts-staging-fixture-model";
 import {deliverSharedFixtureAlert} from "./shared-alerts-staging-fixture-transport";
@@ -57,12 +57,20 @@ export async function startSharedFixture(request:NextRequest,nonce:string):Promi
   return new Response(body,{headers:{"Content-Type":"application/x-ndjson","Cache-Control":"no-store","X-Accel-Buffering":"no"}});
  }catch(error){try{parent?.finish("failed");}finally{if(database?.open)database.close();}throw error;}finally{starting=false;}
 }
-export function fixtureRequest(runId:string,key:FixtureKey,headers:Headers,method:"GET"|"POST"){
+function fixtureRequestUnchecked(runId:string,key:FixtureKey,headers:Headers,method:"GET"|"POST"){
  early();const entry=current;if(!entry||entry.closed||entry.context.runId!==runId||!["harbor","northstar"].includes(key))refused();
  const origin=resolvePlatformPublicOrigin(new NextRequest(process.env.TRADERLINK_PLATFORM_PUBLIC_ORIGIN??"https://invalid.example",{headers}));
  const request=new Request(`${origin}/__private/shared-alerts-fixture/${runId}/${key}`,{method,headers:new Headers(headers)});
- requireSharedFixtureActor(entry.context,request,key);
  return {context:entry.context,request,channels:entry.channels};
+}
+
+export function fixtureRequest(runId:string,key:FixtureKey,headers:Headers,method:"GET"|"POST"){
+ const result=fixtureRequestUnchecked(runId,key,headers,method);requireSharedFixtureActor(result.context,result.request,key);return result;
+}
+/** Internal callback is synchronous and returns no authority through the native frame. */
+export function withFixtureRequest(runId:string,key:FixtureKey,headers:Headers,method:"GET"|"POST",operation:(value:ReturnType<typeof fixtureRequestUnchecked>)=>void):void{
+ const value=fixtureRequestUnchecked(runId,key,headers,method);
+ withSharedFixtureActorOperation(value.context,value.request,key,()=>{requireSharedFixtureActor(value.context,value.request,key);if(operation(value)!==undefined)refused();});
 }
 
 export function rememberFixturePublication(context:SharedFixtureContext,request:Request,key:FixtureKey,deliveryId:string){
@@ -70,9 +78,13 @@ export function rememberFixturePublication(context:SharedFixtureContext,request:
  requireSharedFixtureActor(context,request,key);const s=readFixtureState(context,request,key),d=s.deliveries.find(d=>d.id===deliveryId);if(!d||s.agreements.find(r=>r.id===d.agreementId)?.source!==key)refused();entry.publications.set(deliveryId,{key,request});
 }
 export async function deliverFixtureQueued(runId:string,key:FixtureKey,headers:Headers,deliveryId:string){
- const {context,request}=fixtureRequest(runId,key,headers,"POST"),entry=current;if(!entry||entry.context!==context)refused();
- const s=readFixtureState(context,request,key),d=s.deliveries.find(d=>d.id===deliveryId),source=entry.publications.get(deliveryId);
- if(!d||!source)refused();if(d.status!=="pending")return null;
+ let selected:{context:SharedFixtureContext;source:{key:FixtureKey;request:Request}}|undefined;
+ withFixtureRequest(runId,key,headers,"POST",({context,request})=>{
+  const entry=current;if(!entry||entry.context!==context)refused();
+  const s=readFixtureState(context,request,key),d=s.deliveries.find(d=>d.id===deliveryId),source=entry.publications.get(deliveryId);
+  if(!d||!source)refused();if(d.status==="pending")selected={context,source};
+ });
+ if(!selected)return null;
  // The source's genuine initiating session is revalidated, never impersonated by the receiver.
- return deliverSharedFixtureAlert(context,source.request,source.key,deliveryId);
+ return deliverSharedFixtureAlert(selected.context,selected.source.request,selected.source.key,deliveryId);
 }

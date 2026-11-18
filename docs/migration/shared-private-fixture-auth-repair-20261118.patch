@@ -1,0 +1,364 @@
+diff --git a/app/(dashboard)/%5F%5Fprivate/shared-alerts-fixture/[runId]/[key]/page.tsx b/app/(dashboard)/%5F%5Fprivate/shared-alerts-fixture/[runId]/[key]/page.tsx
+index d91ad0c70..156b53f2f 100644
+--- a/app/(dashboard)/%5F%5Fprivate/shared-alerts-fixture/[runId]/[key]/page.tsx
++++ b/app/(dashboard)/%5F%5Fprivate/shared-alerts-fixture/[runId]/[key]/page.tsx
+@@ -3,7 +3,7 @@ import {notFound} from "next/navigation";
+ import {SharedAlertsClient} from "@/app/(dashboard)/communities/shared-alerts/shared-alerts-client";
+ import {SharedFixtureCommunity} from "@/app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-community";
+ import {mutateSharedFixture,draftSharedFixture,markSharedFixtureRead} from "@/app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-actions";
+-import {fixtureRequest} from "@/src/modules/communities/server/shared-alerts-staging-fixture-controller";
++import {withFixtureRequest} from "@/src/modules/communities/server/shared-alerts-staging-fixture-controller";
+ import {readFixtureSnapshot} from "@/src/modules/communities/server/shared-alerts-staging-fixture-snapshot";
+ import type {FixtureKey} from "@/src/modules/communities/server/shared-alerts-staging-fixture-authority";
+ export const dynamic="force-dynamic";
+@@ -12,8 +12,9 @@ export default async function FixturePage({params,searchParams}:{params:Promise<
+  if(!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(runId)||!["harbor","northstar"].includes(key))notFound();
+  const communityKey=key as FixtureKey,get=(k:string)=>typeof query[k]==="string"?query[k] as string:"",community=get("screen")==="community";
+  const tab=["find","requests","connections","history","activity","settings"].includes(get("tab"))?get("tab"):"find";
+- let snapshot;
+- try{const {context,request,channels}=fixtureRequest(runId,communityKey,new Headers(actualHeaders),"GET");snapshot=readFixtureSnapshot(context,request,communityKey,channels,{tab:community?"connections":tab,query:get("q"),requestId:get("request")||undefined,composeId:get("compose")||undefined,approvalOnly:get("approvalOnly")==="1"});}catch{notFound();}
++ let snapshot:ReturnType<typeof readFixtureSnapshot>|undefined;
++ try{withFixtureRequest(runId,communityKey,new Headers(actualHeaders),"GET",({context,request,channels})=>{snapshot=readFixtureSnapshot(context,request,communityKey,channels,{tab:community?"connections":tab,query:get("q"),requestId:get("request")||undefined,composeId:get("compose")||undefined,approvalOnly:get("approvalOnly")==="1"});});}catch{notFound();}
++ if(!snapshot)notFound();
+  if(community)return <SharedFixtureCommunity runId={runId} communityKey={communityKey} snapshot={snapshot} error={get("error")==="1"}/>;
+  const base=`/__private/shared-alerts-fixture/${runId}/${communityKey}`;
+  return <SharedAlertsClient snapshot={snapshot} tab={tab as "find"|"requests"|"connections"|"history"|"activity"|"settings"} error={get("error")==="1"?"The test action could not finish. Check its current state and active test window.":null} saved={get("saved")==="1"} bindings={{mutate:mutateSharedFixture.bind(null,runId,communityKey),draft:draftSharedFixture.bind(null,runId,communityKey),markRead:markSharedFixtureRead.bind(null,runId,communityKey),navigation:{basePath:base,communityHref:base+"?screen=community"+(get("request")?"&request="+encodeURIComponent(get("request")):""),testLabel:"SyntheticAgreement test. ActualDiscordIO is restricted to TradersLink Tests. The two logical communities do not grant ownership of a real Discord server.",outboundOnly:true}}}/>;
+diff --git a/app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-actions.ts b/app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-actions.ts
+index 2b9996180..1a3de3792 100644
+--- a/app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-actions.ts
++++ b/app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-actions.ts
+@@ -5,17 +5,19 @@ import {revalidatePath} from "next/cache";
+ import type {SharedAlertDraftState} from "@/src/modules/communities/contracts/shared-alerts-contracts";
+ import type {FixtureKey} from "@/src/modules/communities/server/shared-alerts-staging-fixture-authority";
+ import {assertSharedFixtureContext} from "@/src/modules/communities/server/shared-alerts-staging-fixture-authority";
+-import {fixtureRequest,rememberFixturePublication,deliverFixtureQueued} from "@/src/modules/communities/server/shared-alerts-staging-fixture-controller";
++import {withFixtureRequest,rememberFixturePublication,deliverFixtureQueued} from "@/src/modules/communities/server/shared-alerts-staging-fixture-controller";
+ import {fixtureKeyForCommunity} from "@/src/modules/communities/server/shared-alerts-staging-fixture-snapshot";
+ import {setFixturePublisher,createFixtureAgreement,agreeFixtureRequest,changeFixtureTerms,fixtureLifecycle,publishFixtureAlert,approveFixtureAlert,replyFixtureRequest,markFixtureRead,readFixtureState,fixtureSettings,fixtureBlock,fixturePresentation,configureFixtureRoute,rejectFixtureAlert,correctFixtureAlert} from "@/src/modules/communities/server/shared-alerts-staging-fixture-model";
+ const value=(data:FormData,key:string)=>{const v=data.get(key);return typeof v==="string"?v.trim():"";};
+ function number(data:FormData,key:string){const n=Number(value(data,key));if(!Number.isSafeInteger(n)||n<1)throw new Error("Invalid test revision.");return n;}
+ type FixtureResult=SharedAlertDraftState & {testNotice?:string;testReceipt?:Readonly<{guildId:string;channelId:string;messageId:string}>};
+ async function perform(runId:string,key:FixtureKey,data:FormData):Promise<FixtureResult>{
+- const actualHeaders=new Headers(await headers()),{context,request}=fixtureRequest(runId,key,actualHeaders,"POST"),a=assertSharedFixtureContext(context),p=a.manifest.principals.find(p=>p.key===key)!;
++ const actualHeaders=new Headers(await headers());let deliveryIdToSend:string|undefined;
+  let id=value(data,"requestId"),tab=value(data,"tab")||"requests";
+  let receipt:Awaited<ReturnType<typeof deliverFixtureQueued>>=null;
+  try{
++  withFixtureRequest(runId,key,actualHeaders,"POST",({context,request})=>{
++  const a=assertSharedFixtureContext(context),p=a.manifest.principals.find(p=>p.key===key)!;
+   const command=value(data,"command");
+   if(value(data,"communitySlug")!==key)throw new Error("Wrong test community.");
+   if(command==="publisher"){if(value(data,"userId")!==p.userId)throw new Error("Wrong test publisher.");setFixturePublisher(context,request,key,data.get("enabled")==="on");tab="settings";}
+@@ -37,17 +39,19 @@ async function perform(runId:string,key:FixtureKey,data:FormData):Promise<Fixtur
+    const s=readFixtureState(context,request,key),r=s.agreements.find(r=>r.id===id),routeCommand=value(data,"routeCommand");if(!r||value(data,"userId")!==r.publisherId||!["save","pause","resume","remove"].includes(routeCommand))throw new Error("Invalid test route.");
+    configureFixtureRoute(context,request,key,id,number(data,"routeRevision"),routeCommand as "save"|"pause"|"resume"|"remove",value(data,"channelId"),data.get("requireApproval")==="on");tab="connections";
+   }else if(command==="publish"){
+-   const deliveryId=publishFixtureAlert(context,request,key,id,number(data,"version"),value(data,"content"));rememberFixturePublication(context,request,key,deliveryId);receipt=await deliverFixtureQueued(runId,key,actualHeaders,deliveryId);tab="connections";
++   const deliveryId=publishFixtureAlert(context,request,key,id,number(data,"version"),value(data,"content"));rememberFixturePublication(context,request,key,deliveryId);deliveryIdToSend=deliveryId;tab="connections";
+   }else if(command==="correct"){
+    correctFixtureAlert(context,request,key,value(data,"deliveryId"),number(data,"contentRevision"),value(data,"content"));tab="connections";
+   }else if(command==="review"){
+-   const deliveryId=value(data,"deliveryId"),decision=value(data,"decision");if(decision==="approve"){approveFixtureAlert(context,request,key,deliveryId,number(data,"contentRevision"));receipt=await deliverFixtureQueued(runId,key,actualHeaders,deliveryId);}else if(decision==="reject")rejectFixtureAlert(context,request,key,deliveryId,number(data,"contentRevision"));else throw new Error("Invalid test review.");tab="connections";
++   const deliveryId=value(data,"deliveryId"),decision=value(data,"decision");if(decision==="approve"){approveFixtureAlert(context,request,key,deliveryId,number(data,"contentRevision"));deliveryIdToSend=deliveryId;}else if(decision==="reject")rejectFixtureAlert(context,request,key,deliveryId,number(data,"contentRevision"));else throw new Error("Invalid test review.");tab="connections";
+   }else throw new Error("This operation is unavailable in the isolated test.");
+   assertSharedFixtureContext(context);
++  });
++  if(deliveryIdToSend){receipt=await deliverFixtureQueued(runId,key,actualHeaders,deliveryIdToSend);withFixtureRequest(runId,key,actualHeaders,"POST",({context})=>{assertSharedFixtureContext(context);});}
+   const query=new URLSearchParams({tab,saved:"1"});if(id)query.set("request",id);
+   const path=`/__private/shared-alerts-fixture/${runId}/${key}`;revalidatePath(path);return {error:null,destination:path+"?"+query};
+  }catch{if(receipt)return {error:null,destination:null,testNotice:"Delivered to TradersLink Tests before this test window closed. Do not resend this alert.",testReceipt:receipt};return {error:"The test action could not finish. Check the current request, approval and active test window.",destination:null};}
+ }
+ export async function mutateSharedFixture(runId:string,key:FixtureKey,data:FormData):Promise<void>{const result=await perform(runId,key,data);if(result.destination)redirect(result.destination);redirect(`/__private/shared-alerts-fixture/${runId}/${key}?error=1`);}
+ export async function draftSharedFixture(runId:string,key:FixtureKey,_previous:SharedAlertDraftState,data:FormData):Promise<FixtureResult>{return perform(runId,key,data);}
+-export async function markSharedFixtureRead(runId:string,key:FixtureKey,input:{communitySlug:string;requestId:string;messageSequence:number;eventSequence:number}):Promise<boolean>{try{const {context,request}=fixtureRequest(runId,key,new Headers(await headers()),"POST");if(input.communitySlug!==key)return false;markFixtureRead(context,request,key,input.requestId,input.messageSequence,input.eventSequence);return true;}catch{return false;}}
++export async function markSharedFixtureRead(runId:string,key:FixtureKey,input:{communitySlug:string;requestId:string;messageSequence:number;eventSequence:number}):Promise<boolean>{try{const actualHeaders=new Headers(await headers());if(input.communitySlug!==key)return false;withFixtureRequest(runId,key,actualHeaders,"POST",({context,request})=>{markFixtureRead(context,request,key,input.requestId,input.messageSequence,input.eventSequence);});return true;}catch{return false;}}
+diff --git a/src/modules/communities/server/community-staging-qa-capability.ts b/src/modules/communities/server/community-staging-qa-capability.ts
+index 06e22dc12..6c1006995 100644
+--- a/src/modules/communities/server/community-staging-qa-capability.ts
++++ b/src/modules/communities/server/community-staging-qa-capability.ts
+@@ -6,7 +6,9 @@ import type Database from "better-sqlite3";
+ import {withJournalAdminDatabase,PlatformAdminAuthorization} from "../../platform/server/administration/platform-admin-authorization";
+ import {PlatformAdminAuditRepository} from "../../platform/server/administration/platform-admin-audit-repository";
+ import {requireTraderLinkPlatformAuthenticatedRequestIdentity} from "../../platform/server/authentication/require-platform-request-scope";
+-import {PlatformSessionService} from "../../platform/server/authentication/platform-session-service";
++import {PlatformSessionService,hashPlatformSessionToken} from "../../platform/server/authentication/platform-session-service";
++import {deriveAuthenticatedUserJournalScope} from "../../platform/server/authentication/authenticated-user-journal-scope";
++import {deriveJournalAccountSelectionRef} from "../../platform/contracts/journal-account-selection";
+ import {PlatformSessionRepository} from "../../platform/server/authentication/platform-session-repository";
+ import {platformMigrationManifest} from "../../platform/server/database/platform-migration-manifest";
+ import {calculatePlatformMigrationChecksum} from "../../platform/server/database/platform-migration-contract";
+@@ -34,6 +36,7 @@ type Principals={kind:string;nonce:string;pins:{origin:string;sourceCommit:strin
+ export type CommunityStagingQaCapability=Readonly<{
+  run:CommunityStagingQaRun;signal:AbortSignal;request:typeof fetch;
+  assertActive:()=>void;gatewayFrame:(database:Database.Database)=>void;historyTick:()=>void;collectorTick:()=>void;
++ withOperationFrame:(operation:()=>void)=>void;assertOperationFrame:()=>void;requestWithFixtureOperation:(resource:Parameters<typeof fetch>[0],options:Parameters<typeof fetch>[1],boundary:(operation:()=>void)=>void)=>ReturnType<typeof fetch>;
+  remainingMs:()=>number;onStop:(callback:()=>void)=>()=>void;finish:(outcome:"completed"|"cancelled"|"failed")=>void;
+ }>;
+ const admitted=new WeakMap<object,Database.Database>();
+@@ -107,6 +110,7 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
+  const request=input.request,requestBinding=JSON.stringify([...request.headers]);
+  if(request.method!=="POST"||request.signal.aborted||new URL(request.url).href!==`${run.pins.origin}/__private/${run.pipeline==="stats"?"community-stats-qa":"community-staging-qa"}/${run.nonce}`||request.headers.get("origin")!==run.pins.origin||request.headers.get("sec-fetch-site")==="cross-site")refused();
+  const auditTarget=hash(`${run.runId}:${run.communityId}`),nonceRef=hash(run.nonce),start=Date.now(),abort=new AbortController(),stops=new Set<()=>void>();
++ let operationCheck:(()=>void)|undefined,operationFailure:unknown,originalOwnerBinding:string|undefined;
+  let finished=false,requests=0,writes=0,frames=0,histories=0,ticks=0,started=false,authorizing=false;
+  const structural=()=>{
+   assertCommunityStagingQaTarget(db,run.pins);
+@@ -137,23 +141,55 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
+   const member=db.prepare("SELECT guild_owner,last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(principals.coach.userId,run.guildId) as {guild_owner:number;last_verified_at_utc:string}|undefined;
+   if(!member||member.guild_owner!==1||!fresh(member.last_verified_at_utc,Date.now()))refused();
+  };
+- const authorize=(operation?:()=>void)=>{
++ const authorize=(operation?:()=>void,fixtureOperation=false)=>{
+   if(authorizing||db.inTransaction)refused();authorizing=true;
+   try{structural();const identity=requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers,{environment,databasePath:DATABASE});
++   const ownerNativeStamp=()=>({subjects:db.prepare("SELECT auth_subject,created_at_utc,updated_at_utc FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").all(principals.coach.userId),lifecycle:db.prepare("SELECT lifecycle_ref,generation,admission_ref,erasure_generation,phase,profile_ref,profile_generation,valid_until_utc FROM platform_erasure_lifecycles WHERE user_id=?").get(principals.coach.userId)});
++   const originalNative=run.pipeline==="shared-fixture"?JSON.stringify(ownerNativeStamp()):null;
++   if(run.pipeline==="shared-fixture"){
++    const binding=hash(JSON.stringify({sessionId:identity.sessionId,mode:identity.mode,scope:identity.scope,subject:principals.coach.subject,native:originalNative}));
++    if(originalOwnerBinding&&originalOwnerBinding!==binding)refused();originalOwnerBinding=binding;
++   }
+    new PlatformAdminAuthorization(db,environment).withRequestAuditFrame(request,frame=>{
+     const scope=frame.authorize(identity,request.headers);if(scope.userId!==principals.coach.userId||scope.role!=="journal_owner_admin"||scope.mode!=="production_discord_owner"||!scope.permissions.includes("manage_users")||identity.sessionId!==principals.coach.session.session.sessionId||!scope.discordOwnerVerifiedAtUtc||!fresh(scope.discordOwnerVerifiedAtUtc,Date.now()))refused();
+-    checkNative();operation?.();frame.revalidate(scope,identity,request.headers);
++    if(!fixtureOperation){checkNative();operation?.();frame.revalidate(scope,identity,request.headers);return;}
++    const selection=identity.scope.activeAccountId===null?null:deriveJournalAccountSelectionRef(identity.scope.workspaceId,identity.scope.activeAccountId);
++    const revalidate=()=>{
++     if(operationFailure)throw operationFailure;
++     if(finished||request.signal.aborted||abort.signal.aborted||Date.now()-start>=run.bounds.durationMs)refused();
++     structural();checkNative();
++     if(fixtureOperation){
++      const nativeSession=new PlatformSessionRepository(db).findActiveByTokenDigest(hashPlatformSessionToken(principals.coach.session.token),new Date().toISOString());
++      const currentScope=deriveAuthenticatedUserJournalScope(db,principals.coach.userId,selection);
++      if(JSON.stringify(ownerNativeStamp())!==originalNative)refused();
++      if(!nativeSession||nativeSession.sessionId!==identity.sessionId||nativeSession.userId!==identity.scope.userId||JSON.stringify(currentScope)!==JSON.stringify(identity.scope))refused();
++     }
++     frame.revalidate(scope,identity,request.headers);
++    };
++    try{if(fixtureOperation){operationFailure=undefined;operationCheck=revalidate;}revalidate();if(operation?.()!==undefined)refused();revalidate();}finally{if(fixtureOperation){operationCheck=undefined;operationFailure=undefined;}}
+    });
+   }finally{authorizing=false;}
+  };
+  const audit=(reason:string,outcome:"success"|"failed")=>new PlatformAdminAuditRepository(db).append({actorKind:"platform_user",actorUserId:principals.coach.userId,actorRole:"journal_owner_admin",action:"operational_receipt_recorded",targetKind:"authority",targetRefSha256:auditTarget,outcome,reasonCode:reason,correlationRefSha256:nonceRef,previewReceiptSha256:input.runManifestSha256,details:{purpose:"isolated_staging_review",pipeline:run.pipeline,requests,writes,frames},createdAtUtc:new Date().toISOString()});
+  const stop=(reason="denied")=>{if(!abort.signal.aborted)abort.abort(reason);for(const callback of stops){try{callback();}catch{/* terminal cleanup must continue */}}stops.clear();};
+- const check=()=>{if(finished||request.signal.aborted||abort.signal.aborted||Date.now()-start>=run.bounds.durationMs){stop();refused();}try{authorize();}catch(error){stop();throw error;}};
++ const check=()=>{try{if(finished||request.signal.aborted||abort.signal.aborted||Date.now()-start>=run.bounds.durationMs)refused();if(operationCheck)operationCheck();else authorize();}catch(error){if(operationCheck)operationFailure=error;else stop();throw error;}};
++ const withOperationFrame=(operation:()=>void)=>{
++  if(run.pipeline!=="shared-fixture"||operationCheck||finished||request.signal.aborted||abort.signal.aborted||Date.now()-start>=run.bounds.durationMs)refused();
++  try{authorize(operation,true);}catch(error){stop();throw error;}
++ };
++ const assertOperationFrame=()=>{if(run.pipeline!=="shared-fixture"||!operationCheck||!db.inTransaction)refused();check();};
+  const approvedThreads=new Set<string>();
+- const transport:typeof fetch=async(resource,options)=>{
+-  function deny():never{stop();return refused();}
+-  check();if(++requests>run.bounds.requests){stop();deny();}
+-  const url=new URL(typeof resource==="string"?resource:resource instanceof URL?resource.href:resource.url),method=(options?.method??(resource instanceof Request?resource.method:"GET")).toUpperCase();
++ const transport=async(resource:Parameters<typeof fetch>[0],options?:Parameters<typeof fetch>[1],boundary?:(operation:()=>void)=>void):ReturnType<typeof fetch>=>{
++  function deny():never{const error=new Error("Community staging QA capability refused.");if(operationCheck)operationFailure=error;else stop();throw error;}
++  const checkedBoundary=(work:()=>void)=>{
++   if(!boundary){work();return;}
++   if(run.pipeline!=="shared-fixture")deny();
++   let calls=0,armed=true,invalid=false;
++   try{const result=boundary(()=>{if(!armed||calls++!==0||!operationCheck||!db.inTransaction){invalid=true;return deny();}assertOperationFrame();work();});if(result!==undefined||calls!==1||invalid)deny();}finally{armed=false;}
++  };
++  let url!:URL,method!:string,route!:string;
++  checkedBoundary(()=>{check();if(++requests>run.bounds.requests)deny();
++  url=new URL(typeof resource==="string"?resource:resource instanceof URL?resource.href:resource.url);method=(options?.method??(resource instanceof Request?resource.method:"GET")).toUpperCase();
+   const headers=new Headers(options?.headers??(resource instanceof Request?resource.headers:undefined));
+   if(headers.get("authorization")!==`Bot ${environment.TRADERLINK_DISCORD_BOT_TOKEN?.trim()}`||!environment.TRADERLINK_DISCORD_BOT_TOKEN?.trim()||url.username||url.password||url.hash)deny();
+   const queryKeys=[...url.searchParams.keys()];
+@@ -161,13 +197,14 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
+   const limit=url.searchParams.get("limit"),after=url.searchParams.get("after"),before=url.searchParams.get("before");
+   if(limit&&(!/^\d{1,4}$/.test(limit)||Number(limit)<1||Number(limit)>1000)||after&&!id(after)||before&&!id(before)&&(!/^\d{4}-\d{2}-\d{2}T/.test(before)||before.length>32||!Number.isFinite(Date.parse(before))))deny();
+   if(url.origin!=="https://discord.com"||!url.pathname.startsWith("/api/v10/")||!["GET","POST","PATCH","DELETE"].includes(method))deny();
+-  const route=url.pathname.slice("/api/v10".length),channel=route.match(/^\/channels\/(\d+)\/(messages(?:\/\d+)?|threads\/archived\/public)$/),guildRoute=route.match(/^\/guilds\/(\d+)(?:\/(channels|roles|members(?:\/\d+)?|invites|vanity-url|threads\/active))?$/);
++  route=url.pathname.slice("/api/v10".length);const channel=route.match(/^\/channels\/(\d+)\/(messages(?:\/\d+)?|threads\/archived\/public)$/),guildRoute=route.match(/^\/guilds\/(\d+)(?:\/(channels|roles|members(?:\/\d+)?|invites|vanity-url|threads\/active))?$/);
+   if(channel){if(!run.channelIds.includes(channel[1])&&!approvedThreads.has(channel[1]))deny();if(method!=="GET"&&(run.pipeline==="stats"||!channel[2].startsWith("messages")||++writes>run.bounds.writes))deny();}
+   else if(method!=="GET"||!(route==="/users/@me"||guildRoute?.[1]===run.guildId))deny();
++  });
+   const response=await fetch(resource,{...options,redirect:"error",signal:AbortSignal.any([abort.signal,request.signal,...(options?.signal?[options.signal]:[]),AbortSignal.timeout(Math.max(1,Math.min(10000,run.bounds.durationMs-(Date.now()-start))))])});
+   // A completed write receipt must survive cancellation. New work is still denied.
+   if(method!=="GET")return response;
+-  check();
++  checkedBoundary(check);
+   if(response.ok&&(route.endsWith("/threads/active")||route.endsWith("/threads/archived/public"))){
+    const clone=response.clone(),reader=clone.body?.getReader();if(!reader)deny();const chunks:Uint8Array[]=[];let size=0;
+    try{for(;;){const chunk=await reader.read();if(chunk.done)break;size+=chunk.value.length;if(size>4_000_000)deny();chunks.push(chunk.value);}}finally{await reader.cancel();}
+@@ -182,7 +219,7 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
+  authorize(()=>{if(db.prepare("SELECT 1 FROM platform_admin_audit_events WHERE action='operational_receipt_recorded' AND correlation_ref_sha256=? AND reason_code='community_stage_run_started'").get(nonceRef))refused();audit("community_stage_run_started","success");started=true;});
+  const deadline=setTimeout(()=>stop("deadline"),run.bounds.durationMs);deadline.unref?.();
+  const aborted=()=>stop("cancelled");request.signal.addEventListener("abort",aborted,{once:true});
+- const capability:CommunityStagingQaCapability=Object.freeze({run:Object.freeze({...run,channelIds:Object.freeze([...run.channelIds]),jobs:Object.freeze(run.jobs.map(x=>Object.freeze({...x}))),bounds:Object.freeze({...run.bounds}),pins:Object.freeze({...run.pins})}),signal:abort.signal,request:transport,assertActive:check,
++ const capability:CommunityStagingQaCapability=Object.freeze({run:Object.freeze({...run,channelIds:Object.freeze([...run.channelIds]),jobs:Object.freeze(run.jobs.map(x=>Object.freeze({...x}))),bounds:Object.freeze({...run.bounds}),pins:Object.freeze({...run.pins})}),signal:abort.signal,request:transport,assertActive:check,withOperationFrame,assertOperationFrame,requestWithFixtureOperation:(resource,options,boundary)=>transport(resource,options,boundary),
+   gatewayFrame:database=>{if(database!==db)refused();check();if(++frames>run.bounds.gatewayFrames){stop();refused();}},historyTick:()=>{check();if(++histories>run.bounds.historyTicks){stop();refused();}},collectorTick:()=>{check();if(++ticks>run.bounds.collectorTicks){stop();refused();}},
+   remainingMs:()=>Math.max(0,run.bounds.durationMs-(Date.now()-start)),onStop:callback=>{if(abort.signal.aborted){callback();return()=>undefined;}stops.add(callback);return()=>{stops.delete(callback);};},
+   finish:outcome=>{if(finished)return;finished=true;clearTimeout(deadline);request.signal.removeEventListener("abort",aborted);stop();if(started){structural();db.transaction(()=>audit(outcome==="completed"?"community_stage_run_completed":"community_stage_run_aborted",outcome==="completed"?"success":"failed")).immediate();}},
+diff --git a/src/modules/communities/server/shared-alerts-staging-fixture-authority.ts b/src/modules/communities/server/shared-alerts-staging-fixture-authority.ts
+index 4795f3e67..fae53a659 100644
+--- a/src/modules/communities/server/shared-alerts-staging-fixture-authority.ts
++++ b/src/modules/communities/server/shared-alerts-staging-fixture-authority.ts
+@@ -7,7 +7,10 @@ import {requireTraderLinkPlatformAuthenticatedRequestIdentity} from "../../platf
+ import {platformMigrationManifest} from "../../platform/server/database/platform-migration-manifest";
+ import {calculatePlatformMigrationChecksum} from "../../platform/server/database/platform-migration-contract";
+ import {PlatformSessionRepository} from "../../platform/server/authentication/platform-session-repository";
+-import {PlatformSessionService,TRADERLINK_PLATFORM_SESSION_COOKIE} from "../../platform/server/authentication/platform-session-service";
++import {hashPlatformSessionToken,TRADERLINK_PLATFORM_SESSION_COOKIE} from "../../platform/server/authentication/platform-session-service";
++import {platformAuthCookieName} from "../../platform/server/authentication/platform-auth-cookies";
++import {deriveAuthenticatedUserJournalScope} from "../../platform/server/authentication/authenticated-user-journal-scope";
++import {deriveJournalAccountSelectionRef} from "../../platform/contracts/journal-account-selection";
+ export type FixtureKey="harbor"|"northstar";
+ type Principal=Readonly<{key:FixtureKey;userId:string;subject:string;sessionId:string;channelIds:readonly string[]}>;
+ export type SharedFixtureManifest=Readonly<{kind:"shared-alerts-synthetic-fixture-v1";fixtureId:string;runId:string;nonce:string;nativeLedgerSha256:string;pins:CommunityStagingQaCapability["run"]["pins"];expiresAtUtc:string;principals:readonly Principal[]}>;
+@@ -58,15 +61,54 @@ export function assertSharedFixtureContext(context:SharedFixtureContext,database
+  if(a.manifest.principals.some(p=>!principalActive(a.database,p)))refused();
+  return a;
+ }
+-export function requireSharedFixtureActor(context:SharedFixtureContext,request:Request,key:FixtureKey):Principal & Readonly<{fixtureKeys:readonly FixtureKey[]}>{
+- const a=admitted.get(context);if(!a||!a.database.open||a.parent.signal.aborted||Date.now()>=Date.parse(a.manifest.expiresAtUtc))refused();
++type ActorBoundary={request:Request;key:FixtureKey;verify:()=>void};
++const activeActors=new WeakMap<object,ActorBoundary>();
++// An immutable comparison digest, never a scope/grant or permission cache.
++const originalRequests=new WeakMap<Request,string>();
++function prepareActor(context:SharedFixtureContext,request:Request,key:FixtureKey){
++ const a=admitted.get(context);if(!a||!a.database.open||a.database.inTransaction||a.parent.signal.aborted||Date.now()>=Date.parse(a.manifest.expiresAtUtc))refused();
+  const p=a.manifest.principals.find(x=>x.key===key);if(!p)refused();
+- const url=new URL(request.url);
+- if(url.origin!==a.manifest.pins.origin||url.pathname!==`/__private/shared-alerts-fixture/${context.runId}/${key}`||url.search||url.hash||url.username||url.password||request.signal.aborted||!["GET","POST"].includes(request.method)||request.headers.get("sec-fetch-site")==="cross-site"||request.method==="POST"&&request.headers.get("origin")!==url.origin)refused();
++ const headersBinding=JSON.stringify([...request.headers]),selector=process.env.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT;
+  const identity=requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers,{databasePath:a.database.name});
+- const cookies=(request.headers.get("cookie")??"").split(";").map(x=>x.trim()).filter(x=>x.startsWith(TRADERLINK_PLATFORM_SESSION_COOKIE+"="));
++ const originalSubjects=a.database.prepare("SELECT auth_subject,created_at_utc,updated_at_utc FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").all(p.userId);
++ const readLifecycle=()=>a.database.prepare("SELECT l.lifecycle_ref,l.generation,l.admission_ref,l.erasure_generation,l.phase,l.profile_ref,l.profile_generation,l.valid_until_utc,p.generation current_profile_generation,p.valid_until_utc profile_valid_until_utc FROM platform_erasure_lifecycles l JOIN platform_erasure_profiles p USING(profile_ref) WHERE l.user_id=?").get(p.userId) as {phase:string;valid_until_utc:string;profile_generation:number;current_profile_generation:number;profile_valid_until_utc:string}|undefined;
++ const originalLifecycle=readLifecycle(),nativeBinding=JSON.stringify({subjects:originalSubjects,lifecycle:originalLifecycle});
++ const requestFingerprint=createHash("sha256").update(JSON.stringify({runId:context.runId,key,headersBinding,selector,subject:p.subject,nativeBinding,mode:identity.mode,sessionId:identity.sessionId,scope:identity.scope})).digest("hex");
++ const originalFingerprint=originalRequests.get(request);if(originalFingerprint&&originalFingerprint!==requestFingerprint)refused();originalRequests.set(request,requestFingerprint);
++ const cookieName=platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE);
++ const cookies=(request.headers.get("cookie")??"").split(";").map(x=>x.trim()).filter(x=>x.startsWith(cookieName+"="));
+  if(cookies.length!==1)refused();
+- const session=new PlatformSessionService(new PlatformSessionRepository(a.database)).resolve(cookies[0].slice(TRADERLINK_PLATFORM_SESSION_COOKIE.length+1));
+- if(identity.mode!=="platform_session"||identity.scope.userId!==p.userId||identity.sessionId!==p.sessionId||!session||session.sessionId!==p.sessionId||session.userId!==p.userId||session.authProvider!=="discord")refused();
+- assertSharedFixtureContext(context);return Object.freeze({...p,fixtureKeys:Object.freeze(a.manifest.principals.map(x=>x.key))});
++ const tokenDigest=hashPlatformSessionToken(decodeURIComponent(cookies[0].slice(cookieName.length+1)));
++ const selection=identity.scope.activeAccountId===null?null:deriveJournalAccountSelectionRef(identity.scope.workspaceId,identity.scope.activeAccountId);
++ const verify=()=>{
++  if(!a.database.open||a.parent.signal.aborted||Date.now()>=Date.parse(a.manifest.expiresAtUtc)||JSON.stringify([...request.headers])!==headersBinding||process.env.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT!==selector)refused();
++  const url=new URL(request.url);
++  if(url.origin!==a.manifest.pins.origin||url.pathname!==`/__private/shared-alerts-fixture/${context.runId}/${key}`||url.search||url.hash||url.username||url.password||request.signal.aborted||!["GET","POST"].includes(request.method)||request.headers.get("sec-fetch-site")==="cross-site"||request.method==="POST"&&request.headers.get("origin")!==url.origin)refused();
++  const session=new PlatformSessionRepository(a.database).findActiveByTokenDigest(tokenDigest,new Date().toISOString());
++  const scope=deriveAuthenticatedUserJournalScope(a.database,p.userId,selection);
++  const subjects=a.database.prepare("SELECT auth_subject,created_at_utc,updated_at_utc FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").all(p.userId) as {auth_subject:string}[];
++  const lifecycle=readLifecycle();
++  if(JSON.stringify({subjects,lifecycle})!==nativeBinding||!lifecycle||lifecycle.phase!=="live"||lifecycle.valid_until_utc<=new Date().toISOString()||lifecycle.profile_generation!==lifecycle.current_profile_generation||lifecycle.profile_valid_until_utc<=new Date().toISOString())refused();
++  if(identity.mode!=="platform_session"||identity.scope.userId!==p.userId||identity.sessionId!==p.sessionId||!session||session.sessionId!==p.sessionId||session.userId!==p.userId||session.authProvider!=="discord"||JSON.stringify(scope)!==JSON.stringify(identity.scope)||subjects.length!==1||subjects[0].auth_subject!==p.subject||!selector?.split(",").map(x=>x.trim()).includes(p.subject))refused();
++ };
++ verify();return {a,p,verify};
++}
++/** ONE synchronous actor operation. Normal Auth stays outside the owned writer. */
++export function withSharedFixtureActorOperation(context:SharedFixtureContext,request:Request,key:FixtureKey,operation:()=>void):void{
++ const existing=activeActors.get(context);
++ if(existing){if(existing.request!==request||existing.key!==key)refused();existing.verify();assertSharedFixtureContext(context);if(operation()!==undefined)refused();existing.verify();assertSharedFixtureContext(context);return;}
++ const {a,verify}=prepareActor(context,request,key);
++ a.parent.withOperationFrame(()=>{
++  if(activeActors.has(context))refused();activeActors.set(context,{request,key,verify});
++  try{verify();assertSharedFixtureContext(context);if(operation()!==undefined)refused();verify();assertSharedFixtureContext(context);}finally{activeActors.delete(context);}
++ });
++}
++export function requireSharedFixtureActor(context:SharedFixtureContext,request:Request,key:FixtureKey):Principal & Readonly<{fixtureKeys:readonly FixtureKey[]}>{
++ const a=admitted.get(context);if(!a)refused();
++ const active=activeActors.get(context);
++ if(active){if(active.request!==request||active.key!==key)refused();a.parent.assertOperationFrame();active.verify();}
++ else{const prepared=prepareActor(context,request,key);prepared.verify();}
++ assertSharedFixtureContext(context);
++ const p=a.manifest.principals.find(x=>x.key===key);if(!p)refused();
++ return Object.freeze({...p,fixtureKeys:Object.freeze(a.manifest.principals.map(x=>x.key))});
+ }
+diff --git a/src/modules/communities/server/shared-alerts-staging-fixture-controller.ts b/src/modules/communities/server/shared-alerts-staging-fixture-controller.ts
+index c6fc8a384..9557a95ef 100644
+--- a/src/modules/communities/server/shared-alerts-staging-fixture-controller.ts
++++ b/src/modules/communities/server/shared-alerts-staging-fixture-controller.ts
+@@ -8,7 +8,7 @@ import {resolvePlatformBackgroundWorkerMode} from "../../platform/server/runtime
+ import {openPlatformDatabase} from "../../platform/server/database/open-platform-database";
+ import {issueCommunityStagingQaCapability,type CommunityStagingQaCapability,type CommunityStagingQaRun} from "./community-staging-qa-capability";
+ import {COMMUNITY_STAGING_QA_DATABASE} from "./community-staging-qa-target";
+-import {issueSharedFixtureContext,assertSharedFixtureContext,requireSharedFixtureActor,type SharedFixtureContext,type FixtureKey} from "./shared-alerts-staging-fixture-authority";
++import {issueSharedFixtureContext,assertSharedFixtureContext,requireSharedFixtureActor,withSharedFixtureActorOperation,type SharedFixtureContext,type FixtureKey} from "./shared-alerts-staging-fixture-authority";
+ import {SharedAlertsDiscord} from "./shared-alerts-discord";
+ import {readFixtureState} from "./shared-alerts-staging-fixture-model";
+ import {deliverSharedFixtureAlert} from "./shared-alerts-staging-fixture-transport";
+@@ -57,22 +57,34 @@ export async function startSharedFixture(request:NextRequest,nonce:string):Promi
+   return new Response(body,{headers:{"Content-Type":"application/x-ndjson","Cache-Control":"no-store","X-Accel-Buffering":"no"}});
+  }catch(error){try{parent?.finish("failed");}finally{if(database?.open)database.close();}throw error;}finally{starting=false;}
+ }
+-export function fixtureRequest(runId:string,key:FixtureKey,headers:Headers,method:"GET"|"POST"){
++function fixtureRequestUnchecked(runId:string,key:FixtureKey,headers:Headers,method:"GET"|"POST"){
+  early();const entry=current;if(!entry||entry.closed||entry.context.runId!==runId||!["harbor","northstar"].includes(key))refused();
+  const origin=resolvePlatformPublicOrigin(new NextRequest(process.env.TRADERLINK_PLATFORM_PUBLIC_ORIGIN??"https://invalid.example",{headers}));
+  const request=new Request(`${origin}/__private/shared-alerts-fixture/${runId}/${key}`,{method,headers:new Headers(headers)});
+- requireSharedFixtureActor(entry.context,request,key);
+  return {context:entry.context,request,channels:entry.channels};
+ }
+ 
++export function fixtureRequest(runId:string,key:FixtureKey,headers:Headers,method:"GET"|"POST"){
++ const result=fixtureRequestUnchecked(runId,key,headers,method);requireSharedFixtureActor(result.context,result.request,key);return result;
++}
++/** Internal callback is synchronous and returns no authority through the native frame. */
++export function withFixtureRequest(runId:string,key:FixtureKey,headers:Headers,method:"GET"|"POST",operation:(value:ReturnType<typeof fixtureRequestUnchecked>)=>void):void{
++ const value=fixtureRequestUnchecked(runId,key,headers,method);
++ withSharedFixtureActorOperation(value.context,value.request,key,()=>{requireSharedFixtureActor(value.context,value.request,key);if(operation(value)!==undefined)refused();});
++}
++
+ export function rememberFixturePublication(context:SharedFixtureContext,request:Request,key:FixtureKey,deliveryId:string){
+  const entry=current;if(!entry||entry.context!==context||entry.closed||entry.publications.size>=6)refused();
+  requireSharedFixtureActor(context,request,key);const s=readFixtureState(context,request,key),d=s.deliveries.find(d=>d.id===deliveryId);if(!d||s.agreements.find(r=>r.id===d.agreementId)?.source!==key)refused();entry.publications.set(deliveryId,{key,request});
+ }
+ export async function deliverFixtureQueued(runId:string,key:FixtureKey,headers:Headers,deliveryId:string){
+- const {context,request}=fixtureRequest(runId,key,headers,"POST"),entry=current;if(!entry||entry.context!==context)refused();
+- const s=readFixtureState(context,request,key),d=s.deliveries.find(d=>d.id===deliveryId),source=entry.publications.get(deliveryId);
+- if(!d||!source)refused();if(d.status!=="pending")return null;
++ let selected:{context:SharedFixtureContext;source:{key:FixtureKey;request:Request}}|undefined;
++ withFixtureRequest(runId,key,headers,"POST",({context,request})=>{
++  const entry=current;if(!entry||entry.context!==context)refused();
++  const s=readFixtureState(context,request,key),d=s.deliveries.find(d=>d.id===deliveryId),source=entry.publications.get(deliveryId);
++  if(!d||!source)refused();if(d.status==="pending")selected={context,source};
++ });
++ if(!selected)return null;
+  // The source's genuine initiating session is revalidated, never impersonated by the receiver.
+- return deliverSharedFixtureAlert(context,source.request,source.key,deliveryId);
++ return deliverSharedFixtureAlert(selected.context,selected.source.request,selected.source.key,deliveryId);
+ }
+diff --git a/src/modules/communities/server/shared-alerts-staging-fixture-transport.ts b/src/modules/communities/server/shared-alerts-staging-fixture-transport.ts
+index 752a5f56e..89366f7e2 100644
+--- a/src/modules/communities/server/shared-alerts-staging-fixture-transport.ts
++++ b/src/modules/communities/server/shared-alerts-staging-fixture-transport.ts
+@@ -1,24 +1,26 @@
+ import "server-only";
+ import {createHash} from "node:crypto";
+-import {assertSharedFixtureContext,type SharedFixtureContext,type FixtureKey} from "./shared-alerts-staging-fixture-authority";
++import {assertSharedFixtureContext,withSharedFixtureActorOperation,type SharedFixtureContext,type FixtureKey} from "./shared-alerts-staging-fixture-authority";
+ import {claimFixtureDelivery} from "./shared-alerts-staging-fixture-model";
+ import {SharedAlertsDiscord} from "./shared-alerts-discord";
+ import {COMMUNITY_REVIEW_DISCORD_GUILD_ID as GUILD} from "./community-review-discord-guild";
+ /** Real Tests-only provider facts are never substituted for synthetic agreement ownership. */
+ export async function deliverSharedFixtureAlert(context:SharedFixtureContext,request:Request,key:FixtureKey,deliveryId:string){
+- const authority=assertSharedFixtureContext(context),ticket=claimFixtureDelivery(context,request,key,deliveryId);
++ let authority!:ReturnType<typeof assertSharedFixtureContext>,ticket!:ReturnType<typeof claimFixtureDelivery>;
++ withSharedFixtureActorOperation(context,request,key,()=>{authority=assertSharedFixtureContext(context);ticket=claimFixtureDelivery(context,request,key,deliveryId);});
+  let started=false,settled=false;
+  try{
+   const botToken=process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim();if(!botToken)throw new Error("Test bot unavailable.");
+-  const transport:typeof fetch=async(resource,options)=>{
+-   ticket.check();const url=new URL(typeof resource==="string"?resource:resource instanceof URL?resource.href:resource.url);
++  const transport:typeof fetch=(resource,options)=>{
++   const url=new URL(typeof resource==="string"?resource:resource instanceof URL?resource.href:resource.url);
+    const method=(options?.method??"GET").toUpperCase();
++   const validateTarget=()=>{
+    // This additional guard is deliberately narrower than the parent capability.
+    if(url.origin!=="https://discord.com"||url.username||url.password||url.hash||url.search||method!=="GET"&&method!=="POST")throw new Error("Test transport target refused.");
+    const allowed=method==="GET"&&(url.pathname==="/api/v10/users/@me"||url.pathname===`/api/v10/guilds/${GUILD}/channels`||url.pathname===`/api/v10/guilds/${GUILD}/roles`||new RegExp(`^/api/v10/guilds/${GUILD}/members/\\d{1,32}$`).test(url.pathname))||method==="POST"&&url.pathname===`/api/v10/channels/${ticket.channelId}/messages`;
+    if(!allowed)throw new Error("Test transport target refused.");
+-   const response=await authority.parent.request(resource,{...options,redirect:"error",signal:AbortSignal.any([request.signal,authority.parent.signal,...(options?.signal?[options.signal]:[])])});
+-   if(method==="GET")ticket.check();return response;
++   };
++   return authority.parent.requestWithFixtureOperation(resource,{...options,redirect:"error",signal:AbortSignal.any([request.signal,authority.parent.signal,...(options?.signal?[options.signal]:[])])},operation=>withSharedFixtureActorOperation(context,request,key,()=>{ticket.check();validateTarget();operation();if(method==="GET")ticket.check();}));
+   };
+   const discord=new SharedAlertsDiscord(botToken,transport),channel=await discord.verifyChannel(GUILD,ticket.channelId);
+   ticket.check();

@@ -7,7 +7,10 @@ import {requireTraderLinkPlatformAuthenticatedRequestIdentity} from "../../platf
 import {platformMigrationManifest} from "../../platform/server/database/platform-migration-manifest";
 import {calculatePlatformMigrationChecksum} from "../../platform/server/database/platform-migration-contract";
 import {PlatformSessionRepository} from "../../platform/server/authentication/platform-session-repository";
-import {PlatformSessionService,TRADERLINK_PLATFORM_SESSION_COOKIE} from "../../platform/server/authentication/platform-session-service";
+import {hashPlatformSessionToken,TRADERLINK_PLATFORM_SESSION_COOKIE} from "../../platform/server/authentication/platform-session-service";
+import {platformAuthCookieName} from "../../platform/server/authentication/platform-auth-cookies";
+import {deriveAuthenticatedUserJournalScope} from "../../platform/server/authentication/authenticated-user-journal-scope";
+import {deriveJournalAccountSelectionRef} from "../../platform/contracts/journal-account-selection";
 export type FixtureKey="harbor"|"northstar";
 type Principal=Readonly<{key:FixtureKey;userId:string;subject:string;sessionId:string;channelIds:readonly string[]}>;
 export type SharedFixtureManifest=Readonly<{kind:"shared-alerts-synthetic-fixture-v1";fixtureId:string;runId:string;nonce:string;nativeLedgerSha256:string;pins:CommunityStagingQaCapability["run"]["pins"];expiresAtUtc:string;principals:readonly Principal[]}>;
@@ -58,15 +61,54 @@ export function assertSharedFixtureContext(context:SharedFixtureContext,database
  if(a.manifest.principals.some(p=>!principalActive(a.database,p)))refused();
  return a;
 }
-export function requireSharedFixtureActor(context:SharedFixtureContext,request:Request,key:FixtureKey):Principal & Readonly<{fixtureKeys:readonly FixtureKey[]}>{
- const a=admitted.get(context);if(!a||!a.database.open||a.parent.signal.aborted||Date.now()>=Date.parse(a.manifest.expiresAtUtc))refused();
+type ActorBoundary={request:Request;key:FixtureKey;verify:()=>void};
+const activeActors=new WeakMap<object,ActorBoundary>();
+// An immutable comparison digest, never a scope/grant or permission cache.
+const originalRequests=new WeakMap<Request,string>();
+function prepareActor(context:SharedFixtureContext,request:Request,key:FixtureKey){
+ const a=admitted.get(context);if(!a||!a.database.open||a.database.inTransaction||a.parent.signal.aborted||Date.now()>=Date.parse(a.manifest.expiresAtUtc))refused();
  const p=a.manifest.principals.find(x=>x.key===key);if(!p)refused();
- const url=new URL(request.url);
- if(url.origin!==a.manifest.pins.origin||url.pathname!==`/__private/shared-alerts-fixture/${context.runId}/${key}`||url.search||url.hash||url.username||url.password||request.signal.aborted||!["GET","POST"].includes(request.method)||request.headers.get("sec-fetch-site")==="cross-site"||request.method==="POST"&&request.headers.get("origin")!==url.origin)refused();
+ const headersBinding=JSON.stringify([...request.headers]),selector=process.env.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT;
  const identity=requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers,{databasePath:a.database.name});
- const cookies=(request.headers.get("cookie")??"").split(";").map(x=>x.trim()).filter(x=>x.startsWith(TRADERLINK_PLATFORM_SESSION_COOKIE+"="));
+ const originalSubjects=a.database.prepare("SELECT auth_subject,created_at_utc,updated_at_utc FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").all(p.userId);
+ const readLifecycle=()=>a.database.prepare("SELECT l.lifecycle_ref,l.generation,l.admission_ref,l.erasure_generation,l.phase,l.profile_ref,l.profile_generation,l.valid_until_utc,p.generation current_profile_generation,p.valid_until_utc profile_valid_until_utc FROM platform_erasure_lifecycles l JOIN platform_erasure_profiles p USING(profile_ref) WHERE l.user_id=?").get(p.userId) as {phase:string;valid_until_utc:string;profile_generation:number;current_profile_generation:number;profile_valid_until_utc:string}|undefined;
+ const originalLifecycle=readLifecycle(),nativeBinding=JSON.stringify({subjects:originalSubjects,lifecycle:originalLifecycle});
+ const requestFingerprint=createHash("sha256").update(JSON.stringify({runId:context.runId,key,headersBinding,selector,subject:p.subject,nativeBinding,mode:identity.mode,sessionId:identity.sessionId,scope:identity.scope})).digest("hex");
+ const originalFingerprint=originalRequests.get(request);if(originalFingerprint&&originalFingerprint!==requestFingerprint)refused();originalRequests.set(request,requestFingerprint);
+ const cookieName=platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE);
+ const cookies=(request.headers.get("cookie")??"").split(";").map(x=>x.trim()).filter(x=>x.startsWith(cookieName+"="));
  if(cookies.length!==1)refused();
- const session=new PlatformSessionService(new PlatformSessionRepository(a.database)).resolve(cookies[0].slice(TRADERLINK_PLATFORM_SESSION_COOKIE.length+1));
- if(identity.mode!=="platform_session"||identity.scope.userId!==p.userId||identity.sessionId!==p.sessionId||!session||session.sessionId!==p.sessionId||session.userId!==p.userId||session.authProvider!=="discord")refused();
- assertSharedFixtureContext(context);return Object.freeze({...p,fixtureKeys:Object.freeze(a.manifest.principals.map(x=>x.key))});
+ const tokenDigest=hashPlatformSessionToken(decodeURIComponent(cookies[0].slice(cookieName.length+1)));
+ const selection=identity.scope.activeAccountId===null?null:deriveJournalAccountSelectionRef(identity.scope.workspaceId,identity.scope.activeAccountId);
+ const verify=()=>{
+  if(!a.database.open||a.parent.signal.aborted||Date.now()>=Date.parse(a.manifest.expiresAtUtc)||JSON.stringify([...request.headers])!==headersBinding||process.env.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT!==selector)refused();
+  const url=new URL(request.url);
+  if(url.origin!==a.manifest.pins.origin||url.pathname!==`/__private/shared-alerts-fixture/${context.runId}/${key}`||url.search||url.hash||url.username||url.password||request.signal.aborted||!["GET","POST"].includes(request.method)||request.headers.get("sec-fetch-site")==="cross-site"||request.method==="POST"&&request.headers.get("origin")!==url.origin)refused();
+  const session=new PlatformSessionRepository(a.database).findActiveByTokenDigest(tokenDigest,new Date().toISOString());
+  const scope=deriveAuthenticatedUserJournalScope(a.database,p.userId,selection);
+  const subjects=a.database.prepare("SELECT auth_subject,created_at_utc,updated_at_utc FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'").all(p.userId) as {auth_subject:string}[];
+  const lifecycle=readLifecycle();
+  if(JSON.stringify({subjects,lifecycle})!==nativeBinding||!lifecycle||lifecycle.phase!=="live"||lifecycle.valid_until_utc<=new Date().toISOString()||lifecycle.profile_generation!==lifecycle.current_profile_generation||lifecycle.profile_valid_until_utc<=new Date().toISOString())refused();
+  if(identity.mode!=="platform_session"||identity.scope.userId!==p.userId||identity.sessionId!==p.sessionId||!session||session.sessionId!==p.sessionId||session.userId!==p.userId||session.authProvider!=="discord"||JSON.stringify(scope)!==JSON.stringify(identity.scope)||subjects.length!==1||subjects[0].auth_subject!==p.subject||!selector?.split(",").map(x=>x.trim()).includes(p.subject))refused();
+ };
+ verify();return {a,p,verify};
+}
+/** ONE synchronous actor operation. Normal Auth stays outside the owned writer. */
+export function withSharedFixtureActorOperation(context:SharedFixtureContext,request:Request,key:FixtureKey,operation:()=>void):void{
+ const existing=activeActors.get(context);
+ if(existing){if(existing.request!==request||existing.key!==key)refused();existing.verify();assertSharedFixtureContext(context);if(operation()!==undefined)refused();existing.verify();assertSharedFixtureContext(context);return;}
+ const {a,verify}=prepareActor(context,request,key);
+ a.parent.withOperationFrame(()=>{
+  if(activeActors.has(context))refused();activeActors.set(context,{request,key,verify});
+  try{verify();assertSharedFixtureContext(context);if(operation()!==undefined)refused();verify();assertSharedFixtureContext(context);}finally{activeActors.delete(context);}
+ });
+}
+export function requireSharedFixtureActor(context:SharedFixtureContext,request:Request,key:FixtureKey):Principal & Readonly<{fixtureKeys:readonly FixtureKey[]}>{
+ const a=admitted.get(context);if(!a)refused();
+ const active=activeActors.get(context);
+ if(active){if(active.request!==request||active.key!==key)refused();a.parent.assertOperationFrame();active.verify();}
+ else{const prepared=prepareActor(context,request,key);prepared.verify();}
+ assertSharedFixtureContext(context);
+ const p=a.manifest.principals.find(x=>x.key===key);if(!p)refused();
+ return Object.freeze({...p,fixtureKeys:Object.freeze(a.manifest.principals.map(x=>x.key))});
 }

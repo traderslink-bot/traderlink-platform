@@ -1,24 +1,26 @@
 import "server-only";
 import {createHash} from "node:crypto";
-import {assertSharedFixtureContext,type SharedFixtureContext,type FixtureKey} from "./shared-alerts-staging-fixture-authority";
+import {assertSharedFixtureContext,withSharedFixtureActorOperation,type SharedFixtureContext,type FixtureKey} from "./shared-alerts-staging-fixture-authority";
 import {claimFixtureDelivery} from "./shared-alerts-staging-fixture-model";
 import {SharedAlertsDiscord} from "./shared-alerts-discord";
 import {COMMUNITY_REVIEW_DISCORD_GUILD_ID as GUILD} from "./community-review-discord-guild";
 /** Real Tests-only provider facts are never substituted for synthetic agreement ownership. */
 export async function deliverSharedFixtureAlert(context:SharedFixtureContext,request:Request,key:FixtureKey,deliveryId:string){
- const authority=assertSharedFixtureContext(context),ticket=claimFixtureDelivery(context,request,key,deliveryId);
+ let authority!:ReturnType<typeof assertSharedFixtureContext>,ticket!:ReturnType<typeof claimFixtureDelivery>;
+ withSharedFixtureActorOperation(context,request,key,()=>{authority=assertSharedFixtureContext(context);ticket=claimFixtureDelivery(context,request,key,deliveryId);});
  let started=false,settled=false;
  try{
   const botToken=process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim();if(!botToken)throw new Error("Test bot unavailable.");
-  const transport:typeof fetch=async(resource,options)=>{
-   ticket.check();const url=new URL(typeof resource==="string"?resource:resource instanceof URL?resource.href:resource.url);
+  const transport:typeof fetch=(resource,options)=>{
+   const url=new URL(typeof resource==="string"?resource:resource instanceof URL?resource.href:resource.url);
    const method=(options?.method??"GET").toUpperCase();
+   const validateTarget=()=>{
    // This additional guard is deliberately narrower than the parent capability.
    if(url.origin!=="https://discord.com"||url.username||url.password||url.hash||url.search||method!=="GET"&&method!=="POST")throw new Error("Test transport target refused.");
    const allowed=method==="GET"&&(url.pathname==="/api/v10/users/@me"||url.pathname===`/api/v10/guilds/${GUILD}/channels`||url.pathname===`/api/v10/guilds/${GUILD}/roles`||new RegExp(`^/api/v10/guilds/${GUILD}/members/\\d{1,32}$`).test(url.pathname))||method==="POST"&&url.pathname===`/api/v10/channels/${ticket.channelId}/messages`;
    if(!allowed)throw new Error("Test transport target refused.");
-   const response=await authority.parent.request(resource,{...options,redirect:"error",signal:AbortSignal.any([request.signal,authority.parent.signal,...(options?.signal?[options.signal]:[])])});
-   if(method==="GET")ticket.check();return response;
+   };
+   return authority.parent.requestWithFixtureOperation(resource,{...options,redirect:"error",signal:AbortSignal.any([request.signal,authority.parent.signal,...(options?.signal?[options.signal]:[])])},operation=>withSharedFixtureActorOperation(context,request,key,()=>{ticket.check();validateTarget();operation();if(method==="GET")ticket.check();}));
   };
   const discord=new SharedAlertsDiscord(botToken,transport),channel=await discord.verifyChannel(GUILD,ticket.channelId);
   ticket.check();
