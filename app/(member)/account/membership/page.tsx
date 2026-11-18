@@ -15,14 +15,19 @@ import { isPlatformMembershipCatalogAvailable } from "@/src/modules/platform/ser
 import { DashboardPanel } from "../../../dashboard-template";
 import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
 import { membershipPortalAction } from "../../../plans/checkout-actions";
+import { headers } from "next/headers";
+import { canConnectWhopAccount,readWhopAccountIdentity,readWhopAccountConnectionNotice } from
+  "@/src/modules/platform/server/billing/whop-account-connection";
+import { WhopAccountConnection } from "./whop-account-connection";
 
 export const metadata: Metadata = { title: "Plan & billing | TraderLink", robots: { index: false, follow: false }, referrer: "no-referrer" };
 export const dynamic = "force-dynamic";
-export default async function MembershipAccountPage({searchParams}:{searchParams:Promise<{addonOfferId?:string;secret?:string}>}) {
+export default async function MembershipAccountPage({searchParams}:{searchParams:Promise<{addonOfferId?:string;secret?:string;whop?:string|string[]}>}) {
   const query=await searchParams;
   const { scope } = await requireTraderLinkPlatformBillingPageIdentity();
   const snapshot = withReadonlyPlatformDatabase({}, (database) => {
-    if (!isPlatformMembershipCatalogAvailable(database)) return { plans: [], subscriptions: [], hasStripe: false,amendmentsReady:false,addonChoices:[],amendmentSubscriptions:[],initialAmendment:null };
+    const whopIdentity = readWhopAccountIdentity(database,scope.userId);
+    if (!isPlatformMembershipCatalogAvailable(database)) return { whopIdentity, plans: [], subscriptions: [], hasStripe: false,amendmentsReady:false,addonChoices:[],amendmentSubscriptions:[],initialAmendment:null };
     const access = new PlatformMembershipRepository(database).readEffectiveAccess(scope.userId);
     const plans = access.sources.map((source) => {
       const row = database.prepare(`SELECT p.name,r.interval_unit,r.interval_count FROM platform_membership_plan_versions v JOIN platform_membership_plans p ON p.plan_id=v.plan_id
@@ -44,8 +49,10 @@ export default async function MembershipAccountPage({searchParams}:{searchParams
         AND o.billing_interval='month' AND o.billing_interval_count=1 ORDER BY s.created_at_utc`).all(scope.userId) as MembershipAmendmentSubscriptionChoice[]:[];
     const open=amendmentsReady?database.prepare("SELECT amendment_id FROM platform_membership_addon_amendments WHERE user_id=? AND state IN ('preparing','quoted','confirming','pending_payment','reconciliation_required') ORDER BY created_at_utc DESC LIMIT 1").get(scope.userId) as {amendment_id:string}|undefined:undefined;
     const initialAmendment:MembershipAddonAmendmentView|null=open?membershipAddonAmendmentView(new MembershipAddonAmendmentRepository(database).read(scope.userId,open.amendment_id)):null;
-    return { plans, subscriptions,amendmentsReady,addonChoices,amendmentSubscriptions,initialAmendment,hasStripe: subscriptions.some((s) => s.provider === "stripe" && s.customer) };
+    return { whopIdentity, plans, subscriptions,amendmentsReady,addonChoices,amendmentSubscriptions,initialAmendment,hasStripe: subscriptions.some((s) => s.provider === "stripe" && s.customer) };
   });
+  const whopConnectAvailable = snapshot.whopIdentity === "not_linked"
+    && canConnectWhopAccount(new Headers(await headers()),scope.userId);
   return <AccountSettingsLayout activeSection="membership" title="Plan & billing" description="">
     <DashboardPanel title="Your plans"><Stack spacing={2}>
       {!snapshot.plans.length ? <Typography>No active membership plans. A recent payment may still be processing.</Typography> : snapshot.plans.map((plan) => <Typography key={plan.id}>{plan.name} · {plan.ends ? `Access until ${plan.ends}` : "No end date"}{plan.recurrence ? ` · ${plan.recurrence}` : ""}</Typography>)}
@@ -55,6 +62,7 @@ export default async function MembershipAccountPage({searchParams}:{searchParams
     <DashboardPanel title="Billing"><Stack spacing={2}>
       {snapshot.subscriptions.map((s) => <Typography key={s.id}>{s.provider} · {s.state.replaceAll("_", " ")}{s.ends ? ` · ${s.ends}` : ""}</Typography>)}
       {snapshot.hasStripe ? <form action={membershipPortalAction}><Button type="submit" variant="contained">Manage Stripe billing</Button></form> : <Typography>No Stripe subscription is linked.</Typography>}
+      <WhopAccountConnection state={snapshot.whopIdentity} canConnect={whopConnectAvailable} notice={readWhopAccountConnectionNotice(query.whop)} />
     </Stack></DashboardPanel>
   </AccountSettingsLayout>;
 }

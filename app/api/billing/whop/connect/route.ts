@@ -1,3 +1,4 @@
+import { createBillingWhopOAuthFlowBinding } from "@/src/modules/platform/server/billing/whop-account-connection";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -21,11 +22,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const billingEntry=request.nextUrl.searchParams.get("entry")==="billing";
   try {
     const identity = requireWhopOAuthRequestIdentity(request);
     const configuration = loadWhopOAuthRequestConfiguration(request, identity.scope.userId);
+    if(billingEntry&&configuration.realm!=="sandbox")throw Error("Billing Whop linking is unavailable");
     const pkce = createWhopOAuthPkce();
-    const state = configuration.realm === "sandbox" ? `sandbox.${pkce.state}` : pkce.state;
+    const nonce=billingEntry?`billing.${pkce.state}`:pkce.state;
+    const state = configuration.realm === "sandbox" ? `sandbox.${nonce}` : nonce;
     const response = NextResponse.redirect(buildWhopAuthorizeUrl({
       configuration,
       state,
@@ -39,9 +43,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       createWhopPrivacyReference(identity.scope.userId, "platform_user",
         configuration.identityHmacKey), WHOP_OAUTH_COOKIE_MAX_AGE_SECONDS);
     setPlatformAuthCookie(response, request, WHOP_OAUTH_FLOW_COOKIE,
-      createWhopOAuthFlowBinding(configuration, identity.scope.userId), WHOP_OAUTH_COOKIE_MAX_AGE_SECONDS);
+      (billingEntry?createBillingWhopOAuthFlowBinding(configuration,identity.scope.userId,state):createWhopOAuthFlowBinding(configuration, identity.scope.userId)), WHOP_OAUTH_COOKIE_MAX_AGE_SECONDS);
     return response;
   } catch {
-    return NextResponse.redirect(new URL("/account?whop=unavailable", resolvePlatformPublicOrigin(request)));
+    return NextResponse.redirect(new URL(`${billingEntry?"/account/membership":"/account"}?whop=unavailable`, resolvePlatformPublicOrigin(request)));
   }
 }
