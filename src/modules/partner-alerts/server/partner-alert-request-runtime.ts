@@ -1,3 +1,4 @@
+import { partnerAlertOwnerEvidenceTarget,refreshPartnerAlertOwnerEvidence } from "./partner-alert-owner-evidence-refresh";
 import { isPartnerAlertReviewDiscordTarget } from "./partner-alert-review-discord";
 import "server-only";
 
@@ -188,6 +189,16 @@ export async function withPartnerAlertRequestRuntime<T>(
       ? readPartnerAlertDiscordOutputConfiguration(environment, outputBotUserId, outputConfigurationRef)
       : readPartnerAlertProviderRuntimeConfiguration(environment, outputBotUserId, outputConfigurationRef);
     const discordConfiguration = readDiscordConfiguration();
+    const ownerTarget = partnerAlertOwnerEvidenceTarget(request);
+    if (ownerTarget && discordConfiguration) {
+      const fingerprint = discordConfiguration ? providerConfigurationFingerprint(discordConfiguration) : null;
+      const refreshed = await refreshPartnerAlertOwnerEvidence({ database,admission,request,environment,target: ownerTarget,
+        botToken: discordConfiguration?.discordBotToken ?? "",configurationIsCurrent: () => {
+          const current = readDiscordConfiguration();
+          return fingerprint !== null && current !== null && providerConfigurationFingerprint(current) === fingerprint;
+        } });
+      if (refreshed === "unavailable") return unavailableResult();
+    }
     const messageContentEnabled = environment.PARTNER_ALERT_DISCORD_MESSAGE_CONTENT_INTENT_ENABLED === "true";
     const pricingCapabilities = providerConfiguration?.pricingCapabilities
       ?? (stripeFundingEnvironment ? readPartnerAlertPublishingPricingCapabilities(environment) : null);
