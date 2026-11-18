@@ -23,6 +23,15 @@ import {
 let foundation: PlatformRouteTestFoundation;
 let restoreEnvironment: () => void;
 
+function expectPrivateFactsHeaders(response: Response): void {
+  expect(response.headers.get("cache-control")).toBe("private, no-store, max-age=0");
+  expect(response.headers.get("cdn-cache-control")).toBe("no-store");
+  expect(response.headers.get("vercel-cdn-cache-control")).toBe("no-store");
+  expect(response.headers.get("pragma")).toBe("no-cache");
+  expect(response.headers.get("expires")).toBe("0");
+  expect(response.headers.get("vary")?.split(",").map(token => token.trim().toLowerCase())).toContain("cookie");
+}
+
 function id(sequence: number): string {
   return `20000000-0000-4000-8000-${String(sequence).padStart(12, "0")}`;
 }
@@ -253,14 +262,13 @@ describe("replacement Journal Level Analysis route boundaries", () => {
       link: { linkStatus: "linked" },
     });
 
-    const facts = await (
-      await getTradeDetailLevelFacts(
-        createPlatformRouteTestRequest(
-          `/api/trades/${roundTripId}/level-analysis/facts`,
-        ),
-        { params: Promise.resolve({ tradeId: roundTripId }) },
-      )
-    ).json();
+    const factsResponse = await getTradeDetailLevelFacts(
+      createPlatformRouteTestRequest(`/api/trades/${roundTripId}/level-analysis/facts`),
+      { params: Promise.resolve({ tradeId: roundTripId }) },
+    );
+    expect(factsResponse.status).toBe(200);
+    expectPrivateFactsHeaders(factsResponse);
+    const facts = await factsResponse.json();
     expect(facts).toMatchObject({
       savedTradeId: roundTripId,
       availability: { availability: "attached" },
@@ -347,6 +355,7 @@ describe("replacement Journal Level Analysis route boundaries", () => {
       { params: Promise.resolve({ tradeId: roundTripId }) },
     );
     expect(response.status).toBe(200);
+    expectPrivateFactsHeaders(response);
     await expect(response.json()).resolves.toMatchObject({
       savedTradeId: roundTripId,
       availability: { availability: "not_checked" },
@@ -364,6 +373,7 @@ describe("replacement Journal Level Analysis route boundaries", () => {
       { params: Promise.resolve({ tradeId: roundTripId }) },
     );
     expect(unavailable.status).toBe(503);
+    expectPrivateFactsHeaders(unavailable);
 
     delete process.env.TRADERLINK_LEVEL_ANALYSIS_RAW_DEBUG_ENABLED;
     const hidden = await getAdminTradeLink(

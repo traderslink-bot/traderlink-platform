@@ -16,6 +16,19 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// These are authenticated account-specific facts on success and failure.
+function privateFactsResponse(response: Response): Response {
+  for (const [name, value] of Object.entries({
+    "cache-control": "private, no-store, max-age=0",
+    "cdn-cache-control": "no-store",
+    "vercel-cdn-cache-control": "no-store",
+    pragma: "no-cache",
+    expires: "0",
+  })) response.headers.set(name, value);
+  response.headers.append("vary", "Cookie");
+  return response;
+}
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ tradeId: string }> },
@@ -27,13 +40,13 @@ export async function GET(
     if (!isCanonicalUuidV4(tradeId)) platformFailure("TRADERLINK_LEVEL_ANALYSIS_LINK_INVALID");
     const accountScope = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
     const providers = requireConfiguredLevelAnalysisProviders();
-    return Response.json(withReadonlyPlatformDatabase({}, (database) =>
+    return privateFactsResponse(Response.json(withReadonlyPlatformDatabase({}, (database) =>
       new JournalLevelAnalysisLinkService(
         new LevelAnalysisDeliveryRepository(database),
         new JournalLevelAnalysisLinkRepository(database),
         providers,
-      ).facts(accountScope, tradeId)));
+      ).facts(accountScope, tradeId))));
   } catch (error) {
-    return levelAnalysisErrorResponse(error);
+    return privateFactsResponse(levelAnalysisErrorResponse(error));
   }
 }
