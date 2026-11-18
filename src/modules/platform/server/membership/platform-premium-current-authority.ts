@@ -145,11 +145,12 @@ export class PlatformPremiumCurrentAuthority implements PlatformPremiumAuthority
         if (read.kind !== "snapshot" || read.apiVersion !== "platform_premium_authority_v2") return { kind: "unbound" as const };
         const raw: Extract<MembershipPremiumRead, { kind: "snapshot" }> = structuredClone(read);
         const ticket = premiumTicket(raw.ticket); const scope = premiumScope(ticket.scope);
-        const at = premiumUtc(this.configuration.nowUtc());
         if (scope.authorityKey !== authorityKey || !this.isCurrent(ticket) || raw.policy.state !== "active"
           || raw.policy.guildId !== this.configuration.guildId || raw.policy.generation !== scope.policyGeneration
           || !Array.isArray(raw.policy.offerScopes) || raw.policy.offerScopes.length < 1 || raw.policy.offerScopes.length > 50
           || !Array.isArray(raw.coverage) || raw.coverage.length !== raw.policy.offerScopes.length) throw new PlatformPremiumError("invalid");
+        // isCurrent advances the nominal runtime clock; sample coverage time afterwards.
+        const at = premiumUtc(this.configuration.nowUtc());
         const age = premiumInteger(raw.policy.maximumEvidenceAgeMs, 1, 86_400_000); const payer = payerCopy(raw.payer);
         const seen = new Set<string>();
         const coverage: PlatformPremiumSnapshot["coverage"] = Object.freeze(raw.policy.offerScopes.map(value => {

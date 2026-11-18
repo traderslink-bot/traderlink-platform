@@ -19,6 +19,7 @@ import { calculatePlatformMigrationChecksum } from "../../platform/server/databa
 import { readAppliedPlatformMigrations } from "../../platform/server/database/platform-migration-registry";
 import { PlatformErasureAdmission } from "../../platform/server/privacy/platform-erasure-admission";
 import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS as PLATFORM_PREMIUM_ROLE_SCHEMA_SQL } from "../../platform/server/membership/platform-premium-role-current-access-schema";
+import { readPartnerAlertRequestUserPremium, type PartnerAlertCatalogPremiumRead } from "./partner-alert-request-user-premium";
 import { createPartnerAlertRequestPremiumBinder } from "./partner-alert-request-premium-binding";
 import { readPartnerAlertIsolatedStaging } from "./partner-alert-isolated-staging";
 import { checkPartnerAlertSubscriberAccess, verifyPartnerAlertSubscriberOffer, type PartnerAlertDiscordDestination,
@@ -72,6 +73,7 @@ const REF = /^[A-Za-z0-9_:-]{1,160}$/u;
 
 export type PartnerAlertRequestRuntime = Readonly<{
   http: PartnerAlertHttpAdapter;
+  readUserPremium: (userId:string) => Promise<PartnerAlertCatalogPremiumRead>;
   receiveWhopEvent: (scope: PartnerAlertWhopWebhookScope,
     input: Parameters<PartnerAlertWhopInbox["receiveSignedEvent"]>[0]) => void;
   reviewSubscriberRole: (request: Request) => Promise<Response>;
@@ -299,6 +301,12 @@ export async function withPartnerAlertRequestRuntime<T>(
       premiumRequestBinder = createPartnerAlertRequestPremiumBinder({ database,admission,request,environment,
         guildId: destinationGuildId,paidRoleId: stripePremiumRole,observeDiscord: observable });
     }
+    const readUserPremium: PartnerAlertRequestRuntime["readUserPremium"] = async userId => {
+      if(stripeFundingEnvironment!=="sandbox"||!readPartnerAlertIsolatedStaging(environment))
+        return {identity:"native_verification_needed",premium:"unknown",destination:"unknown",observedAtUtc:null,validUntilUtc:null,destinationObservedAtUtc:null,destinationValidUntilUtc:null};
+      return readPartnerAlertRequestUserPremium({database:database!,admission,request,environment,
+        guildId:destinationGuildId,paidRoleId:stripePremiumRole,userId,observeDiscord:observable});
+    };
     const subscriberAuthority = (target: PartnerAlertSubscriberOffer) => bindSubscriberAuthority
       ? bound ?? null : premiumRequestBinder ? premiumRequestBinder.bind(target)
       : bindPartnerAlertNativeSubscriber(database!, admission, target, destinationGuildId, stripeFundingEnvironment,
@@ -623,7 +631,7 @@ export async function withPartnerAlertRequestRuntime<T>(
     };
     return await operation(Object.freeze({ http, writer, readSourceChannels, checkSubscriberAccess,
       readSubscriberOfferState, receiveWhopEvent, reviewSubscriberRole, reviewStripeAdjustment,
-      receiveStripeBillingEvent, startStripeCheckout, readStripeCatalogOffer, readStripeSeller, startStripeSellerSetup, completeStripeSellerSetup }));
+      receiveStripeBillingEvent, startStripeCheckout, readStripeCatalogOffer, readUserPremium, readStripeSeller, startStripeSellerSetup, completeStripeSellerSetup }));
   } catch {
     return unavailableResult();
   } finally {

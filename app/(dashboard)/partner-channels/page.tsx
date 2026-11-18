@@ -41,6 +41,7 @@ export default async function PartnerChannelsPage() {
   type Catalog = Awaited<ReturnType<typeof qualifyPartnerAlertCatalogCheckout>>;
   type Card = PartnerChannelCatalogItem;
   let catalog: Catalog;
+  let premium: Awaited<ReturnType<import("@/src/modules/partner-alerts/server/partner-alert-request-runtime").PartnerAlertRequestRuntime["readUserPremium"]>> | null = null;
   const cards = new Map<string, Card>();
   const stripeCards = new Map<string, Card>();
   const cardKey = (item: Pick<Card, "communityId" | "offerKey">) => JSON.stringify([item.communityId, item.offerKey]);
@@ -59,6 +60,7 @@ export default async function PartnerChannelsPage() {
     const qualify = (verify?: Parameters<typeof qualifyPartnerAlertCatalogCheckout>[4]) =>
       qualifyPartnerAlertCatalogCheckout(candidates, qualifier, AbortSignal.timeout(10_000), new Date().toISOString(), verify);
     const projected = await withPartnerAlertRequestRuntime<Catalog | null>(request, async access => {
+      premium = await access.readUserPremium(scope.userId);
       if (billing) {
         const signal = AbortSignal.timeout(10_000);
         for (const { item, offer } of [...stripeOffers, ...legacyOffers]) {
@@ -89,7 +91,13 @@ export default async function PartnerChannelsPage() {
   return <PartnerChannelCatalog
     catalogStatus={catalog.kind === "available" || cards.size > 0 ? "ready" : "unavailable"}
     items={[...cards.values()]}
-    premiumStatus={[...cards.values()].some(item => item.access === "subscribed" || item.stripeCheckout)
-      ? "active" : "unavailable"}
+    premiumStatus={premiumStatusForCatalog(premium)}
   />;
+}
+
+// A verified user-level observation survives an empty sale catalog. Expired or
+// missing evidence stays unknown; an offer/card never becomes Premium proof.
+function premiumStatusForCatalog(read: import("@/src/modules/partner-alerts/server/partner-alert-request-user-premium").PartnerAlertCatalogPremiumRead|null): "active"|"attention"|"unavailable" {
+ if(!read?.validUntilUtc||Date.parse(read.validUntilUtc)<=Date.now())return "unavailable";
+ return read.premium==="paid"?"active":read.premium==="not_paid"?"attention":"unavailable";
 }
