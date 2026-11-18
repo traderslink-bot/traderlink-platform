@@ -1,3 +1,4 @@
+import { COMMUNITY_HISTORY_HEADER, classifyCommunityHistoryEntry } from "@/src/modules/communities/contracts/community-history-entry";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { areTraderLinkPlatformAiFeaturesEnabled } from
@@ -22,6 +23,10 @@ function isPageRoot(pathname: string): boolean {
 function continueRequest(request: NextRequest, proxyEntryEpochMs: number): NextResponse {
   const headers = new Headers(request.headers);
   headers.set("x-traderlink-page-path", request.nextUrl.pathname);
+  // The browser cannot select a trusted history context through request headers.
+  headers.delete(COMMUNITY_HISTORY_HEADER);
+  const history = classifyCommunityHistoryEntry(request.nextUrl.pathname, request.nextUrl.searchParams, request.method);
+  if (history) headers.set(COMMUNITY_HISTORY_HEADER, history === "invalid" ? "invalid" : JSON.stringify(history));
   const returnUrl = request.nextUrl.clone();
   if (returnUrl.searchParams.has("_rsc")) returnUrl.searchParams.delete("_rsc");
   headers.set("x-traderlink-page-return-to", returnUrl.pathname + returnUrl.search);
@@ -44,6 +49,26 @@ function continueRequest(request: NextRequest, proxyEntryEpochMs: number): NextR
     return response;
   }
   return NextResponse.next({ request: { headers } });
+}
+
+/** Classification only. The route still verifies the real installed staging
+ * image, native session and selected Discord subject before OAuth or linking.
+ * No AI page, webhook, live flow or billing entitlement is enabled here.
+ */
+function isIsolatedStagingWhopIdentityRequest(request: NextRequest): boolean {
+  const env = process.env;
+  const selected = (env.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT ?? "")
+    .split(",").map(value => value.trim());
+  return request.method === "GET"
+    && ["/api/billing/whop/connect", "/api/billing/whop/callback"].includes(request.nextUrl.pathname)
+    && env.NODE_ENV === "production"
+    && env.TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE === "disabled_isolated_staging"
+    && env.RAILWAY_PROJECT_ID === "49fc9197-07c9-45c7-b528-57d0393c2cca"
+    && env.RAILWAY_ENVIRONMENT_ID === "9e079dd4-f3f3-4872-9b00-adbd3000c485"
+    && env.RAILWAY_SERVICE_ID === "4d264aca-510c-4f5e-bc28-e89e526b8008"
+    && env.TRADERLINK_PLATFORM_PUBLIC_ORIGIN === "https://traderlink-platform-staging-staging.up.railway.app"
+    && selected.length === 2 && new Set(selected).size === 2
+    && selected.every(value => /^\d{5,22}$/.test(value));
 }
 
 function comingSoonResponse(): NextResponse {
@@ -106,7 +131,7 @@ export function proxy(request: NextRequest): NextResponse {
     return continueRequest(request, proxyEntryEpochMs);
   }
 
-  if (areTraderLinkPlatformAiFeaturesEnabled()) {
+  if (isIsolatedStagingWhopIdentityRequest(request) || areTraderLinkPlatformAiFeaturesEnabled()) {
     return continueRequest(request, proxyEntryEpochMs);
   }
 

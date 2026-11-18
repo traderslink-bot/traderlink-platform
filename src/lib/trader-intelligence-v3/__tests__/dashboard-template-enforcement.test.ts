@@ -17,6 +17,8 @@ const retiredLegacyAnalyticsLabClient = join(
   "analytics-lab-client.tsx",
 );
 const reviewedFeaturePanelFiles = new Set([
+  // Existing published Scanner company detail panel; never an application shell.
+  join(dashboardRoot, "screeners", "workspace", "scanner-company-drawer.tsx"),
   join(dashboardRoot, "communities", "coach-trade-review-workspace-persistent.tsx"),
   join(dashboardRoot, "communities", "coaching-calendar-page.tsx"),
   join(dashboardRoot, "communities", "coaching-plan-builder.tsx"),
@@ -37,6 +39,8 @@ const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "charts", "chart-preferences-panel.tsx"),
   join(dashboardRoot, "charts", "trade-market-chart-drawer.tsx"),
   join(dashboardRoot, "notes", "journal-notes-drawer.tsx"),
+  // Catalog filters use a mobile bottom sheet inside the shared dashboard layout.
+  join(dashboardRoot, "partner-channels", "partner-channel-catalog.tsx"),
   join(dashboardRoot, "scanner", "scanner-client.tsx"),
   join(dashboardRoot, "screeners", "declines-card.tsx"),
   join(dashboardRoot, "screeners", "live-screeners-client.tsx"),

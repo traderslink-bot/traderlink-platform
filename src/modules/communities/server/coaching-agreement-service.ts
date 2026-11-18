@@ -1,4 +1,4 @@
-import {chooseStudentReviewSchedules} from '../contracts/coaching-review-schedule-choice';
+import {chooseStudentReviewSchedules,requireFutureCoachingReviewWeek} from '../contracts/coaching-review-schedule-choice';
 import {studentReviewPreferences,type StudentReviewPreferences} from '../contracts/coaching-student-review-preferences';
 import {requireCoachCommercialAccess} from './coaching-commercial-access';
 import {assignIncludedPlanLessons} from "./coaching-included-lessons";
@@ -50,6 +50,7 @@ export class CoachingAgreementService{
   const tradeEvaluationTemplates=Object.fromEntries(items.flatMap(item=>{const template=builderConfig.tradeEvaluationTemplates?.[item.itemType];return template?[[item.planItemId,template]]:[];}));
   const performanceEvaluationTemplates=Object.fromEntries(items.flatMap(item=>{const template=builderConfig.performanceEvaluationTemplates?.[item.itemType];return template?[[item.planItemId,template]]:[];}));
   const terms:CoachingAgreementTerms={planId:plan.plan_id,planRevision:plan.revision,planName:plan.name,description:plan.description,priceAmountMinor:price,currency:plan.currency,billingCadence:plan.billing_cadence,paymentInstructions:plan.payment_instructions,requiredDiscordRoleId:plan.required_discord_role_id,autoArchiveAfterDays:plan.auto_archive_after_days,items,builderConfig,startDate:input.startDate??null,customIntervalDays:input.customIntervalDays??null,dueTimeUtc:input.dueTimeUtc,coverageDays:input.coverageDays,...(Object.keys(tradeEvaluationTemplates).length?{tradeEvaluationTemplates}:{}),...(Object.keys(performanceEvaluationTemplates).length?{performanceEvaluationTemplates}:{})};
+  requireFutureCoachingReviewWeek(terms,input.atUtc);
   items.forEach(item=>{const period=coachingPeriod(terms,item,0);if(period&&item.itemType.endsWith("_review"))coachingReviewCoverage(terms,item,period);});
   const id=createCanonicalUuidV4();
   this.db.transaction(()=>{

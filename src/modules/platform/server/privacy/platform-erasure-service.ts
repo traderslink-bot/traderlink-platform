@@ -1,6 +1,9 @@
+import {eraseCommunityStatsIdentity} from "../../../communities/server/stats/community-stats-retention";
+import { assertBoundStripeErasureAvailable, hasStripeErasureSchema, runBoundStripeErasure } from "./platform-stripe-erasure-runtime-binding";
 import type Database from "better-sqlite3";
 import { captureErasureClosure, type ErasureRoot } from "./platform-erasure-closure";
 import { observeErasurePhase } from "./platform-erasure-observability";
+import { platformErasureParticipants } from "./platform-erasure-participants";
 
 import { JournalAccountRepository, type JournalAccountRecord } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
@@ -173,6 +176,7 @@ function eraseAccountRows(database: Database.Database, scope: AccountScope): rea
 function withPermanentDeleteTransaction<T>(
   database: Database.Database,
   operation: () => T,
+  afterGuardRestoration?: () => void,
 ): T {
   const guards = deleteGuards(database);
   return database.transaction(() => {
@@ -180,6 +184,7 @@ function withPermanentDeleteTransaction<T>(
     for (const guard of guards) database.exec(`DROP TRIGGER ${identifier(guard.name)}`);
     const result = operation();
     for (const guard of guards) database.exec(guard.sql);
+    afterGuardRestoration?.();
     if (observeErasurePhase("foreign_key_check", () => database.prepare("PRAGMA foreign_key_check").get())) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "erasure_foreign_keys" });
     }
@@ -300,11 +305,23 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
     assertCanonicalUuidV4(scope.userId, "erasureUserId");
     assertCanonicalUuidV4(scope.workspaceId, "erasureWorkspaceId");
     if (scope.workspaceRole !== "owner") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
-    return withPermanentDeleteTransaction(this.database, () => {
+    return this.database.transaction(() => {
+      // Must precede delete-guard suspension AND closure capture. Native AFTER
+      // retention barriers remain active throughout the canonical operation.
+      const participants = platformErasureParticipants(this.database);
+      const operationRef = participants?.core.rootCommand(scope.userId);
+      if (hasStripeErasureSchema(this.database)) {
+        if (!operationRef) return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+        assertBoundStripeErasureAvailable(this.database,operationRef,scope.userId);
+      }
+      if (participants && operationRef) participants.partner.beforeRootDelete(operationRef, scope.userId);
+      if (operationRef) runBoundStripeErasure(this.database,operationRef,scope.userId);
+      return withPermanentDeleteTransaction(this.database, () => {
       assertSoleWorkspaceOwner(this.database, scope);
       const accountIds = this.database.prepare<[string], { account_id: string }>(`SELECT account_id
 FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) => row.account_id);
       const artifacts = readPrivateArtifacts(this.database, accountIds);
+      eraseCommunityStatsIdentity(this.database,scope.userId);
       const closure = captureScopedRows(this.database, scope);
       try { closure.deleteRows(); } finally { closure.dispose(); }
       if (this.database.prepare("SELECT 1 FROM platform_users WHERE user_id=?").get(scope.userId)) {
@@ -319,6 +336,9 @@ FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) 
         erasedAccountIds: Object.freeze(accountIds),
         privateArtifactsPendingPurge,
       });
-    });
+      }, () => {
+        if (participants && operationRef) participants.core.markLogicalDeleted(operationRef);
+      });
+    }).immediate();
   }
 }

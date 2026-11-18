@@ -1,28 +1,24 @@
 import "server-only";
 
+import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {
-  requireTraderLinkPlatformBillingRequestIdentity,
-  requireTraderLinkPlatformPageIdentity,
-  type TraderLinkPlatformRequestIdentity,
-} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+  requireCommunityOwnerReviewIdentity,
+  requireCommunityOwnerReviewPageIdentity,
+  requireCommunityOwnerReviewRequestIdentity,
+} from "./community-owner-review-request-identity";
 
 export function requireCoachingPilotRequestIdentity(
   headers: Headers,
 ): TraderLinkPlatformRequestIdentity {
-  return requireCoachingPilotIdentity(requireTraderLinkPlatformBillingRequestIdentity(headers));
+  return requireCommunityOwnerReviewRequestIdentity(headers);
 }
 
 export async function requireCoachingPilotPageIdentity(): Promise<TraderLinkPlatformRequestIdentity> {
-  return requireCoachingPilotIdentity(await requireTraderLinkPlatformPageIdentity());
+  return requireCommunityOwnerReviewPageIdentity();
 }
 
 export function requireCoachingPilotIdentity(
   identity: TraderLinkPlatformRequestIdentity,
 ): TraderLinkPlatformRequestIdentity {
-  if (!hasWatchlistDashboardNavigationAccess(identity)) {
-    platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
-  }
-  return identity;
+  return requireCommunityOwnerReviewIdentity(identity);
 }

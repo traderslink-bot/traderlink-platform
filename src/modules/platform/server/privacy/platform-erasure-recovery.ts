@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
 import type { PlatformErasureArtifact } from "./platform-erasure-service";
 import { PlatformErasureHistory } from "./platform-erasure-history";
+import { completePlatformModuleErasure } from "./platform-erasure-participants";
 
 export type ErasureAction = "trade_tracker_account" | "demo_trade_tracker_account" | "traderlink_account";
 export type ErasureObjectStore = Readonly<{
@@ -80,7 +81,13 @@ export class PlatformErasureRecovery {
     if (this.database.inTransaction) throw new Error("erasure_purge_before_commit");
     const job = this.database.prepare<[string], Job>("SELECT operation_id,state,object_count FROM platform_erasure_operations WHERE operation_id=?").get(operationId);
     if (!job) throw new Error("erasure_unknown_operation");
-    if (job.state === "complete") return;
+    if (job.state === "complete") {
+      this.database.transaction(() => {
+        completePlatformModuleErasure(this.database, operationId);
+        new PlatformErasureHistory(this.database).completed(operationId);
+      }).immediate();
+      return;
+    }
     const rows = this.database.prepare<[string], ObjectRow>("SELECT * FROM platform_erasure_objects WHERE operation_id=? ORDER BY ordinal").all(operationId);
     if (rows.length !== job.object_count) throw new Error("erasure_obligation_manifest_incomplete");
     for (const row of rows) {
@@ -126,6 +133,7 @@ export class PlatformErasureRecovery {
       this.database.prepare("DELETE FROM platform_erasure_objects WHERE operation_id=?").run(operationId);
       this.database.prepare(`UPDATE platform_erasure_operations SET state='complete',active_slot=NULL,
         target_binding_sha256=NULL,completed_at_utc=? WHERE operation_id=?`).run(new Date().toISOString(), operationId);
+      completePlatformModuleErasure(this.database, operationId);
       new PlatformErasureHistory(this.database).completed(operationId);
     }).immediate();
   }

@@ -1,3 +1,4 @@
+import {countCreatedPlatformTestUsers,openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -6,9 +7,6 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
-import { openPlatformDatabase } from "../database/open-platform-database";
-import { platformMigrationManifest } from "../database/platform-migration-manifest";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformUserRepository } from "../identity/platform-user-repository";
 import { PlatformWorkspaceRepository } from "../identity/platform-workspace-repository";
 import { PlatformDiscordMembershipRepository } from "./platform-discord-membership-repository";
@@ -35,15 +33,12 @@ afterEach(async () => {
 function databaseForTest() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-discord-sign-in-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "test.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, {
-    manifest: platformMigrationManifest,
-    now: () => new Date("2026-08-02T12:00:00.000Z"),
-  });
+  setPlatformTestFixtureMigrationTime(database, () => new Date("2026-08-02T12:00:00.000Z"));
   return database;
 }
 
@@ -77,7 +72,7 @@ describe("PlatformDiscordSignInService", () => {
       });
       expect(result.allowedAccountIds).toEqual([IDS[3]]);
       expect(result.session.token).toBe(TOKEN_ONE);
-      expect(database.prepare("SELECT COUNT(*) AS count FROM platform_users").get())
+      expect(countCreatedPlatformTestUsers(database, 'count'))
         .toEqual({ count: 1 });
       expect(database.prepare("SELECT COUNT(*) AS count FROM platform_workspaces").get())
         .toEqual({ count: 1 });
@@ -146,7 +141,7 @@ describe("PlatformDiscordSignInService", () => {
       expect(second.provisioned).toBe(false);
       expect(second.userId).toBe(first.userId);
       expect(second.workspaceId).toBe(first.workspaceId);
-      expect(database.prepare("SELECT COUNT(*) AS count FROM platform_users").get())
+      expect(countCreatedPlatformTestUsers(database, 'count'))
         .toEqual({ count: 2 });
       expect(database.prepare("SELECT COUNT(*) AS count FROM platform_auth_sessions").get())
         .toEqual({ count: 2 });

@@ -23,7 +23,15 @@ export function CommunityManagementDashboard({snapshot,section,isReview=false,di
 }
 function OwnerDashboard({snapshot}:{snapshot:TraderLinkCommunityDashboardSnapshot}){
  const items=[{label:"Roles and access",section:"roles",permission:"community.roles.manage"},{label:"Settings",section:"settings",permission:"community.manage"}].filter(item=>snapshot.community.isOwner||has(snapshot,item.permission));
- return <DashboardPanel title="Manage"><Grid container spacing={2}>{items.map(item=><Grid key={item.section} size={{xs:12,sm:6,lg:4}}><Button component={Link} href={`/communities/${snapshot.community.slug}/manage/${item.section}`} fullWidth variant="outlined">{item.label}</Button></Grid>)}</Grid></DashboardPanel>;
+ return <DashboardPanel title="Manage"><Grid container spacing={2}>{items.map(item=><Grid key={item.section} size={{xs:12,sm:6,lg:4}}><Button component={Link} href={`/communities/${snapshot.community.slug}/manage/${item.section}`} fullWidth variant="outlined">{item.label}</Button></Grid>)}
+    {snapshot.community.isOwner ? (
+      <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+        <Button component={Link} href={`/communities/${snapshot.community.slug}/partner-channels`} fullWidth variant="outlined">
+          Publish partner channels
+        </Button>
+      </Grid>
+    ) : null}
+  </Grid></DashboardPanel>;
 }
 const fixedResponsibilities=[
   {key:"coaching-access",label:"Access coaching"},

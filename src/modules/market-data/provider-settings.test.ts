@@ -7,7 +7,7 @@ import { changeMarketDataProvider, marketDataProvider, marketDataSelection, MARK
 
 it("defaults every feature to Alpaca and persists isolated revisioned selections across reads", async () => {
   const root = await mkdtemp(join(tmpdir(), "market-provider-"));
-  const env = { TEST_MARKET_DATA_DB: join(root, "platform.sqlite"), TRADERLINK_MARKET_DATA_PROVIDER: "moomoo" };
+  const env: NodeJS.ProcessEnv = { NODE_ENV: "test", TEST_MARKET_DATA_DB: join(root, "platform.sqlite"), TRADERLINK_MARKET_DATA_PROVIDER: "moomoo" };
   try {
     for (const feature of MARKET_DATA_FEATURES) expect(marketDataProvider(feature, env)).toBe("alpaca");
     expect(await changeMarketDataProvider("charts", 0, "moomoo", env)).toEqual({ provider: "moomoo", revision: 1 });
@@ -21,7 +21,7 @@ it("defaults every feature to Alpaca and persists isolated revisioned selections
 });
 it("allows only one concurrent selection change and rejects malformed revisions", async () => {
   const root = await mkdtemp(join(tmpdir(), "market-provider-race-"));
-  const env = { TEST_MARKET_DATA_DB: join(root, "platform.sqlite") };
+  const env: NodeJS.ProcessEnv = { NODE_ENV: "test", TEST_MARKET_DATA_DB: join(root, "platform.sqlite") };
   try {
     const results = await Promise.allSettled([changeMarketDataProvider("charts", 0, "moomoo", env), changeMarketDataProvider("charts", 0, "moomoo", env)]);
     expect(results.filter(result => result.status === "fulfilled")).toHaveLength(1);

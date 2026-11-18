@@ -10,11 +10,16 @@ const state = globalThis as typeof globalThis & { [key]?: Slot };
 const housekeepingKey = Symbol.for("traderlink.platform.erasure.housekeeping.v1");
 const housekeeping = globalThis as typeof globalThis & { [housekeepingKey]?: boolean };
 
+/** Request-side preparation must not contend with an active erasure writer. */
+export function assertErasureWorkerIdle(): void {
+  if (state[key]) platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+}
+
 /** One worker, no queue and no terminate/timeout policy for a writer. Keep
  * occupancy until actual exit, even after an error/result or client disconnect.
  */
 export function runErasureWorker(databasePath: string, command: ErasureCommand | null): Promise<ErasureCompletion> {
-  if (state[key]) platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+  assertErasureWorkerIdle();
   const worker = new Worker(join(process.cwd(), "workers/platform-erasure-worker.cjs"), {
     workerData: { databasePath, command },
   });

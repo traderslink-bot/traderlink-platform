@@ -1,4 +1,6 @@
-export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
+import type { PartnerAlertProductionProviderInputs } from "./src/modules/partner-alerts/server/partner-alert-production-provider";
+
+export async function registerTraderLinkHostedNodeRuntime(partnerProvider?: PartnerAlertProductionProviderInputs): Promise<void> {
   if (process.env.NODE_ENV !== "production"
     && [undefined, "enabled"].includes(process.env.TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE)) return;
 
@@ -9,6 +11,22 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
       "./src/modules/platform/server/runtime/platform-background-worker-mode"
     );
     const workerMode = resolvePlatformBackgroundWorkerMode();
+    const databasePath = process.env.TRADERLINK_PLATFORM_DB_PATH;
+    // Restore proofs certify the immutable input image. Check before any
+    // readiness or migration connection can change its SQLite bytes.
+    if (Object.keys(process.env).some(key => key.startsWith("TRADERLINK_PLATFORM_RESTORE_"))) {
+      if (!databasePath) throw new Error("TRADERLINK_PLATFORM_RESTORE_PATH_REQUIRED");
+      const { assertPlatformRestoreStartup } = await import(
+        "./src/modules/platform/server/privacy/platform-erasure-restore-startup-proof"
+      );
+      assertPlatformRestoreStartup(databasePath, process.env);
+    }
+    if (workerMode === "disabled_isolated_staging") {
+      // The staging-only entrypoint already initialized and verified the pinned
+      // synthetic database. Never load production maintenance or worker modules.
+      console.info("TraderLink isolated staging background workers disabled.");
+      return;
+    }
     const { runHostedPlatformMigrationMaintenance } = await import(
       "./src/modules/platform/server/database/run-hosted-platform-migration-maintenance"
     );
@@ -48,6 +66,36 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
       "./src/modules/platform/server/runtime/traderlink-hosted-background-workers"
     );
     startTraderLinkHostedBackgroundWorkers();
+    let partnerMaintenanceStarted = false;
+    if (partnerProvider) {
+      const { installPartnerAlertProductionProvider } = await import(
+        "./src/modules/partner-alerts/server/partner-alert-production-provider"
+      );
+      partnerMaintenanceStarted = Boolean(await installPartnerAlertProductionProvider(partnerProvider));
+    } else if (process.env.PARTNER_ALERT_LIFECYCLE_ENABLED === "true") {
+      const { startConfiguredPartnerAlertMaintenance } = await import(
+        "./src/modules/partner-alerts/server/partner-alert-native-runtime"
+      );
+      partnerMaintenanceStarted = Boolean(startConfiguredPartnerAlertMaintenance());
+    }
+    if (!partnerMaintenanceStarted && process.env.PARTNER_ALERT_STRIPE_RETENTION_REVIEW_PATH) {
+      const { startConfiguredPartnerAlertRetention } = await import(
+        "./src/modules/partner-alerts/server/partner-alert-retention-runtime"
+      );
+      startConfiguredPartnerAlertRetention(databasePath);
+    }
+    if (process.env.PARTNER_STRIPE_NATIVE_LIVE_ENABLED === "true") {
+      const { startPartnerAlertStripeRoleRuntime } = await import(
+        "./src/modules/partner-alerts/server/partner-alert-stripe-role-runtime"
+      );
+      startPartnerAlertStripeRoleRuntime();
+    }
+    if (process.env.PARTNER_ALERT_MIRRORING_ENABLED === "true") {
+      const { startConfiguredPartnerAlertMirroring } = await import(
+        "./src/modules/partner-alerts/server/partner-alert-mirroring-runtime"
+      );
+      startConfiguredPartnerAlertMirroring(databasePath);
+    }
   } catch (error) {
     const code =
       typeof error === "object" && error !== null && "code" in error &&

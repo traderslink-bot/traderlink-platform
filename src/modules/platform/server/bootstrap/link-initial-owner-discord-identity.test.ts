@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -9,7 +10,6 @@ import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/
 import { PlatformAuthenticationRepository } from "../authentication/platform-authentication-repository";
 import { createAndRestoreVerifyPlatformDatabaseBackup } from "../database/platform-database-backup";
 import { openPlatformDatabase } from "../database/open-platform-database";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformUserRepository } from "../identity/platform-user-repository";
 import { PlatformWorkspaceRepository } from "../identity/platform-workspace-repository";
 import {
@@ -35,13 +35,13 @@ function createSeededDatabase(): Readonly<{
   const root = mkdtempSync(join(tmpdir(), "traderlink-owner-discord-link-"));
   roots.push(root);
   const databasePath = join(root, "development.sqlite");
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath,
     forbiddenRepositoryRoots: [],
   });
   try {
-    runPlatformMigrations(database, { now: () => NOW });
+    setPlatformTestFixtureMigrationTime(database, () => NOW);
     new PlatformUserRepository(database, {
       allowedAuthProviders: ["development_local"],
     }).createUser({

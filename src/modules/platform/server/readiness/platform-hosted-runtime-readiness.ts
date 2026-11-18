@@ -10,6 +10,7 @@ import { TRADERLINK_PLATFORM_JOURNAL_UPLOAD_STAGING_ROOT_ENV } from "@/src/modul
 import { TRADERLINK_PLATFORM_DB_PATH_ENV } from "../database/platform-database-config";
 import { readAppliedPlatformMigrations } from "../database/platform-migration-registry";
 import { openReadonlyPlatformDatabase } from "../database/open-readonly-platform-database";
+import { resolvePlatformBackgroundWorkerMode } from "../runtime/platform-background-worker-mode";
 import {
   requirePlatformSingleNodeSqliteStorage,
   TRADERLINK_PLATFORM_SQLITE_SINGLE_NODE_BACKEND,
@@ -43,7 +44,7 @@ function requireExactAbsolutePath(
   return resolve(configured);
 }
 
-function requireDirectory(path: string, writable: boolean): void {
+function requireDirectory(path: string, writable: boolean, privateDirectory = false): void {
   if (
     !existsSync(path) ||
     lstatSync(path).isSymbolicLink() ||
@@ -52,7 +53,15 @@ function requireDirectory(path: string, writable: boolean): void {
   ) {
     throw new Error("TRADERLINK_HOSTED_RUNTIME_STORAGE_INVALID");
   }
-  accessSync(path, constants.R_OK | (writable ? constants.W_OK : 0));
+  if (privateDirectory) {
+    const metadata = lstatSync(path);
+    if ((metadata.mode & 0o777) !== 0o700 ||
+      ![0, process.getuid?.()].includes(metadata.uid)) {
+      throw new Error("TRADERLINK_HOSTED_RUNTIME_STORAGE_INVALID");
+    }
+  }
+  accessSync(path, constants.R_OK | (writable ? constants.W_OK : 0) |
+    (privateDirectory ? constants.X_OK : 0));
 }
 
 function requireProtectedBackupRoot(
@@ -111,29 +120,45 @@ export function verifyPlatformHostedRuntimeReadiness(
   );
   requireDirectory(volumeRoot, true);
 
+  // Hosted review uses its own synthetic namespace on the staging volume.
+  // Resolve the complete immutable Railway/artifact guard before accepting it.
+  const isolatedStaging =
+    environment.TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE === "disabled_isolated_staging";
+  if (isolatedStaging &&
+    resolvePlatformBackgroundWorkerMode(environment) !== "disabled_isolated_staging") {
+    throw new Error("TRADERLINK_HOSTED_RUNTIME_CONFIGURATION_INVALID");
+  }
+  const dataRoot = isolatedStaging
+    ? join(volumeRoot, "community-combined-review-20261117")
+    : volumeRoot;
+  const journalRoot = isolatedStaging ? join(dataRoot, "journal") : dataRoot;
+  if (isolatedStaging) {
+    requireDirectory(dataRoot, true, true);
+    requireDirectory(journalRoot, true, true);
+  }
   const databasePath = requireExactAbsolutePath(
     environment,
     TRADERLINK_PLATFORM_DB_PATH_ENV,
-    join(volumeRoot, "traderlink-platform.sqlite"),
+    join(dataRoot, isolatedStaging ? "platform.sqlite" : "traderlink-platform.sqlite"),
   );
   const evidenceVaultRoot = requireExactAbsolutePath(
     environment,
     TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT_ENV,
-    join(volumeRoot, "evidence-vault"),
+    join(journalRoot, "evidence-vault"),
   );
   const uploadStagingRoot = requireExactAbsolutePath(
     environment,
     TRADERLINK_PLATFORM_JOURNAL_UPLOAD_STAGING_ROOT_ENV,
-    join(volumeRoot, "upload-staging"),
+    join(journalRoot, "upload-staging"),
   );
   const backupRoot = requireExactAbsolutePath(
     environment,
     TRADERLINK_PLATFORM_HOSTED_BACKUP_ROOT_ENV,
-    join(volumeRoot, "backups"),
+    join(dataRoot, "backups"),
   );
-  requireDirectory(evidenceVaultRoot, true);
-  requireDirectory(uploadStagingRoot, true);
-  requireDirectory(backupRoot, true);
+  requireDirectory(evidenceVaultRoot, true, isolatedStaging);
+  requireDirectory(uploadStagingRoot, true, isolatedStaging);
+  requireDirectory(backupRoot, true, isolatedStaging);
   requireProtectedBackupRoot(environment, backupRoot);
 
   next("open");

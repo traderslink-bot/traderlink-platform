@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import type { ErasureAction } from "./platform-erasure-recovery";
+import { platformModuleErasurePending } from "./platform-erasure-participants";
 
 export const ERASURE_HISTORY_RETENTION_MS = 30 * 24 * 60 * 60_000;
 export type ErasureHistoryPhase = "accepted" | "not_deleted" | "committed_cleanup_pending" | "complete" | "outcome_unknown";
@@ -46,6 +47,7 @@ export class PlatformErasureHistory {
 
   completed(receiptId: string): void {
     if (!this.database.inTransaction) throw new Error("erasure_history_complete_requires_transaction");
+    if (platformModuleErasurePending(this.database, receiptId)) return;
     const now = this.now().toISOString();
     this.database.prepare(`UPDATE platform_erasure_history SET phase='complete',updated_at_utc=?,
       committed_at_utc=COALESCE(committed_at_utc,(SELECT operation.created_at_utc FROM platform_erasure_operations operation
@@ -63,6 +65,12 @@ export class PlatformErasureHistory {
     this.database.transaction(() => {
       const operation = this.database.prepare<[string], { state: string }>(
         "SELECT state FROM platform_erasure_operations WHERE operation_id=?").get(receiptId);
+      if (!operation && platformModuleErasurePending(this.database, receiptId)) {
+        // Preparation/fencing committed, logical deletion did not. Keep the
+        // durable pending phase; this is neither a completed erasure nor an
+        // interrupted acceptance with no recovery operation.
+        return;
+      }
       if (operation?.state === "complete") { this.completed(receiptId); return; }
       const now = this.now().toISOString();
       if (operation) {
@@ -84,11 +92,14 @@ export class PlatformErasureHistory {
     if (this.database.inTransaction) throw new Error("erasure_history_recovery_requires_idle_connection");
     const bounded = Math.max(1, Math.min(128, Math.floor(limit)));
     const now = this.now().toISOString();
+    const moduleGuard = this.database.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_erasure_module_operations'").get()
+      ? "AND NOT EXISTS (SELECT 1 FROM platform_erasure_module_operations module_operation WHERE module_operation.operation_ref=history.receipt_id)" : "";
     return this.database.transaction(() => this.database.prepare(`UPDATE platform_erasure_history
       SET phase='outcome_unknown',updated_at_utc=?,finished_at_utc=?,safe_failure_kind='interrupted_before_receipt'
       WHERE receipt_id IN (SELECT history.receipt_id FROM platform_erasure_history history
         WHERE history.phase='accepted' AND history.expires_at_utc>?
           AND NOT EXISTS (SELECT 1 FROM platform_erasure_operations operation WHERE operation.operation_id=history.receipt_id)
+          ${moduleGuard}
         ORDER BY history.accepted_at_utc,history.receipt_id LIMIT ?)`)
       .run(now, now, now, bounded).changes).immediate();
   }

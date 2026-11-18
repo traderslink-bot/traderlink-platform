@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { INTERNAL_RETAINED_ERASURE_PRINCIPAL_SQL } from "@/src/modules/platform/server/identity/platform-internal-erasure-principal";
 
 import type {
   JournalAdminPage,
@@ -402,7 +403,7 @@ export class JournalAdminUserService {
   }> = {}): JournalAdminPage<JournalAdminUserListItem> & Readonly<{ totalCount: number; offset: number }> {
     const pageSize = journalAdminPageSize(input.pageSize);
     const filters = input.filters ?? {};
-    const clauses: string[] = [];
+    const clauses: string[] = [`NOT ${INTERNAL_RETAINED_ERASURE_PRINCIPAL_SQL}`];
     const bindings: Array<string | number> = [];
     const search = filters.search?.trim().slice(0, 100);
     if (search) {
@@ -543,7 +544,7 @@ ORDER BY user.created_at_utc DESC, user.user_id DESC LIMIT ? OFFSET ?`)
       COALESCE(SUM(status = 'disabled'), 0) AS disabled,
       COALESCE(SUM(EXISTS (SELECT 1 FROM platform_auth_identities identity
         WHERE identity.user_id = user.user_id AND identity.auth_provider = 'discord')), 0) AS discordLinked
-      FROM platform_users user`).get()!;
+      FROM platform_users user WHERE NOT ${INTERNAL_RETAINED_ERASURE_PRINCIPAL_SQL}`).get()!;
   }
 
   private recordedWatchlistVisits(userIds: readonly string[]): ReadonlyMap<string, string> | null {

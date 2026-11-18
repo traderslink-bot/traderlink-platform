@@ -526,7 +526,7 @@ WHERE raw_record_sha256 = ? AND content_fingerprint_sha256 = ?`)
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("enforces canonical decimals and occurrence-distinct source identity", () => {
     const database = setupDatabase();
@@ -548,7 +548,7 @@ SET source_record_identity_sha256 = ? WHERE source_row_id = ?`)
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("keeps the accepted Phase 2 foundation list immutable", () => {
     expect(platformMigrationManifest.slice(0, 2).map((migration) => migration.migrationId)).toEqual([

@@ -1,10 +1,10 @@
-import {hasWatchlistDashboardNavigationAccess} from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import {hasCommunityStatsOwnAccess} from "@/src/modules/communities/server/stats/community-stats-access";
+import type {CommunityStatsNavigationAccess} from "@/src/modules/communities/contracts/community-stats-contracts";
 import {headers} from "next/headers";
 import {readCommunityHistoryEntry} from "@/src/modules/communities/contracts/community-history-entry";
-import {requireTraderLinkPlatformAuthenticatedPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {requireCommunityOwnerReviewAuthenticatedPageIdentity,requireCommunityOwnerReviewServerComponentPageIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {withReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
-import {requireTraderLinkPlatformServerComponentPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {createCanonicalUtcTimestamp,isTraderLinkPlatformError} from "@/src/modules/platform/server/database/platform-migration-contract";
 import {TraderLinkCommunityPlatformRepository,type TraderLinkCommunityCoachingSnapshot} from "@/src/modules/communities/server/traderlink-community-platform-repository";
@@ -13,14 +13,13 @@ import {isCommunityContentActivityPath} from "@/src/modules/communities/server/c
 import {notFound} from "next/navigation";
 
 /** Selected Coaching and owner management route loader; stock projections remain separate. */
-export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot;isReview:boolean}>>{
+export async function loadCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
  try{return await loadAuthorizedCoachingDashboard(communitySlug,path);}catch(error){
   if(isTraderLinkPlatformError(error)&&(error.code==="TRADERLINK_WORKSPACE_ACCESS_DENIED"||error.code==="TRADERLINK_WORKSPACE_NOT_FOUND"))notFound();throw error;
  }
 }
-async function loadAuthorizedCoachingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot;isReview:boolean}>>{
- const identity=await requireTraderLinkPlatformServerComponentPageIdentity(),requested=path??`/communities/${communitySlug}`,suffix=requested.slice(`/communities/${communitySlug}`.length);
- if (/^\/(workspace|coaches|coaching)(?:\/|$)/.test(suffix)&&!hasWatchlistDashboardNavigationAccess(identity))notFound();
+async function loadAuthorizedCoachingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityCoachingSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
+ const identity=await requireCommunityOwnerReviewServerComponentPageIdentity(),requested=path??`/communities/${communitySlug}`,suffix=requested.slice(`/communities/${communitySlug}`.length);
  const historyPath=suffix==="/coaching"||suffix==="/workspace"||suffix==="/workspace/students"||/^\/workspace\/students\/[^/?#]+(?:\/reviews\/[^/?#]+(?:\/final)?)?$/.test(suffix);
  const existingCoachingPage=historyPath||/^\/workspace\/(coachingwork|reviews|sessions|teaching)$/.test(suffix);let historyOnly=false;
  try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,existingCoachingOnly:existingCoachingPage,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}catch(error){if(!historyPath)throw error;historyOnly=true;}
@@ -41,7 +40,8 @@ async function loadAuthorizedCoachingDashboard(communitySlug:string,path?:string
    if(!existingCoachingPage||!ownRelationships.some(row=>row.status==='active'&&!row.archivedAtUtc))notFound();
    current={...current,publishing:undefined,relationships:ownRelationships,plans:[],coaches:[],audiences:[],coachingRoleOptions:[],community:{...current.community,isOwner:false,memberCount:0},viewer:{...current.viewer,capabilities:current.viewer.capabilities.filter(key=>key.startsWith('community.coaching.')&&key!=='community.coaching.manage_all')}};
   }
-  return {...current,lifecycle:database.prepare("SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?").get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0})),viewer:{...current.viewer,activeJournalAccountId:identity.scope.activeAccountId??null,activeJournalAccountName}};
+  const statsOwnContentAccess=!historyOnly&&!deletedOwner&&hasCommunityStatsOwnAccess(database,current.community.communityId,viewer.userId);
+  return {...current,statsOwnContentAccess,lifecycle:database.prepare("SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?").get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0})),viewer:{...current.viewer,activeJournalAccountId:identity.scope.activeAccountId??null,activeJournalAccountName}};
  });
  return Object.freeze({snapshot,isReview:false});
 }
@@ -51,8 +51,7 @@ export async function loadCommunityRetainedHistory() {
  const entry=readCommunityHistoryEntry(await headers());
  if(entry==="invalid")notFound();
  if(!entry)return null;
- const identity=await requireTraderLinkPlatformAuthenticatedPageIdentity();
- if(!hasWatchlistDashboardNavigationAccess(identity))notFound();
+ const identity=await requireCommunityOwnerReviewAuthenticatedPageIdentity();
  try{return withReadonlyPlatformDatabase({},db=>new TraderLinkCommunityPlatformRepository(db).readRetainedHistory(entry,identity.scope.userId));}
  catch(error){if(isTraderLinkPlatformError(error)&&(error.code==="TRADERLINK_WORKSPACE_ACCESS_DENIED"||error.code==="TRADERLINK_WORKSPACE_NOT_FOUND"))notFound();throw error;}
 }

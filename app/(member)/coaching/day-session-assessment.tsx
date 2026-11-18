@@ -1,10 +1,6 @@
 "use client";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Grid from '@mui/material/Grid';
-import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -12,10 +8,7 @@ import {DAY_SESSION_FIELDS,type DaySessionReview} from '@/src/modules/communitie
 import type {IndependentCoachingReviewDraft} from '@/src/modules/communities/contracts/independent-coaching';
 import {useIndependentResourceLocation} from './resource-location';
 export function DaySessionSetup(props:{value:DaySessionReview;onChange:(value:DaySessionReview)=>void}|Record<string,never>){
- if ('value' in props && props.value) {
-  const {value,onChange}=props;
-  return <Stack spacing={2}><Typography component="h3" variant="h3">Day/session review</Typography><Typography variant="body2">Each selected day has its own overall assessment. These additional fields cover decisions across the session; they do not create a day score.</Typography><Grid container spacing={2}>{value.fields.map(field=><Grid key={field.id} size={{xs:12,md:6}}><Stack spacing={1.5} sx={{border:1,borderColor:'divider',borderRadius:1,p:2}}><FormControlLabel label={DAY_SESSION_FIELDS.find(item=>item.id===field.id)!.title} control={<Checkbox checked={field.enabled} onChange={event=>onChange({...value,fields:value.fields.map(item=>item.id===field.id?{...item,enabled:event.target.checked}:item)})}/>}/><TextField select size="small" label="Completion" value={field.required?'required':'optional'} disabled={!field.enabled} sx={{maxWidth:240}} onChange={event=>onChange({...value,fields:value.fields.map(item=>item.id===field.id?{...item,required:event.target.value==='required'}:item)})}><MenuItem value="required">Required</MenuItem><MenuItem value="optional">Optional</MenuItem></TextField><TextField label="Guidance (optional)" multiline minRows={2} disabled={!field.enabled} value={field.guidance??''} error={(field.guidance?.length??0)>400} helperText={(field.guidance?.length??0)>400?'Use 400 characters or fewer.':undefined} onChange={event=>onChange({...value,fields:value.fields.map(item=>item.id===field.id?{...item,guidance:event.target.value}:item)})}/></Stack></Grid>)}</Grid><FormControlLabel label="Consider shared trading-day notes and tags" control={<Checkbox checked={value.journalEvidence} onChange={event=>onChange({...value,journalEvidence:event.target.checked})}/>}/><Typography variant="body2" color="text.secondary">Supporting evidence only. This adds no separate assessment, score or access permission.</Typography></Stack>;
- }
+ void props;
  return <Box sx={{border:1,borderColor:'divider',borderRadius:2,p:{xs:2,sm:2.5},bgcolor:'background.paper'}}><Stack spacing={1}>
   <Typography component="h3" variant="h3">Day/session feedback</Typography>
   <Typography variant="body2" sx={{fontWeight:600}}>Overall day/session assessment · Required</Typography>

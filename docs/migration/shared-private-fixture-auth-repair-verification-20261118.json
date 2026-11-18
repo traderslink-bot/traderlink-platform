@@ -1,0 +1,97 @@
+{
+  "kind": "shared-private-fixture-auth-repair-local-verification",
+  "base": "4db034101c68feee03f80baf122b928b082d45f6",
+  "runtimePatchSha256": "a4361895ec1a6ad336a0d326b6b0a569ce22587ae45cf4008429ffeab4b50946",
+  "runtimeFiles": [
+    {
+      "path": "app/(dashboard)/%5F%5Fprivate/shared-alerts-fixture/[runId]/[key]/page.tsx",
+      "preimageSha256": "82caeaee02f08e2f2c24faa25989fdeab16240aa3a8f82d216e85ddf75c8d082",
+      "postimageSha256": "75748d50401295b69d55d17d4e77c9a25fb4ba547db7ef71d60f941aabe17883"
+    },
+    {
+      "path": "app/(dashboard)/communities/shared-alerts/shared-alerts-staging-fixture-actions.ts",
+      "preimageSha256": "2cbad61a22e1f125244c756dc0677285fed81a5fb2445abf8ee9f4f82390a7c4",
+      "postimageSha256": "969bb18ae544b819d1852a673f320a207597a3e971e2e1c9511f6facbea2b4dd"
+    },
+    {
+      "path": "src/modules/communities/server/community-staging-qa-capability.ts",
+      "preimageSha256": "f4bc4fac65c0e76b5a3a8b6a5556a67cb06339f07c2b8bf2d73dd26468bc4a0e",
+      "postimageSha256": "893b7f16ae594e5d7f1444536e85d476ff975d5a2447135becd5e4be83b52f63"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-authority.ts",
+      "preimageSha256": "e7fbc1942591372866ac4b3afa2cb3e31e5cfe9095968e4ab6b09c46db656f7b",
+      "postimageSha256": "e5d533b7be3ccaeec7e4c6fd2e61ed043d7a27b5d4f493195f438c5cc606e8c9"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-controller.ts",
+      "preimageSha256": "3eedd381bcfd7548cd57306b8ac80fee74434bcf3a02927d929fbfc7a6e58db8",
+      "postimageSha256": "d8d0f724c3b1fd9d22c4e8d6d14b93e355fa5dd94779d18a057713b9ffeaeeba"
+    },
+    {
+      "path": "src/modules/communities/server/shared-alerts-staging-fixture-transport.ts",
+      "preimageSha256": "83b29acca63d9b2f4bffa3491976ba532afb600c53621375a9624d49782268a5",
+      "postimageSha256": "4db249e8e4da2292146c817dbbac4333c359771f13cdb9bca96e47c8cc4021e4"
+    }
+  ],
+  "newTestFiles": [
+    {
+      "path": "src/modules/communities/server/shared-fixture-operation-frame.test.ts",
+      "sha256": "27e60f24872a2a15109d584656da476dfaac64ed0e508360580aca0350a06101"
+    },
+    {
+      "path": "src/modules/communities/server/shared-fixture-actor-operation.test.ts",
+      "sha256": "1290f3b17966f066adc9002c0c8b344df2903ca52859d25aca61f608cd28170b"
+    },
+    {
+      "path": "src/modules/communities/server/shared-fixture-native-frame.test.ts",
+      "sha256": "5742fb65a31535797e37a335718bc67318ed01cb3ad22d5acc3476469d4e9a25"
+    }
+  ],
+  "vitest": {
+    "passed": 52,
+    "failed": 0,
+    "files": 4,
+    "realNativeFrameTests": 6,
+    "unchangedAdminControlTests": 4,
+    "reportSha256": "2b4197b8ce953b8754227c109907a21ed4a3f5b6e5865a0472da28f78b3183cb",
+    "suites": [
+      {
+        "path": "src/modules/communities/server/shared-fixture-actor-operation.test.ts",
+        "passed": 20
+      },
+      {
+        "path": "src/modules/communities/server/shared-fixture-native-frame.test.ts",
+        "passed": 6
+      },
+      {
+        "path": "src/modules/communities/server/shared-fixture-operation-frame.test.ts",
+        "passed": 22
+      },
+      {
+        "path": "src/modules/platform/server/administration/platform-admin-authorization.test.ts",
+        "passed": 4
+      }
+    ]
+  },
+  "strictTypecheck": {
+    "roots": 9,
+    "sourceFiles": 1655,
+    "diagnostics": 0
+  },
+  "lint": {
+    "files": 9,
+    "errors": 0,
+    "warnings": 0
+  },
+  "nativeEvidenceBoundary": "Disposable real SQLite/Admin frame/session/scope/grant/audit and actual delivery adapter. Private files/target/normal resolver/community row and actor/model provider ports are synthetic where explicitly declared; not genuine hosted admission/component/catalog acceptance.",
+  "measuredAdapterNativeAllowedEvents": 19,
+  "mockedProviderGets": 6,
+  "mockedProviderPosts": 1,
+  "wholeBrowserCaseBudgetMeasured": false,
+  "backgroundDemoNotice": "Disposable sign-in emits existing demo_august_saved_candles_unavailable notice; no fixture assertion or source acceptance relies on demo activation.",
+  "guardsAndChildrenClosed": true,
+  "hostedActions": 0,
+  "actualProviderEffects": 0,
+  "productionChanged": false
+}

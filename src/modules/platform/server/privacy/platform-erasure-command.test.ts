@@ -142,13 +142,44 @@ describe.each([false, true])("all erasure actions, combined manifest=%s", (combi
       f.invariant();
     } finally { f.db.close(); }
   });
-  it("erases the whole authorized user/workspace without erasing the unrelated owner", () => {
+  const requiresParticipantAdmission = combined && platformMigrationManifest.some(
+    migration => migration.migrationId === "0190_platform_paid_core_partner_prerequisites",
+  );
+  if (requiresParticipantAdmission) {
+    it("holds whole-account erasure until the integrated participants are admitted", () => {
+      const f = fixture(true, true);
+      try {
+        expect(() => executeErasureCommand(f.db, noObjects, { ...f.command, action: "traderlink_account" }))
+          .toThrow(expect.objectContaining({ code: "held" }));
+        expect(f.db.prepare("SELECT 1 FROM platform_users WHERE user_id=?").get(f.owner.userId)).toBeDefined();
+        expect(f.db.prepare("SELECT 1 FROM platform_workspaces WHERE workspace_id=?").get(f.owner.workspaceId)).toBeDefined();
+        expect(f.accounts.listActiveAccounts(f.owner.workspaceId)).toHaveLength(2);
+        expect(f.db.prepare("SELECT 1 FROM platform_erasure_history LIMIT 1").get()).toBeUndefined();
+        expect(f.db.prepare("SELECT 1 FROM platform_erasure_module_operations LIMIT 1").get()).toBeUndefined();
+        f.invariant();
+      } finally { f.db.close(); }
+    });
+  } else {
+    it("erases the whole authorized user/workspace without erasing the unrelated owner", () => {
+      const f = fixture(combined, true);
+      try {
+        executeErasureCommand(f.db, noObjects, { ...f.command, action: "traderlink_account" });
+        expect(f.db.prepare("SELECT 1 FROM platform_users WHERE user_id=?").get(f.owner.userId)).toBeUndefined();
+        expect(f.db.prepare("SELECT 1 FROM platform_workspaces WHERE workspace_id=?").get(f.owner.workspaceId)).toBeUndefined();
+        f.completedHistory("traderlink_account");
+        f.invariant();
+      } finally { f.db.close(); }
+    });
+  }
+  it("holds a partially installed participant schema before accepting a whole-account receipt", () => {
     const f = fixture(combined, true);
     try {
-      executeErasureCommand(f.db, noObjects, { ...f.command, action: "traderlink_account" });
-      expect(f.db.prepare("SELECT 1 FROM platform_users WHERE user_id=?").get(f.owner.userId)).toBeUndefined();
-      expect(f.db.prepare("SELECT 1 FROM platform_workspaces WHERE workspace_id=?").get(f.owner.workspaceId)).toBeUndefined();
-      f.completedHistory("traderlink_account");
+      f.db.exec("CREATE TABLE partner_alert_unqualified_fixture (id TEXT)");
+      expect(() => executeErasureCommand(f.db, noObjects, { ...f.command, action: "traderlink_account" }))
+        .toThrow(expect.objectContaining({ code: "held" }));
+      expect(f.db.prepare("SELECT 1 FROM platform_users WHERE user_id=?").get(f.owner.userId)).toBeDefined();
+      expect(f.accounts.listActiveAccounts(f.owner.workspaceId)).toHaveLength(2);
+      expect(f.db.prepare("SELECT 1 FROM platform_erasure_history LIMIT 1").get()).toBeUndefined();
       f.invariant();
     } finally { f.db.close(); }
   });

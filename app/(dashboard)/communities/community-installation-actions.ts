@@ -1,6 +1,6 @@
 "use server";
 
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireCommunityOwnerReviewPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { isApprovedCommunityGuild } from "@/src/modules/communities/server/community-launch-policy";
 import { canPrepareCommunityInstallation } from "@/src/modules/communities/server/community-admission-service";
@@ -8,7 +8,7 @@ import { readCommunityInstallationStatus } from "@/src/modules/communities/serve
 import { COMMUNITY_INSTALLATION_MESSAGES, type CommunityInstallationStatus } from "@/src/modules/communities/contracts/community-installation-status";
 
 export async function checkCommunityInstallation(form: FormData): Promise<CommunityInstallationStatus> {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await requireCommunityOwnerReviewPageIdentity();
   const guildId = String(form.get("discordGuildId") ?? "");
   const denied: CommunityInstallationStatus = {state: "owner_required", message: COMMUNITY_INSTALLATION_MESSAGES.owner_required};
   if (!/^\d{1,32}$/u.test(guildId) || !withReadonlyPlatformDatabase({}, db => canPrepareCommunityInstallation(db, guildId, identity.scope.userId, isApprovedCommunityGuild(guildId)))) return denied;

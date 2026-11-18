@@ -3,11 +3,11 @@ import { withPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { requestWatchlistRuntimeRaw } from "../runtime/watchlist-runtime-admin-client";
 import { readAutomaticAnalysisEvents } from "./watchlist-automatic-notifications";
 import { claimFreeChatPost, finishFreeChatPost, queueFreeChatPublication, queueFreeChatMove } from "./watchlist-free-chat-store";
-import { deliverFreeChatPublication, type FreeChatPublication } from "./watchlist-free-chat-delivery";
+import { deliverFreeChatPublication, type FreeChatPublication, type FreeChatOwnerCopy } from "./watchlist-free-chat-delivery";
 
 import { readFreeChatVisibility } from "./watchlist-free-chat-visibility";
 
-type Pending = { post_key: string; cycle_id: string; ticker: string; owner_user_id: string; draft_revision: number | null; origin: "approval" | "automatic" | "manual"; approval_revision: number | null; requested_at_ms:number };
+type Pending = { post_key: string; cycle_id: string; ticker: string; owner_user_id: string; draft_revision: number | null; origin: "approval" | "automatic" | "manual"; approval_revision: number | null; requested_at_ms:number; owner_copy_json: string | null };
 type ReviewEvent = { revision: number; at: number; actor: string; body: { kind: string; draftRevision?: number; approvalRevision?: number; channel?: string; status?: string;
   publication?: { notificationKind?: string; website?: { cards?: { tradersLinkAiRead?: { body?: string } } } } } };
 type Review = { symbol: string; cycleId: string; cancelled: boolean; events: ReviewEvent[] };
@@ -131,8 +131,9 @@ export async function reconcileFreeChatPublications() {
           publication = JSON.parse(response.body).publication as FreeChatPublication;
           if (publication.symbol !== post.ticker || publication.cycleId !== post.cycle_id || publication.approvalRevision !== approval.revision) throw Error("Publication mismatch.");
         }
+        const ownerCopy = post.owner_copy_json ? JSON.parse(post.owner_copy_json) as FreeChatOwnerCopy : undefined;
         deliveryStarted = true;
-        const result = await deliverFreeChatPublication(publication, () => readFreeChatVisibility(post.ticker, true));
+        const result = await deliverFreeChatPublication(publication, () => readFreeChatVisibility(post.ticker, true), undefined, undefined, ownerCopy);
         withPlatformDatabase({mode:"runtime"}, db => finishFreeChatPost(db,post.post_key,result));
       } catch {
         withPlatformDatabase({mode:"runtime"}, db => db.prepare(`UPDATE platform_watchlist_free_chat_posts

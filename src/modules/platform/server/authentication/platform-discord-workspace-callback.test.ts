@@ -1,3 +1,4 @@
+import {countCreatedPlatformTestUsers,openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { platformAuthCookieName } from "./platform-auth-cookies";
 // @vitest-environment node
@@ -8,7 +9,6 @@ import { join } from "node:path";
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { openPlatformDatabase } from "../database/open-platform-database";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { GET } from "../../../../../app/api/auth/discord/callback/route";
 import { PLATFORM_DISCORD_OAUTH_STATE_COOKIE, PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE, PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE } from "./platform-discord-oauth-cookies";
 import { PlatformLoginService } from "./platform-login-service";
@@ -19,8 +19,8 @@ afterEach(async () => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); for (const ro
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), "discord-workspace-callback-")); roots.push(root);
   const path = join(root, randomUUID()+".sqlite");
-  const database = openPlatformDatabase({ mode: "initializer", databasePath: path, forbiddenRepositoryRoots: [] });
-  try { runPlatformMigrations(database); } finally { database.close(); }
+  const database = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: path, forbiddenRepositoryRoots: [] });
+  try {  } finally { database.close(); }
   vi.stubEnv("NODE_ENV", "production");
   vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", path);
   vi.stubEnv("TRADERLINK_PLATFORM_PUBLIC_ORIGIN", "https://app.traderslink.pro");
@@ -94,7 +94,7 @@ describe("connecting Discord to an existing Google account", () => {
     try {
       expect(new PlatformSessionService(new PlatformSessionRepository(verified)).resolve(token!)?.userId).toBe(google.session.userId);
       expect(verified.prepare("SELECT joined_at_utc FROM platform_discord_memberships").get()).toEqual({ joined_at_utc: "2024-06-01T12:34:56.123Z" });
-      expect(verified.prepare("SELECT count(*) AS n FROM platform_users").get()).toEqual({ n: 1 });
+      expect(countCreatedPlatformTestUsers(verified, 'n')).toEqual({ n: 1 });
       expect(verified.prepare("SELECT count(*) AS n FROM platform_auth_identities WHERE status='active'").get()).toEqual({ n: 2 });
     } finally { verified.close(); }
   }, 30000);

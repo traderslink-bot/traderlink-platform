@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { randomUUID } from "node:crypto";
 import { mkdtempSync } from "node:fs";
@@ -14,7 +15,6 @@ import {
   ACADEMY_OAUTH_STATE_COOKIE,
 } from "../academy-progress-store";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "@/src/modules/platform/server/authentication/platform-session-service";
 
@@ -242,13 +242,13 @@ function createPlatformDatabase(): string {
   const root = mkdtempSync(join(tmpdir(), "traderlink-discord-route-"));
   roots.push(root);
   const databasePath = join(root, `${randomUUID()}.sqlite`);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath,
     forbiddenRepositoryRoots: [],
   });
   try {
-    runPlatformMigrations(database);
+
   } finally {
     database.close();
   }

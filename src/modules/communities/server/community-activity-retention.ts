@@ -8,11 +8,13 @@ export const COMMUNITY_NAMED_ACTIVITY_RETENTION_DAYS = 90;
 const allowedContentPath = `(path = '/communities/' || c.slug OR (
   substr(path,1,length('/communities/' || c.slug || '/')) = '/communities/' || c.slug || '/'
   AND (
-    substr(path,length('/communities/' || c.slug || '/')+1) IN ('alerts','watchlists','server-watchlists','coaches')
+    substr(path,length('/communities/' || c.slug || '/')+1) IN ('alerts','watchlists','server-watchlists','coaches','alert','watchlist','content')
     OR (
-      substr(path,length('/communities/' || c.slug || '/')+1,instr(substr(path,length('/communities/' || c.slug || '/')+1),'/')-1) IN ('alerts','watchlists','server-watchlists','coaches')
+      substr(path,length('/communities/' || c.slug || '/')+1,instr(substr(path,length('/communities/' || c.slug || '/')+1),'/')-1) IN ('alerts','watchlists','server-watchlists','coaches','alert','watchlist','content','swing')
       AND length(substr(path,length('/communities/' || c.slug || '/')+1+instr(substr(path,length('/communities/' || c.slug || '/')+1),'/'))) > 0
-      AND substr(path,length('/communities/' || c.slug || '/')+1+instr(substr(path,length('/communities/' || c.slug || '/')+1),'/')) NOT GLOB '*[^a-zA-Z0-9_-]*'
+      AND substr(path,length('/communities/' || c.slug || '/')+1+instr(substr(path,length('/communities/' || c.slug || '/')+1),'/')) NOT GLOB '*[^a-zA-Z0-9_/-]*'
+      AND substr(path,length('/communities/' || c.slug || '/')+1+instr(substr(path,length('/communities/' || c.slug || '/')+1),'/')) NOT LIKE '%//%'
+      AND substr(path,-1)<>'/'
     )
   )
 ))`;

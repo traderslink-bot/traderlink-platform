@@ -1,0 +1,127 @@
+{
+  "codeHead": "6a550da9f578f23cc0d33d65127ec90c64051ef4",
+  "catalogOnlyHeadDuringRun": "b2fe7d66b996a811d232300d530d236c77272741",
+  "catalogOnlyPath": "docs/migration/partner-alert-erasure-profile-qualification.json",
+  "nonDocumentCodeDiff": [],
+  "baseline": {
+    "files": 760,
+    "filesPassed": 750,
+    "filesFailed": 4,
+    "filesSkipped": 6,
+    "cases": 5748,
+    "passed": 5734,
+    "failed": 5,
+    "skipped": 9,
+    "seconds": 1272.7,
+    "log": "/tmp/coaching-full-repository-20261117.log"
+  },
+  "inheritedGatedSkips": [
+    {
+      "file": "src/modules/partner-alerts/server/partner-alert-stripe-checkout-browser.test.ts",
+      "test": "completes Stripe channel and package checkout and reconciles Discord roles on the real test guild"
+    },
+    {
+      "file": "src/modules/partner-alerts/server/partner-alert-whop-inbox.test.ts",
+      "test": "the native Stripe reconciliation changes only its assigned Discord test role"
+    },
+    {
+      "file": "src/modules/partner-alerts/server/partner-alert-stripe-connected-adjustments.test.ts",
+      "test": "reconciles Stripe Connect sandbox refunds, disputes, and a failed renewal"
+    },
+    {
+      "file": "src/modules/partner-alerts/server/partner-alert-stripe-sandbox-webhook.test.ts",
+      "test": "replays real Stripe sandbox events and removes only the reviewed managed Discord role"
+    },
+    {
+      "file": "src/lib/trader-intelligence-v3/__tests__/ga1-c/ga1-c-scale.test.ts",
+      "test": "GA1-C fixed-seed 10,000-row final proof > executes generic and every governed preset with bounded deterministic replay"
+    },
+    {
+      "file": "src/lib/trader-intelligence-v3/__tests__/ga1-c/ga1-c-scale.test.ts",
+      "test": "GA1-C fixed-seed 10,000-row final proof > fails closed at the max-plus-one source boundary"
+    },
+    {
+      "file": "src/lib/trader-intelligence-v3/__tests__/ga1-a/query-property-scale.test.ts",
+      "test": "GA1-A fixed-seed properties and 10,000-row scale proof > executes aggregate plus three groupings over 10,000 included rows within a reasonable budget"
+    },
+    {
+      "file": "src/lib/trader-intelligence-v3/__tests__/ga1-b/ga1-b-scale.test.ts",
+      "test": "GA1-B fixed-seed 10,000-row scale proof > executes bounded evidence, similarity, and all governed presets deterministically"
+    },
+    {
+      "file": "src/modules/coach/server/coach-ai-chat-live-provider.test.ts",
+      "test": "Coach AI Chat live OpenAI Agents SDK acceptance > passes grounded, follow-up, draft, manual-entry and refusal cases"
+    }
+  ],
+  "findings": [
+    {
+      "file": "src/lib/trader-intelligence-v3/__tests__/dashboard-template-enforcement.test.ts",
+      "cases": 1,
+      "cause": "Published Scanner company Drawer missing exact reviewed feature-panel entry; production174ef file byte-identical; no local frame violation."
+    },
+    {
+      "file": "src/lib/trader-intelligence-v3/__tests__/route-containment.test.ts",
+      "cases": 2,
+      "cause": "21 current pages and10 APIs absent from explicit matrix. All10 AST findings unclassified; actual guards reviewed individually, no catchall admission."
+    },
+    {
+      "file": "src/modules/news/server/reverse-splits/registered-migration.test.ts",
+      "cases": 1,
+      "cause": "Historical0142 fixture directly erases after full current schema without required current admission. Exact Core one-file patch preserves legacy positive/current held guards/reserved principal invariance."
+    },
+    {
+      "file": "src/modules/platform/server/database/platform-migration-file-contract.test.ts",
+      "cases": 1,
+      "cause": "Existing regex rejects quoted property keys in immutable0209 descriptor; AST exact exported literal verification replaces substring matching."
+    }
+  ],
+  "firstCoherentFocusedProbe": {
+    "filesPassed": 3,
+    "filesFailed": 1,
+    "casesPassed": 37,
+    "casesFailed": 1,
+    "seconds": 21.61,
+    "log": "/tmp/coaching-postdiscovery-focused-20261117.log",
+    "remaining": "All203 literal descriptors accepted; old static comparator conflates file declaration sequence and validated canonical execution sequence."
+  },
+  "correction": {
+    "parent": "888edf2c6d10a156f2c812ae79135ed2f164e182",
+    "allowlist": [
+      "docs/migration/combined-qa-correction-progress-20261117.md",
+      "docs/migration/combined-qa-discovery-20261117.json",
+      "docs/migration/combined-route-guard-review-20261117.json",
+      "docs/migration/platform-test-fixture-progress-20261117.md",
+      "src/lib/trader-intelligence-v3/__tests__/dashboard-template-enforcement.test.ts",
+      "src/lib/trader-intelligence-v3/__tests__/route-containment.test.ts",
+      "src/lib/trader-intelligence-v3/contracts/route-containment.ts",
+      "src/lib/trader-intelligence-v3/testing/route-containment-ast.ts",
+      "src/modules/news/server/reverse-splits/registered-migration.test.ts",
+      "src/modules/platform/server/database/platform-migration-file-contract.test.ts",
+      "src/scripts/verify-traderlink-platform-migration-files.ts"
+    ],
+    "codeFileSha256": {
+      "src/lib/trader-intelligence-v3/__tests__/dashboard-template-enforcement.test.ts": "7315172603b29adb7aa73e200320be9abb77aafff1ac5385a3b293525484b768",
+      "src/lib/trader-intelligence-v3/__tests__/route-containment.test.ts": "1d8f005dc5ea27758fc077dd9784a697be1d26039371d4a12caa81534200bff2",
+      "src/lib/trader-intelligence-v3/contracts/route-containment.ts": "991e9c65fa94486db58be0691099f08265430870596baf93578e62195a5e1ca0",
+      "src/lib/trader-intelligence-v3/testing/route-containment-ast.ts": "46d6af664d157a50763a0caf629d044c3687be82d7be5e39a02040e39bc27b93",
+      "src/modules/news/server/reverse-splits/registered-migration.test.ts": "2da81c73957a29a64d0a91fedb506aeee80de124778e8fef860ee28b97000bfd",
+      "src/modules/platform/server/database/platform-migration-file-contract.test.ts": "3cd37eeae481d0fd582dfe1c983f924f8dc6c18724d50bc107014cfeecc29ad3",
+      "src/scripts/verify-traderlink-platform-migration-files.ts": "e49518c2169cf2eff1f61f42af776c82b51dae7c0fdd9e7daf19665efc2f50e1"
+    },
+    "focused": {
+      "files": 4,
+      "casesPassed": 41,
+      "failures": 0,
+      "seconds": 20.95,
+      "cache": false,
+      "timeoutOverride": false,
+      "log": "/tmp/coaching-postdiscovery-final-20261117.log"
+    },
+    "typecheck": "PASS: unexcluded full project, noEmit, incremental false, 4GiB V8, zero diagnostics",
+    "typecheckLog": "/tmp/coaching-postdiscovery-typecheck-20261117.log",
+    "lint": "PASS explicit changed source and test files",
+    "diffCheck": "PASS",
+    "globalOrderAlignment": "Each descriptor source verified against exact metadata; unique-ID/order manifest validator owns canonical sort; sorted verified ID/namespace/order compared in full. No declaration list, execution value or SQL changed.",
+    "remaining": "Coordinator integration with Shared finite staging capability and current qualified catalog, final authoritative full-suite retest and actual staging browser workflows."
+  }
+}

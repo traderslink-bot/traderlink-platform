@@ -1,19 +1,17 @@
+import {countCreatedPlatformTestUsers,openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { openPlatformDatabase } from "../database/open-platform-database";
-import { platformMigrationManifest } from "../database/platform-migration-manifest";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformAuthenticationRepository } from "./platform-authentication-repository";
 import { provisionVerifiedPlatformIdentity } from "./platform-identity-provisioning";
 const roots: string[] = [];
 afterEach(async () => { for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root); }, 20_000);
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), "platform-identity-provisioning-")); roots.push(root);
-  const db = openPlatformDatabase({ mode: "initializer", databasePath: join(root, "qa.sqlite"), forbiddenRepositoryRoots: [] });
-  runPlatformMigrations(db, { manifest: platformMigrationManifest });
+  const db = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: join(root, "qa.sqlite"), forbiddenRepositoryRoots: [] });
+
   return db;
 }
 const timestamp = "2026-10-14T12:00:00.000Z";
@@ -26,7 +24,7 @@ describe("verified provider provisioning", () => {
       expect(again).toEqual({ ...first, provisioned: false });
       new PlatformAuthenticationRepository(db).linkIdentity({ userId: first.userId, authProvider: "email", authSubject: "credential-id", linkedByUserId: first.userId, timestamp });
       expect(provision("email", "credential-id")).toEqual({ ...first, provisioned: false });
-      expect(db.prepare("SELECT count(*) AS n FROM platform_users").get()).toEqual({ n: 1 });
+      expect(countCreatedPlatformTestUsers(db, 'n')).toEqual({ n: 1 });
     } finally { db.close(); }
   });
   it("does not equate subjects from different providers or display names", () => {

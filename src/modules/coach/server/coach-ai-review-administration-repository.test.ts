@@ -1,11 +1,10 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import Database from "better-sqlite3";
 import { CoachReviewDeliveryScheduleRepository } from "./coach-weekly-review-schedule-repository";
 import { CoachAiReviewGenerationContractRepository } from "./coach-ai-review-generation-contract-repository";
 import { describe, expect, it } from "vitest";
 
 import type { JournalAdminScope } from "@/src/modules/platform/contracts/journal-admin-scope";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-repository";
 import { CoachAiReviewAdministrationRepository } from "./coach-ai-review-administration-repository";
@@ -33,9 +32,9 @@ function scope(): JournalAdminScope {
 }
 
 function setup(): Readonly<{ database: Database.Database; repository: CoachAiReviewAdministrationRepository }> {
-  const database = new Database(":memory:");
+  const database = openPristinePlatformTestDatabase();
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => new Date(at) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(at));
   database.exec(`INSERT INTO platform_users VALUES ('${userId}', 'development_local', 'review-admin-owner', 'Owner', 'active', '${at}', '${at}');
 INSERT INTO platform_workspaces VALUES ('${workspaceId}', 'Review admin workspace', 'America/New_York', 'active', '${at}', '${at}');
 INSERT INTO platform_workspace_memberships VALUES ('${workspaceId}', '${userId}', 'owner', 'active', '${userId}', '${at}', '${at}');

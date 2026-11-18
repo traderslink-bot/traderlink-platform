@@ -1,9 +1,8 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { CoachReviewDeliveryScheduleRepository } from "./coach-weekly-review-schedule-repository";
 
@@ -13,12 +12,9 @@ function setup(): Readonly<{
   database: Database.Database;
   scope: WorkspaceAccessScope;
 }> {
-  const database = new Database(":memory:");
+  const database = openPristinePlatformTestDatabase();
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, {
-    manifest: platformMigrationManifest,
-    now: () => new Date(nowUtc),
-  });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(nowUtc));
   const userId = createCanonicalUuidV4();
   const workspaceId = createCanonicalUuidV4();
   const accountId = createCanonicalUuidV4();

@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { WhopAiReviewOAuthConfiguration } from
   "./whop-ai-review-configuration";
 
+export const WHOP_OAUTH_FLOW_COOKIE = "traderlink_whop_oauth_flow";
 export const WHOP_OAUTH_STATE_COOKIE = "traderlink_whop_oauth_state";
 export const WHOP_OAUTH_VERIFIER_COOKIE = "traderlink_whop_oauth_verifier";
 export const WHOP_OAUTH_USER_BINDING_COOKIE = "traderlink_whop_oauth_user";
@@ -25,18 +26,25 @@ export function createWhopOAuthPkce(): Readonly<{
   });
 }
 
+/** The trusted server configuration selects the realm for the whole flow. */
+function whopOAuthOrigin(configuration: WhopAiReviewOAuthConfiguration): string {
+  return configuration.realm === "sandbox" ? "https://sandbox-api.whop.com" : "https://api.whop.com";
+}
+
 export function buildWhopAuthorizeUrl(input: Readonly<{
   configuration: WhopAiReviewOAuthConfiguration;
   state: string;
   challenge: string;
 }>): URL {
-  const url = new URL("https://api.whop.com/oauth/authorize");
+  const url = new URL("/oauth/authorize", whopOAuthOrigin(input.configuration));
   url.search = new URLSearchParams({
     response_type: "code",
     client_id: input.configuration.clientId,
     redirect_uri: input.configuration.redirectUri,
     scope: "openid",
     state: input.state,
+    // Reuse the fresh cookie-bound state; identity comes from userinfo, not an id_token.
+    nonce: input.state,
     code_challenge: input.challenge,
     code_challenge_method: "S256",
   }).toString();
@@ -56,7 +64,7 @@ export async function readWhopOAuthSubject(input: Readonly<{
   code: string;
   verifier: string;
 }>): Promise<string> {
-  const tokenResponse = await fetch("https://api.whop.com/oauth/token", {
+  const tokenResponse = await fetch(`${whopOAuthOrigin(input.configuration)}/oauth/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -74,7 +82,7 @@ export async function readWhopOAuthSubject(input: Readonly<{
   if (typeof accessToken !== "string" || !accessToken) {
     throw new Error("TRADERLINK_WHOP_OAUTH_FAILED");
   }
-  const userResponse = await fetch("https://api.whop.com/oauth/userinfo", {
+  const userResponse = await fetch(`${whopOAuthOrigin(input.configuration)}/oauth/userinfo`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
     signal: AbortSignal.timeout(15_000),

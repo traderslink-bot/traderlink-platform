@@ -1,3 +1,6 @@
+import {CommunityTradeEvaluationFeedback} from './community-trade-evaluation-feedback';
+import {CommunityDayAssessmentFeedback} from './community-day-assessment-feedback';
+import {performancePrimitive} from '@/src/modules/communities/contracts/coaching-performance-evaluation';
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -18,8 +21,10 @@ export function CommunityRetainedHistoryPage({history}:{history:CommunityRetaine
     {relation.reviews.length?relation.reviews.map(review=><Box key={review.reviewId} sx={{border:1,borderColor:"divider",borderRadius:2,p:2}}>
      <Stack spacing={1}><Typography component="h2" variant="h2">{review.title}</Typography><Chip label="Delivered" color="success" size="small" sx={{alignSelf:"flex-start"}}/>
       <Typography variant="body2">{review.deliveredAtUtc}</Typography>
-      {[["Review",review.summary],["What went well",review.wentWell],["What needs work",review.needsWork],["Next focus",review.nextFocus],...(history.role==="coach"?[["Private coach notes",review.coachPrivateNotes??""]]:[])].filter(([,text])=>text).map(([label,text])=><Box key={label}><Typography sx={{fontWeight:700}}>{label}</Typography><Typography sx={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{text}</Typography></Box>)}
-      {review.trades.map((trade,index)=><Box key={index}><Typography sx={{fontWeight:700}}>{trade.label||`Trade ${index+1}`}</Typography><Typography sx={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{coachingTradeFeedbackText(trade.feedback)}</Typography></Box>)}
+      {[["Review",review.performanceEvaluationTemplate?"":review.summary],["What went well",review.wentWell],["What needs work",review.needsWork],["Next focus",review.nextFocus],...(history.role==="coach"?[["Private coach notes",review.coachPrivateNotes??""]]:[])].filter(([,text])=>text).map(([label,text])=><Box key={label}><Typography sx={{fontWeight:700}}>{label}</Typography><Typography sx={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{text}</Typography></Box>)}
+      {review.performanceEvaluationTemplate?<CommunityTradeEvaluationFeedback subject="performance" template={performancePrimitive(review.performanceEvaluationTemplate)} value={review.summary} readOnly/>:null}
+      {review.dayAssessments.map(day=><Box key={day.date}><Typography sx={{fontWeight:700}}>Trading day {day.date}</Typography><Typography sx={{whiteSpace:'pre-wrap'}}>{day.assessment}</Typography><CommunityDayAssessmentFeedback day={day}/></Box>)}
+      {review.trades.map((trade,index)=><Box key={index}><Typography sx={{fontWeight:700}}>{trade.label||`Trade ${index+1}`}</Typography><Box sx={{overflowWrap:"anywhere"}}>{review.tradeEvaluationTemplate?<CommunityTradeEvaluationFeedback template={review.tradeEvaluationTemplate} value={trade.feedback} readOnly/>:<Typography sx={{whiteSpace:"pre-wrap"}}>{coachingTradeFeedbackText(trade.feedback)}</Typography>}</Box></Box>)}
       {history.role==="coach"?<Button href={`${base}/workspace/students/${relation.relationshipId}/reviews/${review.reviewId}/final?view=history`} variant="outlined">Open saved review</Button>:null}
      </Stack></Box>):<Typography>No delivered reviews.</Typography>}
     {relation.records.map((record,index)=><Box key={`record-${index}`}><Typography sx={{fontWeight:700}}>{record.title}{record.private?" · Private coach note":""}</Typography><Typography sx={{whiteSpace:"pre-wrap"}}>{record.body}</Typography></Box>)}

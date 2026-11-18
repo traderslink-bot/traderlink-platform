@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -6,8 +7,6 @@ import { join } from "node:path";
 import { prepareAnalyticsLabSavedViewPayload } from "@/app/(dashboard)/analytics/lab/analytics-lab-platform-query";
 import type { AnalyticsLabPlatformQuery } from "@/app/(dashboard)/analytics/lab/analytics-lab-platform-types";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { JournalAnalyticsSavedViewRepository } from "./analytics-lab-saved-view-repository";
 import { JournalAnalyticsSavedViewService } from "./analytics-lab-saved-view-service";
@@ -28,12 +27,12 @@ function id(sequence: number): string {
 function setup() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-saved-views-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "journal.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => new Date(at) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(at));
   const userId = id(1);
   const workspaceId = id(2);
   const firstAccountId = id(3);

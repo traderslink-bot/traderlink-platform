@@ -14,7 +14,7 @@ const fake = vi.hoisted(() => {
   return { Worker };
 });
 vi.mock("node:worker_threads", () => ({ Worker: fake.Worker }));
-import { runErasureWorker, startCommittedErasureRecovery } from "./platform-erasure-worker-supervisor";
+import { assertErasureWorkerIdle, runErasureWorker, startCommittedErasureRecovery } from "./platform-erasure-worker-supervisor";
 
 afterEach(() => {
   fake.Worker.instances.length = 0;
@@ -28,8 +28,10 @@ describe("erasure supervisor actual-exit occupancy", () => {
     let resolved = false; void pending.then(() => { resolved = true; });
     worker.emit("message", { status: "complete", result: { nextSelectionRef: null } });
     await Promise.resolve(); expect(resolved).toBe(false);
+    expect(() => assertErasureWorkerIdle()).toThrow();
     expect(() => runErasureWorker("/synthetic.sqlite", null)).toThrow();
     worker.emit("exit", 0);
+    expect(() => assertErasureWorkerIdle()).not.toThrow();
     await expect(pending).resolves.toEqual({ nextSelectionRef: null });
   });
   it("keeps occupancy after error, rejects after exit and then permits recovery", async () => {

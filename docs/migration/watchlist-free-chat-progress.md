@@ -20,3 +20,9 @@
 - Restricted sends suppress Discord embeds and omit all attachments. The delivery port reads the three saved settings and confirms member visibility immediately before every attempt, including retry and automatic sends. An unavailable policy prevents the Free Chat attempt. The locked Watchlist views link to Whop for the existing Premium controls, while explicit custom-plan destinations are preserved.
 - The corresponding Runtime change previews the post before manual share, approval or move with Free Chat selected, and explicit Free Chat move retry.
 - Offline evidence: 20 delivery, move, and copy tests, 6 Potential Path/upgrade tests, and all eight variants in an isolated Chromium fixture running the owner script and preview handler. The browser confirmed the manual send begins only after confirmation, and cancel leaves the queue untouched. Transport payloads and rate-limit retries were intercepted. Zero Discord requests or posts. Production was not changed.
+
+## Direct share message and status
+
+Replaced the masked post's “New idea” sentence with “On the TradersLink Watchlist.” Manual delayed shares can edit the opening message in the preview. The submitted copy is stored with the approval receipt; private ticker symbols, links, and custom mentions are rejected where they can disclose a protected ticker or bypass the fixed audience. If the three visibility settings change after confirmation, the attempted delivery stops and asks for a fresh preview. Automatic posts and ordinary approval/move opt-ins retain their existing flows.
+
+The additive caption column uses a provisional local 0213/order 268 descriptor. The coordinator must reconcile the final migration identity and order against the hosted ledger before deployment. A populated, isolated migration fixture preserved older receipts. The 23 Platform tests, focused type check/lint, and Chromium composer test passed. No Discord requests, hosted data changes, or deployment.

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { requireCommunityOwnerReviewAuthenticatedPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 
 import { JournalAdminOverviewService } from "@/src/modules/journal/server/administration/journal-admin-overview-service";
 import { createJournalAdminReadContext } from "@/src/modules/journal/server/administration/journal-admin-read-helpers";
@@ -77,6 +78,11 @@ FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
     }
     throw error;
   }
+  let partnerChannelReviewAccess = false;
+  try {
+    await requireCommunityOwnerReviewAuthenticatedPageIdentity();
+    partnerChannelReviewAccess = true;
+  } catch { /* The other administration pages retain their existing authorization. */ }
   return (
     <DashboardMuiProviders appearance={shell.appearance}>
     <JournalAdminShell
@@ -84,6 +90,7 @@ FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
       dataAsOfUtc={shell.dataAsOfUtc}
       environment={environmentLabel()}
       operatorRole={shell.operatorRole}
+      partnerChannelReviewAccess={partnerChannelReviewAccess}
     >
       {children}
     </JournalAdminShell>

@@ -3,7 +3,7 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import {describe,expect,it,vi} from 'vitest';
 import {CoachingAgreementPanel} from '@/app/(dashboard)/communities/coaching-agreement-panel';
 import {createTraderLinkCommunityReviewFixture} from '../server/traderlink-community-review-fixture';
-vi.mock('@/app/(dashboard)/communities/community-actions',()=>({coachingAgreementAction:()=>{}}));
+vi.mock('@/app/(dashboard)/communities/community-actions',()=>({coachingAgreementAction:()=>{},coachingAgreementWithFeedbackAction:async()=>({status:'success',message:'Agreement saved.'})}));
 import {coachingRequiredAccess} from './coaching-required-access';
 import {defaultTradeEvaluationTemplate} from './coaching-trade-evaluation';
 import {defaultPerformanceTemplate} from './coaching-performance-evaluation';

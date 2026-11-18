@@ -5,11 +5,30 @@ import { closeSync, existsSync, fsyncSync, mkdtempSync, openSync, readFileSync, 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { buildSync } from "esbuild";
 import { describe, expect, it } from "vitest";
 import { PlatformErasureRecovery, type ErasureObjectStore } from "./platform-erasure-recovery";
 import { platformErasureRecoverySchemaStatements } from "./platform-erasure-recovery-schema";
 import type { PlatformErasureArtifact } from "./platform-erasure-service";
 import { PlatformErasureHistory } from "./platform-erasure-history";
+
+/** Match the production erasure worker's server bundle conditions. Only the
+ * framework's compile-time server-only marker is resolved; recovery/history,
+ * SQLite, file operations and process interruption are all real. */
+function crashChild(source: string, args: string[]) {
+  const bundle = buildSync({
+    stdin: { contents: source, resolveDir: process.cwd(), sourcefile: "erasure-crash-child.cjs" },
+    write: false, bundle: true, platform: "node", target: "node24", format: "cjs",
+    conditions: ["react-server"], external: ["better-sqlite3"],
+    alias: { "server-only": require.resolve("next/dist/compiled/server-only/empty.js") },
+    define: { "import.meta.url": "__erasure_config_url" },
+    banner: { js: 'const __erasure_config_url = require("node:url").pathToFileURL(require("node:path").join(process.cwd(), "src/modules/platform/server/database/platform-database-config.ts")).href;' },
+    logLevel: "silent",
+  });
+  return spawnSync(process.execPath, ["-e", "const Module=require('node:module'); const child=new Module(require('node:path').join(process.cwd(),'erasure-crash-child.cjs'),module); child.filename=child.id; child.paths=module.paths; child._compile(require('node:fs').readFileSync(0,'utf8'),child.filename);", ...args], {
+    cwd: process.cwd(), encoding: "utf8", timeout: 10_000, input: bundle.outputFiles[0].text,
+  });
+}
 
 function fileStore(root: string): ErasureObjectStore {
   const path = (artifact: PlatformErasureArtifact) => join(root,
@@ -37,14 +56,12 @@ describe("actual process interruption with disposable WAL and private files", ()
       db.exec("CREATE TABLE accounts(id INTEGER PRIMARY KEY); INSERT INTO accounts VALUES(1);");
       db.close(); db = undefined;
       const source = `const path=require('node:path');const Database=require('better-sqlite3');
-        const {PlatformErasureHistory}=require(path.resolve('src/modules/platform/server/privacy/platform-erasure-history.ts'));
+        const {PlatformErasureHistory}=require('./src/modules/platform/server/privacy/platform-erasure-history.ts');
         const db=new Database(process.argv[1]);db.pragma('synchronous=FULL');
         db.transaction(()=>new PlatformErasureHistory(db).accept({receiptId:'synthetic_receipt',memberUserId:'synthetic_member',displayName:'Synthetic member',action:'traderlink_account'})).immediate();
         process.exit(42);`;
-      const child = spawnSync(process.execPath, ["--require", "tsx/cjs", "-e", source, databasePath], {
-        cwd: process.cwd(), encoding: "utf8", timeout: 10_000,
-      });
-      expect(child.status).toBe(42);
+      const child = crashChild(source, [databasePath]);
+      expect(child.status, child.stderr || String(child.error ?? "")).toBe(42);
       db = new Database(databasePath);
       expect(db.prepare("SELECT phase FROM platform_erasure_history").get()).toEqual({ phase: "accepted" });
       new PlatformErasureHistory(db).reconcileInterrupted();
@@ -81,7 +98,7 @@ describe("actual process interruption with disposable WAL and private files", ()
       const childSource = `
         const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
         const Database=require('better-sqlite3');
-        const {PlatformErasureRecovery}=require(path.resolve('src/modules/platform/server/privacy/platform-erasure-recovery.ts'));
+        const {PlatformErasureRecovery}=require('./src/modules/platform/server/privacy/platform-erasure-recovery.ts');
         const root=process.argv[1],phase=process.argv[2];
         const db=new Database(path.join(root,'synthetic.sqlite'));
         db.pragma('synchronous=FULL');
@@ -95,10 +112,8 @@ describe("actual process interruption with disposable WAL and private files", ()
         r.finish(r.pending(),(p,n)=>{if(p===phase&&n===0)process.exit(42)});
         process.exit(43);
       `;
-      const child = spawnSync(process.execPath, ["--require", "tsx/cjs", "-e", childSource, root, phase], {
-        cwd: process.cwd(), encoding: "utf8", timeout: 10_000,
-      });
-      expect(child.status).toBe(42);
+      const child = crashChild(childSource, [root, phase]);
+      expect(child.status, child.stderr || String(child.error ?? "")).toBe(42);
       db = new Database(databasePath); db.pragma("synchronous=FULL");
       const restarted = new PlatformErasureRecovery(db, fileStore(root));
       expect(restarted.pending() === job).toBe(true);

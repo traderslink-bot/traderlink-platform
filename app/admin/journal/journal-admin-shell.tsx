@@ -56,6 +56,7 @@ const navigation = [
   { href: "/admin/journal/links-quality", label: "Links AI Chat", icon: <FlagRoundedIcon /> },
   { href: "/admin/journal/notifications", label: "Notifications", icon: <NotificationsNoneRoundedIcon /> },
   { href: "/admin/journal/discord-notifications", label: "Discord notification members", icon: <GroupRoundedIcon /> },
+  { href: "/admin/journal/partner-channels", label: "Partner channel review", icon: <NotificationsNoneRoundedIcon /> },
   { href: "/admin/journal/system", label: "System", icon: <HealthAndSafetyRoundedIcon /> },
   { href: "/admin/journal/errors", label: "Errors", icon: <ReportProblemRoundedIcon /> },
   { href: "/admin/journal/audit", label: "Audit", icon: <AssessmentRoundedIcon /> },
@@ -88,12 +89,14 @@ export function JournalAdminShell({
   dataAsOfUtc,
   environment,
   operatorRole,
+  partnerChannelReviewAccess = false,
 }: {
   alertCount: number;
   children: ReactNode;
   dataAsOfUtc: string;
   environment: "Local" | "Preview" | "Production";
   operatorRole: string;
+  partnerChannelReviewAccess?: boolean;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -121,7 +124,7 @@ export function JournalAdminShell({
       </Box>
       <Divider />
       <List sx={{ flex: 1, px: 1, py: 1.5 }}>
-        {navigation.map((item) => (
+        {navigation.filter((item) => item.href !== "/admin/journal/partner-channels" || partnerChannelReviewAccess).map((item) => (
           <ListItemButton
             aria-current={active(pathname, item.href) ? "page" : undefined}
             component={Link}

@@ -1,7 +1,7 @@
 "use server";
 import {revalidatePath,refresh} from "next/cache";
 import {redirect} from "next/navigation";
-import {requireTraderLinkPlatformPageIdentity,requireTraderLinkPlatformAuthenticatedPageIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {requireCommunityOwnerReviewPageIdentity,requireCommunityOwnerReviewAuthenticatedPageIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {withPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
 import {createCanonicalUtcTimestamp} from "@/src/modules/platform/server/database/platform-migration-contract";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
@@ -32,14 +32,14 @@ function updatedCommunityUrl(communitySlug: string, path: string): string {
 }
 
 async function context(slug: string, formData?:FormData, verifyParticipants=true, existingCoachingOnly=false) {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await requireCommunityOwnerReviewPageIdentity();
   await requireCommunityRequestAccess({userId:identity.scope.userId,slug,verifyParticipants,existingCoachingOnly,relationshipId:String(formData?.get("relationshipId")??"")||undefined,taskId:String(formData?.get("taskId")??"")||undefined,reviewId:String(formData?.get("reviewId")??"")||undefined});
   return { identity, slug };
 }
 function failure(message: string): CommunityPublicationFeedback { return { status: "error", message }; }
 function refreshSafely(path: string) { try { revalidatePath(path); } catch { /* The saved result remains valid. */ } }
 export async function saveCommunityRoleWithFeedback(form: FormData): Promise<CommunityPublicationFeedback> {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await requireCommunityOwnerReviewPageIdentity();
   const slug = String(form.get("communitySlug") ?? "");
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return failure("Community unavailable.");
   const capability = "community.roles.manage";
@@ -73,7 +73,7 @@ export async function saveCommunityRoleWithFeedback(form: FormData): Promise<Com
 }
 
 export async function setCommunityPauseWithFeedback(form:FormData):Promise<CommunityPublicationFeedback>{
- const identity=await requireTraderLinkPlatformPageIdentity();
+ const identity=await requireCommunityOwnerReviewPageIdentity();
  const slug=String(form.get("communitySlug")??"");
  const status=String(form.get("communityStatus")??"");
  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||!["active","paused"].includes(status))return failure("Community unavailable.");
@@ -101,7 +101,7 @@ export async function pauseCommunityDiscordRoleFeaturesAction(formData:FormData)
 }
 export async function saveCommunitySettingsAction(formData:FormData):Promise<void>{const communitySlug=required(formData,"communitySlug");const {identity}=await context(communitySlug,formData);withPlatformDatabase({mode:"runtime"},database=>{const actor=resolveTraderLinkCommunityViewer(database,identity,communitySlug);const community=database.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(communitySlug) as {community_id:string};new TraderLinkCommunityPlatformRepository(database).updateSettings({communityId:community.community_id,actor,displayName:required(formData,"displayName"),description:String(formData.get("description")??""),retentionDays:90,visibilityStatus:"not_configured",visibilityCopy:"",atUtc:createCanonicalUtcTimestamp()});});revalidateCommunityPath(communitySlug,"manage/settings");redirect(updatedCommunityUrl(communitySlug,"manage/settings"));}
 export async function changeCommunityLifecycleWithFeedback(form:FormData):Promise<CommunityPublicationFeedback>{
- const identity=await requireTraderLinkPlatformAuthenticatedPageIdentity(),slug=String(form.get("communitySlug")??""),operation=String(form.get("operation")??"");
+ const identity=await requireCommunityOwnerReviewAuthenticatedPageIdentity(),slug=String(form.get("communitySlug")??""),operation=String(form.get("operation")??"");
  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||!["remove","recover","reconnect"].includes(operation))return {status:"error",message:"Community unavailable."};
  try{
   const atUtc=new Date().toISOString();

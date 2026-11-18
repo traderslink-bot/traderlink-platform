@@ -36,7 +36,7 @@ export function requireFollowUpWindow(db:Database.Database,relationshipId:string
  const bound=coachingReviewService(db,reviewId);
  if(!bound)throw new Error("The original agreement for this review must be identified before follow-up.");
  const terms=bound.terms;
- const service=terms.items.find(item=>item.itemType==="review_follow_up");
+ const service=bound.item.followUpDays>0?bound.item:terms.items.find(item=>item.itemType==="review_follow_up");
  if(!service){if(terms.items.some(item=>item.itemType==="custom_task"))return;throw new Error("Follow-up is not included in this agreement.");}
  if(!review.viewed_at_utc)throw new Error("Mark the review as read before sending a follow-up.");
  if(Date.parse(atUtc)>Date.parse(review.viewed_at_utc)+service.followUpDays*86400000)throw new Error("The follow-up period for this review has ended.");

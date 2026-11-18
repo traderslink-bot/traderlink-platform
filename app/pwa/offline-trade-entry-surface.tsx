@@ -76,7 +76,7 @@ function browserPathnameSnapshot(): string {
   const pathname = intendedOfflinePathname() ??
     normalizePlatformOfflinePathname(window.location.pathname);
   if (pathname === "/manual-entry") return "/trade-tracker";
-  if (pathname === "/reflection-loop" || pathname === "/review" || pathname === "/progress" || pathname === "/coaching" || pathname.startsWith("/coach/")) return "/ai-reviews";
+  if (pathname === "/reflection-loop" || pathname === "/review" || pathname === "/progress" || pathname.startsWith("/coach/")) return "/ai-reviews";
   if (pathname === "/analytics/trade-analysis") return "/analytics/trade-analyzer/day";
   if (pathname === "/upload-csv" || pathname === "/import-dry-run" || pathname === "/import-health" || pathname === "/onboarding" || pathname === "/first-run" || pathname === "/admin/broker-mappings") return "/imports";
   if (pathname === "/repair-wizard") return "/data-decisions";

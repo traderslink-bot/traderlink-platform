@@ -17,3 +17,7 @@ Implementation contract:
 QA decisions: selection bound to cycle/draft so a later refresh cannot inherit one-time opt-in; automatic opt-in has enable time to avoid sending previous events. Off cancels queued automatic sends. Removed/re-added tickers do not inherit preferences. Dedicated endpoint authorizes owner and mutation CSRF; webhook channel verified before sending; secret never returned. Reject incomplete/mismatched approved export, not the owner's ordinary publication. Manual delayed sends require a published analysis, not just a listed ticker. No image generation by OpenAI; use existing renderer/cache.
 
 Progress: [watchlist-free-chat-progress.md](watchlist-free-chat-progress.md).
+
+## Direct share composer
+
+The direct **Post to Free Chat** action opens one dialog for the editable message, the rendered copy, and delivery status. The worker uses the confirmed opening message with the protected heading, links, and mention. It rechecks Premium visibility on every attempt and holds a manual share for review if that visibility changed. The receipt owns the submitted message so cooldowns, process restarts, and confirmed-failure retries do not lose it. A bounded read-only receipt poll updates the same dialog after confirmation. Approval and move opt-ins retain their separate preview and delivery paths.

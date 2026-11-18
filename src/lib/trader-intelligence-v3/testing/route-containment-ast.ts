@@ -216,6 +216,9 @@ const PLATFORM_REQUEST_GUARDS = new Set([
 ]);
 
 const DELEGATED_PLATFORM_GUARDS: Readonly<Record<string, readonly string[]>> = {
+  "@/src/modules/communities/server/stats/community-stats-staging-qa-controller": ["startCommunityStatsQa"],
+  "@/src/modules/communities/server/shared-alerts-staging-fixture-controller": ["startSharedFixture"],
+  "@/src/modules/partner-alerts/server/partner-alert-owner-review-request": ["partnerAlertOwnerReviewRequestDenied"],
   "@/src/modules/communities/server/coaching-pilot-request-identity": ["requireCoachingPilotRequestIdentity"],
   "@/src/modules/platform/server/administration/platform-admin-authorization": ["requireJournalAdminScope"],
   "@/src/modules/watchlist/server/access/watchlist-admin-authorization": ["withWatchlistAdminDatabase"],
@@ -253,6 +256,47 @@ function importedScannerSettingsHandler(sourceFile: ts.SourceFile): string | nul
   return null;
 }
 
+/** Exact synchronous connect contract; a helper name alone never admits OAuth effects. */
+function trustedWhopConnectIdentityFlow(sourceFile: ts.SourceFile, guardName: string): boolean {
+  if (sourceFile.fileName !== "app/api/billing/whop/connect/route.ts") return false;
+  let configurationName: string | undefined;
+  for (const statement of sourceFile.statements) {
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier) ||
+        statement.moduleSpecifier.text !== "@/src/modules/platform/server/billing/whop-ai-review-staging-identity" ||
+        statement.importClause?.isTypeOnly) continue;
+    const bindings = statement.importClause?.namedBindings;
+    if (bindings && ts.isNamedImports(bindings)) {
+      const binding = bindings.elements.find(element => !element.isTypeOnly &&
+        (element.propertyName ?? element.name).text === "loadWhopOAuthRequestConfiguration");
+      configurationName = binding?.name.text;
+    }
+  }
+  const handler = sourceFile.statements.find((statement): statement is ts.FunctionDeclaration =>
+    ts.isFunctionDeclaration(statement) && statement.name?.text === "GET");
+  const request = handler?.parameters[0]?.name;
+  if (!configurationName || !handler?.body || !request || !ts.isIdentifier(request) ||
+      request.text === guardName || request.text === configurationName || handler.body.statements.length !== 1) return false;
+  const attempt = handler.body.statements[0];
+  if (!ts.isTryStatement(attempt)) return false;
+  const [identityStatement, configurationStatement] = attempt.tryBlock.statements;
+  if (!identityStatement || !configurationStatement || !ts.isVariableStatement(identityStatement) ||
+      !ts.isVariableStatement(configurationStatement) || identityStatement.declarationList.declarations.length !== 1 ||
+      configurationStatement.declarationList.declarations.length !== 1) return false;
+  const identity = identityStatement.declarationList.declarations[0];
+  const configuration = configurationStatement.declarationList.declarations[0];
+  if (!ts.isIdentifier(identity.name) || !identity.initializer || !ts.isCallExpression(identity.initializer) ||
+      !ts.isIdentifier(identity.initializer.expression) || identity.initializer.expression.text !== guardName ||
+      identity.initializer.arguments.length !== 1 || !ts.isIdentifier(identity.initializer.arguments[0]) ||
+      identity.initializer.arguments[0].text !== request.text || !configuration.initializer ||
+      !ts.isCallExpression(configuration.initializer) || !ts.isIdentifier(configuration.initializer.expression) ||
+      configuration.initializer.expression.text !== configurationName || configuration.initializer.arguments.length !== 2) return false;
+  const [configurationRequest, userId] = configuration.initializer.arguments;
+  return ts.isIdentifier(configurationRequest) && configurationRequest.text === request.text &&
+    ts.isPropertyAccessExpression(userId) && userId.name.text === "userId" &&
+    ts.isPropertyAccessExpression(userId.expression) && userId.expression.name.text === "scope" &&
+    ts.isIdentifier(userId.expression.expression) && userId.expression.expression.text === identity.name.text;
+}
+
 function importedPlatformGuards(
   sourceFile: ts.SourceFile,
   boundary: TraderIntelligenceRouteContainmentEntry["authorizationBoundary"],
@@ -276,7 +320,9 @@ function importedPlatformGuards(
         worker
           ? modulePath === worker[0] && imported === worker[1]
           : (modulePath === PLATFORM_SCOPE_MODULE && PLATFORM_REQUEST_GUARDS.has(imported)) ||
-            DELEGATED_PLATFORM_GUARDS[modulePath]?.includes(imported)
+            DELEGATED_PLATFORM_GUARDS[modulePath]?.includes(imported) ||
+            (modulePath === "@/src/modules/platform/server/billing/whop-ai-review-staging-identity" &&
+              imported === "requireWhopOAuthRequestIdentity" && trustedWhopConnectIdentityFlow(sourceFile, element.name.text))
       ) {
         guards.add(element.name.text);
       }

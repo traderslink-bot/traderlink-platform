@@ -129,6 +129,43 @@ const LOCAL_PAGE_MODULES = [
   "app/intelligence/import-trials/page.tsx",
 ] as const;
 
+// Individually reviewed combined-feature routes; explicit paths, never a prefix waiver.
+const REVIEWED_COMBINED_PAGE_ROUTES = [
+  ["app/(dashboard)/admin/communities/page.tsx", "Redirect only to /admin/journal/communities; no data access here; destination requires current Core admin scope."],
+  ["app/(dashboard)/communities/[communitySlug]/alert/[...feed]/page.tsx", "CommunityBrandedFeedPage: two-account review identity, fresh Community request access, active community membership and scoped destination resolution."],
+  ["app/(dashboard)/communities/[communitySlug]/alert/page.tsx", "CommunityDestinationHubPage delegates to guarded publishing loader/current membership before scoped destination hub read."],
+  ["app/(dashboard)/communities/[communitySlug]/alerts/[alertSlug]/page.tsx", "Publishing loader review identity/current membership and alert view/create or verified channel readership; scoped alert must exist."],
+  ["app/(dashboard)/communities/[communitySlug]/alerts/page.tsx", "Qualified Shared carrier and two-account review identity/current membership with individual publishing grant; otherwise guarded Community section loader; denial renders no private data."],
+  ["app/(dashboard)/communities/[communitySlug]/content/[...feed]/page.tsx", "CommunityContentRoutePage guarded publishing loader/current membership, scoped page/document resolution; collection delegates to guarded branded feed."],
+  ["app/(dashboard)/communities/[communitySlug]/content/page.tsx", "CommunityDestinationHubPage delegates to guarded publishing loader/current membership before scoped destination hub read."],
+  ["app/(dashboard)/communities/[communitySlug]/manage/alerts/[alertSlug]/page.tsx", "Publishing loader review identity/current membership; alerts.create and own alert or alerts.manage_all."],
+  ["app/(dashboard)/communities/[communitySlug]/manage/pages/page.tsx", "Publishing loader review identity/current membership and community.manage; exact community owner for destination configuration."],
+  ["app/(dashboard)/communities/[communitySlug]/manage/shared-alerts/page.tsx", "Community review identity then sharedOwnerContext actual server ownership and verified participant access."],
+  ["app/(dashboard)/communities/[communitySlug]/manage/watchlists/[pageId]/page.tsx", "Publishing loader review identity/current membership/community.manage plus destination permissions.canPublish for exact page."],
+  ["app/(dashboard)/communities/[communitySlug]/partner-channels/page.tsx", "Two-account Community review identity plus exact active community owner_user_id before seller setup/status reads."],
+  ["app/(dashboard)/communities/[communitySlug]/publish/page.tsx", "Publishing loader review identity/current membership; only destinations with permissions.canPublish, otherwise notFound."],
+  ["app/(dashboard)/communities/[communitySlug]/stats/analysts/page.tsx", "Publishing loader review identity/membership; owner, analytics.view or explicit own-content access; no synthetic review mode."],
+  ["app/(dashboard)/communities/[communitySlug]/stats/settings/page.tsx", "Publishing loader review identity and current membership; exact community owner, no synthetic review mode."],
+  ["app/(dashboard)/communities/[communitySlug]/stats/team/page.tsx", "Publishing loader review identity/membership; owner or all team.manage, member_activity.view and analytics.view capabilities; no synthetic review mode."],
+  ["app/(dashboard)/communities/[communitySlug]/swing/[...feed]/page.tsx", "Guarded publishing loader/current membership before scoped legacy swing lookup and canonical redirect."],
+  ["app/(dashboard)/communities/[communitySlug]/watchlist/[...feed]/page.tsx", "CommunityBrandedFeedPage: two-account review identity, fresh Community request access, active community membership and scoped destination resolution."],
+  ["app/(dashboard)/communities/[communitySlug]/watchlist/page.tsx", "CommunityDestinationHubPage delegates to guarded publishing loader/current membership before scoped destination hub read."],
+  ["app/(dashboard)/communities/page.tsx", "Two-account Community owner-review identity before listing this user’s memberships and relationship history."],
+  ["app/(dashboard)/partner-channels/page.tsx", "Two-account Community review identity before private catalog and qualified subscriber runtime reads."],
+] as const;
+const REVIEWED_COMBINED_API_ROUTES = [
+  ["app/api/communities/[communitySlug]/shared-alerts/source/route.ts", ["GET", "POST"], "owner_mutation", "Shared Alerts", "Platform request identity and Community review gate before source/schema access; qualified carrier, current community/publisher authorization and same-origin POST through source adapter."],
+  ["app/api/communities/[communitySlug]/stats/route.ts", ["GET", "POST"], "owner_mutation", "Community Stats", "Platform request identity and Community review gate; authorizeCommunityStats read/own-content/export grants; settings POST requires same-origin and exact owner with revision check."],
+  ["app/api/communities/[communitySlug]/stats/visits/route.ts", ["POST"], "owner_mutation", "Community Stats", "Same-origin bounded POST, Platform request identity plus Community review gate, fresh community visit authorization; tracking flag and scoped telemetry only."],
+  ["app/api/company/details/route.ts", ["GET"], "owner_read", "Scanner Company", "Platform request identity and two-account Watchlist navigation gate before company/provider reads; symbol/universe checks and scoped Press Release entitlement before news."],
+  ["app/api/company/technicals/route.ts", ["GET"], "owner_read", "Scanner Company", "Platform request identity plus two-account Watchlist gate, validated Scanner-universe symbol, private readonly technical/year-range response."],
+  ["app/api/partner-channels/communities/[communityId]/offers/[offerKey]/access/route.ts", ["POST"], "owner_mutation", "Paid Channels", "Exact partnerAlertOwnerReviewRequestDenied gate before qualified runtime; writer.run authorizes current subscriber offer and reviewed provider/role observations."],
+  ["app/api/partner-channels/communities/[communityId]/offers/[offerKey]/checkout/route.ts", ["POST"], "owner_mutation", "Paid Channels", "Exact partnerAlertOwnerReviewRequestDenied gate; separately qualified sandbox/native billing service performs authenticated same-origin checkout and subscriber-offer checks."],
+  ["app/api/partner-channels/communities/[communityId]/route.ts", ["GET", "POST"], "owner_mutation", "Paid Channels", "Exact partnerAlertOwnerReviewRequestDenied gate; qualified runtime private-read/mutation adapter enforces scoped owner/subscriber and mutation Origin."],
+  ["app/api/partner-channels/communities/[communityId]/source-channels/route.ts", ["GET", "POST"], "owner_mutation", "Paid Channels", "Exact partnerAlertOwnerReviewRequestDenied gate; qualified runtime verifies source owner/guild; refreshing POST requires requirePlatformMutationRequest."],
+  ["app/api/partner-channels/communities/[communityId]/stripe-onboarding/route.ts", ["POST"], "owner_mutation", "Paid Channels", "Exact partnerAlertOwnerReviewRequestDenied gate plus Platform mutation/Origin checks, active Platform request scope and exact community owner query before qualified seller setup."],
+] as const;
+
 // Pages served through the shared signed-in Platform frame.
 const PLATFORM_DASHBOARD_PAGE_MODULES = [
   "app/(dashboard)/communities/[communitySlug]/[...section]/page.tsx",
@@ -258,8 +295,6 @@ const PLATFORM_OWNER_API_ROUTES = [
 const PLATFORM_SCOPED_API_ROUTES = [
   ["app/api/admin/market-data/route.ts", ["GET", "POST"], "owner_mutation"],
   ["app/api/charts/provider/route.ts", ["GET"], "owner_read"],
-  ["app/api/company/details/route.ts", ["GET"], "owner_read"],
-  ["app/api/company/technicals/route.ts", ["GET"], "owner_read"],
   ["app/api/coaching/action/route.ts", ["POST"], "owner_mutation"],
   ["app/api/coaching/review-resource/route.ts", ["GET"], "owner_read"],
   ["app/api/admin/journal/demo-daily-tracker-market-data/export/route.ts", ["POST"], "owner_mutation"],
@@ -568,6 +603,61 @@ export const TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX = [
 
 /** The current Platform inventory is checked without expanding v3 wrapper admission. */
 export const TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX = [
+  {
+    ...pageEntry("app/(dashboard)/communities/[communitySlug]/server-watchlists/[watchlistId]/page.tsx", "owner_read"),
+    authorizationRequirement: "Normal publication loader: actual Platform/Community request access, exact server-watchlist ID from visibility-filtered snapshot; extra stored research only after authorization. Editor requires publish_staff and author or manage_all.",
+    currentResponsibility: "Canonical Community server watchlist saved URL",
+    sourceOfTruthLayer: "Native Community publication snapshot and persisted watchlist research",
+    mutationProtectionRequirement: "Existing guarded publication server actions; authorized tracked-page visits only",
+  },
+  {
+    ...pageEntry("app/(dashboard)/%5F%5Fprivate/shared-alerts-fixture/[runId]/[key]/page.tsx", "internal_diagnostics"),
+    routePath: "/__private/shared-alerts-fixture/[runId]/[key]",
+    authenticationRequirement: "Actual native Discord session and shared signed-in dashboard layout",
+    authorizationRequirement: "Private fixtureRequest/readFixtureSnapshot: fixed sealed staging files, current Core parent and child, exact run/key/session/native-ledger/source pins and finite deadline; production/non-staging denied.",
+    mutationProtectionRequirement: "Bound fixture server actions revalidate actual session, parent/child and Origin; no normal membership or owner grant is created",
+    currentResponsibility: "Private finite SyntheticAgreement test page; actual Discord IO restricted to Tests",
+    deploymentAndSecurityAssumptions: "Isolated staging only; actual cross-route opaque registry identity is independently tested",
+  },
+  {
+    ...apiEntry("app/%5F%5Fprivate/community-stats-qa/[nonce]/route.ts", ["POST"], "internal_diagnostics", "platform_request_scope"),
+    routePath: "/__private/community-stats-qa/[nonce]",
+    authenticationRequirement: "Actual Core administrative Platform session",
+    authorizationRequirement: "Exact startCommunityStatsQa: isolated staging target, fixed private Stats files, actual Core issuer, installed source/archive/build/schema/full-ledger/session/owner/guild/settings/nonce checks",
+    mutationProtectionRequirement: "Same-origin POST, Stats-only pipeline, selected Tests General, no delivery jobs, zero Discord writes and finite native collector budgets; abort cancels authority",
+    currentResponsibility: "Private bounded native Stats acceptance stream; no Shared model or generic worker activation",
+    deploymentAndSecurityAssumptions: "Isolated staging only; no client file/scope/pin selectors or production authority",
+  },
+  {
+    ...apiEntry("app/%5F%5Fprivate/community-staging-qa/[nonce]/route.ts", ["POST"], "internal_diagnostics", "platform_request_scope"),
+    routePath: "/__private/community-staging-qa/[nonce]",
+    authenticationRequirement: "Actual Core administrative Platform session",
+    authorizationRequirement: "Exact startSharedFixture controller: staging guard, fixed private manifest hashes, genuine Core issuer request, source/build/schema/full-ledger pins, Tests-only child scope and finite deadline",
+    mutationProtectionRequirement: "Genuine parent checks exact nonce, current Core session, same-origin POST and sealed scope; stream abort cancels authority",
+    currentResponsibility: "Private finite Shared staging fixture issuer stream; no generic worker admission",
+    deploymentAndSecurityAssumptions: "Isolated staging only; no public scope/path/database selectors or production authority",
+  },
+  ...REVIEWED_COMBINED_PAGE_ROUTES.map(([modulePath, authorizationRequirement]) => ({
+    ...pageEntry(modulePath, "owner_read"), authorizationRequirement,
+    mutationProtectionRequirement: "Authored changes use guarded mutations; readable content can record authorized view telemetry",
+    currentResponsibility: "Reviewed Community, Shared, Stats or Paid page/redirect",
+    sourceOfTruthLayer: "Platform identity and current scoped Community/Partner repositories",
+    currentLegacyHazard: "No legacy owner-layout assumption; guard chain reviewed per explicit path",
+    migrationOrAdapterRequirement: "Use current Platform and feature guards; no V3 adapter or fallback",
+    deploymentAndSecurityAssumptions: "Two-account owner review plus normal feature permissions",
+    replacementOrRetirementCondition: "Preserve approved current Platform feature behavior",
+
+  })),
+  ...REVIEWED_COMBINED_API_ROUTES.map(([modulePath, methods, classification, feature, authorizationRequirement]) => ({
+    ...apiEntry(modulePath, methods, classification, "platform_request_scope"), authorizationRequirement,
+    currentResponsibility: `${feature} authenticated HTTP boundary`,
+    sourceOfTruthLayer: "Platform identity and current feature-owned authorization services",
+    currentLegacyHazard: "No legacy wrapper substitution; exact current server guards required",
+    migrationOrAdapterRequirement: "Use current Platform and feature guards; no V3 adapter or fallback",
+    deploymentAndSecurityAssumptions: "Two-account owner review plus normal feature permissions and provider admission",
+    replacementOrRetirementCondition: "Preserve approved current Platform feature behavior",
+
+  })),
   ...TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX,
   apiEntry("app/api/auth/discord/callback/route.ts", ["GET"], "public_safe_informational", "public_oauth_entry"),
   ...PLATFORM_CRON_ROUTES.map(modulePath =>

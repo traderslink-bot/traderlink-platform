@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash } from "node:crypto";
 import { mkdtempSync } from "node:fs";
@@ -12,7 +13,6 @@ import type { TraderLinkPlatformRequestIdentity } from "../authentication/requir
 import { PlatformDiscordSignInService } from "../authentication/platform-discord-sign-in-service";
 import { openPlatformDatabase } from "../database/open-platform-database";
 import { createCanonicalUuidV4 } from "../database/platform-migration-contract";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformAdminAuthorization } from "./platform-admin-authorization";
 import { PlatformOperatorRepository } from "./platform-operator-repository";
 import { resetJournalAdminRateLimitsForTests } from "./platform-admin-request-security";
@@ -31,12 +31,12 @@ afterEach(async () => {
 function setup(guildOwner = true) {
   const root = mkdtempSync(join(tmpdir(), "traderlink-admin-auth-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "test.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => SIGN_IN_AT });
+  setPlatformTestFixtureMigrationTime(database, () => SIGN_IN_AT);
   const signIn = new PlatformDiscordSignInService(database, {
     now: () => SIGN_IN_AT,
   }).signIn({

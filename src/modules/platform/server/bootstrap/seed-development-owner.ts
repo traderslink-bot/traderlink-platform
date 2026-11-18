@@ -24,6 +24,7 @@ import {
 } from "../database/platform-migration-registry";
 import { calculatePlatformSchemaDigest } from "../database/platform-schema-digest";
 import { verifyCompletedPlatformDatabase } from "../database/run-platform-migrations";
+import { INTERNAL_RETAINED_ERASURE_PRINCIPAL_SQL } from "../identity/platform-internal-erasure-principal";
 import { PlatformUserRepository } from "../identity/platform-user-repository";
 import { PlatformWorkspaceRepository } from "../identity/platform-workspace-repository";
 import {
@@ -138,7 +139,7 @@ function readDomainRowCounts(
     Object.fromEntries(
       platformOwnershipFoundationDomainTableNames.map((tableName) => {
         const row = database
-          .prepare<[], { count: number }>(`SELECT COUNT(*) AS count FROM ${tableName}`)
+          .prepare<[], { count: number }>(`SELECT COUNT(*) AS count FROM ${tableName}${tableName === "platform_users" ? ` AS user WHERE NOT ${INTERNAL_RETAINED_ERASURE_PRINCIPAL_SQL}` : ""}`)
           .get();
         return [tableName, row?.count ?? -1];
       }),

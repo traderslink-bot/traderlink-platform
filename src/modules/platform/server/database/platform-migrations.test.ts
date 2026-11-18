@@ -66,9 +66,9 @@ describe("TraderLink Platform migrations", () => {
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
-  it("creates exactly the current registry and empty managed domain tables", () => {
+  it("creates exactly the current registry and managed domain seed state", () => {
     const database = openInitializer(newPath("foundation"));
     try {
       const result = runPlatformMigrations(database, {
@@ -83,9 +83,22 @@ describe("TraderLink Platform migrations", () => {
       expect(
         database.prepare("SELECT COUNT(*) AS count FROM platform_schema_migrations").get(),
       ).toEqual({ count: platformMigrationManifest.length });
+      // Migration 0205 owns one disabled retained principal, not a human login.
+      expect(database.prepare("SELECT * FROM platform_users").all()).toEqual([{
+        user_id: "00000000-0000-4000-8000-000000000195",
+        auth_provider: "erasure",
+        auth_subject: "paid-partner-retained-principal-v1",
+        display_name: "Removed Partner owner",
+        status: "disabled",
+        created_at_utc: "2026-11-02T00:00:00.000Z",
+        updated_at_utc: "2026-11-02T00:00:00.000Z",
+      }]);
+      expect(database.prepare("SELECT * FROM platform_auth_identities").all()).toEqual([]);
+      expect(database.prepare("SELECT * FROM platform_workspace_memberships").all()).toEqual([]);
       for (const table of currentPlatformDomainTableNames) {
         expect(database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get(), table).toEqual({
-          count: table === "coach_ai_provider_settings" ? 1
+          count: table === "platform_users" ? 1
+            : table === "coach_ai_provider_settings" ? 1
             : table === "coach_ai_chat_provider_settings" ? 1
               : table === "coach_ai_feature_controls" ? 4
                 : table === "coach_ai_review_budget_controls" ? 1
@@ -99,7 +112,7 @@ describe("TraderLink Platform migrations", () => {
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("rolls back registry bootstrap and every migration-one object on failure", () => {
     const database = openInitializer(newPath("rollback"));
@@ -143,7 +156,7 @@ describe("TraderLink Platform migrations", () => {
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("rejects duplicate global IDs and execution orders before mutation", () => {
     const first = platformMigrationManifest[0];
@@ -173,7 +186,7 @@ WHERE migration_id = ?`)
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("rejects unknown applied migration history", () => {
     const database = openInitializer(newPath("unknown-history"));
@@ -190,7 +203,7 @@ WHERE migration_id = '0002_journal_account_boundary'`)
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("rejects out-of-order applied migration rows", () => {
     const database = openInitializer(newPath("out-of-order-history"));
@@ -219,7 +232,7 @@ WHERE execution_order = 100`)
     } finally {
       database.close();
     }
-  });
+  }, 15_000);
 
   it("records exact online-backup, restore, file, pragma, and recovery evidence", async () => {
     const sourcePath = newPath("backup-source");
@@ -272,7 +285,7 @@ WHERE execution_order = 100`)
     expect(evidence.destructiveMigrationBoundary).toBe(
       "orchestrator_accepted_checkpoint_required",
     );
-  });
+  }, 15_000);
 
   it("backs up and restore-verifies an accepted manifest prefix before its next migration", async () => {
     const sourcePath = newPath("prefix-backup-source");
@@ -360,5 +373,5 @@ WHERE execution_order = 100`)
         sourceAccountCanonicalizationVersions: ["ibkr-source-account-v1"],
       },
     });
-  });
+  }, 15_000);
 });

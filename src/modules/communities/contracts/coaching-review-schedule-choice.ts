@@ -2,6 +2,11 @@ import {nextReviewMonday} from './coaching-delivery-calendar';
 import {coachingPeriod,type CoachingAgreementTerms} from './coaching-agreements';
 import {submissionDate,submissionPeriod} from './coaching-request-submission-limits';
 
+/** The same start-date rule applies before proposing and when accepting. */
+export function requireFutureCoachingReviewWeek(terms:CoachingAgreementTerms,atUtc:string):void{
+ if(terms.items.some(item=>item.timelineEnabled&&terms.builderConfig?.offers[item.itemType]?.weeklySchedule==='monday'&&['weekly','every_two_weeks'].includes(item.frequency)&&(coachingPeriod(terms,item,0)?.start??'9999')<submissionDate(atUtc)))throw new Error('The first review week has already started. Ask your coach for an updated agreement with a future start date.');
+}
+
 /** Resolve only choices explicitly offered by the coach. Saved accepted history is never reinterpreted. */
 export function chooseStudentReviewSchedules(terms:CoachingAgreementTerms,choices:Readonly<Record<string,unknown>>={},atUtc?:string):CoachingAgreementTerms{
  const offers={...terms.builderConfig?.offers};let changed=false;
@@ -13,7 +18,7 @@ export function chooseStudentReviewSchedules(terms:CoachingAgreementTerms,choice
   return {...item,timelineEnabled:choice==='scheduled',...(choice==='on_request'?{selectionMode:'student' as const}:{})};
  });
  const result=changed?{...terms,items,...(atUtc&&items.every(item=>!item.timelineEnabled)?{startDate:submissionDate(atUtc)}:{}),builderConfig:{...terms.builderConfig!,offers}}:terms;
- if(atUtc&&result.items.some(item=>item.timelineEnabled&&result.builderConfig?.offers[item.itemType]?.weeklySchedule==='monday'&&['weekly','every_two_weeks'].includes(item.frequency)&&(coachingPeriod(result,item,0)?.start??'9999')<submissionDate(atUtc)))throw new Error('The first review week has already started. Ask your coach for an updated agreement with a future start date.');
+ if(atUtc)requireFutureCoachingReviewWeek(result,atUtc);
  return result;
 }
 

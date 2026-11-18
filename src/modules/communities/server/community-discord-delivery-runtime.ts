@@ -18,13 +18,14 @@ export const runHostedCommunityDiscordDelivery = nonOverlappingCoachingMaintenan
   if(!botToken||!publicOrigin)return null;
   const origin=new URL(publicOrigin).origin;
   const {openPlatformDatabase}=await import("../../platform/server/database/open-platform-database");
-  const {TraderLinkCommunityDiscordDeliveryService}=await import("./traderlink-community-discord-delivery-service");
+  const {runCommunityDiscordDeliveryPass}=await import("./community-discord-delivery-pass");
   const database=openPlatformDatabase({mode:"runtime"});
   try {
-    return await new TraderLinkCommunityDiscordDeliveryService(database,{
+    return await runCommunityDiscordDeliveryPass(database,{
       botToken,publicOrigin:origin,
       notBeforeUtc:process.env.TRADERLINK_COMMUNITY_DELIVERY_NOT_BEFORE_UTC?.trim()||undefined,
-    }).runAvailable(5);
+      limit:5,
+    });
   } finally {database.close();}
 });
 

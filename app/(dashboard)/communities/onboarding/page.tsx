@@ -4,14 +4,14 @@ import Stack from "@mui/material/Stack";
 
 import Typography from "@mui/material/Typography";
 import { DashboardPage, DashboardPanel } from "@/app/dashboard-ui";
-import { requireTraderLinkPlatformServerComponentPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireCommunityOwnerReviewServerComponentPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { isApprovedCommunityGuild } from "@/src/modules/communities/server/community-launch-policy";
 import { canConnectCommunity, canPrepareCommunityInstallation } from "@/src/modules/communities/server/community-admission-service";
 import { CommunityConnectForm } from "../community-connect-form";
 
 export default async function CommunityOnboardingPage() {
-  const identity = await requireTraderLinkPlatformServerComponentPageIdentity();
+  const identity = await requireCommunityOwnerReviewServerComponentPageIdentity();
   const guilds = withReadonlyPlatformDatabase({}, database => (
     database.prepare(`SELECT candidate.discord_guild_id guildId,candidate.guild_name guildName,
       community.slug connectedSlug FROM traderlink_community_discord_guild_candidates candidate

@@ -1,3 +1,4 @@
+import { COMMUNITY_REVIEW_DISCORD_GUILD_ID, isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type Database from "better-sqlite3";
 import {createCanonicalUuidV4} from "../../platform/server/database/platform-migration-contract";
 export function communityIsRemoved(db:Database.Database,communityId:string):boolean{return Boolean(db.prepare(`SELECT 1 FROM traderlink_community_lifecycle WHERE community_id=? AND removed_at_utc IS NOT NULL`).get(communityId));}
@@ -37,24 +38,21 @@ export function expireCommunityRecoverySettings(db:Database.Database,atUtc:strin
   db.prepare(`UPDATE traderlink_community_lifecycle SET configuration_purged_at_utc=? WHERE community_id=?`).run(atUtc,row.community_id);
  })();
 }
-/** Complete successful bot roster only; partial, malformed, rate-limited and failed reads never mean uninstall. */
+/** Read only the approved guild. Confirmed unknown-guild responses retain the two-observation removal boundary. */
 export async function refreshCommunityBotInstallations(db:Database.Database,token:string,atUtc:string,request:typeof fetch=fetch){
  if(!token)return;
- const due=db.prepare(`SELECT c.community_id,c.discord_guild_id,l.bot_missing_since_utc FROM traderlink_communities c LEFT JOIN traderlink_community_lifecycle l ON l.community_id=c.community_id WHERE c.status IN ('active','paused') AND l.removed_at_utc IS NULL AND (l.bot_checked_at_utc IS NULL OR l.bot_checked_at_utc<?) LIMIT 25`).all(new Date(Date.parse(atUtc)-300000).toISOString()) as {community_id:string;discord_guild_id:string;bot_missing_since_utc:string|null}[];
+ const due=db.prepare(`SELECT c.community_id,c.discord_guild_id,l.bot_missing_since_utc FROM traderlink_communities c LEFT JOIN traderlink_community_lifecycle l ON l.community_id=c.community_id WHERE c.discord_guild_id=? AND c.status IN ('active','paused') AND l.removed_at_utc IS NULL AND (l.bot_checked_at_utc IS NULL OR l.bot_checked_at_utc<?) LIMIT 25`).all(COMMUNITY_REVIEW_DISCORD_GUILD_ID,new Date(Date.parse(atUtc)-300000).toISOString()) as {community_id:string;discord_guild_id:string;bot_missing_since_utc:string|null}[];
  if(!due.length)return;
- const guilds=new Set<string>();let complete=false,after="0";
+ const guilds=new Set<string>();let complete=false;
  try{
-  for(let page=0;page<10;page++){
-   const response=await request(`https://discord.com/api/v10/users/@me/guilds?limit=200&after=${after}`,{headers:{Authorization:`Bot ${token}`},cache:"no-store",signal:AbortSignal.timeout(8000)});
-   if(!response.ok)throw new Error("Unavailable");
-   const rows=await response.json() as {id:string}[];if(!Array.isArray(rows)||rows.some(row=>!/^\d{1,32}$/.test(row.id)||BigInt(row.id)<=BigInt(after)))throw new Error("Malformed roster");
-   for(const row of rows)guilds.add(row.id);
-   if(rows.length<200){complete=true;break;}
-   after=rows.reduce((largest,row)=>BigInt(row.id)>BigInt(largest)?row.id:largest,after);
-  }
+  const response=await request(`https://discord.com/api/v10/guilds/${COMMUNITY_REVIEW_DISCORD_GUILD_ID}`,{headers:{Authorization:`Bot ${token}`},cache:"no-store",signal:AbortSignal.timeout(8000)});
+  const guild=await response.json() as {id?:string;code?:number};
+  if(response.ok&&guild.id===COMMUNITY_REVIEW_DISCORD_GUILD_ID){guilds.add(guild.id);complete=true;}
+  else if(response.status===404&&guild.code===10004)complete=true;
  }catch{/* Unknown evidence below; never infer absence. */}
  db.transaction(()=>{
   for(const row of due){
+   if(!isCommunityReviewDiscordGuild(row.discord_guild_id)||!db.prepare("SELECT 1 FROM traderlink_communities WHERE community_id=? AND discord_guild_id=?").get(row.community_id,COMMUNITY_REVIEW_DISCORD_GUILD_ID))continue;
    const present=guilds.has(row.discord_guild_id),confirmedMissing=!present&&complete&&Boolean(row.bot_missing_since_utc&&Date.parse(atUtc)-Date.parse(row.bot_missing_since_utc)>=60000);
    const state=present?'connected':confirmedMissing?'not_installed':'unavailable';
    db.prepare(`INSERT INTO traderlink_community_lifecycle(community_id,bot_state,bot_checked_at_utc,bot_missing_since_utc) VALUES(?,?,?,?) ON CONFLICT(community_id) DO UPDATE SET bot_state=excluded.bot_state,bot_checked_at_utc=excluded.bot_checked_at_utc,bot_missing_since_utc=excluded.bot_missing_since_utc`).run(row.community_id,state,atUtc,present?null:complete?(row.bot_missing_since_utc??atUtc):null);
