@@ -1,3 +1,4 @@
+import { hostedQaDeliverySql, ownHostedQaClaim, ownsHostedQaClaim, type HostedPaidQaAuthority } from "./partner-alert-hosted-qa-authority";
 import { PARTNER_ALERT_PUBLISHING_CONSENT_SQL } from "./partner-alert-publishing-consent";
 import type Database from "better-sqlite3";
 import { PartnerAlertValidationError } from "../contracts/partner-alert-contracts";
@@ -37,20 +38,24 @@ type Claim = Readonly<{ job: Job; token: string; fence: PartnerAlertCommunityFen
 /** Explicit runOnce only. No DB open, HTTP client, scheduling or startup. */
 export class PartnerAlertDeliveryWorker {
   constructor(private readonly db: Database.Database, private readonly transport: PartnerAlertDiscordDeliveryTransport,
-    private readonly configuration: Readonly<{ enabled: boolean; nowUtc: () => string; createId: () => string;
+    private readonly configuration: Readonly<{ execution?: HostedPaidQaAuthority; enabled: boolean; nowUtc: () => string; createId: () => string;
       attention: (deliveryId: string, reason: string) => void;
       rehydratePart?: (target: Readonly<{ mappingId: string; communityId: string; sourceGuildId: string; sourceChannelId: string;
         messageId: string; sourceRevision: number; partIndex: number }>, stillCurrent: () => boolean) => Promise<string | null> }>) {
   }
   private now(): string { return partnerAlertUtc(this.configuration.nowUtc(), "nowUtc"); }
-  private current(id: string): Job | undefined {
+  private selection(alias: "d" | "partner_alert_deliveries", phase: "work" | "settle" | "associated" = "work") {
+    return this.configuration.execution ? hostedQaDeliverySql(this.configuration.execution, alias, phase) : { sql: "1", parameters: [] as string[] };
+  }
+  private current(id: string, phase: "work" | "settle" = "work"): Job | undefined {
+    const selected = this.selection("d", phase);
     return this.db.prepare(`SELECT d.*,m.destination_channel_id,s.state source_state,s.revision current_revision,s.source_guild_id,
       r.observed_at_utc source_observed_at_utc,r.state source_revision_state
       FROM partner_alert_deliveries d JOIN partner_alert_mappings m ON m.mapping_id=d.mapping_id AND m.community_id=d.community_id
       JOIN partner_alert_source_messages s ON s.community_id=d.community_id AND s.source_channel_id=d.source_channel_id
         AND s.message_id=d.message_id JOIN partner_alert_source_revisions r ON r.community_id=d.community_id
         AND r.source_channel_id=d.source_channel_id AND r.message_id=d.message_id AND r.revision=d.source_revision
-      WHERE d.delivery_id=?`).get(id) as Job | undefined;
+      WHERE d.delivery_id=? AND (${selected.sql})`).get(id, ...selected.parameters) as Job | undefined;
   }
   private publishable(job: Job, at: string): boolean {
     if (job.action === "delete") return true;
@@ -73,6 +78,7 @@ export class PartnerAlertDeliveryWorker {
   /** One shared selector for global community selection and locked revalidation.
    * A blocked/exhausted row cannot pin the worker to its community. */
   private nextEligible(at: string, communityId: string | null = null): { delivery_id: string; community_id: string } | undefined {
+    const selected = this.selection("d");
     return this.db.prepare(`SELECT d.delivery_id,d.community_id FROM partner_alert_deliveries d
       JOIN partner_alert_partners p USING(community_id)
       JOIN platform_erasure_lifecycles l ON l.user_id=p.owner_user_id
@@ -83,6 +89,7 @@ export class PartnerAlertDeliveryWorker {
         AND s.message_id=d.message_id AND s.revision=d.source_revision
       WHERE l.phase='live' AND owner.status='active' AND l.profile_generation=profile.generation
         AND l.valid_until_utc>? AND profile.valid_until_utc>?
+        AND (${selected.sql})
         AND d.status IN ('pending','failed') AND d.attempts<5 AND d.next_attempt_at_utc<=?
         AND (? IS NULL OR d.community_id=?)
         AND (d.last_error_code IS NULL OR d.last_error_code IN ('rate_limited','temporary'))
@@ -95,12 +102,13 @@ export class PartnerAlertDeliveryWorker {
             AND earlier.source_revision=d.source_revision AND earlier.part_index<d.part_index
             AND earlier.action!='delete' AND earlier.status NOT IN ('delivered','cancelled')))
       ORDER BY CASE d.action WHEN 'delete' THEN 0 ELSE 1 END,d.next_attempt_at_utc,d.message_id,d.part_index LIMIT 1`)
-      .get(at,at,at,communityId,communityId) as { delivery_id: string; community_id: string } | undefined;
+      .get(at,at,...selected.parameters,at,communityId,communityId) as { delivery_id: string; community_id: string } | undefined;
   }
   /** Maintain at most ONE expired send per call, independently of ready work.
    * Expiry means uncertain; it never permits a resend or proves quiescence. */
   private maintainExpiredSend(): void {
     const at = this.now();
+    const selected = this.selection("d", "settle");
     const expired = this.db.prepare(`SELECT d.delivery_id,d.community_id FROM partner_alert_deliveries d
       JOIN partner_alert_partners p USING(community_id)
       JOIN platform_erasure_lifecycles l ON l.user_id=p.owner_user_id
@@ -109,11 +117,13 @@ export class PartnerAlertDeliveryWorker {
       JOIN partner_alert_context_epochs epochs ON epochs.community_id=d.community_id
       WHERE l.phase='live' AND owner.status='active' AND l.profile_generation=profile.generation
         AND l.valid_until_utc>? AND profile.valid_until_utc>?
-        AND d.status='sending' AND d.lease_until_utc<=?
-      ORDER BY d.lease_until_utc,d.delivery_id LIMIT 1`).get(at,at,at) as { delivery_id: string; community_id: string } | undefined;
+        AND (${selected.sql}) AND d.status='sending' AND d.lease_until_utc<=?
+      ORDER BY d.lease_until_utc,d.delivery_id LIMIT 1`).get(at,at,...selected.parameters,at) as { delivery_id: string; community_id: string } | undefined;
     if (!expired) return;
     requirePartnerAlertAdmission(this.db).runCommunity(expired.community_id, [], () => this.db.transaction(() => {
       const currentAt = this.now();
+      const scoped = this.current(expired.delivery_id, "settle");
+      if (!scoped || scoped.community_id !== expired.community_id) return;
       this.db.prepare(`UPDATE partner_alert_mirrored_parts SET state='uncertain' WHERE EXISTS
         (SELECT 1 FROM partner_alert_deliveries d WHERE d.delivery_id=? AND d.community_id=?
           AND d.mapping_id=partner_alert_mirrored_parts.mapping_id AND d.message_id=partner_alert_mirrored_parts.message_id
@@ -147,6 +157,7 @@ export class PartnerAlertDeliveryWorker {
       }
       const token = partnerAlertId(this.configuration.createId(), "leaseToken");
       const fence = admission.captureCommunityFence(job.community_id);
+      if (this.configuration.execution) ownHostedQaClaim(this.configuration.execution, job.delivery_id, token);
       this.db.prepare(`UPDATE partner_alert_deliveries SET status='sending',attempts=attempts+1,lease_token=?,
         lease_until_utc=?,admission_fence_json=? WHERE delivery_id=?`).run(token, new Date(Date.parse(at) + 60_000).toISOString(), JSON.stringify(fence), job.delivery_id);
       this.db.prepare(`INSERT INTO partner_alert_mirrored_parts
@@ -232,13 +243,14 @@ export class PartnerAlertDeliveryWorker {
     const guildId = partnerAlertSnowflake(input.guildId, "destinationGuildId");
     const channelId = partnerAlertSnowflake(input.channelId, "destinationChannelId");
     const messageId = partnerAlertSnowflake(input.messageId, "destinationMessageId");
+    const selected = this.selection("d", "settle");
     const candidates = this.db.prepare(`SELECT d.delivery_id FROM partner_alert_deliveries d
       JOIN partner_alert_mappings m ON m.mapping_id=d.mapping_id AND m.community_id=d.community_id
       WHERE m.destination_guild_id=? AND m.destination_channel_id=? AND m.ever_approved=1
-        AND d.action='create' AND d.status IN ('sending','uncertain') AND d.lease_token IS NOT NULL
-        AND substr(replace(d.delivery_id,'-',''),1,25)=? LIMIT 2`).pluck().all(guildId, channelId, input.nonce);
+        AND (${selected.sql}) AND d.action='create' AND d.status IN ('sending','uncertain') AND d.lease_token IS NOT NULL
+        AND substr(replace(d.delivery_id,'-',''),1,25)=? LIMIT 2`).pluck().all(guildId, channelId, ...selected.parameters, input.nonce);
     if (candidates.length !== 1 || typeof candidates[0] !== "string") return;
-    const job = this.current(candidates[0]);
+    const job = this.current(candidates[0], "settle");
     if (!job?.lease_token || !job.admission_fence_json || job.destination_channel_id !== channelId) return;
     const fence = JSON.parse(job.admission_fence_json) as PartnerAlertCommunityFence;
     if (fence.communityId !== job.community_id) return;
@@ -248,25 +260,28 @@ export class PartnerAlertDeliveryWorker {
   private promoteResolvedPart(job: Job, id: string | null): void {
     // Retention can clear a queued write's body. Only its stored action authorizes deletion.
     const expiredWrite = "action!='delete' AND text_content IS NULL AND rehydrate_source=0";
+    const selected = this.selection("partner_alert_deliveries", "associated");
     this.db.prepare(`UPDATE partner_alert_deliveries SET
       action=CASE WHEN action='delete' OR (${expiredWrite}) THEN action WHEN ? IS NULL THEN 'create' ELSE 'edit' END,
       destination_message_id=?,
       status=CASE WHEN (${expiredWrite}) OR (action='delete' AND ? IS NULL) THEN 'cancelled' ELSE 'pending' END,
       last_error_code=CASE WHEN (${expiredWrite}) THEN 'retention_expired' END
-      WHERE mapping_id=? AND message_id=? AND part_index=? AND source_revision>?
+      WHERE mapping_id=? AND message_id=? AND part_index=? AND source_revision>? AND (${selected.sql})
         AND source_revision=(SELECT revision FROM partner_alert_source_messages s WHERE s.community_id=partner_alert_deliveries.community_id
           AND s.source_channel_id=partner_alert_deliveries.source_channel_id AND s.message_id=partner_alert_deliveries.message_id)
         AND status IN ('pending','uncertain') AND lease_token IS NULL`)
-      .run(id, id, id, job.mapping_id, job.message_id, job.part_index, job.source_revision);
+      .run(id, id, id, job.mapping_id, job.message_id, job.part_index, job.source_revision, ...selected.parameters);
   }
   private finish(claim: Claim, result: PartnerAlertDiscordWriteOutcome): void {
+    if (this.configuration.execution && !ownsHostedQaClaim(this.configuration.execution, claim.job.delivery_id, claim.token)) return;
     if (retainLatePartnerDeliveryOutcome(this.db, claim.fence.ownerUserId, claim.job, claim.token, claim.fence, result)) return;
     const { job, token } = claim;
     let attention: string | null = null;
     const admission = requirePartnerAlertAdmission(this.db);
     admission.runCommunity(job.community_id, [], () => this.db.transaction(() => {
+      const selected = this.selection("partner_alert_deliveries", "settle");
       if (!this.db.prepare(`SELECT 1 FROM partner_alert_deliveries WHERE delivery_id=? AND lease_token=?
-        AND status IN ('sending','uncertain')`).get(job.delivery_id, token)) return;
+        AND status IN ('sending','uncertain') AND (${selected.sql})`).get(job.delivery_id, token, ...selected.parameters)) return;
       let outcome = result;
       if (outcome.kind === "confirmed") {
         try {
@@ -310,7 +325,7 @@ export class PartnerAlertDeliveryWorker {
         this.db.prepare(`UPDATE partner_alert_mirrored_parts SET state=? WHERE mapping_id=? AND message_id=? AND part_index=?`)
           .run(job.destination_message_id ? "active" : "deleted", job.mapping_id, job.message_id, job.part_index);
         this.promoteResolvedPart(job, job.destination_message_id);
-        if (outcome.kind === "not_written" || this.current(job.delivery_id)?.current_revision !== job.source_revision) {
+        if (outcome.kind === "not_written" || this.current(job.delivery_id, "settle")?.current_revision !== job.source_revision) {
           this.db.prepare(`UPDATE partner_alert_deliveries SET status='cancelled',last_error_code=?,
             lease_token=NULL,lease_until_utc=NULL WHERE delivery_id=?`)
             .run(outcome.kind === "not_written" ? outcome.reason : "superseded", job.delivery_id);

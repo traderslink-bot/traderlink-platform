@@ -1,3 +1,5 @@
+import { assertHostedQaExecution, hostedQaDeliverySql, hostedQaManifest, hostedQaRuntime, ownsHostedQaNonce,
+  recordHostedQaDestination, registerHostedQaBulkDelete, registerHostedQaSource, type HostedPaidQaAuthority } from "./partner-alert-hosted-qa-authority";
 import { isCommunityReviewDiscordGuild } from "@/src/modules/communities/server/community-review-discord-guild";
 import { createPartnerAlertReviewDiscordMessageRest as createPartnerAlertDiscordMessageRest, createPartnerAlertReviewDiscordResourceVerifier as createPartnerAlertDiscordResourceVerifier } from "./partner-alert-review-discord";
 import type Database from "better-sqlite3";
@@ -17,6 +19,7 @@ import { PARTNER_ALERT_PUBLISHING_CONSENT_SQL } from "./partner-alert-publishing
 /** The database and erasure lifecycle are already verified by the caller. A
  * separate persisted lease admits at most one Gateway receiver per bot. */
 export function startPartnerAlertMirroring(db: Database.Database, input: Readonly<{
+  execution?: HostedPaidQaAuthority;
   destinationGuildId: string;
   readOutput: () => PartnerAlertDiscordOutputConfiguration | null;
   assertCurrentStorage: () => void;
@@ -27,6 +30,12 @@ export function startPartnerAlertMirroring(db: Database.Database, input: Readonl
   onStopped: () => void;
 }>): (() => Promise<void>) | null {
   if (!isCommunityReviewDiscordGuild(input.destinationGuildId)) return null;
+  const execution = input.execution;
+  const finite = execution ? hostedQaManifest(execution) : null;
+  if (execution && (hostedQaRuntime(execution).database !== db || finite?.mode !== "mirroring")) return null;
+  const permittedBinding = (target: PartnerAlertResourceVerificationTarget) => !finite || (target.communityId === finite.communityId
+    && finite.bindings.some(b => b.sourceChannelId === target.sourceChannelId && b.destinationChannelId === target.destinationChannelId
+      && b.roleId === target.destinationRoleId));
   const output = input.readOutput();
   if (!output || !output.outputBindings.some(binding => binding.destinationGuildId === input.destinationGuildId)) return null;
   input.assertCurrentStorage();
@@ -50,6 +59,7 @@ export function startPartnerAlertMirroring(db: Database.Database, input: Readonl
   let work: Promise<void> | undefined;
   let rateLimitedUntilMs = 0;
   const currentOutput = () => {
+    if (execution) assertHostedQaExecution(execution);
     if (closing || !session.isCurrent()) return null;
     const current = input.readOutput();
     return current?.discordBotToken === output.discordBotToken && current.discordBotUserId === output.discordBotUserId
@@ -70,19 +80,19 @@ export function startPartnerAlertMirroring(db: Database.Database, input: Readonl
   };
   const isRegistered = (target: PartnerAlertResourceVerificationTarget) => {
     const bindings = currentOutput()?.outputBindings;
-    return isCommunityReviewDiscordGuild(target.sourceGuildId) && isCommunityReviewDiscordGuild(target.destinationGuildId)
+    return permittedBinding(target) && isCommunityReviewDiscordGuild(target.sourceGuildId) && isCommunityReviewDiscordGuild(target.destinationGuildId)
       && target.destinationGuildId === input.destinationGuildId && Boolean(bindings && partnerAlertOutputBindingMatches(bindings, target));
   };
   const matchingSource = (guildId: string, channelId: string, allowOld: boolean) => {
     if (!isCommunityReviewDiscordGuild(guildId)) return false;
     const bindings = currentOutput()?.outputBindings;
-    return Boolean(bindings?.some(binding => binding.destinationGuildId === input.destinationGuildId
+    return Boolean(bindings?.some(binding => permittedBinding(binding) && binding.destinationGuildId === input.destinationGuildId
       && binding.sourceGuildId === guildId && binding.sourceChannelId === channelId
       && (sourceActive.get(binding.communityId, guildId, channelId, binding.destinationChannelId, input.nowUtc())
         || (allowOld && hasSourceHistory.get(binding.communityId, channelId, guildId)))));
   };
   const isOutputChannel = (guildId: string, channelId: string) => guildId === input.destinationGuildId
-    && Boolean(currentOutput()?.outputBindings.some(binding => binding.destinationGuildId === guildId && binding.destinationChannelId === channelId));
+    && Boolean(currentOutput()?.outputBindings.some(binding => permittedBinding(binding) && binding.destinationGuildId === guildId && binding.destinationChannelId === channelId));
   const verify = createPartnerAlertDiscordResourceVerifier({ botToken: output.discordBotToken, botUserId: output.discordBotUserId,
     transport, messageContentIntentEnabled: true, maximumEvidenceAgeMs: output.discordMaximumEvidenceAgeMs,
     isDestinationRoleExclusive: isRegistered, nowUtc: input.nowUtc });
@@ -98,7 +108,7 @@ export function startPartnerAlertMirroring(db: Database.Database, input: Readonl
   });
   const ingress = new PartnerAlertIngressService(db, { enabled: true, nowUtc: input.nowUtc, createId: randomUUID,
     maximumNewAlertAgeMs: 120_000, hydrate: messages.hydrate });
-  const delivery = new PartnerAlertDeliveryWorker(db, messages, { enabled: true, nowUtc: input.nowUtc, createId: randomUUID,
+  const delivery = new PartnerAlertDeliveryWorker(db, messages, { enabled: true, execution, nowUtc: input.nowUtc, createId: randomUUID,
     attention: (_deliveryId, reason) => input.reportAttention(reason),
     rehydratePart: (target, stillCurrent) => ingress.rehydratePart(target, stillCurrent) });
   const gateway = new PartnerAlertDiscordGateway({ enabled: true, botToken: output.discordBotToken,
@@ -127,12 +137,37 @@ export function startPartnerAlertMirroring(db: Database.Database, input: Readonl
         const { author, webhook_id, id: messageId, nonce } = event.data;
         if (event.type === "MESSAGE_CREATE" && webhook_id == null && typeof messageId === "string" && typeof nonce === "string"
           && author && typeof author === "object" && "id" in author && author.id === output.discordBotUserId) {
+          if (execution && !ownsHostedQaNonce(execution, nonce)) return;
           delivery.reconcileCreatedMessage({ guildId: guild_id, channelId: channel_id, messageId, nonce });
+          if (execution) {
+            const selected = hostedQaDeliverySql(execution, "d", "settle");
+            const applied = db.prepare(`SELECT 1 FROM partner_alert_deliveries d WHERE d.destination_message_id=?
+              AND d.status='delivered' AND (${selected.sql}) LIMIT 1`).get(messageId, ...selected.parameters);
+            if (applied) recordHostedQaDestination(execution, channel_id, messageId);
+          }
         }
         return;
       }
       const deletion = event.type === "MESSAGE_DELETE" || event.type === "MESSAGE_DELETE_BULK";
       if (matchingSource(guild_id, channel_id, deletion)) {
+        if (execution && finite) {
+          const id = event.data.id;
+          if (event.type === "MESSAGE_CREATE") {
+            const author = event.data.author;
+            if (!author || typeof author !== "object" || !("id" in author) || author.id !== finite.permittedAuthorId
+              || event.data.webhook_id != null || typeof event.data.content !== "string"
+              || !event.data.content.startsWith("TLQA " + finite.runId + " ") || event.data.content.length > 6000
+              || typeof id !== "string" || !registerHostedQaSource(execution, channel_id, id, "create")) return;
+          } else if (event.type === "MESSAGE_UPDATE") {
+            if (typeof id !== "string" || typeof event.data.edited_timestamp !== "string"
+              || !registerHostedQaSource(execution, channel_id, id, "edit")) return;
+          } else if (event.type === "MESSAGE_DELETE") {
+            if (typeof id !== "string" || !registerHostedQaSource(execution, channel_id, id, "delete")) return;
+          } else {
+            if (!Array.isArray(event.data.ids) || !event.data.ids.every(id => typeof id === "string")
+              || !registerHostedQaBulkDelete(execution, channel_id, event.data.ids as string[])) return;
+          }
+        }
         await ingress.ingest(event);
       }
     },
@@ -156,7 +191,8 @@ export function startPartnerAlertMirroring(db: Database.Database, input: Readonl
   const scheduleDelivery = (delayMs: number) => {
     if (closing) return;
     deliveryTimer = setTimeout(() => {
-      if (!currentOutput()) { void stop(); return; }
+      try { if (!currentOutput()) { void stop(); return; } }
+      catch { void stop(); return; }
       work = delivery.runOnce().then(found => scheduleDelivery(found ? 250 : 1000))
         .catch(() => { input.reportAttention("delivery_pending_review"); scheduleDelivery(1000); });
     }, delayMs).unref();
