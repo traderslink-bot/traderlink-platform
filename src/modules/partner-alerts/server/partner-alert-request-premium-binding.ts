@@ -1,5 +1,10 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { PlatformSessionRepository } from "../../platform/server/authentication/platform-session-repository";
+import { hashPlatformSessionToken,TRADERLINK_PLATFORM_SESSION_COOKIE } from "../../platform/server/authentication/platform-session-service";
+import { platformAuthCookieName } from "../../platform/server/authentication/platform-auth-cookies";
+import { deriveAuthenticatedUserJournalScope } from "../../platform/server/authentication/authenticated-user-journal-scope";
+import { deriveJournalAccountSelectionRef } from "../../platform/contracts/journal-account-selection";
 import type Database from "better-sqlite3";
 import { assertCommunityStagingQaTarget } from "../../communities/server/community-staging-qa-target";
 import { requireCommunityOwnerReviewIdentity } from "../../communities/server/community-owner-review-request-identity";
@@ -27,7 +32,7 @@ export function createPartnerAlertRequestPremiumBinder(input: Readonly<{
   return Object.freeze({
     clear: () => { closed = true;for (const binding of active.values()) binding.clear();active.clear(); },
     bind: (target: PartnerAlertSubscriberOffer): ReturnType<typeof bindPartnerAlertNativeSubscriber> => {
-      if (closed || input.request.signal.aborted || !input.paidRoleId) return null;
+      if (closed || input.database.inTransaction || input.request.signal.aborted || !input.paidRoleId) return null;
       try {
         const identity = () => requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformAuthenticatedRequestIdentity(
           input.request.headers,{ environment: input.environment,databasePath: input.database.name }));
@@ -38,28 +43,64 @@ export function createPartnerAlertRequestPremiumBinder(input: Readonly<{
         assertCommunityStagingQaTarget(input.database,configuration.pins);
         configurationFingerprint = configuration.fingerprint;
         const headersBinding = JSON.stringify([...input.request.headers]);
+        const reviewSelector = input.environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT;
+        const cookieName = platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE);
+        const cookies = (input.request.headers.get("cookie") ?? "").split(";").map(value => value.trim())
+          .filter(value => value.startsWith(cookieName + "="));
+        if (cookies.length !== 1) return null;
+        const tokenDigest = hashPlatformSessionToken(decodeURIComponent(cookies[0]!.slice(cookieName.length + 1)));
+        const originalSubjects = input.database.prepare("SELECT auth_subject FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'")
+          .all(actor.scope.userId) as { auth_subject: string }[];
+        if (originalSubjects.length !== 1 || !reviewSelector?.split(",").map(value => value.trim()).includes(originalSubjects[0]!.auth_subject)) return null;
+        const originalDiscordSubject = originalSubjects[0]!.auth_subject;
+        const selection = actor.scope.activeAccountId === null ? null
+          : deriveJournalAccountSelectionRef(actor.scope.workspaceId,actor.scope.activeAccountId);
+        const verifyNativePrincipal = () => {
+          if (closed || input.request.signal.aborted || JSON.stringify([...input.request.headers]) !== headersBinding
+            || readPartnerAlertRequestPremiumConfiguration(input.environment)?.fingerprint !== configuration.fingerprint
+            || !writer.isCurrentWriter()) return fail();
+          input.admission.assertLivePrincipal(target.userId);
+          const session = new PlatformSessionRepository(input.database).findActiveByTokenDigest(tokenDigest,new Date().toISOString());
+          const scope = deriveAuthenticatedUserJournalScope(input.database,actor.scope.userId,selection);
+          const subjects = input.database.prepare("SELECT auth_subject FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND status='active'")
+            .all(actor.scope.userId) as { auth_subject: string }[];
+          if (!session || session.sessionId !== actor.sessionId || session.userId !== actor.scope.userId
+            || JSON.stringify(scope) !== JSON.stringify(actor.scope) || subjects.length !== 1
+            || subjects[0]!.auth_subject !== originalDiscordSubject
+            || input.environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT !== reviewSelector) return fail();
+        };
         const revalidate = () => {
           if (closed || input.request.signal.aborted || JSON.stringify([...input.request.headers]) !== headersBinding) return fail();
-          const current = identity();
-          if (current.mode !== actor.mode || current.sessionId !== actor.sessionId
-            || JSON.stringify(current.scope) !== JSON.stringify(actor.scope)
-            || readPartnerAlertRequestPremiumConfiguration(input.environment)?.fingerprint !== configuration.fingerprint) return fail();
+          if (readPartnerAlertRequestPremiumConfiguration(input.environment)?.fingerprint !== configuration.fingerprint) return fail();
+          // Complete normal Auth may touch its session using another connection.
+          // Resolve it only outside SQL; inside use the ORIGINAL native principal
+          // on the actual admitted handle, never another resolver or a cached grant.
+          if (!input.database.inTransaction) {
+            const current = identity();
+            if (current.mode !== actor.mode || current.sessionId !== actor.sessionId
+              || JSON.stringify(current.scope) !== JSON.stringify(actor.scope)) return fail();
+          }
           assertCommunityStagingQaTarget(input.database,configuration.pins);
           if (input.database.inTransaction) {
-            if (!writer.isCurrentWriter()) return fail();
-            input.admission.assertCurrent(target.userId);
-          } else writer.run(() => input.admission.assertCurrent(target.userId));
+            verifyNativePrincipal();
+          } else writer.run(verifyNativePrincipal);
         };
         const key = JSON.stringify([target.communityId,target.userId]);
         const previous = active.get(key);
         if (previous) { previous.revalidate();return previous.authority; }
         const admitted = requirePartnerAlertAdmission(input.database);
         const producer = input.admission.memberRepository(target.userId);
-        const writer = { run: <T>(operation: () => T): T => admitted.runCommunity(target.communityId,[target.userId],operation),
+        const writer = { run: <T>(operation: () => T): T => admitted.runCommunity(target.communityId,[target.userId],() => {
+          verifyNativePrincipal();
+          const result = operation();
+          verifyNativePrincipal();
+          return result;
+        }),
           isCurrentWriter: () => {
             try { return requirePlatformErasureWriter(input.database,target.userId) === input.admission; } catch { return false; }
           } };
         const initial = writer.run(() => {
+          verifyNativePrincipal();
           const linked = producer.resolveUserAuthority(target.userId,input.guildId);
           if (linked.kind !== "linked") return null;
           const read = producer.captureV2(linked.authorityKey);
