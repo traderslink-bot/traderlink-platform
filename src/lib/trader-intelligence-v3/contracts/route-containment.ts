@@ -601,6 +601,31 @@ export const TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX = [
 
 /** The current Platform inventory is checked without expanding v3 wrapper admission. */
 export const TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX = [
+  {
+    ...pageEntry("app/(dashboard)/communities/[communitySlug]/server-watchlists/[watchlistId]/page.tsx", "owner_read"),
+    authorizationRequirement: "Normal publication loader: actual Platform/Community request access, exact server-watchlist ID from visibility-filtered snapshot; extra stored research only after authorization. Editor requires publish_staff and author or manage_all.",
+    currentResponsibility: "Canonical Community server watchlist saved URL",
+    sourceOfTruthLayer: "Native Community publication snapshot and persisted watchlist research",
+    mutationProtectionRequirement: "Existing guarded publication server actions; authorized tracked-page visits only",
+  },
+  {
+    ...pageEntry("app/(dashboard)/%5F%5Fprivate/shared-alerts-fixture/[runId]/[key]/page.tsx", "internal_diagnostics"),
+    routePath: "/__private/shared-alerts-fixture/[runId]/[key]",
+    authenticationRequirement: "Actual native Discord session and shared signed-in dashboard layout",
+    authorizationRequirement: "Private fixtureRequest/readFixtureSnapshot: fixed sealed staging files, current Core parent and child, exact run/key/session/native-ledger/source pins and finite deadline; production/non-staging denied.",
+    mutationProtectionRequirement: "Bound fixture server actions revalidate actual session, parent/child and Origin; no normal membership or owner grant is created",
+    currentResponsibility: "Private finite SyntheticAgreement test page; actual Discord IO restricted to Tests",
+    deploymentAndSecurityAssumptions: "Isolated staging only; actual cross-route opaque registry identity is independently tested",
+  },
+  {
+    ...apiEntry("app/%5F%5Fprivate/community-staging-qa/[nonce]/route.ts", ["POST"], "internal_diagnostics", "platform_request_scope"),
+    routePath: "/__private/community-staging-qa/[nonce]",
+    authenticationRequirement: "Actual Core administrative Platform session",
+    authorizationRequirement: "Exact startSharedFixture controller: staging guard, fixed private manifest hashes, genuine Core issuer request, source/build/schema/full-ledger pins, Tests-only child scope and finite deadline",
+    mutationProtectionRequirement: "Genuine parent checks exact nonce, current Core session, same-origin POST and sealed scope; stream abort cancels authority",
+    currentResponsibility: "Private finite Shared staging fixture issuer stream; no generic worker admission",
+    deploymentAndSecurityAssumptions: "Isolated staging only; no public scope/path/database selectors or production authority",
+  },
   ...REVIEWED_COMBINED_PAGE_ROUTES.map(([modulePath, authorizationRequirement]) => ({
     ...pageEntry(modulePath, "owner_read"), authorizationRequirement,
     mutationProtectionRequirement: "Authored changes use guarded mutations; readable content can record authorized view telemetry",
