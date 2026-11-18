@@ -34,7 +34,7 @@ import { resolvePartnerAlertWhopVerificationContext } from "./partner-alert-cata
 import { PartnerAlertWhopInbox } from "./partner-alert-whop-inbox";
 import type { PartnerAlertWhopWebhookScope } from "./partner-alert-whop-webhook";
 import { PartnerAlertAdmission } from "./partner-alert-admission";
-import { PartnerAlertHttpAdapter } from "./partner-alert-http";
+import { PartnerAlertHttpAdapter, partnerAlertPrivateReadFailure } from "./partner-alert-http";
 import { PartnerAlertRequestWriter, type PartnerAlertPrivateRequestScope } from "./partner-alert-request-writer";
 import { createPartnerAlertProviderVerifier } from "./partner-alert-provider-adapter";
 
@@ -278,7 +278,7 @@ export async function withPartnerAlertRequestRuntime<T>(
         if (refresh) requirePlatformMutationRequest(incoming);
         const source = await readVerifiedSource(incoming, communityId, undefined, refresh);
         return runtimeResponse(200, { ok: true, result: { communityId, ...source } });
-      } catch { return runtimeResponse(503, { ok: false, code: "unavailable" }); }
+      } catch (error) { return partnerAlertPrivateReadFailure(error); }
     };
     const bound = bindSubscriberAuthority?.({ database, writer, admission });
     const nowUtc = () => new Date().toISOString();

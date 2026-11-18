@@ -58,7 +58,7 @@ function privateReadTarget(input: PartnerAlertPrivateReadTarget): PartnerAlertPr
   throw new PartnerAlertValidationError("privateReadTarget");
 }
 
-function privateReadFailure(error: unknown): Response {
+export function partnerAlertPrivateReadFailure(error: unknown): Response {
   if (isTraderLinkPlatformError(error)) {
     switch (error.code) {
       case "TRADERLINK_WORKSPACE_ACCESS_DENIED":
@@ -162,7 +162,7 @@ export class PartnerAlertHttpAdapter {
       // all provider callbacks on either success or failure.
       return outcome(this.writer.executeMutation(request, prepared, { plan, facts }));
     } catch (error) {
-      if (isTraderLinkPlatformError(error)) return privateReadFailure(error);
+      if (isTraderLinkPlatformError(error)) return partnerAlertPrivateReadFailure(error);
       if (error instanceof PartnerAlertValidationError) {
         const forbidden = ["identity", "sessionId", "verifiedCommand", "communityOwner", "requestAuthority", "requestOrigin"].includes(error.field);
         return response(forbidden ? 403 : 400, { ok: false, code: forbidden ? "forbidden" : "invalid_request",
@@ -199,6 +199,6 @@ export class PartnerAlertHttpAdapter {
       // Projection and validation completed inside admission; Response/JSON is
       // created only after the actual writer/Auth frame returns committed DTOs.
       return response(200, { ok: true, result });
-    } catch (error) { return privateReadFailure(error); }
+    } catch (error) { return partnerAlertPrivateReadFailure(error); }
   }
 }
