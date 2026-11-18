@@ -1,4 +1,5 @@
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -11,9 +12,9 @@ import { platformMigrationManifest } from "./platform-migration-manifest";
 import { runPlatformMigrations } from "./run-platform-migrations";
 
 const roots: string[] = [];
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function pathFor(name: string): string {
   const root = mkdtempSync(join(tmpdir(), "traderlink-initialization-modes-"));

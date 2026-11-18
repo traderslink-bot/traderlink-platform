@@ -1,5 +1,6 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -51,9 +52,9 @@ type Position = Readonly<{
 type OpenPosition = Readonly<{ symbol: string; quantity: string }>;
 
 const roots: string[] = [];
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function statement(input: Readonly<{
   period: string;

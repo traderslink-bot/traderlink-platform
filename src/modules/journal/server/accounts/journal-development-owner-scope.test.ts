@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -26,7 +27,7 @@ const ACCOUNT_A_ID = "33333333-3333-4333-8333-333333333333";
 const ACCOUNT_B_ID = "44444444-4444-4444-8444-444444444444";
 
 describe("development owner Journal scope", () => {
-  it("authorizes all active accounts and resolves only an allowed opaque selection", () => {
+  it("authorizes all active accounts and resolves only an allowed opaque selection", async () => {
     const root = mkdtempSync(join(tmpdir(), "traderlink-development-scope-"));
     const database = openPlatformDatabase({
       mode: "initializer",
@@ -111,7 +112,7 @@ WHERE account_id = ?`).run("2099-08-02T13:00:00.000Z", ACCOUNT_B_ID);
       )).toThrowError("TRADERLINK_ACCOUNT_ACCESS_DENIED");
     } finally {
       database.close();
-      rmSync(root, { recursive: true, force: true });
+      await removePlatformDatabaseTestFixture(root);
     }
   });
 });

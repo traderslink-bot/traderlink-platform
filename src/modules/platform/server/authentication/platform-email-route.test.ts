@@ -1,6 +1,7 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { platformAuthCookieName } from "./platform-auth-cookies";
 // @vitest-environment node
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type Database from "better-sqlite3";
@@ -30,13 +31,13 @@ import { POST as logoutAll } from "@/app/api/auth/logout-all/route";
 const origin = "https://login.example.test";
 const secret = "synthetic-route-test-secret-with-at-least-32-characters";
 const roots: string[] = [];
-afterEach(() => {
+afterEach(async () => {
   fixture.database?.close();
   fixture.database = null;
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
-});
+}, 20_000);
 function request(body: Record<string, unknown>, cookie = "", source = origin) {
   return new NextRequest(`${origin}/api/auth/email`, {
     method: "POST", headers: { origin: source, cookie, "content-type": "application/json" },

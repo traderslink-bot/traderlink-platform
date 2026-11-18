@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -27,9 +28,9 @@ const IDS = [
 const TOKEN_ONE = "A".repeat(43);
 const TOKEN_TWO = "B".repeat(43);
 
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function databaseForTest() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-discord-sign-in-"));

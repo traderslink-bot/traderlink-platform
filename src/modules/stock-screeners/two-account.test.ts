@@ -1,5 +1,6 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { randomUUID } from "node:crypto";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
@@ -247,6 +248,6 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
   } finally {
     vi.useRealTimers();
     vi.unstubAllEnvs();
-    rmSync(root, { recursive: true, force: true });
+    await removePlatformDatabaseTestFixture(root);
   }
 }, 30_000);

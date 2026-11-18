@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -10,9 +11,9 @@ import { PlatformSessionRepository } from "./platform-session-repository";
 import { PlatformSessionService } from "./platform-session-service";
 import { PlatformMembershipRepository } from "../membership/platform-membership-repository";
 const roots: string[] = [];
-afterEach(() => {
-  for (const p of roots.splice(0)) rmSync(p, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const p of roots.splice(0)) await removePlatformDatabaseTestFixture(p);
+}, 20_000);
 function setup() {
   const root = mkdtempSync(join(tmpdir(), "login-service-"));
   roots.push(root);

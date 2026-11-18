@@ -1,7 +1,8 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
-import { copyFileSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 vi.mock("server-only", () => ({}));
@@ -12,7 +13,7 @@ import { executeHostedTransfer } from "./hosted-transfer-service";
 import { hostedTransferSha256, type HostedTransferModule } from "./hosted-transfer-contract";
 import type { HostedSourceSnapshots } from "./hosted-source-snapshot-reader";
 const roots: string[] = [];
-afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
+afterEach(async () => { for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root); }, 20_000);
 const now = new Date("2026-10-31T12:00:00.000Z");
 const digest = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 describe("whole hosted transfer transaction", () => {

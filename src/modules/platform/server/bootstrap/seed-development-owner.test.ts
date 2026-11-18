@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -21,10 +22,10 @@ import {
 
 const roots: string[] = [];
 
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
   vi.restoreAllMocks();
-});
+}, 20_000);
 
 function setup(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-development-owner-seed-"));

@@ -1,5 +1,6 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 // @vitest-environment node
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -31,11 +32,11 @@ const discordSubjects = ["123456789012345678", "123456789012345679"] as const;
 const discordGuild = "987654321098765432";
 const roots: string[] = [];
 
-afterEach(() => {
+afterEach(async () => {
   vi.unstubAllEnvs();
   requestState.headers = new Headers();
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), "platform-home-page-"));

@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -27,9 +28,9 @@ const roots: string[] = [];
 const SUBJECT = "123456789012345678";
 const GUILD = "987654321098765432";
 
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 describe("unified Platform request scope", () => {
   it("resolves Google and email members without Discord and keeps their accounts separate", () => {

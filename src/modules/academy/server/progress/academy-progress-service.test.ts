@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -17,11 +18,11 @@ const OTHER_USER_ID = "20000000-0000-4000-8000-000000000002";
 const NOW = "2026-08-02T13:00:00.000Z";
 const LESSON = "/academy/what-is-a-stock-and-how-does-a-trade-work/";
 
-afterEach(() => {
+afterEach(async () => {
   for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true });
+    await removePlatformDatabaseTestFixture(root);
   }
-});
+}, 20_000);
 
 function createFixture() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-academy-progress-"));

@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -23,9 +24,9 @@ const ACCOUNT_ID = "10000000-0000-4000-8000-000000000003";
 const SUBJECT = "123456789012345678";
 const NOW = new Date("2026-08-02T12:00:00.000Z");
 
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function createSeededDatabase(): Readonly<{
   root: string;

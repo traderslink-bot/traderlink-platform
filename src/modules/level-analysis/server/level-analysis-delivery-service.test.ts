@@ -1,4 +1,5 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -16,9 +17,9 @@ import {
 import { LevelAnalysisDeliveryService } from "./level-analysis-delivery-service";
 
 const roots: string[] = [];
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function setup(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-level-delivery-"));

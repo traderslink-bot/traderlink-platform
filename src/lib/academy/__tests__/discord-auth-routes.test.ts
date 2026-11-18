@@ -1,5 +1,6 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
@@ -25,13 +26,13 @@ beforeEach(() => {
   vi.stubEnv("TRADERLINK_PLATFORM_PUBLIC_ORIGIN", "https://traderslink.pro");
 });
 
-afterEach(() => {
+afterEach(async () => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true });
+    await removePlatformDatabaseTestFixture(root);
   }
-});
+}, 20_000);
 
 describe("Discord Academy auth routes", () => {
   it("keeps users with an active dashboard-authorized Platform session out of Discord OAuth", async () => {

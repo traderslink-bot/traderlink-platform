@@ -1,5 +1,6 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -22,10 +23,10 @@ const SUBJECT = "123456789012345678";
 const RATE_SECRET = "journal-admin-authorization-test-secret";
 const SIGN_IN_AT = new Date("2026-08-03T07:00:00.000Z");
 
-afterEach(() => {
+afterEach(async () => {
   resetJournalAdminRateLimitsForTests();
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function setup(guildOwner = true) {
   const root = mkdtempSync(join(tmpdir(), "traderlink-admin-auth-"));

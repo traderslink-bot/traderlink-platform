@@ -1,4 +1,5 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -17,10 +18,10 @@ import { JournalImportAttemptRepository } from "./journal-import-attempt-reposit
 const roots: string[] = [];
 const START = new Date("2026-08-03T09:30:00.000Z");
 
-afterEach(() => {
+afterEach(async () => {
   vi.unstubAllEnvs();
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function setup(): Readonly<{ databasePath: string; scope: WorkspaceAccessScope }> {
   const root = mkdtempSync(join(tmpdir(), "traderlink-attempt-recovery-"));

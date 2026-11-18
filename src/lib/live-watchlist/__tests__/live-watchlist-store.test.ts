@@ -1,5 +1,6 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -186,7 +187,7 @@ describe("LiveWatchlistStore", () => {
       if (otherWriter.inTransaction) otherWriter.exec("ROLLBACK");
       otherWriter.close();
       resetLiveWatchlistStoreForTests();
-      rmSync(root, { recursive: true, force: true });
+      await removePlatformDatabaseTestFixture(root);
     }
   }, 15_000);
 

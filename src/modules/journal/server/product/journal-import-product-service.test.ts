@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { existsSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -29,12 +30,12 @@ const roots: string[] = [];
 const START = new Date("2026-08-03T08:30:00.000Z");
 const BROWSER_REF = "50000000-0000-4000-8000-000000000005";
 
-afterEach(() => {
+afterEach(async () => {
   vi.unstubAllEnvs();
   for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true });
+    await removePlatformDatabaseTestFixture(root);
   }
-});
+}, 20_000);
 
 function setup(): Readonly<{
   databasePath: string;
