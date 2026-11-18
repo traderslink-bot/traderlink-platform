@@ -29,9 +29,9 @@ function records(paths: readonly string[]): readonly TraderIntelligenceRouteSour
   return paths.map((path) => ({ path, source: readFileSync(path, "utf8") }));
 }
 
-function allApiRouteRecords() {
+function allAppRouteRecords() {
   return records(
-    findFiles(join(process.cwd(), "app", "api"), (name) => name === "route.ts"),
+    findFiles(join(process.cwd(), "app"), (name) => name === "route.ts"),
   );
 }
 
@@ -49,6 +49,40 @@ function intelligenceClientRecords() {
 }
 
 describe("Trader Intelligence route containment matrix", () => {
+  it("discovers registered App Router handlers outside the api directory", () => {
+    expect(allAppRouteRecords().some(record => record.path ===
+      "app/%5F%5Fprivate/community-staging-qa/[nonce]/route.ts")).toBe(true);
+  });
+
+  it.each([
+    {name: "actual synchronous Whop flow", admitted: true, rewrite: (source: string) => source},
+    {name: "trusted import alias", admitted: true, rewrite: (source: string) => source
+      .replace("createWhopOAuthFlowBinding, requireWhopOAuthRequestIdentity }", "createWhopOAuthFlowBinding, requireWhopOAuthRequestIdentity as actualIdentity }")
+      .replace("requireWhopOAuthRequestIdentity(request)", "actualIdentity(request)")},
+    {name: "untrusted same-name export", admitted: false, rewrite: (source: string) => source.replace(
+      "@/src/modules/platform/server/billing/whop-ai-review-staging-identity", "@/untrusted")},
+    {name: "wrong identity request", admitted: false, rewrite: (source: string) => source.replace(
+      "requireWhopOAuthRequestIdentity(request)", "requireWhopOAuthRequestIdentity(otherRequest)")},
+    {name: "wrong configuration user", admitted: false, rewrite: (source: string) => source.replace(
+      "loadWhopOAuthRequestConfiguration(request, identity.scope.userId)", "loadWhopOAuthRequestConfiguration(request, otherUserId)")},
+    {name: "missing identity call", admitted: false, rewrite: (source: string) => source.replace(
+      "const identity = requireWhopOAuthRequestIdentity(request);", 'const identity = {scope:{userId:"fake"}};')},
+    {name: "shadowed imported helper", admitted: false, rewrite: (source: string) => source.replace(
+      "const identity = requireWhopOAuthRequestIdentity(request);", "const requireWhopOAuthRequestIdentity = () => fake; const identity = requireWhopOAuthRequestIdentity(request);")},
+    {name: "effect before identity/configuration", admitted: false, rewrite: (source: string) => source.replace(
+      "const identity = requireWhopOAuthRequestIdentity(request);", 'const response = NextResponse.redirect("https://untrusted"); const identity = requireWhopOAuthRequestIdentity(request);')},
+  ])("checks exact Whop connect flow: $name", ({rewrite, admitted}) => {
+    const path = "app/api/billing/whop/connect/route.ts";
+    const source = readFileSync(path, "utf8");
+    const matrix = TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(entry => entry.modulePath === path);
+    expect(matrix).toHaveLength(1);
+    const findings = scanTraderIntelligenceRouteContainment({
+      routeRecords: [{path, source: rewrite(source)}], intelligenceClientRecords: [], matrix,
+    });
+    if (admitted) expect(findings).toEqual([]);
+    else expect(findings.some(finding => finding.code === "ti_v3_route_method_unwrapped")).toBe(true);
+  });
+
   it("classifies every Intelligence page and discovered API exactly once", () => {
     const actualRoutes = [
       ...findFiles(
@@ -60,10 +94,10 @@ describe("Trader Intelligence route containment matrix", () => {
         (name) => name === "page.tsx",
       ),
       ...discoverTraderIntelligenceApiRoutes({
-        routeRecords: allApiRouteRecords(),
+        routeRecords: allAppRouteRecords(),
         intelligenceClientRecords: intelligenceClientRecords(),
       }),
-      ...allApiRouteRecords().filter(record =>
+      ...allAppRouteRecords().filter(record =>
         TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.some(entry => entry.modulePath === record.path),
       ).map(record => record.path),
     ];
@@ -78,7 +112,7 @@ describe("Trader Intelligence route containment matrix", () => {
   it("uses AST inspection to require exact wrapper paths and complete method coverage", () => {
     expect(
       scanTraderIntelligenceRouteContainment({
-        routeRecords: allApiRouteRecords(),
+        routeRecords: allAppRouteRecords(),
         intelligenceClientRecords: intelligenceClientRecords(),
         matrix: TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX,
       }),
@@ -167,7 +201,7 @@ describe("Trader Intelligence route containment matrix", () => {
 
   it("rejects an unclassified journal API regardless of prefix", () => {
     const routeRecords = [
-      ...allApiRouteRecords(),
+      ...allAppRouteRecords(),
       {
         path: "app/api/new-journal-surface/route.ts",
         source:
