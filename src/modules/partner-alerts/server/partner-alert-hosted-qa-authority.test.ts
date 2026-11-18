@@ -79,9 +79,12 @@ const nativeAuthoritySetup=`
 it('issues genuine owner-bound authority, rejects copied capability and preserves spent budget across reopen',async()=>{
  const receipt=await nativeCase(nativeAuthoritySetup+`
  assert.throws(()=>hostedQA.issuePartnerAlertHostedQaAuthority({...input,journalKey:randomBytes(32)}));
+ const actualCatalog=unit.inputs.profileCatalogSha256;unit.inputs.profileCatalogSha256="0".repeat(64);
+ assert.throws(()=>hostedQA.issuePartnerAlertHostedQaAuthority(input));unit.inputs.profileCatalogSha256=actualCatalog;
  const authority=hostedQA.issuePartnerAlertHostedQaAuthority(input);
  hostedQA.withPartnerAlertHostedQaParent(authority,()=>assert.equal(core.requestPrincipal().userId,actor.userId));
  assert.throws(()=>core.requestPrincipal());assert.throws(()=>hostedQA.assertPartnerAlertHostedQaCurrent({...authority}));
+ unit.inputs.profileCatalogSha256="0".repeat(64);assert.throws(()=>hostedQA.assertPartnerAlertHostedQaCurrent(authority));unit.inputs.profileCatalogSha256=actualCatalog;
  hostedQA.reserveHostedQaBudget(authority,"http");hostedQA.closeHostedQaAuthority(authority);
  assert.throws(()=>hostedQA.assertPartnerAlertHostedQaCurrent(authority));
  const resumed=hostedQA.issuePartnerAlertHostedQaAuthority(input);hostedQA.reserveHostedQaBudget(resumed,"http");assert.throws(()=>hostedQA.reserveHostedQaBudget(resumed,"http"));hostedQA.closeHostedQaAuthority(resumed);

@@ -132,6 +132,9 @@ function mutate(s: State, update: (payload: Payload) => void) {
 function checkStatic(s: State, settlement = false) {
   if (currentPlatformErasureAdmission(s.input.database) !== s.input.core || !s.input.database.open) fail();
   s.trusted.assertCurrentRelease(); s.input.core.assertStorageCurrent();
+  const qualified = s.input.core.qualificationReceipt();
+  if (qualified.schemaSha256 !== s.trusted.schemaSha256
+    || qualified.profileCatalogSha256 !== s.trusted.profileCatalogSha256) fail();
   if (!settlement) {
     const at = Date.now();
     if (at < s.lastAt || at >= s.deadline) s.revoked = true;
@@ -186,6 +189,9 @@ export function issuePartnerAlertHostedQaAuthority(input: HostedPaidQaAuthorityI
   if (env.PARTNER_ALERT_STRIPE_ERASURE_REVIEW_PUBLIC_KEY !== input.reviewPublicKey) fail();
   const trusted = readPartnerAlertStripeErasureWorkerInputs(input.database, env);
   if (!trusted || trusted.releaseFormat !== "v5" || trusted.effectMode !== "discord_roles" || trusted.schemaSha256 !== input.pins.schemaSha256) fail();
+  const qualified = input.core.qualificationReceipt();
+  if (qualified.schemaSha256 !== trusted.schemaSha256
+    || qualified.profileCatalogSha256 !== trusted.profileCatalogSha256) fail();
   const bindingKey = trusted.erasureRuntime.binding.key;
   if (bindingKey.byteLength !== 32 || !timingSafeEqual(Buffer.from(bindingKey), Buffer.from(input.journalKey))) fail();
   const output = trusted.readCurrentConfiguration();
