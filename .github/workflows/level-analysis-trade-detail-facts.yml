@@ -9,6 +9,7 @@ on:
       - "app/intelligence/trades/**"
       - "src/lib/level-analysis/**"
       - "tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts"
+      - "tests/e2e/level-analysis/**"
       - "playwright.level-analysis.config.ts"
       - "package.json"
       - "package-lock.json"
@@ -22,6 +23,7 @@ on:
       - "app/intelligence/trades/**"
       - "src/lib/level-analysis/**"
       - "tests/e2e/level-analysis-trade-detail-seeded-flow.spec.ts"
+      - "tests/e2e/level-analysis/**"
       - "playwright.level-analysis.config.ts"
       - "package.json"
       - "package-lock.json"
@@ -34,6 +36,8 @@ jobs:
     env:
       CI: "true"
       NEXT_TELEMETRY_DISABLED: "1"
+      NODE_DISABLE_COMPILE_CACHE: "1"
+      TSX_DISABLE_CACHE: "1"
 
     steps:
       - name: Check out repository
@@ -51,8 +55,34 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run seeded level-analysis trade detail flow
-        run: npm run test:e2e:level-analysis
+      - name: Prepare isolated synthetic Platform storage
+        run: |
+          if [ -e /data ] || [ -L /data ]; then
+            echo "Refusing existing test storage" >&2
+            exit 1
+          fi
+          sudo install -d -m 0700 -o "$(id -u)" -g "$(id -g)" /data
+          printf '%s\n' "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" > /data/.level-analysis-e2e-owner
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Run seeded browser flow with loopback-only networking
+        run: |
+          host_network_namespace="$(readlink /proc/self/ns/net)"
+          sudo unshare --net -- bash -euc '
+            ip link set lo up
+            test -z "$(ip -4 route show default)"
+            test -z "$(ip -6 route show default)"
+            exec runuser --user "$1" -- env -i \
+              PATH="$2" HOME="$3" CI=true NEXT_TELEMETRY_DISABLED=1 \
+              NODE_DISABLE_COMPILE_CACHE=1 TSX_DISABLE_CACHE=1 \
+              GITHUB_RUN_ID="$4" GITHUB_RUN_ATTEMPT="$5" \
+              LEVEL_ANALYSIS_E2E_HOST_NETWORK_NAMESPACE="$6" \
+              setpriv --no-new-privs node "$7/node_modules/@playwright/test/cli.js" test \
+              --config="$7/playwright.level-analysis.config.ts"
+          ' -- "$(id -un)" "$PATH" "$HOME" "$GITHUB_RUN_ID" \
+            "$GITHUB_RUN_ATTEMPT" "$host_network_namespace" "$PWD"
 
       - name: Upload failure artifacts
         if: failure()
