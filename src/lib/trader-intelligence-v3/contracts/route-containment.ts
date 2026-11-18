@@ -295,8 +295,6 @@ const PLATFORM_OWNER_API_ROUTES = [
 const PLATFORM_SCOPED_API_ROUTES = [
   ["app/api/admin/market-data/route.ts", ["GET", "POST"], "owner_mutation"],
   ["app/api/charts/provider/route.ts", ["GET"], "owner_read"],
-  ["app/api/company/details/route.ts", ["GET"], "owner_read"],
-  ["app/api/company/technicals/route.ts", ["GET"], "owner_read"],
   ["app/api/coaching/action/route.ts", ["POST"], "owner_mutation"],
   ["app/api/coaching/review-resource/route.ts", ["GET"], "owner_read"],
   ["app/api/admin/journal/demo-daily-tracker-market-data/export/route.ts", ["POST"], "owner_mutation"],
