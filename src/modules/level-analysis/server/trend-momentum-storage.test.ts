@@ -22,6 +22,8 @@ test("partial history reuses actual minutes without covering missing minutes or 
       CREATE TABLE level_analysis_manual_retry_history_requests AS SELECT *,NULL AS retry_request_id FROM level_analysis_indicator_history_requests WHERE 0;
       CREATE TABLE level_analysis_logical_trade_jobs(logical_trade_job_id,user_id,workspace_id,account_id,market_session_set_id);
       CREATE TABLE level_analysis_market_session_sets(market_session_set_id,provider_symbol,provider_key,provider_adapter_version);
+      CREATE TABLE level_analysis_analyzer_acquisitions(acquisition_id,market_session_set_id);
+      INSERT INTO level_analysis_analyzer_acquisitions VALUES('acquisition','session');
       INSERT INTO level_analysis_logical_trade_jobs VALUES('job','user','workspace','account','session');
       INSERT INTO level_analysis_market_session_sets VALUES('session','TEST','moomoo_history_kline','moomoo_history_kline_v1');`);
     db.prepare("INSERT INTO level_analysis_indicator_history_requests VALUES('request','job','acquisition',?,?,1,'partial','provider_range_incomplete',?,?,?,?)")
@@ -31,6 +33,8 @@ test("partial history reuses actual minutes without covering missing minutes or 
     const before=db.prepare("SELECT total_changes() n").get();
     const evidence=repo.compatibleEvidence(scope,"TEST",start,start+600);
     assert.equal(evidence.candles.length,9);
+    assert.equal(evidence.candles[0].time,start); // Native Moomoo END label normalized once.
+    assert.equal(repo.compatibleEvidence(scope,"TEST",start,start+600,"alpaca_sip_raw_v1").candles.length,0);
     assert.equal(hasCompletedIndicatorCoverage(evidence.ranges,start,start+600),false);
     assert.equal(hasCompletedIndicatorCoverage(evidence.ranges,start+120,start+180),false);
     assert.equal(hasCompletedIndicatorCoverage(evidence.ranges,start+300,start+600),true);
@@ -39,6 +43,14 @@ test("partial history reuses actual minutes without covering missing minutes or 
     assert.deepEqual(five.map(c=>c.time),[start+300]);
     assert.equal(repo.compatibleEvidence({...scope,accountId:"other"},"TEST",start,start+600).candles.length,0);
     assert.deepEqual(db.prepare("SELECT total_changes() n").get(),before);
+    const receipt = db.prepare("SELECT candles_json,candle_sha256 FROM level_analysis_indicator_history_requests").get();
+    db.exec(`INSERT INTO level_analysis_market_session_sets VALUES('alpaca-session','TEST','alpaca_sip_raw','alpaca_sip_raw_v1');
+      UPDATE level_analysis_logical_trade_jobs SET market_session_set_id='alpaca-session';`);
+    const afterRepoint=db.prepare("SELECT total_changes() n").get();
+    assert.deepEqual(repo.compatibleEvidence(scope,"TEST",start,start+600),evidence);
+    assert.equal(repo.compatibleEvidence(scope,"TEST",start,start+600,"alpaca_sip_raw_v1").candles.length,0);
+    assert.deepEqual(db.prepare("SELECT candles_json,candle_sha256 FROM level_analysis_indicator_history_requests").get(),receipt);
+    assert.deepEqual(db.prepare("SELECT total_changes() n").get(),afterRepoint);
     assert.equal((db.prepare("SELECT status FROM level_analysis_indicator_history_requests").get() as {status:string}).status,"partial");
     db.exec("UPDATE level_analysis_indicator_history_requests SET candle_sha256='invalid'");
     assert.throws(()=>repo.compatibleEvidence(scope,"TEST",start,start+600),/digest_mismatch/);
@@ -169,10 +181,12 @@ test("history repository binds job ownership and never rewrites completed eviden
     db.pragma("foreign_keys = ON");
     db.exec(`CREATE TABLE level_analysis_logical_trade_jobs(logical_trade_job_id TEXT PRIMARY KEY, user_id, workspace_id, account_id, status);
       CREATE TABLE level_analysis_analyzer_reservations(reservation_id TEXT PRIMARY KEY, logical_trade_job_id);
-      CREATE TABLE level_analysis_analyzer_acquisitions(acquisition_id TEXT PRIMARY KEY, reservation_id, completed_at_utc, charged_user_id, outcome);`);
+      CREATE TABLE level_analysis_analyzer_acquisitions(acquisition_id TEXT PRIMARY KEY, reservation_id, completed_at_utc, charged_user_id, outcome, market_session_set_id);
+      CREATE TABLE level_analysis_market_session_sets(market_session_set_id TEXT PRIMARY KEY,provider_adapter_version);
+      INSERT INTO level_analysis_market_session_sets VALUES('session','moomoo_history_kline_v1');`);
     db.prepare("INSERT INTO level_analysis_logical_trade_jobs VALUES (?, ?, ?, ?, 'leased')").run(id(1), id(5), id(6), id(7));
     db.prepare("INSERT INTO level_analysis_analyzer_reservations VALUES (?, ?)").run(id(8), id(1));
-    db.prepare("INSERT INTO level_analysis_analyzer_acquisitions VALUES (?, ?, NULL, ?, NULL)").run(id(2), id(8), id(5));
+    db.prepare("INSERT INTO level_analysis_analyzer_acquisitions VALUES (?, ?, NULL, ?, NULL, 'session')").run(id(2), id(8), id(5));
     migration.statements.forEach((sql) => db.exec(sql));
     db.exec(`CREATE TABLE level_analysis_manual_retry_requests(retry_request_id,logical_trade_job_id,user_id,created_at_utc);
 CREATE TABLE level_analysis_manual_retry_acquisitions(acquisition_id,retry_request_id);
@@ -188,6 +202,8 @@ CREATE TABLE level_analysis_manual_retry_history_requests AS SELECT *, NULL AS r
       failureReasonCode: "moomoo_returned_no_candles", exchangeTimezone: "America/New_York", utcOffsetSeconds: null };
     assert.equal(repo.finish({ scope: { ...scope, userId: id(9) }, jobId: id(1), requestId, result, now }), false);
     assert.equal(repo.finish({ scope, jobId: id(1), requestId, result, now }), true);
+    assert.equal(repo.read(scope,id(1),false,"moomoo_history_kline_v1").length,1);
+    assert.equal(repo.read(scope,id(1),false,"alpaca_sip_raw_v1").length,0);
     assert.equal(repo.finish({ scope, jobId: id(1), requestId, result, now }), false);
     assert.equal(repo.begin(args), null);
     assert.equal(repo.completedEvidence(scope, id(1)).ranges.length, 1);

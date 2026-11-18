@@ -1,7 +1,11 @@
 import { expect, it, vi } from "vitest";
 import { scannerIndicatorResponse } from "./scanner-indicator-response";
 
+const sourceSelection=vi.hoisted(()=>({provider:"alpaca",revision:0}));
 vi.mock("server-only", () => ({}));
+vi.mock("@/src/modules/market-data/server/provider-settings", () => ({
+  marketDataSelection: () => ({...sourceSelection}),
+}));
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope", () => ({
   requireTraderLinkPlatformRequestIdentity: (headers: Headers) => headers.get("x-test-viewer"),
 }));
@@ -53,4 +57,29 @@ it("coalesces reads across authorized viewers, separates timeframes, and checks 
     expect((await scannerIndicatorResponse(request("5m", "second"), load)).status).toBe(200);
     expect(load).toHaveBeenCalledTimes(3);
   } finally { vi.useRealTimers(); }
+});
+
+it("isolates cached reads by source revision and rejects a mismatched feed",async()=>{
+ vi.useFakeTimers();vi.setSystemTime(new Date("2026-11-12T15:00:30Z"));
+ try{
+  sourceSelection.provider="alpaca";sourceSelection.revision=0;
+  const request=()=>new Request("https://example.test/api/screeners/charts/bars?symbol=SWITCH&frame=5m",{headers:{"x-test-viewer":"viewer"}});
+  const bars=Array.from({length:360},(_,i)=>({time:Date.now()/1000-(360-i)*60,open:2,high:2.1,low:1.9,close:2,volume:100}));
+  const load=vi.fn(async(input:Request)=>{
+   const query=new URL(input.url).searchParams;
+   expect(query.get("provider")).toBe(sourceSelection.provider);
+   expect(query.get("providerRevision")).toBe(String(sourceSelection.revision));
+   return Response.json({symbol:"SWITCH",feed:sourceSelection.provider==="alpaca"?"sip":"moomoo",adjustment:"split",bars});
+  });
+  expect((await scannerIndicatorResponse(request(),load)).status).toBe(200);
+  sourceSelection.provider="moomoo";sourceSelection.revision=1;
+  expect((await scannerIndicatorResponse(request(),load)).status).toBe(200);
+  expect((await scannerIndicatorResponse(request(),load)).status).toBe(200);expect(load).toHaveBeenCalledTimes(2);
+  sourceSelection.provider="alpaca";sourceSelection.revision=2;
+  expect((await scannerIndicatorResponse(request(),load)).status).toBe(200);expect(load).toHaveBeenCalledTimes(3);
+  sourceSelection.provider="moomoo";sourceSelection.revision=3;
+  load.mockResolvedValueOnce(Response.json({symbol:"SWITCH",feed:"sip",adjustment:"split",bars}));
+  expect((await scannerIndicatorResponse(request(),load)).status).toBe(503);
+  expect((await scannerIndicatorResponse(request(),load)).status).toBe(200);expect(load).toHaveBeenCalledTimes(5);
+ }finally{sourceSelection.provider="alpaca";sourceSelection.revision=0;vi.useRealTimers();}
 });

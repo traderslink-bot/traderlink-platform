@@ -3,8 +3,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const bridge = vi.hoisted(() => vi.fn());
+const selection = vi.hoisted(() => ({ provider: "alpaca" as "alpaca" | "moomoo", revision: 0 }));
 vi.mock("@/src/modules/watchlist/server/moomoo-watchlist-candle-bridge", () => ({ fetchWatchlistMoomooCandles: bridge }));
-vi.mock("./client", () => ({ alpacaMarketDataEnabled: () => process.env.TRADERLINK_MARKET_DATA_PROVIDER === "alpaca" }));
+vi.mock("@/src/modules/market-data/server/provider-settings", () => ({ marketDataSelection: () => ({ ...selection }) }));
 import { GET } from "@/app/api/live-watchlist/moomoo-candles/route";
 
 const request = (query = "symbol=NWGL&start=1793975400&end=1793979000", authorized = true) =>
@@ -14,7 +15,7 @@ const request = (query = "symbol=NWGL&start=1793975400&end=1793979000", authoriz
 
 beforeEach(() => {
   vi.stubEnv("TRADERSLINK_WATCHLIST_PUBLISHER_TOKEN", "offline-fixture");
-  vi.stubEnv("TRADERLINK_MARKET_DATA_PROVIDER", "alpaca");
+  selection.provider="alpaca";selection.revision=0;
   bridge.mockReset().mockResolvedValue({ ok: true, candles: [{ time: 1793975400,
     openDecimal: "2.4", highDecimal: "2.5", lowDecimal: "2.3", closeDecimal: "2.45", volumeDecimal: "100" }] });
 });
@@ -36,7 +37,7 @@ it("reports Alpaca truthfully while preserving candle values and millisecond tim
 });
 
 it("preserves the Moomoo provider identity when selected", async () => {
-  vi.stubEnv("TRADERLINK_MARKET_DATA_PROVIDER", "moomoo");
+  selection.provider="moomoo";selection.revision++;
   expect(await (await GET(request())).json()).toMatchObject({ provider: "moomoo_open_api" });
 });
 
@@ -49,6 +50,12 @@ it("keeps unavailable results unavailable and identifies the selected provider o
   response = await GET(request());
   expect(response.status).toBe(503);
   expect(await response.json()).toEqual({ status: "unavailable", code: "alpaca_connection_unavailable" });
-  vi.stubEnv("TRADERLINK_MARKET_DATA_PROVIDER", "moomoo");
+  selection.provider="moomoo";selection.revision++;
   expect(await (await GET(request())).json()).toEqual({ status: "unavailable", code: "moomoo_connection_unavailable" });
+});
+
+it("does not return late candles after the selected source changes",async()=>{
+ bridge.mockImplementationOnce(async()=>{selection.provider="moomoo";selection.revision++;return {ok:true,candles:[]};});
+ const response=await GET(request());expect(response.status).toBe(503);
+ expect(await response.json()).toEqual({status:"unavailable",code:"watchlist_provider_changed"});
 });

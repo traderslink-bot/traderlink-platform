@@ -43,8 +43,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid candle request." }, { status: 400 });
   }
 
+  let selectedProvider: "alpaca" | "moomoo" | undefined;
   try {
     const selection = marketDataSelection("watchlist");
+    selectedProvider = selection.provider;
     const result = await fetchWatchlistMoomooCandles({
       symbol,
       interval: "1m",
@@ -73,6 +75,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       })),
     });
   } catch {
-    return NextResponse.json({ status: "unavailable", code: "watchlist_candle_connection_unavailable" }, { status: 503 });
+    return NextResponse.json({ status: "unavailable", code: selectedProvider === "alpaca" ? "alpaca_connection_unavailable" : selectedProvider === "moomoo" ? "moomoo_connection_unavailable" : "watchlist_candle_connection_unavailable" }, { status: 503 });
   }
 }
