@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - codex/ci-browser-facts-cache-20261118
       - codex/full-ci-repair-20261115
   pull_request:
     types:
