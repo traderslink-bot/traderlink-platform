@@ -19,7 +19,7 @@ import type {TraderLinkCommunityTradeReview} from "@/src/modules/communities/con
 import {markCommunityReviewViewedAction,replyCommunityReviewAction,updateCommunityReviewActionItemAction} from "./community-actions";
 import {CommunityTypography as Typography} from "./community-typography";
 
-export function StudentCoachingReview({snapshot,review,isReview,paused,messagingEnabled}:{snapshot:TraderLinkCommunityDashboardSnapshot;review:TraderLinkCommunityTradeReview;isReview:boolean;paused:boolean;messagingEnabled:boolean}){
+export function StudentCoachingReview({snapshot,review,isReview,paused}:{snapshot:TraderLinkCommunityDashboardSnapshot;review:TraderLinkCommunityTradeReview;isReview:boolean;paused:boolean}){
  const delivered=Boolean(review.deliveredAtUtc);
  const agreement=snapshot.coachingAgreements?.find(item=>item.agreementId===review.agreedService?.agreementId);
  const template=review.agreedService?agreement?.terms.tradeEvaluationTemplates?.[review.agreedService.planItemId]:undefined;
@@ -50,8 +50,8 @@ export function StudentCoachingReview({snapshot,review,isReview,paused,messaging
    {review.viewedAtUtc?<Typography color="text.secondary" variant="caption">Read {new Date(review.viewedAtUtc).toLocaleDateString("en-US",{timeZone:"UTC"})} UTC</Typography>:null}
    {review.followUpDueAtUtc&&review.deliveryState==="follow_up"?<Typography>Follow-up due {new Date(review.followUpDueAtUtc).toLocaleDateString("en-US",{timeZone:"UTC"})} UTC</Typography>:null}
    {snapshot.reviewReplies.filter(reply=>reply.reviewId===review.reviewId).map(reply=><Box key={reply.replyId}><Typography variant="body2" sx={{ fontWeight: 700 }}>{reply.authorName}</Typography><Typography sx={{whiteSpace:"pre-wrap"}} variant="body2">{reply.body}</Typography></Box>)}
-   {messagingEnabled&&!paused&&review.followUpProblem&&!["completed","cancelled"].includes(review.deliveryState)?<Typography color="text.secondary">{review.followUpProblem}</Typography>:null}
-   {messagingEnabled&&!paused&&!review.followUpProblem&&!["completed","cancelled"].includes(review.deliveryState)?<Box action={disabled?undefined:replyCommunityReviewAction} component="form">{hidden}<Stack direction="row" spacing={1}><TextField fullWidth label="Question or reply" multiline name="body" required/><Button disabled={disabled} type="submit">Send</Button></Stack></Box>:null}
+   {!paused&&review.followUpProblem&&!["completed","cancelled"].includes(review.deliveryState)?<Typography color="text.secondary">{review.followUpProblem}</Typography>:null}
+   {!paused&&!review.followUpProblem&&!["completed","cancelled"].includes(review.deliveryState)?<Box action={disabled?undefined:replyCommunityReviewAction} component="form">{hidden}<Stack direction="row" spacing={1}><TextField fullWidth label="Question or reply" multiline name="body" required/><Button disabled={disabled} type="submit">Send</Button></Stack></Box>:null}
   </Stack>:review.studentContext?<Typography sx={{mt:1}} variant="body2">{review.studentContext}</Typography>:null}
  </Box>;
 }
