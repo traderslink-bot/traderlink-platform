@@ -6,7 +6,7 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "../../src/modules/platform/con
 import { renderLegacyFactsHarness } from "./level-analysis/component-renderer.cjs";
 const ORIGIN = "https://127.0.0.1:3102";
 const controlRoot = () => process.env.LEVEL_ANALYSIS_E2E_CONTROL_ROOT!;
-import { expect, test, type Page } from "@playwright/test";
+import { expect, request as playwrightRequest, test, type Page } from "@playwright/test";
 import deliveryFixture from "../../src/lib/level-analysis/__fixtures__/level-analysis-journal-delivery-package-v1.compact.json";
 
 const UNSAFE_LEVEL_FACTS_PHRASES = [
@@ -29,6 +29,50 @@ const UNSAFE_LEVEL_FACTS_PHRASES = [
   "behavior score",
   "behavior scoring",
 ];
+
+// Next App Page owns Vary; authenticate JSON cache-key separation independently.
+function expectPrivateNoStore(headers: Record<string, string>, requireCookie = false) {
+  expect(headers["cache-control"]).toBe("private, no-store, max-age=0");
+  expect(headers["cdn-cache-control"]).toBe("no-store");
+  expect(headers["vercel-cdn-cache-control"]).toBe("no-store");
+  expect(headers.pragma).toBe("no-cache");
+  expect(headers.expires).toBe("0");
+  if (requireCookie) expect(varyTokensFor(headers)).toContain("cookie");
+}
+
+function varyTokensFor(headers: Record<string, string>) {
+  return (headers.vary ?? "").split(",").map(token => token.trim().toLowerCase());
+}
+
+async function checkPrivateReadBoundaries(page: Page, tradeId: string, attemptRoot: string) {
+  const oppositeRoot = attemptRoot === controlRoot() ? join(controlRoot(), "retry-1") : controlRoot();
+  const selectionMismatch = await playwrightRequest.newContext({ baseURL: ORIGIN, ignoreHTTPSErrors: true,
+    storageState: join(oppositeRoot, "browser-state.json") });
+  const unauthenticated = await playwrightRequest.newContext({ baseURL: ORIGIN, ignoreHTTPSErrors: true });
+  const storyUrl = `/api/platform/journal/trade-details?roundTripId=${tradeId}`;
+  try {
+    // This owner may select either account. Reads are scoped to the selected one;
+    // do not confuse a selection mismatch with denial of ownership of that account.
+    for (const context of [selectionMismatch, unauthenticated]) {
+      const denied = await context.get(storyUrl);
+      expect(denied.status()).toBe(400);
+      expectPrivateNoStore(denied.headers(), true);
+      expect(await denied.json()).toEqual({ status: "unavailable" });
+    }
+    const mismatchedFacts = await selectionMismatch.get(`/api/trades/${tradeId}/level-analysis/facts`);
+    expect(mismatchedFacts.status()).toBe(400);
+    expect(await mismatchedFacts.json()).toMatchObject({ ok: false, code: "TRADERLINK_LEVEL_ANALYSIS_LINK_INVALID" });
+    const unauthenticatedFacts = await unauthenticated.get(`/api/trades/${tradeId}/level-analysis/facts`);
+    expect(unauthenticatedFacts.status()).toBe(403);
+    expect(await unauthenticatedFacts.json()).toMatchObject({ ok: false, code: "TRADERLINK_WORKSPACE_ACCESS_DENIED" });
+    // Same exact URL still resolves to the original selected account, with no
+    // cached success reused for unauthenticated or other-selected-account reads.
+    const own = await page.request.get(storyUrl);
+    expect(own.status()).toBe(200);
+    expectPrivateNoStore(own.headers(), true);
+    expect(await own.json()).toMatchObject({ symbol: "DEVS" });
+  } finally { await selectionMismatch.dispose(); await unauthenticated.dispose(); }
+}
 
 async function saveSeedTrade(page: Page, attemptRoot: string): Promise<{ id: string; symbol: string }> {
   const metadata = JSON.parse(readFileSync(join(attemptRoot, "metadata.json"), "utf8"));
@@ -80,6 +124,7 @@ async function saveSeedTrade(page: Page, attemptRoot: string): Promise<{ id: str
   expect(savedTrade.symbol).toBe("DEVS");
   const details = await page.request.get(`/api/platform/journal/trade-details?roundTripId=${savedTrade.id}`);
   expect(details.status()).toBe(200);
+  expectPrivateNoStore(details.headers(), true);
   expect(await details.json()).toMatchObject({ symbol: "DEVS" });
   return savedTrade;
 }
@@ -159,16 +204,23 @@ test.describe("current Journal contracts and preserved Level Facts component", (
 
     const savedTrade = await saveSeedTrade(page, attemptRoot);
     const facts = await seedAcceptedLevelFactsLink(page, savedTrade.id, attemptRoot);
+    await checkPrivateReadBoundaries(page, savedTrade.id, attemptRoot);
 
     const pageResponse = await page.goto(
       `/intelligence/trades/${encodeURIComponent(savedTrade.id)}`,
     );
     expect(pageResponse?.headers()["cache-control"]).toContain("no-store");
-    const varyTokens = (pageResponse?.headers().vary ?? "")
-      .split(",")
-      .map((token) => token.trim().toLowerCase());
-    expect(varyTokens).toContain("cookie");
+    // The compiled Next16 App Page replaces Vary with its router contract.
+    // Require the complete non-storable page policy; Cookie variation is tested
+    // on the genuine authenticated Journal JSON responses above.
+    expect(pageResponse?.status()).toBe(200);
+    const pageHeaders = pageResponse?.headers() ?? {};
+    expectPrivateNoStore(pageHeaders);
+    const varyTokens = varyTokensFor(pageHeaders);
     expect(varyTokens).toContain("rsc");
+    expect(varyTokens).toContain("next-router-state-tree");
+    expect(varyTokens).toContain("next-router-prefetch");
+    expect(varyTokens).toContain("next-router-segment-prefetch");
     await expect(page).toHaveURL(/\/analytics\/execution$/);
     await expect(page.getByRole("heading", { name: "Trade Breakdown", exact: true })).toBeVisible();
 

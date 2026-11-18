@@ -16,6 +16,7 @@ on:
   push:
     branches:
       - main
+      - codex/ci-browser-header-contract-20261118
     paths:
       - ".github/workflows/level-analysis-trade-detail-facts.yml"
       - "app/api/level-analysis/**"
