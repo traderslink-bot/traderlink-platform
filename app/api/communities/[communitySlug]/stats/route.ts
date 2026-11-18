@@ -72,7 +72,7 @@ export async function GET(request:Request,context:Context):Promise<Response>{
       if(!scope.isOwner)return Response.json({error:"Owner access required."},{status:404,headers});
       if(!communityStatsStorageReady(database))return Response.json({error:"Stats storage unavailable."},{status:503,headers});
       const settings=database.prepare(`SELECT discord_enabled,channel_ids_json,own_content_user_ids_json,export_user_ids_json,revision FROM community_stats_settings WHERE community_id=?`).get(scope.communityId)??null;
-      const channels=database.prepare(`SELECT channel_id,name,channel_type FROM community_stats_channels WHERE community_id=? AND public_readable=1 ORDER BY name`).all(scope.communityId);
+      const channels=database.prepare(`SELECT channel_id,name,channel_type FROM community_stats_channels WHERE community_id=? AND public_readable=1 AND channel_type IN(0,5,15,16) ORDER BY name`).all(scope.communityId);
       const people=database.prepare(`SELECT u.user_id AS id,u.display_name AS name FROM traderlink_community_memberships m JOIN platform_users u ON u.user_id=m.user_id AND u.status='active' WHERE m.community_id=? AND m.status='active' ORDER BY u.display_name,u.user_id`).all(scope.communityId) as {id:string;name:string}[];
       const permissions=new TraderLinkCommunityRepository(database);
       const members=people.map(person=>({...person,publisher:permissions.resolveAccess(scope.communityId,person.id).capabilities.some(capability=>["community.alerts.create","community.watchlists.publish_staff","community.coaching.offer"].includes(capability))}));
@@ -140,7 +140,7 @@ export async function POST(request:Request,context:Context):Promise<Response>{
     if(!communityStatsStorageReady(database))return new Response(null,{status:503,headers});
     const channels=[...new Set(body.channelIds as string[])].sort(),own=[...new Set(body.ownContentUserIds as string[])],exports=[...new Set(body.exportUserIds as string[])];
     if(channels.some(channel=>!/^\d{1,32}$/u.test(channel)))return new Response(null,{status:400,headers});
-    if(channels.some(channel=>!database!.prepare(`SELECT 1 FROM community_stats_channels WHERE community_id=? AND channel_id=? AND public_readable=1`).get(scope.communityId,channel)))return Response.json({error:"A selected channel is unavailable. Refresh channels before saving."},{status:400,headers});
+    if(channels.some(channel=>!database!.prepare(`SELECT 1 FROM community_stats_channels WHERE community_id=? AND channel_id=? AND public_readable=1 AND channel_type IN(0,5,15,16)`).get(scope.communityId,channel)))return Response.json({error:"A selected channel is unavailable. Refresh channels before saving."},{status:400,headers});
     // Owner selection is intersected with the bot channel permissions before collection.
     const repository=new TraderLinkCommunityRepository(database);
     for(const userId of new Set([...own,...exports])){
