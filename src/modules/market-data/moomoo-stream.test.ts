@@ -1,0 +1,67 @@
+import { EventEmitter } from "node:events";
+import type WebSocket from "ws";
+import { afterEach, expect, it, vi } from "vitest";
+const access = vi.hoisted(() => ({before: undefined as undefined | (() => Promise<void>)}));
+vi.mock("@/src/modules/watchlist/server/moomoo-watchlist-candle-bridge",()=>({withWatchlistIndicatorMoomooAccess:async(callback:(access:{token:string;requestScope:string})=>unknown)=>{await access.before?.(); return callback({token:"private-fixture-token",requestScope:"fixture"});}}));
+import { MoomooChartStream } from "./server/moomoo-chart-stream";
+class Socket extends EventEmitter {readyState=1;sent:Record<string,unknown>[]=[];send(text:string){this.sent.push(JSON.parse(text));}close(){this.readyState=3;this.emit("close");}}
+afterEach(()=>{vi.useRealTimers();access.before=undefined;});
+it("shares one authenticated socket across four charts and releases only unused subscriptions",async()=>{
+ const sockets:Socket[]=[];const source=new MoomooChartStream({},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
+ const a:unknown[]=[],b:unknown[]=[];
+ const release=[source.subscribe("AAA",false,event=>a.push(event)),source.subscribe("AAA",false,event=>b.push(event)),source.subscribe("AAA",true,()=>{}),source.subscribe("BBB",false,()=>{})];
+ await Promise.resolve();const socket=sockets[0];expect(sockets).toHaveLength(1);socket.emit("open");
+ expect(socket.sent[0]).toEqual({action:"auth",data:{auth_type:"oauth2",authorization:"Bearer private-fixture-token"}});
+ socket.emit("message",Buffer.from(JSON.stringify({session_id:"session"})));
+ expect(socket.sent.filter(row=>row.action==="subscribe")).toHaveLength(1);
+ expect(a.at(-1)).toMatchObject({type:"status",data:{state:"connecting"}});
+ socket.emit("message",Buffer.from(JSON.stringify({id:socket.sent.at(-1)!.id,code:0})));
+ expect(a.at(-1)).toMatchObject({type:"status",data:{state:"connected"}});
+ const now=Date.parse("2026-11-17T15:00:00Z");vi.useFakeTimers();vi.setSystemTime(now);
+ socket.emit("message",Buffer.from(JSON.stringify({type:"QUOTE",symbol:"US.AAA",data:{data_time_ms:now,last_price:2.5,suspension:false}})));
+ expect(a.at(-1)).toMatchObject({type:"trading-status",data:{status:{halted:false}}});
+ expect(a).toEqual(b);expect(JSON.stringify(a)).not.toContain("private-fixture-token");
+ socket.emit("message",Buffer.from(JSON.stringify({type:"KLINE",symbol:"US.AAA",data:{period:"1m",adjust:"none",kl_list:[{time_ms:now+60000,open_price:2,high_price:2.6,low_price:1.9,close_price:2.5,volume:100}]}})));
+ expect(a.at(-1)).toMatchObject({type:"bar",data:{daily:false,bar:{time:now/1000,close:2.5,volume:100}}});
+ release[0]();expect(socket.sent.filter(row=>row.action==="unsubscribe")).toHaveLength(0);
+ for(const stop of release.slice(1))stop();expect(socket.readyState).toBe(3);
+ source.close();
+});
+
+it("backs off failed subscriptions without reporting a usable connection and reconnects with subscriptions",async()=>{
+ vi.useFakeTimers();
+ const sockets:Socket[]=[], events:unknown[]=[];
+ const source=new MoomooChartStream({},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
+ const stop=source.subscribe("AAA",false,event=>events.push(event));
+ await Promise.resolve();await Promise.resolve();
+ const socket=sockets[0];socket.emit("open");socket.emit("message",Buffer.from(JSON.stringify({session_id:"session"})));
+ socket.emit("message",Buffer.from(JSON.stringify({id:socket.sent.at(-1)!.id,code:403,message:"permission unavailable"})));
+ expect(events.some(event=>(event as {data:{state:string}}).data.state==="connected")).toBe(false);
+ expect(socket.readyState).toBe(3);
+ await vi.advanceTimersByTimeAsync(2999);expect(sockets).toHaveLength(1);
+ await vi.advanceTimersByTimeAsync(1);expect(sockets).toHaveLength(2);
+ sockets[1].emit("open");sockets[1].emit("message",Buffer.from(JSON.stringify({session_id:"session2"})));
+ sockets[1].emit("message",Buffer.from(JSON.stringify({id:sockets[1].sent.at(-1)!.id,code:403})));
+ await vi.advanceTimersByTimeAsync(5999);expect(sockets).toHaveLength(2);
+ await vi.advanceTimersByTimeAsync(1);expect(sockets).toHaveLength(3);
+ sockets[2].emit("open");sockets[2].emit("message",Buffer.from(JSON.stringify({session_id:"session3"})));
+ expect(sockets[2].sent.at(-1)).toMatchObject({action:"subscribe",quote:["US.AAA"]});
+ sockets[2].emit("message",Buffer.from(JSON.stringify({id:sockets[2].sent.at(-1)!.id,code:0})));
+ expect(events.at(-1)).toMatchObject({data:{state:"connected"}});
+ stop();expect(vi.getTimerCount()).toBe(0);
+});
+it("restarts credential lookup when the last chart closes and another opens during authentication",async()=>{
+ let release!:()=>void;
+ access.before=()=>new Promise<void>(resolve=>{release=resolve;});
+ const sockets:Socket[]=[];
+ const source=new MoomooChartStream({},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
+ const old=source.subscribe("AAA",false,()=>{});old();
+ access.before=undefined;
+ const stop=source.subscribe("BBB",false,()=>{});
+ release();
+ for(let i=0;i<8;i++)await Promise.resolve();
+ expect(sockets).toHaveLength(1);
+ sockets[0].emit("open");sockets[0].emit("message",Buffer.from(JSON.stringify({session_id:"new"})));
+ expect(sockets[0].sent.at(-1)).toMatchObject({quote:["US.BBB"]});
+ stop();source.close();
+});

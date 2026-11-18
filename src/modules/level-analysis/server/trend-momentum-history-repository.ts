@@ -46,18 +46,19 @@ WHERE history_request_id = ? AND status = 'requested'`).run(timestamp, row.histo
     }).immediate();
   }
 
-  read(scope: AccountScope, jobId: string, allRequests = false, alpacaOnly = false): readonly Row[] {
+  read(scope: AccountScope, jobId: string, allRequests = false, source?: "alpaca_sip_raw_v1" | "moomoo_history_kline_v1"): readonly Row[] {
     const retry = new ManualAnalyzerRetryRepository(this.database).latest(jobId);
     return this.database.prepare(`SELECT request.* FROM ${historySource} request
 JOIN level_analysis_logical_trade_jobs job ON job.logical_trade_job_id = request.logical_trade_job_id
 WHERE job.logical_trade_job_id = ? AND job.user_id = ? AND job.workspace_id = ? AND job.account_id = ?
 AND (? = 1 OR request.retry_request_id IS ?)
-${alpacaOnly ? `AND EXISTS (SELECT 1 FROM level_analysis_analyzer_acquisitions acquisition
+${source ? `AND EXISTS (SELECT 1 FROM level_analysis_analyzer_acquisitions acquisition
  JOIN level_analysis_market_session_sets session ON session.market_session_set_id = acquisition.market_session_set_id
  WHERE acquisition.acquisition_id = request.acquisition_id
- AND session.provider_adapter_version = 'alpaca_sip_raw_v1')` : ""}
+ AND session.provider_adapter_version = ?)` : ""}
 ORDER BY request.requested_end_seconds DESC, request.attempt_number ASC`).all(
       jobId, scope.userId, scope.workspaceId, scope.accountId, allRequests ? 1 : 0, retry?.retry_request_id ?? null,
+      ...(source ? [source] : []),
     ) as readonly Row[];
   }
 
@@ -65,8 +66,8 @@ ORDER BY request.requested_end_seconds DESC, request.attempt_number ASC`).all(
     const alpaca = source === "alpaca_sip_raw_v1";
     const rows = this.database.prepare(`SELECT request.* FROM ${historySource} request
 JOIN level_analysis_logical_trade_jobs job ON job.logical_trade_job_id = request.logical_trade_job_id
-${alpaca ? "JOIN level_analysis_analyzer_acquisitions acquisition ON acquisition.acquisition_id = request.acquisition_id" : ""}
-JOIN level_analysis_market_session_sets session ON session.market_session_set_id = ${alpaca ? "acquisition" : "job"}.market_session_set_id
+JOIN level_analysis_analyzer_acquisitions acquisition ON acquisition.acquisition_id = request.acquisition_id
+JOIN level_analysis_market_session_sets session ON session.market_session_set_id = acquisition.market_session_set_id
 WHERE job.user_id = ? AND job.workspace_id = ? AND job.account_id = ?
  AND session.provider_symbol = ? AND session.provider_adapter_version = ?
  AND request.status IN ('complete', 'no_history', 'partial')
@@ -87,12 +88,12 @@ ORDER BY request.completed_at_utc DESC, request.history_request_id LIMIT 100`).a
       candles: [...candles.values()].sort((a, b) => a.time - b.time) };
   }
 
-  hasSufficientEvidence(scope: AccountScope, symbol: string, tradingDate: string, earliest: number, asOf: number): boolean {
+  hasSufficientEvidence(scope: AccountScope, symbol: string, tradingDate: string, earliest: number, asOf: number, source: "alpaca_sip_raw_v1" | "moomoo_history_kline_v1" = "moomoo_history_kline_v1"): boolean {
     const session = newYorkExtendedSession(tradingDate);
     if (!session || !Number.isFinite(earliest) || earliest > asOf) return false;
     try {
       const first = priorIndicatorHistoryRanges(tradingDate).at(-1)!.start;
-      const evidence = this.compatibleEvidence(scope, symbol, first, asOf);
+      const evidence = this.compatibleEvidence(scope, symbol, first, asOf, source);
       if (!hasCompletedIndicatorCoverage(evidence.ranges, session.startTime, asOf)) return false;
       return inspectIndicatorWarmup({ asOf: Math.floor(earliest), completedRanges: evidence.ranges,
         candles: evidence.candles.map((c) => ({ time: c.time, open: Number(c.openDecimal), high: Number(c.highDecimal),
@@ -126,7 +127,7 @@ WHERE job.logical_trade_job_id = ? AND job.user_id = ? AND job.workspace_id = ? 
       const inRange = (r: Row) =>
         r.requested_start_seconds === range.start && r.requested_end_seconds === range.endExclusive;
       const all = this.read(input.scope, input.jobId).filter(inRange);
-      const prior = input.alpaca ? this.read(input.scope, input.jobId, false, true).filter(inRange) : all;
+      const prior = this.read(input.scope, input.jobId, false, input.alpaca ? "alpaca_sip_raw_v1" : "moomoo_history_kline_v1").filter(inRange);
       if (prior.some((r) => r.status === "complete" || r.status === "no_history" || r.status === "requested") || all.length >= 3) return null;
       const id = createCanonicalUuidV4();
       const table = retry ? "level_analysis_manual_retry_history_requests" : "level_analysis_indicator_history_requests";

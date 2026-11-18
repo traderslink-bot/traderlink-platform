@@ -114,7 +114,9 @@ describe("same-time relative volume", () => {
         if (timeframe === "15Min") {
           historyRequests++;
           if (historyRequests === 1) throw Error("temporary provider failure");
-          return { bars: { AAA: historyRequests === 2 ? [...history, { ...history[0], t: "invalid" }] : history, BBB: history } };
+          const bars = { AAA: historyRequests === 2 ? [...history, { ...history[0], t: "invalid" }] : history, BBB: history };
+          const requested = (params.get("symbols") ?? "").split(",") as (keyof typeof bars)[];
+          return { bars: Object.fromEntries(requested.map(symbol => [symbol, bars[symbol]])) };
         }
         const bars = timeframe === "5Min"
           ? [providerBar(windows.last_regular.from, 150), providerBar(windows.regular.from, 300)]

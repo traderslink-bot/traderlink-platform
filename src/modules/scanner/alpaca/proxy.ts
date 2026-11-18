@@ -1,4 +1,5 @@
 import "server-only";
+import { marketDataSelection } from "@/src/modules/market-data/server/provider-settings";
 import { readFile } from "node:fs/promises";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { chartCatchUpWindow, chartHistoryPage, chartHistoryWindow } from "./chart-history";
@@ -25,6 +26,16 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
       if (from !== null && (daily || query.has("before") || query.has("recent"))) throw Error("invalid_history_range");
       window = from === null ? chartHistoryWindow(query.get("before"), daily, Date.now(), query.get("recent") === "1") : chartCatchUpWindow(from);
     } catch { return Response.json({error:"invalid_history_range"},{status:400,headers:safeHeaders}); } }
+    const feature = query.get("scannerIndicators")==="1"?"scanners":"charts";
+    const selection = marketDataSelection(feature);
+    const selected = () => { const next=marketDataSelection(feature); return next.provider===selection.provider && next.revision===selection.revision; };
+    if ((query.has("provider") && query.get("provider")!==selection.provider) || (query.has("providerRevision") && query.get("providerRevision")!==String(selection.revision))) {
+      return Response.json({error:"provider_changed"},{status:409,headers:safeHeaders});
+    }
+    if(selection.provider==="moomoo"){
+      const {moomooChartResponse}=await import("@/src/modules/market-data/server/moomoo-chart-response");
+      return await moomooChartResponse(request,stream,symbol,daily,feature);
+    }
     const configured = process.env.TRADERLINK_ALPACA_GATEWAY_URL;
     let token = process.env.TRADERLINK_ALPACA_GATEWAY_TOKEN;
     if (process.env.NODE_ENV !== "production" && process.env.TRADERLINK_ALPACA_GATEWAY_TOKEN_FILE) {
@@ -57,6 +68,7 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
     }
     if (!stream) { try {
       const payload=await upstream.json();
+      if(!selected())return Response.json({error:"provider_changed"},{status:409,headers:safeHeaders});
       if(paged&&window){
         if(payload.complete!==true||payload.adjustment!=="split"||payload.feed!==(overnight?"boats":"sip")||!Array.isArray(payload.bars))throw Error("incomplete_history");
         return Response.json({...chartHistoryPage(payload.bars as Candle[],window,daily),basisDate:payload.basisDate,...(from !== null ? {catchUpFrom:window.start} : {}),...(!daily?{calendar:payload.calendar??{available:false}}:{calendars:payload.calendars??[]})},{headers:safeHeaders});
@@ -69,6 +81,7 @@ export async function proxyAlpacaChart(request: Request, stream: boolean): Promi
         try {
           const { done, value } = await reader.read();
           if (done) { request.signal.removeEventListener("abort", abort); controller.close(); }
+          else if(!selected()){request.signal.removeEventListener("abort",abort);await reader.cancel();controller.close();}
           else controller.enqueue(value);
         } catch { request.signal.removeEventListener("abort", abort); controller.error(Error("Chart connection interrupted")); }
       },

@@ -4,21 +4,35 @@ import { createHash } from "node:crypto";
 import { stripTypeScriptTypes } from "node:module";
 import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
 
-let closed = 0, refreshed = false, dropQuote = false, accessCalls = 0, assertions = 0;
+let closed = 0, refreshed = false, dropQuote = false, accessCalls = 0, assertions = 0, disabled = new Set(), selectedSubject = null, budgetCalls = 0;
 const context = createContext({ process: { env: {} }, Object });
 const connection = { connectionId: "fixture-connection", state: "active", authorizedScopes: ["quote:read"] };
 const modules = {
-  "server-only": {}, "node:crypto": { createHash },
-  "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider": { MoomooDailyTradeKlineMarketDataProvider: class {} },
+  "server-only": {},
+  "@/src/modules/platform/server/broker-connections/moomoo-shared-transport": {
+    TRADERLINK_MOOMOO_SHARED_BUDGET_ENV: "TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED",
+    sharedMoomooFetch: async (_url, _init, options) => {
+      assert.equal(options.priority, "watchlist"); assert.equal(options.requireEnabled, true);
+      assert.equal(options.environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED, "true");
+      budgetCalls++; return { ok: true };
+    },
+  }, "node:crypto": { createHash },
+  "@/src/modules/market-data/server/provider-settings": { marketDataEnvironment: (_feature, environment) => environment },
+  "@/src/modules/scanner/alpaca/client": { alpacaMarketDataEnabled: () => false },
+  "@/src/modules/scanner/alpaca/watchlist-adapter": { fetchAlpacaWatchlistCandles: () => { throw Error("unexpected Alpaca call"); } },
+  "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider": { MoomooDailyTradeKlineMarketDataProvider: class {
+    constructor(_token, request) { this.request = request; }
+    async fetch() { await this.request("https://webapi.moomoo.com/test-fixture"); return { ok: true }; }
+  } },
   "@/src/modules/platform/server/authentication/authenticated-user-journal-scope": { deriveAuthenticatedUserJournalScope: (_db, userId) => ({ userId }) },
   "@/src/modules/platform/server/database/open-platform-database": { openPlatformDatabase: () => ({ close: () => { closed++; } }) },
   "@/src/modules/platform/server/database/platform-migration-contract": { platformFailure: () => { throw Error("access_denied"); } },
   "@/src/modules/platform/server/identity/platform-user-repository": { PlatformUserRepository: class { findActiveByAuthIdentity(_provider, subject) { return { userId: subject }; } } },
   "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service": { MoomooConnectionAccessService: class {
-    async accessToken() { refreshed = true; accessCalls++; return "private-fixture-token"; }
+    async accessToken(scope) { selectedSubject = scope.userId; refreshed = true; accessCalls++; return "private-fixture-token"; }
   } },
   "@/src/modules/platform/server/broker-connections/moomoo-connection-repository": { MoomooConnectionRepository: class {
-    find() { return refreshed && dropQuote ? { ...connection, authorizedScopes: [] } : connection; }
+    find(scope) { return disabled.has(scope.userId) ? null : refreshed && dropQuote ? { ...connection, authorizedScopes: [] } : { ...connection, connectionId: `fixture-${scope.userId}` }; }
   } },
   "./access/watchlist-dashboard-navigation-access": { TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV: "OWNER_SUBJECT" },
 };
@@ -41,10 +55,23 @@ await assert.rejects(() => use(async () => { throw Error("must not receive token
 equal(closed, 2);
 refreshed = false; dropQuote = false;
 const before = accessCalls;
+await use(async () => null, { OWNER_SUBJECT: "123,456" });
+equal(selectedSubject, "123"); equal(accessCalls, before + 1); equal(closed, 3);
+disabled.add("123");
+await use(async () => null, { OWNER_SUBJECT: "123,456" });
+equal(selectedSubject, "456"); equal(closed, 4);
+const status = module.namespace.readSharedMoomooConnectionStatus;
+const statusCalls = accessCalls;
+equal(status({ OWNER_SUBJECT: "123,456" }).ready, true);
+equal(accessCalls, statusCalls); equal(closed, 5);
+disabled.add("456"); equal(status({ OWNER_SUBJECT: "123,456" }).ready, false); equal(closed, 6);
 await assert.rejects(() => use(async () => null, { OWNER_SUBJECT: "123,456" }), /access_denied/u); assertions++;
-equal(accessCalls, before); equal(closed, 3);
+equal(accessCalls, statusCalls); equal(closed, 7);
+disabled.clear();
 await assert.rejects(() => use(async () => null, {}), /access_denied/u); assertions++;
-equal(closed, 4);
+equal(closed, 8);
 await assert.rejects(() => use(async () => { throw Error("fixture consumer failed"); }, { OWNER_SUBJECT: "123" }), /fixture consumer failed/u); assertions++;
-equal(closed, 5);
-console.log(`PASS: ${assertions} focused assertions against the actual Indicators Moomoo access boundary with injected repositories: exactly one configured connection, post-refresh quote permission, opaque scope and connection cleanup on every path. No live credential/database/provider use.`);
+equal(closed, 9);
+await module.namespace.fetchWatchlistMoomooCandles({}, { OWNER_SUBJECT: "123" });
+equal(budgetCalls, 1); equal(closed, 10);
+console.log(`PASS: ${assertions} focused assertions against the actual Indicators Moomoo access boundary with injected repositories: deterministic configured shared connection, read-only readiness, post-refresh quote permission, opaque scope and connection cleanup on every path. No live credential/database/provider use.`);

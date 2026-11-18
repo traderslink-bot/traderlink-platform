@@ -1,5 +1,6 @@
 import "server-only";
-import { alpacaMarketDataEnabled } from "@/src/modules/scanner/alpaca/client";
+import { sharedMoomooFetch, TRADERLINK_MOOMOO_SHARED_BUDGET_ENV } from "@/src/modules/platform/server/broker-connections/moomoo-shared-transport";
+import { marketDataSelection } from "@/src/modules/market-data/server/provider-settings";
 import { fetchAlpacaIndicatorHistory } from "@/src/modules/scanner/alpaca/watchlist-adapter";
 import { IndicatorRequestCoordinator } from "@/src/lib/live-watchlist/indicators/indicator-request-coordinator";
 import { fetchIndicatorHistory } from "@/src/lib/live-watchlist/indicators/indicator-history-provider";
@@ -14,19 +15,32 @@ import { watchlistMoomooAdmission } from "../setups/setup-admission-runtime";
 type Access = Readonly<{ token: string; requestScope: string }>;
 // Credentials exist only inside the authorized operation; they never enter snapshots or audit records.
 type RuntimeState = { operationAccess: Map<string, Access>; consumerAccess: Map<string, Access>;
-  pending: Map<string, Promise<WatchlistIndicatorSnapshot>>; service: IndicatorRefreshService | null };
+  pending: Map<string, Promise<WatchlistIndicatorSnapshot>>; selectionKey?: string; service: IndicatorRefreshService | null };
 const processState = globalThis as typeof globalThis & { __watchlistIndicatorsV1?: RuntimeState };
-const state = processState.__watchlistIndicatorsV1 ??= { operationAccess: new Map(), consumerAccess: new Map(), pending: new Map(), service: null };
+const state: RuntimeState = processState.__watchlistIndicatorsV1 ??= { operationAccess: new Map(), consumerAccess: new Map(), pending: new Map(), service: null };
 const { operationAccess, consumerAccess, pending } = state;
 const consumerPublications = new Map<string, { symbol: string; activationId: string }>();
 
+function currentSelection() {
+  const selection = marketDataSelection("watchlist");
+  const key = `${selection.provider}:${selection.revision}`;
+  if (state.selectionKey !== key) {
+    state.service?.reconcilePopulation(new Map());
+    state.service = null;
+    state.selectionKey = key;
+  }
+  return { ...selection, key };
+}
+
 /** Read-only member path: does not initialize a worker or request provider data. */
 export function readCachedWatchlistIndicators(symbol: string, activationId: string): WatchlistIndicatorSnapshot | null {
+  currentSelection();
   return state.service?.current(symbol, activationId) ?? null;
 }
 
 /** Authenticated runtime-only reuse; provider provenance is not part of the member payload. */
 export function readSharedWatchlistIndicatorCandles(symbol: string, activationId: string) {
+  currentSelection();
   return state.service?.sharedFiveMinute(symbol, activationId) ?? null;
 }
 
@@ -35,10 +49,15 @@ export function reconcileWatchlistIndicatorPopulation(active: ReadonlyMap<string
 }
 
 export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
+  const selection = currentSelection();
+  const isSelected = () => {
+    const latest = marketDataSelection("watchlist");
+    return `${latest.provider}:${latest.revision}` === selection.key;
+  };
   if (!state.service) {
-    const coordinator = new IndicatorRequestCoordinator({ audit: event => state.service?.recordTransport(event), admission: watchlistMoomooAdmission() });
-    state.service = new IndicatorRefreshService({ calendar: calendar as IndicatorCalendar,
-      ...(alpacaMarketDataEnabled() ? { providers: ["alpaca"] as const } : {}),
+    const coordinator = new IndicatorRequestCoordinator({ audit: event => service.recordTransport(event), admission: watchlistMoomooAdmission() });
+    const service: IndicatorRefreshService = new IndicatorRefreshService({ calendar: calendar as IndicatorCalendar,
+      ...(selection.provider === "alpaca" ? { providers: ["alpaca"] as const } : {}),
       record: record => {
         if (record.outcome === "queued") consumerPublications.set(record.id, { symbol: record.symbol, activationId: record.activationId });
         if (!["queued", "running"].includes(record.outcome)) consumerPublications.delete(record.id);
@@ -50,9 +69,11 @@ export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
         } catch { /* Persistent configuration/audit failure does not stop market-data delivery. */ }
       },
       saveCalculation: async evidence => {
+        if (!isSelected()) return false;
         const saved = await watchlistIndicatorAuditStore().saveCalculation(evidence);
         // Detection consumes this same accepted evidence, never another provider refresh.
         // Its failure cannot block the existing Indicators or publishing workflow.
+        if (!isSelected()) return false;
         try {
           const { recordAcceptedWatchlistSetupCalculation } = await import("../setups/setup-runtime");
           await recordAcceptedWatchlistSetupCalculation(evidence);
@@ -66,9 +87,9 @@ export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
         const demand = identity ? await watchlistFeedDemandFor(input.request.symbol, identity) : null;
         const allowed = async () => {
           const latest = identity ? await watchlistFeedDemandFor(input.request.symbol, identity) : null;
-          return Boolean(latest?.frames.includes(input.request.timeframe) && (input.provider !== "yahoo" || latest.frames.length > 2));
+          return isSelected() && Boolean(latest?.frames.includes(input.request.timeframe) && (input.provider !== "yahoo" || latest.frames.length > 2));
         };
-        if (!demand?.frames.includes(input.request.timeframe) || input.provider === "yahoo" && demand.frames.length === 2) return { provider: input.provider,
+        if (!isSelected() || !demand?.frames.includes(input.request.timeframe) || input.provider === "yahoo" && demand.frames.length === 2) return { provider: input.provider,
           adjustment: input.provider === "alpaca" ? "alpaca-split" : input.provider === "moomoo" ? "moomoo-forward" : "yahoo-chart-native", bars: [], pages: 0,
           transportIds: [], outcome: "permission", nextEnd: null };
         if (input.provider === "alpaca") return fetchAlpacaIndicatorHistory({ ...input, coordinator, isCurrent: allowed });
@@ -77,10 +98,13 @@ export function watchlistIndicatorRefreshService(): IndicatorRefreshService {
           bars: [], pages: 0, transportIds: [], outcome: "authentication", nextEnd: null };
         return fetchIndicatorHistory({ ...input, coordinator, requestAllowed: allowed, isCurrent: allowed, additionalDemand: demand.frames.length === 2,
           scope: input.provider === "moomoo" ? access!.requestScope : "watchlist-yahoo-chart",
-          ...(input.provider === "moomoo" ? { accessToken: access!.token } : {}) });
+          ...(input.provider === "moomoo" ? { accessToken: access!.token,
+            fetcher: ((url, init) => sharedMoomooFetch(url, init, { priority: "watchlist", requireEnabled: true,
+              environment: { ...process.env, [TRADERLINK_MOOMOO_SHARED_BUDGET_ENV]: "true" } })) as typeof fetch } : {}) });
       },
     });
-    try { void watchlistIndicatorAuditStore().reconcileRestart(state.service.runtimeInstanceId).catch(() => {}); }
+    state.service = service;
+    try { void watchlistIndicatorAuditStore().reconcileRestart(service.runtimeInstanceId).catch(() => {}); }
     catch { /* Owner audit reports storage unavailability separately. */ }
   }
   return state.service;
@@ -92,6 +116,7 @@ export function refreshWatchlistIndicators(symbol: string, activationId: string,
   const existing = pending.get(key);
   if (existing) return existing.then(() => refreshWatchlistIndicators(symbol, activationId, demand));
   const runtime = watchlistIndicatorRefreshService();
+  const selectionKey = state.selectionKey;
   let entered = false;
   const operation = (async () => {
     if (!runtime.current(symbol, activationId)) {
@@ -101,7 +126,7 @@ export function refreshWatchlistIndicators(symbol: string, activationId: string,
       } catch { /* Missing/invalid replay inputs require a fresh warm-up; no invented checkpoint. */ }
     }
     if (!runtime.needsRefresh(symbol, activationId, demand)) return runtime.refresh(symbol, activationId, demand);
-    if (alpacaMarketDataEnabled()) return runtime.refresh(symbol, activationId, demand);
+    if (currentSelection().provider === "alpaca") return runtime.refresh(symbol, activationId, demand);
     return withWatchlistIndicatorMoomooAccess(async access => {
       entered = true; operationAccess.set(key, access);
       try { return await runtime.refresh(symbol, activationId, demand); }
@@ -112,6 +137,8 @@ export function refreshWatchlistIndicators(symbol: string, activationId: string,
       return runtime.refresh(symbol, activationId, demand);
     });
   })().then(async snapshot => {
+    currentSelection();
+    if (state.selectionKey !== selectionKey) throw Error("Watchlist indicator provider changed during refresh.");
     if (demand?.reuseCompletedFrames) {
       try {
         const { ensureWatchlistSetupsFromSavedCalculation } = await import("../setups/setup-runtime");

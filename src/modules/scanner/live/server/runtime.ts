@@ -55,7 +55,10 @@ function newsFor(symbols: readonly string[], environment: NodeJS.ProcessEnv): Re
 }
 const reusableAudits=registry.audits??=new Map<string,ScannerAuditRecorder>();
 const providerChanges=registry.providerChanges??=new Set<string>();
-function scannerEnvironment(environment:NodeJS.ProcessEnv):NodeJS.ProcessEnv{return {...environment,TRADERLINK_MARKET_DATA_PROVIDER:readScannerConnection(root(environment),environment).provider};}
+function scannerEnvironment(environment:NodeJS.ProcessEnv):NodeJS.ProcessEnv{
+  const provider=readScannerConnection(root(environment),{...environment,TRADERLINK_MARKET_DATA_PROVIDER:"alpaca"}).provider;
+  return {...environment,TRADERLINK_MARKET_DATA_PROVIDER:provider,...(provider==="moomoo"?{TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED:"true"}:{})};
+}
 function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime {
   const environment=scannerEnvironment(inputEnvironment);
   const directory = root(environment);
@@ -164,7 +167,7 @@ function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime 
 }
 export function startConfiguredLiveScannerRuntime(inputEnvironment: NodeJS.ProcessEnv = process.env): void {
   const environment=scannerEnvironment(inputEnvironment);
-  if (environment.TRADERLINK_LIVE_SCREENERS_ENABLED !== "true" || (!alpacaMarketDataEnabled(environment) && environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED !== "true")) return;
+  if (environment.TRADERLINK_LIVE_SCREENERS_ENABLED !== "true") return;
   const current = configuredRuntime(environment);
   if (registry.started.has(current.feed)) return;
   registry.started.add(current.feed);
@@ -202,7 +205,7 @@ export async function changeScannerConnection(provider:ScannerProvider,revision:
   const old=registry.instances.get(directory);const wasRunning=old?registry.started.has(old.feed):false;
   try{
     const current=readScannerConnection(directory,environment);if(current.revision!==revision)throw Error("scanner_connection_conflict");
-    if(provider==="moomoo"&&environment.TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED!=="true")throw Error("scanner_connection_not_configured");
+    if(provider==="moomoo")await withWatchlistIndicatorMoomooAccess(async()=>undefined,environment);
     if(provider===current.provider)return scannerConnection(environment);
     old?.stop?.();old?.stopSource?.();await old?.feed.whenIdle();
     // A scan already awaiting metadata may have reopened its source before it drained.

@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { marketDataSelection } from "@/src/modules/market-data/server/provider-settings";
 import { acceptLiveScreenerFrame, LIVE_SCREENER_MAX_BYTES, parseLiveScreenerFrame } from "@/src/modules/stock-screeners/live-screener-book";
 
 export const runtime = "nodejs";
@@ -30,7 +31,11 @@ export async function POST(request: Request) {
       parts.push(value);
     }
     const now = Date.now();
-    const frame = parseLiveScreenerFrame(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts))), now);
+    const body = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts)));
+    const selection = marketDataSelection("screeners");
+    if ((body?.provider ?? "alpaca") !== selection.provider || (body?.revision ?? 0) !== selection.revision)
+      return new Response(null, { status: 409 });
+    const frame = parseLiveScreenerFrame(body, now, selection);
     const result = acceptLiveScreenerFrame(frame, now);
     return new Response(null, { status: result === "accepted" ? 204 : 409, headers: { "Cache-Control": "no-store" } });
   } catch {

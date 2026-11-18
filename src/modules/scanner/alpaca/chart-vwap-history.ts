@@ -1,7 +1,7 @@
 import type {AlpacaVwapCorporateEvents} from './chart-vwap-events';
 import {setImmediate as yieldToFeed} from 'node:timers/promises';
 import {aggregateCandles,easternDayStart,type Candle} from './candles';
-import type {AlpacaRestData} from './rest-data';
+import type {AlpacaHistoryRequest,AlpacaHistoryResult} from './rest-data';
 import {AlpacaChartCalendar} from './chart-calendar-provider';
 import {ChartSessionCalendar} from './chart-calendar';
 import {PRICE_SOURCES,type PriceSource,DEFAULT_CHART_PREFERENCES} from './chart-preferences';
@@ -13,7 +13,7 @@ import {addVwapMoment,type VwapMoment} from './vwap-moments';
 export class AlpacaVwapHistory{
  private cache=new Map<string,{at:number;seed:VwapSeed}>();
  private pending=new Map<string,Promise<VwapSeed>>();
- constructor(private readonly rest:Pick<AlpacaRestData,'history'>,private readonly calendar:Pick<AlpacaChartCalendar,'forBars'>,private readonly now:()=>number=Date.now,private readonly events?:Pick<AlpacaVwapCorporateEvents,'read'>){}
+ constructor(private readonly rest:{history(request:AlpacaHistoryRequest):Promise<Omit<AlpacaHistoryResult,'feed'>&{feed:string}>},private readonly calendar:Pick<AlpacaChartCalendar,'forBars'>,private readonly now:()=>number=Date.now,private readonly events?:Pick<AlpacaVwapCorporateEvents,'read'>,private readonly expectedFeed='sip'){}
  async read(request:VwapSeedRequest):Promise<VwapSeed>{
   const basisDate=easternClock(this.now()).date,key=JSON.stringify([basisDate,request]),cached=this.cache.get(key);
   if(cached&&this.now()-cached.at<300_000)return cached.seed;
@@ -31,7 +31,7 @@ export class AlpacaVwapHistory{
    if(this.now()-began>90_000||easternClock(this.now()).date!==basisDate)throw Error('vwap_history_unavailable');
    const next=Math.min(request.before,easternDayStart(cursor+(request.timeframe==='1D'?3650:30)*86400));if(next<=cursor)throw Error('vwap_history_unavailable');
    const history=await this.rest.history({symbol:request.symbol,timeframe:request.timeframe==='1D'?'1Day':'1Min',start:cursor*1000,end:next*1000-1});
-   if(history.basisDate!==basisDate||!history.complete||history.adjustment!=='split'||history.feed!=='sip'||history.symbol!==request.symbol)throw Error('vwap_history_unavailable');
+   if(history.basisDate!==basisDate||!history.complete||history.adjustment!=='split'||history.feed!==this.expectedFeed||history.symbol!==request.symbol)throw Error('vwap_history_unavailable');
    const inputs:Candle[]=history.bars;let sessionCalendar:ChartSessionCalendar|undefined;
    if(request.timeframe!=='1D'&&inputs.length){const facts=await this.calendar.forBars(inputs);if(!facts.available)throw Error('vwap_calendar_unavailable');const calendar=new ChartSessionCalendar();calendar.merge(facts);if(!inputs.every(bar=>calendar.covers(bar.time)))throw Error('vwap_calendar_unavailable');sessionCalendar=calendar;}
    const buckets=new Map<number,Candle>();

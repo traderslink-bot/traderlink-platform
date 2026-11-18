@@ -5,7 +5,9 @@ import { dirname, join } from "node:path";
 import { resolvePlatformDatabaseConfig } from "../platform/server/database/platform-database-config";
 import type { TraderLinkPlatformRequestIdentity } from "../platform/server/authentication/require-platform-request-scope";
 import { easternClock } from "../scanner/live/sessions";
-import { screenRules, sortIncludes, type Candidate, type Definition, type MarketPack, type RunResult } from "./contracts";
+import { marketDataSelection } from "../market-data/server/provider-settings";
+import { screenerPackFilename } from "./provider-pack-store";
+import { screenRules, sortIncludes, type Candidate, type Definition, type MarketPack, type RunResult, type ScreenerProviderSelection } from "./contracts";
 import { previewPack } from "./fixture";
 import { applyLiveScreenerBook } from "./live-screener-book";
 import { PAGE_SIZE, querySnapshot, sortRows } from "./query";
@@ -77,7 +79,7 @@ function withinSnapshotAgeLimit(pack: MarketPack, now: number) {
     .every(({ capturedAt }) => now - capturedAt <= MARKET_PACK_MAX_AGE_MS && capturedAt <= now + 5_000);
 }
 
-async function readSharedMarket(file: string, now: number) {
+async function readSharedMarket(file: string, now: number, selection: ScreenerProviderSelection) {
   const previous = lastMarket?.file === file && withinSnapshotAgeLimit(lastMarket.pack, now)
     ? lastMarket : undefined;
   try {
@@ -85,7 +87,7 @@ async function readSharedMarket(file: string, now: number) {
     if (!stats.isFile()) throw Error("market_pack_invalid");
     const signature = [stats.dev, stats.ino, stats.mtimeMs, stats.size].join(":");
     if (previous?.signature === signature) return { pack: previous.pack, fallback: false };
-    const pack = await readMarketPack(file, now);
+    const pack = await readMarketPack(file, now, selection);
     lastMarket = { file, signature, pack };
     return { pack, fallback: false };
   } catch (error) {
@@ -94,24 +96,31 @@ async function readSharedMarket(file: string, now: number) {
   }
 }
 
-async function marketForRun(now: number, preview: boolean) {
+async function marketForRun(now: number, preview: boolean, selection: ScreenerProviderSelection) {
   // The private VPS launcher isolates the app's data directory from other
   // development and hosted data. The market collector writes this file separately.
   const directory = stockScreenersDirectory();
   if (preview && process.env.TRADERLINK_PLATFORM_LOCAL_PRIVATE_DATA_ROOT !== dirname(directory)) {
     return { pack: previewMarket(now), fallback: false };
   }
-  const file = join(directory, "market.json");
+  let file = join(directory, screenerPackFilename(selection));
+  // Existing Alpaca installations keep working until their first scoped upload.
+  if (selection.provider === "alpaca" && selection.revision === 0) {
+    const scoped = await lstat(file).catch(() => null);
+    if (!scoped) file = join(directory, "market.json");
+  }
   const interval = process.env.TRADERLINK_STOCK_SCREENERS_LIVE_WORKER === "1"
     ? LIVE_SNAPSHOT_RECHECK_MS : SNAPSHOT_RECHECK_MS;
   if (!marketRead || marketRead.file !== file || marketRead.interval !== interval || marketRead.until <= now) {
-    marketRead = { file, interval, until: now + interval, result: readSharedMarket(file, now) };
+    marketRead = { file, interval, until: now + interval, result: readSharedMarket(file, now, selection) };
   }
+  const pending = marketRead;
   try {
-    const result = await marketRead.result;
+    const result = await pending.result;
     if (!withinSnapshotAgeLimit(result.pack, now)) throw Error("market_pack_invalid");
     return result;
   } catch (error) {
+    if (marketRead === pending) marketRead = undefined;
     if (preview && (error as NodeJS.ErrnoException)?.code === "ENOENT") return { pack: previewMarket(now), fallback: false };
     throw error;
   }
@@ -120,22 +129,26 @@ async function marketForRun(now: number, preview: boolean) {
 export async function createRun(identity: TraderLinkPlatformRequestIdentity, definition: Definition): Promise<RunResult> {
   const now = Date.now();
   const preview = identity.mode === "local_development" && process.env.NODE_ENV !== "production";
-  const { pack, fallback } = await marketForRun(now, preview);
+  const selection = marketDataSelection("screeners");
+  const { pack, fallback } = await marketForRun(now, preview, selection);
+  const currentSelection = marketDataSelection("screeners");
+  if (currentSelection.provider !== selection.provider || currentSelection.revision !== selection.revision) throw Error("market_pack_provider_mismatch");
   const lastAfterHours = pack.snapshots.after_hours;
   const hasClosedAfterHours = pack.latest === "last_regular" && lastAfterHours.closed &&
     lastAfterHours.date === pack.snapshots.last_regular.date &&
     lastAfterHours.rows.some(row => row.values.price !== undefined);
   const session = definition.session === "latest" ? (hasClosedAfterHours ? "after_hours" : pack.latest) : definition.session;
   const selected = pack.snapshots[session];
-  const liveMarket = process.env.TRADERLINK_STOCK_SCREENERS_LIVE_WORKER === "1" && selected.source === "Alpaca SIP" && !selected.closed
-    ? applyLiveScreenerBook(selected, now) : undefined;
+  const liveMarket = process.env.TRADERLINK_STOCK_SCREENERS_LIVE_WORKER === "1" && !selected.closed
+    ? applyLiveScreenerBook(selected, now, selection) : undefined;
   const { rows: snapshotRows, ...info } = liveMarket?.snapshot ?? selected;
   const example = info.source === "Preview data";
   const marketClock = easternClock(now);
   const weekday = new Date(marketClock.date + "T12:00:00Z").getUTCDay();
   const businessHours = weekday > 0 && weekday < 6 && marketClock.minute >= 240 && marketClock.minute < 1200;
+  const marketTime = info.closed || liveMarket?.freshness.size ? info.capturedAt : info.asOf;
   const stale = !example && ((!info.closed || (businessHours && definition.session === "latest"))
-    && now - info.capturedAt > 7 * 60_000);
+    && now - marketTime > 7 * 60_000);
   const includePressReleases = screenRules(definition).some(rule => rule.metric === "pressReleaseAge")
     || sortIncludes(definition.sort, "pressReleaseAge") || definition.columns.includes("pressReleaseAge");
   const recentPressReleases = includePressReleases && !example

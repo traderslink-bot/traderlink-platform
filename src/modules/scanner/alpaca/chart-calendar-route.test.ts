@@ -1,12 +1,13 @@
 // @vitest-environment node
 import {beforeEach,expect,it,vi} from 'vitest';
-const state=vi.hoisted(()=>({authenticated:true,access:true,gateway:vi.fn()}));
+const state=vi.hoisted(()=>({authenticated:true,access:true,gateway:vi.fn(),selection:{provider:"alpaca",revision:0}}));
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!state.authenticated)throw Error();return {};}}));
 vi.mock('@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access',()=>({hasWatchlistDashboardNavigationAccess:()=>state.access}));
 vi.mock('./client',()=>({requestAlpacaGateway:state.gateway}));
+vi.mock('@/src/modules/market-data/server/provider-settings',()=>({marketDataSelection:()=>({...state.selection})}));
 import {GET} from '@/app/api/charts/calendar/route';
 const request=(year='2027')=>new Request('http://local/api/charts/calendar?year='+year);
-beforeEach(()=>{state.authenticated=true;state.access=true;state.gateway.mockReset();});
+beforeEach(()=>{state.authenticated=true;state.access=true;state.gateway.mockReset();state.selection={provider:"alpaca",revision:0};});
 it('requires authenticated chart access before requesting calendar facts',async()=>{
  state.authenticated=false;expect((await GET(request())).status).toBe(401);expect(state.gateway).not.toHaveBeenCalled();
 });
@@ -17,4 +18,12 @@ it('returns the requested normalized year to signed-in accounts outside the scan
  state.access=false;
  const sessions=Array.from({length:252},(_,n)=>({date:new Date(Date.UTC(2027,0,1+n)).toISOString().slice(0,10),open:'09:30',close:'16:00',private:'excluded'}));
  state.gateway.mockResolvedValue({available:true,start:'2027-01-01',end:'2027-12-31',sessions,private:'excluded'});const response=await GET(request());expect(response.status).toBe(200);expect(response.headers.get('cache-control')).toBe('private, no-store');const body=await response.json();expect(body.sessions).toHaveLength(252);expect(body).not.toHaveProperty('private');expect(body.sessions[0]).not.toHaveProperty('private');expect(state.gateway.mock.calls[0][0]).toBe('calendar');expect(state.gateway.mock.calls[0][1].toString()).toBe('year=2027');
+});
+
+it('rejects an outdated source before reading data and a source changed during the read',async()=>{
+ const stale=new Request('http://local/api/charts/calendar?year=2027&provider=moomoo&providerRevision=1');
+ expect((await GET(stale)).status).toBe(409);expect(state.gateway).not.toHaveBeenCalled();
+ // Use an actual complete normalized calendar so the stale-source check is exercised.
+ state.gateway.mockImplementation(async()=>{state.selection={provider:"alpaca",revision:2};return {available:true,start:'2027-01-01',end:'2027-12-31',sessions:Array.from({length:252},(_,n)=>({date:new Date(Date.UTC(2027,0,1+n)).toISOString().slice(0,10),open:'09:30',close:'16:00'}))};});
+ expect((await GET(request())).status).toBe(409);
 });

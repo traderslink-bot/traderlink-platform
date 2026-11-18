@@ -151,3 +151,8 @@ views, the rendered buy and sell marker anchors matched the one-minute fill
 timestamps and exact execution prices within 0.001 CSS px. Saved shares,
 fill prices and realized gross P/L reconciled. Temporary browser
 instrumentation was removed. No deployment occurred.
+
+## Administrator provider switching
+
+The subsequent retained-Moomoo integration is tracked in
+[Analyzer provider switching](analyzer-provider-switching-progress.md).

@@ -139,6 +139,28 @@ describe("Trader Intelligence route containment matrix", () => {
     }));
   });
 
+  it.each([
+    "app/api/admin/market-data/route.ts",
+    "app/api/charts/provider/route.ts",
+    "app/api/company/details/route.ts",
+    "app/api/company/technicals/route.ts",
+  ])("requires the actual imported Platform guard for %s", path => {
+    const source = readFileSync(path, "utf8");
+    const matrix = TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(entry => entry.modulePath === path);
+    expect(matrix).toHaveLength(1);
+    const check = (testedSource: string) => scanTraderIntelligenceRouteContainment({
+      routeRecords: [{ path, source: testedSource }], intelligenceClientRecords: [], matrix,
+    });
+    expect(check(source)).toEqual([]);
+    const unguarded = source.replace(
+      "@/src/modules/platform/server/authentication/require-platform-request-scope",
+      "./unrecognized-market-data-guard",
+    );
+    for (const method of matrix[0].methods) expect(check(unguarded)).toContainEqual(expect.objectContaining({
+      code: "ti_v3_route_method_unwrapped", path, method,
+    }));
+  });
+
   it("requires Scanner settings to pass its verified owner predicate to the shared handler", () => {
     const path = "app/api/admin/screeners/settings/route.ts";
     const source = readFileSync(path, "utf8");

@@ -1,4 +1,5 @@
 // @vitest-environment node
+vi.mock("@/src/modules/market-data/server/provider-settings",()=>({marketDataSelection:()=>({provider:"alpaca",revision:0})}));
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const identity = vi.hoisted(() => vi.fn());

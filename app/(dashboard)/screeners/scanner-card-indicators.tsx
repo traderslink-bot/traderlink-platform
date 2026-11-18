@@ -1,4 +1,5 @@
 "use client";
+import {useMarketDataSelection} from "../charts/use-chart-market-data";
 
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import Box from "@mui/material/Box";
@@ -73,14 +74,14 @@ let active = 0;
 function pump() {
   while (active<3 && queue.length) queue.shift()?.();
 }
-function readsFor(symbol: string, frame: Frame, minute: number): Promise<ScannerIndicatorRead | null> {
-  const key = `${symbol}:${frame}`;
+function readsFor(symbol: string, frame: Frame, minute: number, providerQuery:string): Promise<ScannerIndicatorRead | null> {
+  const key = `${symbol}:${frame}:${providerQuery}`;
   const existing=histories.get(key);
   if(existing?.minute===minute) return existing.promise;
   const promise=new Promise<ScannerIndicatorRead | null>(resolve=>{
     queue.push(()=>{
       active++;
-      void fetch(`/api/screeners/charts/bars?symbol=${encodeURIComponent(symbol)}&scannerIndicators=1&frame=${frame}`,{cache:"no-store",signal:AbortSignal.timeout(15000)})
+      void fetch(`/api/screeners/charts/bars?symbol=${encodeURIComponent(symbol)}&scannerIndicators=1&frame=${frame}&${providerQuery}`,{cache:"no-store",signal:AbortSignal.timeout(15000)})
         .then(async response=>{
           if(!response.ok) return null;
           const value=await response.json() as ScannerIndicatorRead;
@@ -148,25 +149,28 @@ function RecentSignal({ signal, compact = false }: { signal: DisplaySignal; comp
 
 export function ScannerIndicatorReads({ row,now }: { row:Pick<LiveScannerRow,"symbol"|"price">; now:number }) {
   const { frame,selected }=useSettings();
+  const provider=useMarketDataSelection("scanners");
+  const providerQuery=`provider=${provider.provider}&providerRevision=${provider.revision}`;
+  const readKey=`${row.symbol}:${frame}:${providerQuery}`;
   const ref=useRef<HTMLDivElement|null>(null);
   const [visible,setVisible]=useState(false);
   const enabled = selected.length > 0;
   const frameMs = Number.parseInt(frame, 10) * 60_000;
   const historyWindow = Math.floor(now / frameMs) * frameMs / 60_000;
-  const [history,setHistory]=useState<ScannerIndicatorRead|null>(()=>
-    histories.get(`${row.symbol}:${frame}`)?.value??null);
+  const [savedRead,setSavedRead]=useState<{key:string;value:ScannerIndicatorRead}|null>(null);
+  const history=savedRead?.key===readKey?savedRead.value:histories.get(readKey)?.value??null;
   useEffect(()=>{
     if (!ref.current || !enabled) return;
     return observeIndicatorVisibility(ref.current,setVisible);
   },[enabled]);
   useEffect(()=>{
-    if(!visible||!enabled) return;
+    if(!visible||!enabled||!provider.ready) return;
     let current=true;
-    void readsFor(row.symbol,frame,historyWindow).then(value=>{
-      if(current && value) startTransition(()=>setHistory(value));
+    void readsFor(row.symbol,frame,historyWindow,providerQuery).then(value=>{
+      if(current && value) startTransition(()=>setSavedRead({key:readKey,value}));
     });
     return ()=>{current=false;};
-  },[row.symbol,frame,historyWindow,visible,enabled]);
+  },[row.symbol,frame,historyWindow,visible,enabled,provider.ready,providerQuery,readKey]);
   const chosen = history?.symbol===row.symbol && history.frame===frame ? history.rows.flatMap(reading => {
     if (!selected.includes(reading.name)) return [];
     const signals = reading.signals.filter(signal=>isRecentScannerSignal(signal.at,now));

@@ -1,6 +1,6 @@
 import type { ScreenerLiveUpdate } from "./live-market-worker";
 import type { LiveScreenerFrame, LiveScreenerWindow } from "./live-screener-book";
-import { MAX_LISTINGS } from "./contracts";
+import { MAX_LISTINGS, type ScreenerProviderSelection } from "./contracts";
 
 const SEND_INTERVAL = 500;
 const HEARTBEAT_INTERVAL = 1_000;
@@ -9,6 +9,7 @@ type Settings = {
   token: string;
   window: LiveScreenerWindow;
   signal: AbortSignal;
+  selection?: ScreenerProviderSelection;
   onError?: (status: number | "transport") => void;
 };
 
@@ -66,7 +67,7 @@ export class LiveScreenerPublisher {
     const generation = this.generation;
     const reset = this.reset;
     const selected = [...(reset ? this.rows : this.pending).values()];
-    const frame: LiveScreenerFrame = { ...window, generation, sequence: this.sequence + 1, sentAt: now, reset, rows: selected };
+    const frame: LiveScreenerFrame = { ...window, ...this.options.selection, generation, sequence: this.sequence + 1, sentAt: now, reset, rows: selected };
     this.inflight = true;
     try {
       const response = await this.transport(this.endpoint, {

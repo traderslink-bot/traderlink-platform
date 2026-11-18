@@ -8,6 +8,13 @@ import type { DailyTradeAnalyzerResult } from "../contracts/daily-trade-analyzer
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import type { DailyTradeExecutionCandleMismatch } from "./daily-trade-execution-candle-validation";
 
+export type AnalyzerMarketDataProvider = "alpaca" | "moomoo";
+
+const providerSources = {
+  alpaca: { key: "alpaca_sip_raw", adapter: "alpaca_sip_raw_v1" },
+  moomoo: { key: "moomoo_history_kline", adapter: "moomoo_history_kline_v1" },
+} as const;
+
 export type ClaimedLogicalTradeAnalyzerJob = Readonly<{
   attemptCount: number;
   createdAtUtc: string;
@@ -67,7 +74,10 @@ function newYorkDate(timestamp: string): string | null {
 }
 
 export class LogicalTradeAnalyzerRepository {
-  constructor(private readonly database: Database.Database) {}
+  constructor(
+    private readonly database: Database.Database,
+    readonly provider: AnalyzerMarketDataProvider = "alpaca",
+  ) {}
 
   hasPriorAnalysis(scope: AccountScope, logicalTradeId: string): boolean {
     return Boolean(this.database.prepare(`SELECT 1 FROM journal_logical_trade_daily_analyses
@@ -78,12 +88,13 @@ WHERE user_id = ? AND workspace_id = ? AND account_id = ? AND logical_trade_id =
 
   hasSavedCoverage(target: LogicalTradeAnalyzerTarget, desiredCoverageEndUtc: string): boolean {
     return Boolean(this.database.prepare(`SELECT 1 FROM level_analysis_market_session_sets session
-WHERE provider_key = 'alpaca_sip_raw' AND provider_adapter_version = 'alpaca_sip_raw_v1'
+WHERE provider_key = ? AND provider_adapter_version = ?
  AND provider_symbol = ? AND exchange_identity = 'unknown' AND trading_date_new_york = ?
  AND interval = '1m' AND session_policy = 'america_new_york_extended_0400_2000_v1'
  AND current_status = 'ready' AND current_coverage_end_utc >= ?
  AND EXISTS (SELECT 1 FROM level_analysis_market_session_candles candle
    WHERE candle.market_session_set_version_id = session.current_version_id)`).get(
+      providerSources[this.provider].key, providerSources[this.provider].adapter,
       target.providerSymbol, target.tradingDateNewYork, desiredCoverageEndUtc,
     ));
   }
@@ -280,28 +291,28 @@ WHERE version.workspace_id = ? AND version.account_id = ? AND version.logical_tr
     }));
   }
 
-  private alpacaSession(symbol: string, tradingDate: string, now: Date): string {
+  private providerSession(symbol: string, tradingDate: string, now: Date): string {
     const timestamp = createCanonicalUtcTimestamp(now);
     this.database.prepare(`INSERT INTO level_analysis_market_session_sets (
  market_session_set_id, provider_key, provider_adapter_version, provider_symbol,
  exchange_identity, trading_date_new_york, interval, session_policy,
  current_version_id, current_coverage_end_utc, current_status, lease_expires_at_utc,
  created_at_utc, updated_at_utc
-) VALUES (?, 'alpaca_sip_raw', 'alpaca_sip_raw_v1', ?, 'unknown', ?,
+) VALUES (?, ?, ?, ?, 'unknown', ?,
  '1m', 'america_new_york_extended_0400_2000_v1', NULL, NULL, 'queued', NULL, ?, ?)
 ON CONFLICT(provider_key, provider_adapter_version, provider_symbol, exchange_identity,
  trading_date_new_york, interval, session_policy) DO NOTHING`).run(
-      createCanonicalUuidV4(), symbol,
+      createCanonicalUuidV4(), providerSources[this.provider].key, providerSources[this.provider].adapter, symbol,
       tradingDate, timestamp, timestamp,
     );
     const session = this.database.prepare(`SELECT market_session_set_id
 FROM level_analysis_market_session_sets
-WHERE provider_key = 'alpaca_sip_raw' AND provider_adapter_version = 'alpaca_sip_raw_v1'
+WHERE provider_key = ? AND provider_adapter_version = ?
  AND provider_symbol = ? AND exchange_identity = 'unknown' AND trading_date_new_york = ?
  AND interval = '1m' AND session_policy = 'america_new_york_extended_0400_2000_v1'`).get(
-      symbol, tradingDate,
+      providerSources[this.provider].key, providerSources[this.provider].adapter, symbol, tradingDate,
     ) as { market_session_set_id: string } | undefined;
-    if (!session) throw new Error("alpaca_analyzer_session_unavailable");
+    if (!session) throw new Error("analyzer_provider_session_unavailable");
     return session.market_session_set_id;
   }
 
@@ -314,7 +325,7 @@ WHERE provider_key = 'alpaca_sip_raw' AND provider_adapter_version = 'alpaca_sip
     refreshCompleted?: boolean;
   }>): Readonly<{ jobId: string; created: boolean }> {
     const timestamp = createCanonicalUtcTimestamp(input.now);
-    const sessionId = this.alpacaSession(input.target.providerSymbol, input.target.tradingDateNewYork, input.now);
+    const sessionId = this.providerSession(input.target.providerSymbol, input.target.tradingDateNewYork, input.now);
     const existing = this.database.prepare(`SELECT logical_trade_job_id
 FROM level_analysis_logical_trade_jobs WHERE workspace_id = ? AND account_id = ?
  AND logical_trade_version_id = ? AND desired_coverage_end_utc = ?`).get(
@@ -353,7 +364,23 @@ WHERE logical_trade_job_id = ? AND status = 'queued'
       .run(timestamp, timestamp, jobId);
   }
 
-  claimNext(now: Date): ClaimedLogicalTradeAnalyzerJob | null {
+  nextProvider(now: Date): AnalyzerMarketDataProvider | null {
+    const row = this.database.prepare(`SELECT session.provider_key
+FROM level_analysis_logical_trade_jobs job
+JOIN level_analysis_market_session_sets session ON session.market_session_set_id=job.market_session_set_id
+WHERE (job.status='queued' OR (job.status='leased' AND job.lease_expires_at_utc < ?))
+ AND job.next_attempt_at_utc <= ?
+ AND session.provider_adapter_version IN ('alpaca_sip_raw_v1','moomoo_history_kline_v1')
+ AND NOT EXISTS (SELECT 1 FROM journal_demo_accounts demo
+   WHERE demo.workspace_id=job.workspace_id AND demo.account_id=job.account_id)
+ORDER BY job.created_at_utc, job.logical_trade_job_id LIMIT 1`).get(
+      createCanonicalUtcTimestamp(now), createCanonicalUtcTimestamp(now),
+    ) as { provider_key: string } | undefined;
+    if (!row) return null;
+    return row.provider_key === "alpaca_sip_raw" ? "alpaca" : "moomoo";
+  }
+
+  claimNext(now: Date, provider: AnalyzerMarketDataProvider = "alpaca"): ClaimedLogicalTradeAnalyzerJob | null {
     const timestamp = createCanonicalUtcTimestamp(now);
     const row = this.database.transaction(() => {
       // The first shared-worker release judged sparse symbols incomplete when
@@ -400,10 +427,13 @@ WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
 FROM level_analysis_logical_trade_jobs
 WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
  AND next_attempt_at_utc <= ?
+ AND EXISTS (SELECT 1 FROM level_analysis_market_session_sets session
+   WHERE session.market_session_set_id=level_analysis_logical_trade_jobs.market_session_set_id
+    AND session.provider_key=? AND session.provider_adapter_version=?)
  AND NOT EXISTS (SELECT 1 FROM journal_demo_accounts demo
    WHERE demo.workspace_id = level_analysis_logical_trade_jobs.workspace_id
     AND demo.account_id = level_analysis_logical_trade_jobs.account_id)
-ORDER BY created_at_utc, logical_trade_job_id LIMIT 1`).get(timestamp, timestamp) as
+ORDER BY created_at_utc, logical_trade_job_id LIMIT 1`).get(timestamp, timestamp, providerSources[provider].key, providerSources[provider].adapter) as
         | { logical_trade_job_id: string; user_id: string; workspace_id: string; account_id: string;
             logical_trade_id: string; logical_trade_version_id: string; market_session_set_id: string;
             desired_coverage_end_utc: string; attempt_count: number; created_at_utc: string; post_session_refresh: number }
@@ -424,17 +454,11 @@ WHERE logical_trade_job_id = ? AND (status = 'queued' OR (status = 'leased' AND 
       this.finish(row.logical_trade_job_id, "expired", now);
       return null;
     }
-    const sessionId = this.alpacaSession(target.providerSymbol, target.tradingDateNewYork, now);
-    if (sessionId !== row.market_session_set_id) {
-      this.database.prepare(`UPDATE level_analysis_logical_trade_jobs
-SET market_session_set_id = ? WHERE logical_trade_job_id = ? AND status = 'leased'`)
-        .run(sessionId, row.logical_trade_job_id);
-    }
     return Object.freeze({ attemptCount: row.attempt_count + 1,
       createdAtUtc: (this.database.prepare(`SELECT created_at_utc FROM level_analysis_manual_retry_requests
 WHERE logical_trade_job_id=? ORDER BY created_at_utc DESC,rowid DESC LIMIT 1`).get(row.logical_trade_job_id) as { created_at_utc: string } | undefined)?.created_at_utc ?? row.created_at_utc,
       desiredCoverageEndUtc: row.desired_coverage_end_utc, jobId: row.logical_trade_job_id,
-      marketSessionSetId: sessionId, postSessionRefresh: row.post_session_refresh === 1, scope, target });
+      marketSessionSetId: row.market_session_set_id, postSessionRefresh: row.post_session_refresh === 1, scope, target });
   }
 
   persistResult(input: Readonly<{

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { marketDataProvider } from "@/src/modules/market-data/server/provider-settings";
+
 import type Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -125,7 +127,7 @@ export function createJournalIntegrityRuntime(
   );
   const logicalTradeAnalyzer = new LogicalTradeAnalyzerSelectionService(
     logicalTrades,
-    new LogicalTradeAnalyzerRepository(database),
+    new LogicalTradeAnalyzerRepository(database, marketDataProvider("trade-analyzer", environment)),
     new SharedAnalyzerAllowanceRepository(database),
     new TrendMomentumHistoryRepository(database),
   );

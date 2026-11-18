@@ -51,7 +51,8 @@ export class LogicalTradeAnalyzerSelectionService {
       const retry = this.analyzer.hasPriorAnalysis(scope, target.logicalTradeId);
       const savedIndicators = savedCoverage && (!this.indicatorHistory ||
         this.indicatorHistory.hasSufficientEvidence(scope, target.providerSymbol, target.tradingDateNewYork,
-          Math.min(...target.events.map((event) => Date.parse(event.executedAtUtc) / 1000)), desiredEnd));
+          Math.min(...target.events.map((event) => Date.parse(event.executedAtUtc) / 1000)), desiredEnd,
+          this.analyzer.provider === "alpaca" ? "alpaca_sip_raw_v1" : "moomoo_history_kline_v1"));
       if (!savedCoverage && !retry && !hasSharedAnalyzerAllowance(availability)) return "usage_exhausted";
       if (retry && !savedIndicators && !this.allowances.manualRetryAvailable(scope, target.logicalTradeId, now)) return "retry_limit_reached";
       const queued = this.analyzer.queue({

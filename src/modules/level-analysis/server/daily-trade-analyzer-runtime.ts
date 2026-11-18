@@ -1,5 +1,11 @@
 import "server-only";
 
+import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
+import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import { MoomooDailyTradeKlineMarketDataProvider } from "./providers/moomoo-daily-trade-kline-market-data-provider";
+import { LogicalTradeMoomooAnalyzerWorker } from "./logical-trade-moomoo-analyzer-worker";
+import { MoomooChartHistory } from "@/src/modules/market-data/server/moomoo-chart-history";
+import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 
 import { DailyTradeAnalyzerRepository } from "./daily-trade-analyzer-repository";
@@ -72,20 +78,43 @@ export async function runDailyTradeAnalyzerOnce(): Promise<boolean> {
     try { database = openPlatformDatabase({ mode: "runtime" }); }
     finally { dbOpenMs = performance.now() - openStarted; }
     const allowances = new SharedAnalyzerAllowanceRepository(database);
-    const provider = new AlpacaAnalyzerMarketDataProvider();
-    const providerFor = async () => provider;
+    const logical = new LogicalTradeAnalyzerRepository(database);
+    // Selection is pinned by the queued session, including post-session refresh.
+    const source = logical.nextProvider(new Date()) ?? "alpaca";
     const dailyRepository = new DailyTradeAnalyzerRepository(database);
-    const worker = new LogicalTradeAlpacaAnalyzerWorker(
-      new LogicalTradeAnalyzerRepository(database), dailyRepository, allowances, providerFor,
-      new LogicalTradeAnalyzerNotificationService(database),
-      undefined,
-      new TrendMomentumHistoryService(new TrendMomentumHistoryRepository(database), allowances, providerFor, undefined, (symbol) => provider.splitDates(symbol)),
-      (timing) => {
-        claimStartEpochMs = timing.startEpochMs;
-        claimEndEpochMs = timing.endEpochMs;
-        claimNextMs = timing.durationMs;
-      },
-    );
+    const notifications = new LogicalTradeAnalyzerNotificationService(database);
+    const onClaimTiming = (timing: { startEpochMs: number; endEpochMs: number; durationMs: number }) => {
+      claimStartEpochMs = timing.startEpochMs;
+      claimEndEpochMs = timing.endEpochMs;
+      claimNextMs = timing.durationMs;
+    };
+    let worker: LogicalTradeAlpacaAnalyzerWorker | LogicalTradeMoomooAnalyzerWorker;
+    if (source === "moomoo") {
+      const connections = new MoomooConnectionRepository(database);
+      const providerFor = async (scope: AccountScope, completeHistory = false) => {
+        const accessToken = await new MoomooConnectionAccessService(connections).accessToken({
+          ...scope, allowedAccountIds: [scope.accountId], activeAccountId: scope.accountId,
+        });
+        return new MoomooDailyTradeKlineMarketDataProvider(() => Promise.resolve(accessToken), undefined, { completeHistory });
+      };
+      const corporateActions = new MoomooChartHistory();
+      worker = new LogicalTradeMoomooAnalyzerWorker(
+        logical, dailyRepository, allowances, providerFor, notifications, undefined,
+        new TrendMomentumHistoryService(new TrendMomentumHistoryRepository(database), allowances,
+          (scope) => providerFor(scope, true), undefined,
+          async symbol => (await corporateActions.readEvents(symbol, "Splits")).dates, "moomoo_history_kline_v1"),
+        onClaimTiming,
+      );
+    } else {
+      const provider = new AlpacaAnalyzerMarketDataProvider();
+      const providerFor = async () => provider;
+      worker = new LogicalTradeAlpacaAnalyzerWorker(
+        logical, dailyRepository, allowances, providerFor, notifications, undefined,
+        new TrendMomentumHistoryService(new TrendMomentumHistoryRepository(database), allowances,
+          providerFor, undefined, (symbol) => provider.splitDates(symbol)),
+        onClaimTiming,
+      );
+    }
     setupMs = performance.now() - started - (dbOpenMs ?? 0);
     const runStarted = performance.now();
     try { return await worker.runOne(); }

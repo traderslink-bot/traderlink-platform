@@ -14,11 +14,12 @@ export class TrendMomentumHistoryService {
     private readonly allowances: SharedAnalyzerAllowanceRepository,
     private readonly providerFor: (scope: AccountScope) => Promise<MarketDataProvider>,
     private readonly now: () => Date = () => new Date(),
-    private readonly splitDates?: (symbol: string) => Promise<readonly string[]>) {}
+    private readonly splitDates?: (symbol: string) => Promise<readonly string[]>,
+    private readonly source: "alpaca_sip_raw_v1" | "moomoo_history_kline_v1" = splitDates ? "alpaca_sip_raw_v1" : "moomoo_history_kline_v1") {}
 
   beginSession(job: ClaimedLogicalTradeAnalyzerJob, acquisitionId: string, start: number, endExclusive: number) {
     return this.history.begin({ scope: job.scope, jobId: job.jobId, acquisitionId,
-      range: { start, endExclusive }, now: this.now(), alpaca: Boolean(this.splitDates) });
+      range: { start, endExclusive }, now: this.now(), alpaca: this.source === "alpaca_sip_raw_v1" });
   }
   finishSession(job: ClaimedLogicalTradeAnalyzerJob, requestId: string, result: MarketDataProviderResult) {
     this.history.finish({ scope: job.scope, jobId: job.jobId, requestId, result, now: this.now() });
@@ -33,12 +34,16 @@ export class TrendMomentumHistoryService {
     let prior = priorIndicatorHistoryRanges(job.target.tradingDateNewYork);
     if (this.splitDates) {
       const dates = await this.splitDates(job.target.providerSymbol);
+      if (dates.some(date => !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date)) {
+        throw new Error("indicator_split_date_invalid");
+      }
       const lastSplit = dates.filter((date) => date <= job.target.tradingDateNewYork).sort().at(-1);
       const splitSession = lastSplit ? newYorkExtendedSession(lastSplit) : null;
       if (splitSession) prior = prior.filter((range) => range.start >= splitSession.startTime);
     }
     const evidence = this.history.compatibleEvidence(job.scope, job.target.providerSymbol,
-      prior.at(-1)?.start ?? session.startTime, asOf, this.splitDates ? "alpaca_sip_raw_v1" : "moomoo_history_kline_v1");
+      prior.at(-1)?.start ?? session.startTime, asOf, this.source);
     const evidenceBars = reconciledSession
       ? [...evidence.candles.filter((bar) => bar.time < session.startTime),
         ...reconciledSession.filter((bar) => bar.time >= session.startTime && bar.time + 60 <= asOf)]
@@ -58,7 +63,7 @@ export class TrendMomentumHistoryService {
     if (reconciledSession) return { pending: false, input, outcome: "history_exhausted" };
     // One range per pass. Completed sparse/empty windows are never retried.
     const candidates = [...(!currentCovered ? [{ start: session.startTime, endExclusive: asOf }] : []), ...(!enough ? prior : [])];
-    const rows = this.history.read(job.scope, job.jobId);
+    const rows = this.history.read(job.scope, job.jobId, false, this.source);
     let exhaustedByFailure = false;
     for (const range of candidates) {
       if (hasCompletedIndicatorCoverage(evidence.ranges, range.start, range.endExclusive)) continue;
@@ -69,7 +74,7 @@ export class TrendMomentumHistoryService {
       if (last?.completed_at_utc && Date.parse(last.completed_at_utc) + 60_000 > now.getTime()) return { pending: true };
       const requestStartedAt = this.allowances.historyRequestStartedAt(job.jobId, job.createdAtUtc, now);
       if (now.getTime() - Date.parse(requestStartedAt) >= 24 * 3600_000) { exhaustedByFailure = true; break; }
-      const scope = this.splitDates ? job.scope : this.allowances.designatedScope();
+      const scope = this.source === "alpaca_sip_raw_v1" ? job.scope : this.allowances.designatedScope();
       if (!scope || !this.allowances.hasHistoryReservation(job.jobId, now)) {
         return { pending: false, input, outcome: "provider_unavailable" };
       }
@@ -77,7 +82,7 @@ export class TrendMomentumHistoryService {
         marketSessionSetId: job.marketSessionSetId, now, historyContinuation: true });
       if (!acquisition) return { pending: true };
       const requestId = this.history.begin({ scope: job.scope, jobId: job.jobId,
-        acquisitionId: acquisition.acquisitionId, range, now, alpaca: Boolean(this.splitDates) });
+        acquisitionId: acquisition.acquisitionId, range, now, alpaca: this.source === "alpaca_sip_raw_v1" });
       if (!requestId) {
         this.allowances.completeAcquisition({ acquisitionId: acquisition.acquisitionId, now, outcome: "provider_unavailable" });
         return { pending: true };

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { fetchWatchlistMoomooCandles } from "@/src/modules/watchlist/server/moomoo-watchlist-candle-bridge";
-import { alpacaMarketDataEnabled } from "@/src/modules/scanner/alpaca/client";
+import { marketDataSelection } from "@/src/modules/market-data/server/provider-settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +43,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid candle request." }, { status: 400 });
   }
 
+  let selectedProvider: "alpaca" | "moomoo" | undefined;
   try {
+    const selection = marketDataSelection("watchlist");
+    selectedProvider = selection.provider;
     const result = await fetchWatchlistMoomooCandles({
       symbol,
       interval: "1m",
@@ -51,12 +54,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       startTime,
       endTime,
     });
+    const current = marketDataSelection("watchlist");
+    if (current.provider !== selection.provider || current.revision !== selection.revision) {
+      return NextResponse.json({ status: "unavailable", code: "watchlist_provider_changed" }, { status: 503 });
+    }
     if (!result.ok) {
       return NextResponse.json({ status: "unavailable", code: result.code }, { status: 503 });
     }
     return NextResponse.json({
       status: "ready",
-      provider: alpacaMarketDataEnabled() ? "alpaca" : "moomoo_open_api",
+      provider: selection.provider === "alpaca" ? "alpaca" : "moomoo_open_api",
       symbol,
       candles: result.candles.map((candle) => ({
         timestamp: candle.time * 1_000,
@@ -68,6 +75,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       })),
     });
   } catch {
-    return NextResponse.json({ status: "unavailable", code: alpacaMarketDataEnabled() ? "alpaca_connection_unavailable" : "moomoo_connection_unavailable" }, { status: 503 });
+    return NextResponse.json({ status: "unavailable", code: selectedProvider === "alpaca" ? "alpaca_connection_unavailable" : selectedProvider === "moomoo" ? "moomoo_connection_unavailable" : "watchlist_candle_connection_unavailable" }, { status: 503 });
   }
 }
