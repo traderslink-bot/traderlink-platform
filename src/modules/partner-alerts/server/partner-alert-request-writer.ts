@@ -23,7 +23,8 @@ import { parsePartnerAlertCheckoutOffer, partnerAlertExactKeys, partnerAlertId, 
   parsePartnerAlertPublishingTerms, partnerAlertRef, partnerAlertSnowflake, partnerAlertUtc } from "../contracts/partner-alert-validation";
 import { PartnerAlertPlatformAuthority } from "./partner-alert-platform-authority";
 import type { PartnerAlertAuthority } from "./partner-alert-authority";
-import { PartnerAlertRepository } from "./partner-alert-repository";
+import { PartnerAlertRepository, PartnerAlertRepositoryError } from "./partner-alert-repository";
+import { requirePartnerAlertAdmission } from "./partner-alert-admission";
 import { currentPlatformErasureAdmission, hasPlatformErasureModules, requirePlatformErasureWriter } from "../../platform/server/privacy/platform-erasure-admission";
 import { inspectPartnerAlertPreparedCommand, withPartnerAlertVerifiedCommand, requirePartnerAlertVerifiedCommand,
   type PartnerAlertPreparedCommand } from "./partner-alert-request-boundary";
@@ -333,6 +334,45 @@ export class PartnerAlertRequestWriter {
     });
     providerPlanBindings.set(plan, { writer: this, request, command, consumed: false });
     return plan;
+  }
+
+  /** First approval is the explicit owner configuration event. Draft reads and
+   * community-owner saves never initialize a fence or acquire owner authority. */
+  private approvePartnerWithContext(repository: PartnerAlertRepository,
+    input: Parameters<PartnerAlertRepository["approvePartner"]>[0], configurationRef: string) {
+    const database = this.database;
+    const context = database.prepare<[string], { configuration_ref: string }>(
+      "SELECT configuration_ref FROM partner_alert_context_epochs WHERE community_id=?",
+    ).get(input.communityId);
+    const hold = (): never => {
+      throw new PartnerAlertRepositoryError("unavailable", "Publishing approval is temporarily unavailable.");
+    };
+    if (context && context.configuration_ref !== configurationRef) return hold();
+    if (!context) {
+      const partner = database.prepare<[string], {
+        status: string; approved_at_utc: string | null; approved_application_revision: number | null;
+      }>("SELECT status,approved_at_utc,approved_application_revision FROM partner_alert_partners WHERE community_id=?")
+        .get(input.communityId);
+      // Absence is not permission to reconstruct a lost generation for a
+      // publisher that has already been approved, activated, sold or delivered.
+      if (!partner || !["draft", "awaiting_approval"].includes(partner.status)
+        || partner.approved_at_utc !== null || partner.approved_application_revision !== null
+        || database.prepare(`SELECT 1 FROM partner_alert_audit_events
+          WHERE community_id=? AND action IN ('partner.approved','partner.activated') LIMIT 1`).get(input.communityId)
+        || database.prepare(`SELECT 1 FROM partner_alert_mappings
+          WHERE community_id=? AND (activated_at_utc IS NOT NULL OR delivery_state='ready') LIMIT 1`).get(input.communityId)
+        || ["partner_alert_stripe_checkout_claims", "partner_alert_memberships", "partner_alert_role_jobs",
+          "partner_alert_source_messages", "partner_alert_deliveries", "partner_alert_mirrored_parts"]
+          .some(table => database.prepare(`SELECT 1 FROM ${table} WHERE community_id=? LIMIT 1`).get(input.communityId))) {
+        return hold();
+      }
+    }
+    // Existing inspection, revision, resource and offer checks happen BEFORE
+    // enrollment. A later failure propagates through the owning Auth/Core frame,
+    // rolling back this approval, its command/audit and the context together.
+    const result = repository.approvePartner(input);
+    if (!context) requirePartnerAlertAdmission(database).onboardCommunity(input.communityId, configurationRef);
+    return result;
   }
 
   /** Existing commands only. A non-applied workflow outcome is
@@ -682,7 +722,8 @@ export class PartnerAlertRequestWriter {
                   approveMapping: input => guarded(() => repository.approveMapping(input)),
                   approveOffer: input => guarded(() => repository.approveOffer(input)),
                   activatePartner: input => guarded(() => repository.activatePartner(input)),
-                  approvePartner: input => guarded(() => repository.approvePartner(input)),
+                  approvePartner: input => guarded(() => this.approvePartnerWithContext(repository, input,
+                    configuration.outputConfigurationRef)),
                   setPartnerState: input => guarded(() => repository.setPartnerState(input)),
                   requestChanges: input => guarded(() => repository.requestChanges(input)),
                   declinePartner: input => guarded(() => repository.declinePartner(input)),
