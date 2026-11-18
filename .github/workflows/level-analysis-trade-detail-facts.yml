@@ -29,7 +29,7 @@ on:
 jobs:
   seeded-trade-detail-flow:
     name: Seeded trade detail level facts flow
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
       CI: "true"
