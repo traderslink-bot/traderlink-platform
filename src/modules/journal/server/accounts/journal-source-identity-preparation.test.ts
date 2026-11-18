@@ -1,5 +1,6 @@
 import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -46,11 +47,34 @@ import {
 } from "./journal-account-service";
 
 const roots: string[] = [];
+const retiredDatabasePaths = new Set<string>();
+type FixtureIntegrityState = {
+  version: number;
+  quickCheckTimer: ReturnType<typeof setTimeout> | null;
+  dirtySinceForeignKeyCheck: boolean;
+  dirtySinceQuickCheck: boolean;
+  quickCheckInFlight: boolean;
+  cancelWorker: (() => void) | null;
+  foreignKeyCheckFailed: boolean;
+  quickCheckFailed: boolean;
+};
+type FixtureProcessState = typeof globalThis & {
+  __traderlinkPlatformRuntimeDatabaseIntegrityFingerprints?: Map<string, FixtureIntegrityState | string>;
+};
 
-afterEach(() => {
-  for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true });
-  }
+async function removeFixtureRoot(root: string): Promise<void> {
+  await removePlatformDatabaseTestFixture(root);
+  retiredDatabasePaths.add(join(root, "storage", "development.sqlite"));
+}
+
+afterEach(async () => {
+  // Start cancellation for every owned fixture before yielding to any timer.
+  await Promise.all(roots.splice(0).map(removeFixtureRoot));
+}, 20_000);
+
+afterAll(() => {
+  const cache = (globalThis as FixtureProcessState).__traderlinkPlatformRuntimeDatabaseIntegrityFingerprints;
+  for (const databasePath of retiredDatabasePaths) expect(cache?.has(databasePath) ?? false).toBe(false);
 });
 
 type Harness = Readonly<{
@@ -582,4 +606,65 @@ WHERE account_id = ?`).run(harness.accountIds[0]);
       }
     }
   });
+});
+
+
+describe("source preparation fixture lifecycle", () => {
+  function fixtureState(root: string): { cache: Map<string, FixtureIntegrityState | string>; path: string; state: FixtureIntegrityState } {
+    const globals = globalThis as FixtureProcessState;
+    const cache = globals.__traderlinkPlatformRuntimeDatabaseIntegrityFingerprints ??= new Map();
+    const path = join(root, "storage", "development.sqlite");
+    const state: FixtureIntegrityState = {
+      version: 3, quickCheckTimer: null, dirtySinceForeignKeyCheck: true,
+      dirtySinceQuickCheck: true, quickCheckInFlight: true, cancelWorker: null,
+      foreignKeyCheckFailed: false, quickCheckFailed: false,
+    };
+    cache.set(path, state);
+    return { cache, path, state };
+  }
+
+  it("cancels queued checks and waits for owned readers without touching unrelated state", async () => {
+    const root = mkdtempSync(join(tmpdir(), "traderlink-source-preparation-"));
+    roots.push(root);
+    const { cache, path, state } = fixtureState(root);
+    let queuedCheckRan = false, releasedWithFilesPresent = false;
+    state.quickCheckTimer = setTimeout(() => { queuedCheckRan = true; }, 0);
+    state.cancelWorker = () => {
+      setTimeout(() => {
+        releasedWithFilesPresent = existsSync(root);
+        state.quickCheckInFlight = false;
+      }, 20);
+    };
+    const unrelatedPath = root + "-unowned";
+    cache.set(unrelatedPath, "unrelated fingerprint");
+    try {
+      await removeFixtureRoot(root);
+      expect(queuedCheckRan).toBe(false);
+      expect(releasedWithFilesPresent).toBe(true);
+      expect(existsSync(root)).toBe(false);
+      expect(cache.has(path)).toBe(false);
+      expect(cache.get(unrelatedPath)).toBe("unrelated fingerprint");
+    } finally { cache.delete(unrelatedPath); }
+  });
+
+  it.each(["foreignKeyCheckFailed", "quickCheckFailed"] as const)(
+    "preserves fixture evidence and fails cleanup for a genuine %s result",
+    async failure => {
+      const root = mkdtempSync(join(tmpdir(), "traderlink-source-preparation-"));
+      roots.push(root);
+      const { cache, path, state } = fixtureState(root);
+      state.cancelWorker = () => {
+        setTimeout(() => { state[failure] = true; state.quickCheckInFlight = false; }, 10);
+      };
+      try {
+        await expect(removeFixtureRoot(root)).rejects.toThrow();
+        expect(existsSync(root)).toBe(true);
+        expect(cache.has(path)).toBe(true);
+      } finally {
+        // Only this synthetic failed-reader fixture is reset for its own cleanup.
+        state[failure] = false;
+        state.cancelWorker = null;
+      }
+    },
+  );
 });

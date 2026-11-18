@@ -1,5 +1,6 @@
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash } from "node:crypto";
-import { readFileSync, rmSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -187,10 +188,10 @@ beforeEach(() => {
   );
 });
 
-afterEach(() => {
+afterEach(async () => {
   restoreEnvironment();
-  rmSync(foundation.root, { recursive: true, force: true });
-});
+  await removePlatformDatabaseTestFixture(foundation.root);
+}, 20_000);
 
 describe("replacement Journal Level Analysis route boundaries", () => {
   it("resolves, persists, deduplicates and reads an account-scoped link", async () => {

@@ -1,12 +1,13 @@
 import {countCreatedPlatformTestUsers,openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { PlatformAuthenticationRepository } from "./platform-authentication-repository";
 import { provisionVerifiedPlatformIdentity } from "./platform-identity-provisioning";
 const roots: string[] = [];
-afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
+afterEach(async () => { for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root); }, 20_000);
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), "platform-identity-provisioning-")); roots.push(root);
   const db = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: join(root, "qa.sqlite"), forbiddenRepositoryRoots: [] });

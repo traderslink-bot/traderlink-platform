@@ -122,3 +122,29 @@ The source contracts follow official
 [corporate-action](https://open.moomoo.com/api/quote/basic-data/rehab),
 [snapshot](https://open.moomoo.com/api/quote/realtime/market-snapshot) and
 [calendar](https://open.moomoo.com/api/quote/basic-data/trading-days) documentation.
+
+
+## Full-size snapshot ingress correction, November 17 ET
+
+The first real combined-worker pack POST returned HTTP 400. The production
+log at 2026-11-18T03:10:17.408689584Z reported that Next.js truncated
+`/api/internal/stock-screeners-pack` to 10 MiB. The route's intended 128 MiB
+streaming bound was downstream of the application's all-path proxy clone.
+A validator-valid 5,843-symbol fixture reproduced the failure with 28,103,761
+input bytes and only 10,485,760 forwarded bytes, producing invalid JSON.
+
+The repair excludes only the exact pack endpoint and its trailing-slash form
+from proxy matching. Every other proxy path keeps its published behavior.
+The route retains bearer authentication, the existing 128 MiB streaming bound,
+provider/revision fences, watermark/value checks and atomic file replacement.
+Its error log now records only stage, byte count and an allowlisted error code.
+No pack contents, credentials or arbitrary exception message are logged.
+
+Three focused tests passed against published 861 source plus this patch. They
+cover Next's actual truncating clone, intact large-pack publication, exact-path
+matching, wrong-token and revision rejection, invalid future watermark rejection,
+and the unchanged streaming-size limit. Exact-source TypeScript and targeted
+ESLint also passed. The running VPS worker and its warm cache were preserved.
+A Platform-only deployment lets the ordinary next warm collection publish through
+the corrected ingress. Actual scoped publication and the authorized owner run
+remain release-Coordinator verification steps.

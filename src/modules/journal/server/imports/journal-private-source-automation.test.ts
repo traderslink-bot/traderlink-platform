@@ -1,4 +1,5 @@
 import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash } from "node:crypto";
 import {
   existsSync,
@@ -6,7 +7,6 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
-  rmSync,
   statSync,
   symlinkSync,
   writeFileSync,
@@ -94,11 +94,11 @@ function expectNoPendingWal(databasePath: string): void {
   if (existsSync(walPath)) expect(statSync(walPath).size).toBe(0);
 }
 
-afterEach(() => {
+afterEach(async () => {
   for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true });
+    await removePlatformDatabaseTestFixture(root);
   }
-});
+}, 20_000);
 
 function acceptedShapeStatement(): string {
   const tradeHeader =

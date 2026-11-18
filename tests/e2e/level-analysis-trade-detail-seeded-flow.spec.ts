@@ -1,4 +1,11 @@
 import { Buffer } from "node:buffer";
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { PLATFORM_MUTATION_REQUEST_HEADER } from "../../src/modules/platform/contracts/platform-request-security";
+import { renderLegacyFactsHarness } from "./level-analysis/component-renderer.cjs";
+const ORIGIN = "https://127.0.0.1:3102";
+const controlRoot = () => process.env.LEVEL_ANALYSIS_E2E_CONTROL_ROOT!;
 import { expect, test, type Page } from "@playwright/test";
 import deliveryFixture from "../../src/lib/level-analysis/__fixtures__/level-analysis-journal-delivery-package-v1.compact.json";
 
@@ -23,67 +30,52 @@ const UNSAFE_LEVEL_FACTS_PHRASES = [
   "behavior scoring",
 ];
 
-async function openDisclosure(page: Page, testId: string, label: string) {
-  const details = page.getByTestId(testId);
-
-  if ((await details.count()) === 0) {
-    return;
-  }
-
-  const trigger = details.getByText(label, { exact: true });
-  const isOpen = (await details.getAttribute("open")) !== null;
-
-  if (!isOpen && (await trigger.isVisible())) {
-    await trigger.click();
-  }
-}
-
 async function saveSeedTrade(page: Page): Promise<{ id: string; symbol: string }> {
-  const symbol = "DEVS";
+  // Accepted replacement import UI; same four fills, now in its supported format.
   const csv = [
-    "Ticker,Executed At,Action,Qty,Fill Price,Status,Commission,Fees,Net Amount",
-    `${symbol},06/01/2026 11:55:00 AM,BOT,60,$10.00,Filled,$0.50,$0.02,-600.52`,
-    `${symbol},2026-06-01 11:59:00,BOT,40,10.10,Filled,0.50,0.02,-404.52`,
-    `${symbol},2026-06-01 12:02:00,SLD,50,10.35,Filled,0.50,0.02,516.98`,
-    `${symbol},2026-06-01 12:05:00,SLD,50,10.45,Filled,0.50,0.02,521.98`,
-  ].join("\n");
-
+    "Statement,Header,Field Name,Field Value",
+    'Statement,Data,Period,"June 1, 2026 - June 1, 2026"',
+    "Account Information,Header,Field Name,Field Value",
+    "Account Information,Data,Account,SYNTH-LEVEL-FACTS",
+    "Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,Comm/Fee,TradeID",
+    'Trades,Data,Order,Stocks,USD,DEVS,"2026-06-01, 11:55:00",60,10.00,-0.52,E2E-1',
+    'Trades,Data,Order,Stocks,USD,DEVS,"2026-06-01, 11:59:00",40,10.10,-0.52,E2E-2',
+    'Trades,Data,Order,Stocks,USD,DEVS,"2026-06-01, 12:02:00",-50,10.35,-0.52,E2E-3',
+    'Trades,Data,Order,Stocks,USD,DEVS,"2026-06-01, 12:05:00",-50,10.45,-0.52,E2E-4',
+    "Mark-to-Market Performance Summary,Header,Asset Category,Currency,Symbol,Prior Quantity,Current Quantity",
+    "Mark-to-Market Performance Summary,Data,Stocks,USD,DEVS,0,0",
+  ].join("\r\n");
   await page.goto("/intelligence/import-dry-run");
-  await page.waitForLoadState("networkidle");
-  await openDisclosure(
-    page,
-    "import-dry-run-advanced-upload-settings",
-    "Show advanced import settings",
-  );
-  await page.getByTestId("local-csv-input").setInputFiles({
-    buffer: Buffer.from(csv),
-    mimeType: "text/csv",
-    name: "level-analysis-seeded-devs.csv",
+  await expect(page).toHaveURL(/\/imports\?mode=preview$/);
+  await page.getByLabel("Broker", { exact: true }).fill("Interactive Brokers");
+  await expect(page.getByLabel("Broker", { exact: true })).toHaveValue("Interactive Brokers");
+  await page.locator('input[type="file"]').setInputFiles({
+    buffer: Buffer.from(csv), mimeType: "text/csv", name: "level-analysis-seeded-devs.csv",
   });
-  const brokerSelect = page.getByTestId("broker-select");
-  await brokerSelect.selectOption({ label: "Generic execution CSV" });
-  await expect(brokerSelect).toHaveValue("generic_execution_csv");
-  await expect(page.getByText("4 accepted").first()).toBeVisible();
-  await expect(page.getByTestId("save-import-button")).toBeEnabled();
-  await page.getByTestId("save-import-button").click();
-  await page.waitForURL(/\/intelligence\/imports\/.+/, { timeout: 30_000 });
-
-  const savedTrades = await (await page.request.get("/api/trades")).json();
-  const savedTrade = savedTrades.trades.find(
-    (trade: { symbol: string }) => trade.symbol === symbol,
-  ) as { id: string; symbol: string } | undefined;
-
+  const previewResponse = page.waitForResponse(response => response.url().endsWith("/api/platform/journal/imports/preview") && response.request().method() === "POST");
+  const committed = page.waitForResponse(response => response.url().endsWith("/api/platform/journal/imports/commit") && response.request().method() === "POST");
+  await page.getByRole("button", { name: "Upload", exact: true }).click();
+  const preview = await previewResponse;
+  expect(preview.status()).toBe(200);
+  expect((await preview.json()).preview).toMatchObject({ mappedExecutionCount: 4, canCommit: true });
+  expect((await committed).status()).toBe(200);
+  await expect(page.getByText("4 executions added to your Trade Tracker.", { exact: true })).toBeVisible();
+  const savedTrade = JSON.parse(execFileSync(process.execPath, ["--conditions=react-server", "--import", "tsx",
+    "tests/e2e/level-analysis/fixture-server.cjs", "trade", controlRoot()], { encoding: "utf8" })) as { id: string; symbol: string };
   expect(savedTrade).toBeTruthy();
-  return savedTrade!;
+  expect(savedTrade.symbol).toBe("DEVS");
+  const details = await page.request.get(`/api/platform/journal/trade-details?roundTripId=${savedTrade.id}`);
+  expect(details.status()).toBe(200);
+  expect(await details.json()).toMatchObject({ symbol: "DEVS" });
+  return savedTrade;
 }
 
 async function seedAcceptedLevelFactsLink(page: Page, savedTradeId: string) {
   const ingestResponse = await page.request.post("/api/level-analysis/deliveries", {
     data: {
       payload: deliveryFixture,
-      createdAt: "2026-06-06T21:00:00.000Z",
     },
-    headers: { Origin: "http://127.0.0.1:3101" },
+    headers: { Origin: ORIGIN, "Sec-Fetch-Site": "same-origin", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" },
   });
   expect(ingestResponse.status()).toBe(200);
   const ingestBody = await ingestResponse.json();
@@ -96,13 +88,11 @@ async function seedAcceptedLevelFactsLink(page: Page, savedTradeId: string) {
 
   const linkResponse = await page.request.post("/api/level-analysis/trade-links", {
     data: {
-      savedTradeId,
-      symbol: "DEVS",
+      roundTripId: savedTradeId,
+      expectedAccountSelectionRef: JSON.parse(readFileSync(join(controlRoot(), "metadata.json"), "utf8")).expectedAccountSelectionRef,
       provider: "ibkr",
-      tradeEndedAt: "2026-06-01T16:05:00.000Z",
-      createdAt: "2026-06-06T21:05:00.000Z",
     },
-    headers: { Origin: "http://127.0.0.1:3101" },
+    headers: { Origin: ORIGIN, "Sec-Fetch-Site": "same-origin", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" },
   });
   expect(linkResponse.status()).toBe(200);
   const linkBody = await linkResponse.json();
@@ -140,16 +130,17 @@ async function seedAcceptedLevelFactsLink(page: Page, savedTradeId: string) {
       },
     },
   });
+  return factsBody;
 }
 
-test.describe("level-analysis trade detail seeded flow", () => {
-  test("renders accepted packaged delivery facts on a saved trade detail page", async ({
+test.describe("current Journal contracts and preserved Level Facts component", () => {
+  test("checks current app redirects and renders genuine facts in the labelled component harness", async ({
     page,
   }) => {
     test.setTimeout(120_000);
 
     const savedTrade = await saveSeedTrade(page);
-    await seedAcceptedLevelFactsLink(page, savedTrade.id);
+    const facts = await seedAcceptedLevelFactsLink(page, savedTrade.id);
 
     const pageResponse = await page.goto(
       `/intelligence/trades/${encodeURIComponent(savedTrade.id)}`,
@@ -160,19 +151,14 @@ test.describe("level-analysis trade detail seeded flow", () => {
       .map((token) => token.trim().toLowerCase());
     expect(varyTokens).toContain("cookie");
     expect(varyTokens).toContain("rsc");
-    await expect(page.getByTestId("trade-review-page")).toBeVisible();
-    await expect(
-      page.getByTestId("trade-detail-level-facts-availability"),
-    ).toContainText("Level facts attached");
+    await expect(page).toHaveURL(/\/analytics\/execution$/);
+    await expect(page.getByRole("heading", { name: "Trade Breakdown", exact: true })).toBeVisible();
 
-    const supportingDetails = page.getByTestId("trade-supporting-details");
-    if ((await supportingDetails.getAttribute("open")) === null) {
-      await supportingDetails
-        .getByText("More evidence, comparisons, and writing prompts", {
-          exact: true,
-        })
-        .click();
-    }
+    // This is component browser coverage, NOT a claim that current Journal renders it.
+    await page.goto("about:blank");
+    await page.setContent(renderLegacyFactsHarness(facts));
+    await expect(page.getByRole("heading", { name: "Preserved Level Facts component — test harness", exact: true })).toBeVisible();
+    await expect(page.getByTestId("trade-detail-level-facts-availability")).toContainText("Level facts attached");
 
     const panel = page.getByTestId("trade-detail-level-facts-panel");
     await expect(panel).toBeVisible();

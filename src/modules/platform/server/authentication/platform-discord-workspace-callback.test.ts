@@ -1,8 +1,9 @@
 import {countCreatedPlatformTestUsers,openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { platformAuthCookieName } from "./platform-auth-cookies";
 // @vitest-environment node
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
@@ -14,7 +15,7 @@ import { PlatformLoginService } from "./platform-login-service";
 import { PlatformSessionRepository } from "./platform-session-repository";
 import { PlatformSessionService } from "./platform-session-service";
 const roots: string[] = [];
-afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
+afterEach(async () => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root); }, 20_000);
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), "discord-workspace-callback-")); roots.push(root);
   const path = join(root, randomUUID()+".sqlite");

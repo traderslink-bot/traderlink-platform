@@ -1,4 +1,4 @@
-import { rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -43,10 +43,10 @@ beforeEach(() => {
   );
 });
 
-afterEach(() => {
+afterEach(async () => {
   restoreEnvironment();
-  rmSync(foundation.root, { recursive: true, force: true });
-});
+  await removePlatformDatabaseTestFixture(foundation.root);
+}, 20_000);
 
 describe("replacement Level Analysis delivery API routes", () => {
   it("validates, ingests, deduplicates and reads configured delivery facts", async () => {

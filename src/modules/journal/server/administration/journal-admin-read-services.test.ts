@@ -1,6 +1,7 @@
 import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -30,9 +31,9 @@ const configuration = Object.freeze({
   keysBase64: Object.freeze({ test_key: Buffer.alloc(32, 9).toString("base64") }),
 });
 
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function setup() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-admin-read-"));

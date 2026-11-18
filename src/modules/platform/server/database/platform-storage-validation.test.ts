@@ -1,5 +1,6 @@
 import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -13,9 +14,9 @@ import {
 } from "./platform-migration-contract";
 
 const roots: string[] = [];
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function database(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-storage-validation-"));

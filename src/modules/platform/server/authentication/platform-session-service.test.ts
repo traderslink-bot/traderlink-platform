@@ -1,5 +1,6 @@
 import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -15,9 +16,9 @@ const USER_ID = "10000000-0000-4000-8000-000000000001";
 const SESSION_ID = "10000000-0000-4000-8000-000000000002";
 const TOKEN = "C".repeat(43);
 
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 describe("PlatformSessionService", () => {
   it("resolves, expires and revokes only hashed server-side sessions", () => {

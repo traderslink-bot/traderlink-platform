@@ -1,5 +1,6 @@
 import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
-import { mkdtempSync, rmSync } from "node:fs";
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -10,7 +11,7 @@ const id = (value: number) => `00000000-0000-4000-8000-${String(value).padStart(
 const at = "2026-11-13T18:01:37.000Z";
 const owner = { userId: id(1), workspaceId: id(2), accountId: id(3), workspaceRole: "owner" as const };
 
-function fixture(run: (db: ReturnType<typeof openPlatformDatabase>) => void) {
+async function fixture(run: (db: ReturnType<typeof openPlatformDatabase>) => void) {
   const dir = mkdtempSync(join(tmpdir(), "traderlink-chart-journal-"));
   const db = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: join(dir, "scratch.sqlite"), forbiddenRepositoryRoots: [] });
   try {
@@ -27,7 +28,7 @@ function fixture(run: (db: ReturnType<typeof openPlatformDatabase>) => void) {
     expect(db.pragma("foreign_key_check")).toEqual([]);
   } finally {
     db.close();
-    rmSync(dir, { recursive: true, force: true });
+    await removePlatformDatabaseTestFixture(dir);
   }
 }
 

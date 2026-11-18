@@ -1,6 +1,7 @@
 import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -185,7 +186,7 @@ describe("LiveWatchlistStore", () => {
       if (otherWriter.inTransaction) otherWriter.exec("ROLLBACK");
       otherWriter.close();
       resetLiveWatchlistStoreForTests();
-      rmSync(root, { recursive: true, force: true });
+      await removePlatformDatabaseTestFixture(root);
     }
   }, 15_000);
 

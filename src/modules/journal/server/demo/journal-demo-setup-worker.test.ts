@@ -1,9 +1,10 @@
 import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 // @vitest-environment node
 import { execFileSync } from "node:child_process";
 import { createServer } from "node:http";
 import { once } from "node:events";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Worker } from "node:worker_threads";
@@ -73,6 +74,6 @@ test("the packaged demo writer can wait for SQLite without blocking page reads",
     await completion?.catch(() => undefined);
     await new Promise<void>(done => server.close(() => done()));
     database.close();
-    rmSync(root, { recursive: true, force: true });
+    await removePlatformDatabaseTestFixture(root);
   }
 }, 20_000);

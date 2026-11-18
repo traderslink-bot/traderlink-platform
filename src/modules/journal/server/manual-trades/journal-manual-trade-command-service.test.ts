@@ -1,6 +1,7 @@
 import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { randomBytes } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -41,9 +42,9 @@ import { JournalManualTradePreviewRepository } from "./journal-manual-trade-prev
 import { JournalManualTradePreviewService } from "./journal-manual-trade-preview-service";
 
 const roots: string[] = [];
-afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-});
+afterEach(async () => {
+  for (const root of roots.splice(0)) await removePlatformDatabaseTestFixture(root);
+}, 20_000);
 
 function setup() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-manual-trade-"));

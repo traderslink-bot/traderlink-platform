@@ -1,6 +1,7 @@
 import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
+import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -14,11 +15,11 @@ import { JournalAnalyticsFactSetService } from "./journal-analytics-fact-set-ser
 
 const roots: string[] = [];
 
-afterEach(() => {
+afterEach(async () => {
   for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true });
+    await removePlatformDatabaseTestFixture(root);
   }
-});
+}, 20_000);
 
 function id(sequence: number): string {
   return `00000000-0000-4000-8000-${String(sequence).padStart(12, "0")}`;
