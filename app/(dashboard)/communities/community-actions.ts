@@ -369,6 +369,16 @@ export async function submitCommunityReviewAction(formData:FormData):Promise<{me
  try{await reviewWorkflow(formData,(service,input)=>service.submitReview(input));return {message:'Submitted. Your coach’s deadline follows the agreed turnaround.',ok:true};}catch(error){return {message:error instanceof Error?error.message:'Could not submit this review.',ok:false};}
 }
 
+export async function coachingAgreementWithFeedbackAction(formData:FormData):Promise<CommunityPublicationFeedback>{
+ try{await coachingAgreementAction(formData);return {status:'success',message:'Agreement saved.'};}
+ catch(error){
+  unstable_rethrow(error);
+  const message=error instanceof Error?error.message:'';
+  if(formData.get('intent')==='propose'&&message.startsWith('The first review week has already started.'))return {status:'error',message:'Choose a future start date. The first review week has already started.'};
+  return {status:'error',message:/^(The first review week has already started\.|Choose (the coaching start date|a valid deadline time|scheduled reviews)|Your coach needs to set a service start date|Confirm the required Journal sharing|Your Journal account changed|This agreement is no longer available)/.test(message)?message:'We couldn’t save this agreement. Your entries are still here. Check your settings and access, then try again.'};
+ }
+}
+
 export async function coachingAgreementAction(formData:FormData):Promise<void>{
  const communitySlug=required(formData,"communitySlug"),relationshipId=required(formData,"relationshipId"),intent=required(formData,"intent");
  const {identity}=await context(communitySlug,formData,true,true);
@@ -406,7 +416,8 @@ export async function setCommunitySelectedDayPeriodAction(formData:FormData):Pro
 
 export async function saveCommunityDayAssessmentAction(formData:FormData):Promise<void>{
  const focusFeedback:CoachingFocusFeedback={};for(const key of Object.keys(COACHING_REVIEW_FOCUS) as (keyof CoachingFocusFeedback)[])if(formData.has(`focus:${key}`))focusFeedback[key]=String(formData.get(`focus:${key}`)??'');
- await reviewWorkflow(formData,(service,input)=>service.saveDayAssessment({...input,date:required(formData,'date'),assessment:required(formData,'assessment'),focusFeedback}));
+ const sessionFeedback=formData.has('daySessionFeedback')?JSON.parse(String(formData.get('daySessionFeedback'))):undefined;
+ await reviewWorkflow(formData,(service,input)=>service.saveDayAssessment({...input,date:required(formData,'date'),assessment:required(formData,'assessment'),focusFeedback,...(sessionFeedback===undefined?{}:{sessionFeedback})}));
 }
 
 export async function removeCommunityDayAssessmentAction(formData:FormData):Promise<void>{await reviewWorkflow(formData,(service,input)=>service.removeDayAssessment({...input,date:required(formData,'date')}));}

@@ -111,7 +111,7 @@ export class IndependentCoachingJournalReadService {
 
  verifySelection(input:{enrollmentId:string;actorUserId:string;reviewId:string;ids:readonly string[];days:readonly string[];period:{start:string|null;end:string|null};restoreRoundTripIds?:readonly string[]}){
   const data=this.population({...input,excludeReviewed:true},input.period),restored=this.restoreCandidates(data,input.restoreRoundTripIds??[]),trades=[...data.original,...data.older,...data.retainedOlder,...restored],selected=input.ids.map(id=>trades.find(trade=>matchesIndependentCoachingTrade(trade,id)));
-  if(selected.some(trade=>!trade))throw new Error('Choose trades from the shared Journal account.');
+  if(selected.some(trade=>!trade))throw new Error(input.days.length?'Choose a shared trade from one of the selected trading days.':'Choose trades from the shared Journal account.');
   for(const trade of selected){if((input.period.start&&trade!.tradingDate<input.period.start&&!data.older.some(older=>older.logicalTradeId===trade!.logicalTradeId)&&!data.retainedOlder.some(older=>older.logicalTradeId===trade!.logicalTradeId)&&!restored.some(older=>older.logicalTradeId===trade!.logicalTradeId))||(input.period.end&&trade!.tradingDate>input.period.end))throw new Error('Trade outside the review period.');if(input.days.length&&!input.days.includes(trade!.tradingDate))throw new Error('Trade outside the selected trading days.');}
   const access=independentCoachingJournalAccess(this.database,{...input,requiredScopes:['trades']});
   if(access.review?.kind==='trading_day'){

@@ -1,3 +1,5 @@
+import {communityRecordedEvaluation,type CommunityRecordedEvaluation} from './coaching-review-recorded-evaluation';
+import {communityPerformanceFeedback} from './coaching-review-overall-feedback';
 import {captureCommunityAlertPublication,planCommunitySharedRevisions,type SharedCaptureBefore} from "./shared-alerts-storage-readiness";
 import {requireCoachCommercialAccess} from './coaching-commercial-access';
 import {requireCoachStudentAdmission} from './coaching-coach-student-admission';
@@ -76,7 +78,7 @@ export type CommunityRetainedHistory = Readonly<{
   slug: string; communityName: string; role: "coach" | "student";
   relationships: readonly Readonly<{
     relationshipId: string; planName: string; coachName: string; studentName: string;
-    reviews: readonly Readonly<{
+    reviews: readonly Readonly<CommunityRecordedEvaluation&{
       reviewId: string; title: string; deliveredAtUtc: string; summary: string;
       wentWell: string; needsWork: string; nextFocus: string; coachPrivateNotes?: string;
       trades: readonly Readonly<{ label: string; feedback: string }>[];
@@ -217,7 +219,8 @@ updateTradeReview(input:Readonly<{communityId:string;actor:BaseViewer;reviewId:s
     if(review?.acceptance_state==='pending'||review?.delivery_state!=="draft"||input.status!=="in_review")platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED",{field:"reviewState"});
     if(!review||review.coach_user_id!==input.actor.userId)platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED",{operation:"update_trade_review"});const relationshipId=(this.database.prepare(`SELECT relationship_id FROM traderlink_community_coaching_trade_reviews WHERE community_id=? AND review_id=?`).get(input.communityId,input.reviewId) as {relationship_id:string}).relationship_id;this.requireCurrentCoachingRole(input.communityId,relationshipId);
     requireCoachingReviewAvailable(this.database,input.reviewId,input.atUtc);
-    this.database.prepare(`UPDATE traderlink_community_coaching_trade_reviews SET coach_feedback=?,went_well=?,needs_work=?,next_focus=?,coach_private_notes=?,previous_focus_status=?,previous_focus_assessment=?,status=?,completed_at_utc=CASE WHEN ?='completed' THEN ? ELSE NULL END,updated_at_utc=? WHERE review_id=? AND community_id=?`).run(text(input.coachFeedback,8000,"coachFeedback",false),text(input.wentWell,8000,"wentWell",false),text(input.needsWork,8000,"needsWork",false),text(input.nextFocus,8000,"nextFocus",false),text(input.coachPrivateNotes,8000,"coachPrivateNotes",false),input.previousFocusStatus,text(input.previousFocusAssessment,8000,"previousFocusAssessment",false),input.status,input.status,input.atUtc,input.atUtc,input.reviewId,input.communityId);
+    const acceptedPerformanceFeedback=communityPerformanceFeedback(this.database,input.reviewId,input.coachFeedback);
+    this.database.prepare(`UPDATE traderlink_community_coaching_trade_reviews SET coach_feedback=?,went_well=?,needs_work=?,next_focus=?,coach_private_notes=?,previous_focus_status=?,previous_focus_assessment=?,status=?,completed_at_utc=CASE WHEN ?='completed' THEN ? ELSE NULL END,updated_at_utc=? WHERE review_id=? AND community_id=?`).run(acceptedPerformanceFeedback??text(input.coachFeedback,8000,"coachFeedback",false),text(input.wentWell,8000,"wentWell",false),text(input.needsWork,8000,"needsWork",false),text(input.nextFocus,8000,"nextFocus",false),text(input.coachPrivateNotes,8000,"coachPrivateNotes",false),input.previousFocusStatus,text(input.previousFocusAssessment,8000,"previousFocusAssessment",false),input.status,input.status,input.atUtc,input.atUtc,input.reviewId,input.communityId);
   }
 
 setStudentServices(input:Readonly<{communityId:string;actor:BaseViewer;relationshipId:string;messagingEnabled:boolean;tradeReviewsEnabled:boolean;atUtc:string}>):void {
@@ -337,7 +340,7 @@ readRetainedHistory(entry: import("../contracts/community-history-entry").Commun
       }[];
     return {
       relationshipId:relation.relationship_id,planName:relation.plan_name,coachName:relation.coach_name,studentName:relation.student_name,
-      reviews:reviews.map(review => ({reviewId:review.review_id,title:review.title,deliveredAtUtc:review.delivered_at_utc,
+      reviews:reviews.map(review => ({...communityRecordedEvaluation(this.database,review.review_id),reviewId:review.review_id,title:review.title,deliveredAtUtc:review.delivered_at_utc,
         summary:review.coach_feedback,wentWell:review.went_well,needsWork:review.needs_work,nextFocus:review.next_focus,
         ...(coach?{coachPrivateNotes:review.private_notes??""}:{}),
         trades:(this.database.prepare(`SELECT trade_label label,coach_feedback feedback FROM traderlink_community_coaching_review_trades

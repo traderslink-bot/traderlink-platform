@@ -1,3 +1,4 @@
+import {daySessionReady,validateDaySessionDraft} from '../contracts/coaching-trading-day-evaluation';
 import {coachingReviewTradeCap} from "./coaching-review-cap-resolution";
 import {coachingReviewRequestedDays,coachingReviewService} from "./coaching-review-service-binding";
 import {coachingUnavailableReviewTrades,coachingDistinctReviewTrades} from "./coaching-review-trade-eligibility";
@@ -26,6 +27,8 @@ export function coachingTradingDayRequirements(db:Database.Database,reviewId:str
  const context=reader.readReviewContext({...input,includeJournal:true,includeDayJournal:true,includeRules:true});
  const availableDays=new Set([...rawShared.trades.flatMap(trade=>trade.tradingDate?[trade.tradingDate]:[]),...context.dayNotes.map(day=>day.date),...context.dayRules.map(day=>day.date)]);
  const days=coachingDayAssessments(db,reviewId),complete=rawShared.coverage==='complete';
+ const template=service.terms.tradeEvaluationTemplates?.[service.item.planItemId];
+ const agreedDayReady=(day:CoachingDayAssessment)=>{if(!template?.daySessionReview)return true;const draft={dayAssessments:{[day.date]:day.assessment},daySessionFeedback:{[day.date]:day.sessionFeedback??{}}};try{validateDaySessionDraft(draft,[day.date],template);return daySessionReady(day.date,draft,template.daySessionReview);}catch{return false;}};
  const requiredDays=complete?Math.min(service.item.quantity,availableDays.size):service.item.quantity;
  const expected=trades.filter(trade=>days.some(day=>day.date===trade.tradingDate)).length;
  const perDay=(date:string)=>complete?Math.min(cap.quantity,trades.filter(trade=>trade.tradingDate===date).length):cap.quantity;
@@ -35,7 +38,7 @@ export function coachingTradingDayRequirements(db:Database.Database,reviewId:str
  let problem:string|null=null;
  if((requestedDays.length||service.item.selectionMode==='student')&&requestedDays.length<requiredDays)problem='Complete the student day selection for the agreed review period before delivery.';
  else
- if(days.length<requiredDays||days.length>service.item.quantity||days.some(day=>!availableDays.has(day.date)||!allowed(day.date)||!day.assessment.trim()||(service.item.focusAreas??[]).some(key=>!['overall','next_steps'].includes(key)&&!day.focusFeedback[key]?.trim())))problem='Complete each agreed trading-day assessment and focus area before delivery.';
+ if(days.length<requiredDays||days.length>service.item.quantity||days.some(day=>!availableDays.has(day.date)||!allowed(day.date)||!day.assessment.trim()||!agreedDayReady(day)||(service.item.focusAreas??[]).some(key=>!['overall','next_steps'].includes(key)&&(!template?.daySessionReview||key==='goals')&&!day.focusFeedback[key]?.trim())))problem='Complete each agreed trading-day assessment and focus area before delivery.';
  else if(selected.some(item=>!trades.some(trade=>trade.roundTripId===item.round_trip_id&&days.some(day=>day.date===trade.tradingDate))))problem='Every selected trade needs a completed day assessment.';
  else if(cap.basis==='per_day'&&days.some(day=>selected.filter(item=>item.workflow_state==='saved'&&trades.some(trade=>trade.roundTripId===item.round_trip_id&&trade.tradingDate===day.date)).length<perDay(day.date)))problem='Finish the available individual trade reviews for each selected day.';
  else if(cap.basis==='per_review'&&reviewedTrades<requiredTradeFeedback)problem='Finish the available trade reviews included across the selected days.';
