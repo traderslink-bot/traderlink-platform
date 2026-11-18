@@ -100,14 +100,38 @@ function prepareFixture(storageRoot, controlRoot) {
     const primary = new JournalAccountService(new JournalAccountRepository(database))
       .requireAccountRecord(scope, accountId);
     assert.equal(primary.displayName, "Primary Journal");
-    metadata = { scenario: "synthetic_existing_owner_prior_cleared_demo_empty_primary_journal",
+    metadata = { runId: process.env.LEVEL_ANALYSIS_E2E_RUN_ID, sourceAccount: ACCOUNT, scenario: "synthetic_existing_owner_prior_cleared_demo_empty_primary_journal",
       scope, databasePath: environment.TRADERLINK_PLATFORM_DB_PATH,
       expectedAccountSelectionRef: deriveJournalAccountSelectionRef(signed.workspaceId, accountId) };
-    privateJson(path.join(controlRoot, "browser-state.json"), { cookies: [{
-      name: "__Host-tl_platform_session", value: signed.session.token, domain: "127.0.0.1", path: "/",
-      expires: -1, httpOnly: true, secure: true, sameSite: "Lax",
-    }], origins: [] });
-    privateJson(path.join(controlRoot, "metadata.json"), metadata);
+    const sessionCookie = { name: "__Host-tl_platform_session", value: signed.session.token,
+      domain: "127.0.0.1", path: "/", expires: -1, httpOnly: true, secure: true, sameSite: "Lax" };
+    const saveAttempt = (directory, attempt) => {
+      fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+      privateJson(path.join(directory, "metadata.json"), attempt);
+      privateJson(path.join(directory, "browser-state.json"), { cookies: [sessionCookie, {
+        name: "traderlink_journal_account", value: attempt.expectedAccountSelectionRef,
+        domain: "127.0.0.1", path: "/", expires: -1, httpOnly: true, secure: true, sameSite: "Strict",
+      }], origins: [] });
+    };
+    saveAttempt(controlRoot, metadata);
+    // Playwright has one retry. Give it its own genuine empty account, rather
+    // than weakening four-new-fill assertions after a partially successful run.
+    const retryAccountId = randomUUID(), timestamp = new Date().toISOString();
+    new JournalAccountRepository(database).createAccount({ accountId: retryAccountId,
+      workspaceId: scope.workspaceId, displayName: "Retry Journal", baseCurrency: "USD",
+      tradingTimezone: "America/New_York", status: "active", createdByUserId: scope.userId,
+      createdAtUtc: timestamp, updatedAtUtc: timestamp });
+    const retryScope = { ...scope, activeAccountId: retryAccountId,
+      allowedAccountIds: [...scope.allowedAccountIds, retryAccountId] };
+    const sourceAccount = ACCOUNT + "-RETRY-1";
+    new JournalAccountService(new JournalAccountRepository(database), loadAccountIdentityConfiguration(
+      environment, IBKR_SOURCE_ACCOUNT_CANONICALIZERS, IBKR_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
+    )).confirmSourceIdentityLinkRecord(retryScope, { accountId: retryAccountId, sourceSystem: "ibkr",
+      rawSourceAccountId: sourceAccount, privacySafeDisplay: "Synthetic retry account", now: new Date() });
+    assert.equal(database.prepare("SELECT count(*) AS count FROM journal_executions WHERE workspace_id=? AND account_id=?")
+      .get(scope.workspaceId, retryAccountId).count, 0);
+    saveAttempt(path.join(controlRoot, "retry-1"), { ...metadata, scope: retryScope, sourceAccount,
+      expectedAccountSelectionRef: deriveJournalAccountSelectionRef(scope.workspaceId, retryAccountId) });
   } finally { database.close(); }
   return { environment, metadata };
 }
@@ -132,6 +156,17 @@ function readTrade(controlRoot) {
 }
 
 // Kernel boundary for the entire browser process tree, not a worker bypass.
+function writeTradeResult(controlRoot) {
+  const metadata = JSON.parse(fs.readFileSync(path.join(controlRoot, "metadata.json"), "utf8"));
+  assert.equal(metadata.runId, process.env.LEVEL_ANALYSIS_E2E_RUN_ID, "Wrong fixture run");
+  const trade = readTrade(controlRoot);
+  privateJson(path.join(controlRoot, "trade-result.json"), {
+    protocol: "level-facts-trade-result-v1", runId: metadata.runId,
+    workspaceId: metadata.scope.workspaceId, accountId: metadata.scope.activeAccountId,
+    expectedAccountSelectionRef: metadata.expectedAccountSelectionRef, trade,
+  });
+}
+
 async function verifyNetworkIsolation() {
   const status = fs.readFileSync("/proc/self/status", "utf8");
   assert(process.getuid() !== 0 && /^CapEff:\s+0+$/m.test(status)
@@ -187,8 +222,8 @@ async function serve() {
   for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => { proxy.close(); child.kill(signal); });
 }
 
-module.exports = { prepareFixture, readTrade, verifyNetworkIsolation };
+module.exports = { prepareFixture, readTrade, writeTradeResult, verifyNetworkIsolation };
 if (require.main === module) {
-  if (process.argv[2] === "trade") process.stdout.write(JSON.stringify(readTrade(process.argv[3])));
+  if (process.argv[2] === "trade") writeTradeResult(process.argv[3]);
   else serve().catch(error => { console.error(error); process.exitCode = 1; });
 }
