@@ -6,7 +6,7 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "../../src/modules/platform/con
 import { renderLegacyFactsHarness } from "./level-analysis/component-renderer.cjs";
 const ORIGIN = "https://127.0.0.1:3102";
 const controlRoot = () => process.env.LEVEL_ANALYSIS_E2E_CONTROL_ROOT!;
-import { expect, request as playwrightRequest, test, type Page } from "@playwright/test";
+import { expect, request as playwrightRequest, test, type Page, type TestInfo } from "@playwright/test";
 import deliveryFixture from "../../src/lib/level-analysis/__fixtures__/level-analysis-journal-delivery-package-v1.compact.json";
 
 const UNSAFE_LEVEL_FACTS_PHRASES = [
@@ -44,13 +44,34 @@ function varyTokensFor(headers: Record<string, string>) {
   return (headers.vary ?? "").split(",").map(token => token.trim().toLowerCase());
 }
 
-async function checkPrivateReadBoundaries(page: Page, tradeId: string, attemptRoot: string) {
+async function checkPrivateReadBoundaries(page: Page, tradeId: string, attemptRoot: string, testInfo: TestInfo) {
   const oppositeRoot = attemptRoot === controlRoot() ? join(controlRoot(), "retry-1") : controlRoot();
+  const oppositeState = JSON.parse(readFileSync(join(oppositeRoot, "browser-state.json"), "utf8"));
+  const oppositeMetadata = JSON.parse(readFileSync(join(oppositeRoot, "metadata.json"), "utf8"));
   const selectionMismatch = await playwrightRequest.newContext({ baseURL: ORIGIN, ignoreHTTPSErrors: true,
-    storageState: join(oppositeRoot, "browser-state.json") });
-  const unauthenticated = await playwrightRequest.newContext({ baseURL: ORIGIN, ignoreHTTPSErrors: true });
+    storageState: oppositeState });
+  // Playwright Test inherits configured owner state for omitted options.
+  // Explicit empty state is required before calling this actor unauthenticated.
+  const unauthenticated = await playwrightRequest.newContext({ baseURL: ORIGIN, ignoreHTTPSErrors: true,
+    storageState: { cookies: [], origins: [] } });
   const storyUrl = `/api/platform/journal/trade-details?roundTripId=${tradeId}`;
   try {
+    const selectedState = await selectionMismatch.storageState();
+    const anonymousState = await unauthenticated.storageState();
+    const expectedSession = oppositeState.cookies.find((cookie: { name: string; value: string }) =>
+      cookie.name === "__Host-tl_platform_session");
+    const selectedSessionMatches = selectedState.cookies.some(cookie =>
+      cookie.name === "__Host-tl_platform_session" && cookie.value === expectedSession?.value);
+    const selectedAccountMatches = selectedState.cookies.some(cookie =>
+      cookie.name === "traderlink_journal_account" && cookie.value === oppositeMetadata.expectedAccountSelectionRef);
+    await testInfo.attach("private-request-context-state", { contentType: "application/json",
+      body: JSON.stringify({ selectedSessionMatches, selectedAccountMatches,
+        selectedCookieNames: selectedState.cookies.map(cookie => cookie.name),
+        anonymousCookieNames: anonymousState.cookies.map(cookie => cookie.name), anonymousOriginCount: anonymousState.origins.length }) });
+    expect(selectedSessionMatches).toBe(true);
+    expect(selectedAccountMatches).toBe(true);
+    expect(anonymousState.cookies.map(cookie => cookie.name)).toEqual([]);
+    expect(anonymousState.origins.length).toBe(0);
     // This owner may select either account. Reads are scoped to the selected one;
     // do not confuse a selection mismatch with denial of ownership of that account.
     for (const context of [selectionMismatch, unauthenticated]) {
@@ -71,6 +92,7 @@ async function checkPrivateReadBoundaries(page: Page, tradeId: string, attemptRo
     expect(own.status()).toBe(200);
     expectPrivateNoStore(own.headers(), true);
     expect(await own.json()).toMatchObject({ symbol: "DEVS" });
+    expect((await unauthenticated.storageState()).cookies.map(cookie => cookie.name)).toEqual([]);
   } finally { await selectionMismatch.dispose(); await unauthenticated.dispose(); }
 }
 
@@ -204,7 +226,6 @@ test.describe("current Journal contracts and preserved Level Facts component", (
 
     const savedTrade = await saveSeedTrade(page, attemptRoot);
     const facts = await seedAcceptedLevelFactsLink(page, savedTrade.id, attemptRoot);
-    await checkPrivateReadBoundaries(page, savedTrade.id, attemptRoot);
 
     const pageResponse = await page.goto(
       `/intelligence/trades/${encodeURIComponent(savedTrade.id)}`,
@@ -246,5 +267,9 @@ test.describe("current Journal contracts and preserved Level Facts component", (
         phrase,
       );
     }
+    // Finish the original UI/component inventory before added boundary probes.
+    // Every probe remains strict; a later failure still fails the whole test.
+    await checkPrivateReadBoundaries(page, savedTrade.id, attemptRoot, testInfo);
+
   });
 });
