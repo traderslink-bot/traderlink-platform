@@ -7,7 +7,7 @@ import { MoomooChartStream } from "./server/moomoo-chart-stream";
 class Socket extends EventEmitter {readyState=1;sent:Record<string,unknown>[]=[];send(text:string){this.sent.push(JSON.parse(text));}close(){this.readyState=3;this.emit("close");}}
 afterEach(()=>{vi.useRealTimers();access.before=undefined;});
 it("shares one authenticated socket across four charts and releases only unused subscriptions",async()=>{
- const sockets:Socket[]=[];const source=new MoomooChartStream({},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
+ const sockets:Socket[]=[];const source=new MoomooChartStream({NODE_ENV:"test"},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
  const a:unknown[]=[],b:unknown[]=[];
  const release=[source.subscribe("AAA",false,event=>a.push(event)),source.subscribe("AAA",false,event=>b.push(event)),source.subscribe("AAA",true,()=>{}),source.subscribe("BBB",false,()=>{})];
  await Promise.resolve();const socket=sockets[0];expect(sockets).toHaveLength(1);socket.emit("open");
@@ -31,7 +31,7 @@ it("shares one authenticated socket across four charts and releases only unused 
 it("backs off failed subscriptions without reporting a usable connection and reconnects with subscriptions",async()=>{
  vi.useFakeTimers();
  const sockets:Socket[]=[], events:unknown[]=[];
- const source=new MoomooChartStream({},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
+ const source=new MoomooChartStream({NODE_ENV:"test"},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
  const stop=source.subscribe("AAA",false,event=>events.push(event));
  await Promise.resolve();await Promise.resolve();
  const socket=sockets[0];socket.emit("open");socket.emit("message",Buffer.from(JSON.stringify({session_id:"session"})));
@@ -54,7 +54,7 @@ it("restarts credential lookup when the last chart closes and another opens duri
  let release!:()=>void;
  access.before=()=>new Promise<void>(resolve=>{release=resolve;});
  const sockets:Socket[]=[];
- const source=new MoomooChartStream({},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
+ const source=new MoomooChartStream({NODE_ENV:"test"},()=>{const socket=new Socket();sockets.push(socket);return socket as unknown as WebSocket;});
  const old=source.subscribe("AAA",false,()=>{});old();
  access.before=undefined;
  const stop=source.subscribe("BBB",false,()=>{});
