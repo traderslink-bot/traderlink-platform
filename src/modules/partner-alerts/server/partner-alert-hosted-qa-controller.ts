@@ -84,45 +84,62 @@ export function createPartnerAlertHostedQaController(cap: HostedPaidQaAuthority,
       const configured = output(); if (!configured) return fail();
       const store = new PartnerAlertGatewaySessionStore(db, { botUserId: manifest.botUserId, destinationGuildId: manifest.guildId,
         leaseToken: randomUUID(), nowUtc: () => new Date().toISOString() });
-      if (!withPartnerAlertHostedQaParent(cap, () => store.acquire())) return fail();
-      let ready = false, stopped: Promise<void> | null = null, connections = 0;
-      const resumed = Boolean(withPartnerAlertHostedQaParent(cap, () => store.loadSession()));
+      let ready = false, stopped: Promise<void> | null = null, connections = 0, resumed = false;
       let resolve!: (result: Readonly<{ ready: boolean; session: "identified" | "resumed"; attention: readonly string[] }>) => void;
       const done = new Promise<Readonly<{ ready: boolean; session: "identified" | "resumed"; attention: readonly string[] }>>(r => { resolve = r; });
-      const driver = new PartnerAlertDiscordGateway({ enabled: true, botToken: configured.discordBotToken,
-        expectedBotUserId: manifest.botUserId, socketFactory: url => { if (++connections > 3) return fail(); return socketFactory(url); },
-        hasExclusiveReceiverLease: () => { try { current(); return store.isCurrent(); } catch { return false; } },
-        identifyAllowed: async () => {
-          current(); if (!withPartnerAlertHostedQaParent(cap, () => store.reserveIdentify())) return false;
-          const response = await discord("https://discord.com/api/v10/gateway/bot", { method: "GET", headers: { authorization: `Bot ${configured.discordBotToken}` } });
-          if (response.status !== 200) return false;
-          const value = await readPartnerAlertDiscordJson(response, abort.signal) as { shards?: number; session_start_limit?: { remaining?: number; max_concurrency?: number } };
-          return value.shards === 1 && Number(value.session_start_limit?.remaining) > 0 && Number(value.session_start_limit?.max_concurrency) > 0;
-        },
-        shouldReceive: () => false, onDispatch: async () => { throw new Error("Readiness may not dispatch messages."); },
-        loadSession: () => withPartnerAlertHostedQaParent(cap, () => store.loadSession()),
-        saveSession: value => {
-          withPartnerAlertHostedQaParent(cap, () => store.saveSession(value)); ready = true;
-          queueMicrotask(() => { void finish(); });
-        },
-        clearSession: () => withPartnerAlertHostedQaParent(cap, () => store.clearSession()),
-        markGap: () => withPartnerAlertHostedQaParent(cap, () => store.markGap()), attention: report,
-        schedule: (fn, ms) => setTimeout(fn, ms), cancel: handle => clearTimeout(handle as ReturnType<typeof setTimeout>), random: Math.random,
-      });
+      const owned: { driver: PartnerAlertDiscordGateway | null; acquisitionAttempted: boolean;
+        timer: ReturnType<typeof setTimeout> | undefined; renew: ReturnType<typeof setInterval> | undefined } =
+        { driver: null, acquisitionAttempted: false, timer: undefined, renew: undefined };
       const finish = (): Promise<void> => stopped ??= Promise.resolve().then(async () => {
-        clearTimeout(timer); clearInterval(renew); driver.stop(); await driver.drain();
-        // Exact owned token release is original cleanup, even after parent expiry.
-        runtime.trusted.assertCurrentRelease(); store.release(); stops.delete(finish);
-        resolve({ ready, session: resumed ? "resumed" : "identified", attention: [...attention] });
+        clearTimeout(owned.timer); clearInterval(owned.renew);
+        let clean = true;
+        try { owned.driver?.stop(); } catch { clean = false; report("receiver_stop_unavailable"); }
+        try { await owned.driver?.drain(); } catch { clean = false; report("receiver_drain_unavailable"); }
+        if (owned.acquisitionAttempted) {
+          // Original exact-token cleanup only. A changed release cannot admit a
+          // new write; preserve the lease/obligation and still settle the caller.
+          try { runtime.trusted.assertCurrentRelease(); store.release(); }
+          catch { clean = false; report("receiver_lease_release_unavailable"); }
+        }
+        stops.delete(finish);
+        resolve({ ready: ready && clean, session: resumed ? "resumed" : "identified", attention: [...attention] });
       });
       stops.add(finish);
-      const renew = setInterval(() => {
-        try { if (withPartnerAlertHostedQaParent(cap, () => store.renew())) return; } catch { /* Parent or exact lease ended. */ }
-        report("receiver_lease_unavailable"); void finish();
-      }, 10_000);
-      const timer = setTimeout(() => { void finish(); }, Math.max(1, Math.min(60_000, hostedQaDeadline(cap) - Date.now())));
-      try { if (!driver.start()) await finish(); } catch (error) { await finish(); throw error; }
-      return done;
+      try {
+        const acquired = withPartnerAlertHostedQaParent(cap, () => {
+          owned.acquisitionAttempted = true; return store.acquire();
+        });
+        if (!acquired) return fail();
+        resumed = Boolean(withPartnerAlertHostedQaParent(cap, () => store.loadSession()));
+        const driver = new PartnerAlertDiscordGateway({ enabled: true, botToken: configured.discordBotToken,
+          expectedBotUserId: manifest.botUserId, socketFactory: url => { if (++connections > 3) return fail(); return socketFactory(url); },
+          hasExclusiveReceiverLease: () => { try { current(); return store.isCurrent(); } catch { return false; } },
+          identifyAllowed: async () => {
+            current(); if (!withPartnerAlertHostedQaParent(cap, () => store.reserveIdentify())) return false;
+            const response = await discord("https://discord.com/api/v10/gateway/bot", { method: "GET", headers: { authorization: `Bot ${configured.discordBotToken}` } });
+            if (response.status !== 200) return false;
+            const value = await readPartnerAlertDiscordJson(response, abort.signal) as { shards?: number; session_start_limit?: { remaining?: number; max_concurrency?: number } };
+            return value.shards === 1 && Number(value.session_start_limit?.remaining) > 0 && Number(value.session_start_limit?.max_concurrency) > 0;
+          },
+          shouldReceive: () => false, onDispatch: async () => { throw new Error("Readiness may not dispatch messages."); },
+          loadSession: () => withPartnerAlertHostedQaParent(cap, () => store.loadSession()),
+          saveSession: value => {
+            withPartnerAlertHostedQaParent(cap, () => store.saveSession(value)); ready = true;
+            queueMicrotask(() => { void finish(); });
+          },
+          clearSession: () => withPartnerAlertHostedQaParent(cap, () => store.clearSession()),
+          markGap: () => withPartnerAlertHostedQaParent(cap, () => store.markGap()), attention: report,
+          schedule: (fn, ms) => setTimeout(fn, ms), cancel: handle => clearTimeout(handle as ReturnType<typeof setTimeout>), random: Math.random,
+        });
+        owned.driver = driver;
+        owned.renew = setInterval(() => {
+          try { if (withPartnerAlertHostedQaParent(cap, () => store.renew())) return; } catch { /* Parent or exact lease ended. */ }
+          report("receiver_lease_unavailable"); void finish();
+        }, 10_000);
+        owned.timer = setTimeout(() => { void finish(); }, Math.max(1, Math.min(60_000, hostedQaDeadline(cap) - Date.now())));
+        if (!driver.start()) await finish();
+        return done;
+      } catch (error) { await finish(); throw error; }
     }),
     reconcileRole: (operationId: string) => tracked(async () => {
       if (manifest.mode !== "roles" || !/^[0-9a-f-]{36}$/u.test(operationId)) return fail();
