@@ -1,22 +1,18 @@
 {
   "version": "core_partner_erasure_profiles_v1",
-  "reviewStatus": "UNQUALIFIED",
-  "technicalRefsAndExpiryStatus": "unqualified_pending_current_source_schema_review",
+  "reviewStatus": "INDEPENDENTLY_REVIEWED",
+  "technicalRefsAndExpiryStatus": "independently_reviewed",
   "qualificationValidUntilUtc": "2026-11-24T18:55:13.040Z",
-  "schemaSha256": "bd8a006dd68b2244b385fcccd88733511008dce12650389141d8fb714ff687b4",
+  "schemaSha256": "5812417dfe56b3fe0cb370d7e59caee068b6020859c95f1a2e4816322eb936a5",
   "authoritySchemaSha256": "b8a968de4880cf6e5574906a2b569a502bdfd16b7519ddaf41cadab9c77a0961",
   "privacySchemaSha256": "b53da413ac0cc52615171ed4ad337eec41464c553e866995953a96687b7a2c2f",
   "nativeSourceArtifactSha256": "364aa7982a87f4cee623dbcc1d50b3c53a94825a1c964278de18c1481bdc9f76",
   "referencePolicy": "hold_signer_and_shared_owner",
   "payloadDisposition": "policy_bound_text_expiry_hold_minimal_unresolved",
   "schemaEvidence": {
-    "artifactPath": "/home/traderlink/projects/traderslink-coordinator/operations/community-staging-actual-schema-20261117.json",
-    "artifactSha256": "5466f471321383df07f7bdb9d91661b93a611e8ddad73ce8cd202d14e79f6959",
-    "sourceCommit": "afc7848a869ae9a31e2fb317cd5e4b8b5805e2ad",
-    "reviewStatus": "UNQUALIFIED",
-    "observedSchemaSha256": "bd8a006dd68b2244b385fcccd88733511008dce12650389141d8fb714ff687b4",
-    "reviewedCodeVectorSha256": "0e892ebe924440e1df53db4e49c437a6142fba77de0963c06c1f274cb85dc2ab",
-    "actualInitializerSourceCommit": "0c2b6010d05784788c32a7f84697f489291ebeee"
+    "reviewStatus": "INDEPENDENTLY_REVIEWED",
+    "observedSchemaSha256": "5812417dfe56b3fe0cb370d7e59caee068b6020859c95f1a2e4816322eb936a5",
+    "artifactSha256": "c95cf17a18a675a6fc0efb327bacf69edfbe898dcdffa8ae9bc7561e52d280cb"
   },
   "retentionPolicy": {
     "ref": "paid_partner_retention_7d_v2",
@@ -45,9 +41,9 @@
   ],
   "independentReview": {
     "status": "accepted",
-    "reviewerRef": "paid_worker_01a19f82_1ef7_7e31_8757_f360fbe7af76",
-    "receiptRef": "paid_combined_staging_afc7848_20261117",
-    "reviewedAtUtc": "2026-11-17T22:07:05.364Z",
-    "catalogContentSha256": "3b9973901c4e9f0351c2a59477798673ef015985a3a61371ff7489ba63609b74"
+    "reviewerRef": "stats_independent_reviewer_01a15613_739c",
+    "receiptRef": "stats_finite204_staging_catalog_content_review_20261118",
+    "reviewedAtUtc": "2026-11-18T03:08:19.386Z",
+    "catalogContentSha256": "2790229e9cafe7aeb7d90a9ff5d28ef240d451be0e644e259d160bd70ed719b9"
   }
 }
