@@ -47,8 +47,8 @@ async function saveSeedTrade(page: Page): Promise<{ id: string; symbol: string }
   ].join("\r\n");
   await page.goto("/intelligence/import-dry-run");
   await expect(page).toHaveURL(/\/imports\?mode=preview$/);
-  await page.getByLabel("Broker", { exact: true }).fill("Interactive Brokers");
-  await expect(page.getByLabel("Broker", { exact: true })).toHaveValue("Interactive Brokers");
+  await page.getByRole("textbox", { name: "Broker", exact: true }).fill("Interactive Brokers");
+  await expect(page.getByRole("textbox", { name: "Broker", exact: true })).toHaveValue("Interactive Brokers");
   await page.locator('input[type="file"]').setInputFiles({
     buffer: Buffer.from(csv), mimeType: "text/csv", name: "level-analysis-seeded-devs.csv",
   });

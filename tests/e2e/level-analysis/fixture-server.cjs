@@ -60,6 +60,7 @@ function prepareFixture(storageRoot, controlRoot) {
   const { runPlatformMigrations } = load("src/modules/platform/server/database/run-platform-migrations.ts");
   const { PlatformDiscordSignInService } = load("src/modules/platform/server/authentication/platform-discord-sign-in-service.ts");
   const { PlatformOperatorRepository } = load("src/modules/platform/server/administration/platform-operator-repository.ts");
+  const { JournalDemoAccountRepository } = load("src/modules/journal/server/demo/journal-demo-account-repository.ts");
   const { JournalAccountRepository } = load("src/modules/journal/server/accounts/journal-account-repository.ts");
   const { JournalAccountService, loadAccountIdentityConfiguration } = load("src/modules/journal/server/accounts/journal-account-service.ts");
   const { IBKR_SOURCE_ACCOUNT_CANONICALIZERS, IBKR_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } = load("src/modules/journal/server/accounts/ibkr-source-account-canonicalizer.ts");
@@ -86,7 +87,21 @@ function prepareFixture(storageRoot, controlRoot) {
       environment, IBKR_SOURCE_ACCOUNT_CANONICALIZERS, IBKR_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
     )).confirmSourceIdentityLinkRecord(scope, { accountId, sourceSystem: "ibkr", rawSourceAccountId: ACCOUNT,
       privacySafeDisplay: "Synthetic account", now: new Date() });
-    metadata = { scope, databasePath: environment.TRADERLINK_PLATFORM_DB_PATH,
+    // This test models an existing owner who previously cleared Demo, not
+    // first-time onboarding. The historical UUID is synthetic fixture state;
+    // no actual demo materialization or erasure is claimed by this regression.
+    const demos = new JournalDemoAccountRepository(database);
+    demos.recordClearedLifecycle({ userId: scope.userId, workspaceId: scope.workspaceId,
+      clearedDemoAccountId: randomUUID(), clearedAtUtc: new Date().toISOString() });
+    assert.equal(demos.findLifecycleForUser(scope)?.state, "cleared");
+    assert.equal(demos.findAccountForUser(scope), null);
+    assert.equal(database.prepare("SELECT count(*) AS count FROM journal_executions WHERE workspace_id=?")
+      .get(scope.workspaceId).count, 0, "Browser Upload must create the executions");
+    const primary = new JournalAccountService(new JournalAccountRepository(database))
+      .requireAccountRecord(scope, accountId);
+    assert.equal(primary.displayName, "Primary Journal");
+    metadata = { scenario: "synthetic_existing_owner_prior_cleared_demo_empty_primary_journal",
+      scope, databasePath: environment.TRADERLINK_PLATFORM_DB_PATH,
       expectedAccountSelectionRef: deriveJournalAccountSelectionRef(signed.workspaceId, accountId) };
     privateJson(path.join(controlRoot, "browser-state.json"), { cookies: [{
       name: "__Host-tl_platform_session", value: signed.session.token, domain: "127.0.0.1", path: "/",
