@@ -93,7 +93,7 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
  const selectors=environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT?.split(",").map(x=>x.trim());
  if(!selectors||selectors.length!==2||selectors[0]===selectors[1]||principals.coach.subject!==selectors[1]||principals.student.subject!==selectors[0])refused();
  const request=input.request,requestBinding=JSON.stringify([...request.headers]);
- if(request.method!=="POST"||request.signal.aborted||new URL(request.url).href!==`${run.pins.origin}/__private/community-staging-qa/${run.nonce}`||request.headers.get("origin")!==run.pins.origin||request.headers.get("sec-fetch-site")==="cross-site")refused();
+ if(request.method!=="POST"||request.signal.aborted||new URL(request.url).href!==`${run.pins.origin}/__private/${run.pipeline==="stats"?"community-stats-qa":"community-staging-qa"}/${run.nonce}`||request.headers.get("origin")!==run.pins.origin||request.headers.get("sec-fetch-site")==="cross-site")refused();
  const auditTarget=hash(`${run.runId}:${run.communityId}`),nonceRef=hash(run.nonce),start=Date.now(),abort=new AbortController(),stops=new Set<()=>void>();
  let finished=false,requests=0,writes=0,frames=0,histories=0,ticks=0,started=false,authorizing=false;
  const structural=()=>{

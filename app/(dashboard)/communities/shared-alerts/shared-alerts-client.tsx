@@ -105,8 +105,8 @@ function Pages({ total, page, snapshot, tab, parameter, requestId }: { total: nu
   return <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", mt: 2 }}>
     <Typography color="text.secondary" variant="body2">{total === 0 ? "0" : `${(page - 1) * snapshot.pageSize + 1}–${Math.min(page * snapshot.pageSize, total)}`} of {total}</Typography>
     <Stack direction="row" spacing={1}>
-      <Button component={Link} disabled={page <= 1} href={url(snapshot, { tab, q: snapshot.query, request: requestId, approvalOnly:parameter==="deliveryPage"&&snapshot.selected?.deliveryFilter==="approval"?"1":undefined, [parameter]: page - 1 })} size="small">Previous</Button>
-      <Button component={Link} disabled={page >= pages} href={url(snapshot, { tab, q: snapshot.query, request: requestId, approvalOnly:parameter==="deliveryPage"&&snapshot.selected?.deliveryFilter==="approval"?"1":undefined, [parameter]: page + 1 })} size="small">Next</Button>
+      <Button component={Link} prefetch={snapshot.navigation?false:undefined} disabled={page <= 1} href={url(snapshot, { tab, q: snapshot.query, request: requestId, approvalOnly:parameter==="deliveryPage"&&snapshot.selected?.deliveryFilter==="approval"?"1":undefined, [parameter]: page - 1 })} size="small">Previous</Button>
+      <Button component={Link} prefetch={snapshot.navigation?false:undefined} disabled={page >= pages} href={url(snapshot, { tab, q: snapshot.query, request: requestId, approvalOnly:parameter==="deliveryPage"&&snapshot.selected?.deliveryFilter==="approval"?"1":undefined, [parameter]: page + 1 })} size="small">Next</Button>
     </Stack>
   </Stack>;
 }
@@ -121,7 +121,7 @@ function Directory({ snapshot }: { snapshot: Snapshot }) {
         <Stack spacing={1.5}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}><Avatar src={community.logoUrl ?? undefined} alt="">{community.name.slice(0, 1)}</Avatar><Box><Typography component="h3" variant="h6">{community.name}</Typography><Typography color="text.secondary" variant="body2">{community.slug}</Typography></Box></Stack>
           <Chip label={community.blocked ? "Requests blocked" : community.requestsOpen ? "Open to sharing requests" : "Requests closed"} size="small" sx={{ alignSelf: "flex-start" }} />
-          {community.existingRequestId?<Button component={Link} href={url(snapshot,{tab:community.existingConnection?"connections":"requests",request:community.existingRequestId})} variant="outlined">{community.existingConnection?"Open connection":"Open existing request"}</Button>:<Button component={Link} disabled={community.blocked || !community.requestsOpen} href={url(snapshot, { tab: "find", compose: community.communityId })} variant="outlined">Send sharing request</Button>}
+          {community.existingRequestId?<Button component={Link} prefetch={snapshot.navigation?false:undefined} href={url(snapshot,{tab:community.existingConnection?"connections":"requests",request:community.existingRequestId})} variant="outlined">{community.existingConnection?"Open connection":"Open existing request"}</Button>:<Button component={Link} prefetch={snapshot.navigation?false:undefined} disabled={community.blocked || !community.requestsOpen} href={url(snapshot, { tab: "find", compose: community.communityId })} variant="outlined">Send sharing request</Button>}
         </Stack>
       </Box></Grid>)}
     </Grid>
@@ -149,10 +149,10 @@ function Compose({ snapshot }: { snapshot: Snapshot }) {
         {direction === "send" ? <Box><Typography component="h3" variant="subtitle1">Analysts to offer</Typography>
           {eligible.map(person => <FormControlLabel key={person.userId} control={<Checkbox name="publisherId" value={person.userId} checked={publishers.includes(person.userId)} onChange={event => { const checked = event.target.checked; setPublishers(current => checked ? [...current,person.userId] : current.filter(id => id !== person.userId)); }} />} label={person.name} />)}
           {!eligible.length ? <Alert severity="warning">Give a team member Publish alerts permission before sending an offer.</Alert> : null}
-          <Button component={Link} href={url(snapshot,{tab:"settings"})}>Manage publishing permissions</Button>
+          <Button component={Link} prefetch={snapshot.navigation?false:undefined} href={url(snapshot,{tab:"settings"})}>Manage publishing permissions</Button>
         </Box> : <Alert severity="info">The other owner will offer analysts first. You can then choose which analysts to receive and their channels before accepting.</Alert>}
         <TextField disabled={draft.pending} label="Message to the owner" multiline minRows={3} name="message" onChange={event => draft.setMessage(event.target.value)} required slotProps={{ htmlInput: { maxLength: 2000 } }} value={draft.message} />
-        <Stack direction="row" spacing={1}><Submit disabled={(direction === "send" && !publishers.length) || other.blocked || !other.requestsOpen}>Send request</Submit><Button component={Link} href={url(snapshot, { tab: "find" })}>Cancel</Button></Stack>
+        <Stack direction="row" spacing={1}><Submit disabled={(direction === "send" && !publishers.length) || other.blocked || !other.requestsOpen}>Send request</Submit><Button component={Link} prefetch={snapshot.navigation?false:undefined} href={url(snapshot, { tab: "find" })}>Cancel</Button></Stack>
       </Stack>
     </Box>
   </DashboardPanel>;
@@ -191,7 +191,7 @@ function ReviewAgreement({ snapshot, request }: { snapshot: Snapshot; request: S
         {receiving && selected.includes(route.userId)?<><ReceivingChannelChoice snapshot={snapshot} route={route} /><FormControlLabel control={<Checkbox defaultChecked={route.requireApproval} name={`approval_${route.userId}`} />} label="Require approval before posting" /></>:null}
       </Stack></Box>)}
       {!routes.length?<Alert severity="warning">{receiving?"This request has no available analyst offer. Ask the source owner to add analysts before you can accept.":"Give a team member Publish alerts permission, then return to offer analysts."}</Alert>:null}
-      {!receiving?<Button component={Link} href={url(snapshot,{tab:"settings"})}>Manage publishing permissions</Button>:null}
+      {!receiving?<Button component={Link} prefetch={snapshot.navigation?false:undefined} href={url(snapshot,{tab:"settings"})}>Manage publishing permissions</Button>:null}
       {receiving?<FormControlLabel control={<Checkbox checked={showName} name="showSourceCommunityName" onChange={event=>setShowName(event.target.checked)} />} label={`Show ${request.source.name}’s community name in Discord posts sent to our server`} />:<input name="showSourceCommunityName" type="hidden" value={showName?"on":""} />}
       <Submit disabled={!selected.length}>{receiving?"Accept selected analysts":"Send analyst offer"}</Submit>
     </Stack>
@@ -258,8 +258,8 @@ function Conversation({ snapshot, request }: { snapshot: Snapshot; request: Shar
   return <Stack spacing={2}>
     <Typography component="h3" variant="h6">Messages</Typography>
     {!selected.messages.length?<Typography color="text.secondary">No messages in this request.</Typography>:null}
-    {selected.readThrough === null ? <Button component={Link} href={url(snapshot, { tab: request.isConnection ? "connections" : "requests", request: request.requestId })}>Latest messages</Button> : null}
-    {selected.olderMessagesBefore ? <Button component={Link} href={url(snapshot, { tab: request.isConnection ? "connections" : "requests", request: request.requestId, before: selected.olderMessagesBefore })}>Older messages</Button> : null}
+    {selected.readThrough === null ? <Button component={Link} prefetch={snapshot.navigation?false:undefined} href={url(snapshot, { tab: request.isConnection ? "connections" : "requests", request: request.requestId })}>Latest messages</Button> : null}
+    {selected.olderMessagesBefore ? <Button component={Link} prefetch={snapshot.navigation?false:undefined} href={url(snapshot, { tab: request.isConnection ? "connections" : "requests", request: request.requestId, before: selected.olderMessagesBefore })}>Older messages</Button> : null}
     {selected.messages.map(message => <Box key={message.sequence} data-shared-read-latest={message.sequence === selected.readThrough?.messageSequence ? "message" : undefined} sx={{ ...panelBorder, bgcolor: message.authorCommunityId === snapshot.community.communityId ? "action.hover" : "background.paper" }}>
       <Typography variant="subtitle2">{message.authorName}</Typography><Typography variant="caption" color="text.secondary">{date(message.createdAtUtc)}</Typography><Typography sx={{ mt: 1, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }} variant="body2">{message.body}</Typography>
     </Box>)}
@@ -297,7 +297,7 @@ function SelectedRequest({ snapshot, onRead }: { snapshot: Snapshot; onRead: () 
     </> : null}
 
     {selected.deliveries.length || selected.deliveryFilter==="approval" || request.status==="active" ? <><Divider /><Box><Typography component="h3" variant="h6" sx={{ mb: 1 }}>{selected.deliveryFilter==="approval"?"Posts awaiting approval":"Delivery log"}</Typography>
-      {receiving?<Stack direction="row" sx={{gap:1,mb:2,flexWrap:"wrap"}}><Button component={Link} href={url(snapshot,{tab:"connections",request:request.requestId})} variant={selected.deliveryFilter==="all"?"contained":"outlined"}>All posts</Button><Button component={Link} href={url(snapshot,{tab:"connections",request:request.requestId,approvalOnly:"1"})} variant={selected.deliveryFilter==="approval"?"contained":"outlined"}>Awaiting approval ({selected.approvalTotal})</Button></Stack>:null}
+      {receiving?<Stack direction="row" sx={{gap:1,mb:2,flexWrap:"wrap"}}><Button component={Link} prefetch={snapshot.navigation?false:undefined} href={url(snapshot,{tab:"connections",request:request.requestId})} variant={selected.deliveryFilter==="all"?"contained":"outlined"}>All posts</Button><Button component={Link} prefetch={snapshot.navigation?false:undefined} href={url(snapshot,{tab:"connections",request:request.requestId,approvalOnly:"1"})} variant={selected.deliveryFilter==="approval"?"contained":"outlined"}>Awaiting approval ({selected.approvalTotal})</Button></Stack>:null}
       {!selected.deliveries.length?<Typography color="text.secondary">{selected.deliveryFilter==="approval" ? "No posts awaiting approval." : "No deliveries yet."}</Typography>:null}<Stack spacing={1}>{selected.deliveries.map(delivery => <Box key={delivery.deliveryId} sx={panelBorder}>
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}><Typography variant="subtitle2">{delivery.kind === "correction" ? "Correction: " : delivery.kind === "withdrawal" ? "Withdrawn: " : ""}{delivery.title}</Typography><Chip label={delivery.status==="pending"&&delivery.parts.some(p=>p.status==="delivered")?"Partially delivered":delivery.status.replaceAll("_"," ")} size="small" /></Stack>
       <Typography color="text.secondary" variant="caption">{date(delivery.createdAtUtc)} · {delivery.authorName} · {deliveryChannelLabel(snapshot, request, delivery.channelId, delivery.authorUserId)} · {delivery.attemptCount} attempts · Updated {date(delivery.updatedAtUtc)}</Typography>
@@ -378,14 +378,14 @@ function SharedAlertsClientContent({ snapshot: incoming, tab, error, saved }: Om
     {snapshot.navigation?<Alert severity="info">{snapshot.navigation.testLabel}</Alert>:null}
     {!interactive ? <Typography role="status" variant="body2">Loading sharing controls…</Typography> : null}
     <Stack aria-busy={!interactive} inert={!interactive} data-shared-alerts-ready={interactive ? "true" : "false"} spacing={2.5} sx={{ minWidth: 0 }}>
-    <DashboardPanel hideHeader><Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, alignItems: { sm: "center" }, justifyContent: "space-between" }}><Box><Typography component="h1" variant="h1">Shared alerts</Typography><Typography color="text.secondary" sx={{ mt: 1 }}>{snapshot.community.name}</Typography></Box><Stack direction="row" spacing={1}><Button component={Link} href="/help/traderslink-app/shared-alerts" aria-label="Help for Shared alerts">Help</Button><Button component={Link} href="/communities">My communities</Button><Button component={Link} href={snapshot.navigation?.communityHref??`/communities/${snapshot.community.slug}/manage`}>Back to community</Button></Stack></Stack>
+    <DashboardPanel hideHeader><Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, alignItems: { sm: "center" }, justifyContent: "space-between" }}><Box><Typography component="h1" variant="h1">Shared alerts</Typography><Typography color="text.secondary" sx={{ mt: 1 }}>{snapshot.community.name}</Typography></Box><Stack direction="row" spacing={1}><Button component={Link} prefetch={snapshot.navigation?false:undefined} href="/help/traderslink-app/shared-alerts" aria-label="Help for Shared alerts">Help</Button><Button component={Link} prefetch={snapshot.navigation?false:undefined} href="/communities">My communities</Button><Button component={Link} prefetch={snapshot.navigation?false:undefined} href={snapshot.navigation?.communityHref??`/communities/${snapshot.community.slug}/manage`}>Back to community</Button></Stack></Stack>
       <Tabs aria-label="Shared alert sections" allowScrollButtonsMobile scrollButtons slotProps={{ scroller: { ref: tabScroller } }} value={tab} variant="scrollable" sx={{ mt: 2, borderBottom: 1, borderColor: "divider", "& .MuiTab-root.Mui-selected": { color: "text.primary" }, "& .MuiTabs-indicator": { bgcolor: "text.primary" } }}>
-        <Tab component={Link} onNavigate={navigate("find")} href={url(snapshot, { tab: "find" })} label="Find communities" value="find" />
-        <Tab component={Link} onNavigate={navigate("requests")} href={url(snapshot, { tab: "requests" })} label={<Badge badgeContent={snapshot.requestUnreadCount??0} color="error" max={99} sx={{ pr: 1.5 }}>Requests</Badge>} value="requests" />
-        <Tab component={Link} onNavigate={navigate("connections")} href={url(snapshot, { tab: "connections" })} label={<Badge badgeContent={snapshot.connectionUnreadCount??0} color="error" sx={{pr:1.5}}>Connections</Badge>} value="connections" />
-        <Tab component={Link} onNavigate={navigate("activity")} href={url(snapshot,{tab:"activity"})} label={<Badge badgeContent={snapshot.unreadCount} color="error" sx={{pr:1.5}}>Activity</Badge>} value="activity" />
-        <Tab component={Link} onNavigate={navigate("history")} href={url(snapshot,{tab:"history"})} label="History" value="history" />
-        <Tab component={Link} onNavigate={navigate("settings")} href={url(snapshot,{tab:"settings"})} label="Settings" value="settings" />
+        <Tab component={Link} prefetch={snapshot.navigation?false:undefined} onNavigate={navigate("find")} href={url(snapshot, { tab: "find" })} label="Find communities" value="find" />
+        <Tab component={Link} prefetch={snapshot.navigation?false:undefined} onNavigate={navigate("requests")} href={url(snapshot, { tab: "requests" })} label={<Badge badgeContent={snapshot.requestUnreadCount??0} color="error" max={99} sx={{ pr: 1.5 }}>Requests</Badge>} value="requests" />
+        <Tab component={Link} prefetch={snapshot.navigation?false:undefined} onNavigate={navigate("connections")} href={url(snapshot, { tab: "connections" })} label={<Badge badgeContent={snapshot.connectionUnreadCount??0} color="error" sx={{pr:1.5}}>Connections</Badge>} value="connections" />
+        <Tab component={Link} prefetch={snapshot.navigation?false:undefined} onNavigate={navigate("activity")} href={url(snapshot,{tab:"activity"})} label={<Badge badgeContent={snapshot.unreadCount} color="error" sx={{pr:1.5}}>Activity</Badge>} value="activity" />
+        <Tab component={Link} prefetch={snapshot.navigation?false:undefined} onNavigate={navigate("history")} href={url(snapshot,{tab:"history"})} label="History" value="history" />
+        <Tab component={Link} prefetch={snapshot.navigation?false:undefined} onNavigate={navigate("settings")} href={url(snapshot,{tab:"settings"})} label="Settings" value="settings" />
       </Tabs>
     </DashboardPanel>
     {navigating ? <LinearProgress aria-label="Loading Shared alerts" /> : null}

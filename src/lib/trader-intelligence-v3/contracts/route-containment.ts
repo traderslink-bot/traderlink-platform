@@ -620,6 +620,15 @@ export const TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX = [
     deploymentAndSecurityAssumptions: "Isolated staging only; actual cross-route opaque registry identity is independently tested",
   },
   {
+    ...apiEntry("app/%5F%5Fprivate/community-stats-qa/[nonce]/route.ts", ["POST"], "internal_diagnostics", "platform_request_scope"),
+    routePath: "/__private/community-stats-qa/[nonce]",
+    authenticationRequirement: "Actual Core administrative Platform session",
+    authorizationRequirement: "Exact startCommunityStatsQa: isolated staging target, fixed private Stats files, actual Core issuer, installed source/archive/build/schema/full-ledger/session/owner/guild/settings/nonce checks",
+    mutationProtectionRequirement: "Same-origin POST, Stats-only pipeline, selected Tests General, no delivery jobs, zero Discord writes and finite native collector budgets; abort cancels authority",
+    currentResponsibility: "Private bounded native Stats acceptance stream; no Shared model or generic worker activation",
+    deploymentAndSecurityAssumptions: "Isolated staging only; no client file/scope/pin selectors or production authority",
+  },
+  {
     ...apiEntry("app/%5F%5Fprivate/community-staging-qa/[nonce]/route.ts", ["POST"], "internal_diagnostics", "platform_request_scope"),
     routePath: "/__private/community-staging-qa/[nonce]",
     authenticationRequirement: "Actual Core administrative Platform session",
