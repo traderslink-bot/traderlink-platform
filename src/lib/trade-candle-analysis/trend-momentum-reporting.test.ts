@@ -93,6 +93,15 @@ test("individual card switches saved timeframe and retains partial indicator ava
   }
 });
 
+test("missing saved indicator history is explained without asking the trader to run analysis", () => {
+  const analysis = { events: [] } as unknown as DaySessionTradeAnalyzer;
+  const html = renderToStaticMarkup(createElement(TradeIndicatorContext, {
+    analysis, timeframe: "1m", currency: "USD", timezone: "America/New_York",
+  }));
+  assert.match(html, /This saved analysis does not include the newer indicator history\./);
+  assert.doesNotMatch(html, /Analyze the trade again/);
+});
+
 test("trade summary uses the same new context and never substitutes conflicting legacy values", () => {
   const trendMomentum = fixture();
   const analysis = { trendMomentum, events: [{ eventId: "entry", kind: "entry", price: "20", sequence: 1,

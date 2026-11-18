@@ -22,6 +22,9 @@ function isPageRoot(pathname: string): boolean {
 function continueRequest(request: NextRequest, proxyEntryEpochMs: number): NextResponse {
   const headers = new Headers(request.headers);
   headers.set("x-traderlink-page-path", request.nextUrl.pathname);
+  const returnUrl = request.nextUrl.clone();
+  if (returnUrl.searchParams.has("_rsc")) returnUrl.searchParams.delete("_rsc");
+  headers.set("x-traderlink-page-return-to", returnUrl.pathname + returnUrl.search);
   // Never trust a browser-supplied diagnostic ID on any route.
   headers.delete("x-traderlink-speed-id");
   headers.delete("x-traderlink-speed-start-ms");

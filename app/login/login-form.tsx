@@ -1,4 +1,6 @@
 "use client";
+
+import { PLATFORM_ENTRY_PATH } from "@/src/modules/platform/contracts/platform-home-page";
 import { readLoginResponse } from "@/src/modules/platform/contracts/platform-login-response";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
@@ -17,7 +19,7 @@ export type LoginFormMode =
   | "confirm-email-change";
 export function LoginForm({
   mode = "login",
-  returnTo = "/workspace",
+  returnTo = PLATFORM_ENTRY_PATH,
   googleAvailable = false,
   discordAvailable = false,
   emailAvailable = true,

@@ -42,10 +42,10 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["trade analyzer", "chart replay", "day trade analysis", "historical analytics"],
         blocks: [
           { kind: "paragraph", text: "Trade Analyzer uses the allowance and reset period included in your plan and selected add-ons, shared across your Journal accounts. If your plan does not include it, the Workspace Analyzer icon opens a small message with a link to upgrade. The Analyze choices in trade-entry review also show an upgrade link. An unlimited allowance has no personal quantity limit. When no analyses remain, choose a plan with more analyses or wait for the displayed reset. Saved results remain stored. Trade Analyzer Analysis is a separate plan feature from generating a Trade Analyzer result. If your plan does not include Analysis, its pages show a labelled screenshot of the Demo account and a link to plans and add-ons. The screenshot controls are not interactive. The preview does not show your trades or use an analysis allowance. Existing saved results remain stored when membership expires." },
-          { kind: "paragraph", text: "The Trade Analyzer combines your exact Trade Tracker executions with supported market candles. Inside Session Tracker it replays one selected trade and explains its entries, exits, price path and completed candle patterns. Day Trade Analysis compares saved Analyzer results across eligible day trades." },
+          { kind: "paragraph", text: "The Trade Analyzer combines your recorded executions with supported market candles. Open Trade Analyzer to enter and analyze trades or choose a saved trade from To analyze. Choose Your analyzed trades to open a completed result, or Day Trade Analysis to compare results across eligible day trades." },
           { kind: "table", columns: ["Area", "Purpose"], rows: [
             ["Session Tracker", "Review one trading day, select a ticker and trade, replay the chart, inspect executions and save notes, tags and rules."],
-            ["Trade Analyzer", "The reusable chart, exact execution details, Green-to-Red review and candle-pattern capability."],
+            ["Trade Analyzer", "Enter trades, select saved trades to analyze, and open the chart and analysis for a completed trade."],
             ["Day Trade Analysis", "Long-term comparisons over eligible day trades that already have saved Analyzer results."],
             ["Analytics", "Regular Trade Tracker analytics over supported historical trading facts. It does not share the Analyzer eligibility population."],
           ] },
@@ -162,7 +162,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Compare EMA alignment and RSI at your saved entries and exits.",
         keywords: ["EMA 9", "EMA 20", "RSI", "initial entry", "add", "partial exit"], blocks: [
           { kind: "paragraph", text: "Choose one-minute or five-minute candles and an execution type: initial entry, add, re-entry, partial exit, interim position closure or final exit. The comparison uses indicators known at that execution and counts each whole-trade outcome once within a group. Older distance-only analysis is not substituted when the added indicator history is unavailable." },
-          { kind: "paragraph", text: "For an older saved analysis, open its Analyzer from Workspace and choose Refresh indicator history. This also updates older indicator calculations. Your trade details stay unchanged and the earlier saved analysis is retained. Sufficient saved candles are reused for free; missing history uses the existing limit of three free candle-data retries per saved trade each New York day." },
+          { kind: "paragraph", text: "For an older saved analysis in your own trading account, open its Analyzer from Workspace and choose Refresh indicator history. This also updates older indicator calculations. Your trade details stay unchanged and the earlier saved analysis is retained. Sufficient saved candles are reused for free; missing history uses the existing limit of three free candle-data retries per saved trade each New York day." },
           { kind: "paragraph", text: "An account with an explicit owner testing exemption shows Unlimited instead of remaining uses. It has no daily, period or manual-retry quantity limit. Requests still wait their turn for the shared data connection, and duplicate requests do not start another analysis." },
           { kind: "paragraph", text: "Detailed indicator comparisons opens Trend & Momentum with your date range, Gross/Net basis, direction, timeframe and execution type preserved. You can combine conditions there and inspect supporting executions." },
         ],
@@ -533,8 +533,19 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
     slug: "analyzed-trades",
     title: "Your analyzed trades",
-    description: "Find the recorded trades behind these results and open each exact Session Tracker review.",
+    description: "Enter executions in Trade Analyzer and open the chart and analysis for each completed result.",
     sections: [
+      {
+        id: "enter-trades",
+        title: "Enter and analyze trades",
+        summary: "Submit one or more trades for analysis directly from Trade Analyzer.",
+        keywords: ["manual trade entry", "executions", "batch", "to analyze", "demo data"],
+        blocks: [
+          { kind: "paragraph", text: "Select Trade Analyzer in the sidebar, or choose Open Trade Analyzer on Home. In Manual trade entry, choose a trading date and enter each buy and sell as it appears with your broker. Use Add execution to enter more fills, then select Analyze trades. Eligible same-day trades are submitted together. Use the trade tabs or picker to see one trade at a time." },
+          { kind: "paragraph", text: "The executions save to your selected trading account. To analyze lists saved day trades awaiting analysis. Your analyzed trades lists completed results. Open a result to see its chart, execution markers, and Trade Analysis card." },
+          { kind: "paragraph", text: "When Demo is active, choose a sample trade to explore its finished analysis. Select Clear demo data and start fresh when you are ready to set up your own trading account." },
+        ],
+      },
       {
         id: "filters",
         title: "Ticker search",
@@ -557,7 +568,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Gross or Net result", "Actual saved trade result under the selected basis."],
             ["Return", "Percentage result when a supported denominator is available."],
             ["Executions", "All saved executions in your trade, including re-entries and interim position closures."],
-            ["View full analysis", "Opens the exact saved trade. When indicator conditions are selected, it focuses a supporting execution at the selected one-minute or five-minute interval."],
+            ["View full analysis", "Opens the exact saved trade in Trade Analyzer. When indicator conditions are selected, it focuses a supporting execution at the selected one-minute or five-minute interval."],
           ] },
           { kind: "paragraph", text: "Each row uses the whole saved trade's selected result once. Missing financial results remain unavailable. The indicator inclusion note describes the selected execution conditions, not a separate trade or a separate profit calculation." },
           { kind: "paragraph", text: "The directory intentionally keeps Green-to-red opportunity, capture and reversal columns off this page. Open the full analysis for entry, exit, pattern and Green-to-red context, or use the Green-to-red page for those cross-trade comparisons." },
