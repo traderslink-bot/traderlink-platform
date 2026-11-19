@@ -6,6 +6,7 @@ import {erasureHold} from "../../platform/server/privacy/platform-erasure-admiss
 import {partnerAlertProviderInboxSourceRecord} from "./partner-alert-retained-evidence";
 
 import { readPartnerDeliveryTextBinding } from "./partner-alert-erasure-delivery-text-binding";
+import { partnerAlertTombstoneStorage, type PartnerAlertErasureTombstone } from "./partner-alert-restore-tombstones";
 
 type Key=Readonly<{keyRef:string;key:Uint8Array}>;
 type Claim=Readonly<{participant:string;claim_ref:string;original_json:string;original_sha256:string;
@@ -261,12 +262,14 @@ export class PartnerAlertErasureClaimSuccessors {
     claimRef:"restore_tombstone";verifiedAtUtc:string}>):void {
     if(!this.database.inTransaction)return erasureHold();
     const operation=partnerAlertId(input.operationRef,"operationRef"),claim=this.claim(operation,input.participant,input.claimRef);
-    const tombstone=JSON.parse(claim.original_json) as Record<string,unknown>;
-    const stored=this.database.prepare(`SELECT tombstone_ref,subject_binding_hmac_sha256,binding_key_ref,retain_until_utc
+    const tombstone=JSON.parse(claim.original_json) as PartnerAlertErasureTombstone;
+    const storage=partnerAlertTombstoneStorage(tombstone);
+    const stored=this.database.prepare(`SELECT tombstone_ref,subject_binding_hmac_sha256,binding_key_ref,last_affected_backup_expires_at_utc,retain_until_utc
       FROM partner_alert_erasure_tombstones WHERE source_operation_ref=?`).get(operation) as Record<string,unknown>|undefined;
     if(!stored||stored.tombstone_ref!==tombstone.tombstoneRef
       ||stored.subject_binding_hmac_sha256!==tombstone.subjectBindingHmacSha256
-      ||stored.binding_key_ref!==this.binding.keyRef||stored.retain_until_utc!==tombstone.retainUntilUtc)return erasureHold();
+      ||stored.binding_key_ref!==this.binding.keyRef||stored.last_affected_backup_expires_at_utc!==storage.backupHorizon
+      ||stored.retain_until_utc!==storage.retainUntil)return erasureHold();
     this.retain(operation,claim,"restore_tombstone",partnerAlertId(String(stored.tombstone_ref),"tombstoneRef"),input.verifiedAtUtc);
   }
   coverage(operationRef:string):Readonly<{complete:boolean;claimCount:number;successorCount:number}> {

@@ -4,6 +4,7 @@ import { readPartnerAlertIsolatedStaging } from "./partner-alert-isolated-stagin
 import { createHash, createPrivateKey, createPublicKey, randomUUID, verify, type KeyObject } from "node:crypto";
 import { dirname, isAbsolute } from "node:path";
 import type Database from "better-sqlite3";
+import { partnerAlertRecoveryPointRefs, type PartnerAlertBackupExposure } from "./partner-alert-backup-exposure";
 import { platformPaidStripeConnectBillingMigration } from "../../platform/server/database/migrations/0209_platform_paid_stripe_connect_billing";
 import { platformPaidPartnerGatewaySessionMigration } from "../../platform/server/database/migrations/0210_platform_paid_partner_gateway_session";
 import { platformPaidStripeReauthorizationMigration } from "../../platform/server/database/migrations/0211_platform_paid_stripe_reauthorization";
@@ -170,14 +171,24 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
     || sha(JSON.stringify([ledgerPath,keyRef,sha(ledgerKey),subjectKeyRef,sha(subjectKey)])) !== ledgerBindingSha256) return fail();
   const tombstoneLedger = new PartnerAlertTombstoneLedger({path:ledgerPath,root:dirname(ledgerPath),ledgerId:backupInventoryId,keyRef,key:ledgerKey});
   tombstoneLedger.read();
-  const horizon = () => {
+  const horizon = (): PartnerAlertBackupExposure => {
     const now = nowUtc();
-    const [, lineage, snapshot, observed, latest, horizon, until] = signedFields(env.PARTNER_ALERT_STRIPE_ERASURE_BACKUP_PATH,
-      backupKey, { "traderlink:paid-stripe-backup-inventory:v1": 7 });
-    const createdAt = utc(latest), expiresAt = utc(horizon);
+    const fields = signedFields(env.PARTNER_ALERT_STRIPE_ERASURE_BACKUP_PATH,
+      backupKey, { "traderlink:paid-stripe-backup-inventory:v1": 7, "traderlink:paid-stripe-backup-inventory:v2": 7 });
+    const [format, lineage, snapshot, observed, latest, exposure, until] = fields;
+    const createdAt = utc(latest);
     if (lineage !== backupInventoryId || typeof snapshot !== "string" || !hex.test(snapshot) || utc(observed) > now
-      || utc(until) <= now || createdAt > utc(observed) || expiresAt < now || expiresAt < createdAt) return fail();
-    return {createdAt,expiresAt};
+      || utc(until) <= now || createdAt > utc(observed)) return fail();
+    if (format === "traderlink:paid-stripe-backup-inventory:v1") {
+      const expiresAt = utc(exposure);
+      if (expiresAt < now || expiresAt < createdAt) return fail();
+      return Object.freeze({kind:"finite",createdAtUtc:createdAt,expiresAtUtc:expiresAt});
+    }
+    if (!exposure || typeof exposure !== "object" || Array.isArray(exposure)) return fail();
+    const value = exposure as Record<string,unknown>;
+    if (value.kind !== "until_confirmed_disposition" || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify(["kind","recoveryPointRefs"])) return fail();
+    return Object.freeze({kind:"until_confirmed_disposition",createdAtUtc:createdAt,observedAtUtc:utc(observed),
+      inventoryRef:String(lineage),inventorySha256:sha(JSON.stringify(fields)),recoveryPointRefs:partnerAlertRecoveryPointRefs(value.recoveryPointRefs)});
   };
   horizon();
   const forbiddenRoleIds = Object.freeze([...protectedRoles] as string[]);
@@ -191,6 +202,7 @@ export function readPartnerAlertStripeErasureWorkerInputs(db: Database.Database,
     nowUtc,forbiddenRoleIds,sources:createPartnerAlertErasedBuyerCoverage(db),
     roleKeys:{keyId,privateKey,publicKey:rolePublicKey,maximumLifetimeMs:30_000},
     erasureRuntime:{binding:{keyRef:subjectKeyRef,key:subjectKey},tombstoneLedger,nowUtc,createId:randomUUID,
-      lastAffectedBackupCreatedAtUtc:() => horizon().createdAt,lastAffectedBackupExpiresAtUtc:() => horizon().expiresAt},
+      readBackupExposure:horizon,lastAffectedBackupCreatedAtUtc:() => horizon().createdAtUtc,
+      lastAffectedBackupExpiresAtUtc:() => {const value=horizon();return value.kind==="finite"?value.expiresAtUtc:fail();}},
   });
 }

@@ -3,14 +3,14 @@ import { closeSync, constants, existsSync, fsyncSync, openSync, renameSync,
   realpathSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, join } from "node:path";
 import { partnerAlertInteger, partnerAlertRef } from "../contracts/partner-alert-validation";
-import type { PartnerAlertErasureTombstone } from "./partner-alert-restore-tombstones";
+import { validatePartnerAlertErasureTombstone, type PartnerAlertErasureTombstone } from "./partner-alert-restore-tombstones";
 import { readPartnerAlertTombstoneLedgerBytes } from "./partner-alert-tombstone-ledger-bounded-reader";
 
 type State = "prepared" | "committed" | "aborted";
 type Record = Readonly<{ tombstone: PartnerAlertErasureTombstone; state: State }>;
-type Snapshot = Readonly<{ version: 1; ledgerId: string; generation: number; previousSha256: string;
+type Snapshot = Readonly<{ version: 1 | 2; ledgerId: string; generation: number; previousSha256: string;
   records: readonly Record[] }>;
-type Envelope = Readonly<{ version: 1; keyRef: string; iv: string; tag: string; ciphertext: string }>;
+type Envelope = Readonly<{ version: 1 | 2; keyRef: string; iv: string; tag: string; ciphertext: string }>;
 
 export type PartnerAlertTombstoneLedgerReceipt = Readonly<{ generation: number; sha256: string }>;
 export type PartnerAlertTombstoneLedgerView = PartnerAlertTombstoneLedgerReceipt & Readonly<{
@@ -44,34 +44,41 @@ export class PartnerAlertTombstoneLedger {
     this.key = input.key;
   }
 
-  private aad(): Buffer { return Buffer.from(`partner-alert-tombstone-ledger-v1\u0000${this.ledgerId}`); }
+  private aad(version: 1 | 2): Buffer { return Buffer.from(`partner-alert-tombstone-ledger-v${version}\u0000${this.ledgerId}`); }
 
   private decode(): Snapshot {
     if (!existsSync(this.path)) return Object.freeze({ version: 1, ledgerId: this.ledgerId,
       generation: 0, previousSha256: "0".repeat(64), records: Object.freeze([]) });
     const bytes = readPartnerAlertTombstoneLedgerBytes(this.path,this.root,16 * 1024 * 1024);
     const envelope = JSON.parse(bytes.toString("utf8")) as Envelope;
-    if (envelope.version !== 1 || envelope.keyRef !== this.keyRef) throw new Error("partner_alert_tombstone_ledger_envelope");
+    if (![1,2].includes(envelope.version) || envelope.keyRef !== this.keyRef) throw new Error("partner_alert_tombstone_ledger_envelope");
     const decipher = createDecipheriv("aes-256-gcm", this.key, Buffer.from(envelope.iv,"base64url"));
-    decipher.setAAD(this.aad()); decipher.setAuthTag(Buffer.from(envelope.tag,"base64url"));
+    decipher.setAAD(this.aad(envelope.version)); decipher.setAuthTag(Buffer.from(envelope.tag,"base64url"));
     const plaintext = Buffer.concat([decipher.update(Buffer.from(envelope.ciphertext,"base64url")),decipher.final()]);
     const snapshot = JSON.parse(plaintext.toString("utf8")) as Snapshot;
-    if (snapshot.version !== 1 || snapshot.ledgerId !== this.ledgerId || !Number.isSafeInteger(snapshot.generation)
+    if (snapshot.version !== envelope.version || snapshot.ledgerId !== this.ledgerId || !Number.isSafeInteger(snapshot.generation)
       || snapshot.generation < 0 || !/^[0-9a-f]{64}$/u.test(snapshot.previousSha256)
       || !Array.isArray(snapshot.records) || snapshot.records.length > 100_000) {
       throw new Error("partner_alert_tombstone_ledger_snapshot");
+    }
+    for (const row of snapshot.records) {
+      if (!["prepared","committed","aborted"].includes(row.state)
+        || snapshot.version === 1 && row.tombstone.version === 2) throw Error("partner_alert_tombstone_ledger_version");
+      validatePartnerAlertErasureTombstone(row.tombstone);
     }
     return Object.freeze({ ...snapshot, records: Object.freeze(snapshot.records) });
   }
 
   private write(previous: Snapshot, records: readonly Record[]): PartnerAlertTombstoneLedgerReceipt {
     const prior = canonical(previous);
-    const next: Snapshot = Object.freeze({ version: 1, ledgerId: this.ledgerId,
+    for (const row of records) validatePartnerAlertErasureTombstone(row.tombstone);
+    const version = previous.version === 2 || records.some(row => row.tombstone.version === 2) ? 2 : 1;
+    const next: Snapshot = Object.freeze({ version, ledgerId: this.ledgerId,
       generation: previous.generation + 1, previousSha256: sha(prior), records: Object.freeze(records) });
     const plaintext = canonical(next); const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", this.key, iv); cipher.setAAD(this.aad());
+    const cipher = createCipheriv("aes-256-gcm", this.key, iv); cipher.setAAD(this.aad(version));
     const ciphertext = Buffer.concat([cipher.update(plaintext,"utf8"),cipher.final()]);
-    const envelope: Envelope = Object.freeze({ version: 1, keyRef: this.keyRef, iv: iv.toString("base64url"),
+    const envelope: Envelope = Object.freeze({ version, keyRef: this.keyRef, iv: iv.toString("base64url"),
       tag: cipher.getAuthTag().toString("base64url"), ciphertext: ciphertext.toString("base64url") });
     const temporary = join(this.root, `.${basename(this.path)}.${process.pid}.${randomUUID()}.tmp`);
     let descriptor: number | null = null;

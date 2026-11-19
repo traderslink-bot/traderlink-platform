@@ -3,7 +3,7 @@ import { lstatSync, realpathSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type Database from "better-sqlite3";
 import { PartnerAlertTombstoneLedger } from "../../../partner-alerts/server/partner-alert-tombstone-ledger";
-import { matchesPartnerAlertTombstoneSubject } from "../../../partner-alerts/server/partner-alert-restore-tombstones";
+import { matchesPartnerAlertTombstoneSubject, isPartnerAlertTombstoneActive } from "../../../partner-alerts/server/partner-alert-restore-tombstones";
 
 type LedgerPin = Readonly<{generation:number;sha256:string}>;
 type Key = Parameters<typeof matchesPartnerAlertTombstoneSubject>[2];
@@ -22,7 +22,7 @@ export function stageCommittedRestoreTombstone(database: Database.Database,
   if (view.generation !== pin.generation || view.sha256 !== pin.sha256 || view.unresolvedPrepared.length) return held();
   const matches = view.committed.filter(row => row.sourceOperationRef === operationRef);
   const tombstone = matches[0];
-  if (matches.length !== 1 || !tombstone || tombstone.erasedAtUtc > atUtc || tombstone.retainUntilUtc <= atUtc
+  if (matches.length !== 1 || !tombstone || !isPartnerAlertTombstoneActive(tombstone,atUtc)
     || !matchesPartnerAlertTombstoneSubject(tombstone,userId,key)) return held();
   const operation = database.prepare(`SELECT o.lifecycle_ref FROM platform_erasure_module_operations o
     JOIN platform_erasure_lifecycles l ON l.lifecycle_ref=o.lifecycle_ref AND l.operation_ref=o.operation_ref

@@ -61,8 +61,10 @@ function fixture(mode: "no_discord_effects" | "discord_roles" = "no_discord_effe
     signature: sign(null, Buffer.from(JSON.stringify(values)), key).toString("base64url") }), { mode: 0o600 });
   const resign = () => signed(reviewPath, fields, reviewKey.privateKey);
   resign();
-  signed(backupPath, ["traderlink:paid-stripe-backup-inventory:v1", "inventory", sha("synthetic backup"),
-    utc(0), utc(-1000), utc(90000), utc(30000)], backupKey.privateKey);
+  const backupFields:unknown[]=["traderlink:paid-stripe-backup-inventory:v1", "inventory", sha("synthetic backup"),
+    utc(0), utc(-1000), utc(90000), utc(30000)];
+  const resignBackup=()=>signed(backupPath,backupFields,backupKey.privateKey);
+  resignBackup();
   const env: NodeJS.ProcessEnv = { NODE_ENV: "development", TRADERLINK_PAID_OWNER_PREVIEW: "1",
     TRADERLINK_PLATFORM_DB_PATH: db.name, PARTNER_ALERT_STRIPE_ERASURE_ENABLED: "true",
     PARTNER_ALERT_ERASURE_PROFILE_CATALOG_SHA256: catalog, PARTNER_ALERT_STRIPE_ERASURE_REVIEW_PATH: reviewPath,
@@ -77,8 +79,38 @@ function fixture(mode: "no_discord_effects" | "discord_roles" = "no_discord_effe
     PARTNER_ALERT_DISCORD_BOT_USER_ID: bot, PARTNER_ALERT_DISCORD_BOT_TOKEN: "synthetic-discord-token-only",
     PARTNER_ALERT_DISCORD_EVIDENCE_MAX_AGE_MS: "60000",
     PARTNER_ALERT_OUTPUT_BINDINGS_JSON: JSON.stringify({ configurationRef: outputRef, bindings: registry }) });
-  return { db, env, fields, registry, resign, read: () => readPartnerAlertStripeErasureWorkerInputs(db, env)! };
+  return { db, env, fields, registry, resign, backupFields,backupPath,resignBackup,
+    read: () => readPartnerAlertStripeErasureWorkerInputs(db, env)! };
 }
+
+const manualRecoveryPoint="33f671e6-5c6d-4ae2-aed6-bac305286ebd";
+function unknownInventory(f:ReturnType<typeof fixture>){
+  f.backupFields[0]="traderlink:paid-stripe-backup-inventory:v2";
+  f.backupFields[5]={kind:"until_confirmed_disposition",recoveryPointRefs:[manualRecoveryPoint]};
+  f.resignBackup();
+}
+it("authenticates explicit unknown exposure without inventing a finite callback value",()=>{
+  const f=fixture();unknownInventory(f);const input=f.read();
+  expect(input.erasureRuntime.readBackupExposure()).toMatchObject({kind:"until_confirmed_disposition",
+    inventoryRef:"inventory",recoveryPointRefs:[manualRecoveryPoint]});
+  expect(input.erasureRuntime.readBackupExposure()).toHaveProperty("inventorySha256",sha(JSON.stringify(f.backupFields)));
+  expect(()=>input.erasureRuntime.lastAffectedBackupExpiresAtUtc()).toThrow("unqualified");
+});
+it.each([null,"Infinity","9999-12-31T23:59:59.000Z",{kind:"until_confirmed_disposition",recoveryPointRefs:[]},
+  {kind:"until_confirmed_disposition",recoveryPointRefs:[manualRecoveryPoint,manualRecoveryPoint]},
+  {kind:"until_confirmed_disposition",recoveryPointRefs:[manualRecoveryPoint],expiresAtUtc:null},
+  {kind:"until_confirmed_disposition",recoveryPointRefs:["unverified"]},
+  {kind:"unknown",recoveryPointRefs:[manualRecoveryPoint]}])("refuses malformed signed v2 horizon %#",value=>{
+  const f=fixture();unknownInventory(f);f.backupFields[5]=value;f.resignBackup();expect(f.read).toThrow();
+});
+it("refuses signature tampering and expired or foreign unknown inventories",()=>{
+  const f=fixture();unknownInventory(f);
+  const original=readFileSync(f.backupPath,"utf8"),envelope=JSON.parse(original);
+  envelope.fields[5].recoveryPointRefs=["11111111-1111-4111-8111-111111111111"];
+  writeFileSync(f.backupPath,JSON.stringify(envelope));expect(f.read).toThrow();
+  f.backupFields[6]="2020-01-01T00:00:00.000Z";f.resignBackup();expect(f.read).toThrow();
+  f.backupFields[6]=new Date(Date.now()+30000).toISOString();f.backupFields[1]="foreign_inventory";f.resignBackup();expect(f.read).toThrow();
+});
 
 it("returns only signed v5 profile/mode and no Discord configuration without bot credentials", () => {
   const f = fixture();
