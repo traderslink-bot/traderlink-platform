@@ -121,7 +121,17 @@ export function assertCommunityStagingQaSharedTarget(value:CommunityStagingQaCap
 type SchemaLineagePin=Readonly<{migrationId:string;moduleNamespace:string;executionOrder:number;checksumSha256:string;postSchemaSha256:string}>;
 type SchemaLineageBase=Readonly<{principalManifestSha256:string;fromSchemaSha256:string;toSchemaSha256:string;fromMigrationCount:203;prefix:readonly SchemaLineagePin[]}>;
 type SchemaLineage=SchemaLineageBase & (Readonly<{kind:"community-staging-qa-schema-lineage-v1";toMigrationCount:204;append:SchemaLineagePin}>
- | Readonly<{kind:"community-staging-qa-schema-lineage-v2";toMigrationCount:205;appends:readonly [SchemaLineagePin,SchemaLineagePin]}>);
+ | Readonly<{kind:"community-staging-qa-schema-lineage-v2";toMigrationCount:205;appends:readonly [SchemaLineagePin,SchemaLineagePin]}>
+ | Readonly<{kind:"community-staging-qa-schema-lineage-v3";toMigrationCount:210;appends:readonly [SchemaLineagePin,SchemaLineagePin,SchemaLineagePin,SchemaLineagePin,SchemaLineagePin,SchemaLineagePin,SchemaLineagePin]}>);
+const COMMUNITY_STAGING_QA_SCHEMA_SUFFIX=Object.freeze([
+ ["0216_platform_premium_current_access_events","platform",291],
+ ["0217_traderlink_community_stats_forward_checkpoints","community",292],
+ ["0218_watchlist_row_visibility","platform",293],
+ ["0219_watchlist_masked_added_date","platform",294],
+ ["0220_watchlist_trader_notes_notifications","platform",295],
+ ["0221_news_account_filters_and_saved_views","news",296],
+ ["0222_watchlist_indicators_visibility","platform",297],
+] as const);
 function assertPrincipalSchemaLineage(database:Database.Database,run:CommunityStagingQaRun,principals:Principals,lineage:SchemaLineage|undefined):void{
  if(principals.pins.schemaSha256===run.pins.schemaSha256){if(lineage||run.principalSchemaLineageSha256)refused();return;}
  if(!lineage||lineage.principalManifestSha256!==run.principalManifestSha256||lineage.fromSchemaSha256!==principals.pins.schemaSha256||lineage.toSchemaSha256!==run.pins.schemaSha256||lineage.fromMigrationCount!==203||!Array.isArray(lineage.prefix)||lineage.prefix.length!==203)refused();
@@ -132,9 +142,11 @@ function assertPrincipalSchemaLineage(database:Database.Database,run:CommunitySt
  }else if(lineage.kind==="community-staging-qa-schema-lineage-v2"){
   if(lineage.toMigrationCount!==205||platformMigrationManifest.length!==205||!Array.isArray(lineage.appends)||lineage.appends.length!==2)refused();
   suffix=lineage.appends;
+ }else if(lineage.kind==="community-staging-qa-schema-lineage-v3"){
+  if(lineage.toMigrationCount!==210||platformMigrationManifest.length!==210||!Array.isArray(lineage.appends)||lineage.appends.length!==7)refused();
+  suffix=lineage.appends;
  }else return refused();
- if(suffix[0]?.migrationId!=="0216_platform_premium_current_access_events"||suffix[0].moduleNamespace!=="platform"||suffix[0].executionOrder!==291)refused();
- if(suffix.length===2&&(suffix[1]?.migrationId!=="0217_traderlink_community_stats_forward_checkpoints"||suffix[1].moduleNamespace!=="community"||suffix[1].executionOrder!==292))refused();
+ for(let index=0;index<suffix.length;index++){const pin=suffix[index],expected=COMMUNITY_STAGING_QA_SCHEMA_SUFFIX[index];if(!pin||!expected||pin.migrationId!==expected[0]||pin.moduleNamespace!==expected[1]||pin.executionOrder!==expected[2])refused();}
  const rows=database.prepare("SELECT migration_id,module_namespace,execution_order,checksum_sha256,post_schema_sha256 FROM platform_schema_migrations ORDER BY execution_order").all() as {migration_id:string;module_namespace:string;execution_order:number;checksum_sha256:string;post_schema_sha256:string}[];
  const pins=[...lineage.prefix,...suffix];
  if(rows.length!==pins.length||platformMigrationManifest.length!==pins.length)refused();

@@ -89,7 +89,9 @@ async function run(){
  refuse(db.serialize(),PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS.map(sql=>sql.startsWith('CREATE TABLE "platform_premium_paid_events"')?sql.replace("current_provider_access","forged_access"):sql));
  refuse(db.serialize(),PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS,clone=>clone.prepare("DELETE FROM platform_schema_migrations WHERE migration_id='0216_platform_premium_current_access_events'").run());
  refuse(db.serialize(),PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS,clone=>clone.prepare("UPDATE platform_schema_migrations SET checksum_sha256=? WHERE migration_id='0216_platform_premium_current_access_events'").run("f".repeat(64)));
- refuse(db.serialize(),PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS,clone=>clone.prepare("UPDATE platform_schema_migrations SET execution_order=292 WHERE migration_id='0216_platform_premium_current_access_events'").run());
+ refuse(db.serialize(),PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS,clone=>{const invalidOrder=clone.prepare("SELECT max(execution_order)+1 AS value FROM platform_schema_migrations").get() as {value:number};
+  assert(Number.isSafeInteger(invalidOrder.value));const changed=clone.prepare("UPDATE platform_schema_migrations SET execution_order=? WHERE migration_id='0216_platform_premium_current_access_events'").run(invalidOrder.value);
+  assert.equal(changed.changes,1);});
  refuse(db.serialize(),PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS,clone=>clone.prepare("UPDATE platform_schema_migrations SET module_namespace='journal' WHERE migration_id='0216_platform_premium_current_access_events'").run());
  refuse(db.serialize(),PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS,clone=>clone.exec("ALTER TABLE platform_premium_paid_events ADD COLUMN unexpected_native_column TEXT"));
  let core=bind(db);

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import {existsSync,mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {join,resolve,dirname} from 'node:path';
 import {createRequire} from 'node:module';
