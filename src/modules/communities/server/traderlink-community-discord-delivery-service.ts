@@ -1,7 +1,7 @@
 import {sharedOwnedDeliverySql,sharedOwnedActionSql,sharedCooldownSql} from "./shared-alerts-storage-readiness";
 import type {SharedActionAdmission} from "./community-publication-action-delivery";
 import { COMMUNITY_REVIEW_DISCORD_GUILD_ID, isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
-import { verifyCommunityReviewDeliveryChannel, CommunityReviewDiscordChannelError } from "./community-review-discord-channel";
+import { verifyCommunityReviewDeliveryChannel, CommunityReviewDiscordChannelError, type CommunityReviewDeliveryScope } from "./community-review-discord-channel";
 import {publicationContent,revisionDiscordPayload,type PublicationContent} from "./community-publication-revisions";
 import {CommunityPublicationActionDelivery} from "./community-publication-action-delivery";
 import {expireCommunityRecoverySettings,refreshCommunityBotInstallations} from "./community-lifecycle";
@@ -12,14 +12,16 @@ import {createHash} from "node:crypto";
 import type Database from "better-sqlite3";
 import {sourceAlertDiscordParts} from "../contracts/community-source-alert-parts";
 import {communityPublicationDestinationUrl} from "./community-branded-destination-url";
+import {assertCommunityStagingQaCapability,type CommunityStagingQaCapability} from "./community-staging-qa-capability";
 
 import { createCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
 
 class RejectedDelivery extends Error {}
 type DeliveryRow={publisher_user_id:string|null;destination_id:string;current_attempt_key:string|null;attempt_count:number;community_id:string;discord_guild_id:string;delivery_id:string;object_type:"alert"|"watchlist"|"plan";object_id:string;discord_channel_id:string;community_slug:string;community_name:string};
+export type CommunityExactDeliverySelection=CommunityReviewDeliveryScope & Readonly<{capability:CommunityStagingQaCapability;deliveryIds:readonly string[];actionIds:readonly string[];sharedDeliveryIds:readonly string[]}>;
 
 export class TraderLinkCommunityDiscordDeliveryService {
-  constructor(private readonly database:Database.Database,private readonly config:Readonly<{botToken:string;publicOrigin:string;notBeforeUtc?:string;now?:()=>string;sharedActions?:SharedActionAdmission}>,private readonly request:typeof fetch=fetch){ }
+  constructor(private readonly database:Database.Database,private readonly config:Readonly<{botToken:string;publicOrigin:string;notBeforeUtc?:string;now?:()=>string;sharedActions?:SharedActionAdmission;exactSelection?:CommunityExactDeliverySelection}>,private readonly request:typeof fetch=fetch){ }
 
   private alertPublisher(row:DeliveryRow){return row.object_type==="alert"||row.object_type==="watchlist"?publicationContent(this.database,row.community_id,row.object_type,row.object_id)?.authorName??"An analyst":"An analyst";}
   private content(row:DeliveryRow):Readonly<{content:string;allowed_mentions:{parse:readonly string[]}}>{
@@ -74,19 +76,28 @@ export class TraderLinkCommunityDiscordDeliveryService {
     const cutoff=this.config.notBeforeUtc??null,now=this.config.now??createCanonicalUtcTimestamp,at=now();
     if(cutoff&&!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(cutoff))throw new Error("Invalid delivery cutoff.");
     const owned=sharedOwnedDeliverySql(this.database,"traderlink_community_content_deliveries");
-    expireCommunityRecoverySettings(this.database,at);
-    await refreshCommunityBotInstallations(this.database,this.config.botToken,at,this.request);
+    const exact=this.config.exactSelection;
+    if(exact)assertCommunityStagingQaCapability(exact.capability,this.database);
+    if(!exact){
+      expireCommunityRecoverySettings(this.database,at);
+      await refreshCommunityBotInstallations(this.database,this.config.botToken,at,this.request);
+    }
     const stale=new Date(Date.parse(at)-120000).toISOString();
-    this.database.prepare(`UPDATE traderlink_community_content_deliveries SET status='failed' WHERE object_type='alert' AND NOT ${owned} AND status='sending' AND delivery_outcome='pending' AND updated_at_utc<? AND EXISTS (SELECT 1 FROM traderlink_community_delivery_attempt_history h WHERE h.delivery_id=traderlink_community_content_deliveries.delivery_id AND h.outcome='confirmed' AND h.attempt_key LIKE 'source-alert:%:part:%')`).run(stale);
-    if(this.database.prepare(`SELECT 1 FROM traderlink_community_publication_actions a WHERE NOT ${sharedOwnedActionSql(this.database)} AND status='pending' AND last_error='Discord rate limit; retry scheduled.' AND next_attempt_at_utc>? LIMIT 1`).get(at))return Object.freeze({delivered:0,failed:0});
+    if(!exact)this.database.prepare(`UPDATE traderlink_community_content_deliveries SET status='failed' WHERE object_type='alert' AND NOT ${owned} AND status='sending' AND delivery_outcome='pending' AND updated_at_utc<? AND EXISTS (SELECT 1 FROM traderlink_community_delivery_attempt_history h WHERE h.delivery_id=traderlink_community_content_deliveries.delivery_id AND h.outcome='confirmed' AND h.attempt_key LIKE 'source-alert:%:part:%')`).run(stale);
+    const exactActionRate=exact?` AND a.action_id IN (${exact.actionIds.map(()=>"?").join(",")||"NULL"})`:"";
+    if(this.database.prepare(`SELECT 1 FROM traderlink_community_publication_actions a WHERE NOT ${sharedOwnedActionSql(this.database)}${exactActionRate} AND status='pending' AND last_error='Discord rate limit; retry scheduled.' AND next_attempt_at_utc>? LIMIT 1`).get(...(exact?[...exact.actionIds]:[]),at))return Object.freeze({delivered:0,failed:0});
     // A crashed send is uncertain, not permission to post again.
-    this.database.prepare(`UPDATE traderlink_community_content_deliveries SET status='failed' WHERE delivery_id IN (SELECT delivery_id FROM traderlink_community_content_deliveries WHERE NOT ${owned} AND status='sending' AND updated_at_utc<? ORDER BY updated_at_utc LIMIT 25)`).run(new Date(Date.parse(at)-120000).toISOString());
+    if(!exact)this.database.prepare(`UPDATE traderlink_community_content_deliveries SET status='failed' WHERE delivery_id IN (SELECT delivery_id FROM traderlink_community_content_deliveries WHERE NOT ${owned} AND status='sending' AND updated_at_utc<? ORDER BY updated_at_utc LIMIT 25)`).run(new Date(Date.parse(at)-120000).toISOString());
     // Conservatively honor a provider rate limit across this worker, not just one row.
-    if(this.database.prepare(`SELECT 1 FROM traderlink_community_content_deliveries WHERE NOT ${owned} AND delivery_outcome='pending' AND status='failed' AND last_error='Discord rate limit; retry scheduled.' AND next_attempt_at_utc>? LIMIT 1`).get(at))return Object.freeze({delivered:0,failed:0});
-    const rows=this.database.prepare(`SELECT d.publisher_user_id,d.destination_id,d.current_attempt_key,d.community_id,c.discord_guild_id,d.delivery_id,d.object_type,d.object_id,d.attempt_count,x.discord_channel_id,c.slug community_slug,c.display_name community_name FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id JOIN traderlink_communities c ON c.community_id=d.community_id WHERE NOT ${sharedOwnedDeliverySql(this.database)} AND ${sharedCooldownSql(this.database,"x.discord_channel_id",at)} AND c.discord_guild_id=? AND ((d.object_type='plan' AND x.content_type='coaching') OR (d.object_type='alert' AND x.content_type='alerts') OR (d.object_type='watchlist' AND x.content_type='watchlists')) AND d.status IN ('pending','failed') AND d.delivery_outcome='pending' AND d.attempt_count<5 AND (d.next_attempt_at_utc IS NULL OR d.next_attempt_at_utc<=?) AND x.status='active' AND c.status='active' AND (? IS NULL OR d.requested_at_utc>=?) ORDER BY d.requested_at_utc LIMIT ?`).all(COMMUNITY_REVIEW_DISCORD_GUILD_ID,at,cutoff,cutoff,limit) as DeliveryRow[];
+    const exactDeliveryRate=exact?` AND delivery_id IN (${exact.deliveryIds.map(()=>"?").join(",")||"NULL"})`:"";
+    if(this.database.prepare(`SELECT 1 FROM traderlink_community_content_deliveries WHERE NOT ${owned}${exactDeliveryRate} AND delivery_outcome='pending' AND status='failed' AND last_error='Discord rate limit; retry scheduled.' AND next_attempt_at_utc>? LIMIT 1`).get(...(exact?[...exact.deliveryIds]:[]),at))return Object.freeze({delivered:0,failed:0});
+    const exactIds=exact?.deliveryIds??[];
+    const exactClause=exact?` AND d.delivery_id IN (${exactIds.map(()=>"?").join(",")||"NULL"}) AND x.discord_channel_id IN (${exact.channelIds.map(()=>"?").join(",")||"NULL"})`:"";
+    const guildId=exact?.guildId??COMMUNITY_REVIEW_DISCORD_GUILD_ID;
+    const rows=this.database.prepare(`SELECT d.publisher_user_id,d.destination_id,d.current_attempt_key,d.community_id,c.discord_guild_id,d.delivery_id,d.object_type,d.object_id,d.attempt_count,x.discord_channel_id,c.slug community_slug,c.display_name community_name FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id JOIN traderlink_communities c ON c.community_id=d.community_id WHERE NOT ${sharedOwnedDeliverySql(this.database)} AND ${sharedCooldownSql(this.database,"x.discord_channel_id",at)} AND c.discord_guild_id=?${exactClause} AND ((d.object_type='plan' AND x.content_type='coaching') OR (d.object_type='alert' AND x.content_type='alerts') OR (d.object_type='watchlist' AND x.content_type='watchlists')) AND d.status IN ('pending','failed') AND d.delivery_outcome='pending' AND d.attempt_count<5 AND (d.next_attempt_at_utc IS NULL OR d.next_attempt_at_utc<=?) AND x.status='active' AND c.status='active' AND (? IS NULL OR d.requested_at_utc>=?) ORDER BY d.requested_at_utc LIMIT ?`).all(guildId,...(exact?[...exactIds,...exact.channelIds]:[]),at,cutoff,cutoff,limit) as DeliveryRow[];
     let delivered=0,failed=0;
     for(const row of rows){
-      if(!isCommunityReviewDiscordGuild(row.discord_guild_id))continue;
+      if(exact?(row.discord_guild_id!==exact.guildId||!exact.channelIds.includes(row.discord_channel_id)):!isCommunityReviewDiscordGuild(row.discord_guild_id))continue;
       if(this.database.prepare(`SELECT 1 FROM traderlink_community_content_deliveries d WHERE d.delivery_id=? AND ${sharedOwnedDeliverySql(this.database)}`).get(row.delivery_id))continue;
       const started=now();
       const claimed=this.database.prepare("UPDATE traderlink_community_content_deliveries SET status='sending',attempt_count=attempt_count+1,last_error=NULL,updated_at_utc=? WHERE delivery_id=? AND status IN ('pending','failed') AND delivery_outcome='pending'").run(started,row.delivery_id);
@@ -108,14 +119,14 @@ export class TraderLinkCommunityDiscordDeliveryService {
           const intent=new CommunityPublishingAccess(this.database).intent(row.community_id,row.object_type,row.object_id);
           if(!intent||intent.distribution!=="discord"||!intent.destinationIds.includes(row.destination_id))throw new RejectedDelivery("This destination is no longer selected for Discord delivery.");
           if(!row.publisher_user_id)throw new RejectedDelivery("Legacy delivery requires owner review; no publisher was recorded.");
-          const verified=await verifyCommunityRequestMember(this.database,{slug:row.community_slug,userId:row.publisher_user_id,botToken:this.config.botToken,atUtc:now()},this.request);
+          const verified=await verifyCommunityRequestMember(this.database,{slug:row.community_slug,userId:row.publisher_user_id,botToken:this.config.botToken,atUtc:now(),stagingQaGuildId:exact?.guildId},this.request);
           if(!verified){fail("pending","Publisher verification unavailable; delivery paused.");continue;}
           new CommunityPublishingAccess(this.database).assertDelivery(row.community_id,row.publisher_user_id,row.destination_id,row.object_type==="alert"?"alerts":"watchlists",now());
         }
         let payload=this.content(row);
         let parts=this.messageParts(row,payload.content);
         if(parts.some(part=>part.length>2000))throw new RejectedDelivery("Post exceeds Discord's 2,000-character limit.");
-        await verifyCommunityReviewDeliveryChannel(this.database,row,this.config.botToken,this.request);
+        await verifyCommunityReviewDeliveryChannel(this.database,row,this.config.botToken,this.request,exact);
         const stillActive=this.database.prepare("SELECT 1 FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id JOIN traderlink_communities c ON c.community_id=d.community_id WHERE d.delivery_id=? AND d.status='sending' AND x.status='active' AND c.status='active' AND x.discord_channel_id=? AND c.discord_guild_id=?").get(row.delivery_id,row.discord_channel_id,row.discord_guild_id);
         if(!stillActive)throw new RejectedDelivery("The delivery or its destination is no longer active.");
         payload=this.content(row);
@@ -131,9 +142,9 @@ export class TraderLinkCommunityDiscordDeliveryService {
             if(!this.database.prepare("SELECT 1 FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id JOIN traderlink_communities c ON c.community_id=d.community_id WHERE d.delivery_id=? AND d.status='sending' AND x.status='active' AND c.status='active' AND x.discord_channel_id=? AND c.discord_guild_id=?").get(row.delivery_id,row.discord_channel_id,row.discord_guild_id))throw new RejectedDelivery("The delivery or destination is no longer active.");
             const currentIntent=new CommunityPublishingAccess(this.database).intent(row.community_id,"alert",row.object_id);
             if(!currentIntent||currentIntent.distribution!=="discord"||!currentIntent.destinationIds.includes(row.destination_id))throw new RejectedDelivery("This channel is no longer selected for the alert.");
-            if(!await verifyCommunityRequestMember(this.database,{slug:row.community_slug,userId:row.publisher_user_id!,botToken:this.config.botToken,atUtc:now()},this.request))throw new RejectedDelivery("Publisher verification unavailable.");
+            if(!await verifyCommunityRequestMember(this.database,{slug:row.community_slug,userId:row.publisher_user_id!,botToken:this.config.botToken,atUtc:now(),stagingQaGuildId:exact?.guildId},this.request))throw new RejectedDelivery("Publisher verification unavailable.");
             new CommunityPublishingAccess(this.database).assertDelivery(row.community_id,row.publisher_user_id!,row.destination_id,"alerts",now());
-            await verifyCommunityReviewDeliveryChannel(this.database,row,this.config.botToken,this.request);
+            await verifyCommunityReviewDeliveryChannel(this.database,row,this.config.botToken,this.request,exact);
             new CommunityPublishingAccess(this.database).assertDelivery(row.community_id,row.publisher_user_id,row.destination_id,"alerts",now());
             this.content(row);
             const nonce=createHash("sha256").update(partKey).digest("hex").slice(0,24);
@@ -165,7 +176,7 @@ export class TraderLinkCommunityDiscordDeliveryService {
         const nonce=createHash("sha256").update(row.current_attempt_key??row.delivery_id).digest("hex").slice(0,24);
         this.database.prepare("UPDATE traderlink_community_content_deliveries SET delivery_outcome='uncertain' WHERE delivery_id=? AND status='sending'").run(row.delivery_id);
         if(row.object_type==="alert"||row.object_type==="watchlist")new CommunityPublishingAccess(this.database).assertDelivery(row.community_id,row.publisher_user_id,row.destination_id,row.object_type==="alert"?"alerts":"watchlists",now());
-        await verifyCommunityReviewDeliveryChannel(this.database,row,this.config.botToken,this.request);
+        await verifyCommunityReviewDeliveryChannel(this.database,row,this.config.botToken,this.request,exact);
         if(row.object_type==="alert"||row.object_type==="watchlist")new CommunityPublishingAccess(this.database).assertDelivery(row.community_id,row.publisher_user_id,row.destination_id,row.object_type==="alert"?"alerts":"watchlists",now());
         this.content(row);
         postStarted=true;

@@ -21,10 +21,11 @@ export function ensureSharedAlertParts(database: Database.Database, deliveryId: 
   return readSharedAlertParts(database, deliveryId, revision);
 }
 
-export function cancelStoppedSharedAlertParts(database: Database.Database, atUtc: string): void {
+export function cancelStoppedSharedAlertParts(database: Database.Database, atUtc: string, deliveryIds?: readonly string[]): void {
+  const selected=deliveryIds?` AND community_shared_alert_delivery_parts.delivery_id IN (${deliveryIds.map(()=>"?").join(",")||"NULL"})`:"";
   database.prepare(`UPDATE community_shared_alert_delivery_parts SET status='cancelled',retry_at_utc=NULL,last_error='Remaining parts stopped or superseded.',updated_at_utc=?
     WHERE status IN ('pending','failed') AND EXISTS(SELECT 1 FROM community_shared_alert_deliveries d WHERE d.delivery_id=community_shared_alert_delivery_parts.delivery_id
-      AND (d.status IN ('cancelled','rejected') OR d.content_revision<>community_shared_alert_delivery_parts.content_revision))`).run(atUtc);
+      AND (d.status IN ('cancelled','rejected') OR d.content_revision<>community_shared_alert_delivery_parts.content_revision))${selected}`).run(atUtc,...(deliveryIds??[]));
 }
 
 export function hasConfirmedSharedAlertOriginal(database: Database.Database, deliveryId: string): boolean {

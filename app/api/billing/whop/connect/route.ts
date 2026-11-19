@@ -22,10 +22,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const billingEntry=request.nextUrl.searchParams.get("entry")==="billing";
   try {
     const identity = requireWhopOAuthRequestIdentity(request);
     const configuration = loadWhopOAuthRequestConfiguration(request, identity.scope.userId);
+    const billingEntry=request.nextUrl.searchParams.get("entry")==="billing";
     if(billingEntry&&configuration.realm!=="sandbox")throw Error("Billing Whop linking is unavailable");
     const pkce = createWhopOAuthPkce();
     const nonce=billingEntry?`billing.${pkce.state}`:pkce.state;
@@ -46,6 +46,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       (billingEntry?createBillingWhopOAuthFlowBinding(configuration,identity.scope.userId,state):createWhopOAuthFlowBinding(configuration, identity.scope.userId)), WHOP_OAUTH_COOKIE_MAX_AGE_SECONDS);
     return response;
   } catch {
-    return NextResponse.redirect(new URL(`${billingEntry?"/account/membership":"/account"}?whop=unavailable`, resolvePlatformPublicOrigin(request)));
+    return NextResponse.redirect(new URL(`${request.nextUrl.searchParams.get("entry")==="billing"?"/account/membership":"/account"}?whop=unavailable`, resolvePlatformPublicOrigin(request)));
   }
 }

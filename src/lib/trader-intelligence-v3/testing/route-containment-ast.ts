@@ -216,6 +216,7 @@ const PLATFORM_REQUEST_GUARDS = new Set([
 ]);
 
 const DELEGATED_PLATFORM_GUARDS: Readonly<Record<string, readonly string[]>> = {
+  "@/src/modules/communities/server/community-delivery-staging-qa-controller": ["startCommunityDeliveryQa"],
   "@/src/modules/communities/server/stats/community-stats-staging-qa-controller": ["startCommunityStatsQa"],
   "@/src/modules/communities/server/shared-alerts-staging-fixture-controller": ["startSharedFixture"],
   "@/src/modules/partner-alerts/server/partner-alert-owner-review-request": ["partnerAlertOwnerReviewRequestDenied"],

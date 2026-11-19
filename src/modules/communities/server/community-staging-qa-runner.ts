@@ -31,7 +31,7 @@ export async function runFiniteCommunityStagingQa(database:Database.Database,cap
     if(capability.signal.aborted&&capability.signal.reason!=="deadline")throw new Error("Community staging collection cancelled.");
    }finally{release();collector.stop();}
   }else{
-   const result=await runCommunityDiscordDeliveryPass(database,{botToken,publicOrigin:run.pins.origin,notBeforeUtc:run.cutoffUtc,limit:1},capability.request);
+   const result=await runCommunityDiscordDeliveryPass(database,{botToken,publicOrigin:run.pins.origin,notBeforeUtc:run.cutoffUtc,limit:Math.max(1,run.jobs.length),sharedEnabled:run.pipeline==="shared-delivery",exactSelection:{capability,guildId:run.guildId,channelIds:run.channelIds,deliveryIds:run.jobs.filter(job=>job.table==="traderlink_community_content_deliveries").map(job=>job.id),actionIds:run.jobs.filter(job=>job.table==="traderlink_community_publication_actions").map(job=>job.id),sharedDeliveryIds:run.jobs.filter(job=>job.table==="community_shared_alert_deliveries").map(job=>job.id)}},capability.request);
    delivered=result.delivered;failed=result.failed;
   }
   const sources=database.prepare("SELECT source,status,reason FROM community_stats_source_state WHERE community_id=? ORDER BY source").all(capability.run.communityId) as {source:string;status:string;reason:string|null}[];

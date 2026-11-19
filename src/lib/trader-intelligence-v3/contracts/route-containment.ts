@@ -154,6 +154,7 @@ const REVIEWED_COMBINED_PAGE_ROUTES = [
   ["app/(dashboard)/partner-channels/page.tsx", "Two-account Community review identity before private catalog and qualified subscriber runtime reads."],
 ] as const;
 const REVIEWED_COMBINED_API_ROUTES = [
+  ["app/api/communities/[communitySlug]/coaching/reviews/[reviewId]/trades/[roundTripId]/route.ts", ["GET"], "owner_read", "Community Coaching", "Platform request identity and fresh Community request access before readonly lookup of this coach's accepted, noncancelled review in the exact community; Journal reader rechecks current relationship, capability, participant, account and field-level sharing for both card and Details reads."],
   ["app/api/communities/[communitySlug]/shared-alerts/source/route.ts", ["GET", "POST"], "owner_mutation", "Shared Alerts", "Platform request identity and Community review gate before source/schema access; qualified carrier, current community/publisher authorization and same-origin POST through source adapter."],
   ["app/api/communities/[communitySlug]/stats/route.ts", ["GET", "POST"], "owner_mutation", "Community Stats", "Platform request identity and Community review gate; authorizeCommunityStats read/own-content/export grants; settings POST requires same-origin and exact owner with revision check."],
   ["app/api/communities/[communitySlug]/stats/visits/route.ts", ["POST"], "owner_mutation", "Community Stats", "Same-origin bounded POST, Platform request identity plus Community review gate, fresh community visit authorization; tracking flag and scoped telemetry only."],
@@ -618,6 +619,15 @@ export const TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX = [
     mutationProtectionRequirement: "Bound fixture server actions revalidate actual session, parent/child and Origin; no normal membership or owner grant is created",
     currentResponsibility: "Private finite SyntheticAgreement test page; actual Discord IO restricted to Tests",
     deploymentAndSecurityAssumptions: "Isolated staging only; actual cross-route opaque registry identity is independently tested",
+  },
+  {
+    ...apiEntry("app/%5F%5Fprivate/community-delivery-qa/[nonce]/route.ts", ["POST"], "internal_diagnostics", "platform_request_scope"),
+    routePath: "/__private/community-delivery-qa/[nonce]",
+    authenticationRequirement: "Actual Core administrative Platform session",
+    authorizationRequirement: "Exact startCommunityDeliveryQa: isolated staging target, fixed private delivery files, actual Core issuer, installed source/archive/build/schema/full-ledger/session/owner and sealed job checks",
+    mutationProtectionRequirement: "Same-origin POST, exact finite queue IDs, sealed guild/channel scope and bounded Discord requests/writes; unrelated queued work is refused and untouched",
+    currentResponsibility: "Private bounded native Community delivery acceptance; no generic worker activation",
+    deploymentAndSecurityAssumptions: "Isolated staging only; approved test guilds/channels, no client file/scope/pin selectors or production authority",
   },
   {
     ...apiEntry("app/%5F%5Fprivate/community-stats-qa/[nonce]/route.ts", ["POST"], "internal_diagnostics", "platform_request_scope"),

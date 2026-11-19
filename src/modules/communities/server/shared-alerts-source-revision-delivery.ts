@@ -73,23 +73,24 @@ export const sharedAlertsSourceRevisionDelivery: SharedSourceDispatchBindings["e
   kind: "alert-revision-multipart",
   async run(context) {
     const db = context.database, now = context.now();
-    const interrupted = db.prepare(`SELECT action_id,payload_json FROM traderlink_community_publication_actions WHERE object_type='alert' AND status='sending' AND updated_at_utc<? AND json_extract(payload_json,'$.kind')='shared-source-edit-v1'`)
-      .all(new Date(Date.parse(now) - 300_000).toISOString()) as { action_id: string; payload_json: string }[];
+    const selected=context.exactSelection?.actionIds,selectedSql=selected?` AND action_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:"";
+    const interrupted = db.prepare(`SELECT action_id,payload_json FROM traderlink_community_publication_actions WHERE object_type='alert' AND status='sending' AND updated_at_utc<? AND json_extract(payload_json,'$.kind')='shared-source-edit-v1'${selectedSql}`)
+      .all(new Date(Date.parse(now) - 300_000).toISOString(),...(selected??[])) as { action_id: string; payload_json: string }[];
     for (const row of interrupted) {
       const plan = JSON.parse(row.payload_json) as EditPlan;
       const status = plan.parts.every(part => part.status === "confirmed") ? "confirmed" : plan.parts.some(part => part.status === "uncertain") ? "uncertain" : "pending";
       db.prepare("UPDATE traderlink_community_publication_actions SET status=?,updated_at_utc=? WHERE action_id=? AND status='sending'").run(status, now, row.action_id);
     }
-    queueSharedSourceRevisions(context);
+    if(!selected)queueSharedSourceRevisions(context);
     const rows = db.prepare(`SELECT action.action_id,action.payload_json,action.attempt_count,action.publisher_user_id,action.initiating_publisher_user_id,action.target_message_id,action.revision_id,action.community_id,action.object_id,action.destination_id,
       c.discord_guild_id,c.slug,x.discord_channel_id,a.author_user_id,a.status source_status,r.content_json,r.content_hash,r.actor_user_id
       FROM traderlink_community_publication_actions action JOIN traderlink_community_publication_revisions r ON r.revision_id=action.revision_id AND r.community_id=action.community_id
       JOIN traderlink_communities c ON c.community_id=action.community_id AND c.status='active'
       JOIN traderlink_community_discord_destinations x ON x.destination_id=action.destination_id AND x.community_id=action.community_id AND x.content_type='alerts' AND x.status='active'
       JOIN traderlink_community_alerts a ON a.alert_id=action.object_id AND a.community_id=action.community_id
-      WHERE ${sharedCooldownSql(db,'x.discord_channel_id',now)} AND action.object_type='alert' AND action.action_kind='edit' AND action.status='pending' AND action.attempt_count<5 AND json_extract(action.payload_json,'$.kind')='shared-source-edit-v1'
+      WHERE ${sharedCooldownSql(db,'x.discord_channel_id',now)} ${selected?`AND action.action_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:""} AND action.object_type='alert' AND action.action_kind='edit' AND action.status='pending' AND action.attempt_count<5 AND json_extract(action.payload_json,'$.kind')='shared-source-edit-v1'
       AND action.publisher_user_id IS NOT NULL AND action.initiating_publisher_user_id IS NOT NULL
-      AND (action.next_attempt_at_utc IS NULL OR action.next_attempt_at_utc<=?) ORDER BY action.requested_at_utc,action.rowid LIMIT ?`).all(now, context.limit) as ActionRow[];
+      AND (action.next_attempt_at_utc IS NULL OR action.next_attempt_at_utc<=?) ORDER BY action.requested_at_utc,action.rowid LIMIT ?`).all(...(selected??[]),now, context.limit) as ActionRow[];
     let delivered = 0, failed = 0, writes = 0;
     for (const row of rows) {
       if (writes >= context.limit) break;

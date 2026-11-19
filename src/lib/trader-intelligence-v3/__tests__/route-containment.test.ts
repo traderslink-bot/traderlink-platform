@@ -52,6 +52,8 @@ describe("Trader Intelligence route containment matrix", () => {
   it("discovers registered App Router handlers outside the api directory", () => {
     expect(allAppRouteRecords().some(record => record.path ===
       "app/%5F%5Fprivate/community-staging-qa/[nonce]/route.ts")).toBe(true);
+    expect(allAppRouteRecords().some(record => record.path ===
+      "app/%5F%5Fprivate/community-delivery-qa/[nonce]/route.ts")).toBe(true);
   });
 
   it.each([
@@ -140,6 +142,7 @@ describe("Trader Intelligence route containment matrix", () => {
   });
 
   it.each([
+    "app/api/communities/[communitySlug]/coaching/reviews/[reviewId]/trades/[roundTripId]/route.ts",
     "app/api/admin/market-data/route.ts",
     "app/api/charts/provider/route.ts",
     "app/api/company/details/route.ts",

@@ -12,7 +12,7 @@ import {deriveJournalAccountSelectionRef} from "../../platform/contracts/journal
 import {PlatformSessionRepository} from "../../platform/server/authentication/platform-session-repository";
 import {platformMigrationManifest} from "../../platform/server/database/platform-migration-manifest";
 import {calculatePlatformMigrationChecksum} from "../../platform/server/database/platform-migration-contract";
-import {COMMUNITY_REVIEW_DISCORD_GUILD_ID} from "./community-review-discord-guild";
+import {COMMUNITY_REVIEW_DISCORD_GUILD_ID,isCommunityStagingQaDiscordGuild} from "./community-review-discord-guild";
 
 import {assertCommunityStagingQaTarget,COMMUNITY_STAGING_QA_DATABASE as DATABASE} from "./community-staging-qa-target";
 export {assertCommunityStagingQaTarget,type CommunityStagingQaTargetPins} from "./community-staging-qa-target";
@@ -28,7 +28,7 @@ export type CommunityStagingQaRun=Readonly<{
  pins:Readonly<{origin:string;sourceCommit:string;sourceVectorSha256:string;sourceArchiveSha256:string;schemaSha256:string;buildId:string;artifactSha256:string}>;
  communityId:string;guildId:string;channelIds:readonly string[];settingsVersion:number;
  pipeline:"stats"|"common-delivery"|"shared-delivery"|"shared-fixture";fixtureManifestSha256?:string;cutoffUtc:string;
- jobs:readonly Readonly<{table:"traderlink_community_content_deliveries"|"traderlink_community_publication_actions"|"community_shared_alert_deliveries";id:string;createdAtUtc:string}>[];
+ jobs:readonly Readonly<{table:"traderlink_community_content_deliveries"|"traderlink_community_publication_actions"|"community_shared_alert_deliveries";id:string;createdAtUtc:string;stateSha256:string}>[];
  bounds:Readonly<{durationMs:number;requests:number;writes:number;gatewayFrames:number;historyTicks:number;collectorTicks:number}>;
 }>;
 type Principal={userId:string;workspaceId:string;subject:string;session:{token:string;session:{sessionId:string;authProvider:string}}};
@@ -39,6 +39,29 @@ export type CommunityStagingQaCapability=Readonly<{
  withOperationFrame:(operation:()=>void)=>void;assertOperationFrame:()=>void;requestWithFixtureOperation:(resource:Parameters<typeof fetch>[0],options:Parameters<typeof fetch>[1],boundary:(operation:()=>void)=>void)=>ReturnType<typeof fetch>;
  remainingMs:()=>number;onStop:(callback:()=>void)=>()=>void;finish:(outcome:"completed"|"cancelled"|"failed")=>void;
 }>;
+type CommunityStagingQaJob=CommunityStagingQaRun["jobs"][number];
+/** Producer/issuer shared digest. It pins the selected queue row and its routing/content dependencies before admission. */
+export function communityStagingQaJobStateSha256(database:Database.Database,job:Pick<CommunityStagingQaJob,"table"|"id">):string{
+ const key=job.table==="traderlink_community_publication_actions"?"action_id":"delivery_id";
+ const row=database.prepare(`SELECT * FROM ${job.table} WHERE ${key}=?`).get(job.id) as Record<string,unknown>|undefined;if(!row)refused();
+ let dependencies:unknown;
+ if(job.table==="traderlink_community_content_deliveries")dependencies={
+  target:database.prepare("SELECT c.community_id,c.discord_guild_id,c.status community_status,x.destination_id,x.discord_channel_id,x.content_type,x.status destination_status FROM traderlink_community_discord_destinations x JOIN traderlink_communities c ON c.community_id=x.community_id WHERE x.community_id=? AND x.destination_id=?").get(row.community_id,row.destination_id),
+  distribution:database.prepare("SELECT * FROM traderlink_community_publication_distribution WHERE community_id=? AND object_type=? AND object_id=?").get(row.community_id,row.object_type,row.object_id),
+  revisions:database.prepare("SELECT revision_id,evidence_kind,content_hash,actor_user_id FROM traderlink_community_publication_revisions WHERE community_id=? AND object_type=? AND object_id=? ORDER BY rowid").all(row.community_id,row.object_type,row.object_id),
+ };
+ else if(job.table==="traderlink_community_publication_actions")dependencies={
+  target:database.prepare("SELECT c.community_id,c.discord_guild_id,c.status community_status,x.destination_id,x.discord_channel_id,x.content_type,x.status destination_status FROM traderlink_community_discord_destinations x JOIN traderlink_communities c ON c.community_id=x.community_id WHERE x.community_id=? AND x.destination_id=?").get(row.community_id,row.destination_id),
+  revision:database.prepare("SELECT revision_id,evidence_kind,content_hash,actor_user_id FROM traderlink_community_publication_revisions WHERE community_id=? AND revision_id=?").get(row.community_id,row.revision_id),
+ };
+ else dependencies={
+  agreement:database.prepare("SELECT * FROM community_shared_alert_requests WHERE request_id=?").get(row.request_id),
+  route:database.prepare("SELECT * FROM community_shared_alert_routes WHERE request_id=? AND author_user_id=?").get(row.request_id,row.author_user_id),
+  parts:database.prepare("SELECT * FROM community_shared_alert_delivery_parts WHERE delivery_id=? ORDER BY content_revision,part_number").all(job.id),
+  original:row.original_delivery_id?database.prepare("SELECT delivery_id,status,discord_message_id,channel_id,content_revision FROM community_shared_alert_deliveries WHERE delivery_id=?").get(row.original_delivery_id):null,
+ };
+ return hash(JSON.stringify({table:job.table,id:job.id,row,dependencies}));
+}
 const admitted=new WeakMap<object,Database.Database>();
 export function assertCommunityStagingQaCapability(value:CommunityStagingQaCapability|undefined,database?:Database.Database,purpose?:"shared-fixture"):asserts value is CommunityStagingQaCapability{
  if(!value||!admitted.has(value)||(database&&admitted.get(value)!==database)||(purpose==="shared-fixture"?value.run.pipeline!=="shared-fixture":value.run.pipeline==="shared-fixture"))refused();value.assertActive();
@@ -81,10 +104,16 @@ function readPrivate(path:string,expectedHash:string):string{
  try{const opened=fstatSync(fd);if(opened.dev!==before.dev||opened.ino!==before.ino||opened.size!==before.size||opened.mode!==before.mode||opened.uid!==before.uid||opened.nlink!==1)refused();const bytes=readFileSync(fd);const after=fstatSync(fd);if(after.size!==opened.size||after.mtimeMs!==opened.mtimeMs||after.ctimeMs!==opened.ctimeMs||bytes.length!==opened.size||!equal(hash(bytes),expectedHash))refused();return bytes.toString("utf8");}finally{closeSync(fd);}
 }
 function validateRun(run:CommunityStagingQaRun):void{
- if(run.kind!=="community-staging-qa-run-v1"||!uuid(run.runId)||!/^[0-9a-f]{32}$/.test(run.nonce)||!digest(run.principalManifestSha256)||run.guildId!==COMMUNITY_REVIEW_DISCORD_GUILD_ID||!uuid(run.communityId)||!Array.isArray(run.channelIds)||!run.channelIds.length||run.channelIds.length>50||run.channelIds.some(x=>!id(x))||new Set(run.channelIds).size!==run.channelIds.length||!Number.isSafeInteger(run.settingsVersion)||run.settingsVersion<0||!["stats","common-delivery","shared-delivery","shared-fixture"].includes(run.pipeline))refused();
+ const pipeline=["stats","common-delivery","shared-delivery","shared-fixture"].includes(run.pipeline);
+ const guildAllowed=(run.pipeline==="common-delivery"||run.pipeline==="shared-delivery")?isCommunityStagingQaDiscordGuild(run.guildId):run.guildId===COMMUNITY_REVIEW_DISCORD_GUILD_ID;
+ if(run.kind!=="community-staging-qa-run-v1"||!uuid(run.runId)||!/^[0-9a-f]{32}$/.test(run.nonce)||!digest(run.principalManifestSha256)||!pipeline||!guildAllowed||!uuid(run.communityId)||!Array.isArray(run.channelIds)||!run.channelIds.length||run.channelIds.length>50||run.channelIds.some(x=>!id(x))||new Set(run.channelIds).size!==run.channelIds.length||!Number.isSafeInteger(run.settingsVersion)||run.settingsVersion<0)refused();
  if(!run.pins||new URL(run.pins.origin).origin!==run.pins.origin||!run.pins.origin.startsWith("https://")||!/^[0-9a-f]{40}$/.test(run.pins.sourceCommit)||![run.pins.sourceVectorSha256,run.pins.sourceArchiveSha256,run.pins.schemaSha256,run.pins.artifactSha256].every(digest)||!/^[A-Za-z0-9_-]{1,128}$/.test(run.pins.buildId))refused();
  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(run.cutoffUtc)||!Number.isFinite(Date.parse(run.cutoffUtc))||!Array.isArray(run.jobs)||run.jobs.length>3||new Set(run.jobs.map(x=>x.id)).size!==run.jobs.length)refused();
- for(const job of run.jobs)if(!["traderlink_community_content_deliveries","traderlink_community_publication_actions","community_shared_alert_deliveries"].includes(job.table)||!uuid(job.id)||!Number.isFinite(Date.parse(job.createdAtUtc))||job.createdAtUtc<run.cutoffUtc)refused();
+ for(const job of run.jobs){
+  const known=["traderlink_community_content_deliveries","traderlink_community_publication_actions","community_shared_alert_deliveries"].includes(job.table);
+  const validId=job.table==="community_shared_alert_deliveries"?/^[a-f0-9]{32}$/.test(job.id):uuid(job.id);
+  if(!known||!validId||!digest(job.stateSha256)||!Number.isFinite(Date.parse(job.createdAtUtc))||job.createdAtUtc<run.cutoffUtc)refused();
+ }
  if((run.pipeline==="stats"||run.pipeline==="shared-fixture")?run.jobs.length:!run.jobs.length)refused();
  if(run.pipeline==="shared-fixture"?!digest(run.fixtureManifestSha256):run.fixtureManifestSha256!==undefined)refused();
  if(run.pipeline==="shared-fixture"&&(run.bounds?.gatewayFrames!==0||run.bounds?.historyTicks!==0||run.bounds?.collectorTicks!==0))refused();
@@ -108,7 +137,8 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
  const selectors=environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT?.split(",").map(x=>x.trim());
  if(!selectors||selectors.length!==2||selectors[0]===selectors[1]||principals.coach.subject!==selectors[1]||principals.student.subject!==selectors[0])refused();
  const request=input.request,requestBinding=JSON.stringify([...request.headers]);
- if(request.method!=="POST"||request.signal.aborted||new URL(request.url).href!==`${run.pins.origin}/__private/${run.pipeline==="stats"?"community-stats-qa":"community-staging-qa"}/${run.nonce}`||request.headers.get("origin")!==run.pins.origin||request.headers.get("sec-fetch-site")==="cross-site")refused();
+ const route=run.pipeline==="stats"?"community-stats-qa":run.pipeline==="shared-fixture"?"community-staging-qa":"community-delivery-qa";
+ if(request.method!=="POST"||request.signal.aborted||new URL(request.url).href!==`${run.pins.origin}/__private/${route}/${run.nonce}`||request.headers.get("origin")!==run.pins.origin||request.headers.get("sec-fetch-site")==="cross-site")refused();
  const auditTarget=hash(`${run.runId}:${run.communityId}`),nonceRef=hash(run.nonce),start=Date.now(),abort=new AbortController(),stops=new Set<()=>void>();
  let operationCheck:(()=>void)|undefined,operationFailure:unknown,originalOwnerBinding:string|undefined;
  let finished=false,requests=0,writes=0,frames=0,histories=0,ticks=0,started=false,authorizing=false;
@@ -117,26 +147,35 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
   assertPrincipalSchemaLineage(db,run,principals,lineage);
   if(db.readonly||JSON.stringify([...request.headers])!==requestBinding||environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT?.split(",").map(x=>x.trim()).join(",")!==selectors.join(","))refused();
  };
+ const deliveryPipeline=run.pipeline==="common-delivery"||run.pipeline==="shared-delivery";
+ const pendingRows=()=>[
+  ...db.prepare("SELECT d.delivery_id id,d.requested_at_utc createdAtUtc,d.community_id communityId,c.discord_guild_id guildId,x.discord_channel_id channelId,'traderlink_community_content_deliveries' kind FROM traderlink_community_content_deliveries d LEFT JOIN traderlink_communities c ON c.community_id=d.community_id LEFT JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id WHERE d.status IN('pending','failed','sending') AND d.delivery_outcome IN('pending','uncertain')").all(),
+  ...db.prepare("SELECT a.action_id id,a.requested_at_utc createdAtUtc,a.community_id communityId,c.discord_guild_id guildId,x.discord_channel_id channelId,'traderlink_community_publication_actions' kind FROM traderlink_community_publication_actions a LEFT JOIN traderlink_communities c ON c.community_id=a.community_id LEFT JOIN traderlink_community_discord_destinations x ON x.destination_id=a.destination_id AND x.community_id=a.community_id WHERE a.status IN('pending','sending')").all(),
+  ...db.prepare("SELECT d.delivery_id id,d.created_at_utc createdAtUtc,r.source_community_id communityId,c.discord_guild_id guildId,d.channel_id channelId,'community_shared_alert_deliveries' kind FROM community_shared_alert_deliveries d LEFT JOIN community_shared_alert_requests r ON r.request_id=d.request_id LEFT JOIN traderlink_communities c ON c.community_id=r.receiver_community_id WHERE d.status IN('awaiting_approval','pending','failed','sending')").all(),
+ ] as {id:string;createdAtUtc:string;communityId:string;guildId:string;channelId:string;kind:CommunityStagingQaJob["table"]}[];
+ const selectedKey=new Set(run.jobs.map(job=>`${job.table}:${job.id}`));
+ const excludedQueueState=()=>deliveryPipeline?hash(JSON.stringify({
+  jobs:pendingRows().filter(row=>!selectedKey.has(`${row.kind}:${row.id}`)).sort((a,b)=>`${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`)),
+  parts:db.prepare("SELECT * FROM community_shared_alert_delivery_parts WHERE delivery_id NOT IN (SELECT value FROM json_each(?)) ORDER BY delivery_id,content_revision,part_number").all(JSON.stringify(run.jobs.filter(job=>job.table==="community_shared_alert_deliveries").map(job=>job.id))),
+ })):null;
+ const originalExcludedQueueState=excludedQueueState();
+ let selectedJobsAdmitted=false;
  const checkNative=()=>{
   const session=new PlatformSessionService(new PlatformSessionRepository(db)).resolve(principals.coach.session.token);
   if(!session||session.sessionId!==principals.coach.session.session.sessionId||session.userId!==principals.coach.userId||session.authProvider!=="discord")refused();
   if(!db.prepare("SELECT 1 FROM platform_auth_identities WHERE user_id=? AND auth_provider='discord' AND auth_subject=? AND status='active'").get(principals.coach.userId,principals.coach.subject)||!db.prepare("SELECT 1 FROM platform_workspace_memberships WHERE user_id=? AND workspace_id=? AND role='owner' AND status='active'").get(principals.coach.userId,principals.coach.workspaceId))refused();
-  const community=db.prepare("SELECT c.discord_guild_id,c.owner_user_id,s.discord_configuration_version,s.channel_ids_json FROM traderlink_communities c JOIN community_stats_settings s ON s.community_id=c.community_id WHERE c.community_id=? AND c.status='active'").get(run.communityId) as {discord_guild_id:string;owner_user_id:string;discord_configuration_version:number;channel_ids_json:string}|undefined;
-  if(!community||community.discord_guild_id!==run.guildId||community.owner_user_id!==principals.coach.userId||community.discord_configuration_version!==run.settingsVersion)refused();
-  const selected=JSON.parse(community.channel_ids_json) as unknown;if(!Array.isArray(selected)||selected.some(x=>typeof x!=="string"||!run.channelIds.includes(x)))refused();
-  if(run.pipeline!=="stats"){
-   const pending=[
-    ...db.prepare("SELECT d.delivery_id id,d.requested_at_utc createdAtUtc,d.community_id communityId,c.discord_guild_id guildId,x.discord_channel_id channelId,'traderlink_community_content_deliveries' kind FROM traderlink_community_content_deliveries d LEFT JOIN traderlink_communities c ON c.community_id=d.community_id LEFT JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id WHERE d.status IN('pending','failed','sending') AND d.delivery_outcome IN('pending','uncertain')").all(),
-    ...db.prepare("SELECT a.action_id id,a.requested_at_utc createdAtUtc,a.community_id communityId,c.discord_guild_id guildId,x.discord_channel_id channelId,'traderlink_community_publication_actions' kind FROM traderlink_community_publication_actions a LEFT JOIN traderlink_communities c ON c.community_id=a.community_id LEFT JOIN traderlink_community_discord_destinations x ON x.destination_id=a.destination_id AND x.community_id=a.community_id WHERE a.status IN('pending','sending')").all(),
-    ...db.prepare("SELECT d.delivery_id id,d.created_at_utc createdAtUtc,r.source_community_id communityId,c.discord_guild_id guildId,d.channel_id channelId,'community_shared_alert_deliveries' kind FROM community_shared_alert_deliveries d LEFT JOIN community_shared_alert_requests r ON r.request_id=d.request_id LEFT JOIN traderlink_communities c ON c.community_id=r.receiver_community_id WHERE d.status IN('awaiting_approval','pending','failed','sending')").all(),
-   ] as {id:string;createdAtUtc:string;communityId:string;guildId:string;channelId:string;kind:string}[];
-   for(const row of pending)if(row.communityId!==run.communityId||row.guildId!==run.guildId||!run.channelIds.includes(row.channelId)||!run.jobs.some(job=>job.table===row.kind&&job.id===row.id&&job.createdAtUtc===row.createdAtUtc)||row.createdAtUtc<run.cutoffUtc)refused();
-   for(const job of run.jobs){const row=pending.find(row=>row.kind===job.table&&row.id===job.id);if(!row){
-    const table=job.table,key=table==="traderlink_community_publication_actions"?"action_id":"delivery_id";
-    const exists=db.prepare(`SELECT 1 FROM ${table} WHERE ${key}=?`).get(job.id);if(!exists)refused();
-   }}
-   const unsafe=db.prepare("SELECT delivery_id FROM community_shared_alert_delivery_parts WHERE status IN('pending','sending','uncertain')").all() as {delivery_id:string}[];
-   if(unsafe.some(row=>!run.jobs.some(job=>job.table==="community_shared_alert_deliveries"&&job.id===row.delivery_id)))refused();
+  const community:({discord_guild_id:string;owner_user_id:string;discord_configuration_version?:number;channel_ids_json?:string}|undefined)=deliveryPipeline
+   ?db.prepare("SELECT discord_guild_id,owner_user_id FROM traderlink_communities WHERE community_id=? AND status='active'").get(run.communityId) as {discord_guild_id:string;owner_user_id:string}|undefined
+   :db.prepare("SELECT c.discord_guild_id,c.owner_user_id,s.discord_configuration_version,s.channel_ids_json FROM traderlink_communities c JOIN community_stats_settings s ON s.community_id=c.community_id WHERE c.community_id=? AND c.status='active'").get(run.communityId) as {discord_guild_id:string;owner_user_id:string;discord_configuration_version:number;channel_ids_json:string}|undefined;
+  if(!community||community.discord_guild_id!==run.guildId||community.owner_user_id!==principals.coach.userId)refused();
+  if(!deliveryPipeline){if(community.discord_configuration_version!==run.settingsVersion||typeof community.channel_ids_json!=="string")refused();const selected=JSON.parse(community.channel_ids_json) as unknown;if(!Array.isArray(selected)||selected.some(x=>typeof x!=="string"||!run.channelIds.includes(x)))refused();}
+  if(deliveryPipeline){
+   if(excludedQueueState()!==originalExcludedQueueState)refused();
+   if(!selectedJobsAdmitted){
+    const pending=pendingRows();
+    for(const job of run.jobs){const row=pending.find(item=>item.kind===job.table&&item.id===job.id);if(!row||row.communityId!==run.communityId||row.guildId!==run.guildId||!run.channelIds.includes(row.channelId)||row.createdAtUtc!==job.createdAtUtc||row.createdAtUtc<run.cutoffUtc||communityStagingQaJobStateSha256(db,job)!==job.stateSha256)refused();}
+    selectedJobsAdmitted=true;
+   }
   }
   const member=db.prepare("SELECT guild_owner,last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(principals.coach.userId,run.guildId) as {guild_owner:number;last_verified_at_utc:string}|undefined;
   if(!member||member.guild_owner!==1||!fresh(member.last_verified_at_utc,Date.now()))refused();
@@ -222,7 +261,7 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
  const capability:CommunityStagingQaCapability=Object.freeze({run:Object.freeze({...run,channelIds:Object.freeze([...run.channelIds]),jobs:Object.freeze(run.jobs.map(x=>Object.freeze({...x}))),bounds:Object.freeze({...run.bounds}),pins:Object.freeze({...run.pins})}),signal:abort.signal,request:transport,assertActive:check,withOperationFrame,assertOperationFrame,requestWithFixtureOperation:(resource,options,boundary)=>transport(resource,options,boundary),
   gatewayFrame:database=>{if(database!==db)refused();check();if(++frames>run.bounds.gatewayFrames){stop();refused();}},historyTick:()=>{check();if(++histories>run.bounds.historyTicks){stop();refused();}},collectorTick:()=>{check();if(++ticks>run.bounds.collectorTicks){stop();refused();}},
   remainingMs:()=>Math.max(0,run.bounds.durationMs-(Date.now()-start)),onStop:callback=>{if(abort.signal.aborted){callback();return()=>undefined;}stops.add(callback);return()=>{stops.delete(callback);};},
-  finish:outcome=>{if(finished)return;finished=true;clearTimeout(deadline);request.signal.removeEventListener("abort",aborted);stop();if(started){structural();db.transaction(()=>audit(outcome==="completed"?"community_stage_run_completed":"community_stage_run_aborted",outcome==="completed"?"success":"failed")).immediate();}},
+  finish:outcome=>{if(finished)return;if(deliveryPipeline&&excludedQueueState()!==originalExcludedQueueState)refused();finished=true;clearTimeout(deadline);request.signal.removeEventListener("abort",aborted);stop();if(started){structural();db.transaction(()=>audit(outcome==="completed"?"community_stage_run_completed":"community_stage_run_aborted",outcome==="completed"?"success":"failed")).immediate();}},
  });
  admitted.set(capability,db);return capability;
 }

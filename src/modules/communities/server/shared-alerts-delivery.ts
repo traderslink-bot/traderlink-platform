@@ -17,7 +17,7 @@ type CurrentJob = {status:string;title:string;symbol:string|null;body:string;con
 export class SharedAlertsDelivery {
   private readonly now:()=>string;
   private readonly request:typeof fetch;
-  constructor(private readonly database:Database.Database,private readonly config:{botToken:string;enabled:boolean;now?:()=>string;notBeforeUtc?:string;preparePublication?:(communityId:string,alertId:string,context:SharedAlertPublishingContext)=>Promise<boolean>;canSharePublication?:(communityId:string,alertId:string,context:SharedAlertPublishingContext)=>boolean},request:typeof fetch=fetch){
+  constructor(private readonly database:Database.Database,private readonly config:{botToken:string;enabled:boolean;now?:()=>string;notBeforeUtc?:string;exactDeliveryIds?:readonly string[];preparePublication?:(communityId:string,alertId:string,context:SharedAlertPublishingContext)=>Promise<boolean>;canSharePublication?:(communityId:string,alertId:string,context:SharedAlertPublishingContext)=>boolean},request:typeof fetch=fetch){
     this.now=config.now??createCanonicalUtcTimestamp;
     this.request=sharedAlertAwareDiscordRequest(request,operation=>operation(database),this.now);
   }
@@ -28,11 +28,12 @@ export class SharedAlertsDelivery {
     const repository=new SharedAlertsRepository(this.database,this.now),discord=new SharedAlertsDiscord(this.config.botToken,this.request,this.now);
     const at=this.now(),cutoff=this.config.notBeforeUtc??null;
     if(cutoff&&(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(cutoff)||!Number.isFinite(Date.parse(cutoff))))throw new Error("Invalid shared delivery cutoff.");
-    this.reconcileInterrupted();cancelStoppedSharedAlertParts(this.database,at);
+    const selected=this.config.exactDeliveryIds,selectedSql=selected?` AND delivery_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:"";
+    this.reconcileInterrupted(selected);cancelStoppedSharedAlertParts(this.database,at,selected);
     this.database.prepare(`UPDATE community_shared_alert_deliveries SET status='cancelled',last_error='Original partner post was never confirmed.',updated_at_utc=?
       WHERE status IN ('awaiting_approval','pending','failed') AND original_delivery_id IN (
         SELECT original.delivery_id FROM community_shared_alert_deliveries original WHERE original.status IN ('cancelled','rejected') AND original.discord_message_id IS NULL
-          AND NOT EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=original.delivery_id AND p.status IN ('sending','uncertain')))` ).run(at);
+          AND NOT EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=original.delivery_id AND p.status IN ('sending','uncertain')))${selectedSql}` ).run(at,...(selected??[]));
     const budget=Math.max(1,Math.min(25,Number.isSafeInteger(limit)?limit:10));
     const jobs=this.database.prepare(`SELECT d.* FROM community_shared_alert_deliveries d WHERE d.attempt_count<5
       AND (d.status='pending' OR (d.status='failed' AND d.retry_at_utc IS NOT NULL AND d.retry_at_utc<=@now))
@@ -41,7 +42,8 @@ export class SharedAlertsDelivery {
         AND (original.status='delivered' OR EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts first WHERE first.delivery_id=original.delivery_id AND first.part_number=1 AND first.status='delivered' AND first.discord_message_id=original.discord_message_id))))
       AND (@cutoff IS NULL OR d.created_at_utc>=@cutoff)
       AND NOT EXISTS(SELECT 1 FROM community_shared_alert_rate_limits cooldown WHERE cooldown.retry_at_utc>@now AND ((cooldown.scope='global' AND cooldown.scope_id='*') OR (cooldown.scope='channel' AND cooldown.scope_id=d.channel_id)))
-      ORDER BY d.created_at_utc,d.delivery_id LIMIT @limit`).all({now:at,cutoff,limit:budget}) as Job[];
+      ${selected?"AND d.delivery_id IN (SELECT value FROM json_each(@selected))":""}
+      ORDER BY d.created_at_utc,d.delivery_id LIMIT @limit`).all({now:at,cutoff,limit:budget,...(selected?{selected:JSON.stringify(selected)}:{})}) as Job[];
     let delivered=0,failed=0,sends=0;
     const channelChecks=new Map<string,Promise<readonly {channelId:string;name:string}[]>>();
     for(const job of jobs){
@@ -119,7 +121,7 @@ export class SharedAlertsDelivery {
         failed++;
       }
     }
-    cancelStoppedSharedAlertParts(this.database,this.now());
+    cancelStoppedSharedAlertParts(this.database,this.now(),selected);
     return {delivered,failed};
   }
 
@@ -139,17 +141,18 @@ export class SharedAlertsDelivery {
     return true;
   }
 
-  private reconcileInterrupted():void{
+  private reconcileInterrupted(deliveryIds?:readonly string[]):void{
     const at=this.now(),stale=new Date(Date.parse(at)-300000).toISOString();
-    this.database.prepare("UPDATE community_shared_alert_delivery_parts SET status='uncertain',last_error='The part send was interrupted; check Discord before reconciliation.',updated_at_utc=? WHERE status='sending' AND updated_at_utc<?").run(at,stale);
+    const selected=deliveryIds?` AND delivery_id IN (${deliveryIds.map(()=>"?").join(",")||"NULL"})`:"";
+    this.database.prepare(`UPDATE community_shared_alert_delivery_parts SET status='uncertain',last_error='The part send was interrupted; check Discord before reconciliation.',updated_at_utc=? WHERE status='sending' AND updated_at_utc<?${selected}`).run(at,stale,...(deliveryIds??[]));
     this.database.prepare(`UPDATE community_shared_alert_deliveries SET status='delivered',updated_at_utc=? WHERE status IN ('pending','failed','sending') AND discord_message_id IS NOT NULL
       AND EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=community_shared_alert_deliveries.delivery_id AND p.content_revision=community_shared_alert_deliveries.content_revision)
-      AND NOT EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=community_shared_alert_deliveries.delivery_id AND p.content_revision=community_shared_alert_deliveries.content_revision AND p.status<>'delivered')`).run(at);
+      AND NOT EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=community_shared_alert_deliveries.delivery_id AND p.content_revision=community_shared_alert_deliveries.content_revision AND p.status<>'delivered')${selected}`).run(at,...(deliveryIds??[]));
     this.database.prepare(`UPDATE community_shared_alert_deliveries SET status='uncertain',last_error='A message part needs confirmation.',updated_at_utc=? WHERE status='sending'
       AND (EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=community_shared_alert_deliveries.delivery_id AND p.content_revision=community_shared_alert_deliveries.content_revision AND p.status='uncertain')
-        OR (updated_at_utc<? AND NOT EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=community_shared_alert_deliveries.delivery_id AND p.content_revision=community_shared_alert_deliveries.content_revision)))`).run(at,stale);
+        OR (updated_at_utc<? AND NOT EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=community_shared_alert_deliveries.delivery_id AND p.content_revision=community_shared_alert_deliveries.content_revision)))${selected}`).run(at,stale,...(deliveryIds??[]));
     this.database.prepare(`UPDATE community_shared_alert_deliveries SET status='pending',updated_at_utc=? WHERE status='sending' AND updated_at_utc<?
-      AND NOT EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=community_shared_alert_deliveries.delivery_id AND p.content_revision=community_shared_alert_deliveries.content_revision AND p.status IN ('sending','uncertain'))`).run(at,stale);
+      AND NOT EXISTS(SELECT 1 FROM community_shared_alert_delivery_parts p WHERE p.delivery_id=community_shared_alert_deliveries.delivery_id AND p.content_revision=community_shared_alert_deliveries.content_revision AND p.status IN ('sending','uncertain'))${selected}`).run(at,stale,...(deliveryIds??[]));
   }
   private complete(job:Job):boolean{
     return this.database.prepare(`UPDATE community_shared_alert_deliveries SET status='delivered',last_error=NULL,retry_at_utc=NULL,updated_at_utc=? WHERE delivery_id=? AND content_revision=? AND status='sending'
@@ -158,7 +161,7 @@ export class SharedAlertsDelivery {
   }
   private release(job:Job):void{this.database.prepare("UPDATE community_shared_alert_deliveries SET status='pending',updated_at_utc=? WHERE delivery_id=? AND content_revision=? AND status='sending'").run(this.now(),job.delivery_id,job.content_revision);}
   private coolingDown(channelId:string):boolean{return new SharedAlertRateLimits(this.database,this.now).current(channelId)!==null;}
-  private cancel(job:Job,reason:string):void{this.database.prepare("UPDATE community_shared_alert_deliveries SET status='cancelled',last_error=?,updated_at_utc=? WHERE delivery_id=? AND content_revision=? AND status IN ('pending','failed','sending')").run(reason,this.now(),job.delivery_id,job.content_revision);cancelStoppedSharedAlertParts(this.database,this.now());}
+  private cancel(job:Job,reason:string):void{this.database.prepare("UPDATE community_shared_alert_deliveries SET status='cancelled',last_error=?,updated_at_utc=? WHERE delivery_id=? AND content_revision=? AND status IN ('pending','failed','sending')").run(reason,this.now(),job.delivery_id,job.content_revision);cancelStoppedSharedAlertParts(this.database,this.now(),this.config.exactDeliveryIds);}
   private failBeforeSend(job:Job,reason:string):void{this.database.prepare("UPDATE community_shared_alert_deliveries SET status='failed',attempt_count=min(5,attempt_count+1),last_error=?,retry_at_utc=?,updated_at_utc=? WHERE delivery_id=? AND content_revision=? AND status IN ('pending','failed','sending')").run(reason,new Date(Date.parse(this.now())+60000).toISOString(),this.now(),job.delivery_id,job.content_revision);}
   private hold(job:Job,part:SharedAlertPartRow,reason:string):void{this.database.transaction(()=>{
     this.database.prepare("UPDATE community_shared_alert_delivery_parts SET status='uncertain',last_error=?,retry_at_utc=NULL,updated_at_utc=? WHERE delivery_id=? AND content_revision=? AND part_number=? AND status IN ('pending','sending','failed')").run(reason,this.now(),job.delivery_id,job.content_revision,part.part_number);

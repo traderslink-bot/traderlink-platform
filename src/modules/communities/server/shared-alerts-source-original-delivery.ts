@@ -96,19 +96,20 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
   kind: "alert-original-multipart",
   async run(context) {
     const db = context.database, at = context.now(), owned=sharedOwnedDeliverySql(context.database,"traderlink_community_content_deliveries"),stale = new Date(Date.parse(at) - 300_000).toISOString();
+    const selected=context.exactSelection?.sourceDeliveryIds,selectedSql=selected?` AND delivery_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:"";
     // A crashed provider write is never permission to resend a message.
     db.prepare(`UPDATE traderlink_community_content_deliveries SET status=CASE WHEN delivery_outcome='pending' THEN 'pending' ELSE 'failed' END,
       last_error=CASE WHEN delivery_outcome='pending' THEN 'Resuming confirmed source progress.' ELSE 'Source alert send was interrupted; inspect Discord.' END,
       delivery_outcome=CASE WHEN delivery_outcome='pending' THEN 'pending' ELSE 'uncertain' END,updated_at_utc=?
-      WHERE object_type='alert' AND ${owned} AND status='sending' AND updated_at_utc<?`).run(at, stale);
+      WHERE object_type='alert' AND ${owned} AND status='sending' AND updated_at_utc<?${selectedSql}`).run(at, stale,...(selected??[]));
     const rows = db.prepare(`SELECT d.delivery_id,d.community_id,d.object_id,d.destination_id,d.publisher_user_id,x.discord_channel_id,c.discord_guild_id,c.slug,a.author_user_id,r.revision_id,r.content_json,r.content_hash
       FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id AND x.content_type='alerts' AND x.status='active'
       JOIN traderlink_communities c ON c.community_id=d.community_id AND c.status='active'
       JOIN traderlink_community_alerts a ON a.alert_id=d.object_id AND a.community_id=d.community_id AND a.status='published'
       JOIN traderlink_community_publication_revisions r ON r.revision_id=(SELECT first.revision_id FROM traderlink_community_publication_revisions first WHERE first.community_id=d.community_id AND first.object_type='alert' AND first.object_id=d.object_id AND first.evidence_kind='original' ORDER BY first.rowid LIMIT 1)
-      WHERE ${sharedOwnedDeliverySql(db)} AND ${sharedCooldownSql(db,'x.discord_channel_id',at)} AND d.object_type='alert' AND d.publisher_user_id IS NOT NULL AND d.status IN ('pending','failed') AND d.delivery_outcome='pending' AND d.attempt_count<5
+      WHERE ${sharedOwnedDeliverySql(db)} AND ${sharedCooldownSql(db,'x.discord_channel_id',at)} ${selected?`AND d.delivery_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:""} AND d.object_type='alert' AND d.publisher_user_id IS NOT NULL AND d.status IN ('pending','failed') AND d.delivery_outcome='pending' AND d.attempt_count<5
       AND (d.next_attempt_at_utc IS NULL OR d.next_attempt_at_utc<=?) AND (? IS NULL OR d.requested_at_utc>=?) ORDER BY d.requested_at_utc,d.delivery_id LIMIT ?`)
-      .all(at, context.notBeforeUtc ?? null, context.notBeforeUtc ?? null, context.limit) as SourceOriginalRow[];
+      .all(...(selected??[]),at, context.notBeforeUtc ?? null, context.notBeforeUtc ?? null, context.limit) as SourceOriginalRow[];
     let delivered = 0, failed = 0, writes = 0;
     for (const row of rows) {
       if (writes >= context.limit) break;

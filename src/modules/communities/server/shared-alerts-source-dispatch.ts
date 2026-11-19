@@ -22,6 +22,7 @@ export type SharedSourceDispatchContext = Readonly<{
   notBeforeUtc: string | undefined;
   /** Source ONLY. Partners always render complete frozen text without this URL. */
   trackedPageUrl: (communitySlug: string, alertId: string) => string;
+  exactSelection?:Readonly<{sourceDeliveryIds:readonly string[];actionIds:readonly string[];sharedDeliveryIds:readonly string[]}>;
 }>;
 
 /** Actual source senders must persist per-part text/attempt/receipt before returning.
@@ -54,7 +55,7 @@ export async function runSharedAlertsSourceDispatch(database: Database.Database,
 }
 
 /** Native composition shared by hosted and explicitly admitted finite staging. */
-export async function runSharedAlertsSourcePass(database:Database.Database,config:Readonly<{enabled?:boolean;sharedEnabled?:boolean;botToken:string;publicOrigin:string;notBeforeUtc?:string;limit?:number;now?:()=>string}>,bindings:SharedSourceDispatchBindings,transport:typeof fetch=fetch):Promise<Counts>{
+export async function runSharedAlertsSourcePass(database:Database.Database,config:Readonly<{enabled?:boolean;sharedEnabled?:boolean;botToken:string;publicOrigin:string;notBeforeUtc?:string;limit?:number;now?:()=>string;exactSelection?:SharedSourceDispatchContext["exactSelection"]}>,bindings:SharedSourceDispatchBindings,transport:typeof fetch=fetch):Promise<Counts>{
   if(!sharedAlertsStorageReady(database))throw new SharedAlertError("unavailable");
   if (!config.botToken.trim() || !bindings || bindings.originals?.kind !== "alert-original-multipart" || typeof bindings.originals.run !== "function" || bindings.edits?.kind !== "alert-revision-multipart" || typeof bindings.edits.run !== "function" || bindings.tracker?.readBoundary !== "authenticated-community-audience-and-channel" || typeof bindings.tracker.url !== "function") throw new SharedAlertError("unavailable");
   const origin = new URL(config.publicOrigin);
@@ -69,7 +70,7 @@ export async function runSharedAlertsSourcePass(database:Database.Database,confi
   const policy = new SharedAlertsSourcePolicy(database);
   const request = sharedAlertAwareDiscordRequest(transport, operation => operation(database), now);
   const context: SharedSourceDispatchContext = {
-    database, policy, request, now, botToken: config.botToken, limit, notBeforeUtc: config.notBeforeUtc,
+    database, policy, request, now, botToken: config.botToken, limit, notBeforeUtc: config.notBeforeUtc,exactSelection:config.exactSelection,
     trackedPageUrl: (slug, alertId) => {
       if (slug.length > 100 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug)) throw new SharedAlertError("invalid");
       assertCanonicalUuidV4(alertId, "alertId");
@@ -88,7 +89,7 @@ export async function runSharedAlertsSourcePass(database:Database.Database,confi
   const shared = new SharedAlertsDelivery(database, {
     botToken: config.botToken,
     enabled: config.sharedEnabled === true && process.env.TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED === "1",
-    now, notBeforeUtc: config.notBeforeUtc, ...authorization,
+    now, notBeforeUtc: config.notBeforeUtc,exactDeliveryIds:config.exactSelection?.sharedDeliveryIds, ...authorization,
   }, request);
   let delivered = 0, failed = 0;
   // Each bound stage receives the same durable cooldown wrapper, policy and bounded pass size.

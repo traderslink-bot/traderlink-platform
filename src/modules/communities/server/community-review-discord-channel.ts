@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { assertCommunityReviewDiscordGuild } from "./community-review-discord-guild";
+import {canBotPublish} from "./community-discord-resources";
 
 export class CommunityReviewDiscordChannelError extends Error {
   constructor(readonly response: Response) {
@@ -19,14 +20,24 @@ export type CommunityReviewDeliveryTarget = Readonly<{
   object_id?: string;
 }>;
 
+export type CommunityReviewDeliveryScope = Readonly<{
+  guildId: string;
+  channelIds: readonly string[];
+}>;
+
 /** Resolve channels only within the approved guild, then recheck the stored target after I/O. */
 export async function verifyCommunityReviewDeliveryChannel(
   database: Database.Database,
   target: CommunityReviewDeliveryTarget,
   token: string,
   request: typeof fetch,
+  scope?: CommunityReviewDeliveryScope,
 ): Promise<void> {
-  assertCommunityReviewDiscordGuild(target.discord_guild_id);
+  if (scope) {
+    if (target.discord_guild_id !== scope.guildId || !scope.channelIds.includes(target.discord_channel_id)) {
+      throw new Error("Community delivery target is outside the sealed staging scope.");
+    }
+  } else assertCommunityReviewDiscordGuild(target.discord_guild_id);
   const current = () => {
     if (target.delivery_id && !database.prepare("SELECT 1 FROM traderlink_community_content_deliveries WHERE delivery_id=? AND status='sending'").get(target.delivery_id)) return false;
     if (target.action_id) {
@@ -41,13 +52,21 @@ export async function verifyCommunityReviewDeliveryChannel(
     .get(target.community_id, target.destination_id, target.discord_channel_id, target.discord_guild_id);
   };
   if (!current() || !/^[0-9]{1,32}$/u.test(target.discord_channel_id)) throw new Error("Community delivery target changed.");
-  const response = await request(`https://discord.com/api/v10/guilds/${target.discord_guild_id}/channels`, {
-    headers: { Authorization: `Bot ${token}` }, cache: "no-store", signal: AbortSignal.timeout(8000),
-  });
-  if (!response.ok) throw new CommunityReviewDiscordChannelError(response);
-  const channels = await response.json() as { id?: string; guild_id?: string; type?: number }[];
-  if (!Array.isArray(channels) || !channels.some(channel => channel.id === target.discord_channel_id
-    && channel.guild_id === target.discord_guild_id && [0, 5].includes(channel.type ?? -1))) {
+  const headers={ Authorization: `Bot ${token}` };
+  const responses=await Promise.all([
+    request(`https://discord.com/api/v10/guilds/${target.discord_guild_id}/channels`,{headers,cache:"no-store",signal:AbortSignal.timeout(8000)}),
+    request(`https://discord.com/api/v10/guilds/${target.discord_guild_id}/roles`,{headers,cache:"no-store",signal:AbortSignal.timeout(8000)}),
+    request("https://discord.com/api/v10/users/@me",{headers,cache:"no-store",signal:AbortSignal.timeout(8000)}),
+  ]);
+  const failed=responses.find(response=>!response.ok);if(failed)throw new CommunityReviewDiscordChannelError(failed);
+  const [channels,roles,bot]=await Promise.all(responses.map(response=>response.json())) as [Array<{id?:string;guild_id?:string;type?:number;permission_overwrites?:Array<{id:string;type:number;allow:string;deny:string}>}>,Array<{id:string;name:string;permissions:string}>,{id?:string;bot?:boolean}];
+  if(!bot.id||bot.bot!==true)throw new Error("Discord bot identity is unavailable.");
+  const memberResponse=await request(`https://discord.com/api/v10/guilds/${target.discord_guild_id}/members/${bot.id}`,{headers,cache:"no-store",signal:AbortSignal.timeout(8000)});
+  if(!memberResponse.ok)throw new CommunityReviewDiscordChannelError(memberResponse);
+  const member=await memberResponse.json() as {roles?:string[];communication_disabled_until?:string|null};
+  const channel=Array.isArray(channels)?channels.find(item=>item.id===target.discord_channel_id&&item.guild_id===target.discord_guild_id&&[0,5].includes(item.type??-1)):undefined;
+  const timedOut=Boolean(member.communication_disabled_until&&Date.parse(member.communication_disabled_until)>Date.now());
+  if(!channel||!Array.isArray(channel.permission_overwrites)||!Array.isArray(roles)||!Array.isArray(member.roles)||timedOut||!canBotPublish(target.discord_guild_id,bot.id,member.roles,roles,channel.permission_overwrites)) {
     throw new Error("Discord channel is outside the approved server or unavailable.");
   }
   if (!current()) throw new Error("Community delivery target changed during verification.");

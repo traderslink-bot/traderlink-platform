@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const crypto = require('node:crypto');
 const ts = require('typescript');
 const Database = require('better-sqlite3');
+const nativeRequire = require;
 const guild = '1559172784813514803', foreign = '999000000000000001';
 const now = '2026-11-17T16:00:00.000Z';
 const modules = new Map();
@@ -12,6 +13,7 @@ let permission = true;
 const contract = {
   createCanonicalUtcTimestamp: () => now, createCanonicalUuidV4: () => crypto.randomUUID(),
   assertCanonicalUuidV4() {}, assertCanonicalUtcTimestamp() {},
+  validatePlatformMigrationManifest(entries) { return entries; },
   platformFailure(code) { throw new Error(code); },
 };
 function load(name) {
@@ -22,7 +24,8 @@ function load(name) {
   vm.runInNewContext(code, { exports: exported, Response, Request, Headers, URL, AbortSignal, Date, BigInt, Map, Set, console,
     require(specifier) {
       if (specifier === 'server-only') return {};
-      if (specifier === 'node:crypto') return crypto;
+      if (specifier.startsWith('node:')) return nativeRequire(specifier);
+      if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier);
       if (specifier.endsWith('platform-migration-contract')) return contract;
       if (specifier.endsWith('community-publishing-access')) return {
         PublishingAccessError: class extends Error {},
@@ -32,11 +35,13 @@ function load(name) {
           assertDelivery() { if (!permission) throw new Error('Publisher permission revoked'); }
         },
       };
+      if (specifier.endsWith('community-staging-qa-capability')) return { assertCommunityStagingQaCapability() {} };
       if (specifier.endsWith('community-request-verification') && !name.endsWith('community-request-verification.ts')) return { verifyCommunityRequestMember: async () => permission };
       if (specifier.endsWith('community-lifecycle')) return { expireCommunityRecoverySettings() {}, refreshCommunityBotInstallations: async () => {} };
       if (specifier.endsWith('coaching-access-lifecycle')) return { reconcileCoachingAccess() {} };
       if (specifier.endsWith('community-launch-policy')) return { isFreshCommunityEvidence: at => at === now, isApprovedCommunityGuild: () => true };
       if (specifier.endsWith('platform-discord-membership-repository')) return { PlatformDiscordMembershipRepository: class {} };
+      if (specifier.endsWith('platform-erasure-admission')) return { requirePlatformErasureWriter: () => ({ assertLivePrincipal() {} }) };
       if (specifier.endsWith('traderlink-community-repository')) return { TraderLinkCommunityRepository: class {} };
       if (specifier.endsWith('community-admission-service')) return {};
       if (specifier.endsWith('community-branded-destination-url')) return { communityPublicationDestinationUrl: () => 'https://example.test/community/item' };
@@ -94,7 +99,7 @@ INSERT INTO traderlink_community_memberships VALUES('test','publisher','active')
     if (pathname.endsWith('/guilds/' + guild)) return Response.json({ id: guild, owner_id: '777', name: 'TradersLink Tests' });
     throw new Error('Unapproved URL ' + url);
   };
-  const service = (cutoff) => new (load(root + 'traderlink-community-discord-delivery-service.ts').TraderLinkCommunityDiscordDeliveryService)(db, { botToken: 'synthetic', publicOrigin: 'https://example.test', now: () => now, notBeforeUtc: cutoff }, transport);
+  const service = (cutoff, exactSelection) => new (load(root + 'traderlink-community-discord-delivery-service.ts').TraderLinkCommunityDiscordDeliveryService)(db, { botToken: 'synthetic', publicOrigin: 'https://example.test', now: () => now, notBeforeUtc: cutoff, exactSelection }, transport);
   const alert = (body) => {
     db.prepare("UPDATE traderlink_community_discord_destinations SET content_type='alerts' WHERE destination_id='target'").run();
     db.prepare('INSERT INTO traderlink_community_alerts VALUES(?,?,?,?,?,?,?,?,?,?)').run('alert','test','alert','Alert','TEST',body,'discord_post','published','publisher',now);
@@ -117,6 +122,12 @@ async function main() {
   });
   await check('historical cutoff holds older deliveries', async f => { f.seed('old','test','plan','2026-11-16T00:00:00.000Z'); assert.equal((await f.service(now).runAvailable()).delivered,0); assert.equal(f.posts.length,0); });
   await check('concurrent passes claim once', async f => { f.seed('allowed'); await Promise.all([f.service().runAvailable(),f.service().runAvailable()]); assert.equal(f.posts.length,1); });
+  await check('finite exact selection sends only sealed job and leaves unrelated stale row unchanged', async f => {
+    f.seed('selected');f.seed('unrelated');f.db.prepare("UPDATE traderlink_community_content_deliveries SET status='sending',updated_at_utc='2026-11-17T15:00:00.000Z' WHERE delivery_id='unrelated'").run();
+    const exact={guildId:guild,channelIds:['555'],deliveryIds:['selected'],actionIds:[],sharedDeliveryIds:[]};
+    assert.equal((await f.service(undefined,exact).runAvailable(3)).delivered,1);assert.equal(f.posts.length,1);
+    assert.equal(f.db.prepare("SELECT status FROM traderlink_community_content_deliveries WHERE delivery_id='unrelated'").get().status,'sending');
+  });
   await check('destination retarget during channel verification blocks every write', async f => { f.seed('allowed'); f.setHook(async url => { if(url.endsWith('/channels'))f.db.prepare("UPDATE traderlink_communities SET discord_guild_id=? WHERE community_id='test'").run(foreign); }); await f.service().runAvailable(); assert.equal(f.posts.length,0); });
   await check('delivery cancelled during final channel lookup cannot post', async f => { f.seed('allowed'); let lookups=0; f.setHook(async url=>{if(url.endsWith('/channels')&&++lookups===2)f.db.prepare("UPDATE traderlink_community_content_deliveries SET status='cancelled' WHERE delivery_id='allowed'").run();}); await f.service().runAvailable(); assert.equal(f.posts.length,0); assert.equal(f.db.prepare("SELECT status FROM traderlink_community_content_deliveries WHERE delivery_id='allowed'").get().status,"cancelled"); });
   await check('full alert original text and allowed mentions', async f => { f.alert('Exact alert body'); assert.equal((await f.service().runAvailable()).delivered,1); assert(f.posts[0].body.content.includes('Exact alert body')); assert.deepEqual(f.posts[0].body.allowed_mentions.parse,[]); });
