@@ -23,6 +23,8 @@ RUN node scripts/platform/analyzer-0186-bundle.cjs
 RUN node scripts/platform/build-erasure-worker.cjs --out-dir /app/erasure-worker
 RUN node scripts/platform/build-journal-demo-worker.cjs /app/demo-worker/journal-demo-setup.cjs
 RUN node scripts/platform/build-news-maintenance-command-20261028.cjs
+ARG RAILWAY_GIT_COMMIT_SHA
+RUN node scripts/platform/build-combined-210-release-20261119.cjs
 
 FROM base AS runtime
 ENV NODE_ENV=production
@@ -46,6 +48,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/analyzer-maintenance/migrate.cjs 
 RUN mv /app/server.js /app/application-server.js
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/analyzer-image-entrypoint.cjs ./server.js
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/platform/analyzer-exact-ledger.json /app/scripts/platform/analyzer-image-role.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/combined210-package/ ./
 
 COPY --from=builder /app/src/scripts/render-public-gainers-request.py /app/src/scripts/render-daily-gainers-preview.py /app/src/scripts/daily-gainers-preview.html /app/src/scripts/daily-gainers-public-nav.html /app/src/scripts/
 

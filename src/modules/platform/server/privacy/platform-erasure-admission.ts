@@ -62,7 +62,7 @@ type ReviewedProfile = Readonly<{ profileRef: string; retentionPolicyRef: string
 type ReviewedCatalog = Readonly<{ schemaSha256: string; profiles: readonly ReviewedProfile[] }>;
 function verifyNativeArtifacts(): void {
   const pins: Readonly<Record<string,string>> = {
-    "membership/platform-premium-authority-repository.ts": "9a930d63894503c3e909b52e8ba475a1305341a6b85e77007b36f918385631de",
+    "membership/platform-premium-authority-repository.ts": "b96948b3f322767d90e73a8f040699926b6a606f3e54bde07f63be0f91f93267",
     "membership/platform-premium-whop-native.ts": "0c6e1ad9b402e5bde926284865c38de1f7a7502dcf72c623d6300b8b85637718",
     "privacy/platform-premium-signer-redaction.ts": "364aa7982a87f4cee623dbcc1d50b3c53a94825a1c964278de18c1481bdc9f76",
   };

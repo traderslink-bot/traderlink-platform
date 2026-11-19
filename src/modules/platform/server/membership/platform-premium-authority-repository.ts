@@ -1,3 +1,4 @@
+import { isReviewed210PremiumEventsLedgerPrefix } from "../privacy/platform-erasure-210-boundary";
 import { createHash, randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
 import {
@@ -1124,7 +1125,8 @@ export class PlatformPremiumAuthorityRepository implements PlatformPremiumAuthor
    || ledger.length === 205 && ledger[203]?.migration_id === "0216_platform_premium_current_access_events" && ledger[203].module_namespace === "platform"
     && ledger[203].execution_order === 291 && ledger[203].checksum_sha256 === "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539"
     && last?.migration_id === "0217_traderlink_community_stats_forward_checkpoints" && last.module_namespace === "community"
-    && last.execution_order === 292 && last.checksum_sha256 === "d0d493935a53c473a73d164101c1bab6193487ca56a4b678ea26cff4d9f7dbec";
+    && last.execution_order === 292 && last.checksum_sha256 === "d0d493935a53c473a73d164101c1bab6193487ca56a4b678ea26cff4d9f7dbec"
+   || isReviewed210PremiumEventsLedgerPrefix(ledger);
       if (!reviewedLedger || !this.isCurrentV2(ticket)) throw new PlatformPremiumAuthorityError("unbound");
       const snapshot = this.captureV2(ticket.scope.authorityKey);
       if (snapshot.kind !== "snapshot" || snapshot.policy.state !== "active" || snapshot.policy.guildId !== "1559172784813514803"

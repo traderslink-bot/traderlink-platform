@@ -10,6 +10,10 @@
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
     "overlapSeconds": 0,
-    "drainingSeconds": 30
+    "drainingSeconds": 30,
+    "preDeployCommand": [
+      "node /app/combined210-image-predeploy.cjs"
+    ],
+    "preDeployTimeoutSeconds": 120
   }
 }
