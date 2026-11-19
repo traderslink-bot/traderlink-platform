@@ -46,7 +46,7 @@ function main(){
  a.equal(census.roleSha256,hash(roleBytes));a(Array.isArray(census.entries)&&census.entries.length>0&&census.entries.length<=250000);
  const proof={kind:'ACTUAL_SAME_SERVICE_210_PREDEPLOY_IMAGE_QUALIFICATION',atUtc:new Date().toISOString(),
   deploymentId:process.env.RAILWAY_DEPLOYMENT_ID,source:role.applicationSource,role:role.role,
-  manifestSha256:hash(roleBytes),installedPinsSha256:hash(Buffer.from(JSON.stringify(hashes))),installedPinCount:pins.length,
+  manifestSha256:hash(roleBytes),imageRole:role,readOnlyVerifierSha256:role.readOnlyVerifierSha256,installedPinsSha256:hash(Buffer.from(JSON.stringify(hashes))),installedPinCount:pins.length,
   imageCensusSha256:hash(censusBytes),imageCensusBytes:censusBytes.length,imageCensusEntryCount:census.entries.length,
   uid:process.getuid(),gid:process.getgid(),node:process.versions.node,abi:process.versions.modules,nativePackage:packageJson.version,nativeSha256:nativeHash,python,
   volumeMounted:false,databaseOpened:false,applicationImported:false,providerRequests:0,filesystemWrites:0,
