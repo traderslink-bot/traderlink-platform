@@ -1,0 +1,415 @@
+diff --git a/src/modules/communities/server/shared-alerts-native-acceptance.test.ts b/src/modules/communities/server/shared-alerts-native-acceptance.test.ts
+new file mode 100644
+index 000000000..437ebd88e
+--- /dev/null
++++ b/src/modules/communities/server/shared-alerts-native-acceptance.test.ts
+@@ -0,0 +1,251 @@
++// @vitest-environment node
++import { randomUUID } from "node:crypto";
++import type Database from "better-sqlite3";
++import { afterEach, describe, expect, it, vi } from "vitest";
++import { openPristinePlatformTestDatabase } from "@/src/test/pristine-platform-test-database";
++import { captureSharedAlertPublication } from "./shared-alerts-read";
++import { captureSharedAlertChange } from "./shared-alerts-publication-changes";
++import { SharedAlertsRepository } from "./shared-alerts-repository";
++import { SharedAlertError } from "./shared-alerts-errors";
++import { ensureSharedAlertParts, readSharedAlertParts } from "./shared-alerts-parts";
++
++// Real migrated disposable SQLite, real repository/access checks. These seeded
++// principals are local fixtures, not evidence of hosted Discord ownership.
++const at = "2026-11-19T02:00:00.000Z";
++const databases: Database.Database[] = [];
++afterEach(() => {
++  vi.unstubAllEnvs();
++  for (const database of databases.splice(0)) database.close();
++});
++
++function insert(database: Database.Database, table: string, row: Record<string, string | number | null>): void {
++  const columns = Object.keys(row);
++  database.prepare(`INSERT INTO ${table} (${columns.join(",")}) VALUES (${columns.map(() => "?").join(",")})`).run(...Object.values(row));
++}
++
++type NativeTestTarget = Readonly<{ guildId: string; channelId: string }>;
++function fixture(targets: Readonly<{ source: NativeTestTarget; receiver: NativeTestTarget }> = {
++  source: { guildId: "100000000000000011", channelId: "100000000000000021" },
++  receiver: { guildId: "100000000000000012", channelId: "100000000000000022" },
++}) {
++  const database = openPristinePlatformTestDatabase();
++  databases.push(database);
++  const repository = new SharedAlertsRepository(database, () => at);
++  const sourceId = randomUUID(), receiverId = randomUUID();
++  function user(discordId: string) {
++    const userId = randomUUID();
++    insert(database, "platform_users", { user_id: userId, auth_provider: "discord", auth_subject: discordId, display_name: "Local test", status: "active", created_at_utc: at, updated_at_utc: at });
++    insert(database, "platform_auth_identities", { user_id: userId, auth_provider: "discord", auth_subject: discordId, status: "active", linked_by_user_id: userId, created_at_utc: at, updated_at_utc: at });
++    return userId;
++  }
++  const sourceOwner = user("100000000000000001"), receiverOwner = user("100000000000000002");
++  const publisher = user("100000000000000003"), secondPublisher = user("100000000000000004");
++  function discordMembership(userId: string, guildId: string, owner: boolean) {
++    insert(database, "platform_discord_memberships", { user_id: userId, guild_id: guildId, username: "local-test", global_display_name: "Local test", role_ids_json: "[]", guild_owner: owner ? 1 : 0, first_verified_at_utc: at, last_verified_at_utc: at });
++  }
++  function community(communityId: string, ownerId: string, guildId: string, slug: string) {
++    discordMembership(ownerId, guildId, true);
++    insert(database, "traderlink_communities", { community_id: communityId, discord_guild_id: guildId, slug, display_name: slug, status: "active", owner_user_id: ownerId, created_at_utc: at, updated_at_utc: at });
++    insert(database, "traderlink_community_memberships", { community_id: communityId, user_id: ownerId, status: "active", discord_verified_at_utc: at, first_verified_at_utc: at, updated_at_utc: at });
++    repository.recordOwnerCheck(repository.ownerContext(communityId), "verified");
++  }
++  community(sourceId, sourceOwner, targets.source.guildId, "local-source");
++  community(receiverId, receiverOwner, targets.receiver.guildId, "local-receiver");
++  const source = { communityId: sourceId, userId: sourceOwner };
++  const receiver = { communityId: receiverId, userId: receiverOwner };
++  for (const userId of [publisher, secondPublisher]) {
++    discordMembership(userId, targets.source.guildId, false);
++    insert(database, "traderlink_community_memberships", { community_id: sourceId, user_id: userId, status: "active", discord_verified_at_utc: at, first_verified_at_utc: at, updated_at_utc: at });
++    repository.setPublisher(source, userId, true);
++  }
++  const requestId = repository.createRequest({ actor: source, otherCommunityId: receiverId, direction: "send", showSourceCommunityName: true, message: "Local native acceptance request", agreed: true, publisherIds: [publisher] });
++  const channel = { guildId: targets.receiver.guildId, channelId: targets.receiver.channelId, name: "local-test", verifiedAtUtc: at };
++  function acceptance(version: number, requireApproval = true) {
++    return { actor: receiver, requestId, version, showSourceCommunityName: true, publisherIds: [publisher], routes: [{ userId: publisher, channel, requireApproval }], agreed: true };
++  }
++  function activate(requireApproval = true) {
++    repository.agree(acceptance(repository.requestForActor(receiver, requestId).terms_version, requireApproval));
++    expect(repository.requestForActor(receiver, requestId).status).toBe("active");
++  }
++  function alert(distribution: "website" | "discord" = "discord") {
++    const alertId = randomUUID(), audienceId = randomUUID();
++    insert(database, "traderlink_community_audiences", { audience_id: audienceId, community_id: sourceId, name: `Local ${audienceId}`, mode: "everyone", status: "active", created_by_user_id: sourceOwner, created_at_utc: at, updated_at_utc: at });
++    insert(database, "traderlink_community_alerts", { alert_id: alertId, community_id: sourceId, slug: `local-${alertId}`, author_user_id: publisher, title: "Local alert", symbol: "TEST", body: "Original local body", status: "published", audience_id: audienceId, published_at_utc: at, created_at_utc: at, updated_at_utc: at, publishing_mode: "discord_post" });
++    insert(database, "traderlink_community_publication_distribution", { community_id: sourceId, object_type: "alert", object_id: alertId, publisher_user_id: publisher, distribution, destination_ids_json: "[]", updated_at_utc: at });
++    captureSharedAlertPublication(repository, alertId, at);
++    return alertId;
++  }
++  function delivery(alertId: string) {
++    const row = database.prepare("SELECT delivery_id,content_revision,status FROM community_shared_alert_deliveries WHERE alert_id=? AND kind='publication'").get(alertId) as { delivery_id: string; content_revision: number; status: string } | undefined;
++    expect(row).toBeDefined();
++    return row!;
++  }
++  function facts() {
++    return ["community_shared_alert_requests", "community_shared_alert_routes", "community_shared_alert_deliveries", "community_shared_alert_delivery_parts", "community_shared_alert_events", "community_shared_alert_messages", "community_shared_alert_read_positions", "community_alert_publisher_permissions", "community_shared_alert_owner_checks"].map(table => database.prepare(`SELECT * FROM ${table} ORDER BY 1,2`).all());
++  }
++  return { database, repository, source, receiver, publisher, secondPublisher, requestId, acceptance, activate, alert, delivery, facts };
++}
++
++function rejectedWithoutChanges(f: ReturnType<typeof fixture>, action: () => void, code: SharedAlertError["code"]) {
++  const before = f.facts();
++  expect(action).toThrow(expect.objectContaining({ code }));
++  expect(f.facts()).toEqual(before);
++}
++
++describe("Shared Alerts native acceptance prerequisites", () => {
++  const testsTarget = { guildId: "1559172784813514803", channelId: "1559172786176401410" };
++  const mainTestTarget = { guildId: "1433570740430573642", channelId: "1546033958448529508" };
++  const directions = [
++    ["Tests to main designated alerts", testsTarget, mainTestTarget],
++    ["Main designated alerts to Tests", mainTestTarget, testsTarget],
++  ] as const;
++
++  it.each(directions)("preserves separate native source owner and receiver route: %s", (_name, source, receiver) => {
++    vi.stubEnv("TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED", "1");
++    const f = fixture({ source, receiver });
++    const sourceOwner = f.repository.requireOwner(f.source), receiverOwner = f.repository.requireOwner(f.receiver);
++    expect(sourceOwner.guildId).toBe(source.guildId);
++    expect(receiverOwner.guildId).toBe(receiver.guildId);
++    expect(sourceOwner.guildId).not.toBe(receiverOwner.guildId);
++    expect(sourceOwner.ownerUserId).not.toBe(receiverOwner.ownerUserId);
++    f.activate();
++    const d = f.delivery(f.alert());
++    const admitted = f.database.prepare(`SELECT r.source_community_id,r.receiver_community_id,
++      r.source_owner_user_id,r.source_owner_discord_id,r.receiver_owner_user_id,r.receiver_owner_discord_id,
++      source.discord_guild_id source_guild,receiver.discord_guild_id receiver_guild,
++      r.terms_version,r.source_approved_version,r.receiver_approved_version,
++      route.author_user_id,route.channel_id route_channel,d.channel_id delivery_channel,
++      route.revision route_revision,d.channel_revision,d.content_revision
++      FROM community_shared_alert_deliveries d JOIN community_shared_alert_requests r ON r.request_id=d.request_id
++      JOIN traderlink_communities source ON source.community_id=r.source_community_id
++      JOIN traderlink_communities receiver ON receiver.community_id=r.receiver_community_id
++      JOIN community_shared_alert_routes route ON route.request_id=d.request_id AND route.author_user_id=d.author_user_id
++      WHERE d.delivery_id=?`).get(d.delivery_id) as Record<string, string | number>;
++    expect(admitted).toMatchObject({
++      source_community_id: sourceOwner.communityId, receiver_community_id: receiverOwner.communityId,
++      source_owner_user_id: sourceOwner.ownerUserId, source_owner_discord_id: sourceOwner.discordUserId,
++      receiver_owner_user_id: receiverOwner.ownerUserId, receiver_owner_discord_id: receiverOwner.discordUserId,
++      source_guild: source.guildId, receiver_guild: receiver.guildId,
++      author_user_id: f.publisher, route_channel: receiver.channelId, delivery_channel: receiver.channelId,
++      channel_revision: admitted.route_revision,
++      source_approved_version: admitted.terms_version, receiver_approved_version: admitted.terms_version,
++    });
++    rejectedWithoutChanges(f, () => f.repository.reviewDelivery(f.source, f.requestId, d.delivery_id, d.content_revision, true), "not_owner");
++    f.repository.reviewDelivery(f.receiver, f.requestId, d.delivery_id, d.content_revision, true);
++    expect(f.database.prepare("SELECT approved_by_user_id,status FROM community_shared_alert_deliveries WHERE delivery_id=?").get(d.delivery_id)).toEqual({ approved_by_user_id: receiverOwner.ownerUserId, status: "pending" });
++    rejectedWithoutChanges(f, () => f.repository.configureRoute(f.source, f.requestId, f.publisher, Number(admitted.route_revision), { command: "save", requireApproval: false }), "not_owner");
++  });
++
++  it.each(directions)("rejects a source-guild destination and changed owner bindings: %s", (_name, source, receiver) => {
++    const f = fixture({ source, receiver });
++    const input = f.acceptance(1);
++    const badTarget = { ...input, routes: [{ ...input.routes[0], channel: { ...input.routes[0].channel, guildId: source.guildId, channelId: source.channelId } }] };
++    rejectedWithoutChanges(f, () => f.repository.agree(badTarget), "channel_unavailable");
++    for (const side of ["source", "receiver"] as const) {
++      const field = `${side}_owner_discord_id`;
++      const original = (f.database.prepare(`SELECT ${field} subject FROM community_shared_alert_requests WHERE request_id=?`).get(f.requestId) as { subject: string }).subject;
++      f.database.prepare(`UPDATE community_shared_alert_requests SET ${field}='100000000000000099' WHERE request_id=?`).run(f.requestId);
++      rejectedWithoutChanges(f, () => f.repository.agree(input), "changed");
++      f.database.prepare(`UPDATE community_shared_alert_requests SET ${field}=? WHERE request_id=?`).run(original, f.requestId);
++    }
++    f.repository.agree(input);
++    const version = f.repository.requestForActor(f.receiver, f.requestId).terms_version;
++    expect(f.repository.requestForActor(f.receiver, f.requestId).status).toBe("active");
++    const route = f.database.prepare("SELECT revision FROM community_shared_alert_routes WHERE request_id=? AND author_user_id=?").get(f.requestId, f.publisher) as { revision: number };
++    rejectedWithoutChanges(f, () => f.repository.configureRoute(f.receiver, f.requestId, f.publisher, route.revision, { command: "save", channel: badTarget.routes[0].channel }), "channel_unavailable");
++    expect(f.repository.requestForActor(f.receiver, f.requestId).terms_version).toBe(version);
++  });
++
++  it("rejects the original receiver acceptance after another tab accepts and the source revises analysts", () => {
++    const f = fixture();
++    const original = f.acceptance(1);
++    f.repository.agree(original); // A second genuine tab can submit this normal action.
++    const active = f.repository.requestForActor(f.source, f.requestId);
++    expect(active.status).toBe("active");
++    f.repository.reopenAgreement(f.source, f.requestId, active.terms_version);
++    const opened = f.repository.requestForActor(f.source, f.requestId);
++    f.repository.agree({ actor: f.source, requestId: f.requestId, version: opened.terms_version, showSourceCommunityName: true, publisherIds: [f.secondPublisher], routes: [], agreed: true });
++    const current = f.repository.requestForActor(f.source, f.requestId);
++    expect(current.status).toBe("pending");
++    expect(current.terms_version).toBeGreaterThan(original.version);
++    rejectedWithoutChanges(f, () => f.repository.agree(original), "changed");
++  });
++
++  it("does not create a send request without an analyst", () => {
++    const f = fixture();
++    f.repository.lifecycle(f.source, f.requestId, 1, "withdraw");
++    const before = f.facts();
++    expect(() => f.repository.createRequest({ actor: f.source, otherCommunityId: f.receiver.communityId, direction: "send", showSourceCommunityName: true, message: "Missing analyst", agreed: true, publisherIds: [] })).toThrow(expect.objectContaining({ code: "publishers_required" }));
++    expect(f.facts()).toEqual(before);
++  });
++
++  it("rejects stale content approval and accepts only the revised body", () => {
++    vi.stubEnv("TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED", "1");
++    const f = fixture(); f.activate();
++    const alertId = f.alert(), original = f.delivery(alertId);
++    f.database.prepare("UPDATE traderlink_community_alerts SET body='Revised local body' WHERE alert_id=?").run(alertId);
++    captureSharedAlertChange(f.repository, { alertId, kind: "correction", actorUserId: f.publisher, atUtc: at });
++    const revised = f.delivery(alertId);
++    expect(revised.content_revision).toBe(original.content_revision + 1);
++    rejectedWithoutChanges(f, () => f.repository.reviewDelivery(f.receiver, f.requestId, original.delivery_id, original.content_revision, true), "changed");
++    f.repository.reviewDelivery(f.receiver, f.requestId, revised.delivery_id, revised.content_revision, true);
++    expect(f.database.prepare("SELECT body,status,approved_content_revision FROM community_shared_alert_deliveries WHERE delivery_id=?").get(revised.delivery_id)).toEqual({ body: "Revised local body", status: "pending", approved_content_revision: revised.content_revision });
++  });
++
++  it("rejects source self-approval and receiver approval after native owner evidence is revoked", () => {
++    vi.stubEnv("TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED", "1");
++    const f = fixture(); f.activate(); const d = f.delivery(f.alert());
++    rejectedWithoutChanges(f, () => f.repository.reviewDelivery(f.source, f.requestId, d.delivery_id, d.content_revision, true), "not_owner");
++    f.database.prepare("UPDATE platform_discord_memberships SET guild_owner=0 WHERE user_id=?").run(f.receiver.userId);
++    rejectedWithoutChanges(f, () => f.repository.reviewDelivery(f.receiver, f.requestId, d.delivery_id, d.content_revision, true), "not_owner");
++  });
++
++  it("revokes queued approval and does not restore a selected route on publisher regrant", () => {
++    vi.stubEnv("TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED", "1");
++    const f = fixture(); f.activate(); const d = f.delivery(f.alert());
++    f.repository.setPublisher(f.source, f.publisher, false);
++    expect(f.database.prepare("SELECT status FROM community_shared_alert_deliveries WHERE delivery_id=?").get(d.delivery_id)).toEqual({ status: "cancelled" });
++    rejectedWithoutChanges(f, () => f.repository.reviewDelivery(f.receiver, f.requestId, d.delivery_id, d.content_revision, true), "changed");
++    f.repository.setPublisher(f.source, f.publisher, true);
++    expect(f.database.prepare("SELECT receiver_selected FROM community_shared_alert_routes WHERE request_id=? AND author_user_id=?").get(f.requestId, f.publisher)).toEqual({ receiver_selected: 0 });
++    expect(f.database.prepare("SELECT status FROM community_shared_alert_deliveries WHERE delivery_id=?").get(d.delivery_id)).toEqual({ status: "cancelled" });
++  });
++
++  it("captures only enabled Discord intent and preserves canonical 32hex identity on repeated capture", () => {
++    vi.stubEnv("TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED", "1");
++    const f = fixture(); f.activate();
++    const website = f.alert("website");
++    expect(f.database.prepare("SELECT count(*) n FROM community_shared_alert_deliveries WHERE alert_id=?").get(website)).toEqual({ n: 0 });
++    vi.stubEnv("TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED", "0");
++    const disabled = f.alert();
++    expect(f.database.prepare("SELECT count(*) n FROM community_shared_alert_deliveries WHERE alert_id=?").get(disabled)).toEqual({ n: 0 });
++    vi.stubEnv("TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED", "1");
++    const eligible = f.alert(), d = f.delivery(eligible);
++    expect(d.delivery_id).toMatch(/^[0-9a-f]{32}$/u);
++    captureSharedAlertPublication(f.repository, eligible, at);
++    expect(f.database.prepare("SELECT delivery_id FROM community_shared_alert_deliveries WHERE alert_id=?").all(eligible)).toEqual([{ delivery_id: d.delivery_id }]);
++  });
++
++  it("does not mark a later unseen peer reply read, or move a read marker backwards", () => {
++    const f = fixture();
++    const first = (f.database.prepare("SELECT max(sequence) sequence FROM community_shared_alert_messages WHERE request_id=?").get(f.requestId) as { sequence: number }).sequence;
++    f.repository.reply(f.source, f.requestId, "Later unseen reply");
++    const latest = (f.database.prepare("SELECT max(sequence) sequence FROM community_shared_alert_messages WHERE request_id=?").get(f.requestId) as { sequence: number }).sequence;
++    f.repository.markRead(f.receiver, f.requestId, first, 0);
++    expect(f.database.prepare("SELECT count(*) n FROM community_shared_alert_messages WHERE request_id=? AND author_community_id<>? AND sequence>(SELECT last_read_sequence FROM community_shared_alert_read_positions WHERE request_id=? AND community_id=?)").get(f.requestId, f.receiver.communityId, f.requestId, f.receiver.communityId)).toEqual({ n: 1 });
++    f.repository.markRead(f.receiver, f.requestId, latest, 0);
++    f.repository.markRead(f.receiver, f.requestId, first, 0);
++    expect(f.database.prepare("SELECT last_read_sequence FROM community_shared_alert_read_positions WHERE request_id=? AND community_id=?").get(f.requestId, f.receiver.communityId)).toEqual({ last_read_sequence: latest });
++  });
++
++  it("keeps already delivered multipart text and receipt immutable across a repeated claim", () => {
++    vi.stubEnv("TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED", "1");
++    const f = fixture(); f.activate(false); const d = f.delivery(f.alert());
++    f.database.transaction(() => ensureSharedAlertParts(f.database, d.delivery_id, d.content_revision, ["First frozen body", "Second frozen body"], at)).immediate();
++    f.database.prepare("UPDATE community_shared_alert_delivery_parts SET status='delivered',discord_message_id='100000000000000099',attempt_count=1 WHERE delivery_id=? AND part_number=1").run(d.delivery_id);
++    const frozen = readSharedAlertParts(f.database, d.delivery_id, d.content_revision);
++    f.database.transaction(() => ensureSharedAlertParts(f.database, d.delivery_id, d.content_revision, ["Replacement text"], at)).immediate();
++    expect(readSharedAlertParts(f.database, d.delivery_id, d.content_revision)).toEqual(frozen);
++    expect(() => f.database.prepare("UPDATE community_shared_alert_delivery_parts SET content='Mutated' WHERE delivery_id=? AND part_number=1").run(d.delivery_id)).toThrow("immutable");
++  });
++});
+diff --git a/docs/migration/shared-functional-acceptance-20261119.md b/docs/migration/shared-functional-acceptance-20261119.md
+new file mode 100644
+index 000000000..0076288bd
+--- /dev/null
++++ b/docs/migration/shared-functional-acceptance-20261119.md
+@@ -0,0 +1,139 @@
++# Shared Alerts functional acceptance — current source
++
++Current assigned baseline: `0111dfdb58c22ba7149f5a499a15682505aba797`, branch `codex/shared-functional-acceptance-20261119`. This is the controlling current-source inventory and controller handoff, not an execution result. Coordinator owns integration, commits and hosted runtime admission. No production release is authorized by this work.
++
++## Status and evidence boundaries
++
++The earlier a8/957 image passed both Harbor/Northstar navigation, cold hidden unread, hydrated hidden unread and one actual TradersLink Tests Discord delivery. Those results used genuine sessions with SyntheticAgreement communities and an in-memory queue. They do not prove current-image behavior, canonical native SQL delivery, genuine two-guild ownership or full feature acceptance. Frozen601 tooling and its reviews remain historical and must not be relabeled for0111.
++
++Current0111 browser/provider execution: **UNRUN**. Twelve isolated native database cases PASS; they do not close the browser/provider requirements. The previous private runtime binding still names a8/957; Coordinator is independently qualifying the new image. No capability has been minted or old binding repinned here. Coordinator supplied fresh authenticated destination metadata; its exact scope is recorded below. Native owners/publishers/reviewers and current case admission remain separate prerequisites. This record supersedes the old preparation's Website-only positive assumption.
++
++Community owns canonical finite-controller, destination guards, `shared-alerts-delivery.ts`, parts cancellation and source dispatch selection changes. Shared owns this inventory, selector/result requirements and isolated feature findings/tests. Do not duplicate Community edits or change normal background behavior to satisfy a test.
++
++Dependencies: ignored local symlink to Coordinator-approved `/home/traderlink/projects/community-combined-production-review-20261117/node_modules`. Lock SHA256 `4cefe56a3899db538c7adec0956fb7236664c78009d5c78c824a12c869357bcb`; installed required entries match,116 optional platform entries absent. Next16.2.6, Vitest4.1.4, TypeScript5.9.3, better-sqlite3 12.9.0. No copy or installation; generated outputs must remain private to this lane/run.
++
++## Current source facts controlling cases
++
++- Normal `captureSharedAlertPublication` requires both `TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED === '1'` and the actual normal publication distribution `discord`. Website-only is a negative: zero source Discord jobs and zero Shared jobs. Canonical positive cases select and budget BOTH real source publication deliveries and receiver Shared parts. A test must not invent distribution rows or globally start workers.
++- Actual Shared SQL IDs can be32 lowercase hexadecimal characters from `randomblob(16)`. Preserve them verbatim; a UUIDv4-only validator is incompatible. Correction/withdrawal `event_key` is distinct from `delivery_id`.
++- `runAvailable(1)` on the baseline is NOT an exact-job fence: interrupted reconciliation, original-followup cancellation and stopped-parts cancellation can change unrelated rows before, inside and after the selected loop. Finite execution needs explicit selected IDs for all those writes, including nested failure paths. A transport allowlist alone is insufficient.
++- Shared correction/withdrawal currently makes a labelled followup POST referencing the confirmed original. Verify that actual behavior and the explicitly preserved original. Source common publishing has its own revision/PATCH/DELETE semantics; do not claim those from a Shared followup receipt.
++- Multipart rows are created lazily during a successful parent claim. Their key is `(delivery_id,content_revision,part_number)` with stable nonce and frozen body. Never regenerate or resend a confirmed part. A successful part resets the parent attempt count while each part retains its own cap.
++- An unknown network/5xx outcome holds the relevant part/job as uncertain.429 persists cooldown, including a genuine bot-global cooldown. Do not erase or shorten a real cooldown during cleanup or assert unrelated-metadata invariance across a legitimate global cooldown change.
++
++Inspected baseline SHA256 preimages (Community may supersede these in its handoff):
++
++| File under `src/modules/communities/server/` | SHA256 |
++| --- | --- |
++| shared-alerts-delivery.ts | 73a741dc396d88245af209a05bed813f3e07cddc8ac2a1a923a65d8ebcf2cc21 |
++| shared-alerts-parts.ts | 39f39e948d7e84f58256f7590f11623bcb4bb6a899075908c908da7a2d12f307 |
++| shared-alerts-rate-limits.ts | 64b481e40d0b69e78f5fa331dd9879b67b2c2d242bed9f04c58842d229a167b0 |
++| shared-alerts-publication-changes.ts | 8733d4220f97bfb4c768527b3ae5e5b3140512fc7f3a870093ea2db6053e8be5 |
++| shared-alerts-storage-readiness.ts | 46fa2c0543feb9c64278ffdcf09e3c28653dbd50ef9083c49fd20ad55647d4b0 |
++
++## Complete inventory retained
++
++Every requirement below remains in discovery. Browser/provider status is UNRUN on current0111 unless an exact runtime/case result is attached. Source/mock tests establish only their stated layer. A blocked case does not stop independent runnable cases or disappear from the ledger.
++
++| Cases | Required observations |
++| --- | --- |
++| B01–B04 | Directory search/pagination/empty; direct-route privacy; requests-open settings; block/unblock; self/duplicate denial; both send and receive initiation; selected analysts before sending; no misplaced settings in Find communities. |
++| B05 | Actual reply and pagination; persisted unread; cold AND hydrated genuinely hidden tabs; visible but offscreen conversation; acknowledge only seen messages; foreground/reload/mobile persistence. No visibility monkeypatch. |
++| B06 | Correct source/receiver terms; named analysts before sending; no redundant sender consent; actual stale submitted version rejected without changing current facts; receiver source-name-in-post choice without second source vote. |
++| B07–B10 | Native channel assignment; individual Publish alerts grant; composer/access message/Help; revoke/regrant; analyst subsets; independent receiving routes including intentional same channel; source cannot configure receiver; unavailable/changed/nonwritable feedback. |
++| B11–B12 | Receiver approval per selected route; full content visible; source cannot self-approve; hold ORIGINAL browser review POST, change content, release unchanged POST to server and verify specific rejection; fresh review succeeds; decline/correct/withdraw; changing approval preference cannot flush old held content. |
++| B13–B16 | Direct and saved draft; source tracker/teaser/full-post; receiver full allowed body without private tracker access; Website-only negative; Unicode/limits/multipart; durable receipts; partial retry without replay; uncertain hold; correction actor/author/route preserved; pause before next write fences it. |
++| B17 | Pending/declined/withdrawn/active/paused/ended labels; active leaves actionable requests; terminal/history notifications; per-analyst stop; pause/resume/end notification; peer-outage stop; no historical backfill. |
++| B18–B19 | Real attempt/timestamp/error/receipt link and totals/filter/empty/old-channel history; correct actual author; receiver source-community-name-in-post preference in actual content. |
++| B20–B22 | Independent community agreement even with same user; no Journal/audience/private tracker/onward access; ownership change invalidation; held ORIGINAL publisher AND reviewer Chromium POST after native revocation reaches server, specifically rejects and leaves protected facts unchanged. |
++| B23 | BOTH Harbor/Northstar Back to community ↔ Back to Shared; cross-community denial;1440 desktop/390 mobile; Light/Navy; keyboard/select/focus/scroll; normal/empty/loading/error/disabled/unsaved; no overflow; applicable Community/standalone Coaching navigation. |
++| B24 | Actual Help link/route and content match current workflow; technical acceptance does not replace owner UI approval. |
++
++Separate C15/C22 native erasure/survivor scope retains its explicit ownership/evidence/retention disposition; no destructive execution or PASS follows from SyntheticAgreement.
++
++| Batch | Finite relevant coverage |
++| --- | --- |
++| F01 | Fresh trusted two-server destinations; genuine owners/publishers/reviewers; normal bounded mappings/roles/records; requests-open/block controls and exact restoration disposition. |
++| F02 | Both request directions, analyst offer/subsets, stale terms, duplicates/self/closed/blocked, independent agreements. No provider message required. |
++| F03 | Normal Discord-intent source publication/direct/draft/tracked/full mode and receiver routes/review/attribution in both approved directions. Source common jobs AND receiver Shared jobs explicitly selected. Website-only negative separately. |
++| F04 | Review/decline/stale-content/terms, correction/withdrawal, pause/resume/end/per-analyst stop, peer notifications/outage/no backfill. Reference exact confirmed original; zero extra delivery for denied stale/paused cases. |
++| F05 | Splitter-derived multipart counts; durable part receipts; partial retry,429/backoff,pre-send denial,unknown outcomes and reconciliation. Fault adapter evidence separated from actual provider receipts. |
++| F06 | Genuine publisher/reviewer/ownership/membership revocation and isolation with original browser requests. Ordinary or synthetic flag changes cannot substitute for native permission provenance. |
++| F07 | Conversation/read boundaries, both accounts/navigation, mobile/desktop/themes/focus/scroll/Help/UI states; normal preference VALUE restoration with honest new timestamps. |
++| F08 | Canonical source action→queue→selected finite worker→actual provider→persisted receipt→fresh UI, applicable Community/watchlist/trade-alert integration and Stats joins agreed with owning chat. Consolidated findings, one coherent correction batch, full applicable retest. |
++
++## Exact finite-controller input required by Shared
++
++1. Seal source commit, deployment/image/build identity, schema/profile/policy, run/case IDs, deadline/cutoff and trusted destination registry hash. Reject stale or unsupported current identity; do not relabel frozen601.
++2. Exact native job tuples `(table,id,createdAtUtc)` for each source-common, Shared-source/revision and receiver queue. Every other nonterminal row is inventoried as EXCLUDED with before digest; inventory is not authorization. Empty selection means no jobs, never all jobs.
++3. Bind source/receiver community, actual guild/channel tuple, request/terms/route/content revisions, native publisher/author/change actor/reviewer/owner identities and eligibility. Fresh owner-check writes may affect selected contexts only. Destination metadata must prove real guild/channel/type/parent/designation and effective bot permissions; a label or caller-supplied ID alone is insufficient.
++4. Seal selected parent snapshot, preexisting parts `(id,revision,part_number,status,attempt_count,nonce/body digest,receipt)` and read-only original receipt dependencies. Original dependency is not permission to mutate it. Allow only deterministic lazy parts for selected parent/revision/body, with splitter-derived count and stable nonces. Re-evaluate current permission/content/route immediately before each claim/write.
++5. Declare sufficient exact source+receiver POST/PATCH/DELETE and attempts/metadata/role/setup budgets, per-case transitions, allowed lazy descendants, fault adapter, absolute deadline, and cleanup/restoration. Owner permits full relevant finite testing; earlier one-post/115s examples are not global limits. No queue-wide flush or blind uncertain retry.
++6. All nested pre-loop/claim/success/failure/catch/cancel/after-loop writes must obey selection. Preserve normal hosted `runAvailable` outside finite mode. Genuine observed global cooldown is an explicitly recorded safety write, never silently undone; simulated global faults use isolated data.
++
++## Required output and settlement
++
++- Enumerate every attempted native/provider operation including denied/failed/unknown: method, route class, actual destination, selected job/part/revision, nonce/body digest, status/outcome and exact confirmed receipt. Do not log credentials, cookies or private content.
++- Compare selected before/after and complete excluded-row inventory after ALL execution paths, including pre-loop reconciliation and lazy children. Report any unexpected delta as FAIL/HOLD with exact scope; selected protected metadata comparison is not a full-database claim.
++- Read back exact receipt/message and verify content attribution, full/teaser body, revision/withdrawal label/original outcome; fresh server UI must show matching persisted status/link. Browser screenshots require actual review.
++- Root retains its all-outcome broker through child terminal, unknown writers and native reconciliation/normal UI restoration until sealed disposition. Child exit alone is not permission for next mint/release. No production deployment or unrelated cleanup.
++
++## Concrete stale terms discovery sequence
++
++D01 candidate normal flow: receiver tabA holds its ORIGINAL v1 Accept POST before forwarding; receiver tabB normally accepts v1, making ACTIVE (receiver route selection may itself advance the terms version); source then normally changes offered analysts, making a newer PENDING version; release tabA unchanged original v1 Accept. Verify request reaches server and specifically rejects stale version without advancing the current version. This removes the need to invent a pending-state source editor. It is a SOURCE SEQUENCE, not a browser PASS, and does not alter old601's historical D01 HOLD.
++
++## Next executable work
++
++Community returns coherent exact-job controller patch/contracts; Shared adds isolated native-SQL regression coverage and feature findings. Coordinator supplies qualified current staging image and current browser/native binding. Fresh destination discovery and independent local cases proceed without waiting for all other cases. Heavy operation launch checks actual RAM/cgroup/pressure/workload plus common/feature guards; never stop an active preview. Record the consolidated result ledger here before claiming current acceptance.
++
++
++## Isolated native checkpoint
++
++`src/modules/communities/server/shared-alerts-native-acceptance.test.ts` exercises real current migrated SQLite and real Shared/Core repository authorization; no mocked permission methods, no hosted access, no Discord transport. Eight cases passed on0111: stale original acceptance after normal source revision; send request missing analyst; stale content review/fresh revised acceptance; source self-review and revoked native owner evidence; publisher revoke/regrant route non-restoration; Website-only/disabled capture and32hex idempotency; seen-message marker boundary/monotonicity; frozen multipart payload/receipt. Fixture-native facts are not genuine hosted ownership, original Chromium POST or actual hidden-tab evidence. Capture intent is seeded local test input; this does not prove normal source UI/common delivery.
++
++First run: eight/eight PASS,8.95s total, native cases698ms; private JSON report `/tmp/shared-native-acceptance-20261119-sazqn2tl/result.json`. Common flock plus owned exclusive feature guard acquired/released, single worker/no file parallelism, private cache/output, no install/shared dependency writes. MemAvailable before6,956,420KiB/after6,894,452KiB; memory pressure zero at observed checkpoint, cgroup limits unbounded. Targeted ESLint clean. Final assertion-only expansion also includes messages/grants/owner-checks in rejected-action unchanged-fact comparisons; final rerun PASS eight/eight,11.15s total,752ms native cases; private report `/tmp/shared-native-acceptance-20261119-sazqn2tl/final-result.json`. Final MemAvailable4,415,788KiB before/3,965,400KiB after; guards released. Help review: this slice changes tests/documentation only and does not require Help content changes; B24 actual browser Help verification remains open.
++
++
++## Fresh destination discovery — normal staging495
++
++Coordinator supplied actual authenticated Discord metadata at `2026-11-19T02:46:43.034Z` from normal deployment `495f9db5-24e8-47fc-a02d-a902103d8bf4`:11 read-only GETs,zero provider writes,no token export. Shared independently read the exact evidence artifact `/home/traderlink/projects/traderslink-coordinator/operations/community-discord-targets-readonly-current-20261119.json`, SHA256 `89904a502c7776fd9356718c9c955906c8db03947f738aa9812b71fcf99dd1d6`. It proves the following current identity/type/effective bot permissions and must not be relabeled as0111 installed-source, native-case or delivery acceptance. All four are text channels; historical designated-test provenance is Coordinator-confirmed.
++
++| Guild | Channel | Actual effective permissions | Case disposition |
++| --- | --- | --- | --- |
++| TradersLink Tests `1559172784813514803` | General `1559172786176401410` | View,Send,Embed Links,Read History; no Administrator/Manage Messages | Metadata prerequisite ready; TestsGeneral positives proceed independently when current runtime/controller/native case is qualified. |
++| TradersLink `1433570740430573642` | alerts `1546033958448529508` | View,Send,Read History; Embed Links FALSE | Community owns checking existing authorized control to grant only missing Embed Links on this designated test channel. |
++| TradersLink `1433570740430573642` | watchlist `1546034056725008385` | View,Send,Read History; Embed Links FALSE | Same finite permission repair; preserve unrelated overwrites/ordinary channels. |
++| TradersLink `1433570740430573642` | coaching `1546033844468187156` | View,Send,Read History; Embed Links FALSE | Same finite permission repair; no payload workaround to hide permission failure. |
++
++No new owner approval is needed for the already-authorized bounded test setup. This does not authorize an ordinary channel or queue-wide flush. Shared forwarded the exact evidence/ownership to Community; Shared does not duplicate their permission repair. The private browser binding independently still names deployment957/sourcea8 at this checkpoint; it has not been edited or reused for a new image. Full native qualification also needs genuine current owner/publisher/reviewer provenance; bot-channel permission proof alone cannot establish it.
++
++
++## Separate source and receiver admission contract
++
++Coordinator found the frozen controller projection paired `source_community_id` with the RECEIVER guild, then required both match one `run.communityId/run.guildId` tuple. This rejects both genuine cross-guild directions. Community owns the coherent additive correction; Shared supplies canonical contract and native fixture evidence, without editing controller/capability paths.
++
++Each selected Shared job needs independent sealed bindings:
++
++- SOURCE: native communityId,guildId,ownerUserId,ownerDiscordId, active status and fresh current-owner proof. Obtain canonical `ownerContext` and `requireOwner` for that actual owner; retain Core `resolveAccess` isOwner/community.manage, active membership/identity and Shared owner freshness.
++- RECEIVER: its own native communityId,guildId,ownerUserId,ownerDiscordId,current-owner proof and exact destination channelId. The receiver is not implicitly the source or admin executor.
++- AGREEMENT: requestId,termsVersion,status active,neither side paused,both current approved versions,unchanged source/receiver owner user/Discord IDs and presentation choice.
++- ROUTE: requestId+authorUserId,sourceOffered,receiverSelected,notPaused,route revision,exact receiver channel,approval requirement; same values as selected parent channelRevision/channelId/requiresApproval.
++- CONTENT/PUBLISHER: selected parent contentRevision/title/body/symbol,actual author/original publisher/change actor,normal source Discord distribution and source destination grants. `sharedAlertPublishingAuthorization` must still run real publisher verification and source read/delivery policies; no synthetic grant or global guard widening.
++- RECEIPT: original followup dependency read-only,selected immutable multipart nonce/body/receipt bindings. Exact source-common jobs write source destinations; selected partner jobs write receiver destinations. Channel union alone is not per-job routing authority.
++
++The native executor session/admin gate remains separate. Reverse direction may use the original student account as actual business source owner, so `principals.coach === every source owner` is not a valid substitute for real native source-owner evidence. If actor sessions are additionally pinned, validate the actual eligible admitted principal for each side. Do not fake ownership or require both native communities have one guild. Recheck immutable ownership/guild/route bindings during the run as expected job statuses/receipts advance; an initial job hash alone must not conceal a changed destination.
++
++Transport must admit only necessary authenticated metadata reads in BOTH sealed native guilds and only exact designated per-job message destinations/methods/receipts. Existing Stats/thread scope does not expand through a Shared send manifest. Both native owner contexts must remain tied to the current agreement. Include current native community guild/owner and publisher/distribution dependencies in the selected state hash; the request's historical owner snapshot alone is insufficient.
++
++Additional current-source blockers reported to Community: `shared-alerts-delivery.ts` pre-loop and before-write guards; `shared-alerts-discord.ts` verifyOwner/channels guards; `shared-alerts-source-original-delivery.ts` assertSourceWriteCurrent/run guards; Shared source-dispatch publisher verifier lacking the staged-guild override. They all still use Tests-only defaults. The additive correction needs an explicitly capability-bound staging policy through these paths, preserving ordinary production default behavior. Merely correcting `pendingRows` cannot execute cross-guild delivery.
++
++### Native evidence
++
++Four new cases extend the existing eight to **12/12 PASS** with real migrated disposable SQLite/real Core and Shared access methods. Both actual approved guild/channel pairs are used as LOCAL test inputs: TestsGeneral `1559172784813514803/1559172786176401410` ↔ main designatedalerts `1433570740430573642/1546033958448529508`. Each source and receiver has its own distinct seeded current native owner; fixtures never rewrite two communities into one guild. Cases verify correct queue source/receiver ownership,receiver channel/route/revision/currentconsent,receiver-only approval and route control,rejection of source-guild receiving channel,and rejection of either source/receiver historical owner Discord binding mismatch without changed protected facts.
++
++Actual test command uses private config/cache and normal guards,single worker,no file parallelism;12tests PASS in9.59s (native assertions1.09s). Private JSON `/tmp/shared-native-acceptance-20261119-sazqn2tl/two-guild-result.json`. MemAvailable7,422,256KiB before/7,266,636KiB after; observed memory pressure zero,unbounded cgroup; owned guards released. ESLint and diff-check clean. No network,provider/controller admission,browser or hosted native owner claim follows from this seeded model. Community must exercise its corrected ACTUAL admission helper with both tuples and negative source/receiver/owner/route controls after integration.
++
++
++## Fixed source/results handoff
++
++Core confirmed the separate executor/source/receiver ownership contract. The current12-case source and exact local result are sealed in [native evidence](shared-native-two-guild-acceptance-evidence-20261119.json) with the three-file [source-only patch](shared-native-two-guild-acceptance-source-20261119.patch). Use those postimage hashes; the earlier eight-case `eedd` source pin is superseded. Coordinator owns commit/integration/current-image/native admission. This packet contains no dependency/build output and no browser/provider PASS. Further edits need a new packet rather than modifying this sealed artifact.
+diff --git a/docs/migration/shared-alerts-staging-fixture-ui-plan-20261117.md b/docs/migration/shared-alerts-staging-fixture-ui-plan-20261117.md
+index 0356c8d14..8c280e1c8 100644
+--- a/docs/migration/shared-alerts-staging-fixture-ui-plan-20261117.md
++++ b/docs/migration/shared-alerts-staging-fixture-ui-plan-20261117.md
+@@ -71,3 +71,8 @@ Use `traderlink-browser-env node scripts/qa/shared-alerts-staging-fixture-browse
+ Coordinator must integrate/review the immutable source, build/qualify the actual combined image, seal real private manifests and verify route/page/action registry identity. Then execute both actual modes, both back-navigation paths, actual hidden-thread unread behavior and actual Tests receipt/late-revocation cases. Independently run normal canonical Community Alerts/Watchlists owner/member/denied browser QA and rerun affected cases after the final combined image. Production and unrelated processes remain unchanged.
+ 
+ Metadata intake correction: Git ls-tree at base cc81185257d43e52ea97921f3a2051214a6fc713 proves both escaped new route/page paths ABSENT. Their beforeSha256 fields are null (not the empty-file digest). All eleven runtime postimages remain unchanged. The pre/postimage record digest changes from ffaf9657cc018950822a02000a08281e673094dfa6dd883df867b9ae4bc04ed6 to 5949603d24fbe551f9f379e0a505e0779cbd086d198cc30c3fa12bc23814d715; this is a documentation-only correction and does not reset runtime verification.
++
++
++## Current functional acceptance continuation
++
++The Coordinator-assigned0111 lane continues the complete Shared feature inventory and native/controller work in [Shared functional acceptance](shared-functional-acceptance-20261119.md). Historical fixture/browser evidence in this plan is preserved and does not establish acceptance of a newer image.

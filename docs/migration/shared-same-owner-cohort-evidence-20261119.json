@@ -1,0 +1,74 @@
+{
+  "kind": "SHARED_SAME_OWNER_COHORT_LOCAL_NATIVE_ADDITIVE_V1",
+  "createdAtUtc": "2026-11-19T03:44:47.482695+00:00",
+  "baseCommit": "0111dfdb58c22ba7149f5a499a15682505aba797",
+  "sourceFiles": [
+    {
+      "path": "src/modules/communities/server/shared-alerts-same-owner-native.test.ts",
+      "preimageSha256": null,
+      "postimageSha256": "ff299c5ac9ad272cb78c79e30c3bda89187cc2b7a671073fff99c59f9675b42e"
+    },
+    {
+      "path": "docs/migration/shared-same-owner-cohort-acceptance-20261119.md",
+      "preimageSha256": null,
+      "postimageSha256": "61e5e4a4ab9d837cf5662e98be1024979616381b3514e8b8372fcd6abe7b2457"
+    }
+  ],
+  "patch": {
+    "path": "docs/migration/shared-same-owner-cohort-source-20261119.patch",
+    "sha256": "340a900ddce236d37db4f8031abf69b80bb41ff14c1b7815e16fccdd893f9974"
+  },
+  "preservedPriorPacketSha256": "330a0d65fa7c311b6b4d04f823f0cf12384fbd49b69d311f82dc6baa868f9d52",
+  "actualOwnerDiscoveryEvidenceSha256": "2fcceedd196d934540f4e11724241cb6576dff4fbd3a1a071abe78a5709ea056",
+  "nativeResult": {
+    "reportSha256": "11d13c4a27e47dc65cb623211fee1c876af77fd1ec9ea6943268e569bfc0cbb5",
+    "passed": 4,
+    "failed": 0,
+    "files": [
+      {
+        "status": "passed",
+        "startTime": 1795059781294,
+        "endTime": 1795059781660.1091,
+        "cases": [
+          {
+            "title": "Shared Alerts actual-cohort same-owner contract keeps source and receiver approval contexts separate in direction 0",
+            "status": "passed",
+            "duration": 136.05281100000002
+          },
+          {
+            "title": "Shared Alerts actual-cohort same-owner contract keeps source and receiver approval contexts separate in direction 1",
+            "status": "passed",
+            "duration": 76.03117299999985
+          },
+          {
+            "title": "Shared Alerts actual-cohort same-owner contract requires an independent receiver acceptance for each direction despite one common owner",
+            "status": "passed",
+            "duration": 78.52767200000017
+          },
+          {
+            "title": "Shared Alerts actual-cohort same-owner contract does not borrow one guild's native owner evidence for the other guild or permit same-community sharing",
+            "status": "passed",
+            "duration": 75.10920900000019
+          }
+        ]
+      }
+    ]
+  },
+  "scope": {
+    "topology": "one seeded local owner;two genuine-approved guild IDs;separate seeded publisher",
+    "businessContract": "sameowner permitted;receiver-community owner approval;no independent author/reviewer user separation rule",
+    "actualHostedNativeOwnerProof": "NOT established by local fixtures",
+    "controllerAdmission": "UNRUN",
+    "currentImageBrowserAndProvider": "UNRUN",
+    "providerRequests": 0,
+    "database": "disposable real migrated local SQLite only",
+    "productSourceChanges": 0,
+    "integrationAuthority": "Coordinator"
+  },
+  "validation": {
+    "targetedEslint": "PASS",
+    "diffCheck": "PASS",
+    "singleWorker": true,
+    "ownedGuardsReleased": true
+  }
+}

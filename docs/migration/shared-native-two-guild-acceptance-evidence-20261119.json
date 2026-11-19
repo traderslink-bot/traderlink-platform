@@ -1,0 +1,126 @@
+{
+  "kind": "SHARED_NATIVE_TWO_GUILD_SOURCE_AND_LOCAL_RESULT_ONLY_V1",
+  "createdAtUtc": "2026-11-19T03:22:21.208335+00:00",
+  "baseCommit": "0111dfdb58c22ba7149f5a499a15682505aba797",
+  "branch": "codex/shared-functional-acceptance-20261119",
+  "sourceFiles": [
+    {
+      "path": "src/modules/communities/server/shared-alerts-native-acceptance.test.ts",
+      "preimageSha256": null,
+      "postimageSha256": "d5ecd10526e705e5aad8c57237fa728c80da2cabd06b3ee5639d4c965c76ca36"
+    },
+    {
+      "path": "docs/migration/shared-functional-acceptance-20261119.md",
+      "preimageSha256": null,
+      "postimageSha256": "ac89a42114f9e54c3f0f3d1848dc32a6b7aaf834dba475da48b101081a6dfe5a"
+    },
+    {
+      "path": "docs/migration/shared-alerts-staging-fixture-ui-plan-20261117.md",
+      "preimageSha256": "5fd8525d155af138992ff162d88f5f0c32b2a58321fbb510ad2d33b87e41783b",
+      "postimageSha256": "e38319724f32fddb30e444ff06de6d55712369a1b973906f9954fd96fac287c7"
+    }
+  ],
+  "patch": {
+    "path": "docs/migration/shared-native-two-guild-acceptance-source-20261119.patch",
+    "sha256": "9471985f80e0d5472817d94e729510e9a8cca36790c6f391f78b232254e7e306"
+  },
+  "nativeResult": {
+    "originalReportPath": "/tmp/shared-native-acceptance-20261119-sazqn2tl/two-guild-result.json",
+    "originalReportSha256": "68917d86b726022ae53d194382eb7285f11ece95fa1037172dc8f50a19e5e3ea",
+    "success": true,
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "files": [
+      {
+        "name": "/home/traderlink/projects/shared-functional-acceptance-20261119/src/modules/communities/server/shared-alerts-native-acceptance.test.ts",
+        "status": "passed",
+        "startTime": 1795058312596,
+        "endTime": 1795058313684.318,
+        "cases": [
+          {
+            "title": "Shared Alerts native acceptance prerequisites preserves separate native source owner and receiver route: Tests to main designated alerts",
+            "status": "passed",
+            "duration": 227.58747500000004
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites preserves separate native source owner and receiver route: Main designated alerts to Tests",
+            "status": "passed",
+            "duration": 100.544936
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites rejects a source-guild destination and changed owner bindings: Tests to main designated alerts",
+            "status": "passed",
+            "duration": 81.53122700000017
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites rejects a source-guild destination and changed owner bindings: Main designated alerts to Tests",
+            "status": "passed",
+            "duration": 81.46369499999992
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites rejects the original receiver acceptance after another tab accepts and the source revises analysts",
+            "status": "passed",
+            "duration": 76.05861400000003
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites does not create a send request without an analyst",
+            "status": "passed",
+            "duration": 82.54741399999989
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites rejects stale content approval and accepts only the revised body",
+            "status": "passed",
+            "duration": 68.66185999999993
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites rejects source self-approval and receiver approval after native owner evidence is revoked",
+            "status": "passed",
+            "duration": 76.17148199999997
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites revokes queued approval and does not restore a selected route on publisher regrant",
+            "status": "passed",
+            "duration": 71.89572799999996
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites captures only enabled Discord intent and preserves canonical 32hex identity on repeated capture",
+            "status": "passed",
+            "duration": 67.50505999999996
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites does not mark a later unseen peer reply read, or move a read marker backwards",
+            "status": "passed",
+            "duration": 72.87611100000004
+          },
+          {
+            "title": "Shared Alerts native acceptance prerequisites keeps already delivered multipart text and receipt immutable across a repeated claim",
+            "status": "passed",
+            "duration": 80.31814399999985
+          }
+        ]
+      }
+    ]
+  },
+  "validation": {
+    "targetedEslint": "PASS",
+    "diffCheck": "PASS",
+    "privateCacheAndOutputs": true,
+    "singleWorker": true,
+    "fileParallelism": false,
+    "ownedGuardsReleased": true
+  },
+  "scope": {
+    "database": "real migrated disposable local SQLite; seeded native principals",
+    "nativeBusinessMethods": "real Shared repository and Core Community access",
+    "controllerAdmission": "UNRUN",
+    "browser": "UNRUN current image",
+    "provider": "UNRUN current image",
+    "hostedNativeOwnership": "NOT established by fixtures",
+    "productionWrites": 0,
+    "providerRequests": 0,
+    "executorOwnership": "distinct from business source and receiver owners",
+    "integrationAuthority": "Coordinator"
+  },
+  "supersedesTestSourceSha256": "eedd6b169394d78f25a817c419a58ac72a5ee9052c8b673f1313d8e01c8f831f"
+}
