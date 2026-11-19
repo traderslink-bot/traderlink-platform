@@ -9,6 +9,7 @@ import {
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -52,4 +53,14 @@ export async function markPressReleaseChannelRead(channel: string): Promise<Acti
   } catch {
     return Object.freeze({ ok: false as const, message: "This channel could not be marked as read." });
   }
+}
+
+export async function loadPressReleaseFeed(input: { filters?: unknown; offset?: number; asOf?: string }) {
+  try {
+    const identity = await identityWithAccess();
+    const page = withReadonlyPlatformDatabase({}, database => new PressReleaseDashboardRepository(database).listPage({
+      channel: "all", scope: identity.scope, limit: 100, filters: input.filters, offset: input.offset, asOf: input.asOf,
+    }));
+    return { ok: true as const, page };
+  } catch { return { ok: false as const, message: "News could not be loaded. Check your filters and try again." }; }
 }

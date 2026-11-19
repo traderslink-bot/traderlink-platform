@@ -2,7 +2,7 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 import calendar from "./scanner-news-calendar.json";
-import { publicNewsUrl } from "../contracts/public-news-url";
+import { newsArticleLink, newsSummaryUnavailable } from "../contracts/news-outbound-link";
 
 const easternDateFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
@@ -58,8 +58,10 @@ function articleTypeLabel(row: ArticleRow): string {
   return "News";
 }
 
-function articleLink(row: ArticleRow): string {
-  return publicNewsUrl(`/news/${encodeURIComponent(row.ticker)}/${encodeURIComponent(row.slug)}`);
+function articleLink(row: ArticleRow): string | null {
+  const metadata = JSON.parse(row.metadata_json) as Record<string, unknown> | null;
+  return newsArticleLink(`/news/${encodeURIComponent(row.ticker)}/${encodeURIComponent(row.slug)}`,
+    newsSummaryUnavailable(row.summary, row.event_type, metadata ?? {}), row.source_url);
 }
 
 export function listScannerRecentPressReleases(database: Database.Database, ticker: string, now = new Date()) {

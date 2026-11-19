@@ -14,7 +14,7 @@ export type ChartViewSnapshot = {
   symbol: string; timeframe: ChartTimeframe; sessions: string; basisDate: string;
   range: Range; logicalRange: Range; axis: { first: number; last: number; count: number; sessions: string };
   anchor: { time: number; offset: number }; priceRange: Range | null;
-  autoScale: boolean; preferenceAutoScale: boolean; logarithmic: boolean;
+  priceScalePolicy?: 1; autoScale: boolean; preferenceAutoScale: boolean; logarithmic: boolean;
 };
 type Storage = Pick<globalThis.Storage, "getItem" | "setItem" | "removeItem">;
 type State = { panels: Record<string, string>; views: Record<string, ChartViewSnapshot> };
@@ -108,5 +108,5 @@ export function restoreChartRange(view: ChartViewSnapshot, times: readonly numbe
 export const chartViews = new ChartViewMemory(() => typeof window === "undefined" ? undefined : window.localStorage);
 
 export function canRestoreChartPrice(view: ChartViewSnapshot | null, preferences: { autoScale: boolean; logarithmic: boolean }, basisDate: string) {
-  return !!view && view.basisDate === basisDate && view.preferenceAutoScale === preferences.autoScale && view.logarithmic === preferences.logarithmic && (!preferences.logarithmic || view.priceRange === null || view.priceRange.from > 0);
+  return !!view && view.priceScalePolicy === 1 && view.basisDate === basisDate && view.preferenceAutoScale === preferences.autoScale && view.logarithmic === preferences.logarithmic && (!preferences.logarithmic || view.priceRange === null || view.priceRange.from > 0);
 }

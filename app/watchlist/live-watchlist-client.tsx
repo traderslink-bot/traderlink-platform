@@ -1,5 +1,7 @@
 "use client";
 
+import { newsDisplayLink } from "@/src/modules/news/contracts/news-outbound-link";
+
 import { analysisPullbacks } from "@/src/lib/live-watchlist/owner-analysis-pullbacks";
 import { AnalysisTraderNotes } from "./analysis-trader-notes";
 import analysisLayout from "./analysis-layout.module.css";
@@ -642,7 +644,7 @@ export function TradersLinkAiReadCard({
           <ul>
             {read.sources.map((source) => (
               <li key={`${source.sourceType}-${source.url}`}>
-                <a href={source.url} target="_blank" rel="noreferrer">
+                <a href={newsDisplayLink(source.url) ?? undefined} target="_blank" rel="noreferrer">
                   {source.title}
                 </a>
                 <span>
@@ -1039,7 +1041,7 @@ function RecentNewsFilingsCard({ card }: { card: LiveWatchlistCardContent }) {
         <a
           key={`${article.url}-${article.publishedAt ?? ""}`}
           className="watchlist-news-link"
-          href={article.url}
+          href={newsDisplayLink(article.url) ?? undefined}
           target="_blank"
           rel="noreferrer"
         >

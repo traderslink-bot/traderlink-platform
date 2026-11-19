@@ -1,7 +1,8 @@
 "use client";
 
-import { Box, Button, Checkbox, ClickAwayListener, FormControlLabel, IconButton, Paper, Popper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Checkbox, ClickAwayListener, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, IconButton, Paper, Popper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import DashboardCustomizeOutlined from "@mui/icons-material/DashboardCustomizeOutlined";
+import CloseRounded from "@mui/icons-material/CloseRounded";
 import DragIndicator from "@mui/icons-material/DragIndicator";
 import ViewQuiltOutlined from "@mui/icons-material/ViewQuiltOutlined";
 import { useRef, useState, type PointerEvent } from "react";
@@ -132,22 +133,24 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
   </Box>;
 }
 
-export function ScannerLayoutToolbar({editing,name,active,setName,saved,visible,onToggle,message,onEdit,onSelect,onSave,onCancel,onReset,onPreset,onUndo,canUndo,mobile=false}:{
-  mobile?:boolean;editing:boolean;name:string;active:string;setName:(name:string)=>void;saved:NamedLayout[];
+export function ScannerLayoutToolbar({editing,name,active,sourceName=active,setName,saved,visible,onToggle,message,onEdit,onSelect,onSave,onCancel,onReset,onPreset,onUndo,canUndo,mobile=false}:{
+  mobile?:boolean;editing:boolean;name:string;active:string;sourceName?:string;setName:(name:string)=>void;saved:NamedLayout[];
   visible:Widget[];onToggle:(widget:Widget)=>void;message:string;
   onPreset:(tile:Tile)=>void;onUndo:()=>void;canUndo:boolean;
-  onEdit:()=>void;onSelect:(name:string)=>void;onSave:()=>void;onCancel:()=>void;onReset:()=>void;
+  onEdit:()=>void;onSelect:(name:string)=>void;onSave:()=>boolean|void;onCancel:()=>void;onReset:()=>void;
 }) {
   const [anchor,setAnchor]=useState<HTMLButtonElement|null>(null);
   const close=()=>setAnchor(null);
+  const [replaceName,setReplaceName]=useState<string|null>(null);
+  const save=()=>{if(name.trim()!==sourceName&&saved.some(item=>item.name===name.trim())){setReplaceName(name.trim());return;}if(onSave()!==false)close();};
   const actions=<Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
-      <Button size="small" variant="outlined" color="inherit" onClick={()=>{onCancel();close();}}
+      <Button data-layout-editor-action size="small" variant="outlined" color="inherit" onClick={()=>{onCancel();close();}}
         sx={theme=>({
           color:theme.palette.text.primary,
           borderColor:theme.palette.mode==="dark"?theme.palette.traderLink.chart.controlText:theme.palette.text.secondary,
           "&:hover":{bgcolor:theme.palette.action.hover,borderColor:theme.palette.text.primary},
         })}>Cancel</Button>
-      <Button size="small" variant="contained" onClick={()=>{onSave();close();}} disabled={!name.trim()}
+      <Button data-layout-editor-action size="small" variant="contained" onClick={save} disabled={!name.trim()}
         sx={theme=>({
           border:"1px solid",
           borderColor:theme.palette.mode==="dark"?theme.palette.primary.light:theme.palette.primary.main,
@@ -168,12 +171,13 @@ export function ScannerLayoutToolbar({editing,name,active,setName,saved,visible,
     </Tooltip>
     {editing&&!mobile&&actions}
     <Popper open={Boolean(anchor)} anchorEl={anchor} placement="bottom-start" sx={{zIndex:1299}}>
-      <ClickAwayListener onClickAway={close}>
+      <ClickAwayListener onClickAway={event=>{if(event.target instanceof Element&&event.target.closest('[data-layout-editor-action]'))return;close();}}>
         <Paper aria-label="Layout settings" role="region" onKeyDown={event=>{
           if(event.key==="Escape"){anchor?.focus();close();}
         }} sx={{p:1.5,mt:0.5,width:270,maxWidth:"calc(100vw - 16px)",maxHeight:"70dvh",overflowY:"auto",border:1,borderColor:"divider"}}>
+          <Stack direction="row" sx={{alignItems:'center',justifyContent:'space-between',mb:1}}><Typography component="h2" sx={{fontSize:16,fontWeight:700}}>Desktop layout</Typography><IconButton aria-label="Close layout settings" onClick={()=>{anchor?.focus();close();}}><CloseRounded/></IconButton></Stack>
           <Stack spacing={1}>
-            {saved.length>0&&<TextField select label="Layout" size="small" slotProps={{select:{native:true}}} value={active}
+            {saved.length>0&&<TextField select label="Layout" size="small" slotProps={{inputLabel:{shrink:true},select:{native:true}}} value={sourceName}
               onChange={event=>onSelect(event.target.value)}>
               <option value="">Default</option>
               {saved.map(item=><option key={item.name} value={item.name}>{item.name}</option>)}
@@ -200,5 +204,9 @@ export function ScannerLayoutToolbar({editing,name,active,setName,saved,visible,
         </Paper>
       </ClickAwayListener>
     </Popper>
+    <Dialog open={replaceName!==null} onClose={()=>setReplaceName(null)} aria-labelledby="replace-desktop-layout-title">
+      <DialogTitle id="replace-desktop-layout-title">Replace saved layout?</DialogTitle><DialogContent>Replace “{replaceName}” with this arrangement?</DialogContent>
+      <DialogActions><Button data-layout-editor-action variant="outlined" color="inherit" onClick={()=>setReplaceName(null)}>Cancel</Button><Button data-layout-editor-action variant="outlined" color="error" onClick={()=>{setReplaceName(null);if(onSave()!==false)close();}}>Replace</Button></DialogActions>
+    </Dialog>
   </>;
 }

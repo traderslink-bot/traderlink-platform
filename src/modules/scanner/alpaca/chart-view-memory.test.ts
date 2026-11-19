@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { canRestoreChartPrice, ChartViewMemory, defaultIndicatorDisplay, restoreChartRange, type ChartViewSnapshot } from "@/app/(dashboard)/charts/chart-view-memory";
 import { singleChart } from "./chart-multiview";
-const view: ChartViewSnapshot = {symbol:"OMH",timeframe:"1m",sessions:"[true,true,true]",basisDate:"2026-11-10",range:{from:100,to:180},logicalRange:{from:1.25,to:4.75},axis:{first:80,last:200,count:7,sessions:"[true,true,true]"},anchor:{time:100,offset:0.25},priceRange:{from:1,to:4},autoScale:false,preferenceAutoScale:true,logarithmic:false};
+const view: ChartViewSnapshot = {priceScalePolicy:1,symbol:"OMH",timeframe:"1m",sessions:"[true,true,true]",basisDate:"2026-11-10",range:{from:100,to:180},logicalRange:{from:1.25,to:4.75},axis:{first:80,last:200,count:7,sessions:"[true,true,true]"},anchor:{time:100,offset:0.25},priceRange:{from:1,to:4},autoScale:false,preferenceAutoScale:true,logarithmic:false};
 function fixture(){const values=new Map<string,string>();const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);},removeItem:(k:string)=>{values.delete(k);}};return {values,storage,memory:new ChartViewMemory(()=>storage)};}
 it("persists only small view state across page/store lifetimes, isolated by owner, workspace and timeframe",()=>{
  const {memory,storage,values}=fixture();memory.retain("owner-a","main",singleChart("OMH"));memory.write("owner-a","main","chart-1",view);
@@ -51,3 +51,5 @@ it("retains display choices for the same chart while pruning closed or replaced 
   memory.retain("owner","main",layout);
   expect(memory.readIndicatorDisplay("owner","main","one","NCT")).toBe(defaultIndicatorDisplay);
 });
+
+it("ignores legacy manual price scale but keeps its time range",()=>{const legacy={...view,priceScalePolicy:undefined};expect(canRestoreChartPrice(legacy,{autoScale:true,logarithmic:false},view.basisDate)).toBe(false);expect(restoreChartRange(legacy,[80,100,120,140,160,180,200])).toEqual(restoreChartRange(view,[80,100,120,140,160,180,200]));});

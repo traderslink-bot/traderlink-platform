@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import {
@@ -29,13 +30,14 @@ function resolveChannel(segments: readonly string[] | undefined): PressReleaseCh
     case "market-cap": return "market_cap_all";
     case "market-cap/under-30m": return "market_cap_under_30m";
     case "market-cap/30m-50m": return "market_cap_30m_to_50m";
+    case "market-cap/100m-300m": return "market_cap_all";
+    case "market-cap/300m-500m": return "market_cap_all";
     case "market-cap/50m-100m": return "market_cap_50m_to_100m";
     default: return null;
   }
 }
-export async function generateMetadata({ params }: Pick<PageProps, "params">): Promise<Metadata> {
-  const channel = resolveChannel((await params).channel);
-  const title = channel ? pressReleaseChannelDefinition(channel).label : "Press Releases";
+export async function generateMetadata(): Promise<Metadata> {
+  const title = "Press Releases";
   return {
     description: "Read TradersLink press releases and AI summaries in the dashboard.",
     title: `${title} | TraderLink Platform`,
@@ -59,6 +61,10 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
     );
   }
 
+  if (channel !== "all") {
+    const requested = (await searchParams).article;
+    redirect("/press-releases" + (typeof requested === "string" && requested.length <= 64 ? `?article=${encodeURIComponent(requested)}` : ""));
+  }
   const identity = await requireTraderLinkPlatformPageIdentity();
   if (!hasPressReleaseDashboardAccess(identity)) {
     return (
@@ -79,10 +85,10 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
   const articleId = typeof requestedArticle === "string" && requestedArticle.length <= 64
     ? requestedArticle
     : null;
-  const { articles, selectedArticle } = withReadonlyPlatformDatabase({}, (database) => {
+  const { page, selectedArticle } = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new PressReleaseDashboardRepository(database);
     return Object.freeze({
-      articles: repository.list({ channel, limit: 150, scope: identity.scope }),
+      page: repository.listPage({ channel: "all", limit: 100, scope: identity.scope }),
       selectedArticle: articleId
         ? repository.find({ articleId, channel, scope: identity.scope })
         : null,
@@ -91,8 +97,11 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
 
   return (
     <PressReleaseFeed
+      key={identity.scope.userId}
       channel={channel}
-      initialArticles={articles}
+      initialArticles={page.articles}
+      initialPage={page}
+      preferenceKey={identity.scope.userId}
       initialSelectedArticle={selectedArticle}
     />
   );

@@ -104,3 +104,5 @@ Latest QA continuation: Stripe recovery approval/withdrawal passed actual owner-
 Shared-detail correction: single-trade analysis/executions permit either Journal or Analytics access, retaining independent plans; broker-mismatch confirmation requires Journal access. Actual denied-handler checks, focused lint and the 90-entrypoint compiler passed. Browser acceptance remains separately tracked.
 
 Owner member selection: replaced inaccessible raw-ID grant/diagnostic inputs with a paginated picker using existing private admin references. Browser verified timed grant/revoke, 53-member pagination and post-revocation diagnostics. Early AI generation denial, focused lint and the 92-entrypoint compiler passed. The [acceptance matrix](membership-acceptance-matrix.md) now identifies remaining checks for the complete scope.
+
+**Press release filters and sorting:** [Membership integration and QA](membership-news-filters-progress-20261118.md).

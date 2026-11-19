@@ -1,4 +1,7 @@
-import { assertMembershipFeature } from "../../platform/server/membership/platform-membership-access";
+import { DEFAULT_NEWS_FILTERS, NEWS_FILTERS_FEATURE, marketCapUsd, parseNewsFilters } from "../contracts/press-release-filters";
+import { pressReleaseFilterQuery } from "./press-release-filter-query";
+import { newsSummaryUnavailable } from "../contracts/news-outbound-link";
+import { assertMembershipFeature, evaluateMembershipFeature } from "../../platform/server/membership/platform-membership-access";
 import "server-only";
 import { readMembershipNewsDelaySeconds } from "../../platform/server/membership/membership-news-delay";
 import { assertMembershipNotification, canReceiveMembershipNotification } from "../../platform/server/membership/membership-notification-access";
@@ -45,6 +48,8 @@ const ALL_ELIGIBLE_ROUTE_TAGS = Object.freeze([
   "market_cap_under_30m",
   "market_cap_30m_to_50m",
   "market_cap_50m_to_100m",
+  "market_cap_100m_to_300m",
+  "market_cap_300m_to_500m",
 ] as const);
 
 function routeTags(channel: PressReleaseChannel): readonly string[] {
@@ -106,11 +111,7 @@ function supportResistanceLevels(metadata: Record<string, unknown>): readonly st
 
 function rowToArticle(row: ArticleRow): PressReleaseArticle {
   const metadata = parseRecord(row.metadata_json);
-  const summaryUnavailable = !row.summary?.trim()
-    || ["headline_only_fallback", "businesswire_headline_only", "sec_unreadable_fallback", "market_cap_stale_skip"].includes(String(metadata.articleSourceMode || ""))
-    || row.event_type === "press_release_unreadable"
-    || row.summary.startsWith("Full article text is currently unavailable.")
-    || row.summary.startsWith("Summary could not be generated.");
+  const summaryUnavailable = newsSummaryUnavailable(row.summary, row.event_type, metadata);
   return Object.freeze({
     articleText: row.article_text,
     eventType: row.event_type,
@@ -252,6 +253,53 @@ ORDER BY article.published_at DESC, article.id
 LIMIT ?`).all(input.scope.userId, ...tags, ...(input.ticker ? [input.ticker] : []),
       ...Array(2).fill(readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds")), limit) as ArticleRow[];
     return Object.freeze(rows.map(rowToArticle));
+  }
+
+  listPage(input: Readonly<{
+    channel: PressReleaseChannel;
+    filters?: unknown; offset?: number; asOf?: string;
+    limit?: number;
+    ticker?: string;
+    scope: WorkspaceAccessScope;
+  }>) {
+    assertActiveUser(this.database, input.scope);
+    assertMembershipFeature(this.database, input.scope.userId, "news.access");
+    const filtersAllowed = evaluateMembershipFeature(this.database, input.scope.userId, NEWS_FILTERS_FEATURE).allowed;
+    const filters = filtersAllowed ? parseNewsFilters(input.filters ?? DEFAULT_NEWS_FILTERS) : DEFAULT_NEWS_FILTERS;
+    const query = pressReleaseFilterQuery(filters);
+    const requested = input.filters ?? DEFAULT_NEWS_FILTERS;
+    const resetRestrictedView = !filtersAllowed && JSON.stringify(requested) !== JSON.stringify(DEFAULT_NEWS_FILTERS);
+    const offset = resetRestrictedView ? 0 : input.offset ?? 0;
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100000) throw new Error("Invalid page.");
+    const asOf = input.asOf ?? new Date().toISOString();
+    if (!Number.isFinite(Date.parse(asOf)) || new Date(asOf).toISOString() !== asOf || Date.parse(asOf) > Date.now()) throw new Error("Invalid page time.");
+    this.database.function("traderlink_news_cap", { deterministic: true }, (value, recordedUsd) => marketCapUsd(value, recordedUsd));
+    this.database.function("traderlink_news_unavailable", { deterministic: true }, (summary, eventType, metadata) =>
+      newsSummaryUnavailable(typeof summary === "string" ? summary : null, typeof eventType === "string" ? eventType : null, parseRecord(String(metadata ?? "{}"))) ? 1 : 0);
+    const tags = routeTags(input.channel);
+    const limit = Math.max(1, Math.min(250, input.limit ?? 100));
+    const delaySeconds = readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds");
+    const rows = this.database.prepare(`SELECT
+  article.id, article.ticker, article.slug, article.headline, article.summary,
+  article.article_text, article.source_url, article.event_type, article.route_tag,
+  article.published_at, article.metadata_json, article.positives_json,
+  article.negatives_json, article.risk_flags_json,
+  CASE WHEN receipt.article_id IS NULL THEN 0 ELSE 1 END AS is_read
+FROM news_articles article
+LEFT JOIN news_article_read_receipts receipt
+  ON receipt.article_id = article.id AND receipt.user_id = ?
+LEFT JOIN news_article_read_receipts snapshot_receipt
+  ON snapshot_receipt.article_id = article.id AND snapshot_receipt.user_id = ? AND snapshot_receipt.read_at_utc <= ?
+WHERE article.route_tag IN (${placeholders(tags)})
+  ${input.ticker ? "AND article.ticker = ?" : ""}
+  AND julianday(article.created_at) <= julianday(?) - ? / 86400.0
+  AND julianday(article.published_at) <= julianday(?) - ? / 86400.0
+  AND article.created_at <= ?
+  ${query.where}
+ORDER BY ${query.order}
+LIMIT ? OFFSET ?`).all(input.scope.userId, input.scope.userId, asOf, ...tags, ...(input.ticker ? [input.ticker] : []),
+      asOf, delaySeconds, asOf, delaySeconds, asOf, ...query.parameters, limit + 1, offset) as ArticleRow[];
+    return { articles: Object.freeze(rows.slice(0, limit).map(rowToArticle)), more: rows.length > limit, nextOffset: offset + Math.min(limit, rows.length), offset, asOf, filtersAllowed };
   }
 
   find(input: Readonly<{

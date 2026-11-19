@@ -2,19 +2,14 @@
 
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import NotificationsActiveRoundedIcon from "@mui/icons-material/NotificationsActiveRounded";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import InputAdornment from "@mui/material/InputAdornment";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import {
   pressReleaseChannelDefinition,
@@ -22,14 +17,20 @@ import {
   type PressReleaseChannel,
 } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { DashboardPage, DashboardPanel } from "../../dashboard-template";
-import { markPressReleaseChannelRead, markPressReleaseRead } from "./press-release-actions";
+import { loadPressReleaseFeed, markPressReleaseChannelRead, markPressReleaseRead } from "./press-release-actions";
 import { PressReleaseArticleDrawer, pressReleaseEasternTime, pressReleaseType } from "./press-release-article-drawer";
+
+import { DEFAULT_NEWS_FILTERS, parseNewsFilters, type NewsFilters } from "@/src/modules/news/contracts/press-release-filters";
+import { PressReleaseFilterControls } from "./press-release-filter-controls";
 
 export function PressReleaseFeed({
   channel,
   initialArticles,
   initialSelectedArticle,
+  initialPage, preferenceKey,
 }: {
+  initialPage: { more: boolean; nextOffset: number; asOf: string; filtersAllowed: boolean };
+  preferenceKey: string;
   channel: PressReleaseChannel;
   initialArticles: readonly PressReleaseArticle[];
   initialSelectedArticle: PressReleaseArticle | null;
@@ -38,15 +39,38 @@ export function PressReleaseFeed({
   const definition = pressReleaseChannelDefinition(channel);
   const [articles, setArticles] = useState<readonly PressReleaseArticle[]>(initialArticles);
   const [selected, setSelected] = useState<PressReleaseArticle | null>(initialSelectedArticle);
-  const [query, setQuery] = useState("");
-  const [view, setView] = useState<"all" | "unread">("all");
+  const [filters, setFilters] = useState<NewsFilters>({ ...DEFAULT_NEWS_FILTERS });
+  const [page, setPage] = useState(initialPage);
+  const [loading, setLoading] = useState(false);
+  const requestVersion = useRef(0);
   const [message, setMessage] = useState<string | null>(null);
+
+  const fetchFeed = useCallback(async (next: NewsFilters, offset = 0, asOf?: string) => {
+    const version = ++requestVersion.current;
+    setLoading(true);
+    try {
+      next = parseNewsFilters(next);
+      const result = await loadPressReleaseFeed({ filters: next, offset, asOf });
+      if (version !== requestVersion.current) return;
+      if (!result.ok) { setMessage(result.message); return; }
+      const applied = result.page.filtersAllowed ? next : { ...DEFAULT_NEWS_FILTERS };
+      setFilters(applied); setPage(result.page); setMessage(null);
+      setArticles(current => result.page.offset ? [...current, ...result.page.articles.filter(article => !current.some(existing => existing.id === article.id))] : result.page.articles);
+      try { localStorage.setItem(`traderlink:news-view:v1:${preferenceKey}`, JSON.stringify(applied)); } catch { /* Browsing works without browser storage. */ }
+    } catch { if (version === requestVersion.current) setMessage("News could not be loaded. Please try again."); }
+    finally { if (version === requestVersion.current) setLoading(false); }
+  }, [preferenceKey]);
+  const invalidateRequests = useCallback(() => { requestVersion.current++; }, []);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`traderlink:news-view:v1:${preferenceKey}`);
+      if (saved && initialPage.filtersAllowed) void fetchFeed(parseNewsFilters(JSON.parse(saved)));
+    } catch { /* Ignore unavailable or obsolete preferences. */ }
+    return invalidateRequests;
+  }, [fetchFeed, initialPage.filtersAllowed, preferenceKey, invalidateRequests]);
   const [working, startTransition] = useTransition();
   const initialSelectedArticleId = initialSelectedArticle?.id ?? null;
   const initialSelectedArticleWasRead = initialSelectedArticle?.isRead ?? true;
-  const pageDescription = channel === "news_filtered"
-    ? "Scans the market for small cap stocks with recent press releases, that show signs of momentum."
-    : "AI-summarized press releases help you understand the news fast—so you can look beyond the headline before making a trading decision.";
 
   useEffect(() => {
     if (!initialSelectedArticleId || initialSelectedArticleWasRead) return;
@@ -67,14 +91,7 @@ export function PressReleaseFeed({
     });
   }, [initialSelectedArticleId, initialSelectedArticleWasRead, router]);
 
-  const visible = useMemo(() => {
-    const normalized = query.trim().toUpperCase();
-    return articles.filter((article) => {
-      if (view === "unread" && article.isRead) return false;
-      if (!normalized) return true;
-      return `${article.ticker} ${article.headline} ${article.summary ?? ""}`.toUpperCase().includes(normalized);
-    });
-  }, [articles, query, view]);
+  const visible = articles;
 
   function replaceArticleRead(articleId: string): void {
     setArticles((current) => current.map((article) =>
@@ -114,7 +131,8 @@ export function PressReleaseFeed({
       }
       setArticles((current) => current.map((article) => Object.freeze({ ...article, isRead: true })));
       setSelected((current) => current ? Object.freeze({ ...current, isRead: true }) : null);
-      setMessage("This channel is marked as read.");
+      setMessage("All press releases are marked as read.");
+      if (filters.read !== "all") void fetchFeed(filters);
       router.refresh();
     });
   }
@@ -128,9 +146,7 @@ export function PressReleaseFeed({
       >
         <Box>
           <Typography component="h1" variant="h1">{definition.label}</Typography>
-          <Typography sx={{ mt: 0.75, color: "text.secondary" }} variant="body2">
-            {pageDescription}
-          </Typography>
+
         </Box>
         <Button
           component={NextLink}
@@ -155,19 +171,9 @@ export function PressReleaseFeed({
           spacing={1.25}
           sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}
         >
-          <TextField
-            fullWidth
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search ticker or headline"
-            size="small"
-            slotProps={{
-              input: {
-                startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment>,
-              },
-            }}
-            sx={{ maxWidth: { md: 420 } }}
-            value={query}
-          />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            {page.filtersAllowed ? <PressReleaseFilterControls value={filters} onApply={next => void fetchFeed(next)} disabled={loading} /> : null}
+          </Box>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
             <Button
               component={NextLink}
@@ -178,22 +184,14 @@ export function PressReleaseFeed({
             >
               Manage press release alerts
             </Button>
-            <ToggleButtonGroup
-              exclusive
-              onChange={(_, value: "all" | "unread" | null) => value && setView(value)}
-              size="small"
-              value={view}
-            >
-              <ToggleButton value="all">All</ToggleButton>
-              <ToggleButton value="unread">Unread</ToggleButton>
-            </ToggleButtonGroup>
             <Button disabled={working || articles.every((article) => article.isRead)} onClick={markChannelRead} startIcon={<CheckRoundedIcon />}>
-              Mark channel read
+              Mark all read
             </Button>
           </Stack>
         </Stack>
 
-        <Box sx={{ mt: 2 }}>
+        <Box aria-busy={loading} sx={{ mt: 2 }}>
+          {loading ? <Typography variant="body2" role="status">Loading news…</Typography> : null}
           <Box
             sx={{
               borderBottom: 1,
@@ -211,7 +209,7 @@ export function PressReleaseFeed({
             }}
           >
             <span />
-            <span>Time ET</span>
+            <span>Published ET</span>
             <span>Ticker</span>
             <span>Market cap</span>
             <span>Type</span>
@@ -221,7 +219,7 @@ export function PressReleaseFeed({
             <Stack sx={{ alignItems: "center", minHeight: 180, justifyContent: "center", textAlign: "center" }}>
               <Typography sx={{ fontWeight: 700 }}>No matching press releases</Typography>
               <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-                {query.trim() || view === "unread"
+                {JSON.stringify(filters) !== JSON.stringify(DEFAULT_NEWS_FILTERS)
                   ? "Try a different search or show all articles."
                   : "New eligible press releases will appear here as they are published."}
               </Typography>
@@ -265,7 +263,7 @@ export function PressReleaseFeed({
                 <Box sx={{ minWidth: 0 }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                     <Typography noWrap sx={{ fontWeight: article.isRead ? 700 : 850 }} variant="body2">{article.ticker}</Typography>
-                    <Typography color="text.secondary" noWrap variant="caption">{pressReleaseEasternTime(article.publishedAt)}</Typography>
+                    <Typography color="text.secondary" noWrap variant="caption">{pressReleaseEasternTime(article.publishedAt, true)}</Typography>
                     {article.marketCap ? <Typography color="text.secondary" noWrap variant="caption">{article.marketCap}</Typography> : null}
                   </Stack>
                   <Typography
@@ -277,9 +275,9 @@ export function PressReleaseFeed({
                 </Box>
               </Box>
               <Box aria-hidden sx={{ bgcolor: article.isRead ? "transparent" : "primary.main", borderRadius: "50%", display: { xs: "none", md: "block" }, height: 8, width: 8 }} />
-              <Typography color="text.secondary" noWrap sx={{ display: { xs: "none", md: "block" } }} variant="caption">{pressReleaseEasternTime(article.publishedAt)}</Typography>
+              <Box sx={{ display: { xs: "none", md: "block" } }}><Typography color="text.secondary" variant="caption" component="div">{new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }).format(new Date(article.publishedAt))}</Typography><Typography color="text.secondary" noWrap variant="caption">{pressReleaseEasternTime(article.publishedAt)}</Typography></Box>
               <Typography noWrap sx={{ display: { xs: "none", md: "block" }, fontWeight: article.isRead ? 700 : 850 }} variant="body2">{article.ticker}</Typography>
-              <Typography color="text.secondary" noWrap sx={{ display: { xs: "none", md: "block" } }} variant="caption">{article.marketCap ?? ""}</Typography>
+              <Typography color="text.secondary" noWrap sx={{ display: { xs: "none", md: "block" } }} variant="caption">{article.marketCap ?? "Unknown"}</Typography>
               <Typography color="text.secondary" noWrap sx={{ display: { xs: "none", md: "block" }, textTransform: "capitalize" }} variant="caption">{pressReleaseType(article)}</Typography>
               <Typography
                 noWrap
@@ -291,6 +289,7 @@ export function PressReleaseFeed({
             </Box>
           ))}
         </Box>
+        {page.more ? <Button disabled={loading} onClick={() => void fetchFeed(filters, page.nextOffset, page.asOf)}>Load more</Button> : null}
       </DashboardPanel>
 
       <PressReleaseArticleDrawer article={selected} onClose={closeDrawer} />

@@ -1,5 +1,7 @@
 "use client";
 
+import { dashboardPressReleaseSourceLink, SUMMARY_UNAVAILABLE_MESSAGE } from "@/src/modules/news/contracts/news-outbound-link";
+
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import type { ScannerChartTarget } from "../scanner-chart-workspace";
 import { ScannerChartLaunchControls, useSideCardChartControls } from "../scanner-chart-launch-controls";
@@ -79,6 +81,7 @@ function shortTime(value:string|null):string{
   return hour&&minute?`${hour}:${minute}`:value;
 }
 function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBack:()=>void;onClose:()=>void}){
+  const articleLink=dashboardPressReleaseSourceLink(article);
   return <Stack sx={{height:"100dvh",minHeight:0}}>
     <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",px:{xs:1,sm:2},py:1}}>
       <Button onClick={onBack} startIcon={<ArrowBackRoundedIcon/>}>Back to list</Button>
@@ -89,14 +92,14 @@ function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBac
         <Typography color="text.secondary" variant="caption">{dateFormatter.format(new Date(article.publishedAt))} · {timeFormatter.format(new Date(article.publishedAt))} ET{article.marketCap?` · Mkt Cap ${article.marketCap}`:""}</Typography>
       </Box>
       <Typography component="h2" variant="h2">{article.headline}</Typography>
-      {article.summary?<Box><Typography component="h3" sx={{fontWeight:800}} variant="subtitle2">Summary</Typography><Typography sx={{mt:1,whiteSpace:"pre-wrap"}} variant="body2">{article.summary}</Typography></Box>:null}
-      <PressReleaseDetailSection items={article.positives} title="Positives"/>
-      <PressReleaseDetailSection items={article.negatives} title="Negatives"/>
-      <PressReleaseDetailSection items={article.riskFlags} title="Risk flags"/>
-      <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance"/>
+      {article.summaryUnavailable?<Typography variant="body2">{SUMMARY_UNAVAILABLE_MESSAGE}</Typography>:article.summary?<Box><Typography component="h3" sx={{fontWeight:800}} variant="subtitle2">Summary</Typography><Typography sx={{mt:1,whiteSpace:"pre-wrap"}} variant="body2">{article.summary}</Typography></Box>:null}
+      {!article.summaryUnavailable?<PressReleaseDetailSection items={article.positives} title="Positives"/>:null}
+      {!article.summaryUnavailable?<PressReleaseDetailSection items={article.negatives} title="Negatives"/>:null}
+      {!article.summaryUnavailable?<PressReleaseDetailSection items={article.riskFlags} title="Risk flags"/>:null}
+      {!article.summaryUnavailable?<PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance"/>:null}
       <Stack direction={{xs:"column",sm:"row"}} spacing={1}>
-        <Button component="a" endIcon={<LaunchRoundedIcon/>} href={article.publicPath} target="_blank" variant="contained">Open article page</Button>
-        {article.sourceUrl?<Button component="a" href={article.sourceUrl} rel="noreferrer" target="_blank" variant="outlined">Open original source</Button>:null}
+        {articleLink?<Button component="a" endIcon={<LaunchRoundedIcon/>} href={articleLink} target="_blank" variant="contained">{article.eventType?.toLowerCase().startsWith("sec_")?"Open SEC Filing":"Open source article"}</Button>:null}
+
       </Stack>
     </Stack>
   </Stack>;

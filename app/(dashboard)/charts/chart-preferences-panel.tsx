@@ -14,10 +14,10 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import CloseRounded from '@mui/icons-material/CloseRounded';
 import {useTheme} from '@mui/material/styles';
 import {ChartIndicatorEditor} from './chart-indicator-editor';
-import {CHART_TIMEFRAMES} from '@/src/modules/scanner/alpaca/candles';
+import {CHART_TIMEFRAMES,type ChartTimeframe} from '@/src/modules/scanner/alpaca/candles';
 import type { ChartIndicatorDisplay } from './chart-view-memory';
 import {DEFAULT_CHART_CROSSHAIR_MODE,setAllIndicatorOverlayWidths,setAllIndicatorPriceScaleLabels,type ChartPreferences,type IndicatorType} from '@/src/modules/scanner/alpaca/chart-preferences';
-export function ChartPreferencesPanel({panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange}:{panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:ChartIndicatorDisplay;onIndicatorDisplayChange:(type:IndicatorType,action:'hidden'|'enabled',value:boolean)=>void}){
+export function ChartPreferencesPanel({timeframe,panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange}:{timeframe:ChartTimeframe;panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:ChartIndicatorDisplay;onIndicatorDisplayChange:(type:IndicatorType,action:'hidden'|'enabled',value:boolean)=>void}){
  const theme=useTheme(),mobile=useMediaQuery(theme.breakpoints.down('md'));
  const set=<K extends keyof ChartPreferences>(key:K,value:ChartPreferences[K])=>onChange({...p,[key]:value});
  const color=(label:string,value:string,change:(v:string)=>void)=><TextField label={label} type="color" defaultValue={value} key={value} onBlur={e=>{if(e.target.value!==value)change(e.target.value);}} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:120}}/>;
@@ -39,7 +39,7 @@ export function ChartPreferencesPanel({panel,onClose,preferences:p,crosshairLine
    </TextField>
    <TextField select label="Default timeframe" value={p.timeframe} onChange={e=>set('timeframe',e.target.value as ChartPreferences['timeframe'])} size="small">{CHART_TIMEFRAMES.map(v=><MenuItem key={v} value={v}>{v}</MenuItem>)}</TextField>
    <TextField select label="Timezone" value={p.timezone} onChange={e=>set('timezone',e.target.value as ChartPreferences['timezone'])} size="small">{[['America/New_York','Eastern'],['America/Toronto','Toronto'],['UTC','UTC']].map(([v,label])=><MenuItem key={v} value={v}>{label}</MenuItem>)}</TextField>
-   {(['grid','volume','autoScale','logarithmic'] as const).map(key=><FormControlLabel key={key} label={{grid:'Show grid',volume:'Show volume',autoScale:'Automatic price scale',logarithmic:'Logarithmic price scale'}[key]} control={<Checkbox checked={p[key]} onChange={(_,v)=>set(key,v)}/>}/>)}
+   {(['grid','volume','autoScale','logarithmic'] as const).map(key=><FormControlLabel key={key} label={{grid:'Show grid',volume:'Show volume',autoScale:'Automatic price scale',logarithmic:`Logarithmic price scale · ${timeframe}`}[key]} control={<Checkbox checked={p[key]} onChange={(_,v)=>set(key,v)}/>}/>)}
    <FormControlLabel label="Indicator labels on price scale" control={<Checkbox checked={p.indicatorPriceScaleLabels??false} onChange={(_,visible)=>onChange(setAllIndicatorPriceScaleLabels(p,visible))}/>}/>
    <Typography variant="caption" color="text.secondary">Sets labels for all indicators. Adjust individual indicators in Style.</Typography>
 

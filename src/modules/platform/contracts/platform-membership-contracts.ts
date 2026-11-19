@@ -6,6 +6,7 @@ export const PLATFORM_MEMBERSHIP_FEATURES = Object.freeze([
   ...MEMBERSHIP_PRIVATE_WATCHLIST_FEATURES,
   ...MEMBERSHIP_NOTIFICATION_FEATURES,
   ...MEMBERSHIP_NEWS_DELAY_FEATURES,
+  { key: "news.filters_sorting", label: "Press release filters and sorting", kind: "boolean", module: "news" },
   { key: "dashboard.access", label: "Dashboard", kind: "boolean", module: "platform" },
   { key: "journal.access", label: "Trading Journal", kind: "boolean", module: "journal" },
   { key: "journal.session_tracker", label: "Session Tracker", kind: "boolean", module: "journal" },

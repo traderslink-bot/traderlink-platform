@@ -1,5 +1,7 @@
 "use client";
 
+import { newsSourceLink } from "@/src/modules/news/contracts/news-outbound-link";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
@@ -78,6 +80,7 @@ export function GeneralMarketNewsFeed() {
   const showSymbols = (article: GeneralNewsRow) => article.symbols.slice(0, 3).map(symbol => <Chip key={symbol} size="small" label={symbol.replace(/\.US$/, "")} variant="outlined" />);
   const newCount = pending?.articles.filter(a => !feed.articles.some(b => b.id === a.id)).length ?? 0;
   const stale = !feed.status.collectedAt || Date.now() - Date.parse(feed.status.collectedAt) > 5 * 60_000;
+  const selectedSourceLink = newsSourceLink(selected?.sourceUrl);
   return <DashboardPage><DashboardPanel title="General Market News">
     <Stack spacing={2}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}><Chip label="Personal test" size="small" /><Typography variant="caption" color="text.secondary">Updated {feed.status.deliveredAt ? time(feed.status.deliveredAt) : "—"}</Typography></Stack>
@@ -118,7 +121,7 @@ export function GeneralMarketNewsFeed() {
           <Typography component="h2" variant="h2">{selected.headline}</Typography><Divider />
           <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{selected.body ?? "Article text is unavailable. Read the original source."}</Typography>
           {selected.bodyTruncated ? <Alert severity="info">This saved article was shortened. Read the original source for the complete text.</Alert> : null}
-          {selected.sourceUrl ? <Button href={selected.sourceUrl} target="_blank" rel="noopener noreferrer" variant="contained" endIcon={<LaunchRoundedIcon />}>Read original source</Button> : null}
+          {selectedSourceLink ? <Button href={selectedSourceLink} target="_blank" rel="noopener noreferrer" variant="contained" endIcon={<LaunchRoundedIcon />}>Read original source</Button> : null}
         </> : null}
       </Stack>
     </Drawer>

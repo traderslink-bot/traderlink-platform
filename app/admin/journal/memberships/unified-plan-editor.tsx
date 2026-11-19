@@ -97,6 +97,7 @@ export function UnifiedPlanEditor({ initial, draftId, revision, features, provid
                   features: toggleMembershipProduct(current.features, feature.key, checked, current.packageType) }))} />}
                 {selected ? <Stack spacing={1} sx={{ mt: 1 }}>
                   {feature.key === "news.access" ? <>
+                    <EditorCheck label="Press release filters and sorting" checked={plan.features.some(f => f.key === "news.filters_sorting")} onChange={enabled => setting("news.filters_sorting", enabled)} />
                     <Typography variant="body2">Press release delay</Typography>
                     <EditorDelay value={plan.features.find(f => f.key === "news.visibility_delay_seconds")?.limit ?? 0} onChange={limit => setting("news.visibility_delay_seconds", true, limit)} />
                     <EditorCheck label="Allow press release notifications" checked={plan.features.some(f => f.key === "notifications.press_release")} onChange={enabled => setting("notifications.press_release", enabled)} />

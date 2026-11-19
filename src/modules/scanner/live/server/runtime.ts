@@ -50,7 +50,7 @@ function newsFor(symbols: readonly string[], environment: NodeJS.ProcessEnv): Re
   if (symbols.length === 0) return new Map();
   return withReadonlyPlatformDatabase({ environment },database =>
     new Map(symbols.map(symbol => [symbol,listScannerRecentPressReleases(database,symbol).articles.map(article => ({
-      id: article.id, headline: article.headline, createdAt: article.createdAt, url: article.url, typeLabel: article.typeLabel,
+      id: article.id, headline: article.headline, createdAt: article.createdAt, url: article.url?.startsWith("https://traderslink.pro/news/") ? `/press-releases?article=${encodeURIComponent(article.id)}` : article.url, typeLabel: article.typeLabel,
     }))])));
 }
 const reusableAudits=registry.audits??=new Map<string,ScannerAuditRecorder>();

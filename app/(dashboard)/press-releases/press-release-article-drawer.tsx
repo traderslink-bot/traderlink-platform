@@ -14,7 +14,7 @@ import Typography from "@mui/material/Typography";
 import NextLink from "next/link";
 
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
-import { publicNewsUrl } from "@/src/modules/news/contracts/public-news-url";
+import { dashboardPressReleaseSourceLink, SUMMARY_UNAVAILABLE_MESSAGE } from "@/src/modules/news/contracts/news-outbound-link";
 import { PressReleaseDetailSection } from "./press-release-detail-section";
 
 export function pressReleaseEasternTime(value: string, includeDate = false): string {
@@ -31,6 +31,8 @@ export function pressReleaseEasternTime(value: string, includeDate = false): str
 export function pressReleaseType(article: PressReleaseArticle): string {
   const value = article.eventType?.toLowerCase().replace(/[_-]+/gu, " ").trim();
   if (value?.includes("sec") || value?.includes("filing")) return "SEC filing";
+  if (value?.includes("earnings")) return "Earnings";
+  if (value?.includes("financing")) return "Financing";
   if (value?.includes("press release")) return "Press release";
   if (value) return value.replace(/\b\w/gu, (letter) => letter.toUpperCase());
   return "News";
@@ -40,6 +42,7 @@ export function PressReleaseArticleDrawer({ article, onClose }: Readonly<{
   article: PressReleaseArticle | null;
   onClose: () => void;
 }>) {
+  const articleLink = article ? dashboardPressReleaseSourceLink(article) : null;
   return <Drawer anchor="right" onClose={onClose} open={article !== null} slotProps={{ paper: { sx: { maxWidth: "100%", width: { xs: "100%", sm: 620 } } } }}>
     {article ? <Stack spacing={2.25} sx={{ p: { xs: 2, sm: 3 } }}>
       <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
@@ -55,14 +58,15 @@ export function PressReleaseArticleDrawer({ article, onClose }: Readonly<{
       </Stack>
       <Typography component="h2" variant="h2">{article.headline}</Typography>
       {!article.summaryUnavailable && article.summary ? <Box><Typography component="h3" sx={{ fontWeight: 800 }} variant="subtitle2">AI summary</Typography><Typography sx={{ mt: 1, whiteSpace: "pre-wrap" }} variant="body2">{article.summary}</Typography></Box> : null}
+      {article.summaryUnavailable ? <Typography variant="body2">{SUMMARY_UNAVAILABLE_MESSAGE}</Typography> : null}
       <Divider />
       {article.summaryUnavailable ? null : <PressReleaseDetailSection items={article.positives} title="Positives" />}
       {article.summaryUnavailable ? null : <PressReleaseDetailSection items={article.negatives} title="Negatives" />}
-      <PressReleaseDetailSection items={article.riskFlags} title="Risk flags" />
-      <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance" />
+      {!article.summaryUnavailable ? <PressReleaseDetailSection items={article.riskFlags} title="Risk flags" /> : null}
+      {!article.summaryUnavailable ? <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance" /> : null}
       <Divider />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-        <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={article.summaryUnavailable && article.sourceUrl && /^https?:\/\//iu.test(article.sourceUrl) ? article.sourceUrl : publicNewsUrl(article.publicPath)} variant="contained">{article.summaryUnavailable ? "Open source article" : "Open article page"}</Button>
+        {articleLink ? <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={articleLink} variant="contained">{pressReleaseType(article) === "SEC filing" ? "Open SEC Filing" : "Open source article"}</Button> : null}
         <Button component={NextLink} href="/account/trading#pwa-app" variant="outlined">Set up the TradersLink app</Button>
       </Stack>
     </Stack> : null}

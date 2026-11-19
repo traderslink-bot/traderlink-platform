@@ -4,7 +4,7 @@ import { formatMembershipNewsDelay } from "./membership-news-delays";
 
 /** Stored permission keys stay stable; these are settings inside a product. */
 export const MEMBERSHIP_PRODUCT_SETTINGS: Readonly<Record<string, readonly string[]>> = {
-  "news.access": ["news.visibility_delay_seconds", "news.notification_delay_seconds", "notifications.press_release"],
+  "news.access": ["news.filters_sorting", "news.visibility_delay_seconds", "news.notification_delay_seconds", "notifications.press_release"],
   "journal.access": ["journal.accounts", "journal.rules", "journal.custom_rules", "journal.preset_rules", "journal.custom_tags"],
   "journal.calendar": ["journal.calendar_month", "journal.calendar_week"],
   "analytics.trade_explorer": ["analytics.exports"],
@@ -98,9 +98,13 @@ export function membershipProductDescription(key: string, features: readonly Pro
     const visibility = settings.get("news.visibility_delay_seconds")?.limit ?? 0;
     const notification = settings.get("news.notification_delay_seconds")?.limit ?? 0;
     const enabled = settings.has("notifications.press_release");
-    if (!enabled) return visibility ? `Press releases are delayed ${formatMembershipNewsDelay(visibility)} without notifications.` : "Instant stock press releases without notifications.";
-    if (!visibility && !notification) return "Instant notifications when news hits the market.";
-    return `${visibility ? `Press releases are delayed ${formatMembershipNewsDelay(visibility)}.` : "Instant stock press releases."} ${notification ? `Notifications are delayed ${formatMembershipNewsDelay(notification)}.` : "Instant notifications when news hits the market."}`;
+    const filters = settings.has("news.filters_sorting") ? " Includes press release filters and sorting." : "";
+    if (!enabled) {
+      const description = visibility ? `Press releases are delayed ${formatMembershipNewsDelay(visibility)} without notifications.` : "Instant stock press releases without notifications.";
+      return `${description}${filters}`;
+    }
+    if (!visibility && !notification) return `Instant notifications when news hits the market.${filters}`;
+    return `${visibility ? `Press releases are delayed ${formatMembershipNewsDelay(visibility)}.` : "Instant stock press releases."} ${notification ? `Notifications are delayed ${formatMembershipNewsDelay(notification)}.` : "Instant notifications when news hits the market."}${filters}`;
   }
   if (key === "journal.access") {
     const entry = settings.has("journal.imports") ? "Manually enter and import your trades, then journal your trading day." : "Manually enter your trades and journal your trading day.";

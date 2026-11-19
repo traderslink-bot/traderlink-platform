@@ -28,7 +28,7 @@ export type PressReleaseChannelDefinition = Readonly<{
 
 export const PRESS_RELEASE_CHANNEL_DEFINITIONS: readonly PressReleaseChannelDefinition[] =
   Object.freeze([
-    Object.freeze({ channel: "all", href: "/press-releases", label: "All Press Releases", shortLabel: "All" }),
+    Object.freeze({ channel: "all", href: "/press-releases", label: "Press Releases", shortLabel: "All" }),
     Object.freeze({ channel: "news_filtered", href: "/press-releases/news-filtered", label: "News Scanner", shortLabel: "Scanner" }),
     Object.freeze({ channel: "market_cap_all", href: "/press-releases/market-cap", label: "All Market Cap", shortLabel: "All Market Cap" }),
     Object.freeze({ channel: "market_cap_under_30m", href: "/press-releases/market-cap/under-30m", label: "Under $30M Market Cap", shortLabel: "Under $30M" }),

@@ -3,6 +3,19 @@ import { ensureJournalPlanFoundation, membershipAllowanceInBrief, membershipProd
 import { isMembershipPlanSelectableFeature, derivedMembershipPlanNotificationKeys } from "./membership-plan-notifications";
 
 describe("Product-oriented plan features", () => {
+  it("keeps press release filters inside Stock Press Releases without enabling unrelated settings", () => {
+    const filters = f("news.filters_sorting");
+    expect(isMembershipPlanSelectableFeature(filters.key)).toBe(false);
+    const baseline = toggleMembershipProduct([], "news.access", true);
+    expect(baseline.some(feature => feature.key === filters.key)).toBe(false);
+    const selected = [...baseline, filters];
+    expect(storedMembershipProductFeatures(selected)).toEqual(expect.arrayContaining(selected));
+    expect(membershipProductDescription("news.access", selected, "")).toContain("Includes press release filters and sorting.");
+    expect(derivedMembershipPlanNotificationKeys(selected)).toEqual([]);
+    expect(toggleMembershipProduct(selected, "news.access", false)).toEqual([]);
+    expect(storedMembershipProductFeatures([filters]).some(feature => feature.key === filters.key)).toBe(false);
+  });
+
   it("lists Watchlist once with nested card permissions preserved for publication", () => {
     const children = ["watchlist.ticker_details", "watchlist.trade_analysis", "watchlist.levels", "watchlist.indicators"];
     for (const key of children) expect(isMembershipPlanSelectableFeature(key)).toBe(false);

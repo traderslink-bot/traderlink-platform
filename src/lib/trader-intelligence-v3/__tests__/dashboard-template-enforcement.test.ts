@@ -27,6 +27,7 @@ const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "ai-reviews", "trade-tracker-review-coverage.tsx"),
   join(dashboardRoot, "calendar", "calendar-client.tsx"),
   join(dashboardRoot, "press-releases", "press-release-article-drawer.tsx"),
+  join(dashboardRoot, "press-releases", "press-release-filter-controls.tsx"),
   join(dashboardRoot, "workspace", "workspace-rules-panel.tsx"),
   join(dashboardRoot, "analytics", "candle-pattern-occurrence-explorer.tsx"),
   join(dashboardRoot, "analytics", "trade-analysis-client.tsx"),
@@ -104,8 +105,8 @@ describe("TraderLink Platform dashboard template enforcement", () => {
         frame.includes('/communities/${firstCommunity.community.slug}')) ||
       (href === "/coaching" && existsSync("app/(member)/coaching/[[...section]]/page.tsx")) ||
       (href === "/watchlist" && existsSync("app/watchlist/page.tsx")) ||
-      (href.startsWith("/press-releases/") &&
-        channels.includes(`case "${href.slice("/press-releases/".length)}":`));
+      ((href === "/press-releases" || href.startsWith("/press-releases/")) &&
+        channels.includes(`case "${href === "/press-releases" ? "" : href.slice("/press-releases/".length)}":`));
     expect(DASHBOARD_NAVIGATION_HREFS.filter(href => !resolves(href))).toEqual([]);
   });
 

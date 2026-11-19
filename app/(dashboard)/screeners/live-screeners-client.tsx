@@ -384,7 +384,6 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
       <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",flexShrink:0,px:{xs:1.5,md:2},py:0}}>
         <Box sx={{minWidth:0}}>
           <Stack direction="row" data-chart-header-controls sx={{alignItems:"center",flexWrap:"wrap",gap:0.75}}>
-            <Typography color="text.secondary" variant="body2">TradersLink + TradingView charts</Typography>
             {temporary?<><Button size="small" onClick={onBack}>Back to saved charts</Button>
               <Button size="small" onClick={onSaveTemporary}>Add to saved charts</Button></>:<>
             <Box component="form" onSubmit={event=>{event.preventDefault();addChart();}} sx={{display:"flex",alignItems:"center",gap:0.5}}>

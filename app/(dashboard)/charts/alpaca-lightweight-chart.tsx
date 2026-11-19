@@ -1,4 +1,5 @@
 "use client";
+import {chartLogarithmic,setChartLogarithmic} from '@/src/modules/scanner/alpaca/chart-preferences';
 
 import { useChartMarketData } from "./use-chart-market-data";
 import { ChartDrawings } from "./chart-drawings";
@@ -65,7 +66,7 @@ const indicatorName = (type: IndicatorType) => type === "Bollinger" ? "BOLL" : t
 export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick }: {
   tradeContext?: MarketTradeContext; tradeFocusRevision?: number; onTradeMarkClick?: (marks: readonly MarketTradeMark[]) => void;
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
-  viewId?: string; viewWorkspace?: "main" | "scanner"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
+  viewId?: string; viewWorkspace?: "main" | "scanner" | "workspace"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
   const baseTicker = symbol.split(":").at(-1)!.toUpperCase();
   const marketData = useChartMarketData();
@@ -141,6 +142,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const crosshairDetails = useRef<HTMLDivElement>(null);
   const [activeTimeframe,setActiveTimeframe]=useState<ChartTimeframe|null>(null);
   const timeframe=controlledTimeframe??activeTimeframe??preferences.timeframe;
+  const logarithmic = chartLogarithmic(preferences,timeframe);
   const daily = usesDailyCandles(timeframe);
   const calendarFrame = isCalendarChartTimeframe(timeframe) ? timeframe : null;
   const vwapDisplayFrame = calendarFrame ? "1D" : timeframe as ChartCalculationTimeframe;
@@ -163,7 +165,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
   const regularOnly = preferences.regular && !preferences.premarket && !preferences.postmarket && !showOvernight;
   if(ready&&controlledTimeframe===undefined&&activeTimeframe===null)setActiveTimeframe(preferences.timeframe);
   const changePreferences = (next: ChartPreferences) => {
-    change(next);
+    change(next.logarithmic!==logarithmic?setChartLogarithmic(next,timeframe,next.logarithmic):next);
     if (next.timeframe !== preferences.timeframe) onDefaultTimeframeChange?.(next.timeframe);
   };
   const [attempt, setAttempt] = useState(0);
@@ -184,7 +186,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     const cached = snapshot && snapshot.basisDate === basis && Date.now() - snapshot.savedAt < candleSnapshotLifetime ? snapshot : undefined;
     const savedView = ownerKey && viewId ? chartViews.read(ownerKey, viewWorkspace, viewId, ticker, timeframe, sessionKey)
       ?? (showOvernight ? chartViews.read(ownerKey, viewWorkspace, viewId, ticker, timeframe, sipSessionKey) : null) : null;
-    const restorePrice=canRestoreChartPrice(savedView,preferences,basis);
+    const restorePrice=canRestoreChartPrice(savedView,{autoScale:preferences.autoScale,logarithmic},basis);
     const restore=savedView?{...savedView,priceRange:restorePrice?savedView.priceRange:null}:null;
     marketCalendar.current = cached?.calendar ?? new ChartSessionCalendar();
     const displayTime=new Intl.DateTimeFormat("en-US",{timeZone:preferences.timezone,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
@@ -251,7 +253,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         localization: { timeFormatter: (time: Time) => typeof time === "number" ? formatChartTime(time) : String(time) },
       });
       removeChart = () => { overlaySeries.current=[]; chart.remove(); };
-      chart.priceScale("right").applyOptions({autoScale:restorePrice?savedView!.autoScale:preferences.autoScale,mode:preferences.logarithmic?PriceScaleMode.Logarithmic:PriceScaleMode.Normal});
+      chart.priceScale("right").applyOptions({autoScale:restorePrice?savedView!.autoScale:preferences.autoScale,mode:logarithmic?PriceScaleMode.Logarithmic:PriceScaleMode.Normal});
       const candles = preferences.kind==="line" ? chart.addSeries(LineSeries,{color:preferences.upColor}) : preferences.kind==="bars" ? chart.addSeries(BarSeries,{upColor:preferences.upColor,downColor:preferences.downColor}) : chart.addSeries(CandlestickSeries, { upColor: preferences.upColor, downColor: preferences.downColor, borderVisible: false, wickUpColor: preferences.upColor, wickDownColor: preferences.downColor, priceFormat: { type: "price", precision: 4, minMove: 0.0001 } });
       const drawingInterval={"1m":60,"5m":300,"15m":900,"1h":3600,"4h":14400,"1D":86400}[vwapDisplayFrame];
       let drawingVolumeBars:Candle[]|undefined;
@@ -452,7 +454,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         activeCrosshair=event.point&&event.time!==undefined?event:undefined;updateIndicatorLegend();updateDateVisibility();
         if (!crosshairDetails.current) return;
         const bar = typeof event.time === "number" ? displayed.get(event.time) : undefined;
-        crosshairDetails.current.textContent = bar ? `${formatChartTime(bar.time)} · ${bar.carried ? `Carried-forward price $${bar.close.toFixed(bar.close < 1 ? 4 : 2)} · No candle returned` : `O ${bar.open} H ${bar.high} L ${bar.low} C ${bar.close} · Vol ${bar.volume.toLocaleString()}`}` : "";
+        const priceFormatter = candles.priceFormatter();
+        crosshairDetails.current.textContent = bar ? `${formatChartTime(bar.time)} · ${bar.carried ? `Carried-forward price $${priceFormatter.format(bar.close)} · No candle returned` : `O ${priceFormatter.format(bar.open)} H ${priceFormatter.format(bar.high)} L ${priceFormatter.format(bar.low)} C ${priceFormatter.format(bar.close)} · Vol ${bar.volume.toLocaleString()}`}` : "";
       });
       const dateFormat = new Intl.DateTimeFormat("en-US",{timeZone:preferences.timezone,month:"short",day:"numeric"});
       const updateDates = () => {
@@ -819,7 +822,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
           range:{from:range.from,to:range.to},logicalRange:{from:logicalRange.from,to:logicalRange.to},
           axis:{first:displayPoints[0].time,last:displayPoints.at(-1)!.time,count:displayPoints.length,sessions:sessionKey},
           anchor:{time:displayPoints[index].time,offset:logicalRange.from-index},priceRange:chart.priceScale("right").getVisibleRange(),
-          autoScale:chart.priceScale("right").options().autoScale,preferenceAutoScale:preferences.autoScale,logarithmic:preferences.logarithmic});
+          autoScale:chart.priceScale("right").options().autoScale,preferenceAutoScale:preferences.autoScale,priceScalePolicy:1,logarithmic});
       }
       let previousVisibleTo = 0;
       chart.timeScale().subscribeVisibleLogicalRangeChange(range=>{
@@ -1060,7 +1063,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready]);
+  }, [logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready]);
 
   useEffect(() => {
     if (!activeTradeContext || !ready) return;
@@ -1150,6 +1153,6 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         onReview={journal.review} focusStatus={journal.status} register={journal.register}
         setOverlay={journal.setOverlay} panelId={journal.panelId} />
     </Suspense>}
-    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel panel={panel} onClose={()=>setPanel(null)} preferences={accountPreferences} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
+    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel timeframe={timeframe} panel={panel} onClose={()=>setPanel(null)} preferences={{...accountPreferences,logarithmic}} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
   </Box>;
 }

@@ -1,3 +1,4 @@
+import { newsSourceLink, newsSummaryUnavailable, SUMMARY_UNAVAILABLE_MESSAGE } from "@/src/modules/news/contracts/news-outbound-link";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -333,14 +334,14 @@ export async function buildNewsArticleMetadata({
   return {
     title: `${article.ticker}: ${article.headline} | TradersLink News`,
     description:
-      article.summary ||
+      (newsSummaryUnavailable(article.summary, article.eventType, article.metadata) ? SUMMARY_UNAVAILABLE_MESSAGE : article.summary) ||
       `Trader-focused press release summary and context for ${article.ticker}.`,
     alternates: {
       canonical: `${basePath}/${article.ticker}/${article.slug}`,
     },
     openGraph: {
       title: `${article.ticker}: ${article.headline}`,
-      description: article.summary || undefined,
+      description: newsSummaryUnavailable(article.summary, article.eventType, article.metadata) ? SUMMARY_UNAVAILABLE_MESSAGE : article.summary || undefined,
       type: "article",
       publishedTime: article.publishedAt,
     },
@@ -374,9 +375,9 @@ export async function NewsArticleView({
       rawPayload.levelsText,
   );
   const showLockedLevelsCard = accessMode === "free";
-  const alertSummary =
-    article.summary ||
-    asText(ai.summary || rawPayload.summary, "No AI summary was stored.");
+  const summaryUnavailable = newsSummaryUnavailable(article.summary, article.eventType, metadata);
+  const sourceLink = newsSourceLink(article.sourceUrl);
+  const alertSummary = summaryUnavailable ? SUMMARY_UNAVAILABLE_MESSAGE : article.summary;
   const companyProfile = await getFinnhubCompanyProfile(article.ticker);
   const companyWebsite = formatFinnhubWebsite(companyProfile?.weburl ?? null);
   const companyInfoRows = [
@@ -384,7 +385,7 @@ export async function NewsArticleView({
     { label: "Exchange", value: formatFinnhubExchange(companyProfile?.exchange ?? null) },
     { label: "Industry", value: companyProfile?.industry ?? null },
     { label: "Country", value: formatFinnhubCountry(companyProfile?.country ?? null) },
-    { label: "Website", value: companyWebsite, href: companyWebsite ?? undefined },
+    { label: "Website", value: companyWebsite, href: newsSourceLink(companyWebsite) ?? undefined },
     {
       label: "Market cap",
       value: formatFinnhubMarketCap(companyProfile?.marketCapitalization ?? null),
@@ -495,14 +496,14 @@ export async function NewsArticleView({
                     Company information is temporarily unavailable.
                   </p>
                 )}
-                {article.sourceUrl && secArticle ? (
+                {sourceLink && (secArticle || summaryUnavailable) ? (
                   <a
                     className="news-secondary-action news-sec-source-link"
-                    href={article.sourceUrl}
+                    href={sourceLink}
                     rel="noopener noreferrer"
                     target="_blank"
                   >
-                    Open SEC filing
+                    {secArticle ? "Open SEC Filing" : "Open source article"}
                   </a>
                 ) : null}
               </SectionCard>

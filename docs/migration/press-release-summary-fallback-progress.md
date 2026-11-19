@@ -19,3 +19,7 @@ Release handoff:
 ## Production integration
 
 The approved source-link and article-type edits are applied to the current shared press-release-article-drawer.tsx, not the older inline drawer. Existing Dark theme, shared drawer, scanner broadcasts, and unrelated staged work are preserved. The read contract adds an optional summaryUnavailable flag; no schema migration. Forward-only runner activation; historical omissions remain untouched.
+
+## 2026-11-18 outbound correction — local only
+
+The owner now requires the exact message `Summary could not be generated.` for unavailable summaries. This supersedes the earlier instruction to omit fallback copy. Source links must exclude NuntioBot and its subdomains; blocked-only fallback records have no outbound action. Stored source identity is preserved. Consolidated discovery, source review and remaining verification are recorded in [the outbound QA ledger](../news-outbound-links-qa-20261118.md). No production readiness or release is claimed.

@@ -1,0 +1,83 @@
+{
+  "state": "LOCAL_NEWS_LAYER_QA_PASSED_NOT_DEPLOYED",
+  "vitest": {
+    "files": 7,
+    "passed": 39
+  },
+  "outboundNodeTests": {
+    "passed": 6
+  },
+  "focusedTypes": {
+    "scope": "Actual filter/URL/query contracts and filter/drawer React component types",
+    "roots": 5,
+    "sourceFiles": 791,
+    "diagnostics": 0
+  },
+  "lint": "passed_without_warnings",
+  "browser": {
+    "scope": "Actual Feed/Filters/Drawer + theme, synthetic actions/identity/data/router; not full Next/Auth integration",
+    "checks": [
+      "unified feed mounts",
+      "invalid range stays in drawer",
+      "cancel discards unapplied changes",
+      "applies validated filters and active chips",
+      "different user starts with own default view",
+      "restores user-scoped browser preferences",
+      "sort applies through the server-action boundary",
+      "load more preserves snapshot and appends without replacing existing rows",
+      "failed load remains retryable",
+      "drawer restores focus to its trigger",
+      "AI summary stays inside dashboard with no public/source article link",
+      "valid fallback publisher action",
+      "NuntioBot-only fallback has no outbound action",
+      "source-only SEC label and target",
+      "native date controls inherit Navy Dark color scheme",
+      "Navy Dark mobile filter controls reachable without horizontal overflow",
+      "mobile landscape without horizontal page overflow",
+      "future restricted view retains basic feed without filters or sorting",
+      "no browser page errors"
+    ],
+    "errors": []
+  },
+  "syntheticQuery": {
+    "qualification": "synthetic SQLite eligible feed",
+    "population": 12000,
+    "queryMilliseconds": 33.13,
+    "order": "cap_asc",
+    "filters": "100M<=cap<300M",
+    "migration": false
+  },
+  "finalAffectedRetest": {
+    "scope": "News finite synthetic/source/component QA; no Next server/Auth/hosted calls",
+    "started": "2026-11-18T21:23:12.904584+00:00",
+    "checks": [
+      {
+        "case": "types",
+        "exit": 0,
+        "seconds": 2.075,
+        "log": "/tmp/traderlink-news-unified-qa-20261118/types.log"
+      },
+      {
+        "case": "lint",
+        "exit": 0,
+        "seconds": 1.72,
+        "log": "/tmp/traderlink-news-unified-qa-20261118/lint.log"
+      },
+      {
+        "case": "browser",
+        "exit": 0,
+        "seconds": 6.188,
+        "log": "/tmp/traderlink-news-unified-qa-20261118/browser.log"
+      }
+    ],
+    "passed": true,
+    "finished": "2026-11-18T21:23:22.889344+00:00"
+  },
+  "boundaries": [
+    "synthetic component browser, not full Next/Auth",
+    "no production writes or notifications",
+    "membership/catalog integration pending",
+    "no new schema/index/migration",
+    "premium enforcement OFF"
+  ]
+}

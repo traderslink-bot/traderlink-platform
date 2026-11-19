@@ -1,0 +1,6 @@
+import {expect,it} from 'vitest';
+import {CHART_TIMEFRAMES} from '@/src/modules/scanner/alpaca/candles';
+import {DEFAULT_CHART_PREFERENCES,chartLogarithmic,setChartLogarithmic,parseChartPreferences} from '@/src/modules/scanner/alpaca/chart-preferences';
+it('applies defaults to every legacy account regardless of its old global setting',()=>{for(const logarithmic of [true,false]){const p=parseChartPreferences({...DEFAULT_CHART_PREFERENCES,logarithmic});for(const f of CHART_TIMEFRAMES)expect(chartLogarithmic(p,f)).toBe(['1D','1W','1M','1Y'].includes(f));}});
+it('persists independent explicit overrides and does not mutate another account',()=>{const a=setChartLogarithmic(DEFAULT_CHART_PREFERENCES,'1D',false);const b=parseChartPreferences(setChartLogarithmic(a,'1m',true));expect(chartLogarithmic(b,'1D')).toBe(false);expect(chartLogarithmic(b,'1m')).toBe(true);expect(chartLogarithmic(b,'1W')).toBe(true);expect(chartLogarithmic(b,'5m')).toBe(false);expect(DEFAULT_CHART_PREFERENCES.priceScaleByTimeframe).toBeUndefined();expect(chartLogarithmic(DEFAULT_CHART_PREFERENCES,'1D')).toBe(true);});
+it('rejects invalid timeframe maps',()=>{for(const priceScaleByTimeframe of [null,[],{'2D':true},{'1D':'true'}])expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,priceScaleByTimeframe})).toThrow('invalid_preferences');});

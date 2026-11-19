@@ -1,5 +1,7 @@
 "use client";
 
+import { dashboardNewsLink } from "@/src/modules/news/contracts/news-outbound-link";
+
 import AddRounded from "@mui/icons-material/AddRounded";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import Alert from "@mui/material/Alert";
@@ -501,7 +503,7 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
           }) : <Typography variant="body2">This stock is in the selected universe and has a price for this session.</Typography>}
           {inspected.row.pressRelease && <Typography variant="body2" sx={{ mt: 1, overflowWrap: "anywhere" }}>
             {displayTime(inspected.row.pressRelease.publishedAt)} · {" "}
-            <Link href={inspected.row.pressRelease.url} target="_blank" rel="noreferrer">{inspected.row.pressRelease.headline}</Link>
+            {dashboardNewsLink(inspected.row.pressRelease.url) ? <Link href={dashboardNewsLink(inspected.row.pressRelease.url)!} target="_blank" rel="noreferrer">{inspected.row.pressRelease.headline}</Link> : inspected.row.pressRelease.headline}
           </Typography>}
         </>}
         {inspected.kind === "chart" && (preview
@@ -510,7 +512,7 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
         {inspected.kind === "news" && (newsError ? <Alert severity="warning">Recent news is unavailable.</Alert> : news === null
           ? <LinearProgress aria-label="Loading news" /> : news.length ? <Box component="ul" sx={{ pl: 2, my: 0 }}>
             {news.map(item => <li key={item.url}><Typography variant="body2" sx={{ my: 0.85 }}>
-              {displayTime(item.publishedAt)} · <Link href={item.url} target="_blank" rel="noreferrer">{item.headline}</Link>
+              {displayTime(item.publishedAt)} · {dashboardNewsLink(item.url) ? <Link href={dashboardNewsLink(item.url)!} target="_blank" rel="noreferrer">{item.headline}</Link> : item.headline}
             </Typography></li>)}
           </Box> : <Typography variant="body2">No news was found for this ticker in the last 48 hours.</Typography>)}
       </DialogContent>

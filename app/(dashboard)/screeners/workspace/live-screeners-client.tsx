@@ -1,5 +1,11 @@
 "use client";
 
+import {useWorkspaceChartLayout} from './use-workspace-chart-layout';
+import {useWorkspaceMobileOrientation} from './use-workspace-mobile-orientation';
+import {useMobileWorkspaceLayout} from './use-mobile-workspace-layout';
+import {MobileWorkspaceLayoutEditor,MobileCardResizeHandles} from './scanner-mobile-layout-editor';
+import {mobileWorkspaceStyles} from './scanner-mobile-layout-styles';
+import {useMobileWorkspaceViewport} from './use-mobile-workspace-viewport';
 import { scannerPriceNumber } from "../scanner-price";
 
 import { ScannerLayoutHandles, ScannerLayoutToolbar, type CardViews, type NamedLayout } from "./scanner-layout-editor";
@@ -13,7 +19,7 @@ import { scannerGainColor } from "../scanner-gain-color";
 
 import { ChartMultiviewCharts } from "../../charts/chart-multiview";
 import { ChartMultiviewMenu } from "../../charts/chart-multiview-menu";
-import { useChartPreferences } from "../../charts/use-chart-preferences";
+import { ChartPreferencesContext, useChartPreferences } from "../../charts/use-chart-preferences";
 import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import { useChartMultiview } from "../../charts/use-chart-multiview";
 import { chartCount, reconcileChartTickers, selectedChart, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
@@ -387,7 +393,6 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
       <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",flexShrink:0,px:{xs:1.5,md:2},py:0}}>
         <Box sx={{minWidth:0}}>
           <Stack direction="row" data-chart-header-controls sx={{alignItems:"center",flexWrap:"wrap",gap:0.75}}>
-            <Typography color="text.secondary" variant="body2">TradersLink + TradingView charts</Typography>
             {temporary?<><Button size="small" onClick={onBack}>Back to saved charts</Button>
               <Button size="small" onClick={onSaveTemporary}>Add to saved charts</Button></>:<>
             <Box component="form" onSubmit={event=>{event.preventDefault();addChart();}} sx={{display:"flex",alignItems:"center",gap:0.5}}>
@@ -525,13 +530,21 @@ const ScannerPageSurface = memo(function ScannerPageSurface({ children }: {
 export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }: { admin?: boolean; sample?:ScannerReadModel; scannersOnly?:boolean }) {
   const desktopLayout=!admin&&!scannersOnly;
   const workspaceLayout=DEFAULT_SCANNER_WORKSPACE_LAYOUT;
+  const mobile = useMediaQuery('(max-width:899.95px), (pointer:coarse) and (max-width:1400px)') && !admin;
+  const orientation=useWorkspaceMobileOrientation(mobile);
+  const landscape=orientation==='landscape';
+  const chartPreferenceState=useChartPreferences();
+  const {preferences:chartPreferences,ready:preferencesReady,message:preferencesMessage,ownerKey}=chartPreferenceState;
+  const mobileEditor=useMobileWorkspaceLayout(ownerKey,orientation);
+  const mobileLayout=mobileEditor.layout;
   const [stored,setStored]=useState<{active:string;layouts:NamedLayout[]}>({active:"",layouts:[]});
   const [draftViews,setDraftViews]=useState<CardViews>({});
   const [draftScanners,setDraftScanners]=useState<CardScanners>({});
   const [draft,setDraft]=useState<CardLayout|null>(null);
-  const [undo,setUndo]=useState<CardLayout[]>([]);
+  const [undo,setUndo]=useState<(NamedLayout&{sourceName:string})[]>([]);
   const [visibilityMessage,setVisibilityMessage]=useState("");
   const [layoutName,setLayoutName]=useState("");
+  const [draftSourceName,setDraftSourceName]=useState("");
   useEffect(()=>{
     const frame=requestAnimationFrame(()=>{
       try {
@@ -557,27 +570,27 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   },[]);
   const saveLayouts=(active:string,layouts:NamedLayout[])=>{
     const next={active,layouts};
-    setStored(next);
-    try{localStorage.setItem("traderslink.scanner.desktop-layout.v3",JSON.stringify(next));}
-    catch{/* Keep layouts for this page if storage is unavailable. */}
+    try{localStorage.setItem("traderslink.scanner.desktop-layout.v3",JSON.stringify(next));setStored(next);setVisibilityMessage("");return true;}
+    catch{setVisibilityMessage("Changes could not be saved. Your saved layout is unchanged. Try again.");return false;}
   };
   const activeLayout=stored.layouts.find(item=>item.name===stored.active);
-  const cardViews=draft?draftViews:activeLayout?.views;
-  const scannerChoices=draft?draftScanners:activeLayout?.scanners;
+  const cardViews=mobile&&desktopLayout?mobileLayout.views:draft?draftViews:activeLayout?.views;
+  const scannerChoices=mobile&&desktopLayout?mobileLayout.scanners:draft?draftScanners:activeLayout?.scanners;
+  const rememberDesktop=()=>{if(draft)setUndo(previous=>[...previous.slice(-19),{name:layoutName,sourceName:draftSourceName,rectangles:draft,scanners:draftScanners,views:draftViews}]);};
   const selectScanner=(slot:ScannerCardKind,scanner:ScannerCardKind)=>{
     const scanners={...scannerChoices,[slot]:scanner};
-    if(draft){setDraftScanners(scanners);return;}
+    if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,scanners});return;}
+    if(draft){rememberDesktop();setDraftScanners(scanners);return;}
     const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,scanners,views:cardViews};
     saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
   };
   const rectangles=draft??activeLayout?.rectangles??defaultRectangles;
-  const visible=Object.keys(rectangles) as ScannerWorkspaceWidget[];
-  const mobile = useMediaQuery("(max-width:899.95px)") && !admin;
+  const visible=mobile&&desktopLayout?mobileLayout.order:Object.keys(rectangles) as ScannerWorkspaceWidget[];
   const [desktopBounds,setDesktopBounds]=useState({x:0,y:0,w:0,h:0});
   // Mobile edits visibility in the same saved layout. Its stacked cards do not have desktop geometry.
   const layoutBounds=mobile?{w:1280,h:720}:desktopBounds;
   const changeLayout=(next:CardLayout)=>{
-    if(draft&&next!==draft)setUndo(previous=>[...previous.slice(-19),draft]);
+    if(draft&&next!==draft)rememberDesktop();
     setDraft(next);
   };
   const toggleWidget=(widget:ScannerWorkspaceWidget)=>{
@@ -601,13 +614,24 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   };
   const [preferTabs,setPreferTabs]=useState(readMobileScannerLayout);
   const [activeScanner,setActiveScanner]=useState<MobileScannerTab>("gainers");
-  const mobileTabs = mobile && preferTabs;
+  const mobileTabs = mobile && (desktopLayout?mobileLayout.mode==="tabs":preferTabs);
   const mobileTabsId = useId();
-  const { preferences:chartPreferences, ready:preferencesReady, message:preferencesMessage }=useChartPreferences();
+  const hydratedSelection=useRef<string|null>(null);
+  useEffect(()=>{
+    if(!mobile||!desktopLayout||!mobileEditor.ready||!ownerKey)return;
+    const selectionScope=JSON.stringify([ownerKey,orientation,mobileEditor.selectedName]);
+    if(hydratedSelection.current===selectionScope)return;
+    const frame=requestAnimationFrame(()=>{hydratedSelection.current=selectionScope;setActiveScanner(mobileLayout.selected);});
+    return()=>cancelAnimationFrame(frame);
+  },[mobile,desktopLayout,mobileEditor.ready,ownerKey,orientation,mobileEditor.selectedName,mobileLayout.selected]);
+
   const defaultTimeframe=chartPreferences.timeframe;
-  const [pageCharts,setPageCharts]=useState<ChartMultiview|null>(null);
+  const {layout:pageCharts,change:setPageCharts,ready:pageChartsReady}=useWorkspaceChartLayout(ownerKey);
+  const pendingPageTicker=useRef<{symbol:string;owner:string|undefined}|null>(null);
   const pageTicker=pageCharts?selectedChart(pageCharts)?.group.symbol??null:null;
   const selectPageTicker=useCallback((symbol:string)=>{
+    if(!pageChartsReady){pendingPageTicker.current={symbol,owner:ownerKey};return;}
+    pendingPageTicker.current=null;
     setPageCharts(current=>{
       if(!current)return singleChart(symbol,defaultTimeframe);
       const existing=current.groups.find(group=>group.symbol===symbol);
@@ -621,7 +645,15 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
       gridRef.current?.querySelector('[data-scanner-workspace-card="ticker-workspace"]')
         ?.scrollIntoView({block:"nearest"});
     }
-  },[defaultTimeframe,mobile,mobileTabs]);
+  },[defaultTimeframe,mobile,mobileTabs,setPageCharts,pageChartsReady,ownerKey]);
+  useEffect(()=>{
+    if(!pageChartsReady||!pendingPageTicker.current)return;
+    const frame=requestAnimationFrame(()=>{
+      const pending=pendingPageTicker.current;pendingPageTicker.current=null;
+      if(pending&&(!pending.owner||pending.owner===ownerKey))selectPageTicker(pending.symbol);
+    });
+    return()=>cancelAnimationFrame(frame);
+  },[pageChartsReady,ownerKey,selectPageTicker]);
   const [companySymbol,setCompanySymbol]=useState<string|null>(null);
   const [companyDrawerLoaded,setCompanyDrawerLoaded]=useState(false);
   const openCompanyDetails=useCallback((symbol:string)=>{
@@ -636,10 +668,12 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   }),[pageTicker,showWorkspaceChart,selectPageTicker,desktopLayout,openCompanyDetails]);
 
   const includeWidget = (widget: ScannerWorkspaceWidget) => desktopLayout?visible.includes(widget):!scannersOnly||(widget!=="market-events"&&widget!=="ticker-workspace");
-  const mobileScannerTabs=MOBILE_SCANNER_TABS.filter(({widget})=>includeWidget(widget));
-  const displayedTab=includeWidget(activeScanner)?activeScanner:mobileScannerTabs[0]?.widget;
+  const mobileScannerTabs=MOBILE_SCANNER_TABS.filter(({widget})=>includeWidget(widget)).sort((a,b)=>mobile&&desktopLayout?mobileLayout.order.indexOf(a.widget)-mobileLayout.order.indexOf(b.widget):0);
+  const selectedScanner=activeScanner;
+  const displayedTab=includeWidget(selectedScanner)?selectedScanner:mobileScannerTabs[0]?.widget;
   const showScanner = (widget: ScannerWorkspaceWidget) => includeWidget(widget) && (!mobileTabs || widget===displayedTab);
   const toggleMobileLayout = () => {
+    if(desktopLayout&&mobile){mobileEditor.update({...mobileLayout,mode:mobileTabs?"stacked":"tabs"});return;}
     const next = !preferTabs;
     setPreferTabs(next);
     try { window.localStorage.setItem(MOBILE_SCANNER_LAYOUT_KEY,next?"tabs":"stacked"); }
@@ -715,6 +749,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
   const [checkedAt,setCheckedAt]=useState<number>(()=>sample?.updatedAtUtc?Date.parse(sample.updatedAtUtc):Date.now());
   const gridRef=useRef<HTMLDivElement|null>(null);
+  const mobileHeight=useMobileWorkspaceViewport(gridRef,mobile&&desktopLayout,mobileTabs);
   const tiled=desktopLayout&&!mobile&&desktopBounds.w>0&&desktopBounds.h>0;
   const positionStyles=tiled?Object.fromEntries(cardEntries(rectangles).map(([widget,r])=>[
     `& > [data-scanner-workspace-card="${widget}"]`,
@@ -788,7 +823,8 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
       return;
     }
     const views={...cardViews,[slot]:view};
-    if(draft){setDraftViews(views);return;}
+    if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,views});return;}
+    if(draft){rememberDesktop();setDraftViews(views);return;}
     const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,
       scanners:scannerChoices,views};
     saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
@@ -834,12 +870,12 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     </DashboardPanel>:null}
     {!admin&&<Portal container={scannerToolbar}>
       <Stack direction="row" sx={{justifyContent:desktopLayout?"flex-start":"flex-end",alignItems:"center",minWidth:0}}>
-      {desktopLayout&&<ScannerLayoutToolbar mobile={mobile} editing={draft!==null} name={layoutName} active={stored.active}
-        onEdit={()=>{setLayoutName(stored.active);setUndo([]);setVisibilityMessage("");setDraftScanners(scannerChoices??{});setDraftViews(cardViews??{});setDraft(rectangles);}}
+      {desktopLayout&&mobile&&<MobileWorkspaceLayoutEditor key={orientation} editor={mobileEditor} orientation={orientation}/>}{desktopLayout&&!mobile&&<ScannerLayoutToolbar mobile={mobile} editing={draft!==null} name={layoutName} active={stored.active} sourceName={draft?draftSourceName:stored.active}
+        onEdit={()=>{setDraftSourceName(stored.active);setLayoutName(stored.active);setUndo([]);setVisibilityMessage("");setDraftScanners(scannerChoices??{});setDraftViews(cardViews??{});setDraft(rectangles);}}
         setName={setLayoutName} saved={stored.layouts.filter(item=>item.name)} visible={visible} onToggle={toggleWidget} message={visibilityMessage}
         onSelect={name=>{
           const selected=stored.layouts.find(item=>item.name===name);
-          setLayoutName(name);
+          setDraftSourceName(name);setLayoutName(name);
           setDraftScanners(selected?.scanners??{});
           setDraftViews(selected?.views??{});
           changeLayout(selected?.rectangles??defaultRectangles);
@@ -857,12 +893,12 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
           setVisibilityMessage("");
         }}
         canUndo={undo.length>0}
-        onUndo={()=>{const previous=undo.at(-1);if(previous){setDraft(previous);setUndo(undo.slice(0,-1));}}}
+        onUndo={()=>{const previous=undo.at(-1);if(previous){setDraft(previous.rectangles);setLayoutName(previous.name);setDraftSourceName(previous.sourceName);setDraftScanners(previous.scanners??{});setDraftViews(previous.views??{});setUndo(undo.slice(0,-1));}}}
         onSave={()=>{
           const name=layoutName.trim();
           if(!draft||!name)return;
-          saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,views:draftViews}]);
-          setDraft(null);
+          const saved=saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,views:draftViews}]);
+          if(saved)setDraft(null);return saved;
         }}/>}
         {((desktopLayout&&mobile)||(!drawerOpen&&chartWorkspace.charts.length>0))&&
           <Tooltip title={drawerOpen?"Chart drawer is open":chartWorkspace.charts.length?"Reopen chart drawer":"No saved chart drawer"}>
@@ -874,9 +910,9 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
               </ButtonBase>
             </Box>
           </Tooltip>}
-        {desktopLayout&&mobile&&<Tooltip title={preferTabs?"Use stacked layout":"Use tabs"}>
-          <IconButton aria-label={preferTabs?"Use stacked layout":"Use tabs"} onClick={toggleMobileLayout} sx={{"@media(max-width:359px)":{"&&":{minWidth:34,width:34,p:0}}}}>
-            {preferTabs?<ViewStreamOutlined fontSize="small"/>:<ViewDayOutlined fontSize="small"/>}
+        {desktopLayout&&mobile&&<Tooltip title={mobileTabs?"Use stacked layout":"Use tabs"}>
+          <IconButton aria-label={mobileTabs?"Use stacked layout":"Use tabs"} onClick={toggleMobileLayout} sx={{"@media(max-width:359px)":{"&&":{minWidth:34,width:34,p:0}}}}>
+            {mobileTabs?<ViewStreamOutlined fontSize="small"/>:<ViewDayOutlined fontSize="small"/>}
           </IconButton>
         </Tooltip>}
       </Stack>
@@ -886,7 +922,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     <ScannerPageSurface covered={drawerOpen||companySymbol!==null}>
     <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box>
       {mobile&&(mobileTabs||!desktopLayout)&&<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0,mb:0.6}}>
-        {mobileTabs?<Tabs value={displayedTab??false} onChange={(_,value:MobileScannerTab)=>setActiveScanner(value)}
+        {mobileTabs?<Tabs value={displayedTab??false} onChange={(_,value:MobileScannerTab)=>{setActiveScanner(value);if(desktopLayout)mobileEditor.update({...mobileLayout,selected:value});}}
           aria-label="Scanner cards" variant="scrollable" scrollButtons={false}
           sx={{flex:1,minWidth:0,minHeight:36,"& .MuiTab-root":{minWidth:0,minHeight:36,px:0.85,py:0.3,
             textTransform:"none",fontSize:"0.71rem",fontWeight:700,whiteSpace:"nowrap"}}}>
@@ -921,6 +957,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
       gridTemplateRows:{xs:mobileTabs?"auto":"repeat(7,auto)",md:desktopLayout?"none":"repeat(2,minmax(0,1fr))"},
       ...(desktopLayout&&!tiled?{"& > [data-scanner-workspace-card]":{gridArea:{md:"auto"},height:{md:300}},gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(2,minmax(0,1fr))"}}:{}),
       ...positionStyles,
+      ...(mobile&&desktopLayout?mobileWorkspaceStyles(mobileLayout,mobileHeight,landscape,mobileTabs):{}),
       '& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 },
     }}>
       {widgets.filter(isScannerCard).filter(showScanner).filter(slot=>!admin||slot!=="breakouts").map(slot=>{
@@ -953,8 +990,8 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
         </ScannerWorkspaceCard>;
       })}
       {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltWindow={haltWindow} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
-      {!admin&&showScanner("ticker-workspace")&&<ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={compactChartSymbol} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} keepMounted={!mobile&&draft!==null}/>}
-      {draft&&tiled&&<ScannerLayoutHandles rectangles={draft} onChange={changeLayout} onMessage={setVisibilityMessage}/>}
+      {!admin&&showScanner("ticker-workspace")&&<ChartPreferencesContext.Provider value={chartPreferenceState}><ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={pageChartsReady?compactChartSymbol:null} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} fillMobile={mobile&&desktopLayout} keepMounted={!mobile&&draft!==null}/></ChartPreferencesContext.Provider>}
+      {mobile&&desktopLayout&&mobileEditor.editing&&!mobileTabs&&<MobileCardResizeHandles rootRef={gridRef} layout={mobileLayout} viewport={mobileHeight} onChange={mobileEditor.update}/>}{draft&&tiled&&<ScannerLayoutHandles rectangles={draft} onChange={changeLayout} onMessage={setVisibilityMessage}/>}
     </Box></Box></ScannerNewsDrawerProvider>
     </ScannerPageSurface>
     </ScannerCompactChartCovered>

@@ -258,10 +258,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       items: Object.freeze([
         Object.freeze({ href: "/market-news/week-ahead", label: "The Week Ahead", icon: "newspaper" as const }),
         Object.freeze({ href: "/market-news/general", label: "General Market News", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/news-filtered", label: "News Scanner", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", subLabel:"Market Cap", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M-$50M", subLabel:"Market Cap", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", subLabel:"Market Cap", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases", label: "Press Releases", icon: "newspaper" as const }),
       ]),
     }),
     Object.freeze({
@@ -364,7 +361,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/account": "Account",
     "/account/membership": "Plan & billing",
     "/notifications": "Notifications",
-    "/press-releases": "All Press Releases",
+    "/press-releases": "Press Releases",
     "/press-releases/news-filtered": "News Scanner",
     "/market-news/week-ahead": "The Week Ahead",
     "/market-news/general": "General Market News",
