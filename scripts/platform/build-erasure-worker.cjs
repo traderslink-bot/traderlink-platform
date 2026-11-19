@@ -25,5 +25,7 @@ build({
   define: { "import.meta.url": "__erasure_config_url" },
   banner: { js: 'const __erasure_config_url = require("node:url").pathToFileURL(require("node:path").join(process.cwd(), "src/modules/platform/server/database/platform-database-config.ts")).href;' },
   conditions: ["react-server"],
+  // Next resolves this marker for server code; the standalone Node worker needs the same server entry.
+  alias: { "server-only": require.resolve("next/dist/compiled/server-only/empty.js") },
   logLevel: "warning",
 }).catch(() => { process.exitCode = 1; });

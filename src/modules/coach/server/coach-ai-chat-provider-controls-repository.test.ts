@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { Buffer } from "node:buffer";
 
 import Database from "better-sqlite3";
@@ -6,8 +7,6 @@ import { CoachAiProviderSettingsRepository } from "@/src/modules/coach/server/co
 import { CoachAiChatRepository } from "@/src/modules/coach/server/coach-ai-chat-repository";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUuidV4, isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
 
@@ -38,8 +37,8 @@ VALUES (?, ?, 'Test', 'USD', 'America/New_York', 'active', ?, ?, ?)`).run(accoun
 }
 
 function setup(): Fixture {
-  const database = new Database(":memory:"); database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => new Date(initialTime) });
+  const database = openPristinePlatformTestDatabase(); database.pragma("foreign_keys = ON");
+  setPlatformTestFixtureMigrationTime(database, () => new Date(initialTime));
   const scope = insertScope(database);
   const sharedUserId = createCanonicalUuidV4();
   database.prepare(`INSERT INTO platform_users (user_id, auth_provider, auth_subject, display_name, status, created_at_utc, updated_at_utc)

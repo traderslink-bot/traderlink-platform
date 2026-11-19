@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { existsSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -10,7 +11,6 @@ vi.mock("server-only", () => ({}));
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import {
   beginJournalImportAttempt,
   finishJournalImportPreview,
@@ -52,12 +52,12 @@ function setup(): Readonly<{
     mkdirSync(path);
   }
   const databasePath = join(databaseRoot, "test.sqlite");
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath,
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => START });
+  setPlatformTestFixtureMigrationTime(database, () => START);
   const signIn = new PlatformDiscordSignInService(database, {
     now: () => START,
   }).signIn({

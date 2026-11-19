@@ -1,3 +1,4 @@
+import {CommunityStatsVisitRecorder} from "../../../community-stats-visit-recorder";
 import {isCoachingStaff} from "@/src/modules/communities/contracts/coaching-audience";
 import {CommunityNavigation} from "../../../community-navigation";
 import {coachingPlanPriceLabel} from "@/src/modules/communities/contracts/coaching-plan-presentation";
@@ -20,6 +21,7 @@ export default async function CommunityCoachPage({params}:{params:Promise<{commu
   const plans=loaded.snapshot.plans.filter(plan=>plan.coachProfileId===coach.coachProfileId&&plan.status==="active");
   const accepting=coach.status==="active"&&coachAcceptsStudents(plans,coach.coachProfileId);
   return <DashboardPage><CommunityNavigation snapshot={loaded.snapshot}/>
+    {!loaded.isReview&&coach.status==="active"?<CommunityStatsVisitRecorder communitySlug={communitySlug}/>:null}
     <Typography component="a" href={`/communities/${communitySlug}/coaches`} sx={{color:"traderLink.linkText",fontWeight:800,textDecoration:"none"}}>← Back to coaches</Typography>
     <Grid container spacing={2}>
       <Grid size={{xs:12,lg:5}}><DashboardPanel hideHeader><Stack spacing={1.5}>

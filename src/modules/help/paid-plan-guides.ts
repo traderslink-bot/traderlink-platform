@@ -67,6 +67,56 @@ export const PAID_PLAN_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     ]),
   }),
   Object.freeze({
+    slug: "partner-channels",
+    title: "Partner Channels",
+    description: "Choose community alert channels and understand the two paid-access requirements.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "choose-partner-channels",
+        title: "Choose Partner Channels",
+        summary: "Review the community, channels, price and access requirements before continuing.",
+        keywords: Object.freeze(["Partner Channels", "community alerts", "Stripe", "Whop", "Discord", "Premium"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Open Partner Channels from the Communities section. Catalog cards and channel details show the name of the connected Discord server, the included channel names, the price and the billing period." }),
+          Object.freeze({ kind: "paragraph", text: "Partner Channel posts are read-only text alerts delivered inside the TraderLink Discord server. Links, invites, media, attachments, mass mentions, source-server promotion and chat are not included." }),
+          Object.freeze({ kind: "callout", title: "Two active paid requirements", text: "Access requires active paid TraderLink Premium and an active paid community subscription for the selected channel. Trials, complimentary access, gifts, manual grants, sandbox records and unverified payment evidence do not satisfy either paid requirement." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "subscribe-and-check-access",
+        title: "Subscribe and check access",
+        summary: "Subscribe through the checkout shown for the offer, then verify access in TraderLink.",
+        keywords: Object.freeze(["subscribe", "Check access", "community billing", "refund", "Stripe checkout", "Whop checkout"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "steps", items: Object.freeze([
+            Object.freeze({ title: "1. Review the channels", text: "Confirm the Discord server name, included channels, price and billing period. The checkout details flag channels your current subscriptions already cover." }),
+            Object.freeze({ title: "2. Open checkout", text: "Use the checkout shown for your offer. For a Stripe offer, select Continue to Stripe. If you already subscribed through Whop, use that Whop account to manage your subscription." }),
+            Object.freeze({ title: "3. Return and check access", text: "Select Check access. TraderLink verifies both paid subscriptions and confirms your Discord role. Open the channel from its Discord link once access is confirmed." }),
+          ]) }),
+          Object.freeze({ kind: "callout", title: "Community billing", text: "The community handles payment, refunds, and billing through the service you used to subscribe." }),
+          Object.freeze({ kind: "paragraph", text: "If you already subscribe through Whop, your channel access stays in place while Whop still grants access, including during its renewal grace period. A separate active subscription covering the same channel can keep the channel open after your Whop access ends." }),
+          Object.freeze({ kind: "paragraph", text: "A publishing pause stops new alerts and purchases while subscribers with current paid access keep their Discord channels. Subscribers can still check access from their purchase in the catalog. The TradersLink administrator can recheck the Discord setup and resume publishing." }),
+          Object.freeze({ kind: "paragraph", text: "Returning from checkout does not prove payment. A provider delay or temporary verification problem leaves access unchanged and shows that verification is unavailable. It must not appear as a confirmed cancellation or unpaid result." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "fix-partner-channel-access",
+        title: "Fix Partner Channel access",
+        summary: "Check each paid requirement separately before purchasing again.",
+        keywords: Object.freeze(["access needs attention", "Premium inactive", "Whop active", "missing role", "do not repurchase"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "bullets", items: Object.freeze([
+            "If TraderLink Premium needs attention, restore or renew Premium, then select Check access again.",
+            "If the community subscription needs attention, check its status with the payment service you used.",
+            "If the subscription is active, wait and select Check access again before buying it again.",
+            "The dedicated channel role is removed when verified paid access ends and no other active purchase still covers the channel.",
+          ]) }),
+          Object.freeze({ kind: "paragraph", text: "Contact the community for its payment, refund and billing questions. Contact TraderLink support when both paid requirements are active but access still cannot be verified or the managed Discord role is missing." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
     slug: "getting-started",
     title: "Get paid access",
     description: "Choose a TraderLink plan, review its access options and use its configured checkout.",

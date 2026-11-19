@@ -20,13 +20,14 @@ export function IndependentCoachProfileEditor({profile,contextId,photoAvailable,
 /** A photo saves independently from the profile text form. One operation is allowed at a time. */
 function CoachProfilePhotoPicker({displayName,contextId,photoAvailable,photoVersion,photoStorageReady}:{displayName:string;contextId:string|null;photoAvailable:boolean;photoVersion:string|null;photoStorageReady:boolean}){
  const [file,setFile]=useState<File|null>(null),[saved,setSaved]=useState(photoAvailable),[version,setVersion]=useState(photoVersion),[pending,setPending]=useState<'upload'|'remove'|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[failed,setFailed]=useState<'upload'|'remove'|null>(null);
+ const [photoContextId,setPhotoContextId]=useState(contextId);
  const alive=useRef(false),generation=useRef(0),inFlight=useRef<Promise<void>|null>(null);
  useEffect(()=>{alive.current=true;generation.current++;return()=>{alive.current=false;generation.current++;};},[]);
- const savedUrl=contextId&&saved?`/api/coaching/profile-photo?contextId=${encodeURIComponent(contextId)}&v=${encodeURIComponent(version??'saved')}`:undefined;
+ const savedUrl=photoContextId&&saved?`/api/coaching/profile-photo?contextId=${encodeURIComponent(photoContextId)}&v=${encodeURIComponent(version??'saved')}`:undefined;
  const initials=displayName.trim().split(/\s+/).map(part=>part[0]).join('').slice(0,2).toUpperCase()||'C';
  const mutate=(kind:'upload'|'remove',selected?:File):Promise<void>=>{
   if(inFlight.current)return inFlight.current;
-  if(!contextId||!photoStorageReady||kind==='upload'&&!selected)return Promise.reject(new Error('Save your coach profile before choosing a photo.'));
+  if(!photoStorageReady||kind==='upload'&&!selected||kind==='remove'&&!photoContextId)return Promise.reject(new Error('Choose a photo to continue.'));
   const token=generation.current;
   setPending(kind);setError('');setNotice('');setFailed(null);
   const current=()=>alive.current&&generation.current===token;
@@ -40,7 +41,8 @@ function CoachProfilePhotoPicker({displayName,contextId,photoAvailable,photoVers
     if(kind==='upload'){
      const stamp=result.updatedAtUtc;
      if(result.available!==true||typeof stamp!=='string'||!Number.isFinite(Date.parse(stamp))||new Date(stamp).toISOString()!==stamp)throw new Error('The upload confirmation could not be verified. Retry your photo.');
-     if(!current())return;setSaved(true);setVersion(stamp);setFile(null);setNotice('Photo saved.');
+     if(typeof result.contextId!=='string'||!(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i).test(result.contextId)||(photoContextId&&result.contextId!==photoContextId))throw new Error('The upload confirmation could not be verified. Retry your photo.');
+     if(!current())return;setPhotoContextId(result.contextId);setSaved(true);setVersion(stamp);setFile(null);setNotice('Photo saved.');
     }else{
      if(result.removed!==true)throw new Error('The removal confirmation could not be verified. Retry removing the photo.');
      if(!current())return;setSaved(false);setVersion(null);setFile(null);setNotice('Photo removed.');
@@ -56,7 +58,7 @@ function CoachProfilePhotoPicker({displayName,contextId,photoAvailable,photoVers
  const remove=()=>{if(inFlight.current||!window.confirm('Remove your profile photo?'))return;void mutate('remove').catch(()=>{});};
  return <CoachingReviewDraftGuard title="Photo upload not confirmed" description="Retry your photo change before leaving, or discard the selected file." onSaveBeforeLeave={async()=>{if(inFlight.current){await inFlight.current;return;}if(file||failed)await retry();}}><Box data-coaching-controlled-draft data-coaching-unsaved={file||pending?'true':'false'} data-coaching-pending={pending?'true':'false'}><Stack spacing={2} sx={{alignItems:{xs:'flex-start',md:'center'}}}>
   <Avatar src={savedUrl} alt={`${displayName} profile photo`} sx={{width:144,height:144,fontSize:40}}>{initials}</Avatar>
-  <Button component="label" variant="outlined" disabled={!photoStorageReady||!contextId||Boolean(pending)}>{pending==='upload'?'Uploading…':saved?'Change photo':'Choose photo'}<input hidden type="file" disabled={!photoStorageReady||!contextId||Boolean(pending)} accept="image/png,image/jpeg,image/webp" onChange={event=>{
+  <Button component="label" variant="outlined" disabled={!photoStorageReady||Boolean(pending)}>{pending==='upload'?'Uploading…':saved?'Change photo':'Choose photo'}<input hidden type="file" disabled={!photoStorageReady||Boolean(pending)} accept="image/png,image/jpeg,image/webp" onChange={event=>{
    const selected=event.target.files?.[0]??null;event.currentTarget.value='';if(!selected||inFlight.current)return;
    if(selected.size<1||selected.size>8388608){setError('Select an image of 8 MB or smaller.');setNotice('');return;}
    if(!['image/png','image/jpeg','image/webp'].includes(selected.type)){setError('Use a PNG, JPEG or WebP image.');setNotice('');return;}
@@ -67,6 +69,6 @@ function CoachProfilePhotoPicker({displayName,contextId,photoAvailable,photoVers
   {error?<Alert severity="error" role="status">{error}</Alert>:notice?<Alert severity="success" role="status">{notice}</Alert>:null}
   {!pending&&failed?<Stack spacing={1}>{file?<Typography variant="body2">Selected for retry: {file.name}</Typography>:null}<Stack direction="row" sx={{gap:1,flexWrap:'wrap'}}><Button variant="outlined" onClick={()=>void retry().catch(()=>{})}>Retry</Button>{file?<Button onClick={()=>{setFile(null);setFailed(null);setError('');}}>Discard selected file</Button>:null}</Stack></Stack>:null}
   {saved&&!file?<Button color="error" disabled={Boolean(pending)} onClick={remove}>{pending==='remove'?'Removing…':'Remove photo'}</Button>:null}
-  {!contextId?<Typography variant="body2" color="text.secondary">Save your coach profile once before choosing a photo.</Typography>:!photoStorageReady?<Alert severity="info">Photo uploads will be available after profile photo storage is enabled.</Alert>:null}
+  {!photoStorageReady?<Alert severity="info">Photo uploads will be available after profile photo storage is enabled.</Alert>:null}
  </Stack></Box></CoachingReviewDraftGuard>;
 }

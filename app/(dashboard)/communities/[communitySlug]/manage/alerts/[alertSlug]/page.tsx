@@ -1,0 +1,34 @@
+import {CommunityNavigation} from "../../../../community-navigation";
+import {CommunityPublicationHistory} from "../../../../community-publication-history";
+import {CommunityPublicationUpdateControls} from "../../../../community-publication-update-controls";
+import {CommunityDestinationPicker} from "../../../../community-destination-picker";
+import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
+import Box from "@mui/material/Box";
+import Avatar from "@mui/material/Avatar";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { notFound } from "next/navigation";
+
+import { DashboardPage, DashboardPanel } from "@/app/dashboard-ui";
+import { saveCommunityAlertWithFeedback } from "../../../../community-publication-actions";
+import { CommunityPublicationForm } from "../../../../community-publication-form";
+import { loadCommunityPublishingDashboard as loadCommunityDashboard } from "../../../../community-publication-dashboard-loader";
+
+export default async function CommunityAlertPage({params}:{params:Promise<{communitySlug:string;alertSlug:string}>}) {
+  const {communitySlug,alertSlug}=await params;
+  const {snapshot,isReview}=await loadCommunityDashboard(communitySlug,`/communities/${communitySlug}/manage/alerts/${alertSlug}`);
+  const alert=snapshot.alerts.find(item=>item.slug===alertSlug||item.alertId===alertSlug);
+  if(!alert)notFound();
+  const canEdit=snapshot.viewer.capabilities.includes("community.alerts.create")&&(alert.authorUserId===snapshot.viewer.userId||snapshot.viewer.capabilities.includes("community.alerts.manage_all"));
+  if(!canEdit)notFound();
+  return <DashboardPage><CommunityNavigation snapshot={snapshot}/>
+    <Box component="a" href={`/communities/${communitySlug}/manage/alerts`} sx={{color:"primary.main",fontWeight:800,textDecoration:"none"}}>← Back to alert publishing</Box>
+    <DashboardPanel hideHeader><Stack spacing={2}><Stack direction="row" spacing={1} sx={{alignItems:"center",flexWrap:"wrap"}}><CampaignRoundedIcon color="primary"/>{alert.symbol?<Chip color="primary" label={alert.symbol}/>:null}<Chip color={alert.publishingMode==="tracked_page"?"success":"warning"} label={alert.publishingMode==="tracked_page"?"Tracked page":"Discord post"} variant="outlined"/></Stack><Typography component="h1" variant="h1">{alert.title}</Typography><Typography sx={{fontSize:"1.05rem",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{alert.body}</Typography><Stack direction="row" spacing={1.25} sx={{alignItems:"center"}}><Avatar alt={`${alert.authorName} profile picture`} src={alert.authorAvatarUrl??undefined}>{alert.authorName.trim().split(/\s+/).map(part=>part[0]).slice(0,2).join("").toUpperCase()}</Avatar><Box><Typography sx={{fontWeight:800}}>Published by {alert.authorName}</Typography><Typography color="text.secondary" variant="body2">{alert.publishedAtUtc?new Date(alert.publishedAtUtc).toLocaleString("en-US",{timeZone:"UTC"})+" UTC":"Draft"}</Typography></Box></Stack></Stack></DashboardPanel>
+    {canEdit?<DashboardPanel title="Edit alert"><CommunityPublicationForm action={saveCommunityAlertWithFeedback} disabled={isReview}><input name="communitySlug" type="hidden" value={communitySlug}/><input name="alertId" type="hidden" value={alert.alertId}/><Stack spacing={2}><TextField defaultValue={alert.title} label="Title" name="title" required/><TextField defaultValue={alert.symbol??""} label="Ticker" name="symbol"/><TextField defaultValue={alert.body} label="Alert" minRows={4} multiline name="body" required/><TextField defaultValue={alert.publishingMode} label="Publishing" name="publishingMode" select><MenuItem value="tracked_page">Post a tracked-page link to Discord</MenuItem><MenuItem value="discord_post">Full Discord post</MenuItem></TextField><CommunityDestinationPicker publishing={snapshot.publishing} kind="alerts" objectId={alert.alertId}/>{alert.status==="published"?<CommunityPublicationUpdateControls/>:null}<Stack direction="row" spacing={1}><Button disabled={isReview} name="status" type="submit" value="published" variant="contained">{alert.status==="published"?"Save changes":"Publish alert"}</Button><Button disabled={isReview} name="status" type="submit" value="draft" variant="outlined">{alert.status==="archived"?"Restore draft":alert.status==="published"?"Unpublish":"Save draft"}</Button><Button color="error" disabled={isReview} name="status" type="submit" value="archived" variant="outlined">Archive alert</Button></Stack></Stack></CommunityPublicationForm></DashboardPanel>:null}
+    {!isReview?<CommunityPublicationHistory communityId={snapshot.community.communityId} objectId={alert.alertId} kind="alert" canManage={canEdit}/>:null}
+  </DashboardPage>;
+}

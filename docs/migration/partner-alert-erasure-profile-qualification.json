@@ -1,0 +1,57 @@
+{
+  "version": "core_partner_erasure_profiles_v1",
+  "reviewStatus": "INDEPENDENTLY_REVIEWED",
+  "technicalRefsAndExpiryStatus": "independently_reviewed",
+  "qualificationValidUntilUtc": "2026-11-24T18:55:13.040Z",
+  "schemaSha256": "a91c0ca5cc93eb0ced66e3f42214eab450ce26fc9ebe264ae1c17086e884960e",
+  "authoritySchemaSha256": "b8a968de4880cf6e5574906a2b569a502bdfd16b7519ddaf41cadab9c77a0961",
+  "privacySchemaSha256": "b53da413ac0cc52615171ed4ad337eec41464c553e866995953a96687b7a2c2f",
+  "nativeSourceArtifactSha256": "364aa7982a87f4cee623dbcc1d50b3c53a94825a1c964278de18c1481bdc9f76",
+  "referencePolicy": "hold_signer_and_shared_owner",
+  "payloadDisposition": "policy_bound_text_expiry_hold_minimal_unresolved",
+  "schemaEvidence": {
+    "reviewStatus": "INDEPENDENTLY_REVIEWED",
+    "observedSchemaSha256": "a91c0ca5cc93eb0ced66e3f42214eab450ce26fc9ebe264ae1c17086e884960e",
+    "artifactSha256": "10b7681552e8ce485ff7e3d2900f0870c5c4a54a94bf6b145d6508a507d0ef01"
+  },
+  "retentionPolicy": {
+    "ref": "paid_partner_retention_7d_v2",
+    "deliveredOrSettledMessageTextDays": 7,
+    "rejectedModerationTextDays": 7,
+    "textClock": "first_local_receipt_no_restart",
+    "unresolvedExternalOperationPayloads": "minimal_identifiers_status_only_after_text_expiry",
+    "credentialRemoval": "immediate_on_disconnect_or_erasure",
+    "pseudonymizedAuditAndIdempotencyYears": 2,
+    "agreementPaymentRefundDisputeYears": 7
+  },
+  "backupPolicy": {
+    "ref": "paid_partner_restore_safety_v2",
+    "rotationPeriod": "not_prescribed",
+    "localAlertTextDays": 7,
+    "erasureTombstonesReappliedAfterRestore": true,
+    "restoredCredentialsRemainDisabled": true
+  },
+  "profiles": [
+    {
+      "profileRef": "community_account_erasure_v1",
+      "retentionPolicyRef": "paid_partner_retention_7d_v2",
+      "backupPolicyRef": "paid_partner_restore_safety_v2",
+      "validUntilUtc": "2026-11-24T18:55:13.040Z"
+    }
+  ],
+  "independentReview": {
+    "status": "accepted",
+    "reviewerRef": "stats_independent_reviewer_01a15613_739c",
+    "receiptRef": "stats_final_1e612_catalog_review_20261118",
+    "reviewedAtUtc": "2026-11-18T12:11:47.495Z",
+    "catalogContentSha256": "1a780a6a49bf1402b199133465510377bb1639473e218a6d17c91b01b4d3819c"
+  },
+  "sourceQualification": {
+    "status": "ACCEPTED_SOURCE_ONLY",
+    "commit": "1e612d9b5c2842857e4f7ec736dbcebfe8cd3f98",
+    "tree": "2568f79eca464b3a8bf6851ac0531d7aece1cb1a",
+    "canonicalDescriptorLedgerSha256": "81b350f1f1cf167b91c0fc47f64db24bc1d4126e56489284877a62fcffdde5f2",
+    "sourceGraphSha256": "c98bf456e5d4c9f0cd7cd228a25043f531082e792260e3fbf6910b97cc18111f",
+    "checkpointClassification": "community-stats-205-checkpoint-lifecycle-review-20261118.json"
+  }
+}

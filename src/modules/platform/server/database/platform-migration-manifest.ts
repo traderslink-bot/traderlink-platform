@@ -1,4 +1,27 @@
 import { newsAccountFiltersAndSavedViewsMigration } from "@/src/modules/news/server/database/migrations/0221_news_account_filters_and_saved_views";
+import { traderLinkCommunityStatsForwardCheckpointsMigration } from "@/src/modules/communities/server/database/migrations/0217_traderlink_community_stats_forward_checkpoints";
+import { platformPremiumCurrentAccessEventsMigration } from "./migrations/0216_platform_premium_current_access_events";
+import { traderLinkCommunityStatsAttributionMigration } from "@/src/modules/communities/server/database/migrations/0215_traderlink_community_stats_attribution";
+import { traderLinkCommunityStatsMigration } from "@/src/modules/communities/server/database/migrations/0173_traderlink_community_stats";
+import { traderLinkCommunityStatsHistoryMigration } from "@/src/modules/communities/server/database/migrations/0174_traderlink_community_stats_history";
+import { traderLinkCommunitySharedAlertsMigration } from "@/src/modules/communities/server/database/migrations/0171_traderlink_community_shared_alerts";
+import { traderLinkCommunitySharedAlertIndividualsMigration } from "@/src/modules/communities/server/database/migrations/0177_traderlink_community_shared_alert_individuals";
+import { traderLinkCommunityBrandedFeedsMigration } from "@/src/modules/communities/server/database/migrations/0177_traderlink_community_branded_feeds";
+import { traderLinkCommunityDestinationTemplatesMigration } from "@/src/modules/communities/server/database/migrations/0199_traderlink_community_destination_templates";
+import { traderLinkCommunityDestinationGroupsMigration } from "@/src/modules/communities/server/database/migrations/0200_traderlink_community_destination_groups";
+import { platformPaidCorePartnerPrerequisitesMigration } from "@/src/modules/platform/server/database/migrations/0190_platform_paid_core_partner_prerequisites";
+import { platformPaidPartnerRetainedEvidenceMigration } from "@/src/modules/platform/server/database/migrations/0196_platform_paid_partner_retained_evidence";
+import { platformPaidPartnerRetentionSuccessorsMigration } from "@/src/modules/platform/server/database/migrations/0197_platform_paid_partner_retention_successors";
+import { platformPaidPartnerIdentifyingSourceDeleteGuardMigration } from "@/src/modules/platform/server/database/migrations/0198_platform_paid_partner_identifying_source_delete_guard";
+import { platformErasureTextSuccessorMigration } from "@/src/modules/platform/server/database/migrations/0204_platform_erasure_text_successors";
+import { seed } from "@/src/modules/platform/server/database/migrations/0205_platform_paid_partner_retained_principal_seed";
+import { platformPaidPartnerConsentInspectionMigration } from "@/src/modules/platform/server/database/migrations/0206_platform_paid_partner_consent_inspection";
+import { platformPaidWhopCoverageEvidenceMigration } from "@/src/modules/platform/server/database/migrations/0208_platform_paid_whop_coverage_evidence";
+import { platformPaidStripeConnectBillingMigration } from "@/src/modules/platform/server/database/migrations/0209_platform_paid_stripe_connect_billing";
+import { platformPaidPartnerGatewaySessionMigration } from "@/src/modules/platform/server/database/migrations/0210_platform_paid_partner_gateway_session";
+import { platformPaidStripeReauthorizationMigration } from "@/src/modules/platform/server/database/migrations/0211_platform_paid_stripe_reauthorization";
+import { platformPaidStripeCheckoutReviewedVersionMigration } from "@/src/modules/platform/server/database/migrations/0212_platform_paid_stripe_checkout_reviewed_version";
+import { watchlistFreeChatOwnerCopyMigration } from "./migrations/0213_watchlist_free_chat_owner_copy";
 import { platformHomePagePreferenceMigration } from "./migrations/0214_platform_home_page_preference";
 import { traderLinkCommunitiesIdentityPermissionsMigration } from "@/src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
 import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
@@ -35,7 +58,6 @@ import { journalChartEntriesMigration } from "@/src/modules/journal/server/datab
 import { watchlistIndicatorsVisibilityMigration } from "./migrations/0222_watchlist_indicators_visibility";
 import { watchlistTraderNotesNotificationsMigration } from "./migrations/0220_watchlist_trader_notes_notifications";
 import { watchlistMaskedAddedDateMigration } from "./migrations/0219_watchlist_masked_added_date";
-import { watchlistFreeChatOwnerCopyMigration } from "./migrations/0213_watchlist_free_chat_owner_copy";
 import { watchlistRowVisibilityMigration } from "./migrations/0218_watchlist_row_visibility";
 import { newsGeneralMarketNewsMigration } from "@/src/modules/news/server/database/migrations/0185_news_general_market_news";
 import { platformAccountErasureRecoveryMigration } from "./migrations/0183_platform_account_erasure_recovery";
@@ -748,6 +770,28 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0194_traderlink_coaching_review_selection_lifecycle.ts", migration: traderLinkCoachingReviewSelectionLifecycleMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0214_platform_home_page_preference.ts", migration: platformHomePagePreferenceMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0213_watchlist_free_chat_owner_copy.ts", migration: watchlistFreeChatOwnerCopyMigration }),
+    Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0171_traderlink_community_shared_alerts.ts", migration: traderLinkCommunitySharedAlertsMigration }),
+    Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0177_traderlink_community_shared_alert_individuals.ts", migration: traderLinkCommunitySharedAlertIndividualsMigration }),
+    Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0177_traderlink_community_branded_feeds.ts", migration: traderLinkCommunityBrandedFeedsMigration }),
+    Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0199_traderlink_community_destination_templates.ts", migration: traderLinkCommunityDestinationTemplatesMigration }),
+    Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0200_traderlink_community_destination_groups.ts", migration: traderLinkCommunityDestinationGroupsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0190_platform_paid_core_partner_prerequisites.ts", migration: platformPaidCorePartnerPrerequisitesMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0196_platform_paid_partner_retained_evidence.ts", migration: platformPaidPartnerRetainedEvidenceMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0197_platform_paid_partner_retention_successors.ts", migration: platformPaidPartnerRetentionSuccessorsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0198_platform_paid_partner_identifying_source_delete_guard.ts", migration: platformPaidPartnerIdentifyingSourceDeleteGuardMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0204_platform_erasure_text_successors.ts", migration: platformErasureTextSuccessorMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0205_platform_paid_partner_retained_principal_seed.ts", migration: seed }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0206_platform_paid_partner_consent_inspection.ts", migration: platformPaidPartnerConsentInspectionMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0208_platform_paid_whop_coverage_evidence.ts", migration: platformPaidWhopCoverageEvidenceMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0209_platform_paid_stripe_connect_billing.ts", migration: platformPaidStripeConnectBillingMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0210_platform_paid_partner_gateway_session.ts", migration: platformPaidPartnerGatewaySessionMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0211_platform_paid_stripe_reauthorization.ts", migration: platformPaidStripeReauthorizationMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0212_platform_paid_stripe_checkout_reviewed_version.ts", migration: platformPaidStripeCheckoutReviewedVersionMigration }),
+    Object.freeze({sourcePath:"src/modules/communities/server/database/migrations/0173_traderlink_community_stats.ts",migration:traderLinkCommunityStatsMigration}),
+    Object.freeze({sourcePath:"src/modules/communities/server/database/migrations/0174_traderlink_community_stats_history.ts",migration:traderLinkCommunityStatsHistoryMigration}),
+    Object.freeze({sourcePath:"src/modules/communities/server/database/migrations/0215_traderlink_community_stats_attribution.ts",migration:traderLinkCommunityStatsAttributionMigration}),
+    Object.freeze({sourcePath:"src/modules/platform/server/database/migrations/0216_platform_premium_current_access_events.ts",migration:platformPremiumCurrentAccessEventsMigration}),
+    Object.freeze({sourcePath:"src/modules/communities/server/database/migrations/0217_traderlink_community_stats_forward_checkpoints.ts",migration:traderLinkCommunityStatsForwardCheckpointsMigration}),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0218_watchlist_row_visibility.ts", migration: watchlistRowVisibilityMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0219_watchlist_masked_added_date.ts", migration: watchlistMaskedAddedDateMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0220_watchlist_trader_notes_notifications.ts", migration: watchlistTraderNotesNotificationsMigration }),
@@ -761,6 +805,24 @@ export const platformMigrationManifest = validatePlatformMigrationManifest(
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
+    "0216_platform_premium_current_access_events": Object.freeze([]),
+    "0217_traderlink_community_stats_forward_checkpoints": Object.freeze(["community_stats_forward_checkpoints"]),
+    "0171_traderlink_community_shared_alerts": Object.freeze(["community_alert_discord_authors", "community_shared_alert_blocks", "community_shared_alert_deliveries", "community_shared_alert_events", "community_shared_alert_messages", "community_shared_alert_owner_checks", "community_shared_alert_rate_limits", "community_shared_alert_read_positions", "community_shared_alert_requests", "community_shared_alert_settings"]),
+    "0177_traderlink_community_shared_alert_individuals": Object.freeze(["community_alert_publisher_permissions", "community_shared_alert_delivery_parts", "community_shared_alert_routes"]),
+    "0173_traderlink_community_stats": Object.freeze(["community_stats_channels", "community_stats_coverage", "community_stats_events", "community_stats_identity_links", "community_stats_members", "community_stats_memberships", "community_stats_roles", "community_stats_settings", "community_stats_settings_audit", "community_stats_source_state", "community_stats_voice_state"]),
+    "0174_traderlink_community_stats_history": Object.freeze(["community_stats_history_exclusions", "community_stats_history_jobs", "community_stats_reaction_snapshots"]),
+    "0177_traderlink_community_branded_feeds": Object.freeze(["traderlink_community_content_audit", "traderlink_community_content_categories", "traderlink_community_content_page_aliases", "traderlink_community_content_page_metadata_settings", "traderlink_community_content_page_publishers", "traderlink_community_content_pages", "traderlink_community_content_placements", "traderlink_community_content_ticker_details", "traderlink_community_general_content", "traderlink_community_page_allowances", "traderlink_community_swing_posts"]),
+    "0199_traderlink_community_destination_templates": Object.freeze(["traderlink_community_category_permissions", "traderlink_community_content_daily_stats", "traderlink_community_content_document_revisions", "traderlink_community_content_documents", "traderlink_community_content_templates", "traderlink_community_legacy_destination_routes", "traderlink_community_watchlist_item_revisions", "traderlink_community_watchlist_items"]),
+    "0200_traderlink_community_destination_groups": Object.freeze(["traderlink_community_content_page_roles"]),
+    "0190_platform_paid_core_partner_prerequisites": Object.freeze(["partner_alert_agreement_acceptances", "partner_alert_audit_events", "partner_alert_commands", "partner_alert_context_epochs", "partner_alert_deliveries", "partner_alert_ingress_sessions", "partner_alert_mappings", "partner_alert_memberships", "partner_alert_mirrored_parts", "partner_alert_offer_channels", "partner_alert_offers", "partner_alert_partners", "partner_alert_premium_refresh_events", "partner_alert_publishing_agreements", "partner_alert_publishing_memberships", "partner_alert_role_jobs", "partner_alert_source_messages", "partner_alert_source_revisions", "partner_alert_whop_connections", "partner_alert_whop_identities", "partner_alert_whop_inbox", "platform_erasure_gift_authorizations", "platform_erasure_lifecycle_events", "platform_erasure_lifecycles", "platform_erasure_module_operations", "platform_erasure_operation_claims", "platform_erasure_profiles", "platform_premium_authorities", "platform_premium_authority_policies", "platform_premium_complimentary_grants", "platform_premium_complimentary_redactions_v2", "platform_premium_discovery_candidates", "platform_premium_discovery_cooldowns", "platform_premium_discovery_current", "platform_premium_discovery_epochs", "platform_premium_external_cleanup", "platform_premium_identity_fence_events", "platform_premium_native_bindings", "platform_premium_paid_events", "platform_premium_paid_observations", "platform_premium_role_cooldowns", "platform_premium_role_jobs", "platform_premium_role_review", "platform_premium_signer_redaction_protocol"]),
+    "0196_platform_paid_partner_retained_evidence": Object.freeze(["partner_alert_retained_commercial_evidence", "partner_alert_retained_operation_evidence"]),
+    "0197_platform_paid_partner_retention_successors": Object.freeze(["partner_alert_erasure_claim_successors", "partner_alert_erasure_tombstones", "partner_alert_restore_reapplications", "partner_alert_retention_holds"]),
+    "0204_platform_erasure_text_successors": Object.freeze(["platform_erasure_text_successors"]),
+    "0206_platform_paid_partner_consent_inspection": Object.freeze(["partner_alert_application_consents", "partner_alert_application_inspections"]),
+    "0208_platform_paid_whop_coverage_evidence": Object.freeze(["partner_alert_whop_discovery", "partner_alert_whop_paid_intervals"]),
+    "0209_platform_paid_stripe_connect_billing": Object.freeze(["partner_alert_stripe_checkout_claims", "partner_alert_stripe_events", "partner_alert_stripe_onboarding_attempts", "partner_alert_stripe_paid_terms", "partner_alert_stripe_prices", "partner_alert_stripe_review_decisions", "partner_alert_stripe_role_reconciliations", "partner_alert_stripe_sellers"]),
+    "0211_platform_paid_stripe_reauthorization": Object.freeze(["partner_alert_stripe_authorizations"]),
+    "0215_traderlink_community_stats_attribution": Object.freeze(["community_stats_attribution_state", "community_stats_bot_messages", "community_stats_invite_joins", "community_stats_invite_usage", "community_stats_invites", "community_stats_reaction_refresh", "community_stats_traffic_sources"]),
     "0121_traderlink_communities_identity_permissions": Object.freeze([
       "traderlink_communities",
       "traderlink_community_memberships",

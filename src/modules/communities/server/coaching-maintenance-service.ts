@@ -5,6 +5,7 @@ import { CoachingDiscordRefreshService, type CoachingDiscordRefreshCursor } from
 import { CoachingAgreementService } from "./coaching-agreement-service";
 import { coachingEntitlement, archivePausedCoaching } from "./coaching-access-lifecycle";
 import { pruneCommunityNamedActivity } from "./community-activity-retention";
+import {maintainCommunityContentStats} from "./community-content-stats-retention";
 import { purgeExpiredCoachingDeletionArchives } from "./coaching-deletion-archive";
 
 /** One bounded pass; callers own the connection and must close it in finally. */
@@ -18,6 +19,7 @@ export async function runCoachingMaintenance(
   if (!Number.isInteger(limit) || limit < 1 || limit > 25) throw new Error("Invalid maintenance batch size.");
   const token = options.botToken?.trim();
   const activityRetention = pruneCommunityNamedActivity(db, atUtc);
+  const contentStatsRetention = maintainCommunityContentStats(db, atUtc);
   const deletionArchivesPurged = purgeExpiredCoachingDeletionArchives(db, atUtc);
   const access = token
     ? await new CoachingDiscordRefreshService(db, token, options.request, options.refreshCursor).runAvailable(limit, atUtc)
@@ -62,7 +64,7 @@ export async function runCoachingMaintenance(
     await setImmediate();
   }
   const archived = archivePausedCoaching(db, atUtc);
-  return { ok: failed === 0, access, checked: rows.length, created, failed, archived, activityRetention, deletionArchivesPurged, roleRefreshConfigured: Boolean(token) };
+  return { ok: failed === 0, access, checked: rows.length, created, failed, archived, activityRetention, contentStatsRetention, deletionArchivesPurged, roleRefreshConfigured: Boolean(token) };
 }
 
 /** Shared by the hosted timer: a slow provider pass never overlaps the next tick. */

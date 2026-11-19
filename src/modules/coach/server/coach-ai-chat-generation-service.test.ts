@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { Buffer } from "node:buffer";
 import { describe, expect, it, vi } from "vitest";
 
@@ -9,8 +9,6 @@ import type { CoachAiDailyCompanionContext } from "../contracts/ai-daily-compani
 import { COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUuidV4, isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { CoachAiChatProviderGenerationError } from "./coach-ai-chat-openai-adapter";
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
@@ -25,8 +23,8 @@ import { CoachAiChatGenerationService, COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_COD
 const now = new Date("2026-08-05T12:00:00.000Z");
 
 function fixture() {
-  const database = new Database(":memory:"); database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => now });
+  const database = openPristinePlatformTestDatabase(); database.pragma("foreign_keys = ON");
+  setPlatformTestFixtureMigrationTime(database, () => now);
   const userId = createCanonicalUuidV4(); const workspaceId = createCanonicalUuidV4(); const accountId = createCanonicalUuidV4();
   database.prepare(`INSERT INTO platform_users VALUES (?, 'development_local', ?, 'Test', 'active', ?, ?)`).run(userId, `test-${userId}`, now.toISOString(), now.toISOString());
   database.prepare(`INSERT INTO platform_workspaces VALUES (?, 'Test', 'America/New_York', 'active', ?, ?)`).run(workspaceId, now.toISOString(), now.toISOString());

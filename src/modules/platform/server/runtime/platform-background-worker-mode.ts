@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { constants, closeSync, fstatSync, lstatSync, openSync, readFileSync, realpathSync } from "node:fs";
 
 export const PLATFORM_BACKGROUND_WORKER_MODE_ENV = "TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE";
@@ -5,7 +6,7 @@ export const PRIVATE_ACCEPTANCE_MARKER = "/data/private-acceptance.json";
 export const PRIVATE_ACCEPTANCE_ARTIFACT = "/app/private-acceptance-artifact.json";
 const buildIdPath = "/app/.next/BUILD_ID";
 const prefix = "TRADERLINK_PLATFORM_PRIVATE_ACCEPTANCE_";
-type Disposition = "enabled" | "disabled_private_acceptance";
+type Disposition = "enabled" | "disabled_private_acceptance" | "disabled_isolated_staging";
 
 function refused(): never {
   throw Object.assign(new Error("Private acceptance boundary refused."), {
@@ -40,6 +41,60 @@ function readBoundedFile(path: string, permissions?: number): string {
   }
 }
 
+export const ISOLATED_STAGING_ARTIFACT = "/app/isolated-staging-artifact.json";
+const stagingPrefix = "TRADERLINK_PLATFORM_ISOLATED_STAGING_";
+const stagingTarget = Object.freeze({
+  role: "community-combined-review",
+  projectId: "49fc9197-07c9-45c7-b528-57d0393c2cca",
+  environmentId: "9e079dd4-f3f3-4872-9b00-adbd3000c485",
+  serviceId: "4d264aca-510c-4f5e-bc28-e89e526b8008",
+  databasePath: "/data/community-combined-review-20261117/platform.sqlite",
+});
+
+/** The staging controller builds the immutable receipt and initializes/verifies
+ * the synthetic database before this application starts. This guard grants no
+ * migration, provider or authentication authority. */
+function isolatedStagingMode(environment: NodeJS.ProcessEnv): Disposition {
+  try {
+    if (environment.NODE_ENV !== "production" || process.cwd() !== "/app"
+      || environment.RAILWAY_PROJECT_ID !== stagingTarget.projectId
+      || environment.RAILWAY_ENVIRONMENT_ID !== stagingTarget.environmentId
+      || environment.RAILWAY_SERVICE_ID !== stagingTarget.serviceId
+      || environment.TRADERLINK_PLATFORM_DB_PATH !== stagingTarget.databasePath
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(environment.RAILWAY_DEPLOYMENT_ID ?? "")
+      || Object.keys(environment).some(key => key.startsWith(prefix) && environment[key] !== undefined)
+      || environment.TRADERLINK_PLATFORM_MAINTENANCE_MIGRATION_ID !== undefined
+      || environment.TRADERLINK_PLATFORM_MAINTENANCE_CONFIRM !== undefined) refused();
+    const expected = {
+      ...stagingTarget,
+      sourceCommit: environment[`${stagingPrefix}SOURCE_COMMIT`],
+      sourceVectorSha256: environment[`${stagingPrefix}SOURCE_VECTOR_SHA256`],
+      schemaSha256: environment[`${stagingPrefix}SCHEMA_SHA256`],
+      buildId: environment[`${stagingPrefix}BUILD_ID`],
+    };
+    const artifactHash = environment[`${stagingPrefix}ARTIFACT_SHA256`];
+    if (!/^[0-9a-f]{40}$/.test(expected.sourceCommit ?? "")
+      || !/^[0-9a-f]{64}$/.test(expected.sourceVectorSha256 ?? "")
+      || !/^[0-9a-f]{64}$/.test(expected.schemaSha256 ?? "")
+      || !/^[0-9a-f]{64}$/.test(artifactHash ?? "")
+      || !/^[A-Za-z0-9_-]{1,128}$/.test(expected.buildId ?? "")) refused();
+    const bytes = readBoundedFile(ISOLATED_STAGING_ARTIFACT, 0o444);
+    if (createHash("sha256").update(bytes).digest("hex") !== artifactHash) refused();
+    const artifact = JSON.parse(bytes);
+    if (artifact?.kind !== "traderlink-isolated-staging-artifact-v1") refused();
+    for (const [key, value] of Object.entries(expected)) {
+      if (artifact[key] !== value) refused();
+    }
+    if (readBoundedFile(buildIdPath).trim() !== expected.buildId) refused();
+    return "disabled_isolated_staging";
+  } catch {
+    throw Object.assign(new Error("Isolated staging boundary refused."), {
+      code: "TRADERLINK_PLATFORM_ISOLATED_STAGING_INVALID",
+      safeContext: { stage: "background_worker_mode" },
+    });
+  }
+}
+
 /** Resolve before migration maintenance. Normal hosted configuration never reads
  * a private marker; a requested private mode must qualify completely or abort. */
 export function resolvePlatformBackgroundWorkerMode(
@@ -47,6 +102,7 @@ export function resolvePlatformBackgroundWorkerMode(
 ): Disposition {
   const mode = environment[PLATFORM_BACKGROUND_WORKER_MODE_ENV];
   if (mode === undefined || mode === "enabled") return "enabled";
+  if (mode === "disabled_isolated_staging") return isolatedStagingMode(environment);
   if (mode !== "disabled_private_acceptance") refused();
   if (environment.NODE_ENV !== "production" || environment.HOSTNAME !== "127.0.0.1"
     || environment.PORT !== "3010" || process.cwd() !== "/app"

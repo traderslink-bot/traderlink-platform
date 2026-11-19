@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -5,8 +6,6 @@ import { join, resolve } from "node:path";
 
 import type Database from "better-sqlite3";
 
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { LevelAnalysisDeliveryRepository } from "./level-analysis-delivery-repository";
 import {
@@ -24,12 +23,12 @@ afterEach(async () => {
 function setup(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-level-delivery-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "platform.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => new Date("2026-08-02T12:00:00.000Z") });
+  setPlatformTestFixtureMigrationTime(database, () => new Date("2026-08-02T12:00:00.000Z"));
   return database;
 }
 

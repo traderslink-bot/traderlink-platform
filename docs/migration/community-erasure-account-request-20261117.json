@@ -1,0 +1,183 @@
+{
+  "state": "SOURCE_VERIFIED_FINAL_COMBINED_QUALIFICATION_PENDING",
+  "parentCommit": "4ef93f9ca4821e5e1e5b957f61c9bac5550aa55e",
+  "files": [
+    {
+      "path": "app/api/platform/account-erasure/route.ts",
+      "sha256": "ae60da027bcbe6f557068a4f8f1cc07fe0d7a3c6b1abc0a60edf946cfbe7f07d"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-erasure-command.ts",
+      "sha256": "b0beda4531ca37535a6d0527cfa07cbbdb2351c59254ffd4dab2b4eadbf17e9b"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-erasure-request-preparation.ts",
+      "sha256": "a2424380631038f6ef6cd6d28c0ea6c8e5186a291e9554c25ba76a0cdc42d518"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-erasure-request-preparation.test.ts",
+      "sha256": "fbe0756a7601f053003658372d9c4f5ffe793508b42a8c5e6c4494832e54fcd2"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-erasure-route.test.ts",
+      "sha256": "94e04aed07821fc17eabe33e94d7d1a0e3cbcf6479761b2ee51066ee3a63791b"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-erasure-worker-supervisor.ts",
+      "sha256": "fef0d42852cb013d87f1c5599705614c21e8ba6b003b3219053576ae18f08f8b"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-erasure-worker-supervisor.test.ts",
+      "sha256": "cbd0e5a9ad6b992eddf5812846f6710b01dc8013dbee7f539592700730b9bc04"
+    },
+    {
+      "path": "scripts/qa/community-erasure-v5-root.cjs",
+      "sha256": "c4f9555f2c09e4da6e41ae4c1af65b7e878662eced0687671f6ff969f6168132"
+    }
+  ],
+  "nativeHandlerEvidenceRoot": "/tmp/community-erasure-v5-root-WRi71D",
+  "nativeReceiptSha256": "dab21135357ced8a2f2b64495a5040b2b3b5f496710b2b6fc86924f34080c1fc",
+  "nativeHandlerResults": [
+    {
+      "scenario": "empty",
+      "handler": true,
+      "result": "deleted",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "legacy",
+      "handler": true,
+      "result": "deleted",
+      "networkCalls": 0,
+      "legacyPremiumFixture": true,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "renewed_ordinary",
+      "handler": true,
+      "result": "deleted",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "renewed_member",
+      "handler": true,
+      "result": "deleted",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "nonempty",
+      "handler": true,
+      "result": "held",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "changed",
+      "handler": true,
+      "result": "held",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "pending",
+      "handler": true,
+      "result": "held",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "held",
+      "handler": true,
+      "result": "held",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "csrf",
+      "handler": true,
+      "result": "held",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "expired_session",
+      "handler": true,
+      "result": "held",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "forged_body",
+      "handler": true,
+      "result": "deleted",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "cross_user",
+      "handler": true,
+      "result": "held",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "production_cookie",
+      "handler": true,
+      "result": "deleted",
+      "networkCalls": 0,
+      "legacyPremiumFixture": false,
+      "nativeEntries": 193,
+      "fixtureOnly": true
+    }
+  ],
+  "focusedTestFiles": 5,
+  "focusedTestsPassed": 32,
+  "scopedTypeCheckExitCode": 0,
+  "fixtureManifestEntries": 193,
+  "fixtureSchemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+  "driver": "better-sqlite3 12.9.0 / SQLite 3.53.0",
+  "signedReaderCommit": "4a0596ca24626c0ccfae963250c455dfba51daa5",
+  "independentReview": {
+    "reviewerTask": "01a19f82-1ef7-7e31-8757-f360fbe7af76",
+    "scope": "Read-only actual source + final receipt review, no source blocker; no independent rerun or production catalog approval"
+  },
+  "testInstrumentation": [
+    "fixture manifest resolution for Node process and worker bundle",
+    "all worker fetch attempts fail and leave a marker",
+    "microtask inserts a paid fact after first empty capture only in changed scenario",
+    "private worker errors recorded only inside synthetic fixture"
+  ],
+  "deferred": [
+    "final canonical combined manifest/source freeze",
+    "independent current native schema/catalog acceptance",
+    "actual deployment signature/inventory/key/profile installation"
+  ],
+  "noHostedEffects": true,
+  "qualificationBaselineCommit": "fc9d404708f8a36da2001979e657147bfbbd87b3"
+}

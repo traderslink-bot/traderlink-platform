@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 
@@ -10,8 +11,6 @@ import {
   createCanonicalUuidV4,
   isTraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
@@ -27,9 +26,9 @@ type Fixture = Readonly<{
 }>;
 
 function setup(): Fixture {
-  const database = new Database(":memory:");
+  const database = openPristinePlatformTestDatabase();
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => new Date(initialTime) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(initialTime));
   const userId = createCanonicalUuidV4();
   const workspaceId = createCanonicalUuidV4();
   const accountId = createCanonicalUuidV4();

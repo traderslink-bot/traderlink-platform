@@ -1,11 +1,10 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { deriveJournalAccountSelectionRef } from "@/src/modules/platform/contracts/journal-account-selection";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
 import { PlatformWorkspaceRepository } from "@/src/modules/platform/server/identity/platform-workspace-repository";
 import {
@@ -29,13 +28,13 @@ const ACCOUNT_B_ID = "44444444-4444-4444-8444-444444444444";
 describe("development owner Journal scope", () => {
   it("authorizes all active accounts and resolves only an allowed opaque selection", async () => {
     const root = mkdtempSync(join(tmpdir(), "traderlink-development-scope-"));
-    const database = openPlatformDatabase({
+    const database = openPristinePlatformTestDatabase({
       mode: "initializer",
       databasePath: join(root, "scope.sqlite"),
       forbiddenRepositoryRoots: [],
     });
     try {
-      runPlatformMigrations(database);
+
       const timestamp = "2026-08-02T12:00:00.000Z";
       new PlatformUserRepository(database, {
         allowedAuthProviders: [DEVELOPMENT_OWNER_SEED_AUTH_PROVIDER],

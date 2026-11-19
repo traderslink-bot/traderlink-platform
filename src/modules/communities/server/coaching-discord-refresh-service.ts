@@ -1,3 +1,4 @@
+import {COMMUNITY_REVIEW_DISCORD_GUILD_ID,assertCommunityReviewDiscordGuild} from './community-review-discord-guild';
 import type Database from "better-sqlite3";
 import { assertCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
 import { verifyCommunityRequestMember } from "./community-request-verification";
@@ -22,9 +23,9 @@ export class CoachingDiscordRefreshService {
   JOIN traderlink_communities c ON c.community_id=p.community_id AND c.status='active'
   JOIN platform_auth_identities i ON i.user_id=p.user_id AND i.auth_provider='discord' AND i.status='active'
   LEFT JOIN platform_discord_memberships m ON m.user_id=p.user_id AND m.guild_id=c.discord_guild_id
-  WHERE m.last_verified_at_utc IS NULL OR m.last_verified_at_utc<?
+  WHERE c.discord_guild_id=? AND (m.last_verified_at_utc IS NULL OR m.last_verified_at_utc<?)
   ORDER BY CASE WHEN (c.discord_guild_id || ':' || p.user_id)>? THEN 0 ELSE 1 END,
-   (c.discord_guild_id || ':' || p.user_id) LIMIT ?`).all(cutoff, this.cursor.after ?? '', limit) as Target[];
+   (c.discord_guild_id || ':' || p.user_id) LIMIT ?`).all(COMMUNITY_REVIEW_DISCORD_GUILD_ID, cutoff, this.cursor.after ?? '', limit) as Target[];
   let refreshed = 0, unavailable = 0, rateLimited = false;
   const request: typeof fetch = async (url, options) => {
    const response = await this.request(url, options);
@@ -44,6 +45,7 @@ export class CoachingDiscordRefreshService {
    return response;
   };
   for (const target of targets) {
+   assertCommunityReviewDiscordGuild(target.discord_guild_id);
    const verified = await verifyCommunityRequestMember(this.db, {slug:target.slug,userId:target.user_id,botToken:this.botToken,atUtc,existingCoachingOnly:true}, request);
    // Advance after failures and suspensions too; stale evidence remains stale.
    this.cursor.after = `${target.discord_guild_id}:${target.user_id}`;

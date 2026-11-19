@@ -1,3 +1,4 @@
+import { assertCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type { CommunityDiscordResources } from "../contracts/community-discord-resources";
 
 type Role = { id: string; name: string; permissions: string };
@@ -26,6 +27,7 @@ export function canBotPublish(guildId: string, botId: string, memberRoles: reado
 
 /** Read-only discovery. No Discord roles, channels or permissions are modified. */
 export async function readCommunityDiscordResources(guildId: string, token: string, request: typeof fetch = fetch): Promise<CommunityDiscordResources> {
+  assertCommunityReviewDiscordGuild(guildId);
   if (!snowflake.test(guildId) || !token.trim()) throw new Error("Discord connection unavailable.");
   async function get(path: string): Promise<unknown> {
     const response = await request(`https://discord.com/api/v10/${path}`, { headers: { Authorization: `Bot ${token}` }, cache: "no-store", signal: AbortSignal.timeout(8000) });

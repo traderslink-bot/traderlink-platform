@@ -1,0 +1,33 @@
+# Shared Alerts synthetic staging separation — 2026-11-17
+
+Owner objective: Harbor and Northstar can exercise sharing while every real Discord effect remains confined to TradersLink Tests (`1559172784813514803`). This is staging-only QA infrastructure. It does not grant authority over either account's real Discord server.
+
+## Reviewed boundary
+
+Coordinator approved phase A: three new server modules (`shared-alerts-staging-fixture-authority`, `-model`, `-transport`), one focused QA driver, this protocol and its source vector. Their preimages are absent at composition commit d6239d88ba96a5471aea99b1c9ce8360e6db7ee2. No UI/routes/client code, canonical DDL, production hooks, global worker flags, actual owner/membership/role/grant records or native delivery queue rows are added by phase A.
+
+The logical keys `harbor` and `northstar` exist only in a separate, finite in-memory model labeled `SyntheticAgreement`. They are not Discord guild IDs or duplicate canonical communities. An independently checked real transport is labeled `ActualDiscordIO`; it validates the bot's actual Tests guild channel inventory/roles and each actual participant's Tests membership before its sole message POST. No foreign guild URL, fake channel verification, substituted provider response or Gateway is supported.
+
+A genuine existing Core-issued Community staging capability is mandatory. Its real Core private audit frame, current native database, source/archive/build/image/schema artifact, sessions, native ledger and revocation guards remain authoritative. A child opaque WeakMap brand binds that parent and exact native database. A private manifest pins the parent's run ID/nonce/pins and recomputed full native migration-ledger digest, one fixture UUID, expiration within the parent's remaining time (at most 120 seconds), exactly two distinct actual stable users/Discord subjects/session IDs and explicit Tests channel mappings. These subjects must exactly match the two configured staging principals. Every model operation authenticates the actual request and native PlatformSessionService cookie/session again; switching accounts does not manufacture a role or Discord owner fact.
+
+Context copies, different database/run/account/session/community, mismatched manifest/pins, missing or expired authority, actual session revocation, parent Core grant revocation and post-await changes deny before model work/provider continuation. The model is bounded to 96 operations, eight agreements, six deliveries and 32 messages. Parent provider request/write limits and cancellation remain in force. No background registration, timer-based work, exported constructible context or global mutable authorization is introduced.
+
+Synthetic requests require an offered publisher before sending. Only the receiving logical community chooses its mapped delivery channel and post approval requirement. Terms versions and content revisions prevent stale acceptance/approval; publisher revocation/pause/withdrawal prevents later transport. Each native transport claim is single-use. A completed provider receipt may settle the existing model attempt after expiry; it cannot start more work. Receipts/state are in memory for this finite run, not durable production delivery records.
+
+## Parent-purpose contract gap
+
+During implementation, discovery found that the existing delivery capability requires at least one canonical queue job, while its Stats pipeline permits none but forbids writes. Fabricating a queue job or borrowing an unrelated job is unacceptable. Coordinator approved the additional narrow existing-file allowlist: explicit `shared-fixture` pipeline plus pinned `fixtureManifestSha256` in `community-staging-qa-capability.ts`, explicit refusal in the ordinary `community-staging-qa-runner.ts`, and focused capability regressions. The implemented purpose extension requires zero canonical jobs and rejects unrelated pending native work. The child manifest must match the parent's admitted hash; the normal runner explicitly refuses this pipeline. Existing source/owner/session/pin/native ledger/provider guards stay intact. This resolves the parent-purpose admission gap without fake queue jobs.
+
+## Local verification
+
+34 fixture scenarios and 40 parent capability scenarios pass. The fixture driver uses genuine Core policy/private-frame/session/native SQLite APIs, with simulated target filesystem, request identity and Discord transport. It checks wrong database/context/run/account, changed source/vector/archive/schema/artifact/build/ledger, manifest/nonce/channel/subject transplants, stale terms/content approval, publisher/real session/Core grant revocation, changed provider inventory/membership, pause, cancellation/expiry and late receipt preservation. Parent tests ensure the new scope cannot absorb canonical jobs, run the native delivery/Stats runner or leak its child hash into the ordinary Stats pipeline. Strict TypeScript passes over all five runtime inputs and their real transitive dependencies; focused lint is clean. No browser/actual provider acceptance is implied.
+
+[Exact source vector](shared-alerts-staging-fixture-vector-20261117.json). Existing production Help Center guides are unchanged: phase A has no user route or changed production flow. Phase B must include appropriate test labeling/help.
+
+## Integration and acceptance still required
+
+Phase B needs its own reviewed private staging controller and browser adapters. No route or Shared Alerts page currently uses the phase-A modules. It must connect the two real browser sessions to the two logical fixture communities, show clear test labels, preserve both Back to community and Back to Shared alerts paths, and support read markers in a real hidden tab. The Coordinator owns source/image integration and exact finite provider manifests. Existing Tests Community, Coaching/Stats principals and data remain unchanged.
+
+A successful future test must be reported as synthetic cross-community agreement authorization plus actual Tests Discord transport. It cannot establish real authorization over two foreign Discord servers. Unit tests use simulated provider/target/request-identity boundaries and never imply browser or actual-provider acceptance. Nothing in this protocol authorizes a production release.
+
+Purpose-isolation follow-up: generic capability admission now refuses fixture scope; only the explicit fixture-purpose child assertion accepts it. Actual Stats Gateway construction rejects this capability before storage/socket activity. Fixture scopes require zero Gateway/history/collector budgets. The 34 fixture and 40 capability cases pass, as do the four current-source Stats controller cases; strict five-file/transitive TypeScript and lint remain clean.

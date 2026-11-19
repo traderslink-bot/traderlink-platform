@@ -33,6 +33,7 @@ import MultilineChartRoundedIcon from "@mui/icons-material/MultilineChartRounded
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import NewspaperRoundedIcon from "@mui/icons-material/NewspaperRounded";
+import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
 import PauseCircleOutlineRoundedIcon from "@mui/icons-material/PauseCircleOutlineRounded";
 import PanoramaFishEyeIcon from "@mui/icons-material/PanoramaFishEye";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
@@ -157,6 +158,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     lab: <ScienceRoundedIcon />,
     manualEntry: <NoteAltRoundedIcon />,
     newspaper: <NewspaperRoundedIcon />,
+    notifications: <NotificationsRoundedIcon />,
     overview: <SpaceDashboardRoundedIcon />,
     openPositions: <PanoramaFishEyeIcon />,
     reflection: <NoteAltRoundedIcon />,
@@ -406,6 +408,7 @@ function DashboardShellContent({
   generalMarketNewsAccess = false,
   watchlistAdminNavigationAccess = false,
   communityNavigationHref = null,
+  partnerChannelsNavigationAccess = false,
   coachingNavigationHref = null,
 }: {
   children: ReactNode;
@@ -421,6 +424,7 @@ function DashboardShellContent({
   generalMarketNewsAccess?: boolean;
   watchlistAdminNavigationAccess?: boolean;
   communityNavigationHref?: string | null;
+  partnerChannelsNavigationAccess?: boolean;
   coachingNavigationHref?: string | null;
 }) {
   const theme = useTheme();
@@ -548,7 +552,7 @@ function DashboardShellContent({
         }),
       }));
   const sidebarNavigationSections = stockToolsNavigationSections
-    .filter(section => section.group.id === "communities" ? communityNavigationHref !== null : section.group.id === "coaching" ? watchlistAdminNavigationAccess && coachingNavigationHref === "/coaching" : true)
+    .filter(section => section.group.id === "communities" ? communityNavigationHref !== null || partnerChannelsNavigationAccess : section.group.id === "coaching" ? watchlistAdminNavigationAccess && coachingNavigationHref === "/coaching" : true)
     .map(section => section.group.id !== "communities" && section.group.id !== "coaching" ? section : Object.freeze({
       ...section,
       group: Object.freeze({
@@ -556,6 +560,7 @@ function DashboardShellContent({
         items: Object.freeze(section.group.items.flatMap<DashboardNavigationGroupItem>(item => {
           if (!isDashboardNavigationItem(item)) return [item];
           if (item.href === "/communities") return communityNavigationHref ? [Object.freeze({ ...item, href: communityNavigationHref })] : [];
+          if (item.href === "/partner-channels") return partnerChannelsNavigationAccess && watchlistAdminNavigationAccess ? [item] : [];
           if (item.href === "/coaching") {
             return watchlistAdminNavigationAccess && coachingNavigationHref === "/coaching" ? [item] : [];
           }

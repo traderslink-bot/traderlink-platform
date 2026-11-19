@@ -1,3 +1,4 @@
+import {performancePrimitive} from '../contracts/coaching-performance-evaluation';
 import {requireCoachingReviewAvailable} from "./coaching-review-timing";
 import {coachingRequiredAccess} from "../contracts/coaching-required-access";
 import {coachingTradeFeedbackComplete} from "../contracts/coaching-trade-feedback";
@@ -40,18 +41,23 @@ export function coachingReviewRequirements(db: Database.Database, reviewId: stri
       deliveredAtUtc:string|null;relationshipId:string;periodStart:string|null;periodEnd:string|null;workspaceKind:import("../contracts/coaching-review-workspace").CoachingReviewKind|null;focusAreasJson:string;deliveryState:string; acceptanceState: "accepted" | "pending"; coachFeedback: string; wentWell: string;
       needsWork: string; nextFocus: string; previousFocusAssessment: string; focusFeedbackJson: string;
     };
+  const boundService=coachingReviewService(db,reviewId);
+  const tradeTemplate=boundService?.terms.tradeEvaluationTemplates?.[boundService.item.planItemId];
+  const performanceTemplate=boundService?.terms.performanceEvaluationTemplates?.[boundService.item.planItemId];
   const trades = db.prepare(`SELECT round_trip_id roundTripId,workflow_state workflowState,coach_feedback coachFeedback FROM traderlink_community_coaching_review_trades WHERE review_id=?`).all(reviewId) as { roundTripId:string;workflowState: string;coachFeedback:string }[];
   const actions = db.prepare(`SELECT status FROM traderlink_community_coaching_review_actions WHERE review_id=?`).all(reviewId) as { status: string }[];
   const active=trades.filter(trade=>trade.workflowState!=='removed'),identityKeys=review.deliveryState==='draft'?coachingReviewIdentityKeys(db,active.map(trade=>trade.roundTripId)):new Map<string,string>();
   const units=new Map<string,typeof trades[number]>();for(const trade of active){const key=identityKeys.get(trade.roundTripId)??trade.roundTripId;const prior=units.get(key);if(!prior||trade.workflowState==='saved')units.set(key,trade);}
+  const readinessTrades=[...units.values()].map(trade=>review.deliveryState==='draft'&&tradeTemplate&&trade.workflowState==='saved'&&!coachingTradeFeedbackComplete(trade.coachFeedback,boundService?.item.focusAreas??[],tradeTemplate)?{...trade,workflowState:'queued'}:trade);
   const progress = coachingReviewReadiness({ ...review,
     agreedTradeCount: coachingReviewRequiredTradeCount(db, reviewId),
-    focusFeedback: JSON.parse(review.focusFeedbackJson),focusAreas:JSON.parse(review.focusAreasJson),dayAssessments:coachingDayAssessments(db,reviewId),
-  }, [...units.values()], actions,coachingReviewAvailableTradeCount(db,reviewId));
+    focusFeedback: JSON.parse(review.focusFeedbackJson),focusAreas:performanceTemplate?(JSON.parse(review.focusAreasJson) as string[]).filter(key=>key==='goals'):review.workspaceKind==='trading_day'&&tradeTemplate?.daySessionReview?(JSON.parse(review.focusAreasJson) as string[]).filter(key=>key==='goals'):JSON.parse(review.focusAreasJson),dayAssessments:coachingDayAssessments(db,reviewId),
+  }, readinessTrades, actions,coachingReviewAvailableTradeCount(db,reviewId));
   if(review.deliveryState!=="draft")return {...progress,ready:Boolean(review.deliveredAtUtc),problem:review.deliveredAtUtc?null:'This review has not been delivered.',dayCoverage:coachingReviewDeliveryCoverage(db,reviewId)?.dayCoverage??undefined};
   let dayCoverage:ReturnType<typeof coachingTradingDayRequirements>['coverage'];
   try{
   const service=coachingReviewService(db,reviewId);
+  if(performanceTemplate&&!coachingTradeFeedbackComplete(review.coachFeedback,[],performancePrimitive(performanceTemplate)))throw new Error('Complete the agreed Performance evaluation and required written assessment before delivery.');
   if(review.workspaceKind==='trading_day'&&(!review.periodStart||!review.periodEnd))throw new Error('Choose the review date range before selecting trading days.');
   if(service?.item.itemType==='trade_review'&&service.item.coveragePeriod!=='single_item'&&(!review.periodStart||!review.periodEnd))throw new Error('Choose the date range required by this accepted Trade service.');
   if(!service&&review.deliveryState==='draft')throw new Error('Identify the exact accepted service before delivery.');
@@ -68,10 +74,10 @@ export function coachingReviewRequirements(db: Database.Database, reviewId: stri
   if(selected.some(trade=>!byId.has(trade.roundTripId)))throw new Error('Restore sharing or remove unavailable trade selections before delivery.');
   requireReviewSelectionLimits(db,reviewId,selected.map(trade=>byId.get(trade.roundTripId)!));
   const day=coachingTradingDayRequirements(db,reviewId);dayCoverage=day.coverage;if(dayCoverage)progress.total=Math.max(progress.total,dayCoverage.requiredTradeFeedback);
-  if(service&&review.deliveryState==='draft'&&trades.some(trade=>trade.workflowState==='saved'&&!coachingTradeFeedbackComplete(trade.coachFeedback,service.item.focusAreas??[])))throw new Error('Complete the agreed focus feedback for every selected trade.');
+  if(service&&review.deliveryState==='draft'&&trades.some(trade=>trade.workflowState==='saved'&&!coachingTradeFeedbackComplete(trade.coachFeedback,service.item.focusAreas??[],tradeTemplate)))throw new Error('Complete the agreed focus feedback for every selected trade.');
   if(day.problem)throw new Error(day.problem);
   if(review.workspaceKind==='trading_day'&&dayCoverage?.availableDays===0){progress.focusComplete=true;progress.ready=review.acceptanceState!=='pending'&&progress.saved===progress.selected&&progress.hasContent;}
-  if(service&&service.item.itemType!=="trading_day_review"&&service.item.focusAreas?.filter(key=>service.item.itemType!=="trade_review"||key==="goals").some(key=>!['overall','next_steps'].includes(key)&&!JSON.parse(review.focusFeedbackJson)[key]?.trim()))throw new Error("Complete each agreed focus assessment before delivery.");
+  if(service&&service.item.itemType!=="trading_day_review"&&service.item.focusAreas?.filter(key=>(service.item.itemType!=="trade_review"&&!performanceTemplate)||key==="goals").some(key=>!['overall','next_steps'].includes(key)&&!JSON.parse(review.focusFeedbackJson)[key]?.trim()))throw new Error("Complete each agreed focus assessment before delivery.");
   if (!progress.ready) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
     field: progress.saved < progress.required ? "requiredTradeReviews" : progress.saved < progress.selected ? "unfinishedTradeReviews" : "emptyReview",
   });

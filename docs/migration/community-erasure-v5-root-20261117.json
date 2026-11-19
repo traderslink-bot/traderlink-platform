@@ -1,0 +1,121 @@
+{
+  "qualification": "UNQUALIFIED_SYNTHETIC_ONLY",
+  "coreCommit": "79eab5ffec49af63ce2e6ba5595d3a31f7ddb2eb",
+  "paidCommit": "4a0596ca24626c0ccfae963250c455dfba51daa5",
+  "paidGuardParent": "3475c51e506d2c6484271067b00b589f5e378c52",
+  "helperCommit": "fe5892683f3343ae1a8189d6ded6a64ade65ad5f",
+  "fixtureSource": "/tmp/core-0209-main193.FBjTfc",
+  "fixtureSchema": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+  "driver": "better-sqlite3 12.9.0 / SQLite 3.53.0",
+  "evidenceRoot": "/tmp/community-erasure-v5-root-MRbenG",
+  "results": [
+    {
+      "scenario": "empty",
+      "result": "deleted",
+      "missingLifecycleBootstrapped": true,
+      "noPremiumGranted": true,
+      "networkCalls": 0,
+      "unrelatedPublisherPreserved": true,
+      "nativeEntries": 193,
+      "schemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "nonempty",
+      "result": "held",
+      "missingLifecycleBootstrapped": true,
+      "noPremiumGranted": true,
+      "networkCalls": 0,
+      "unrelatedPublisherPreserved": true,
+      "nativeEntries": 193,
+      "schemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+      "fixtureOnly": true
+    },
+    {
+      "scenario": "changed",
+      "result": "held",
+      "missingLifecycleBootstrapped": true,
+      "noPremiumGranted": true,
+      "networkCalls": 0,
+      "unrelatedPublisherPreserved": true,
+      "nativeEntries": 193,
+      "schemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+      "fixtureOnly": true
+    }
+  ],
+  "paidSourceVectorSha256": "bb2a0af15e9657cdd0faf9a23f81ed606264441e5575b10f75e50aa16449ff3b",
+  "harness": [
+    {
+      "path": "scripts/qa/community-erasure-v5-root.cjs",
+      "sha256": "48fef904137da36f8ce9b4b418bad0386050a0d457648a4baa62b351d20029bd"
+    },
+    {
+      "path": "scripts/qa/community-erasure-v5-seed.cjs",
+      "sha256": "6f2ab49996d497d45a4bcd047866abad6f5119621119a4198186506fdf699d4b"
+    }
+  ],
+  "qualificationLimit": "Full-root proof over an isolated historical193 schema using current implementation and generated test keys/catalog. Final canonical combined schema and independent review remain pending.",
+  "renewalRehearsal": {
+    "evidenceRoot": "/tmp/community-erasure-v5-root-uSSv4t",
+    "results": [
+      {
+        "scenario": "empty",
+        "result": "deleted",
+        "missingLifecycleBootstrapped": true,
+        "noPremiumGranted": true,
+        "networkCalls": 0,
+        "unrelatedPublisherPreserved": true,
+        "nativeEntries": 193,
+        "schemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+        "fixtureOnly": true
+      },
+      {
+        "scenario": "nonempty",
+        "result": "held",
+        "missingLifecycleBootstrapped": true,
+        "noPremiumGranted": true,
+        "networkCalls": 0,
+        "unrelatedPublisherPreserved": true,
+        "nativeEntries": 193,
+        "schemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+        "fixtureOnly": true
+      },
+      {
+        "scenario": "changed",
+        "result": "held",
+        "missingLifecycleBootstrapped": true,
+        "noPremiumGranted": true,
+        "networkCalls": 0,
+        "unrelatedPublisherPreserved": true,
+        "nativeEntries": 193,
+        "schemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+        "fixtureOnly": true
+      },
+      {
+        "scenario": "renewed_ordinary",
+        "result": "deleted",
+        "missingLifecycleBootstrapped": true,
+        "noPremiumGranted": true,
+        "networkCalls": 0,
+        "unrelatedPublisherPreserved": true,
+        "nativeEntries": 193,
+        "schemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+        "fixtureOnly": true
+      },
+      {
+        "scenario": "renewed_member",
+        "result": "deleted",
+        "missingLifecycleBootstrapped": true,
+        "noPremiumGranted": true,
+        "networkCalls": 0,
+        "unrelatedPublisherPreserved": true,
+        "nativeEntries": 193,
+        "schemaSha256": "26422558d5ad7706a7bfd3d991aa4e9dd0c2945a98eb5bd4819bb2ed7a822622",
+        "fixtureOnly": true
+      }
+    ],
+    "requestPath": "real stored session and Core request audit frame; no HTTP endpoint claimed",
+    "harnessSha256": "b86550676b11e17023eda45b6ab31ef014de22fdba947b841e9fc91af51d2663",
+    "qualification": "UNQUALIFIED_SYNTHETIC_ONLY"
+  }
+}

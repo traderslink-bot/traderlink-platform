@@ -1,0 +1,8 @@
+import type Database from "better-sqlite3";
+
+export type CommunityContentReportRow=Readonly<{pageId:string;categoryId:string|null;publisherUserId:string|null;visits:number;uniqueMembers:number;contentOpens:number}>;
+type CommunityContentReportDatabaseRow={pageId:string;categoryId:string|null;publisherUserId:string|null;visits:number;uniqueMembers:number;contentOpens:number};
+/** Extends the existing signed-in Community Stats evidence; visits are never interpreted as likes. */
+export function readCommunityContentReport(database:Database.Database,input:{communityId:string;fromUtc:string;toUtc:string;pageId?:string;categoryId?:string;publisherUserId?:string}):readonly CommunityContentReportRow[]{
+ return (database.prepare(`SELECT page_id pageId,category_id categoryId,publisher_user_id publisherUserId,count(*) visits,count(DISTINCT platform_user_id) uniqueMembers,count(DISTINCT CASE WHEN content_id<>page_id THEN content_id END) contentOpens FROM community_stats_events WHERE community_id=? AND surface='web' AND kind='web_visit' AND occurred_at_utc>=? AND occurred_at_utc<? AND page_id IS NOT NULL AND (? IS NULL OR page_id=?) AND (? IS NULL OR category_id=?) AND (? IS NULL OR publisher_user_id=?) GROUP BY page_id,category_id,publisher_user_id ORDER BY visits DESC`).all(input.communityId,input.fromUtc,input.toUtc,input.pageId??null,input.pageId??null,input.categoryId??null,input.categoryId??null,input.publisherUserId??null,input.publisherUserId??null) as CommunityContentReportDatabaseRow[]).map(row=>({pageId:row.pageId,categoryId:row.categoryId,publisherUserId:row.publisherUserId,visits:Number(row.visits),uniqueMembers:Number(row.uniqueMembers),contentOpens:Number(row.contentOpens)}));
+}

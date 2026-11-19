@@ -24,6 +24,8 @@ export type WhopAiReviewEntitlementConfiguration = Readonly<{
 }>;
 
 export type WhopAiReviewOAuthConfiguration = Readonly<{
+  realm?: "sandbox";
+  stagingBinding?: string;
   clientId: string;
   redirectUri: string;
   companyId: string;
@@ -147,4 +149,19 @@ export function readWhopAiReviewCustomerUrls(
     checkoutUrl: httpsUrl(environment, "WHOP_AI_REVIEWS_CHECKOUT_URL"),
     billingPortalUrl: httpsUrl(environment, "WHOP_BILLING_PORTAL_URL"),
   });
+}
+
+/** Identity-only configuration. The request helper must qualify the actual stage
+ * before returning this; commerce/webhook entitlement gates remain separate. */
+export function loadWhopAiReviewStagingOAuthConfiguration(
+  environment: NodeJS.ProcessEnv = process.env,
+): WhopAiReviewOAuthConfiguration {
+  const clientId = value(environment, "WHOP_OAUTH_CLIENT_ID");
+  const redirectUri = value(environment, "WHOP_OAUTH_REDIRECT_URI");
+  const identityHmacKey = value(environment, "TRADERLINK_PLATFORM_WHOP_IDENTITY_HMAC_KEY");
+  if (environment.TRADERLINK_PLATFORM_BACKGROUND_WORKERS_MODE !== "disabled_isolated_staging"
+    || !clientId || !/^app_[A-Za-z0-9]+$/.test(clientId)
+    || redirectUri !== "https://traderlink-platform-staging-staging.up.railway.app/api/billing/whop/callback"
+    || !identityHmacKey || identityHmacKey.length < 32) throw new Error("TRADERLINK_WHOP_CONFIGURATION_INVALID");
+  return Object.freeze({realm:"sandbox",clientId,redirectUri,identityHmacKey,companyId:"biz_NCFyk1qapzv2gZ"});
 }

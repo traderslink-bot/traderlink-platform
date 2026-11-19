@@ -1,11 +1,9 @@
+import {countCreatedPlatformTestUsers,openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { openPlatformDatabase } from "../database/open-platform-database";
-import { platformMigrationManifest } from "../database/platform-migration-manifest";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformLoginService } from "./platform-login-service";
 import { PlatformSessionRepository } from "./platform-session-repository";
 import { PlatformSessionService } from "./platform-session-service";
@@ -17,12 +15,12 @@ afterEach(async () => {
 function setup() {
   const root = mkdtempSync(join(tmpdir(), "login-service-"));
   roots.push(root);
-  const db = openPlatformDatabase({
+  const db = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "qa.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(db, { manifest: platformMigrationManifest });
+
   let now = new Date("2026-10-14T12:00:00.000Z");
   const service = new PlatformLoginService(db, { now: () => now });
   return {
@@ -167,7 +165,7 @@ describe("member login ownership and recovery", () => {
       expect(reconnect.session.userId).toBe(first.session.userId);
       expect(preserved()).toEqual(beforeLink);
       expect(
-        db.prepare("SELECT count(*) AS n FROM platform_users").get(),
+        countCreatedPlatformTestUsers(db, 'n'),
       ).toEqual({ n: 2 });
       advance(86400000);
       expect(service.createLinkIntent(reconnect.token, "discord")).toEqual(expect.any(String));
@@ -279,7 +277,7 @@ describe("member login ownership and recovery", () => {
       advance(86400001);
       expect(() => service.verifyEmail(raw)).toThrow();
       expect(
-        db.prepare("SELECT count(*) AS n FROM platform_users").get(),
+        countCreatedPlatformTestUsers(db, 'n'),
       ).toEqual({ n: 0 });
       for (let i = 0; i < 10; i++) service.throttle("a".repeat(64));
       expect(() => service.throttle("a".repeat(64))).toThrow("Too many");
@@ -304,7 +302,7 @@ describe("member login ownership and recovery", () => {
       expect(service.connected(checked.token)).toHaveLength(2);
       expect(() => service.signInOAuth({ provider: "discord", subject: "recheck-discord", displayName: "Trader",
         linkIntent: intent, currentSession: checked.token })).toThrow();
-      expect(db.prepare("SELECT count(*) AS n FROM platform_users").get()).toEqual({ n: 1 });
+      expect(countCreatedPlatformTestUsers(db, 'n')).toEqual({ n: 1 });
     } finally { db.close(); }
   }, 30000);
 

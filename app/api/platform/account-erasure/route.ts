@@ -21,7 +21,9 @@ import {
   isTraderLinkPlatformError,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { runErasureWorker } from "@/src/modules/platform/server/privacy/platform-erasure-worker-supervisor";
+import { assertErasureWorkerIdle, runErasureWorker } from "@/src/modules/platform/server/privacy/platform-erasure-worker-supervisor";
+import { prepareAuthenticatedErasureRequest } from "@/src/modules/platform/server/privacy/platform-erasure-request-preparation";
+import type { ErasureCommand } from "@/src/modules/platform/server/privacy/platform-erasure-command";
 import type { ErasureAction } from "@/src/modules/platform/server/privacy/platform-erasure-recovery";
 
 export const runtime = "nodejs";
@@ -82,13 +84,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (action !== "traderlink_account") {
       requireExpectedJournalAccountSelection(identity.scope, body.expectedAccountSelectionRef);
     }
-    const result = await runErasureWorker(resolvePlatformDatabaseConfig({}).databasePath, {
+    const command: ErasureCommand = {
       action, scope: identity.scope, sessionId: identity.sessionId, mode: identity.mode,
       expectedAccountSelectionRef: body.expectedAccountSelectionRef,
       demoReturnSelection: action === "demo_trade_tracker_account"
         && identity.scope.allowedAccountIds.some((accountId) => accountId !== identity.scope.activeAccountId)
         ? readJournalDemoReturnAccountSelectionCookie(request.headers) : null,
-    });
+    };
+    const databasePath = resolvePlatformDatabaseConfig({}).databasePath;
+    assertErasureWorkerIdle();
+    if (action === "traderlink_account") prepareAuthenticatedErasureRequest(request, identity, command, databasePath);
+    const result = await runErasureWorker(databasePath, command);
     const response = NextResponse.json({ status: "deleted", action }, {
       headers: { "cache-control": "no-store" },
     });

@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -5,9 +6,7 @@ import { join } from "node:path";
 
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalAccountService } from "@/src/modules/journal/server/accounts/journal-account-service";
-import { openPlatformDatabase } from "../database/open-platform-database";
 import { createCanonicalUuidV4 } from "../database/platform-migration-contract";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformUserRepository } from "./platform-user-repository";
 import { PlatformWorkspaceRepository } from "./platform-workspace-repository";
 import { PlatformAccountProfileReadService } from "./platform-account-profile-read-service";
@@ -22,13 +21,13 @@ describe("Platform account profile read service", () => {
   it("returns only privacy-safe profile and allowed Journal account facts", () => {
     const root = mkdtempSync(join(tmpdir(), "traderlink-account-profile-"));
     roots.push(root);
-    const database = openPlatformDatabase({
+    const database = openPristinePlatformTestDatabase({
       mode: "initializer",
       databasePath: join(root, "profile.sqlite"),
       forbiddenRepositoryRoots: [],
     });
     try {
-      runPlatformMigrations(database);
+
       const userId = createCanonicalUuidV4();
       const workspaceId = createCanonicalUuidV4();
       const now = "2026-08-02T12:00:00.000Z";

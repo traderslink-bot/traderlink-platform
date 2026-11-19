@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdtempSync } from "node:fs";
@@ -14,8 +15,6 @@ import { PlatformAdminAuditRepository } from "@/src/modules/platform/server/admi
 import { PlatformAdminAuditService } from "@/src/modules/platform/server/administration/platform-admin-audit-service";
 import { PlatformAdminSystemService } from "@/src/modules/platform/server/administration/platform-admin-system-service";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { JournalAdminDecisionService } from "./journal-admin-decision-service";
 import { JournalImportAttemptRepository } from "./journal-import-attempt-repository";
 import { JournalAdminImportService } from "./journal-admin-import-service";
@@ -39,12 +38,12 @@ afterEach(async () => {
 function setup() {
   const root = mkdtempSync(join(tmpdir(), "traderlink-admin-read-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "test.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => new Date(NOW) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(NOW));
   const signIn = new PlatformDiscordSignInService(database, {
     now: () => new Date(NOW),
   }).signIn({
@@ -250,4 +249,25 @@ describe("Journal Administration read services", () => {
       database.close();
     }
   }, 20_000);
+});
+
+
+describe("retained erasure principal customer-directory compatibility", {timeout:30000},()=>{
+  it("omits only the exact disabled internal row from customer lists and totals",()=>{
+    const {database,adminScope}=setup();try{
+      const inserted=database.prepare("INSERT OR IGNORE INTO platform_users VALUES('00000000-0000-4000-8000-000000000195','erasure','paid-partner-retained-principal-v1','Removed Partner owner','disabled','2026-11-02T00:00:00.000Z','2026-11-02T00:00:00.000Z')").run();
+      if(inserted.changes) database.prepare("DELETE FROM platform_user_preferences WHERE user_id='00000000-0000-4000-8000-000000000195'").run();
+      const row=()=>database.prepare("SELECT * FROM platform_users WHERE user_id='00000000-0000-4000-8000-000000000195'").get();const before=row();
+      const service=new JournalAdminUserService({database,scope:adminScope,configuration,now:new Date(NOW)});
+      expect(service.list().items).toHaveLength(1);expect(service.list().totalCount).toBe(1);
+      expect(service.list({filters:{status:'disabled'}}).items).toHaveLength(0);
+      expect(service.memberSummary()).toMatchObject({total:1,enabled:1,disabled:0});expect(row()).toEqual(before);
+      database.prepare("UPDATE platform_users SET status='active' WHERE user_id='00000000-0000-4000-8000-000000000195'").run();
+      expect(service.list().items).toHaveLength(2);expect(service.memberSummary()).toMatchObject({total:2,enabled:2});
+      database.prepare("UPDATE platform_users SET status='disabled' WHERE user_id='00000000-0000-4000-8000-000000000195'").run();
+      database.prepare("INSERT INTO platform_user_preferences(user_id,reporting_currency,updated_at_utc) VALUES('00000000-0000-4000-8000-000000000195','USD','2026-11-02T00:00:00.000Z')").run();
+      expect(service.list({filters:{status:'disabled'}}).items).toHaveLength(1);expect(service.memberSummary()).toMatchObject({total:2,enabled:1,disabled:1});
+
+    }finally{database.close();}
+  });
 });

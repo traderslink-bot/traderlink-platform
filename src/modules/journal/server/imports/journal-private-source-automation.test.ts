@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash } from "node:crypto";
 import {
@@ -20,13 +21,11 @@ import {
   DEVELOPMENT_OWNER_SEED_AUTH_PROVIDER,
   DEVELOPMENT_OWNER_SEED_AUTH_SUBJECT,
 } from "@/src/modules/platform/server/bootstrap/development-owner-seed-authorization";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { TRADERLINK_PLATFORM_DB_PATH_ENV } from "@/src/modules/platform/server/database/platform-database-config";
 import {
   createCanonicalUuidV4,
   isTraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
 import { PlatformWorkspaceRepository } from "@/src/modules/platform/server/identity/platform-workspace-repository";
 import { runTraderLinkPlatformJournalSourceImport } from "@/src/scripts/import-traderlink-platform-journal-source";
@@ -215,14 +214,12 @@ function createHarness(options: Readonly<{ linkIdentity?: boolean }> = {}): Harn
       journalkey: journalKey,
     }),
   };
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath,
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, {
-    now: () => new Date("2026-08-01T12:00:00.000Z"),
-  });
+  setPlatformTestFixtureMigrationTime(database, () => new Date("2026-08-01T12:00:00.000Z"));
   const userId = createCanonicalUuidV4();
   const workspaceId = createCanonicalUuidV4();
   const timestamp = "2026-08-01T12:01:00.000Z";

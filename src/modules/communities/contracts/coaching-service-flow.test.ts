@@ -1,7 +1,10 @@
 // @vitest-environment node
 import Database from 'better-sqlite3';
+import {readFileSync} from 'node:fs';
+import {IndependentCoachingProfilePhoto} from '../server/independent-coaching-profile-photo';
+import {IndependentCoachingRepository} from '../server/independent-coaching-repository';
 import {randomUUID} from 'node:crypto';
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeAll, describe, expect, it, vi} from 'vitest';
 import {platformMigrationManifest} from '../../platform/server/database/platform-migration-manifest';
 import {TraderLinkCommunityRepository} from '../server/traderlink-community-repository';
 import {TraderLinkCommunityPlatformRepository} from '../server/traderlink-community-platform-repository';
@@ -12,12 +15,30 @@ import * as eligibility from '../server/coaching-review-trade-eligibility';
 import {coachingReviewRequirements} from '../server/coaching-review-required-work';
 import {coachingReviewResourceScope} from '../server/coaching-review-resource-scope';
 import {writeCoachingTradeFeedback} from './coaching-trade-feedback';
+import {defaultPerformanceTemplate,PERFORMANCE_ASSESSMENT_ID} from './coaching-performance-evaluation';
+import {defaultDaySessionReview} from './coaching-trading-day-evaluation';
+import {defaultTradeEvaluationTemplate,type TradeEvaluation} from './coaching-trade-evaluation';
 import type {TraderLinkCommunityCoachingPlanItem} from './traderlink-community-platform-contracts';
 import * as commercialAccess from '../server/coaching-commercial-access';
 import * as studentPlatformAccess from '../server/coaching-student-platform-access';
 import * as studentAdmission from '../server/coaching-coach-student-admission';
 const NOW='2026-10-19T20:00:00.000Z';
 let db:Database.Database;
+let emptySchema:Buffer;
+let schemaUsers:unknown[];
+beforeAll(()=>{
+ // Build the complete current schema once; each case restores its own writable
+ // in-memory copy, never another case's users, agreements, grants or reviews.
+ const schema=new Database(':memory:');
+ try{
+  schema.pragma('foreign_keys=ON');
+  for(const migration of platformMigrationManifest)for(const statement of migration.statements)schema.exec(statement);
+  expect(schema.pragma('quick_check')).toEqual([{quick_check:'ok'}]);
+  expect(schema.pragma('foreign_key_check')).toEqual([]);
+  schemaUsers=schema.prepare('SELECT user_id FROM platform_users ORDER BY user_id').all();
+  emptySchema=schema.serialize();
+ }finally{schema.close();}
+});
 afterEach(()=>{vi.restoreAllMocks();db?.close();});
 function fixture(){
  // Isolate the review lifecycle from independently tested signup and payment admission.
@@ -25,8 +46,10 @@ function fixture(){
  vi.spyOn(studentPlatformAccess,'requireStudentPlatformCoachingAccess').mockImplementation(()=>undefined);
  vi.spyOn(studentAdmission,'requireCoachStudentAdmission').mockImplementation(()=>undefined);
 
- db=new Database(':memory:');db.pragma('foreign_keys=ON');
- for(const migration of platformMigrationManifest)for(const statement of migration.statements)db.exec(statement);
+ db=new Database(emptySchema);db.pragma('foreign_keys=ON');
+ expect(db.pragma('foreign_keys',{simple:true})).toBe(1);
+ // Keep migration-owned system users, but never inherit a previous test user.
+ expect(db.prepare('SELECT user_id FROM platform_users ORDER BY user_id').all()).toEqual(schemaUsers);
  const owner=randomUUID(),coach=randomUUID(),workspace=randomUUID(),account=randomUUID(),guild='100000001';
  for(const [id,subject] of [[owner,'100000002'],[coach,'100000003']]){
  db.prepare("INSERT INTO platform_users(user_id,auth_provider,auth_subject,display_name,status,created_at_utc,updated_at_utc) VALUES(?,'discord',?,?,'active',?,?)").run(id,subject,id,NOW,NOW);
@@ -59,10 +82,14 @@ it('moves a qualified enrollment into Students',()=>{
  expect(db.prepare("SELECT status FROM traderlink_community_coaching_relationships WHERE relationship_id=?").get(relationshipId)).toEqual({status:'active'});
 });
 describe('complete accepted coaching services with disposable current-schema data',()=>{
- it.each((['trade_review','trading_day_review','performance_review'] as const).flatMap(type=>(['completed','cancelled'] as const).map(ending=>({type,ending}))))('$type preserves consent, terms, drafts and $ending history',({type,ending})=>{
- const f=fixture();
+ const lifecycleCases=(['trade_review','trading_day_review','performance_review'] as const).flatMap(type=>
+  (['completed','cancelled'] as const).flatMap(ending=>
+   [false,true].map(structured=>({type,ending,structured}))));
+ it.each(lifecycleCases)('$type structured=$structured preserves consent, terms, drafts and $ending history',({type,ending,structured})=>{
+ const f=fixture(),template={...defaultTradeEvaluationTemplate(),...(type==='trading_day_review'?{daySessionReview:{...defaultDaySessionReview(),fields:defaultDaySessionReview().fields.map(field=>({...field,required:field.enabled}))}}:{})};
+ const performanceTemplate=defaultPerformanceTemplate();
  const item={planItemId:randomUUID(),ordinal:0,itemType:type,frequency:'once',coveragePeriod:type==='trading_day_review'?'single_item':'previous_7_days',quantity:type==='performance_review'?1:2,dueOffsetDays:2,selectionMode:'coach_or_student',followUpDays:0,measurementKind:type==='trading_day_review'?'trading_days':type==='trade_review'?'trades':'reviews',plannedMinutes:null,timelineEnabled:true,reviewDepth:'standard',focusAreas:['rules','journal','goals']} as TraderLinkCommunityCoachingPlanItem;
- const planInput={communityId:f.communityId,actor:f.actor,coachProfileId:f.profile,name:`QA ${type}`,description:'Synthetic',cadence:'trade_reviews',tradeReviewLimit:2,studentCapacity:10,messagingIncluded:true,tradeReviewsIncluded:true,sessionsIncluded:false,teachingIncluded:false,priceLabel:'Free QA',priceAmountMinor:0,currency:'USD',billingCadence:'one_time',quoteRequired:false,paymentInstructions:'',audienceId:f.audienceId,requiredDiscordRoleId:'100000004',planStyle:'structured',builderConfig:{about:'QA',offers:{trading_day_review:{details:'Two days',resources:[],includeDayJournal:true,tradeCap:{basis:'per_review',quantity:2}}}},items:[item],journalScopes:[{dataScope:'trades',required:true}],publish:true,atUtc:NOW} satisfies Parameters<TraderLinkCommunityPlatformRepository['createPlan']>[0];
+ const planInput={communityId:f.communityId,actor:f.actor,coachProfileId:f.profile,name:`QA ${type}`,description:'Synthetic',cadence:'trade_reviews',tradeReviewLimit:2,studentCapacity:10,messagingIncluded:true,tradeReviewsIncluded:true,sessionsIncluded:false,teachingIncluded:false,priceLabel:'Free QA',priceAmountMinor:0,currency:'USD',billingCadence:'one_time',quoteRequired:false,paymentInstructions:'',audienceId:f.audienceId,requiredDiscordRoleId:'100000004',planStyle:'structured',builderConfig:{about:'QA',...(structured?(type==='performance_review'?{performanceEvaluationTemplates:{performance_review:performanceTemplate}}:{tradeEvaluationTemplates:{[type]:template}}):{}),offers:{trading_day_review:{details:'Two days',resources:[],includeDayJournal:true,tradeCap:{basis:'per_review',quantity:2}}}},items:[item],journalScopes:[{dataScope:'trades',required:true}],publish:true,atUtc:NOW} satisfies Parameters<TraderLinkCommunityPlatformRepository['createPlan']>[0];
  const planId=f.platform.createPlan(planInput);
  const relation=f.platform.requestCoaching({communityId:f.communityId,actor:f.student,planId,atUtc:NOW});
  expect(db.prepare('SELECT count(*) n FROM traderlink_community_journal_grants WHERE relationship_id=?').get(relation)).toEqual({n:0});
@@ -96,19 +123,47 @@ describe('complete accepted coaching services with disposable current-schema dat
  f.programs.selectTrades({...work,roundTripIds:[trades[0].roundTripId]});
  f.programs.selectTrades({...work,actor:f.student,roundTripIds:[trades[1].roundTripId]});
  if(type==='trading_day_review')expect(()=>f.programs.selectTrades({...work,roundTripIds:[trades[2].roundTripId]})).toThrow();
- for(const trade of trades.slice(0,2))f.programs.saveTradeReview({...work,roundTripId:trade.roundTripId,feedback:writeCoachingTradeFeedback({summary:`Review ${trade.symbol}`,focus:{rules:'Recorded evidence',journal:'Shared note'}})});
+ for(const trade of trades.slice(0,2)){
+  const evaluation:TradeEvaluation={templateVersion:template.version,answers:Object.fromEntries(template.criteria.map(field=>[field.id,3])),whatWorked:'Controlled risk.',whatToImprove:'Plan exits.',nextAction:'Record the stop before entry.'};
+  if(structured){
+   expect(()=>f.programs.saveTradeReview({...work,roundTripId:trade.roundTripId,feedback:'An old open tab cannot replace agreed fields'})).toThrow('existing feedback is unchanged');
+   f.programs.saveTradeReview({...work,roundTripId:trade.roundTripId,feedback:writeCoachingTradeFeedback({summary:'Preserved original feedback',focus:{},evaluation:{...evaluation,answers:{}}})});
+   expect(db.prepare('SELECT workflow_state FROM traderlink_community_coaching_review_trades WHERE review_id=? AND round_trip_id=?').get(reviewId,trade.roundTripId)).toEqual({workflow_state:'queued'});
+   expect(coachingReviewRequirements(db,reviewId).ready).toBe(false);
+  }
+  f.programs.saveTradeReview({...work,roundTripId:trade.roundTripId,feedback:writeCoachingTradeFeedback({summary:`Review ${trade.symbol}`,focus:{rules:'Recorded evidence',journal:'Shared note'},...(structured?{evaluation}:{})})});
+ }
  }
  if(type!=='performance_review'){
   const identitySpy=vi.spyOn(eligibility,'coachingReviewIdentityKeys').mockReturnValue(new Map(trades.slice(0,2).map(t=>[t.roundTripId,trades[0].roundTripId])));
   try{expect(f.platform.readCoachingSnapshot('qa-review',f.actor).tradeReviews.find(r=>r.reviewId===reviewId)?.workTradeProgress).toEqual({selected:1,saved:1});}finally{identitySpy.mockRestore();}
  }
- if(type==='trading_day_review')for(const date of ['2026-10-15','2026-10-16'])f.programs.saveDayAssessment({...work,date,assessment:`Day ${date}`,focusFeedback:{rules:'Recorded day rule',journal:'Recorded day note',goals:'Assess goal within this day'}});
+ if(type==='trading_day_review')for(const date of ['2026-10-15','2026-10-16']){
+  const dayInput={...work,date,assessment:`Day ${date}`,focusFeedback:{rules:'Recorded day rule',journal:'Recorded day note',goals:'Assess goal within this day'}};
+  if(structured){
+   f.programs.saveDayAssessment({...dayInput,sessionFeedback:{}});
+   expect(coachingReviewRequirements(db,reviewId).ready).toBe(false);
+   expect(()=>f.programs.saveDayAssessment({...dayInput,sessionFeedback:{rules:'Disabled accepted question'}})).toThrow('enabled accepted day/session fields');
+  }
+  f.programs.saveDayAssessment({...dayInput,...(structured?{sessionFeedback:{risk_limits:'Stayed within the daily loss limit.',session_decisions:'Reduced size after the first loss.'}}:{})});
+ }
  else f.programs.saveFocusFeedback({...work,feedback:{rules:'Recorded rule evidence',journal:'Shared notes and tags',goals:'Goal assessment'}});
- f.platform.updateTradeReview({...work,coachFeedback:'Public overall assessment',wentWell:'',needsWork:'',nextFocus:'Next action',coachPrivateNotes:'PRIVATE DO NOT EXPOSE',previousFocusStatus:null,previousFocusAssessment:'',status:'in_review'});
+ const overallInput={...work,wentWell:'',needsWork:'',nextFocus:'Next action',coachPrivateNotes:'PRIVATE DO NOT EXPOSE',previousFocusStatus:null,previousFocusAssessment:'',status:'in_review' as const};
+ let publicOverall='Public overall assessment';
+ if(structured&&type==='performance_review'){
+  expect(()=>f.platform.updateTradeReview({...overallInput,coachFeedback:publicOverall})).toThrow('existing feedback is unchanged');
+  const evaluation:TradeEvaluation={templateVersion:performanceTemplate.version,answers:Object.fromEntries(performanceTemplate.criteria.map(field=>[field.id,3])),whatWorked:'Controlled risk.',whatToImprove:'Improve exits.',nextAction:'Record planned risk.',writtenAnswers:{[PERFORMANCE_ASSESSMENT_ID]:'Steadier risk control throughout this period.'}};
+  f.platform.updateTradeReview({...overallInput,coachFeedback:writeCoachingTradeFeedback({summary:'',focus:{},evaluation:{...evaluation,writtenAnswers:{}}})});
+  expect(coachingReviewRequirements(db,reviewId).ready).toBe(false);
+  expect(()=>f.programs.deliverReview(work)).toThrow();
+  expect(()=>f.platform.updateTradeReview({...overallInput,coachFeedback:writeCoachingTradeFeedback({summary:'',focus:{},evaluation:{...evaluation,templateVersion:performanceTemplate.version+1}})})).toThrow('accepted evaluation template version');
+  publicOverall=writeCoachingTradeFeedback({summary:'',focus:{},evaluation});
+ }
+ f.platform.updateTradeReview({...overallInput,coachFeedback:publicOverall});
  expect(coachingReviewRequirements(db,reviewId).ready).toBe(true);
  f.platform.revokeJournal({actorUserId:f.student.userId,grantId:grant,atUtc:NOW});
  expect(coachingReviewRequirements(db,reviewId).ready).toBe(false);expect(()=>f.programs.deliverReview(work)).toThrow();
- expect((db.prepare('SELECT coach_feedback,delivery_state FROM traderlink_community_coaching_trade_reviews WHERE review_id=?').get(reviewId))).toEqual({coach_feedback:'Public overall assessment',delivery_state:'draft'});
+ expect((db.prepare('SELECT coach_feedback,delivery_state FROM traderlink_community_coaching_trade_reviews WHERE review_id=?').get(reviewId))).toEqual({coach_feedback:publicOverall,delivery_state:'draft'});
  // Restore the agreed non-analytics fields first: saved work remains blocked
  // until Analytics alone is restored, without expanding any other sharing.
  f.platform.grantJournal({...base,actor:f.student,journalAccountId:f.account,dataScope:'trades',sharedFields:['trade_notes','tags','rules','day_rules','journal_notes']});
@@ -120,7 +175,7 @@ describe('complete accepted coaching services with disposable current-schema dat
  expect(coachingReviewRequirements(db,reviewId).ready).toBe(true);
  f.programs.deliverReview(work);
  const studentView=f.platform.readCoachingSnapshot('qa-review',f.student).tradeReviews.find(r=>r.reviewId===reviewId)!;
- expect(studentView.coachFeedback).toBe('Public overall assessment');expect(studentView.coachPrivateNotes).toBe('');expect(studentView.sharedGoals).toEqual(goals);
+ expect(studentView.coachFeedback).toBe(publicOverall);expect(studentView.coachPrivateNotes).toBe('');expect(studentView.sharedGoals).toEqual(goals);
  f.programs.markReviewViewed({...work,actor:f.student});
  f.programs.setReviewLifecycle({...work,state:ending});
  if(ending==='cancelled'){
@@ -128,9 +183,19 @@ describe('complete accepted coaching services with disposable current-schema dat
  expect(()=>f.programs.saveFocusFeedback({...work,feedback:{rules:'Forbidden edit'}})).toThrow();
  expect(()=>f.programs.deliverReview(work)).toThrow();
  }
+ const historyEntry={path:'/communities/qa-review/coaching',slug:'qa-review',role:'student' as const,relationshipId:relation,reviewId};
+ vi.mocked(Journal.prototype.read).mockClear();vi.mocked(Journal.prototype.readReviewContext).mockClear();
+ const retained=f.platform.readRetainedHistory(historyEntry,f.student.userId),recorded=retained.relationships[0].reviews[0];
+ expect(recorded.summary).toBe(publicOverall);expect(recorded.coachPrivateNotes).toBeUndefined();
+ expect(JSON.stringify(retained)).not.toContain('PRIVATE DO NOT EXPOSE');
+ expect(Journal.prototype.read).not.toHaveBeenCalled();expect(Journal.prototype.readReviewContext).not.toHaveBeenCalled();
+ if(structured&&type==='performance_review')expect(recorded.performanceEvaluationTemplate?.version).toBe(performanceTemplate.version);
+ if(structured&&type!=='performance_review')expect(recorded.tradeEvaluationTemplate?.version).toBe(template.version);
+ if(structured&&type==='trading_day_review')expect(recorded.dayAssessments.every(day=>Boolean(day.sessionFeedback?.risk_limits))).toBe(true);
+ expect(()=>f.platform.readRetainedHistory(historyEntry,f.actor.userId)).toThrow();
  expect(db.prepare('SELECT terms_json FROM traderlink_community_coaching_agreements WHERE agreement_id=?').get(agreementId)).toEqual(frozen);
  expect(f.platform.readCoachingSnapshot('qa-review',f.student).tradeReviews.find(r=>r.reviewId===reviewId)?.deliveryState).toBe(ending);
- expect(f.platform.readCoachingSnapshot('qa-review',f.student).tradeReviews.find(r=>r.reviewId===reviewId)?.coachFeedback).toBe('Public overall assessment');
+ expect(f.platform.readCoachingSnapshot('qa-review',f.student).tradeReviews.find(r=>r.reviewId===reviewId)?.coachFeedback).toBe(publicOverall);
  expect(db.pragma('foreign_key_check')).toEqual([]);
  });
 });
@@ -143,6 +208,15 @@ function acceptedTimingFixture(kind:'trade_review'|'trading_day_review'|'perform
  const boundItem=(JSON.parse((db.prepare('SELECT terms_json FROM traderlink_community_coaching_agreements WHERE agreement_id=?').get(agreementId) as {terms_json:string}).terms_json).items as TraderLinkCommunityCoachingPlanItem[])[0];return {...f,base,item:boundItem,agreementId};
 }
 describe('review scheduling and submission rules',()=>{
+ it('rejects an expired proposed week before withdrawing an existing proposal or changing accepted terms',()=>{
+  const f=acceptedTimingFixture('trade_review','student',true,'weekly',{flexible:'weekdays'});
+  f.agreements.propose({...f.base,startDate:'2026-10-26',dueTimeUtc:'17:00'});
+  const snapshot=()=>db.prepare('SELECT agreement_id,status,terms_json FROM traderlink_community_coaching_agreements ORDER BY agreement_id').all();
+  const before=snapshot();
+  expect(()=>f.agreements.propose({...f.base,startDate:'2026-10-12',dueTimeUtc:'17:00'})).toThrow('first review week has already started');
+  expect(snapshot()).toEqual(before);
+  expect(db.pragma('foreign_key_check')).toEqual([]);
+ });
  it.each(['trade_review','trading_day_review','performance_review'] as const)('%s cannot start or save during the final included trading day',kind=>{
   const f=acceptedTimingFixture(kind);f.platform.grantJournal({...f.base,actor:f.student,journalAccountId:f.account,dataScope:'complete'});const reviewId=f.programs.createReview({...f.base,planItemId:f.item.planItemId,reviewType:'custom',workspaceKind:kind==='trade_review'?'trade':kind==='trading_day_review'?'trading_day':'performance',title:'Future',context:'',periodStart:'2026-11-14',periodEnd:'2026-11-20',dueAtUtc:'2026-11-23T17:00:00.000Z',roundTripIds:[]});
   const before={...f.base,reviewId,atUtc:'2026-11-20T23:59:59.999Z'};
@@ -403,4 +477,26 @@ it('student replacement keeps the same community trading day',()=>{
  expect(()=>f.programs.replaceStudentTrade({...input,removeRoundTripId:trades[0].roundTripId,replacementRoundTripId:trades[2].roundTripId})).toThrow('same selected trading day');
  expect(()=>f.programs.replaceStudentTrade({...input,removeRoundTripId:trades[0].roundTripId,replacementRoundTripId:trades[1].roundTripId})).not.toThrow();
  expect(db.prepare('SELECT due_at_utc FROM traderlink_community_coaching_trade_reviews WHERE review_id=?').get(reviewId)).toEqual(original);
+});
+
+
+describe('profile photo before the first text save',()=>{
+ it('creates only the owner private context, retains it on text save and keeps the photo private without a published plan',()=>{
+  const f=fixture(),photos=new IndependentCoachingProfilePhoto(db),repo=new IndependentCoachingRepository(db);
+  expect(repo.contextForCoach(f.actor.userId)).toBeNull();
+  const image=readFileSync('public/icons/traderlink-192.png');
+  const result=photos.save({actorUserId:f.actor.userId,filename:'profile.png',mediaType:'image/png',content:image,atUtc:NOW});
+  expect(result.available).toBe(true);expect(repo.contextForCoach(f.actor.userId)?.contextId).toBe(result.contextId);
+  expect(db.prepare('SELECT count(*) count FROM traderlink_coaching_plans WHERE context_id=?').get(result.contextId)).toEqual({count:0});
+  expect(()=>photos.read(result.contextId,f.student.userId,NOW)).toThrow('unavailable');
+  expect(photos.read(result.contextId,f.actor.userId,NOW).content.equals(image)).toBe(true);
+  expect(repo.saveProfile(f.actor.userId,{displayName:'My coach name',headline:'My headline',biography:'My profile text',deliverySummary:'My approach'},NOW)).toBe(result.contextId);
+  expect(photos.metadata(result.contextId,f.actor.userId,NOW).available).toBe(true);
+  photos.remove(f.actor.userId);expect(photos.metadata(result.contextId,f.actor.userId,NOW).available).toBe(false);
+ });
+ it('rejects invalid uploads before creating a private profile or changing a saved image',()=>{
+  const f=fixture(),photos=new IndependentCoachingProfilePhoto(db),repo=new IndependentCoachingRepository(db);
+  expect(()=>photos.save({actorUserId:f.actor.userId,filename:'bad.png',mediaType:'image/png',content:Buffer.from('not an image'),atUtc:NOW})).toThrow('PNG');
+  expect(repo.contextForCoach(f.actor.userId)).toBeNull();
+ });
 });

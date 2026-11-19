@@ -1,3 +1,4 @@
+import {IndependentCoachingRepository} from './independent-coaching-repository';
 import {createHash} from 'node:crypto';
 import type Database from 'better-sqlite3';
 import {readCoachCommercialAccess} from './coaching-commercial-access';
@@ -30,15 +31,20 @@ export class IndependentCoachingProfilePhoto{
   const row=this.db.prepare('SELECT context_id FROM traderlink_coaching_contexts WHERE coach_user_id=?').get(actorUserId) as {context_id:string}|undefined;
   if(!row)throw new Error('Save your coach profile first.');return row.context_id;
  }
- save(input:{actorUserId:string;filename:string;mediaType:string;content:Buffer;atUtc:string}):IndependentCoachProfilePhotoMetadata{
+ save(input:{actorUserId:string;filename:string;mediaType:string;content:Buffer;atUtc:string}):IndependentCoachProfilePhotoMetadata&{contextId:string}{
   if(!this.storageReady())throw new Error('Profile photo storage is not ready.');
   if(!Number.isFinite(Date.parse(input.atUtc))||new Date(input.atUtc).toISOString()!==input.atUtc||!Buffer.isBuffer(input.content)||input.content.length<1||input.content.length>8388608)throw new Error('Select an image of 8 MB or smaller.');
   const valid:{[key:string]:boolean}={'image/png':input.content.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),'image/jpeg':input.content[0]===255&&input.content[1]===216,'image/webp':input.content.subarray(0,4).toString()==='RIFF'&&input.content.subarray(8,12).toString()==='WEBP'};
   if(!valid[input.mediaType])throw new Error('Use a PNG, JPEG or WebP image.');
   const filename=input.filename.replace(/[\u0000-\u001f\u007f]/g,' ').trim();if(!filename||filename.length>180)throw new Error('Choose an image with a valid filename.');
-  const contextId=this.ownedContext(input.actorUserId),sha=createHash('sha256').update(input.content).digest('hex');
-  this.db.transaction(()=>this.db.prepare(`INSERT INTO ${TABLE}(context_id,filename,media_type,byte_length,sha256,content,created_at_utc,updated_at_utc) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(context_id) DO UPDATE SET filename=excluded.filename,media_type=excluded.media_type,byte_length=excluded.byte_length,sha256=excluded.sha256,content=excluded.content,updated_at_utc=excluded.updated_at_utc`).run(contextId,filename,input.mediaType,input.content.length,sha,input.content,input.atUtc,input.atUtc)).immediate();
-  return {available:true,updatedAtUtc:input.atUtc};
+  const sha=createHash('sha256').update(input.content).digest('hex');
+  const contextId=this.db.transaction(()=>{
+   const repo=new IndependentCoachingRepository(this.db),prior=repo.contextForCoach(input.actorUserId);
+   const account=this.db.prepare("SELECT display_name FROM platform_users WHERE user_id=? AND status='active'").get(input.actorUserId) as {display_name:string}|undefined;
+   if(!account)throw new Error('This coach photo is unavailable.');
+   const contextId=prior?.contextId??repo.saveProfile(input.actorUserId,{displayName:account.display_name.trim().slice(0,120)||'Coach',headline:'',biography:'',deliverySummary:''},input.atUtc);
+   this.db.prepare(`INSERT INTO ${TABLE}(context_id,filename,media_type,byte_length,sha256,content,created_at_utc,updated_at_utc) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(context_id) DO UPDATE SET filename=excluded.filename,media_type=excluded.media_type,byte_length=excluded.byte_length,sha256=excluded.sha256,content=excluded.content,updated_at_utc=excluded.updated_at_utc`).run(contextId,filename,input.mediaType,input.content.length,sha,input.content,input.atUtc,input.atUtc);return contextId;}).immediate();
+  return {available:true,updatedAtUtc:input.atUtc,contextId};
  }
  remove(actorUserId:string):void{if(!this.storageReady())throw new Error('Profile photo storage is not ready.');const contextId=this.ownedContext(actorUserId);this.db.prepare(`DELETE FROM ${TABLE} WHERE context_id=?`).run(contextId);}
  read(contextId:string,actorUserId:string,atUtc:string):Readonly<{content:Buffer;mediaType:string;sha256:string}>{

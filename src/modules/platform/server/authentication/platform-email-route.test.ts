@@ -1,3 +1,4 @@
+import {countCreatedPlatformTestUsers,openPristinePlatformTestDatabase} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { platformAuthCookieName } from "./platform-auth-cookies";
 // @vitest-environment node
@@ -17,8 +18,6 @@ vi.mock("./platform-login-mail-queue", async importOriginal => ({
   ...await importOriginal<typeof import("./platform-login-mail-queue")>(),
   startPlatformLoginMailWorker: vi.fn(),
 }));
-import { openPlatformDatabase } from "../database/open-platform-database";
-import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { claimLoginMail, finishLoginMail } from "./platform-login-mail-queue";
 import { PlatformLoginService } from "./platform-login-service";
 import { PlatformSessionRepository } from "./platform-session-repository";
@@ -56,9 +55,9 @@ describe("email HTTP route integration", () => {
     vi.stubGlobal("fetch", fetch);
     const root = mkdtempSync(join(tmpdir(), "login-route-qa-"));
     roots.push(root);
-    const db = openPlatformDatabase({ mode: "initializer", databasePath: join(root, "qa.sqlite"), forbiddenRepositoryRoots: [] });
+    const db = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: join(root, "qa.sqlite"), forbiddenRepositoryRoots: [] });
     fixture.database = db;
-    runPlatformMigrations(db);
+
     const email = "member@example.test", password = "Eight123";
     const foreign = await POST(request({ action: "signup", email, password }, "", "https://foreign.example.test"));
     expect(foreign.status).toBe(400);
@@ -125,7 +124,7 @@ describe("email HTTP route integration", () => {
     expect(sessions.resolve(secondToken)?.userId).toBe(member.userId);
     expect((await logoutAll(request({}, secondCookie))).status).toBe(303);
     expect(sessions.resolve(secondToken)).toBeNull();
-    expect(db.prepare("SELECT COUNT(*) n FROM platform_users").get()).toEqual({ n: 1 });
+    expect(countCreatedPlatformTestUsers(db, 'n')).toEqual({ n: 1 });
     expect(fetch).not.toHaveBeenCalled();
   }, 60000);
   it("adds and verifies email on an existing Google account without replacing ownership", async () => {
@@ -136,8 +135,8 @@ describe("email HTTP route integration", () => {
     vi.stubEnv("TRADERLINK_LOGIN_EMAIL_FROM", "login@example.test");
     const fetch = vi.fn(() => { throw Error("External network forbidden"); }); vi.stubGlobal("fetch", fetch);
     const root = mkdtempSync(join(tmpdir(), "login-email-link-qa-")); roots.push(root);
-    const db = openPlatformDatabase({ mode: "initializer", databasePath: join(root, "qa.sqlite"), forbiddenRepositoryRoots: [] }); fixture.database = db;
-    runPlatformMigrations(db);
+    const db = openPristinePlatformTestDatabase({ mode: "initializer", databasePath: join(root, "qa.sqlite"), forbiddenRepositoryRoots: [] }); fixture.database = db;
+
     const signed = new PlatformLoginService(db).signInOAuth({ provider: "google", subject: "synthetic-google-subject", displayName: "Trader" });
     db.prepare("UPDATE platform_auth_sessions SET created_at_utc=? WHERE session_id=?").run(new Date(Date.now() - 3600000).toISOString(), signed.session.sessionId);
     const cookie = `${platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE)}=${signed.token}`;
@@ -164,7 +163,7 @@ describe("email HTTP route integration", () => {
     const token = login.headers.get("set-cookie")!.match(/tl_platform_session=([^; ,]+)/)![1];
     expect(new PlatformSessionService(new PlatformSessionRepository(db)).resolve(token)?.userId).toBe(signed.session.userId);
     expect(new PlatformLoginService(db).connected(token).map(item => item.provider).sort()).toEqual(["email", "google"]);
-    expect(db.prepare("SELECT count(*) n FROM platform_users").get()).toEqual({ n: 1 });
+    expect(countCreatedPlatformTestUsers(db, 'n')).toEqual({ n: 1 });
     expect(fetch).not.toHaveBeenCalled();
   }, 60000);
 

@@ -2,11 +2,19 @@ import {describe,it,expect} from 'vitest';
 import {addDeliveryDays,nextReviewMonday} from './coaching-delivery-calendar';
 import {coachingPeriod,coachingReviewCoverage,type CoachingAgreementTerms} from './coaching-agreements';
 import {submissionDeadline} from './coaching-review-timing';
-import {chooseStudentReviewSchedules,withTradeReviewStartDate} from './coaching-review-schedule-choice';
+import {chooseStudentReviewSchedules,requireFutureCoachingReviewWeek,withTradeReviewStartDate} from './coaching-review-schedule-choice';
 import {parseCoachingPlanConfiguration} from './coaching-plan-configuration';
 const item={planItemId:'day',itemType:'trading_day_review' as const,frequency:'weekly' as const,coveragePeriod:'single_item' as const,quantity:1,dueOffsetDays:6,selectionMode:'coach_or_student' as const,followUpDays:0,measurementKind:'trading_days' as const,plannedMinutes:null,timelineEnabled:true,reviewDepth:'complete_day' as const,ordinal:0};
 const terms=(modern=true,count:'calendar'|'weekdays'='calendar'):CoachingAgreementTerms=>({planId:'plan',planRevision:1,planName:'Day reviews',description:'',priceAmountMinor:0,currency:'USD',billingCadence:'weekly',paymentInstructions:'',requiredDiscordRoleId:null,autoArchiveAfterDays:null,startDate:'2026-11-03',customIntervalDays:null,dueTimeUtc:'18:00',items:[item],...(modern?{builderConfig:{about:'',offers:{trading_day_review:{details:'',resources:[],weeklySchedule:'monday',deliveryDayCount:count}}}}:{})});
 describe('agreed Monday weeks and delivery days',()=>{
+ it('checks the same future-week boundary before proposing without changing legacy or request schedules',()=>{
+  const proposed={...terms(),startDate:'2026-11-09'};
+  expect(()=>requireFutureCoachingReviewWeek(proposed,'2026-11-10T15:00:00.000Z')).toThrow('first review week has already started');
+  expect(()=>requireFutureCoachingReviewWeek(proposed,'2026-11-09T15:00:00.000Z')).not.toThrow();
+  expect(()=>requireFutureCoachingReviewWeek(terms(false),'2026-11-10T15:00:00.000Z')).not.toThrow();
+  expect(()=>requireFutureCoachingReviewWeek({...proposed,items:[{...item,timelineEnabled:false}]},'2026-11-10T15:00:00.000Z')).not.toThrow();
+  expect(proposed.startDate).toBe('2026-11-09');
+ });
  it('starts a Tuesday signup on the next Monday, retaining consecutive full weeks',()=>{
   expect(nextReviewMonday('2026-11-03')).toBe('2026-11-09');expect(nextReviewMonday('2026-11-09')).toBe('2026-11-09');
   expect(coachingPeriod(terms(),item,0)).toEqual({start:'2026-11-09',end:'2026-11-15',dueAtUtc:'2026-11-21T18:00:00.000Z'});

@@ -153,10 +153,13 @@ test('the owner can preview and queue a published ticker with no analysis', asyn
  for(const sql of load('src/modules/platform/server/database/migrations/0213_watchlist_free_chat_owner_copy.ts').watchlistFreeChatOwnerCopyMigration.statements)h.db.exec(sql);
  const url=new URL('https://preview.test/free-chat?symbol=TEST');
  const read=()=>admin.handleFreeChatAdmin('GET',url,undefined,'owner');
- assert.equal((await read()).preview,null);
+ const unpublished=await read();
+ assert.equal(unpublished.preview,null);
+ assert.equal(unpublished.canShare,false);
  h.set({acknowledged:true});
  const current=await read();
  assert.equal(current.hasPublishedAnalysis,false);
+ assert.equal(current.canShare,true);
  assert.equal(current.preview.includeImages,false);
  assert.match(current.preview.content,/\$TEST on the TradersLink Watchlist/);
  assert.doesNotMatch(current.preview.content,/Analysis|Images/);
@@ -164,6 +167,7 @@ test('the owner can preview and queue a published ticker with no analysis', asyn
   action:'send',visibilityKey:current.preview.visibilityKey,message:'Watching for a setup.'}),'owner');
  assert.equal(sent.delivery.state,'pending');
  assert.equal(sent.savedMessage,'Watching for a setup.');
+ assert.equal(sent.canShare,true);
  await h.worker.reconcileFreeChatPublications();
  assert.equal(h.publications[0].listingOnly,true);
 });

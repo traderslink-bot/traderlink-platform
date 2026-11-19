@@ -104,7 +104,7 @@ export async function handleFreeChatAdmin(method: "GET" | "POST", url: URL, body
       const listingOnly = Boolean(approval && isFreeChatListingOnly(approval));
       const preview = approval && visibility ? freeChatPreview(review.symbol, approvals.some(event => event.revision < approval.revision), visibility,
         undefined, listingOnly) : null;
-      return {cycleId:review.cycleId,automaticEnabled:preference?.automatic_enabled === 1,hasPublishedAnalysis:Boolean(approval) && !listingOnly,posts,
+      return {cycleId:review.cycleId,automaticEnabled:preference?.automatic_enabled === 1,hasPublishedAnalysis:Boolean(approval) && !listingOnly,canShare:Boolean(approval),posts,
         approvalRevision:approval?.revision,delivery:deliveryStatus(delivery),preview,
         savedMessage:existing?.visibilityKey === preview?.visibilityKey ? existing?.message ?? null : null};
     });

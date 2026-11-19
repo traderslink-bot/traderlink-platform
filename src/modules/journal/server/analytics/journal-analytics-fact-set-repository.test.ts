@@ -1,3 +1,4 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import { removePlatformDatabaseTestFixture } from "@/src/test/platform-database-fixture";
 import { createHash } from "node:crypto";
 import { mkdtempSync } from "node:fs";
@@ -7,8 +8,6 @@ import { join } from "node:path";
 import type Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import type { JournalAnalyticsFactSetRequest } from "../../contracts/journal-analytics-fact-set";
 import { JournalAnalyticsFactSetRepository } from "./journal-analytics-fact-set-repository";
@@ -93,12 +92,12 @@ const allRequest: JournalAnalyticsFactSetRequest = Object.freeze({
 function setupDatabase(): Database.Database {
   const root = mkdtempSync(join(tmpdir(), "traderlink-analytics-facts-"));
   roots.push(root);
-  const database = openPlatformDatabase({
+  const database = openPristinePlatformTestDatabase({
     mode: "initializer",
     databasePath: join(root, "analytics.sqlite"),
     forbiddenRepositoryRoots: [],
   });
-  runPlatformMigrations(database, { now: () => new Date(timestamp) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(timestamp));
   seedGraph(database);
   return database;
 }

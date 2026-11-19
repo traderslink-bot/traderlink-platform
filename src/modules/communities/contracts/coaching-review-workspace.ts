@@ -62,7 +62,7 @@ export function previousDeliveredFocus<T extends FocusReview>(reviews: readonly 
     .sort((a, b) => b.deliveredAtUtc!.localeCompare(a.deliveredAtUtc!))[0];
 }
 
-export type CoachingDayAssessment=Readonly<{date:string;assessment:string;focusFeedback:CoachingFocusFeedback;savedAtUtc:string}>;
+export type CoachingDayAssessment=Readonly<{date:string;assessment:string;focusFeedback:CoachingFocusFeedback;sessionFeedback?:Readonly<Partial<Record<import('./coaching-trading-day-evaluation').DaySessionFieldId,string>>>;savedAtUtc:string}>;
 
 export function coachingServiceFocus(item:{itemType:string;focusAreas?:readonly CoachingReviewFocus[]}):CoachingReviewFocus[]{
  const legacy:Record<string,CoachingReviewFocus>={rules_review:'rules',risk_review:'risk',goal_review:'goals',journal_review:'journal'};

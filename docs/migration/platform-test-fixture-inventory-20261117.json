@@ -1,0 +1,1620 @@
+{
+  "assignedParent": "9eaad45268a6c9b877971f65aa8fd6fcf56220ca",
+  "scope": "Explicit runPlatformMigrations/platformMigrationManifest test usage; real fidelity and partial historical fixtures retained",
+  "files": [
+    {
+      "path": "src/lib/academy/__tests__/discord-auth-routes.test.ts",
+      "calls": [
+        {
+          "line": 250,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 24,
+      "assertionVectorSha256": "ff461400c6246281350505068d4b7de7d90994eb8b7c4d1b1ef21884bd04a76b",
+      "originalFileSha256": "7b014338a7cf52c52919f419f575b6f9abf06d8d5f5c26a63d460eedf1340a1c",
+      "updatedFileSha256": "063d67037e40abc20fcf79438dc65d205aa21db95462f6e48bea81a3e82f861a",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/lib/live-watchlist/__tests__/live-watchlist-store.test.ts",
+      "calls": [
+        {
+          "line": 169,
+          "options": "",
+          "arg": "otherWriter",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 200,
+      "assertionVectorSha256": "a04c74e2972b8634667a85587d1d58a59691a64332e1941f5b178833cd1a89f3",
+      "originalFileSha256": "81f9074fa40a782717c68ba45dbda940adcf316caf3dabac8e55aa5f80b1852c",
+      "updatedFileSha256": "3c14917d146a9bd5e1579cb00cec0779f9a1137fe59a2384f33753814ef91447",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/academy/server/progress/academy-progress-service.test.ts",
+      "calls": [
+        {
+          "line": 34,
+          "options": "{ now: () => new Date(NOW) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"test.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 8,
+      "assertionVectorSha256": "642676a86cd23901941e41ce9306e23bd311b10e5a70d73197007f2d9452a56f",
+      "originalFileSha256": "15f47ac77fbc72b5b0e01c2eb6b0d5a33c6ed333fa1e01afeb81f7a0d4d1176e",
+      "updatedFileSha256": "169287a1031a76f50fe4280bde39319a1ed482bff3b4deb15a7f0cae3a83de97",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-chat-action-draft-service.test.ts",
+      "calls": [
+        {
+          "line": 41,
+          "options": "{ manifest: platformMigrationManifest, now: () => now }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 51,
+      "assertionVectorSha256": "279d75837faa0c76182e06738341b255f60d71f7d4e69099262481f80b98a98a",
+      "originalFileSha256": "115ef2d6891c9e93fefdce66dc1e028b04ec8b02fd6bdce96bfda311772d735b",
+      "updatedFileSha256": "28b6e47c8e7a6c24a294c928151101bd5030e71fea4a3d1b171b2aebbed438b3",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-chat-administration-repository.test.ts",
+      "calls": [
+        {
+          "line": 38,
+          "options": "{ manifest: platformMigrationManifest, now: () => new Date(initialTime) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 9,
+      "assertionVectorSha256": "79c3dbffd8716ee4a29a2f64435bc50bf8758ef011d80a30d439af21efa905e3",
+      "originalFileSha256": "328e07e26db55de023825d50aea0d21ad44296542d9c7392e5599deeb810e744",
+      "updatedFileSha256": "43691e3930eb4517696b0cd1c752148b3a9322b63c6c3de2268f3afbf436cc46",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-chat-generation-recovery-service.test.ts",
+      "calls": [
+        {
+          "line": 44,
+          "options": "{ manifest: platformMigrationManifest, now: () => base }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 8,
+      "assertionVectorSha256": "31a410f435ce2d8800249d6d2f3b6b705e3bb6685bff38896a8803e813ab6ac3",
+      "originalFileSha256": "ad4704fd30d288cd968c8369127ef2fc9a464488189f4a591e99aef467f34164",
+      "updatedFileSha256": "d3ace08f1f9d41c7aac35b3e0c243cd27edca4fee0667852255a9d65cb01c683",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-chat-generation-service.test.ts",
+      "calls": [
+        {
+          "line": 29,
+          "options": "{ manifest: platformMigrationManifest, now: () => now }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 58,
+      "assertionVectorSha256": "c8e9dd38407b03881c5c5d921718033747bae685887acd0199c94ddd32695274",
+      "originalFileSha256": "365f85ab3499e8a541c6c836d3bab6def0f34fe4d179166c13a6af8dd51487a4",
+      "updatedFileSha256": "3583944b20a40030aa36d114f184e9dcdd448853acecddef9bed323948bab6e8",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-chat-provider-controls-repository.test.ts",
+      "calls": [
+        {
+          "line": 42,
+          "options": "{ manifest: platformMigrationManifest, now: () => new Date(initialTime) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 23,
+      "assertionVectorSha256": "3623d6657b3fe93a82b3361b1cb0dc6e08b294ce368b992e52e2e2fe3cffe7d1",
+      "originalFileSha256": "28351e2d2fd762dc7b933ace05dd78221ea9fd5c77e2f370063f23fafbdfe3c8",
+      "updatedFileSha256": "cbe1d487e9ee6c1fdd83624e25fb18568c2eb231f639a6019a638cd218118801",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-chat-repository.test.ts",
+      "calls": [
+        {
+          "line": 54,
+          "options": "{\n    manifest: platformMigrationManifest,\n    now: () => new Date(initialTime),\n  }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 34,
+      "assertionVectorSha256": "49b1acef318c669097e987d0dbf5c61080fd618bde881c7e8cc744e7c4182a52",
+      "originalFileSha256": "1972e1c7061c99628ca87ebc8018a588d1edfc1c9c6404bfaa9e2913fceeb848",
+      "updatedFileSha256": "a1d10236c9603431e9cfa7f77f99d9c32c35ee69632665dfcb03460b5878946c",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-daily-companion-command-service.test.ts",
+      "calls": [
+        {
+          "line": 44,
+          "options": "{ manifest: platformMigrationManifest, now: () => now }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 13,
+      "assertionVectorSha256": "abf4edefec2a266d3fcb1d10b0cb07bbac85ead52a304a503664f1a042be47d6",
+      "originalFileSha256": "4b61dae2c7a52bcfa269de46a94c845d7c4d33c45a9024f9828904f87b020eea",
+      "updatedFileSha256": "c05c25351212b2eb8a5f449082dd635c79358d90922abafe22d15ca26da64e29",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-manual-entry-command-service.test.ts",
+      "calls": [
+        {
+          "line": 20,
+          "options": "{ manifest: platformMigrationManifest, now: () => now }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 7,
+      "assertionVectorSha256": "92fed909665c4d9c9d090acafc073b3475dc336efda078c6909fabe40b9e6954",
+      "originalFileSha256": "bea287314ea0db012b5ac46818b5024e0b4fe3ba6ea96be0c06161448799a0a1",
+      "updatedFileSha256": "90b60c69ed8e149ef5fb3723c1f1601a576308b7c786b08aa4c7ae5472ad9b46",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-manual-entry-draft-repository.test.ts",
+      "calls": [
+        {
+          "line": 32,
+          "options": "{ manifest: platformMigrationManifest, now: () => new Date(initialTime) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 16,
+      "assertionVectorSha256": "4a2a70165199e44573e7b67d8460a7c8788671af0addca1ee6bbbc067d1de7b4",
+      "originalFileSha256": "2f995456978aee0c1b8041501b5be375d1081fd1a8a4aebe3132c3ab4247f433",
+      "updatedFileSha256": "479fd63ba6816e097def0b4b098af2e91eaf9cdd385d8eba66447ddceaa90de5",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-review-administration-repository.test.ts",
+      "calls": [
+        {
+          "line": 38,
+          "options": "{ manifest: platformMigrationManifest, now: () => new Date(at) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 4,
+      "assertionVectorSha256": "dbefe3144e492224483d69d542f8bdf20dbacc8f4a43b02b0951274c3f04d435",
+      "originalFileSha256": "8837b1a3e66739e040b5dbc7f67e6325b24208156b3956277625628887e11c8b",
+      "updatedFileSha256": "5eaee96e8204b59dcdbfbb992b58c229d99ab615907639fda87fbd38ebf2554f",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-review-delivery-change-command-service.test.ts",
+      "calls": [
+        {
+          "line": 18,
+          "options": "{ manifest: platformMigrationManifest, now: () => now }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 10,
+      "assertionVectorSha256": "59ae21fb8872db3724487d8228f1c0aabb48cb7e025de5bb8a9e65d58f1d93eb",
+      "originalFileSha256": "5551fb287243093e24705765db983b3e20d043fdcf74370d2a81eb42642a101c",
+      "updatedFileSha256": "3420d8fbc1199e2aa39898b23b3c08702719563407ebb01ba5f3ffc4253f0f79",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/coach-ai-review-provider-controls-repository.test.ts",
+      "calls": [
+        {
+          "line": 30,
+          "options": "{ manifest: platformMigrationManifest.filter(migration => migration.executionOrder < 65), now: () => new Date(initialTime) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "partial historical schema fixture (real runner retained)"
+    },
+    {
+      "path": "src/modules/coach/server/coach-monthly-ai-review-issuance-service.test.ts",
+      "calls": [
+        {
+          "line": 39,
+          "options": "{\n    manifest: platformMigrationManifest.filter(migration => migration.executionOrder < 65),\n    now: () => new Date(createdAtUtc),\n  }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "partial historical schema fixture (real runner retained)"
+    },
+    {
+      "path": "src/modules/coach/server/coach-monthly-ai-review-runner.test.ts",
+      "calls": [
+        {
+          "line": 35,
+          "options": "{\n    manifest: platformMigrationManifest.filter(migration => migration.executionOrder < 65),\n    now: () => new Date(createdAtUtc),\n  }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "partial historical schema fixture (real runner retained)"
+    },
+    {
+      "path": "src/modules/coach/server/coach-weekly-ai-review-issuance-service.test.ts",
+      "calls": [
+        {
+          "line": 39,
+          "options": "{\n    manifest: platformMigrationManifest.filter(migration => migration.executionOrder < 65),\n    now: () => new Date(createdAtUtc),\n  }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "partial historical schema fixture (real runner retained)"
+    },
+    {
+      "path": "src/modules/coach/server/coach-weekly-ai-review-runner.test.ts",
+      "calls": [
+        {
+          "line": 34,
+          "options": "{\n    manifest: platformMigrationManifest.filter(migration => migration.executionOrder < 65),\n    now: () => new Date(createdAtUtc),\n  }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "partial historical schema fixture (real runner retained)"
+    },
+    {
+      "path": "src/modules/coach/server/coach-weekly-review-schedule-repository.test.ts",
+      "calls": [
+        {
+          "line": 18,
+          "options": "{\n    manifest: platformMigrationManifest,\n    now: () => new Date(nowUtc),\n  }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 6,
+      "assertionVectorSha256": "3bafb99b0a8d58abaf3aa7f1774e96d77f7e31e1ca24a5df7b6e09b0f02e67b0",
+      "originalFileSha256": "72909bb6d9b7f5c3c53b8063513dbec5f1e2d25409bfa1a7990beec7b5c151f3",
+      "updatedFileSha256": "7bc51fb6a204ca5c84319c4e2ad8792893ce381aacc99667cae66dcacf0dfe50",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/coach/server/database/migrations/0029_coach_ai_chat_foundation.test.ts",
+      "calls": [
+        {
+          "line": 19,
+          "options": "{\n    manifest: platformMigrationManifest.filter(migration => migration.executionOrder <= 29),\n    now: () => new Date(timestamp),\n  }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/coach/server/database/migrations/0031_coach_ai_chat_setting_change_drafts.test.ts",
+      "calls": [
+        {
+          "line": 18,
+          "options": "{ manifest: platformMigrationManifest, now: () => new Date(at) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/coach/server/database/migrations/0032_coach_ai_review_provider_controls.test.ts",
+      "calls": [
+        {
+          "line": 21,
+          "options": "{ manifest: platformMigrationManifest.filter(migration => migration.executionOrder <= 32), now: () => new Date(at) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/communities/contracts/coaching-service-flow.test.ts",
+      "calls": [],
+      "disposition": "metadata-only or already cached"
+    },
+    {
+      "path": "src/modules/journal/server/accounts/journal-account-authorization.test.ts",
+      "calls": [
+        {
+          "line": 35,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"authorization.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 3,
+      "assertionVectorSha256": "da69b3a4664ccdcf3bc2dcc6fe1577e7bef9d5c3257668263f554fe31941ef16",
+      "originalFileSha256": "986eae97a3b9ec372048a04782b2d1bde9edd58beba3f517c569535750f06b01",
+      "updatedFileSha256": "2fe9db303503a01b939703be3dbfb516464e00dd099de5cd7758c60754ad2b95",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/accounts/journal-account-boundary.test.ts",
+      "calls": [
+        {
+          "line": 35,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"accounts.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 4,
+      "assertionVectorSha256": "46597a1a17bb615121dc52540ed23e1d85ea7ceaf7ad22fdfd5e347961cbed0c",
+      "originalFileSha256": "2fc6104de0ec2649a2f7aa9df5b2c7bb75f7ca3ba83ac51ab837dc208c167f4d",
+      "updatedFileSha256": "04ce0969f6e820b62785f68465d9f46d2e56d0926f1a29a401f320e4e76fc04b",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/accounts/journal-account-fingerprint-rotation.test.ts",
+      "calls": [
+        {
+          "line": 64,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"identities.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 24,
+      "assertionVectorSha256": "bdacff520bb67ac73e567abedff7beeb348a2f0735df401e16214c1b5111beb0",
+      "originalFileSha256": "e71f94a696342950a1f1aed08da4a1bf5f091373572b374f05ad47c1f1954be9",
+      "updatedFileSha256": "df38d7d7ae829b19e07ee0064f7cefbef7e11a0dbb1d19037a220db78972d720",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/accounts/journal-development-owner-scope.test.ts",
+      "calls": [
+        {
+          "line": 37,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath: join(root, \"scope.sqlite\"),\n      forbiddenRepositoryRoots: [],\n    })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 8,
+      "assertionVectorSha256": "ed405030530309c132705362cb006f2fa5474f8479ab738171e9fe6808daac18",
+      "originalFileSha256": "d5b7556b8bc7620e5e153bd14851b67fd7075612129093ddd49575acd69bb66f",
+      "updatedFileSha256": "e809687b2ea15fcd45bc88575bc6005305252bedb0980056cdee50fa054e4e41",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/accounts/journal-source-identity-preparation.test.ts",
+      "calls": [
+        {
+          "line": 105,
+          "options": "{\n    now: () => new Date(\"2026-08-01T12:00:00.000Z\"),\n  }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 36,
+      "assertionVectorSha256": "389882c2c0060914e8945d86240cc828fa785a1e72b8ab607680ad3d68bb7748",
+      "originalFileSha256": "2da8b9edc141a6b11c369e8d33627a2c4eba2c18242153ff78d84d07654113d2",
+      "updatedFileSha256": "606325f658988ebdb76c180ce5d40f5975a619dcbbe043899a029a694223d3b3",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/administration/journal-admin-read-services.test.ts",
+      "calls": [
+        {
+          "line": 46,
+          "options": "{ now: () => new Date(NOW) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"test.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 24,
+      "assertionVectorSha256": "6a34d0d19f8abdea68c15348b231181218eb6447908e3e035f47d630a5fc182c",
+      "originalFileSha256": "ecdd9e215c53c39718aaf2ce7f0dcb84b249c8a46071f779bb7292e39ae1eb36",
+      "updatedFileSha256": "2d2426c0c3696f0edb586b65e1c83b5dcdf22ef0e49964211db972aa99554b6e",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/administration/journal-import-attempt-recovery.test.ts",
+      "calls": [
+        {
+          "line": 34,
+          "options": "{ now: () => START }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 3,
+      "assertionVectorSha256": "b776ac0293ed03a4febd3091609733cc163b9c2c9776415cfc9ff891c8dfbdc8",
+      "originalFileSha256": "4edf8cb19cdb65985b66b2e450b7c125ecd08243f8ab1d764667a31be1a6d15a",
+      "updatedFileSha256": "75aa1fc357bab0d5507005d77538d26b720287dce3b9871d04708217c2366f1c",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/administration/journal-import-attempt-repository.test.ts",
+      "calls": [
+        {
+          "line": 37,
+          "options": "{ now: () => new Date(FIRST) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"test.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 10,
+      "assertionVectorSha256": "4f9ee456b062a29db027ea6b24d7684f073498003dd89800ca6571126d997e04",
+      "originalFileSha256": "752c955a0a36c80b58cabf5c577211f28b145bf976b2fe6decddef08c09e53e9",
+      "updatedFileSha256": "193c9505a860d754fc4ad1cdc02a3a13db2c63fe51fec5f645b1b166575ffc36",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/administration/journal-import-attempt-service.test.ts",
+      "calls": [
+        {
+          "line": 43,
+          "options": "{ now: () => START }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 7,
+      "assertionVectorSha256": "0899016327320451a9226e64dc5f5d2d2c5d70b02be0859b7d0bd055b37b8b34",
+      "originalFileSha256": "da77485d0d85be5f9d1018fc8e1c802d4dba699a7e14b2136f762cad62565f34",
+      "updatedFileSha256": "d4358848b06477bd95affbbc197c923ec589991d63bd15047bcedd587804cc33",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/administration/journal-statement-format-command-service.test.ts",
+      "calls": [
+        {
+          "line": 42,
+          "options": "{ now: () => new Date(NOW) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 28,
+      "assertionVectorSha256": "5edb032ab4b9aaa2a7f01fe94d2a8432cd78fa6174200f443d30e9a1fe58b088",
+      "originalFileSha256": "6c73e0b960f125b85ad672460ab6924c27d6c59df8a2bb2a3324df334cb2feec",
+      "updatedFileSha256": "717f0a44f73809cc09f59aae5468b09d7a3cfa2c22f27a7e2b55f4a3c90e243a",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/administration/journal-statement-format-repository.test.ts",
+      "calls": [
+        {
+          "line": 40,
+          "options": "{ now: () => new Date(START) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"test.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 10,
+      "assertionVectorSha256": "aac8eaf19b5fc67b56bd5ba7b91823f5b05a865cea2672f5c3c1d0129e2e58b0",
+      "originalFileSha256": "d4b71101292e7fe7bbc7a9819510e19c7aacae87a1009697b9de28e9bf84e5eb",
+      "updatedFileSha256": "f48a2de5fdc45c9ca3d591b8dbb7dc7165803f0f57e770fe9cb9f8c67c4771f0",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/administration/journal-support-consent-repository.test.ts",
+      "calls": [
+        {
+          "line": 31,
+          "options": "{ now: () => new Date(START) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"test.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 6,
+      "assertionVectorSha256": "ad7d1e6f514e602ebbacca69aecc8c01a8cbd37a4b94c51aa9e5cd99d3735fd0",
+      "originalFileSha256": "eba91a57207dcca04f8f32949f3e218711d9b4c4823fa7babbd992706b8c0bcf",
+      "updatedFileSha256": "f68a0aee0bc0d15a21bdc24af7a878438a8d1d001a6f182dca79cd37a3b57304",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/administration/journal-support-consent-service.test.ts",
+      "calls": [
+        {
+          "line": 50,
+          "options": "{ now: () => START }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 10,
+      "assertionVectorSha256": "a8505000ac5359510b93eea34da44864d74de1598faf1523f403a3076ddbfcf5",
+      "originalFileSha256": "f4eb94f1bd9a84140af4bf6d0e44db1807fc8ff082ea92265ac8e8933f84d450",
+      "updatedFileSha256": "28be11a1c41957315e811e01f3028cf0766c5475b4284e720c991aa5337f1ed2",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/analytics/journal-analytics-fact-set-repository.test.ts",
+      "calls": [
+        {
+          "line": 100,
+          "options": "{ now: () => new Date(timestamp) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"analytics.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 28,
+      "assertionVectorSha256": "331f893964e93858beaebdc9ab08570523e7c68624c3aa264f681b21dea6d5f7",
+      "originalFileSha256": "c422096570944594d1d0577faa573874d4d08703979dd015104bd5b58e35ce7e",
+      "updatedFileSha256": "7734c71ef5476c9b6ef72f916c0cbb80339c1b301f8981645b1fcc0ca9ab900f",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/annotations/journal-annotation-service.test.ts",
+      "calls": [
+        {
+          "line": 124,
+          "options": "{ now: () => new Date(at) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"journal.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 48,
+      "assertionVectorSha256": "802677719655808f6d9ea75aed5f418b5ce6b757d2d4c4ad672edac1f46d1c87",
+      "originalFileSha256": "6deef6ed10b17a0bb94a7483a967c4185670d1e2fa7612e7aa83e9e44f43ed71",
+      "updatedFileSha256": "14ca1d390e3d2293e3e430aef6bc76b13c8787f3b05696ed7b3cd3f1654a2efe",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/chart/journal-chart-service.test.ts",
+      "calls": [
+        {
+          "line": 17,
+          "options": "{ now: () => new Date(at) }",
+          "arg": "db",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath: join(dir, \"scratch.sqlite\"), forbiddenRepositoryRoots: [] })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 21,
+      "assertionVectorSha256": "ea93eba35b4576fad1312d916a5b497631aa97bf8bdc2168cf67339a6af6688c",
+      "originalFileSha256": "f8ed67894fb0c7a52ba504e6732f95b907c76b7128db5551ff61df20e92d5dd3",
+      "updatedFileSha256": "e63f6863d2c1583b7528b4202367120c51277e13065cb593037c156edf746012",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/database/journal-integrity-migrations.test.ts",
+      "calls": [
+        {
+          "line": 45,
+          "options": "{\n    now: () => new Date(timestamp),\n  }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"journal.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/journal/server/demo/journal-demo-indicator-schema.test.ts",
+      "calls": [
+        {
+          "line": 25,
+          "options": "{now:()=>now}",
+          "arg": "db",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/journal/server/demo/journal-demo-prepared-publication-rehearsal.test.ts",
+      "calls": [
+        {
+          "line": 96,
+          "options": "{now:()=>now}",
+          "arg": "base",
+          "initializer": "new Database(liveFile)"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/journal/server/demo/journal-demo-setup-worker.test.ts",
+      "calls": [
+        {
+          "line": 28,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 3,
+      "assertionVectorSha256": "a12d3692bdae69a9a885a82b02cab4403a08d754acd95c12aa16bd8c19dc3151",
+      "originalFileSha256": "e304e5ffed360b8aa67cc24f0af39352311b0069a59a0bbc4bed7e588d321d85",
+      "updatedFileSha256": "80b15eb1c3cb5b9f58aaa4cf4c89ab1312361031172bb33f541c8723ff37e03c",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/imports/journal-import-service.test.ts",
+      "calls": [
+        {
+          "line": 76,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath: join(root, \"journal.sqlite\"), forbiddenRepositoryRoots: [] })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 143,
+      "assertionVectorSha256": "8cefb9088b249411e8f55cb3551dac1c1380f528997685a7921166d3de18db39",
+      "originalFileSha256": "01dd873059e8104c2530a4cc5eba7a1cdbac5d9bb9b374b7b073969d1999bdde",
+      "updatedFileSha256": "03842bf18b6dfcb511718082f48ac9be8057d7667a7675e552dc09b6966940dd",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/imports/journal-private-source-automation.test.ts",
+      "calls": [
+        {
+          "line": 223,
+          "options": "{\n    now: () => new Date(\"2026-08-01T12:00:00.000Z\"),\n  }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 44,
+      "assertionVectorSha256": "bec3aff8515523e38abfe53f02c4ea8c2688246ac1002303c74a07e1f32dcb96",
+      "originalFileSha256": "56045c5416be46821d60d83c8f91ef9733b9bb623e5d93ce3829d19aad73bce6",
+      "updatedFileSha256": "74833f5003f2e0fe7f16ad1269a0900232fbc96818be0f420f17a2909a9f1041",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/journal-integrity-command-service.test.ts",
+      "calls": [
+        {
+          "line": 93,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"journal.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 176,
+      "assertionVectorSha256": "a0814e92d15e979e54df1e4be95286bac631aa98597c0464a6fc0a4dfd434d89",
+      "originalFileSha256": "a344f05c8bffe8e0d5ff7997e72c536c4b7f870db2f741d852bd4914e168aff4",
+      "updatedFileSha256": "14ead1879a51d96eee0687819b8214cdc02f7487f215f27e91360db035e42150",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/manual-trades/journal-manual-trade-command-service.test.ts",
+      "calls": [
+        {
+          "line": 57,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"journal.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 32,
+      "assertionVectorSha256": "ff1c4e20a569f9fc20abcfcf1a9e0b49ee1048fc161ef3fe247f64364a679bd7",
+      "originalFileSha256": "ee9fb55df2445e31b7a6661db7ebee6e8cd7c2383513f0005552b062b1b7b16d",
+      "updatedFileSha256": "da642458fe943754cb64036e343f626855ad15e809bd64a221dba7279180e25e",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal/server/product/journal-import-product-service.test.ts",
+      "calls": [
+        {
+          "line": 59,
+          "options": "{ now: () => START }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 8,
+      "assertionVectorSha256": "be93aa3afb0eeb91e5956183d53b166f191e671fe5fb44a8f917d40696b49d21",
+      "originalFileSha256": "c91cd70c878327b72bda4925ad004e9b18713d1d616dc0905e16c2391895b35b",
+      "updatedFileSha256": "fb6ec55056dcfeeba8cff009c2bd818376ae471f1c907ff364c4ae8d0222ac1a",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/journal-analytics/server/analytics-lab-saved-view-service.test.ts",
+      "calls": [
+        {
+          "line": 35,
+          "options": "{ now: () => new Date(at) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"journal.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 17,
+      "assertionVectorSha256": "31e1a9228192d9c6527213b4d9c1b733af56b2d553e2dedafb3ea692694d00d1",
+      "originalFileSha256": "14a191badc62e6ec09a60ddca0dd0a4d28138484b30ca87129975aed70bb8af7",
+      "updatedFileSha256": "031b65c9078bf40ce871a2b9b0f5626af9455f4e388f41abbc3ff32290ee062e",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/level-analysis/server/candle-review-service.test.ts",
+      "calls": [
+        {
+          "line": 48,
+          "options": "{ now: () => new Date(at) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"journal.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 25,
+      "assertionVectorSha256": "316257fb69669e0732a16178d9a5c39893c052754344d0a7de044c2ba5636026",
+      "originalFileSha256": "93e5b1f555e3f5ba17f3f01ce599b0ea959875aa4912504809d4576c03804ed2",
+      "updatedFileSha256": "40a5b42d09113c8e31bab171ecc366c127767aefaaf0a928bd43d9a951cd15e5",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/level-analysis/server/journal-level-analysis-link-service.test.ts",
+      "calls": [
+        {
+          "line": 57,
+          "options": "{ now: () => new Date(now) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"platform.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 18,
+      "assertionVectorSha256": "43bfdb0a48b148d48d5631e93ddd01fd646ac5a0b30f31ad8f73f4a9f3af99cf",
+      "originalFileSha256": "966d67de491dddd0f006578ae20067cca7353398b530b05e13e13698e557a490",
+      "updatedFileSha256": "1af610df580df334b352bb114bb5b857ed16d6a1a17f9f3f9c8740dba11431f7",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/level-analysis/server/level-analysis-delivery-service.test.ts",
+      "calls": [
+        {
+          "line": 31,
+          "options": "{ now: () => new Date(\"2026-08-02T12:00:00.000Z\") }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"platform.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 18,
+      "assertionVectorSha256": "23feff7dc4b848b4aa88fbd9287c3d3db174c97f91c72daf6e74732f53c7eefe",
+      "originalFileSha256": "52284b27cee0996026e962e1171b6ca904e8313a52660170b62d768def6c6cbe",
+      "updatedFileSha256": "5bc716697ee37072d9106103eb5700d87eae5823531300d04421659c8df00ae2",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/news/server/reverse-splits/registered-migration.test.ts",
+      "calls": [
+        {
+          "line": 24,
+          "options": "{ manifest: predecessor, now: () => new Date(at) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        },
+        {
+          "line": 26,
+          "options": "{\n      manifest: platformMigrationManifest.slice(0, migrationIndex + 1),\n      now: () => new Date(at),\n    }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        },
+        {
+          "line": 32,
+          "options": "{ now: () => new Date(at) }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        },
+        {
+          "line": 34,
+          "options": "",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/partner-alerts/server/database/partner-alert-current-manifest.test.ts",
+      "calls": [
+        {
+          "line": 31,
+          "options": "{ manifest: prefix, now }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        },
+        {
+          "line": 52,
+          "options": "{ manifest, now, atomicSuffix: true, verifyAtomicSuffix: failure }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        },
+        {
+          "line": 56,
+          "options": "{ manifest, now, atomicSuffix: true }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        },
+        {
+          "line": 64,
+          "options": "{ manifest, now, atomicSuffix: true }",
+          "arg": "database",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/partner-alerts/server/partner-alert-stripe-erasure-worker-input-v5.test.ts",
+      "calls": [],
+      "disposition": "metadata-only or already cached"
+    },
+    {
+      "path": "src/modules/platform/server/administration/platform-admin-authorization.test.ts",
+      "calls": [
+        {
+          "line": 38,
+          "options": "{ now: () => SIGN_IN_AT }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"test.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 7,
+      "assertionVectorSha256": "70b82e61f27e4ef9810bea5146efc48292c3032fa0e1aebaebaa565032d115f7",
+      "originalFileSha256": "2f9a7b1dc6f508ccd096b8ed29f422c8d9cbcb0c230dd0c30f3f72d95280d081",
+      "updatedFileSha256": "485ba8d3a45b45ef10c09d5209e63d24a359ec04ed1b8a877dd6ba45093296fa",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/administration/platform-operator-service.test.ts",
+      "calls": [
+        {
+          "line": 40,
+          "options": "{ now: () => NOW }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 10,
+      "assertionVectorSha256": "39822e43d2562dde7030d2ca79a50ef08d370a16e11f135ca06e2b648a1f6c7f",
+      "originalFileSha256": "74afc1adab2ef975ad89cb8be1a49317785de341afea6090ae0469dc7dc5653a",
+      "updatedFileSha256": "9fa3d7dfeb546d7b1af77e1fdd9e128ae178de8218fb3833f7e026cde7690387",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/authentication/platform-authentication-repository.test.ts",
+      "calls": [
+        {
+          "line": 38,
+          "options": "{\n        manifest: platformMigrationManifest.slice(0, 11),\n        now: () => new Date(NOW),\n      }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath: pathForTest(),\n      forbiddenRepositoryRoots: [],\n    })"
+        },
+        {
+          "line": 48,
+          "options": "{ now: () => new Date(NOW) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath: pathForTest(),\n      forbiddenRepositoryRoots: [],\n    })"
+        },
+        {
+          "line": 77,
+          "options": "{ now: () => new Date(NOW) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath: pathForTest(),\n      forbiddenRepositoryRoots: [],\n    })"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/platform/server/authentication/platform-discord-sign-in-service.test.ts",
+      "calls": [
+        {
+          "line": 42,
+          "options": "{\n    manifest: platformMigrationManifest,\n    now: () => new Date(\"2026-08-02T12:00:00.000Z\"),\n  }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"test.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 17,
+      "assertionVectorSha256": "c17f0d0bb7d5e40db32ccc82c1f38e6ce0f34b55dbf7c64536cd82b3f680db3f",
+      "originalFileSha256": "4c5cf3f25c81dfb4993b6bed20796473c4a91385f32aa0229e4e526ef7740e6a",
+      "updatedFileSha256": "d454a2e155758daaedf3b1fa7553860772eda80f3b7778fea73b29e06c10e569",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/authentication/platform-discord-workspace-callback.test.ts",
+      "calls": [
+        {
+          "line": 22,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath: path, forbiddenRepositoryRoots: [] })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 16,
+      "assertionVectorSha256": "1abaf3a6a0f19f3dcbcf242b7250edb5b23ca20ad8a25d1589a12b756319724c",
+      "originalFileSha256": "7d04a996e07d9766094dfe536835f0c4acc94a213338b493ac5221cc81b6ed01",
+      "updatedFileSha256": "01df602ff6a7f914342344ea23ee1fd03da41a42b2fb14fa0b23a4d1780de24e",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/authentication/platform-email-route.test.ts",
+      "calls": [
+        {
+          "line": 60,
+          "options": "",
+          "arg": "db",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath: join(root, \"qa.sqlite\"), forbiddenRepositoryRoots: [] })"
+        },
+        {
+          "line": 139,
+          "options": "",
+          "arg": "db",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath: join(root, \"qa.sqlite\"), forbiddenRepositoryRoots: [] })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 54,
+      "assertionVectorSha256": "c64c23614c7b3be739f8ca666c250423d12bae29fa5dc7d177d55cbd471d4df6",
+      "originalFileSha256": "3c317430027218fae56ccdc59c98d71b378f3c3db90e9a5880170a592f495f51",
+      "updatedFileSha256": "63fd6914e9cd8960443436a82a16397c55fcb45efdde2eca1007ad68703de541",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/authentication/platform-identity-provisioning.test.ts",
+      "calls": [
+        {
+          "line": 15,
+          "options": "{ manifest: platformMigrationManifest }",
+          "arg": "db",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath: join(root, \"qa.sqlite\"), forbiddenRepositoryRoots: [] })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 6,
+      "assertionVectorSha256": "0dbade3265086c8d8febdddc6915bd02825e1d632555181e20c8b7a5122c477a",
+      "originalFileSha256": "50688254d46137eb84a4664000e63c05a721426ea31a3ae4f6b51b35da6a05bc",
+      "updatedFileSha256": "eab4c264379ce1f0ac1edc632adbf3bf447d4140bfec7a9b0f741a36900bc246",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/authentication/platform-login-service.test.ts",
+      "calls": [
+        {
+          "line": 24,
+          "options": "{ manifest: platformMigrationManifest }",
+          "arg": "db",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"qa.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 51,
+      "assertionVectorSha256": "1a083e89e644a4c8ee1fd1b804ca9f2fc503a28978f2153c1a40a7e43db8b6b4",
+      "originalFileSha256": "2583c548d72949d1132b57cd289ec2a42e5191c71d3e4e71dba95b546234e0d3",
+      "updatedFileSha256": "7973cc923043d2f5d9b59ffe7f76a7dedf215fad627f74536346fd598a6fd041",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/authentication/platform-session-service.test.ts",
+      "calls": [
+        {
+          "line": 33,
+          "options": "{\n        now: () => new Date(\"2026-08-02T12:00:00.000Z\"),\n      }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath: join(root, \"test.sqlite\"),\n      forbiddenRepositoryRoots: [],\n    })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 7,
+      "assertionVectorSha256": "210035d7b244b34195d9afa70551e9e2a5ad3bda337cfa36bcc022033a8d7e46",
+      "originalFileSha256": "9a3df38c5cd21a418bc9a6b1d9d110d68fd804dd95a46e74ca159e948cd10a42",
+      "updatedFileSha256": "6b0fe3724f2f52baffb94c05b218ce98c5abf6287086e8314486b2077be6c90b",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/authentication/require-platform-request-scope.test.ts",
+      "calls": [
+        {
+          "line": 43,
+          "options": "{ now: () => now }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath, forbiddenRepositoryRoots: [] })"
+        },
+        {
+          "line": 105,
+          "options": "{\n        now: () => new Date(\"2026-08-02T12:00:00.000Z\"),\n      }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath,\n      forbiddenRepositoryRoots: [],\n    })"
+        },
+        {
+          "line": 182,
+          "options": "{\n        now: () => new Date(\"2026-08-02T12:00:00.000Z\"),\n      }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath,\n      forbiddenRepositoryRoots: [],\n    })"
+        },
+        {
+          "line": 253,
+          "options": "{ now: () => at }",
+          "arg": "db",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath: join(root, \"test.sqlite\"), forbiddenRepositoryRoots: [] })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 29,
+      "assertionVectorSha256": "3bc05b07b05b6544a37fa9ab8e27e98090666bef6a6b09206d5d7b4da3dfa762",
+      "originalFileSha256": "a362dd9ccc4477018876c86205d3ff081010226cb292a56c6bb3f2cd70cc6382",
+      "updatedFileSha256": "3c1ae8bc60b366ea191f073990b3cf5e8035f19509ebb1f3a13a475575782114",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/authorization/workspace-access-scope.test.ts",
+      "calls": [
+        {
+          "line": 40,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"scope.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 6,
+      "assertionVectorSha256": "a0931e07d5f7470191de2396cd1fe9ef0a34304248e628030b0e09a89cf91b01",
+      "originalFileSha256": "1a70b834223717c57b6acfb192871109ba6ca5862c81a01c46ef8f1aaf223b59",
+      "updatedFileSha256": "16615f2e4707f15f9b2f9b8c56c1e83d3033b95f8413b47e79b5822fddb1c486",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/bootstrap/link-initial-owner-discord-identity.test.ts",
+      "calls": [
+        {
+          "line": 43,
+          "options": "{ now: () => NOW }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath,\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 5,
+      "assertionVectorSha256": "752251fb86a551536cb3919cbf8f907ddf6531f07fa5a746f2a74aa7f9055d35",
+      "originalFileSha256": "6f7a72bde02f205c8a1bce2201a968c2c97fc21a8203c467773b3986aa3faecb",
+      "updatedFileSha256": "e683673f8cba58d6c23345a6b06d2bcfabc16a08c4632da41ed85707069aa8a3",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/bootstrap/seed-development-owner.test.ts",
+      "calls": [
+        {
+          "line": 37,
+          "options": "{\n    now: () => new Date(\"2026-08-01T13:00:00.000Z\"),\n  }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"seed.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 18,
+      "assertionVectorSha256": "9304c601113a48f80a7b7e1d1e708fd4e36d80af713dbe512fadb0b4c7bf6bfd",
+      "originalFileSha256": "a19eba6c787ca48c8f305ff8bd449126b9dfcee9daee7863e54ca287fc4a2248",
+      "updatedFileSha256": "950076cbfb09ecb6ea2e81dc63a32afd01a31d0c4da29c12ff07185d65ff707e",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/broker-connections/moomoo-connection-alerts.test.ts",
+      "calls": [
+        {
+          "line": 14,
+          "options": "",
+          "arg": "db",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/platform/server/broker-connections/moomoo-membership-access.test.ts",
+      "calls": [
+        {
+          "line": 14,
+          "options": "",
+          "arg": "db",
+          "initializer": "new Database(':memory:')"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/platform/server/database/platform-database-initialization-modes.test.ts",
+      "calls": [
+        {
+          "line": 66,
+          "options": "{ manifest: [platformMigrationManifest[0]] }",
+          "arg": "partialDb",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath: partial,\n      forbiddenRepositoryRoots: [],\n    })"
+        },
+        {
+          "line": 145,
+          "options": "{\n      manifest: platformMigrationManifest.slice(0, 2),\n      now: () => new Date(\"2026-08-01T12:00:00.000Z\"),\n    }",
+          "arg": "prefixDatabase",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath: path,\n      forbiddenRepositoryRoots: [],\n    })"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "calls": [
+        {
+          "line": 45,
+          "options": "{ manifest: platformMigrationManifest.slice(0, -1) }",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"analyzer-alpaca\"))"
+        },
+        {
+          "line": 54,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"analyzer-alpaca\"))"
+        },
+        {
+          "line": 73,
+          "options": "{\n        now: () => new Date(\"2026-08-01T12:00:00.000Z\"),\n      }",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"foundation\"))"
+        },
+        {
+          "line": 113,
+          "options": "{ manifest: [failing] }",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"rollback\"))"
+        },
+        {
+          "line": 129,
+          "options": "{ manifest: [platformMigrationManifest[0]] }",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"resume\"))"
+        },
+        {
+          "line": 131,
+          "options": "{\n          manifest: [platformMigrationManifest[0], failingSecond],\n        }",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"resume\"))"
+        },
+        {
+          "line": 139,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"resume\"))"
+        },
+        {
+          "line": 163,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"checksum-tampering\"))"
+        },
+        {
+          "line": 169,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"checksum-tampering\"))"
+        },
+        {
+          "line": 180,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"unknown-history\"))"
+        },
+        {
+          "line": 186,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"unknown-history\"))"
+        },
+        {
+          "line": 197,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"out-of-order-history\"))"
+        },
+        {
+          "line": 215,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(newPath(\"out-of-order-history\"))"
+        },
+        {
+          "line": 228,
+          "options": "{\n      now: () => new Date(\"2026-08-01T12:00:00.000Z\"),\n    }",
+          "arg": "database",
+          "initializer": "openInitializer(sourcePath)"
+        },
+        {
+          "line": 279,
+          "options": "{ manifest: platformMigrationManifest.slice(0, 8) }",
+          "arg": "database",
+          "initializer": "openInitializer(sourcePath)"
+        },
+        {
+          "line": 297,
+          "options": "",
+          "arg": "database",
+          "initializer": "openInitializer(sourcePath)"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/platform/server/database/platform-schema-digest.test.ts",
+      "calls": [
+        {
+          "line": 28,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"digest.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 4,
+      "assertionVectorSha256": "5d8a368d9a4f19854bfb4fc4ee9df9e4d77e6062be6f42e1e51e52541f7e770e",
+      "originalFileSha256": "643200b078dd529fee821ba8155975a96f39267f42d6e54ff045896e3fc5f59b",
+      "updatedFileSha256": "a52f92aac5eb61cfd35f90fbda850aa9e3710040d80ec532d515a01071019d95",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/database/platform-storage-validation.test.ts",
+      "calls": [
+        {
+          "line": 29,
+          "options": "",
+          "arg": "db",
+          "initializer": "openPlatformDatabase({\n    mode: \"initializer\",\n    databasePath: join(root, \"storage.sqlite\"),\n    forbiddenRepositoryRoots: [],\n  })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 6,
+      "assertionVectorSha256": "cb336ff9d293dc6f4480eb765bc3025f6a61c8d4c69bd9b9af4bdeca2d678a55",
+      "originalFileSha256": "e4715f477da02b51757954272ce5fd6a15959598c5a4dcf3e608bba393ffb2ed",
+      "updatedFileSha256": "11fb5788ab2ca2f6e3e35683838e84b79a16347a6091ec7c24e99140f808b3d6",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/identity/platform-account-profile-read-service.test.ts",
+      "calls": [
+        {
+          "line": 30,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({\n      mode: \"initializer\",\n      databasePath: join(root, \"profile.sqlite\"),\n      forbiddenRepositoryRoots: [],\n    })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 4,
+      "assertionVectorSha256": "3f1a1cd169bf9597aae155f24228973e0be911e9e0e4956d38fb4ba553efce58",
+      "originalFileSha256": "13b326ca5c6cd683dbe30d251aa89d1061fe808da6e0ace54c7a39d96d3f531f",
+      "updatedFileSha256": "9d80cd01211360189740ed7894fdd2e6944fd547bc3bdf33db4447219b7b1922",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/platform/server/identity/platform-home-page.test.ts",
+      "calls": [
+        {
+          "line": 67,
+          "options": "{ manifest: platformMigrationManifest.slice(0, upgrade) }",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath, forbiddenRepositoryRoots: [] })"
+        },
+        {
+          "line": 73,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath, forbiddenRepositoryRoots: [] })"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/platform/server/privacy/platform-erasure-command.test.ts",
+      "calls": [
+        {
+          "line": 27,
+          "options": "{ manifest: combined ? platformMigrationManifest : platformMigrationManifest.filter((m) => m.executionOrder <= 189) }",
+          "arg": "template",
+          "initializer": "new Database(\":memory:\")"
+        }
+      ],
+      "disposition": "real migration/upgrade or separately qualified existing fixture"
+    },
+    {
+      "path": "src/modules/platform/server/transfer/hosted-transfer-atomicity.test.ts",
+      "calls": [
+        {
+          "line": 24,
+          "options": "{ now: () => now }",
+          "arg": "db",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath: path, forbiddenRepositoryRoots: [] })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 7,
+      "assertionVectorSha256": "d6a4000c1619c992f890c221dc7aacbd2cae754c2c578cf908fbdd9e789d75d3",
+      "originalFileSha256": "e96f94b609c490edd0e57b83a4e56564d876598b6ad3932465568db906cf4d6f",
+      "updatedFileSha256": "40cc951633f9b9bf866ea1e25153c154c51cf57dc67f4be12abcc2aa6e4c71e4",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    },
+    {
+      "path": "src/modules/stock-screeners/two-account.test.ts",
+      "calls": [
+        {
+          "line": 104,
+          "options": "",
+          "arg": "database",
+          "initializer": "openPlatformDatabase({ mode: \"initializer\", databasePath })"
+        }
+      ],
+      "disposition": "convert ordinary full-schema fixture",
+      "originalAssertionExpressions": 49,
+      "assertionVectorSha256": "6141c764a8d31dba55d504c4826f28921c04f7c4dd918dfc10b6e2571aaea822",
+      "originalFileSha256": "d4bf9f5ac8cdfe25262ea9d0c27bea190f27c37b1cc1d6c252fd6d5ec662453d",
+      "updatedFileSha256": "bf98702357390d21c7e698a6ae954b625e51a4df3aadee00bece7350ee4ddac2",
+      "assertionVerification": "Identical assertion vectors after only the explicitly approved reserved-principal count-query normalization"
+    }
+  ],
+  "discoveryBaseline": {
+    "log": "Coordinator operations/community-frozen-234-full-suite-20261117.log",
+    "boundedRun": "SIGTERM after 30 minutes; incomplete, not a full pass",
+    "completedFailingFiles": 18,
+    "reportedFailedCases": 144
+  },
+  "firstConsumerRetest": {
+    "filesScheduled": 59,
+    "filesPassed": 50,
+    "filesFailed": 8,
+    "casesPassed": 317,
+    "casesFailed": 20,
+    "unhandledWorkerErrors": 1,
+    "durationSeconds": 277.17,
+    "log": "/tmp/coaching-pristine-consumers-20261117.log",
+    "note": "New helper Buffer deep matcher OOM; corrected to SHA-256. Consumer failures are canonical reserved-principal compatibility, not timeouts."
+  },
+  "realSqlProbe": {
+    "files": 3,
+    "casesPassed": 20,
+    "casesFailed": 1,
+    "durationSeconds": 70.22,
+    "maximumMeasuredFullMigrationCaseMs": 7117,
+    "temporaryDiagnosticCaseBudgetMs": 20000,
+    "log": "/tmp/coaching-fixture-migration-probe-20261117.log",
+    "note": "Real migration statements unchanged; one explicit seed population expectation needs correction. All seven helper cases passed after hash comparison."
+  },
+  "realSqlCaseBudgets": [
+    {
+      "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "name": "preserves existing Analyzer session receipts while enabling raw Alpaca cache rows",
+      "measuredMs": 5895,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 5802,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "name": "creates exactly the current registry and managed domain seed state",
+      "measuredMs": 5589,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "originalName": "creates exactly the current registry and empty managed domain tables",
+      "qualifiedMs": 6352,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "name": "preserves an exact committed prefix and resumes at the next order",
+      "measuredMs": 5766,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 6212,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "name": "rejects applied migration checksum tampering",
+      "measuredMs": 5438,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 6346,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "name": "rejects unknown applied migration history",
+      "measuredMs": 5565,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 6618,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "name": "rejects out-of-order applied migration rows",
+      "measuredMs": 6350,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 6043,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "name": "records exact online-backup, restore, file, pragma, and recovery evidence",
+      "measuredMs": 5825,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 6893,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+      "name": "requires exact non-secret HMAC and canonicalizer recovery authority",
+      "measuredMs": 7117,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 6310,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/journal/server/database/journal-integrity-migrations.test.ts",
+      "name": "creates the current schema and accepts one fully scoped evidence graph",
+      "measuredMs": 5728,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 7986,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/journal/server/database/journal-integrity-migrations.test.ts",
+      "name": "enforces canonical decimals and occurrence-distinct source identity",
+      "measuredMs": 6160,
+      "budgetMs": 15000,
+      "reason": "Actual canonical SQL exceeds default 5000ms",
+      "qualifiedMs": 6509,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/authentication/platform-authentication-repository.test.ts",
+      "name": "backfills the stable development identity and links Discord exactly",
+      "measuredMs": null,
+      "budgetMs": 15000,
+      "reason": "Same full canonical 203-migration setup measured 5438\u20137117ms; behavior assertions retained",
+      "qualifiedMs": 5933,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/platform/server/authentication/platform-authentication-repository.test.ts",
+      "name": "rejects duplicate provider ownership without changing the original link",
+      "measuredMs": null,
+      "budgetMs": 15000,
+      "reason": "Same full canonical 203-migration setup measured 5438\u20137117ms; behavior assertions retained",
+      "qualifiedMs": 6252,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/coach/server/database/migrations/0031_coach_ai_chat_setting_change_drafts.test.ts",
+      "name": "creates one scoped immutable proposal with guarded confirmation states",
+      "measuredMs": null,
+      "budgetMs": 15000,
+      "reason": "Same full canonical 203-migration setup measured 5438\u20137117ms; behavior assertions retained",
+      "qualifiedMs": 5709,
+      "qualifiedStatus": "passed"
+    },
+    {
+      "file": "src/modules/coach/server/database/migrations/0031_coach_ai_chat_setting_change_drafts.test.ts",
+      "name": "rejects a draft whose message/account scope does not match",
+      "measuredMs": null,
+      "budgetMs": 15000,
+      "reason": "Same full canonical 203-migration setup measured 5438\u20137117ms; behavior assertions retained",
+      "qualifiedMs": 5624,
+      "qualifiedStatus": "passed"
+    }
+  ],
+  "countAdaptation": {
+    "caseFailuresAddressed": 13,
+    "assertionExpressions": 11,
+    "files": [
+      "src/modules/platform/server/authentication/platform-login-service.test.ts",
+      "src/modules/platform/server/authentication/platform-email-route.test.ts",
+      "src/modules/platform/server/authentication/platform-discord-sign-in-service.test.ts",
+      "src/modules/platform/server/authentication/platform-discord-workspace-callback.test.ts",
+      "src/modules/platform/server/authentication/platform-identity-provisioning.test.ts",
+      "src/modules/platform/server/transfer/hosted-transfer-atomicity.test.ts"
+    ],
+    "contract": "Original expected created-user counts retained. Assert exact actual pristine reserved tuple unchanged, without auth/workspace links, count every additional identity including unknown erasure principals."
+  },
+  "coreOwnedFindings": [
+    {
+      "file": "src/modules/platform/server/bootstrap/seed-development-owner.test.ts",
+      "cases": 6,
+      "cause": "Current empty-foundation guard treats canonical disabled reserved principal as a completed development seed. Original behavior assertions retained; Core owns runtime repair."
+    },
+    {
+      "file": "src/modules/journal/server/administration/journal-admin-read-services.test.ts",
+      "cases": 1,
+      "cause": "Global admin user listing includes reserved internal principal. Original human listing assertion retained; Core owns runtime repair."
+    }
+  ],
+  "canonicalSeedTestAdaptation": {
+    "file": "src/modules/platform/server/database/platform-migrations.test.ts",
+    "contract": "Exactly one canonical migration-0205 disabled retained principal, exact full tuple, no auth identities or workspace memberships; all other managed-table seed/empty expectations unchanged."
+  },
+  "qualifiedSlice": {
+    "filesPassed": 11,
+    "casesPassed": 51,
+    "failures": 0,
+    "durationSeconds": 116.49,
+    "globalCaseTimeoutMs": 5000,
+    "cliTimeoutOverride": false,
+    "log": "/tmp/coaching-fixture-qualified-slice-20261117.log",
+    "scope": "9 helper guards, six adapted human-count fixture files, four faithful actual-SQL migration files. Seven Core-owned runtime assertions remain pending outside this green slice."
+  },
+  "staticQualification": {
+    "typescript": "PASS: npx tsc --noEmit --incremental false --pretty false; unexcluded project, zero diagnostics, 4 GiB V8 limit",
+    "typescriptLog": "/tmp/coaching-pristine-typecheck-20261117.log",
+    "lint": "PASS: explicit changed helper/consumer/migration test files",
+    "diffCheck": "PASS",
+    "runtimeSourceChanged": false,
+    "schemaSqlChanged": false,
+    "fullRepositorySuiteStatus": "Not rerun; Core compatibility fix and full usage-inventory retest pending"
+  }
+}

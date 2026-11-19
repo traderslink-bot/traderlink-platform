@@ -1,10 +1,9 @@
+import {openPristinePlatformTestDatabase,setPlatformTestFixtureMigrationTime} from '@/src/test/pristine-platform-test-database';
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
 
 import type { JournalAdminScope } from "@/src/modules/platform/contracts/journal-admin-scope";
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
-import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 import type { PlatformAdminReferenceKeyConfiguration } from "@/src/modules/platform/server/administration/platform-admin-reference-authority";
 
 import { CoachAiChatAdministrationRepository } from "./coach-ai-chat-administration-repository";
@@ -33,9 +32,9 @@ function setup(): Readonly<{
   creatorId: string;
   activeMemberId: string;
 }> {
-  const database = new Database(":memory:");
+  const database = openPristinePlatformTestDatabase();
   database.pragma("foreign_keys = ON");
-  runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => new Date(initialTime) });
+  setPlatformTestFixtureMigrationTime(database, () => new Date(initialTime));
 
   const adminId = createCanonicalUuidV4();
   const otherAdminId = createCanonicalUuidV4();

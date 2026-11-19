@@ -148,10 +148,10 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
             </Grid>
           </Stack></Box>
           <CoachingPlanPaymentOptionsFields value={paymentOptions} onChange={setPaymentOptions} billing={billing} onBillingChange={setBilling} offers={active} paymentInstructions={paymentInstructions} onPaymentInstructionsChange={setPaymentInstructions}/>
-          {snapshot?<Box id="coach-plan-enrollment" component="details" sx={{border:1, borderColor:"divider", borderRadius:2, p:2}}>
+          {snapshot?<Box id="coach-plan-enrollment" component="details" open={!plan?.requiredDiscordRoleId} sx={{border:1, borderColor:"divider", borderRadius:2, p:2}}>
             <Box component="summary" sx={{cursor:"pointer", fontWeight:700}}>Discord enrollment settings</Box>
             <Stack spacing={2} sx={{mt:2}}>
-              <TextField value={coachingRole} onChange={event=>setCoachingRole(event.target.value)} id="coach-plan-required-role" fullWidth label="Student enrollment role" name="requiredDiscordRoleId" select helperText="Students need this Discord role to access this plan. Your server owner or admin manages Discord roles; this does not assign your coach responsibilities.">
+              <TextField value={coachingRole} onChange={event=>setCoachingRole(event.target.value)} id="coach-plan-required-role" fullWidth label="Student enrollment role (required to publish)" name="requiredDiscordRoleId" select helperText="Students need this Discord role to access this plan. Your server owner or admin manages Discord roles; this does not assign your coach responsibilities.">
                 <MenuItem value="">Select role</MenuItem>
                 {roles.map(role => <MenuItem key={role} value={role}>{snapshot?.coachingRoleOptions?.find(item=>item.id===role)?.name??(snapshot?.staffRoles??[]).find(item=>item.discordRoleIds.includes(role))?.name??(snapshot?.audiences??[]).find(item=>item.discordRoleIds.includes(role))?.name??"Previously selected role (unavailable)"}</MenuItem>)}
               </TextField>
@@ -181,7 +181,7 @@ export function CoachingPlanBuilder({snapshot, coachProfileId, isReview=false, p
             {feedback.error?<Alert severity="error" role="alert">{feedback.error}</Alert>:null}
             {tooLong||description.length>500?<Typography color="error" role="alert">Fix the plan details before saving.</Typography>:null}
             {!independent?<Button disabled={isReview||pending||!active.length||tooLong||description.length>500} name="intent" type="submit" value={plan?"save":"draft"} variant="outlined">{plan?"Save changes":"Save draft"}</Button>:null}
-            {!independent&&plan?.status!=="active"?<Button disabled={isReview||pending||!active.length||tooLong||description.length>500} name="intent" type="submit" value="publish" variant="contained">Publish plan</Button>:null}
+            {!independent&&!coachingRole&&active.length?<Typography color="error" variant="body2">Choose a Student enrollment role in Discord enrollment settings before publishing.</Typography>:null}{!independent&&plan?.status!=="active"?<Button disabled={isReview||pending||!active.length||tooLong||description.length>500||!coachingRole} name="intent" type="submit" value="publish" variant="contained">Publish plan</Button>:null}
             {onCancel?<Button type="button" onClick={onCancel}>Cancel edit</Button>:null}
             <Button href="#coach-plan-builder" sx={{display:{lg:"none"}}}>Back to plan</Button>
           </Stack>
