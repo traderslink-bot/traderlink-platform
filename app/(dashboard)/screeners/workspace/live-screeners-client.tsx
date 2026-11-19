@@ -12,7 +12,9 @@ import { ScannerLayoutHandles, ScannerLayoutToolbar, type CardViews, type NamedL
 import { validPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
 import { defaultTile, fromGrid, minimum, validTile } from "./scanner-split-layout";
 import { cardEntries, layoutSize, placeAddedCard, removePresetSpacing, tileToCards, validCardLayout, type CardLayout } from "./scanner-free-layout";
-import { isScannerCard, readCardScanners, scannerTitles, WorkspaceScannerTitle, WorkspaceScannerTitleContext, type CardScanners, type ScannerCardKind } from "./workspace-scanner-title";
+import { isScannerCardSlot, readCardScanners, scannerCardSlots, scannerTitles, WorkspaceScannerTitle, WorkspaceScannerTitleContext, type CardScanners, type ScannerCardKind, type ScannerCardSlot } from "./workspace-scanner-title";
+import { GainerSwitchControl } from "./gainer-switch-control";
+import { GAINER_CARD_LABELS, gainerCardResults, gainerCardView, isGainerCard, readGainerSwitchPreferences, type GainerSwitchPreferences } from "@/src/modules/scanner/live/gainer-card-policy";
 import { ScannerPageChartButton, ScannerPageTicker, ScannerPageTickerSelection } from "./scanner-page-ticker";
 
 import { scannerGainColor } from "../scanner-gain-color";
@@ -540,6 +542,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   const mobileLayout=mobileEditor.layout;
   const [stored,setStored]=useState<{active:string;layouts:NamedLayout[]}>({active:"",layouts:[]});
   const [draftViews,setDraftViews]=useState<CardViews>({});
+  const [draftGainerSwitch,setDraftGainerSwitch]=useState<GainerSwitchPreferences>({});
   const [draftScanners,setDraftScanners]=useState<CardScanners>({});
   const [draft,setDraft]=useState<CardLayout|null>(null);
   const [undo,setUndo]=useState<(NamedLayout&{sourceName:string})[]>([]);
@@ -555,8 +558,8 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
         if(!Array.isArray(value?.layouts))return;
         const layouts:NamedLayout[]=value.layouts.flatMap((item:NamedLayout&{positions?:DesktopPositions;tile?:unknown;visible?:typeof widgets})=>{
           if(!item||typeof item.name!=="string")return [];
-          if(validCardLayout(item.rectangles))return [{name:item.name,rectangles:removePresetSpacing(item.rectangles),scanners:readCardScanners(item.scanners),views:Object.fromEntries(
-            Object.entries(item.views??{}).filter(([slot,view])=>isScannerCard(slot)&&
+          if(validCardLayout(item.rectangles))return [{name:item.name,rectangles:removePresetSpacing(item.rectangles),scanners:readCardScanners(item.scanners),gainerAutoSwitch:readGainerSwitchPreferences(item.gainerAutoSwitch,Object.keys(scannerCardSlots)),views:Object.fromEntries(
+            Object.entries(item.views??{}).filter(([slot,view])=>isScannerCardSlot(slot)&&
               (view==="table"||view==="two-rows"||view==="cards")))}];
           if(validTile(item.tile))return [{name:item.name,rectangles:tileToCards(item.tile)}];
           const visible=item.visible??widgets;
@@ -577,12 +580,13 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   const activeLayout=stored.layouts.find(item=>item.name===stored.active);
   const cardViews=mobile&&desktopLayout?mobileLayout.views:draft?draftViews:activeLayout?.views;
   const scannerChoices=mobile&&desktopLayout?mobileLayout.scanners:draft?draftScanners:activeLayout?.scanners;
-  const rememberDesktop=()=>{if(draft)setUndo(previous=>[...previous.slice(-19),{name:layoutName,sourceName:draftSourceName,rectangles:draft,scanners:draftScanners,views:draftViews}]);};
-  const selectScanner=(slot:ScannerCardKind,scanner:ScannerCardKind)=>{
+  const cardGainerSwitch=mobile&&desktopLayout?mobileLayout.gainerAutoSwitch:draft?draftGainerSwitch:activeLayout?.gainerAutoSwitch;
+  const rememberDesktop=()=>{if(draft)setUndo(previous=>[...previous.slice(-19),{name:layoutName,sourceName:draftSourceName,rectangles:draft,scanners:draftScanners,views:draftViews,gainerAutoSwitch:draftGainerSwitch}]);};
+  const selectScanner=(slot:ScannerCardSlot,scanner:ScannerCardKind)=>{
     const scanners={...scannerChoices,[slot]:scanner};
     if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,scanners});return;}
     if(draft){rememberDesktop();setDraftScanners(scanners);return;}
-    const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,scanners,views:cardViews};
+    const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,scanners,views:cardViews,gainerAutoSwitch:cardGainerSwitch};
     saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
   };
   const rectangles=draft??activeLayout?.rectangles??defaultRectangles;
@@ -669,7 +673,10 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   }),[pageTicker,showWorkspaceChart,selectPageTicker,desktopLayout,openCompanyDetails]);
 
   const includeWidget = (widget: ScannerWorkspaceWidget) => desktopLayout?visible.includes(widget):!scannersOnly||(widget!=="market-events"&&widget!=="ticker-workspace");
-  const mobileScannerTabs=MOBILE_SCANNER_TABS.filter(({widget})=>includeWidget(widget)).sort((a,b)=>mobile&&desktopLayout?mobileLayout.order.indexOf(a.widget)-mobileLayout.order.indexOf(b.widget):0);
+  const mobileScannerTabs=MOBILE_SCANNER_TABS.filter(({widget})=>includeWidget(widget)).map(tab=>{
+    const kind=isScannerCardSlot(tab.widget)?scannerChoices?.[tab.widget]:undefined;
+    return kind?{...tab,label:kind==="gainers"?"Top Gainers":scannerTitles[kind],accessibleLabel:scannerTitles[kind]}:tab;
+  }).sort((a,b)=>mobile&&desktopLayout?mobileLayout.order.indexOf(a.widget)-mobileLayout.order.indexOf(b.widget):0);
   const selectedScanner=activeScanner;
   const displayedTab=includeWidget(selectedScanner)?selectedScanner:mobileScannerTabs[0]?.widget;
   const showScanner = (widget: ScannerWorkspaceWidget) => includeWidget(widget) && (!mobileTabs || widget===displayedTab);
@@ -782,18 +789,24 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
   const haltWindow=model?{date:model.tradingDate,closed:model.status==="closed",checkedAt}:undefined;
   const haltByTicker=useMemo(()=>new Map(activeHalts.map(halt=>[halt.ticker,halt])),[activeHalts]);
-  const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
+  const gainerKindFor=(slot?:ScannerCardSlot)=>{
+    const choice=slot?scannerChoices?.[slot]:undefined;
+    return choice&&isGainerCard(choice)?choice:"gainers";
+  };
+  const gainerViewFor=(slot?:ScannerCardSlot)=>gainerCardView(gainerKindFor(slot),model?.session,slot?cardGainerSwitch?.[slot]!==false:true);
+  const resultsFor=(kind:ScannerKind,slot?:ScannerCardSlot)=>kind==="gainers"
+    ?gainerCardResults(model,gainerKindFor(slot),slot?cardGainerSwitch?.[slot]!==false:true):model?.momentum;
   const memberNotice=admin&&model?.status!=="closed"?null:memberScannerStatus(model,loadError,checkedAt,failedAt);
   const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
   const gainerTitle=model?.session==="after_hours"?"Top Gainers Post Market":"Top Gainers";
-  const renderGainerTitle=(switchable=false)=><Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}>{switchable?<WorkspaceScannerTitle label={gainerTitle}/>:
-    <Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography>}<Tooltip title={GAINERS_EXPLANATION}>
+  const renderGainerTitle=(switchable=false,slot?:ScannerCardSlot)=><Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}>{switchable?<WorkspaceScannerTitle label={GAINER_CARD_LABELS[gainerKindFor(slot)]}/>:
+    <Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{slot?GAINER_CARD_LABELS[gainerKindFor(slot)]:gainerTitle}</Typography>}<Tooltip title={GAINERS_EXPLANATION}>
     <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
   </Tooltip></Stack>;
-  const [fullScannerSlot,setFullScannerSlot]=useState<ScannerCardKind>();
-  const modeFor=(kind:ScannerCardKind,slot?:ScannerCardKind)=>
+  const [fullScannerSlot,setFullScannerSlot]=useState<ScannerCardSlot>();
+  const modeFor=(kind:ScannerCardSlot,slot?:ScannerCardSlot)=>
     slot ? cardViews?.[slot]??"table" : kind==="breakouts"?"table":displayModes[kind];
-  const changeMode=(kind:ScannerCardKind,view:ScannerView,slot?:ScannerCardKind)=>{
+  const changeMode=(kind:ScannerCardSlot,view:ScannerView,slot?:ScannerCardSlot)=>{
     if(!slot){
       if(kind!=="breakouts")setDisplayModes(previous=>({...previous,[kind]:view}));
       return;
@@ -802,17 +815,27 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,views});return;}
     if(draft){rememberDesktop();setDraftViews(views);return;}
     const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,
-      scanners:scannerChoices,views};
+      scanners:scannerChoices,views,gainerAutoSwitch:cardGainerSwitch};
     saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
   };
-  const viewSettings=(kind:ScannerKind,slot?:ScannerCardKind)=><ScannerViewSettings label={SCREEN_LABELS[kind]} view={modeFor(kind,slot)}
-    onViewChange={view=>changeMode(kind,view,slot)}/>;
-  const contents=(kind:ScannerKind,compactDesktop=false,inWorkspace=false,slot?:ScannerCardKind)=><>
+  const changeGainerSwitch=(slot:ScannerCardSlot,automatic:boolean)=>{
+    const gainerAutoSwitch={...cardGainerSwitch,[slot]:automatic};
+    if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,gainerAutoSwitch});return;}
+    if(draft){rememberDesktop();setDraftGainerSwitch(gainerAutoSwitch);return;}
+    const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,
+      scanners:scannerChoices,views:cardViews,gainerAutoSwitch};
+    saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
+  };
+  const viewSettings=(kind:ScannerKind,slot?:ScannerCardSlot)=><ScannerViewSettings label={kind==="gainers"&&slot?GAINER_CARD_LABELS[gainerKindFor(slot)]:SCREEN_LABELS[kind]} view={modeFor(kind,slot)}
+    onViewChange={view=>changeMode(kind,view,slot)}>
+      {kind==="gainers"&&slot&&gainerKindFor(slot)==="gainers"?<GainerSwitchControl automatic={cardGainerSwitch?.[slot]!==false} onChange={value=>changeGainerSwitch(slot,value)}/>:null}
+    </ScannerViewSettings>;
+  const contents=(kind:ScannerKind,compactDesktop=false,inWorkspace=false,slot?:ScannerCardSlot)=><>
     {memberNotice?<Alert severity={memberNotice===SCANNER_UNAVAILABLE_MESSAGE?"warning":"info"}>{memberNotice}</Alert>
-      :kind==="gainers"&&gainerView==="post_market"&&model&&model.session!=="after_hours"
-      ?<Typography color="text.secondary">{admin?"Post-market readings begin after the regular session closes.":SCANNER_UNAVAILABLE_MESSAGE}</Typography>
+      :kind==="gainers"&&gainerViewFor(slot)==="post_market"&&model&&model.session!=="after_hours"
+      ?<Typography color="text.secondary">Post-market gainers begin after the regular session closes.</Typography>
       :<>
-        <ScannerContents now={checkedAt} displayMode={modeFor(kind,slot)} compactDesktop={compactDesktop} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:inWorkspace||kind==="gainers"})} results={resultsFor(kind)} screen={kind}/></>}
+        <ScannerContents now={checkedAt} displayMode={modeFor(kind,slot)} compactDesktop={compactDesktop} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:inWorkspace||kind==="gainers"})} results={resultsFor(kind,slot)} screen={kind}/></>}
   </>;
   const workspaceScreeners=<SideCardChartControls value={true}><ScannerNewsDrawerProvider onOpen={item=>{
     const stock=[...(selectedGainers?.rows??[]),...momentumStocks,
@@ -848,18 +871,18 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
       <Stack direction="row" sx={{justifyContent:desktopLayout?"flex-start":"flex-end",alignItems:"center",minWidth:0}}>
         <ScannerConnectionIndicator phase={phase}/>
       {desktopLayout&&mobile&&<MobileWorkspaceLayoutEditor key={orientation} editor={mobileEditor} orientation={orientation}/>}{desktopLayout&&!mobile&&<ScannerLayoutToolbar mobile={mobile} editing={draft!==null} name={layoutName} active={stored.active} sourceName={draft?draftSourceName:stored.active}
-        onEdit={()=>{setDraftSourceName(stored.active);setLayoutName(stored.active);setUndo([]);setVisibilityMessage("");setDraftScanners(scannerChoices??{});setDraftViews(cardViews??{});setDraft(rectangles);}}
+        onEdit={()=>{setDraftSourceName(stored.active);setLayoutName(stored.active);setUndo([]);setVisibilityMessage("");setDraftScanners(scannerChoices??{});setDraftViews(cardViews??{});setDraftGainerSwitch(cardGainerSwitch??{});setDraft(rectangles);}}
         setName={setLayoutName} saved={stored.layouts.filter(item=>item.name)} visible={visible} onToggle={toggleWidget} message={visibilityMessage}
         onSelect={name=>{
           const selected=stored.layouts.find(item=>item.name===name);
           setDraftSourceName(name);setLayoutName(name);
           setDraftScanners(selected?.scanners??{});
-          setDraftViews(selected?.views??{});
+          setDraftViews(selected?.views??{});setDraftGainerSwitch(selected?.gainerAutoSwitch??{});
           changeLayout(selected?.rectangles??defaultRectangles);
           setVisibilityMessage("");
         }}
         onCancel={()=>setDraft(null)}
-        onReset={()=>{setDraftScanners({});setDraftViews({});changeLayout(defaultRectangles);setVisibilityMessage("");}}
+        onReset={()=>{setDraftScanners({});setDraftViews({});setDraftGainerSwitch({});changeLayout(defaultRectangles);setVisibilityMessage("");}}
         onPreset={next=>{
           const required=minimum(next,0);
           if(required.w>layoutBounds.w||required.h>layoutBounds.h){
@@ -870,11 +893,11 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
           setVisibilityMessage("");
         }}
         canUndo={undo.length>0}
-        onUndo={()=>{const previous=undo.at(-1);if(previous){setDraft(previous.rectangles);setLayoutName(previous.name);setDraftSourceName(previous.sourceName);setDraftScanners(previous.scanners??{});setDraftViews(previous.views??{});setUndo(undo.slice(0,-1));}}}
+        onUndo={()=>{const previous=undo.at(-1);if(previous){setDraft(previous.rectangles);setLayoutName(previous.name);setDraftSourceName(previous.sourceName);setDraftScanners(previous.scanners??{});setDraftViews(previous.views??{});setDraftGainerSwitch(previous.gainerAutoSwitch??{});setUndo(undo.slice(0,-1));}}}
         onSave={()=>{
           const name=layoutName.trim();
           if(!draft||!name)return;
-          const saved=saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,views:draftViews}]);
+          const saved=saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,views:draftViews,gainerAutoSwitch:draftGainerSwitch}]);
           if(saved)setDraft(null);return saved;
         }}/>}
         {((desktopLayout&&mobile)||(!drawerOpen&&chartWorkspace.charts.length>0))&&
@@ -903,8 +926,8 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
           aria-label="Scanner cards" variant="scrollable" scrollButtons={false}
           sx={{flex:1,minWidth:0,minHeight:36,"& .MuiTab-root":{minWidth:0,minHeight:36,px:0.85,py:0.3,
             textTransform:"none",fontSize:"0.71rem",fontWeight:700,whiteSpace:"nowrap"}}}>
-          {mobileScannerTabs.map(({widget,label,accessibleLabel})=><Tab key={widget} value={widget} label={desktopLayout&&isScannerCard(widget)&&scannerChoices?.[widget]?scannerTitles[scannerChoices[widget]]:label}
-            id={`${mobileTabsId}-${widget}`} aria-label={desktopLayout&&isScannerCard(widget)&&scannerChoices?.[widget]?scannerTitles[scannerChoices[widget]]:accessibleLabel} aria-controls={`${mobileTabsId}-panel`}/>)}
+          {mobileScannerTabs.map(({widget,label,accessibleLabel})=><Tab key={widget} value={widget} label={desktopLayout&&isScannerCardSlot(widget)&&scannerChoices?.[widget]?scannerTitles[scannerChoices[widget]]:label}
+            id={`${mobileTabsId}-${widget}`} aria-label={desktopLayout&&isScannerCardSlot(widget)&&scannerChoices?.[widget]?scannerTitles[scannerChoices[widget]]:accessibleLabel} aria-controls={`${mobileTabsId}-panel`}/>)}
         </Tabs>:<Box sx={{flex:1}}/>}
         {!desktopLayout&&(mobileTabs?<Tooltip title="Use stacked layout">
           <IconButton size="small" aria-label="Use stacked layout" onClick={toggleMobileLayout}
@@ -937,19 +960,21 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
       ...(mobile&&desktopLayout?mobileWorkspaceStyles(mobileLayout,mobileHeight,landscape,mobileTabs):{}),
       '& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 },
     }}>
-      {widgets.filter(isScannerCard).filter(showScanner).filter(slot=>!admin||slot!=="breakouts").map(slot=>{
+      {widgets.filter(isScannerCardSlot).filter(showScanner).filter(slot=>!admin||slot!=="breakouts").map(slot=>{
         const kind=desktopLayout?(scannerChoices?.[slot]??slot):slot;
         const viewSlot=desktopLayout?slot:undefined;
-        const panel=kind==="gainers"||kind==="momentum"?(<DashboardPanel hideHeader>
+        const isGainer=isGainerCard(kind);
+        const screen:ScannerKind=isGainer?"gainers":"momentum";
+        const panel=isGainer||kind==="momentum"?(<DashboardPanel hideHeader>
           <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5,minHeight:22}}>
-            {kind==="momentum"?<WorkspaceScannerTitle><Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box></WorkspaceScannerTitle>:renderGainerTitle(desktopLayout)}
+            {kind==="momentum"?<WorkspaceScannerTitle><Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box></WorkspaceScannerTitle>:renderGainerTitle(desktopLayout,viewSlot)}
             <Stack direction="row" spacing={0.5} sx={{alignItems:"center",flexShrink:0}}>
-          {viewSettings(kind,viewSlot)}
-          {admin&&resultsFor(kind)?<Chip label={`${resultsFor(kind)!.total}`} size="small" aria-label={`${resultsFor(kind)!.total} qualifying`}/>:null}
-          <IconButton size="small" sx={{p:0.25}} aria-label={`Open ${SCREEN_LABELS[kind]} full view`} title={`Open ${SCREEN_LABELS[kind]} full view`} onClick={()=>{setFullScannerSlot(viewSlot);setFullScanner(kind);}}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton>
+          {viewSettings(screen,viewSlot)}
+          {admin&&resultsFor(screen,viewSlot)?<Chip label={`${resultsFor(screen,viewSlot)!.total}`} size="small" aria-label={`${resultsFor(screen,viewSlot)!.total} qualifying`}/>:null}
+          <IconButton size="small" sx={{p:0.25}} aria-label={`Open ${scannerTitles[kind]} full view`} title={`Open ${scannerTitles[kind]} full view`} onClick={()=>{setFullScannerSlot(viewSlot);setFullScanner(screen);}}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton>
             </Stack>
           </Stack>
-          {contents(kind,true,false,viewSlot)}
+          {contents(screen,true,false,viewSlot)}
         </DashboardPanel>):
           kind==="top-losers"?<DeclinesCard now={checkedAt} view={modeFor("top-losers",viewSlot)} onViewChange={view=>changeMode("top-losers",view,viewSlot)} results={model?.declines}
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)}
@@ -976,14 +1001,14 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     {companyDrawerLoaded&&<ScannerCompanyDrawer symbol={companySymbol} onClose={()=>setCompanySymbol(null)}/>}
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
-      slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${SCREEN_LABELS[fullScanner]} full view`:undefined,
+      slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${fullScanner==="gainers"&&fullScannerSlot?GAINER_CARD_LABELS[gainerKindFor(fullScannerSlot)]:SCREEN_LABELS[fullScanner]} full view`:undefined,
         sx:{width:{xs:"100vw",md:"90vw",xl:"85vw"},maxWidth:"100vw"}}}}>
       {fullScanner?<Stack sx={{height:"100dvh",minHeight:0}}>
         <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",borderBottom:1,borderColor:"divider",px:2,py:1.25}}>
-          <Typography component="h2" variant="h6" sx={{fontWeight:800}}>{SCREEN_LABELS[fullScanner]}</Typography>
+          <Typography component="h2" variant="h6" sx={{fontWeight:800}}>{fullScanner==="gainers"&&fullScannerSlot?GAINER_CARD_LABELS[gainerKindFor(fullScannerSlot)]:SCREEN_LABELS[fullScanner]}</Typography>
           <Stack direction="row" sx={{alignItems:"center"}}>{viewSettings(fullScanner,fullScannerSlot)}<IconButton aria-label="Close full scanner view" onClick={()=>setFullScanner(null)}><CloseRoundedIcon/></IconButton></Stack>
         </Stack>
-        <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0,p:2})}>{fullScanner==="gainers"?renderGainerTitle():null}{contents(fullScanner,false,false,fullScannerSlot)}</Box>
+        <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0,p:2})}>{fullScanner==="gainers"?renderGainerTitle(false,fullScannerSlot):null}{contents(fullScanner,false,false,fullScannerSlot)}</Box>
       </Stack>:null}
     </Drawer>
     </ScannerPageTickerSelection>

@@ -2,25 +2,35 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import NativeSelect from "@mui/material/NativeSelect";
+import { GAINER_CARD_LABELS } from "@/src/modules/scanner/live/gainer-card-policy";
 
-export const scannerTitles = {
+export const scannerCardSlots = {
   gainers: "Top Gainers",
   momentum: "Momentum",
   "top-losers": "Top Losers",
   "high-drops": "HOD Drops",
   breakouts: "Breakouts",
 };
+export const scannerTitles = {
+  ...GAINER_CARD_LABELS,
+  momentum: scannerCardSlots.momentum,
+  "top-losers": scannerCardSlots["top-losers"],
+  "high-drops": scannerCardSlots["high-drops"],
+  breakouts: scannerCardSlots.breakouts,
+};
+export type ScannerCardSlot = keyof typeof scannerCardSlots;
 export type ScannerCardKind = keyof typeof scannerTitles;
-export type CardScanners = Partial<Record<ScannerCardKind, ScannerCardKind>>;
+export type CardScanners = Partial<Record<ScannerCardSlot, ScannerCardKind>>;
+export const isScannerCardSlot = (value: string): value is ScannerCardSlot => Object.hasOwn(scannerCardSlots, value);
 export const isScannerCard = (value: string): value is ScannerCardKind => Object.hasOwn(scannerTitles,value);
 export function readCardScanners(value: unknown): CardScanners {
   if(!value||typeof value!=="object")return {};
   return Object.fromEntries(Object.entries(value).filter(([slot,scanner])=>
-    isScannerCard(slot)&&typeof scanner==="string"&&isScannerCard(scanner)));
+    isScannerCardSlot(slot)&&typeof scanner==="string"&&isScannerCard(scanner)));
 }
 
 export const WorkspaceScannerTitleContext = createContext<{
-  slot: ScannerCardKind; scanner: ScannerCardKind; onChange:(scanner:ScannerCardKind)=>void;
+  slot: ScannerCardSlot; scanner: ScannerCardKind; onChange:(scanner:ScannerCardKind)=>void;
 }|null>(null);
 
 export function WorkspaceScannerTitle({ children, label }: { children?:ReactNode; label?:string }) {

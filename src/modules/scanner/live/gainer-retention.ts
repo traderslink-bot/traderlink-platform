@@ -12,7 +12,7 @@ export class GainerRetentionBook {
   private members = new Map<string, Member>();
 
   select(context: string, rows: readonly LiveScannerRow[], failures: (row: LiveScannerRow) => readonly string[], now: number,
-    allowedSymbols?: ReadonlySet<string>): readonly LiveScannerRow[] {
+    allowedSymbols?: ReadonlySet<string>, retainEstablishedLiquidity = false): readonly LiveScannerRow[] {
     if (this.context !== context) { this.context = context; this.members.clear(); }
     if (allowedSymbols) for (const symbol of this.members.keys()) if (!allowedSymbols.has(symbol)) this.members.delete(symbol);
     const selected: LiveScannerRow[] = [];
@@ -22,7 +22,7 @@ export class GainerRetentionBook {
       seen.add(observed.symbol);
       const member = this.members.get(observed.symbol);
       let row = observed;
-      // A same-session known comparison remains usable through a transport/cache outage.
+      // A known comparison remains usable inside this book’s context through a transport/cache outage.
       if (member) {
         const comparison = observed.comparisonPrice ?? member.row.comparisonPrice;
         row = { ...observed,
@@ -38,6 +38,11 @@ export class GainerRetentionBook {
       }
       if (!member || row.sessionGain === null || reasons.some(reason => !TEMPORARY_LIQUIDITY_FAILURES.has(reason))) {
         this.members.delete(row.symbol); continue;
+      }
+      // A qualified day leader does not become a new candidate when after-hours counters restart.
+      // Gain/price/universe failures above still remove it; the dedicated post-market list stays separate.
+      if (retainEstablishedLiquidity) {
+        this.members.set(row.symbol, { row, failingSince: null }); selected.push(row); continue;
       }
       member.failingSince ??= now;
       if (now - member.failingSince >= GAINER_LIQUIDITY_GRACE_MS) { this.members.delete(row.symbol); continue; }

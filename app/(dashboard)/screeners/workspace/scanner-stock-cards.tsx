@@ -61,7 +61,7 @@ export function useTickerCardSections() {
 const scannerViews = { table: "Table", cards: "Cards", "two-rows": "Two rows" } as const;
 export type ScannerView = keyof typeof scannerViews;
 
-export function ScannerViewSettings({ label, view, onViewChange }: { label: string; view: ScannerView; onViewChange: (view: ScannerView) => void }) {
+export function ScannerViewSettings({ label, view, onViewChange, children }: { label: string; view: ScannerView; onViewChange: (view: ScannerView) => void; children?: ReactNode }) {
   const { sections, update } = useTickerCardSections();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const id = useId();
@@ -85,11 +85,12 @@ export function ScannerViewSettings({ label, view, onViewChange }: { label: stri
       </IconButton>
       <Box role="group" aria-label="Display view" sx={{pr:4.5}}>
         {(Object.entries(scannerViews) as [ScannerView,string][]).map(([value,text])=>
-          <Button size="small" key={value} aria-pressed={view===value}
+          <Button size="small" color="inherit" key={value} aria-pressed={view===value}
             onClick={()=>{onViewChange(value);if(value!=="cards")setAnchor(null);}} sx={{width:"100%",minHeight:32,justifyContent:"flex-start",textTransform:"none",bgcolor:view===value?"action.selected":undefined}}>
             {text}
           </Button>)}
       </Box>
+      {children}
       {view==="cards"&&<Box role="group" aria-label="Ticker card sections" sx={{borderTop:1,borderColor:"divider",mt:0.75,pt:0.75}}>
       <Typography variant="body2" sx={{fontWeight:700,px:0.5}}>Card sections</Typography>
       {[...sections, ...SECTIONS.filter(section => !sections.includes(section))].map(section => {

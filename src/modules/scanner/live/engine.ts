@@ -177,14 +177,17 @@ export class LiveScannerEngine {
       rows.push(row);
       this.breakouts.observe(snapshot,row);
     }
-    const retentionContext = `${input.tradingDate}:${input.session}:${scannerConfigurationHash(input.configuration)}`;
+    const configurationHash = scannerConfigurationHash(input.configuration);
+    const retentionContext = `${input.tradingDate}:${input.session}:${configurationHash}`;
     if (this.gainerAuditContext !== retentionContext) { this.gainerAuditContext = retentionContext; this.gainerAudit.clear(); this.momentumAudit.clear(); }
     const failuresFor = (row: LiveScannerRow) => scannerGainerFilterFailures(row,input.configuration.gainers.filters[input.session]);
     const freshGainerSymbols = new Set(rows.map(row => row.symbol));
     const rankGainers = (a: LiveScannerRow, b: LiveScannerRow) =>
       Number(freshGainerSymbols.has(b.symbol)) - Number(freshGainerSymbols.has(a.symbol))
       || (b.sessionGain ?? -Infinity) - (a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol);
-    const dayGainers = [...this.dayGainerRetention.select(retentionContext, rows, failuresFor, input.now, new Set(membership.keys()))]
+    const dayContext = `${input.tradingDate}:day:${configurationHash}`;
+    const dayGainers = [...this.dayGainerRetention.select(dayContext, rows, failuresFor, input.now,
+      new Set(membership.keys()), input.session === "after_hours")]
       .sort(rankGainers);
     const snapshotsBySymbol = new Map(input.snapshots.map(snapshot => [snapshot.symbol,snapshot]));
     const gainerRows = input.session === "after_hours" ? rows.map(row => {
