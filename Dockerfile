@@ -52,7 +52,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/combined210-package/ ./
 
 COPY --from=builder /app/src/scripts/render-public-gainers-request.py /app/src/scripts/render-daily-gainers-preview.py /app/src/scripts/daily-gainers-preview.html /app/src/scripts/daily-gainers-public-nav.html /app/src/scripts/
 
-USER nextjs
+USER root
 EXPOSE 3000
 
 CMD ["node", "server.js"]
