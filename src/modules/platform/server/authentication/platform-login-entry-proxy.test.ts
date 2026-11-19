@@ -29,9 +29,12 @@ describe("Dashboard entry request context", () => {
     expect(deepLink.headers.get("x-middleware-request-x-traderlink-page-return-to")).toBe("/workspace?period=month");
   });
 
-  it("preserves the public help redirect", () => {
-    const response = proxy(new NextRequest("https://app.traderslink.pro/help", { headers: { host: "app.traderslink.pro" } }));
+  it.each([
+    { url: "https://app.traderslink.pro/help", host: "app.traderslink.pro", expected: "https://traderslink.pro/help" },
+    { url: "http://0.0.0.0:8080/help/traderslink-app/shared-alerts?from=shared-alerts&section=sharing-requests", host: "0.0.0.0:8080", expected: "https://traderslink.pro/help/traderslink-app/shared-alerts?from=shared-alerts&section=sharing-requests" },
+  ])("preserves the public help redirect for $url", ({ url, host, expected }) => {
+    const response = proxy(new NextRequest(url, { headers: { host, "x-forwarded-host": "app.traderslink.pro" } }));
     expect(response.status).toBe(308);
-    expect(response.headers.get("location")).toBe("https://traderslink.pro/help");
+    expect(response.headers.get("location")).toBe(expected);
   });
 });

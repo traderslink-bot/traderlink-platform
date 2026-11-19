@@ -120,6 +120,11 @@ people's data by implication.
 
 ## Availability correction — 2026-10-26
 
+The current Coordinator-assigned November 19 repair follows the
+[actual retry repair record](account-erasure-live-retry-repair-20261119.md).
+It preserves the existing admission deadline and deletion/restore contract;
+local source qualification does not establish production completion.
+
 The owner authorized the broader worker/recovery correction and disposable
 synthetic checks. The [current implementation record](account-erasure-recovery-implementation-20261026.md)
 defines commit-first durable private-file cleanup, preserves normal completion

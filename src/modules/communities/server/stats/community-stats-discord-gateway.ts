@@ -9,6 +9,7 @@ import {CommunityStatsInvites} from "./community-stats-invites";
 import {randomUUID} from "node:crypto";
 import {CommunityStatsRepository} from "./community-stats-repository";
 import {CommunityStatsDiscordEvents,statsDiscordMember} from "./community-stats-discord-events";
+import {communityStatsWrites,statsWriteReview} from "./community-stats-write-queue";
 
 type Guild={ownerDiscordId:string|null;configurationVersion:number;topology:{roles:unknown;channels:unknown;threads:unknown}|null;communityId:string;guildId:string;selected:Set<string>;channels:Set<string>;ready:boolean;readyAt:string|null;chunks:Set<number>;chunkCount:number;seen:Set<string>;nonce:string;threadIds:Set<string>;forumThreadIds:Set<string>;forumParents:Set<string>;baselineChanged:Set<string>;gapSince:string|null;ownerVerified:boolean;awaitingRoster:boolean;requestedAt:string|null};
 type Packet={op:number;s?:number;t?:string;d?:unknown};
@@ -34,6 +35,7 @@ export class CommunityStatsDiscordGateway{
   private retry=0;
   private lastConfirmed:string|null=null;
   private guilds=new Map<string,Guild>();
+  private queuedFrameBytes=0;
   constructor(private readonly database:()=>Database.Database,private readonly token:string,communities:readonly {communityId:string;guildId:string;channelIds:readonly string[];configurationVersion?:number}[],private readonly review?:CommunityStagingQaCapability){
     if(review)assertCommunityStagingQaCapability(review,this.database());
     this.invites=new CommunityStatsInvites(this.database(),this.token,review?.request,review);
@@ -44,8 +46,23 @@ export class CommunityStatsDiscordGateway{
   start():void{if(this.review&&!this.releaseReviewStop)this.releaseReviewStop=this.review.onStop(()=>this.stop());if(!this.socket&&!this.stopped&&!this.fatal)this.connect();}
   stop():void{if(this.stopped)return;this.releaseReviewStop?.();this.releaseReviewStop=undefined;this.invites.stop();this.stopped=true;this.clearTimers();const socket=this.socket;this.socket=null;socket?.close(1000);try{this.disconnect("disabled");}catch(error){console.error("Stats shutdown persistence deferred.",{errorName:error instanceof Error?error.name:"UnknownError"});}}
   private clearTimers():void{if(this.heartbeat)clearInterval(this.heartbeat);if(this.firstHeartbeat)clearTimeout(this.firstHeartbeat);if(this.reconnect)clearTimeout(this.reconnect);this.heartbeat=null;this.firstHeartbeat=null;this.reconnect=null;}
-  private send(op:number,d:unknown):void{this.review?.assertActive();if(this.socket?.readyState===WebSocket.OPEN)this.socket.send(JSON.stringify({op,d}));}
+  private send(op:number,d:unknown):void{this.defer(()=>{this.review?.assertActive();try{if(this.socket?.readyState===WebSocket.OPEN)this.socket.send(JSON.stringify({op,d}));}catch{this.fail("gateway_send_failed");}});}
   private repository():CommunityStatsRepository{return new CommunityStatsRepository(this.database());}
+  private defer(effect:()=>void):void{communityStatsWrites(this.database()).afterCommit(effect);}
+  private write(operation:()=>void,teardown=false):Promise<void>{
+    return communityStatsWrites(this.database()).write(operation,{
+      ...(!teardown?statsWriteReview(this.review):{}),
+      captureRollback:()=>{
+        const snapshots=[...this.guilds.values()].map(guild=>({guild,state:structuredClone(guild)}));
+        const rollbackInvites=this.invites.captureWriteRollback();
+        const lastConfirmed=this.lastConfirmed,retry=this.retry;
+        return ()=>{rollbackInvites();for(const {guild,state} of snapshots)Object.assign(guild,state);this.lastConfirmed=lastConfirmed;this.retry=retry;};
+      },
+    });
+  }
+  private persist(operation:()=>void,teardown=false):void{
+    void this.write(operation,teardown).catch(error=>{console.error("Stats gateway persistence deferred.",{errorName:error instanceof Error?error.name:"UnknownError"});if(!teardown)this.fail("gateway_persistence_unavailable");});
+  }
   private updateChannels(guild:Guild,member:unknown,at:string):void{
     if(!guild.topology)return;
     const channels=statsBotChannels(guild.guildId,guild.topology.roles,guild.topology.channels,member);
@@ -54,7 +71,6 @@ export class CommunityStatsDiscordGateway{
     guild.channels=new Set([...channels.keys()].filter(id=>guild.selected.has(id)));
     guild.threadIds.clear();guild.forumThreadIds.clear();guild.forumParents=new Set([...channels].filter(([id,c])=>[15,16].includes(c.type)&&guild.selected.has(id)).map(([id])=>id));
     for(const raw of Array.isArray(guild.topology.threads)?guild.topology.threads:[]){const thread=object(raw);if(thread.guild_id!==undefined&&thread.guild_id!==guild.guildId)continue;if([10,11].includes(Number(thread.type))&&guild.channels.has(String(thread.parent_id))&&typeof thread.id==="string"){guild.channels.add(thread.id);guild.threadIds.add(thread.id);if(guild.forumParents.has(String(thread.parent_id)))guild.forumThreadIds.add(thread.id);this.threadJob(guild,thread,at);}}
-    this.review?.assertActive();
     const repo=this.repository();repo.transaction(()=>{
       if(!this.currentGuild(guild)||!guild.ownerVerified)return;
       repo.db.prepare(`DELETE FROM community_stats_channels WHERE community_id=?`).run(guild.communityId);
@@ -73,15 +89,18 @@ export class CommunityStatsDiscordGateway{
   }
   private requestRoster(guild:Guild,atUtc:string):void{if(!this.currentGuild(guild))return;guild.nonce=randomUUID().replaceAll("-","");guild.awaitingRoster=true;guild.requestedAt=atUtc;guild.chunkCount=0;this.send(8,{guild_id:guild.guildId,query:"",limit:0,nonce:guild.nonce});}
   private disconnect(reason:string):void{
-    const at=now(),repo=this.repository(),lastConfirmed=this.lastConfirmed;
+    const at=now();this.persist(()=>this.disconnectNow(reason,at),true);
+  }
+  private disconnectNow(reason:string,at:string):void{
+    const repo=this.repository(),lastConfirmed=this.lastConfirmed;
     this.lastConfirmed=null;
     repo.transaction(()=>{for(const guild of this.guilds.values()){
-      this.invites.invalidate(guild.communityId);
+      this.defer(()=>this.invites.invalidate(guild.communityId));
       guild.gapSince=guild.gapSince??lastConfirmed??at;
       if(lastConfirmed)for(const source of ["discord","membership"] as const)repo.coverage(guild.communityId,source,lastConfirmed,at,"gap","disconnected");
       repo.source(guild.communityId,"discord",this.fatal?"unavailable":"gap",at,reason);
       repo.source(guild.communityId,"membership",this.fatal?"unavailable":"gap",at,reason);
-      this.invites.invalidate(guild.communityId);
+      this.defer(()=>this.invites.invalidate(guild.communityId));
       guild.ready=false;guild.readyAt=null;guild.ownerVerified=false;guild.awaitingRoster=false;guild.requestedAt=null;
     }});
   }
@@ -93,7 +112,7 @@ export class CommunityStatsDiscordGateway{
     socket.onmessage=event=>{
       if(this.stopped||this.socket!==socket||typeof event.data!=="string")return;
       if(event.data.length>4_000_000){this.fail("gateway_frame_exceeded_metadata_budget");return;}
-      try{const packet=JSON.parse(event.data) as Packet;this.review?.gatewayFrame(this.database());this.packet(packet);}catch{this.fail("invalid_gateway_event");}
+      try{const packet=JSON.parse(event.data) as Packet;this.review?.gatewayFrame(this.database());this.packet(packet,event.data.length);}catch{this.fail("invalid_gateway_event");}
     };
     socket.onerror=()=>{if(this.socket===socket)this.fail("gateway_connection_failed");};
     socket.onclose=event=>{
@@ -104,14 +123,15 @@ export class CommunityStatsDiscordGateway{
     };
   }
   private fail(reason:string):void{
+    if(communityStatsWrites(this.database()).inAttempt){this.defer(()=>this.fail(reason));return;}
     if(this.stopped||this.fatal||this.reconnect)return;
     this.clearTimers();const old=this.socket;this.socket=null;old?.close(4000);
     try{this.disconnect(reason);}catch(error){console.error("Stats gap persistence deferred.",{errorName:error instanceof Error?error.name:"UnknownError"});}
     const delay=Math.min(300_000,1000*2**Math.min(this.retry++,8))+Math.floor(Math.random()*1000);
-    this.reconnect=setTimeout(()=>{this.reconnect=null;this.connect();},delay);this.reconnect.unref?.();
+    this.reconnect=setTimeout(()=>{this.reconnect=null;void communityStatsWrites(this.database()).whenIdle().then(()=>this.connect());},delay);this.reconnect.unref?.();
   }
   private beat():void{if(!this.acknowledged){this.fail("heartbeat_not_acknowledged");return;}this.acknowledged=false;this.send(1,this.sequence);}
-  private packet(packet:Packet):void{
+  private packet(packet:Packet,frameBytes=0):void{
     if(Number.isInteger(packet.s))this.sequence=packet.s!;
     const data=object(packet.d);
     if(packet.op===10){
@@ -137,10 +157,19 @@ export class CommunityStatsDiscordGateway{
       // Re-identify to obtain GUILD_CREATE before claiming complete collection again.
       this.sessionId=null;this.resumeUrl=null;this.sequence=null;this.fail("refresh_snapshot_after_resume");return;
     }
-    const guild=this.guilds.get(String(["GUILD_CREATE","GUILD_UPDATE","GUILD_DELETE"].includes(packet.t)?data.id:data.guild_id));if(!guild||!this.currentGuild(guild))return;
-    const repo=this.repository(),at=now();
+    const at=now(),sessionId=this.sessionId??"",sequence=this.sequence??0;
+    this.queuedFrameBytes+=frameBytes;
+    void this.write(()=>this.dispatch(packet,data,at,sessionId,sequence)).catch(error=>{console.error("Stats gateway event persistence deferred.",{errorName:error instanceof Error?error.name:"UnknownError"});this.fail("gateway_persistence_unavailable");}).finally(()=>{this.queuedFrameBytes-=frameBytes;});
+    // Retain every accepted frame, then use the existing resume/reconnect path
+    // for backpressure instead of accumulating an unbounded transport backlog.
+    if(this.queuedFrameBytes>4_000_000)this.fail("gateway_write_backlog");
+  }
+  private dispatch(packet:Packet,data:Data,at:string,sessionId:string,sequence:number):void{
+    if(!packet.t)return;
+    const guild=this.guilds.get(String(["GUILD_CREATE","GUILD_UPDATE","GUILD_DELETE"].includes(packet.t!)?data.id:data.guild_id));if(!guild||!this.currentGuild(guild))return;
+    const repo=this.repository();
     if(packet.t==="GUILD_CREATE"&&data.unavailable===true){
-      this.invites.invalidate(guild.communityId);
+      this.defer(()=>this.invites.invalidate(guild.communityId));
       guild.ready=false;guild.readyAt=null;guild.ownerVerified=false;guild.awaitingRoster=false;guild.requestedAt=null;
       guild.channels.clear();guild.chunks.clear();guild.seen.clear();guild.baselineChanged.clear();
       guild.gapSince=guild.gapSince??this.lastConfirmed??at;
@@ -161,7 +190,7 @@ export class CommunityStatsDiscordGateway{
         });return;
       }
     }
-    if(!guild.ownerVerified){this.invites.invalidate(guild.communityId);return;}
+    if(!guild.ownerVerified){this.defer(()=>this.invites.invalidate(guild.communityId));return;}
     if(packet.t==="GUILD_MEMBER_UPDATE"&&object(data.user).id===this.botId){this.sessionId=null;this.resumeUrl=null;this.fail("bot_roles_changed");return;}
     if(packet.t==="GUILD_CREATE"){
       guild.topology={roles:data.roles,channels:data.channels,threads:data.threads};
@@ -191,7 +220,7 @@ export class CommunityStatsDiscordGateway{
 
         });guild.ready=guild.selected.size>0&&[...guild.selected].every(channel=>guild.channels.has(channel));guild.readyAt=at;guild.seen.clear();
         guild.awaitingRoster=false;guild.requestedAt=null;guild.chunks.clear();guild.baselineChanged.clear();
-        this.invites.start({communityId:guild.communityId,guildId:guild.guildId,valid:()=>!this.stopped&&this.currentGuild(guild)&&guild.ownerVerified&&!!guild.readyAt});
+        this.defer(()=>this.invites.start({communityId:guild.communityId,guildId:guild.guildId,valid:()=>!this.stopped&&this.currentGuild(guild)&&guild.ownerVerified&&!!guild.readyAt}));
       }return;
     }
     if(packet.t==="GUILD_DELETE"||packet.t.startsWith("CHANNEL_")||packet.t.startsWith("GUILD_ROLE_")){
@@ -199,7 +228,7 @@ export class CommunityStatsDiscordGateway{
       guild.ready=false;guild.channels.clear();this.sessionId=null;this.resumeUrl=null;this.fail("permissions_changed");return;
     }
     if(!guild.readyAt&&packet.t.startsWith("GUILD_MEMBER_")){const user=object(data.user);if(typeof user.id==="string"){guild.baselineChanged.add(user.id);if(packet.t==="GUILD_MEMBER_REMOVE")guild.seen.delete(user.id);else guild.seen.add(user.id);}}
-    if(guild.readyAt&&["INVITE_CREATE","INVITE_DELETE"].includes(packet.t)){this.invites.inviteEvent(guild.communityId,packet.t,data,at);return;}
+    if(guild.readyAt&&["INVITE_CREATE","INVITE_DELETE"].includes(packet.t!)){this.invites.inviteEvent(guild.communityId,packet.t!,data,at);return;}
     if(!guild.ready&&!packet.t.startsWith("GUILD_MEMBER_"))return;
     if(packet.t==="THREAD_CREATE"||packet.t==="THREAD_UPDATE"){
       const threadId=String(data.id??"");guild.channels.delete(threadId);
@@ -207,12 +236,15 @@ export class CommunityStatsDiscordGateway{
     }
     if(packet.t==="THREAD_DELETE"){guild.channels.delete(String(data.id));return;}
     if(packet.t==="GUILD_MEMBER_ADD"&&guild.readyAt&&object(data.user).bot!==true)this.invites.join(guild.communityId,object(data.user).id,data.joined_at,at);
-    repo.transaction(()=>new CommunityStatsDiscordEvents(repo).dispatch(guild.communityId,packet.t!,data,this.sessionId??"",this.sequence??0,at,guild.channels,null,guild.threadIds,guild.forumThreadIds));
+    repo.transaction(()=>new CommunityStatsDiscordEvents(repo).dispatch(guild.communityId,packet.t!,data,sessionId,sequence,at,guild.channels,null,guild.threadIds,guild.forumThreadIds));
   }
   private confirm():void{
-    const at=now(),repo=this.repository();
+    const at=now();this.persist(()=>this.confirmNow(at));
+  }
+  private confirmNow(at:string):void{
+    const repo=this.repository();
     repo.transaction(()=>{for(const guild of this.guilds.values()){
-      if(!this.currentGuild(guild)){this.invites.invalidate(guild.communityId);continue;}
+      if(!this.currentGuild(guild)){this.defer(()=>this.invites.invalidate(guild.communityId));continue;}
       if(guild.awaitingRoster&&guild.requestedAt&&Date.parse(at)-Date.parse(guild.requestedAt)>120_000){guild.awaitingRoster=false;guild.requestedAt=null;guild.ready=false;guild.readyAt=null;for(const source of ["discord","membership"] as const)repo.source(guild.communityId,source,"unavailable",at,"The complete guild roster is unavailable. Check the member intent and reconnect collection.");continue;}
       if(guild.readyAt){
         this.retry=0;

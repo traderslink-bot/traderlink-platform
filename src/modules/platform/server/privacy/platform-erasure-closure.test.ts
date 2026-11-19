@@ -96,4 +96,58 @@ describe("rooted erasure closure on synthetic databases", () => {
       expect(db.pragma("foreign_key_check")).toEqual([]);
     } finally { db.close(); }
   });
+
+  it("expands an unchanged root's large unrelated child population once while a separate chain grows", () => {
+    const statements: string[] = [];
+    const db = new Database(":memory:", { verbose: sql => { if (typeof sql === "string") statements.push(sql); } });
+    try {
+      db.pragma("foreign_keys=ON");
+      db.exec(`CREATE TABLE roots(id INTEGER PRIMARY KEY); INSERT INTO roots VALUES(1),(2);
+        CREATE TABLE chain(id INTEGER PRIMARY KEY, root INTEGER REFERENCES roots(id), parent INTEGER REFERENCES chain(id));
+        CREATE TABLE stable_children(id INTEGER PRIMARY KEY, root INTEGER REFERENCES roots(id));
+        INSERT INTO chain VALUES(1,1,NULL);
+        WITH RECURSIVE rows(n) AS (VALUES(2) UNION ALL SELECT n+1 FROM rows WHERE n<40)
+        INSERT INTO chain SELECT n,NULL,n-1 FROM rows;
+        INSERT INTO stable_children VALUES(1,1);
+        WITH RECURSIVE rows(n) AS (VALUES(2) UNION ALL SELECT n+1 FROM rows WHERE n<5000)
+        INSERT INTO stable_children SELECT n,2 FROM rows;`);
+      statements.length = 0;
+      db.transaction(() => {
+        db.pragma("defer_foreign_keys=ON");
+        const closure = captureErasureClosure(db, [{ table: "roots", column: "id", value: "1" }]);
+        expect(closure.rowCount).toBe(42);
+        closure.deleteRows(); closure.dispose();
+        expect(db.pragma("foreign_key_check")).toEqual([]);
+      }).immediate();
+      expect(statements.filter(sql => sql.startsWith("INSERT OR IGNORE INTO temp.") && sql.includes('JOIN main."stable_children"'))).toHaveLength(1);
+      expect(db.prepare("SELECT count(*) AS n FROM stable_children").get()).toEqual({ n: 4999 });
+      expect(db.prepare("SELECT count(*) AS n FROM chain").get()).toEqual({ n: 0 });
+    } finally { db.close(); }
+  });
+
+  it("revisits a previously expanded parent when another root reaches additional parent rows", () => {
+    const db = new Database(":memory:");
+    try {
+      db.pragma("foreign_keys=ON");
+      db.exec(`CREATE TABLE z_detour(id INTEGER PRIMARY KEY); INSERT INTO z_detour VALUES(1);
+        CREATE TABLE a_roots(id INTEGER PRIMARY KEY, detour INTEGER REFERENCES z_detour(id));
+        INSERT INTO a_roots VALUES(1,NULL),(2,1),(3,NULL);
+        CREATE TABLE b_child(id INTEGER PRIMARY KEY, root INTEGER REFERENCES a_roots(id));
+        INSERT INTO b_child VALUES(1,1),(2,2),(3,3);
+        CREATE TABLE c_leaf(id INTEGER PRIMARY KEY, child INTEGER REFERENCES b_child(id));
+        INSERT INTO c_leaf VALUES(1,1),(2,2),(3,3);`);
+      db.transaction(() => {
+        db.pragma("defer_foreign_keys=ON");
+        const closure = captureErasureClosure(db, [
+          { table: "a_roots", column: "id", value: "1" }, { table: "z_detour", column: "id", value: "1" },
+        ]);
+        expect(closure.rowCount).toBe(7);
+        closure.deleteRows(); closure.dispose();
+        expect(db.pragma("foreign_key_check")).toEqual([]);
+      }).immediate();
+      for (const table of ["a_roots", "b_child", "c_leaf"]) {
+        expect(db.prepare(`SELECT id FROM ${table}`).all()).toEqual([{ id: 3 }]);
+      }
+    } finally { db.close(); }
+  });
 });

@@ -10,6 +10,7 @@ import {PlatformOperatorRepository} from "@/src/modules/platform/server/administ
 import {platformAuthCookieName} from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import {TRADERLINK_PLATFORM_SESSION_COOKIE} from "@/src/modules/platform/server/authentication/platform-session-service";
 import {calculatePlatformSchemaDigest} from "@/src/modules/platform/server/database/platform-schema-digest";
+import {communityStatsWrites} from "./community-stats-write-queue";
 import {CommunityStatsRepository} from "@/src/modules/communities/server/stats/community-stats-repository";
 import {POST} from "@/app/%5F%5Fprivate/community-stats-qa/[nonce]/route";
 
@@ -57,5 +58,5 @@ beforeEach(()=>{
 afterEach(()=>{if(unit.db?.open)unit.db.close();unit.db=null;vi.restoreAllMocks();vi.unstubAllGlobals();vi.unstubAllEnvs();vi.useRealTimers();});
 const eventCount=()=>!unit.db?.open?unit.closedEvents:Number((unit.db!.prepare("SELECT count(*) n FROM community_stats_events").get() as {n:number}).n);
 describe("Native capture repair — explicit UNIT IO boundaries",()=>{
- it("retains six verified Settings choices while capturing only selected General",async()=>{const db=unit.db!,response=await post();expect(response.status).toBe(200);const body=response.text();await vi.advanceTimersByTimeAsync(10);expect(db.prepare("SELECT channel_id FROM community_stats_channels WHERE community_id=? ORDER BY channel_id").all(communityId)).toHaveLength(6);expect(db.prepare("SELECT DISTINCT channel_id FROM community_stats_events WHERE surface='discord'").all()).toEqual([{channel_id:GENERAL}]);expect(JSON.parse((db.prepare("SELECT channel_ids_json FROM community_stats_settings WHERE community_id=?").get(communityId) as {channel_ids_json:string}).channel_ids_json)).toEqual([GENERAL]);await vi.advanceTimersByTimeAsync(1100);expect(await body).toContain('"event":"completed"');expect(unit.closedEvents).toBe(1);});
+ it("retains six verified Settings choices while capturing only selected General",async()=>{const db=unit.db!,response=await post();expect(response.status).toBe(200);const body=response.text();await vi.advanceTimersByTimeAsync(10);await communityStatsWrites(db).whenIdle();expect(db.prepare("SELECT channel_id FROM community_stats_channels WHERE community_id=? ORDER BY channel_id").all(communityId)).toHaveLength(6);expect(db.prepare("SELECT DISTINCT channel_id FROM community_stats_events WHERE surface='discord'").all()).toEqual([{channel_id:GENERAL}]);expect(JSON.parse((db.prepare("SELECT channel_ids_json FROM community_stats_settings WHERE community_id=?").get(communityId) as {channel_ids_json:string}).channel_ids_json)).toEqual([GENERAL]);await vi.advanceTimersByTimeAsync(1100);expect(await body).toContain('"event":"completed"');expect(unit.closedEvents).toBe(1);});
 });

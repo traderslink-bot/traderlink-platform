@@ -5,6 +5,7 @@ import { neon } from "@neondatabase/serverless";
 import type Database from "better-sqlite3";
 
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { runNonblockingSqliteWrite } from "@/src/modules/platform/server/database/nonblocking-sqlite-write";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { requirePlatformSingleNodeSqliteStorage } from "@/src/modules/platform/server/database/platform-storage-backend";
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
@@ -30,6 +31,21 @@ export const LIVE_WATCHLIST_ARCHIVE_RETENTION_MS = 3 * 24 * 60 * 60 * 1_000;
 let sharedSqliteDatabase: SqliteDatabase | null = null;
 let sharedNeonSql: NeonSql | null = null;
 let sharedNeonSchemaPromise: Promise<void> | null = null;
+
+// Keep card/health submissions in their accepted order while writer acquisition
+// yields. The tail absorbs rejection only to release the next submission; each
+// caller still receives its own error. No provider or delivery work runs here.
+const sqliteWriteTails = new Map<string, Promise<void>>();
+function orderedSqliteWrite<T>(key: string, write: () => Promise<T>): Promise<T> {
+  const previous = sqliteWriteTails.get(key) ?? Promise.resolve();
+  const result = previous.then(write);
+  const tail = result.then(() => undefined, () => undefined);
+  sqliteWriteTails.set(key, tail);
+  void tail.then(() => {
+    if (sqliteWriteTails.get(key) === tail) sqliteWriteTails.delete(key);
+  });
+  return result;
+}
 
 function databaseUrl(): string | undefined {
   return process.env.LIVE_WATCHLIST_DATABASE_URL?.trim() || undefined;
@@ -957,20 +973,24 @@ export class LiveWatchlistStore {
       };
     }
 
-    const db = await getSqliteDatabase();
-    db.prepare(
-      `
-        INSERT INTO live_watchlist_health (key, market_data_status, market_data_updated_at)
-        VALUES ('global', ?, ?)
-        ON CONFLICT(key) DO UPDATE SET
-          market_data_status = excluded.market_data_status,
-          market_data_updated_at = excluded.market_data_updated_at
-      `,
-    ).run(patch.marketDataStatus, patch.marketDataUpdatedAt);
-    return {
-      marketDataStatus: patch.marketDataStatus,
-      marketDataUpdatedAt: patch.marketDataUpdatedAt,
-    };
+    return orderedSqliteWrite("health", async () => {
+      const db = await getSqliteDatabase();
+      await runNonblockingSqliteWrite(db, () => {
+        db.prepare(
+          `
+            INSERT INTO live_watchlist_health (key, market_data_status, market_data_updated_at)
+            VALUES ('global', ?, ?)
+            ON CONFLICT(key) DO UPDATE SET
+              market_data_status = excluded.market_data_status,
+              market_data_updated_at = excluded.market_data_updated_at
+          `,
+        ).run(patch.marketDataStatus, patch.marketDataUpdatedAt);
+      });
+      return {
+        marketDataStatus: patch.marketDataStatus,
+        marketDataUpdatedAt: patch.marketDataUpdatedAt,
+      };
+    });
   }
 
   async getHealth(): Promise<{
@@ -999,62 +1019,67 @@ export class LiveWatchlistStore {
 
   async upsertPatch(patch: LiveWatchlistCardPatch): Promise<LiveWatchlistSymbolState> {
     const symbol = normalizeSymbol(patch.symbol);
-    const latestArchive = patch.preserveExistingOnReactivation === true
-      ? await this.getLatestArchiveForSymbol(symbol)
-      : null;
-    const preservedArchiveState = latestArchive && sameNewYorkDate(latestArchive.archivedAt, patch.updatedAt)
-      ? latestArchive.state
-      : null;
+    const write = async (): Promise<LiveWatchlistSymbolState> => {
+      const latestArchive = patch.preserveExistingOnReactivation === true
+        ? await this.getLatestArchiveForSymbol(symbol)
+        : null;
+      const preservedArchiveState = latestArchive && sameNewYorkDate(latestArchive.archivedAt, patch.updatedAt)
+        ? latestArchive.state
+        : null;
 
-    if (!shouldUseSqliteFallback()) {
-      let movedToFollowup = false;
-      const next = await mutateNeonSymbolState(symbol, (existing) => {
-        const updated = applyPatch(
-          preservedArchiveState
-            ? mergeArchivedReactivationContext(existing, preservedArchiveState)
-            : existing,
-          { ...patch, symbol },
-          Boolean(preservedArchiveState && (!existing || existing.status === "deactivated")),
-        );
-        movedToFollowup =
+      if (!shouldUseSqliteFallback()) {
+        let movedToFollowup = false;
+        const next = await mutateNeonSymbolState(symbol, (existing) => {
+          const updated = applyPatch(
+            preservedArchiveState
+              ? mergeArchivedReactivationContext(existing, preservedArchiveState)
+              : existing,
+            { ...patch, symbol },
+            Boolean(preservedArchiveState && (!existing || existing.status === "deactivated")),
+          );
+          movedToFollowup =
+            existing?.watchlistSlotState !== "followup" &&
+            updated.watchlistSlotState === "followup";
+          return updated;
+        });
+        if (next.status === "deactivated" || movedToFollowup) {
+          await this.createArchiveIfEligible(next);
+        }
+        return next;
+      }
+
+      const db = await getSqliteDatabase();
+      const { next, movedToFollowup } = await runNonblockingSqliteWrite(db, () => {
+        const row = db.prepare("SELECT state_json FROM live_watchlist_symbols WHERE symbol = ?").get(symbol) as { state_json: string } | undefined;
+        const current = row ? parseState(row.state_json) : null;
+        const existing = preservedArchiveState
+          ? mergeArchivedReactivationContext(current, preservedArchiveState)
+          : current;
+        const next = applyPatch(existing, { ...patch, symbol }, Boolean(preservedArchiveState && (!current || current.status === "deactivated")));
+        const movedToFollowup =
           existing?.watchlistSlotState !== "followup" &&
-          updated.watchlistSlotState === "followup";
-        return updated;
+          next.watchlistSlotState === "followup";
+        db.prepare(
+          `
+            INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json, revision)
+            VALUES (?, ?, ?, ?, 0)
+            ON CONFLICT(symbol) DO UPDATE SET
+              status = excluded.status,
+              updated_at = excluded.updated_at,
+              state_json = excluded.state_json,
+              revision = live_watchlist_symbols.revision + 1
+          `,
+        ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
+        return { next, movedToFollowup };
       });
       if (next.status === "deactivated" || movedToFollowup) {
         await this.createArchiveIfEligible(next);
       }
       return next;
-    }
-
-    const db = await getSqliteDatabase();
-    const { next, movedToFollowup } = db.transaction(() => {
-      const row = db.prepare("SELECT state_json FROM live_watchlist_symbols WHERE symbol = ?").get(symbol) as { state_json: string } | undefined;
-      const current = row ? parseState(row.state_json) : null;
-    const existing = preservedArchiveState
-      ? mergeArchivedReactivationContext(current, preservedArchiveState)
-      : current;
-    const next = applyPatch(existing, { ...patch, symbol }, Boolean(preservedArchiveState && (!current || current.status === "deactivated")));
-    const movedToFollowup =
-      existing?.watchlistSlotState !== "followup" &&
-      next.watchlistSlotState === "followup";
-    db.prepare(
-      `
-        INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json, revision)
-        VALUES (?, ?, ?, ?, 0)
-        ON CONFLICT(symbol) DO UPDATE SET
-          status = excluded.status,
-          updated_at = excluded.updated_at,
-          state_json = excluded.state_json,
-          revision = live_watchlist_symbols.revision + 1
-      `,
-    ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
-      return { next, movedToFollowup };
-    })();
-    if (next.status === "deactivated" || movedToFollowup) {
-      await this.createArchiveIfEligible(next);
-    }
-    return next;
+    };
+    return shouldUseSqliteFallback()
+      ? orderedSqliteWrite(`symbol:${symbol}`, write)
+      : write();
   }
 
   async upsertTickerData(patch: LiveWatchlistTickerDataPatch): Promise<LiveWatchlistSymbolState> {
@@ -1365,7 +1390,9 @@ export class LiveWatchlistStore {
     }
 
     const db = await getSqliteDatabase();
-    return db.prepare("DELETE FROM live_watchlist_archives WHERE archived_at < ?").run(cutoff).changes;
+    return runNonblockingSqliteWrite(db, () =>
+      db.prepare("DELETE FROM live_watchlist_archives WHERE archived_at < ?").run(cutoff).changes,
+    );
   }
 
   private async createArchiveIfEligible(state: LiveWatchlistSymbolState): Promise<void> {
@@ -1396,14 +1423,14 @@ export class LiveWatchlistStore {
     }
 
     const db = await getSqliteDatabase();
-    db.prepare(
+    await runNonblockingSqliteWrite(db, () => db.prepare(
       `
         INSERT OR IGNORE INTO live_watchlist_archives (
           archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
         )
         VALUES (?, ?, ?, ?, ?, ?)
       `,
-    ).run(archiveId, state.symbol, state.updatedAt, state.firstPostedAt, state.updatedAt, stateJson);
+    ).run(archiveId, state.symbol, state.updatedAt, state.firstPostedAt, state.updatedAt, stateJson));
   }
 }
 

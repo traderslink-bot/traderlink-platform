@@ -1,5 +1,7 @@
 # Watchlist Runtime Dashboard Admin Plan
 
+November 19 technical maintenance: [nonblocking public-store writes](watchlist-nonblocking-store-progress-20261119.md). No feature, approval or delivery-policy change.
+
 October 8 owner-approved title: [Potential Targets heading](watchlist-potential-targets-heading-progress.md).
 
 September 23 analysis status wording: [completed local correction](watchlist-analysis-status-copy-progress.md).

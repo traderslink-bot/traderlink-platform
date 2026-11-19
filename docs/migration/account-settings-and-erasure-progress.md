@@ -4,6 +4,12 @@
 
 **Controlling plan:** [Account Settings And Erasure Plan](account-settings-and-erasure-plan.md)
 
+Current November 19 source batch: [actual live-retry repair](account-erasure-live-retry-repair-20261119.md).
+The second actual request also rolled back. Core owns the assigned privacy/auth
+source correction and shared nonblocking writer helper; the Coordinator owns
+peer integration and any separately authorized release. All18 focused tests and
+targeted ESLint on11 source/test files pass. No additional live request is authorized here.
+
 2026-10-26 availability correction: the owner authorized broader implementation
 and disposable synthetic checks after the [initial blocker](account-erasure-availability-blocker-20261026.md).
 The [implementation record](account-erasure-recovery-implementation-20261026.md)

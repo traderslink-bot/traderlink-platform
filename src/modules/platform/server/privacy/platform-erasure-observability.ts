@@ -1,4 +1,4 @@
-/** Phase-only diagnostics: never log identifiers, paths, file keys or errors. */
+/** Safe diagnostics: no personal identifiers, paths, file keys or error text. */
 export function classifyErasureFailure(error: unknown): string {
   // Read only an own data property. Never stringify a driver error, traverse
   // its cause/stack, or invoke an arbitrary exception getter in a failure path.
@@ -15,19 +15,41 @@ export function classifyErasureFailure(error: unknown): string {
   } catch { return "unknown"; }
 }
 
-export function observeErasurePhase<T>(phase: string, operation: () => T): T {
+type TableObservation = Readonly<{ table: string; selectedRows: number; parentTable?: string }>;
+
+function observe<T>(phase: string, operation: () => T, table?: TableObservation): T {
   const started = performance.now();
   let state: "finished" | "failed" = "finished";
   let failureKind: string | undefined;
-  if (process.env.NODE_ENV === "production") console.info("platform_erasure_phase", {
-    phase, state: "started", atUtc: new Date().toISOString(),
-  });
+  const production = process.env.NODE_ENV === "production";
+  // One string per event: worker stdout and main stdout may interleave lines.
+  // Table events report only slow queries or failures to keep volume bounded.
+  if (production && !table) console.info(JSON.stringify({
+    event: "platform_erasure_phase", phase, state: "started", atUtc: new Date().toISOString(),
+  }));
   try { return operation(); }
   catch (error) { state = "failed"; failureKind = classifyErasureFailure(error); throw error; }
   finally {
-    if (process.env.NODE_ENV === "production") console.info("platform_erasure_phase", {
-      phase, state, atUtc: new Date().toISOString(), durationMs: Math.round(performance.now() - started),
+    const durationMs = Math.round(performance.now() - started);
+    if (production && (!table || durationMs >= 50 || state === "failed")) console.info(JSON.stringify({
+      event: "platform_erasure_phase", phase, state, atUtc: new Date().toISOString(), durationMs,
+      ...table,
       ...(failureKind ? { failureKind } : {}),
-    });
+    }));
   }
+}
+
+export function observeErasurePhase<T>(phase: string, operation: () => T): T {
+  return observe(phase, operation);
+}
+
+/** Callers supply canonical schema names and selected-key counts, never values. */
+export function observeErasureTable<T>(
+  phase: "capture_root_table" | "capture_fk_edge" | "delete_table",
+  table: string, selectedRows: number, operation: () => T, parentTable?: string,
+): T {
+  const identifier = /^[a-z_][a-z0-9_]{0,127}$/u;
+  if (!identifier.test(table) || (parentTable !== undefined && !identifier.test(parentTable))
+    || !Number.isSafeInteger(selectedRows) || selectedRows < 0) return operation();
+  return observe(phase, operation, { table, selectedRows, ...(parentTable ? { parentTable } : {}) });
 }

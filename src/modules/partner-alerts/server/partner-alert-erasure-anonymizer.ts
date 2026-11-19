@@ -29,11 +29,15 @@ export class PartnerAlertErasureAnonymizer {
     for(const {name} of tables){
       if(!/^[a-z][a-z0-9_]{0,127}$/u.test(name))return erasureHold();
       const foreign=this.database.pragma(`foreign_key_list('${name}')`) as {table:string;from:string}[];
-      for(const edge of foreign.filter(row=>row.table==="platform_users")){
+      const columns=[...new Set(foreign.filter(row=>row.table==="platform_users").map(edge=>{
         if(!/^[a-z][a-z0-9_]{0,127}$/u.test(edge.from))return erasureHold();
-        if(this.database.prepare(`SELECT 1 FROM "${name}" WHERE "${edge.from}"=? LIMIT 1`)
-          .get(PARTNER_ALERT_ERASURE_PRINCIPAL_ID))return erasureHold();
-      }
+        return edge.from;
+      }))].sort();
+      // The same sentinel must be absent from every discovered incoming FK.
+      // Probe each table once, including nullable and unknown module columns;
+      // no authority result or schema discovery is cached across writers.
+      if(columns.length&&this.database.prepare(`SELECT 1 FROM "${name}" WHERE ${columns.map(column=>`"${column}"=?`).join(" OR ")} LIMIT 1`)
+        .get(...columns.map(()=>PARTNER_ALERT_ERASURE_PRINCIPAL_ID)))return erasureHold();
     }
   }
   anonymize(operationRef:string,userId:string,atUtc:string):void {

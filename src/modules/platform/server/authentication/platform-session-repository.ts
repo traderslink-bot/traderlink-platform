@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { tryNonblockingSqliteWrite } from "../database/nonblocking-sqlite-write";
 
 import {
   assertCanonicalUtcTimestamp,
@@ -173,6 +174,17 @@ WHERE session_id = ?
     if (result.changes !== 1) {
       platformFailure("TRADERLINK_AUTH_SESSION_INVALID");
     }
+  }
+
+  /** Activity is housekeeping, not an expiry extension or authentication proof.
+   * A contended writer leaves the persisted time unchanged for the next request.
+   * An existing caller transaction owns its own writes; do not nest acquisition.
+   */
+  tryTouchActiveSession(input: Readonly<{ sessionId: string; timestamp: string }>): boolean {
+    assertCanonicalUuidV4(input.sessionId, "sessionId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    if (this.database.inTransaction) return false;
+    return tryNonblockingSqliteWrite(this.database, () => this.touchActiveSession(input)).kind === "written";
   }
 
   revokeByTokenDigest(input: Readonly<{

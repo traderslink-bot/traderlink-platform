@@ -1,0 +1,117 @@
+{
+  "status": "FOCUSED_CHECKPOINT_PASSED_PENDING_ROOT_INTEGRATION_REVIEW",
+  "createdAtUtc": "2026-11-19T13:19:03.936208+00:00",
+  "workspace": "/home/traderlink/projects/community-stats-production-repair-20261119",
+  "branch": "codex/community-stats-nonblocking-writes-20261119",
+  "baseCommit": "fcd190742d7f35a3d9bf1b76d50ab36d9bf7fe01",
+  "baseTree": "b8e5e4f0d664457a79e07f1dd7b67cd0116461bc",
+  "owner": "Stats existing chat 01a15613-739c-7170-8ab9-9ce11d07c18e",
+  "ownedSourceAllowlist": [
+    {
+      "path": "src/modules/communities/server/stats/community-stats-collector.ts",
+      "preimageSha256": "0c58b5c3b37e3e8a760ae2ead72d957a3f8fdc5c39d9ee5ee66775cf575bc91c",
+      "postimageSha256": "ea2979732443dc7e96fb65e8eba5e77116aecb25a4bcd6f7b2abb84c193bb745",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-discord-gateway.ts",
+      "preimageSha256": "1f3cdfa1938832dc0ded3e2ba8433a9eabf091ddbc40827835bbee8c96eb5192",
+      "postimageSha256": "264eeea6ca5d44878acfb7f67a8674ad1e51247989248c48ed06411e0e368e07",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-history.ts",
+      "preimageSha256": "1bde9d205cd4886b74cc407eb04dd60fb7980dd7a879d5b38d9bf8bcb661795f",
+      "postimageSha256": "5be76cd26d48f99a5b7893182164475a2aab5ff002e583f44e1c5aa7cd87e228",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-invites.ts",
+      "preimageSha256": "e4a3d28b3886d61ff3170f22477ce5a70ef76d84e1433ec9d81f23b0e6a39c62",
+      "postimageSha256": "b879cf214a3dae9e63aa4fcd32ce280cfc2f2cabf060698dd590a31bbc00f23e",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-write-queue.ts",
+      "preimageSha256": null,
+      "postimageSha256": "0625c8fdbfcd627995c28d71cd1f3d6dde1fbf1998f599ee473e7554d68f9767",
+      "kind": "new"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-nonblocking.test.ts",
+      "preimageSha256": null,
+      "postimageSha256": "b89128f222ff930241da1aee429af43fedb51bf8340eafd7053bbb4bd15ee6b0",
+      "kind": "new"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-discord-capture-repair.test.ts",
+      "preimageSha256": "fea13cfff9df0c07c05540d651ffd36de338f605ab36c5bd188d1d84e39f8264",
+      "postimageSha256": "8bf4722f1eda762235be76fd47c9c0da7849a257ad8a9dc3e3f76212ddf14747",
+      "kind": "modified"
+    }
+  ],
+  "ownedSourceVectorSha256": "324879a5784675e0e8237e91ab9ee16d69ae9c518a554b04cb929b05e816c16c",
+  "separatelyOwnedDependency": {
+    "owner": "Core",
+    "path": "src/modules/platform/server/database/nonblocking-sqlite-write.ts",
+    "sha256": "07c39202988638c4f7425121b24ddbc638eb411c63fd595e6205e018627c4909",
+    "includedInStatsAllowlist": false
+  },
+  "implementation": [
+    "Per-handle FIFO uses Core immediate single-attempt acquisition; busy BEGIN retains original payload at queue head and retries with asynchronous backoff. Callback/commit failures never replay.",
+    "Collector enabled/disabled/connecting/missing-token writes, Gateway events/coverage/metadata, history pages/cursors/backoff and invite writes use this queue.",
+    "Authority and selected configuration rechecked at execution; native QA full authorization remains outside transactions, original cancellation/deadline rechecked inside. No TTL changes.",
+    "SQL and memory snapshots roll back together for Gateway/invites. Network/timer effects follow commit. Gateway control/ACK processing stays immediate; accepted frame backlog uses existing reconnect mechanism and drains before reconnect.",
+    "History REST response is retained through contention without refetch; event data and checkpoint commit together. Original event times/session/sequence retained.",
+    "Existing capture replay now explicitly awaits asynchronous queue completion; all six channel choices, selected-channel capture, settings and completion assertions preserved."
+  ],
+  "verification": {
+    "resources": {
+      "memAvailable": "MemAvailable:    7210860 kB",
+      "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=25549860111\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=24888558551\n",
+      "cgroupCurrent": "7235010560"
+    },
+    "results": [
+      {
+        "operation": "types",
+        "returncode": 0,
+        "elapsedSeconds": 6.135,
+        "logSha256": "e416e11b4498abcf7db421e4d60a2b3bf4a0de588ea5280c71caa528edc455c7"
+      },
+      {
+        "operation": "lint",
+        "returncode": 0,
+        "elapsedSeconds": 2.021,
+        "logSha256": "acf8701d7e98280cf5dfa03a9d666ce3d057a54d1bf772802ae275b7dfc17e48"
+      },
+      {
+        "operation": "tests",
+        "returncode": 0,
+        "elapsedSeconds": 14.461,
+        "logSha256": "70f2f863acef36c6f7e5803577ac5eddb3a75a64a52c815fbd15db9af6f2ecf8"
+      }
+    ]
+  },
+  "verificationDetail": {
+    "tests": "26/26 across three files: eight new contention cases, 17 existing forward cases, one existing capture replay. Synthetic disposable native SQLite two-handle fixtures and protocol replay; no real provider calls.",
+    "types": "578 reachable source files, zero diagnostics.",
+    "lint": "Six implementation/new-test files zero errors/warnings. Existing capture replay has three no-explicit-any errors and one unused-variable warning, independently compared to fcd baseline and unchanged; no new diagnostics.",
+    "diffCheck": "git diff --check passed",
+    "donor": "community-combined-production-review-20261117 node_modules; package and lock exact; private cache/config; no install or donor mutation.",
+    "guards": "Both feature O_EXCL inode-owned lock and host flock held; sequential operations, released after children exited.",
+    "finalEvidenceDirectory": "/tmp/tl-stats-nonblocking-checkpoint-_p54upzr",
+    "initialFailure": "Preserved initial/run2 results: 25/26; full native assert initially inside transaction, then async replay test scheduling assumption. Fixed authorization placement and added explicit queue wait without relaxing assertions.",
+    "finalSource": "Final checks ran after last source edit; source frozen after pass."
+  },
+  "progress": "Implementation and focused verification complete; Root/Core must review and integrate exact allowlist with Core helper. Hosted combined qualification remains separate.",
+  "helpCenter": "No user-facing functionality, UI or workflow change; no guide update required.",
+  "notPerformed": [
+    "No build/browser/CSV downloads or hosted QA",
+    "No production/provider/config/schema/profile/catalog changes",
+    "No Git staging, commit, push, merge or deployment"
+  ],
+  "limits": [
+    "In-process contention queue preserves accepted work during lock waits; no new crash-recovery persistence guarantee is introduced.",
+    "No claim that current hosted event-loop stalls or actual account erasure are resolved until Root integrates and verifies the changed combined runtime."
+  ]
+}

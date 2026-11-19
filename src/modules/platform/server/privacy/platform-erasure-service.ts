@@ -320,8 +320,10 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
         assertBoundStripeErasureAvailable(this.database,operationRef,scope.userId);
       }
       observeErasurePhase("module_root_fence", () => {
-        if (participants && operationRef) participants.partner.beforeRootDelete(operationRef, scope.userId);
-        if (operationRef) runBoundStripeErasure(this.database,operationRef,scope.userId);
+        if (participants && operationRef) observeErasurePhase("partner_root_fence", () =>
+          participants.partner.beforeRootDelete(operationRef, scope.userId));
+        if (operationRef) observeErasurePhase("stripe_root_fence", () =>
+          runBoundStripeErasure(this.database,operationRef,scope.userId));
       });
       return withPermanentDeleteTransaction(this.database, () => {
       assertSoleWorkspaceOwner(this.database, scope);

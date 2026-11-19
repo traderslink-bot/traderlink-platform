@@ -190,6 +190,179 @@ describe("LiveWatchlistStore", () => {
     }
   }, 15_000);
 
+  it.each(["health", "card"] as const)("yields and preserves accepted %s update order across store instances", async (kind) => {
+    const root = mkdtempSync(join(tmpdir(), "watchlist-ordered-writes-"));
+    const databasePath = join(root, "test.sqlite");
+    const otherWriter = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
+    const firstStore = new LiveWatchlistStore();
+    const secondStore = new LiveWatchlistStore();
+    const submit = (store: LiveWatchlistStore, version: number) => kind === "health"
+      ? store.upsertHealth({ type: "health", marketDataStatus: version === 1 ? "stale" : "live", marketDataUpdatedAt: version * 1000 })
+      : store.upsertPatch({ symbol: "ABCD", updatedAt: version * 1000, cards: { liveTraderRead: {
+        title: `read ${version}`, body: `owner content ${version}`, updatedAt: version * 1000, priceWhenPosted: 1.2, source: "live_alert",
+      } } });
+    try {
+      await firstStore.getHealth(); // Open the normal shared runtime connection before contention.
+      otherWriter.exec("BEGIN IMMEDIATE");
+      let heartbeat = false;
+      const started = performance.now();
+      const first = submit(firstStore, 1);
+      const pulse = setTimeout(() => { heartbeat = true; otherWriter.exec("COMMIT"); }, 25);
+      try {
+        // A second request arrives after release, before the first writer's retry.
+        await new Promise(resolve => setTimeout(resolve, 50));
+        const second = submit(secondStore, 2);
+        await Promise.all([first, second]);
+        expect(heartbeat).toBe(true);
+        expect(performance.now() - started).toBeLessThan(1500);
+        if (kind === "health") {
+          expect(await firstStore.getHealth()).toEqual({ marketDataStatus: "live", marketDataUpdatedAt: 2000 });
+        } else {
+          const state = await firstStore.getSymbol("ABCD");
+          expect(state?.cards.liveTraderRead?.body).toBe("owner content 2");
+          expect(state?.cards.liveTraderRead?.updatedAt).toBe(2000);
+          expect(state?.firstPostedAt).toBe(1000);
+        }
+      } finally { clearTimeout(pulse); }
+    } finally {
+      if (otherWriter.inTransaction) otherWriter.exec("ROLLBACK");
+      otherWriter.close();
+      resetLiveWatchlistStoreForTests();
+      await removePlatformDatabaseTestFixture(root);
+    }
+  }, 15_000);
+
+  it("merges a delayed card patch with the latest durable price and retains original card times", async () => {
+    const root = mkdtempSync(join(tmpdir(), "watchlist-fresh-state-"));
+    const databasePath = join(root, "test.sqlite");
+    const otherWriter = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
+    const store = new LiveWatchlistStore();
+    try {
+      await store.upsertPatch(buildCorePatch("ABCD", 1000));
+      otherWriter.exec("BEGIN IMMEDIATE");
+      const started = performance.now();
+      const pending = store.upsertPatch({ symbol: "ABCD", updatedAt: 2000, cards: {
+        liveTraderRead: { title: "saved read", body: "owner edit", updatedAt: 1800, priceWhenPosted: 1.2, source: "live_alert" },
+      } });
+      const pulse = setTimeout(() => {
+        otherWriter.prepare(`UPDATE live_watchlist_symbols SET state_json = json_set(state_json,
+          '$.latestPrice', 2.5, '$.latestPriceSource', 'ticker', '$.latestPriceObservedAt', 3000,
+          '$.marketDataRevision', 7, '$.updatedAt', 3000), revision = revision + 1 WHERE symbol = 'ABCD'`).run();
+        otherWriter.exec("COMMIT");
+      }, 25);
+      try {
+        const state = await pending;
+        expect(performance.now() - started).toBeLessThan(1500);
+        expect(state.latestPrice).toBe(2.5);
+        expect(state.latestPriceObservedAt).toBe(3000);
+        expect(state.marketDataRevision).toBe(7);
+        expect(state.updatedAt).toBe(3000);
+        expect(state.cards.liveTraderRead?.updatedAt).toBe(1800);
+        expect(state.cards.liveTraderRead?.body).toBe("owner edit");
+      } finally { clearTimeout(pulse); }
+    } finally {
+      if (otherWriter.inTransaction) otherWriter.exec("ROLLBACK");
+      otherWriter.close();
+      resetLiveWatchlistStoreForTests();
+      await removePlatformDatabaseTestFixture(root);
+    }
+  }, 15_000);
+
+  it("propagates a non-busy failed patch without blocking a later accepted update", async () => {
+    const root = mkdtempSync(join(tmpdir(), "watchlist-failed-write-"));
+    const databasePath = join(root, "test.sqlite");
+    const otherWriter = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
+    const store = new LiveWatchlistStore();
+    try {
+      await store.upsertPatch(buildCorePatch("ABCD", 1000));
+      // A real SQL constraint failure rolls back just this patch.
+      otherWriter.exec(`CREATE TRIGGER reject_bad_patch BEFORE UPDATE ON live_watchlist_symbols
+        WHEN json_extract(NEW.state_json, '$.cards.liveTraderRead.body') = 'rejected'
+        BEGIN SELECT RAISE(ABORT, 'rejected patch'); END`);
+      const rejected = store.upsertPatch({ symbol: "ABCD", updatedAt: 2000, cards: {
+        liveTraderRead: { title: "bad", body: "rejected", updatedAt: 2000, priceWhenPosted: 1.2, source: "live_alert" },
+      } });
+      const recovered = store.upsertPatch({ symbol: "ABCD", updatedAt: 3000, cards: {} });
+      await expect(rejected).rejects.toThrow("rejected patch");
+      expect((await recovered).updatedAt).toBe(3000);
+      expect((await store.getSymbol("ABCD"))?.cards.liveTraderRead?.body).not.toBe("rejected");
+    } finally {
+      otherWriter.close();
+      resetLiveWatchlistStoreForTests();
+      await removePlatformDatabaseTestFixture(root);
+    }
+  }, 15_000);
+
+  it("yields during archival pruning and uses the original expiry cutoff", async () => {
+    const root = mkdtempSync(join(tmpdir(), "watchlist-prune-yield-"));
+    const databasePath = join(root, "test.sqlite");
+    const otherWriter = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
+    let now = 4000;
+    const store = new LiveWatchlistStore(() => now);
+    try {
+      await store.upsertPatch(buildCorePatch("ABCD", 1000));
+      await store.upsertPatch({ symbol: "ABCD", status: "deactivated", updatedAt: 2000, cards: {} });
+      now = LIVE_WATCHLIST_ARCHIVE_RETENTION_MS + 2000;
+      otherWriter.exec("BEGIN IMMEDIATE");
+      const started = performance.now();
+      const pending = store.pruneExpiredArchives();
+      const pulse = setTimeout(() => { now++; otherWriter.exec("COMMIT"); }, 25);
+      try {
+        expect(await pending).toBe(0); // Equal to the original cutoff is retained.
+        expect(performance.now() - started).toBeLessThan(1500);
+        expect(await store.pruneExpiredArchives()).toBe(1);
+      } finally { clearTimeout(pulse); }
+    } finally {
+      if (otherWriter.inTransaction) otherWriter.exec("ROLLBACK");
+      otherWriter.close();
+      resetLiveWatchlistStoreForTests();
+      await removePlatformDatabaseTestFixture(root);
+    }
+  }, 15_000);
+
+  it("yields during archive insertion and preserves the committed deactivation snapshot", async () => {
+    const root = mkdtempSync(join(tmpdir(), "watchlist-archive-yield-"));
+    const databasePath = join(root, "test.sqlite");
+    const otherWriter = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
+    const store = new LiveWatchlistStore(() => 4000);
+    let pulse: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await store.upsertPatch(buildCorePatch("ABCD", 1000));
+      const prune = store.pruneExpiredArchives.bind(store);
+      vi.spyOn(store, "pruneExpiredArchives").mockImplementationOnce(async () => {
+        const count = await prune();
+        otherWriter.exec("BEGIN IMMEDIATE");
+        pulse = setTimeout(() => otherWriter.exec("COMMIT"), 25);
+        return count;
+      });
+      const started = performance.now();
+      await store.upsertPatch({ symbol: "ABCD", status: "deactivated", updatedAt: 2000, cards: {} });
+      expect(performance.now() - started).toBeLessThan(1500);
+      const archives = await store.listArchives();
+      expect(archives).toHaveLength(1);
+      expect(archives[0]?.archivedAt).toBe(2000);
+      expect(archives[0]?.state.updatedAt).toBe(2000);
+      expect(archives[0]?.state.firstPostedAt).toBe(1000);
+      expect(archives[0]?.state.cards).toEqual((await store.getSymbol("ABCD"))?.cards);
+    } finally {
+      if (pulse) clearTimeout(pulse);
+      if (otherWriter.inTransaction) otherWriter.exec("ROLLBACK");
+      otherWriter.close();
+      resetLiveWatchlistStoreForTests();
+      await removePlatformDatabaseTestFixture(root);
+    }
+  }, 15_000);
+
   it("normalizes Neon bigint timestamp strings for archive rows", () => {
     expect(normalizeLiveWatchlistTimestamp("1782069488260")).toBe(1782069488260);
     expect(normalizeLiveWatchlistTimestamp(1782069488260)).toBe(1782069488260);

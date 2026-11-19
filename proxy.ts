@@ -126,6 +126,7 @@ export function proxy(request: NextRequest): NextResponse {
       const destination = request.nextUrl.clone();
       destination.protocol = "https:";
       destination.host = publicHostname;
+      destination.port = "";
       return NextResponse.redirect(destination, 308);
     }
     return continueRequest(request, proxyEntryEpochMs);

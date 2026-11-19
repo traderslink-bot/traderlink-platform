@@ -6,18 +6,25 @@ import {CommunityStatsRepository} from "./community-stats-repository";
 import {CommunityStatsDiscordGateway} from "./community-stats-discord-gateway";
 import {TraderLinkCommunityRepository} from "../traderlink-community-repository";
 import {CommunityStatsHistory} from "./community-stats-history";
+import {communityStatsWrites,statsWriteReview} from "./community-stats-write-queue";
 
 import {assertCommunityStagingQaCapability,type CommunityStagingQaCapability} from "../community-staging-qa-capability";
 /** Shared production collector logic. No timer, socket or database opens on construction. */
 export class CommunityStatsCollector {
  private state:{gateway:CommunityStatsDiscordGateway|null;signature:string;lastWeb:string|null;historyCommunities:string[]}={gateway:null,signature:"",lastWeb:null,historyCommunities:[]};
  private stopped=false;
+ private ticking=false;
  private readonly history:CommunityStatsHistory;
  constructor(private readonly database:Database.Database,private readonly review?:CommunityStagingQaCapability){
   if(review)assertCommunityStagingQaCapability(review,database);
   this.history=new CommunityStatsHistory(database,review?.request,review);
  }
  tick():void{
+  if(this.stopped||this.ticking)return;
+  this.ticking=true;
+  void this.collect().catch(error=>console.error("Community Stats collection paused.",{errorName:error instanceof Error?error.name:"UnknownError"})).finally(()=>{this.ticking=false;});
+ }
+ private async collect():Promise<void>{
     if(this.stopped)return;
     const database=this.database,state=this.state;
     this.review?.collectorTick();
@@ -25,13 +32,16 @@ export class CommunityStatsCollector {
     try{
       if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"){
         state.gateway?.stop();state.gateway=null;state.signature="";state.lastWeb=null;state.historyCommunities=[];
-        database.prepare(`UPDATE community_stats_source_state SET status='disabled',checked_at_utc=?,reason='Collection is disabled.' WHERE status!='disabled' AND (? IS NULL OR community_id=?)`).run(at,this.review?.run.communityId??null,this.review?.run.communityId??null);return;
+        await communityStatsWrites(database).write(()=>{if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1")database.prepare(`UPDATE community_stats_source_state SET status='disabled',checked_at_utc=?,reason='Collection is disabled.' WHERE status!='disabled' AND (? IS NULL OR community_id=?)`).run(at,this.review?.run.communityId??null,this.review?.run.communityId??null);},statsWriteReview(this.review));return;
       }
+      const approved=approvedCommunityGuildIds().filter(isCommunityReviewDiscordGuild);
+      const communities=await communityStatsWrites(database).write(()=>{
+      if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1")throw new Error("Stats collection configuration changed.");
       const communities=database.prepare(`SELECT c.community_id,c.discord_guild_id,s.discord_enabled,s.channel_ids_json,s.discord_configuration_version FROM traderlink_communities c JOIN platform_users owner ON owner.user_id=c.owner_user_id AND owner.status='active' LEFT JOIN community_stats_settings s ON s.community_id=c.community_id WHERE c.status='active' AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL) ORDER BY c.community_id`)
         .all() as {community_id:string;discord_guild_id:string;discord_enabled:number|null;channel_ids_json:string|null;discord_configuration_version:number|null}[];
       if(this.review)communities.splice(0,communities.length,...communities.filter(row=>row.community_id===this.review!.run.communityId));
-      const approved=approvedCommunityGuildIds().filter(isCommunityReviewDiscordGuild);
-      repo.transaction(()=>{for(const community of communities){
+      if(this.stopped)return [];
+      for(const community of communities){
         if(!isCommunityReviewDiscordGuild(community.discord_guild_id))continue;
         repo.ensureCommunity(community.community_id,at);
         // Close revoked/relinked web eligibility at the first observed change; never relabel history.
@@ -64,19 +74,22 @@ export class CommunityStatsCollector {
           repo.source(community.community_id,"discord","not_configured",at,approved.includes(community.discord_guild_id)?"Discord collection is disabled for this community.":"Discord collection is awaiting operator approval for this server.");
           repo.source(community.community_id,"membership","not_configured",at,"A complete guild roster has not been observed.");
         }
-      }});state.lastWeb=at;
+      }return communities;},statsWriteReview(this.review));state.lastWeb=at;
+      if(this.stopped)return;
       const selected=communities.filter(row=>row.discord_enabled===1&&approved.includes(row.discord_guild_id)).map(row=>({communityId:row.community_id,guildId:row.discord_guild_id,channelIds:JSON.parse(row.channel_ids_json??"[]") as string[],configurationVersion:row.discord_configuration_version??0}));
       const token=process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim(),signature=JSON.stringify(selected)+(token?":token-present":":no-token");
+      const selectionIsCurrent=()=>!this.stopped&&process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"&&selected.every(community=>!!database.prepare(`SELECT 1 FROM traderlink_communities c JOIN community_stats_settings s ON s.community_id=c.community_id JOIN platform_users u ON u.user_id=c.owner_user_id AND u.status='active' WHERE c.community_id=? AND c.discord_guild_id=? AND c.status='active' AND s.discord_enabled=1 AND s.discord_configuration_version=? AND s.channel_ids_json=? AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL)`).get(community.communityId,community.guildId,community.configurationVersion,JSON.stringify(community.channelIds)));
       state.historyCommunities=selected.map(community=>community.communityId);
       if(signature!==state.signature){
         state.gateway?.stop();state.gateway=null;state.signature=signature;
         if(selected.length&&token){
           // Re-establish current Discord and membership collection after a configuration change.
-          repo.transaction(()=>{for(const community of selected){
+          await communityStatsWrites(database).write(()=>{if(!selectionIsCurrent())throw new Error("Stats collection configuration changed.");for(const community of selected){
             repo.source(community.communityId,"discord","connecting",at);repo.source(community.communityId,"membership","connecting",at);
-          }});
+          }},statsWriteReview(this.review));
+          if(this.stopped)return;
           state.gateway=new CommunityStatsDiscordGateway(()=>database,token,selected,this.review);state.gateway.start();
-        }else for(const community of selected)repo.source(community.communityId,"discord","unavailable",at,"Bot credentials are unavailable.");
+        }else await communityStatsWrites(database).write(()=>{if(!selectionIsCurrent())throw new Error("Stats collection configuration changed.");for(const community of selected)repo.source(community.communityId,"discord","unavailable",at,"Bot credentials are unavailable.");},statsWriteReview(this.review));
       }
     }catch(error){state.lastWeb=null;console.error("Community Stats collection paused.",{errorName:error instanceof Error?error.name:"UnknownError"});}
 
@@ -89,6 +102,6 @@ export class CommunityStatsCollector {
  stop():void{
   if(this.stopped)return;this.stopped=true;
   this.state.gateway?.stop();this.state.gateway=null;this.state.historyCommunities=[];this.state.lastWeb=null;
-  if(this.review)this.database.prepare("UPDATE community_stats_source_state SET status='gap',checked_at_utc=?,reason='Collection is paused.' WHERE community_id=? AND source='web' AND status='collecting'").run(new Date().toISOString(),this.review.run.communityId);
+  if(this.review)void communityStatsWrites(this.database).write(()=>this.database.prepare("UPDATE community_stats_source_state SET status='gap',checked_at_utc=?,reason='Collection is paused.' WHERE community_id=? AND source='web' AND status='collecting'").run(new Date().toISOString(),this.review!.run.communityId)).catch(error=>console.error("Stats shutdown persistence deferred.",{errorName:error instanceof Error?error.name:"UnknownError"}));
  }
 }

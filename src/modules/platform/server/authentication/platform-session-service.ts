@@ -85,11 +85,11 @@ export class PlatformSessionService {
       Date.parse(nowUtc) - Date.parse(session.lastSeenAtUtc) >=
       TRADERLINK_PLATFORM_SESSION_TOUCH_INTERVAL_MS
     ) {
-      this.repository.touchActiveSession({
+      const touched = this.repository.tryTouchActiveSession({
         sessionId: session.sessionId,
         timestamp: nowUtc,
       });
-      return Object.freeze({ ...session, lastSeenAtUtc: nowUtc });
+      return touched ? Object.freeze({ ...session, lastSeenAtUtc: nowUtc }) : session;
     }
     return session;
   }

@@ -1,0 +1,142 @@
+{
+  "status": "V2_FOCUSED_CHECKPOINT_PASSED_PENDING_INDEPENDENT_REVIEW_AND_ROOT_INTEGRATION",
+  "createdAtUtc": "2026-11-19T13:27:31.243374+00:00",
+  "workspace": "/home/traderlink/projects/community-stats-production-repair-20261119",
+  "branch": "codex/community-stats-nonblocking-writes-20261119",
+  "baseCommit": "fcd190742d7f35a3d9bf1b76d50ab36d9bf7fe01",
+  "baseTree": "b8e5e4f0d664457a79e07f1dd7b67cd0116461bc",
+  "owner": "Stats existing chat 01a15613-739c-7170-8ab9-9ce11d07c18e",
+  "ownedSourceAllowlist": [
+    {
+      "path": "src/modules/communities/server/stats/community-stats-collector.ts",
+      "preimageSha256": "0c58b5c3b37e3e8a760ae2ead72d957a3f8fdc5c39d9ee5ee66775cf575bc91c",
+      "previousIntegratedPostimageSha256": "ea2979732443dc7e96fb65e8eba5e77116aecb25a4bcd6f7b2abb84c193bb745",
+      "postimageSha256": "ea2979732443dc7e96fb65e8eba5e77116aecb25a4bcd6f7b2abb84c193bb745",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-discord-gateway.ts",
+      "preimageSha256": "1f3cdfa1938832dc0ded3e2ba8433a9eabf091ddbc40827835bbee8c96eb5192",
+      "previousIntegratedPostimageSha256": "264eeea6ca5d44878acfb7f67a8674ad1e51247989248c48ed06411e0e368e07",
+      "postimageSha256": "5d866630a77a9c0414c90bc9354cde6e4f6b623d064993641aa45e8261d3a541",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-history.ts",
+      "preimageSha256": "1bde9d205cd4886b74cc407eb04dd60fb7980dd7a879d5b38d9bf8bcb661795f",
+      "previousIntegratedPostimageSha256": "5be76cd26d48f99a5b7893182164475a2aab5ff002e583f44e1c5aa7cd87e228",
+      "postimageSha256": "990528eee4d112ee33abf38884a29d0d18c6d08e39ffd5d3e3997a93ef9910db",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-invites.ts",
+      "preimageSha256": "e4a3d28b3886d61ff3170f22477ce5a70ef76d84e1433ec9d81f23b0e6a39c62",
+      "previousIntegratedPostimageSha256": "b879cf214a3dae9e63aa4fcd32ce280cfc2f2cabf060698dd590a31bbc00f23e",
+      "postimageSha256": "006ae07e76498f4c03e2a4d7f17c6e479bbe685187d09ec2c541e23967fc28a4",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-write-queue.ts",
+      "preimageSha256": null,
+      "previousIntegratedPostimageSha256": "0625c8fdbfcd627995c28d71cd1f3d6dde1fbf1998f599ee473e7554d68f9767",
+      "postimageSha256": "0625c8fdbfcd627995c28d71cd1f3d6dde1fbf1998f599ee473e7554d68f9767",
+      "kind": "new"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-nonblocking.test.ts",
+      "preimageSha256": null,
+      "previousIntegratedPostimageSha256": "b89128f222ff930241da1aee429af43fedb51bf8340eafd7053bbb4bd15ee6b0",
+      "postimageSha256": "947fa94d87c90eae413b98b13cf28f747b2e7ad7ba9aa3a7a6b9883ff0493a3e",
+      "kind": "new"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-discord-capture-repair.test.ts",
+      "preimageSha256": "fea13cfff9df0c07c05540d651ffd36de338f605ab36c5bd188d1d84e39f8264",
+      "previousIntegratedPostimageSha256": "8bf4722f1eda762235be76fd47c9c0da7849a257ad8a9dc3e3f76212ddf14747",
+      "postimageSha256": "8bf4722f1eda762235be76fd47c9c0da7849a257ad8a9dc3e3f76212ddf14747",
+      "kind": "modified"
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-forward.test.ts",
+      "preimageSha256": "d59e96d883c3039dcb716505a1f0cddd49fb84465f91c314fe6817b3a4af6e9e",
+      "previousIntegratedPostimageSha256": "d59e96d883c3039dcb716505a1f0cddd49fb84465f91c314fe6817b3a4af6e9e",
+      "postimageSha256": "33dde128c3902715564217b5eef7c89467ef814831cb11c5b3088ebf3ce9a73c",
+      "kind": "modified"
+    }
+  ],
+  "ownedSourceVectorSha256": "a37bf79e03a66bf8deca26a1d04afc0fbe6e3a5e70dea3f6e1b934ac64ead81e",
+  "separatelyOwnedDependency": {
+    "owner": "Core",
+    "path": "src/modules/platform/server/database/nonblocking-sqlite-write.ts",
+    "sha256": "07c39202988638c4f7425121b24ddbc638eb411c63fd595e6205e018627c4909",
+    "includedInStatsAllowlist": false
+  },
+  "implementation": [
+    "Per-handle FIFO uses Core immediate single-attempt acquisition; busy BEGIN retains original payload at queue head and retries with asynchronous backoff. Callback/commit failures never replay.",
+    "Collector enabled/disabled/connecting/missing-token writes, Gateway events/coverage/metadata, history pages/cursors/backoff and invite writes use this queue.",
+    "Authority and selected configuration rechecked at execution; native QA full authorization remains outside transactions, original cancellation/deadline rechecked inside. No TTL changes.",
+    "SQL and memory snapshots roll back together for Gateway/invites. Network/timer effects follow commit. Gateway control/ACK processing stays immediate; accepted frame backlog uses existing reconnect mechanism and drains before reconnect.",
+    "History REST response is retained through contention without refetch; event data and checkpoint commit together. Original event times/session/sequence retained.",
+    "Existing capture replay now explicitly awaits asynchronous queue completion; all six channel choices, selected-channel capture, settings and completion assertions preserved."
+  ],
+  "verification": {
+    "resources": {
+      "memAvailable": "MemAvailable:    7204904 kB",
+      "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=25549860247\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=24888558687\n",
+      "cgroupCurrent": "8571068416"
+    },
+    "results": [
+      {
+        "operation": "types",
+        "returncode": 0,
+        "elapsedSeconds": 6.535,
+        "logSha256": "9c8611d15db542e7633dbace100e8c35b8636f01d807a67de4dd342c027db549"
+      },
+      {
+        "operation": "lint",
+        "returncode": 0,
+        "elapsedSeconds": 2.02,
+        "logSha256": "2977d1ce3b68a37730cbe59aa5a92f9aabf69f394d90541b8820eff18b20bc38"
+      },
+      {
+        "operation": "tests",
+        "returncode": 0,
+        "elapsedSeconds": 16.265,
+        "logSha256": "c39e1d6e058e81e9bcc97b8f5e41b99aaf60ed2572738cb8367707b17151a0b0"
+      }
+    ]
+  },
+  "verificationDetail": {
+    "tests": "32/32 across same three focused files: six additional cases cover Gateway join/create/delete under real held writer followed by disconnect; invite SQL+memory rollback in failed Gateway parent; fetched-page disabled/new-generation cancellation with exact event/checkpoint/jobs snapshots. Prior26 checks retained with corrected cancellation assertion.",
+    "types": "579 reachable source files, zero diagnostics.",
+    "lint": "Six implementation/new-test files zero errors/warnings. Existing capture baseline3errors/1warning and forward baseline3errors/0warnings independently compared; no new diagnostics.",
+    "diffCheck": "git diff --check passed",
+    "guards": "Both shared guards held for sequential operations, then released after children exited.",
+    "evidenceDirectory": "/tmp/tl-stats-nonblocking-checkpoint-_p54upzr",
+    "finalSource": "No source edits during final v2 check or after pass.",
+    "initialV2Result": "31/32: old forward test expected no events across12 later ticks because old error backoff suppressed valid new configuration; replaced with explicit cancellation-state snapshot plus later valid recovery assertion."
+  },
+  "progress": "Both independent findings repaired in one batch and focused checks pass. Root must obtain independent v2 review and reconcile exact previous postimages to v2; combined native checkpoint still waits final Help/final source freeze.",
+  "helpCenter": "No user-facing functionality, UI or workflow change; no guide update required.",
+  "notPerformed": [
+    "No build/browser/CSV downloads or hosted QA",
+    "No production/provider/config/schema/profile/catalog changes",
+    "No Git staging, commit, push, merge or deployment"
+  ],
+  "limits": [
+    "In-process contention queue preserves accepted work during lock waits; no new crash-recovery persistence guarantee is introduced.",
+    "No claim that current hosted event-loop stalls or actual account erasure are resolved until Root integrates and verifies the changed combined runtime.",
+    "Current result is authored implementation and focused evidence; source-independent acceptance of this v2 is not claimed."
+  ],
+  "supersedes": {
+    "manifestPath": "/home/traderlink/projects/community-stats-production-repair-20261119/docs/migration/stats-nonblocking-writer-checkpoint-20261119.json",
+    "sha256": "9e18fe8d5a2cd4172c397a30746bc4aa0878444931df7b26728c4284934ad58f",
+    "preservedUnchanged": true,
+    "meaning": "V1 had two independently identified contract regressions; v2 addresses both, no approval inheritance."
+  },
+  "consolidatedRepair": [
+    "Accepted Gateway invite join/create/delete SQL now runs in parent transaction before later queued disconnect; parent captures/restores invite session memory. Only schedule/external effects defer after commit; standalone invite calls remain queued and current authority checked.",
+    "Distinct HistoryAccessChanged cancellation bypasses provider backoff/error persistence. Provider error-state write itself rechecks captured current authority/config; forward backoff matches original configuration_version+updated timestamp, reaction backoff matches captured version.",
+    "Existing selected-settings test now asserts cancellation has zero event/cursor/job mutation at exact revocation boundary and verifies a later genuinely current-authority tick can proceed. It no longer relies on unintended global five-minute backoff to keep all future ticks empty."
+  ]
+}

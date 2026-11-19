@@ -1,8 +1,9 @@
 import type Database from "better-sqlite3";
+import { observeErasureTable } from "./platform-erasure-observability";
 
 type Column = { name: string; pk: number };
 type ForeignKey = { id: number; seq: number; table: string; from: string; to: string | null; on_delete: string };
-type Table = { name: string; columns: Column[]; keys: string[]; temporary: string };
+type Table = { name: string; columns: Column[]; keys: string[]; temporary: string; selectedRows: number };
 export type ErasureRoot = Readonly<{ table: string; column: string; value: string; workspaceId?: string }>;
 
 function quote(value: string): string {
@@ -41,7 +42,7 @@ export function captureErasureClosure(
       const keys = /WITHOUT\s+ROWID/iu.test(row.sql) ? primary : rowId ? [rowId] : primary;
       if (keys.length === 0 || /CREATE\s+VIRTUAL/iu.test(row.sql)) throw new Error("erasure_unsupported_table");
       const temporary = `erasure_keys_${tables.size}`;
-      const table = { name: row.name, columns, keys, temporary };
+      const table = { name: row.name, columns, keys, temporary, selectedRows: 0 };
       tables.set(table.name, table);
       database.exec(`CREATE TEMP TABLE ${quote(temporary)} (${keys.map((_, i) => `k${i} NOT NULL`).join(",")}, PRIMARY KEY (${keys.map((_, i) => `k${i}`).join(",")})) WITHOUT ROWID`);
     }
@@ -53,6 +54,7 @@ export function captureErasureClosure(
         ${where ? "AND" : "WHERE"} NOT EXISTS (SELECT 1 FROM temp.${quote(table.temporary)} seen WHERE ${keyJoin(table, "child", "seen")})
         LIMIT ${maxRows - rowCount + 1}`).run(...bindings).changes;
       rowCount += changed;
+      table.selectedRows += changed;
       if (rowCount > maxRows) throw new Error("erasure_row_budget");
       if (performance.now() - startedAt > maxElapsedMs) throw new Error("erasure_phase_budget");
       return changed;
@@ -63,11 +65,11 @@ export function captureErasureClosure(
       if (!table || !table.columns.some((column) => column.name === root.column)) throw new Error("erasure_unknown_root");
       const restrictWorkspace = root.workspaceId && root.column !== "workspace_id"
         && table.columns.some((column) => column.name === "workspace_id");
-      insert(table, `FROM main.${quote(table.name)} child`,
+      observeErasureTable("capture_root_table", table.name, table.selectedRows, () => insert(table, `FROM main.${quote(table.name)} child`,
         `WHERE child.${quote(root.column)} = ?${restrictWorkspace ? " AND child.workspace_id=?" : ""}`,
-        restrictWorkspace ? [root.value, root.workspaceId!] : [root.value]);
+        restrictWorkspace ? [root.value, root.workspaceId!] : [root.value]));
     }
-    const edges: { child: Table; parent: Table; match: string }[] = [];
+    const edges = new Map<Table, { child: Table; match: string }[]>();
     for (const child of tables.values()) {
       const groups = new Map<number, ForeignKey[]>();
       for (const fk of database.prepare<[], ForeignKey>(`PRAGMA main.foreign_key_list(${quote(child.name)})`).all()) {
@@ -93,20 +95,25 @@ export function captureErasureClosure(
         const primary = parent.columns.filter((column) => column.pk > 0).sort((a, b) => a.pk - b.pk);
         if (ordered.some((fk) => !fk.to) && primary.length !== ordered.length) throw new Error("erasure_unknown_parent_key");
         const match = ordered.map((fk, i) => `parent.${quote(fk.to || primary[i]!.name)} = child.${quote(fk.from)}`).join(" AND ");
-        edges.push({ child, parent, match });
+        const incoming = edges.get(parent) ?? [];
+        incoming.push({ child, match });
+        edges.set(parent, incoming);
       }
     }
-    // Finite row budget bounds cycle expansion, rather than truncating at an
-    // arbitrary graph depth. Empty parent sets do not touch child data.
-    for (;;) {
-      let changed = 0;
-      for (const edge of edges) {
-        if (!database.prepare(`SELECT 1 FROM temp.${quote(edge.parent.temporary)} LIMIT 1`).get()) continue;
-        changed += insert(edge.child, `FROM temp.${quote(edge.parent.temporary)} selected
-          JOIN main.${quote(edge.parent.name)} parent ON ${keyJoin(edge.parent, "parent", "selected")}
-          JOIN main.${quote(edge.child.name)} child ON ${edge.match}`);
+    // Revisit only parents whose selected keys grew. An unchanged parent cannot
+    // expose a new child: main rows are unchanged throughout capture. Scheduling
+    // a growing parent again still reaches every cycle, within the same budgets.
+    const pending = new Set([...tables.values()].filter(table => table.selectedRows > 0));
+    while (pending.size) {
+      const parent = pending.values().next().value!;
+      pending.delete(parent);
+      for (const edge of edges.get(parent) ?? []) {
+        const changed = observeErasureTable("capture_fk_edge", edge.child.name, parent.selectedRows, () =>
+          insert(edge.child, `FROM temp.${quote(parent.temporary)} selected
+            JOIN main.${quote(parent.name)} parent ON ${keyJoin(parent, "parent", "selected")}
+            JOIN main.${quote(edge.child.name)} child ON ${edge.match}`), parent.name);
+        if (changed) pending.add(edge.child);
       }
-      if (changed === 0) break;
     }
     // Reachability is not permission to erase another workspace/account. Refuse
     // the whole transaction if a shared/cross-scope relation needs a policy.
@@ -134,9 +141,10 @@ export function captureErasureClosure(
         deleted = true;
         let removed = 0;
         for (const table of [...tables.values()].reverse()) {
-          removed += database.prepare(`DELETE FROM main.${quote(table.name)} WHERE
+          if (table.selectedRows === 0) continue;
+          removed += observeErasureTable("delete_table", table.name, table.selectedRows, () => database.prepare(`DELETE FROM main.${quote(table.name)} WHERE
             (${table.keys.map(quote).join(",")}) IN
-            (SELECT ${table.keys.map((_, i) => `k${i}`).join(",")} FROM temp.${quote(table.temporary)})`).run().changes;
+            (SELECT ${table.keys.map((_, i) => `k${i}`).join(",")} FROM temp.${quote(table.temporary)})`).run().changes);
         }
         return removed;
       },
