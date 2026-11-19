@@ -56,3 +56,12 @@ USER root
 EXPOSE 3000
 
 CMD ["node", "server.js"]
+
+FROM runtime AS image-census
+USER root
+COPY --from=runtime / /tmp/final-image-root/
+RUN node -e 'const fs=require("node:fs"),cp=require("node:child_process"),c=require("node:crypto"),a=require("node:assert/strict");const hash=b=>c.createHash("sha256").update(b).digest("hex");const roleSha=hash(fs.readFileSync("/app/combined210-image-role.json"));const p=cp.spawnSync("/usr/bin/python3",["-I","-B","/app/combined210-resource-collector.py","emit-image-census","--root","/tmp/final-image-root","--role-sha256",roleSha],{encoding:"utf8",timeout:125000,maxBuffer:67108864});a.equal(p.status,0,p.stderr||"Final-image metadata collection failed");const data=JSON.parse(p.stdout);a.equal(data.unknownCount,0);a.equal(data.roleSha256,roleSha);a.equal(data.kind,"FINAL_IMAGE_METADATA_CENSUS_V1");a(Buffer.byteLength(p.stdout)<=67108864);fs.writeFileSync("/tmp/final-image-census.json",p.stdout,{flag:"wx",mode:256});console.log(JSON.stringify({stage:"combined210_final_image_census",source:data.source,roleSha256:roleSha,censusSha256:hash(Buffer.from(p.stdout)),bytes:Buffer.byteLength(p.stdout),entries:data.entries.length,unknownCount:data.unknownCount}));'
+
+FROM runtime AS production
+USER root
+COPY --from=image-census --chown=nextjs:nodejs /tmp/final-image-census.json /app/combined210-image-census.json

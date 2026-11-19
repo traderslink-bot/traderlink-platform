@@ -1,0 +1,31 @@
+{
+  "status": "ACCEPTED_PRODUCTION_PURPOSE_STATIC_SOURCE_SCHEMA_NATIVE_EVIDENCE_AND_CATALOG_POLICY",
+  "receiptRef": "stats_current210_a7_final_static_review_20261119_v1",
+  "reviewedAtUtc": "2026-11-19T05:14:42.950Z",
+  "validUntilUtc": "2027-11-19T05:14:42.950Z",
+  "source": "a7b81b3689fd020e3f8346478d89f8e28e12cbc0",
+  "tree": "1f1309e406b1e9b6eec9fee74d999385edd9a09d",
+  "catalogPath": "/home/traderlink/projects/discord-stats/docs/migration/stats-current210-a7-final-static-catalog-20261119.json",
+  "catalogRawSha256": "c4a0dcb2ac5453d4ad7897ea5fcb2deb3211859e0b914223c82d7b6950bb7172",
+  "catalogContentSha256": "d0175d0a2dca908dd872e6f98966895dd0315eaea006d2f12428c33656c85239",
+  "schemaEvidenceSha256": "cb25977c15088d74bfd3c0da077f18dd93661511b62eb0e6d82f8c1f364e05ee",
+  "currentNativeAcceptanceSha256": "da2ee15115fd15982556f63c875b17c9ad9abce20af6ddccc9bb537dcf363ccf",
+  "checks": [
+    "New review of coherent Paid unknown-horizon source and exact210 Premium runtime applicability repair; no old approval copied.",
+    "Five fresh native suites11PASS plus2new unknown ordinary-root/paid-hold cases inspected with19frozen artifacts, full437Git pins, full210descriptor vector and1520schema digest independently verified.",
+    "All437pins match a7; exact parent/tree/soleDocker USER root delta and DockerSHA c8e0ba9e08a5d511b7b1959300f6a6d16e2918e91e704f3582e97004d1edb40c verified. Source-level USER mismatch resolved; actual image execution still open.",
+    "Policy and authority/privacy descriptor refs unchanged;7day text/minimal unresolved retention,2year audit,7year financial, no prescribed backup rotation. Currentb969 physical authority pin coherently bound.",
+    "Catalog content canonical SHA excludes independentReview exactly as current parser specifies; fresh review status and365day profile qualification assembled with no keys/signatures orSQL."
+  ],
+  "findingsInReviewedScope": [],
+  "notClaimed": [
+    "Runtime or hosted approval",
+    "Actual production image/predeploy/MainUID0 proof",
+    "Populated preservation/full live ledger/backup restore/copy install",
+    "Actual ownerAuth/profileCAS/config/signing/SELF/current provider proof",
+    "AccountHTTP/workerIPC/supervisor E2E/activation/health",
+    "Approval of later source changes"
+  ],
+  "releaseGates": "Root alone integrates exact new raw artifact, verifies any later carrier delta and unchanged437 graph, then qualifies actual built image/native/config/custody/capacity/backup/fullledger/profile/session/activation/health/forward recovery.",
+  "priorArtifacts": "All prior205/79d catalogs/receipts preserved unchanged. No runtime suite rerun by Stats."
+}

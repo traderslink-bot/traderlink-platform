@@ -41,9 +41,13 @@ function main(){
   {encoding:'utf8',timeout:5000,maxBuffer:1024,env:{PATH:'/usr/bin:/bin',PYTHONDONTWRITEBYTECODE:'1'}});
  a.equal(py.status,0,py.stderr);const python=JSON.parse(py.stdout);a.equal(python.major,3);a(python.minor>=11);
  const mounts=fs.readFileSync('/proc/self/mountinfo','utf8');a(!mounts.split('\n').some(line=>line.split(' ')[4]==='/data'));
+ const censusBytes=bytes('/app/combined210-image-census.json',64*1024*1024),census=JSON.parse(censusBytes);
+ a.equal(census.kind,'FINAL_IMAGE_METADATA_CENSUS_V1');a.equal(census.unknownCount,0);a.equal(census.source,role.applicationSource);
+ a.equal(census.roleSha256,hash(roleBytes));a(Array.isArray(census.entries)&&census.entries.length>0&&census.entries.length<=250000);
  const proof={kind:'ACTUAL_SAME_SERVICE_210_PREDEPLOY_IMAGE_QUALIFICATION',atUtc:new Date().toISOString(),
   deploymentId:process.env.RAILWAY_DEPLOYMENT_ID,source:role.applicationSource,role:role.role,
   manifestSha256:hash(roleBytes),installedPinsSha256:hash(Buffer.from(JSON.stringify(hashes))),installedPinCount:pins.length,
+  imageCensusSha256:hash(censusBytes),imageCensusBytes:censusBytes.length,imageCensusEntryCount:census.entries.length,
   uid:process.getuid(),gid:process.getgid(),node:process.versions.node,abi:process.versions.modules,nativePackage:packageJson.version,nativeSha256:nativeHash,python,
   volumeMounted:false,databaseOpened:false,applicationImported:false,providerRequests:0,filesystemWrites:0,
   scope:'Built image/source and ABI qualification only. Keeper hold is not normal application readiness; full migration, configuration and activation gates remain.'};

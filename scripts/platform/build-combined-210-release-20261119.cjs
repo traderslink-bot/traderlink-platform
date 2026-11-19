@@ -21,6 +21,7 @@ const rawEntries={
  'combined-210-copy-protocol-20261119.py':'scripts/platform/combined-210-copy-protocol-20261119.py',
  'combined-210-raw-install-20261119.py':'scripts/platform/combined-210-raw-install-20261119.py',
  'combined210-image-predeploy.cjs':'scripts/platform/combined-210-image-predeploy-20261119.cjs',
+ 'combined210-resource-collector.py':'scripts/platform/combined-210-resource-collector-20261119.py',
 };
 const entries={
  'combined210-readonly-verifier.cjs':'scripts/platform/combined-210-readonly-verifier-20261119.cjs',
