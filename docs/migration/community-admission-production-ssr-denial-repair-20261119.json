@@ -1,0 +1,53 @@
+{
+  "status": "VERIFIED_SEPARATE_TWO_FILE_SSR_REPAIR_READY_FOR_ROOT",
+  "atUtc": "2026-11-19T10:33:34.359717Z",
+  "base": "509573dc7f59c35336aae570ca4b7f1583b777d4",
+  "branch": "codex/community-admission-production-repair-20261119",
+  "files": [
+    {
+      "path": "app/admin/journal/communities/admission/page.tsx",
+      "preimageSha256": "74762fb0c19ccfb6dd424f904d7df29f1f5d99ab1b101bc7a8fac5789087aaad",
+      "postimageSha256": "721abf6d69aedc155222722489567e6bbb5d7802f993585f4c7dce0398d1b9b2",
+      "bytes": 1336
+    },
+    {
+      "path": "src/modules/communities/server/community-admission-page.test.ts",
+      "preimageSha256": null,
+      "postimageSha256": "f99c0d28fa70b3a0011e5fdcbec5ae03b1f08ba072433e1db72263dfab47cdfc",
+      "bytes": 3144
+    }
+  ],
+  "change": "Catch only instanceofCommunityAdmissionError withstatus403 around authorizedsnapshot read; renderEXISTINGJournalAdminAccessDenied component. Allothererrors rethrow. No TTL/scope/API/schema/policy/copy/layout or refreshroute change.",
+  "verification": {
+    "focusedRegression": {
+      "files": 1,
+      "tests": 5,
+      "passed": 5,
+      "returncode": 0,
+      "logSha256": "353ae4eafca3f04ec3c8bfff51bacdef3fce8582f2be512d5b37aee4370bae26",
+      "cases": "Realserviceconstructor freshproof at300000ms readsnormalpage; staleproof300001ms returnsdeniedbeforeSQLread; real503/plainError/structuralnoninstance403 rethrowunchanged. DBwrapper/read/UIportsmocked, actualauthorizationconstructor/errorclass exercised."
+    },
+    "targetedLint": {
+      "files": 2,
+      "errors": 0,
+      "warnings": 0,
+      "returncode": 0,
+      "logSha256": "61e54bf2c1394280156e1a493d2e44a1ebef910275523043ae333b46aee817ed"
+    },
+    "focusedStrictTypes": {
+      "sourceGraphFiles": 306,
+      "diagnostics": 0,
+      "returncode": 0,
+      "logSha256": "a20929ae162e5e3bfed0e636d3109f9f0cf139c6d1bd7411aed5885ee2a6ed70",
+      "harnessNote": "Firstprivatecompiler attempt lackedReactjsx-runtimedeclarationmapping; correctedonlyprivatepath and reranfailedtypecheck, no productsourcechanges. Failedlogretained."
+    },
+    "gitDiffCheck": "PASS",
+    "privateArtifacts": "/tmp/tl-community-admission-ssr-repair-47n_tnjk",
+    "donorPackageAndLockByteMatch": true,
+    "resourceGuards": "Firstlaunchrefusedoccupiedactive.lock withnochange; retryafterreleaseacquiredbothnormalguardsnonblocking. Fresh~7.1GiB/nootherownerprocessstopped. Owninode/childrenclosed, privatecache only.",
+    "runnerNotices": "Vitest privateesbuildjsx optionignoredin favorofOXC; tests5PASS. ESLintReactautodetectnotice only, diagnostics0/0."
+  },
+  "guideAndAppearance": "Usesexistingapproveddeniedcomponent/copy/theme/Refreshowneraccessroute. No newappearance or HelpCenterworkflow guidance needed.",
+  "catalogImpact": "Existingc4a rawcatalog/sourcepolicies/TTLs and nativeAuth/Core/ownerproof remainunchanged. Root mustreviewcombinedactualsource; noactualproductionruntimeapprovalclaimed.",
+  "ownership": "No commits/push/build/deploy/browser/provider/SQLeffects. Rootaloneintegrates; preserveoriginalCommunitywork and separatelyverifiedStatsoriginallowlist."
+}
