@@ -16,15 +16,7 @@ build({
   format: "cjs",
   external: ["better-sqlite3"],
   conditions: ["react-server"],
-  plugins: [{
-    name: "server-only-marker",
-    setup(builder) {
-      builder.onResolve({ filter: /^server-only$/ }, () => ({
-        path: "server-only", namespace: "server-only-marker",
-      }));
-      builder.onLoad({ filter: /.*/, namespace: "server-only-marker" }, () => ({ contents: "" }));
-    },
-  }],
+  alias: { "server-only": require.resolve("next/dist/compiled/server-only/empty.js") },
   define: { "import.meta.url": "__database_config_url" },
   banner: {
     js: 'const __database_config_url = require("node:url").pathToFileURL(require("node:path").join(process.cwd(), "src/modules/platform/server/database/platform-database-config.ts")).href;',

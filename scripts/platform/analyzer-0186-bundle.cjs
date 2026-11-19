@@ -7,6 +7,7 @@ require('esbuild').buildSync({
   platform: 'node',
   format: 'cjs',
   conditions: ['react-server'],
+  alias: { 'server-only': require.resolve('next/dist/compiled/server-only/empty.js') },
   external: ['better-sqlite3'],
   define: { 'import.meta.url': '__platform_config_url' },
   banner: { js: 'const __platform_config_url=require("node:url").pathToFileURL("/app/src/modules/platform/server/database/platform-database-config.ts").href;' },
