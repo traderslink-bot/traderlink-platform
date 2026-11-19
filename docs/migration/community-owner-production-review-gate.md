@@ -47,3 +47,27 @@ and does not alter accepted feature behavior or user instructions.
   prevents regression to an ungated generic platform identity resolver.
 - Combined candidate verification must repeat route/action checks after Shared,
   Paid, Alerts, Watchlists, and Content source is assembled.
+
+## Production Community access integration — 2026-11-19
+
+- The two-account selector remains only the outer review gate. A new guarded
+  `POST /api/communities/discord-access` performs bounded live Discord bot
+  verification for server-selected non-declined invitations and connected
+  communities; the request body cannot select a user, guild, policy, profile,
+  database, or permission.
+- The POST uses a real same-origin Platform mutation request and current
+  Platform session. Core admits a missing lifecycle only through the installed
+  signed-v5 profile and the configured or unique active base-principal policy;
+  it never automatically readmits a stale, held, or erasing lifecycle.
+- Exact observed Discord memberships are persisted in the same admitted writer
+  before the existing Community repository activates membership. Candidate
+  discovery records current owner evidence but grants no Community role or
+  publishing permission. A partial Discord outage preserves prior candidates.
+- No Help Center guide update is required. The visible refresh control exposes
+  the already-approved server/member verification step and does not change
+  Community permissions or feature behavior.
+- Focused acceptance: 34 tests pass across access synchronization, route
+  orchestration, and route containment; focused ESLint, full TypeScript,
+  architecture verification, and private-data verification pass. The first
+  TypeScript attempt exhausted Node's default 2 GB heap before diagnostics;
+  the same check passed with a bounded 4 GB heap.

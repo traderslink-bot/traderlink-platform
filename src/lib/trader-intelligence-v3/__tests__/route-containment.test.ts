@@ -164,6 +164,19 @@ describe("Trader Intelligence route containment matrix", () => {
     }));
   });
 
+  it("keeps Community access refresh behind both outer selection and Core lifecycle admission", () => {
+    const path = "app/api/communities/discord-access/route.ts";
+    const source = readFileSync(path, "utf8");
+    const matrix = TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(entry => entry.modulePath === path);
+    expect(matrix).toHaveLength(1);
+    expect(source).toContain("requireCommunityOwnerReviewRequestIdentity(request.headers)");
+    expect(source).toContain("withAdmittedCommunityMemberRequest({");
+    expect(source).toContain('mode: "ensure"');
+    expect(scanTraderIntelligenceRouteContainment({
+      routeRecords: [{ path, source }], intelligenceClientRecords: [], matrix,
+    })).toEqual([]);
+  });
+
   it("requires Scanner settings to pass its verified owner predicate to the shared handler", () => {
     const path = "app/api/admin/screeners/settings/route.ts";
     const source = readFileSync(path, "utf8");

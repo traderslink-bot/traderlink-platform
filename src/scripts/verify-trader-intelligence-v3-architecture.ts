@@ -26,14 +26,14 @@ function sourceRecord(path: string) {
 const paths = worktreeFiles();
 const architectureRecords = paths
   .filter((path) =>
-    /^(?:src\/lib\/.*\.(?:ts|tsx)$|app\/api\/.*route\.ts$)/i.test(
+    /^(?:src\/lib\/.*\.(?:ts|tsx)$|app\/.*\/route\.ts$)/i.test(
       path,
     ),
   )
   .filter((path) => !path.includes("/__tests__/"))
   .map(sourceRecord);
 const routeRecords = paths
-  .filter((path) => /^app\/api\/.*\/route\.ts$/.test(path))
+  .filter((path) => /^app\/.*\/route\.ts$/.test(path))
   .map(sourceRecord);
 const intelligenceClientRecords = paths
   .filter((path) => /^app\/intelligence\/.*\.(?:ts|tsx)$/.test(path))
