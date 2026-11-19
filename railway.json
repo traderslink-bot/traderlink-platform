@@ -12,7 +12,7 @@
     "overlapSeconds": 0,
     "drainingSeconds": 30,
     "preDeployCommand": [
-      "node /app/combined210-image-predeploy.cjs"
+      "node -e 'process.exitCode=78;eval(Buffer.from(process.env.TRADERLINK_ROOT_PREDEPLOY_GATE_B64,\"base64\").toString())'"
     ],
     "preDeployTimeoutSeconds": 120
   }
