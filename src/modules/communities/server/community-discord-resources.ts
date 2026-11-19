@@ -1,3 +1,4 @@
+import { isCommunityOwnerReviewGuild, isCommunityOwnerReviewChannel, type CommunityOwnerReviewIntent } from "./community-owner-review-policy";
 import { assertCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type { CommunityDiscordResources } from "../contracts/community-discord-resources";
 
@@ -26,8 +27,8 @@ export function canBotPublish(guildId: string, botId: string, memberRoles: reado
 }
 
 /** Read-only discovery. No Discord roles, channels or permissions are modified. */
-export async function readCommunityDiscordResources(guildId: string, token: string, request: typeof fetch = fetch): Promise<CommunityDiscordResources> {
-  assertCommunityReviewDiscordGuild(guildId);
+export async function readCommunityDiscordResources(guildId: string, token: string, request: typeof fetch = fetch, reviewIntent?: CommunityOwnerReviewIntent): Promise<CommunityDiscordResources> {
+  if (!(reviewIntent === "community-owner-review" && isCommunityOwnerReviewGuild(guildId))) assertCommunityReviewDiscordGuild(guildId);
   if (!snowflake.test(guildId) || !token.trim()) throw new Error("Discord connection unavailable.");
   async function get(path: string): Promise<unknown> {
     const response = await request(`https://discord.com/api/v10/${path}`, { headers: { Authorization: `Bot ${token}` }, cache: "no-store", signal: AbortSignal.timeout(8000) });
@@ -45,6 +46,7 @@ export async function readCommunityDiscordResources(guildId: string, token: stri
   const channels: { id: string; name: string; canPublish: boolean }[] = [];
   for (const channel of rawChannels as { id: string; guild_id?: string; name: string; type: number; permission_overwrites?: Overwrite[] }[]) {
     if (!channel || !snowflake.test(channel.id) || typeof channel.name !== "string" || (channel.guild_id !== undefined && channel.guild_id !== guildId)) throw new Error("Discord channels unavailable.");
+    if (reviewIntent === "community-owner-review" && !isCommunityOwnerReviewChannel(guildId, channel.id)) continue;
     if (channel.type !== 0 && channel.type !== 5) continue; // Text/announcement only; no forum/thread fallback.
     const overwrites = channel.permission_overwrites;
     if (!Array.isArray(overwrites) || overwrites.some(item => !item || !snowflake.test(item.id) || ![0,1].includes(item.type) || !bitfield.test(item.allow) || !bitfield.test(item.deny))) throw new Error("Discord channel permissions unavailable.");

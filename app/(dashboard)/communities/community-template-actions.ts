@@ -12,7 +12,7 @@ export async function saveCommunityTemplateWithFeedback(form:FormData):Promise<C
  const identity=await requireCommunityOwnerReviewPageIdentity();const slug=String(form.get("communitySlug")??"");
  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))return {status:"error",message:"Community unavailable."};
  try{
-  await requireCommunityRequestAccess({userId:identity.scope.userId,slug});
+  await requireCommunityRequestAccess({reviewIntent:"community-owner-review",userId:identity.scope.userId,slug});
   const result=withPlatformDatabase({mode:"runtime"},db=>db.transaction(()=>{
    const actor=resolveTraderLinkCommunityViewer(db,identity,slug);
    const community=db.prepare(`SELECT community_id FROM traderlink_communities WHERE slug=?`).get(slug) as {community_id:string};

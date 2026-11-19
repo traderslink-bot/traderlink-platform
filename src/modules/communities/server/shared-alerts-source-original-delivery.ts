@@ -1,5 +1,5 @@
 import {sharedOwnedDeliverySql,sharedCooldownSql} from "./shared-alerts-storage-readiness";
-import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
+import { isSharedAlertReviewTarget } from "./shared-alerts-review-targets";
 import type Database from "better-sqlite3";
 import { createHash } from "node:crypto";
 import { partitionDiscordAlertText } from "../contracts/discord-alert-message-parts";
@@ -72,7 +72,7 @@ export function confirmedSourceParts(database: Database.Database, deliveryId: st
 }
 
 export function assertSourceWriteCurrent(context: SharedSourceDispatchContext, row: Pick<SourceOriginalRow, "community_id" | "author_user_id" | "publisher_user_id" | "destination_id" | "discord_channel_id" | "discord_guild_id">): void {
-  try{if(context.exactSelection)assertCommunityStagingQaSharedTarget(context.exactSelection.capability,context.database,row.discord_guild_id,row.discord_channel_id);else if(!isCommunityReviewDiscordGuild(row.discord_guild_id))throw new Error();}catch{throw new SharedAlertError("changed");}
+  try{if(context.exactSelection)assertCommunityStagingQaSharedTarget(context.exactSelection.capability,context.database,row.discord_guild_id,row.discord_channel_id);else if(!isSharedAlertReviewTarget(row.discord_guild_id,row.discord_channel_id))throw new Error();}catch{throw new SharedAlertError("changed");}
   const repository = new SharedAlertsRepository(context.database, context.now), owner = repository.ownerContext(row.community_id);
   if (owner.guildId !== row.discord_guild_id || !repository.ownerIsFresh(owner)) throw new SharedAlertError("changed");
   if (!context.database.prepare("SELECT 1 FROM traderlink_community_discord_destinations WHERE community_id=? AND destination_id=? AND content_type='alerts' AND status='active' AND discord_channel_id=?").get(row.community_id, row.destination_id, row.discord_channel_id)) throw new SharedAlertError("changed");
@@ -84,9 +84,14 @@ export async function verifySourceWrite(context: SharedSourceDispatchContext, ro
   const repository = new SharedAlertsRepository(context.database, context.now), owner = repository.ownerContext(row.community_id);
   if (owner.guildId !== row.discord_guild_id) throw new SharedAlertError("changed");
   const discord = new SharedAlertsDiscord(context.botToken, context.request, context.now,context.exactSelection?{database:context.database,capability:context.exactSelection.capability}:undefined);
-  await verifySharedAlertOwner(repository, discord, owner);
+  // A selected source send does not reconcile unrelated agreements on an
+  // ownership mismatch. Its current native owner check was qualified before
+  // the case; fresh Discord ownership is independently checked before sending.
+  if (context.selectedOriginal) {
+    if (!await discord.verifyOwner(owner.guildId, owner.discordUserId)) throw new SharedAlertError("changed");
+  } else await verifySharedAlertOwner(repository, discord, owner);
   for (const userId of new Set([row.author_user_id, row.publisher_user_id])) {
-    if (!userId || !await verifyCommunityRequestMember(context.database, { slug: row.slug, userId, botToken: context.botToken, atUtc: context.now(),stagingQaGuildId:context.exactSelection?.guildId }, context.request)) throw new SharedAlertError("discord_unavailable");
+    if (!userId || !await verifyCommunityRequestMember(context.database, { slug: row.slug, userId, botToken: context.botToken, atUtc: context.now(),stagingQaGuildId:context.exactSelection?.guildId,reviewIntent:context.exactSelection?undefined:"shared-alerts",commitObservation:context.selectedOriginal?.commitObservation }, context.request)) throw new SharedAlertError("discord_unavailable");
     context.policy.assertDelivery(row.community_id, userId, row.destination_id, "alerts", context.now());
   }
   await discord.verifyChannel(row.discord_guild_id, row.discord_channel_id);
@@ -97,12 +102,13 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
   kind: "alert-original-multipart",
   async run(context) {
     const db = context.database, at = context.now(), owned=sharedOwnedDeliverySql(context.database,"traderlink_community_content_deliveries"),stale = new Date(Date.parse(at) - 300_000).toISOString();
-    const selected=context.exactSelection?.deliveryIds,selectedSql=selected?` AND delivery_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:"";
+    const write = <T>(operation: () => T): T => context.selectedOriginal ? context.selectedOriginal.withCurrentWriter(operation) : operation();
+    const selected=context.selectedOriginal?[context.selectedOriginal.deliveryId]:context.exactSelection?.deliveryIds,selectedSql=selected?` AND delivery_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:"";
     // A crashed provider write is never permission to resend a message.
-    db.prepare(`UPDATE traderlink_community_content_deliveries SET status=CASE WHEN delivery_outcome='pending' THEN 'pending' ELSE 'failed' END,
+    write(() => db.prepare(`UPDATE traderlink_community_content_deliveries SET status=CASE WHEN delivery_outcome='pending' THEN 'pending' ELSE 'failed' END,
       last_error=CASE WHEN delivery_outcome='pending' THEN 'Resuming confirmed source progress.' ELSE 'Source alert send was interrupted; inspect Discord.' END,
       delivery_outcome=CASE WHEN delivery_outcome='pending' THEN 'pending' ELSE 'uncertain' END,updated_at_utc=?
-      WHERE object_type='alert' AND ${owned} AND status='sending' AND updated_at_utc<?${selectedSql}`).run(at, stale,...(selected??[]));
+      WHERE object_type='alert' AND ${owned} AND status='sending' AND updated_at_utc<?${selectedSql}`).run(at, stale,...(selected??[])));
     const rows = db.prepare(`SELECT d.delivery_id,d.community_id,d.object_id,d.destination_id,d.publisher_user_id,x.discord_channel_id,c.discord_guild_id,c.slug,a.author_user_id,r.revision_id,r.content_json,r.content_hash
       FROM traderlink_community_content_deliveries d JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id AND x.content_type='alerts' AND x.status='active'
       JOIN traderlink_communities c ON c.community_id=d.community_id AND c.status='active'
@@ -114,11 +120,15 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
     let delivered = 0, failed = 0, writes = 0;
     for (const row of rows) {
       if (writes >= context.limit) break;
-      try{if(context.exactSelection)assertCommunityStagingQaSharedTarget(context.exactSelection.capability,context.database,row.discord_guild_id,row.discord_channel_id);else if(!isCommunityReviewDiscordGuild(row.discord_guild_id))continue;}catch{continue;}
+      try{if(context.exactSelection)assertCommunityStagingQaSharedTarget(context.exactSelection.capability,context.database,row.discord_guild_id,row.discord_channel_id);else if(!isSharedAlertReviewTarget(row.discord_guild_id,row.discord_channel_id))continue;}catch{continue;}
       if (new SharedAlertRateLimits(db, context.now).current(row.discord_channel_id)) continue;
-      if (!db.prepare("UPDATE traderlink_community_content_deliveries SET status='sending',attempt_count=attempt_count+1,updated_at_utc=? WHERE delivery_id=? AND status IN ('pending','failed') AND delivery_outcome='pending'").run(context.now(), row.delivery_id).changes) continue;
+      const claim = () => {
+        context.selectedOriginal?.assertCurrent("claim");
+        return db.prepare("UPDATE traderlink_community_content_deliveries SET status='sending',attempt_count=attempt_count+1,updated_at_utc=? WHERE delivery_id=? AND status IN ('pending','failed') AND delivery_outcome='pending'").run(context.now(), row.delivery_id).changes;
+      };
+      if (!write(claim)) continue;
       let uncertain = false;
-      const stop = (outcome: "pending" | "rejected" | "uncertain", message: string, retryAt: string | null = null) => db.prepare(`UPDATE traderlink_community_content_deliveries SET status='failed',delivery_outcome=?,last_error=?,next_attempt_at_utc=?,updated_at_utc=? WHERE delivery_id=? AND status='sending'`).run(outcome, message, retryAt, context.now(), row.delivery_id);
+      const stop = (outcome: "pending" | "rejected" | "uncertain", message: string, retryAt: string | null = null) => write(() => db.prepare(`UPDATE traderlink_community_content_deliveries SET status='failed',delivery_outcome=?,last_error=?,next_attempt_at_utc=?,updated_at_utc=? WHERE delivery_id=? AND status='sending'`).run(outcome, message, retryAt, context.now(), row.delivery_id));
       const intended = () => {
         const intent = context.policy.intent(row.community_id, "alert", row.object_id);
         return intent?.distribution === "discord" && intent.destinationIds.includes(row.destination_id);
@@ -128,14 +138,18 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
         if (!intended()) { stop("rejected", "Source Discord intent changed."); failed++; continue; }
         let plan = readSourceOriginalPlan(db, row);
         if (!plan) {
+          plan = write(() => {
+          context.selectedOriginal?.assertCurrent("send");
           if (db.prepare("SELECT 1 FROM traderlink_community_delivery_attempt_history WHERE delivery_id=? AND attempt_key LIKE ? LIMIT 1").get(row.delivery_id, `source-alert:${row.delivery_id}:part:%`)) throw new SharedAlertError("changed");
           if (createHash("sha256").update(row.content_json).digest("hex") !== row.content_hash) throw new SharedAlertError("changed");
           const content = JSON.parse(row.content_json) as Content;
           const parts = sourceAlertParts(db, row.object_id, content, content.publishingMode === "tracked_page" ? context.trackedPageUrl(row.slug, row.object_id) : "");
-          plan = { kind: "shared-source-original-v1", revisionId: row.revision_id, channelId: row.discord_channel_id, parts: parts.map((text, index) => ({ content: text, nonce: sourceAlertNonce(`source-alert:${row.delivery_id}:${index + 1}`) })) };
-          const encoded = JSON.stringify(plan);
+          const captured: SourceOriginalPlan = { kind: "shared-source-original-v1", revisionId: row.revision_id, channelId: row.discord_channel_id, parts: parts.map((text, index) => ({ content: text, nonce: sourceAlertNonce(`source-alert:${row.delivery_id}:${index + 1}`) })) };
+          const encoded = JSON.stringify(captured);
           db.prepare(`INSERT INTO traderlink_community_publication_receipts(community_id,user_id,request_id,payload_hash,result_json,created_at_utc) VALUES(?,?,?,?,?,?)`)
             .run(row.community_id, row.publisher_user_id, `shared-source-original:${row.delivery_id}`, createHash("sha256").update(encoded).digest("hex"), encoded, context.now());
+          return captured;
+          });
         }
         if (plan.channelId !== row.discord_channel_id || plan.revisionId !== row.revision_id) throw new SharedAlertError("changed");
         for (const [index, part] of plan.parts.entries()) {
@@ -146,6 +160,7 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
           if (writes >= context.limit) break;
           if (new SharedAlertRateLimits(db, context.now).current(row.discord_channel_id)) break;
           await verifySourceWrite(context, row);
+          write(() => context.selectedOriginal?.assertCurrent("send"));
           if (!db.prepare(`SELECT 1 FROM traderlink_community_content_deliveries d JOIN traderlink_community_alerts a ON a.alert_id=d.object_id AND a.community_id=d.community_id
             JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id WHERE d.delivery_id=? AND d.status='sending' AND a.status='published' AND x.status='active' AND x.discord_channel_id=?`).get(row.delivery_id, row.discord_channel_id)) break;
           if (!intended()) { stop("rejected", "Source Discord intent changed."); break; }
@@ -153,10 +168,11 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
           if (attempts >= 5) { stop("rejected", "Source message-part retries exhausted."); break; }
           const first = confirmedSourceParts(db, row.delivery_id)[0]?.messageId;
           if (index && !first) { stop("uncertain", "Original source message is not confirmed."); break; }
-          db.transaction(() => {
+          write(() => db.transaction(() => {
+            context.selectedOriginal?.assertCurrent("send");
             recordCommunityDeliveryAttempt(db, { deliveryId: row.delivery_id, communityId: row.community_id, attemptKey: key, outcome: "uncertain", error: "Source part send started; awaiting provider confirmation.", atUtc: context.now() });
             db.prepare("UPDATE traderlink_community_content_deliveries SET delivery_outcome='uncertain',updated_at_utc=? WHERE delivery_id=? AND status='sending'").run(context.now(), row.delivery_id);
-          }).immediate();
+          }).immediate());
           uncertain = true; writes++;
           const response = await context.request(`https://discord.com/api/v10/channels/${plan.channelId}/messages`, {
             method: "POST", headers: { Authorization: `Bot ${context.botToken}`, "Content-Type": "application/json" }, signal: AbortSignal.timeout(10_000),
@@ -165,23 +181,23 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
           if (response.ok) {
             const receipt = await response.json() as { id?: string; channel_id?: string };
             if (!receipt.id || !/^\d{1,32}$/u.test(receipt.id) || receipt.channel_id !== plan.channelId) throw new SharedAlertError("changed");
-            db.transaction(() => {
+            write(() => db.transaction(() => {
               recordCommunityDeliveryAttempt(db, { deliveryId: row.delivery_id, communityId: row.community_id, attemptKey: key, outcome: "confirmed", messageId: receipt.id, atUtc: context.now() });
               db.prepare(`UPDATE traderlink_community_content_deliveries SET attempt_count=0,discord_message_id=CASE WHEN ?=1 THEN coalesce(discord_message_id,?) ELSE discord_message_id END,
                 delivery_outcome=CASE WHEN delivery_outcome='confirmed' THEN 'confirmed' ELSE 'pending' END,updated_at_utc=? WHERE delivery_id=?`).run(number, receipt.id, context.now(), row.delivery_id);
-            }).immediate(); uncertain = false;
+            }).immediate()); uncertain = false;
           } else if (response.status === 429) {
-            recordCommunityDeliveryAttempt(db, { deliveryId: row.delivery_id, communityId: row.community_id, attemptKey: key, outcome: "pending", error: "Discord rate limit; retry after stored cooldown.", atUtc: context.now() });
+            write(() => recordCommunityDeliveryAttempt(db, { deliveryId: row.delivery_id, communityId: row.community_id, attemptKey: key, outcome: "pending", error: "Discord rate limit; retry after stored cooldown.", atUtc: context.now() }));
             stop("pending", "Discord rate limit; retry scheduled.", new Date(Date.parse(context.now()) + 60_000).toISOString()); uncertain = false; break;
           } else if (response.status >= 500) { stop("uncertain", "Source message result needs confirmation."); failed++; break; }
           else {
-            recordCommunityDeliveryAttempt(db, { deliveryId: row.delivery_id, communityId: row.community_id, attemptKey: key, outcome: "rejected", error: `Discord rejected source part (${response.status}).`, atUtc: context.now() });
+            write(() => recordCommunityDeliveryAttempt(db, { deliveryId: row.delivery_id, communityId: row.community_id, attemptKey: key, outcome: "rejected", error: `Discord rejected source part (${response.status}).`, atUtc: context.now() }));
             stop("rejected", "Discord rejected the source alert."); uncertain = false; failed++; break;
           }
         }
         const complete = confirmedSourceParts(db, row.delivery_id).length === plan.parts.length;
-        if (complete) delivered += db.prepare("UPDATE traderlink_community_content_deliveries SET status='delivered',delivery_outcome='confirmed',delivered_at_utc=?,updated_at_utc=?,last_error=NULL,next_attempt_at_utc=NULL WHERE delivery_id=? AND status='sending'").run(context.now(), context.now(), row.delivery_id).changes;
-        else db.prepare("UPDATE traderlink_community_content_deliveries SET status='pending',updated_at_utc=? WHERE delivery_id=? AND status='sending' AND delivery_outcome='pending'").run(context.now(), row.delivery_id);
+        if (complete) delivered += write(() => db.prepare("UPDATE traderlink_community_content_deliveries SET status='delivered',delivery_outcome='confirmed',delivered_at_utc=?,updated_at_utc=?,last_error=NULL,next_attempt_at_utc=NULL WHERE delivery_id=? AND status='sending'").run(context.now(), context.now(), row.delivery_id).changes);
+        else write(() => db.prepare("UPDATE traderlink_community_content_deliveries SET status='pending',updated_at_utc=? WHERE delivery_id=? AND status='sending' AND delivery_outcome='pending'").run(context.now(), row.delivery_id));
       } catch {
         stop(uncertain ? "uncertain" : "pending", uncertain ? "Source result needs confirmation; no automatic resend." : "Source verification unavailable; retry scheduled.", uncertain ? null : new Date(Date.parse(context.now()) + 60_000).toISOString()); failed++;
       }

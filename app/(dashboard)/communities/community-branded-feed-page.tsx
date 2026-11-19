@@ -20,7 +20,7 @@ import {CommunityAlertFocus} from "./community-alert-focus";
 
 export async function CommunityBrandedFeedPage({communitySlug,pageType,segments,focus}:{communitySlug:string;pageType:CommunityContentPageType;segments:readonly string[];focus?:string|null}){
  const identity=await requireCommunityOwnerReviewServerComponentPageIdentity();
- await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug});
+ await requireCommunityRequestAccess({reviewIntent:"community-owner-review",userId:identity.scope.userId,slug:communitySlug});
  const requestHeaders=await headers();
  const prefetch=["next-router-prefetch","x-middleware-prefetch"].some(key=>requestHeaders.get(key)==="1")||requestHeaders.has("next-router-segment-prefetch")||["purpose","sec-purpose"].some(key=>/\bprefetch\b/i.test(requestHeaders.get(key)??""));
  const atUtc=createCanonicalUtcTimestamp();

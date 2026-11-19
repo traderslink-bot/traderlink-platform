@@ -1,3 +1,4 @@
+import { isCommunityOwnerReviewGuild, type CommunityOwnerReviewIntent } from "./community-owner-review-policy";
 import { assertCommunityReviewDiscordGuild } from "./community-review-discord-guild";
 import type Database from "better-sqlite3";
 import { PlatformDiscordMembershipRepository } from "../../platform/server/authentication/platform-discord-membership-repository";
@@ -9,8 +10,8 @@ import { canAdmitNewCommunity } from "./community-admission-service";
 const snowflake = /^\d{1,32}$/u;
 
 /** Fresh bot responses prove installation and ownership; OAuth candidates are only discovery. */
-export async function verifyCommunityOwner(guildId: string, discordUserId: string, botToken: string, request: typeof fetch = fetch) {
-  assertCommunityReviewDiscordGuild(guildId);
+export async function verifyCommunityOwner(guildId: string, discordUserId: string, botToken: string, request: typeof fetch = fetch, reviewIntent?: CommunityOwnerReviewIntent) {
+  if (!(reviewIntent === "community-owner-review" && isCommunityOwnerReviewGuild(guildId))) assertCommunityReviewDiscordGuild(guildId);
   if (!snowflake.test(guildId) || !snowflake.test(discordUserId) || !botToken.trim()) throw new Error("Discord connection unavailable.");
   const options = { headers: { Authorization: `Bot ${botToken}` }, cache: "no-store" as const };
   const [guildResponse, memberResponse] = await Promise.all([

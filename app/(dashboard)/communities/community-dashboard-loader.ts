@@ -22,7 +22,7 @@ async function loadAuthorizedCoachingDashboard(communitySlug:string,path?:string
  const identity=await requireCommunityOwnerReviewServerComponentPageIdentity(),requested=path??`/communities/${communitySlug}`,suffix=requested.slice(`/communities/${communitySlug}`.length);
  const historyPath=suffix==="/coaching"||suffix==="/workspace"||suffix==="/workspace/students"||/^\/workspace\/students\/[^/?#]+(?:\/reviews\/[^/?#]+(?:\/final)?)?$/.test(suffix);
  const existingCoachingPage=historyPath||/^\/workspace\/(coachingwork|reviews|sessions|teaching)$/.test(suffix);let historyOnly=false;
- try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,existingCoachingOnly:existingCoachingPage,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}catch(error){if(!historyPath)throw error;historyOnly=true;}
+ try{await requireCommunityRequestAccess({reviewIntent:"community-owner-review",userId:identity.scope.userId,slug:communitySlug,existingCoachingOnly:existingCoachingPage,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}catch(error){if(!historyPath)throw error;historyOnly=true;}
  const snapshot=withPlatformDatabase({mode:"runtime"},database=>{
   let activeJournalAccountName:string|null=null;
   if(identity.scope.activeAccountId&&identity.scope.allowedAccountIds.includes(identity.scope.activeAccountId))activeJournalAccountName=(database.prepare("SELECT display_name FROM journal_accounts WHERE account_id=? AND workspace_id=? AND status='active'").get(identity.scope.activeAccountId,identity.scope.workspaceId) as {display_name:string}|undefined)?.display_name??null;

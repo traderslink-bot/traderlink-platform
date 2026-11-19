@@ -15,6 +15,7 @@ import {communityPublicationDestinationUrl} from "./community-branded-destinatio
 import {assertCommunityStagingQaCapability,type CommunityStagingQaCapability} from "./community-staging-qa-capability";
 
 import { createCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
+import { communityCoachingPlanDeliveryContent } from "./community-coaching-plan-delivery-content";
 
 class RejectedDelivery extends Error {}
 type DeliveryRow={publisher_user_id:string|null;destination_id:string;current_attempt_key:string|null;attempt_count:number;community_id:string;discord_guild_id:string;delivery_id:string;object_type:"alert"|"watchlist"|"plan";object_id:string;discord_channel_id:string;community_slug:string;community_name:string};
@@ -52,11 +53,9 @@ export class TraderLinkCommunityDiscordDeliveryService {
       return {content:`**${watchlist.title}**\nShared with ${row.community_name} on TraderLink.\n\nOpen watchlist: ${url}`,allowed_mentions:{parse:[]}};
     }
     if(row.object_type==="plan"){
-      const plan=this.database.prepare(`SELECT p.name,p.description,p.price_label,c.coach_slug,c.display_name FROM traderlink_community_coaching_plans p JOIN traderlink_community_coach_profiles c ON c.coach_profile_id=p.coach_profile_id WHERE p.plan_id=? AND p.community_id=? AND p.status='active' AND c.status='active'`).get(row.object_id,row.community_id) as {name:string;description:string;price_label:string;coach_slug:string;display_name:string}|undefined;
-      if(!plan)throw new RejectedDelivery("Community coaching plan is no longer available.");
-      const url=`${this.config.publicOrigin}/communities/${row.community_slug}/coaches/${plan.coach_slug}`;
-      const price=plan.price_label?`\n${plan.price_label}`:"";
-      return {content:`**${plan.name} with ${plan.display_name}**${price}\n${plan.description.slice(0,1400)}\n\nPayment and access are handled by ${row.community_name} in Discord.\nOpen coaching details: ${url}`,allowed_mentions:{parse:[]}};
+      const content=communityCoachingPlanDeliveryContent(this.database,{communityId:row.community_id,planId:row.object_id,communitySlug:row.community_slug,communityName:row.community_name,publicOrigin:this.config.publicOrigin});
+      if(!content)throw new RejectedDelivery("Community coaching plan is no longer available.");
+      return content;
     }
     throw new RejectedDelivery("Unsupported community delivery type.");
   }

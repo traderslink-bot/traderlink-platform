@@ -33,7 +33,7 @@ function updatedCommunityUrl(communitySlug: string, path: string): string {
 
 async function context(slug: string, formData?:FormData, verifyParticipants=true, existingCoachingOnly=false) {
   const identity = await requireCommunityOwnerReviewPageIdentity();
-  await requireCommunityRequestAccess({userId:identity.scope.userId,slug,verifyParticipants,existingCoachingOnly,relationshipId:String(formData?.get("relationshipId")??"")||undefined,taskId:String(formData?.get("taskId")??"")||undefined,reviewId:String(formData?.get("reviewId")??"")||undefined});
+  await requireCommunityRequestAccess({reviewIntent:"community-owner-review",userId:identity.scope.userId,slug,verifyParticipants,existingCoachingOnly,relationshipId:String(formData?.get("relationshipId")??"")||undefined,taskId:String(formData?.get("taskId")??"")||undefined,reviewId:String(formData?.get("reviewId")??"")||undefined});
   return { identity, slug };
 }
 function failure(message: string): CommunityPublicationFeedback { return { status: "error", message }; }
@@ -45,7 +45,7 @@ export async function saveCommunityRoleWithFeedback(form: FormData): Promise<Com
   const capability = "community.roles.manage";
   let community: { community_id: string; discord_guild_id: string };
   try {
-    await requireCommunityRequestAccess({ userId: identity.scope.userId, slug });
+    await requireCommunityRequestAccess({reviewIntent:"community-owner-review", userId: identity.scope.userId, slug });
     community = withPlatformDatabase({ mode: "runtime" }, db => {
       const row = db.prepare(`SELECT community_id,discord_guild_id FROM traderlink_communities WHERE slug=?`).get(slug) as typeof community | undefined;
       if (!row) throw new Error("Unavailable");
@@ -54,7 +54,7 @@ export async function saveCommunityRoleWithFeedback(form: FormData): Promise<Com
     });
   } catch { return failure("We couldn't verify your permission to manage this server. Reconnect Discord or try again shortly."); }
   let resources;
-  try { resources = await readCommunityDiscordResources(community.discord_guild_id, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? ""); }
+  try { resources = await readCommunityDiscordResources(community.discord_guild_id, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "", fetch, "community-owner-review"); }
   catch { return failure("Discord roles and channels are unavailable. Check that the bot is installed, then refresh this page."); }
   const role = resources.roles.find(item => item.id === form.get("discordRoleId"));
   const responsibilities = form.getAll("responsibilities").filter((value): value is TraderLinkCommunityFixedResponsibility => typeof value === "string" && ["coaching-access","coach","community-admin"].includes(value));
@@ -78,10 +78,10 @@ export async function setCommunityPauseWithFeedback(form:FormData):Promise<Commu
  const status=String(form.get("communityStatus")??"");
  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||!["active","paused"].includes(status))return failure("Community unavailable.");
  try{
-  await requireCommunityRequestAccess({userId:identity.scope.userId,slug});
+  await requireCommunityRequestAccess({reviewIntent:"community-owner-review",userId:identity.scope.userId,slug});
   const target=withPlatformDatabase({mode:"runtime"},db=>db.prepare(`SELECT c.community_id,c.discord_guild_id,c.owner_user_id,i.auth_subject FROM traderlink_communities c JOIN platform_auth_identities i ON i.user_id=? AND i.auth_provider='discord' AND i.status='active' WHERE c.slug=? AND c.owner_user_id=? AND c.status IN ('active','paused')`).get(identity.scope.userId,slug,identity.scope.userId) as {community_id:string;discord_guild_id:string;owner_user_id:string;auth_subject:string}|undefined);
   if(!target)return failure("Only the verified server owner can pause or resume this community.");
-  await verifyCommunityOwner(target.discord_guild_id,target.auth_subject,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"");
+  await verifyCommunityOwner(target.discord_guild_id,target.auth_subject,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"", fetch, "community-owner-review");
   withPlatformDatabase({mode:"runtime"},db=>new TraderLinkCommunityRepository(db).setStatus({communityId:target.community_id,actorUserId:identity.scope.userId,status:status as "active"|"paused",timestamp:new Date().toISOString()}));
  }catch{return failure("We couldn't verify and change the community status. Check Discord access and try again.");}
  refreshSafely(`/communities/${slug}/manage/settings`);refreshSafely("/communities");
@@ -113,7 +113,7 @@ export async function changeCommunityLifecycleWithFeedback(form:FormData):Promis
    if(target.guild_owner!==1||!isFreshCommunityEvidence(target.last_verified_at_utc,atUtc))return {status:"error",message:"Refresh Discord servers on Communities to verify current server ownership, then try removal again."};
    withPlatformDatabase({mode:"runtime"},db=>removeCommunity(db,target.community_id,identity.scope.userId,atUtc));
   }else{
-   const evidence=await verifyCommunityOwner(target.discord_guild_id,target.auth_subject,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"");
+   const evidence=await verifyCommunityOwner(target.discord_guild_id,target.auth_subject,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"", fetch, "community-owner-review");
    withPlatformDatabase({mode:"runtime"},db=>db.transaction(()=>{
     onboardApprovedCommunity(db,{userId:identity.scope.userId,evidence,atUtc});
     if(operation==="recover")recoverCommunity(db,target.community_id,identity.scope.userId,atUtc);

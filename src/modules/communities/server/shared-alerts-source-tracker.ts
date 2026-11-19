@@ -1,4 +1,4 @@
-import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
+import { isSharedAlertReviewGuild, isSharedAlertReviewTarget } from "./shared-alerts-review-targets";
 import type Database from "better-sqlite3";
 import { assertCanonicalUuidV4, createCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
 import { verifyCommunityRequestMember } from "./community-request-verification";
@@ -18,8 +18,8 @@ export async function readSharedAlertsSourceTracker(database: Database.Database,
   assertCanonicalUuidV4(input.userId, "userId"); assertCanonicalUuidV4(input.alertId, "alertId");
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(input.communitySlug) || input.communitySlug.length > 100 || !input.botToken.trim()) throw new SharedAlertError("unavailable");
   const reviewCommunity = database.prepare("SELECT discord_guild_id FROM traderlink_communities WHERE slug=? AND status='active'").get(input.communitySlug) as { discord_guild_id: string } | undefined;
-  if (!reviewCommunity || !isCommunityReviewDiscordGuild(reviewCommunity.discord_guild_id)) throw new SharedAlertError("unavailable");
-  if (!await verifyCommunityRequestMember(database, { slug: input.communitySlug, userId: input.userId, botToken: input.botToken, atUtc: createCanonicalUtcTimestamp() }, request)) throw new SharedAlertError("unavailable");
+  if (!reviewCommunity || !isSharedAlertReviewGuild(reviewCommunity.discord_guild_id)) throw new SharedAlertError("unavailable");
+  if (!await verifyCommunityRequestMember(database, { slug: input.communitySlug, userId: input.userId, botToken: input.botToken, atUtc: createCanonicalUtcTimestamp(), reviewIntent: "shared-alerts" }, request)) throw new SharedAlertError("unavailable");
   const target = database.prepare(`SELECT c.community_id,c.discord_guild_id,i.auth_subject FROM traderlink_communities c
     JOIN platform_auth_identities i ON i.user_id=? AND i.auth_provider='discord' AND i.status='active'
     WHERE c.slug=? AND c.status='active'`).get(input.userId, input.communitySlug) as { community_id: string; discord_guild_id: string; auth_subject: string } | undefined;
@@ -71,7 +71,7 @@ export async function readSharedAlertsSourceTracker(database: Database.Database,
     if (!Array.isArray(ids) || !ids.length || ids.length > 50 || ids.some(id => typeof id !== "string")) throw new SharedAlertError("not_found");
     const associated = database.prepare(`SELECT destination_id,discord_channel_id FROM traderlink_community_discord_destinations WHERE community_id=? AND content_type='alerts'`)
       .all(target.community_id) as { destination_id: string; discord_channel_id: string }[];
-    if (!associated.some(destination => ids.includes(destination.destination_id) && readable.has(destination.discord_channel_id))) throw new SharedAlertError("not_found");
+    if (!associated.some(destination => ids.includes(destination.destination_id) && isSharedAlertReviewTarget(target.discord_guild_id, destination.discord_channel_id) && readable.has(destination.discord_channel_id))) throw new SharedAlertError("not_found");
     // No Journal, source grant list, conversation, partner routes or coaching records returned.
     return Object.freeze({ alertId: alert.alertId, communitySlug: input.communitySlug, title: alert.title, symbol: alert.symbol, body: alert.body, status: alert.status, authorUserId: alert.authorUserId, publishedAtUtc: alert.publishedAtUtc, updatedAtUtc: alert.updatedAtUtc });
   }).deferred();

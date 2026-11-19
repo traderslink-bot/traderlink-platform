@@ -1,4 +1,4 @@
-import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
+import { isSharedAlertReviewGuild, isSharedAlertReviewTarget } from "./shared-alerts-review-targets";
 import type { SharedAlertChannel } from "../contracts/shared-alerts-contracts";
 import { SharedAlertError } from "./shared-alerts-errors";
 import { createCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
@@ -20,7 +20,7 @@ export class SharedAlertsDiscord {
 
   private allowed(guildId:string,channelId?:string):void{
     if(this.staging){try{assertCommunityStagingQaSharedTarget(this.staging.capability,this.staging.database,guildId,channelId);return;}catch{throw new SharedAlertError("unavailable");}}
-    if(!isCommunityReviewDiscordGuild(guildId))throw new SharedAlertError("unavailable");
+    if (!(channelId === undefined ? isSharedAlertReviewGuild(guildId) : isSharedAlertReviewTarget(guildId, channelId))) throw new SharedAlertError("unavailable");
   }
 
   private async get<T>(path: string): Promise<T> {
@@ -59,6 +59,7 @@ export class SharedAlertsDiscord {
     let base = BigInt(0);
     for (const role of roles) if (roleIds.has(role.id)) base |= BigInt(role.permissions);
     return channels.filter(channel => {
+      if (!isSharedAlertReviewTarget(guildId, channel.id)) return false;
       if (![0, 5].includes(channel.type) || !SNOWFLAKE.test(channel.id) || (channel.guild_id && channel.guild_id !== guildId)) return false;
       if ((base & ADMIN) !== BigInt(0)) return true;
       let permissions = base;

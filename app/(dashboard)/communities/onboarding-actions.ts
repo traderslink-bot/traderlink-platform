@@ -24,7 +24,7 @@ export async function onboardDiscordCommunityAction(formData: FormData): Promise
   ).get(identity.scope.userId) as { auth_subject: string } | undefined);
   if (!linked) throw new Error("Discord account connection required.");
   // No SQLite write transaction is held while calling Discord.
-  const evidence = await verifyCommunityOwner(discordGuildId, linked.auth_subject, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "");
+  const evidence = await verifyCommunityOwner(discordGuildId, linked.auth_subject, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "", fetch, "community-owner-review");
   const community = withPlatformDatabase({ mode: "runtime" }, database => onboardApprovedCommunity(database, {
     userId: identity.scope.userId,
     evidence, atUtc: createCanonicalUtcTimestamp(),

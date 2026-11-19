@@ -25,6 +25,14 @@ export type SharedSourceDispatchContext = Readonly<{
   /** Source ONLY. Partners always render complete frozen text without this URL. */
   trackedPageUrl: (communitySlug: string, alertId: string) => string;
   exactSelection?:CommunityExactDeliverySelection;
+  /** Server-only normal-runtime selection. Never supplied by a browser or a
+   * staging capability; the selected executor repeats the native job binding. */
+  selectedOriginal?: Readonly<{
+    deliveryId: string;
+    assertCurrent: (phase: "claim" | "send") => void;
+    withCurrentWriter: <T>(operation: () => T) => T;
+    commitObservation: <T>(affectedUserIds: readonly string[], operation: () => T) => T;
+  }>;
 }>;
 
 /** Actual source senders must persist per-part text/attempt/receipt before returning.
@@ -87,7 +95,7 @@ export async function runSharedAlertsSourcePass(database:Database.Database,confi
   };
   const stagingGuild=(slug:string)=>{if(!config.exactSelection)return undefined;const row=database.prepare("SELECT discord_guild_id FROM traderlink_communities WHERE slug=? AND status='active'").get(slug) as {discord_guild_id:string}|undefined;if(!row)return undefined;assertCommunityStagingQaSharedTarget(config.exactSelection.capability,database,row.discord_guild_id);return row.discord_guild_id;};
   const authorization = sharedAlertPublishingAuthorization(database, policy,
-    async (slug, userId) => verifyCommunityRequestMember(database, { slug, userId, botToken: config.botToken, atUtc: now(),stagingQaGuildId:stagingGuild(slug) }, request),
+    async (slug, userId) => verifyCommunityRequestMember(database, { slug, userId, botToken: config.botToken, atUtc: now(),stagingQaGuildId:stagingGuild(slug),reviewIntent:config.exactSelection?undefined:"shared-alerts" }, request),
     mayChangeAlert, now);
   const shared = new SharedAlertsDelivery(database, {
     botToken: config.botToken,

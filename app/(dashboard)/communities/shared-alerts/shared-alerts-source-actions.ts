@@ -44,7 +44,7 @@ export async function executeSharedAlertsSourceMutation(request: Request): Promi
     const command = field(form, "command");
     if (!["save_alert", "save_destination", "assign_publishers"].includes(command)) throw new SharedAlertError("invalid");
     const actorUserId = identity.scope.userId;
-    await requireCommunityRequestAccess({ userId: actorUserId, slug });
+    await requireCommunityRequestAccess({ userId: actorUserId, slug, reviewIntent: "shared-alerts" });
     const communityId = withPlatformDatabase({ mode: "runtime" }, database => {
       const row = database.prepare("SELECT community_id FROM traderlink_communities WHERE slug=? AND status='active'").get(slug) as { community_id: string } | undefined;
       if (!row) throw new SharedAlertError("unavailable");
@@ -104,7 +104,7 @@ export async function executeSharedAlertsSourceMutation(request: Request): Promi
         for (const userId of userIds as string[]) {
           assertCanonicalUuidV4(userId, "publisherId");
           // Owner authorization above precedes verification of selected target members.
-          await requireCommunityRequestAccess({ userId, slug });
+          await requireCommunityRequestAccess({ userId, slug, reviewIntent: "shared-alerts" });
         }
         withPlatformDatabase({ mode: "runtime" }, database => new SharedAlertsSourcePolicy(database).assignPublishers({ communityId, ownerUserId: actorUserId, destinationId, userIds: userIds as string[], atUtc: createCanonicalUtcTimestamp() }));
         result = { status: "success", message: "Publisher channel assignments saved.", destinationId };

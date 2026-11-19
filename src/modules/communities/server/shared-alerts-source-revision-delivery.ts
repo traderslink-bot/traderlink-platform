@@ -1,5 +1,5 @@
 import {sharedCooldownSql} from "./shared-alerts-storage-readiness";
-import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild";
+import { isSharedAlertReviewTarget } from "./shared-alerts-review-targets";
 import {assertCommunityStagingQaSharedTarget} from "./community-staging-qa-capability";
 import { createHash } from "node:crypto";
 import { createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
@@ -95,7 +95,7 @@ export const sharedAlertsSourceRevisionDelivery: SharedSourceDispatchBindings["e
     let delivered = 0, failed = 0, writes = 0;
     for (const row of rows) {
       if (writes >= context.limit) break;
-      try{if(context.exactSelection)assertCommunityStagingQaSharedTarget(context.exactSelection.capability,context.database,row.discord_guild_id,row.discord_channel_id);else if(!isCommunityReviewDiscordGuild(row.discord_guild_id))continue;}catch{continue;}
+      try{if(context.exactSelection)assertCommunityStagingQaSharedTarget(context.exactSelection.capability,context.database,row.discord_guild_id,row.discord_channel_id);else if(!isSharedAlertReviewTarget(row.discord_guild_id,row.discord_channel_id))continue;}catch{continue;}
       if (new SharedAlertRateLimits(db, context.now).current(row.discord_channel_id)) continue;
       if (!db.prepare("UPDATE traderlink_community_publication_actions SET status='sending',attempt_count=attempt_count+1,updated_at_utc=? WHERE action_id=? AND status='pending'").run(context.now(), row.action_id).changes) continue;
       const plan = JSON.parse(row.payload_json) as EditPlan;

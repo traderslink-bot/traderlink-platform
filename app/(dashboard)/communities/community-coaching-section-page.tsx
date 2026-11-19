@@ -16,7 +16,7 @@ export default async function CommunitySectionPage({params}:{params:Promise<{com
  if(resolved==="manage"||resolved==="roles"||resolved==="settings"){
   const allowed=loaded.snapshot.community.isOwner||capabilities.includes(resolved==="roles"?"community.roles.manage":"community.manage");
   if(!allowed)notFound();
-  const discordResources=!loaded.isReview&&(resolved==="roles"||resolved==="settings")?await readCommunityDiscordResources(loaded.snapshot.community.discordGuildId,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"").catch(()=>null):null;
+  const discordResources=!loaded.isReview&&(resolved==="roles"||resolved==="settings")?await readCommunityDiscordResources(loaded.snapshot.community.discordGuildId,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"", fetch, "community-owner-review").catch(()=>null):null;
   return <CommunityManagementDashboard snapshot={loaded.snapshot} section={resolved} isReview={loaded.isReview} discordResources={discordResources}/>;
  }
  if(resolved==="coaching"&&isCoachingStaff(capabilities))redirect(`/communities/${communitySlug}/workspace`);

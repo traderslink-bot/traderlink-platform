@@ -1,5 +1,6 @@
 import {hasCommunityStatsOwnAccess} from "@/src/modules/communities/server/stats/community-stats-access";
 import type {CommunityStatsNavigationAccess} from "@/src/modules/communities/contracts/community-stats-contracts";
+import {readCommunityStatsViewerChannels} from "@/src/modules/communities/server/stats/community-stats-viewer-channels";
 import {readCommunityViewerChannels} from "@/src/modules/communities/server/community-channel-readership";
 import {requireCommunityRequestAccess} from "@/src/modules/communities/server/community-request-access";
 import { requireCommunityOwnerReviewServerComponentPageIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
@@ -30,13 +31,14 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
   const identity=await requireCommunityOwnerReviewServerComponentPageIdentity();
   const requested=path??`/communities/${communitySlug}`;
   const suffix=requested.slice(`/communities/${communitySlug}`.length);
+  const statsReview = ["/stats/activity", "/stats/analysts", "/stats/team", "/stats/settings"].includes(suffix);
   const historyPath=suffix==="/coaching"||suffix==="/workspace"||suffix==="/workspace/students"||/^\/workspace\/students\/[^/?#]+(?:\/reviews\/[^/?#]+(?:\/final)?)?$/.test(suffix);
   let historyOnly=false;
   const existingCoachingPage=historyPath||/^\/workspace\/(coachingwork|reviews|sessions|teaching)$/.test(suffix);
-  try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,existingCoachingOnly:existingCoachingPage,relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}
+  try{await requireCommunityRequestAccess({userId:identity.scope.userId,slug:communitySlug,existingCoachingOnly:existingCoachingPage,reviewIntent:statsReview?"stats":"community-owner-review",relationshipId:suffix.match(/^\/workspace\/students\/([^/?#]+)/)?.[1]});}
   catch(error){if(!historyPath)throw error;historyOnly=true;}
   // The resolver reads its target synchronously; no connection/transaction is held during Discord I/O.
-  const readableChannelIds=historyOnly?[]:await withPlatformDatabase({mode:"runtime"},database=>readCommunityViewerChannels(database,communitySlug,identity.scope.userId,process.env.TRADERLINK_DISCORD_BOT_TOKEN??""));
+  const readableChannelIds=historyOnly?[]:await withPlatformDatabase({mode:"runtime"},database=>statsReview?readCommunityStatsViewerChannels(database,communitySlug,identity.scope.userId,process.env.TRADERLINK_DISCORD_BOT_TOKEN??""):readCommunityViewerChannels(database,communitySlug,identity.scope.userId,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"",fetch,[0,5],"community-owner-review"));
   let activeJournalAccountName:string|null=null;
   const snapshot=withPlatformDatabase({mode:"runtime"},database=>{
     if(identity.scope.activeAccountId&&identity.scope.allowedAccountIds.includes(identity.scope.activeAccountId))activeJournalAccountName=(database.prepare("SELECT display_name FROM journal_accounts WHERE account_id=? AND workspace_id=? AND status='active'").get(identity.scope.activeAccountId,identity.scope.workspaceId) as {display_name:string}|undefined)?.display_name??null;

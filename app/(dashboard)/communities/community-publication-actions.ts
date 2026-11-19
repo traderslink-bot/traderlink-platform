@@ -20,7 +20,7 @@ async function save(kind: "alert" | "watchlist", form: FormData): Promise<Commun
   const identity = await requireCommunityOwnerReviewPageIdentity();
   const slug = String(form.get("communitySlug") ?? "");
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return { status: "error", message: "Community unavailable. Refresh this page." };
-  try { await requireCommunityRequestAccess({ userId: identity.scope.userId, slug }); }
+  try { await requireCommunityRequestAccess({reviewIntent:"community-owner-review", userId: identity.scope.userId, slug }); }
   catch { return { status: "error", message: "We couldn't verify your Discord access. Your entries are still here. Reconnect Discord or try again shortly." }; }
   let result: CommunityPublicationFeedback;
   try {

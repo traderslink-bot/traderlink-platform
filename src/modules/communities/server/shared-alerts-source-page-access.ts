@@ -88,7 +88,7 @@ async function access(communitySlug: string) {
     return true;
   });
   if (!ready) return null;
-  await requireCommunityRequestAccess({ slug: communitySlug, userId: identity.scope.userId });
+  await requireCommunityRequestAccess({ slug: communitySlug, userId: identity.scope.userId, reviewIntent: "shared-alerts" });
   return { communitySlug, userId: identity.scope.userId, atUtc: createCanonicalUtcTimestamp() };
 }
 

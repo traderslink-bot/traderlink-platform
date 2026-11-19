@@ -41,7 +41,7 @@ export default async function CommunitySectionPage({params}:{params:Promise<{com
     (resolved==="settings"&&(owner||capabilities.includes("community.manage")));
   if(!allowed)notFound();
   const discordResources = !loaded.isReview && (resolved === "roles" || resolved === "channels" || resolved === "settings")
-    ? await readCommunityDiscordResources(loaded.snapshot.community.discordGuildId, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "").catch(() => null)
+    ? await readCommunityDiscordResources(loaded.snapshot.community.discordGuildId, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "", fetch, "community-owner-review").catch(() => null)
     : null;
   return <CommunityDashboard discordResources={discordResources} discordClientId={process.env.TRADERLINK_COMMUNITIES_DISCORD_CLIENT_ID?.trim()||null} isReview={loaded.isReview} section={resolved} snapshot={loaded.snapshot}/>;
 }

@@ -57,7 +57,7 @@ export async function handleSharedAlertsSourceHttp(request: Request, mutate: Sou
     for (const key of ["communitySlug", "view", "alertId", "page"]) if (url.searchParams.getAll(key).length > 1) throw new SharedAlertError("invalid");
     const slug = url.searchParams.get("communitySlug") ?? "", view = url.searchParams.get("view") ?? "publisher";
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug) || slug.length > 100 || !["publisher", "owner"].includes(view)) throw new SharedAlertError("invalid");
-    await requireCommunityRequestAccess({ userId: identity.scope.userId, slug });
+    await requireCommunityRequestAccess({ userId: identity.scope.userId, slug, reviewIntent: "shared-alerts" });
     const database = openPlatformDatabase({ mode: "runtime" });
     try {
       const input = { communitySlug: slug, userId: identity.scope.userId, atUtc: createCanonicalUtcTimestamp() };

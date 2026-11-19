@@ -7,7 +7,7 @@ import {openPlatformDatabase} from "../../platform/server/database/open-platform
 import {verifyCommunityRequestMember} from "./community-request-verification";
 
 /** Authenticated identity is supplied by the server entry point, never a form field. */
-export async function requireCommunityRequestAccess(input:{userId:string;slug?:string;relationshipId?:string;taskId?:string;reviewId?:string;verifyParticipants?:boolean;existingCoachingOnly?:boolean}){
+export async function requireCommunityRequestAccess(input:{userId:string;slug?:string;relationshipId?:string;taskId?:string;reviewId?:string;verifyParticipants?:boolean;existingCoachingOnly?:boolean;reviewIntent?:"shared-alerts"|"stats"|"community-owner-review"}){
  const db=openPlatformDatabase({mode:"runtime"});
  try{
   let relationshipId=input.relationshipId;
@@ -31,6 +31,6 @@ export async function requireCommunityRequestAccess(input:{userId:string;slug?:s
    if(snapshot===false)throw new Error("Local preview Discord snapshot access is unavailable.");
    if(snapshot===true)return;
   }
-  for(const userId of users)if(!await verifyCommunityRequestMember(db,{slug,userId,atUtc,botToken,existingCoachingOnly:input.existingCoachingOnly,relationshipId}))throw new Error("Discord access could not be verified. Try again shortly.");
+  for(const userId of users)if(!await verifyCommunityRequestMember(db,{slug,userId,atUtc,botToken,existingCoachingOnly:input.existingCoachingOnly,relationshipId,reviewIntent:input.reviewIntent}))throw new Error("Discord access could not be verified. Try again shortly.");
  }finally{db.close();}
 }

@@ -21,7 +21,7 @@ export async function changeCommunityLifecycleWithFeedback(form:FormData):Promis
    if(target.guild_owner!==1||!isFreshCommunityEvidence(target.last_verified_at_utc,atUtc))return {status:"error",message:"Refresh Discord servers on Communities to verify current server ownership, then try removal again."};
    withPlatformDatabase({mode:"runtime"},db=>removeCommunity(db,target.community_id,identity.scope.userId,atUtc));
   }else{
-   const evidence=await verifyCommunityOwner(target.discord_guild_id,target.auth_subject,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"");
+   const evidence=await verifyCommunityOwner(target.discord_guild_id,target.auth_subject,process.env.TRADERLINK_DISCORD_BOT_TOKEN??"", fetch, "community-owner-review");
    withPlatformDatabase({mode:"runtime"},db=>db.transaction(()=>{
     onboardApprovedCommunity(db,{userId:identity.scope.userId,evidence,atUtc});
     if(operation==="recover")recoverCommunity(db,target.community_id,identity.scope.userId,atUtc);

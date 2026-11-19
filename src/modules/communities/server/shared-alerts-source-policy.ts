@@ -1,3 +1,4 @@
+import { isSharedAlertReviewTarget } from "./shared-alerts-review-targets";
 import type Database from "better-sqlite3";
 import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4, createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
 import { isFreshCommunityEvidence } from "./community-launch-policy";
@@ -42,10 +43,10 @@ export class SharedAlertsSourcePolicy {
     const rows = this.database.prepare(`SELECT destination_id destinationId,name,discord_channel_id channelId,status
       FROM traderlink_community_discord_destinations WHERE community_id=? AND content_type='alerts' AND status='active' ORDER BY name,destination_id`)
       .all(communityId) as SharedSourceDestination[];
-    return rows.filter(row => access.isOwner || Boolean(this.database.prepare(`SELECT 1 FROM traderlink_community_destination_publishers
+    return rows.filter(row => isSharedAlertReviewTarget(evidence.discord_guild_id, row.channelId) && (access.isOwner || Boolean(this.database.prepare(`SELECT 1 FROM traderlink_community_destination_publishers
       WHERE community_id=? AND destination_id=? AND ((subject_kind='user' AND subject_id=?) OR
       (subject_kind='role' AND subject_id IN (SELECT value FROM json_each(?)))) LIMIT 1`)
-      .get(communityId, row.destinationId, userId, JSON.stringify([...roles]))));
+      .get(communityId, row.destinationId, userId, JSON.stringify([...roles])))));
   }
 
   /** Channel must come from server-side SharedAlertsDiscord.verifyChannel, never submitted evidence. */

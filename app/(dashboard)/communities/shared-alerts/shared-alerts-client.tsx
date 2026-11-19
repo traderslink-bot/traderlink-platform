@@ -173,7 +173,7 @@ function RequestList({ snapshot, tab }: { snapshot: Snapshot; tab: View }) {
         </Stack>
       </Box>;
     })}</Stack>
-    {!snapshot.requests.length ? <Typography color="text.secondary">{tab === "connections" ? "No active connections yet." : "No pending sharing requests."}</Typography> : null}
+    {!snapshot.requests.length ? <Typography color="text.secondary">{tab === "connections" ? "No active connections yet." : tab === "history" ? "No sharing requests in history yet." : tab === "activity" ? "No unread updates." : "No pending sharing requests."}</Typography> : null}
     <Pages total={snapshot.requestTotal} page={snapshot.requestPage} snapshot={snapshot} tab={tab} parameter="requestPage" />
   </DashboardPanel>;
 }
