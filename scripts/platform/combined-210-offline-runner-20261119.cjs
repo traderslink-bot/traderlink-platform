@@ -20,7 +20,7 @@ function targetEnvironment(input){a.equal(input.databasePath,'/data/traderlink-p
     RAILWAY_DEPLOYMENT_ID:input.deployment,RAILWAY_GIT_COMMIT_SHA:input.source,TRADERLINK_PLATFORM_DB_PATH:input.databasePath}))a.equal(process.env[k],value);
   a.match(input.source,/^[a-f0-9]{40}$/);a.match(input.deployment,/^[a-f0-9-]{36}$/);a.equal(input.schemaSha256,TARGET);
   a.equal(input.originalCount,182);a.equal(input.originalSchemaSha256,OLD);
-  a.equal(input.ownerWindowEndUtc,'2026-11-19T09:00:00.000Z');
+  a.equal(input.ownerWindowEndUtc,'2026-11-19T10:00:00.000Z');
   const pre=input.admission;a.equal(pre.kind,'ROOT_REVIEWED210_MAINTENANCE_PREPARATION');
   for(const k of ['actualInstalledImageVerified','singleWriterAndAllForeignHandlesClosed','originalRecoveryPrepared','namespaceAndMountCoverageComplete'])a.equal(pre[k],true);
   for(const k of ['imageReviewSha256','custodyReviewSha256','recoveryReviewSha256'])a.match(pre[k],/^[a-f0-9]{64}$/);}

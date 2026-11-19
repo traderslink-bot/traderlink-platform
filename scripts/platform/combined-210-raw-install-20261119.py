@@ -85,7 +85,7 @@ def run(config_path, expected_config_sha):
                            RAILWAY_DEPLOYMENT_ID=cfg['deployment'], RAILWAY_GIT_COMMIT_SHA=cfg['source']).items():
         p.require(os.environ.get(key) == value, 'raw_driver_wrong_target')
     p.require(cfg['databasePath'] == '/data/traderlink-platform.sqlite', 'raw_driver_wrong_live_path')
-    p.require(cfg['ownerWindowEndUtc'] == '2026-11-19T09:00:00.000Z', 'raw_driver_owner_window')
+    p.require(cfg['ownerWindowEndUtc'] == '2026-11-19T10:00:00.000Z', 'raw_driver_owner_window')
     import datetime
     deadline_ms = int(datetime.datetime.fromisoformat(cfg['ownerWindowEndUtc'].replace('Z', '+00:00')).timestamp() * 1000)
     with p.Control(cfg['root'], cfg['runId']) as control:
