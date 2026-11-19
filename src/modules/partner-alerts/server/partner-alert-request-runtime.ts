@@ -63,6 +63,8 @@ import { createPartnerAlertNativeStripeCheckout } from "./partner-alert-stripe-n
 import { preparePartnerAlertStripeCheckoutEligibility } from "./partner-alert-stripe-checkout-eligibility";
 import { partnerStripeId } from "./partner-alert-stripe-paid-invoice";
 import { readPartnerAlertStripeBillingConfiguration } from "./partner-alert-stripe-billing-runtime";
+import { readPartnerAlertOwnerDiscordDiscoveryConfiguration,
+  type PartnerAlertOwnerDiscordDiscoveryConfiguration } from "./partner-alert-owner-discord-discovery";
 
 const ENABLED_ENV = "PARTNER_ALERT_REQUEST_RUNTIME_ENABLED";
 const CATALOG_SHA_ENV = "PARTNER_ALERT_ERASURE_PROFILE_CATALOG_SHA256";
@@ -102,7 +104,7 @@ const privateHeaders = { "cache-control": "private, no-store, max-age=0", pragma
 function runtimeResponse(status: number, body: unknown): Response {
   return Response.json(body, { status, headers: privateHeaders });
 }
-function providerConfigurationFingerprint(value: PartnerAlertDiscordOutputConfiguration): string {
+function providerConfigurationFingerprint(value: PartnerAlertDiscordOutputConfiguration | PartnerAlertOwnerDiscordDiscoveryConfiguration): string {
   return createHash("sha256").update(JSON.stringify({ ...value,
     discordBotToken: createHash("sha256").update(value.discordBotToken).digest("hex") })).digest("hex");
 }
@@ -193,16 +195,20 @@ export async function withPartnerAlertRequestRuntime<T>(
       : readPartnerAlertProviderRuntimeConfiguration(environment, outputBotUserId, outputConfigurationRef);
     const discordConfiguration = readDiscordConfiguration();
     const ownerTarget = partnerAlertOwnerEvidenceTarget(request);
-    if (ownerTarget && discordConfiguration) {
+    const readOwnerDiscordConfiguration = () => ownerTarget
+      && environment[ENABLED_ENV] === "true" && environment[CATALOG_SHA_ENV] === catalogSha256
+      ? readPartnerAlertOwnerDiscordDiscoveryConfiguration(environment, outputBotUserId, outputConfigurationRef) : null;
+    const ownerDiscordConfiguration = readOwnerDiscordConfiguration();
+    if (ownerTarget && ownerDiscordConfiguration) {
       if (request.method === "POST") {
         const denied = partnerAlertOwnerMutationRequestDenied(request);
         if (denied) return denied;
       }
-      const fingerprint = discordConfiguration ? providerConfigurationFingerprint(discordConfiguration) : null;
+      const fingerprint = providerConfigurationFingerprint(ownerDiscordConfiguration);
       const refreshed = await refreshPartnerAlertOwnerEvidence({ database,admission,request,environment,target: ownerTarget,
-        botToken: discordConfiguration?.discordBotToken ?? "",configurationIsCurrent: () => {
-          const current = readDiscordConfiguration();
-          return fingerprint !== null && current !== null && providerConfigurationFingerprint(current) === fingerprint;
+        botToken: ownerDiscordConfiguration.discordBotToken,configurationIsCurrent: () => {
+          const current = readOwnerDiscordConfiguration();
+          return current !== null && providerConfigurationFingerprint(current) === fingerprint;
         } });
       if (refreshed === "unavailable") return unavailableResult();
     }
@@ -247,21 +253,21 @@ export async function withPartnerAlertRequestRuntime<T>(
         return pricingCapabilities;
       },
     });
-    const channelCatalog = discordConfiguration ? createPartnerAlertDiscordChannelCatalog({
-      botToken: discordConfiguration.discordBotToken, botUserId: discordConfiguration.discordBotUserId,
+    const channelCatalog = ownerDiscordConfiguration ? createPartnerAlertDiscordChannelCatalog({
+      botToken: ownerDiscordConfiguration.discordBotToken, botUserId: ownerDiscordConfiguration.discordBotUserId,
       maximumDurationMs: 10_000,
       transport: (url, init) => fetch(url, init),
     }) : null;
     const readVerifiedSource = async (incoming: Request, communityId: string, expectedRevision?: number, refresh = false) => {
-      if (!channelCatalog || !discordConfiguration) throw new Error("Discord source unavailable");
-      const configurationFingerprint = providerConfigurationFingerprint(discordConfiguration);
+      if (!channelCatalog || !ownerDiscordConfiguration) throw new Error("Discord source unavailable");
+      const configurationFingerprint = providerConfigurationFingerprint(ownerDiscordConfiguration);
       const target = writer.preauthorizeSourceChannelCatalog(incoming, communityId);
       if (expectedRevision !== undefined && target.partnerRevision !== expectedRevision) {
         throw new PartnerAlertRepositoryError("conflict", "Discord source revision changed");
       }
       const source = await channelCatalog(target.sourceGuildId, incoming.signal);
-      const currentConfiguration = readDiscordConfiguration();
-      if (!currentConfiguration || providerConfigurationFingerprint(currentConfiguration) !== configurationFingerprint) {
+      const currentConfiguration = readOwnerDiscordConfiguration();
+      if (incoming.signal.aborted || !currentConfiguration || providerConfigurationFingerprint(currentConfiguration) !== configurationFingerprint) {
         throw new Error("Discord source configuration changed");
       }
       writer.revalidateSourceChannelCatalog(incoming, target, refresh ? source : undefined);
