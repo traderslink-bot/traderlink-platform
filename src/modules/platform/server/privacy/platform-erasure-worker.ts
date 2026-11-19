@@ -10,7 +10,7 @@ import { createErasureObjectStore } from "./platform-erasure-object-store";
 import { executeErasureCommand, type ErasureCommand } from "./platform-erasure-command";
 import { PlatformErasureRecovery } from "./platform-erasure-recovery";
 import { platformModuleErasurePending } from "./platform-erasure-participants";
-import { observeErasurePhase } from "./platform-erasure-observability";
+import { classifyErasureFailure, observeErasurePhase } from "./platform-erasure-observability";
 import { PlatformErasureHistory } from "./platform-erasure-history";
 
 async function main() {
@@ -61,6 +61,9 @@ async function main() {
         historyBatchFull: expiredRowsRemoved === 128 || reconciled === 128 } };
     }
   } catch (error) {
+    if (process.env.NODE_ENV === "production") console.info("platform_erasure_failure", {
+      failureKind: classifyErasureFailure(error), atUtc: new Date().toISOString(),
+    });
     // Never transfer driver messages, paths, identities, source keys or stacks.
     message = { status: "failed", code: isTraderLinkPlatformError(error) ? error.code : "TRADERLINK_ACCOUNT_ERASURE_FAILED" };
   } finally {

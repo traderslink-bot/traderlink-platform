@@ -182,10 +182,14 @@ function withPermanentDeleteTransaction<T>(
   const guards = deleteGuards(database);
   return database.transaction(() => {
     database.pragma("defer_foreign_keys = ON");
-    for (const guard of guards) database.exec(`DROP TRIGGER ${identifier(guard.name)}`);
+    observeErasurePhase("delete_guards_suspend", () => {
+      for (const guard of guards) database.exec(`DROP TRIGGER ${identifier(guard.name)}`);
+    });
     const result = operation();
-    for (const guard of guards) database.exec(guard.sql);
-    afterGuardRestoration?.();
+    observeErasurePhase("delete_guards_restore", () => {
+      for (const guard of guards) database.exec(guard.sql);
+    });
+    observeErasurePhase("logical_admission_settlement", () => afterGuardRestoration?.());
     if (observeErasurePhase("foreign_key_check", () => database.prepare("PRAGMA foreign_key_check").get())) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { check: "erasure_foreign_keys" });
     }
@@ -315,18 +319,21 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
         if (!operationRef) return platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
         assertBoundStripeErasureAvailable(this.database,operationRef,scope.userId);
       }
-      if (participants && operationRef) participants.partner.beforeRootDelete(operationRef, scope.userId);
-      if (operationRef) runBoundStripeErasure(this.database,operationRef,scope.userId);
+      observeErasurePhase("module_root_fence", () => {
+        if (participants && operationRef) participants.partner.beforeRootDelete(operationRef, scope.userId);
+        if (operationRef) runBoundStripeErasure(this.database,operationRef,scope.userId);
+      });
       return withPermanentDeleteTransaction(this.database, () => {
       assertSoleWorkspaceOwner(this.database, scope);
       // Serialized note-alert identities are not represented by incoming FKs.
-      eraseWatchlistNotesUserCopies(this.database, scope.userId);
+      observeErasurePhase("watchlist_identity_copies", () => eraseWatchlistNotesUserCopies(this.database, scope.userId));
       const accountIds = this.database.prepare<[string], { account_id: string }>(`SELECT account_id
 FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) => row.account_id);
       const artifacts = readPrivateArtifacts(this.database, accountIds);
-      eraseCommunityStatsIdentity(this.database,scope.userId);
+      observeErasurePhase("stats_identity_copies", () => eraseCommunityStatsIdentity(this.database,scope.userId));
       const closure = captureScopedRows(this.database, scope);
-      try { closure.deleteRows(); } finally { closure.dispose(); }
+      try { observeErasurePhase("delete_selected_rows", () => closure.deleteRows()); }
+      finally { observeErasurePhase("dispose_selected_keys", () => closure.dispose()); }
       if (this.database.prepare("SELECT 1 FROM platform_users WHERE user_id=?").get(scope.userId)) {
         platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       }
@@ -334,7 +341,7 @@ FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) 
       if (privateArtifactsPendingPurge.length && !options.recordPrivateArtifactObligations) {
         platformFailure("TRADERLINK_ACCOUNT_ERASURE_FAILED");
       }
-      options.recordPrivateArtifactObligations?.(privateArtifactsPendingPurge);
+      observeErasurePhase("record_cleanup_obligations", () => options.recordPrivateArtifactObligations?.(privateArtifactsPendingPurge));
       return Object.freeze({
         erasedAccountIds: Object.freeze(accountIds),
         privateArtifactsPendingPurge,

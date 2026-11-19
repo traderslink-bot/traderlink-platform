@@ -14,7 +14,7 @@ const fake = vi.hoisted(() => {
   return { Worker };
 });
 vi.mock("node:worker_threads", () => ({ Worker: fake.Worker }));
-import { assertErasureWorkerIdle, runErasureWorker, startCommittedErasureRecovery } from "./platform-erasure-worker-supervisor";
+import { assertErasureWorkerIdle, isErasureWorkerRunning, runErasureWorker, startCommittedErasureRecovery } from "./platform-erasure-worker-supervisor";
 
 afterEach(() => {
   fake.Worker.instances.length = 0;
@@ -24,13 +24,16 @@ afterEach(() => {
 describe("erasure supervisor actual-exit occupancy", () => {
   it("does not release its slot or return success before the writer exits", async () => {
     const pending = runErasureWorker("/synthetic.sqlite", null);
+    expect(isErasureWorkerRunning()).toBe(true);
     const worker = fake.Worker.instances[0]!;
     let resolved = false; void pending.then(() => { resolved = true; });
     worker.emit("message", { status: "complete", result: { nextSelectionRef: null } });
     await Promise.resolve(); expect(resolved).toBe(false);
+    expect(isErasureWorkerRunning()).toBe(true);
     expect(() => assertErasureWorkerIdle()).toThrow();
     expect(() => runErasureWorker("/synthetic.sqlite", null)).toThrow();
     worker.emit("exit", 0);
+    expect(isErasureWorkerRunning()).toBe(false);
     expect(() => assertErasureWorkerIdle()).not.toThrow();
     await expect(pending).resolves.toEqual({ nextSelectionRef: null });
   });

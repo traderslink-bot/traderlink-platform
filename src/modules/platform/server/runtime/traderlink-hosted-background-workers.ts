@@ -13,6 +13,7 @@ import { startWatchlistSetupSharedFeed } from "@/src/modules/watchlist/server/se
 import { startConfiguredLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
 
 import { resolvePlatformBackgroundWorkerMode } from "@/src/modules/platform/server/runtime/platform-background-worker-mode";
+import { isErasureWorkerRunning } from "../privacy/platform-erasure-worker-supervisor";
 
 let workersStarted = false;
 
@@ -44,7 +45,7 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
 
   let analyzerRunning = false;
   const runAnalyzer = async (): Promise<void> => {
-    if (analyzerRunning) return;
+    if (analyzerRunning || isErasureWorkerRunning()) return;
     analyzerRunning = true;
     try {
       const processed = await runDailyTradeAnalyzerOnce();
@@ -60,13 +61,16 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
 
   let notificationDeliveryRunning = false;
   const deliverNotifications = async (): Promise<void> => {
-    if (notificationDeliveryRunning) return;
+    if (notificationDeliveryRunning || isErasureWorkerRunning()) return;
     notificationDeliveryRunning = true;
     const database = openPlatformDatabase({ mode: "runtime" });
     try {
-      await new PlatformRemoteNotificationDeliveryService(
+      const delivery = new PlatformRemoteNotificationDeliveryService(
         new PlatformRemoteNotificationDeliveryRepository(database),
-      ).runAvailable(20);
+      );
+      for (let processed = 0; processed < 20 && !isErasureWorkerRunning(); processed++) {
+        if (!await delivery.runOne()) break;
+      }
     } catch (error) {
       console.error("TraderLink hosted notification delivery worker failed.", {
         errorName: error instanceof Error ? error.name : "UnknownError",
@@ -78,8 +82,19 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
   };
 
   void runAnalyzer();
-  const runWatchlistApprovals = () => void reconcileWatchlistNotificationApprovals().catch(() => console.error("Watchlist notification approval check failed."));
-  const runWatchlistDelivery = () => { void runNotesNotifications().catch(() => console.error("Watchlist notes notifications failed.")); void runCategoryMoveNotifications().catch(() => console.error("Watchlist move notifications failed.")); return void runWatchlistNotificationDelivery().catch(() => console.error("Watchlist notification delivery check failed.")); };
+  // Each existing timer tries again normally after the actual writer exits.
+  // Do not start more synchronous SQLite claims while erasure owns the writer;
+  // never cancel in-flight delivery or discard its durable completion receipt.
+  const runWatchlistApprovals = () => {
+    if (isErasureWorkerRunning()) return;
+    void reconcileWatchlistNotificationApprovals().catch(() => console.error("Watchlist notification approval check failed."));
+  };
+  const runWatchlistDelivery = () => {
+    if (isErasureWorkerRunning()) return;
+    void runNotesNotifications().catch(() => console.error("Watchlist notes notifications failed."));
+    void runCategoryMoveNotifications().catch(() => console.error("Watchlist move notifications failed."));
+    return void runWatchlistNotificationDelivery().catch(() => console.error("Watchlist notification delivery check failed."));
+  };
   runWatchlistApprovals();
   runWatchlistDelivery();
   setInterval(runWatchlistApprovals, 15_000);

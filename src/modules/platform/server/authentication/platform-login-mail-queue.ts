@@ -6,6 +6,7 @@ import {
   randomBytes,
   randomUUID,
 } from "node:crypto";
+import { isErasureWorkerRunning } from "../privacy/platform-erasure-worker-supervisor";
 import type Database from "better-sqlite3";
 import { withPlatformDatabase } from "../database/open-platform-database";
 import {
@@ -126,10 +127,11 @@ export function startPlatformLoginMailWorker() {
     return;
   started = true;
   const run = async () => {
-    if (running) return;
+    if (running || isErasureWorkerRunning()) return;
     running = true;
     try {
       for (let i = 0; i < 3; i++) {
+        if (isErasureWorkerRunning()) break;
         const job = withPlatformDatabase({ mode: "runtime" }, (db) =>
           claimLoginMail(db, process.env.TRADERLINK_LOGIN_RATE_LIMIT_SECRET!),
         );

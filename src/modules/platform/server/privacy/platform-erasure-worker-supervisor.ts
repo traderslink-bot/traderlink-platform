@@ -11,8 +11,10 @@ const housekeepingKey = Symbol.for("traderlink.platform.erasure.housekeeping.v1"
 const housekeeping = globalThis as typeof globalThis & { [housekeepingKey]?: boolean };
 
 /** Request-side preparation must not contend with an active erasure writer. */
+export function isErasureWorkerRunning(): boolean { return state[key] !== undefined; }
+
 export function assertErasureWorkerIdle(): void {
-  if (state[key]) platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
+  if (isErasureWorkerRunning()) platformFailure("TRADERLINK_ACCOUNT_ERASURE_CONFLICT");
 }
 
 /** One worker, no queue and no terminate/timeout policy for a writer. Keep

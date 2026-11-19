@@ -75,3 +75,10 @@ the separate admin feature owner. No unsupported historical outcome is inferred.
   2026-08-10 with `{ "status": "passed", "fixture": "disposable_synthetic_only" }`.
 
 The home-page preference has its own [implementation and verification record](welcome-home-page-plan.md).
+
+
+### November 19, 2026 — current production210 repair under Coordinator ownership
+
+The actual ordinary-account request did not commit; Root verified the active user, expired ready/settling operation and absent recovery outbox read-only, with both protected users intact. The isolated509 repair, native expired-command regression, timer contention correction and representative FK-scan benchmark are recorded in [the current repair tracker](account-erasure-production-repair-20261119.md). Source checks and synthetic recovery cases do not establish a successful production erasure. A two-index structural improvement is a review-only proposal, with no migration registration or hosted change by this worker. Root retains Git, genuine current source/catalog review, integration and any separately authorized release or live follow-up.
+
+Coordinator review correction: the final v2 source restores the original reverse-split scheduling guard and limits erasure deferral to approved mail/notification/analyzer work. The affected timer case now verifies reverse-split continuity and passes, with no broad or unrelated retest. Source v1 remains preserved; v2 supersedes it for review. Production scan-cost resolution and any separately authorized index migration remain Root-owned and open.

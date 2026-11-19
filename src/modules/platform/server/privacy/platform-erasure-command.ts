@@ -202,6 +202,12 @@ export async function executeStripePreparedErasureCommand(
       receiptId,memberUserId:userId,displayName:requireAdmittedMember(database,command),action:command.action,
     })).immediate();
     core.prepare(command,ref);
+  } else if (core.operation(ref).valid_until_utc <= core.now()) {
+    // The same authenticated, explicitly confirmed command must be readmitted
+    // BEFORE Stripe preflight enters its writer frame. That frame deliberately
+    // refuses an expired operation; the later synchronous command cannot renew
+    // it retroactively. Existing claims/effect deadlines remain unchanged.
+    core.readmitErasureCommand(ref,command);
   }
   const operation=core.operation(ref), lifecycle=core.lifecycle(userId);
   const expected=operation.phase==="ready" && operation.quiescence_ref
