@@ -1,0 +1,138 @@
+{
+  "status": "TEST_ONLY_ASYNC_CONTROLLER_CORRECTION_FOCUSED_PASS_PENDING_ROOT_INTEGRATION",
+  "createdAtUtc": "2026-11-19T14:01:03.394848+00:00",
+  "workspace": "/home/traderlink/projects/community-stats-production-repair-20261119",
+  "assignedHead": "fcd190742d7f35a3d9bf1b76d50ab36d9bf7fe01",
+  "intendedIntegrationParent": "e80bd75f50e9b3409bcf6d8f566f5bf21a0de278",
+  "actualCombinedRuntimeTree": "1a48767f6ff77b7cfd836f2578e8282e2ea1619f",
+  "sourceAllowlist": [
+    {
+      "path": "src/modules/communities/server/stats/community-stats-staging-qa-controller.test.ts",
+      "preimageSha256": "fbc154310e100e518e9e501c9314b8306a4171dfb3e99b8548c60bdc1e9cb4fe",
+      "v2PostimageSha256": "fbc154310e100e518e9e501c9314b8306a4171dfb3e99b8548c60bdc1e9cb4fe",
+      "postimageSha256": "094d1b69ed6c407cc4cb0eee24326748afa92b9eb4d3dd42a1fe92ffd7e40b33"
+    }
+  ],
+  "expectedAdditionalDocumentPath": "docs/migration/stats-controller-async-unit-checkpoint-20261119.json",
+  "v2Preserved": {
+    "manifest": "/home/traderlink/projects/community-stats-production-repair-20261119/docs/migration/stats-nonblocking-writer-checkpoint-v2-20261119.json",
+    "sha256": "13bf7bab6e03e5a0915d49aa7e511fa18642649a11734df145a3d8afef02d161",
+    "allEightSourcePostsUnchanged": [
+      {
+        "path": "src/modules/communities/server/stats/community-stats-collector.ts",
+        "sha256": "ea2979732443dc7e96fb65e8eba5e77116aecb25a4bcd6f7b2abb84c193bb745"
+      },
+      {
+        "path": "src/modules/communities/server/stats/community-stats-discord-gateway.ts",
+        "sha256": "5d866630a77a9c0414c90bc9354cde6e4f6b623d064993641aa45e8261d3a541"
+      },
+      {
+        "path": "src/modules/communities/server/stats/community-stats-history.ts",
+        "sha256": "990528eee4d112ee33abf38884a29d0d18c6d08e39ffd5d3e3997a93ef9910db"
+      },
+      {
+        "path": "src/modules/communities/server/stats/community-stats-invites.ts",
+        "sha256": "006ae07e76498f4c03e2a4d7f17c6e479bbe685187d09ec2c541e23967fc28a4"
+      },
+      {
+        "path": "src/modules/communities/server/stats/community-stats-write-queue.ts",
+        "sha256": "0625c8fdbfcd627995c28d71cd1f3d6dde1fbf1998f599ee473e7554d68f9767"
+      },
+      {
+        "path": "src/modules/communities/server/stats/community-stats-nonblocking.test.ts",
+        "sha256": "947fa94d87c90eae413b98b13cf28f747b2e7ad7ba9aa3a7a6b9883ff0493a3e"
+      },
+      {
+        "path": "src/modules/communities/server/stats/community-stats-discord-capture-repair.test.ts",
+        "sha256": "8bf4722f1eda762235be76fd47c9c0da7849a257ad8a9dc3e3f76212ddf14747"
+      },
+      {
+        "path": "src/modules/communities/server/stats/community-stats-forward.test.ts",
+        "sha256": "33dde128c3902715564217b5eef7c89467ef814831cb11c5b3088ebf3ce9a73c"
+      }
+    ]
+  },
+  "rootCause": [
+    "Tests advanced fakeclock1100ms immediately while async FIFO pump intentionally yields via real node timers/setImmediate; native1000ms authority expired before startup/event observation could finish.",
+    "Concurrent/nonce test also asserted socket before queued collector connecting write completed, threw before draining response and left controller module busy. Following cancellation404 was cascading test isolation failure, not relaxed native authorization."
+  ],
+  "correction": [
+    "In two successful flow tests, await real FIFO idle before advancing the original fake deadline/asserting startup. Assert fake Date remains original AT after wait; no TTL increase.",
+    "Preserve admitted/completed events, messagebody/token exclusion, single socket/event/database-close, concurrent404/replay404 and GET-only assertions.",
+    "Retain cancellation before startup and add cancellation after native Gateway/event observation; require HTTP200, database release, zero REST and retained accepted event."
+  ],
+  "verification": {
+    "resources": {
+      "memAvailable": "MemAvailable:    7210408 kB",
+      "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=25549860252\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=24888558691\n",
+      "cgroupCurrent": "8698675200"
+    },
+    "results": [
+      {
+        "operation": "types",
+        "returncode": 0,
+        "elapsedSeconds": 7.34,
+        "logSha256": "4461edc017dc6661ef6a11d936ba2a605e9d46e2c4dfd30b5fea5545d7e29e98"
+      },
+      {
+        "operation": "lint",
+        "returncode": 0,
+        "elapsedSeconds": 1.569,
+        "logSha256": "107fe71278be3614d7469771d7f0cecd4951e3f070030b2fa119603039307699"
+      },
+      {
+        "operation": "tests",
+        "returncode": 0,
+        "elapsedSeconds": 16.316,
+        "logSha256": "6c1d9d07720860b1c8b1ef675b4a93f555d387114c661c6998b4dc6b88d5d606"
+      }
+    ]
+  },
+  "typeDetail": "725 reachable sources, zero diagnostics; current test correction checked with actual combined Core/Auth imports.",
+  "lintDetail": "Existing three no-explicit-any diagnostics unchanged from exact fcd/e80 test baseline; zero new errors/warnings.",
+  "actualTestContext": {
+    "root": "/home/traderlink/projects/community-tonight-combined-20261119",
+    "source": "e80bd75f50e9b3409bcf6d8f566f5bf21a0de278",
+    "sourceTreeCleanBeforeAndAfter": true,
+    "substitution": "Private Vite transform replaces ONLY controller UNIT test with assigned corrected test source. Runtime modules remain exact immutable e80; combined source files not edited.",
+    "cases": 32,
+    "files": 1,
+    "providers": "Local ProtocolSocket and no-network UNIT adapter; real disposable native SQLite/Core/Auth/issuer/nonce/runner/parsers. Not hosted staging."
+  },
+  "runtimeByteIdentityProof": {
+    "currentRuntimeSourceChanges": 0,
+    "previousNativeAndPackagingResultSha256": "b216606168a3252a32dd9a96a6f06a05f3a566b1de81d76c8b9107c57811fd97",
+    "previousReadonlyCompilationResultSha256": "be691aeafc551771bc6448fb2ea46ddc69a68c650c71c4b490cf671c553b37d3",
+    "allConsumedImmutablePinsRehashed": 481,
+    "pinVectorSha256": "81a33e8d922ad50af48cb6e44abf9f409f6c1ae022ef6dd1a390bcadbbb1cec5",
+    "correctedTestInConsumedRuntimeInputs": false,
+    "meaning": "Runtime bytes and existing artifact applicability unchanged; no native5case/worker/verifier rerun or runtime result relabel."
+  },
+  "checkpointHarness": [
+    {
+      "path": "/tmp/tl-stats-controller-qa-20261119/vitest-final.config.mjs",
+      "sha256": "06d89222eba2cd3ce8a6e040fca34947307b372c1e40d1daf1c8d35d850eed57"
+    },
+    {
+      "path": "/tmp/tl-stats-controller-qa-20261119/types-final.cjs",
+      "sha256": "5c1eafd13d09ab490b89d44e873f3030212ab52fb47b0a356cb53eb0ead8cf95"
+    },
+    {
+      "path": "/tmp/tl-stats-controller-qa-20261119/lint.cjs",
+      "sha256": "275df2ffc97fa299d6e5426ab8fec2f545a034a7675a9306fb7c1af14863edde"
+    },
+    {
+      "path": "/tmp/tl-stats-controller-qa-20261119/run-final.py",
+      "sha256": "36b3b820a116f6521aec07c277010cb25a26d85f964555b05e2ac36b45d1d73b"
+    }
+  ],
+  "initialDiscovery": "Assigned workspace31/31 passed after two test waits; final32 cases run against exact combined runtime as a necessary integration check.",
+  "guards": "Fresh resource checks; both shared guards, one operation at a time; owned child processes exited and guards released.",
+  "notPerformed": [
+    "No runtime/auth/nonce/collector/queue/deadline/source contract changes",
+    "No skips, waivers, TTL increase or broader suite rerun",
+    "No source staging/commit/push/hosted/staging deployment/CSV tests"
+  ],
+  "findings": [],
+  "next": "Root independently reviews exact one-test+document allowlist, reconciles onto e80 and retries CI. Existing v2 runtime and e80 native/packaging/verifier pins remain attributed to their actual source."
+}
