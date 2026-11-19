@@ -26,6 +26,11 @@ afterEach(() => {
 });
 
 describe("Trader Intelligence v3 private-data repository guard", () => {
+  const approvedPartnerAlertFixturePaths = [
+    "src/modules/partner-alerts/server/partner-alert-existing-whop-access.test.ts",
+    "src/modules/partner-alerts/server/partner-alert-production-provider.test.ts",
+  ] as const;
+
   it("detects private paths, broker rows, identifiers, screenshots, and credentials", () => {
     const apiKey = "sk-" + "A".repeat(24);
     const accessToken = "ghp_" + "B".repeat(24);
@@ -80,6 +85,65 @@ describe("Trader Intelligence v3 private-data repository guard", () => {
       commit: "synthetic-commit",
       sourceKind: "synthetic_test",
     });
+  });
+
+  it("accepts only the exact synthetic partner-alert secret fixtures", () => {
+    for (const path of approvedPartnerAlertFixturePaths) {
+      const content = readFileSync(path, "utf8");
+      expect(
+        scanTraderIntelligencePrivateData([
+          { path, content, sourceKind: "synthetic_test" },
+        ]).filter((finding) => finding.code === "ti_v3_secret"),
+      ).toEqual([]);
+
+      const match = content.match(
+        /\b(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*["']([^"'\r\n]{16,})["']/i,
+      );
+      expect(match?.[1]).toBeDefined();
+      const literal = match![1]!;
+      const changedLiteral = `${literal.slice(0, -1)}${literal.endsWith("x") ? "y" : "x"}`;
+
+      expect(
+        scanTraderIntelligencePrivateData([
+          {
+            path,
+            content: content.replace(literal, changedLiteral),
+            sourceKind: "synthetic_test",
+          },
+        ]),
+      ).toContainEqual(expect.objectContaining({ code: "ti_v3_secret", path }));
+      expect(
+        scanTraderIntelligencePrivateData([
+          {
+            path,
+            content: `${content}\n// altered fixture context`,
+            sourceKind: "synthetic_test",
+          },
+        ]),
+      ).toContainEqual(expect.objectContaining({ code: "ti_v3_secret", path }));
+      expect(
+        scanTraderIntelligencePrivateData([
+          {
+            path: `src/modules/other/${path.split("/").at(-1)}`,
+            content: `const accessToken = "${literal}";`,
+            sourceKind: "synthetic_test",
+          },
+        ]),
+      ).toContainEqual(expect.objectContaining({ code: "ti_v3_secret" }));
+      expect(
+        scanTraderIntelligencePrivateData([
+          {
+            path,
+            content: `${content}\nconst clientSecret = "${"R".repeat(24)}";`,
+            sourceKind: "synthetic_test",
+          },
+        ]),
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "ti_v3_secret", path }),
+        ]),
+      );
+    }
   });
 
   it("accepts only the exact file-specific fixture hash", () => {

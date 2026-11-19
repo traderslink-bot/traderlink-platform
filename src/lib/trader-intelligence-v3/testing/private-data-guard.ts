@@ -35,6 +35,17 @@ export interface TraderIntelligencePrivateDataFinding {
 const FIXTURE_DIRECTORY_PATTERN =
   /^(?:src\/docs\/trade-execution-import-fixtures|src\/lib\/execution-sources\/csv\/__fixtures__|src\/lib\/trader-analytics\/__fixtures__)\//;
 
+const APPROVED_SYNTHETIC_SECRET_FIXTURES = Object.freeze({
+  "src/modules/partner-alerts/server/partner-alert-existing-whop-access.test.ts": {
+    contentSha256: "c8f47ed1f54817f6b5f7fee01f8b52703d2e0693353d8978d655e2d448a9fa04",
+    literalSha256: "17afd17e72a71dd7cc2f7842aa513a6664ad4f525ed21fa21c31a70a44ebe16a",
+  },
+  "src/modules/partner-alerts/server/partner-alert-production-provider.test.ts": {
+    contentSha256: "9944c12a02a2be76aa6db4a5d0fcd80d95f7d7d9702e1eadf4d346ddced5cedc",
+    literalSha256: "8fc5a99ef24b62895f32678cc09665ed935c92e63867f2e196980a2f7cb06cb2",
+  },
+});
+
 function normalizedPath(path: string): string {
   return path.replaceAll("\\", "/");
 }
@@ -78,10 +89,37 @@ function addContentFindings(
   record: TraderIntelligencePrivateDataRecord,
   code: TraderIntelligencePrivateDataFindingCode,
   pattern: RegExp,
+  includeMatch: (match: RegExpMatchArray) => boolean = () => true,
 ): void {
   for (const match of record.content.matchAll(pattern)) {
+    if (!includeMatch(match)) {
+      continue;
+    }
     addFinding(findings, record, code, lineNumberAt(record.content, match.index ?? 0));
   }
+}
+
+function isApprovedSyntheticSecretFixture(
+  path: string,
+  content: string,
+  literal: string | undefined,
+): boolean {
+  if (!literal) {
+    return false;
+  }
+  const approval =
+    APPROVED_SYNTHETIC_SECRET_FIXTURES[
+      path as keyof typeof APPROVED_SYNTHETIC_SECRET_FIXTURES
+    ];
+  if (!approval) {
+    return false;
+  }
+  const contentSha256 = createHash("sha256").update(content, "utf8").digest("hex");
+  const literalSha256 = createHash("sha256").update(literal, "utf8").digest("hex");
+  return (
+    contentSha256 === approval.contentSha256 &&
+    literalSha256 === approval.literalSha256
+  );
 }
 
 function hasLikelyBrokerRows(content: string): boolean {
@@ -175,7 +213,8 @@ export function scanTraderIntelligencePrivateData(
       findings,
       record,
       "ti_v3_secret",
-      /\b(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*["'][^"'\r\n]{16,}["']/gi,
+      /\b(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[:=]\s*["']([^"'\r\n]{16,})["']/gi,
+      (match) => !isApprovedSyntheticSecretFixture(path, record.content, match[1]),
     );
   }
 
