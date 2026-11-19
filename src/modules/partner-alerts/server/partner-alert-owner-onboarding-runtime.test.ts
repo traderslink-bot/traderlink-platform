@@ -1,13 +1,17 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { PartnerAlertRepositoryError } from "./partner-alert-repository";
 import { PartnerAlertValidationError } from "../contracts/partner-alert-contracts";
 import { withPartnerAlertRequestRuntime } from "./partner-alert-request-runtime";
+import { PartnerAlertPlatformAuthority } from "./partner-alert-platform-authority";
+import { partnerAlertPrivateReadFailure } from "./partner-alert-http";
 
 // Isolated request-composition checks. Native Auth/Core/writer are explicit
 // synthetic ports; this is not an installed native or real Discord pass.
 const state = vi.hoisted(() => ({
   close: vi.fn(), bind: vi.fn(), refresh: vi.fn(), catalog: vi.fn(), preauthorize: vi.fn(), revalidate: vi.fn(),
+  operatorRefresh: vi.fn(),
   beforeSave: undefined as undefined | ((request: Request, command: {
     action: string; communityId: string; expectedRevision: number; displayName: string; sourceChannelId?: string;
   }) => Promise<void>),
@@ -26,6 +30,9 @@ vi.mock("./partner-alert-request-writer", () => ({
 }));
 vi.mock("./partner-alert-owner-evidence-refresh", async original => ({
   ...await original<typeof import("./partner-alert-owner-evidence-refresh")>(), refreshPartnerAlertOwnerEvidence: state.refresh,
+}));
+vi.mock("./partner-alert-operator-evidence-refresh", async original => ({
+  ...await original<typeof import("./partner-alert-operator-evidence-refresh")>(), refreshPartnerAlertOperatorEvidence: state.operatorRefresh,
 }));
 vi.mock("./partner-alert-review-discord", async original => {
   const actual = await original<typeof import("./partner-alert-review-discord")>();
@@ -72,6 +79,7 @@ beforeEach(() => {
   vi.stubEnv("PARTNER_ALERT_PUBLISHING_PRICING_CAPABILITIES_JSON", undefined);
   state.bind.mockImplementation(() => ({}));
   state.refresh.mockImplementation(async input => input.configurationIsCurrent() ? "verified" : "unavailable");
+  state.operatorRefresh.mockImplementation(async input => input.configurationIsCurrent() ? "verified" : "unavailable");
   state.preauthorize.mockImplementation(() => permit);
   state.revalidate.mockImplementation(() => undefined);
   state.catalog.mockResolvedValue(source);
@@ -80,6 +88,61 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 describe("owner onboarding with Discord metadata but no financial configuration", () => {
+  it.each([
+    { setting: "PARTNER_ALERT_PROVIDER_VERIFICATION_ENABLED", value: "false", stale: false },
+    { setting: "PARTNER_ALERT_DISCORD_BOT_TOKEN", value: undefined, stale: false },
+    { setting: "PARTNER_ALERT_PROVIDER_VERIFICATION_ENABLED", value: "false", stale: true },
+    { setting: "PARTNER_ALERT_DISCORD_BOT_TOKEN", value: undefined, stale: true },
+  ])("preserves native operator freshness when $setting=$value (stale=$stale)", async ({ setting, value, stale }) => {
+    vi.stubEnv(setting, value);
+    const req = request("/api/admin/journal/partner-channels"), at = "2026-11-19T18:19:33.000Z";
+    const userId = "10000000-0000-4000-8000-000000000001";
+    const operation = vi.fn(async () => {
+      // Real existing freshness evaluator and HTTP error mapping, with explicit
+      // synthetic identity/admin ports. Actual Core/Auth coverage is separate.
+      const authority = PartnerAlertPlatformAuthority.forRequest(req, {
+        resolveIdentity: () => ({ mode: "platform_session", sessionId: "30000000-0000-4000-8000-000000000003",
+          displayName: "Fixture operator", discord: { guildOwner: true, roleIds: [] }, scope: {
+            userId, workspaceId: "40000000-0000-4000-8000-000000000004", workspaceRole: "owner",
+            allowedAccountIds: [], activeAccountId: null,
+          } }),
+        identityOptions: { environment: process.env }, nowUtc: () => at,
+        maximumActorAgeMs: 30_000, maximumDiscordEvidenceAgeMs: 300_000,
+        destinationGuildId: "1433570740430573642", communities: {} as never, discordMemberships: {} as never,
+        admin: { authorize: () => ({ userId, role: "journal_owner_admin", mode: "production_discord_owner",
+          authorizedAtUtc: at, discordOwnerVerifiedAtUtc: stale ? "2026-11-19T09:58:03.466Z" : at, permissions: [] }) },
+      });
+      try { authority.requireOperator(); return Response.json({ ok: true, result: [] }); }
+      catch (error) { return partnerAlertPrivateReadFailure(error); }
+    });
+    expect((await withPartnerAlertRequestRuntime(req, operation)).status).toBe(stale ? 403 : 200);
+    expect(operation).toHaveBeenCalledOnce();
+    expect(state.operatorRefresh).not.toHaveBeenCalled(); expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("refreshes actual operator observation before normal admin handling without requiring payment or output configuration", async () => {
+    const operation = vi.fn(async () => new Response(null, { status: 204 }));
+    expect((await withPartnerAlertRequestRuntime(request("/api/admin/journal/partner-channels"), operation)).status).toBe(204);
+    expect(state.operatorRefresh).toHaveBeenCalledOnce(); expect(operation).toHaveBeenCalledOnce();
+    expect(state.refresh).not.toHaveBeenCalled(); expect(state.catalog).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("preserves ordinary operator denial and refuses unavailable observation before admin handling", async () => {
+    const denied = vi.fn(async () => new Response(null, { status: 403 }));
+    state.operatorRefresh.mockResolvedValue("not_operator");
+    expect((await withPartnerAlertRequestRuntime(request("/api/admin/journal/partner-channels"), denied)).status).toBe(403);
+    state.operatorRefresh.mockResolvedValue("unavailable"); denied.mockClear();
+    expect((await withPartnerAlertRequestRuntime(request("/api/admin/journal/partner-channels"), denied)).status).toBe(503);
+    expect(denied).not.toHaveBeenCalled();
+  });
+
+  it("keeps invalid admin mutation security before Discord refresh", async () => {
+    expect((await withPartnerAlertRequestRuntime(request("/api/admin/journal/partner-channels", undefined, "POST"),
+      async () => new Response(null, { status: 204 }))).status).toBe(403);
+    expect(state.operatorRefresh).not.toHaveBeenCalled();
+  });
+
   it("refreshes ownership and reads/revalidates existing sources with payment and output configuration absent", async () => {
     const req = request(), response = await read(req);
     expect(response.status).toBe(200);
@@ -103,6 +166,25 @@ describe("owner onboarding with Discord metadata but no financial configuration"
       return new Response(null, { status: 204 });
     });
     expect(response.status).toBe(204);
+  });
+
+  it.each([
+    { label: "renamed server", action: "savePartnerDraft", displayName: "Previous server name" },
+    { label: "renamed channel", action: "saveMappingDraft", displayName: "Previous channel name",
+      sourceChannelId: source.channels[0]!.channelId },
+    { label: "channel missing from current Discord inventory", action: "saveMappingDraft", displayName: "Signals",
+      sourceChannelId: "100000000000000099" },
+  ])("classifies $label as a reload conflict instead of provider unavailability", async command => {
+    const req = request(prefix);
+    const response = await withPartnerAlertRequestRuntime(req, async () => {
+      const result = state.beforeSave!(req, { ...command, communityId: id, expectedRevision: 0 });
+      await expect(result).rejects.toBeInstanceOf(PartnerAlertRepositoryError);
+      await expect(result).rejects.toMatchObject({ kind: "conflict", message: "Discord source name changed" });
+      return new Response(null, { status: 204 });
+    });
+    expect(response.status).toBe(204);
+    expect(state.revalidate).toHaveBeenCalledWith(req, permit, undefined);
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("does not turn missing paid verification into buyer Premium or seller readiness", async () => {

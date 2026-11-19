@@ -1,4 +1,5 @@
 import { partnerAlertOwnerEvidenceTarget,refreshPartnerAlertOwnerEvidence } from "./partner-alert-owner-evidence-refresh";
+import { partnerAlertOperatorEvidenceTarget, refreshPartnerAlertOperatorEvidence } from "./partner-alert-operator-evidence-refresh";
 import { isPartnerAlertReviewDiscordTarget } from "./partner-alert-review-discord";
 import "server-only";
 
@@ -195,7 +196,8 @@ export async function withPartnerAlertRequestRuntime<T>(
       : readPartnerAlertProviderRuntimeConfiguration(environment, outputBotUserId, outputConfigurationRef);
     const discordConfiguration = readDiscordConfiguration();
     const ownerTarget = partnerAlertOwnerEvidenceTarget(request);
-    const readOwnerDiscordConfiguration = () => ownerTarget
+    const operatorTarget = partnerAlertOperatorEvidenceTarget(request);
+    const readOwnerDiscordConfiguration = () => (ownerTarget || operatorTarget)
       && environment[ENABLED_ENV] === "true" && environment[CATALOG_SHA_ENV] === catalogSha256
       ? readPartnerAlertOwnerDiscordDiscoveryConfiguration(environment, outputBotUserId, outputConfigurationRef) : null;
     const ownerDiscordConfiguration = readOwnerDiscordConfiguration();
@@ -211,6 +213,24 @@ export async function withPartnerAlertRequestRuntime<T>(
           return current !== null && providerConfigurationFingerprint(current) === fingerprint;
         } });
       if (refreshed === "unavailable") return unavailableResult();
+    }
+    if (operatorTarget) {
+      if (request.method === "POST") {
+        try { requireJournalAdminMutationRequest(request); }
+        catch { return runtimeResponse(403, { ok: false, code: "forbidden" }); }
+      }
+      // Metadata refresh is optional for settings reads. Without its provider
+      // configuration, retain the unchanged native writer: fresh authorized
+      // evidence can be read, and stale or unauthorized evidence still refuses.
+      if (ownerDiscordConfiguration) {
+        const fingerprint = providerConfigurationFingerprint(ownerDiscordConfiguration);
+        const refreshed = await refreshPartnerAlertOperatorEvidence({ database, admission, request, environment,
+          botToken: ownerDiscordConfiguration.discordBotToken, configurationIsCurrent: () => {
+            const current = readOwnerDiscordConfiguration();
+            return current !== null && providerConfigurationFingerprint(current) === fingerprint;
+          } });
+        if (refreshed === "unavailable") return unavailableResult();
+      }
     }
     const messageContentEnabled = environment.PARTNER_ALERT_DISCORD_MESSAGE_CONTENT_INTENT_ENABLED === "true";
     const pricingCapabilities = providerConfiguration?.pricingCapabilities
@@ -280,7 +300,9 @@ export async function withPartnerAlertRequestRuntime<T>(
       const source = await readVerifiedSource(incoming, command.communityId, command.expectedRevision);
       const name = command.action === "savePartnerDraft" ? source.guildName
         : source.channels.find(channel => channel.channelId === command.sourceChannelId)?.name;
-      if (!name || command.displayName !== name) throw new Error("Discord source name changed");
+      if (!name || command.displayName !== name) {
+        throw new PartnerAlertRepositoryError("conflict", "Discord source name changed");
+      }
     });
     const readSourceChannels = async (incoming: Request, communityId: string): Promise<Response> => {
       if (incoming.method !== "GET" && incoming.method !== "POST") return runtimeResponse(405, { ok: false, code: "method_not_allowed" });
