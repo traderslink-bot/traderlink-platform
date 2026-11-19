@@ -48,6 +48,8 @@ const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "screeners", "workspace", "premarket-pullbacks-card.tsx"),
   join(dashboardRoot, "screeners", "workspace", "screener-press-release-board.tsx"),
   join(dashboardRoot, "screeners", "workspace", "scanner-company-drawer.tsx"),
+  // Bottom feature editor for card order, sizes and saved layouts; not dashboard navigation.
+  join(dashboardRoot, "screeners", "workspace", "scanner-mobile-layout-editor.tsx"),
   join(dashboardRoot, "trades", "trade-details-drawer.tsx"),
   join(dashboardRoot, "workspace", "workspace-atomic-trade-edit-drawer.tsx"),
   join(dashboardRoot, "workspace", "workspace-calendar-panel.tsx"),
