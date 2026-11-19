@@ -53,5 +53,12 @@ function main(){
   scope:'Built image/source and ABI qualification only. Keeper hold is not normal application readiness; full migration, configuration and activation gates remain.'};
  process.stdout.write(JSON.stringify(proof)+'\n');return proof;
 }
-if(require.main===module)main();
+if(require.main===module){
+ main();
+ // Keep the healthy predecessor on its volume while the release owner checks
+ // this exact built-image proof and prepares same-schema activation. This is
+ // a predeploy hold only: it neither mounts /data nor grants runtime admission.
+ // The owner cancels the exact candidate if qualification cannot finish here.
+ setTimeout(()=>process.stdout.write('combined210_predeploy_qualification_hold_complete\n'),90000);
+}
 module.exports={main};
