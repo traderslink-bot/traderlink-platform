@@ -1,3 +1,4 @@
+import { isReviewed210PremiumEventsBoundary } from "./platform-erasure-210-boundary";
 import { calculatePlatformMigrationChecksum } from "../database/platform-migration-contract";
 import { platformPremiumCurrentAccessEventsMigration } from "../database/migrations/0216_platform_premium_current_access_events";
 import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS } from "../membership/platform-premium-role-current-access-schema";
@@ -152,7 +153,8 @@ function qualifyRegisteredSchema(database: Database.Database, required: readonly
       || rows.length === 205 && rows[203] === installed && appended?.migration_id === "0217_traderlink_community_stats_forward_checkpoints"
         && appended.module_namespace === "community" && appended.execution_order === 292
         && canonicalAppend?.migrationId === appended.migration_id && canonicalAppend.moduleNamespace === "community"
-        && canonicalAppend.executionOrder === 292 && appended.checksum_sha256 === calculatePlatformMigrationChecksum(canonicalAppend);
+        && canonicalAppend.executionOrder === 292 && appended.checksum_sha256 === calculatePlatformMigrationChecksum(canonicalAppend)
+      || isReviewed210PremiumEventsBoundary(rows, platformMigrationManifest);
     if (!reviewedBoundary || !declared || declared.moduleNamespace !== "platform"
       || declared.executionOrder !== 291 || installed.execution_order !== 291 || installed.module_namespace !== "platform"
       || installed.checksum_sha256 !== checksum || calculatePlatformMigrationChecksum(declared) !== checksum
