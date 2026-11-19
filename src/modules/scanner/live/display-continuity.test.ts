@@ -81,7 +81,9 @@ it("never carries displayed rows across a provider switch",()=>{
  const previous={...populated(),provider:"moomoo" as const};const incoming=model({provider:"alpaca",status:"warming"});
  expect(applyScannerDisplayContinuity(previous,incoming,{emptySince:null},1000).model).toBe(incoming);
 });
-it("does not disguise an event-stream coverage loss as active retained rows",()=>{
+it("holds an event-stream interruption only for the bounded continuity window",()=>{
  const previous={...populated(),provider:"alpaca" as const,refreshAfterMs:1000};const incoming=model({provider:"alpaca",refreshAfterMs:1000,status:"unavailable"});
- expect(applyScannerDisplayContinuity(previous,incoming,{emptySince:null},1000).model).toBe(incoming);
+ const brief=applyScannerDisplayContinuity(previous,incoming,{emptySince:null},1000);
+ expect(brief.model).toBe(previous);
+ expect(applyScannerDisplayContinuity(previous,incoming,brief.continuity,1001+EMPTY_SCANNER_CONTINUITY_MS).model).toBe(incoming);
 });

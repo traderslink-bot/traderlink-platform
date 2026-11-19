@@ -6,6 +6,12 @@ export type ScannerDisplayContinuity = Readonly<{ emptySince: number | null }>;
 
 const TERMINAL_STATUSES = new Set<ScannerReadModel["status"]>(["disabled", "closed", "universe_missing"]);
 
+export function scannerContextChanged(previous: ScannerReadModel, incoming: ScannerReadModel): boolean {
+  return previous.tradingDate !== incoming.tradingDate || previous.provider !== incoming.provider ||
+    previous.sourceContext !== incoming.sourceContext ||
+    (incoming.session !== null && previous.session !== incoming.session);
+}
+
 export function scannerModelHasRows(model: ScannerReadModel): boolean {
   return Boolean(
     model.gainers.rows.length ||
@@ -26,18 +32,14 @@ export function applyScannerDisplayContinuity(
   continuity: ScannerDisplayContinuity,
   now: number,
 ): Readonly<{ model: ScannerReadModel; continuity: ScannerDisplayContinuity }> {
-  const contextChanged = previous !== null && (
-    previous.tradingDate !== incoming.tradingDate || previous.provider !== incoming.provider ||
-    (incoming.session !== null && previous.session !== incoming.session)
-  );
+  const contextChanged = previous !== null && scannerContextChanged(previous, incoming);
 
   if (
     previous === null ||
     contextChanged ||
     TERMINAL_STATUSES.has(incoming.status) ||
-    incoming.refreshAfterMs===1000&&incoming.status==="unavailable" ||
-    scannerModelHasRows(incoming) ||
-    !scannerModelHasRows(previous)
+    TERMINAL_STATUSES.has(previous.status) || previous.status === "unavailable" ||
+    (incoming.status !== "unavailable" && (scannerModelHasRows(incoming) || !scannerModelHasRows(previous)))
   ) {
     return { model: incoming, continuity: { emptySince: null } };
   }

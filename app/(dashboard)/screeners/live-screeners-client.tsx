@@ -53,7 +53,7 @@ import { ScannerChartLaunchControls, SideCardChartControls, useSideCardChartCont
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import OpenInFullRoundedIcon from "@mui/icons-material/OpenInFullRounded";
-import { Fragment, memo, useCallback, startTransition, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
+import { Fragment, memo, startTransition, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useReducer, useId, type ReactNode } from "react";
 
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
@@ -82,7 +82,8 @@ import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/g
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
 import { memberScannerStatus, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
-import { applyScannerDisplayContinuity, type ScannerDisplayContinuity } from "@/src/modules/scanner/live/display-continuity";
+import { useLiveScannerModel } from "./use-live-scanner-model";
+import { ScannerConnectionIndicator } from "./scanner-connection-indicator";
 
 import { MomentumSections } from "./momentum-sections";
 import { momentumSignalText } from "./momentum-signal-text";
@@ -570,11 +571,10 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     try { window.localStorage.setItem(MOBILE_SCANNER_LAYOUT_KEY,next?"tabs":"stacked"); }
     catch { /* Keep this choice for the current page. */ }
   };
-  const [model,setModel]=useState<ScannerReadModel|null>(null), [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
+  const {model,loadError,checkedAt,failedAt,phase}=useLiveScannerModel();
+  const [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const momentumSections = model?.momentum.momentumSections;
   const momentumStocks = momentumSections ? [...momentumSections.confirmed,...momentumSections.early] : model?.momentum.rows ?? [];
-  const displayContinuity=useRef<ScannerDisplayContinuity>({emptySince:null});
-  const publishedModel=useRef<ScannerReadModel|null>(null);
   const [chartWorkspace,dispatchChart]=useReducer(scannerChartWorkspace,EMPTY_CHART_WORKSPACE);
   const chartView=useChartMultiview("scanner");
   const { preferences:chartPreferences, ready:preferencesReady, message:preferencesMessage }=useChartPreferences();
@@ -639,8 +639,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const [newsArticle,setNewsArticle]=useState<PressReleaseArticle|null>(null);
   const [fullScanner,setFullScanner]=useState<ScannerKind|null>(null);
   const [displayModes,setDisplayModes]=useState<Record<ScannerKind|"top-losers"|"high-drops",ScannerView>>({gainers:"table",momentum:"table","top-losers":"table","high-drops":"table"});
-  const [loadError,setLoadError]=useState(false), [settingsError,setSettingsError]=useState(false);
-  const [checkedAt,setCheckedAt]=useState<number>(()=>Date.now());
+  const [settingsError,setSettingsError]=useState(false);
   const gridRef=useRef<HTMLDivElement|null>(null);
   const [desktopGridHeight,setDesktopGridHeight]=useState<number|null>(null);
   useEffect(()=>{
@@ -658,29 +657,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     schedule();
     return()=>{cancelAnimationFrame(frame);observer?.disconnect();window.removeEventListener("resize",schedule);window.visualViewport?.removeEventListener("resize",schedule);};
   },[]);
-  useEffect(()=>{
-    let source:EventSource|undefined;
-    const open=()=>{
-      source?.close();source=undefined;
-      if(document.hidden)return;
-      source=new EventSource('/api/screeners/live?stream=1');
-      const connection=source;
-      source.addEventListener('scanner',event=>{
-        if(source!==connection)return;
-        try{
-          const incoming=JSON.parse((event as MessageEvent).data) as ScannerReadModel;
-          const now=Date.now();
-          const next=applyScannerDisplayContinuity(publishedModel.current,incoming,displayContinuity.current,now);
-          displayContinuity.current=next.continuity;
-          publishedModel.current=next.model;
-          startTransition(()=>{setModel(next.model);setLoadError(false);setCheckedAt(now);});
-        }catch{setLoadError(true);}
-      });
-      source.onerror=()=>{if(source===connection){setLoadError(true);setCheckedAt(Date.now());}};
-    };
-    document.addEventListener('visibilitychange',open);open();
-    return()=>{source?.close();source=undefined;document.removeEventListener('visibilitychange',open);};
-  },[]);
+
   useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";
   const selectedGainers=gainerViewResults(model,gainerView);
@@ -689,7 +666,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
   const haltByTicker=useMemo(()=>new Map(activeHalts.map(halt=>[halt.ticker,halt])),[activeHalts]);
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
-  const memberNotice=admin&&model?.status!=="closed"?null:memberScannerStatus(model,loadError,checkedAt);
+  const memberNotice=admin&&model?.status!=="closed"?null:memberScannerStatus(model,loadError,checkedAt,failedAt);
   const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
   const gainerTitle=model?.session==="after_hours"?"Top Gainers Post Market":"Top Gainers";
   const gainerTabs=<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title={GAINERS_EXPLANATION}>
@@ -736,6 +713,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     </DashboardPanel>:null}
     {!admin&&<Portal container={scannerToolbar}>
       <Stack direction="row" sx={{justifyContent:"flex-end"}}>
+        <ScannerConnectionIndicator phase={phase}/>
         {!drawerOpen&&chartWorkspace.charts.length>0&&<Tooltip title="Reopen chart drawer">
           <IconButton aria-label="Reopen chart drawer" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>
             <CandlestickChartOutlined fontSize="small"/>

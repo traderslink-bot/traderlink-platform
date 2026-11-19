@@ -176,6 +176,8 @@ export type BreakoutRow = LiveScannerRow & Readonly<{
 export type ScannerReadModel = Readonly<{
   refreshAfterMs?:number;
   provider?:"alpaca"|"moomoo";
+  /** Opaque public dataset identity; supplier names stay server-side. */
+  sourceContext?: string;
   status: "disabled" | "universe_missing" | "closed" | "warming" | "ready" | "partial" | "unavailable";
   tradingDate: string; session: ScannerSession | null; updatedAtUtc: string | null; universeSourceDate?: string | null;
   universeCount: number; receivedCount: number; missingSymbols: readonly string[]; missingFloatCount: number;

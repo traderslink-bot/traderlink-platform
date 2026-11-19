@@ -52,9 +52,9 @@ describe("member scanner notices", () => {
     const populated = { ...base, updatedAtUtc: new Date(updatedAt).toISOString(), momentum: {
       rows: [{ symbol: "TEST" } as ScannerReadModel["momentum"]["rows"][number]], focus: [], total: 1,
     } };
-    expect(memberScannerStatus(populated,true,updatedAt + 5_000)).toBeNull();
-    expect(memberScannerStatus(populated,true,updatedAt + SCANNER_TRANSIENT_FAILURE_GRACE_MS)).toBeNull();
-    expect(memberScannerStatus(populated,true,updatedAt + SCANNER_TRANSIENT_FAILURE_GRACE_MS + 1)).toBe(SCANNER_UNAVAILABLE_MESSAGE);
+    expect(memberScannerStatus(populated,true,updatedAt + 5_000,updatedAt)).toBeNull();
+    expect(memberScannerStatus(populated,true,updatedAt + SCANNER_TRANSIENT_FAILURE_GRACE_MS,updatedAt)).toBeNull();
+    expect(memberScannerStatus(populated,true,updatedAt + SCANNER_TRANSIENT_FAILURE_GRACE_MS + 1,updatedAt)).toBe(SCANNER_UNAVAILABLE_MESSAGE);
   });
   it("shows operating hours overnight rather than a universe/provider error", () => {
     expect(memberScannerStatus({ ...base, status: "universe_missing" },true,at("2026-11-03T01:00:00Z")))

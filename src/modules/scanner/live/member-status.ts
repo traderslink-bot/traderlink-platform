@@ -1,4 +1,6 @@
 import type { ScannerReadModel } from "./contracts";
+import { scannerModelHasRows } from "./display-continuity";
+import { easternClock } from "./sessions";
 
 export const SCANNER_ACTIVE_HOURS_MESSAGE = "Scanners run from premarket open to post-market close (4 AM–8 PM ET).";
 export const SCANNER_UNAVAILABLE_MESSAGE = "Temporarily unavailable.";
@@ -15,19 +17,17 @@ export function scannerOutsideActiveHours(model: ScannerReadModel | null, checke
 }
 
 /** Member-facing presentation only; keep provider/coverage diagnostics in Admin. */
-export function memberScannerStatus(model: ScannerReadModel | null, loadError: boolean, checkedAt: number | null): string | null {
+export function canRetainScannerSnapshot(model: ScannerReadModel | null, now: number): boolean {
+  return Boolean(model && model.tradingDate === easternClock(now).date &&
+    (model.status === "ready" || model.status === "partial" || model.status === "warming" && scannerModelHasRows(model)));
+}
+
+export function memberScannerStatus(model: ScannerReadModel | null, loadError: boolean, checkedAt: number | null, failedAt: number | null = null): string | null {
   if (model?.status === "disabled") return "Disabled";
   if (scannerOutsideActiveHours(model, checkedAt)) return SCANNER_ACTIVE_HOURS_MESSAGE;
   if (loadError) {
-    const updatedAt = model?.updatedAtUtc ? Date.parse(model.updatedAtUtc) : NaN;
-    const hasRows = Boolean(model && (
-      model.gainers.rows.length || model.gainers.focus.length ||
-      model.dayGainers?.rows.length || model.dayGainers?.focus.length ||
-      model.momentum.rows.length || model.momentum.focus.length ||
-      model.declines?.rapid.length || model.declines?.losers.length ||
-      model.premarketPullbacks?.rows.length
-    ));
-    if (!hasRows || checkedAt === null || !Number.isFinite(updatedAt) || checkedAt - updatedAt > SCANNER_TRANSIENT_FAILURE_GRACE_MS) {
+    if (checkedAt === null || failedAt === null || !Number.isFinite(failedAt) ||
+      checkedAt < failedAt || !canRetainScannerSnapshot(model, checkedAt) || checkedAt - failedAt > SCANNER_TRANSIENT_FAILURE_GRACE_MS) {
       return SCANNER_UNAVAILABLE_MESSAGE;
     }
   }
