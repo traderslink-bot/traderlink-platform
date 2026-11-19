@@ -1,3 +1,4 @@
+import { runNotesNotifications } from "@/src/modules/watchlist/server/notifications/watchlist-notes-notifications";
 import { startMoomooConnectionMonitor } from "../broker-connections/moomoo-connection-monitor-runtime";
 import { startPlatformLoginMailWorker } from "../authentication/platform-login-mail-queue";
 import { runCategoryMoveNotifications } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
@@ -73,7 +74,7 @@ export function startTraderLinkHostedBackgroundWorkers(): void {
 
   void runAnalyzer();
   const runWatchlistApprovals = () => void reconcileWatchlistNotificationApprovals().catch(() => console.error("Watchlist notification approval check failed."));
-  const runWatchlistDelivery = () => { void runCategoryMoveNotifications().catch(() => console.error("Watchlist move notifications failed.")); return void runWatchlistNotificationDelivery().catch(() => console.error("Watchlist notification delivery check failed.")); };
+  const runWatchlistDelivery = () => { void runNotesNotifications().catch(() => console.error("Watchlist notes notifications failed.")); void runCategoryMoveNotifications().catch(() => console.error("Watchlist move notifications failed.")); return void runWatchlistNotificationDelivery().catch(() => console.error("Watchlist notification delivery check failed.")); };
   runWatchlistApprovals();
   runWatchlistDelivery();
   setInterval(runWatchlistApprovals, 15_000);

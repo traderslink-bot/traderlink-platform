@@ -108,6 +108,7 @@ export function watchlistNotificationExpired(
 
 export function watchlistPublicationNotificationCopy(ticker: string, kind: "listing" | "analysis" = "listing", ownerApproved = false, context?: AnalysisUpdateContext) {
   if (!tickerPattern.test(ticker)) throw new Error("Invalid Watchlist ticker.");
+  const categoryMoveNote = parseAnalysisUpdateContext(context)?.categoryMoveNote;
   const firstAnalysis = kind === "analysis" && context?.hasPreviousAnalysis === false;
   const analysisTitle = firstAnalysis ? `${ticker} Analysis published` : `${ticker} Analysis updated`;
   const analysisBody = firstAnalysis ? "The first analysis is now available. View the setups and levels in the app." : ANALYSIS_UPDATE_EXPLANATION;
@@ -115,9 +116,9 @@ export function watchlistPublicationNotificationCopy(ticker: string, kind: "list
   return Object.freeze({
     destinationPath: `/watchlist/${ticker}`,
     pushTitle: (kind === "analysis" ? analysisTitle : `${ticker} added to the Watchlist`) + attribution,
-    pushBody: kind === "analysis" ? [context?.categoryMoveNote, analysisBody].filter(Boolean).join("\n") : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
+    pushBody: kind === "analysis" ? [categoryMoveNote, analysisBody].filter(Boolean).join("\n") : `A new Watchlist post is ready. Open ${ticker} to view the levels and available analysis.`,
     emailTitle: (kind === "analysis" ? analysisTitle : `${ticker} added to the TradersLink Watchlist`) + attribution,
-    emailBody: kind === "analysis" ? [context?.categoryMoveNote, analysisBody].filter(Boolean).join("\n") : `A new Watchlist post for ${ticker} is ready.`,
+    emailBody: kind === "analysis" ? [categoryMoveNote, analysisBody].filter(Boolean).join("\n") : `A new Watchlist post for ${ticker} is ready.`,
     emailTickerLabel: `View ${ticker}`,
     emailWatchlistLabel: "View Watchlist",
     emailWatchlistPath: "/watchlist",

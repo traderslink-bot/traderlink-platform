@@ -17,7 +17,14 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
   #traderslink-watchlist-admin-summary > * { margin-top: 0; }
   #traderslink-watchlist-admin-provider-summary { display: grid; gap: 8px; }
   #traderslink-watchlist-admin-provider-summary h2 { margin: 0; font-size: 16px; }
-  #traderslink-watchlist-admin-provider-summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  #traderslink-watchlist-admin-provider-summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%,110px), 1fr)); gap: 8px; }
+  #traderslink-watchlist-admin-provider-summary-cards .runtime-card { min-width: 0; min-height: 48px; padding: 8px; }
+  #traderslink-watchlist-admin-provider-summary-cards .runtime-label { font-size: 11px; }
+  #traderslink-watchlist-admin-provider-summary-cards .runtime-value { font-size: 13px; }
+  #traderslink-watchlist-admin-provider-summary-cards .provider-roles { margin-top: 4px; font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
+  #traderslink-watchlist-admin-provider-summary-cards [data-provider-state="In use"] .runtime-value { color: #15803d; }
+  #traderslink-watchlist-admin-provider-summary-cards [data-provider-state="Unknown"] .runtime-value,
+  #traderslink-watchlist-admin-provider-summary-cards [data-provider-state="Standby"] .runtime-value { color: #b45309; }
   #traderslink-watchlist-admin-section-navigation { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; padding: 12px; background: inherit; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 10px; }
   #traderslink-watchlist-admin-section-navigation button { min-height: 38px; padding: 8px 12px; border: 1px solid rgba(148, 163, 184, 0.55); border-radius: 7px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
   #traderslink-watchlist-admin-section-navigation button[aria-current="page"] { border-color: currentColor; font-weight: 700; }
@@ -65,7 +72,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
     const providerSummary = document.createElement("section");
     providerSummary.id = "traderslink-watchlist-admin-provider-summary";
     const providerSummaryHeading = document.createElement("h2");
-    providerSummaryHeading.textContent = "Market Data Connections";
+    providerSummaryHeading.textContent = "Market Data Providers";
     const providerSummaryCards = document.createElement("div");
     providerSummaryCards.id = "traderslink-watchlist-admin-provider-summary-cards";
     providerSummary.append(providerSummaryHeading, providerSummaryCards);
@@ -131,7 +138,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
       const connectionCards = Array.from(providerGrid.querySelectorAll(":scope > .runtime-card"))
         .filter((card) => {
           const label = normalize(card.querySelector(".runtime-label")?.textContent || "");
-          return label === "Watchlist Market Data" || label === "Moomoo Connection";
+          return label === "Watchlist Market Data" || Boolean(card.dataset.watchlistProvider);
         });
       providerSummaryCards.replaceChildren(...connectionCards.map((card) => card.cloneNode(true)));
     };
@@ -175,6 +182,10 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
         button.setAttribute("aria-current", id === sectionId ? "page" : "false");
       });
     };
+    document.addEventListener("watchlist-open-analysis-attention", () => {
+      activate("ai-controls");
+      if (window.parent !== window) window.parent.postMessage({source:"traderslink-watchlist-admin",type:"open-analysis-attention"}, window.location.origin);
+    });
     sectionDefinitions.forEach((section) => {
       const button = document.createElement("button");
       button.type = "button";

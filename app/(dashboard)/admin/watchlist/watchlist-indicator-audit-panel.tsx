@@ -81,7 +81,7 @@ export default function WatchlistIndicatorAuditPanel() {
           <Typography variant="body2">Started: {time(record.startedAt)}. Finished: {time(record.finishedAt)}.</Typography>
           <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>Refresh: {record.id}. Runtime instance: {record.instanceId}. Activation: {record.activationId}.</Typography>
           {record.timeframes.map(frame => <Typography variant="body2" key={frame.timeframe} sx={{ my: 1 }}>
-            {frame.timeframe === "1d" ? "Daily" : frame.timeframe}: {label(frame.provider)} · Moomoo: {label(frame.primaryOutcome)} · Yahoo fallback: {label(frame.fallbackOutcome)} · {frame.acceptedBars} accepted bars · Through {time(frame.through)} · {frame.missingMinutes} unknown missing minutes · Missing volume: {frame.missingVolumeBars ?? "not recorded"} · {frame.excludedBars} excluded bars · Revision {frame.calculationRevision ?? "—"}
+            {frame.timeframe === "1d" ? "Daily" : frame.timeframe}: {label(frame.provider)} · Primary request: {label(frame.primaryOutcome)} · Fallback: {label(frame.fallbackOutcome)} · {frame.acceptedBars} accepted bars · Through {time(frame.through)} · {frame.missingMinutes} unknown missing minutes · Missing volume: {frame.missingVolumeBars ?? "not recorded"} · {frame.excludedBars} excluded bars · Revision {frame.calculationRevision ?? "—"}
             {frame.rebuildReason ? ` · Rebuild: ${label(frame.rebuildReason)}` : ""}{frame.correctedBars !== undefined ? ` · Corrected: ${frame.correctedBars}` : ""}{frame.gapReset ? " · Restarted warm-up after an unknown gap" : ""}
           </Typography>)}
           <details><summary>Provider requests and retries</summary>

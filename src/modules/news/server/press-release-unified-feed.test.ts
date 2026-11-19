@@ -91,3 +91,16 @@ it('supports every offered sort and recorded category with deterministic time/ID
  expect(f.read({...DEFAULT_NEWS_FILTERS,capStatus:'unknown'}).articles.map(a=>a.id)).toEqual(['c']);
  expect(f.read({...DEFAULT_NEWS_FILTERS,capStatus:'known',summary:'available'}).articles.map(a=>a.id)).toEqual(['a','b']);
 });
+it('keeps a relative-date pagination snapshot stable across Eastern midnight',()=>{
+ vi.useFakeTimers({toFake:['Date']});
+ try{
+  vi.setSystemTime(new Date('2026-01-11T04:59:00.000Z'));
+  const f=fixture();for(let i=0;i<180;i++)f.add('day-'+i,'$20M',{date:'2026-01-10T16:00:00.000Z'});
+  f.add('next-day','$20M',{date:'2026-01-11T05:00:00.000Z'});
+  const filters={...DEFAULT_NEWS_FILTERS,datePeriod:'today'},first=f.read(filters);
+  expect(first.articles).toHaveLength(100);
+  vi.setSystemTime(new Date('2026-01-11T05:01:00.000Z'));
+  const second=f.read(filters,first.nextOffset,first.asOf);
+  expect(second.articles).toHaveLength(80);expect(second.articles.some(article=>article.id==='next-day')).toBe(false);
+ }finally{vi.useRealTimers();}
+});

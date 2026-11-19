@@ -15,10 +15,10 @@ type Intent={operation_id:string;ticker:string;destination_group:string;actor:st
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function categoryMoveNotificationCopy(ticker:string,group:string){
  const labels:Record<string,string>={main:"Main Session",top_regular:"Top Regular Hour Watches",postmarket:"Post-Market",general:"General Watchlist",swings:"Swings"};
- const label=/^top_watches:\d{4}-\d{2}-\d{2}$/.test(group)?"Overnight Watches":labels[group];
+ const label=/^top_watches:\d{4}-\d{2}-\d{2}$/.test(group)?"Overnight":labels[group];
  if(!label||!/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(ticker))throw Error("Invalid category move.");
- const title=`${ticker} added to ${label} by "This Guy"`;
- const body=label==="Overnight Watches"?`See the analysis for potential setups and levels to watch.`:`${ticker} has moved to ${label}. View the ticker page for available analysis, notes and levels.`;
+ const title=`${ticker} moved to ${label} by "This Guy"`;
+ const body=label==="Overnight"?`See the analysis for potential setups and levels to watch.`:`${ticker} has moved to ${label}. View the ticker page for available analysis, notes and levels.`;
  return {pushTitle:title,emailTitle:title,pushBody:body,emailBody:body,destinationPath:`/watchlist/${ticker}`,emailTickerLabel:`View ${ticker}`,emailWatchlistLabel:"View Watchlist",emailWatchlistPath:"/watchlist"} as const;
 }
 /** Owner proxy snapshots current recipients before dispatch. Duplicate clicks keep the same set. */

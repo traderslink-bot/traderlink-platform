@@ -1,3 +1,4 @@
+import { canViewWatchlistIndicators } from "@/src/modules/watchlist/server/access/watchlist-indicators-visibility";
 import { readWatchlistUpgradeLinks } from "@/src/modules/watchlist/server/access/watchlist-plan-policy";
 import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
@@ -39,6 +40,6 @@ export async function GET(
     generatedAt: Date.now(),
     marketDataStatus: health.marketDataStatus,
     marketDataUpdatedAt: health.marketDataUpdatedAt,
-    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators),
+    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators, canViewWatchlistIndicators(request.headers, state.symbol)),
   }, { headers: { "Cache-Control": "private, no-store" } });
 }

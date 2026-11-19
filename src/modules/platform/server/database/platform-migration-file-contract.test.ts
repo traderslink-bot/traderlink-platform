@@ -21,6 +21,9 @@ describe("static platform migration file contract", () => {
       ["0186_daily_trade_analyzer_alpaca_cache", 223],
       ["0187_journal_chart_entries", 224],
     ]);
+    expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
+      "0222_watchlist_indicators_visibility",
+    );
   });
 
   it("accepts either TypeScript string quote style without changing migration identity", () => {

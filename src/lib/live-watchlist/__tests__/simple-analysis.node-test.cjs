@@ -10,10 +10,12 @@ const compile = (mod,file) => {
   const source=fs.readFileSync(file,"utf8");
   const parsed=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,file.endsWith("tsx")?ts.ScriptKind.TSX:ts.ScriptKind.TS);
   assert.equal(parsed.parseDiagnostics.length,0,"Source syntax: "+file);
-  mod._compile(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,file);
+  const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+  mod._compile(code.replace(/require\(["']@\/([^"']+)["']\)/g,(_match,relative)=>"require("+JSON.stringify(path.resolve(__dirname,"../../../..",relative))+")"),file);
 };
 require.extensions[".ts"]=compile;
 require.extensions[".tsx"]=compile;
+require.extensions[".css"]=(mod)=>{mod.exports={__esModule:true,default:{}};};
 const {SimpleAnalysisCard}=require("../../../../app/watchlist/simple-analysis-card.tsx");
 const {makeAnalysisEdit,mergeAnalysisEdit}=require("../analysis-inline-edit.ts");
 const {parseSimpleAnalysis}=require("../simple-analysis.ts");
@@ -23,7 +25,7 @@ const simple={setup:"A setup <script>unsafe</script>",pullbacks:[
   {low:.17,high:.18,confirmation:"Wait for reclaim",invalidation:.16,explanation:"Lower base"}],
   upside:[{low:.27,high:.29,explanation:"Prior resistance"}],invalidation:{price:.16,explanation:"Broader base fails"}};
 const read={analysisFormat:"simple",version:3,symbol:"TEST",currentPrice:.25,dataAsOf:1789400000000,
-  simpleAnalysis:simple,ownerHiddenSections:[]};
+  simpleAnalysis:simple,ownerHiddenSections:[],catalystRealityCheck:{summary:"",sourceUrls:[],status:"none"},riskSummary:[],sources:[]};
 test("stored simple identity parses independently of selector and older current reads still parse",()=>{
   const level={label:"",price:null,rationale:""},context={summary:"",dayTradeRelevance:"",sourceUrls:[]};
   const saved={...read,generatedAt:read.dataAsOf,generationId:"test",marketSession:"regular",bias:"neutral",confidence:"medium",
@@ -40,11 +42,11 @@ test("separate card preserves areas, escapes text and hides only owner-selected 
   const before=JSON.stringify(read);
   const html=renderToStaticMarkup(React.createElement(SimpleAnalysisCard,{read}));
   assert.match(html,/\$0.27–\$0.29/);
-  assert.match(html,/Deeper pullback/);assert.match(html,/Thesis invalidation/);
+  assert.match(html,/>Pullback 1</);assert.match(html,/>Pullback 2</);assert.doesNotMatch(html,/Thesis invalidation|First objective|Invalidation:/);
   assert.doesNotMatch(html,/<script>|Listing monitor|Dilution risk|Live 5-minute|bias/);
   const hidden=renderToStaticMarkup(React.createElement(SimpleAnalysisCard,{read:{...read,ownerHiddenSections:["shallow","targets"]}}));
-  assert.doesNotMatch(hidden,/First base|Where it could go next|Deeper pullback/);
-  assert.match(hidden,/Lower base/);assert.match(hidden,/>Pullback</);
+  assert.doesNotMatch(hidden,/First base|Potential Targets/);
+  assert.match(hidden,/Lower base/);assert.match(hidden,/>Pullback 2</);
   assert.equal(JSON.stringify(read),before);
 });
 test("owner editing keeps format and range endpoints without overwriting original",()=>{

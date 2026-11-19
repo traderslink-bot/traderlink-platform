@@ -3,11 +3,11 @@ import { withPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { requestWatchlistRuntimeRaw } from "../runtime/watchlist-runtime-admin-client";
 import { readAutomaticAnalysisEvents } from "./watchlist-automatic-notifications";
 import { claimFreeChatPost, finishFreeChatPost, queueFreeChatPublication, queueFreeChatMove } from "./watchlist-free-chat-store";
-import { deliverFreeChatPublication, type FreeChatPublication } from "./watchlist-free-chat-delivery";
+import { deliverFreeChatPublication, type FreeChatPublication, type FreeChatOwnerCopy, validateFreeChatOwnerCopy, freeChatVisibilityKey, FreeChatInputError } from "./watchlist-free-chat-delivery";
 
 import { readFreeChatVisibility } from "./watchlist-free-chat-visibility";
 
-type Pending = { post_key: string; cycle_id: string; ticker: string; owner_user_id: string; draft_revision: number | null; origin: "approval" | "automatic" | "manual"; approval_revision: number | null; requested_at_ms:number };
+type Pending = { post_key: string; cycle_id: string; ticker: string; owner_user_id: string; draft_revision: number | null; origin: "approval" | "automatic" | "manual"; approval_revision: number | null; requested_at_ms:number; owner_copy_json: string | null };
 type ReviewEvent = { revision: number; at: number; actor: string; body: { kind: string; draftRevision?: number; approvalRevision?: number; channel?: string; status?: string;
   publication?: { notificationKind?: string; website?: { cards?: { tradersLinkAiRead?: { body?: string } } } } } };
 type Review = { symbol: string; cycleId: string; cancelled: boolean; events: ReviewEvent[] };
@@ -47,10 +47,18 @@ export function recordFreeChatApprovalIntent(body: string, actor: string) {
   if (input.freeChat !== true) return;
   if (!/^platform-owner:[A-Za-z0-9_-]{1,128}$/.test(actor) || typeof input.cycleId !== "string" || input.cycleId.length > 200
     || !/^[A-Z][A-Z0-9.-]{0,12}$/.test(input.symbol) || !Number.isSafeInteger(input.draftRevision) || input.draftRevision < 1) return;
+  let ownerCopy: FreeChatOwnerCopy | undefined;
+  if (input.freeChatCopy !== undefined) {
+    const copy = input.freeChatCopy;
+    if (!copy || typeof copy !== "object" || copy.cycleId !== input.cycleId || copy.draftRevision !== input.draftRevision) throw new FreeChatInputError("Free Chat preview changed. Open its preview again.");
+    const visibility = readFreeChatVisibility(input.symbol, false);
+    if (copy.visibilityKey !== freeChatVisibilityKey(visibility)) throw new FreeChatInputError("Premium settings changed. Open the Free Chat preview again.");
+    ownerCopy = {message:validateFreeChatOwnerCopy(input.symbol,copy.message,visibility),visibilityKey:copy.visibilityKey};
+  }
   withPlatformDatabase({ mode: "runtime" }, database => database.prepare(`INSERT OR IGNORE INTO platform_watchlist_free_chat_posts
-    (post_key,cycle_id,ticker,owner_user_id,draft_revision,origin,state,requested_at_ms,updated_at_ms)
-    VALUES(?,?,?,?,?,'approval','pending',?,?)`).run(`${input.cycleId}:draft:${input.draftRevision}`,input.cycleId,input.symbol,
-    actor.slice("platform-owner:".length),input.draftRevision,Date.now(),Date.now()));
+    (post_key,cycle_id,ticker,owner_user_id,draft_revision,origin,state,requested_at_ms,updated_at_ms,owner_copy_json)
+    VALUES(?,?,?,?,?,'approval','pending',?,?,?)`).run(`${input.cycleId}:draft:${input.draftRevision}`,input.cycleId,input.symbol,
+    actor.slice("platform-owner:".length),input.draftRevision,Date.now(),Date.now(),ownerCopy ? JSON.stringify(ownerCopy) : null));
 }
 
 let running = false;
@@ -91,10 +99,11 @@ export async function reconcileFreeChatPublications() {
           continue;
         }
         let moveApproval:number|null=null;
+        let moveTo:string|undefined;
         if(moveId) {
           const response=await requestWatchlistRuntimeRaw({method:'GET',reviewActor:`platform-owner:${post.owner_user_id}`,timeoutMs:12000,path:'/api/watchlist/analysis-review/category-move?symbol='+encodeURIComponent(post.ticker)});
           if(!response.ok)throw Error('Move status unavailable.');
-          const value=JSON.parse(response.body) as {moves?:{id:string;cycleId:string;current:boolean;destination:string;freeChat?:boolean;approvalRevision?:number|null}[]};
+          const value=JSON.parse(response.body) as {moves?:{id:string;cycleId:string;to:string;current:boolean;destination:string;freeChat?:boolean;approvalRevision?:number|null}[]};
           const move=value.moves?.find(item=>item.id===moveId&&item.cycleId===post.cycle_id);
           if(!move || !move.current || !move.freeChat) {
             // A not-yet-created move can follow its durable intent by seconds.
@@ -106,6 +115,7 @@ export async function reconcileFreeChatPublications() {
           }
           if(move.destination!=='confirmed'){withPlatformDatabase({mode:'runtime'},db=>db.prepare("UPDATE platform_watchlist_free_chat_posts SET next_attempt_at_ms=? WHERE post_key=?").run(Date.now()+30000,post.post_key));continue;}
           moveApproval=move.approvalRevision??null;
+          moveTo=move.to;
           if(moveApproval===null)throw Error('No published analysis for this move.');
         }
         const approval = publishedFreeChatApprovals(review, standaloneShare).find(event => moveId ? event.revision===moveApproval : post.approval_revision !== null ? event.revision === post.approval_revision
@@ -131,8 +141,10 @@ export async function reconcileFreeChatPublications() {
           publication = JSON.parse(response.body).publication as FreeChatPublication;
           if (publication.symbol !== post.ticker || publication.cycleId !== post.cycle_id || publication.approvalRevision !== approval.revision) throw Error("Publication mismatch.");
         }
+        if (moveTo) publication = { ...publication, moveTo };
+        const ownerCopy = post.owner_copy_json ? JSON.parse(post.owner_copy_json) as FreeChatOwnerCopy : undefined;
         deliveryStarted = true;
-        const result = await deliverFreeChatPublication(publication, () => readFreeChatVisibility(post.ticker, true));
+        const result = await deliverFreeChatPublication(publication, () => readFreeChatVisibility(post.ticker, true), undefined, undefined, ownerCopy);
         withPlatformDatabase({mode:"runtime"}, db => finishFreeChatPost(db,post.post_key,result));
       } catch {
         withPlatformDatabase({mode:"runtime"}, db => db.prepare(`UPDATE platform_watchlist_free_chat_posts

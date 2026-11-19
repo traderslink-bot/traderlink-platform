@@ -21,14 +21,18 @@ import { loadPressReleaseFeed, markPressReleaseChannelRead, markPressReleaseRead
 import { PressReleaseArticleDrawer, pressReleaseEasternTime, pressReleaseType } from "./press-release-article-drawer";
 
 import { DEFAULT_NEWS_FILTERS, parseNewsFilters, type NewsFilters } from "@/src/modules/news/contracts/press-release-filters";
+import type { SavedNewsView } from "@/src/modules/news/contracts/press-release-saved-views";
+import { PressReleaseSavedViews } from "./press-release-saved-views";
+import { retrySavingPressReleasePreference } from "./press-release-view-actions";
 import { PressReleaseFilterControls } from "./press-release-filter-controls";
 
 export function PressReleaseFeed({
   channel,
   initialArticles,
   initialSelectedArticle,
-  initialPage, preferenceKey,
+  initialPage, preferenceKey, initialFilters = DEFAULT_NEWS_FILTERS, initialPreferenceExists = false, initialSavedViews = [], initialSelectedViewId = "", initialFiltersOpen = false, alertsAllowed = true,
 }: {
+  initialFilters?: NewsFilters; initialPreferenceExists?: boolean; initialSavedViews?: readonly SavedNewsView[]; initialSelectedViewId?: string; initialFiltersOpen?: boolean; alertsAllowed?: boolean;
   initialPage: { more: boolean; nextOffset: number; asOf: string; filtersAllowed: boolean };
   preferenceKey: string;
   channel: PressReleaseChannel;
@@ -39,8 +43,10 @@ export function PressReleaseFeed({
   const definition = pressReleaseChannelDefinition(channel);
   const [articles, setArticles] = useState<readonly PressReleaseArticle[]>(initialArticles);
   const [selected, setSelected] = useState<PressReleaseArticle | null>(initialSelectedArticle);
-  const [filters, setFilters] = useState<NewsFilters>({ ...DEFAULT_NEWS_FILTERS });
+  const [filters, setFilters] = useState<NewsFilters>({ ...initialFilters });
   const [page, setPage] = useState(initialPage);
+  const [preferenceSaved,setPreferenceSaved] = useState(true);
+  const [savingPreference,startSavingPreference] = useTransition();
   const [loading, setLoading] = useState(false);
   const requestVersion = useRef(0);
   const [message, setMessage] = useState<string | null>(null);
@@ -53,7 +59,8 @@ export function PressReleaseFeed({
       const result = await loadPressReleaseFeed({ filters: next, offset, asOf });
       if (version !== requestVersion.current) return;
       if (!result.ok) { setMessage(result.message); return; }
-      const applied = result.page.filtersAllowed ? next : { ...DEFAULT_NEWS_FILTERS };
+      const applied = result.page.filtersAllowed ? result.page.filters ?? next : { ...DEFAULT_NEWS_FILTERS };
+      if (!offset && !asOf && result.page.filtersAllowed) setPreferenceSaved(result.preferenceSaved !== false);
       setFilters(applied); setPage(result.page); setMessage(null);
       setArticles(current => result.page.offset ? [...current, ...result.page.articles.filter(article => !current.some(existing => existing.id === article.id))] : result.page.articles);
       try { localStorage.setItem(`traderlink:news-view:v1:${preferenceKey}`, JSON.stringify(applied)); } catch { /* Browsing works without browser storage. */ }
@@ -64,10 +71,10 @@ export function PressReleaseFeed({
   useEffect(() => {
     try {
       const saved = localStorage.getItem(`traderlink:news-view:v1:${preferenceKey}`);
-      if (saved && initialPage.filtersAllowed) void fetchFeed(parseNewsFilters(JSON.parse(saved)));
+      if (saved && !initialPreferenceExists && initialPage.filtersAllowed) void fetchFeed(parseNewsFilters(JSON.parse(saved)));
     } catch { /* Ignore unavailable or obsolete preferences. */ }
     return invalidateRequests;
-  }, [fetchFeed, initialPage.filtersAllowed, preferenceKey, invalidateRequests]);
+  }, [fetchFeed, initialPage.filtersAllowed, initialPreferenceExists, preferenceKey, invalidateRequests]);
   const [working, startTransition] = useTransition();
   const initialSelectedArticleId = initialSelectedArticle?.id ?? null;
   const initialSelectedArticleWasRead = initialSelectedArticle?.isRead ?? true;
@@ -159,12 +166,14 @@ export function PressReleaseFeed({
         </Button>
       </Stack>
 
+      {!preferenceSaved?<Alert severity="warning" action={<Button disabled={savingPreference} onClick={()=>startSavingPreference(async()=>{const result=await retrySavingPressReleasePreference(filters);setPreferenceSaved(result.ok);})}>Retry saving</Button>}>Your news loaded, but this view could not be saved to your account.</Alert>:null}
       {message ? (
         <Alert onClose={() => setMessage(null)} severity={message.includes("marked") ? "success" : "error"}>
           {message}
         </Alert>
       ) : null}
 
+      {page.filtersAllowed?<PressReleaseSavedViews initialViews={initialSavedViews} currentFilters={filters} initialSelectedId={initialSelectedViewId} onApply={next=>void fetchFeed(next)} alertsAllowed={alertsAllowed}/>:null}
       <DashboardPanel hideHeader>
         <Stack
           direction={{ xs: "column", md: "row" }}
@@ -172,7 +181,7 @@ export function PressReleaseFeed({
           sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            {page.filtersAllowed ? <PressReleaseFilterControls value={filters} onApply={next => void fetchFeed(next)} disabled={loading} /> : null}
+            {page.filtersAllowed ? <PressReleaseFilterControls value={filters} onApply={next => void fetchFeed(next)} disabled={loading} initialOpen={initialFiltersOpen} /> : null}
           </Box>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
             <Button

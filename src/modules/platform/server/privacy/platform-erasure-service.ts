@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { eraseWatchlistNotesUserCopies } from "@/src/modules/watchlist/server/notifications/watchlist-notes-privacy";
 import { captureErasureClosure, type ErasureRoot } from "./platform-erasure-closure";
 import { observeErasurePhase } from "./platform-erasure-observability";
 
@@ -302,6 +303,8 @@ FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.w
     if (scope.workspaceRole !== "owner") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
     return withPermanentDeleteTransaction(this.database, () => {
       assertSoleWorkspaceOwner(this.database, scope);
+      // Serialized note-alert identities are not represented by incoming FKs.
+      eraseWatchlistNotesUserCopies(this.database, scope.userId);
       const accountIds = this.database.prepare<[string], { account_id: string }>(`SELECT account_id
 FROM journal_accounts WHERE workspace_id = ?`).all(scope.workspaceId).map((row) => row.account_id);
       const artifacts = readPrivateArtifacts(this.database, accountIds);

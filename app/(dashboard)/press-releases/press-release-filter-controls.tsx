@@ -15,16 +15,16 @@ import Alert from "@mui/material/Alert";
 import { DEFAULT_NEWS_FILTERS, parseNewsFilters, type NewsFilters } from "@/src/modules/news/contracts/press-release-filters";
 
 const sorts = { newest: "Newest first", oldest: "Oldest first", cap_asc: "Market cap: low to high", cap_desc: "Market cap: high to low", ticker: "Ticker: A–Z" };
-const names: Record<keyof NewsFilters, string> = { search: "Search", tickers: "Tickers", minCap: "Min cap ($M)", maxCap: "Cap below ($M)", capStatus: "Market cap", from: "From (ET)", to: "To (ET)", type: "News type", read: "Read status", summary: "AI summary", sort: "Sort" };
-export function PressReleaseFilterControls({ value, onApply, disabled }: { value: NewsFilters; onApply: (value: NewsFilters) => void; disabled: boolean }) {
-  const [open, setOpen] = useState(false), [draft, setDraft] = useState(value), [search, setSearch] = useState({ applied: value.search, text: value.search }), [error, setError] = useState("");
+const names: Record<keyof NewsFilters, string> = { datePeriod: "Published date", search: "Search", tickers: "Tickers", minCap: "Min cap ($M)", maxCap: "Cap below ($M)", capStatus: "Market cap", from: "From (ET)", to: "To (ET)", type: "News type", read: "Read status", summary: "AI summary", sort: "Sort" };
+export function PressReleaseFilterControls({ value, onApply, disabled, initialOpen = false }: { value: NewsFilters; onApply: (value: NewsFilters) => void; disabled: boolean; initialOpen?: boolean }) {
+  const [open, setOpen] = useState(initialOpen), [draft, setDraft] = useState(value), [search, setSearch] = useState({ applied: value.search, text: value.search }), [error, setError] = useState("");
   if (search.applied !== value.search) setSearch({ applied: value.search, text: value.search });
-  const change = (key: keyof NewsFilters, next: string) => setDraft(current => ({ ...current, [key]: next, ...(key === "capStatus" && next === "unknown" ? { minCap: "", maxCap: "" } : {}) }));
+  const change = (key: keyof NewsFilters, next: string) => setDraft(current => ({ ...current, [key]: next, ...(["from", "to"].includes(key) ? { datePeriod: "custom" as const } : {}), ...(key === "capStatus" && next === "unknown" ? { minCap: "", maxCap: "" } : {}) }));
   function apply() { try { onApply(parseNewsFilters(draft)); setOpen(false); setError(""); } catch (issue) { setError(issue instanceof Error ? issue.message : "Check your filters."); } }
   function datePreset(days: number) {
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const from = new Date(Date.parse(today + "T12:00:00Z") - (days - 1) * 86400000).toISOString().slice(0, 10);
-    setDraft(current => ({ ...current, from, to: today }));
+    setDraft(current => ({ ...current, from, to: today, datePeriod: days === 1 ? "today" : days === 7 ? "last_7_days" : "last_30_days" }));
   }
   const choice = (key: keyof NewsFilters, values: Record<string, string>) => <TextField select fullWidth label={names[key]} value={draft[key]} onChange={event => change(key, event.target.value)}>{Object.entries(values).map(([id, label]) => <MenuItem key={id} value={id}>{label}</MenuItem>)}</TextField>;
   return <Stack spacing={1.25}>
@@ -37,7 +37,7 @@ export function PressReleaseFilterControls({ value, onApply, disabled }: { value
       <TextField select label="Sort" size="small" value={value.sort} disabled={disabled} onChange={event => onApply({ ...value, sort: event.target.value as NewsFilters["sort"] })} sx={{ minWidth: 205 }}>{Object.entries(sorts).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
     </Stack>
     <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
-      {(Object.keys(value) as (keyof NewsFilters)[]).filter(key => value[key] !== DEFAULT_NEWS_FILTERS[key]).map(key => <Chip key={key} label={`${names[key]}: ${key === "sort" ? sorts[value.sort] : value[key]}`} size="small" onDelete={disabled ? undefined : () => onApply({ ...value, [key]: DEFAULT_NEWS_FILTERS[key] })} />)}
+      {(Object.keys(value) as (keyof NewsFilters)[]).filter(key => value[key] !== DEFAULT_NEWS_FILTERS[key] && !(key === "datePeriod" && value.datePeriod === "custom") && !(["from", "to"].includes(key) && !["any", "custom"].includes(value.datePeriod))).map(key => <Chip key={key} label={`${names[key]}: ${key === "sort" ? sorts[value.sort] : key === "datePeriod" ? ({ today: "Today", last_7_days: "Last 7 days", last_30_days: "Last 30 days", any: "Any date", custom: "Custom dates" }[value.datePeriod]) : value[key]}`} size="small" onDelete={disabled ? undefined : () => onApply({ ...value, [key]: DEFAULT_NEWS_FILTERS[key], ...(key === "datePeriod" ? { from: "", to: "" } : {}) })} />)}
       {JSON.stringify(value) !== JSON.stringify(DEFAULT_NEWS_FILTERS) ? <Button size="small" disabled={disabled} onClick={() => onApply({ ...DEFAULT_NEWS_FILTERS })}>Clear all</Button> : null}
     </Stack>
     <Drawer anchor="right" open={open} onClose={() => setOpen(false)} slotProps={{ paper: { sx: { width: { xs: "100%", sm: 430 }, maxWidth: "100%" } } }}>

@@ -13,6 +13,8 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 
+import { PressReleaseSavedViewRepository } from "@/src/modules/news/server/press-release-saved-view-repository";
+
 type ActionResult = Readonly<{ ok: true }> | Readonly<{ ok: false; message: string }>;
 
 async function identityWithAccess() {
@@ -57,10 +59,15 @@ export async function markPressReleaseChannelRead(channel: string): Promise<Acti
 
 export async function loadPressReleaseFeed(input: { filters?: unknown; offset?: number; asOf?: string }) {
   try {
+    const commandAt = createCanonicalUtcTimestamp();
     const identity = await identityWithAccess();
     const page = withReadonlyPlatformDatabase({}, database => new PressReleaseDashboardRepository(database).listPage({
       channel: "all", scope: identity.scope, limit: 100, filters: input.filters, offset: input.offset, asOf: input.asOf,
     }));
-    return { ok: true as const, page };
+    let preferenceSaved = true;
+    if (!input.offset && !input.asOf && page.filtersAllowed) {
+      try { withPlatformDatabase({mode:"runtime"}, database => new PressReleaseSavedViewRepository(database).savePreference(identity.scope.userId,page.filters,commandAt)); } catch { preferenceSaved = false; }
+    }
+    return { ok: true as const, page, preferenceSaved };
   } catch { return { ok: false as const, message: "News could not be loaded. Check your filters and try again." }; }
 }

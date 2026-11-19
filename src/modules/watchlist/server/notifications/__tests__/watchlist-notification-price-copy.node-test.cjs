@@ -58,8 +58,8 @@ test('saved context still retains prices and category note; only its text projec
   assert.equal(context.firstAnalysisPrice, .62);
   assert.equal(context.updatedAnalysisPrice, .60);
   const result = copy('TEST', 'analysis', false, context);
-  assert.match(result.pushBody, /^Now on Overnight Watches\.\nA follow-up/);
-  assert.match(result.emailBody, /^Now on Overnight Watches\.\nA follow-up/);
+  assert.match(result.pushBody, /^Now on Overnight\.\nA follow-up/);
+  assert.match(result.emailBody, /^Now on Overnight\.\nA follow-up/);
   assert.doesNotMatch(result.pushBody + result.emailBody, /\$\d|\d(?:\.\d+)?%/);
 });
 
@@ -88,6 +88,9 @@ test('existing Free Chat and category destinations remain price-free; transports
     const result = categoryMoveNotificationCopy('TEST', group);
     for (const key of ['pushTitle', 'pushBody', 'emailTitle', 'emailBody']) assertNoPrice(result[key]);
     assert.match(result.pushTitle, /by "This Guy"/);
+    assert.match(result.pushTitle, /^TEST moved to /);
+    assert.equal(result.emailTitle, result.pushTitle);
+    assert.doesNotMatch(result.pushTitle, /added to/);
     assert.equal(result.destinationPath, '/watchlist/TEST');
   }
 });
@@ -101,4 +104,15 @@ test('default X captions stay price-free and owner-authored caption prices are p
   }
   const custom = '$TEST My entry was $0.62 and my own gain was 20%.';
   assert.equal(xCaptionStatus(custom).text, custom);
+});
+
+
+test('Overnight category labels apply to move email/push and legacy update metadata without changing assignments',()=>{
+ const moves=load(directory+'watchlist-category-move-notifications.ts',true);
+ const message=moves.categoryMoveNotificationCopy('TEST','top_watches:2026-11-19');
+ assert.equal(message.pushTitle,'TEST moved to Overnight by "This Guy"');assert.equal(message.emailTitle,message.pushTitle);assert.equal(message.destinationPath,'/watchlist/TEST');assert.doesNotMatch(JSON.stringify(message),/Overnight Watches/);
+ for(const note of ['Now on Overnight Watches.','Now on Overnight.']){
+  const original={automatic:false,hasPreviousAnalysis:true,categoryMoveNote:note,firstAnalysisPrice:1,updatedAnalysisPrice:2};const before=JSON.stringify(original);
+  assert.equal(parseAnalysisUpdateContext(original).categoryMoveNote,'Now on Overnight.');const message=copy('TEST','analysis',true,original);assert.match(message.pushBody,/^Now on Overnight\./);assert.match(message.emailBody,/^Now on Overnight\./);assert.doesNotMatch(JSON.stringify(message),/Overnight Watches/);assert.equal(JSON.stringify(original),before);
+ }
 });

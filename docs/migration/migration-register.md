@@ -295,3 +295,7 @@ rename, provider transfer, session/access change or hosted application. Reconcil
 the exact current migration lineage before integration; this continuation does
 not include the independently staged0173 source. Deployment requires new owner
 approval. See [progress](profile-name-progress-20261018.md).
+
+## News account filters and saved views — source reservation 2026-11-19
+
+Owner requested account-backed cross-device sort/filter preferences and independently enabled filtered press-release alerts with custom market-cap ranges. Coordinator reserved `0221_news_account_filters_and_saved_views`, News namespace, execution order296, after a global collision check. Two additive News-owned user tables are declared; applied migration SQL/checksums remain untouched. Focused in-memory storage/queue and real account-erasure-closure tests pass. Full new-manifest initialization, native/browser QA and cross-lane source/schema catalog qualification remain separate gates. No production DDL, commit, push or deploy has occurred. Reserved lower Community/Watchlist orders are not authorized for publication by this News task; Coordinator must reconcile the selected production prefix before any future migration. See [the feature plan](../press-release-account-views-and-alerts-plan-20261119.md).

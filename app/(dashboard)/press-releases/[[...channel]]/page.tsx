@@ -12,6 +12,9 @@ import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { DashboardPage, DashboardPanel, DashboardUnavailableState } from "../../../dashboard-template";
+import { DEFAULT_NEWS_FILTERS } from "@/src/modules/news/contracts/press-release-filters";
+import { PressReleaseSavedViewRepository } from "@/src/modules/news/server/press-release-saved-view-repository";
+import { canReceiveMembershipNotification } from "@/src/modules/platform/server/membership/membership-notification-access";
 import { PressReleaseFeed } from "../press-release-feed";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +22,7 @@ export const revalidate = 0;
 
 type PageProps = Readonly<{
   params: Promise<{ channel?: string[] }>;
-  searchParams: Promise<{ article?: string | string[] }>;
+  searchParams: Promise<{ article?: string | string[]; view?: string | string[]; customAlert?: string | string[] }>;
 }>;
 
 function resolveChannel(segments: readonly string[] | undefined): PressReleaseChannel | null {
@@ -85,10 +88,17 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
   const articleId = typeof requestedArticle === "string" && requestedArticle.length <= 64
     ? requestedArticle
     : null;
-  const { page, selectedArticle } = withReadonlyPlatformDatabase({}, (database) => {
+  const requestedView = (await searchParams).view;
+  const customAlert = (await searchParams).customAlert === "1";
+  const { page, selectedArticle, preference, savedViews, selectedViewId, alertsAllowed } = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new PressReleaseDashboardRepository(database);
+    const views = new PressReleaseSavedViewRepository(database);
+    const preference = views.readPreference(identity.scope.userId);
+    const savedViews = views.list(identity.scope.userId);
+    const selectedView = typeof requestedView === "string" ? savedViews.find(view => view.id === requestedView) : null;
     return Object.freeze({
-      page: repository.listPage({ channel: "all", limit: 100, scope: identity.scope }),
+      preference, savedViews, selectedViewId: selectedView?.id ?? "", alertsAllowed: canReceiveMembershipNotification(database,identity.scope.userId,"press_release"),
+      page: repository.listPage({ channel: "all", limit: 100, scope: identity.scope, filters: selectedView?.filters ?? preference?.filters ?? DEFAULT_NEWS_FILTERS }),
       selectedArticle: articleId
         ? repository.find({ articleId, channel, scope: identity.scope })
         : null,
@@ -102,6 +112,12 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
       initialArticles={page.articles}
       initialPage={page}
       preferenceKey={identity.scope.userId}
+      initialFilters={page.filters}
+      initialPreferenceExists={preference !== null}
+      initialSavedViews={savedViews}
+      initialSelectedViewId={selectedViewId}
+      initialFiltersOpen={customAlert}
+      alertsAllowed={alertsAllowed}
       initialSelectedArticle={selectedArticle}
     />
   );

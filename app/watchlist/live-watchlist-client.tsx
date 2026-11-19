@@ -430,6 +430,8 @@ export function TradersLinkAiReadCard({
   const pullbackPlan = dipBuyPlanVisible
     ? deriveTradersLinkAiPullbackPlan(read)
     : null;
+  const hasBottomSidebar = Boolean(traderNotes?.trim() || renderSectionEditor || (!hidden.has("riskSummary") && read.riskSummary.some(risk=>risk.trim())));
+  const bottomColumns = hasBottomSidebar && (renderSectionEditor || (!hidden.has("targets") && (read.version === 4 || read.targets.length > 0)));
   const titleOnlyCatalystSources = read.sources.filter(
     (source) => source.evidence?.excerptKind === "article_title",
   );
@@ -459,10 +461,10 @@ export function TradersLinkAiReadCard({
         </div>
       </div>
 
-      <div className={traderNotes?.trim() ? analysisLayout.row : analysisLayout.single}><div>
+      <div>
       {renderSectionEditor?.(["bias", "currentRead"])}
       {!hidden.has("currentRead") && read.currentRead.trim() ? <p>{read.currentRead}</p> : null}
-      </div><AnalysisTraderNotes body={traderNotes} /></div>
+      </div>
       {!hidden.has("momentumFailure") && !hidden.has("shallow") && !hidden.has("deep") && liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
         read,
         livePrice: currentLivePrice,
@@ -487,34 +489,6 @@ export function TradersLinkAiReadCard({
           {visible.map(([key, heading, level]) => renderSectionEditor ? <div key={key}>{renderSectionEditor([key])}{!hidden.has(key) && (level.price !== null || level.rationale.trim()) ? <TradersLinkAiReadLevelBlock heading={heading} level={level} /> : null}</div> : <TradersLinkAiReadLevelBlock key={key} heading={heading} level={level} />)}
         </div> : null;
       })()}
-
-      {renderSectionEditor?.(["targets"])}
-      {read.version === 4 && !hidden.has("targets") ? (
-        <section className="watchlist-ai-read-section">
-          <h3>Potential Targets (Volume Dependent)</h3>
-          <p>Conditional day-trade paths, not predictions. Each farther branch requires the prior area to hold.</p>
-          <ol className="watchlist-ai-read-targets">
-            <TradersLinkAiForwardHorizonBlock heading="Nearest realistic" horizon={read.forwardPlan.nearestRealistic} livePrice={currentLivePrice} />
-            <TradersLinkAiForwardHorizonBlock heading="Continued momentum" horizon={read.forwardPlan.continuedMomentum} livePrice={currentLivePrice} />
-            <TradersLinkAiForwardHorizonBlock heading="Strong expansion" horizon={read.forwardPlan.strongExpansion} livePrice={currentLivePrice} />
-            <TradersLinkAiForwardHorizonBlock heading="Extreme momentum" horizon={read.forwardPlan.extremeMomentum} livePrice={currentLivePrice} />
-          </ol>
-        </section>
-      ) : read.version !== 4 && !hidden.has("targets") && read.targets.length > 0 ? (
-        <section className="watchlist-ai-read-section">
-          <h3>Potential Targets (Volume Dependent)</h3>
-          <ol className="watchlist-ai-read-targets">
-            {read.targets.map((target, index) => (
-              <li key={`${target.label}-${target.price ?? index}`}>
-                <strong>
-                  {target.price === null ? target.label : `$${formatPrice(target.price)}`}
-                </strong>
-                <span>{target.condition}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
 
       {renderSectionEditor?.(["ownerPullbacks"])}
       {(read.version === 3 || read.version === 4) && dipBuyPlanVisible && pullbackRows.length > 0 ? (
@@ -662,6 +636,38 @@ export function TradersLinkAiReadCard({
         </section>
       ) : null}
 
+      <div className={`${bottomColumns ? analysisLayout.row : analysisLayout.single} ${traderNotes?.trim() ? analysisLayout.withNotes : ""}`}>
+        <div>
+      {renderSectionEditor?.(["targets"])}
+      {read.version === 4 && !hidden.has("targets") ? (
+        <section className="watchlist-ai-read-section">
+          <h3>Potential Targets (Volume Dependent)</h3>
+          <p>Conditional day-trade paths, not predictions. Each farther branch requires the prior area to hold.</p>
+          <ol className="watchlist-ai-read-targets">
+            <TradersLinkAiForwardHorizonBlock heading="Nearest realistic" horizon={read.forwardPlan.nearestRealistic} livePrice={currentLivePrice} />
+            <TradersLinkAiForwardHorizonBlock heading="Continued momentum" horizon={read.forwardPlan.continuedMomentum} livePrice={currentLivePrice} />
+            <TradersLinkAiForwardHorizonBlock heading="Strong expansion" horizon={read.forwardPlan.strongExpansion} livePrice={currentLivePrice} />
+            <TradersLinkAiForwardHorizonBlock heading="Extreme momentum" horizon={read.forwardPlan.extremeMomentum} livePrice={currentLivePrice} />
+          </ol>
+        </section>
+      ) : read.version !== 4 && !hidden.has("targets") && read.targets.length > 0 ? (
+        <section className="watchlist-ai-read-section">
+          <h3>Potential Targets (Volume Dependent)</h3>
+          <ol className="watchlist-ai-read-targets">
+            {read.targets.map((target, index) => (
+              <li key={`${target.label}-${target.price ?? index}`}>
+                <strong>
+                  {target.price === null ? target.label : `$${formatPrice(target.price)}`}
+                </strong>
+                <span>{target.condition}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+        </div>
+        <div className={analysisLayout.side}>
       {renderSectionEditor?.(["riskSummary"])}
       {!hidden.has("riskSummary") && read.riskSummary.length > 0 ? (
         <section className="watchlist-ai-read-section">
@@ -669,6 +675,9 @@ export function TradersLinkAiReadCard({
           <ul>{read.riskSummary.map((risk, index) => <li key={index}>{risk}</li>)}</ul>
         </section>
       ) : null}
+          <AnalysisTraderNotes body={traderNotes} />
+        </div>
+      </div>
       <p className="watchlist-ai-read-meta">
         Market data as of {formatDateTime(read.dataAsOf)}. Generated {formatDateTime(read.generatedAt)}.
         AI-assisted preparation only; live price action and risk controls remain decisive. AI can make
@@ -1253,8 +1262,11 @@ function WatchlistTickerTable({
         <span>Details</span>
       </div>
       {symbols.map((symbol) => {
-                  if (symbol.premiumTickerHidden) return <a key={symbol.symbol} href="/plans?feature=watchlist.ticker_details" className={`watchlist-row ${compactRows.row}`}>
+                  if (symbol.premiumTickerHidden) return <a key={symbol.symbol} href="/plans?feature=watchlist.ticker_details" className={`watchlist-row ${compactRows.row} ${symbol.firstPostedAt != null ? compactRows.concealedDate : ""}`}>
             <span className={`watchlist-symbol-cell ${compactRows.ticker}`}><strong aria-label="Premium ticker"><span aria-hidden="true" style={{filter:"blur(4px)",userSelect:"none"}}>••••</span></strong><small style={{color:"#b45309",display:"block"}}>Premium members only</small></span>
+            {symbol.firstPostedAt != null ? <span className={`watchlist-mobile-field ${compactRows.added}`} data-mobile-label="Added" style={watchlistTimeCellStyle}>
+              {formatListDateTime(symbol.firstPostedAt)}
+            </span> : null}
             <span className={compactRows.details} style={{color:"#b45309",fontWeight:700,textDecoration:"underline"}}>Access Premium</span>
           </a>;
 const countryFlag = getWatchlistCountryFlag(symbol.companyInfo?.country);
@@ -1485,7 +1497,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
       {symbol.membershipAnalysisAllowed !== false && symbol.premiumAnalysisPricesAllowed !== false && !symbol.premiumAnalysisPreview ? (
         <WatchlistSetupsCard key={`setups:${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} publicationIdentity={symbol.indicatorPublicationIdentity} />
       ) : null}
-      {symbol.membershipIndicatorsAllowed === false ? <WatchlistPlanUpgrade feature="Indicator card" href="/plans?feature=watchlist.indicators" /> : symbol.indicatorCardVisible !== false ? (
+      {symbol.membershipIndicatorsAllowed === false ? <WatchlistPlanUpgrade feature="Indicator card" premium={symbol.premiumIndicatorsAllowed === false} href={symbol.premiumIndicatorsAllowed === false ? "https://whop.com/traderslink-1049/premium-access-2026" : "/plans?feature=watchlist.indicators"} /> : symbol.indicatorCardVisible !== false ? (
       <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} publicationIdentity={symbol.indicatorPublicationIdentity} livePrice={symbol.latestPrice} />
       ) : null}
       {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
@@ -1638,9 +1650,7 @@ export function LiveWatchlistIndexClient({
             row to open that ticker&apos;s detail page.
           </p>
           <p className="watchlist-testing-note">
-            The watchlist uses a combination of code, algorithms, AI and human analysis. It uses
-            real-time market data and collects chart data, prioritizing recent data
-            while going back as far as needed to build support and resistance levels.
+            The watchlist uses a combination of code, algorithms, AI and human analysis.
           </p>
         </div>
         <div className="watchlist-summary-panel" aria-label="Watchlist status">
@@ -1661,7 +1671,6 @@ export function LiveWatchlistIndexClient({
             >
               <div className="watchlist-session-heading">
                 <div>
-                  <p className="academy-eyebrow">Manually Curated</p>
                   <h2 id="watchlist-top-regular-heading">Top Regular Hour Watches</h2>
                 </div>
                 <span>{topRegularSymbols.length}</span>
@@ -1721,12 +1730,12 @@ export function LiveWatchlistIndexClient({
             <section className="watchlist-session-list" aria-labelledby="watchlist-overnight-heading">
               <div className="watchlist-session-heading">
                 <div>
-                  <h2 id="watchlist-overnight-heading">Overnight Watches</h2>
-                  <WatchlistGroupHelp label="Overnight Watches" text="Tickers selected ahead of the next trading session for their potential to make a move. This list does not suggest whether you should hold them overnight." />
+                  <h2 id="watchlist-overnight-heading">Overnight</h2>
+                  <WatchlistGroupHelp label="Overnight" text="Tickers selected ahead of the next trading session for their potential to make a move. This list does not suggest whether you should hold them overnight." />
                 </div>
                 <span>{overnightSymbols.length}</span>
               </div>
-              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Overnight Watches tickers" symbols={overnightSymbols} reverseSplits={reverseSplits} />
+              <WatchlistTickerTable marketDataStatus={marketDataStatus} ariaLabel="Overnight tickers" symbols={overnightSymbols} reverseSplits={reverseSplits} />
             </section>
           ) : null}
           {postmarketSymbols.length > 0 ? (
@@ -1830,6 +1839,7 @@ export function LiveWatchlistDetailClient({
         setSymbol((current) => {
           const next = reconcileLiveWatchlistSymbolState(current, payload.symbol);
           next.membershipIndicatorsAllowed = payload.symbol.membershipIndicatorsAllowed;
+          next.premiumIndicatorsAllowed = payload.symbol.premiumIndicatorsAllowed;
           next.indicatorCardVisible = payload.symbol.indicatorCardVisible;
           next.premiumLevelsAllowed = payload.symbol.premiumLevelsAllowed;
           next.watchlistUpgradeLinks = payload.symbol.watchlistUpgradeLinks;

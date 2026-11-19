@@ -1,3 +1,4 @@
+import { canViewWatchlistIndicators } from "@/src/modules/watchlist/server/access/watchlist-indicators-visibility";
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import type { NextRequest } from "next/server";
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   if (!/^[A-Z][A-Z0-9.-]{0,15}$/u.test(symbol)) return Response.json({ error: "Ticker was not found." }, { status: 404, headers });
   if (!canViewPrivateWatchlistTicker(request.headers, symbol)) return Response.json({error:"Not found."},{status:404,headers:{"Cache-Control":"private, no-store"}});
   if (!canViewWatchlistTicker(request.headers, symbol)) return Response.json({ code: "premium_ticker_required" }, { status: 403, headers: { "Cache-Control": "private, no-store" } });
+  if (!canViewWatchlistIndicators(request.headers,symbol)) return Response.json({code:"premium_indicators_required"},{status:403,headers});
   const ticker = await new LiveWatchlistStore().getSymbol(symbol);
   if (!ticker || ticker.status === "deactivated" || !Number.isSafeInteger(ticker.firstPostedAt) || !ticker.firstPostedAt || ticker.firstPostedAt <= 0) {
     return Response.json({ error: "Ticker was not found." }, { status: 404, headers });

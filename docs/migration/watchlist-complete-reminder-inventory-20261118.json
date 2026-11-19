@@ -1,0 +1,830 @@
+{
+  "purpose": "Owner-scheduled complete remaining Watchlist deployment handoff; provenance inventory, NOT permission to copy full donor trees or migrations wholesale",
+  "platform": {
+    "workspace": "/home/traderlink/projects/watchlist-alpaca-qa",
+    "branch": "codex/watchlist-alpaca-independent-qa-20261108",
+    "head": "13b69b6c71ac424930cf866ec26a56f4c4f684d1",
+    "parent": "b675b078bb98e786675b69ca69128b6bd3c3f6a5",
+    "provenanceBase": "525284e692f96e09f96a5a098f8248392e26bd2c",
+    "knownLiveSource": "1806d747028b77e6f50f9dad0903f83555eb6233",
+    "liveSourceStatus": "cached prior coordinator readback; fresh hosted check required",
+    "dirty": "M AGENTS.md",
+    "commits": [
+      "13b69b6c71ac424930cf866ec26a56f4c4f684d1 b675b078bb98e786675b69ca69128b6bd3c3f6a5 feat(watchlist): add independent Premium-only indicator access",
+      "b675b078bb98e786675b69ca69128b6bd3c3f6a5 2590843038703e02085ae0887df32561b82b31a4 fix(watchlist): preserve original analysis layout in Premium previews",
+      "2590843038703e02085ae0887df32561b82b31a4 bba4dbc2d0657ea96dec7cefa59b7e2c8fe9daf4 fix(watchlist): retain independent Free Chat copy on first publication",
+      "bba4dbc2d0657ea96dec7cefa59b7e2c8fe9daf4 c56e7068566851eab5af95c8f9a06db6f609df25 fix(watchlist): remove generic Free Chat prompt and honor blank owner messages",
+      "c56e7068566851eab5af95c8f9a06db6f609df25 467cd38575bf9cfdbd668c1ee50ef6f108118104 fix(watchlist): use Overnight throughout member views and alerts",
+      "467cd38575bf9cfdbd668c1ee50ef6f108118104 46c3363b9c744f91dc1e2930e6f63eb9071e0275 feat(watchlist): navigate owner attention shortcut to analysis audit",
+      "46c3363b9c744f91dc1e2930e6f63eb9071e0275 59a10bb79c1c3a9ec1cc42303b3a8cfdcbad8d66 docs(watchlist): confirm complete tonight release reminder scope",
+      "59a10bb79c1c3a9ec1cc42303b3a8cfdcbad8d66 4dbcf0c0deebf695be7b868c5e95838b1042e12f feat(watchlist): compact the admin provider summary and show every source",
+      "4dbcf0c0deebf695be7b868c5e95838b1042e12f 51f8e591dcdd12b6a30ed9ec7167083570b3de7d test(watchlist): qualify complete pending release and refresh card fixtures",
+      "51f8e591dcdd12b6a30ed9ec7167083570b3de7d 798eada2118f28140ff464fd876fc25796d48d32 feat(watchlist): include read-only notification queue counts in admin status",
+      "798eada2118f28140ff464fd876fc25796d48d32 677bfd5658ca56c397e82820ab336bfd34abbbec docs(watchlist): clarify admin summaries and provider audit labels",
+      "677bfd5658ca56c397e82820ab336bfd34abbbec 0f0738954b6d9fbb4cd3a1932934046f8797616f docs(watchlist): explain optional breakout and crossed-level followups",
+      "0f0738954b6d9fbb4cd3a1932934046f8797616f ee11c6811ffac037b357d1ab830ec7cbb4af0cb1 feat(watchlist): add optional Trader Notes alerts and bottom-row layout",
+      "ee11c6811ffac037b357d1ab830ec7cbb4af0cb1 1facad9d7c04cbc83fbcf17c53056a28e84b7d25 feat(watchlist): optionally show publication date for concealed tickers",
+      "1facad9d7c04cbc83fbcf17c53056a28e84b7d25 1a99286e1afedd440e8c81004a93015bacd3ea81 fix(watchlist): reconcile saved access and coalesce owner reads",
+      "1a99286e1afedd440e8c81004a93015bacd3ea81 884f21a2c4935b80610ada2e8eb9cb6a63520df2 Record consolidated Watchlist QA findings before corrections",
+      "884f21a2c4935b80610ada2e8eb9cb6a63520df2 46f639f769f32ec86a0657fe4590c3e648ed191c Apply coordinator allocation for Watchlist row visibility migration",
+      "46f639f769f32ec86a0657fe4590c3e648ed191c cc61c348ea1de464f5a4477ed43a2ee30d54227a Shorten main Watchlist description to owner supplied sentence",
+      "cc61c348ea1de464f5a4477ed43a2ee30d54227a f13f3d34f20c0161ed866e2d474323bcb0ffc1ed Record scheduled Watchlist release handoff reminder",
+      "f13f3d34f20c0161ed866e2d474323bcb0ffc1ed e645f95669524d57ce014bb86daffe17af045854 Describe category move notifications as moved across channels",
+      "e645f95669524d57ce014bb86daffe17af045854 22fd8956ca54e035b4c2eead243c3c68782adfec Remove manually curated label from top regular watches",
+      "22fd8956ca54e035b4c2eead243c3c68782adfec 9544060be31c81dac46ed20cac6032c149d4cab4 Add per-ticker paid-member-only Watchlist row visibility",
+      "9544060be31c81dac46ed20cac6032c149d4cab4 61aab8d73e540e1889573883714a9d3b06c8613f Record migration-free Runtime separation for immediate release",
+      "61aab8d73e540e1889573883714a9d3b06c8613f 9a6156c244b25e81d0bf7b8e534a087c7dc5f0e4 Record owner-authorized after-close Watchlist migration handoff",
+      "9a6156c244b25e81d0bf7b8e534a087c7dc5f0e4 aa5eab33978f604dc53b7334b6f008f188f72b84 Keep provider pairs unsynchronized when Runtime persistence differs",
+      "aa5eab33978f604dc53b7334b6f008f188f72b84 17f7a3527f42020379aadede5ef523b4107bf455 Connect Watchlist provider profiles with revision-fenced shared consumers",
+      "17f7a3527f42020379aadede5ef523b4107bf455 7b87508463ce823b01abbbc26f87c7546caed3ca Share deterministic owner Moomoo connection across market-data consumers",
+      "7b87508463ce823b01abbbc26f87c7546caed3ca 5fca8f32def38079ec9f6d5c8b6bc5adc0acb58a Allow manual Free Chat sharing of ticker-only Watchlist listings",
+      "5fca8f32def38079ec9f6d5c8b6bc5adc0acb58a 0733da1618a0b672fc1aabbd295cdca1b4607a20 Save manual Free Chat copy and expose exact delivery status",
+      "0733da1618a0b672fc1aabbd295cdca1b4607a20 94f15abd16c7ee2c3ba8e5139c675be30a32ee80 Apply Watchlist Premium settings to Free Chat delivery",
+      "94f15abd16c7ee2c3ba8e5139c675be30a32ee80 525284e692f96e09f96a5a098f8248392e26bd2c Retry only confirmed failed Free Chat move receipts"
+    ],
+    "provenanceAllowlist": [
+      {
+        "path": "app/(dashboard)/admin/watchlist/watchlist-indicator-audit-panel.tsx",
+        "baseBlob": "582acfc4a08ccc34c800d926eddf990dd35e9e8f",
+        "candidateBlob": "9484134fa50f72335851a9d713f8386d4887f4d1",
+        "cachedLiveBlob": "582acfc4a08ccc34c800d926eddf990dd35e9e8f"
+      },
+      {
+        "path": "app/(dashboard)/admin/watchlist/watchlist-runtime-admin-client.tsx",
+        "baseBlob": "7d7ee8c8cfa71e69a8577c6d5fcdaf8c804441df",
+        "candidateBlob": "18aa109226e6b5d2fd2c16aac967e238490a34b6",
+        "cachedLiveBlob": "7d7ee8c8cfa71e69a8577c6d5fcdaf8c804441df"
+      },
+      {
+        "path": "app/api/admin/watchlist/analysis-visibility/route.ts",
+        "baseBlob": "88db323672d76ebd644740469baea9ef868428b1",
+        "candidateBlob": "066daa6fce81a0d22799499da8818335436187ab",
+        "cachedLiveBlob": "88db323672d76ebd644740469baea9ef868428b1"
+      },
+      {
+        "path": "app/api/admin/watchlist/runtime/[...path]/route.ts",
+        "baseBlob": "781d15ac6f79cc6a61601ca50f13f58d8c894ea5",
+        "candidateBlob": "23ba5a3aac638dec7bc5c305a76fb15407ef3d6d",
+        "cachedLiveBlob": "ddf0f5dbf50532ba2c4f1c951863437a80825beb"
+      },
+      {
+        "path": "app/api/live-watchlist/moomoo-candles/route.ts",
+        "baseBlob": "2cadf8c7ac4972203df3a1edc25ae0ed74261256",
+        "candidateBlob": "e85f6c0d269ad3756781947e72c939d5632f9d73",
+        "cachedLiveBlob": "1c0453b4261c859fe13e25e045ed3ba653b965d2"
+      },
+      {
+        "path": "app/api/live-watchlist/symbols/[symbol]/indicators/route.ts",
+        "baseBlob": "5e1b6fcf0307b8bce207a2292abab1f4d35d3ac7",
+        "candidateBlob": "3ec57baaae15a000e7c27c3a7881c1545eeab72c",
+        "cachedLiveBlob": "5e1b6fcf0307b8bce207a2292abab1f4d35d3ac7"
+      },
+      {
+        "path": "app/api/live-watchlist/symbols/[symbol]/route.ts",
+        "baseBlob": "c10ac1210bfbc232b07f545aa35037881823aa29",
+        "candidateBlob": "7470bfdcdb40407487b52abbfd31a8a8d4b53d76",
+        "cachedLiveBlob": "c10ac1210bfbc232b07f545aa35037881823aa29"
+      },
+      {
+        "path": "app/watchlist/[symbol]/page.tsx",
+        "baseBlob": "0e278998e651ef3a72ef178978bb3e9d51fa14ff",
+        "candidateBlob": "b606103172bf9783cfb1bfea6c7213d56e8f36cc",
+        "cachedLiveBlob": "0e278998e651ef3a72ef178978bb3e9d51fa14ff"
+      },
+      {
+        "path": "app/watchlist/analysis-layout.module.css",
+        "baseBlob": "dbf8b3b7c0a9b5db98b78710135d3f5502cd6f85",
+        "candidateBlob": "fb8a73f752c1d4ae3289e48177007768cf5f6103",
+        "cachedLiveBlob": "dbf8b3b7c0a9b5db98b78710135d3f5502cd6f85"
+      },
+      {
+        "path": "app/watchlist/analysis-trader-notes.tsx",
+        "baseBlob": "f9c8515a0b92a71bb35046b524d7c5ba8d0424f3",
+        "candidateBlob": "e17907bda6d2eeafaa1628b0f856546d5c6c21d6",
+        "cachedLiveBlob": "f9c8515a0b92a71bb35046b524d7c5ba8d0424f3"
+      },
+      {
+        "path": "app/watchlist/archive/[archiveId]/page.tsx",
+        "baseBlob": "bccfac4ade92cebb6aef82b060f7e4736267f39f",
+        "candidateBlob": "c4c66599b4d0772ce3a94d3a1f73e3cf87abb8b5",
+        "cachedLiveBlob": "bccfac4ade92cebb6aef82b060f7e4736267f39f"
+      },
+      {
+        "path": "app/watchlist/live-watchlist-client.tsx",
+        "baseBlob": "c66bc2c494275075d869f2fda76e3c00c9793a1d",
+        "candidateBlob": "b9af209e2b2c0181d4438595fd84f8a14c3b82ed",
+        "cachedLiveBlob": "c66bc2c494275075d869f2fda76e3c00c9793a1d"
+      },
+      {
+        "path": "app/watchlist/potential-path-levels-card.tsx",
+        "baseBlob": "b77fe359602fcb723f9c32e1ca57b0a381f64c01",
+        "candidateBlob": "93a74396814cfb555a4bc2b23b9332a661c660d2",
+        "cachedLiveBlob": "93a74396814cfb555a4bc2b23b9332a661c660d2"
+      },
+      {
+        "path": "app/watchlist/premium-analysis-card.tsx",
+        "baseBlob": "41af0982a2d705ac04b920956f79922ef7f09d56",
+        "candidateBlob": "60af38379cc3c94caff580292c8afc5ff64e04c1",
+        "cachedLiveBlob": "5e4ef3f47f6e17a418e4376ad772e5c8fb79a609"
+      },
+      {
+        "path": "app/watchlist/premium-price-text.tsx",
+        "baseBlob": null,
+        "candidateBlob": "73ad18d0474d39da41a496f94cd827e080319346",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "app/watchlist/premium-ticker-lock.tsx",
+        "baseBlob": "9807215a5a55f1f914f37b0ae6ed4742d6a335a1",
+        "candidateBlob": "889974116b7c1271421755702fc87eeff22c5eab",
+        "cachedLiveBlob": "889974116b7c1271421755702fc87eeff22c5eab"
+      },
+      {
+        "path": "app/watchlist/simple-analysis-card.tsx",
+        "baseBlob": "62873b929c6070767e2abf4d3c6c022ec3d8b7cf",
+        "candidateBlob": "95aa82cce144d060622c3a7a71f11c5786b1bb94",
+        "cachedLiveBlob": "62873b929c6070767e2abf4d3c6c022ec3d8b7cf"
+      },
+      {
+        "path": "app/watchlist/watchlist-compact-rows.module.css",
+        "baseBlob": "87f52a9634fb40825c2dc3cc5ad5042ac44ad5e6",
+        "candidateBlob": "414bd8440fd34fe9e93c778e8fb04ce366c4ace8",
+        "cachedLiveBlob": "87f52a9634fb40825c2dc3cc5ad5042ac44ad5e6"
+      },
+      {
+        "path": "app/watchlist/watchlist-plan-upgrade.tsx",
+        "baseBlob": "c5073cc8523c7f06e138e3c8ed752249c476533f",
+        "candidateBlob": "4ce223694eac20faeb8b5bbc0a799b35fc46ba3c",
+        "cachedLiveBlob": "4ce223694eac20faeb8b5bbc0a799b35fc46ba3c"
+      },
+      {
+        "path": "docs/migration/watchlist-alpaca-independent-qa.md",
+        "baseBlob": "8d71b3a7cb0abb0188bdbc2692213c01694c04b2",
+        "candidateBlob": "a2c480840c17af30c361edc38b764af9c92031b5",
+        "cachedLiveBlob": "ffccdbf7b8ef7ef6f8cd600d2ca6bd9a0a46fb37"
+      },
+      {
+        "path": "docs/migration/watchlist-free-chat-plan.md",
+        "baseBlob": "48df4e6bbb369e429d206ecfb3435b65af88b28a",
+        "candidateBlob": "832d3361242b5365f6c52a974112a1f595b3498d",
+        "cachedLiveBlob": "48df4e6bbb369e429d206ecfb3435b65af88b28a"
+      },
+      {
+        "path": "docs/migration/watchlist-free-chat-progress.md",
+        "baseBlob": "5eacab0dece66c8c62d917872b8af5cc42890e11",
+        "candidateBlob": "501008a66ee5f8ff08838b759d84b5460ae44128",
+        "cachedLiveBlob": "e4c44d18b98bf9ad04911e58efee64aaeec55b97"
+      },
+      {
+        "path": "src/lib/live-watchlist/__tests__/owner-analysis-rows.node-test.cjs",
+        "baseBlob": "a41bf2737ae9d8f78d3eff081ab645a0dc940c3d",
+        "candidateBlob": "f7243420f2c0690cecb09c681fef46ae4f53e3ae",
+        "cachedLiveBlob": "a41bf2737ae9d8f78d3eff081ab645a0dc940c3d"
+      },
+      {
+        "path": "src/lib/live-watchlist/__tests__/owner-published-analysis-history.node-test.cjs",
+        "baseBlob": "fea9ac138941cc028d5cbb2d06f7b4b68fb96053",
+        "candidateBlob": "95aa053c6198f0420c746c69c1e808e47dbbfbaa",
+        "cachedLiveBlob": "fea9ac138941cc028d5cbb2d06f7b4b68fb96053"
+      },
+      {
+        "path": "src/lib/live-watchlist/__tests__/simple-analysis.node-test.cjs",
+        "baseBlob": "239b6b8936f4fa8c704733b50f72ce7b99159afe",
+        "candidateBlob": "7f3f3f75fea41ef2c038e865a2f0acee7906ae40",
+        "cachedLiveBlob": "239b6b8936f4fa8c704733b50f72ce7b99159afe"
+      },
+      {
+        "path": "src/lib/live-watchlist/__tests__/watchlist-potential-path-price.test.ts",
+        "baseBlob": "d05e5eaf2e48d7053736e3a0ee8f117d495d3cae",
+        "candidateBlob": "dd146009d3eebe7e7d1b7b626df302343bf42b75",
+        "cachedLiveBlob": "dd146009d3eebe7e7d1b7b626df302343bf42b75"
+      },
+      {
+        "path": "src/lib/live-watchlist/live-watchlist-events.ts",
+        "baseBlob": "69be5212f86e357b0162103c641f34248a430bfc",
+        "candidateBlob": "b21ae67ee329a899501fa6670dfc068e0bc43711",
+        "cachedLiveBlob": "69be5212f86e357b0162103c641f34248a430bfc"
+      },
+      {
+        "path": "src/lib/live-watchlist/live-watchlist-types.ts",
+        "baseBlob": "e5095b8d6875ffea338df98bc0d893e7c858214a",
+        "candidateBlob": "d9683be08b978486c26ef03447ced89455f9a856",
+        "cachedLiveBlob": "e5095b8d6875ffea338df98bc0d893e7c858214a"
+      },
+      {
+        "path": "src/lib/live-watchlist/premium-analysis-layout.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "722402572f76fb0905e7e42f2f30b548d1a92bb7",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/lib/live-watchlist/premium-analysis-preview.ts",
+        "baseBlob": "546d287b9b8e920ffb5f975548137d7a2ce0d668",
+        "candidateBlob": "6688eb92ddb5b23f69c7dc41ac117aace831442b",
+        "cachedLiveBlob": "546d287b9b8e920ffb5f975548137d7a2ce0d668"
+      },
+      {
+        "path": "src/lib/live-watchlist/watchlist-member-projection.ts",
+        "baseBlob": "7309637e48f92a5e313c0144e1d8279c1c65a79a",
+        "candidateBlob": "66523494581f30fe15d0b855023acf7a24e26a7f",
+        "cachedLiveBlob": "7309637e48f92a5e313c0144e1d8279c1c65a79a"
+      },
+      {
+        "path": "src/modules/help/watchlist-guides.ts",
+        "baseBlob": "afa39bf42ae4c53ad4f01bbff61edc3f5a291c19",
+        "candidateBlob": "f5d27f13c3de6fad259dd1e30773dddc9f7978f4",
+        "cachedLiveBlob": "bd6f92b4def403811360b0f67ff30ed0f670f857"
+      },
+      {
+        "path": "src/modules/platform/server/database/migrations/0213_watchlist_free_chat_owner_copy.ts",
+        "baseBlob": null,
+        "candidateBlob": "61d2bd563e7788ec868e2641de67be672c6cbc56",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/platform/server/database/migrations/0218_watchlist_row_visibility.ts",
+        "baseBlob": null,
+        "candidateBlob": "aecb45b7f8cf104f279e53eb64195c294dda8497",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/platform/server/database/migrations/0219_watchlist_masked_added_date.ts",
+        "baseBlob": null,
+        "candidateBlob": "75225cd525b94982e8a394581ebb5da691e060f0",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/platform/server/database/migrations/0220_watchlist_trader_notes_notifications.ts",
+        "baseBlob": null,
+        "candidateBlob": "728288ca4321e9af287439a43ffee7b7acfccda7",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/platform/server/database/migrations/0222_watchlist_indicators_visibility.ts",
+        "baseBlob": null,
+        "candidateBlob": "1f850129a7a3d49a9f5c5d5f25330dc361ce17bd",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/platform/server/database/platform-migration-file-contract.test.ts",
+        "baseBlob": "da7ffcd0e2fbee9771533374d675543c24c03d1a",
+        "candidateBlob": "823b4fcafc234d07a214a0ce9541563c278d8a82",
+        "cachedLiveBlob": "c1149b009700f51b02acf960dac1a2ee8fb25c8f"
+      },
+      {
+        "path": "src/modules/platform/server/database/platform-migration-manifest.ts",
+        "baseBlob": "c7838ea29e11dce245be8c33470c474b43d36f90",
+        "candidateBlob": "5566ea6e1b5769832ab493a8d1ca703e2fc4164c",
+        "cachedLiveBlob": "1fe6ec704b4d2c324a8204862a2839930a2be8bb"
+      },
+      {
+        "path": "src/modules/platform/server/runtime/traderlink-hosted-background-workers.ts",
+        "baseBlob": "f7632bad4808e5e8fba9e0477d02c42efb5086b6",
+        "candidateBlob": "741563007ea56c1fa61d566e4e91d224293b62ea",
+        "cachedLiveBlob": "9f04a19b058daf5a36c0fd716ed6b7ddde1f5af3"
+      },
+      {
+        "path": "src/modules/watchlist/server/access/watchlist-admin-authorization.test.ts",
+        "baseBlob": "d31c39470f4df1a4abf45cae293668d572e50c42",
+        "candidateBlob": "dee6d88db25c84a6701e0498f3414e5525f27538",
+        "cachedLiveBlob": "d31c39470f4df1a4abf45cae293668d572e50c42"
+      },
+      {
+        "path": "src/modules/watchlist/server/access/watchlist-analysis-visibility.ts",
+        "baseBlob": "c601cf8de0c583c5f39013e3f41c37e8781eb25e",
+        "candidateBlob": "e867fe009ad7e9254c11ba7b01a06b6c918c6424",
+        "cachedLiveBlob": "c601cf8de0c583c5f39013e3f41c37e8781eb25e"
+      },
+      {
+        "path": "src/modules/watchlist/server/access/watchlist-indicator-membership.test.ts",
+        "baseBlob": "fce7a42f7d47124b65d67624feba51f6df212633",
+        "candidateBlob": "6c6f4163998f6da95657da76e5a7a88c0b835002",
+        "cachedLiveBlob": "fce7a42f7d47124b65d67624feba51f6df212633"
+      },
+      {
+        "path": "src/modules/watchlist/server/access/watchlist-indicators-visibility.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "112445281f4ddd62b82e692a408bed26acc5070d",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/access/watchlist-indicators-visibility.ts",
+        "baseBlob": null,
+        "candidateBlob": "065c54dc1abb23f075922e5436feb883c548cc38",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/access/watchlist-row-visibility.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "67a484f2d643bdb370cbabd0c6d887cf28a47412",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/access/watchlist-ticker-projection.ts",
+        "baseBlob": "163fefd07b6c3dad35637f3b90a5d1155a0fbdd9",
+        "candidateBlob": "780b828ec96f6609c8fe54218545202e34162161",
+        "cachedLiveBlob": "163fefd07b6c3dad35637f3b90a5d1155a0fbdd9"
+      },
+      {
+        "path": "src/modules/watchlist/server/indicators/indicator-refresh-runtime.ts",
+        "baseBlob": "3bf62bc4177489bc7fbf5e852e1090482d13cdc2",
+        "candidateBlob": "8c0b2df8de10af8de32fcab915cbf498be423b34",
+        "cachedLiveBlob": "8c0b2df8de10af8de32fcab915cbf498be423b34"
+      },
+      {
+        "path": "src/modules/watchlist/server/moomoo-watchlist-candle-bridge.ts",
+        "baseBlob": "192df43ec23e7bf4f7d2230eed4f8959bb65d2af",
+        "candidateBlob": "b403dd6fbba8ca696a0557880382b5dd5462b36b",
+        "cachedLiveBlob": "b403dd6fbba8ca696a0557880382b5dd5462b36b"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/__tests__/watchlist-free-chat-premium.node-test.cjs",
+        "baseBlob": null,
+        "candidateBlob": "8c77a08a4c17bf4ad4f9d8ea893eebbf50b6ac48",
+        "cachedLiveBlob": "ec4506ec43d1e719f9c5ef213aacb1f22856e664"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/__tests__/watchlist-manual-loss.node-test.cjs",
+        "baseBlob": "f9f6def8df4f92e26cb68896bd5a6b66cc5041df",
+        "candidateBlob": "589c2a9feea33f5e2079ef9c89d9939c3cdcc8ba",
+        "cachedLiveBlob": "f9f6def8df4f92e26cb68896bd5a6b66cc5041df"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/__tests__/watchlist-move-free-chat.node-test.cjs",
+        "baseBlob": "f28c73a4bcd49c51f1e323080d76cd1be16c6c40",
+        "candidateBlob": "33e962dd4d0c8d92e4ec13614c0cbb0006740c89",
+        "cachedLiveBlob": "d60e1d008fe5c70df98de88344776bcb74a53a2c"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/__tests__/watchlist-notification-price-copy.node-test.cjs",
+        "baseBlob": "79ccf12c00a2252eae204c9d241b46bbae4bdf30",
+        "candidateBlob": "6da05337881f951aa0cf4dcdc6ad34918099a389",
+        "cachedLiveBlob": "3ee166547b168a924a21177ddcd85d860ce1f4a0"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-analysis-update-copy.ts",
+        "baseBlob": "c78cedf5948e21a44fb2527b612fab3d0647bcbf",
+        "candidateBlob": "7a3c3cd9781fc58cbf0837a82ec830f2f611f0f2",
+        "cachedLiveBlob": "c78cedf5948e21a44fb2527b612fab3d0647bcbf"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-category-move-notifications.ts",
+        "baseBlob": "ef43347bf095e4bfaeaa5d1bfc97b0dc86dea022",
+        "candidateBlob": "e35ddb9f7728743679e5e1169bd7e2e1eea86499",
+        "cachedLiveBlob": "ef43347bf095e4bfaeaa5d1bfc97b0dc86dea022"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-free-chat-admin.ts",
+        "baseBlob": "468c99b6712f362c937197aa471ab23741e8e4cf",
+        "candidateBlob": "d7b4e6b79607093473ec475dfaa7516f4a1654f1",
+        "cachedLiveBlob": "52cad2d0a51c62849be5f5469ae26fc0aefc4700"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-free-chat-delivery.ts",
+        "baseBlob": "b33278c6446349c7ec223132968a34790dc4c74f",
+        "candidateBlob": "e070fe3070075c76c624659596d00f235783a502",
+        "cachedLiveBlob": "f34313a49e1319ad8ae27df03f79b36ce0106737"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-free-chat-runtime.ts",
+        "baseBlob": "662fe549ab34fba8e3a873dbe4c6781dd11b0e14",
+        "candidateBlob": "7fe40cd4b4cdb1a48480e088e8871345cb041b70",
+        "cachedLiveBlob": "ee6d5b62a447e3f77bce588154492543df71cc76"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-free-chat-store.ts",
+        "baseBlob": "977a0db10cf3a83dbb2eac66cee28a753d8511a5",
+        "candidateBlob": "f67f75ee823d18842e45b147488bafc82067e22b",
+        "cachedLiveBlob": "f67f75ee823d18842e45b147488bafc82067e22b"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-free-chat-visibility.ts",
+        "baseBlob": null,
+        "candidateBlob": "aac914ed00390159237ebabf1ea2fa5f13e77591",
+        "cachedLiveBlob": "aac914ed00390159237ebabf1ea2fa5f13e77591"
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-notes-notifications.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "5e80968326a16b39eb83b4b7568d359e1a70c036",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-notes-notifications.ts",
+        "baseBlob": null,
+        "candidateBlob": "eb7d38265f9d341f2ac2aa6694f2b451b5282f4a",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/notifications/watchlist-publication-notification-contract.ts",
+        "baseBlob": "d425f9cd536cc425b2f4ee6a4893813bf524d626",
+        "candidateBlob": "5e09fa7f2465c0d7abf9e8faed7f6d81a24f7b25",
+        "cachedLiveBlob": "d425f9cd536cc425b2f4ee6a4893813bf524d626"
+      },
+      {
+        "path": "src/modules/watchlist/server/runtime/watchlist-initial-free-chat.node-test.cjs",
+        "baseBlob": null,
+        "candidateBlob": "53b138ac114662f0c939d59b85686c798fdb680f",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/runtime/watchlist-premium-control.ts",
+        "baseBlob": "500d373f3eaec6e2d6b3d13975e34c0661f21e13",
+        "candidateBlob": "0fa4eeaef82c063d9ef956324c885128380b600f",
+        "cachedLiveBlob": "500d373f3eaec6e2d6b3d13975e34c0661f21e13"
+      },
+      {
+        "path": "src/modules/watchlist/server/runtime/watchlist-runtime-admin-attention.node-test.cjs",
+        "baseBlob": null,
+        "candidateBlob": "1e13026506a004d05e5642c6a10008873c8bd142",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/runtime/watchlist-runtime-admin-client.ts",
+        "baseBlob": "5d990b274618259833678527fd27138923196383",
+        "candidateBlob": "03fe5131771d995331d9c5a736ed140433dcb0b9",
+        "cachedLiveBlob": "03fe5131771d995331d9c5a736ed140433dcb0b9"
+      },
+      {
+        "path": "src/modules/watchlist/server/runtime/watchlist-runtime-admin-document.ts",
+        "baseBlob": "5708cd53eb9efba028c0c898645aa1417f01b6a8",
+        "candidateBlob": "60a7f4ea72d1a0efcd4093b8f6bd2a7133ca2108",
+        "cachedLiveBlob": "5708cd53eb9efba028c0c898645aa1417f01b6a8"
+      },
+      {
+        "path": "src/modules/watchlist/server/runtime/watchlist-runtime-delivery-summary.node-test.cjs",
+        "baseBlob": null,
+        "candidateBlob": "b2fb5cd61a96362e078fe5048c1c1af85719e0a1",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/runtime/watchlist-runtime-delivery-summary.ts",
+        "baseBlob": null,
+        "candidateBlob": "c82b65060c3c0c13b8c5a6f558bdb8db47182659",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/modules/watchlist/server/watchlist-market-data-profile.ts",
+        "baseBlob": null,
+        "candidateBlob": "231d17f2eb2564fce8f80c51ad39ddfdae151fbd",
+        "cachedLiveBlob": "231d17f2eb2564fce8f80c51ad39ddfdae151fbd"
+      },
+      {
+        "path": "src/scripts/verify-watchlist-indicator-connection.mjs",
+        "baseBlob": "e391c4a3c5c8f9fc540353827a6a999b84660796",
+        "candidateBlob": "2d0c094b19340a1c6c31dc935257fdf565f7f35f",
+        "cachedLiveBlob": "2d0c094b19340a1c6c31dc935257fdf565f7f35f"
+      },
+      {
+        "path": "src/scripts/verify-watchlist-provider-profiles.mjs",
+        "baseBlob": null,
+        "candidateBlob": "e57794f0b8389006b4e90c4c52853df9742e81e2",
+        "cachedLiveBlob": "e57794f0b8389006b4e90c4c52853df9742e81e2"
+      },
+      {
+        "path": "src/scripts/verify-watchlist-setup-feed-runtime.mjs",
+        "baseBlob": "fd401a932ce2acdffdd5c91e3d909f01d31f683b",
+        "candidateBlob": "e0b6b11b059e290a435898cd3f63ed60371206c5",
+        "cachedLiveBlob": "e0b6b11b059e290a435898cd3f63ed60371206c5"
+      }
+    ]
+  },
+  "runtime": {
+    "workspace": "/home/traderlink/projects/watchlist-alpaca-runtime-qa",
+    "branch": "codex/watchlist-alpaca-runtime-qa-20261108",
+    "head": "92e4ca9b7afd429433148ad0ad006ed69fcde9cf",
+    "parent": "bf2d986b08c0f132eb162a76d2ecebfc73ec6d13",
+    "provenanceBase": "36937f06db73fe3de3254f6fe111366dfd60f5fe",
+    "knownLiveSource": "08d5c5a3632cac671448c81e833a69fdd92cb7fb",
+    "liveSourceStatus": "cached prior coordinator readback; fresh hosted check required",
+    "dirty": "",
+    "commits": [
+      "92e4ca9b7afd429433148ad0ad006ed69fcde9cf bf2d986b08c0f132eb162a76d2ecebfc73ec6d13 fix(watchlist): separate initial Free Chat editing and keep dialogs below navigation",
+      "bf2d986b08c0f132eb162a76d2ecebfc73ec6d13 c93d6e4ad28858e59b4bbb61c7a4a8b92db826a4 fix(watchlist): preserve intentionally empty Free Chat preview text",
+      "c93d6e4ad28858e59b4bbb61c7a4a8b92db826a4 d3492dd4c122282d2b76d4ca4a3785a363c7cc5a fix(watchlist): shorten Overnight category labels and notification context",
+      "d3492dd4c122282d2b76d4ca4a3785a363c7cc5a 06660ff5861cc7f02a5caf27f7a664ffac20c19c feat(watchlist): open actionable audit details from attention summary",
+      "06660ff5861cc7f02a5caf27f7a664ffac20c19c c8fb483d2e2e22c5f572119bf757e7b48957fcdc fix(watchlist): show actual provider roles instead of idle connection state",
+      "c8fb483d2e2e22c5f572119bf757e7b48957fcdc fd944b9d8816a94e96c7ae441335f43d1be50577 docs(watchlist): record final combined pending release QA",
+      "fd944b9d8816a94e96c7ae441335f43d1be50577 817a3fb6514be1bf9a18fd93dca607ad892c2704 feat(watchlist): show recorded analysis activity and delivery status in Runtime",
+      "817a3fb6514be1bf9a18fd93dca607ad892c2704 c4d728737cff03ba56bc4a5faf8eb1056855ab05 fix(watchlist): clarify admin audit totals and active analysis configuration",
+      "c4d728737cff03ba56bc4a5faf8eb1056855ab05 1ee9cd1e3e41b647012bcf7e80c8a9ff574ea4ef fix(watchlist): retire crossed breakout from follow-up generation",
+      "1ee9cd1e3e41b647012bcf7e80c8a9ff574ea4ef 08eda389543454df54b6d46ccc8bdd6ca443a503 feat(watchlist): publish notes with independent notification receipts",
+      "08eda389543454df54b6d46ccc8bdd6ca443a503 70a9bcae520dac84949c0336842054faeee18772 fix(watchlist): recover saved Free Chat copy and preferences",
+      "70a9bcae520dac84949c0336842054faeee18772 91baeffbbaf9cb71fa326698ab81ea01f52ef22b Use moved headings for Watchlist category posts",
+      "91baeffbbaf9cb71fa326698ab81ea01f52ef22b 1df570cfcda7cd159360b360f14e87a9b7675e2e Record passing full Runtime CI and retire intermediate QA logs",
+      "1df570cfcda7cd159360b360f14e87a9b7675e2e c65a5953597c0acb8067d20f637fde1370b7b927 Align role-flip fixture with observed full-ladder fallback",
+      "c65a5953597c0acb8067d20f637fde1370b7b927 68e2e0f0f7dc624aa7c272b59b37299fcd7730ca Repair inherited runtime test contracts against released provider source",
+      "68e2e0f0f7dc624aa7c272b59b37299fcd7730ca e832928cfeb552d44cf5d4006341952b8f9fb298 Report incomplete provider persistence before acknowledging a profile",
+      "e832928cfeb552d44cf5d4006341952b8f9fb298 2edb2b002741b8c0d434a7bf6457fe3ec02600c0 Switch Watchlist provider roles together with rollback and cache fencing",
+      "2edb2b002741b8c0d434a7bf6457fe3ec02600c0 fc71afee4ff7956ca96447e110955e65d89e07d5 Accept current analysis editor catalyst fields when saving",
+      "fc71afee4ff7956ca96447e110955e65d89e07d5 8319cdc69f88b11824d21ca1a27fb1a12f43e788 Clarify Free Chat listing requirement in owner dialog",
+      "8319cdc69f88b11824d21ca1a27fb1a12f43e788 35ab1530c2229e78020909cc4f51c4d734e09922 Use one editable Free Chat preview and delivery dialog",
+      "35ab1530c2229e78020909cc4f51c4d734e09922 29e27a79a0b00b68b006136ddb406fa29b566c20 Save edited Discord text before a notified Watchlist move",
+      "29e27a79a0b00b68b006136ddb406fa29b566c20 e8ec2dd3ce84350bb8e3535838d4a2cc90629265 Preview Free Chat posts before owner sends",
+      "e8ec2dd3ce84350bb8e3535838d4a2cc90629265 54612dddc377a2b3721ba51618de8708e33de70f Separate Watchlist move placement from delivery retries",
+      "54612dddc377a2b3721ba51618de8708e33de70f 17d99dfb1170cc2d4f50f339e55a25caed0a92f5 Preserve saved analysis when moving a ticker to Private",
+      "17d99dfb1170cc2d4f50f339e55a25caed0a92f5 36937f06db73fe3de3254f6fe111366dfd60f5fe Record read-only SMX adjusted-history and resistance investigation"
+    ],
+    "provenanceAllowlist": [
+      {
+        "path": "docs/runtime-ci-test-repair-manifest.json",
+        "baseBlob": null,
+        "candidateBlob": "da02f3a4aef3e9afc0390a38d13f886fbff257cf",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "docs/watchlist-alpaca-status-qa.md",
+        "baseBlob": "18a04c535f2560891815421e2d66650d88ddc96e",
+        "candidateBlob": "d3788ae7dd5a4af45b85650a8f68fd36d7735bd9",
+        "cachedLiveBlob": "5db6121b73bc39a760849aa054c4adb555d3459b"
+      },
+      {
+        "path": "src/lib/ai/traderslink-ai-read-owner-edit.ts",
+        "baseBlob": "c0d41e9d8fed67641c063a9679e6fe2c095069da",
+        "candidateBlob": "4c9760925765428aeedbfaa6be02252325d1d4e4",
+        "cachedLiveBlob": "4c9760925765428aeedbfaa6be02252325d1d4e4"
+      },
+      {
+        "path": "src/lib/ai/traderslink-ai-read-run-ledger.ts",
+        "baseBlob": "aa886d27d6447f7e09ca99327e2a9762364ce2ed",
+        "candidateBlob": "aa3b5e164d23a7706f4d293f88548e97f9165511",
+        "cachedLiveBlob": "aa886d27d6447f7e09ca99327e2a9762364ce2ed"
+      },
+      {
+        "path": "src/lib/ai/traderslink-ai-read-service.ts",
+        "baseBlob": "df58f2937c58e1f1584990bd2c90ddb7b75b4d98",
+        "candidateBlob": "051dac63a4409661c149fae990e44ac1363094b6",
+        "cachedLiveBlob": "df58f2937c58e1f1584990bd2c90ddb7b75b4d98"
+      },
+      {
+        "path": "src/lib/ai/watchlist-analysis-update-context.ts",
+        "baseBlob": "e2e90eb9d756c34a240a4548bde7629b83204e86",
+        "candidateBlob": "258db397e2ffa2808e18e11eac85800ce5e237aa",
+        "cachedLiveBlob": "e2e90eb9d756c34a240a4548bde7629b83204e86"
+      },
+      {
+        "path": "src/lib/ai/watchlist-breakout-lifecycle.ts",
+        "baseBlob": null,
+        "candidateBlob": "3dbdd8053aee848916488ca2f29971ff482da5ba",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/lib/ai/watchlist-simple-analysis.ts",
+        "baseBlob": "82dd4a4c56c44d5e0288d69da3ddb480d4de32af",
+        "candidateBlob": "e93e84a91dce58e03ee30083bb466390708db6e2",
+        "cachedLiveBlob": "82dd4a4c56c44d5e0288d69da3ddb480d4de32af"
+      },
+      {
+        "path": "src/lib/alerts/watchlist-category-move-receipts.ts",
+        "baseBlob": "beffd84a4d406a3f57abd8463c989a8c76b45cd9",
+        "candidateBlob": "af4c560374db3f2916ab65d1d27ac50dab8b0dc1",
+        "cachedLiveBlob": "beffd84a4d406a3f57abd8463c989a8c76b45cd9"
+      },
+      {
+        "path": "src/lib/alerts/watchlist-category-move-service.ts",
+        "baseBlob": "307505b8231548ebff138eafa26ddbd8986c7cd7",
+        "candidateBlob": "2f807a99e7750ce5becff16c6aa5b056854cbbc9",
+        "cachedLiveBlob": "83e6620e8bd7ceb65ff6d5b236e676809f0d51a3"
+      },
+      {
+        "path": "src/lib/alerts/watchlist-notes-publication.ts",
+        "baseBlob": null,
+        "candidateBlob": "c45ee9c1e352b888333af15ec8495ded7d57935c",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/lib/market-data/candle-fetch-service.ts",
+        "baseBlob": "9a4c356fdf43a13c9edb2ced0557b61870a6b59c",
+        "candidateBlob": "74e1e61f1c240a146a8e713989fa608a2aa8310a",
+        "cachedLiveBlob": "74e1e61f1c240a146a8e713989fa608a2aa8310a"
+      },
+      {
+        "path": "src/lib/market-data/selectable-same-day-candle-service.ts",
+        "baseBlob": "0cf94d49e7988b499d443c26e6e6b6cf1927e378",
+        "candidateBlob": "8c30d874b3750402562290d2a870df3e5a1e3bfb",
+        "cachedLiveBlob": "8c30d874b3750402562290d2a870df3e5a1e3bfb"
+      },
+      {
+        "path": "src/lib/monitoring/manual-watchlist-runtime-manager.ts",
+        "baseBlob": "e06ed91645ffa4e71535fd16f6d7e5822f1a2864",
+        "candidateBlob": "9be4dc7e2ad83d338f4b9c507a14d3357371acba",
+        "cachedLiveBlob": "642b11659d214f8b71051cdb2bb60e154faf4b1b"
+      },
+      {
+        "path": "src/lib/monitoring/watchlist-operations-summary.ts",
+        "baseBlob": null,
+        "candidateBlob": "f7ba744360deecc2b8467324c4b48ce3cd13b022",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/lib/validation/validation-candle-cache.ts",
+        "baseBlob": "c1a4d00243e164932b72d4877fb2b89dd141b254",
+        "candidateBlob": "133ff3be83583fad8c4dde6b362f02c805a8db48",
+        "cachedLiveBlob": "133ff3be83583fad8c4dde6b362f02c805a8db48"
+      },
+      {
+        "path": "src/runtime/manual-watchlist-analysis-review-api.ts",
+        "baseBlob": "02d210c7213e7633b759e40bee34aee943a4fdee",
+        "candidateBlob": "5d1743ad68f8d779c0a09267fa22e7f85d940a96",
+        "cachedLiveBlob": "18ce14c5b4a6014ab56d57d54520d55e1fbc9065"
+      },
+      {
+        "path": "src/runtime/manual-watchlist-page.ts",
+        "baseBlob": "c3b0150010f9f1870e76405f7721ba5f42276231",
+        "candidateBlob": "f5ddb2f213683b87d75839118a6a54aa0c0273a0",
+        "cachedLiveBlob": "48cb516a5c6e2dde84cdaf4898505894db2a6b0a"
+      },
+      {
+        "path": "src/runtime/manual-watchlist-row-review.ts",
+        "baseBlob": "0c109447afa35ef2cee974855f032d1afa790015",
+        "candidateBlob": "81699c85abec3a47f3db016964a62e2035d24ed6",
+        "cachedLiveBlob": "b19c5a9debde961b08cf42ab9df66744ed5fb8a8"
+      },
+      {
+        "path": "src/runtime/manual-watchlist-server.ts",
+        "baseBlob": "38945cd7d8dbbd4c4a04f58eb4f64b3e852efa0d",
+        "candidateBlob": "b0d21c85c9d3b25b038af2222edd1ac7af660ef7",
+        "cachedLiveBlob": "315528d6243d93176b94fc28b84349d7926aa522"
+      },
+      {
+        "path": "src/runtime/watchlist-market-data-profile.ts",
+        "baseBlob": null,
+        "candidateBlob": "9c461afb4a5e2ba5c635469a8c87535efed4aed0",
+        "cachedLiveBlob": "9c461afb4a5e2ba5c635469a8c87535efed4aed0"
+      },
+      {
+        "path": "src/tests/discord-rest-thread-gateway.test.ts",
+        "baseBlob": "4682a34636a56e35e6580eb0308fb13d1c19b565",
+        "candidateBlob": "b0e47d2ec2ac11bfc05701493ea2719499adcef4",
+        "cachedLiveBlob": "4682a34636a56e35e6580eb0308fb13d1c19b565"
+      },
+      {
+        "path": "src/tests/level-runtime-mode.test.ts",
+        "baseBlob": "cf5239cc6203a772f895c492a04429500f614457",
+        "candidateBlob": "89c50026c8bdca14ee4304b9c3060fa68bc55867",
+        "cachedLiveBlob": "cf5239cc6203a772f895c492a04429500f614457"
+      },
+      {
+        "path": "src/tests/manual-watchlist-admin-summary.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "56507b6f2494a4b1269dc1576b6e650b91124c31",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/tests/manual-watchlist-analysis-review-api.test.ts",
+        "baseBlob": "7ef0c5603684e2f488e4b52d2e2054edb740cb04",
+        "candidateBlob": "cce331e376fe0575dba2aab036c2deab2c03d7b2",
+        "cachedLiveBlob": "7ef0c5603684e2f488e4b52d2e2054edb740cb04"
+      },
+      {
+        "path": "src/tests/manual-watchlist-free-chat-recovery.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "ece85a76b5ea4bc225a4e63188e150c9a89c0e4f",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/tests/manual-watchlist-row-review.test.ts",
+        "baseBlob": "fec386c34099980ad0c7ea13c88721154685661d",
+        "candidateBlob": "ae979f285dd295580e08dedd540ec9888a8e0e51",
+        "cachedLiveBlob": "fec386c34099980ad0c7ea13c88721154685661d"
+      },
+      {
+        "path": "src/tests/manual-watchlist-runtime-manager.test.ts",
+        "baseBlob": "283414e17a84071d920bdd6ddb3d4a8f2615e275",
+        "candidateBlob": "cb50dddf27bd7bb9191ff67f26b87cc0d248b249",
+        "cachedLiveBlob": "6f08d95c35295778c3aa3f076bd21adf95997c20"
+      },
+      {
+        "path": "src/tests/manual-watchlist-server.test.ts",
+        "baseBlob": "e46479a03181ec5d81f19df8d9e2774e54894141",
+        "candidateBlob": "9a4efe1839d1cbcd411ba2563449b552f58df0ca",
+        "cachedLiveBlob": "e46479a03181ec5d81f19df8d9e2774e54894141"
+      },
+      {
+        "path": "src/tests/small-cap-level-regressions.test.ts",
+        "baseBlob": "dc95a998aadbcefd7462defb7e91c5c5b1940e8c",
+        "candidateBlob": "e2c1f2e92dbe60695030ec3620062f675facc64f",
+        "cachedLiveBlob": "dc95a998aadbcefd7462defb7e91c5c5b1940e8c"
+      },
+      {
+        "path": "src/tests/traderslink-ai-read-owner-edit.test.ts",
+        "baseBlob": "7378c66539675debcd20764d3a61e3b8e82916e2",
+        "candidateBlob": "cb1266ef03ddd1b79e67fc83637c1ff7211b22a9",
+        "cachedLiveBlob": "0ef6aa1f43ab5d32cd75018c93e722caed821cdb"
+      },
+      {
+        "path": "src/tests/traderslink-ai-read-post-change-fixtures.test.ts",
+        "baseBlob": "367f40ac95ac365c7b056f6108f354495b31b940",
+        "candidateBlob": "f0e776ecca93397d821bfeebef45fde42b60af31",
+        "cachedLiveBlob": "367f40ac95ac365c7b056f6108f354495b31b940"
+      },
+      {
+        "path": "src/tests/traderslink-ai-read-price-action.test.ts",
+        "baseBlob": "e4bfc8d87bfb88edfb1d10fda74a56280f88429c",
+        "candidateBlob": "a82c2c670e8f0760e5892596bb921d8224483d89",
+        "cachedLiveBlob": "e4bfc8d87bfb88edfb1d10fda74a56280f88429c"
+      },
+      {
+        "path": "src/tests/traderslink-ai-read-section-validation.test.ts",
+        "baseBlob": "9604e1da6428d642b4ae7fd16f81d50ff34053e8",
+        "candidateBlob": "3aa3c7e806a295a0e97ddbcbc8141d436a591589",
+        "cachedLiveBlob": "9604e1da6428d642b4ae7fd16f81d50ff34053e8"
+      },
+      {
+        "path": "src/tests/traderslink-ai-read-service.test.ts",
+        "baseBlob": "3b38135e39291614564e448c0beed67034ea6321",
+        "candidateBlob": "fc398bd91157ef5315ff951bc9a37c9046da4f60",
+        "cachedLiveBlob": "3b38135e39291614564e448c0beed67034ea6321"
+      },
+      {
+        "path": "src/tests/traderslink-ai-read-settings.test.ts",
+        "baseBlob": "6bbf81aa377680c9b85f9d9b781af060d81e9a27",
+        "candidateBlob": "8c520dba2a64f791d8f5248214759e5fc825acf2",
+        "cachedLiveBlob": "6bbf81aa377680c9b85f9d9b781af060d81e9a27"
+      },
+      {
+        "path": "src/tests/watchlist-admin-dialog-position.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "f6a9694f128d9ee4915f5212ba9428e32f45dfe5",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/tests/watchlist-automatic-publication-context.test.ts",
+        "baseBlob": "d35241ed0f811a0831da22f87566a8f76629bc55",
+        "candidateBlob": "4641d688318877b3a9acfb0c6e96697d4b2261db",
+        "cachedLiveBlob": "d35241ed0f811a0831da22f87566a8f76629bc55"
+      },
+      {
+        "path": "src/tests/watchlist-breakout-lifecycle.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "13c54571077852b9e486e5e863afa6935ec0cb2b",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/tests/watchlist-discord-heading.test.ts",
+        "baseBlob": "1f117d80625d85c1e0c4e8eff7f1071b28309c1a",
+        "candidateBlob": "95602c460b1bfab3e4d84ec7ae77a0631c879390",
+        "cachedLiveBlob": "1f117d80625d85c1e0c4e8eff7f1071b28309c1a"
+      },
+      {
+        "path": "src/tests/watchlist-discord-mentions.test.ts",
+        "baseBlob": "b176437d5208df66582d457b21da964522d08d49",
+        "candidateBlob": "379c6acded325da13c80dabb63f18ccf47b1f92a",
+        "cachedLiveBlob": "b176437d5208df66582d457b21da964522d08d49"
+      },
+      {
+        "path": "src/tests/watchlist-listing-only-publication.test.ts",
+        "baseBlob": "907234c78a302db387081f0e0c4a0469a8c23f83",
+        "candidateBlob": "f2c9ac4a755a522a8623e27ea864d7402d95bd9a",
+        "cachedLiveBlob": "907234c78a302db387081f0e0c4a0469a8c23f83"
+      },
+      {
+        "path": "src/tests/watchlist-market-data-profile.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "7c646cb1b5f39c85ac2d963d505c6bf78530b647",
+        "cachedLiveBlob": "7c646cb1b5f39c85ac2d963d505c6bf78530b647"
+      },
+      {
+        "path": "src/tests/watchlist-move-choices.test.ts",
+        "baseBlob": "01fb2ec61b0a62de01198c1ed146740d0b0e8488",
+        "candidateBlob": "d9ed5dbed249df223b36354773cdf09bb8078c16",
+        "cachedLiveBlob": "820dcf86d1ce86a7c90554635c51fbea70649adf"
+      },
+      {
+        "path": "src/tests/watchlist-notes-publication.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "9055db7d042026ab11dce12070a0296c2e54fb30",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/tests/watchlist-operations-summary.test.ts",
+        "baseBlob": null,
+        "candidateBlob": "727f6d14d67cc9d6f68dc1033fce0e09d42b0752",
+        "cachedLiveBlob": null
+      },
+      {
+        "path": "src/tests/watchlist-simple-analysis.test.ts",
+        "baseBlob": "f0d3bd8341601d401e742dee84b74e8fbb4e4562",
+        "candidateBlob": "bc6eaecc176a0c624158200ba60288c9609751fc",
+        "cachedLiveBlob": "f0d3bd8341601d401e742dee84b74e8fbb4e4562"
+      },
+      {
+        "path": "src/tests/watchlist-simple-integration.test.ts",
+        "baseBlob": "4df1563b5bd9db6ca98b5d7a2e42b1ec3911abfc",
+        "candidateBlob": "1397bc16dafc18d9412c23dd53301c03bb44e153",
+        "cachedLiveBlob": "4df1563b5bd9db6ca98b5d7a2e42b1ec3911abfc"
+      }
+    ]
+  },
+  "newPreviewCommit": "b675b078bb98e786675b69ca69128b6bd3c3f6a5",
+  "newIndicatorCommit": "13b69b6c71ac424930cf866ec26a56f4c4f684d1",
+  "newBrowserAcceptance": "Unrun; must coordinate shared guard. Existing focused actual renderer DOM/SQL tests passed. Not claimed hosted acceptance.",
+  "migrationOrders": {
+    "0213_watchlist_free_chat_owner_copy": 270,
+    "0218_watchlist_row_visibility": 293,
+    "0219_watchlist_masked_added_date": 294,
+    "0220_watchlist_trader_notes_notifications": 295,
+    "0222_watchlist_indicators_visibility": 297
+  },
+  "preserve": "Live Home0214/order269; News0221/order296 reservation and complete current canonical catalog. No historical checksum rewrites."
+}

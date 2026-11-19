@@ -1,3 +1,5 @@
+import { HIDDEN_ANALYSIS_PRICE, type PremiumSimpleRead } from "@/src/lib/live-watchlist/premium-analysis-preview";
+import { MaskedPriceText } from "./premium-price-text";
 import { AnalysisTraderNotes } from "./analysis-trader-notes";
 import { sortPullbacksByPrice } from "@/src/lib/live-watchlist/pullback-price-order";
 import styles from "./analysis-layout.module.css";
@@ -7,8 +9,10 @@ import type { AnalysisHistoryRow } from "@/src/lib/live-watchlist/analysis-publi
 import type { TradersLinkAiReadPayload } from "@/src/lib/live-watchlist/live-watchlist-types";
 
 /** Separate presentation selected by the saved read, never by today's setting. */
-export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, renderSectionEditor, historicalRows }: {
-  read: TradersLinkAiReadPayload;
+export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, renderSectionEditor, historicalRows, maskPrices = false, premiumNotice }: {
+  read: TradersLinkAiReadPayload | PremiumSimpleRead;
+  maskPrices?: boolean;
+  premiumNotice?: ReactNode;
   traderNotes?: string | null;
   olderArticleDate?: string | null;
   renderSectionEditor?: (sections: readonly string[]) => ReactNode;
@@ -17,36 +21,40 @@ export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, render
   const simple = read.simpleAnalysis;
   if (!simple) return null;
   const hidden = new Set(read.ownerHiddenSections ?? []);
-  const price = (value:number) => "$"+value.toLocaleString("en-US",{maximumFractionDigits:4});
+  const price = (value:number) => maskPrices ? HIDDEN_ANALYSIS_PRICE : "$"+value.toLocaleString("en-US",{maximumFractionDigits:4});
+  const text = (value:string) => maskPrices ? <MaskedPriceText text={value} /> : value;
   const area = (low:number,high:number) => low === high ? price(low) : price(low)+"–"+price(high);
   const pullbacks = sortPullbacksByPrice(simple.pullbacks.map((plan,index)=>({...plan,hidden:plan.hidden ?? hidden.has(index===0?"shallow":index===1?"deep":"")})))
     .map((plan,index)=>({plan,index})).filter(({plan})=>!plan.hidden);
+  const hasSidebar = Boolean(traderNotes?.trim() || renderSectionEditor || (!hidden.has("catalystRealityCheck") && read.catalystRealityCheck.summary.trim() && read.catalystRealityCheck.sourceUrls.length > 0) || (!hidden.has("riskSummary") && read.riskSummary.some(risk=>risk.trim())));
+  const bottomColumns = hasSidebar && (renderSectionEditor || (!hidden.has("targets") && simple.upside.length > 0));
   return <article className="academy-card watchlist-content-card watchlist-ai-read-card" data-card-label="TradersLink Analysis">
     <div className="academy-card-topline"><span>TradersLink Analysis</span></div>
+    {premiumNotice}
     <div className="watchlist-ai-read-header"><div>
       <h2 className="academy-card-title">{read.symbol} trade preparation</h2>
-      <AnalysisHistoryLines read={read} preview={Boolean(renderSectionEditor)} historicalRows={historicalRows} />
+      {maskPrices ? <div className="watchlist-ai-read-eyebrow">Analysis posted: {new Date(read.generatedAt).toLocaleString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})} ET — {text(HIDDEN_ANALYSIS_PRICE)}</div> : <AnalysisHistoryLines read={read as TradersLinkAiReadPayload} preview={Boolean(renderSectionEditor)} historicalRows={historicalRows} />}
     </div></div>
-    <div className={traderNotes?.trim() ? styles.row : styles.single}><div>
+    <div>
     {renderSectionEditor?.(["simpleSetup"])}
-    {!hidden.has("currentRead") && simple.setup.trim() ? <p>{simple.setup}</p> : null}
-    </div><AnalysisTraderNotes body={traderNotes} /></div>
+    {!hidden.has("currentRead") && simple.setup.trim() ? <p>{text(simple.setup)}</p> : null}
+    </div>
     {renderSectionEditor?.(["simplePullbacks"])}
     {pullbacks.map(({plan,index})=><section key={index} className="watchlist-ai-read-section">
       <h3>Pullback {index+1}</h3>
-      <strong>{area(plan.low,plan.high)}</strong><p>{plan.explanation}</p>
-      {plan.confirmation.trim() ? <p><strong>Confirmation:</strong> {plan.confirmation}</p> : null}
+      <strong>{text(area(plan.low,plan.high))}</strong><p>{text(plan.explanation)}</p>
+      {plan.confirmation.trim() ? <p><strong>Confirmation:</strong> {text(plan.confirmation)}</p> : null}
     </section>)}
     {renderSectionEditor?.(["simpleBreakout"])}
     {!hidden.has("breakoutContinuation") && simple.breakout ? <section className="watchlist-ai-read-section">
-      <h3>Breakout</h3><strong>{price(simple.breakout.price)}</strong><p>{simple.breakout.explanation}</p>
-      {simple.breakout.confirmation.trim() ? <p><strong>Confirmation:</strong> {simple.breakout.confirmation}</p> : null}
+      <h3>Breakout</h3><strong>{text(price(simple.breakout.price))}</strong><p>{text(simple.breakout.explanation)}</p>
+      {simple.breakout.confirmation.trim() ? <p><strong>Confirmation:</strong> {text(simple.breakout.confirmation)}</p> : null}
     </section> : null}
-    <div className={renderSectionEditor || (!hidden.has("catalystRealityCheck") && read.catalystRealityCheck.summary.trim() && read.catalystRealityCheck.sourceUrls.length > 0) || (!hidden.has("riskSummary") && read.riskSummary.some(risk=>risk.trim())) ? styles.row : styles.single}><div>
+    <div className={`${bottomColumns ? styles.row : styles.single} ${traderNotes?.trim() ? styles.withNotes : ""}`}><div>
     {renderSectionEditor?.(["simpleUpside"])}
     {!hidden.has("targets") && simple.upside.length ? <section className="watchlist-ai-read-section">
       <h3>Potential Targets (Volume Dependent)</h3><ol className="watchlist-ai-read-targets">
-        {simple.upside.map((level,index)=><li key={index}><strong>{area(level.low,level.high)}</strong><span>{level.explanation}</span></li>)}
+        {simple.upside.map((level,index)=><li key={index}><strong>{text(area(level.low,level.high))}</strong><span>{text(level.explanation)}</span></li>)}
       </ol>
     </section> : null}
     </div><div className={styles.side}>
@@ -60,6 +68,7 @@ export function SimpleAnalysisCard({ read, traderNotes, olderArticleDate, render
       </section> : null}
       {renderSectionEditor?.(["riskSummary"])}
       {!hidden.has("riskSummary") && read.riskSummary.some(risk=>risk.trim()) ? <section className="watchlist-ai-read-section"><h3>Risk notes</h3><ul>{read.riskSummary.filter(risk=>risk.trim()).map((risk,index)=><li key={index}>{risk}</li>)}</ul></section> : null}
+      <AnalysisTraderNotes body={traderNotes} />
     </div></div>
     <p className="watchlist-ai-read-meta">Analysis as of {new Date(read.dataAsOf).toLocaleString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})} ET.</p>
   </article>;

@@ -98,6 +98,7 @@ export function WatchlistRuntimeAdminClient() {
       const message = event.data as { source?: unknown; type?: unknown; card?: unknown; dipBuyPlanVisible?: unknown; symbol?: unknown; cycleId?:unknown };
       if (message.source !== "traderslink-watchlist-admin") return;
       if (message.type === "navigation-ready") { syncNavigation(); return; }
+      if (message.type === "open-analysis-attention") { selectRuntimeSection("ai-controls"); return; }
       if (message.type === "previous-analyses" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol) && typeof message.cycleId==="string" && message.cycleId.length>0 && message.cycleId.length<=200) { setHistoryRequest({symbol:message.symbol,cycleId:message.cycleId}); return; }
       if (message.type === "gain-starting-point" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainStartSymbol(message.symbol); return; }
       if (message.type === "post-potential-gain" && typeof message.symbol === "string" && /^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(message.symbol)) { setGainPostSymbol(message.symbol); return; }
@@ -112,7 +113,7 @@ export function WatchlistRuntimeAdminClient() {
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [selectUsage, selectRecaps, syncNavigation]);
+  }, [selectUsage, selectRecaps, syncNavigation, selectRuntimeSection]);
 
   return (
     <>

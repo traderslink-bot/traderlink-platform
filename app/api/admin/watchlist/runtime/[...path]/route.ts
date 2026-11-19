@@ -1,7 +1,10 @@
+import { readWatchlistRuntimeDeliverySummary } from "@/src/modules/watchlist/server/runtime/watchlist-runtime-delivery-summary";
+import { prepareNotesNotification, runNotesNotifications } from "@/src/modules/watchlist/server/notifications/watchlist-notes-notifications";
 import { isPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { recordCategoryMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-x-admin";
 import { recordXApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-x-runtime";
+import { FreeChatInputError } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-delivery";
 import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
 import { recordFreeChatApprovalIntent, recordFreeChatMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
 import { readFreeChatMoveDelivery, retryFreeChatMoveDelivery } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-store";
@@ -30,6 +33,7 @@ function canRetryFreeChatMove(move: CategoryMoveDeliveryStatus | undefined): mov
 }
 
 const GET_PATHS = new Set([
+  "/api/watchlist/analysis-review/notes-notification",
   "/api/watchlist/analysis-review/discord-text",
   "/api/watchlist/analysis-review/category-move",
   "/api/watchlist/analysis-review/x-post",
@@ -50,6 +54,7 @@ const GET_PATHS = new Set([
 ]);
 
 const POST_PATHS = new Set([
+  "/api/watchlist/analysis-review/notes-notification",
   "/api/watchlist/analysis-review/discord-text",
   "/api/watchlist/analysis-review/category-move",
   "/api/watchlist/analysis-review/x-post",
@@ -138,6 +143,10 @@ async function relay(
   const incomingUrl = new URL(request.url);
   let body = method === "POST" ? await request.text() : undefined;
   let freeChatWarning:string|null=null;
+  let notesWarning:string|null=null;
+  if(pathname === "/api/watchlist/analysis-review/save-notes" && method === "POST" && body && reviewActor) {
+    try {prepareNotesNotification(body,reviewActor);} catch {notesWarning="Your notes can still be published, but update notifications could not be queued. Try Publish notes again to queue them.";}
+  }
   const categoryMove = pathname === "/api/watchlist/analysis-review/category-move";
   const deliveryRetry = categoryMove && method === "POST" ? incomingUrl.searchParams.get("retry") : null;
   if (deliveryRetry === "free-chat" && reviewActor) {
@@ -186,15 +195,16 @@ async function relay(
   let xPostingWarning: string | null = null;
   if (pathname === "/api/watchlist/analysis-review/free-chat" && reviewActor) {
     try { return Response.json(await handleFreeChatAdmin(method,incomingUrl,body,reviewActor.slice("platform-owner:".length)), { headers: { "cache-control": "private, no-store" } }); }
-    catch { return Response.json({ error: "Free Chat controls are unavailable. Reload and try again." }, { status: 409, headers: { "cache-control": "private, no-store" } }); }
+    catch (error) { return Response.json({ error: error instanceof FreeChatInputError ? error.message : "Free Chat controls are unavailable. Reload and try again." }, { status: 409, headers: { "cache-control": "private, no-store" } }); }
   }
   if (pathname === "/api/watchlist/analysis-review/approve" && reviewActor && body) {
     try { xPostingWarning = recordXApprovalIntent(body,reviewActor); } catch { xPostingWarning = "X selection could not be saved. Analysis approval is unchanged."; }
     try { recordFreeChatApprovalIntent(body,reviewActor); }
-    catch { console.error("Free Chat selection could not be saved; ordinary approval remains unchanged."); }
+    catch { freeChatWarning="Your Watchlist publication is unchanged. The Free Chat message could not be queued; use Post to Free Chat to review and send it separately.";console.error("Free Chat selection could not be saved; ordinary approval remains unchanged."); }
     try {
       const input = JSON.parse(body);
       delete input.freeChat;
+      delete input.freeChatCopy;
       delete input.xPost;
       delete input.xCaption;
       body = JSON.stringify(input);
@@ -220,6 +230,19 @@ async function relay(
     path: `${pathname}${incomingUrl.search}`,
   });
   let responseBody = result.body;
+  // Existing owner-only status read; enrich detailed responses without another
+  // browser request, worker execution, store initialization or settings write.
+  if (pathname === "/api/runtime/status" && method === "GET" && result.ok && incomingUrl.searchParams.get("compact") !== "1") {
+    try {
+      const value = JSON.parse(responseBody);
+      try { value.platformDeliveries = withReadonlyPlatformDatabase({}, db => readWatchlistRuntimeDeliverySummary(db)); }
+      catch { value.platformDeliveries = { available: false }; }
+      responseBody = JSON.stringify(value);
+    } catch { /* Keep the original response/error contract. */ }
+  }
+
+  if(pathname === "/api/watchlist/analysis-review/save-notes" && method === "POST" && result.ok && !notesWarning)void runNotesNotifications().catch(()=>console.error("Watchlist notes notification check failed."));
+  if(notesWarning && result.ok){try{responseBody=JSON.stringify({...JSON.parse(responseBody),notesWarning});}catch{/* Preserve saved notes response. */}}
   if (categoryMove && method === "GET" && reviewActor && result.ok) {
     try {
       const value = JSON.parse(responseBody);

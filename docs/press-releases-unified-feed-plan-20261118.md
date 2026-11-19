@@ -63,3 +63,7 @@ Owner additionally requires no dashboard PR details/sidebar/page action to the p
 Cap limits use inclusive minimum / exclusive upper bound (`Below`) so shortcut bands do not overlap. Known numeric USD `marketCapValue` takes precedence over formatted display metadata; ambiguous unsuffixed display values remain unknown. Query paging freezes ingestion, visibility-delay eligibility and read-state against an `asOf` snapshot to prevent newly arriving articles or newly read rows from shifting later pages.
 
 Implementation and QA: [progress record](press-releases-unified-feed-progress-20261118.md). Subscription handoff: [Membership contract](press-releases-membership-handoff-20261118.md).
+
+## Owner extension — account views and custom alerts
+
+The owner subsequently requested cross-device account persistence and notifications for several saved filtered sections, including custom market-cap ranges. This supersedes the browser-only persistence limit above. Follow [the extension plan](press-release-account-views-and-alerts-plan-20261119.md) and its progress record. Migration 0221/order296 is source-reserved; production sequencing/approval remains Coordinator-owned.

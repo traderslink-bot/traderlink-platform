@@ -1,0 +1,416 @@
+{
+  "state": "LOCAL_COMBINED_NATIVE_QA_PASS_NOT_DEPLOYED",
+  "finishedAtUtc": "2026-11-19T01:08:02.770729+00:00",
+  "source": {
+    "baseCommit": "5f0145ec03c7b2cf921861cbafee3e339a9af106",
+    "candidateSha256": "a55a42ff868fd57fa5bba28307546270f02b8f739f39d08fb6ad73d7f135e14b",
+    "changes": [
+      {
+        "afterSha256": "4741c56553301b4440c0f775f45f8671fa6694fee58dca41b8eddbc99e42bd71",
+        "beforeSha256": "899f8d6bdc31270651fd680f61cc3db6357e21741129ace9eca65407de7db7b0",
+        "kind": "modified",
+        "path": "app/(dashboard)/account/notification-preferences.tsx"
+      },
+      {
+        "afterSha256": "5acd330c8a7e0fc9832ff160dbff93a8e4cb53c108daaf144301baac4fcb1ebf",
+        "beforeSha256": "af33ef8e1f293fe366b7f61e3bee3698274f91d11fd6e571b216acc2f8b7cbab",
+        "kind": "modified",
+        "path": "app/(dashboard)/press-releases/[[...channel]]/page.tsx"
+      },
+      {
+        "afterSha256": "f5bb8d44087283e32fba704ca6d1a18b6a282327fdb5aff533e08928af3c9686",
+        "beforeSha256": "2ebd54979ba9385315c52d1d301de22166c41826f4efb973a0c7a4b01582d3e0",
+        "kind": "modified",
+        "path": "app/(dashboard)/press-releases/press-release-actions.ts"
+      },
+      {
+        "afterSha256": "3c948ddc8c78c421c5d94bcabdbd79510ca92259e5fd29982644e99a7d5eb7d6",
+        "beforeSha256": "55215ed55e3b15c30ce1b6373bd56540d8ccf4389102147ae2e2460b13a222ea",
+        "kind": "modified",
+        "path": "app/(dashboard)/press-releases/press-release-feed.tsx"
+      },
+      {
+        "afterSha256": "3a79644b2e5a159543a7e533d0851b7690331409b6697070c78aacf5d55d9e33",
+        "beforeSha256": "662bb5676f12e6d60752e73f73491358aca973c28bec18451771bef920b935d1",
+        "kind": "modified",
+        "path": "app/(dashboard)/press-releases/press-release-filter-controls.tsx"
+      },
+      {
+        "afterSha256": "97368c4c9ab263efa446396b08ea55dceac0ea8ebc9bd3c937dce0e390fc32ec",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "app/(dashboard)/press-releases/press-release-saved-views.tsx"
+      },
+      {
+        "afterSha256": "0e5f9dea269f89c8f8eb3e5ebf77cabb9aa2107061f00fa4274687a98a43e212",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "app/(dashboard)/press-releases/press-release-view-actions.ts"
+      },
+      {
+        "afterSha256": "b3b782a66c6f79cb8f9d54d0dbb303c9fb1088c52d350d726df006c82ff9791b",
+        "beforeSha256": "176b1cbcda4f5aad6c5724622b067a9e49cfa8ca43a1995a2d030c7aa3b84986",
+        "kind": "modified",
+        "path": "app/(member)/account/preferences/page.tsx"
+      },
+      {
+        "afterSha256": "2ef3c41288dea985b03d8bf18df6dd13ef3dac59a45aeed3aea8e82f4460f8a4",
+        "beforeSha256": "1c3679d6b861643cd788515abc3d83bb269c297e2a97dee6e6561a1a42e060ea",
+        "kind": "modified",
+        "path": "docs/migration/migration-register.md"
+      },
+      {
+        "afterSha256": "961c5c141afa76461e68e2fb495dba42e2f51b5d67706d461bf579e934955273",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "docs/press-release-account-views-and-alerts-plan-20261119.md"
+      },
+      {
+        "afterSha256": "057bd43d51b5ae8ac9be08aed827ba3d9357cb51f6addd333d406aefb17d02b0",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "docs/press-release-account-views-and-alerts-progress-20261119.md"
+      },
+      {
+        "afterSha256": "9b236fdf3f8c661468a87af41e995c8da0145d1a50e3c59c53a88ed0a3030fe9",
+        "beforeSha256": "df5e61eb2b8bd4bb4b68de900f00ac60f0998fbbcc7cdfeb425c8bbb7b06dd46",
+        "kind": "modified",
+        "path": "docs/press-releases-unified-feed-plan-20261118.md"
+      },
+      {
+        "afterSha256": "49763eceb3cc43976cc0b4238ecf0d980831c2d1472a88c66a17ff727b07455c",
+        "beforeSha256": "39c6224aa51c173d9a754d08fb8b00faf240d075b2c53384300c59caeeeff3a2",
+        "kind": "modified",
+        "path": "docs/press-releases-unified-feed-progress-20261118.md"
+      },
+      {
+        "afterSha256": "bf91beff0679608b66ba10e0d2d5f031870654629f2d76ad839dba6f6720de18",
+        "beforeSha256": "50d4282abb0ab657f151a791c78db6c0f64fcc754d6559d38b2c8026b8569016",
+        "kind": "modified",
+        "path": "src/docs/codex-project-log.md"
+      },
+      {
+        "afterSha256": "8d9604f3d7ecd1ca70585f5aff3dc75a4b869692e0518743178941437b802dbc",
+        "beforeSha256": "fc19db3fea3068c7c308b8b617118430ea178d74956ccfa7c42e48f40930e87e",
+        "kind": "modified",
+        "path": "src/modules/help/notifications-and-imports-guides.ts"
+      },
+      {
+        "afterSha256": "1e9cb8f78a00e7cd480ea0aaadfd621bead4808f86f1d31d8b0ad8f69521eb72",
+        "beforeSha256": "84956b0fc0ba791bbf2e888a78d2cf0ca785e9af31fbf2d3d9ea883f18da4211",
+        "kind": "modified",
+        "path": "src/modules/help/paid-plan-guides.ts"
+      },
+      {
+        "afterSha256": "d2f0896727409ff968c7a8173df91ee3f5211215aca553e3cb25d917c74dd503",
+        "beforeSha256": "c6fe021670ba0e7ff3d5b22aeab2e6a6c7543549b4138117f1e0cdc304fee0b0",
+        "kind": "modified",
+        "path": "src/modules/news/contracts/press-release-filters.ts"
+      },
+      {
+        "afterSha256": "f23950fc0931dd73ee9f8bdc287a91028a051b1ba32886a36ea1f03eea8099c9",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "src/modules/news/contracts/press-release-saved-views.ts"
+      },
+      {
+        "afterSha256": "fc0c61e700c5aec13ae26335d8160c254dee8bf60a96386afce48096774c1a5b",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "src/modules/news/server/database/migrations/0221_news_account_filters_and_saved_views.ts"
+      },
+      {
+        "afterSha256": "98eae549faca4cdb88cdb244d51ebcea3158a375bbde4448ef850e165cf5fbd2",
+        "beforeSha256": "b5288645256ebc7695ddbada5b1026d5fda6bd0561f11822693e6b93ed2d088b",
+        "kind": "modified",
+        "path": "src/modules/news/server/press-release-dashboard-repository.ts"
+      },
+      {
+        "afterSha256": "e53ee2754d73d928346b0eb3cd406330dc92277b149732b027a7c6ee804277b6",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "src/modules/news/server/press-release-filter-functions.ts"
+      },
+      {
+        "afterSha256": "b18dc99a1c4d10da83f42f348397f6ee6eac60881683bc1634c719a7a9ee7dda",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "src/modules/news/server/press-release-filtered-push.test.ts"
+      },
+      {
+        "afterSha256": "8bec54ce36a3ee1136738a05ebfb1e45156b5d7cd617621348f985c5dba19fa0",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "src/modules/news/server/press-release-saved-view-repository.ts"
+      },
+      {
+        "afterSha256": "553a88f2e87f07ad942cbea6d405a406900a4fa2dca768116d20235dfc35f0b1",
+        "beforeSha256": null,
+        "kind": "new",
+        "path": "src/modules/news/server/press-release-saved-views.test.ts"
+      },
+      {
+        "afterSha256": "cbfd167bec9417fb8f8e0d340409a63022f8670d158b8a06c9ffcc1b639ba115",
+        "beforeSha256": "1e60e2d29fbeaf73ac9f1ddea982965754ec9fb61641f007ca2865998a286acf",
+        "kind": "modified",
+        "path": "src/modules/news/server/press-release-unified-feed.test.ts"
+      },
+      {
+        "afterSha256": "331f4e686376742c5c4daf0565d3a747e93e89de3ae888ec76f7a475cd74d9a3",
+        "beforeSha256": "c410bf3b37ab049e062204b018bbe563183c411b65ae93acdc6732cb41cdce7b",
+        "kind": "modified",
+        "path": "src/modules/news/server/press-release-web-push-repository.ts"
+      },
+      {
+        "afterSha256": "259830d8b7cab9a52d8089458d22c9d774bce4f817f444d9f1587992b44c8131",
+        "beforeSha256": "232c01ffdb324ae55fa8b68748f3c0b0c2cbf913e20926a1c23947a8e4c736f1",
+        "kind": "modified",
+        "path": "src/modules/platform/contracts/membership-feature-copy.ts"
+      },
+      {
+        "afterSha256": "9c37e08cd69a0064d8e10462530e4a55cbbc65e26e8835a0329d27fd15fc7683",
+        "beforeSha256": "553cd4118d85f98a6ae55f54ffece3899188b5248bba6ab0a7d64f839d408ab4",
+        "kind": "modified",
+        "path": "src/modules/platform/server/database/platform-migration-manifest.ts"
+      }
+    ],
+    "patchSha256": "263386aa211ebc27628d51fb32188b2e497ca3d0438fea25adaf045c3abd26ab",
+    "sourceCommitMeaning": "BASE_ONLY",
+    "sourceKind": "UNCOMMITTED_ALLOWLISTED_CANDIDATE",
+    "sourceVectorSha256": "db5205478348ccc01f4ef8be05410b3155868ecad5f4ca1a9f468eaeab066d9c",
+    "vector": "/tmp/traderlink-news-account-qa-20261119/input-vector.json"
+  },
+  "baselineCommit": "5f0145ec03c7b2cf921861cbafee3e339a9af106",
+  "baselineMeaning": "Independently qualified earlier44path migration-free scope; extension depends on this baseline",
+  "build": {
+    "path": "/tmp/traderlink-news-account-build-20261119/run-8209407c92c742c5b1d822926252a584",
+    "resultSha256": "95c4c604048039e671fbcf9c66dd921eb3bbe9161bdb5e15c44a1fc58fbbd6ef",
+    "returncode": 0,
+    "buildId": "GhmhhUfXTro4olqDussEM",
+    "buildOnlyOverlay": {
+      "webpackBuildWorker": true,
+      "webpackMemoryOptimizations": true,
+      "cpus": 2,
+      "webpackCache": false
+    },
+    "buildOnlyOverlaySha256": "5c79f701049407a1c421b07cfcd302bccc29099f236ad26a45c8c25f496d196d"
+  },
+  "native": {
+    "path": "/tmp/traderlink-news-account-build-20261119/run-8209407c92c742c5b1d822926252a584/native-qa-6b8581b7",
+    "resultSha256": "a15542d6280da9f02fd7dfae976fabb6b1e1913d5a7d7e63e9ae1388a06d712c",
+    "checks": [
+      {
+        "name": "anonymous native page denies private news",
+        "status": "PASS",
+        "ms": 566
+      },
+      {
+        "name": "invalid and expired native cookies cannot read private news",
+        "status": "PASS",
+        "ms": 692
+      },
+      {
+        "name": "native basic and entitled sessions both retain filters while policy off",
+        "status": "PASS",
+        "ms": 1929
+      },
+      {
+        "name": "native non-Premium Discord member without any plan retains current open-policy filters",
+        "status": "PASS",
+        "ms": 1340
+      },
+      {
+        "name": "backend search finds older row beyond the first loaded page",
+        "status": "PASS",
+        "ms": 423
+      },
+      {
+        "name": "native saved preferences persist on reload and remain per user",
+        "status": "PASS",
+        "ms": 11770
+      },
+      {
+        "name": "native filter range, sort and pagination use actual server responses",
+        "status": "PASS",
+        "ms": 1845
+      },
+      {
+        "name": "native filter validation, Cancel, empty results and every sort",
+        "status": "PASS",
+        "ms": 9497
+      },
+      {
+        "name": "native summarized drawer has AI content and no public/source article action",
+        "status": "PASS",
+        "ms": 649
+      },
+      {
+        "name": "native fallback businesswire",
+        "status": "PASS",
+        "ms": 878
+      },
+      {
+        "name": "native fallback newsfilter",
+        "status": "PASS",
+        "ms": 851
+      },
+      {
+        "name": "native fallback nuntio",
+        "status": "PASS",
+        "ms": 866
+      },
+      {
+        "name": "native fallback sec",
+        "status": "PASS",
+        "ms": 869
+      },
+      {
+        "name": "legacy native redirect retains requested article drawer",
+        "status": "PASS",
+        "ms": 45092
+      },
+      {
+        "name": "read receipt persists without changing the other user",
+        "status": "PASS",
+        "ms": 20361
+      },
+      {
+        "name": "public full/free fallback pages and metadata expose no NuntioBot link",
+        "status": "PASS",
+        "ms": 718
+      },
+      {
+        "name": "native scanner-recent returns nullable fallback and valid publisher URLs",
+        "status": "PASS",
+        "ms": 51
+      },
+      {
+        "name": "ordinary signed member cannot open native Membership administration",
+        "status": "PASS",
+        "ms": 5345
+      },
+      {
+        "name": "native owner editor saves and reopens filters option then publishes synthetic plan",
+        "status": "PASS",
+        "ms": 2862
+      },
+      {
+        "name": "future enforcement works only in synthetic data and restores OFF",
+        "status": "PASS",
+        "ms": 16714
+      },
+      {
+        "name": "native desktop Light and Navy Dark then mobile portrait/landscape stay usable",
+        "status": "PASS",
+        "ms": 14313
+      },
+      {
+        "name": "native /trading-workspace sidecard desktop/mobile outbound contract",
+        "status": "PASS",
+        "ms": 8330
+      },
+      {
+        "name": "native /scanners sidecard desktop/mobile outbound contract",
+        "status": "PASS",
+        "ms": 7783
+      },
+      {
+        "name": "native General Market News desktop/mobile never links NuntioBot",
+        "status": "PASS",
+        "ms": 6954
+      },
+      {
+        "name": "account view restores in a new browser and several custom alerts persist in Settings",
+        "status": "PASS",
+        "ms": 25813
+      },
+      {
+        "name": "native saved-view rename, duplicate-name recovery and mobile manager",
+        "status": "PASS",
+        "ms": 7690
+      },
+      {
+        "name": "native SQLite write failure keeps feed usable and preference save retry recovers",
+        "status": "PASS",
+        "ms": 11638
+      },
+      {
+        "name": "actual fresh synthetic outbox matches named ranges once and stops after opt-out",
+        "status": "PASS",
+        "ms": 1087
+      }
+    ],
+    "pageErrors": [],
+    "queueProof": {
+      "matchingQueuedOnce": true,
+      "outsideRangeNotQueued": true,
+      "otherAccountNotQueued": true,
+      "claimDecrypted": true,
+      "disabledRuleExpiredBeforeDelivery": true,
+      "providerInvocations": 0
+    },
+    "closure": {
+      "unit": "MainPID=0\nControlGroup=\nActiveState=inactive\n",
+      "portClosed": true
+    },
+    "ownedGuardsReleased": true,
+    "runtimeInputsBefore": {
+      "/tmp/traderlink-news-account-qa-20261119/native-retest-v5.py": "0777255b9dab1301c7ac4e3c8cefbfa83e75800c493b5e58a5d422190611fc5c",
+      "/tmp/traderlink-news-account-qa-20261119/native-driver-v5.cjs": "7ad0a408df607eadb7e78649f29aea15bf5df75c6a3a051a5736aa64eb913726",
+      "/tmp/traderlink-news-account-qa-20261119/runtime-vector-v4.py": "6462d131364057856c8e41fd18589e0710720cda1350cfa19350f06861f9abc8",
+      "/tmp/traderlink-news-account-qa-20261119/dependency-drift.json": "60a55669b3b4c7658c7a79b10cf55a23404ba6e1bb588a561af5a78e9d60df7d"
+    },
+    "runtimeInputsAfter": {
+      "/tmp/traderlink-news-account-qa-20261119/native-retest-v5.py": "0777255b9dab1301c7ac4e3c8cefbfa83e75800c493b5e58a5d422190611fc5c",
+      "/tmp/traderlink-news-account-qa-20261119/native-driver-v5.cjs": "7ad0a408df607eadb7e78649f29aea15bf5df75c6a3a051a5736aa64eb913726",
+      "/tmp/traderlink-news-account-qa-20261119/runtime-vector-v4.py": "6462d131364057856c8e41fd18589e0710720cda1350cfa19350f06861f9abc8",
+      "/tmp/traderlink-news-account-qa-20261119/dependency-drift.json": "60a55669b3b4c7658c7a79b10cf55a23404ba6e1bb588a561af5a78e9d60df7d"
+    },
+    "runtimeInputsUnchanged": true,
+    "runtimeVectorQualification": {
+      "state": "EXPLICIT_RUNTIME_VECTOR_QUALIFIED",
+      "originalBuildVectorSha256": "db5205478348ccc01f4ef8be05410b3155868ecad5f4ca1a9f468eaeab066d9c",
+      "runtimeVectorSha256": "e09ccd716fc2356fe18c7bde1cddd950af8e1fd9e147879647882dcce99dd648",
+      "soleDeclaredDifference": {
+        "path": ".vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json",
+        "change": "bytes",
+        "oldSha256": "a76bba83c2ed7177edc8a826ff2931b3eeead1fe3891f623b3fe0bc08be73fb8",
+        "newSha256": "8ca6b570f9424b5b67bfaff8c14054527921180586679d28e6d9296437eac775",
+        "bytes": 18128,
+        "mtime": 1795048856.9606526
+      },
+      "applicationSourceAndAllDependencyCodeUnchanged": true,
+      "originalFreezeAndBuildUnmodified": true
+    }
+  },
+  "focused": {
+    "affectedNewsArchitectureTests": 57,
+    "actualSourceOutboundUrlTests": 6,
+    "typeRoots": 44,
+    "typeSourceDeclarationFiles": 2256,
+    "typeDiagnostics": 0,
+    "lintWarnings": 0,
+    "freshManifestMigrations": 183,
+    "newNewsTables": 2,
+    "foreignKeyFailures": 0,
+    "quickCheck": "ok",
+    "accountErasure": "Bothnewtablesremoved for selected account; Journal-only erasure preserves; otherusers isolated"
+  },
+  "migration": {
+    "id": "0221_news_account_filters_and_saved_views",
+    "namespace": "news",
+    "executionOrder": 296,
+    "productionApplied": false,
+    "selectedPrefixAndCatalogQualification": "Coordinator-owned, cannot force unapproved lower pending Community/Watchlist migrations"
+  },
+  "premiumEnforcement": "OFF_NO_LIVE_POLICY_OR_GRANT_WRITES",
+  "production": {
+    "deployed": false,
+    "ownerConditionalReleaseApprovalVerifiedByCoordinator": true,
+    "latestCoordinatorWindowToronto": "2026-11-18 20:15 through 2026-11-19 04:00",
+    "releaseOwner": "Coordinator"
+  },
+  "postQaDocumentationOnly": {
+    "note": "Human status/reports updated only after actual final vector/runtime closure. Frozen build vector remains immutable; these documentation bytes are not claimed to be in that historical build vector. Application source/dependency code unchanged. Separate current allowlist postimage manifest supplied."
+  }
+}

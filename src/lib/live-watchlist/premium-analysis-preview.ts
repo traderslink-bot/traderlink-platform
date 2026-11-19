@@ -4,16 +4,40 @@ import { sortPullbacksByPrice } from "./pullback-price-order";
 
 /** Public preview contains display prose only, never the original analysis payload. */
 export type PremiumAnalysisPreview = {
+  simpleRead?: PremiumSimpleRead;
   sections: Array<{ title: string; lines: string[]; priceHidden: boolean }>;
 };
 
+export type PremiumSimpleRead = Pick<TradersLinkAiReadPayload, "symbol" | "generatedAt" | "dataAsOf" | "currentPrice" | "simpleAnalysis" | "ownerHiddenSections" | "catalystRealityCheck" | "riskSummary" | "sources">;
+
 export const HIDDEN_ANALYSIS_PRICE = "[price hidden]";
 
-/** Conceal numeric prose as well as structured prices; percentages can reveal levels. */
+/** Dates, times, percentages and candle lengths are context, not prices. */
 export function concealAnalysisNumbers(text: string): string {
-  return text
-    .replace(/https?:\/\/\S+/giu, "")
-    .replace(/(?:[$€£]\s*)?[-+]?\d[\d,.]*(?:\s*%|\s*(?:dollars?|cents?))?/giu, HIDDEN_ANALYSIS_PRICE);
+  const protectedParts: string[] = [];
+  const protect = (value:string) => `\uE000${String.fromCharCode(0xE100 + protectedParts.push(value)-1)}\uE001`;
+  return text.replace(/https?:\/\/\S+/giu, "")
+    .replace(/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{1,2}(?:,?\s+\d{4})?|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[/:]\d{1,2}(?:[/:]\d{2,4})?(?:\s*[ap]\.?m\.?)?|[-+]?\d+(?:\.\d+)?\s*%|\b\d+\s*(?:min(?:ute)?s?|hours?|days?|weeks?|months?|years?|[mh])\b/giu, protect)
+    .replace(/[$€£]\s*\d[\d,.]*|\b\d+\.\d+\b|\b\d+(?:,\d{3})*(?:\s*(?:dollars?|cents?))\b/giu, HIDDEN_ANALYSIS_PRICE)
+    .replace(/\b(above|below|at|near|toward|towards|through|reclaim|over|under)\s+(\d+)\b/giu, `$1 ${HIDDEN_ANALYSIS_PRICE}`)
+    .replace(/\uE000([\uE100-\uF8FF])\uE001/g, (_, key:string) => protectedParts[key.charCodeAt(0)-0xE100]);
+}
+
+export function buildPremiumSimpleRead(read: TradersLinkAiReadPayload): PremiumSimpleRead | undefined {
+  if (read.analysisFormat !== "simple" || !read.simpleAnalysis) return undefined;
+  const simple = read.simpleAnalysis;
+  return {
+    symbol: read.symbol, generatedAt: read.generatedAt, dataAsOf: read.dataAsOf, currentPrice: 0,
+    ownerHiddenSections: read.ownerHiddenSections,
+    simpleAnalysis: { setup: concealAnalysisNumbers(simple.setup),
+      pullbacks: sortPullbacksByPrice(simple.pullbacks.map((zone,index)=>({...zone,hidden:zone.hidden ?? (read.ownerHiddenSections ?? []).includes(index===0?"shallow":index===1?"deep":"")}))).map(zone=>({low:0,high:0,hidden:zone.hidden,explanation:concealAnalysisNumbers(zone.explanation),confirmation:concealAnalysisNumbers(zone.confirmation),invalidation:null})),
+      upside: simple.upside.map(level=>({low:0,high:0,explanation:concealAnalysisNumbers(level.explanation)})),
+      breakout: simple.breakout ? {price:0,explanation:concealAnalysisNumbers(simple.breakout.explanation),confirmation:concealAnalysisNumbers(simple.breakout.confirmation)} : undefined,
+      invalidation:null },
+    catalystRealityCheck: {status:read.catalystRealityCheck.status,summary:read.catalystRealityCheck.summary,sourceUrls:read.catalystRealityCheck.sourceUrls,dayTradeRelevance:""},
+    riskSummary: [...read.riskSummary],
+    sources: read.sources.filter(source=>source.evidence?.excerptKind === "article_title").map(source=>({ ...source })),
+  };
 }
 
 export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): PremiumAnalysisPreview {
@@ -22,7 +46,7 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
   const add = (key: string, title: string, lines: (string | undefined)[], priceHidden = false) => {
     if (hidden.has(key)) return;
     const safe = lines.filter((line): line is string => typeof line === "string" && Boolean(line.trim()))
-      .map(concealAnalysisNumbers);
+      .map(line => key === "catalystRealityCheck" || key === "riskSummary" ? line : concealAnalysisNumbers(line));
     if (safe.length || priceHidden) sections.push({ title, lines: safe, priceHidden });
   };
   if (read.analysisFormat === "simple" && read.simpleAnalysis) {
@@ -35,7 +59,7 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
       if(zone.hidden) return;
       add(`pullback-${index+1}`, `Pullback ${index+1}`, [zone.explanation, zone.confirmation], true);
     });
-    simple.upside.forEach(level => add("targets", "Potential Targets (Volume Dependent)", [level.explanation], true));
+    add("targets", "Potential Targets (Volume Dependent)", simple.upside.map(level=>HIDDEN_ANALYSIS_PRICE + " " + level.explanation));
   } else {
     add("currentRead", "", [read.currentRead]);
     for (const [key, title] of [["needsToHold", "Structure Weakens"], ["cautionBelow", "Caution below"],
@@ -44,7 +68,7 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
       const level = read[key];
       add(key, title, [level.rationale], level.price !== null);
     }
-    read.targets.forEach(level => add("targets", "Potential Targets (Volume Dependent)", [level.condition], level.price !== null));
+    add("targets", "Potential Targets (Volume Dependent)", read.targets.map(level => HIDDEN_ANALYSIS_PRICE + " " + level.condition));
     // Copy only descriptive strings from known display sections. Evidence IDs and
     // numeric fields never cross this boundary, including future unknown fields.
     if (read.version !== 2) {
@@ -59,5 +83,5 @@ export function buildPremiumAnalysisPreview(read: TradersLinkAiReadPayload): Pre
     add("catalystRealityCheck", "Catalyst / recent news", [read.catalystRealityCheck.summary]);
     add("riskSummary", "Risk", read.riskSummary);
   }
-  return { sections };
+  return { sections, simpleRead: buildPremiumSimpleRead(read) };
 }

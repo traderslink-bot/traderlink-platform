@@ -490,6 +490,7 @@ export type LiveWatchlistSymbolState = {
   premiumAnalysisPreview?: import("./premium-analysis-preview").PremiumAnalysisPreview | null;
   membershipAnalysisAllowed?: boolean;
   membershipIndicatorsAllowed?: boolean;
+  premiumIndicatorsAllowed?: boolean;
   symbol: string;
   status: LiveWatchlistStatus;
   updatedAt: number;

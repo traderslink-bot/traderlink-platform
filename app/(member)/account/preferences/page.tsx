@@ -1,3 +1,6 @@
+import { PressReleaseSavedViewRepository } from "@/src/modules/news/server/press-release-saved-view-repository";
+import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
+import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { PlatformMembershipCatalogRepository, isPlatformMembershipCatalogAvailable } from "@/src/modules/platform/server/membership/platform-membership-catalog-repository";
 import { PLATFORM_NOTIFICATION_CATEGORIES } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import { canReceiveMembershipNotification } from "@/src/modules/platform/server/membership/membership-notification-access";
@@ -33,10 +36,12 @@ export default async function AccountPreferencesPage() {
   const requestHeaders = await headers();
   const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders);
   const { scope } = identity;
-  const { upgradePlans, allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, homePage, homePages, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) => {
+  const { savedNewsViews, allowSavedNewsFilters, upgradePlans, allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, homePage, homePages, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) => {
     const { homePages } = readPlatformHomeAccess(database, identity, requestHeaders);
 
     return Object.freeze({
+      savedNewsViews: new PressReleaseSavedViewRepository(database).list(scope.userId),
+      allowSavedNewsFilters: hasPressReleaseDashboardAccess(identity) && evaluateMembershipFeature(database,scope.userId,"news.filters_sorting").allowed,
       upgradePlans: Object.fromEntries([...PLATFORM_NOTIFICATION_CATEGORIES, "market_halt", "press_release", "watchlist"].map(category => [
         category, isPlatformMembershipCatalogAvailable(database) ? new PlatformMembershipCatalogRepository(database)
           .readPublicPlans(`notifications.${category}`).map(plan => plan.name) : [],
@@ -102,6 +107,8 @@ export default async function AccountPreferencesPage() {
           initialEmailCategories={notificationPreferences.emailCategories}
           initialEmailStatus={notificationEmailStatus}
           initialPressReleasePushChannels={pressReleasePushChannels}
+          initialSavedNewsViews={savedNewsViews}
+          allowSavedNewsFilters={allowSavedNewsFilters}
           initialWebPushCategories={notificationPreferences.webPushCategories}
           initialWatchlistPreferences={watchlistPreferences}
         />

@@ -119,7 +119,7 @@ test('invalid PNG, excessive message/notes and invalid identity never claim a re
 test('admin loss route authenticates and checks mutation origin before reading form or calling delivery', async () => {
   let allowed = false, mutation = false, deliveries = 0, opens = 0;
   const route = load('app/api/admin/watchlist/manual-loss-post/route.ts', {
-    '@/src/modules/platform/server/administration/platform-admin-authorization': { withJournalAdminDatabase: (_headers, fn) => { if (!allowed) throw Error(); return fn(null, { userId: 'owner' }); } },
+    '@/src/modules/watchlist/server/access/watchlist-admin-authorization': { withWatchlistAdminDatabase: (_headers, fn) => { if (!allowed) throw Error(); return fn(null, { userId: 'owner' }); } },
     '@/src/modules/platform/server/administration/platform-admin-request-security': { requireJournalAdminMutationRequest: () => { if (!mutation) throw Error(); } },
     '@/src/modules/platform/server/database/open-platform-database': { openPlatformDatabase: () => { opens++; return { close() {} }; } },
     '@/src/lib/live-watchlist/manual-loss-card': model,
@@ -141,7 +141,7 @@ test('admin loss route authenticates and checks mutation origin before reading f
 test('admin loss route bounds actual bytes without trusting Content-Length', async () => {
   let touched = false;
   const route = load('app/api/admin/watchlist/manual-loss-post/route.ts', {
-    '@/src/modules/platform/server/administration/platform-admin-authorization': { withJournalAdminDatabase: (_headers, fn) => fn(null, { userId: 'owner' }) },
+    '@/src/modules/watchlist/server/access/watchlist-admin-authorization': { withWatchlistAdminDatabase: (_headers, fn) => fn(null, { userId: 'owner' }) },
     '@/src/modules/platform/server/administration/platform-admin-request-security': { requireJournalAdminMutationRequest() {} },
     '@/src/modules/platform/server/database/open-platform-database': { openPlatformDatabase() { touched = true; throw Error(); } },
     '@/src/lib/live-watchlist/manual-loss-card': model,

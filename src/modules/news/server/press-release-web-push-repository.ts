@@ -1,3 +1,4 @@
+import { PressReleaseSavedViewRepository } from "./press-release-saved-view-repository";
 import "server-only";
 
 import type Database from "better-sqlite3";
@@ -7,7 +8,6 @@ import { canReceiveMembershipNotification } from "../../platform/server/membersh
 import { hasPlatformMembershipFeature } from "../../platform/server/membership/platform-membership-access";
 
 import {
-  pressReleaseChannelDefinition,
   type PressReleasePushChannel,
 } from "../contracts/press-release-dashboard-contracts";
 import { hasPressReleaseDashboardDiscordAccess } from "./press-release-dashboard-access";
@@ -33,6 +33,7 @@ type SubscriptionRow = Readonly<{
 
 type ClaimedDeliveryRow = SubscriptionRow & Readonly<{
   channel: string;
+  article_id: string;
   article_created_at: string;
   article_published_at: string;
   attempt_count: number;
@@ -91,11 +92,13 @@ export class PressReleaseWebPushRepository {
     if (!channel) return 0;
     const storedArticle = this.database.prepare("SELECT created_at FROM news_articles WHERE id=?").get(article.id) as { created_at: string } | undefined;
     if (!storedArticle) return 0;
-    const enabledUsers = this.database.prepare<[string], { user_id: string }>(`SELECT DISTINCT subscription.user_id
+    const savedViews = new PressReleaseSavedViewRepository(this.database);
+    const customOptIn = savedViews.isInstalled() ? " OR EXISTS(SELECT 1 FROM news_press_release_saved_views custom WHERE custom.user_id=subscription.user_id AND custom.alerts_enabled=1)" : "";
+    const enabledUsers = this.database.prepare<[string], { user_id: string; legacy_enabled: number }>(`SELECT DISTINCT subscription.user_id,COALESCE(preference.enabled, ${notificationDefaultEnabled(this.database)}) AS legacy_enabled
 FROM platform_web_push_subscriptions subscription
 LEFT JOIN news_press_release_push_preferences preference ON preference.user_id=subscription.user_id AND preference.channel=?
-WHERE subscription.state='active' AND COALESCE(preference.enabled, ${notificationDefaultEnabled(this.database)})=1`).all(channel);
-    const eligibleUserIds = enabledUsers.map((row) => row.user_id).filter((userId) => {
+WHERE subscription.state='active' AND (COALESCE(preference.enabled, ${notificationDefaultEnabled(this.database)})=1${customOptIn})`).all(channel);
+    const eligibleUserIds = enabledUsers.filter(row => row.legacy_enabled === 1 || savedViews.hasMatchingAlert(row.user_id, article.id)).map(row => row.user_id).filter((userId) => {
       if (!canReceiveMembershipNotification(this.database, userId, "press_release")) return false;
       if (hasPlatformMembershipFeature(this.database, userId, "notifications.press_release")) return true;
       if (this.environment.NODE_ENV !== "production") return true;
@@ -110,7 +113,7 @@ WHERE user_id = ? AND guild_id = ?`).get(
         roleIds: parsedRoleIds(membership.role_ids_json),
       }, this.environment) : false;
     });
-    const articlePath = `${pressReleaseChannelDefinition(channel).href}?article=${encodeURIComponent(article.id)}`;
+    const articlePath = `/press-releases?article=${encodeURIComponent(article.id)}`;
     const destinationPath = this.environment.NODE_ENV === "production"
       ? `/api/auth/discord/login?returnTo=${encodeURIComponent(articlePath)}`
       : articlePath;
@@ -183,7 +186,7 @@ AND delivery.subscription_id IN (SELECT subscription_id FROM platform_web_push_s
   SET state = 'pending', available_at_utc = ?, updated_at_utc = ?
   WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count < 5`).run(nowUtc, nowUtc, staleBefore);
         const row = this.database.prepare<[string], ClaimedDeliveryRow>(`SELECT
-    delivery.delivery_id, delivery.attempt_count, delivery.destination_path, delivery.channel,
+    delivery.delivery_id, delivery.attempt_count, delivery.destination_path, delivery.channel, delivery.article_id,
     delivery.notification_title, delivery.notification_body, article.created_at AS article_created_at, article.published_at AS article_published_at,
     subscription.subscription_id, subscription.user_id, subscription.device_ref,
     subscription.endpoint_hash, subscription.key_version,
@@ -203,7 +206,8 @@ AND delivery.subscription_id IN (SELECT subscription_id FROM platform_web_push_s
         // transaction so an opt-out cannot race between this check and claiming.
         const preference = this.database.prepare(`SELECT enabled FROM news_press_release_push_preferences
 WHERE user_id=? AND channel=?`).get(row.user_id, row.channel) as { enabled: number } | undefined;
-        if (!notificationPreferenceEnabled(this.database, preference?.enabled)) {
+        if (!notificationPreferenceEnabled(this.database, preference?.enabled)
+          && !new PressReleaseSavedViewRepository(this.database).hasMatchingAlert(row.user_id, row.article_id)) {
           this.database.prepare(`UPDATE news_press_release_push_deliveries
 SET state='expired', failure_code='preference_disabled', updated_at_utc=?
 WHERE delivery_id=? AND state='pending'`).run(nowUtc, row.delivery_id);

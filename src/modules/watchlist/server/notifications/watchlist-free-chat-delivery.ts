@@ -7,6 +7,7 @@ export type FreeChatPublication = {
   approvalRevision: number;
   updated: boolean;
   listingOnly?: boolean;
+  moveTo?: string;
   images: { filename: string; description: string; base64: string }[];
 };
 
@@ -27,31 +28,57 @@ export function freeChatWebhook(environment = process.env): URL | null {
 
 export type FreeChatVisibility = { ticker: boolean; analysis: boolean; levels: boolean };
 
-export function freeChatPreview(symbol: string, updated: boolean, visibility: FreeChatVisibility, listingOnly = false) {
-  if (visibility.ticker) return {
-    content: "**$•••• — Premium ticker**\n\nNew idea on the TradersLink Watchlist.\n\nView Watchlist ↓\nhttps://app.traderslink.pro/watchlist\n\n@everyone",
-    includeImages: false,
-  };
-  if (listingOnly) return {
-    content: `**$${symbol} on the TradersLink Watchlist**\n\nSee the ticker page for available details.\n\nView $${symbol} ↓\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\n\n@everyone`,
-    includeImages: false,
-  };
-  if (visibility.analysis || visibility.levels) return {
-    content: `**$${symbol} added to the Watchlist**\n\nSee what’s available on the ticker page.\n\nView $${symbol} ↓\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\n\n@everyone`,
-    includeImages: false,
-  };
-  return {
-    content: `Free $${symbol} TradersLink Analysis${updated ? " — Updated" : ""}\n\nImages show part of the analysis. View full analysis in the app 👇\n\nhttps://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}\nhttps://app.traderslink.pro/watchlist\n\n@everyone`,
-    includeImages: true,
-  };
+export type FreeChatOwnerCopy = { message: string; visibilityKey: string };
+
+export function freeChatVisibilityKey(visibility: FreeChatVisibility): string {
+  return [visibility.ticker, visibility.analysis, visibility.levels].map(Number).join("");
 }
 
-export function freeChatPayload(publication: FreeChatPublication, visibility: FreeChatVisibility) {
+export class FreeChatInputError extends Error {}
+
+export function validateFreeChatOwnerCopy(symbol: string, value: unknown, visibility: FreeChatVisibility): string {
+  if (typeof value !== "string" || value.length > 1200) throw new FreeChatInputError("Enter a message of up to 1,200 characters.");
+  const message = value.trim();
+  const normalized = message.normalize("NFKC").replace(/[\u200B-\u200F\uFEFF]/g, "");
+  if (/@(everyone|here)\b|<@|<#/i.test(normalized)) throw new FreeChatInputError("Use the existing Discord notification tag.");
+  if (visibility.ticker) {
+    const escaped = symbol.replaceAll(".", "\\.");
+    const ticker = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`, symbol.length === 1 ? "u" : "iu");
+    if (ticker.test(normalized) || normalized.toUpperCase().includes("$" + symbol) || /https?:|www\.|\b[\w-]+\.[a-z]{2,}\b/i.test(normalized)) {
+      throw new FreeChatInputError("Remove the ticker and links from the message while the ticker is Premium-only.");
+    }
+  }
+  return message;
+}
+
+export function freeChatPreview(symbol: string, updated: boolean, visibility: FreeChatVisibility, message?: string, listingOnly = false, moveTo?: string) {
+  const includeImages = !listingOnly && !visibility.ticker && !visibility.analysis && !visibility.levels;
+  const tickerUrl = `https://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}`;
+  const labels: Record<string, string> = { main: "Main Session", top_regular: "Top Regular Hour Watches", postmarket: "Post-Market", general: "General Watchlist", swings: "Swings" };
+  const destination = moveTo === undefined ? undefined : /^top_watches:\d{4}-\d{2}-\d{2}$/.test(moveTo) ? "Overnight" : labels[moveTo];
+  if (moveTo !== undefined && !destination) throw new FreeChatInputError("Invalid category move.");
+  const heading = destination ? `**${visibility.ticker ? "$•••• — Premium ticker" : "$" + symbol} moved to ${destination}**` : visibility.ticker ? "**$•••• — Premium ticker**" :
+    listingOnly ? `**$${symbol} on the TradersLink Watchlist**` :
+    includeImages ? `Free $${symbol} TradersLink Analysis${updated ? " — Updated" : ""}` : `**$${symbol} added to the Watchlist**`;
+  const defaultMessage = visibility.ticker ? "On the TradersLink Watchlist." :
+    listingOnly ? "See the ticker page for available details." :
+    includeImages ? "Images show part of the analysis. View full analysis in the app 👇" : "";
+  const footer = visibility.ticker ? "View Watchlist ↓\nhttps://app.traderslink.pro/watchlist\n\n@everyone" :
+    includeImages ? `${tickerUrl}\nhttps://app.traderslink.pro/watchlist\n\n@everyone` : `View $${symbol} ↓\n${tickerUrl}\n\n@everyone`;
+  return { content: [heading, message === undefined ? defaultMessage : message.trim(), footer].filter(Boolean).join("\n\n"), heading, defaultMessage, footer, includeImages,
+    visibilityKey: freeChatVisibilityKey(visibility) };
+}
+
+export function freeChatPayload(publication: FreeChatPublication, visibility: FreeChatVisibility, ownerCopy?: FreeChatOwnerCopy) {
   if (!/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(publication.symbol)
     || !publication.cycleId || !Number.isSafeInteger(publication.approvalRevision)
     || publication.approvalRevision < 1 || publication.images.length > 4) throw Error("Invalid approved analysis.");
   const symbol = publication.symbol;
-  const preview = freeChatPreview(symbol, publication.updated, visibility, publication.listingOnly);
+  if (ownerCopy && ownerCopy.visibilityKey !== freeChatVisibilityKey(visibility)) {
+    throw new FreeChatInputError("Premium settings changed. Open the Free Chat preview and try again.");
+  }
+  const preview = freeChatPreview(symbol, publication.updated, visibility,
+    ownerCopy && validateFreeChatOwnerCopy(symbol, ownerCopy.message, visibility), publication.listingOnly, publication.moveTo);
   const images = (preview.includeImages ? publication.images : []).map((image, index) => {
     const bytes = Buffer.from(image.base64, "base64");
     if (bytes.length < 33 || bytes.length > 8 * 1024 * 1024 || bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") {
@@ -63,7 +90,7 @@ export function freeChatPayload(publication: FreeChatPublication, visibility: Fr
 }
 
 /** Caller claims a durable receipt BEFORE invoking this function. Never auto-retry uncertain delivery. */
-export async function deliverFreeChatPublication(publication: FreeChatPublication, readVisibility: () => FreeChatVisibility, transport: typeof fetch = fetch, environment = process.env): Promise<FreeChatDeliveryResult> {
+export async function deliverFreeChatPublication(publication: FreeChatPublication, readVisibility: () => FreeChatVisibility, transport: typeof fetch = fetch, environment = process.env, ownerCopy?: FreeChatOwnerCopy): Promise<FreeChatDeliveryResult> {
   const webhook = freeChatWebhook(environment);
   if (!webhook) return { state: "failed", message: "Free Chat webhook is not configured." };
   try {
@@ -73,9 +100,10 @@ export async function deliverFreeChatPublication(publication: FreeChatPublicatio
   } catch { return { state: "failed", message: "Free Chat connection could not be verified. Try again." }; }
   let payload: ReturnType<typeof freeChatPayload>;
   try {
-    payload = freeChatPayload(publication, readVisibility());
-  } catch {
-    return { state: "failed", message: "Free Chat post could not be prepared. Check its Premium settings and try again." };
+    payload = freeChatPayload(publication, readVisibility(), ownerCopy);
+  } catch (error) {
+    return { state: "failed", message: error instanceof FreeChatInputError ? error.message :
+      "Free Chat post could not be prepared. Check its Premium settings and try again." };
   }
   const form = new FormData();
   form.set("payload_json", JSON.stringify({ content: payload.content, ...(payload.suppressEmbeds ? { flags: 4 } : {}), allowed_mentions: { parse: ["everyone"] },

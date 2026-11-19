@@ -17,7 +17,7 @@ type Delivery = { delivery_id: string; user_id: string; channel: "web_push" | "e
   attempt_count: number; ticker: string; event_id: string; notification_kind: "listing" | "analysis"; expires_at_utc: string; owner_approved: number; analysis_update_context_json: string | null };
 type Subscription = { authentication_tag: string; ciphertext: string; device_ref: string; endpoint_hash: string;
   initialization_vector: string; key_version: string };
-type SendResult = { sent: boolean; retry: boolean; code: string; delayMs?: number };
+type SendResult = { sent: boolean; retry: boolean; code: string; delayMs?: number; uncertain?: boolean };
 
 export async function sendWatchlistNotification(database: Database.Database, row: Delivery, override?: ReturnType<typeof watchlistPublicationNotificationCopy>): Promise<SendResult> {
   let context;
@@ -32,7 +32,7 @@ export async function sendWatchlistNotification(database: Database.Database, row
       content: { title: copy.emailTitle, summary: copy.emailBody, destinationPath: copy.destinationPath },
       additionalLinks: [{ label: copy.emailWatchlistLabel, path: copy.emailWatchlistPath },
         { label: "Manage notifications", path: "/account/preferences" }] });
-    return { sent: result.ok, retry: result.code === "provider_unavailable" || result.code === "not_configured", code: result.code };
+    return { sent: result.ok, retry: result.code === "provider_unavailable" || result.code === "not_configured", code: result.code, ...(result.uncertain ? {uncertain:true} : {}) };
   }
   const subscription = database.prepare<[string,string], Subscription>(`SELECT authentication_tag,ciphertext,device_ref,
     endpoint_hash,initialization_vector,key_version FROM platform_web_push_subscriptions
@@ -57,7 +57,7 @@ export async function sendWatchlistNotification(database: Database.Database, row
     const hint = failure.headers?.["retry-after"];
     const delayMs = hint ? (/^\d+$/.test(hint) ? Number(hint)*1000 : Math.max(0,Date.parse(hint)-Date.now())) : undefined;
     return { sent: false, retry: status === undefined || status === 408 || status === 429 || status >= 500,
-      code: status === 404 || status === 410 ? "device_expired" : "provider_unavailable", delayMs };
+      code: status === 404 || status === 410 ? "device_expired" : "provider_unavailable", delayMs, ...(status===undefined || status===408 || status>=500 ? {uncertain:true} : {}) };
   }
 }
 

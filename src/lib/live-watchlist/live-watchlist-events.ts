@@ -7,7 +7,7 @@ import type {
 
 type Subscriber = {
   id: number;
-  projectSymbol?: (symbol: LiveWatchlistListSymbol) => LiveWatchlistListSymbol;
+  projectSymbol?: (symbol: LiveWatchlistListSymbol) => LiveWatchlistListSymbol | null;
   controller: ReadableStreamDefaultController<Uint8Array>;
 };
 
@@ -19,7 +19,7 @@ function encodeSse(event: string, data: unknown): Uint8Array {
   return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
-export function createLiveWatchlistStream(projectSymbol?: (symbol: LiveWatchlistListSymbol) => LiveWatchlistListSymbol): ReadableStream<Uint8Array> {
+export function createLiveWatchlistStream(projectSymbol?: (symbol: LiveWatchlistListSymbol) => LiveWatchlistListSymbol | null): ReadableStream<Uint8Array> {
   return new ReadableStream<Uint8Array>({
     start(controller) {
       const id = ++nextSubscriberId;
@@ -41,7 +41,9 @@ export function broadcastLiveWatchlistUpdate(symbol: LiveWatchlistSymbolState): 
   const projected = projectLiveWatchlistListSymbol(symbol);
   for (const [id, subscriber] of subscribers.entries()) {
     try {
-      subscriber.controller.enqueue(encodeSse("symbol", subscriber.projectSymbol ? subscriber.projectSymbol(projected) : projected));
+      const visible = subscriber.projectSymbol ? subscriber.projectSymbol(projected) : projected;
+      // Hidden rows must not cause quote-by-quote placeholder events or list reloads.
+      if (visible !== null) subscriber.controller.enqueue(encodeSse("symbol", visible));
     } catch {
       subscribers.delete(id);
     }

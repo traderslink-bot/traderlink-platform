@@ -2,7 +2,8 @@
 .row > * { min-width: 0; overflow-wrap: anywhere; }
 .single { display: block; }
 .notes { white-space: pre-wrap; overflow-wrap: anywhere; }
-.notes h3 { white-space: normal; font-weight: 700; }
+.notes h3 { white-space: normal; }
+.withNotes { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
 .side { display: grid; gap: 1rem; }
 .side section { margin: 0; }
 .sectionTitle { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .5rem; }

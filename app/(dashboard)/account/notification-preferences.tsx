@@ -1,5 +1,8 @@
 "use client";
 
+import { PressReleaseSavedViews } from "../press-releases/press-release-saved-views";
+import type { SavedNewsView } from "@/src/modules/news/contracts/press-release-saved-views";
+
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -83,6 +86,7 @@ export function NotificationPreferences({
   initialEmailCategories,
   initialEmailStatus,
   initialPressReleasePushChannels,
+  initialSavedNewsViews = [], allowSavedNewsFilters = true,
   initialWebPushCategories,
   initialWatchlistPreferences,
 }: {
@@ -100,6 +104,7 @@ export function NotificationPreferences({
     state: "none" | "pending_confirmation" | "confirmed";
   }>;
   initialPressReleasePushChannels: readonly PressReleasePushChannel[];
+  initialSavedNewsViews?: readonly SavedNewsView[]; allowSavedNewsFilters?: boolean;
   initialWebPushCategories: readonly PlatformNotificationCategory[];
   initialWatchlistPreferences: Readonly<{ webPushEnabled: boolean; emailEnabled: boolean }>;
 }) {
@@ -447,6 +452,8 @@ export function NotificationPreferences({
         ))}
         <FormControlLabel control={<Checkbox checked={watchlistPush} disabled={!allowWatchlist || pushState === "unsupported" || pushState === "denied"} onChange={(event) => setWatchlistPush(event.target.checked)} />} label="Watchlist" />
         <FormControlLabel control={<Checkbox checked={marketHaltAlertsEnabled} disabled={!allowHalts || pushState === "unsupported" || pushState === "denied"} onChange={(event) => setMarketHaltAlertsEnabled(event.target.checked)} />} label="Halt alerts" />
+        <Typography component="h3" variant="h3" sx={{pt:1}}>Standard press-release alerts</Typography>
+        <Typography variant="body2" color="text.secondary">For alerts limited to your saved views, leave these channel choices off.</Typography>
         {PRESS_RELEASE_PUSH_CHANNELS.map((channel) => (
           <FormControlLabel
             control={<Checkbox checked={pressReleasePushSelected.includes(channel)} disabled={!allowPressReleases || pushState === "unsupported" || pushState === "denied"} onChange={(event) => togglePressReleasePush(channel, event.target.checked)} />}
@@ -480,6 +487,8 @@ export function NotificationPreferences({
           {pushMessage}
         </Alert>
       ) : null}
+      <Divider />
+      <PressReleaseSavedViews initialViews={initialSavedNewsViews} filtersAllowed={allowSavedNewsFilters} alertsAllowed={allowPressReleases && allowSavedNewsFilters}/>
       <PushDeviceDiagnostics />
     </Stack>
   );

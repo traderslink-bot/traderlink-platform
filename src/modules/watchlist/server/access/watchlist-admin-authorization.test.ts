@@ -30,6 +30,7 @@ import { withWatchlistAdminDatabase } from "./watchlist-admin-authorization";
 import { JOURNAL_ADMIN_REQUEST_HEADER, requireJournalAdminMutationRequest } from "@/src/modules/platform/server/administration/platform-admin-request-security";
 import { canViewWatchlistTicker, canViewPrivateWatchlistTicker, canViewWatchlistAnalysisPrices } from "./watchlist-analysis-visibility";
 import { canViewWatchlistLevels } from "./watchlist-levels-visibility";
+import { GET as readAccessSettings } from "@/app/api/admin/watchlist/analysis-visibility/route";
 
 const owners = ["10000000-0000-4000-8000-000000000001", "10000000-0000-4000-8000-000000000002"];
 const member = "10000000-0000-4000-8000-000000000003";
@@ -133,6 +134,22 @@ describe("member privacy is unchanged", () => {
 });
 
 describe("Watchlist route boundaries", () => {
+  it.each(owners)("loads all settings for a 20-ticker page within the unchanged owner budget (%s)", async userId => {
+    adapters.identity = identity(userId);
+    const before = db.prepare("SELECT count(*) n FROM platform_admin_audit_events").get() as { n: number };
+    for (let index = 0; index < 20; index++) {
+      const response = await readAccessSettings(new Request(`https://app.example.test/api/admin/watchlist/analysis-visibility?symbol=T${index}&control=all`));
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ symbol: `T${index}`, settings: { ticker: false, analysis: false, levels: false, indicators: false, row: false, added: false } });
+    }
+    const after = db.prepare("SELECT count(*) n FROM platform_admin_audit_events").get() as { n: number };
+    expect(after.n - before.n).toBe(20);
+  });
+  it("keeps combined settings owner-only", async () => {
+    adapters.identity = identity(member);
+    const response = await readAccessSettings(new Request("https://app.example.test/api/admin/watchlist/analysis-visibility?symbol=TEST&control=all"));
+    expect(response.status).toBe(404);
+  });
   const routes = ["analysis-visibility", "gain-starting-point", "manual-loss-post", "potential-gain-post", "runtime/[...path]", "setups", "setups/results"];
   it.each(routes)("%s uses Watchlist authority, not a single-account Journal grant", path => {
     const source = readFileSync(`app/api/admin/watchlist/${path}/route.ts`, "utf8");

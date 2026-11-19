@@ -1,6 +1,7 @@
-import { DEFAULT_NEWS_FILTERS, NEWS_FILTERS_FEATURE, marketCapUsd, parseNewsFilters } from "../contracts/press-release-filters";
+import { DEFAULT_NEWS_FILTERS, NEWS_FILTERS_FEATURE, parseNewsFilters } from "../contracts/press-release-filters";
 import { pressReleaseFilterQuery } from "./press-release-filter-query";
 import { newsSummaryUnavailable } from "../contracts/news-outbound-link";
+import { registerPressReleaseFilterFunctions } from "./press-release-filter-functions";
 import { assertMembershipFeature, evaluateMembershipFeature } from "../../platform/server/membership/platform-membership-access";
 import "server-only";
 import { readMembershipNewsDelaySeconds } from "../../platform/server/membership/membership-news-delay";
@@ -265,17 +266,15 @@ LIMIT ?`).all(input.scope.userId, ...tags, ...(input.ticker ? [input.ticker] : [
     assertActiveUser(this.database, input.scope);
     assertMembershipFeature(this.database, input.scope.userId, "news.access");
     const filtersAllowed = evaluateMembershipFeature(this.database, input.scope.userId, NEWS_FILTERS_FEATURE).allowed;
-    const filters = filtersAllowed ? parseNewsFilters(input.filters ?? DEFAULT_NEWS_FILTERS) : DEFAULT_NEWS_FILTERS;
+    const asOf = input.asOf ?? new Date().toISOString();
+    if (!Number.isFinite(Date.parse(asOf)) || new Date(asOf).toISOString() !== asOf || Date.parse(asOf) > Date.now()) throw new Error("Invalid page time.");
+    const filters = filtersAllowed ? parseNewsFilters(input.filters ?? DEFAULT_NEWS_FILTERS, new Date(asOf)) : DEFAULT_NEWS_FILTERS;
     const query = pressReleaseFilterQuery(filters);
     const requested = input.filters ?? DEFAULT_NEWS_FILTERS;
     const resetRestrictedView = !filtersAllowed && JSON.stringify(requested) !== JSON.stringify(DEFAULT_NEWS_FILTERS);
     const offset = resetRestrictedView ? 0 : input.offset ?? 0;
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100000) throw new Error("Invalid page.");
-    const asOf = input.asOf ?? new Date().toISOString();
-    if (!Number.isFinite(Date.parse(asOf)) || new Date(asOf).toISOString() !== asOf || Date.parse(asOf) > Date.now()) throw new Error("Invalid page time.");
-    this.database.function("traderlink_news_cap", { deterministic: true }, (value, recordedUsd) => marketCapUsd(value, recordedUsd));
-    this.database.function("traderlink_news_unavailable", { deterministic: true }, (summary, eventType, metadata) =>
-      newsSummaryUnavailable(typeof summary === "string" ? summary : null, typeof eventType === "string" ? eventType : null, parseRecord(String(metadata ?? "{}"))) ? 1 : 0);
+    registerPressReleaseFilterFunctions(this.database);
     const tags = routeTags(input.channel);
     const limit = Math.max(1, Math.min(250, input.limit ?? 100));
     const delaySeconds = readMembershipNewsDelaySeconds(this.database, input.scope.userId, "news.visibility_delay_seconds");
@@ -299,7 +298,7 @@ WHERE article.route_tag IN (${placeholders(tags)})
 ORDER BY ${query.order}
 LIMIT ? OFFSET ?`).all(input.scope.userId, input.scope.userId, asOf, ...tags, ...(input.ticker ? [input.ticker] : []),
       asOf, delaySeconds, asOf, delaySeconds, asOf, ...query.parameters, limit + 1, offset) as ArticleRow[];
-    return { articles: Object.freeze(rows.slice(0, limit).map(rowToArticle)), more: rows.length > limit, nextOffset: offset + Math.min(limit, rows.length), offset, asOf, filtersAllowed };
+    return { articles: Object.freeze(rows.slice(0, limit).map(rowToArticle)), more: rows.length > limit, nextOffset: offset + Math.min(limit, rows.length), offset, asOf, filtersAllowed, filters };
   }
 
   find(input: Readonly<{

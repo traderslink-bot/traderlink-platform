@@ -1,3 +1,5 @@
+.row.concealedDate .added { grid-column: 3; }
+.row.concealedDate .details { grid-column: 4; }
 .row .details {
   display: inline-flex;
   align-items: center;
@@ -15,4 +17,6 @@
   .row .price { grid-column: 1; grid-row: 2; order: 0; }
   .row .added { grid-column: 2; grid-row: 2; order: 0; }
   .row .details { grid-column: 2; grid-row: 3; order: 0; }
+  .row.concealedDate .added { grid-column: 1; grid-row: 2; }
+  .row.concealedDate .details { grid-column: 2; grid-row: 2; }
 }

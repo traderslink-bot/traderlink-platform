@@ -5,24 +5,25 @@ const operation='12345678-1234-4123-8123-123456789abc';
 function setup(t){
  const db=new Database(':memory:');t.after(()=>db.close());db.exec('CREATE TABLE platform_users(user_id TEXT PRIMARY KEY);');db.prepare('INSERT INTO platform_users VALUES(?)').run('owner');
  for(const sql of load('src/modules/platform/server/database/migrations/0149_watchlist_free_chat.ts').watchlistFreeChatMigration.statements)db.exec(sql);
- const store=load('src/modules/watchlist/server/notifications/watchlist-free-chat-store.ts');let sent=0,destination='confirmed',current=true,reviewCycle='cycle',choice=true,result={state:'sent',message:'Posted',messageId:'111111111111111111'};
- const review=()=>({symbol:'TEST',cycleId:reviewCycle,cancelled:false,events:[{revision:3,at:1,actor:'platform-owner:owner',body:{kind:'approve',draftRevision:2,publication:{website:{cards:{tradersLinkAiRead:{body:'saved'}}}}}},{body:{kind:'delivery',channel:'website',status:'acknowledged',approvalRevision:3}}]});
+ const store=load('src/modules/watchlist/server/notifications/watchlist-free-chat-store.ts');let sent=0,destination='confirmed',current=true,reviewCycle='cycle',choice=true,listingOnly=false,acknowledged=true,publications=[],result={state:'sent',message:'Posted',messageId:'111111111111111111'};
+ const review=()=>({symbol:'TEST',cycleId:reviewCycle,cancelled:false,events:[{revision:3,at:1,actor:'platform-owner:owner',body:{kind:'approve',draftRevision:listingOnly?0:2,publication:listingOnly?{notificationKind:'listing',website:{cards:{}}}:{website:{cards:{tradersLinkAiRead:{body:'saved'}}}}}},{body:{kind:'delivery',channel:'website',status:acknowledged?'acknowledged':'failed',approvalRevision:3}}]});
  const requests=[];
  const worker=load('src/modules/watchlist/server/notifications/watchlist-free-chat-runtime.ts',{
   '@/src/modules/platform/server/database/open-platform-database':{withPlatformDatabase:(_options,callback)=>callback(db)},
-  '../runtime/watchlist-runtime-admin-client':{requestWatchlistRuntimeRaw:async input=>{requests.push(input);return {ok:true,body:JSON.stringify(input.path.includes('/category-move?')?{moves:[{id:operation,cycleId:'cycle',current,destination,freeChat:choice,approvalRevision:3}]}:input.path.includes('/free-chat-publication?')?{publication:{symbol:'TEST',cycleId:'cycle',approvalRevision:3,updated:false,images:[]}}:{review:review()})};}},
+  '../runtime/watchlist-runtime-admin-client':{requestWatchlistRuntimeRaw:async input=>{requests.push(input);return {ok:true,body:JSON.stringify(input.path.includes('/category-move?')?{moves:[{id:operation,cycleId:'cycle',to:'postmarket',current,destination,freeChat:choice,approvalRevision:3}]}:input.path.includes('/free-chat-publication?')?{publication:{symbol:'TEST',cycleId:'cycle',approvalRevision:3,updated:false,images:[]}}:{review:review()})};}},
   './watchlist-automatic-notifications':{readAutomaticAnalysisEvents:async()=>[]},
   './watchlist-free-chat-store':store,
   './watchlist-free-chat-visibility':{readFreeChatVisibility:()=>({ticker:false,analysis:false,levels:false})},
-  './watchlist-free-chat-delivery':{deliverFreeChatPublication:async()=>{sent++;return result;}}
+  './watchlist-free-chat-delivery':{deliverFreeChatPublication:async publication=>{publications.push(publication);sent++;return result;}}
  });
  const input={symbol:'TEST',cycleId:'cycle',id:operation,to:'postmarket',notify:true,freeChat:true};
- return {db,store,worker,input,requests,sent:()=>sent,set:value=>{if('destination'in value)destination=value.destination;if('current'in value)current=value.current;if('reviewCycle'in value)reviewCycle=value.reviewCycle;if('choice'in value)choice=value.choice;if('result'in value)result=value.result;},queue:()=>worker.recordFreeChatMoveIntent(JSON.stringify(input),'platform-owner:owner'),state:()=>db.prepare('SELECT * FROM platform_watchlist_free_chat_posts WHERE post_key=?').get('cycle:move:'+operation)};
+ return {db,store,worker,input,requests,publications,sent:()=>sent,set:value=>{if('listingOnly'in value)listingOnly=value.listingOnly;if('acknowledged'in value)acknowledged=value.acknowledged;if('destination'in value)destination=value.destination;if('current'in value)current=value.current;if('reviewCycle'in value)reviewCycle=value.reviewCycle;if('choice'in value)choice=value.choice;if('result'in value)result=value.result;},queue:()=>worker.recordFreeChatMoveIntent(JSON.stringify(input),'platform-owner:owner'),state:()=>db.prepare('SELECT * FROM platform_watchlist_free_chat_posts WHERE post_key=?').get('cycle:move:'+operation)};
 }
 test('move event is distinct from an earlier Free Chat analysis share and is idempotent',async t=>{
  const h=setup(t);h.store.queueFreeChatPublication(h.db,{cycleId:'cycle',ticker:'TEST',ownerUserId:'owner',approvalRevision:3,origin:'manual',publishedAt:1});h.db.prepare("UPDATE platform_watchlist_free_chat_posts SET state='sent'").run();
  h.queue();h.queue();await h.worker.reconcileFreeChatPublications();await h.worker.reconcileFreeChatPublications();
  assert.equal(h.sent(),1);assert.equal(h.state().state,'sent');assert.equal(h.state().approval_revision,null);assert.equal(h.db.prepare('SELECT count(*) n FROM platform_watchlist_free_chat_posts').get().n,2);
+  assert.equal(h.publications[0].moveTo,'postmarket');
 });
 test('unchecked Free Chat or silent move does not queue a post',t=>{
  const h=setup(t);for(const input of [{...h.input,freeChat:false},{...h.input,notify:false},{...h.input,to:'private'}])h.worker.recordFreeChatMoveIntent(JSON.stringify(input),'platform-owner:owner');
@@ -79,10 +80,13 @@ test('Free Chat retry proxy reads the exact current move and never forwards a pl
  const h=setup(t);h.queue();h.db.prepare("UPDATE platform_watchlist_free_chat_posts SET state='failed'").run();
  const requests=[];let current=true;
  const route=load('app/api/admin/watchlist/runtime/[...path]/route.ts',{
+  '@/src/modules/watchlist/server/runtime/watchlist-runtime-delivery-summary':{readWatchlistRuntimeDeliverySummary:()=>({deliveries:[]})},
+  '@/src/modules/watchlist/server/notifications/watchlist-notes-notifications':{prepareNotesNotification:()=>assert.fail('move retry must not create a notes alert'),runNotesNotifications:()=>assert.fail('move retry must not run notes delivery')},
   '@/src/modules/watchlist/server/access/watchlist-analysis-visibility':{isPrivateWatchlistTicker:()=>false},
   '@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications':{recordCategoryMoveIntent:()=>assert.fail('retry must not create a notification intent')},
   '@/src/modules/watchlist/server/notifications/watchlist-x-admin':{},
   '@/src/modules/watchlist/server/notifications/watchlist-x-runtime':{},
+  '@/src/modules/watchlist/server/notifications/watchlist-free-chat-delivery':{},
   '@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin':{},
   '@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime':{recordFreeChatMoveIntent:()=>assert.fail('retry must not create a Free Chat intent')},
   '@/src/modules/watchlist/server/notifications/watchlist-free-chat-store':h.store,
@@ -114,4 +118,52 @@ test('moving out of Private records Free Chat choice without adding unsupported 
  const result=await invoke('/api/watchlist/analysis-review/category-move','POST','platform-owner:owner',JSON.stringify(input),()=>true,async request=>{requests.push(request);return {ok:true,body:JSON.stringify(request.method==='GET'?{review:{cycleId:'private',head:2,cancelled:false,draft:{revision:2,body:{kind:'original'}}}}:{ok:true})};},()=>{},body=>intents.push(JSON.parse(body)),Response,{error:()=>{}});
  assert.equal(result.status,200);assert.equal(intents[0].freeChat,true);
  const approval=JSON.parse(requests.at(-1).body);assert.equal(approval.freeChat,undefined);assert.equal(approval.notifyUsers,true);assert.equal(approval.draftRevision,2);
+});
+
+test('manual share of an acknowledged ticker-only listing sends text once without an analysis export', async t => {
+ const h=setup(t);
+ h.set({listingOnly:true,acknowledged:false});
+ const input={cycleId:'cycle',ticker:'TEST',ownerUserId:'owner',approvalRevision:3,origin:'manual',publishedAt:1};
+ h.store.queueFreeChatPublication(h.db,input);
+ await h.worker.reconcileFreeChatPublications();
+ assert.equal(h.sent(),0);
+ h.set({acknowledged:true});
+ h.db.prepare('UPDATE platform_watchlist_free_chat_posts SET next_attempt_at_ms=0').run();
+ await h.worker.reconcileFreeChatPublications();
+ await h.worker.reconcileFreeChatPublications();
+ assert.equal(h.sent(),1);
+ assert.equal(h.publications[0].listingOnly,true);
+ assert.equal(h.publications[0].images.length,0);
+ assert.ok(!h.requests.some(request=>request.path.includes('/free-chat-publication?')));
+ assert.equal(h.store.queueFreeChatPublication(h.db,input),false);
+});
+
+test('the owner can preview and queue a published ticker with no analysis', async t=>{
+ const h=setup(t);
+ h.set({listingOnly:true,acknowledged:false});
+ const base='src/modules/watchlist/server/notifications/';
+ const delivery=load(base+'watchlist-free-chat-delivery.ts');
+ const admin=load(base+'watchlist-free-chat-admin.ts',{
+  '../access/watchlist-analysis-visibility':{isPrivateWatchlistTicker:()=>false},
+  '@/src/modules/platform/server/database/open-platform-database':{withPlatformDatabase:(_options,run)=>run(h.db)},
+  '@/src/modules/platform/server/database/open-readonly-platform-database':{withReadonlyPlatformDatabase:(_options,run)=>run(h.db)},
+  './watchlist-free-chat-runtime':h.worker,'./watchlist-free-chat-store':h.store,'./watchlist-free-chat-delivery':delivery,
+  './watchlist-free-chat-visibility':{readFreeChatVisibility:()=>({ticker:false,analysis:false,levels:false})},
+ });
+ for(const sql of load('src/modules/platform/server/database/migrations/0213_watchlist_free_chat_owner_copy.ts').watchlistFreeChatOwnerCopyMigration.statements)h.db.exec(sql);
+ const url=new URL('https://preview.test/free-chat?symbol=TEST');
+ const read=()=>admin.handleFreeChatAdmin('GET',url,undefined,'owner');
+ assert.equal((await read()).preview,null);
+ h.set({acknowledged:true});
+ const current=await read();
+ assert.equal(current.hasPublishedAnalysis,false);
+ assert.equal(current.preview.includeImages,false);
+ assert.match(current.preview.content,/\$TEST on the TradersLink Watchlist/);
+ assert.doesNotMatch(current.preview.content,/Analysis|Images/);
+ const sent=await admin.handleFreeChatAdmin('POST',url,JSON.stringify({symbol:'TEST',cycleId:'cycle',approvalRevision:3,
+  action:'send',visibilityKey:current.preview.visibilityKey,message:'Watching for a setup.'}),'owner');
+ assert.equal(sent.delivery.state,'pending');
+ assert.equal(sent.savedMessage,'Watching for a setup.');
+ await h.worker.reconcileFreeChatPublications();
+ assert.equal(h.publications[0].listingOnly,true);
 });

@@ -47,8 +47,9 @@ function emailHtml(input: Readonly<{
   return `<!doctype html><html><body><h1>${escapeHtml(input.title)}</h1><p>${escapeHtml(input.summary)}</p>${link}${extra}</body></html>`;
 }
 
-function providerResult(response: Response): PlatformNotificationDeliveryResult {
+function providerResult(response: Response): PlatformNotificationDeliveryResult & {uncertain?:boolean} {
   if (response.ok) return deliveryResult("sent");
+  if(response.status===408||response.status>=500)return {...deliveryResult("provider_unavailable"),uncertain:true};
   return deliveryResult(response.status === 408 || response.status === 429 || response.status >= 500
     ? "provider_unavailable"
     : "provider_rejected");
@@ -67,7 +68,7 @@ export async function deliverPlatformNotificationEmail(input: Readonly<{
   environment?: NodeJS.ProcessEnv;
   fetcher?: typeof fetch;
   idempotencyKey: string;
-}>): Promise<PlatformNotificationDeliveryResult> {
+}>): Promise<PlatformNotificationDeliveryResult & {uncertain?:boolean}> {
   const environment = input.environment ?? process.env;
   const apiKey = resendApiKey(environment);
   if (!apiKey) return deliveryResult("not_configured");
@@ -124,6 +125,6 @@ export async function deliverPlatformNotificationEmail(input: Readonly<{
     });
     return providerResult(response);
   } catch {
-    return deliveryResult("provider_unavailable");
+    return {...deliveryResult("provider_unavailable"),uncertain:true};
   }
 }

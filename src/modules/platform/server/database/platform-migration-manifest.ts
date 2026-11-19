@@ -1,3 +1,4 @@
+import { newsAccountFiltersAndSavedViewsMigration } from "@/src/modules/news/server/database/migrations/0221_news_account_filters_and_saved_views";
 import { platformHomePagePreferenceMigration } from "./migrations/0214_platform_home_page_preference";
 import { traderLinkCommunitiesIdentityPermissionsMigration } from "@/src/modules/communities/server/database/migrations/0121_traderlink_communities_identity_permissions";
 import { traderLinkCommunitiesPartnerPlatformMigration } from "@/src/modules/communities/server/database/migrations/0122_traderlink_communities_partner_platform";
@@ -31,6 +32,11 @@ import {traderLinkCoachingProfilePhotosMigration} from "@/src/modules/communitie
 import {traderLinkCoachingReviewSelectionLifecycleMigration} from "@/src/modules/communities/server/database/migrations/0194_traderlink_coaching_review_selection_lifecycle";
 import { dailyTradeAnalyzerAlpacaCacheMigration } from "@/src/modules/level-analysis/server/database/migrations/0186_daily_trade_analyzer_alpaca_cache";
 import { journalChartEntriesMigration } from "@/src/modules/journal/server/database/migrations/0187_journal_chart_entries";
+import { watchlistIndicatorsVisibilityMigration } from "./migrations/0222_watchlist_indicators_visibility";
+import { watchlistTraderNotesNotificationsMigration } from "./migrations/0220_watchlist_trader_notes_notifications";
+import { watchlistMaskedAddedDateMigration } from "./migrations/0219_watchlist_masked_added_date";
+import { watchlistFreeChatOwnerCopyMigration } from "./migrations/0213_watchlist_free_chat_owner_copy";
+import { watchlistRowVisibilityMigration } from "./migrations/0218_watchlist_row_visibility";
 import { newsGeneralMarketNewsMigration } from "@/src/modules/news/server/database/migrations/0185_news_general_market_news";
 import { platformAccountErasureRecoveryMigration } from "./migrations/0183_platform_account_erasure_recovery";
 import { platformWatchlistUsageUserRecentMigration } from "./migrations/0184_platform_watchlist_usage_user_recent";
@@ -741,6 +747,12 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0193_traderlink_coaching_profile_photos.ts", migration: traderLinkCoachingProfilePhotosMigration }),
     Object.freeze({ sourcePath: "src/modules/communities/server/database/migrations/0194_traderlink_coaching_review_selection_lifecycle.ts", migration: traderLinkCoachingReviewSelectionLifecycleMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0214_platform_home_page_preference.ts", migration: platformHomePagePreferenceMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0213_watchlist_free_chat_owner_copy.ts", migration: watchlistFreeChatOwnerCopyMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0218_watchlist_row_visibility.ts", migration: watchlistRowVisibilityMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0219_watchlist_masked_added_date.ts", migration: watchlistMaskedAddedDateMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0220_watchlist_trader_notes_notifications.ts", migration: watchlistTraderNotesNotificationsMigration }),
+    Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0221_news_account_filters_and_saved_views.ts", migration: newsAccountFiltersAndSavedViewsMigration }),
+    Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0222_watchlist_indicators_visibility.ts", migration: watchlistIndicatorsVisibilityMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -841,6 +853,11 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0192_traderlink_coaching_trade_evaluation_templates": Object.freeze(["traderlink_coaching_trade_evaluations","traderlink_coaching_evaluation_events"]),
     "0193_traderlink_coaching_profile_photos": Object.freeze(["traderlink_coaching_profile_photos"]),
     "0194_traderlink_coaching_review_selection_lifecycle": Object.freeze([]),
+    "0222_watchlist_indicators_visibility": Object.freeze(["platform_watchlist_indicators_visibility", "platform_watchlist_indicators_visibility_audit"]),
+    "0220_watchlist_trader_notes_notifications": Object.freeze(["platform_watchlist_notes_notifications", "platform_watchlist_notes_deliveries"]),
+    "0218_watchlist_row_visibility": Object.freeze(["platform_watchlist_row_visibility", "platform_watchlist_row_visibility_audit"]),
+    "0219_watchlist_masked_added_date": Object.freeze(["platform_watchlist_hidden_added_visibility", "platform_watchlist_hidden_added_visibility_audit"]),
+    "0221_news_account_filters_and_saved_views": Object.freeze(["news_press_release_view_preferences", "news_press_release_saved_views"]),
     "0185_news_general_market_news": Object.freeze(["news_general_articles", "news_general_symbols", "news_general_revisions", "news_general_deliveries", "news_general_status"]),
     "0187_journal_chart_entries": Object.freeze(["journal_chart_entries"]),
     "0183_platform_account_erasure_recovery": Object.freeze(["platform_erasure_operations", "platform_erasure_objects", "platform_erasure_history"]),
