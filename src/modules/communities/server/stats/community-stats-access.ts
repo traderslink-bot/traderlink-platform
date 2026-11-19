@@ -1,9 +1,9 @@
 import "server-only";
 import {NextRequest} from "next/server";
-import {assertCommunityReviewDiscordGuild} from "../community-review-discord-guild";
+import {assertStatsReviewGuild} from "./community-stats-review-policy";
 import type Database from "better-sqlite3";
 import { requireCommunityRequestAccess } from "../community-request-access";
-import { readCommunityViewerChannels } from "../community-channel-readership";
+import {readCommunityStatsViewerChannels} from "./community-stats-viewer-channels";
 import { TraderLinkCommunityRepository } from "../traderlink-community-repository";
 import type { CommunityStatsRequestScope } from "../../contracts/community-stats-contracts";
 import { platformFailure,isTraderLinkPlatformError } from "../../../platform/server/database/platform-migration-contract";
@@ -25,18 +25,18 @@ export async function authorizeCommunityStats(
   database: Database.Database, slug: string, actorUserId: string, operation: "read" | "visit" | "settings" = "read",
 ): Promise<CommunityStatsRequestScope> {
   if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u.test(slug)) platformFailure("TRADERLINK_WORKSPACE_NOT_FOUND");
-  await requireCommunityRequestAccess({ slug, userId: actorUserId });
   const row = database.prepare(`SELECT community_id,discord_guild_id,display_name FROM traderlink_communities
     WHERE slug=? AND status='active'`).get(slug) as {community_id:string;discord_guild_id:string;display_name:string}|undefined;
   if (!row) platformFailure("TRADERLINK_WORKSPACE_NOT_FOUND");
-  assertCommunityReviewDiscordGuild(row.discord_guild_id);
+  assertStatsReviewGuild(row.discord_guild_id);
+  await requireCommunityRequestAccess({slug,userId:actorUserId,reviewIntent:"stats"});
   const repository = new TraderLinkCommunityRepository(database);
   let access = repository.requireCapability(row.community_id, actorUserId,"community.view");
-  const readableChannelIds = access.isOwner||operation==="settings"?[]:await readCommunityViewerChannels(database,slug,actorUserId,process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "",fetch,[0,2,5,13,15,16]);
+  const readableChannelIds = access.isOwner||operation==="settings"?[]:await readCommunityStatsViewerChannels(database,slug,actorUserId,process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "",fetch,[0,2,5,13,15,16]);
   // Re-read grants after any Discord I/O, before selecting report data or accepting settings.
   const current=database.prepare("SELECT discord_guild_id FROM traderlink_communities WHERE community_id=? AND status='active'").get(row.community_id) as {discord_guild_id:string}|undefined;
   if(current?.discord_guild_id!==row.discord_guild_id)platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
-  assertCommunityReviewDiscordGuild(current.discord_guild_id);
+  assertStatsReviewGuild(current.discord_guild_id);
   access=repository.requireCapability(row.community_id,actorUserId,"community.view");
   const settings=communityStatsStorageReady(database)?database.prepare(`SELECT own_content_user_ids_json,export_user_ids_json FROM community_stats_settings WHERE community_id=?`).get(row.community_id) as {own_content_user_ids_json:string;export_user_ids_json:string}|undefined:undefined;
   const ownGrants:unknown=JSON.parse(settings?.own_content_user_ids_json??"[]"),exportGrants:unknown=JSON.parse(settings?.export_user_ids_json??"[]");

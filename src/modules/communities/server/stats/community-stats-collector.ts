@@ -1,5 +1,5 @@
 import "server-only";
-import {isCommunityReviewDiscordGuild} from "../community-review-discord-guild";
+import {isStatsReviewGuild,isStatsReviewChannel} from "./community-stats-review-policy";
 import type Database from "better-sqlite3";
 import {approvedCommunityGuildIds} from "../community-launch-policy";
 import {CommunityStatsRepository} from "./community-stats-repository";
@@ -34,7 +34,7 @@ export class CommunityStatsCollector {
         state.gateway?.stop();state.gateway=null;state.signature="";state.lastWeb=null;state.historyCommunities=[];
         await communityStatsWrites(database).write(()=>{if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1")database.prepare(`UPDATE community_stats_source_state SET status='disabled',checked_at_utc=?,reason='Collection is disabled.' WHERE status!='disabled' AND (? IS NULL OR community_id=?)`).run(at,this.review?.run.communityId??null,this.review?.run.communityId??null);},statsWriteReview(this.review));return;
       }
-      const approved=approvedCommunityGuildIds().filter(isCommunityReviewDiscordGuild);
+      const approved=approvedCommunityGuildIds().filter(isStatsReviewGuild);
       const communities=await communityStatsWrites(database).write(()=>{
       if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1")throw new Error("Stats collection configuration changed.");
       const communities=database.prepare(`SELECT c.community_id,c.discord_guild_id,s.discord_enabled,s.channel_ids_json,s.discord_configuration_version FROM traderlink_communities c JOIN platform_users owner ON owner.user_id=c.owner_user_id AND owner.status='active' LEFT JOIN community_stats_settings s ON s.community_id=c.community_id WHERE c.status='active' AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL) ORDER BY c.community_id`)
@@ -42,7 +42,7 @@ export class CommunityStatsCollector {
       if(this.review)communities.splice(0,communities.length,...communities.filter(row=>row.community_id===this.review!.run.communityId));
       if(this.stopped)return [];
       for(const community of communities){
-        if(!isCommunityReviewDiscordGuild(community.discord_guild_id))continue;
+        if(!isStatsReviewGuild(community.discord_guild_id))continue;
         repo.ensureCommunity(community.community_id,at);
         // Close revoked/relinked web eligibility at the first observed change; never relabel history.
         database.prepare(`UPDATE community_stats_identity_links SET until_utc=max(from_utc,?) WHERE community_id=? AND until_utc IS NULL AND NOT EXISTS(
@@ -76,7 +76,7 @@ export class CommunityStatsCollector {
         }
       }return communities;},statsWriteReview(this.review));state.lastWeb=at;
       if(this.stopped)return;
-      const selected=communities.filter(row=>row.discord_enabled===1&&approved.includes(row.discord_guild_id)).map(row=>({communityId:row.community_id,guildId:row.discord_guild_id,channelIds:JSON.parse(row.channel_ids_json??"[]") as string[],configurationVersion:row.discord_configuration_version??0}));
+      const selected=communities.filter(row=>row.discord_enabled===1&&approved.includes(row.discord_guild_id)).map(row=>({communityId:row.community_id,guildId:row.discord_guild_id,channelIds:(JSON.parse(row.channel_ids_json??"[]") as string[]).filter(channel=>isStatsReviewChannel(row.discord_guild_id,channel)),configurationVersion:row.discord_configuration_version??0}));
       const token=process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim(),signature=JSON.stringify(selected)+(token?":token-present":":no-token");
       const selectionIsCurrent=()=>!this.stopped&&process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"&&selected.every(community=>!!database.prepare(`SELECT 1 FROM traderlink_communities c JOIN community_stats_settings s ON s.community_id=c.community_id JOIN platform_users u ON u.user_id=c.owner_user_id AND u.status='active' WHERE c.community_id=? AND c.discord_guild_id=? AND c.status='active' AND s.discord_enabled=1 AND s.discord_configuration_version=? AND s.channel_ids_json=? AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL)`).get(community.communityId,community.guildId,community.configurationVersion,JSON.stringify(community.channelIds)));
       state.historyCommunities=selected.map(community=>community.communityId);

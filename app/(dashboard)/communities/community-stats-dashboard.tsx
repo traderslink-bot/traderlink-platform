@@ -1,6 +1,6 @@
 "use client";
 import Box from "@mui/material/Box";
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState,useSyncExternalStore} from "react";
 import type {CommunityStatsReport,CommunityStatsTab} from "@/src/modules/communities/contracts/community-stats-contracts";
 import {communityStatsValues,communityStatsPresentation} from "./community-stats-presentation";
 import {StatsSectionTable} from "./community-stats-section";
@@ -43,11 +43,11 @@ function StatsTrend({report,allTime=false}:{report:CommunityStatsReport;allTime?
   const ticks=Array.from({length:tickCount},(_,index)=>new Date(Date.parse(chartFrom)+Math.round(index*Math.max(0,dates-1)/Math.max(1,tickCount-1))*day).toISOString().slice(0,10));
   const tickLabel=(date:string)=>new Intl.DateTimeFormat("en",{month:"short",...(dates>90?{year:"numeric" as const}:{day:"numeric" as const}),timeZone:"UTC"}).format(new Date(date+"T00:00:00Z"));
   const line=(surface:"web"|"discord")=>{let previous:number|null=null;return chartTrend.map(point=>{const value=point[surface],date=Date.parse(point.date);if(value===null){previous=null;return "";}const connected=previous!==null&&date-previous===day*interval;previous=date;return `${connected?"L":"M"}${x(point.date)},${baseline-value/maximum*plotHeight}`;}).join(" ");};
-  return <section className="cs-panel"><div className="cs-panel-head"><h2>Activity over time</h2><div className="cs-trend-tools"><div className="cs-trend-actions"><div className="cs-chart-toggle" role="group" aria-label="Activity chart style"><button className="cs-action" aria-pressed={style==="bars"} onClick={()=>setStyle("bars")}>Bars</button><button className="cs-action" aria-pressed={style==="lines"} onClick={()=>setStyle("lines")}>Lines</button></div><StatsCardCsv report={report} title="Activity over time" columns={webOnly?["UTC date","Webpage visits"]:["UTC date","Webpage visits","Discord contributions"]} rows={report.trend.map(point=>({"UTC date":point.date,"Webpage visits":point.web,"Discord contributions":point.discord}))}/>{report.canExport?<button className="cs-action" onClick={exportChart}>Export chart</button>:null}</div>
+  return <section className="cs-panel"><div className="cs-panel-head"><h2>Activity over time</h2><div className="cs-trend-tools"><div className="cs-trend-actions"><div className="cs-chart-toggle" role="group" aria-label="Activity chart style"><button className="cs-action" aria-pressed={style==="bars"} onClick={()=>setStyle("bars")}>Bars</button><button className="cs-action" aria-pressed={style==="lines"} onClick={()=>setStyle("lines")}>Lines</button></div><StatsCardCsv report={report} title="Activity over time" columns={webOnly?["UTC date","Webpage visits"]:["UTC date","Webpage visits","Discord contributions"]} rows={report.trend.map(point=>({"UTC date":point.date,"Webpage visits":point.web,"Discord contributions":point.discord}))}/>{report.canExport?<button className="cs-action" disabled={!report.trend.length} onClick={exportChart}>Export chart</button>:null}</div>
     <div className="cs-chart-legend"><span><i style={{background:"var(--cs-chart-0)"}}/>Webpage visits</span>{!webOnly?<span><i style={{background:"var(--cs-chart-1)"}}/>Discord contributions</span>:null}</div></div></div>
     <div ref={plot} className="cs-trend-plot">{report.trend.length?<svg ref={svg} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${plotWidth} 300`} role="img" aria-label={webOnly?"Webpage visits by date":"Webpage visits and Discord contributions by date"} style={{width:"100%",height:300,color:"inherit"}}>
       <line x1="20" x2={plotWidth-20} y1={baseline} y2={baseline} stroke="currentColor" opacity=".25"/>
-      {[.5,1].map(fraction=><g key={fraction}><line x1="20" x2={plotWidth-20} y1={baseline-fraction*plotHeight} y2={baseline-fraction*plotHeight} stroke="currentColor" opacity=".08"/><text x="20" y={baseline-4-fraction*plotHeight} fill="currentColor" fontSize="9" opacity=".7">{Math.round(maximum*fraction).toLocaleString()}</text></g>)}
+      {[...new Set([Math.ceil(maximum/2),maximum])].map(value=><g key={value}><line x1="20" x2={plotWidth-20} y1={baseline-value/maximum*plotHeight} y2={baseline-value/maximum*plotHeight} stroke="currentColor" opacity=".08"/><text x="20" y={baseline-4-value/maximum*plotHeight} fill="currentColor" fontSize="9" opacity=".7">{value.toLocaleString()}</text></g>)}
       {style==="lines"?<><path d={line("web")} fill="none" stroke="var(--cs-chart-0)" strokeWidth="2.5"/>{!webOnly?<path d={line("discord")} fill="none" stroke="var(--cs-chart-1)" strokeWidth="2.5" strokeDasharray="5 3"/>:null}</>:null}
       {chartTrend.map(point=><g key={point.date}><title>{`${point.date}: ${point.web} webpage visits${webOnly?"":point.discord===null?", Discord n/a":`, ${point.discord} Discord contributions`}`}</title>{style==="bars"?<><rect x={x(point.date)-4} y={baseline-point.web/maximum*plotHeight} width="5" height={point.web/maximum*plotHeight} rx="1" fill="var(--cs-chart-0)"/>{!webOnly&&point.discord!==null?<rect x={x(point.date)+2} y={baseline-point.discord/maximum*plotHeight} width="5" height={point.discord/maximum*plotHeight} rx="1" fill="var(--cs-chart-1)"/>:null}</>:<><circle cx={x(point.date)} cy={baseline-point.web/maximum*plotHeight} r="3" fill="var(--cs-chart-0)"/>{!webOnly&&point.discord!==null?<circle cx={x(point.date)} cy={baseline-point.discord/maximum*plotHeight} r="3" fill="var(--cs-chart-1)"/>:null}</>}</g>)}
       {ticks.map((date,index)=><text key={date} x={x(date)} y="286" textAnchor={index===0?"start":index===ticks.length-1?"end":"middle"} fontSize="10" fill="currentColor">{tickLabel(date)}</text>)}
@@ -89,15 +89,45 @@ function StatsHourlyActivity({report,endpoint,role,filters,onFilters}:{report:Co
     </section>;
   })}</div></>;
 }
-export function CommunityStatsDashboard({communitySlug,initialTab="overview"}:{communitySlug:string;initialTab?:CommunityStatsTab}){
-  const [today]=useState(()=>new Date().toISOString().slice(0,10)),[tab,setTab]=useState<CommunityStatsTab>(initialTab==="timing"?"overview":initialTab==="participation"||initialTab==="cohorts"?"members":initialTab==="visits"?"pages":initialTab),[range,setRange]=useState("30"),[from,setFrom]=useState(()=>dateBefore(new Date().toISOString().slice(0,10),29)),[through,setThrough]=useState(today),[content,setContent]=useState(""),[author,setAuthor]=useState(""),[segment,setSegment]=useState(""),[page,setPage]=useState(1),[member,setMember]=useState(""),[reload,setReload]=useState(0);
+function restoreStatsNavigation(search:string,initialTab:CommunityStatsTab,today:string){
+  const saved=new URLSearchParams(search),requested=saved.get("tab");
+  const fallback=initialTab==="timing"?"overview":initialTab==="participation"||initialTab==="cohorts"?"members":initialTab==="visits"?"pages":initialTab;
+  const tab=tabs.some(([key])=>key===requested)?requested as CommunityStatsTab:fallback;
+  const state={tab,range:"30",from:dateBefore(today,29),through:today,role:"",content:"",author:"",search:"",contentKind:(tab==="authors"?"posts":"") as ""|"posts"|"alert"|"watchlist",segment:"",postingPrior:"30",postingQuiet:"14",postingDays:"3",page:1,memberPage:1,member:""};
+  const validDate=(value:string|null):value is string=>typeof value==="string"&&/^\d{4}-\d{2}-\d{2}$/u.test(value)&&value>="2015-01-01"&&value<=today&&Number.isFinite(Date.parse(value+"T00:00:00Z"))&&new Date(value+"T00:00:00Z").toISOString().slice(0,10)===value;
+  const from=saved.get("from"),through=saved.get("through");
+  if(validDate(from)&&validDate(through)&&from<=through){state.from=from;state.through=through;state.range=from==="2015-01-01"&&through===today?"all":["7","30","90","365"].find(days=>through===today&&from===dateBefore(today,Number(days)-1))??"custom";}
+  const role=saved.get("role");if(role&&/^\d{1,32}$/u.test(role)&&tab!=="team"&&tab!=="publishing")state.role=role;
+  if(["pages","authors","publishing"].includes(tab)){
+    for(const key of ["content","author","search"] as const){const value=saved.get(key);if(value&&value.length<=(key==="search"?80:180))state[key]=value;}
+    const kind=saved.get("contentKind");if(["posts","alert","watchlist"].includes(kind??"")&&tab!=="publishing")state.contentKind=kind as "posts"|"alert"|"watchlist";
+  }
+  const segment=saved.get("segment");if(tab==="members"&&["stopped_posting","discord_any","web_any","both"].includes(segment??""))state.segment=segment!;
+  for(const [key,allowed]of [["postingPrior",[7,30,90]],["postingQuiet",[7,14,30]],["postingDays",[1,3,5]]] as const){const value=saved.get(key);if(value&&allowed.some(number=>number===Number(value)))state[key]=value;}
+  for(const key of ["page","memberPage"] as const){const value=Number(saved.get(key)??1);if(Number.isSafeInteger(value)&&value>0&&Number.isSafeInteger(value*25))state[key]=value;}
+  const member=saved.get("member");if(tab==="members"&&member&&/^\d{1,32}$/u.test(member))state.member=member;
+  return state;
+}
+const subscribeToInitialLocation=()=>()=>{};
+const clientLocationSearch=()=>window.location.search;
+const serverLocationSearch=()=>null;
+/** Wait for the client URL before mounting report state, keeping hydration and
+ * the first request consistent without a post-render state reset. */
+export function CommunityStatsDashboard(props:{communitySlug:string;initialTab?:CommunityStatsTab}){
+  const search=useSyncExternalStore<string|null>(subscribeToInitialLocation,clientLocationSearch,serverLocationSearch);
+  return search===null?<Box sx={communityStatsPresentation} aria-busy><div className="cs-title"><h1>{props.initialTab==="authors"?"Analysts":props.initialTab==="team"?"Team":"Stats"}</h1></div><p role="status" className="cs-note">Loading Stats…</p></Box>:<CommunityStatsDashboardReport key={`${props.communitySlug}:${props.initialTab??"overview"}`} {...props} initialSearch={search}/>;
+}
+function CommunityStatsDashboardReport({communitySlug,initialTab="overview",initialSearch}:{communitySlug:string;initialTab?:CommunityStatsTab;initialSearch:string}){
+  const [today]=useState(()=>new Date().toISOString().slice(0,10));
+  const [initial]=useState(()=>restoreStatsNavigation(initialSearch,initialTab,today));
+  const [tab,setTab]=useState(initial.tab),[range,setRange]=useState(initial.range),[from,setFrom]=useState(initial.from),[through,setThrough]=useState(initial.through),[content,setContent]=useState(initial.content),[author,setAuthor]=useState(initial.author),[segment,setSegment]=useState(initial.segment),[page,setPage]=useState(initial.page),[member,setMember]=useState(initial.member),[reload,setReload]=useState(0);
   const [report,setReport]=useState<CommunityStatsReport|null>(null),[error,setError]=useState(""),[loading,setLoading]=useState(true);
-  const [memberPage,setMemberPage]=useState(1);
-  const [postingPrior,setPostingPrior]=useState("30"),[postingQuiet,setPostingQuiet]=useState("14"),[postingDays,setPostingDays]=useState("3");
+  const [memberPage,setMemberPage]=useState(initial.memberPage);
+  const [postingPrior,setPostingPrior]=useState(initial.postingPrior),[postingQuiet,setPostingQuiet]=useState(initial.postingQuiet),[postingDays,setPostingDays]=useState(initial.postingDays);
   const [viewers,setViewers]=useState<StatsViewerSelection|null>(null);
-  const [role,setRole]=useState("");
-  const [catalogSearch,setCatalogSearch]=useState("");
-  const [contentKind,setContentKind]=useState<""|"posts"|"alert"|"watchlist">(initialTab==="authors"?"posts":"");
+  const [role,setRole]=useState(initial.role);
+  const [catalogSearch,setCatalogSearch]=useState(initial.search);
+  const [contentKind,setContentKind]=useState<""|"posts"|"alert"|"watchlist">(initial.contentKind);
   const [hourlyFilters,setHourlyFilters]=useState<HourlyFilters>({search:"",content:"",author:""});
   const query=new URLSearchParams({tab,from,through,quiet:"7",calendar:"calendar_days",page:String(page)});
   if(content)query.set("content",content);if(author)query.set("author",author);if(segment)query.set("segment",segment);if(member){query.set("member",member);query.set("memberPage",String(memberPage));}
@@ -113,7 +143,12 @@ export function CommunityStatsDashboard({communitySlug,initialTab="overview"}:{c
     const timer=setTimeout(()=>{void fetch(`${endpoint}?${queryText}`,{signal:controller.signal,cache:"no-store",credentials:"same-origin"}).then(async response=>{if(!response.ok)throw new Error("This Stats report is unavailable. Check your access and date range.");return response.json() as Promise<CommunityStatsReport>;}).then(value=>{if(controller.signal.aborted)return;setReport(value);setLoading(false);}).catch(reason=>{if(!controller.signal.aborted&&reason.name!=="AbortError"){setError(reason.message);setLoading(false);}});},250);
     return()=>{clearTimeout(timer);controller.abort();};
   },[endpoint,queryText,reload]);
-  const navigate=(next:CommunityStatsTab,analystId?:string)=>{const path=`/communities/${encodeURIComponent(communitySlug)}/stats/${next==="authors"?"analysts":next==="team"?"team":"activity"}`;if(window.location.pathname!==path)window.history.replaceState(null,"",path);if(next==="authors"&&!contentKind)setContentKind("posts");if(next==="team")setRole("");if(analystId){setAuthor(analystId);setContent("");setCatalogSearch("");}setTab(next);setPage(1);setMember("");setSegment("");if(!["pages","visits","authors","publishing"].includes(next)){setContent("");setAuthor("");setCatalogSearch("");setContentKind("");}};
+  useEffect(()=>{
+    const path=`/communities/${encodeURIComponent(communitySlug)}/stats/${tab==="authors"?"analysts":tab==="team"?"team":"activity"}`;
+    const href=`${path}?${queryText}`;
+    if(window.location.pathname+window.location.search!==href)window.history.replaceState(window.history.state,"",href);
+  },[communitySlug,tab,queryText]);
+  const navigate=(next:CommunityStatsTab,analystId?:string)=>{const path=`/communities/${encodeURIComponent(communitySlug)}/stats/${next==="authors"?"analysts":next==="team"?"team":"activity"}`;if(window.location.pathname!==path)window.history.replaceState(window.history.state,"",path);if(next==="authors"&&!contentKind)setContentKind("posts");if(next==="team")setRole("");if(analystId){setAuthor(analystId);setContent("");setCatalogSearch("");}setTab(next);setPage(1);setMember("");setSegment("");if(!["pages","visits","authors","publishing"].includes(next)){setContent("");setAuthor("");setCatalogSearch("");setContentKind("");}};
   const chooseRange=(value:string)=>{setRange(value);setPage(1);if(value!=="custom"){setThrough(today);setFrom(value==="all"?"2015-01-01":dateBefore(today,Number(value)-1));}};
   const stoppedMode=tab==="members"&&segment==="stopped_posting";
   const webFilters=["pages","visits","authors","publishing"].includes(tab);

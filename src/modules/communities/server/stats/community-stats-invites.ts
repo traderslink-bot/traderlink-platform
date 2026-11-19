@@ -1,5 +1,5 @@
 import {assertCommunityStagingQaCapability,type CommunityStagingQaCapability} from "../community-staging-qa-capability";
-import {isCommunityReviewDiscordGuild} from "../community-review-discord-guild";
+import {isStatsReviewGuild,isStatsReviewChannel} from "./community-stats-review-policy";
 import type Database from 'better-sqlite3';
 import {createHash} from 'node:crypto';
 import {statsHistoryIdentityHash} from './community-stats-history-storage';
@@ -33,7 +33,7 @@ export class CommunityStatsInvites{
   private defer(effect:()=>void):void{communityStatsWrites(this.db).afterCommit(effect);}
   start(guild:Guild):void{
     if(this.review&&(guild.communityId!==this.review.run.communityId||guild.guildId!==this.review.run.guildId))return;
-    if(!isCommunityReviewDiscordGuild(guild.guildId)||process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||!statsAttributionReady(this.db)||this.stopped)return;
+    if(!isStatsReviewGuild(guild.guildId)||process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1"||!statsAttributionReady(this.db)||this.stopped)return;
     const old=this.sessions.get(guild.communityId);if(old?.timer)clearTimeout(old.timer);
     const config=this.db.prepare(`SELECT s.discord_configuration_version AS version,c.owner_user_id AS owner,i.auth_subject AS ownerDiscord FROM community_stats_settings s JOIN traderlink_communities c ON c.community_id=s.community_id JOIN platform_users u ON u.user_id=c.owner_user_id AND u.status='active' JOIN platform_auth_identities i ON i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.status='active' WHERE s.community_id=? AND s.discord_enabled=1`).get(guild.communityId) as {version:number;owner:string;ownerDiscord:string}|undefined;
     if(!config)return;
@@ -66,7 +66,7 @@ export class CommunityStatsInvites{
     const selected=(this.db.prepare(`SELECT channel_ids_json FROM community_stats_settings WHERE community_id=?`).get(communityId) as {channel_ids_json:string}).channel_ids_json;
     s.baseline=null;s.generation++;
     if(kind==="INVITE_DELETE")this.db.prepare(`UPDATE community_stats_invites SET active=0,checked_at_utc=? WHERE community_id=? AND invite_hash=?`).run(at,communityId,key);
-    else if(channel&&(JSON.parse(selected) as string[]).includes(channel)){
+    else if(channel&&isStatsReviewChannel(s.guild.guildId,channel)&&(JSON.parse(selected) as string[]).includes(channel)){
       const creatorId=id(creator.id),erased=creatorId&&this.db.prepare(`SELECT 1 FROM community_stats_history_exclusions WHERE community_id=? AND identity_hash=?`).get(communityId,statsHistoryIdentityHash(communityId,creatorId));
       this.db.prepare(`INSERT INTO community_stats_invites VALUES(?,?,?,?,?,0,?,?,?, ?,0,1,?) ON CONFLICT(community_id,invite_hash) DO UPDATE SET active=1,checked_at_utc=excluded.checked_at_utc`).run(communityId,key,channel,erased?null:creatorId,erased?null:text(creator.username),Number.isSafeInteger(data.max_uses)?data.max_uses:null,date(data.created_at),typeof data.max_age==='number'&&Number.isSafeInteger(data.max_age)&&data.max_age>0&&data.max_age<=604800&&date(data.created_at)?new Date(Date.parse(String(data.created_at))+data.max_age*1000).toISOString():null,data.temporary===true?1:0,at);
     }
@@ -74,7 +74,7 @@ export class CommunityStatsInvites{
   }
   private state(s:Session,status:string):void{this.db.prepare(`INSERT INTO community_stats_attribution_state VALUES(?,'invites',?,?) ON CONFLICT(community_id,source) DO UPDATE SET status=excluded.status,checked_at_utc=excluded.checked_at_utc`).run(s.guild.communityId,status,new Date().toISOString());}
   private schedule(s:Session,delay:number):void{if(s.timer)clearTimeout(s.timer);s.timer=setTimeout(()=>{s.timer=null;void this.refresh(s).catch(async()=>{if(this.current(s)){await this.write(()=>{if(this.current(s)){s.baseline=null;this.state(s,'Connection interrupted');this.defer(()=>this.schedule(s,60000));}});}}).catch(error=>console.error('Stats invite state persistence deferred.',{errorName:error instanceof Error?error.name:'UnknownError'}));},delay);s.timer.unref?.();}
-  private current(s:Session):boolean{return isCommunityReviewDiscordGuild(s.guild.guildId)&&process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"&&!this.stopped&&this.sessions.get(s.guild.communityId)===s&&s.guild.valid()&&!!this.db.prepare(`SELECT 1 FROM community_stats_settings s JOIN traderlink_communities c ON c.community_id=s.community_id WHERE s.community_id=? AND s.discord_enabled=1 AND s.discord_configuration_version=? AND c.discord_guild_id=? AND c.status='active' AND c.owner_user_id=? AND EXISTS(SELECT 1 FROM platform_users u WHERE u.user_id=c.owner_user_id AND u.status='active') AND EXISTS(SELECT 1 FROM platform_auth_identities i WHERE i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.auth_subject=? AND i.status='active')`).get(s.guild.communityId,s.version,s.guild.guildId,s.owner,s.ownerDiscord);}
+  private current(s:Session):boolean{return isStatsReviewGuild(s.guild.guildId)&&process.env.TRADERLINK_COMMUNITY_STATS_ENABLED==="1"&&!this.stopped&&this.sessions.get(s.guild.communityId)===s&&s.guild.valid()&&!!this.db.prepare(`SELECT 1 FROM community_stats_settings s JOIN traderlink_communities c ON c.community_id=s.community_id WHERE s.community_id=? AND s.discord_enabled=1 AND s.discord_configuration_version=? AND c.discord_guild_id=? AND c.status='active' AND c.owner_user_id=? AND EXISTS(SELECT 1 FROM platform_users u WHERE u.user_id=c.owner_user_id AND u.status='active') AND EXISTS(SELECT 1 FROM platform_auth_identities i WHERE i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.auth_subject=? AND i.status='active')`).get(s.guild.communityId,s.version,s.guild.guildId,s.owner,s.ownerDiscord);}
   private async get(path:string,s:Session):Promise<{status:number;body:unknown}>{
     this.review?.assertActive();
     if(!this.current(s))throw new Error("Community collection access changed.");
@@ -105,7 +105,7 @@ export class CommunityStatsInvites{
         const changes=invites.filter(i=>i.uses!==null&&s.baseline?.has(i.key)&&i.uses!==(s.baseline.get(i.key)??0));
         const candidate=s.baseline&&started-s.checked<=90000&&Date.now()-s.checked<=90000&&pending.length===1&&s.joins.length===0&&changes.length===1&&(changes[0].uses??0)-(s.baseline.get(changes[0].key)??0)===1&&invites.every(i=>s.baseline!.has(i.key))&&[...s.baseline.keys()].every(key=>invites.some(i=>i.key===key))&&[200,404].includes(vanity.status)?changes[0]:null;
         const selection=JSON.parse((this.db.prepare(`SELECT channel_ids_json FROM community_stats_settings WHERE community_id=?`).get(s.guild.communityId) as {channel_ids_json:string}).channel_ids_json) as string[];
-        const included=invites.filter(invite=>invite.vanity===1||!!invite.channel&&selection.includes(invite.channel));
+        const included=invites.filter(invite=>invite.vanity===1||!!invite.channel&&isStatsReviewChannel(s.guild.guildId,invite.channel)&&selection.includes(invite.channel));
         this.db.prepare(`UPDATE community_stats_invites SET active=0 WHERE community_id=? AND (vanity=0 OR ?=1)`).run(s.guild.communityId,[200,404].includes(vanity.status)?1:0);
         const write=this.db.prepare(`INSERT INTO community_stats_invites VALUES(?,?,?,?,?,?,?,?,?,?,?,1,?) ON CONFLICT(community_id,invite_hash) DO UPDATE SET channel_id=excluded.channel_id,creator_id=excluded.creator_id,creator_name=excluded.creator_name,uses=excluded.uses,max_uses=excluded.max_uses,created_at_utc=coalesce(excluded.created_at_utc,community_stats_invites.created_at_utc),expires_at_utc=excluded.expires_at_utc,temporary=excluded.temporary,active=1,checked_at_utc=excluded.checked_at_utc`);
         for(const invite of included){const erased=invite.creator&&this.db.prepare(`SELECT 1 FROM community_stats_history_exclusions WHERE community_id=? AND identity_hash=?`).get(s.guild.communityId,statsHistoryIdentityHash(s.guild.communityId,invite.creator));write.run(s.guild.communityId,invite.key,invite.channel,erased?null:invite.creator,erased?null:invite.name,invite.uses,invite.max,invite.created,invite.expires,invite.temporary,invite.vanity,at);}

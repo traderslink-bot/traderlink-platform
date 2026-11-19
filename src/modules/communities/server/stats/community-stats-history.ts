@@ -1,6 +1,6 @@
 import "server-only";
 import {assertCommunityStagingQaCapability,type CommunityStagingQaCapability} from "../community-staging-qa-capability";
-import {isCommunityReviewDiscordGuild} from "../community-review-discord-guild";
+import {isStatsReviewGuild,isStatsReviewChannel} from "./community-stats-review-policy";
 import type Database from "better-sqlite3";
 import {CommunityStatsRepository} from "./community-stats-repository";
 import {statsBotChannels} from "./community-stats-channel-selection";
@@ -70,9 +70,9 @@ export class CommunityStatsHistory {
       WHERE c.community_id=? AND c.status='active' AND d.checked_at_utc>=? AND m.checked_at_utc>=?
       AND NOT EXISTS(SELECT 1 FROM traderlink_community_lifecycle l WHERE l.community_id=c.community_id AND l.removed_at_utc IS NOT NULL)`)
       .get(communityId,new Date(Date.now()-90_000).toISOString(),new Date(Date.now()-90_000).toISOString()) as {guildId:string;version:number;channels:string;ownerId:string;topologyAt:string}|undefined;
-    if(!row||!isCommunityReviewDiscordGuild(row.guildId))return null;
+    if(!row||!isStatsReviewGuild(row.guildId))return null;
     const selected=JSON.parse(row.channels) as string[];
-    return selected.length&&selected.every(id)?{communityId,guildId:row.guildId,version:row.version,selected,ownerId:row.ownerId,topologyAt:row.topologyAt}:null;
+    return selected.length&&selected.every(channel=>id(channel)&&isStatsReviewChannel(row.guildId,channel))?{communityId,guildId:row.guildId,version:row.version,selected,ownerId:row.ownerId,topologyAt:row.topologyAt}:null;
   }
   private async get(path:string,token:string,community:Community):Promise<unknown>{
     this.review?.assertActive();

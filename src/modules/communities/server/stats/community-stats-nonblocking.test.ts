@@ -15,6 +15,7 @@ import {CommunityStatsDiscordGateway} from "./community-stats-discord-gateway";
 import {CommunityStatsHistory} from "./community-stats-history";
 import {CommunityStatsInvites} from "./community-stats-invites";
 import {communityStatsWrites} from "./community-stats-write-queue";
+import {COMMUNITY_MAIN_TEST_DISCORD_GUILD_ID as MAIN,COMMUNITY_MAIN_TEST_DISCORD_CHANNEL_IDS as MAIN_CHANNELS} from "../community-review-discord-guild";
 
 const COMMUNITY="10000000-0000-4000-8000-000000000001",OWNER="10000000-0000-4000-8000-000000000002";
 const GUILD="1559172784813514803",CHANNEL="1559172786176401410",BOT="99999",SUBJECT="12345";
@@ -167,6 +168,52 @@ describe("Stats writes under a real competing SQLite writer",()=>{
     expect(db.prepare("SELECT count(*) FROM community_stats_invite_joins").pluck().get()).toBe(0);
     expect(db.prepare("SELECT count(*) FROM community_stats_invites").pluck().get()).toBe(0);
     expect(session.generation).toBe(generation);expect(session.joins).toEqual([]);expect(session.timer).toBeNull();expect(requests).toBe(0);
+  });
+  it("captures only selected approved Main channels while retaining the real guild roster and scoped channel choices",async()=>{
+    const {db,at}=fixture();db.prepare("UPDATE traderlink_communities SET discord_guild_id=?").run(MAIN);
+    db.prepare("UPDATE community_stats_settings SET channel_ids_json=?").run(JSON.stringify([MAIN_CHANNELS[0],CHANNEL]));
+    const gateway=new CommunityStatsDiscordGateway(()=>db,"SYNTHETIC_NOT_A_TOKEN",[{communityId:COMMUNITY,guildId:MAIN,channelIds:[MAIN_CHANNELS[0],CHANNEL],configurationVersion:1}]);cleanups.push(()=>gateway.stop());
+    const control=gateway as unknown as {packet:(packet:{op:number;s?:number;t?:string;d?:unknown})=>void;guilds:Map<string,{nonce:string}>;invites:CommunityStatsInvites};
+    control.invites=new CommunityStatsInvites(db,"SYNTHETIC_NOT_A_TOKEN",async()=>new Response(null,{status:403}));
+    control.packet({op:0,s:1,t:"READY",d:{session_id:"SYNTHETIC",resume_gateway_url:"wss://gateway.discord.gg",user:{id:BOT}}});
+    control.packet({op:0,s:2,t:"GUILD_CREATE",d:{id:MAIN,owner_id:SUBJECT,roles:[{id:MAIN,name:"everyone",permissions:"66560"}],channels:[...MAIN_CHANNELS,CHANNEL].map(id=>({id,type:0,name:"Synthetic Main channel",permission_overwrites:[]})),members:[{user:{id:BOT},roles:[]}],threads:[]}});
+    await communityStatsWrites(db).whenIdle();
+    expect(db.prepare("SELECT channel_id FROM community_stats_channels ORDER BY channel_id").pluck().all()).toEqual([...MAIN_CHANNELS].sort());
+    control.packet({op:0,s:3,t:"GUILD_MEMBERS_CHUNK",d:{guild_id:MAIN,nonce:control.guilds.get(MAIN)!.nonce,chunk_count:1,chunk_index:0,members:[{user:{id:BOT,username:"Bot",bot:true},roles:[]},{user:{id:SUBJECT,username:"Owner"},roles:[]},{user:{id:"67890",username:"Member"},roles:[]}]}});
+    control.packet({op:0,s:4,t:"MESSAGE_CREATE",d:{guild_id:MAIN,channel_id:MAIN_CHANNELS[0],id:"801",timestamp:at,author:{id:"67890",username:"Member"},content:"MAIN_BODY_NOT_STORED"}});
+    control.packet({op:0,s:5,t:"MESSAGE_CREATE",d:{guild_id:MAIN,channel_id:CHANNEL,id:"802",timestamp:at,author:{id:"67890",username:"Member"},content:"OUTSIDE_BODY_NOT_STORED"}});
+    await communityStatsWrites(db).whenIdle();
+    expect(db.prepare("SELECT channel_id,event_id FROM community_stats_events").all()).toEqual([{channel_id:MAIN_CHANNELS[0],event_id:"message:801"}]);
+    expect(db.prepare("SELECT count(*) FROM community_stats_members WHERE is_bot=0 AND active=1").pluck().get()).toBe(2);
+    expect(db.serialize().includes(Buffer.from("BODY_NOT_STORED"))).toBe(false);
+  });
+  it("does not start Main history when stored selections include an unapproved parent",async()=>{
+    const {db}=fixture();db.prepare("UPDATE traderlink_communities SET discord_guild_id=?").run(MAIN);
+    db.prepare("UPDATE community_stats_settings SET channel_ids_json=?").run(JSON.stringify([MAIN_CHANNELS[0],CHANNEL]));let requests=0;
+    const history=new CommunityStatsHistory(db,async()=>{requests++;throw new Error("Outside history must not be requested");});
+    await history.tick([COMMUNITY],"SYNTHETIC_NOT_A_TOKEN");expect(requests).toBe(0);expect(db.prepare("SELECT count(*) FROM community_stats_history_jobs").pluck().get()).toBe(0);
+  });
+  it("recovers approved Main history without requesting or importing ordinary-channel messages",async()=>{
+    const {db,at}=fixture();db.prepare("UPDATE traderlink_communities SET discord_guild_id=?").run(MAIN);db.prepare("UPDATE community_stats_settings SET channel_ids_json=?").run(JSON.stringify([MAIN_CHANNELS[0]]));
+    db.prepare("DELETE FROM community_stats_channels").run();db.prepare("INSERT INTO community_stats_channels VALUES(?,?,?,0,1,?)").run(COMMUNITY,MAIN_CHANNELS[0],"Main QA",at);
+    const messageAt=new Date(Date.parse(at)-60000).toISOString(),messageId=((BigInt(Date.parse(messageAt))-BigInt(1420070400000))<<BigInt(22)).toString();const requests:string[]=[];
+    const history=new CommunityStatsHistory(db,async resource=>{
+      const path=new URL(String(resource)).pathname.slice("/api/v10".length);requests.push(path);
+      if(path==="/users/@me")return Response.json({id:BOT});
+      if(path===`/guilds/${MAIN}`)return Response.json({id:MAIN,owner_id:SUBJECT,roles:[{id:MAIN,permissions:"66560"}]});
+      if(path===`/guilds/${MAIN}/members/${BOT}`)return Response.json({user:{id:BOT},roles:[]});
+      if(path===`/guilds/${MAIN}/channels`)return Response.json([...MAIN_CHANNELS,CHANNEL].map(id=>({id,type:0,name:"Synthetic Main channel",permission_overwrites:[]})));
+      if(path===`/guilds/${MAIN}/threads/active`)return Response.json({threads:[{id:"1550000000000000021",parent_id:CHANNEL,guild_id:MAIN,type:11}]});
+      if(path===`/channels/${MAIN_CHANNELS[0]}/threads/archived/public`)return Response.json({threads:[],has_more:false});
+      if(path===`/channels/${MAIN_CHANNELS[0]}/messages`)return Response.json([{id:messageId,channel_id:MAIN_CHANNELS[0],type:0,timestamp:messageAt,author:{id:"67890",username:"Main historical member"},content:"MAIN_HISTORY_BODY_NOT_STORED"}]);
+      throw new Error("No ordinary Main channel request is allowed");
+    });
+    for(let i=0;i<12;i++)await history.tick([COMMUNITY],"SYNTHETIC_NOT_A_TOKEN");
+    expect(db.prepare("SELECT channel_id,event_id FROM community_stats_events").all()).toEqual([{channel_id:MAIN_CHANNELS[0],event_id:`message:${messageId}`}]);
+    expect(requests.filter(path=>path.startsWith("/channels/"))).not.toHaveLength(0);
+    expect(requests.filter(path=>path.startsWith("/channels/")).every(path=>path.startsWith(`/channels/${MAIN_CHANNELS[0]}/`))).toBe(true);
+    expect(db.prepare("SELECT 1 FROM community_stats_history_jobs WHERE channel_id=? OR parent_id=?").get(CHANNEL,CHANNEL)).toBeUndefined();
+    expect(db.serialize().includes(Buffer.from("MAIN_HISTORY_BODY_NOT_STORED"))).toBe(false);
   });
   it.each(["commit","disabled","new_generation"])("retains a fetched history page or cancels without mutating newer state: %s",async(mode)=>{
     const {db,blocker,at}=fixture();const lower=new Date(Date.parse(at)-60_000).toISOString();
