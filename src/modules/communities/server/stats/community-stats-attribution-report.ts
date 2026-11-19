@@ -1,9 +1,15 @@
+import {statsConfiguredPublicHostname} from "./community-stats-public-origin";
 import type Database from 'better-sqlite3';
 import type {CommunityStatsTableRow} from '../../contracts/community-stats-contracts';
 import {statsAttributionReady} from './community-stats-invites';
 export function statsTrafficProjection(db:Database.Database,column:'source'|'category'|'referrer_host'|'campaign_medium'|'campaign_name'):string{
   if(!statsAttributionReady(db))return column==='source'?`CASE WHEN source_link_id IS NULL THEN 'Unknown' ELSE 'Shared link' END`:'NULL';
-  const value=`(SELECT t.${column} FROM community_stats_traffic_sources t WHERE t.community_id=community_stats_events.community_id AND t.event_id=community_stats_events.event_id)`;
+  const ownHost=column==='source'||column==='category'?statsConfiguredPublicHostname():null;
+  // Keep original rows intact. Only the derived, untagged self-referral label is
+  // corrected; genuine external referrals and campaign attribution stay intact.
+  const hostLiteral=ownHost?`'${ownHost.replaceAll("'","''")}'`:null;
+  const projected=hostLiteral?`CASE WHEN t.category='Referral' AND lower(t.referrer_host)=${hostLiteral} AND lower(t.source)=${hostLiteral} AND t.campaign_source IS NULL AND t.campaign_medium IS NULL AND t.campaign_name IS NULL THEN 'Internal' ELSE t.${column} END`:`t.${column}`;
+  const value=`(SELECT ${projected} FROM community_stats_traffic_sources t WHERE t.community_id=community_stats_events.community_id AND t.event_id=community_stats_events.event_id)`;
   return column==='source'?`coalesce(${value},CASE WHEN source_link_id IS NULL THEN 'Unknown' ELSE 'Shared link' END)`:value;
 }
 export function readStatsInviteReports(db:Database.Database,communityId:string,channels:readonly string[],from:string,until:string,named:boolean,page:number,size:number,roleId?:string){

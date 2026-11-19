@@ -1,3 +1,4 @@
+import {statsRequestPublicHostname} from "@/src/modules/communities/server/stats/community-stats-public-origin";
 import {requireCommunityOwnerReviewIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {requireTraderLinkPlatformRequestIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {openPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
@@ -9,11 +10,11 @@ const headers={"Cache-Control":"private, no-store"};
 export async function POST(request:Request,{params}:{params:Promise<{communitySlug:string}>}):Promise<Response>{
   let db:ReturnType<typeof openPlatformDatabase>|null=null;
   try{
-    assertStatsSameOrigin(request);const actor=requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers));
+    assertStatsSameOrigin(request);const ownHost=statsRequestPublicHostname(request);const actor=requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers));
     const body=await readCommunityStatsJson(request,1500),{communitySlug}=await params;
     db=openPlatformDatabase({mode:"runtime"});const scope=await authorizeCommunityStats(db,communitySlug,actor.scope.userId,"visit");
     if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1")return new Response(null,{status:204,headers});
-    const result=recordCommunityStatsVisit(db,scope,body,new Date().toISOString(),new URL(request.url).hostname);
+    const result=recordCommunityStatsVisit(db,scope,body,new Date().toISOString(),ownHost);
     return Response.json(result,{headers,status:202});
   }catch(error){
     if(isCommunityStatsAccessDenied(error))return new Response(null,{status:404,headers});
