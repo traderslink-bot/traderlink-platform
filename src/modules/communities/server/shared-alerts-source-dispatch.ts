@@ -10,6 +10,8 @@ import { sharedAlertPublishingAuthorization } from "./shared-alerts-publishing-a
 import { SharedAlertRateLimits, sharedAlertAwareDiscordRequest } from "./shared-alerts-rate-limits";
 import { SharedAlertsSourcePolicy } from "./shared-alerts-source-policy";
 import { SharedAlertsSourcePublication } from "./shared-alerts-source-publication";
+import type {CommunityExactDeliverySelection} from "./traderlink-community-discord-delivery-service";
+import {assertCommunityStagingQaSharedTarget} from "./community-staging-qa-capability";
 
 type Counts = Readonly<{ delivered: number; failed: number }>;
 export type SharedSourceDispatchContext = Readonly<{
@@ -22,7 +24,7 @@ export type SharedSourceDispatchContext = Readonly<{
   notBeforeUtc: string | undefined;
   /** Source ONLY. Partners always render complete frozen text without this URL. */
   trackedPageUrl: (communitySlug: string, alertId: string) => string;
-  exactSelection?:Readonly<{sourceDeliveryIds:readonly string[];actionIds:readonly string[];sharedDeliveryIds:readonly string[]}>;
+  exactSelection?:CommunityExactDeliverySelection;
 }>;
 
 /** Actual source senders must persist per-part text/attempt/receipt before returning.
@@ -83,13 +85,14 @@ export async function runSharedAlertsSourcePass(database:Database.Database,confi
     try { new SharedAlertsSourcePublication(database).readForPublisher(communityId, userId, alertId, now()); return true; }
     catch { return false; }
   };
+  const stagingGuild=(slug:string)=>{if(!config.exactSelection)return undefined;const row=database.prepare("SELECT discord_guild_id FROM traderlink_communities WHERE slug=? AND status='active'").get(slug) as {discord_guild_id:string}|undefined;if(!row)return undefined;assertCommunityStagingQaSharedTarget(config.exactSelection.capability,database,row.discord_guild_id);return row.discord_guild_id;};
   const authorization = sharedAlertPublishingAuthorization(database, policy,
-    async (slug, userId) => verifyCommunityRequestMember(database, { slug, userId, botToken: config.botToken, atUtc: now() }, request),
+    async (slug, userId) => verifyCommunityRequestMember(database, { slug, userId, botToken: config.botToken, atUtc: now(),stagingQaGuildId:stagingGuild(slug) }, request),
     mayChangeAlert, now);
   const shared = new SharedAlertsDelivery(database, {
     botToken: config.botToken,
     enabled: config.sharedEnabled === true && process.env.TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED === "1",
-    now, notBeforeUtc: config.notBeforeUtc,exactDeliveryIds:config.exactSelection?.sharedDeliveryIds, ...authorization,
+    now, notBeforeUtc: config.notBeforeUtc,exactSelection:config.exactSelection,exactDeliveryIds:config.exactSelection?.sharedDeliveryIds, ...authorization,
   }, request);
   let delivered = 0, failed = 0;
   // Each bound stage receives the same durable cooldown wrapper, policy and bounded pass size.

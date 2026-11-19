@@ -9,6 +9,8 @@ import { SharedAlertsRepository, type SharedAlertRequestRow } from "./shared-ale
 import { verifySharedAlertOwner } from "./shared-alerts-verification";
 import { sharedAlertAwareDiscordRequest, sharedAlertRateLimit, SharedAlertRateLimits } from "./shared-alerts-rate-limits";
 import { cancelStoppedSharedAlertParts, ensureSharedAlertParts, hasConfirmedSharedAlertOriginal, type SharedAlertPartRow } from "./shared-alerts-parts";
+import type {CommunityExactDeliverySelection} from "./traderlink-community-discord-delivery-service";
+import {assertCommunityStagingQaSharedTarget} from "./community-staging-qa-capability";
 
 type Job = { author_user_id:string; content_revision:number; requires_approval:number; kind:"publication"|"correction"|"withdrawal"; original_delivery_id:string|null; publisher_user_id:string|null; change_actor_user_id:string|null; source_destination_ids_json:string; delivery_id:string; request_id:string; alert_id:string; terms_version:number; channel_revision:number; channel_id:string; title:string; symbol:string|null; body:string; publishing_mode:"tracked_page"|"discord_post"; source_name:string; show_source_name:number };
 type CurrentJob = {status:string;title:string;symbol:string|null;body:string;content_revision:number;approved_content_revision:number|null;approved_by_user_id:string|null;retry_at_utc:string|null};
@@ -17,7 +19,7 @@ type CurrentJob = {status:string;title:string;symbol:string|null;body:string;con
 export class SharedAlertsDelivery {
   private readonly now:()=>string;
   private readonly request:typeof fetch;
-  constructor(private readonly database:Database.Database,private readonly config:{botToken:string;enabled:boolean;now?:()=>string;notBeforeUtc?:string;exactDeliveryIds?:readonly string[];preparePublication?:(communityId:string,alertId:string,context:SharedAlertPublishingContext)=>Promise<boolean>;canSharePublication?:(communityId:string,alertId:string,context:SharedAlertPublishingContext)=>boolean},request:typeof fetch=fetch){
+  constructor(private readonly database:Database.Database,private readonly config:{botToken:string;enabled:boolean;now?:()=>string;notBeforeUtc?:string;exactSelection?:CommunityExactDeliverySelection;exactDeliveryIds?:readonly string[];preparePublication?:(communityId:string,alertId:string,context:SharedAlertPublishingContext)=>Promise<boolean>;canSharePublication?:(communityId:string,alertId:string,context:SharedAlertPublishingContext)=>boolean},request:typeof fetch=fetch){
     this.now=config.now??createCanonicalUtcTimestamp;
     this.request=sharedAlertAwareDiscordRequest(request,operation=>operation(database),this.now);
   }
@@ -25,7 +27,7 @@ export class SharedAlertsDelivery {
 
   async runAvailable(limit=10):Promise<{delivered:number;failed:number}>{
     if(!this.config.enabled)return {delivered:0,failed:0};
-    const repository=new SharedAlertsRepository(this.database,this.now),discord=new SharedAlertsDiscord(this.config.botToken,this.request,this.now);
+    const repository=new SharedAlertsRepository(this.database,this.now),discord=new SharedAlertsDiscord(this.config.botToken,this.request,this.now,this.config.exactSelection?{database:this.database,capability:this.config.exactSelection.capability}:undefined);
     const at=this.now(),cutoff=this.config.notBeforeUtc??null;
     if(cutoff&&(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(cutoff)||!Number.isFinite(Date.parse(cutoff))))throw new Error("Invalid shared delivery cutoff.");
     const selected=this.config.exactDeliveryIds,selectedSql=selected?` AND delivery_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:"";
@@ -54,7 +56,7 @@ export class SharedAlertsDelivery {
         const agreement=this.database.prepare("SELECT * FROM community_shared_alert_requests WHERE request_id=?").get(job.request_id) as SharedAlertRequestRow|undefined;
         if(!agreement){this.cancel(job,"The agreement is unavailable.");continue;}
         const source=repository.ownerContext(agreement.source_community_id),receiver=repository.ownerContext(agreement.receiver_community_id);
-        if(!isCommunityReviewDiscordGuild(source.guildId)||!isCommunityReviewDiscordGuild(receiver.guildId))continue;
+        try{if(this.config.exactSelection){assertCommunityStagingQaSharedTarget(this.config.exactSelection.capability,this.database,source.guildId);assertCommunityStagingQaSharedTarget(this.config.exactSelection.capability,this.database,receiver.guildId,job.channel_id);}else if(!isCommunityReviewDiscordGuild(source.guildId)||!isCommunityReviewDiscordGuild(receiver.guildId))continue;}catch{continue;}
         await Promise.all([verifySharedAlertOwner(repository,discord,source),verifySharedAlertOwner(repository,discord,receiver)]);
         const publication:SharedAlertPublishingContext={authorUserId:job.author_user_id,publisherUserId:job.publisher_user_id,changeActorUserId:job.change_actor_user_id,kind:job.kind,sourceDestinationIds:JSON.parse(job.source_destination_ids_json) as string[]};
         if(this.config.preparePublication&&!await this.config.preparePublication(source.communityId,job.alert_id,publication)){this.failBeforeSend(job,"Source publisher verification is unavailable.");failed++;continue;}
@@ -88,7 +90,7 @@ export class SharedAlertsDelivery {
           if(!claimed)break;
           inFlight=part;sends++;
           let response:Response;
-          if(!isCommunityReviewDiscordGuild(receiver.guildId))throw new Error("Discord destination is outside the review test server.");
+          if(this.config.exactSelection)assertCommunityStagingQaSharedTarget(this.config.exactSelection.capability,this.database,receiver.guildId,job.channel_id);else if(!isCommunityReviewDiscordGuild(receiver.guildId))throw new Error("Discord destination is outside the review test server.");
           try{response=await this.request(`https://discord.com/api/v10/channels/${job.channel_id}/messages`,{
             method:"POST",headers:{Authorization:`Bot ${this.config.botToken}`,"Content-Type":"application/json"},
             body:JSON.stringify({content:part.content,allowed_mentions:{parse:[],replied_user:false},...(replyId?{message_reference:{message_id:replyId,channel_id:job.channel_id,guild_id:receiver.guildId,fail_if_not_exists:true}}:{}),nonce:part.nonce,enforce_nonce:true}),signal:AbortSignal.timeout(10000),

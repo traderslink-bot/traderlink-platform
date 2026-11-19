@@ -12,6 +12,7 @@ import { SharedAlertRateLimits } from "./shared-alerts-rate-limits";
 import { SharedAlertsRepository } from "./shared-alerts-repository";
 import { verifySharedAlertOwner } from "./shared-alerts-verification";
 import type { SharedSourceDispatchBindings, SharedSourceDispatchContext } from "./shared-alerts-source-dispatch";
+import {assertCommunityStagingQaSharedTarget} from "./community-staging-qa-capability";
 
 export type SourceOriginalRow = Readonly<{
   delivery_id: string; community_id: string; object_id: string; destination_id: string; publisher_user_id: string;
@@ -71,7 +72,7 @@ export function confirmedSourceParts(database: Database.Database, deliveryId: st
 }
 
 export function assertSourceWriteCurrent(context: SharedSourceDispatchContext, row: Pick<SourceOriginalRow, "community_id" | "author_user_id" | "publisher_user_id" | "destination_id" | "discord_channel_id" | "discord_guild_id">): void {
-  if (!isCommunityReviewDiscordGuild(row.discord_guild_id)) throw new SharedAlertError("changed");
+  try{if(context.exactSelection)assertCommunityStagingQaSharedTarget(context.exactSelection.capability,context.database,row.discord_guild_id,row.discord_channel_id);else if(!isCommunityReviewDiscordGuild(row.discord_guild_id))throw new Error();}catch{throw new SharedAlertError("changed");}
   const repository = new SharedAlertsRepository(context.database, context.now), owner = repository.ownerContext(row.community_id);
   if (owner.guildId !== row.discord_guild_id || !repository.ownerIsFresh(owner)) throw new SharedAlertError("changed");
   if (!context.database.prepare("SELECT 1 FROM traderlink_community_discord_destinations WHERE community_id=? AND destination_id=? AND content_type='alerts' AND status='active' AND discord_channel_id=?").get(row.community_id, row.destination_id, row.discord_channel_id)) throw new SharedAlertError("changed");
@@ -82,10 +83,10 @@ export function assertSourceWriteCurrent(context: SharedSourceDispatchContext, r
 export async function verifySourceWrite(context: SharedSourceDispatchContext, row: Pick<SourceOriginalRow, "community_id" | "slug" | "author_user_id" | "publisher_user_id" | "destination_id" | "discord_channel_id" | "discord_guild_id">): Promise<void> {
   const repository = new SharedAlertsRepository(context.database, context.now), owner = repository.ownerContext(row.community_id);
   if (owner.guildId !== row.discord_guild_id) throw new SharedAlertError("changed");
-  const discord = new SharedAlertsDiscord(context.botToken, context.request, context.now);
+  const discord = new SharedAlertsDiscord(context.botToken, context.request, context.now,context.exactSelection?{database:context.database,capability:context.exactSelection.capability}:undefined);
   await verifySharedAlertOwner(repository, discord, owner);
   for (const userId of new Set([row.author_user_id, row.publisher_user_id])) {
-    if (!userId || !await verifyCommunityRequestMember(context.database, { slug: row.slug, userId, botToken: context.botToken, atUtc: context.now() }, context.request)) throw new SharedAlertError("discord_unavailable");
+    if (!userId || !await verifyCommunityRequestMember(context.database, { slug: row.slug, userId, botToken: context.botToken, atUtc: context.now(),stagingQaGuildId:context.exactSelection?.guildId }, context.request)) throw new SharedAlertError("discord_unavailable");
     context.policy.assertDelivery(row.community_id, userId, row.destination_id, "alerts", context.now());
   }
   await discord.verifyChannel(row.discord_guild_id, row.discord_channel_id);
@@ -96,7 +97,7 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
   kind: "alert-original-multipart",
   async run(context) {
     const db = context.database, at = context.now(), owned=sharedOwnedDeliverySql(context.database,"traderlink_community_content_deliveries"),stale = new Date(Date.parse(at) - 300_000).toISOString();
-    const selected=context.exactSelection?.sourceDeliveryIds,selectedSql=selected?` AND delivery_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:"";
+    const selected=context.exactSelection?.deliveryIds,selectedSql=selected?` AND delivery_id IN (${selected.map(()=>"?").join(",")||"NULL"})`:"";
     // A crashed provider write is never permission to resend a message.
     db.prepare(`UPDATE traderlink_community_content_deliveries SET status=CASE WHEN delivery_outcome='pending' THEN 'pending' ELSE 'failed' END,
       last_error=CASE WHEN delivery_outcome='pending' THEN 'Resuming confirmed source progress.' ELSE 'Source alert send was interrupted; inspect Discord.' END,
@@ -113,7 +114,7 @@ export const sharedAlertsSourceOriginalDelivery: SharedSourceDispatchBindings["o
     let delivered = 0, failed = 0, writes = 0;
     for (const row of rows) {
       if (writes >= context.limit) break;
-      if (!isCommunityReviewDiscordGuild(row.discord_guild_id)) continue;
+      try{if(context.exactSelection)assertCommunityStagingQaSharedTarget(context.exactSelection.capability,context.database,row.discord_guild_id,row.discord_channel_id);else if(!isCommunityReviewDiscordGuild(row.discord_guild_id))continue;}catch{continue;}
       if (new SharedAlertRateLimits(db, context.now).current(row.discord_channel_id)) continue;
       if (!db.prepare("UPDATE traderlink_community_content_deliveries SET status='sending',attempt_count=attempt_count+1,updated_at_utc=? WHERE delivery_id=? AND status IN ('pending','failed') AND delivery_outcome='pending'").run(context.now(), row.delivery_id).changes) continue;
       let uncertain = false;

@@ -24,7 +24,7 @@ export async function runCommunityDiscordDeliveryPass(database:Database.Database
  if(hasRates&&new SharedAlertRateLimits(database,now).current())return {delivered:0,failed:0};
  let delivered=0,failed=0,sharedActions:SharedActionAdmission|undefined;
  if(enabled){
-  const policy=new SharedAlertsSourcePolicy(database),context:SharedSourceDispatchContext={database,policy,request,now,botToken:config.botToken,limit,notBeforeUtc:config.notBeforeUtc,exactSelection:config.exactSelection?{sourceDeliveryIds:config.exactSelection.deliveryIds,actionIds:config.exactSelection.actionIds,sharedDeliveryIds:config.exactSelection.sharedDeliveryIds}:undefined,trackedPageUrl:sharedAlertsSourceTrackerBinding(config.publicOrigin).url};
+  const policy=new SharedAlertsSourcePolicy(database),context:SharedSourceDispatchContext={database,policy,request,now,botToken:config.botToken,limit,notBeforeUtc:config.notBeforeUtc,exactSelection:config.exactSelection,trackedPageUrl:sharedAlertsSourceTrackerBinding(config.publicOrigin).url};
   const source=(row:Parameters<SharedActionAdmission["assert"]>[0])=>{
    const author=database.prepare("SELECT author_user_id FROM traderlink_community_alerts WHERE community_id=? AND alert_id=?").get(row.community_id,row.object_id) as {author_user_id:string}|undefined;
    if(!author||!row.publisher_user_id||!row.initiating_publisher_user_id)throw new Error("Source publisher evidence unavailable.");
@@ -34,7 +34,7 @@ export async function runCommunityDiscordDeliveryPass(database:Database.Database
    const current=source(row);assertSourceWriteCurrent(context,current);
    for(const userId of [row.publisher_user_id,row.initiating_publisher_user_id]){if(!userId)throw new Error("Publisher evidence unavailable.");new SharedAlertsSourcePublication(database).readForPublisher(row.community_id,userId,row.object_id,now());policy.assertDelivery(row.community_id,userId,row.destination_id,"alerts",now());}
   };
-  sharedActions={assert,verify:async row=>{await verifySourceWrite(context,source(row));if(!row.initiating_publisher_user_id||!await verifyCommunityRequestMember(database,{slug:row.slug,userId:row.initiating_publisher_user_id,botToken:config.botToken,atUtc:now()},request))throw new Error("Original publisher verification unavailable.");assert(row);}};
+  sharedActions={assert,verify:async row=>{await verifySourceWrite(context,source(row));if(!row.initiating_publisher_user_id||!await verifyCommunityRequestMember(database,{slug:row.slug,userId:row.initiating_publisher_user_id,botToken:config.botToken,atUtc:now(),stagingQaGuildId:config.exactSelection?.guildId},request))throw new Error("Original publisher verification unavailable.");assert(row);}};
   const shared=await runSharedAlertsSourcePass(database,{...config,limit,enabled:true,sharedEnabled:true,exactSelection:context.exactSelection},{originals:sharedAlertsSourceOriginalDelivery,edits:sharedAlertsSourceRevisionDelivery,tracker:sharedAlertsSourceTrackerBinding(config.publicOrigin)},request);
   delivered+=shared.delivered;failed+=shared.failed;
  }

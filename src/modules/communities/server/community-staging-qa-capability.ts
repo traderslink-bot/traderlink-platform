@@ -12,7 +12,9 @@ import {deriveJournalAccountSelectionRef} from "../../platform/contracts/journal
 import {PlatformSessionRepository} from "../../platform/server/authentication/platform-session-repository";
 import {platformMigrationManifest} from "../../platform/server/database/platform-migration-manifest";
 import {calculatePlatformMigrationChecksum} from "../../platform/server/database/platform-migration-contract";
-import {COMMUNITY_REVIEW_DISCORD_GUILD_ID,isCommunityStagingQaDiscordGuild} from "./community-review-discord-guild";
+import {isSharedAlertPublisher} from "./shared-alerts-publisher-permissions";
+import {SharedAlertsRepository} from "./shared-alerts-repository";
+import {COMMUNITY_REVIEW_DISCORD_GUILD_ID,isCommunityStagingQaDiscordChannel,isCommunityStagingQaDiscordGuild} from "./community-review-discord-guild";
 
 import {assertCommunityStagingQaTarget,COMMUNITY_STAGING_QA_DATABASE as DATABASE} from "./community-staging-qa-target";
 export {assertCommunityStagingQaTarget,type CommunityStagingQaTargetPins} from "./community-staging-qa-target";
@@ -23,12 +25,13 @@ const digest=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{64}$/.test
 const id=(v:unknown):boolean=>typeof v==="string"&&/^\d{1,32}$/.test(v);
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(v);
 const fresh=(v:string,now:number)=>Number.isFinite(Date.parse(v))&&Date.parse(v)<=now&&now-Date.parse(v)<=300_000;
+type CommunityStagingQaSharedJob=Readonly<{sourceCommunityId:string;sourceGuildId:string;sourceOwnerUserId:string;sourceOwnerDiscordId:string;receiverCommunityId:string;receiverGuildId:string;receiverOwnerUserId:string;receiverOwnerDiscordId:string;requestId:string;authorUserId:string;channelId:string;routeRevision:number;contentRevision:number;requireApproval:boolean}>;
 export type CommunityStagingQaRun=Readonly<{
  kind:"community-staging-qa-run-v1";runId:string;nonce:string;principalManifestSha256:string;principalSchemaLineageSha256?:string;
  pins:Readonly<{origin:string;sourceCommit:string;sourceVectorSha256:string;sourceArchiveSha256:string;schemaSha256:string;buildId:string;artifactSha256:string}>;
  communityId:string;guildId:string;channelIds:readonly string[];settingsVersion:number;
  pipeline:"stats"|"common-delivery"|"shared-delivery"|"shared-fixture";fixtureManifestSha256?:string;cutoffUtc:string;
- jobs:readonly Readonly<{table:"traderlink_community_content_deliveries"|"traderlink_community_publication_actions"|"community_shared_alert_deliveries";id:string;createdAtUtc:string;stateSha256:string}>[];
+ jobs:readonly Readonly<{table:"traderlink_community_content_deliveries"|"traderlink_community_publication_actions"|"community_shared_alert_deliveries";id:string;createdAtUtc:string;stateSha256:string;shared?:CommunityStagingQaSharedJob}>[];
  bounds:Readonly<{durationMs:number;requests:number;writes:number;gatewayFrames:number;historyTicks:number;collectorTicks:number}>;
 }>;
 type Principal={userId:string;workspaceId:string;subject:string;session:{token:string;session:{sessionId:string;authProvider:string}}};
@@ -39,7 +42,7 @@ export type CommunityStagingQaCapability=Readonly<{
  withOperationFrame:(operation:()=>void)=>void;assertOperationFrame:()=>void;requestWithFixtureOperation:(resource:Parameters<typeof fetch>[0],options:Parameters<typeof fetch>[1],boundary:(operation:()=>void)=>void)=>ReturnType<typeof fetch>;
  remainingMs:()=>number;onStop:(callback:()=>void)=>()=>void;finish:(outcome:"completed"|"cancelled"|"failed")=>void;
 }>;
-type CommunityStagingQaJob=CommunityStagingQaRun["jobs"][number];
+export type CommunityStagingQaJob=CommunityStagingQaRun["jobs"][number];
 /** Producer/issuer shared digest. It pins the selected queue row and its routing/content dependencies before admission. */
 export function communityStagingQaJobStateSha256(database:Database.Database,job:Pick<CommunityStagingQaJob,"table"|"id">):string{
  const key=job.table==="traderlink_community_publication_actions"?"action_id":"delivery_id";
@@ -57,14 +60,62 @@ export function communityStagingQaJobStateSha256(database:Database.Database,job:
  else dependencies={
   agreement:database.prepare("SELECT * FROM community_shared_alert_requests WHERE request_id=?").get(row.request_id),
   route:database.prepare("SELECT * FROM community_shared_alert_routes WHERE request_id=? AND author_user_id=?").get(row.request_id,row.author_user_id),
+  communities:database.prepare("SELECT community_id,discord_guild_id,owner_user_id,status FROM traderlink_communities WHERE community_id IN (SELECT source_community_id FROM community_shared_alert_requests WHERE request_id=? UNION SELECT receiver_community_id FROM community_shared_alert_requests WHERE request_id=?) ORDER BY community_id").all(row.request_id,row.request_id),
+  owners:database.prepare("SELECT c.community_id,c.discord_guild_id,c.owner_user_id,i.auth_subject,m.last_verified_at_utc,checks.result,checks.checked_at_utc FROM traderlink_communities c LEFT JOIN platform_auth_identities i ON i.user_id=c.owner_user_id AND i.auth_provider='discord' AND i.status='active' LEFT JOIN platform_discord_memberships m ON m.user_id=c.owner_user_id AND m.guild_id=c.discord_guild_id LEFT JOIN community_shared_alert_owner_checks checks ON checks.community_id=c.community_id WHERE c.community_id IN (SELECT source_community_id FROM community_shared_alert_requests WHERE request_id=? UNION SELECT receiver_community_id FROM community_shared_alert_requests WHERE request_id=?) ORDER BY c.community_id").all(row.request_id,row.request_id),
+  publisher:database.prepare("SELECT p.*,m.status membership_status,m.discord_verified_at_utc,i.status identity_status,d.last_verified_at_utc FROM community_alert_publisher_permissions p LEFT JOIN traderlink_community_memberships m ON m.community_id=p.community_id AND m.user_id=p.user_id LEFT JOIN platform_auth_identities i ON i.user_id=p.user_id AND i.auth_provider='discord' LEFT JOIN traderlink_communities c ON c.community_id=p.community_id LEFT JOIN platform_discord_memberships d ON d.user_id=p.user_id AND d.guild_id=c.discord_guild_id WHERE p.community_id=(SELECT source_community_id FROM community_shared_alert_requests WHERE request_id=?) AND p.user_id=?").get(row.request_id,row.author_user_id),
+  source:database.prepare("SELECT * FROM traderlink_community_alerts WHERE alert_id=? AND community_id=(SELECT source_community_id FROM community_shared_alert_requests WHERE request_id=?)").get(row.alert_id,row.request_id),
+  distribution:database.prepare("SELECT * FROM traderlink_community_publication_distribution WHERE community_id=(SELECT source_community_id FROM community_shared_alert_requests WHERE request_id=?) AND object_type='alert' AND object_id=?").get(row.request_id,row.alert_id),
+  destinationGrants:database.prepare("SELECT p.* FROM traderlink_community_destination_publishers p WHERE p.community_id=(SELECT source_community_id FROM community_shared_alert_requests WHERE request_id=?) AND p.destination_id IN (SELECT value FROM json_each(?)) ORDER BY p.destination_id,p.subject_kind,p.subject_id").all(row.request_id,row.source_destination_ids_json),
   parts:database.prepare("SELECT * FROM community_shared_alert_delivery_parts WHERE delivery_id=? ORDER BY content_revision,part_number").all(job.id),
   original:row.original_delivery_id?database.prepare("SELECT delivery_id,status,discord_message_id,channel_id,content_revision FROM community_shared_alert_deliveries WHERE delivery_id=?").get(row.original_delivery_id):null,
  };
  return hash(JSON.stringify({table:job.table,id:job.id,row,dependencies}));
 }
+function excludedQueueStateSha256(database:Database.Database,jobs:readonly Pick<CommunityStagingQaJob,"table"|"id">[]):string{
+ const selected=new Set(jobs.map(job=>`${job.table}:${job.id}`));
+ const rows=(table:CommunityStagingQaJob["table"],key:string,statuses:string[])=>
+  (database.prepare(`SELECT * FROM ${table} WHERE status IN (${statuses.map(()=>"?").join(",")}) ORDER BY ${key}`).all(...statuses) as Record<string,unknown>[])
+   .filter(row=>!selected.has(`${table}:${String(row[key])}`));
+ return hash(JSON.stringify({
+  common:rows("traderlink_community_content_deliveries","delivery_id",["pending","failed","sending"]).filter(row=>row.delivery_outcome==="pending"||row.delivery_outcome==="uncertain"),
+  actions:rows("traderlink_community_publication_actions","action_id",["pending","sending"]),
+  shared:rows("community_shared_alert_deliveries","delivery_id",["awaiting_approval","pending","failed","sending"]),
+  parts:(database.prepare("SELECT * FROM community_shared_alert_delivery_parts ORDER BY delivery_id,content_revision,part_number").all() as Record<string,unknown>[])
+   .filter(row=>!selected.has(`community_shared_alert_deliveries:${String(row.delivery_id)}`)),
+ }));
+}
+/** Full-row preservation fence for every non-selected queue row and Shared part. */
+export function createCommunityStagingQaExcludedQueueFence(database:Database.Database,jobs:readonly Pick<CommunityStagingQaJob,"table"|"id">[]){
+ const original=excludedQueueStateSha256(database,jobs);
+ return Object.freeze({assertUnchanged:()=>{if(excludedQueueStateSha256(database,jobs)!==original)refused();}});
+}
+export function assertCommunityStagingQaSharedJobAdmission(database:Database.Database,job:CommunityStagingQaJob,now:string):void{
+ if(job.table!=="community_shared_alert_deliveries"||!job.shared)refused();
+ const selected=database.prepare(`SELECT d.request_id,d.author_user_id,d.channel_id,d.status delivery_status,d.requires_approval,d.terms_version delivery_terms_version,d.content_revision,d.approved_content_revision,d.approved_by_user_id,
+  r.source_community_id,r.receiver_community_id,r.source_owner_user_id,r.source_owner_discord_id,r.receiver_owner_user_id,r.receiver_owner_discord_id,
+  r.status agreement_status,r.terms_version agreement_terms_version,r.source_approved_version,r.receiver_approved_version,r.source_paused,r.receiver_paused,
+  route.source_offered,route.receiver_selected,
+  route.receiver_paused route_receiver_paused,route.revision route_revision,route.channel_id route_channel_id,route.require_approval route_require_approval
+  FROM community_shared_alert_deliveries d JOIN community_shared_alert_requests r ON r.request_id=d.request_id
+  JOIN community_shared_alert_routes route ON route.request_id=d.request_id AND route.author_user_id=d.author_user_id
+  WHERE d.delivery_id=?`).get(job.id) as Record<string,unknown>|undefined;
+ const s=job.shared;if(!selected||selected.source_community_id!==s.sourceCommunityId||selected.source_owner_user_id!==s.sourceOwnerUserId||selected.source_owner_discord_id!==s.sourceOwnerDiscordId||selected.receiver_community_id!==s.receiverCommunityId||selected.receiver_owner_user_id!==s.receiverOwnerUserId||selected.receiver_owner_discord_id!==s.receiverOwnerDiscordId||selected.request_id!==s.requestId||selected.author_user_id!==s.authorUserId||selected.channel_id!==s.channelId||selected.route_channel_id!==s.channelId||selected.route_revision!==s.routeRevision||selected.content_revision!==s.contentRevision||Boolean(selected.route_require_approval)!==s.requireApproval||Boolean(selected.requires_approval)!==s.requireApproval||(s.requireApproval&&(selected.approved_content_revision!==s.contentRevision||selected.approved_by_user_id!==s.receiverOwnerUserId))||selected.source_offered!==1||selected.receiver_selected!==1||selected.route_receiver_paused!==0||selected.agreement_status!=="active"||!["pending","failed","sending"].includes(String(selected.delivery_status))||selected.delivery_terms_version!==selected.agreement_terms_version||selected.agreement_terms_version!==selected.source_approved_version||selected.agreement_terms_version!==selected.receiver_approved_version||selected.source_paused!==0||selected.receiver_paused!==0||!isSharedAlertPublisher(database,s.sourceCommunityId,s.authorUserId,now,true))refused();
+ const repository=new SharedAlertsRepository(database,()=>now);
+ for(const expected of [{communityId:s.sourceCommunityId,guildId:s.sourceGuildId,ownerUserId:s.sourceOwnerUserId,discordUserId:s.sourceOwnerDiscordId},{communityId:s.receiverCommunityId,guildId:s.receiverGuildId,ownerUserId:s.receiverOwnerUserId,discordUserId:s.receiverOwnerDiscordId}]){
+  let actual;try{actual=repository.ownerContext(expected.communityId);}catch{return refused();}
+  if(actual.guildId!==expected.guildId||actual.ownerUserId!==expected.ownerUserId||actual.discordUserId!==expected.discordUserId||!repository.ownerIsFresh(actual))refused();
+ }
+}
 const admitted=new WeakMap<object,Database.Database>();
 export function assertCommunityStagingQaCapability(value:CommunityStagingQaCapability|undefined,database?:Database.Database,purpose?:"shared-fixture"):asserts value is CommunityStagingQaCapability{
  if(!value||!admitted.has(value)||(database&&admitted.get(value)!==database)||(purpose==="shared-fixture"?value.run.pipeline!=="shared-fixture":value.run.pipeline==="shared-fixture"))refused();value.assertActive();
+}
+export function assertCommunityStagingQaSharedTarget(value:CommunityStagingQaCapability|undefined,database:Database.Database,guildId:string,channelId?:string):void{
+ assertCommunityStagingQaCapability(value,database);if(value.run.pipeline!=="shared-delivery")refused();
+ const source=guildId===value.run.guildId&&(channelId===undefined||value.run.channelIds.includes(channelId));
+ const receiver=value.run.jobs.some(job=>job.shared?.receiverGuildId===guildId&&(channelId===undefined||job.shared.channelId===channelId));
+ if(!source&&!receiver)refused();
+ if(channelId!==undefined&&!isCommunityStagingQaDiscordChannel(guildId,channelId))refused();
 }
 
 type SchemaLineagePin=Readonly<{migrationId:string;moduleNamespace:string;executionOrder:number;checksumSha256:string;postSchemaSha256:string}>;
@@ -105,14 +156,16 @@ function readPrivate(path:string,expectedHash:string):string{
 }
 function validateRun(run:CommunityStagingQaRun):void{
  const pipeline=["stats","common-delivery","shared-delivery","shared-fixture"].includes(run.pipeline);
- const guildAllowed=(run.pipeline==="common-delivery"||run.pipeline==="shared-delivery")?isCommunityStagingQaDiscordGuild(run.guildId):run.guildId===COMMUNITY_REVIEW_DISCORD_GUILD_ID;
- if(run.kind!=="community-staging-qa-run-v1"||!uuid(run.runId)||!/^[0-9a-f]{32}$/.test(run.nonce)||!digest(run.principalManifestSha256)||!pipeline||!guildAllowed||!uuid(run.communityId)||!Array.isArray(run.channelIds)||!run.channelIds.length||run.channelIds.length>50||run.channelIds.some(x=>!id(x))||new Set(run.channelIds).size!==run.channelIds.length||!Number.isSafeInteger(run.settingsVersion)||run.settingsVersion<0)refused();
+ const guildAllowed=run.pipeline==="shared-fixture"?run.guildId===COMMUNITY_REVIEW_DISCORD_GUILD_ID:isCommunityStagingQaDiscordGuild(run.guildId);
+ if(run.kind!=="community-staging-qa-run-v1"||!uuid(run.runId)||!/^[0-9a-f]{32}$/.test(run.nonce)||!digest(run.principalManifestSha256)||!pipeline||!guildAllowed||!uuid(run.communityId)||!Array.isArray(run.channelIds)||!run.channelIds.length||run.channelIds.length>50||run.channelIds.some(x=>!isCommunityStagingQaDiscordChannel(run.guildId,x))||new Set(run.channelIds).size!==run.channelIds.length||!Number.isSafeInteger(run.settingsVersion)||run.settingsVersion<0)refused();
  if(!run.pins||new URL(run.pins.origin).origin!==run.pins.origin||!run.pins.origin.startsWith("https://")||!/^[0-9a-f]{40}$/.test(run.pins.sourceCommit)||![run.pins.sourceVectorSha256,run.pins.sourceArchiveSha256,run.pins.schemaSha256,run.pins.artifactSha256].every(digest)||!/^[A-Za-z0-9_-]{1,128}$/.test(run.pins.buildId))refused();
  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(run.cutoffUtc)||!Number.isFinite(Date.parse(run.cutoffUtc))||!Array.isArray(run.jobs)||run.jobs.length>3||new Set(run.jobs.map(x=>x.id)).size!==run.jobs.length)refused();
  for(const job of run.jobs){
   const known=["traderlink_community_content_deliveries","traderlink_community_publication_actions","community_shared_alert_deliveries"].includes(job.table);
   const validId=job.table==="community_shared_alert_deliveries"?/^[a-f0-9]{32}$/.test(job.id):uuid(job.id);
-  if(!known||!validId||!digest(job.stateSha256)||!Number.isFinite(Date.parse(job.createdAtUtc))||job.createdAtUtc<run.cutoffUtc)refused();
+  const shared=job.shared;
+  if(!known||!validId||!digest(job.stateSha256)||!Number.isFinite(Date.parse(job.createdAtUtc))||job.createdAtUtc<run.cutoffUtc||(job.table==="community_shared_alert_deliveries")!==Boolean(shared))refused();
+  if(shared&&(![shared.sourceCommunityId,shared.sourceOwnerUserId,shared.receiverCommunityId,shared.receiverOwnerUserId,shared.requestId,shared.authorUserId].every(uuid)||![shared.sourceGuildId,shared.sourceOwnerDiscordId,shared.receiverGuildId,shared.receiverOwnerDiscordId,shared.channelId].every(id)||!Number.isSafeInteger(shared.routeRevision)||shared.routeRevision<0||!Number.isSafeInteger(shared.contentRevision)||shared.contentRevision<1||typeof shared.requireApproval!=="boolean"||shared.sourceCommunityId!==run.communityId||shared.sourceGuildId!==run.guildId||!isCommunityStagingQaDiscordGuild(shared.receiverGuildId)||!isCommunityStagingQaDiscordChannel(shared.receiverGuildId,shared.channelId)||shared.sourceGuildId===shared.receiverGuildId))refused();
  }
  if((run.pipeline==="stats"||run.pipeline==="shared-fixture")?run.jobs.length:!run.jobs.length)refused();
  if(run.pipeline==="shared-fixture"?!digest(run.fixtureManifestSha256):run.fixtureManifestSha256!==undefined)refused();
@@ -151,14 +204,9 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
  const pendingRows=()=>[
   ...db.prepare("SELECT d.delivery_id id,d.requested_at_utc createdAtUtc,d.community_id communityId,c.discord_guild_id guildId,x.discord_channel_id channelId,'traderlink_community_content_deliveries' kind FROM traderlink_community_content_deliveries d LEFT JOIN traderlink_communities c ON c.community_id=d.community_id LEFT JOIN traderlink_community_discord_destinations x ON x.destination_id=d.destination_id AND x.community_id=d.community_id WHERE d.status IN('pending','failed','sending') AND d.delivery_outcome IN('pending','uncertain')").all(),
   ...db.prepare("SELECT a.action_id id,a.requested_at_utc createdAtUtc,a.community_id communityId,c.discord_guild_id guildId,x.discord_channel_id channelId,'traderlink_community_publication_actions' kind FROM traderlink_community_publication_actions a LEFT JOIN traderlink_communities c ON c.community_id=a.community_id LEFT JOIN traderlink_community_discord_destinations x ON x.destination_id=a.destination_id AND x.community_id=a.community_id WHERE a.status IN('pending','sending')").all(),
-  ...db.prepare("SELECT d.delivery_id id,d.created_at_utc createdAtUtc,r.source_community_id communityId,c.discord_guild_id guildId,d.channel_id channelId,'community_shared_alert_deliveries' kind FROM community_shared_alert_deliveries d LEFT JOIN community_shared_alert_requests r ON r.request_id=d.request_id LEFT JOIN traderlink_communities c ON c.community_id=r.receiver_community_id WHERE d.status IN('awaiting_approval','pending','failed','sending')").all(),
+  ...db.prepare("SELECT d.delivery_id id,d.created_at_utc createdAtUtc,r.receiver_community_id communityId,c.discord_guild_id guildId,d.channel_id channelId,'community_shared_alert_deliveries' kind FROM community_shared_alert_deliveries d LEFT JOIN community_shared_alert_requests r ON r.request_id=d.request_id LEFT JOIN traderlink_communities c ON c.community_id=r.receiver_community_id WHERE d.status IN('awaiting_approval','pending','failed','sending')").all(),
  ] as {id:string;createdAtUtc:string;communityId:string;guildId:string;channelId:string;kind:CommunityStagingQaJob["table"]}[];
- const selectedKey=new Set(run.jobs.map(job=>`${job.table}:${job.id}`));
- const excludedQueueState=()=>deliveryPipeline?hash(JSON.stringify({
-  jobs:pendingRows().filter(row=>!selectedKey.has(`${row.kind}:${row.id}`)).sort((a,b)=>`${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`)),
-  parts:db.prepare("SELECT * FROM community_shared_alert_delivery_parts WHERE delivery_id NOT IN (SELECT value FROM json_each(?)) ORDER BY delivery_id,content_revision,part_number").all(JSON.stringify(run.jobs.filter(job=>job.table==="community_shared_alert_deliveries").map(job=>job.id))),
- })):null;
- const originalExcludedQueueState=excludedQueueState();
+ const excludedQueueFence=deliveryPipeline?createCommunityStagingQaExcludedQueueFence(db,run.jobs):null;
  let selectedJobsAdmitted=false;
  const checkNative=()=>{
   const session=new PlatformSessionService(new PlatformSessionRepository(db)).resolve(principals.coach.session.token);
@@ -167,18 +215,18 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
   const community:({discord_guild_id:string;owner_user_id:string;discord_configuration_version?:number;channel_ids_json?:string}|undefined)=deliveryPipeline
    ?db.prepare("SELECT discord_guild_id,owner_user_id FROM traderlink_communities WHERE community_id=? AND status='active'").get(run.communityId) as {discord_guild_id:string;owner_user_id:string}|undefined
    :db.prepare("SELECT c.discord_guild_id,c.owner_user_id,s.discord_configuration_version,s.channel_ids_json FROM traderlink_communities c JOIN community_stats_settings s ON s.community_id=c.community_id WHERE c.community_id=? AND c.status='active'").get(run.communityId) as {discord_guild_id:string;owner_user_id:string;discord_configuration_version:number;channel_ids_json:string}|undefined;
-  if(!community||community.discord_guild_id!==run.guildId||community.owner_user_id!==principals.coach.userId)refused();
+  if(!community||community.discord_guild_id!==run.guildId||(run.pipeline!=="shared-delivery"&&community.owner_user_id!==principals.coach.userId))refused();
   if(!deliveryPipeline){if(community.discord_configuration_version!==run.settingsVersion||typeof community.channel_ids_json!=="string")refused();const selected=JSON.parse(community.channel_ids_json) as unknown;if(!Array.isArray(selected)||selected.some(x=>typeof x!=="string"||!run.channelIds.includes(x)))refused();}
   if(deliveryPipeline){
-   if(excludedQueueState()!==originalExcludedQueueState)refused();
+   excludedQueueFence?.assertUnchanged();
    if(!selectedJobsAdmitted){
     const pending=pendingRows();
-    for(const job of run.jobs){const row=pending.find(item=>item.kind===job.table&&item.id===job.id);if(!row||row.communityId!==run.communityId||row.guildId!==run.guildId||!run.channelIds.includes(row.channelId)||row.createdAtUtc!==job.createdAtUtc||row.createdAtUtc<run.cutoffUtc||communityStagingQaJobStateSha256(db,job)!==job.stateSha256)refused();}
+    for(const job of run.jobs){const row=pending.find(item=>item.kind===job.table&&item.id===job.id),shared=job.shared;const expectedCommunity=shared?.receiverCommunityId??run.communityId,expectedGuild=shared?.receiverGuildId??run.guildId,expectedChannel=shared?.channelId;if(!row||row.communityId!==expectedCommunity||row.guildId!==expectedGuild||(expectedChannel?row.channelId!==expectedChannel:!run.channelIds.includes(row.channelId))||row.createdAtUtc!==job.createdAtUtc||row.createdAtUtc<run.cutoffUtc||communityStagingQaJobStateSha256(db,job)!==job.stateSha256)refused();}
     selectedJobsAdmitted=true;
    }
+   for(const job of run.jobs)if(job.table==="community_shared_alert_deliveries")assertCommunityStagingQaSharedJobAdmission(db,job,new Date().toISOString());
   }
-  const member=db.prepare("SELECT guild_owner,last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(principals.coach.userId,run.guildId) as {guild_owner:number;last_verified_at_utc:string}|undefined;
-  if(!member||member.guild_owner!==1||!fresh(member.last_verified_at_utc,Date.now()))refused();
+  if(run.pipeline!=="shared-delivery"){const member=db.prepare("SELECT guild_owner,last_verified_at_utc FROM platform_discord_memberships WHERE user_id=? AND guild_id=?").get(principals.coach.userId,run.guildId) as {guild_owner:number;last_verified_at_utc:string}|undefined;if(!member||member.guild_owner!==1||!fresh(member.last_verified_at_utc,Date.now()))refused();}
  };
  const authorize=(operation?:()=>void,fixtureOperation=false)=>{
   if(authorizing||db.inTransaction)refused();authorizing=true;
@@ -218,6 +266,8 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
  };
  const assertOperationFrame=()=>{if(run.pipeline!=="shared-fixture"||!operationCheck||!db.inTransaction)refused();check();};
  const approvedThreads=new Set<string>();
+ const approvedGuilds=new Set<string>([run.guildId,...run.jobs.flatMap(job=>job.shared?[job.shared.receiverGuildId]:[])]),approvedChannels=new Map<string,string>(run.channelIds.map(channel=>[channel,run.guildId]));
+ for(const job of run.jobs)if(job.shared)approvedChannels.set(job.shared.channelId,job.shared.receiverGuildId);
  const transport=async(resource:Parameters<typeof fetch>[0],options?:Parameters<typeof fetch>[1],boundary?:(operation:()=>void)=>void):ReturnType<typeof fetch>=>{
   function deny():never{const error=new Error("Community staging QA capability refused.");if(operationCheck)operationFailure=error;else stop();throw error;}
   const checkedBoundary=(work:()=>void)=>{
@@ -237,8 +287,8 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
   if(limit&&(!/^\d{1,4}$/.test(limit)||Number(limit)<1||Number(limit)>1000)||after&&!id(after)||before&&!id(before)&&(!/^\d{4}-\d{2}-\d{2}T/.test(before)||before.length>32||!Number.isFinite(Date.parse(before))))deny();
   if(url.origin!=="https://discord.com"||!url.pathname.startsWith("/api/v10/")||!["GET","POST","PATCH","DELETE"].includes(method))deny();
   route=url.pathname.slice("/api/v10".length);const channel=route.match(/^\/channels\/(\d+)\/(messages(?:\/\d+)?|threads\/archived\/public)$/),guildRoute=route.match(/^\/guilds\/(\d+)(?:\/(channels|roles|members(?:\/\d+)?|invites|vanity-url|threads\/active))?$/);
-  if(channel){if(!run.channelIds.includes(channel[1])&&!approvedThreads.has(channel[1]))deny();if(method!=="GET"&&(run.pipeline==="stats"||!channel[2].startsWith("messages")||++writes>run.bounds.writes))deny();}
-  else if(method!=="GET"||!(route==="/users/@me"||guildRoute?.[1]===run.guildId))deny();
+  if(channel){const channelGuild=approvedChannels.get(channel[1]);if((!channelGuild&&!approvedThreads.has(channel[1]))||(!approvedThreads.has(channel[1])&&(!isCommunityStagingQaDiscordChannel(channelGuild,channel[1])||!approvedGuilds.has(channelGuild!))))deny();if(method!=="GET"&&(run.pipeline==="stats"||!channel[2].startsWith("messages")||++writes>run.bounds.writes))deny();}
+  else if(method!=="GET"||!(route==="/users/@me"||Boolean(guildRoute&&approvedGuilds.has(guildRoute[1]))))deny();
   });
   const response=await fetch(resource,{...options,redirect:"error",signal:AbortSignal.any([abort.signal,request.signal,...(options?.signal?[options.signal]:[]),AbortSignal.timeout(Math.max(1,Math.min(10000,run.bounds.durationMs-(Date.now()-start))))])});
   // A completed write receipt must survive cancellation. New work is still denied.
@@ -261,7 +311,7 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
  const capability:CommunityStagingQaCapability=Object.freeze({run:Object.freeze({...run,channelIds:Object.freeze([...run.channelIds]),jobs:Object.freeze(run.jobs.map(x=>Object.freeze({...x}))),bounds:Object.freeze({...run.bounds}),pins:Object.freeze({...run.pins})}),signal:abort.signal,request:transport,assertActive:check,withOperationFrame,assertOperationFrame,requestWithFixtureOperation:(resource,options,boundary)=>transport(resource,options,boundary),
   gatewayFrame:database=>{if(database!==db)refused();check();if(++frames>run.bounds.gatewayFrames){stop();refused();}},historyTick:()=>{check();if(++histories>run.bounds.historyTicks){stop();refused();}},collectorTick:()=>{check();if(++ticks>run.bounds.collectorTicks){stop();refused();}},
   remainingMs:()=>Math.max(0,run.bounds.durationMs-(Date.now()-start)),onStop:callback=>{if(abort.signal.aborted){callback();return()=>undefined;}stops.add(callback);return()=>{stops.delete(callback);};},
-  finish:outcome=>{if(finished)return;if(deliveryPipeline&&excludedQueueState()!==originalExcludedQueueState)refused();finished=true;clearTimeout(deadline);request.signal.removeEventListener("abort",aborted);stop();if(started){structural();db.transaction(()=>audit(outcome==="completed"?"community_stage_run_completed":"community_stage_run_aborted",outcome==="completed"?"success":"failed")).immediate();}},
+  finish:outcome=>{if(finished)return;excludedQueueFence?.assertUnchanged();finished=true;clearTimeout(deadline);request.signal.removeEventListener("abort",aborted);stop();if(started){structural();db.transaction(()=>audit(outcome==="completed"?"community_stage_run_completed":"community_stage_run_aborted",outcome==="completed"?"success":"failed")).immediate();}},
  });
  admitted.set(capability,db);return capability;
 }

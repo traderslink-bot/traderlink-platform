@@ -2,6 +2,8 @@ import { isCommunityReviewDiscordGuild } from "./community-review-discord-guild"
 import type { SharedAlertChannel } from "../contracts/shared-alerts-contracts";
 import { SharedAlertError } from "./shared-alerts-errors";
 import { createCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
+import type Database from "better-sqlite3";
+import {assertCommunityStagingQaSharedTarget,type CommunityStagingQaCapability} from "./community-staging-qa-capability";
 
 type Overwrite = { id: string; type: number; allow: string; deny: string };
 type Channel = { id: string; guild_id?: string; name: string; type: number; permission_overwrites?: Overwrite[] };
@@ -14,7 +16,12 @@ const VIEW = BigInt(1024), SEND = BigInt(2048), HISTORY = BigInt(65536), ADMIN =
 /** Read-only verification. Message sending belongs exclusively to the gated worker. */
 export class SharedAlertsDiscord {
   private botId: string | undefined;
-  constructor(private readonly token: string, private readonly request: typeof fetch = fetch, private readonly now: () => string = createCanonicalUtcTimestamp) {}
+  constructor(private readonly token: string, private readonly request: typeof fetch = fetch, private readonly now: () => string = createCanonicalUtcTimestamp,private readonly staging?:Readonly<{database:Database.Database;capability:CommunityStagingQaCapability}>) {}
+
+  private allowed(guildId:string,channelId?:string):void{
+    if(this.staging){try{assertCommunityStagingQaSharedTarget(this.staging.capability,this.staging.database,guildId,channelId);return;}catch{throw new SharedAlertError("unavailable");}}
+    if(!isCommunityReviewDiscordGuild(guildId))throw new SharedAlertError("unavailable");
+  }
 
   private async get<T>(path: string): Promise<T> {
     if (!this.token) throw new SharedAlertError("discord_unavailable");
@@ -28,7 +35,7 @@ export class SharedAlertsDiscord {
   }
 
   async verifyOwner(guildId: string, discordUserId: string): Promise<boolean> {
-    if (!isCommunityReviewDiscordGuild(guildId)) throw new SharedAlertError("unavailable");
+    this.allowed(guildId);
     if (!SNOWFLAKE.test(guildId) || !SNOWFLAKE.test(discordUserId)) throw new SharedAlertError("invalid");
     const guild = await this.get<{ id: string; owner_id: string }>(`/guilds/${guildId}`);
     if (guild.id !== guildId) throw new SharedAlertError("discord_unavailable");
@@ -36,7 +43,7 @@ export class SharedAlertsDiscord {
   }
 
   async channels(guildId: string): Promise<readonly SharedAlertChannel[]> {
-    if (!isCommunityReviewDiscordGuild(guildId)) throw new SharedAlertError("unavailable");
+    this.allowed(guildId);
     if (!SNOWFLAKE.test(guildId)) throw new SharedAlertError("invalid");
     if (!this.botId) this.botId = (await this.get<{ id: string }>("/users/@me")).id;
     const botId = this.botId;
@@ -68,6 +75,7 @@ export class SharedAlertsDiscord {
   }
 
   async verifyChannel(guildId: string, channelId: string): Promise<VerifiedSharedAlertChannel> {
+    this.allowed(guildId,channelId);
     const channel = (await this.channels(guildId)).find(item => item.channelId === channelId);
     if (!channel) throw new SharedAlertError("channel_unavailable");
     return { ...channel, guildId, verifiedAtUtc: this.now() };
