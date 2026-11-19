@@ -62,6 +62,14 @@ it('rejects malformed input and preserves injection text as bound search values'
 });
 it('uses recorded USD values or explicit display suffixes and Eastern DST-aware boundaries', () => {
   expect(marketCapUsd('$1.5B')).toBe(1500000000);expect(marketCapUsd('123')).toBeNull();expect(marketCapUsd('N/A',12345678)).toBe(12345678);
+  expect(marketCapUsd('$50M', 0)).toBe(50000000);
+  expect(marketCapUsd('$50M', '50')).toBe(50000000);
+  expect(marketCapUsd('$50M', 50000000)).toBe(50000000);
+  expect(marketCapUsd('$1.5B', 1500)).toBe(1500000000);
+  expect(marketCapUsd('5.00 M', 4999999)).toBe(4999999);
+  expect(marketCapUsd('144 M', 144123456)).toBe(144123456);
+  expect(marketCapUsd('N/A', 0)).toBeNull();
+  expect(marketCapUsd(null, '12345678')).toBe(12345678);
   expect(easternDayStart('2026-03-08')).toBe('2026-03-08T05:00:00.000Z');expect(easternDayStart('2026-03-08',true)).toBe('2026-03-09T04:00:00.000Z');
   expect(easternDayStart('2026-11-01')).toBe('2026-11-01T04:00:00.000Z');expect(easternDayStart('2026-11-01',true)).toBe('2026-11-02T05:00:00.000Z');
 });
@@ -80,6 +88,21 @@ it('qualifies cap sorting over a production-sized synthetic population without a
  expect(page.articles).toHaveLength(100);expect(page.more).toBe(true);
  const evidence={qualification:'synthetic SQLite eligible feed',population:12000,queryMilliseconds:Math.round((performance.now()-start)*100)/100,order:'cap_asc',filters:'100M<=cap<300M',migration:false};
  mkdirSync('/tmp/traderlink-news-unified-qa-20261118',{recursive:true});writeFileSync('/tmp/traderlink-news-unified-qa-20261118/query-performance.json',JSON.stringify(evidence,null,2));
+});
+
+it.each(['zero placeholder', 'legacy millions'])('uses displayed cap units with %s numeric metadata', representation => {
+  const f = fixture();
+  for (const [id, display, numeric] of [
+    ['nano', '260 k', 0.26], ['below-five', '2.7 M', 2.7], ['five', '5.0 M', 5], ['twenty', '14.0 M', 14],
+    ['thirty', '30.0 M', 30], ['fifty', '46.0 M', 46], ['billion', '1.2 B', 1200],
+  ] as const) {
+    f.add(id, display);
+    f.db.prepare('UPDATE news_articles SET metadata_json=? WHERE id=?')
+      .run(JSON.stringify({ marketCap: display, marketCapValue: representation === 'zero placeholder' ? 0 : numeric }), id);
+  }
+  expect(f.read({ ...DEFAULT_NEWS_FILTERS, maxCap: '5' }).articles.map(a => a.id)).toEqual(['below-five', 'nano']);
+  expect(f.read({ ...DEFAULT_NEWS_FILTERS, maxCap: '30' }).articles.map(a => a.id)).toEqual(['below-five', 'five', 'nano', 'twenty']);
+  expect(f.read({ ...DEFAULT_NEWS_FILTERS, minCap: '30', sort: 'cap_asc' }).articles.map(a => a.id)).toEqual(['thirty', 'fifty', 'billion']);
 });
 
 it('supports every offered sort and recorded category with deterministic time/ID ties',()=>{

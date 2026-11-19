@@ -22,5 +22,18 @@ it('keeps relative dates relative when reopening, and preserves explicit date ra
 it('honors the future filter policy without changing basic read preferences or granting access',()=>{const f=fixture();f.save(f.one,{alertsEnabled:true});f.article('match','$20M');access.allowed=false;expect(f.repo.hasMatchingAlert(f.one,'match')).toBe(false);expect(()=>f.repo.savePreference(f.one,DEFAULT_NEWS_FILTERS,at)).toThrow();const own=f.repo.list(f.one)[0];f.repo.setAlerts(f.one,own.id,own.revision,false,at);expect(f.repo.list(f.one)[0].alertsEnabled).toBe(false);});
 it('account erasure covers both private News tables; Journal-only erasure preserves them and other users',()=>{const f=fixture();f.save();f.save(f.two);f.repo.savePreference(f.one,DEFAULT_NEWS_FILTERS,at);f.db.transaction(()=>{f.db.pragma("defer_foreign_keys=ON");const c=captureErasureClosure(f.db,[{table:'journal_accounts',column:'account_id',value:f.account}]);try{c.deleteRows();}finally{c.dispose();}})();expect(f.repo.list(f.one)).toHaveLength(1);f.db.transaction(()=>{f.db.pragma("defer_foreign_keys=ON");const c=captureErasureClosure(f.db,[{table:'platform_users',column:'user_id',value:f.one}]);try{c.deleteRows();}finally{c.dispose();}})();expect(f.db.prepare('SELECT count(*) n FROM news_press_release_view_preferences').get()).toEqual({n:0});expect(f.repo.list(f.two)).toHaveLength(1);});
 it('keeps a newer account selection when an older command finishes afterward',()=>{const f=fixture();f.repo.savePreference(f.one,{...DEFAULT_NEWS_FILTERS,sort:'oldest'},'2026-11-18T20:01:00.000Z');f.repo.savePreference(f.one,{...DEFAULT_NEWS_FILTERS,sort:'newest'},at);expect(f.repo.readPreference(f.one)).toMatchObject({revision:1,filters:{sort:'oldest'}});});
+it('matches custom alerts using displayed cap units when numeric metadata is a zero placeholder', () => {
+  const f = fixture();
+  f.save(f.one, { alertsEnabled: true, filters: { ...DEFAULT_NEWS_FILTERS, maxCap: '5' } });
+  for (const [id, display] of [['small', '2.7 M'], ['boundary', '5.0 M'], ['large', '46.0 M']] as const) {
+    f.article(id, display);
+    f.db.prepare('UPDATE news_articles SET metadata_json=? WHERE id=?')
+      .run(JSON.stringify({ marketCap: display, marketCapValue: 0 }), id);
+  }
+  expect(f.repo.hasMatchingAlert(f.one, 'small')).toBe(true);
+  expect(f.repo.hasMatchingAlert(f.one, 'boundary')).toBe(false);
+  expect(f.repo.hasMatchingAlert(f.one, 'large')).toBe(false);
+});
+
 it('bounds the number of views and detects case-insensitive duplicate names',()=>{const f=fixture();f.save();expect(()=>f.save(f.one,{name:'MY RANGE'})).toThrow(/already/);for(let n=1;n<20;n++)f.save(f.one,{name:'Range '+n});expect(()=>f.save(f.one,{name:'Too many'})).toThrow(/up to 20/);});
 it('changing display order/read status keeps an active alert start while changing its match resets it',()=>{const f=fixture();const first=f.save(f.one,{alertsEnabled:true})[0];const display=f.repo.save(f.one,{...first,filters:{...first.filters,sort:'oldest',read:'read'}},'2026-11-18T20:05:00.000Z')[0];expect(display.alertsStartedAt).toBe(at);const changed=f.repo.save(f.one,{...display,filters:{...display.filters,minCap:'15'}},'2026-11-18T20:06:00.000Z')[0];expect(changed.alertsStartedAt).toBe('2026-11-18T20:06:00.000Z');});

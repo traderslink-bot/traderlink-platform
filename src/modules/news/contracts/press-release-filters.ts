@@ -39,15 +39,20 @@ export function parseNewsFilters(input: unknown, reference = new Date()): NewsFi
   result.tickers = [...new Set(tickers)].join(", ");
   return result;
 }
-/** Display metadata without an explicit suffix/currency is ambiguous, never infer units. */
+/** Zero is a legacy placeholder. Keep positive dollar precision when it agrees
+ * with the displayed rounding; otherwise use the display's explicit units. */
 export function marketCapUsd(value: unknown, recordedUsd?: unknown): number | null {
-  if ((typeof recordedUsd === "number" || (typeof recordedUsd === "string" && /^\d+(?:\.\d+)?$/u.test(recordedUsd))) && Number.isFinite(Number(recordedUsd)) && Number(recordedUsd) >= 0) return Number(recordedUsd);
-  if (typeof value !== "string") return null;
-  const match = /^\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*([KMBT])\s*$/iu.exec(value);
-  if (!match) return null;
+  const recorded = (typeof recordedUsd === "number" || (typeof recordedUsd === "string" && /^\d+(?:\.\d+)?$/u.test(recordedUsd)))
+    && Number.isFinite(Number(recordedUsd)) && Number(recordedUsd) > 0 ? Number(recordedUsd) : null;
+  const match = typeof value === "string" ? /^\s*\$?\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*([KMBT])\s*$/iu.exec(value) : null;
+  if (!match) return recorded;
   const scales: Record<string, number> = { K: 1e3, M: 1e6, B: 1e9, T: 1e12 };
-  const amount = Number(match[1].replaceAll(",", "")) * scales[match[2].toUpperCase()];
-  return Number.isFinite(amount) ? amount : null;
+  const scale = scales[match[2].toUpperCase()];
+  const amount = Number(match[1].replaceAll(",", "")) * scale;
+  if (!Number.isFinite(amount)) return recorded;
+  const decimals = match[1].split(".")[1]?.length ?? 0;
+  const roundingTolerance = scale / 10 ** decimals / 2 + Number.EPSILON * Math.max(amount, recorded ?? 0);
+  return recorded !== null && Math.abs(recorded - amount) <= roundingTolerance ? recorded : amount;
 }
 const easternParts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
 export function easternDayStart(day: string, following = false): string {
