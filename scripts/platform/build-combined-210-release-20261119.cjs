@@ -24,6 +24,7 @@ const rawEntries={
  'combined210-resource-collector.py':'scripts/platform/combined-210-resource-collector-20261119.py',
 };
 const entries={
+ 'community-selected-delivery.cjs':'scripts/platform/community-selected-delivery-command.cjs',
  'combined210-readonly-verifier.cjs':'scripts/platform/combined-210-readonly-verifier-20261119.cjs',
  'combined210-native-profile-setup.cjs':'scripts/platform/combined-210-native-profile-setup-20261119.cjs',
  'combined210-offline-runner.cjs':'scripts/platform/combined-210-offline-runner-20261119.cjs',
