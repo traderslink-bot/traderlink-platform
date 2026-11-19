@@ -1,0 +1,55 @@
+{
+  "status": "VERIFIED_TWO_FILE_TECHNICAL_REPAIR_READY_FOR_ROOT",
+  "atUtc": "2026-11-19T10:30:13.562815Z",
+  "base": "509573dc7f59c35336aae570ca4b7f1583b777d4",
+  "branch": "codex/community-stats-production-repair-20261119",
+  "files": [
+    {
+      "path": "src/modules/communities/server/stats/community-stats-access.ts",
+      "preimageSha256": "5528eae08974845449720b869ce123a32ae10c5423176687a10d57e0df4f393f",
+      "postimageSha256": "475895cbda7b0ddd115785d24ca4e86b4fe0c15a8b7fd47cf53972f3ccddf421",
+      "bytes": 7128
+    },
+    {
+      "path": "src/modules/communities/server/stats/community-stats-origin.test.ts",
+      "preimageSha256": null,
+      "postimageSha256": "209c797fc07ce33903185c68bd9b74050e1a3f6174ecb7272c8c854a548b1cd0",
+      "bytes": 4090
+    }
+  ],
+  "problem": "Stats helper used internal request.url.origin whenPUBLIC_ORIGINabsent. Source syntheticNextRequest reproduction rejects genuinepublicOrigin undernormalRailwayinternalURL; canonicaltrustedOAuthcallbackresolver accepts. ActualproductionPUBLIC_ORIGINabsent +3fast404/51B consistent; actualinternalURLheaders notcaptured, notfabricated.",
+  "change": "Use existingresolvePlatformPublicOrigin on NextRequestconstructedfromURL+headers only. RequiredOrigin/exactmatch/cross-siterefusal retained. No originalbodyconsumption/forwardedhosttrust/auth/role/TTL/Corebridge/schema/UI changes.",
+  "verification": {
+    "focusedVitest": {
+      "files": 1,
+      "tests": 12,
+      "passed": 12,
+      "returncode": 0,
+      "logSha256": "aa53f9ed16e10ad7c63db2dd80c5ab135bebee2c594e9d5c69fc42e375944c7e"
+    },
+    "targetedLint": {
+      "files": 2,
+      "errors": 0,
+      "warnings": 0,
+      "returncode": 0,
+      "logSha256": "9fe746a14c228e0ffaa8123b1fabb3ea03dcc2eaf6adbed9bc3db6a86a9b3601",
+      "harnessNote": "PluginprintedReactautodetectnotice because assignedlane has no localnode_modules; actuallintdiagnostics0/0."
+    },
+    "focusedStrictTypes": {
+      "sourceGraphFiles": 515,
+      "diagnostics": 0,
+      "returncode": 0,
+      "logSha256": "271b7441392c541cbf9d23c06e50f69440de5235e269c8ea85e89c1cb78e0cc4",
+      "harnessNote": "Firsttwo attempts lacked donor@types better-sqlite3/chai/react mapping, retained logs; privatecompilerresolution corrected only, no productsource changes."
+    },
+    "gitDiffCheck": "PASS",
+    "privateArtifacts": "/tmp/tl-stats-origin-repair-be9ilhpl",
+    "donor": "/home/traderlink/projects/community-combined-production-review-20261117",
+    "donorPackageAndLockByteMatch": true,
+    "cacheIsolation": "PrivateVitestconfig/cache; no copy/install/symlink/donorcache changes.",
+    "guards": "O_EXCL/O_NOFOLLOWfeatureQA active.lock +nonblockingcommonheavyflock; owninode released afterchildrenclosed; fresh~7.1GiBMemAvailable/no pressure."
+  },
+  "guideReview": "ExistingHelpguide consulted; no guideupdate required, normalworkflow/security contract unchanged.",
+  "catalogAndSourceImpact": "Currentc4acatalog bytes/date/expiry and canonicalpublicoriginresolver untouched. ChangedStatscalleroriginresolution requires Root finalsource applicability review; no new nativeABI/schema/policy approval minted.",
+  "ownership": "Rootalonecommits/integrates/pushes/deploys; noGitmutation/hostedPOST/DB/provider/build/broadsuite byStats. Latentfreshness/Corebridge risk remains separate, not bundled."
+}

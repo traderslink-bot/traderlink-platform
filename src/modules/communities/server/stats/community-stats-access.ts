@@ -1,4 +1,5 @@
 import "server-only";
+import {NextRequest} from "next/server";
 import {assertCommunityReviewDiscordGuild} from "../community-review-discord-guild";
 import type Database from "better-sqlite3";
 import { requireCommunityRequestAccess } from "../community-request-access";
@@ -7,6 +8,7 @@ import { TraderLinkCommunityRepository } from "../traderlink-community-repositor
 import type { CommunityStatsRequestScope } from "../../contracts/community-stats-contracts";
 import { platformFailure,isTraderLinkPlatformError } from "../../../platform/server/database/platform-migration-contract";
 import {communityStatsStorageReady} from "./community-stats-repository";
+import {resolvePlatformPublicOrigin} from "../../../platform/server/authentication/platform-public-origin";
 
 /** Dedicated entry permission only; never adds a publication or global analytics capability. */
 export function hasCommunityStatsOwnAccess(database:Database.Database,communityId:string,userId:string):boolean{
@@ -58,8 +60,7 @@ export function isCommunityStatsAccessDenied(error:unknown):boolean{
 
 export function assertStatsSameOrigin(request: Request): void {
   const origin = request.headers.get("origin");
-  const configured = process.env.TRADERLINK_PLATFORM_PUBLIC_ORIGIN;
-  const expected = configured ? new URL(configured).origin : new URL(request.url).origin;
+  const expected = resolvePlatformPublicOrigin(new NextRequest(request.url,{headers:request.headers}));
   if (!origin || origin !== expected || request.headers.get("sec-fetch-site") === "cross-site") {
     platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   }
