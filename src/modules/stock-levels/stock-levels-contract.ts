@@ -7,6 +7,8 @@ export type StockLevelsMap = Readonly<{
   symbol: string;
   referencePrice: number;
   referencePriceAsOf: number;
+  // Older saved maps do not identify whether the reference was a real trade.
+  referencePriceBasis?: "last_trade" | "reference";
   calculatedAt: number;
   cacheStatus: "hit" | "fresh";
   levelMap: LiveWatchlistLevelMap | null;
@@ -35,10 +37,15 @@ export function isStockLevelsMap(value: unknown): value is StockLevelsMap {
   const map = value as Record<string, unknown>;
   return typeof map.symbol === "string" && typeof map.referencePrice === "number" &&
     typeof map.referencePriceAsOf === "number" && typeof map.calculatedAt === "number" &&
+    (map.referencePriceBasis === undefined || map.referencePriceBasis === "last_trade" || map.referencePriceBasis === "reference") &&
     (map.cacheStatus === "hit" || map.cacheStatus === "fresh") &&
     (map.levelMap === null || typeof map.levelMap === "object") &&
     (map.fullLadderCard === null || typeof map.fullLadderCard === "object") &&
     (map.nearestSupportResistanceCard === null || typeof map.nearestSupportResistanceCard === "object");
+}
+
+export function stockLevelsReferencePriceLabel(map: StockLevelsMap): "Last traded price" | "Reference price" {
+  return map.referencePriceBasis === "last_trade" ? "Last traded price" : "Reference price";
 }
 
 export function isSavedStockLevelsMap(value: unknown): value is SavedStockLevelsMap {

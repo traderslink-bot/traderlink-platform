@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import {
   isSavedStockLevelsMap,
   isStockLevelsQuotaFeedback,
+  stockLevelsReferencePriceLabel,
   type SavedStockLevelsMap,
   type StockLevelsQuotaFeedback,
   type StockLevelsResult,
@@ -46,7 +47,7 @@ type GeneratedLevelsResult = Readonly<{
 
 function generatedLevelsSummary(savedMap: SavedStockLevelsMap): string {
   const { map } = savedMap;
-  return `${map.symbol} levels generated on ${generatedAt(map.calculatedAt)}; reference price ${formatPrice(map.referencePrice)} as of ${generatedAt(map.referencePriceAsOf)}`;
+  return `${map.symbol} levels generated on ${generatedAt(map.calculatedAt)}; ${stockLevelsReferencePriceLabel(map).toLowerCase()} ${formatPrice(map.referencePrice)} as of ${generatedAt(map.referencePriceAsOf)}`;
 }
 
 function PotentialPathCard({ map }: { map: SavedStockLevelsMap["map"] }) {
@@ -58,7 +59,7 @@ function PotentialPathCard({ map }: { map: SavedStockLevelsMap["map"] }) {
       guideContent={<HelpOutlineRoundedIcon fontSize="small" />}
       guideHref="https://traderslink.pro/watchlist/how-it-works"
       headerLabel="Support and Resistance"
-      priceNote={`Reference price ${formatPrice(map.referencePrice)} as of ${generatedAt(map.referencePriceAsOf)}; levels generated on ${generatedAt(map.calculatedAt)}`}
+      priceNote={`${stockLevelsReferencePriceLabel(map)} ${formatPrice(map.referencePrice)} as of ${generatedAt(map.referencePriceAsOf)}; levels generated on ${generatedAt(map.calculatedAt)}`}
       priceNoteOwnLine
       showKickerHelp={false}
       showMeta={false}

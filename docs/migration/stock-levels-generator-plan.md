@@ -1,11 +1,134 @@
 # Stock Levels Generator Plan
 
-**Status:** Owner-approved contract recorded; implementation in progress
+**Status:** Current-source and real-market audits recorded; owner-authorised Generator reference-price correction verified locally; not deployed
 **Progress:** [Stock Levels Generator Progress](stock-levels-generator-progress.md)
 **Approved feature boundary:** Authenticated Dashboard Stock Levels generator
 **Route:** `/levels`
 
 **Related owner administration:** [Stock Levels Admin Activity Plan](stock-levels-admin-activity-plan.md)
+
+## Owner direction - 2026-11-20 (Eastern)
+
+The primary audience trades micro-cap and nano-cap stocks. The Generator must
+prioritise meaningful, useful support/resistance areas and an uncluttered map.
+Finding more candidate levels is not, by itself, an improvement.
+
+- Select levels for convincing structural evidence, such as clear reactions,
+  substantial rejection, repeated defence or agreement across timeframes. A
+  single decisive reaction may matter; repeated minor fluctuations alone do
+  not establish a useful level.
+- Consolidate nearby or overlapping evidence into distinct areas. Evaluate
+  selection and spacing against the volatility and liquidity of the intended
+  stocks so minor price variations do not become a stack of redundant rows.
+- Treat volume as supporting evidence alongside price behaviour. Increasing
+  volume influence must demonstrate better level selection before adoption.
+- Show fewer levels when fewer qualify. Do not fill a side or a price interval
+  merely to reach a desired count. Preserve meaningful farther-away structure
+  for large moves when evidence supports it.
+- Apply the same relevance standard to Full ladder: it can expose additional
+  useful structure, but must not become a dump of every detected candidate.
+- Assess future tuning for relevance, distinctness, readability and useful
+  coverage on micro/nano-cap examples, including sparse trading and large
+  moves. More rows or stronger labels alone do not establish an improvement.
+
+This direction records selection/quality requirements for future work. It does
+not itself change scoring, provider settings, the approved daily/4h input
+boundary, the shared Watchlist presentation, or the live runtime.
+
+### Owner working and retention rules
+
+- The owner subsequently directed this chat to select stocks below $20M market
+  capitalisation and generate/test levels itself using available market-data
+  access. An existing offline warehouse is not a prerequisite: use the
+  established market-data gateway and dedicated standalone Generator endpoint
+  for the bounded audit, without copying credentials to disk or creating
+  account saved maps, quota receipts or Watchlist entries. The feature chat
+  owns selection, generation and quality review; release/Git authority remains
+  with the Coordinator.
+- The owner expanded the audit to the exact tickers AKAN, MEDS, LABT, BNAI,
+  ELOG, VWAV, NXAT, NIVF, RAYA, GNLN, GDHG, CYAB and SPRC. Test every requested
+  symbol and explicitly account for reverse splits. Compare adjusted history
+  against raw prices/volumes and effective split factors; verify the 4h basis
+  against raw intraday evidence. Account for ticker changes, repeated splits,
+  provider rounding and announced future events. Do not double-adjust
+  already-adjusted candles, classify large historical prices as invalid solely
+  because of their size, or treat missing current-symbol event metadata as
+  proof that no split occurred. Split-adjusted price correctness and practical
+  usefulness of an old level are separate assessments.
+- Audit first. Before any feature-code edit, explain the demonstrated issue,
+  the smallest proposed change, expected effect and how it will be verified.
+  Preserve behavior that is already working. A different implementation,
+  newer scoring path or additional indicator is not itself a reason to change
+  the feature; a valid outcome of the audit is to recommend keeping it.
+- Reference-price follow-up: the controlling September AGRZ correction in
+  supporting Runtime `docs/stock-levels-agrz-freshness-2026-09-09.md` superseded
+  the older 20-minute delayed-price allowance with a 60-second active-session
+  limit. The current Alpaca path retains that limit. The November 20 ELOG/CYAB
+  failures exposed its availability trade-off for quieter stocks. Distinguish
+  acquiring a fresh price more reliably from accepting an older price. Do not
+  silently relax the limit, switch providers or label an old observation as
+  current. After the historical-input/reference-price distinction was explained,
+  the owner delegated the choice ("you do what works best"). Implement a
+  Generator-only policy accepting a genuine last trade from the same New York
+  date and trading phase without the one-minute limit. Preserve its actual
+  timestamp and label new trade-backed maps "Last traded price". Reject
+  future, missing, invalid and prior-session trades during active trading;
+  preserve the existing 96-hour closed-market rule and Yahoo freshness limit.
+  Keep Private Watchlists on their existing strict policy and leave historical
+  inputs, scoring, split adjustment and provider selection unchanged.
+  Old saved maps without trade provenance retain the Reference price label.
+- Track the exact paths, purpose and provenance of any temporary audit data
+  or generated outputs created for this work. Use existing approved data
+  read-only when possible. Delete this audit's temporary copies and outputs
+  once comparison and review no longer need them; retain only the small
+  findings/evidence record needed to explain the result. Do not delete shared
+  source datasets or another task's files as part of that cleanup.
+
+## Proposed review and improvement sequence - 2026-11-20 (Eastern)
+
+1. **Qualify the baseline.** Establish the deployed scoring mode, effective
+   calculation settings and historical-data source through read-only evidence.
+   Trace the Generator's daily/4h calculation through candidate detection,
+   clustering, ranking and both displayed inventories. Preserve other feature
+   lanes; reconcile overlapping ownership before an edit touches their scope.
+2. **Establish representative comparison cases.** Use real historical candles
+   with documented provenance and confirmed micro/nano-cap relevance at the
+   case date; low share price alone does not establish market capitalisation.
+   Include sparse trading, large moves, reversals, repeated tests, split
+   adjustments and limited-data cases. Separate generation inputs from later
+   outcome candles and reserve unseen dates/stocks for evaluation. Qualify
+   available source data first; synthetic fixtures test mechanics and do not
+   establish real-world level quality.
+3. **Complete discovery before tuning.** Record one consolidated findings
+   ledger covering redundant rows, weak evidence, missing useful areas,
+   overstated strength, stale/broken structure and insufficient data. Assess
+   clutter alongside useful near-price and farther-away coverage. Review the
+   chart evidence as well as counts and forward outcomes; a later break alone
+   does not establish that a level was invalid.
+4. **Explain justified changes before implementation.** Present the findings,
+   evidence, smallest proposed correction and expected effects before editing
+   feature code. Recommend no change where no defect or measured improvement
+   is established. Any correction proceeds as one bounded batch, including
+   volume treatment and spacing only where comparison supports them. Keep
+   calculation and selection in the canonical engine; preserve accepted
+   Watchlist behavior and avoid a separate Platform engine or cosmetic
+   filtering that conceals poor selection. Do not choose an arbitrary output
+   count or force empty areas to contain levels.
+5. **Verify against the frozen baseline.** Run focused checks, then the
+   applicable broader regression and held-out comparisons at the completed
+   slice. Compare evidence quality, redundant/closely overlapping areas,
+   useful coverage, missing structure and label calibration. Check shared
+   Watchlist consumers and factual unavailable states. Record improvements
+   and regressions rather than declaring success from fewer rows alone.
+6. **Review and hand off.** Present before/after maps with the reason each
+   retained or removed area matters. Any requested private preview uses the
+   coordinated isolated VPS lane; review applicable responsive/theme states
+   and Help alignment. Preserve owner visual acceptance and Coordinator
+   authority for commits, integration, Railway staging and release.
+
+This is the planned sequence, not a claim that discovery, data qualification,
+comparison runs or implementation have occurred. Existing provider-call,
+preview, shared-resource and hosted-operation boundaries still apply.
 
 ## Owner-approved correction - 2026-09-09
 
