@@ -2,6 +2,7 @@
 import {chartLogarithmic,setChartLogarithmic} from '@/src/modules/scanner/alpaca/chart-preferences';
 
 import { useChartMarketData } from "./use-chart-market-data";
+import { ChartIndicatorLegend } from "./chart-indicator-legend";
 import { ChartDrawings } from "./chart-drawings";
 import { candleIndexAtOrAfter } from "./chart-drawing-volume";
 import { useDrawingControls } from "./chart-drawing-controls";
@@ -60,8 +61,6 @@ type ChartCandleSnapshot = {
 };
 const recentChartCandles = new Map<string, ChartCandleSnapshot>();
 const candleSnapshotLifetime = 5 * 60_000;
-
-const indicatorName = (type: IndicatorType) => type === "Bollinger" ? "BOLL" : type;
 
 export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick }: {
   tradeContext?: MarketTradeContext; tradeFocusRevision?: number; onTradeMarkClick?: (marks: readonly MarketTradeMark[]) => void;
@@ -1126,19 +1125,13 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     {sessionMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{sessionMessage}</Typography>:null}
     {historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
     {error ? <Stack role="alert" direction="row" sx={{ alignItems: "center", px: 1, gap: 1 }}><Typography sx={{ fontSize: 12 }}>{error}</Typography><Button size="small" onClick={() => setAttempt(value => value + 1)}>Retry</Button></Stack> : null}
-    <Box ref={crosshairDetails} data-chart-crosshair-details sx={{position:compact?"absolute":"static",top:compact?compactToolbarHeight:undefined,left:compact&&leftToolbarShown?44:0,right:0,zIndex:2,pointerEvents:"none",minHeight:compact?0:16,px:0.5,fontSize:10,color:"text.secondary",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} />
+    <Box ref={crosshairDetails} data-chart-crosshair-details sx={{position:compact?"absolute":"static",top:compact?compactToolbarHeight:undefined,left:compact&&leftToolbarShown?44:0,right:0,zIndex:2,pointerEvents:"none",minHeight:compact?0:16,mb:compact?0:0.5,px:0.5,fontSize:10,color:"text.secondary",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} />
     <Box sx={{display:"flex",flex:1,minHeight:0,minWidth:0}}>
     {drawingLeftToolbar}
-    <Box sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}><Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/><Box ref={indicatorLegend} data-chart-indicator-legend sx={{position:"absolute",zIndex:1,top:4,left:8,right:65,pointerEvents:"none",fontSize:11}}>
-      {readoutTypes.map(type=><Box key={type} sx={{display:indicatorDisplay.hidden.has(type)?"none":"flex",alignItems:"center",gap:0.6,minWidth:0}}>
-        <Button size="small" aria-haspopup="menu" aria-expanded={indicatorMenu?.type===type} aria-label={`${indicatorName(type)} options`}
-          onClick={event=>setIndicatorMenu({anchor:event.currentTarget,type})}
-          sx={{pointerEvents:"auto",color:dark?"#e3e8ef":"#243246",minWidth:0,minHeight:compact?28:20,px:0.4,py:0,fontSize:11,lineHeight:1.25,fontWeight:700}}>
-          {indicatorName(type)}
-        </Button>
-        <Box data-indicator-readout={type} sx={{display:"flex",gap:0.75,flexWrap:"wrap",minWidth:0,fontVariantNumeric:"tabular-nums","& span":{whiteSpace:"nowrap"}}}/>
-      </Box>)}
-    </Box><Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/>{drawingOverlay}</Box>
+    <Box sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}><Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/><ChartIndicatorLegend legendRef={indicatorLegend} types={readoutTypes} hidden={indicatorDisplay.hidden}
+      compact={compact} dark={dark} openType={indicatorMenu?.type}
+      onOpenOptions={(type,anchor)=>setIndicatorMenu({anchor,type})}/>
+    <Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/>{drawingOverlay}</Box>
     </Box>
     <Menu anchorEl={indicatorMenu?.anchor} open={Boolean(indicatorMenu)} onClose={()=>setIndicatorMenu(null)}>
       {indicatorMenu?[
