@@ -32,8 +32,8 @@ export function scannerConnection(state: ScannerConnectionState, action: Scanner
   if (incoming.status === "unavailable") {
     const sameContext = state.model !== null && !scannerContextChanged(state.model, incoming);
     const failedAt = sameContext ? state.failedAt ?? action.now : action.now;
-    const next = sameContext && canRetainScannerSnapshot(state.model, action.now)
-      ? applyScannerDisplayContinuity(state.model, incoming, { emptySince: failedAt }, action.now)
+    const next = sameContext && canRetainScannerSnapshot(state.model, action.now) && action.now - failedAt <= SCANNER_TRANSIENT_FAILURE_GRACE_MS
+      ? { model: state.model, continuity: { emptySince: null } }
       : { model: incoming, continuity: { emptySince: null } };
     return { ...next, failedAt, unavailable: incoming, checkedAt: action.now };
   }

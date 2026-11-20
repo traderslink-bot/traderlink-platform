@@ -64,3 +64,9 @@ describe("member scanner notices", () => {
     expect(memberScannerStatus(null,false,null)).toBeNull();
   });
 });
+
+it("uses loading during a brief first connection failure and reports a prolonged outage", () => {
+  const now = Date.parse("2026-11-02T20:30:00Z");
+  expect(memberScannerStatus(null,true,now+5000,now)).toBeNull();
+  expect(memberScannerStatus(null,true,now+SCANNER_TRANSIENT_FAILURE_GRACE_MS+1,now)).toBe(SCANNER_UNAVAILABLE_MESSAGE);
+});

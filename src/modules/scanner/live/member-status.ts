@@ -4,7 +4,7 @@ import { easternClock } from "./sessions";
 
 export const SCANNER_ACTIVE_HOURS_MESSAGE = "Scanners run from premarket open to post-market close (4 AM–8 PM ET).";
 export const SCANNER_UNAVAILABLE_MESSAGE = "Temporarily unavailable.";
-export const SCANNER_TRANSIENT_FAILURE_GRACE_MS = 30_000;
+export const SCANNER_TRANSIENT_FAILURE_GRACE_MS = 120_000;
 const easternHour = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York", hour: "2-digit", hourCycle: "h23",
 });
@@ -27,9 +27,12 @@ export function memberScannerStatus(model: ScannerReadModel | null, loadError: b
   if (scannerOutsideActiveHours(model, checkedAt)) return SCANNER_ACTIVE_HOURS_MESSAGE;
   if (loadError) {
     if (checkedAt === null || failedAt === null || !Number.isFinite(failedAt) ||
-      checkedAt < failedAt || !canRetainScannerSnapshot(model, checkedAt) || checkedAt - failedAt > SCANNER_TRANSIENT_FAILURE_GRACE_MS) {
+      checkedAt < failedAt || checkedAt - failedAt > SCANNER_TRANSIENT_FAILURE_GRACE_MS) {
       return SCANNER_UNAVAILABLE_MESSAGE;
     }
+    // A new connection may not have a snapshot yet. Keep the loading state during
+    // recovery; never present yesterday's results as today's live results.
+    if (model && !canRetainScannerSnapshot(model, checkedAt)) return SCANNER_UNAVAILABLE_MESSAGE;
   }
   if (model?.status === "unavailable" || model?.status === "universe_missing") return SCANNER_UNAVAILABLE_MESSAGE;
   return null;
