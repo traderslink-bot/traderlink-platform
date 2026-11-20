@@ -23,7 +23,9 @@ export function workProgressLines(row:IndependentCoachWorkRow):readonly string[]
  if(detail?.availability==='unavailable'&&detail.unavailableReason==='unsupported_unit')return ['No trade or day count applies.'];
  if(detail?.availability==='available'&&detail.progress.unit==='performance_criteria'){const progress=detail.progress;return [`${progress.saved} of ${progress.selected} Performance criteria answered`,`${progress.writtenAnswered??0} of ${progress.writtenRequired??0} required written responses complete`,progress.feedbackReady?'Agreed feedback complete; review not delivered.':'Agreed feedback incomplete; review not delivered.'];}
  const lines:string[]=[];
- if(detail?.acceptedQuantity!==null&&detail?.acceptedQuantity!==undefined&&detail.acceptedUnit){
+ if(detail?.acceptedAllowanceLabel){
+  lines.push('Trade reviews included: '+detail.acceptedAllowanceLabel);
+ }else if(detail?.acceptedQuantity!==null&&detail?.acceptedQuantity!==undefined&&detail.acceptedUnit){
   const unit=detail.acceptedUnit==='trades'?(detail.acceptedQuantity===1?'trade':'trades'):(detail.acceptedQuantity===1?'trading day':'trading days');
   lines.push((detail.acceptedUnit==='trades'?'Agreed count: ':'Agreed limit: up to ')+detail.acceptedQuantity+' '+unit+' per review');
  }

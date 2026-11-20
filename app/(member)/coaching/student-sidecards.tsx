@@ -69,21 +69,24 @@ export function IndependentStudentSidecards({studentId,enrollments,section,nowUt
   }catch(cause){if(allowanceMounted.current&&generation===allowanceGeneration.current)setAllowanceCheck({item,error:cause instanceof Error?cause.message:'Completion could not be verified.'});}
   finally{if(allowanceMounted.current&&generation===allowanceGeneration.current)setBusy(false);}
  }
- function assignmentAction(item:SidecardItem){
+ function assignmentAction(item:SidecardItem,label?:string){
   const {enrollment,work}=item;if(!enrollment.planId)return <Typography color={drawerTextColor} variant="body2">Assignment context unavailable</Typography>;
   const returnTo=(planId?'/coaching/plans/'+planId:'/coaching/students')+'#'+new URLSearchParams({student:studentId,section:'lessons'});
   const route='/coaching/plans/'+enrollment.planId+'/assignments/'+work.workId+'?'+new URLSearchParams({enrollmentId:enrollment.enrollmentId,returnTo});
-  return <Button size="small" variant="outlined" href={route} onClick={event=>{if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();const url=new URL(route,window.location.origin);url.searchParams.set('returnTo',window.location.pathname+window.location.search+window.location.hash);window.location.assign(url.pathname+url.search);}}>{enrollment.status==='active'?'Manage in plan':'View assignment'}</Button>;
+  return <Button size="small" variant="outlined" href={route} onClick={event=>{if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();const url=new URL(route,window.location.origin);url.searchParams.set('returnTo',window.location.pathname+window.location.search+window.location.hash);window.location.assign(url.pathname+url.search);}}>{label??(enrollment.status==='active'?'Manage in plan':'View assignment')}</Button>;
  }
  if(section==='lessons'){
-  const assigned=lessonAccessOverview(rows).available;
+  const {available:assigned,pending,history}=lessonAccessOverview(rows);
   return <Stack id={id} spacing={2}>{assigned.length?<Box component="ul" sx={{listStyle:'none',m:0,p:0}}>{assigned.map(item=>{
    const {enrollment,work}=item,url=savedHttpsUrl(work.data.url);
    return <Box component="li" key={work.workId} sx={{py:2,borderBottom:1,borderColor:'divider',display:'grid',gridTemplateColumns:{xs:'minmax(0,1fr)',sm:'minmax(0,1fr) auto'},gap:2,alignItems:'center'}}>
     <Box sx={{minWidth:0}}><Typography color={drawerTextColor} component="h3" variant="h3" sx={{overflowWrap:'anywhere'}}>{sidecardWorkTitle(work,enrollment.planName)}</Typography><Typography variant="body2" color={drawerTextColor}>{enrollment.planName}</Typography><Chip size="small" variant="outlined" label={sidecardStatus(work.status)} sx={{mt:1}}/></Box>
     <Stack direction={{xs:'column',sm:'row'}} sx={{gap:1,alignItems:{xs:'stretch',sm:'center'}}}>{url?<Button size="small" href={url} target="_blank" rel="noopener noreferrer" variant="outlined">Open lesson</Button>:<Typography variant="body2" color={drawerTextColor}>Lesson link unavailable</Typography>}{assignmentAction(item)}</Stack>
    </Box>;
-  })}</Box>:<Typography color={drawerTextColor}>No assigned lessons in this view.</Typography>}</Stack>;
+  })}</Box>:!pending.length?<Typography color={drawerTextColor}>No assigned lessons in this view.</Typography>:null}
+  {pending.length?<Box component="section" aria-label="Lessons to assign"><Typography color={drawerTextColor} component="h3" variant="h3" sx={{mb:1}}>To assign</Typography>{pending.map(group=><Box key={group.enrollment.enrollmentId} sx={{borderBottom:1,borderColor:'divider',py:2}}><Typography color={drawerTextColor} sx={{fontWeight:700}}>{group.enrollment.planName}</Typography><Stack spacing={1} sx={{mt:1}}>{group.items.map(item=><Stack key={item.work.workId} direction={{xs:'column',sm:'row'}} sx={{gap:1,alignItems:{sm:'center'},justifyContent:'space-between'}}><Typography color={drawerTextColor}>{sidecardWorkTitle(item.work,item.enrollment.planName)} · Not assigned</Typography><Box>{assignmentAction(item,item.enrollment.status==='active'?'Assign lesson':'View assignment')}</Box></Stack>)}</Stack></Box>)}</Box>:null}
+  {history.length?<Box component="details"><Box component="summary" sx={{cursor:'pointer',py:1}}>Earlier assignments ({history.length})</Box><Stack spacing={2} sx={{mt:1}}>{history.map(item=><Stack key={item.work.workId} direction={{xs:'column',sm:'row'}} sx={{gap:1,alignItems:{sm:'center'},justifyContent:'space-between'}}><Box><Typography color={drawerTextColor}>{sidecardWorkTitle(item.work,item.enrollment.planName)}</Typography><Typography color={drawerTextColor} variant="body2">{item.enrollment.planName} · {sidecardStatus(item.work.status)}</Typography></Box><Box>{assignmentAction(item,'View assignment')}</Box></Stack>)}</Stack></Box>:null}
+  </Stack>;
  }
  if(section==='notes'){
   const enrollment=rows.find(row=>row.enrollmentId===selected);

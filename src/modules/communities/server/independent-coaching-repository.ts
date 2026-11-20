@@ -632,12 +632,18 @@ export class IndependentCoachingRepository {
       .all(enrollmentId) as {messageId:string;senderUserId:string;senderName:string;body:string;createdAtUtc:string}[];
   }
   listWork(enrollmentId:string,actorUserId:string){
-    this.enrollment(enrollmentId,actorUserId);
+    const enrollment=this.enrollment(enrollmentId,actorUserId),coach=enrollment.coach_user_id===actorUserId;
     const rows=this.database.prepare("SELECT * FROM traderlink_coaching_work WHERE enrollment_id=? ORDER BY due_at_utc IS NULL,due_at_utc,created_at_utc").all(enrollmentId) as {work_id:string;agreement_id:string|null;kind:string;data_json:string;status:string;due_at_utc:string|null}[];
-    return rows.map(row=>({questionSubmissionKey:randomUUID(),workId:row.work_id,agreementId:row.agreement_id,kind:row.kind,data:JSON.parse(row.data_json) as Record<string,unknown>,status:row.status,dueAtUtc:row.due_at_utc,
+    return rows.map(row=>{
+      const saved=JSON.parse(row.data_json) as Record<string,unknown>;
+      // The student can see an included unit before assignment, but not its
+      // unpublished title, text or resource link. Completed lessons keep history.
+      const data=!coach&&row.kind==='lesson'&&!['assigned','completed'].includes(row.status)?Object.fromEntries(['planItemId','occurrenceIndex','serviceUnitIndex','serviceType','quantity','assignedTo','plannedMinutes'].filter(key=>Object.hasOwn(saved,key)).map(key=>[key,saved[key]])):saved;
+      return {questionSubmissionKey:randomUUID(),workId:row.work_id,agreementId:row.agreement_id,kind:row.kind,data,status:row.status,dueAtUtc:row.due_at_utc,
       questions:this.database.prepare(`SELECT q.question_id questionId,q.body,q.created_at_utc createdAtUtc,
         (SELECT body FROM traderlink_coaching_question_answers a WHERE a.question_id=q.question_id ORDER BY revision DESC LIMIT 1) answer
-        FROM traderlink_coaching_questions q WHERE q.work_id=? ORDER BY q.created_at_utc,q.question_id`).all(row.work_id) as {questionId:string;body:string;createdAtUtc:string;answer:string|null}[]}));
+        FROM traderlink_coaching_questions q WHERE q.work_id=? ORDER BY q.created_at_utc,q.question_id`).all(row.work_id) as {questionId:string;body:string;createdAtUtc:string;answer:string|null}[]};
+    });
   }
 
   askQuestion(input:{workId:string;actorUserId:string;submissionKey:string;body:string;atUtc:string}):string{

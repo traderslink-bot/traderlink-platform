@@ -9,7 +9,7 @@ export class IndependentCoachingReviewFollowUp{
   if(review.status!=='delivered'||!terms)throw new Error('Follow-up is available after delivery.');
   const ownService=terms.items.find(item=>item.planItemId===review.planItemId);
   const service=ownService&&ownService.followUpDays>0?ownService:terms.items.find(item=>item.itemType==='review_follow_up'&&item.followUpDays>0);
-  return {review,enrollment,service,custom:terms.items.some(item=>item.itemType==='custom_task')};}
+  return {review,enrollment,service,custom:ownService?.itemType==='custom_task'};}
  read(reviewId:string,actorUserId:string,atUtc:string){
   time(atUtc);const context=this.context(reviewId,actorUserId),state=this.db.prepare('SELECT viewed_at_utc viewedAtUtc,follow_up_due_at_utc dueAtUtc,completed_at_utc completedAtUtc FROM traderlink_coaching_review_follow_up WHERE review_id=?').get(reviewId) as {viewedAtUtc:string|null;dueAtUtc:string|null;completedAtUtc:string|null}|undefined;
   const end=state?.viewedAtUtc&&context.service?new Date(Date.parse(state.viewedAtUtc)+context.service.followUpDays*86400000).toISOString():null;

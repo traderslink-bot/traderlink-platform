@@ -19,6 +19,26 @@ describe('agreed per-review follow-up',()=>{
   const follow=fixture([{planItemId:'review-item',itemType,followUpDays:3}]);expect(follow.read('review','student',now)).toMatchObject({included:true,canReply:false,windowEndsAtUtc:null});follow.markRead('review','student',now);expect(follow.read('review','student',now)).toMatchObject({included:true,canReply:true,windowEndsAtUtc:'2026-11-21T12:00:00.000Z'});expect(follow.read('review','student','2026-11-22T12:00:00.000Z').canReply).toBe(false);
  });
  it('does not borrow follow-up from a different review service',()=>{const follow=fixture([{planItemId:'review-item',itemType:'trade_review',followUpDays:0},{planItemId:'other-review',itemType:'performance_review',followUpDays:7}]);expect(follow.read('review','student',now)).toMatchObject({included:false,canReply:false});});
+ it.each(['trade_review','trading_day_review','performance_review'])('does not borrow unlimited custom-task discussion for %s',itemType=>{
+  const follow=fixture([{planItemId:'review-item',itemType,followUpDays:0},{planItemId:'separate-task',itemType:'custom_task',followUpDays:0}]);
+  for(const actor of ['student','coach']){
+   expect(follow.read('review',actor,now)).toMatchObject({included:false,canReply:false,windowEndsAtUtc:null});
+   expect(()=>follow.reply('review',actor,'Unagreed discussion',now)).toThrow('Follow-up is not included');
+  }
+ });
+ it('retains discussion for the bound custom task and closes it on completion',()=>{
+  const follow=fixture([{planItemId:'review-item',itemType:'custom_task',followUpDays:0}]);
+  expect(follow.read('review','student',now)).toMatchObject({included:true,canReply:true,windowEndsAtUtc:null});
+  follow.complete('review','coach',now);
+  expect(follow.read('review','student',now)).toMatchObject({included:true,canReply:false,problem:'Follow-up is complete.'});
+ });
+ it('keeps an explicitly included window bounded when the agreement also has a custom task',()=>{
+  const follow=fixture([{planItemId:'review-item',itemType:'performance_review',followUpDays:3},{planItemId:'separate-task',itemType:'custom_task',followUpDays:0}]);
+  expect(follow.read('review','student',now).canReply).toBe(false);
+  follow.markRead('review','student',now);
+  expect(follow.read('review','student',now)).toMatchObject({included:true,canReply:true,windowEndsAtUtc:'2026-11-21T12:00:00.000Z'});
+  expect(follow.read('review','student','2026-11-22T12:00:00.000Z').canReply).toBe(false);
+ });
  it('preserves legacy separate follow-up and prefers the bound service when present',()=>{const follow=fixture([{planItemId:'review-item',itemType:'trade_review',followUpDays:3},{planItemId:'legacy',itemType:'review_follow_up',followUpDays:7}]);follow.markRead('review','student',now);expect(follow.read('review','student',now).windowEndsAtUtc).toBe('2026-11-21T12:00:00.000Z');});
  it('retains legacy global follow-up on older agreements',()=>{const follow=fixture([{planItemId:'review-item',itemType:'trade_review',followUpDays:0},{planItemId:'legacy',itemType:'review_follow_up',followUpDays:7}]);follow.markRead('review','student',now);expect(follow.read('review','student',now).windowEndsAtUtc).toBe('2026-11-25T12:00:00.000Z');});
  it('keeps student-only read and coach-only completion boundaries',()=>{const follow=fixture([{planItemId:'review-item',itemType:'performance_review',followUpDays:3}]);expect(()=>follow.markRead('review','coach',now)).toThrow('Only the student');expect(()=>follow.complete('review','student',now)).toThrow('Only the coach');});

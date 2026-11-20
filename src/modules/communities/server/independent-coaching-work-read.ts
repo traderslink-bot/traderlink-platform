@@ -3,6 +3,7 @@ import {daySessionReady,validateDaySessionDraft} from '../contracts/coaching-tra
 import {independentActiveSelectionSql} from './independent-coaching-selection-lifecycle-storage';
 import type Database from 'better-sqlite3';
 import {coachingDate,type CoachingAgreementTerms} from '../contracts/coaching-agreements';
+import {submissionAllowanceLabel} from '../contracts/coaching-request-submission-limits';
 import {coachingServiceFocus,parseCoachingFocus,reviewKindForPlanItem} from '../contracts/coaching-review-workspace';
 import {parseIndependentTradeFeedback,independentTradeFeedbackCompleted,parseIndependentReviewDraft} from '../contracts/independent-coaching-review-input';
 import {parseTradeEvaluationTemplate} from '../contracts/coaching-trade-evaluation';
@@ -15,14 +16,14 @@ import {narrowWorkspaceAccessToAccount} from '../../platform/contracts/workspace
 type ProgressUnit='trades'|'trading_days'|'performance_criteria';
 type ProgressUnavailable='accepted_service_unavailable'|'unsupported_unit'|'invalid_saved_selection'|'identity_unavailable'|'feedback_unavailable';
 export type IndependentCoachReviewProgress=
- | Readonly<{availability:'available';acceptedQuantity:number;acceptedUnit:ProgressUnit;progress:Readonly<{unit:ProgressUnit;selected:number;saved:number;writtenRequired?:number;writtenAnswered?:number;feedbackReady?:boolean;includesTradeEvaluations?:true}>;unavailableReason:null}>
- | Readonly<{availability:'unavailable';acceptedQuantity:number|null;acceptedUnit:ProgressUnit|null;progress:null;unavailableReason:ProgressUnavailable}>;
+ | Readonly<{availability:'available';acceptedQuantity:number;acceptedUnit:ProgressUnit;acceptedAllowanceLabel?:string;progress:Readonly<{unit:ProgressUnit;selected:number;saved:number;writtenRequired?:number;writtenAnswered?:number;feedbackReady?:boolean;includesTradeEvaluations?:true}>;unavailableReason:null}>
+ | Readonly<{availability:'unavailable';acceptedQuantity:number|null;acceptedUnit:ProgressUnit|null;acceptedAllowanceLabel?:string;progress:null;unavailableReason:ProgressUnavailable}>;
 type ProgressSource={planId:string;planItemId:string;kind:string;termsJson:string|null;agreementStatus:string|null;acceptedAtUtc:string|null;selectedDaysJson:string;dayAssessmentsJson:string|null;draftJson?:string};
 type SavedProgressTrade={roundTripId:string;logicalTradeId:string;feedbackJson:string;completed:number};
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
-function unavailable(reason:ProgressUnavailable,acceptedQuantity:number|null=null,acceptedUnit:ProgressUnit|null=null):IndependentCoachReviewProgress{
- return {availability:'unavailable',acceptedQuantity,acceptedUnit,progress:null,unavailableReason:reason};
+function unavailable(reason:ProgressUnavailable,acceptedQuantity:number|null=null,acceptedUnit:ProgressUnit|null=null,acceptedAllowanceLabel?:string):IndependentCoachReviewProgress{
+ return {availability:'unavailable',acceptedQuantity,acceptedUnit,...(acceptedAllowanceLabel?{acceptedAllowanceLabel}:{}),progress:null,unavailableReason:reason};
 }
 function jsonObject(value:unknown):Record<string,unknown>{
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Saved progress unavailable.');
@@ -77,6 +78,7 @@ WHERE trip.workspace_id=? AND trip.account_id=? AND trip.round_trip_id=? AND tri
 /** Optional, original-coach metadata. Any unknown retains the underlying work row. */
 function readReviewProgress(database:Database.Database,coachUserId:string,row:IndependentCoachWorkRow):IndependentCoachReviewProgress{
  let acceptedQuantity:number|null=null,acceptedUnit:ProgressUnit|null=null,reason:ProgressUnavailable='accepted_service_unavailable';
+ let acceptedAllowanceLabel:string|undefined;
  try{
   const source=database.prepare(`SELECT e.plan_id planId,r.plan_item_id planItemId,r.kind,a.terms_json termsJson,a.status agreementStatus,a.accepted_at_utc acceptedAtUtc,
  r.selected_days_json selectedDaysJson,json_extract(r.draft_json,'$.dayAssessments') dayAssessmentsJson,r.draft_json draftJson
@@ -99,6 +101,8 @@ function readReviewProgress(database:Database.Database,coachUserId:string,row:In
   const quantity:unknown=item.quantity;
   if(typeof quantity!=='number'||!Number.isSafeInteger(quantity)||quantity<1)return unavailable(reason);
   acceptedQuantity=quantity;acceptedUnit=unit;reason='invalid_saved_selection';
+  const offer=item.itemType==='trade_review'?terms.builderConfig?.offers.trade_review:undefined,allowance=!item.timelineEnabled&&unit==='trades'?offer?.submissionLimits:undefined;
+  if(allowance&&Number.isSafeInteger(allowance.perPeriod)&&allowance.perPeriod>0&&allowance.perPeriod<=500)acceptedAllowanceLabel=submissionAllowanceLabel(allowance.perPeriod,offer?.tradeReviewFormat==='pack'?'once':item.frequency);
   const templates=terms.tradeEvaluationTemplates===undefined?undefined:jsonObject(terms.tradeEvaluationTemplates);
   const template=templates&&Object.hasOwn(templates,source.planItemId)?parseTradeEvaluationTemplate(templates[source.planItemId]):undefined;
   if(unit==='trading_days'){
@@ -124,10 +128,10 @@ function readReviewProgress(database:Database.Database,coachUserId:string,row:In
  FROM traderlink_coaching_review_trades t JOIN traderlink_coaching_reviews r ON r.review_id=t.review_id
  JOIN traderlink_coaching_enrollments e ON e.enrollment_id=r.enrollment_id JOIN traderlink_coaching_contexts c ON c.context_id=e.context_id
  WHERE r.review_id=? AND c.coach_user_id=? AND e.status='active' AND r.status IN ('ready','draft') AND ${independentActiveSelectionSql(database,'t')} ORDER BY t.round_trip_id LIMIT 501`).all(row.reviewId,coachUserId) as SavedProgressTrade[];
-  if(!trades.length||trades.length>500)return unavailable(reason,acceptedQuantity,unit);
+  if(!trades.length||trades.length>500)return unavailable(reason,acceptedQuantity,unit,acceptedAllowanceLabel);
   reason='identity_unavailable';
   const groups=selectedProgressGroups(database,coachUserId,row.enrollmentId,row.reviewId!,trades);
-  if(!groups.length||groups.length>quantity)return unavailable('invalid_saved_selection',acceptedQuantity,unit);
+  if(!groups.length||groups.length>quantity)return unavailable('invalid_saved_selection',acceptedQuantity,unit,acceptedAllowanceLabel);
   reason='feedback_unavailable';
   const focus=coachingServiceFocus({...item,focusAreas:parseCoachingFocus(item.focusAreas??[])});
   const completion=groups.map(group=>group.map(trade=>{
@@ -136,8 +140,8 @@ function readReviewProgress(database:Database.Database,coachUserId:string,row:In
    return trade.completed===1&&independentTradeFeedbackCompleted(feedback,focus,template);
   }));
   const saved=completion.filter(group=>group.every(Boolean)).length;
-  return {availability:'available',acceptedQuantity:quantity,acceptedUnit:unit,progress:{unit,selected:groups.length,saved},unavailableReason:null};
- }catch{return unavailable(reason,acceptedQuantity,acceptedUnit);}
+  return {availability:'available',acceptedQuantity:quantity,acceptedUnit:unit,...(acceptedAllowanceLabel?{acceptedAllowanceLabel}:{}),progress:{unit,selected:groups.length,saved},unavailableReason:null};
+ }catch{return unavailable(reason,acceptedQuantity,acceptedUnit,acceptedAllowanceLabel);}
 }
 
 export type IndependentCoachWorkRow={reviewId:string|null;workId?:string;serviceType?:string;enrollmentId:string;studentId:string;studentName:string;planId:string;planName:string;kind:string;status:string;dueAtUtc:string;periodStart:string|null;periodEnd:string|null;reviewProgress?:IndependentCoachReviewProgress};
