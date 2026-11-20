@@ -1,3 +1,4 @@
+import { gatewayWireEnabled, gatewayWireUrl, decodeGatewayWire } from "../../market-data/transport/gateway-wire";
 import "server-only";
 import { readFile } from "node:fs/promises";
 import type { AlpacaHistoryFrame, AlpacaHistoryResult } from "./rest-data";
@@ -16,11 +17,12 @@ export async function requestAlpacaGateway(path: "scanner-listings" | "calendar"
   if (!base || !token) throw Error("alpaca_gateway_not_configured");
   const parsed = new URL(base);
   if (parsed.username || parsed.password || parsed.search || parsed.hash || (parsed.protocol !== "https:" && !(local && parsed.protocol === "http:" && parsed.hostname === "127.0.0.1"))) throw Error("alpaca_gateway_invalid");
-  const url = new URL(path, base.endsWith("/") ? base : base + "/"); url.search = query.toString();
+  const wire=gatewayWireEnabled(environment);
+  const url = wire?gatewayWireUrl(base,path,query):new URL(path, base.endsWith("/") ? base : base + "/"); if(!wire)url.search = query.toString();
   const timeout = AbortSignal.timeout(120_000);
   const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", redirect: "error", signal: signal ? AbortSignal.any([timeout, signal]) : timeout });
   if (!response.ok) throw Error("alpaca_market_data_unavailable");
-  return response.json();
+  const payload=await response.json();return wire?decodeGatewayWire(path,payload):payload;
 }
 
 export async function readAlpacaHistory(input: { symbol: string; timeframe: AlpacaHistoryFrame; start: number; end: number; adjustment?: "raw" }, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal): Promise<AlpacaHistoryResult> {

@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { canViewWatchlistIndicators } from "@/src/modules/watchlist/server/access/watchlist-indicators-visibility";
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
@@ -12,7 +13,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const headers = { "cache-control": "private, no-store, max-age=0", "x-content-type-options": "nosniff" };
 
-export async function GET(request: NextRequest, context: { params: Promise<{ symbol: string }> }): Promise<Response> {
+async function readGET(request: NextRequest, context: { params: Promise<{ symbol: string }> }): Promise<Response> {
   const auth = await authorizeWatchlistMemberRequest(request);
   if (!auth.ok) return Response.json({ error: auth.error }, { status: auth.status, headers });
   const features = readWatchlistFeatureAccess(auth.principal.platformUserId);
@@ -32,3 +33,5 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   // Explicit projection excludes provider identity, audit IDs, input candles and transport details.
   return Response.json({ snapshot: memberIndicatorSnapshot(snapshot) }, { headers });
 }
+
+export const GET = browserDataRead("indicator_reads_unavailable", readGET);

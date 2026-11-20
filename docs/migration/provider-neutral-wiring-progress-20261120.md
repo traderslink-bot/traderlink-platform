@@ -1,0 +1,17 @@
+# Provider-neutral paired wiring — current source
+
+Owner authorizes resolve, QA and deploy after normal gates; Release owns publication/runtime rollout. Assignment marker PROVIDER-CUSTODY-8F67-ONCE processed once from verified source-assignment SHA8f67c0aa84cd93bae1bd3699b746ce0d5323f4b95289f797c32f0cce4147a1f6. Current lane005c38bee; prior dirty8d99 lane and all frozen packets intact.
+
+Paired source implementation in progress: shared HTTP helper registered with Release via queue01a1f7d0; legacy route wrappers plus five neutral aliases retain auth/body/selection/store/parser protections; bounded async full-pack decoder yields every64rows; transport and live publisher opt into paired neutral endpoints through explicit default-legacy gates. Entry forwards only the approved candle contract flag, not process environment wholesale. Proxy bypass adds only exact new full snapshot alias and trailing slash beside original exception. No runtime gate/config/provider effect. Source not yet accepted or tested in this lane.
+
+Next: complete paired HTTP/publisher/store and legacy regression tests, targeted types/lint and actual event-loop/full-pack measurements, fix findings in one batch, then integrate remaining preserved browser/Company/candle overlays and Options/Watchlist owner mappings on current source with Release coordination. Combined real connection/browser acceptance and final release still pending.
+
+## Paired-source checkpoint
+
+Implemented all assigned paired7seams, five alias routes, shared receiver helper and bounded async decoder. Existing worker authentication, 128MiB full/3MiB live/16KiB operation body bounds, exact actual supplier/revision, final atomic store check, initial/superseded pack protection, original live parser/generation/sequence/reset/null semantics, cadence and default legacy gates remain. Two additional exact public-copy spans changed; broker/import content untouched.
+
+Final focused batch: **42tests/6files PASS**, targetedTypeScript18paths PASS, lint0. Includes actual isolated atomic file publication, old/current revision rejection before and after I/O, paired private operations/universe and selection roundtrip, live publication, original two-account/provider-switch/upload/worker regressions, all alias module auth, exact proxy upload-only bypass and sibling matching. Native fake provider fixtures only. An initial test-only Next AsyncLocalStorage setup finding was corrected; product runtime was not patched to mask it. Guards settled, no provider/config/service/hosted effect.
+
+Synthetic1000/4000-symbol financial roundtrip and actual event-loop timing:4000 conversion maxheartbeatgap181.09ms synchronous versus4.58ms bounded-yield; decode179.76ms versus154.98ms.1000 gap52.20ms versus3.29ms. Peak combined syntheticRSS345104KiB, not incrementalproductionRAM. This resolves added synchronous converter starvation, not all end-to-end JSON/network/browser latency. Original receiver JSON parsing/fullvalidation remains as baseline.
+
+This paired slice is ready for integration review. Whole-feature acceptance/release is **not yet claimed**: frozen browser/market gateway/Company/cache layers must also be reconciled onto current source, Options/Watchlist mapping/extraHelp reviewed, producer/server/consumer rollout flags ordered, and actual combined source QA/browser/real provider connections completed before Release publishes and verifies. No migrations introduced by this slice. No global provider rollout executed here.

@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { canViewWatchlistIndicators } from "@/src/modules/watchlist/server/access/watchlist-indicators-visibility";
 import { readWatchlistUpgradeLinks } from "@/src/modules/watchlist/server/access/watchlist-plan-policy";
 import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
@@ -14,7 +15,7 @@ import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-stor
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(
+async function readGET(
   request: NextRequest,
   context: { params: Promise<{ symbol: string }> },
 ): Promise<NextResponse> {
@@ -43,3 +44,5 @@ export async function GET(
     symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators, canViewWatchlistIndicators(request.headers, state.symbol)),
   }, { headers: { "Cache-Control": "private, no-store" } });
 }
+
+export const GET = browserDataRead("watchlist_unavailable", readGET);

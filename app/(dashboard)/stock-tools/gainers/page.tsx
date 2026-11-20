@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Typography from "@mui/material/Typography";
 
 import { DashboardPage, DashboardPanel, DashboardSecondaryAction } from "../../../dashboard-template";
@@ -11,6 +8,7 @@ import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/se
 import { findGainerAppearances, readGainerArchive } from "@/src/modules/stock-gainers/server/archive";
 
 import { GainerFilterForm, type GainerFilters, type GainerPeriod } from "./gainer-filters";
+import { GainerDollarVolumeHeading } from "./gainer-dollar-volume-heading";
 
 export const metadata: Metadata = {
   title: "Stock Gainers | TradersLink Platform",
@@ -58,14 +56,7 @@ function Rankings({ rows, sessionHigh }: {
           <th scope="col">Rank</th><th scope="col">Ticker</th>
           {sessionHigh && <th scope="col">High</th>}
           <th scope="col">Close</th><th scope="col">{sessionHigh ? "Max gain" : "Gain"}</th><th scope="col">
-            <Box component="span" sx={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
-              $Vol
-              <Tooltip describeChild title="Estimated dollars traded (share volume × volume-weighted average price). This total can include postmarket trades.">
-                <IconButton size="small" aria-label="About dollar volume">
-                  <InfoOutlinedIcon sx={{ fontSize: 15 }} />
-                </IconButton>
-              </Tooltip>
-            </Box>
+            <GainerDollarVolumeHeading />
           </th>
         </tr></thead>
         <tbody>

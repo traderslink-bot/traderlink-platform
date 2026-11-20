@@ -21,10 +21,8 @@ import Link from "next/link";
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
 import type {
-  LiveWatchlistArchiveSnapshot,
   LiveWatchlistCardContent,
   LiveWatchlistMarketDataStatus,
-  LiveWatchlistSymbolState,
   LiveWatchlistVolumeContext,
   TradersLinkAiReadLevel,
   TradersLinkAiReadForwardHorizon,
@@ -32,6 +30,7 @@ import type {
   TradersLinkAiReadPullbackScenario,
   TradersLinkAiReadSource,
 } from "@/src/lib/live-watchlist/live-watchlist-types";
+import type { MemberWatchlistSymbolState as LiveWatchlistSymbolState, MemberWatchlistArchiveSnapshot as LiveWatchlistArchiveSnapshot } from "@/src/lib/live-watchlist/watchlist-member-market-data";
 import { WatchlistLiveDataStatus, watchlistPriceNote, hasFreshWatchlistPrice } from "./watchlist-price-status";
 import {
   getLiveWatchlistEntryGroup,

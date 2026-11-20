@@ -1,4 +1,5 @@
 import type { LiveWatchlistSymbolState } from "./live-watchlist-types";
+import type { MemberWatchlistSymbolState } from "./watchlist-member-market-data";
 
 /**
  * The Server-Sent Event connection is a low-latency hint, not the source of
@@ -39,10 +40,10 @@ export function isNewerLiveWatchlistSymbolState(
  * received a newer ticker revision. In that case, preserve the newer quote
  * fields while still accepting newer card content.
  */
-export function reconcileLiveWatchlistSymbolState(
-  current: LiveWatchlistSymbolState,
-  incoming: LiveWatchlistSymbolState,
-): LiveWatchlistSymbolState {
+export function reconcileLiveWatchlistSymbolState<T extends MemberWatchlistSymbolState>(
+  current: T,
+  incoming: T,
+): T {
   const incomingIsNewer = isNewerLiveWatchlistSymbolState(current, incoming);
   const preferred = incomingIsNewer ? incoming : current;
   const currentAiRead = current.cards.tradersLinkAiRead;

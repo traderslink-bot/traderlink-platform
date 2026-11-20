@@ -13,9 +13,9 @@ export const REVERSE_SPLIT_HELP_GUIDE: HelpGuide = {
     ],
   }, {
     id: "float-and-close", title: "Float and closing price", summary: "Read dated market data separately from split terms.",
-    keywords: ["float", "estimate", "close", "regular session", "EODHD"],
+    keywords: ["float", "estimate", "close", "regular session", "float estimate"],
     blocks: [
-      { kind: "paragraph", text: "Float is the EODHD provider-reported estimate, not shares outstanding. Estimated post-split float divides that float by the confirmed future ratio and assumes the provider still reports the pre-split figure. Provider estimates and update timing differ; the calculated result is not a verified new float." },
+      { kind: "paragraph", text: "Float is the reported estimate, not shares outstanding. Estimated post-split float divides that float by the confirmed future ratio and assumes the provider still reports the pre-split figure. Provider estimates and update timing differ; the calculated result is not a verified new float." },
       { kind: "paragraph", text: "The closing price is the dated regular-session close, not an after-hours quote or a theoretical split-adjusted price. Always check its date. A dash means the value is unavailable. Historical entries do not turn a current float snapshot into a historical float." },
     ],
   }, {

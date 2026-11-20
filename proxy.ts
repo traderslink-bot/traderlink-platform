@@ -156,5 +156,5 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ["/((?!api/internal/stock-screeners-pack/?$).*)"],
+  matcher: ["/((?!(?:api/internal/stock-screeners-pack|api/internal/screening/v1/snapshot)/?$).*)"],
 };

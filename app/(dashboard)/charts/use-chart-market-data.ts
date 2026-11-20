@@ -3,8 +3,8 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 type Feature = "charts" | "scanners";
-type Selection = { provider: "alpaca" | "moomoo"; revision: number; ready: boolean };
-const initial: Selection = { provider: "alpaca", revision: 0, ready: false };
+type Selection = { generation: string; ready: boolean };
+const initial: Selection = { generation: "", ready: false };
 type Store = { current: Selection; listeners: Set<() => void>; timer?: ReturnType<typeof setInterval>; pending?: AbortController; refresh: () => void };
 const stores = new Map<Feature, Store>();
 function store(feature: Feature): Store {
@@ -22,15 +22,15 @@ async function refresh(feature: Feature, entry: Store) {
     const response = await fetch("/api/charts/provider?feature=" + feature, { cache: "no-store", credentials: "same-origin", signal: request.signal });
     if (!response.ok) throw Error("selection_unavailable");
     next = await response.json() as Selection;
-    if (!["alpaca", "moomoo"].includes(next.provider) || !Number.isSafeInteger(next.revision) || next.revision < 0) throw Error("invalid_selection");
+    if (typeof next.generation !== "string" || !/^[a-f0-9]{64}$/.test(next.generation)) throw Error("invalid_selection");
   } catch {
     if (request.signal.aborted) return;
     // Data routes independently verify the selected source before returning data.
-    next = entry.current;
+    return;
   } finally { if (entry.pending === request) entry.pending = undefined; }
   if (request.signal.aborted || !entry.listeners.size) return;
-  if (entry.current.provider !== next.provider || entry.current.revision !== next.revision || !entry.current.ready) {
-    entry.current = { ...next, ready: true };
+  if (entry.current.generation !== next.generation || !entry.current.ready) {
+    entry.current = { generation: next.generation, ready: true };
     for (const listener of entry.listeners) listener();
   }
 }

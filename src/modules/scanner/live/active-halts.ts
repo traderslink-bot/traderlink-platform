@@ -23,7 +23,9 @@ export function selectActiveScannerHalts(rows:readonly HaltCandidate[],now=new D
   const nowSeconds=easternClockSeconds(now);
   const seen=new Set<string>(),movementByTicker=new Map(movements.map(item=>[item.symbol,item]));
   return Object.freeze(rows.flatMap(halt=>{
-    if(halt.source==="alpaca"){
+    // Explicit live status remains authoritative after public source metadata
+    // is removed. Exchange resume times are annotations, not a status override.
+    if(typeof halt.halted==="boolean"){
       if(halt.halted!==true||seen.has(halt.ticker))return [];
       seen.add(halt.ticker);
       return [{...halt,chartExchange:universeExchanges?.get(halt.ticker)??halt.chartExchange??(halt.market==="NASDAQ"||halt.market==="NYSE"?halt.market:null)}];

@@ -1,3 +1,4 @@
+import { gatewayWireEnabled, gatewayWireUrl, decodeGatewayWire, type GatewayOperation } from "../../market-data/transport/gateway-wire";
 /** Portable adapters for the separately hosted levels/Watchlist runtime.
  * Only a private VPS gateway token is used here; no Alpaca broker key.
  */
@@ -21,12 +22,13 @@ class RuntimeGateway {
     if (this.base.username || this.base.password || this.base.search || this.base.hash || (this.base.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && this.base.protocol === "http:" && this.base.hostname === "127.0.0.1"))) throw Error("Alpaca VPS gateway requires encrypted transport.");
     this.token = token; this.fetcher = options.fetcher ?? fetch; this.now = options.now ?? Date.now;
   }
-  async get(path: string, query: URLSearchParams, signal?: AbortSignal) {
-    const url = new URL(path, this.base); url.search = query.toString();
+  async get(path: GatewayOperation, query: URLSearchParams, signal?: AbortSignal) {
+    const wire=gatewayWireEnabled();
+    const url = wire?gatewayWireUrl(this.base,path,query):new URL(path, this.base); if(!wire)url.search = query.toString();
     const timeout = AbortSignal.timeout(120_000);
     const response = await this.fetcher(url, { headers: { Authorization: `Bearer ${this.token}` }, signal: signal ? AbortSignal.any([signal, timeout]) : timeout, redirect: "error" });
     if (!response.ok) throw Error("Alpaca VPS market data is unavailable.");
-    return response.json();
+    const payload=await response.json();return wire?decodeGatewayWire(path,payload) as typeof payload:payload;
   }
 }
 

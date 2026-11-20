@@ -1,5 +1,6 @@
 import "server-only";
 import type { ScannerConfiguration, ScannerReadModel } from "../contracts";
+import { browserScannerModel } from "./browser-scanner-model";
 
 const RESPONSE_HEADERS = { "cache-control": "private, no-store, max-age=0", "x-content-type-options": "nosniff" };
 const json = (value: unknown,status=200) => Response.json(value,{ status,headers: RESPONSE_HEADERS });
@@ -42,7 +43,7 @@ async function body(request: Request): Promise<unknown> {
 export async function handleLiveScannerGet(request: Request, dependencies: LiveScannerHttpDependencies): Promise<Response> {
   if (request.method !== "GET" || !dependencies.member(request)) return json({ code: "not_found" },404);
   if(new URL(request.url).searchParams.get("stream")==="1"&&dependencies.subscribe)return scannerModelStream(request,dependencies);
-  try { return json(await dependencies.read()); }
+  try { return json(browserScannerModel(await dependencies.read())); }
   catch { return json({ code: "scanner_unavailable" },503); }
 }
 export async function handleScannerFloatsGet(request:Request,dependencies:ScannerFloatsHttpDependencies):Promise<Response>{
@@ -93,7 +94,7 @@ function scannerModelStream(request:Request,dependencies:LiveScannerHttpDependen
         try{while(dirty&&!closed&&(controller.desiredSize??0)>0){
           dirty=false;if(!dependencies.member(request)){close();break;}
           const model=await dependencies.read();if(closed)break;
-          const message=encoder.encode(`event: scanner\ndata: ${JSON.stringify(model)}\n\n`);
+          const message=encoder.encode(`event: scanner\ndata: ${JSON.stringify(browserScannerModel(model))}\n\n`);
           if(message.byteLength>1_000_000){close();break;}
           controller.enqueue(message);
         }}catch{close();}finally{running=false;}

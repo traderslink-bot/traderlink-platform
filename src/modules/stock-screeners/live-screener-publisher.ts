@@ -1,3 +1,4 @@
+import { SCREENER_PRIVATE_PATHS, encodeScreenerPrivateLive } from "./private-publication-wire";
 import type { ScreenerLiveUpdate } from "./live-market-worker";
 import type { LiveScreenerFrame, LiveScreenerWindow } from "./live-screener-book";
 import { MAX_LISTINGS, type ScreenerProviderSelection } from "./contracts";
@@ -10,6 +11,7 @@ type Settings = {
   window: LiveScreenerWindow;
   signal: AbortSignal;
   selection?: ScreenerProviderSelection;
+  neutral?: boolean;
   onError?: (status: number | "transport") => void;
 };
 
@@ -29,7 +31,8 @@ export class LiveScreenerPublisher {
     const origin = new URL(options.origin);
     if (origin.protocol !== "https:" || origin.username || origin.password || origin.search || origin.hash
       || origin.pathname !== "/" || options.token.length < 32) throw Error("invalid_live_publisher_configuration");
-    this.endpoint = new URL("/api/internal/stock-screeners-live", origin);
+    if (options.neutral && !options.selection) throw Error("invalid_live_publisher_configuration");
+    this.endpoint = new URL(options.neutral ? SCREENER_PRIVATE_PATHS.live : "/api/internal/stock-screeners-live", origin);
   }
 
   start() {
@@ -73,7 +76,7 @@ export class LiveScreenerPublisher {
       const response = await this.transport(this.endpoint, {
         method: "POST", redirect: "error", cache: "no-store",
         headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify(frame), signal: AbortSignal.any([signal, AbortSignal.timeout(2_000)]),
+        body: JSON.stringify(this.options.neutral ? encodeScreenerPrivateLive(frame, this.options.selection!, token) : frame), signal: AbortSignal.any([signal, AbortSignal.timeout(2_000)]),
       });
       if (this.generation !== generation || !this.timer) return;
       if (response.status !== 204) {

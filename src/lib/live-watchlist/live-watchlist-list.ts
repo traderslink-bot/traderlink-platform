@@ -24,7 +24,7 @@ export type LiveWatchlistListPayload = Omit<LiveWatchlistStatePayload, "symbols"
   symbols: LiveWatchlistListSymbol[];
 };
 
-export function projectLiveWatchlistListSymbol(state: LiveWatchlistSymbolState): LiveWatchlistListSymbol {
+export function projectLiveWatchlistListSymbol(state: Omit<LiveWatchlistSymbolState, "extendedQuote">): LiveWatchlistListSymbol {
   return {
     symbol: state.symbol,
     status: state.status,

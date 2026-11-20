@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { join } from "node:path";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
@@ -47,7 +48,7 @@ async function readInput(request: Request): Promise<unknown> {
   }
 }
 
-export async function GET(request: Request) {
+async function readGET(request: Request) {
   const query = new URL(request.url).searchParams;
   const identity = scope(request);
   const open = query.get("open");
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+async function readPOST(request: Request) {
   const identity = scope(request);
   if (!identity) return reply({ error: "not_found" }, 404);
   try { requirePlatformMutationRequest(request); } catch { return reply({ error: "invalid_request" }, 403); }
@@ -158,3 +159,7 @@ export async function POST(request: Request) {
     return reply({ error: conflict ? "saved_conflict" : "saved_unavailable" }, conflict ? 409 : 503);
   }
 }
+
+export const GET = browserDataRead("screeners_unavailable", readGET);
+
+export const POST = browserDataRead("screeners_unavailable", readPOST);

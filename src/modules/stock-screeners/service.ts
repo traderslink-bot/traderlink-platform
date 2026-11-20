@@ -61,7 +61,8 @@ export function getRun(identity: TraderLinkPlatformRequestIdentity, id: string, 
 function resultPage(run: Run, page: number, sort: Definition["sort"]): RunResult {
   const last = Math.max(1, Math.ceil(run.matches.length / PAGE_SIZE)), current = Math.min(page, last);
   const sorted = sortRows(run.matches, sort);
-  return { ...run.header, rows: sorted.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE), page: current, pageSize: PAGE_SIZE };
+  return { ...run.header, source: run.header.source === "Preview data" ? "Preview data" : "TradersLink",
+    rows: sorted.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE), page: current, pageSize: PAGE_SIZE };
 }
 
 let marketRead: { file: string; until: number; interval: number; result: ReturnType<typeof readSharedMarket> } | undefined;

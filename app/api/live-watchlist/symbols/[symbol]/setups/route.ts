@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { requireTraderLinkPlatformAuthenticatedRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import type { NextRequest } from "next/server";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 const headers = { "cache-control": "private, no-store, max-age=0", "x-content-type-options": "nosniff" };
 
 /** Access checked before reading cached setup evidence; never initiates a refresh. */
-export async function GET(request: NextRequest, context: { params: Promise<{ symbol: string }> }): Promise<Response> {
+async function readGET(request: NextRequest, context: { params: Promise<{ symbol: string }> }): Promise<Response> {
   const access = await authorizeWatchlistMemberRequest(request);
   if (!access.ok) return Response.json({ error: access.error }, { status: access.status, headers });
   const plan = readWatchlistFeatureAccess(access.principal.platformUserId);
@@ -30,3 +31,5 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
     return Response.json({ snapshot: await readWatchlistSetupSnapshot(symbol, identity, Date.now(), hasWatchlistDashboardNavigationAccess(requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers, { membershipFeatures: ["watchlist.access"] }))) }, { headers });
   } catch { return Response.json({ error: "Setup readings are unavailable." }, { status: 503, headers }); }
 }
+
+export const GET = browserDataRead("setup_reads_unavailable", readGET);

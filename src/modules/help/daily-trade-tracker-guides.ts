@@ -442,7 +442,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         id: "post-session-update",
         title: "One post-session reconciliation",
         summary: "Understand when the Analyzer saves market data.",
-        keywords: Object.freeze(["post session", "reconciliation", "final candle", "update", "moomoo finalizes"]),
+        keywords: Object.freeze(["post session", "reconciliation", "final candle", "update", "post-session update"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "callout", title: "Same-day disclosure", text: "Same-day analysis uses the candles available at the time. Trade Analyzer checks for finalized candles at 4:15 a.m. Eastern the next day, with no additional Analyzer allowance." }),
           Object.freeze({ kind: "paragraph", text: "The final pass can update candle values, indicator details or analysis that depends on them. Already useful analysis remains available if that final refresh cannot finish; TradersLink does not replace it with invented or empty results." }),

@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { projectWatchlistTickersForViewer } from "@/src/modules/watchlist/server/access/watchlist-ticker-projection";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -9,7 +10,7 @@ import { measurePlatformRequestPhase, measurePlatformRequestPhaseAsync, withPlat
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+async function readGET(request: NextRequest): Promise<NextResponse> {
   return withPlatformRequestTiming(async () => {
     const auth = await measurePlatformRequestPhaseAsync("auth", () => authorizeWatchlistMemberRequest(request));
     if (!auth.ok) {
@@ -23,3 +24,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }));
   });
 }
+
+export const GET = browserDataRead("watchlist_unavailable", readGET);

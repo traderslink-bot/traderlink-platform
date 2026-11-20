@@ -8,7 +8,7 @@ import { useCallback, useState } from "react";
 import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import type { DaySessionTradeAnalyzer } from "../trade-tracker/[sessionDate]/day-session-types";
 import { WrittenTradeAnalysis } from "../trade-tracker/written-trade-analysis";
-import { AlpacaLightweightChart } from "./alpaca-lightweight-chart";
+import { MarketChart } from "./market-chart";
 import type { MarketTradeContext, MarketTradeMark } from "./chart-trade-context";
 
 export default function TradeMarketChartDrawer({
@@ -53,7 +53,7 @@ export default function TradeMarketChartDrawer({
       </Stack>
       <Stack data-trade-market-content direction={{ xs: "column", md: "row" }} sx={{ flex: 1, minHeight: 0 }}>
         <Box data-trade-market-chart sx={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-          <AlpacaLightweightChart symbol={symbol} timeframe={timeframe} onTimeframeChange={setTimeframe}
+          <MarketChart symbol={symbol} timeframe={timeframe} onTimeframeChange={setTimeframe}
             compactMobile tradeContext={context} tradeFocusRevision={focusRevision} onTradeMarkClick={selectMarks} />
         </Box>
         {showAnalysis && <Box id="full-chart-trade-analysis" component="aside" aria-label="Saved trade analysis"

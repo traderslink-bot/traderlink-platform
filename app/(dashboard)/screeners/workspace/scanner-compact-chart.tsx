@@ -19,7 +19,7 @@ import { ScannerWorkspaceCard } from "../scanner-workspace-card";
 
 import {workspaceChartHasVisibleArea} from './workspace-chart-visibility';
 
-const Chart = lazy(() => import("../../charts/alpaca-lightweight-chart").then(module => ({default:module.AlpacaLightweightChart})));
+const Chart = lazy(() => import("../../charts/market-chart").then(module => ({default:module.MarketChart})));
 
 const Covered = createContext(false);
 export const ScannerCompactChartCovered = Covered.Provider;

@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { projectWatchlistTickerForViewer } from "@/src/modules/watchlist/server/access/watchlist-ticker-projection";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -7,7 +8,7 @@ import { createLiveWatchlistStream } from "@/src/lib/live-watchlist/live-watchli
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest): Promise<Response> {
+async function readGET(request: NextRequest): Promise<Response> {
   const auth = await authorizeWatchlistMemberRequest(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -21,3 +22,5 @@ export async function GET(request: NextRequest): Promise<Response> {
     },
   });
 }
+
+export const GET = browserDataRead("watchlist_unavailable", readGET);

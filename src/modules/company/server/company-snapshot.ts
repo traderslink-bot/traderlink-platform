@@ -1,3 +1,4 @@
+import { companyProfileFacts, companyMetricFacts } from "../company-data-wire.mjs";
 import "server-only";
 import { readCompanyData as json } from "@/src/lib/news/company-data-gateway";
 import { readCompanyProfileSample, previewCompanyCik } from "./company-profile-samples";
@@ -90,6 +91,11 @@ export async function readCompanySnapshot(symbol:string) {
   const fiscalDate=fiscalYearEnd&&/^\d{4}$/.test(fiscalYearEnd)?new Date(`2000-${fiscalYearEnd.slice(0,2)}-${fiscalYearEnd.slice(2)}T12:00:00Z`):null;
   const fiscalYearEndLabel=fiscalDate&&Number.isFinite(fiscalDate.getTime())
     ? new Intl.DateTimeFormat("en-US",{month:"long",day:"numeric",timeZone:"UTC"}).format(fiscalDate):undefined;
-  return {symbol,cik,companyProfile,headquarters,fiscalYearEndLabel,name:submissions?.name??company?.title,sic:submissions?.sicDescription,profile,metrics:metrics?.metric??null,
+  // The UI does not use upstream logo assets. Keep its profile facts neutral,
+  // without exposing vendor-specific field names or unused asset URLs.
+  const profileFacts=companyProfileFacts(profile);
+  const publicProfile:Record<string,unknown>|null=profileFacts?{...profileFacts,industry:profileFacts.industry??profileFacts.finnhubIndustry}:null;
+  if(publicProfile){delete publicProfile.finnhubIndustry;delete publicProfile.logo;}
+  return {symbol,cik,companyProfile,headquarters,fiscalYearEndLabel,name:submissions?.name??company?.title,sic:submissions?.sicDescription,profile:publicProfile,metrics:metrics?.metric?companyMetricFacts(metrics.metric):null,
     filings:unique, filingsAvailable:Boolean(submissions),financials:reportedFacts(data?.facts??{},profile?.currency,unique,today)};
 }

@@ -8,7 +8,7 @@ import { DashboardPanel } from "@/app/dashboard-template";
 import type { ScannerWorkspaceSlotId } from "./scanner-workspace-layout";
 import { ScannerWorkspaceCard } from "./scanner-workspace-card";
 
-const Chart = lazy(() => import("../charts/alpaca-lightweight-chart").then(module => ({default:module.AlpacaLightweightChart})));
+const Chart = lazy(() => import("../charts/market-chart").then(module => ({default:module.MarketChart})));
 
 const Covered = createContext(false);
 export const ScannerCompactChartCovered = Covered.Provider;

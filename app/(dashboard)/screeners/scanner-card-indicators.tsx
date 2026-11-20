@@ -150,7 +150,7 @@ function RecentSignal({ signal, compact = false }: { signal: DisplaySignal; comp
 export function ScannerIndicatorReads({ row,now }: { row:Pick<LiveScannerRow,"symbol"|"price">; now:number }) {
   const { frame,selected }=useSettings();
   const provider=useMarketDataSelection("scanners");
-  const providerQuery=`provider=${provider.provider}&providerRevision=${provider.revision}`;
+  const providerQuery=`generation=${provider.generation}`;
   const readKey=`${row.symbol}:${frame}:${providerQuery}`;
   const ref=useRef<HTMLDivElement|null>(null);
   const [visible,setVisible]=useState(false);

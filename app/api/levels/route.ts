@@ -7,6 +7,7 @@ import {
   listSavedStockLevelsMaps,
 } from "@/src/modules/stock-levels/server/stock-levels-service";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { browserSavedStockLevelsMap, browserStockLevelsResult } from "@/src/modules/stock-levels/server/browser-stock-levels";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export async function GET(request: Request): Promise<Response> {
   try {
     return Response.json(
       {
-        savedMaps: listSavedStockLevelsMaps(identity.scope),
+        savedMaps: listSavedStockLevelsMaps(identity.scope).map(browserSavedStockLevelsMap),
         ...getStockLevelsQuotaFeedback(identity.scope, noRequestLimit),
       },
       { headers: noStoreHeaders },
@@ -61,10 +62,10 @@ export async function POST(request: Request): Promise<Response> {
   }
   const noRequestLimit = hasWatchlistDashboardNavigationAccess(identity);
   try {
-    return Response.json(await getStockLevels(identity.scope, body.symbol, {
+    return Response.json(browserStockLevelsResult(await getStockLevels(identity.scope, body.symbol, {
       noRequestLimit,
       replaceSavedMapId: body.replaceSavedMapId ?? null,
-    }), { headers: noStoreHeaders });
+    })), { headers: noStoreHeaders });
   } catch {
     return Response.json(
       {

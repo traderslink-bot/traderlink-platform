@@ -2,7 +2,7 @@ import type {ServerResponse} from 'node:http';
 import type {AlpacaQuoteReply} from './scanner-snapshots';
 import {EVENT_GATEWAY_FLUSH_MS} from '../live/event-timing';
 
-type Consumer={symbols:readonly string[];regularClose:number;response:ServerResponse;signatures:Map<string,string>;lastFull:number;lastSent:number};
+type Consumer={symbols:readonly string[];regularClose:number;response:ServerResponse;signatures:Map<string,string>;lastFull:number;lastSent:number;encode?:(value:unknown)=>unknown};
 /** Bounded fan-out over the same quote/session book used by HTTP consumers. */
 export class ScannerStreamHub {
   private consumers=new Set<Consumer>();private dirty=new Set<string>();private running=false;
@@ -10,9 +10,9 @@ export class ScannerStreamHub {
   constructor(private readonly read:(symbols:readonly string[],regularClose:number)=>AlpacaQuoteReply,private readonly renew:(symbols:readonly string[])=>void){
     this.timer=setInterval(()=>this.flush(),EVENT_GATEWAY_FLUSH_MS);this.timer.unref();
   }
-  add(symbols:readonly string[],regularClose:number,response:ServerResponse){
+  add(symbols:readonly string[],regularClose:number,response:ServerResponse,encode?:(value:unknown)=>unknown){
     if(this.consumers.size>=2)throw Error('busy');
-    const consumer={symbols,regularClose,response,signatures:new Map<string,string>(),lastFull:0,lastSent:0};this.consumers.add(consumer);
+    const consumer={symbols,regularClose,response,signatures:new Map<string,string>(),lastFull:0,lastSent:0,encode};this.consumers.add(consumer);
     response.writeHead(200,{'Content-Type':'text/event-stream','X-Accel-Buffering':'no'});response.write(': scanner stream\n\n');
     response.on('close',()=>this.consumers.delete(consumer));this.renew(symbols);this.flush();
   }
@@ -40,7 +40,7 @@ export class ScannerStreamHub {
   private send(consumer:Consumer,value:unknown){
     if(consumer.response.destroyed)return;
     if(consumer.response.writableLength>2_000_000){consumer.response.destroy();return;}
-    consumer.response.write(`event: snapshots\ndata: ${JSON.stringify(value)}\n\n`);consumer.lastSent=Date.now();
+    consumer.response.write(`event: snapshots\ndata: ${JSON.stringify(consumer.encode?consumer.encode(value):value)}\n\n`);consumer.lastSent=Date.now();
   }
   close(){clearInterval(this.timer);for(const consumer of this.consumers)consumer.response.end();this.consumers.clear();}
 }

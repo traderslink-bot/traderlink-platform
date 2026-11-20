@@ -202,6 +202,7 @@ const legacyTopLevelReplacementRedirects = [
 ] as const;
 
 const nextConfig: NextConfig = {
+  productionBrowserSourceMaps: false,
   output: "standalone",
   serverExternalPackages: ["levels-system-v2", "better-sqlite3"],
   async headers() {

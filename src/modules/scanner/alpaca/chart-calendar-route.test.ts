@@ -6,6 +6,7 @@ vi.mock('@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-ac
 vi.mock('./client',()=>({requestAlpacaGateway:state.gateway}));
 vi.mock('@/src/modules/market-data/server/provider-settings',()=>({marketDataSelection:()=>({...state.selection})}));
 import {GET} from '@/app/api/charts/calendar/route';
+import {browserDataSession} from '@/src/modules/market-data/server/browser-data-session';
 const request=(year='2027')=>new Request('http://local/api/charts/calendar?year='+year);
 beforeEach(()=>{state.authenticated=true;state.access=true;state.gateway.mockReset();state.selection={provider:"alpaca",revision:0};});
 it('requires authenticated chart access before requesting calendar facts',async()=>{
@@ -26,4 +27,13 @@ it('rejects an outdated source before reading data and a source changed during t
  // Use an actual complete normalized calendar so the stale-source check is exercised.
  state.gateway.mockImplementation(async()=>{state.selection={provider:"alpaca",revision:2};return {available:true,start:'2027-01-01',end:'2027-12-31',sessions:Array.from({length:252},(_,n)=>({date:new Date(Date.UTC(2027,0,1+n)).toISOString().slice(0,10),open:'09:30',close:'16:00'}))};});
  expect((await GET(request())).status).toBe(409);
+});
+
+it('rejects old neutral generations before calendar I/O, including switching back to the original source',async()=>{
+ const generation=browserDataSession('charts',{provider:'alpaca',revision:0}).generation;
+ const stale=new Request('http://local/api/charts/calendar?year=2027&generation='+generation);
+ state.selection={provider:'moomoo',revision:1};
+ expect((await GET(stale)).status).toBe(409);
+ state.selection={provider:'alpaca',revision:2};
+ expect((await GET(stale)).status).toBe(409);expect(state.gateway).not.toHaveBeenCalled();
 });
