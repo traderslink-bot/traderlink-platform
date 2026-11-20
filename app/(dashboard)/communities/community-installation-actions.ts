@@ -20,5 +20,5 @@ export async function checkCommunityInstallation(form: FormData): Promise<Commun
     .get(identity.scope.userId, guildId) as {auth_subject: string; connected_slug: string | null; connected_owner: string | null} | undefined);
   if (!candidate || (candidate.connected_owner && candidate.connected_owner !== identity.scope.userId)) return denied;
   if (candidate.connected_slug) return {state: "connected", message: COMMUNITY_INSTALLATION_MESSAGES.connected, href: `/communities/${encodeURIComponent(candidate.connected_slug)}/manage`};
-  return readCommunityInstallationStatus(guildId, candidate.auth_subject, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "");
+  return readCommunityInstallationStatus(guildId, candidate.auth_subject, process.env.TRADERLINK_DISCORD_BOT_TOKEN ?? "", fetch, "community-owner-review");
 }

@@ -195,6 +195,14 @@ export type CommunityStatsActivation = Readonly<{
 export type CommunityStatsContent = Readonly<{
   id: string; type: CommunityStatsWebVisit["contentType"]; title: string; path: string;
   canonicalId?:string;placementId?:string;
+  /** Authorized placements of one canonical unit; never separate publication IDs. */
+  occurrences?:readonly Readonly<{pageId:string;placementId?:string;path:string;
+    state:"draft"|"published"|"archived";mode:"tracked_page"|"discord_post"|"not_collected"}>[];
+  legacyState?:"draft"|"published"|"archived";legacyPath?:string;legacyMode?:"tracked_page"|"discord_post"|"not_collected";
+  pageId?:string; categoryId?:string|null; publisherUserId?:string|null;
+  targetKind?:"page"|"alert"|"watchlist_item"|"document";
+  contributorUserId?:string|null; contributorName?:string|null;
+  contributorProvenance?:"native_author"|"first_published_by"|"unknown";
   publishedAtUtc?:string|null;
   publicationMode?:"tracked_page"|"discord_post"|"unknown";
   authorUserId: string | null; authorName: string | null;
@@ -217,6 +225,7 @@ export type CommunityStatsStoredEvent = Readonly<{
   replyToEventId: string | null; replyDelaySeconds: number | null; sourceLinkId: string | null;
   canonicalContentId?:string|null;placementId?:string|null;
   nicknameState?:"observed"|"not_collected";
+  pageId?:string|null;categoryId?:string|null;publisherUserId?:string|null;
 }>;
 
 export type CommunityStatsNativeMember = Readonly<{

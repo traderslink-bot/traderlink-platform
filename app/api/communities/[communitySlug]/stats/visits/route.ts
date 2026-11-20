@@ -2,7 +2,7 @@ import {statsRequestPublicHostname} from "@/src/modules/communities/server/stats
 import {requireCommunityOwnerReviewIdentity} from "@/src/modules/communities/server/community-owner-review-request-identity";
 import {requireTraderLinkPlatformRequestIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {openPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
-import {assertStatsSameOrigin,authorizeCommunityStats,readCommunityStatsJson,isCommunityStatsAccessDenied} from "@/src/modules/communities/server/stats/community-stats-access";
+import {revalidateCommunityStatsRequest,assertStatsSameOrigin,authorizeCommunityStats,readCommunityStatsJson,isCommunityStatsAccessDenied} from "@/src/modules/communities/server/stats/community-stats-access";
 import {recordCommunityStatsVisit} from "@/src/modules/communities/server/stats/community-stats-visits";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -13,8 +13,9 @@ export async function POST(request:Request,{params}:{params:Promise<{communitySl
     assertStatsSameOrigin(request);const ownHost=statsRequestPublicHostname(request);const actor=requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers));
     const body=await readCommunityStatsJson(request,1500),{communitySlug}=await params;
     db=openPlatformDatabase({mode:"runtime"});const scope=await authorizeCommunityStats(db,communitySlug,actor.scope.userId,"visit");
+    revalidateCommunityStatsRequest(request,actor);
     if(process.env.TRADERLINK_COMMUNITY_STATS_ENABLED!=="1")return new Response(null,{status:204,headers});
-    const result=recordCommunityStatsVisit(db,scope,body,new Date().toISOString(),ownHost);
+    const result=recordCommunityStatsVisit(db,scope,body,new Date().toISOString(),ownHost,()=>revalidateCommunityStatsRequest(request,actor));
     return Response.json(result,{headers,status:202});
   }catch(error){
     if(isCommunityStatsAccessDenied(error))return new Response(null,{status:404,headers});

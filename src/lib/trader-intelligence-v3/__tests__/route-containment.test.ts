@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
+import ts from "typescript";
 
 import { describe, expect, it } from "vitest";
 
@@ -209,6 +210,63 @@ describe("Trader Intelligence route containment matrix", () => {
       source.replace("import {", "import type {"),
       source.replace("const denied=gate(request);", "/* gate(request) */ const denied=null;"),
     ]) expect(check(untrusted)).toContainEqual(expect.objectContaining({code:"ti_v3_route_method_unwrapped",path,method:"POST"}));
+  });
+
+  it.each([
+    "app/api/partner-channels/communities/[communityId]/inspection-contact/route.ts",
+    "app/api/admin/journal/partner-channels/[communityId]/resources/route.ts",
+  ])("retains the actual imported original Paid GET gate for %s", path => {
+    const source = readFileSync(path, "utf8");
+    const matrix = TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX.filter(entry => entry.modulePath === path);
+    expect(matrix).toHaveLength(1); expect(matrix[0].methods).toEqual(["GET"]);
+    const check = (text: string) => scanTraderIntelligenceRouteContainment({
+      routeRecords: [{ path, source: text }], intelligenceClientRecords: [], matrix,
+    });
+    expect(check(source)).toEqual([]);
+    // The global scanner classifies trusted helper calls. The stronger local
+    // original-request/order contract below is specific to these two adapters.
+    const originalGateBeforeAwait = (text: string): boolean => {
+      const parsed = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+      let gateName: string | undefined;
+      for (const statement of parsed.statements) {
+        if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)
+          || statement.moduleSpecifier.text !== "@/src/modules/partner-alerts/server/partner-alert-owner-review-request"
+          || statement.importClause?.isTypeOnly) continue;
+        const bindings = statement.importClause?.namedBindings;
+        if (bindings && ts.isNamedImports(bindings)) gateName = bindings.elements.find(element => !element.isTypeOnly
+          && (element.propertyName ?? element.name).text === "partnerAlertOwnerReviewRequestDenied")?.name.text;
+      }
+      const handler = parsed.statements.find((statement): statement is ts.FunctionDeclaration =>
+        ts.isFunctionDeclaration(statement) && statement.name?.text === "GET");
+      const request = handler?.parameters[0]?.name;
+      const [first, second] = handler?.body?.statements ?? [];
+      if (!gateName || !request || !ts.isIdentifier(request) || !first || !ts.isVariableStatement(first)
+        || first.declarationList.declarations.length !== 1 || !second || !ts.isIfStatement(second)) return false;
+      const declaration = first.declarationList.declarations[0], call = declaration.initializer;
+      return ts.isIdentifier(declaration.name) && !!call && ts.isCallExpression(call)
+        && ts.isIdentifier(call.expression) && call.expression.text === gateName && call.arguments.length === 1
+        && ts.isIdentifier(call.arguments[0]) && call.arguments[0].text === request.text
+        && ts.isIdentifier(second.expression) && second.expression.text === declaration.name.text
+        && ts.isReturnStatement(second.thenStatement) && !!second.thenStatement.expression
+        && ts.isIdentifier(second.thenStatement.expression) && second.thenStatement.expression.text === declaration.name.text;
+    };
+    expect(originalGateBeforeAwait(source)).toBe(true);
+    // The real runtime is independently a trusted private-read wrapper. Isolate
+    // the actual imported outer-gate syntax for these gate-only negatives;
+    // removing one gate from the full composition is not an unwrapped route.
+    const outerOnly = source.replace(/return withPartnerAlertRequestRuntime\(request, runtime => runtime\.[^;]+;/u,
+      "return Response.json({ok:true});");
+    expect(outerOnly).not.toBe(source); expect(check(outerOnly)).toEqual([]);
+    for (const invalid of [
+      outerOnly.replace("@/src/modules/partner-alerts/server/partner-alert-owner-review-request", "./untrusted-gate"),
+      outerOnly.replace("const denied = partnerAlertOwnerReviewRequestDenied(request);", "const denied = null;"),
+    ]) {
+      expect(check(invalid)).toContainEqual(expect.objectContaining({code:"ti_v3_route_method_unwrapped",path,method:"GET"}));
+      expect(originalGateBeforeAwait(invalid)).toBe(false);
+    }
+    expect(originalGateBeforeAwait(source.replace("partnerAlertOwnerReviewRequestDenied(request)",
+      "partnerAlertOwnerReviewRequestDenied(otherRequest)"))).toBe(false);
+    expect(originalGateBeforeAwait(source.replace("if (denied) return denied;", "if (denied) return Response.json({ok:true});"))).toBe(false);
   });
 
   it("requires an imported worker gate on scheduled routes", () => {

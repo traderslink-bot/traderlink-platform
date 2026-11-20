@@ -1,20 +1,23 @@
 import "server-only";
+import {readCanonicalStatsTargets} from "./community-stats-content-targets";
 import type Database from "better-sqlite3";
 import type { CommunityStatsContent, CommunityStatsRequestScope } from "../../contracts/community-stats-contracts";
 import { mayReadCommunityPublication } from "../community-channel-readership";
 import {communityStatsStorageReady} from "./community-stats-repository";
 
 export function communityStatsContentMatchesSearch(content:CommunityStatsContent,search:string|undefined):boolean{
-  const value=search?.trim().toLowerCase();return !value||`${content.title}\n${content.authorName??""}`.toLowerCase().includes(value);
+  const value=search?.trim().toLowerCase();return !value||`${content.title}\n${content.authorName??""}\n${content.contributorName??""}`.toLowerCase().includes(value);
 }
 
 /** Unknown publication dates on removed historical items do not erase recorded views. */
 export function communityStatsIsAnalystPost(item:CommunityStatsContent):boolean{
-  return !!item.authorUserId&&["alert","watchlist"].includes(item.type)&&item.state!=="draft"&&(item.state==="published"||item.publishedAtUtc!==null);
+  return (!!(item.authorUserId||item.contributorUserId)||item.targetKind==="watchlist_item")&&["alert","watchlist"].includes(item.type)&&item.state!=="draft"&&(item.state==="published"||item.publishedAtUtc!==null);
 }
 
 /** Only the native member-watchlist catalog identity represents a member placement. */
 export function communityStatsPageCategory(content:CommunityStatsContent):string{
+  if(content.targetKind==="watchlist_item")return "watchlist_item";
+  if(content.targetKind==="document")return "document";
   return content.type==="watchlist"&&content.placementId&&content.id===`placement:${content.placementId}`?"member_watchlist":content.type;
 }
 
@@ -51,30 +54,20 @@ export function readCommunityStatsCatalog(db:Database.Database, scope:CommunityS
       WHERE community_id=? AND status IN ('active','archived')`).all(scope.communityId) as {coach_profile_id:string;coach_slug:string;display_name:string;user_id:string;status:string}[];
     coaches.forEach(row=>result.push({id:row.coach_profile_id,type:"coach",title:row.display_name,path:`${base}/coaches/${row.coach_slug}`,authorUserId:row.user_id,authorName:row.display_name,state:row.status==="active"?"published":"archived",mode:"tracked_page"}));
   }
-  // A branded landing is a page, never evidence that an arbitrary post was read.
-  // General Stats readers already have the active community membership boundary;
-  // author-only reports cannot attribute an authorless landing to their publications.
-  if(!scope.ownContentOnly&&db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='traderlink_community_content_pages'").get()){
-    const pages=db.prepare(`SELECT page_id,page_type,slug,secondary_slug,title,status FROM traderlink_community_content_pages WHERE community_id=? AND status IN ('active','archived')`).all(scope.communityId) as {page_id:string;page_type:string;slug:string;secondary_slug:string|null;title:string;status:string}[];
-    for(const page of pages){
-      if(page.status!=="active"&&!scope.isOwner)continue;
-      const type=page.page_type==="alert"?"alerts":page.page_type==="watchlist"?"watchlists":"community";
-      result.push({id:page.page_id,type,title:page.title,path:`${base}/${page.page_type}/${[page.slug,page.secondary_slug].filter(Boolean).join("/")}`,authorUserId:null,authorName:null,state:page.status==="active"?"published":"archived",mode:page.status==="active"?"tracked_page":"not_collected"});
-    }
+  // Prefer current canonical member routes; retain legacy-only historical units.
+  const groups=new Map<string,CommunityStatsContent[]>();
+  for(const item of readCanonicalStatsTargets(db,scope)){
+    const group=groups.get(item.id);if(group)group.push(item);else groups.set(item.id,[item]);
   }
-  // Existing branded feeds can also focus native swing ideas/general content.
-  // Keep their metadata and native author, without counting them as alert/watchlist posts.
-  if(db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='traderlink_community_content_placements'").get()){
-    const focused=db.prepare(`SELECT placement.content_id,native.title,native.author_user_id,user.display_name,native.published_at_utc,page.page_type,page.slug,page.secondary_slug
-      FROM traderlink_community_content_placements placement
-      JOIN traderlink_community_content_pages page ON page.community_id=placement.community_id AND page.page_id=placement.page_id
-      JOIN (SELECT community_id,swing_id AS content_id,'swing' AS kind,title,author_user_id,status,published_at_utc FROM traderlink_community_swing_posts
-        UNION ALL SELECT community_id,content_id,'content' AS kind,title,author_user_id,status,published_at_utc FROM traderlink_community_general_content) native
-        ON native.community_id=placement.community_id AND native.content_id=placement.content_id AND native.kind=placement.content_type
-      JOIN platform_users user ON user.user_id=native.author_user_id
-      WHERE placement.community_id=? AND placement.status='published' AND page.status='active' AND native.status='published'
-      ORDER BY page.page_id,placement.placement_id`).all(scope.communityId) as {content_id:string;title:string;author_user_id:string;display_name:string;published_at_utc:string|null;page_type:string;slug:string;secondary_slug:string|null}[];
-    for(const row of focused)if(!result.some(content=>content.id===row.content_id))result.push({id:row.content_id,canonicalId:row.content_id,type:"community",title:row.title,path:`${base}/${row.page_type}/${[row.slug,row.secondary_slug].filter(Boolean).join("/")}`,authorUserId:row.author_user_id,authorName:row.display_name,state:"published",publishedAtUtc:row.published_at_utc,mode:"tracked_page"});
+  for(const [id,items] of groups){
+    // A public post stays unique, but every authorized page association survives.
+    // Prefer an eligible link even when the first sorted page is archived.
+    const preferred=items.find(item=>item.state==="published"&&item.mode==="tracked_page")??items[0];
+    const occurrences=items.flatMap(item=>item.pageId?[{pageId:item.pageId,placementId:item.placementId,
+      path:item.path,state:item.state,mode:item.mode}]:[]);
+    const existing=result.findIndex(row=>row.id===id),legacy=existing>=0?result[existing]:undefined;
+    const item={...preferred,occurrences,...(legacy?{legacyPath:legacy.path,legacyMode:legacy.mode,legacyState:legacy.state}:{})};
+    if(existing>=0)result[existing]=item;else result.push(item);
   }
   if(communityStatsStorageReady(db)&&(scope.isOwner||scope.ownContentOnly)){
     const removed=db.prepare(`SELECT content_id,content_type,author_user_id FROM community_stats_events WHERE community_id=? AND surface='web' AND (?=1 OR author_user_id=?) GROUP BY content_id,content_type,author_user_id`).all(scope.communityId,scope.isOwner?1:0,scope.actorUserId) as {content_id:string;content_type:CommunityStatsContent["type"];author_user_id:string|null}[];
@@ -85,6 +78,10 @@ export function readCommunityStatsCatalog(db:Database.Database, scope:CommunityS
 
 export function resolveCommunityStatsPage(catalog:readonly CommunityStatsContent[],slug:string,path:string):CommunityStatsContent|null {
   if(path.length>500||path.includes("?")||path.includes("#")||path.includes("%")||!path.startsWith(`/communities/${slug}`))return null;
-  const content=catalog.find(row=>row.path===path||(row.type==="alert"&&path===`/communities/${slug}/alerts/${row.id}`));
-  return content?.state==="published"&&content.mode==="tracked_page"?content:null;
+  const content=catalog.find(row=>row.path===path||row.legacyPath===path||(row.type==="alert"&&path===`/communities/${slug}/alerts/${row.id}`));
+  if(!content)return null;
+  if(content.path===path)return content.state==="published"&&content.mode==="tracked_page"?content:null;
+  // An eligible legacy page is not an open of the preferred branded placement.
+  const mode=content.legacyMode??content.mode;
+  return mode==="tracked_page"&&(content.legacyState??content.state)==="published"?{...content,path,mode,state:"published",pageId:undefined,placementId:undefined,publisherUserId:undefined,categoryId:undefined}:null;
 }

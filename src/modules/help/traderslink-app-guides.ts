@@ -2,6 +2,19 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "community-stats", title: "Community Stats", description: "See which published alerts and Watchlist items interest your members.",
+    sections: Object.freeze([
+      Object.freeze({id:"content-interest",title:"Content and readership",summary:"Open a page or a specific published item.",keywords:Object.freeze(["Stats","Analysts","Pages","Watchlist","viewers"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Pages shows eligible published pages and content. Opening a Watchlist board counts a board visit. Following a ticker's focused link counts that specific item; it does not count every other ticker displayed. A page total includes its focused item opens; page and item rows overlap and should not be added together. Reading an article counts its document page. An alert link opens its particular placement while analyst totals combine placements of the same alert."}),
+        Object.freeze({kind:"paragraph",text:"Published counts use each item's first publication in your selected UTC dates. Editing or restoring the same Watchlist item does not create another post. Views and viewers count opens during those dates, including older posts. Average viewers per new post uses only newly published, eligible tracked posts, including confirmed zero-view posts."}),
+        Object.freeze({kind:"paragraph",text:"First published by identifies the person recorded at a Watchlist item's original publication. It can differ from the current publisher after an authorized edit. Missing attribution is shown as n/a. Opening a board alone does not establish interest in an individual item. Traffic sources describe recorded webpage visits, not Discord message impressions."}),
+      ])}),
+      Object.freeze({id:"stats-access",title:"Access and exports",summary:"Keep the same permissions when filtering or exporting.",keywords:Object.freeze(["Team","Excel","permissions","Settings"]),blocks:Object.freeze([
+        Object.freeze({kind:"paragraph",text:"Your owner controls Stats access. An own-content grant does not reveal another person's named visits, the member roster, Team or Settings. Being a publisher on a Website destination alone does not grant Stats access. Export Excel follows the same report dates, filters and permissions; publication and audience populations are identified in the workbook."}),
+      ])}),
+    ]),
+  }),
+  Object.freeze({
     slug: "shared-alerts",
     title: "Shared alerts",
     description: "Agree which individual publishers can share alerts and choose their receiving channels.",

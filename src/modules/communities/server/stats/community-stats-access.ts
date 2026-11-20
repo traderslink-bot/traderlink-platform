@@ -1,4 +1,13 @@
 import "server-only";
+import {requireCommunityOwnerReviewIdentity} from "../community-owner-review-request-identity";
+import {requireTraderLinkPlatformRequestIdentity,type TraderLinkPlatformRequestIdentity} from "../../../platform/server/authentication/require-platform-request-scope";
+/** Re-resolve the original actual request, not a retained actor or client scope. */
+export function revalidateCommunityStatsRequest(request:Request,original:TraderLinkPlatformRequestIdentity):void{
+  const fresh=requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers));
+  if(fresh.sessionId!==original.sessionId||fresh.mode!==original.mode||JSON.stringify(fresh.scope)!==JSON.stringify(original.scope))
+    platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+}
+
 import {NextRequest} from "next/server";
 import {assertStatsReviewGuild} from "./community-stats-review-policy";
 import type Database from "better-sqlite3";

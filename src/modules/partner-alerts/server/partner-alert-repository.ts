@@ -261,7 +261,7 @@ export class PartnerAlertRepository {
   /** Current draft flags can be reset by a review decision. Only persistent
    * publisher and selected-resource history establishes this initial-only path.
    * This never examines unrelated buyer, mapping or community history. */
-  private initialDraftSourceGraph(partner: PartnerRow, mapping: MappingRow, userId: string): OfferRow[] {
+  private initialDraftSourceGraph(partner: PartnerRow, mapping: MappingRow, userId: string, selectedOfferId: string | null = null): OfferRow[] {
     if (!this.isInitialDraftPublisher(partner) || mapping.community_id !== partner.community_id
       || mapping.source_guild_id !== partner.source_guild_id || mapping.ever_approved !== 0
       || !["draft", "withdrawn"].includes(mapping.review_state) || mapping.approved_revision !== null
@@ -276,9 +276,9 @@ export class PartnerAlertRepository {
         .get(communityId, mapping.mapping_id)) throw conflict();
     // All versions of every offer ever including this source, including versions
     // whose later coverage differs. Withdrawn approval is still approval history.
-    const offerGraph = `SELECT DISTINCT offer_id FROM partner_alert_offer_channels WHERE community_id=? AND mapping_id=?`;
+    const offerGraph = `SELECT DISTINCT offer_id FROM partner_alert_offer_channels WHERE community_id=? AND mapping_id=? AND (? IS NULL OR offer_id=?)`;
     const offers = this.db.prepare(`SELECT * FROM partner_alert_offers WHERE community_id=?
-      AND offer_id IN (${offerGraph}) ORDER BY offer_id,version`).all(communityId, communityId, mapping.mapping_id) as OfferRow[];
+      AND offer_id IN (${offerGraph}) ORDER BY offer_id,version`).all(communityId, communityId, mapping.mapping_id, selectedOfferId, selectedOfferId) as OfferRow[];
     for (const offer of offers) {
       let parsed: PartnerAlertCheckoutOffer;
       try { parsed = parsePartnerAlertCheckoutOffer(JSON.parse(offer.offer_json)); } catch { throw conflict(); }
@@ -295,7 +295,7 @@ export class PartnerAlertRepository {
           AND json_extract(fingerprint_json,'$.action') IN ('offer.approved','offer.withdrawn') LIMIT 1`).get(communityId, offer.offer_id)) throw conflict();
       // Own logical retirement is expected provenance, not a reason to deadlock
       // eligible re-add. Unknown/operator withdrawal remains unavailable.
-      if (offer.review_state === "withdrawn" && !this.db.prepare(`SELECT 1 FROM partner_alert_audit_events a
+      if (offer.review_state === "withdrawn" && !this.ownDraftOfferRetirement(offer, userId) && !this.db.prepare(`SELECT 1 FROM partner_alert_audit_events a
         JOIN partner_alert_offer_channels c ON c.community_id=a.community_id AND c.offer_id=a.resource_id
           AND c.offer_version=json_extract(a.detail_json,'$.offerVersion')
           AND c.mapping_id=json_extract(a.detail_json,'$.mappingId')
@@ -305,7 +305,7 @@ export class PartnerAlertRepository {
     for (const table of ["partner_alert_stripe_prices", "partner_alert_stripe_checkout_claims",
       "partner_alert_memberships", "partner_alert_whop_discovery", "partner_alert_whop_paid_intervals"]) {
       if (this.db.prepare(`SELECT 1 FROM ${table} WHERE community_id=? AND offer_id IN (${offerGraph}) LIMIT 1`)
-        .get(communityId, communityId, mapping.mapping_id)) throw conflict();
+        .get(communityId, communityId, mapping.mapping_id, selectedOfferId, selectedOfferId)) throw conflict();
     }
     for (const table of ["partner_alert_role_jobs", "partner_alert_stripe_role_reconciliations",
       "partner_alert_deliveries", "partner_alert_mirrored_parts"]) {
@@ -315,6 +315,61 @@ export class PartnerAlertRepository {
     if (this.db.prepare(`SELECT 1 FROM partner_alert_source_messages WHERE community_id=? AND source_channel_id=? LIMIT 1`)
       .get(communityId, mapping.source_channel_id)) throw conflict();
     return offers;
+  }
+
+  /** Only an exact own committed standalone removal explains these withdrawn versions. */
+  private ownDraftOfferRetirement(offer: OfferRow, userId: string): boolean {
+    return Boolean(this.db.prepare(`SELECT 1 FROM partner_alert_audit_events a
+      JOIN partner_alert_commands c ON c.community_id=a.community_id AND c.actor_user_id=a.actor_user_id
+        AND c.request_id=json_extract(a.detail_json,'$.requestId')
+      WHERE a.community_id=? AND a.resource_id=? AND a.actor_user_id=?
+        AND a.action='offer.draft_retired_standalone' AND json_extract(a.detail_json,'$.offerVersion')=?
+        AND json_extract(c.fingerprint_json,'$.action')='offer.draft_removed'
+        AND json_extract(c.fingerprint_json,'$.payload.offerId')=a.resource_id
+        AND json_extract(c.result_json,'$.communityId')=a.community_id
+        AND json_extract(c.result_json,'$.resourceId')=a.resource_id
+        AND json_extract(c.result_json,'$.resourceVersion')=json_extract(a.detail_json,'$.removedAtLatestVersion')
+        AND json_extract(c.result_json,'$.state')='withdrawn' LIMIT 1`)
+      .get(offer.community_id, offer.offer_id, userId, offer.version));
+  }
+
+  removeDraftOffer(input: Readonly<{ communityId: string; requestId: string; expectedRevision: number;
+    offerId: string; expectedLatestOfferVersion: number }>): PartnerAlertWriteResult {
+    const actor = this.owner(input.communityId);
+    const expected = partnerAlertInteger(input.expectedRevision, "expectedRevision", 1);
+    const offerId = partnerAlertId(input.offerId, "offerId");
+    const expectedLatestOfferVersion = partnerAlertInteger(input.expectedLatestOfferVersion, "expectedLatestOfferVersion", 1);
+    return this.write(actor, input.communityId, input.requestId, "offer.draft_removed",
+      { expected, offerId, expectedLatestOfferVersion }, at => {
+        const partner = this.partner(input.communityId, expected); this.owned(partner, actor);
+        this.community(input.communityId, actor.userId, actor.guildId, at);
+        if (!this.isInitialDraftPublisher(partner)) throw conflict();
+        const latest = this.db.prepare(`SELECT * FROM partner_alert_offers WHERE community_id=? AND offer_id=?
+          ORDER BY version DESC LIMIT 1`).get(input.communityId, offerId) as OfferRow | undefined;
+        if (!latest || latest.version !== expectedLatestOfferVersion || latest.review_state !== "draft") throw conflict();
+        const mappings = this.db.prepare(`SELECT DISTINCT m.* FROM partner_alert_mappings m
+          JOIN partner_alert_offer_channels c ON c.community_id=m.community_id AND c.mapping_id=m.mapping_id
+          WHERE c.community_id=? AND c.offer_id=?`).all(input.communityId, offerId) as MappingRow[];
+        const linkCount = this.db.prepare(`SELECT count(DISTINCT mapping_id) total FROM partner_alert_offer_channels
+          WHERE community_id=? AND offer_id=?`).get(input.communityId, offerId) as { total: number };
+        if (!mappings.length || mappings.length !== linkCount.total) throw conflict();
+        let versions: OfferRow[] = [];
+        for (const mapping of mappings) {
+          if (mapping.review_state === "withdrawn" && !this.ownDraftRemoval(mapping, actor.userId)) throw conflict();
+          versions = this.initialDraftSourceGraph(partner, mapping, actor.userId, offerId);
+        }
+        for (const offer of versions) {
+          if (offer.review_state !== "draft") continue;
+          const updated = this.db.prepare(`UPDATE partner_alert_offers SET review_state='withdrawn'
+            WHERE community_id=? AND offer_id=? AND version=? AND review_state='draft'`)
+            .run(input.communityId, offerId, offer.version);
+          if (updated.changes !== 1) throw conflict();
+          this.audit(input.communityId, actor.userId, "offer.draft_retired_standalone", offerId,
+            { offerVersion: offer.version, removedAtLatestVersion: expectedLatestOfferVersion, requestId: input.requestId }, at);
+        }
+        return { communityId: input.communityId, partnerRevision: this.bump(partner, at), resourceId: offerId,
+          resourceVersion: expectedLatestOfferVersion, state: "withdrawn" };
+      });
   }
 
   private ownDraftRemoval(mapping: MappingRow, userId: string): boolean {
@@ -790,6 +845,7 @@ export class PartnerAlertRepository {
     const partner = this.readAuthorizedPartner(communityId, audience);
     // Private agreements are intentionally absent from a subscriber/public read API.
     return { partner,
+      initialDraftPublisher: this.isInitialDraftPublisher(partner),
       application: this.readApplication(communityId, partner.review_requested
         ? partner.submitted_application_revision : partner.approved_application_revision),
       // Durable command revisions order decisions even when timestamps match.

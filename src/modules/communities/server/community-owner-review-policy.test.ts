@@ -4,9 +4,11 @@ import type Database from "better-sqlite3";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { openPristinePlatformTestDatabase } from "@/src/test/pristine-platform-test-database";
 import { readCommunityViewerChannels } from "./community-channel-readership";
+import { readCommunityInstallationStatus } from "./community-installation-status";
 import { verifyCommunityOwner } from "./community-onboarding-service";
 import { readCommunityDiscordResources } from "./community-discord-resources";
 import { isCommunityOwnerReviewChannel } from "./community-owner-review-policy";
+import { COMMUNITY_REVIEW_DISCORD_GUILD_ID as testsGuild } from "./community-review-discord-guild";
 
 const main = "1433570740430573642", owner = "1433569535037931640", bot = "1554300060483715162";
 const channel = "1546033958448529508", ordinary = "1433570740430573999";
@@ -33,6 +35,20 @@ function provider(actualOwner = owner) {
     if (pathname === `/api/v10/guilds/${main}/roles`) return Response.json([{ id: main, name: "@everyone", permissions: "8" }]);
     if (pathname === `/api/v10/guilds/${main}/members/${bot}`) return Response.json({ user: { id: bot }, roles: [] });
     if (pathname === `/api/v10/guilds/${main}/channels`) return Response.json([channel, ordinary].map(id => ({ id, guild_id: main, name: id, type: 0, permission_overwrites: [] })));
+    throw new Error(`Unexpected provider path: ${pathname}`);
+  });
+}
+
+function installationProvider({ actualOwner = owner, guildId = main, installed = true }: {
+  actualOwner?: string;
+  guildId?: string;
+  installed?: boolean;
+} = {}) {
+  return vi.fn(async (resource: Parameters<typeof fetch>[0]) => {
+    const pathname = new URL(String(resource)).pathname;
+    if (pathname === "/api/v10/users/@me/guilds") return Response.json(installed ? [{ id: guildId }] : []);
+    if (pathname === `/api/v10/guilds/${guildId}`) return Response.json({ id: guildId, owner_id: actualOwner, name: "Installation fixture" });
+    if (pathname === `/api/v10/guilds/${guildId}/members/${owner}`) return Response.json({ user: { id: owner, username: "local-owner" }, roles: [] });
     throw new Error(`Unexpected provider path: ${pathname}`);
   });
 }
@@ -75,5 +91,28 @@ describe("Normal Community owner-review metadata opt-in", () => {
       return response(resource);
     };
     expect(await readCommunityViewerChannels(f.database, "local-main", f.userId, "isolated-test-token", request, [0, 5], "community-owner-review")).toEqual([]);
+  });
+
+  it("keeps Main installation verification denied for generic callers", async () => {
+    expect(await readCommunityInstallationStatus(main, owner, "isolated-test-token", installationProvider() as typeof fetch)).toMatchObject({ state: "unavailable" });
+  });
+
+  it("allows the fixed owner-review installation path for Main", async () => {
+    expect(await readCommunityInstallationStatus(main, owner, "isolated-test-token", installationProvider() as typeof fetch, "community-owner-review")).toMatchObject({ state: "ready" });
+  });
+
+  it("still rejects a Main installation when the linked member is not the current guild owner", async () => {
+    const request = installationProvider({ actualOwner: "100000000000000001" });
+    expect(await readCommunityInstallationStatus(main, owner, "isolated-test-token", request as typeof fetch, "community-owner-review")).toMatchObject({ state: "owner_required" });
+  });
+
+  it("preserves default installation verification for the Tests guild", async () => {
+    const request = installationProvider({ guildId: testsGuild });
+    expect(await readCommunityInstallationStatus(testsGuild, owner, "isolated-test-token", request as typeof fetch)).toMatchObject({ state: "ready" });
+  });
+
+  it("reports a complete inventory without the target as not installed", async () => {
+    const request = installationProvider({ installed: false });
+    expect(await readCommunityInstallationStatus(main, owner, "isolated-test-token", request as typeof fetch, "community-owner-review")).toMatchObject({ state: "not_installed" });
   });
 });

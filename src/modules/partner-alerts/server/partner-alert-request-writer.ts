@@ -1,3 +1,4 @@
+import { requireCommunityOwnerReviewRequestIdentity } from "../../communities/server/community-owner-review-request-identity";
 import type { PartnerAlertSubscriberOffer } from "./partner-alert-subscriber-access";
 import { readPartnerAlertIsolatedStaging } from "./partner-alert-isolated-staging";
 import { createHash } from "node:crypto";
@@ -8,6 +9,8 @@ import type { PartnerAlertDiscordSourceCatalog } from "./partner-alert-discord-c
 import { PlatformAdminAuthorization } from "../../platform/server/administration/platform-admin-authorization";
 import { consumeJournalAdminRateLimit, requireJournalAdminMutationRequest } from "../../platform/server/administration/platform-admin-request-security";
 import { PlatformAuthenticationRepository } from "../../platform/server/authentication/platform-authentication-repository";
+import { PlatformOperatorRepository } from "../../platform/server/administration/platform-operator-repository";
+import { readProtectedInitialOwnerDiscordSubject } from "../../platform/server/authentication/platform-discord-configuration";
 import { resolveTraderLinkDiscordGuildId } from "../../platform/server/authentication/platform-discord-configuration";
 import { PlatformDiscordMembershipRepository } from "../../platform/server/authentication/platform-discord-membership-repository";
 import { PlatformSessionRepository } from "../../platform/server/authentication/platform-session-repository";
@@ -60,7 +63,18 @@ export type PartnerAlertRequestWriterConfiguration = Readonly<{
 /** Request-local support for the two EXISTING authorized private reads only.
  * No DB, identity, actor receipt, native/config proof or automation writer escapes.
  * Handles work only synchronously inside the owning run callback. */
+export type PartnerAlertMetadataSelection = Readonly<{ kind: "inspection_contact"; communityId: string } |
+  { kind: "operator_resources"; communityId: string; mappingId: string }>;
+export type PartnerAlertMetadataPermit = Readonly<{ communityId: string; partnerRevision: number;
+  sourceGuildId: string; destinationGuildId: string; mappingId?: string; mappingRevision?: number;
+  sourceChannelId?: string; reviewerDiscordUserId?: string }>;
+type MetadataSnapshot = PartnerAlertMetadataPermit & Readonly<{ fingerprint: string }>;
+const metadataReadBindings = new WeakMap<PartnerAlertMetadataPermit, { writer: PartnerAlertRequestWriter;
+  request: Request; principal: RequestPrincipalBinding; selection: PartnerAlertMetadataSelection;
+  fingerprint: string; consumed: boolean }>();
+
 export type PartnerAlertPrivateRequestScope = Readonly<Pick<PartnerAlertRepository, "readPartner" | "readDeliveryActivity" | "listReviewRequests" | "listRoleReviewEvents" | "readRoleReviewAssignment" | "recordRoleReview"> & {
+  authorizeMetadataRead: (selection: PartnerAlertMetadataSelection) => MetadataSnapshot;
   authorizeCommunitySourceCatalog: (communityId: string) => Readonly<{
     communityId: string; sourceGuildId: string; partnerRevision: number; ownerUserId: string;
   }>;
@@ -94,7 +108,7 @@ type RequestPrincipalBinding = Readonly<{ userId: string; sessionId: string;
 type SourceChannelCatalogBinding = { writer: PartnerAlertRequestWriter; request: Request;
   principal: RequestPrincipalBinding; consumed: boolean };
 const sourceChannelCatalogBindings = new WeakMap<PartnerAlertSourceChannelCatalogPermit, SourceChannelCatalogBinding>();
-const MUTATION_ACTIONS = new Set(["savePartnerDraft", "saveMappingDraft", "removeDraftMapping", "saveOfferVersion",
+const MUTATION_ACTIONS = new Set(["savePartnerDraft", "saveMappingDraft", "removeDraftMapping", "removeDraftOffer", "saveOfferVersion",
   "acceptPublishingAgreement", "submitRequest", "proposePublishingAgreement", "confirmInspection", "approveMapping",
   "approveOffer", "approvePartner", "activatePartner", "setPartnerState", "requestChanges", "declinePartner", "withdrawMapping", "withdrawOffer"]);
 const RESULT_STATES = new Set(["draft", "awaiting_approval", "setup_required", "active", "publishing_paused",
@@ -146,6 +160,8 @@ function commandFingerprint(command: PartnerAlertPreparedCommand["command"], con
         displayName: command.displayName }; break;
     case "removeDraftMapping": action = "mapping.draft_removed";
       payload = { expected, mappingId: command.mappingId }; break;
+    case "removeDraftOffer": action = "offer.draft_removed";
+      payload = { expected, offerId: command.offerId, expectedLatestOfferVersion: command.expectedLatestOfferVersion }; break;
     case "saveOfferVersion": action = "offer.version_saved"; payload = { expected, offer: command.offer }; break;
     case "acceptPublishingAgreement": action = "agreement.accepted";
       payload = { expected, agreementId: command.agreementId, rulesVersion: command.rulesVersion,
@@ -256,6 +272,34 @@ export class PartnerAlertRequestWriter {
   run<T>(request: Request, operation: (scope: PartnerAlertPrivateRequestScope) => T): T {
     if (typeof operation !== "function") return rejected();
     return this.withRequest(request, scope => operation(scope), false);
+  }
+
+  /** An original native read snapshot, not provider or mutation authority. */
+  preauthorizeMetadataRead(request: Request, selection: PartnerAlertMetadataSelection): PartnerAlertMetadataPermit {
+    requireCommunityOwnerReviewRequestIdentity(request.headers);
+    let principal: RequestPrincipalBinding | null = null;
+    const snapshot = this.withRequest(request, (scope, _execute, _replay, original) => {
+      principal = original; return scope.authorizeMetadataRead(selection);
+    }, false);
+    if (!principal) return rejected();
+    const { fingerprint, ...target } = snapshot;
+    const permit = Object.freeze(target);
+    metadataReadBindings.set(permit, { writer: this, request, principal,
+      selection: Object.freeze({ ...selection }), fingerprint, consumed: false });
+    return permit;
+  }
+
+  revalidateMetadataRead(request: Request, permit: PartnerAlertMetadataPermit): void {
+    const binding = metadataReadBindings.get(permit);
+    if (!binding || binding.writer !== this || binding.request !== request || binding.consumed) return rejected();
+    binding.consumed = true;
+    requireCommunityOwnerReviewRequestIdentity(request.headers);
+    this.withRequest(request, (scope, _execute, _replay, current) => {
+      if (JSON.stringify(current) !== JSON.stringify(binding.principal)) return rejected();
+      const snapshot = scope.authorizeMetadataRead(binding.selection);
+      const { fingerprint, ...target } = snapshot;
+      if (fingerprint !== binding.fingerprint || JSON.stringify(target) !== JSON.stringify(permit)) return rejected();
+    }, false);
   }
 
   preauthorizeSourceChannelCatalog(request: Request, communityId: string): PartnerAlertSourceChannelCatalogPermit {
@@ -644,6 +688,43 @@ export class PartnerAlertRequestWriter {
             listReviewRequests: (limit?: number) => guarded(() => {
               return repository.listReviewRequests(limit);
             }),
+            authorizeMetadataRead: selection => guarded(() => {
+              const communityId = partnerAlertId(selection.communityId, "communityId");
+              if (selection.kind === "inspection_contact") {
+                const actor = authority.requireCommunityOwner(communityId);
+                communityOwners.add(communityId);
+                const grant = new PlatformOperatorRepository(database).findActive();
+                if (!grant) throw new PartnerAlertRepositoryError("unavailable", "Inspection contact is unavailable.");
+                const core = requirePlatformErasureWriter(database, actor.userId);
+                if (!core.principalIsLive(grant.userId)) throw new PartnerAlertRepositoryError("unavailable", "Inspection contact is unavailable.");
+                const links = database.prepare(`SELECT auth_subject,created_at_utc,updated_at_utc FROM platform_auth_identities
+                  WHERE user_id=? AND auth_provider='discord' AND status='active' ORDER BY auth_subject`)
+                  .all(grant.userId) as { auth_subject: string; created_at_utc: string; updated_at_utc: string }[];
+                const membership = discord.findCurrent(grant.userId, configuration.destinationGuildId);
+                const protectedSubject = readProtectedInitialOwnerDiscordSubject(configuration.environment);
+                if (links.length !== 1 || (links[0]!.auth_subject !== protectedSubject && membership?.guildOwner !== true)) {
+                  throw new PartnerAlertRepositoryError("unavailable", "Inspection contact is unavailable.");
+                }
+                const partner = database.prepare("SELECT revision,source_guild_id FROM partner_alert_partners WHERE community_id=?")
+                  .get(communityId) as { revision: number; source_guild_id: string } | undefined;
+                if (partner && partner.source_guild_id !== actor.guildId) return rejected();
+                return Object.freeze({ communityId, partnerRevision: partner?.revision ?? 0,
+                  sourceGuildId: actor.guildId, destinationGuildId: configuration.destinationGuildId,
+                  reviewerDiscordUserId: partnerAlertSnowflake(links[0]!.auth_subject, "reviewerDiscordUserId"),
+                  fingerprint: createHash("sha256").update(JSON.stringify([grant, links, membership,
+                    core.lifecycle(grant.userId), protectedSubject ?? null])).digest("hex") });
+              }
+              if (selection.kind !== "operator_resources") return rejected();
+              const view = projectPartnerAlertPrivateRead(repository.readPartner(communityId, "owner"));
+              const mappingId = partnerAlertId(selection.mappingId, "mappingId");
+              const mapping = view.mappings.find(row => row.mappingId === mappingId);
+              if (!mapping || mapping.reviewState === "withdrawn") return rejected();
+              return Object.freeze({ communityId, partnerRevision: view.revision, mappingId,
+                mappingRevision: mapping.revision, sourceGuildId: view.sourceGuildId,
+                sourceChannelId: mapping.sourceChannelId, destinationGuildId: configuration.destinationGuildId,
+                fingerprint: createHash("sha256").update(JSON.stringify([view.status, view.reviewRequested,
+                  mapping, configuration.outputConfigurationRef])).digest("hex") });
+            }),
             authorizeCommunitySourceCatalog: (communityId: string) => guarded(() => {
               const actor = authority.requireCommunityOwner(communityId);
               const partner = database.prepare<[string], { source_guild_id: string; revision: number }>(
@@ -717,6 +798,7 @@ export class PartnerAlertRequestWriter {
                     outputConfigurationRef: configuration.outputConfigurationRef })),
                   saveMappingDraft: input => guarded(() => repository.saveMappingDraft(input)),
                   removeDraftMapping: input => guarded(() => repository.removeDraftMapping(input)),
+                  removeDraftOffer: input => guarded(() => repository.removeDraftOffer(input)),
                   saveOfferVersion: input => guarded(() => repository.saveOfferVersion(input)),
                   acceptPublishingAgreement: input => guarded(() => repository.acceptPublishingAgreement(input)),
                   submitRequest: input => guarded(() => repository.submitRequest(input)),

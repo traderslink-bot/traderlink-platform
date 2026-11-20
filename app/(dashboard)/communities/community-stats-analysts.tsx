@@ -3,7 +3,7 @@ import type {CommunityStatsTableRow} from "@/src/modules/communities/contracts/c
 
 /** Audiences overlap between analysts, so these counts are columns, never donut shares. */
 export function StatsAnalystChart({rows,onAnalyst}:{rows:readonly CommunityStatsTableRow[];onAnalyst:(id:string)=>void}){
-  if(!rows.length)return <p className="cs-note">No published alerts or watchlists.</p>;
+  if(!rows.length)return <p className="cs-note">No analyst results for these dates.</p>;
   const maximum=Math.max(1,...rows.map(row=>typeof row.Viewers==="number"?row.Viewers:0));
   return <figure className="cs-card-chart" aria-label="Top analysts by unique viewers">
     <div className="cs-analyst-chart" style={{gridTemplateColumns:`repeat(${rows.length},minmax(0,1fr))`}}>

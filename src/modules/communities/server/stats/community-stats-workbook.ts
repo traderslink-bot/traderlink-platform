@@ -67,7 +67,7 @@ export function* streamStatsWorkbook(input:Iterable<StatsWorkbookSheet>):Generat
 
 export function* communityStatsWorkbookSheets(report:CommunityStatsReport,readPage:(page:number)=>CommunityStatsReport,eventRows?:(timeline:boolean)=>Readonly<{columns:readonly string[];rows:Iterable<CommunityStatsTableRow>}>,filters:Readonly<Record<string,string>>={}):Generator<StatsWorkbookSheet>{
   const sheet=(title:string,columns:readonly string[],rows:StatsWorkbookSheet["rows"])=>({title,columns,rows});
-  yield sheet("Report details",["Field","Value"],[{Field:"Community",Value:report.communityName},{Field:"Report",Value:report.tab==="authors"?"Analysts":report.tab},{Field:"Scope",Value:report.scope},{Field:"From UTC",Value:report.window.fromDate},{Field:"Through UTC",Value:report.window.throughDate},{Field:"Generated UTC",Value:report.window.asOfUtc},...Object.entries(filters).map(([key,value])=>({Field:key,Value:value}))]);
+  yield sheet("Report details",["Field","Value"],[{Field:"Community",Value:report.communityName},{Field:"Report",Value:report.tab==="authors"?"Analysts":report.tab},{Field:"Scope",Value:report.scope},{Field:"Publication population",Value:"First publications in selected UTC dates; same native item counted once"},{Field:"Audience population",Value:"Opens in selected UTC dates, including older posts"},{Field:"Page totals",Value:"Include eligible focused opens on that page; parent and child rows overlap"},{Field:"From UTC",Value:report.window.fromDate},{Field:"Through UTC",Value:report.window.throughDate},{Field:"Generated UTC",Value:report.window.asOfUtc},...Object.entries(filters).map(([key,value])=>({Field:key,Value:value}))]);
   for(const metric of report.metrics)yield sheet(metric.label,["Measure","Current","Prior period"],[{Measure:metric.label,Current:metric.value,"Prior period":metric.previous}]);
   if(report.columns.length){
     const title=report.tab==="authors"?"Analysts":report.tab==="team"?"Roles and permissions":report.tab==="messages"?"Server Members":report.tab[0].toUpperCase()+report.tab.slice(1);
@@ -91,7 +91,7 @@ export function* communityStatsWorkbookSheets(report:CommunityStatsReport,readPa
     }
     yield sheet("Member measures",["Measure","Current"],report.member.measures);if(eventRows){const events=eventRows(true);yield sheet("Member timeline",events.columns,events.rows);}}
   const selected=report.tab==="pages"?report.catalog.find(item=>item.id===filters["Page filter"]):null;
-  if(selected)yield sheet(selected.title,["Page","Author","State","Publication format"],[{Page:selected.title,Author:selected.authorName??"Community",State:selected.state,"Publication format":selected.publicationMode??"unknown"}]);
+  if(selected)yield sheet(selected.title,["Page",selected.targetKind==="watchlist_item"?"First published by":"Author","State","Publication format"],[{Page:selected.title,[selected.targetKind==="watchlist_item"?"First published by":"Author"]:selected.targetKind==="watchlist_item"?selected.contributorName??"n/a":selected.authorName??"Community",State:selected.state,"Publication format":selected.publicationMode??"unknown"}]);
   for(const chart of report.messageCharts??[])yield sheet(chart.title,chart.columns,chart.rows);
   if(report.notes.length)yield sheet("Definitions",["Definition"],report.notes.map(note=>({Definition:note})));
 }
