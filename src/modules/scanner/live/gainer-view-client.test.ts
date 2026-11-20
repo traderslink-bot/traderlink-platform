@@ -3,7 +3,7 @@ import { act, createElement, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { LiveScannerRow, ScannerReadModel } from "./contracts";
-import { SCANNER_ACTIVE_HOURS_MESSAGE } from "./member-status";
+import { SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_TRANSIENT_FAILURE_GRACE_MS } from "./member-status";
 import { EMPTY_MULTIVIEW, parseChartMultiview } from "../alpaca/chart-multiview";
 
 import { DEFAULT_CHART_PREFERENCES } from "../alpaca/chart-preferences";
@@ -299,10 +299,18 @@ describe("member notices stay in each scanner while Admin keeps diagnostics", ()
     expect(page.container.textContent).not.toContain("stock universe has not arrived");
     expect(page.container.textContent).not.toContain("Live scanner data is temporarily unavailable");
   });
-  it("uses the same short notice when fetching the model fails", async () => {
+  it("waits through the recovery grace before showing a sustained transport outage", async () => {
     const page = await mount(model("regular"),{fail:true});
+    expect(page.container.textContent).not.toContain("Temporarily unavailable.");
+    expect(document.querySelector('button[aria-label="Reconnecting to scanners. Retry connection."]')).not.toBeNull();
+    await act(async () => vi.advanceTimersByTimeAsync(SCANNER_TRANSIENT_FAILURE_GRACE_MS));
+    expect(page.container.textContent).not.toContain("Temporarily unavailable.");
+    await act(async () => vi.advanceTimersByTimeAsync(1));
     expect(page.container.textContent).toContain("Temporarily unavailable.");
     expect(page.container.textContent).not.toContain("latest scanner update could not be loaded");
+    const recovery = page.fetch.mock.calls.filter(([path]) => String(path) === "/api/screeners/live");
+    expect(recovery.length).toBeGreaterThan(0); expect(recovery.length).toBeLessThan(10);
+    expect(recovery.every(([, init]) => init?.cache === "no-store" && init?.credentials === "same-origin")).toBe(true);
   });
   it("retains the detailed provider notice on the Admin page", async () => {
     const page = await mount({ ...model("regular"), status: "partial" },{admin:true});
@@ -444,13 +452,21 @@ describe("two-row table view", () => {
 
 it("closes the pushed model stream while hidden, resumes once and cleans up on unmount",async()=>{
  const page=await mount(model("regular"));
+ expectOnlyInitialChartRequests(page.fetch);
  try{
   Object.defineProperty(document,"hidden",{configurable:true,value:true});
   await act(async()=>document.dispatchEvent(new Event("visibilitychange")));
   expect(page.connections[0].closed).toBe(true);expect(page.stream).toHaveBeenCalledTimes(1);
   Object.defineProperty(document,"hidden",{configurable:true,value:false});
   await act(async()=>document.dispatchEvent(new Event("visibilitychange")));
-  expect(page.stream).toHaveBeenCalledTimes(2);expect(page.connections[1].closed).toBe(false);expectOnlyInitialChartRequests(page.fetch);
+  expect(page.stream).toHaveBeenCalledTimes(2);expect(page.connections[1].closed).toBe(false);
+  const expected = [[SCANNER_LAYOUT, "GET", "no-store"], [CHART_PREFERENCES, "GET", "no-store"], ["/api/screeners/live", "GET", "no-store"]].sort();
+  const requests = () => page.fetch.mock.calls.map(([input, init]) => [String(input), init?.method ?? "GET", init?.cache]).sort();
+  expect(requests()).toEqual(expected);
+  const recovery = page.fetch.mock.calls.find(([path]) => String(path) === "/api/screeners/live")!;
+  expect(recovery[1]).toMatchObject({ credentials: "same-origin", cache: "no-store", redirect: "error" });
+  await act(async()=>vi.advanceTimersByTimeAsync(5000));
+  expect(requests()).toEqual(expected); // Healthy recovery does not introduce snapshot polling.
   await act(async()=>root!.unmount());root=undefined;expect(page.connections[1].closed).toBe(true);
  }finally{delete (document as unknown as {hidden?:boolean}).hidden;}
 });

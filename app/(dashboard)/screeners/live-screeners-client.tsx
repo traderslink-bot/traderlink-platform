@@ -571,7 +571,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     try { window.localStorage.setItem(MOBILE_SCANNER_LAYOUT_KEY,next?"tabs":"stacked"); }
     catch { /* Keep this choice for the current page. */ }
   };
-  const {model,loadError,checkedAt,failedAt,phase}=useLiveScannerModel();
+  const {model,loadError,checkedAt,failedAt,phase,retry}=useLiveScannerModel();
   const [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const momentumSections = model?.momentum.momentumSections;
   const momentumStocks = momentumSections ? [...momentumSections.confirmed,...momentumSections.early] : model?.momentum.rows ?? [];
@@ -713,7 +713,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
     </DashboardPanel>:null}
     {!admin&&<Portal container={scannerToolbar}>
       <Stack direction="row" sx={{justifyContent:"flex-end"}}>
-        <ScannerConnectionIndicator phase={phase}/>
+        <ScannerConnectionIndicator phase={phase} onRetry={retry}/>
         {!drawerOpen&&chartWorkspace.charts.length>0&&<Tooltip title="Reopen chart drawer">
           <IconButton aria-label="Reopen chart drawer" onClick={()=>{setTemporary(null);setDrawerOpen(true);}}>
             <CandlestickChartOutlined fontSize="small"/>

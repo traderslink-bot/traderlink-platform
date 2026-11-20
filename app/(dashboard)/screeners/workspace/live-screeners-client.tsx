@@ -687,7 +687,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     try { window.localStorage.setItem(MOBILE_SCANNER_LAYOUT_KEY,next?"tabs":"stacked"); }
     catch { /* Keep this choice for the current page. */ }
   };
-  const {model,loadError,checkedAt,failedAt,phase}=useLiveScannerModel(sample);
+  const {model,loadError,checkedAt,failedAt,phase,retry}=useLiveScannerModel(sample);
   const [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
   const momentumSections = model?.momentum.momentumSections;
   const momentumStocks = momentumSections ? [...momentumSections.confirmed,...momentumSections.early] : model?.momentum.rows ?? [];
@@ -869,7 +869,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     </DashboardPanel>:null}
     {!admin&&<Portal container={scannerToolbar}>
       <Stack direction="row" sx={{justifyContent:desktopLayout?"flex-start":"flex-end",alignItems:"center",minWidth:0}}>
-        <ScannerConnectionIndicator phase={phase}/>
+        <ScannerConnectionIndicator phase={phase} onRetry={retry}/>
       {desktopLayout&&mobile&&<MobileWorkspaceLayoutEditor key={orientation} editor={mobileEditor} orientation={orientation}/>}{desktopLayout&&!mobile&&<ScannerLayoutToolbar mobile={mobile} editing={draft!==null} name={layoutName} active={stored.active} sourceName={draft?draftSourceName:stored.active}
         onEdit={()=>{setDraftSourceName(stored.active);setLayoutName(stored.active);setUndo([]);setVisibilityMessage("");setDraftScanners(scannerChoices??{});setDraftViews(cardViews??{});setDraftGainerSwitch(cardGainerSwitch??{});setDraft(rectangles);}}
         setName={setLayoutName} saved={stored.layouts.filter(item=>item.name)} visible={visible} onToggle={toggleWidget} message={visibilityMessage}

@@ -47,14 +47,23 @@ it.each([
   const previous = { ...good, sourceContext: "a".repeat(64) };
   expect(scannerConnection(initialScannerConnection(previous, now), { type: "model", model, now }).model).toBe(model);
 });
-it("clears results on a permanently closed EventSource and never holds yesterday after a failure", () => {
+it("clears results after confirmed access denial and never holds yesterday after a failure", () => {
   const failed = scannerConnection(initialScannerConnection(good, now), { type: "failure", permanent: true, now });
-  expect(failed.model).toBeNull(); expect(notice(failed)).toBe(SCANNER_UNAVAILABLE_MESSAGE);
+  expect(failed.model).toBeNull(); expect(notice(failed)).toBeNull();
   const yesterday = { ...good, tradingDate: "2026-11-18" };
   expect(notice(scannerConnection(initialScannerConnection(yesterday, now), { type: "failure", now }))).toBe(SCANNER_UNAVAILABLE_MESSAGE);
 });
 it("does not invent ready data before any successful model", () => {
   const failed = scannerConnection(initialScannerConnection(null, now), { type: "failure", now });
-  expect(notice(failed)).toBe(SCANNER_UNAVAILABLE_MESSAGE);
+  expect(notice(failed)).toBeNull();
   expect(isScannerModel(good)).toBe(true); expect(isScannerModel({ status: "ready" })).toBe(false); expect(isScannerModel(null)).toBe(false);
+});
+
+ it("retains the same-context snapshot beyond the old thirty-second window, but not indefinitely", () => {
+  const failed = { ...good, status: "unavailable" as const };
+  let state = scannerConnection(initialScannerConnection(good, now), {type:"model",model:failed,now});
+  state = scannerConnection(state, {type:"model",model:failed,now:now+90_000});
+  expect(state.model).toBe(good); expect(notice(state)).toBeNull();
+  state = scannerConnection(state, {type:"model",model:failed,now:now+GRACE+1});
+  expect(state.model).toBe(failed); expect(notice(state)).toBe(SCANNER_UNAVAILABLE_MESSAGE);
 });
