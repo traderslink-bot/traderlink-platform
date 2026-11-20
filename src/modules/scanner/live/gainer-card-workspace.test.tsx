@@ -94,7 +94,7 @@ describe("actual Trading Workspace gainer-card choices", () => {
     expect(card("gainers").textContent).toContain("DAY"); expect(card("gainers").textContent).not.toContain("POST");
     expect(card("momentum").textContent).toContain("POST"); expect(card("momentum").textContent).not.toContain("DAY");
     expect(card("gainers").textContent).toContain("120%"); expect(card("momentum").textContent).toContain("10%");
-    expect(card("gainers").querySelector('select')?.textContent).toContain("Top Gainers (Pre/Reg + Post)");
+    expect(card("gainers").querySelector('select')?.textContent).toContain("Top Gainers (pre/reg + post)");
     expect(card("gainers").querySelector('[aria-label$="view: Table"]')).not.toBeNull();
     expect(card("momentum").querySelector('[aria-label$="view: Two rows"]')).not.toBeNull();
     await select("momentum", "gainers");
@@ -104,9 +104,13 @@ describe("actual Trading Workspace gainer-card choices", () => {
   it("saves each combined card's switch immediately and restores it after remount", async () => {
     seed({ gainers: "gainers", momentum: "gainers" }); await mount();
     expect(card("gainers").textContent).toContain("POST");
+    const title=card("gainers").querySelector("select")!;
+    expect(title.selectedOptions[0].textContent).toBe("Top Gainers (post)");
+    expect(Array.from(title.options).filter(option=>!option.hidden).find(option=>option.value==="gainers")?.textContent).toBe("Top Gainers (pre/reg + post)");
     await options("gainers"); expect((switchInput() as HTMLInputElement).checked).toBe(true);
     await click(switchInput());
     expect(card("gainers").textContent).toContain("DAY"); expect(card("momentum").textContent).toContain("POST");
+    expect((card("gainers").querySelector("select") as HTMLSelectElement).selectedOptions[0].textContent).toBe("Top Gainers (pre/reg)");
     expect(JSON.parse(localStorage.getItem(desktopKey)!).layouts[0].gainerAutoSwitch).toEqual({ gainers: false });
     await act(async () => root!.unmount()); root = undefined; document.body.replaceChildren(); await mount();
     expect(card("gainers").textContent).toContain("DAY"); expect(card("momentum").textContent).toContain("POST");
@@ -172,6 +176,9 @@ describe("actual Trading Workspace gainer-card choices", () => {
     layouts.landscape.layouts[0].layout.scanners = { gainers: "post-market-gainers", momentum: "day-gainers" };
     localStorage.setItem(mobileKey, JSON.stringify(layouts)); await mount();
     expect(card("gainers").textContent).toContain("POST");
+    const title=card("gainers").querySelector("select")!;
+    expect(title.selectedOptions[0].textContent).toBe("Top Gainers (post)");
+    expect(Array.from(title.options).filter(option=>!option.hidden).find(option=>option.value==="gainers")?.textContent).toBe("Top Gainers (pre/reg + post)");
     await options("gainers"); await click(switchInput());
     await click(document.querySelector('[aria-label="Close view settings"]'));
     expect(card("gainers").textContent).toContain("DAY");

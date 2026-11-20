@@ -14,7 +14,7 @@ import { defaultTile, fromGrid, minimum, validTile } from "./scanner-split-layou
 import { cardEntries, layoutSize, placeAddedCard, removePresetSpacing, tileToCards, validCardLayout, type CardLayout } from "./scanner-free-layout";
 import { isScannerCardSlot, readCardScanners, scannerCardSlots, scannerTitles, WorkspaceScannerTitle, WorkspaceScannerTitleContext, type CardScanners, type ScannerCardKind, type ScannerCardSlot } from "./workspace-scanner-title";
 import { GainerSwitchControl } from "./gainer-switch-control";
-import { GAINER_CARD_LABELS, gainerCardResults, gainerCardView, isGainerCard, readGainerSwitchPreferences, type GainerSwitchPreferences } from "@/src/modules/scanner/live/gainer-card-policy";
+import { gainerCardTitle, gainerCardResults, gainerCardView, isGainerCard, readGainerSwitchPreferences, type GainerSwitchPreferences } from "@/src/modules/scanner/live/gainer-card-policy";
 import { ScannerPageChartButton, ScannerPageTicker, ScannerPageTickerSelection } from "./scanner-page-ticker";
 
 import { scannerGainColor } from "../scanner-gain-color";
@@ -798,9 +798,9 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     ?gainerCardResults(model,gainerKindFor(slot),slot?cardGainerSwitch?.[slot]!==false:true):model?.momentum;
   const memberNotice=admin&&model?.status!=="closed"?null:memberScannerStatus(model,loadError,checkedAt,failedAt);
   const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
-  const gainerTitle=model?.session==="after_hours"?"Top Gainers Post Market":"Top Gainers";
-  const renderGainerTitle=(switchable=false,slot?:ScannerCardSlot)=><Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}>{switchable?<WorkspaceScannerTitle label={GAINER_CARD_LABELS[gainerKindFor(slot)]}/>:
-    <Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{slot?GAINER_CARD_LABELS[gainerKindFor(slot)]:gainerTitle}</Typography>}<Tooltip title={GAINERS_EXPLANATION}>
+  const gainerTitleFor=(slot?:ScannerCardSlot)=>gainerCardTitle(gainerKindFor(slot),model?.session,slot?cardGainerSwitch?.[slot]!==false:true);
+  const renderGainerTitle=(switchable=false,slot?:ScannerCardSlot)=><Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}>{switchable?<WorkspaceScannerTitle label={gainerTitleFor(slot)}/>:
+    <Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitleFor(slot)}</Typography>}<Tooltip title={GAINERS_EXPLANATION}>
     <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
   </Tooltip></Stack>;
   const [fullScannerSlot,setFullScannerSlot]=useState<ScannerCardSlot>();
@@ -826,7 +826,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
       scanners:scannerChoices,views:cardViews,gainerAutoSwitch};
     saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
   };
-  const viewSettings=(kind:ScannerKind,slot?:ScannerCardSlot)=><ScannerViewSettings label={kind==="gainers"&&slot?GAINER_CARD_LABELS[gainerKindFor(slot)]:SCREEN_LABELS[kind]} view={modeFor(kind,slot)}
+  const viewSettings=(kind:ScannerKind,slot?:ScannerCardSlot)=><ScannerViewSettings label={kind==="gainers"?gainerTitleFor(slot):SCREEN_LABELS[kind]} view={modeFor(kind,slot)}
     onViewChange={view=>changeMode(kind,view,slot)}>
       {kind==="gainers"&&slot&&gainerKindFor(slot)==="gainers"?<GainerSwitchControl automatic={cardGainerSwitch?.[slot]!==false} onChange={value=>changeGainerSwitch(slot,value)}/>:null}
     </ScannerViewSettings>;
@@ -1001,11 +1001,11 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     {companyDrawerLoaded&&<ScannerCompanyDrawer symbol={companySymbol} onClose={()=>setCompanySymbol(null)}/>}
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
-      slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${fullScanner==="gainers"&&fullScannerSlot?GAINER_CARD_LABELS[gainerKindFor(fullScannerSlot)]:SCREEN_LABELS[fullScanner]} full view`:undefined,
+      slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${fullScanner==="gainers"?gainerTitleFor(fullScannerSlot):SCREEN_LABELS[fullScanner]} full view`:undefined,
         sx:{width:{xs:"100vw",md:"90vw",xl:"85vw"},maxWidth:"100vw"}}}}>
       {fullScanner?<Stack sx={{height:"100dvh",minHeight:0}}>
         <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",borderBottom:1,borderColor:"divider",px:2,py:1.25}}>
-          <Typography component="h2" variant="h6" sx={{fontWeight:800}}>{fullScanner==="gainers"&&fullScannerSlot?GAINER_CARD_LABELS[gainerKindFor(fullScannerSlot)]:SCREEN_LABELS[fullScanner]}</Typography>
+          <Typography component="h2" variant="h6" sx={{fontWeight:800}}>{fullScanner==="gainers"?gainerTitleFor(fullScannerSlot):SCREEN_LABELS[fullScanner]}</Typography>
           <Stack direction="row" sx={{alignItems:"center"}}>{viewSettings(fullScanner,fullScannerSlot)}<IconButton aria-label="Close full scanner view" onClick={()=>setFullScanner(null)}><CloseRoundedIcon/></IconButton></Stack>
         </Stack>
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0,p:2})}>{fullScanner==="gainers"?renderGainerTitle(false,fullScannerSlot):null}{contents(fullScanner,false,false,fullScannerSlot)}</Box>

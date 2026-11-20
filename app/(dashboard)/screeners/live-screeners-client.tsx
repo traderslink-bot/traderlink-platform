@@ -1,5 +1,6 @@
 "use client";
 
+import { gainerCardTitle } from "@/src/modules/scanner/live/gainer-card-policy";
 import { scannerPriceNumber } from "./scanner-price";
 
 import { ScannerLayoutHandles, ScannerLayoutToolbar, type NamedLayout } from "./scanner-layout-editor";
@@ -668,7 +669,7 @@ export function LiveScreenersClient({ admin=false }: { admin?: boolean }) {
   const resultsFor=(kind:ScannerKind)=>kind==="gainers"?selectedGainers:model?.momentum;
   const memberNotice=admin&&model?.status!=="closed"?null:memberScannerStatus(model,loadError,checkedAt,failedAt);
   const openNews=async(item:ScannerNewsItem)=>{try{const response=await fetch(`/api/platform/news/workspace-scanner?articleId=${encodeURIComponent(item.id)}`,{cache:"no-store"});if(!response.ok)throw Error();const payload=await response.json() as {article?:PressReleaseArticle};if(payload.article)setNewsArticle(payload.article);}catch{/* Keep the scanner usable when article detail is unavailable. */}};
-  const gainerTitle=model?.session==="after_hours"?"Top Gainers Post Market":"Top Gainers";
+  const gainerTitle=gainerCardTitle("gainers",model?.session);
   const gainerTabs=<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}><Typography component="h2" data-gainer-title sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2}}>{gainerTitle}</Typography><Tooltip title={GAINERS_EXPLANATION}>
     <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
   </Tooltip></Stack>;

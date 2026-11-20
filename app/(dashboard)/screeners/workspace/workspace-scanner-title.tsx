@@ -36,13 +36,15 @@ export const WorkspaceScannerTitleContext = createContext<{
 export function WorkspaceScannerTitle({ children, label }: { children?:ReactNode; label?:string }) {
   const choice=useContext(WorkspaceScannerTitleContext);
   if(!choice)return children;
-  const selectedLabel=label;
+  const selectedLabel=label && label !== scannerTitles[choice.scanner] ? label : undefined;
   return <NativeSelect value={choice.scanner} disableUnderline
     inputProps={{"aria-label":`Scanner for ${scannerTitles[choice.slot]} card`}}
     onChange={event=>{if(isScannerCard(event.target.value))choice.onChange(event.target.value);}}
     sx={{minWidth:0,maxWidth:"100%",fontSize:"0.9rem",fontWeight:850,
       "& .MuiNativeSelect-select":{py:0,pl:0,pr:"19px !important",textOverflow:"ellipsis"},
       "& .MuiNativeSelect-icon":{fontSize:17}}}>
-    {Object.entries(scannerTitles).map(([key,label])=><option key={key} value={key}>{key===choice.scanner&&selectedLabel?selectedLabel:label}</option>)}
+    {/* Keep the collapsed session title distinct from the full scanner choices. */}
+    {selectedLabel && <option hidden value={choice.scanner}>{selectedLabel}</option>}
+    {Object.entries(scannerTitles).map(([key,label])=><option key={key} value={key}>{label}</option>)}
   </NativeSelect>;
 }

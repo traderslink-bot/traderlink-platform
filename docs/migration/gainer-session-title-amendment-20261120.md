@@ -1,0 +1,9 @@
+# Gainer session title amendment
+
+Direct owner request: visible combined card uses Top Gainers (pre/reg) for the day ranking and Top Gainers (post) for its post-market ranking. If automatic switching is disabled, retain the pre/reg title with the day results. Scanner selection keeps Top Gainers (pre/reg + post). Fixed choices become Top Gainers (pre/reg) and Top Gainers (post only). All parenthetical text is lowercase. Treat pre/peg in the request as the same pre/reg wording explicitly specified elsewhere in that request.
+
+Implementation uses existing session/model state and per-card preference, with no timer, request, ranking/filter or layout-state change. Preserve native picker options as full canonical scanner names while its collapsed selected title reflects the current ranking. Apply matching labels to card options/full views and the existing secondary Scanner rendering. Existing stream/request-count tests and per-card preference tests will verify unchanged data behavior alongside label assertions.
+
+Source only in assigned provider-neutral-wiring-20261120 lane, separate from frozen provider packet and reviewed final5-path delta. Preview runner hunk and prior provider changes remain untouched. QA completed after actual Stats handback:43tests across policy/workspace/secondary scanner rendering PASS; lint8files0errors0warnings. Tests cover premarket/regular/post titles, automatic-switch-off basis, canonical dropdown options, independent cards, state restoration and unchanged stream/request counts. Native picker retains current selected session title and canonical visible options. No deployment requested or performed by this task.
+
+Exact finite QA evidence `/tmp/traderlink-gainer-title-qa-20261120/`, independent-closeout SHA9cccba7dda74065b61fbad32d16123509fecf6c4021e6014e6c3ce30aa16d43f. No product source changes after this passing run; no migration. Coordinator retains local Git preservation authority; no push/deploy requested.

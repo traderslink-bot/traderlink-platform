@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScannerReadModel } from "./contracts";
-import { GAINER_CARD_LABELS, gainerCardResults, gainerCardView, isGainerCard, readGainerSwitchPreferences } from "./gainer-card-policy";
+import { GAINER_CARD_LABELS, gainerCardTitle, gainerCardResults, gainerCardView, isGainerCard, readGainerSwitchPreferences } from "./gainer-card-policy";
 
 describe("custom-layout gainer card policy", () => {
   it("keeps combined cards automatic by default and lets each card stay on the daily basis", () => {
@@ -9,6 +9,14 @@ describe("custom-layout gainer card policy", () => {
     expect(gainerCardView("gainers", "after_hours")).toBe("post_market");
     expect(gainerCardView("gainers", "after_hours", false)).toBe("day");
     expect(gainerCardView("gainers", undefined)).toBe("day");
+  });
+  it("labels the active session while retaining lowercase full scanner choices", () => {
+    expect(gainerCardTitle("gainers", "premarket")).toBe("Top Gainers (pre/reg)");
+    expect(gainerCardTitle("gainers", "regular")).toBe("Top Gainers (pre/reg)");
+    expect(gainerCardTitle("gainers", "after_hours")).toBe("Top Gainers (post)");
+    expect(gainerCardTitle("gainers", "after_hours", false)).toBe("Top Gainers (pre/reg)");
+    expect(gainerCardTitle("day-gainers", "after_hours")).toBe("Top Gainers (pre/reg)");
+    expect(gainerCardTitle("post-market-gainers", "regular")).toBe("Top Gainers (post only)");
   });
   it("keeps fixed choices independent of the combined card preference", () => {
     expect(gainerCardView("day-gainers", "after_hours", true)).toBe("day");
@@ -34,7 +42,7 @@ describe("custom-layout gainer card policy", () => {
     expect(readGainerSwitchPreferences({ gainers: "false", momentum: null }, slots)).toEqual({});
   });
   it("provides unambiguous dropdown names without creating another scanner engine kind", () => {
-    expect(GAINER_CARD_LABELS.gainers).toBe("Top Gainers (Pre/Reg + Post)");
+    expect(GAINER_CARD_LABELS.gainers).toBe("Top Gainers (pre/reg + post)");
     expect(isGainerCard("day-gainers")).toBe(true);
     expect(isGainerCard("post-market-gainers")).toBe(true);
     expect(isGainerCard("momentum")).toBe(false);

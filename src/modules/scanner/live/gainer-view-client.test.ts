@@ -93,21 +93,21 @@ describe("actual Top Gainers pushed model and tab interaction", () => {
   });
   it("switches the Gainers title and table to post-market on publication without remounting or extra requests", async () => {
     const page = await mount(model("regular"));
-    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers (pre/reg)");
     expect(page.container.querySelector('[aria-label="Open Top Gainers full view"]')).not.toBeNull();
     expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
     expect(page.stream).toHaveBeenCalledTimes(1);expectOnlyInitialChartRequests(page.fetch);
     await page.update(model("after_hours"));
-    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers Post Market");
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers (post)");
     expect(page.container.textContent).not.toContain("Since today’s regular close");
     expect(page.stream).toHaveBeenCalledTimes(1);expectOnlyInitialChartRequests(page.fetch);
     expect(page.stream).toHaveBeenCalledWith("/api/screeners/live?stream=1");
   });
   it("returns to the day comparison when the reported session is regular", async () => {
     const page = await mount(model("after_hours"));
-    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers Post Market");
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers (post)");
     await page.update(model("regular"));
-    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers (pre/reg)");
     expect(page.container.textContent).not.toContain("Since the previous trading day’s regular close");
     expect(page.stream).toHaveBeenCalledTimes(1);expectOnlyInitialChartRequests(page.fetch);
   });
@@ -214,7 +214,7 @@ describe("compact scanner grid and full view", () => {
     expect([...page.container.querySelectorAll('[data-scanner-workspace-slot]')].map(card=>card.getAttribute("data-scanner-workspace-slot"))).toEqual(["slot-1","slot-2","slot-3","slot-4","slot-5","slot-7","slot-6"]);
     expect(DEFAULT_SCANNER_WORKSPACE_LAYOUT.assignments["ticker-workspace"]).toBe("slot-6");
     expect(page.container.querySelector('[aria-label="Live screener"]')).toBeNull();
-    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers");
+    expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers (pre/reg)");
     expect([...page.container.querySelectorAll('[data-scanner-workspace-card="momentum"] h2')].some(heading=>heading.textContent==="Momentum")).toBe(true);
   });
   it("keeps a single PR instance and exposes every compact column with keyboard details", async () => {

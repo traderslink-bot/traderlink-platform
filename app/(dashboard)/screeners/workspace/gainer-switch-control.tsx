@@ -17,7 +17,7 @@ export function GainerSwitchControl({ automatic, onChange }: {
       label="Automatically switch to post-market gainers"
     />
     <Typography sx={{ mt: 0.25, fontSize: "0.72rem", lineHeight: 1.35 }} color="text.secondary">
-      Off keeps Day Gainers through post-market.
+      Off keeps Top Gainers (pre/reg) through post-market.
     </Typography>
   </Box>;
 }
