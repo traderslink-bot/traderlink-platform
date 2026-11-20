@@ -30,6 +30,15 @@ export function eraseCommunityStatsIdentity(db:Database.Database,platformUserId:
     const affected=db.prepare(`SELECT DISTINCT community_id FROM community_stats_members WHERE discord_user_id IN(SELECT value FROM json_each(?))`).all(currentIds) as {community_id:string}[];
     // An old link must never erase another Platform account's subsequent webpage visits.
     db.prepare(`DELETE FROM community_stats_events AS e WHERE e.platform_user_id=? OR(e.surface='discord' AND(e.discord_user_id IN(SELECT value FROM json_each(?)) OR EXISTS(SELECT 1 FROM community_stats_identity_links l WHERE l.platform_user_id=? AND l.community_id=e.community_id AND l.discord_user_id=e.discord_user_id AND e.occurred_at_utc>=l.from_utc AND(l.until_utc IS NULL OR e.occurred_at_utc<l.until_utc))))`).run(platformUserId,currentIds,platformUserId);
+    // Retained visits belong to their viewers. Remove only the erased subject's
+    // attribution copies, without deleting another member's activity or counts.
+    db.prepare("UPDATE community_stats_events SET author_user_id=NULL WHERE author_user_id=?").run(platformUserId);
+    db.prepare("UPDATE community_stats_events SET publisher_user_id=NULL WHERE publisher_user_id=?").run(platformUserId);
+    const hasTable=(name:string)=>!!db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name=?").get(name);
+    if(hasTable("traderlink_community_activity_events"))db.prepare("UPDATE traderlink_community_activity_events SET publisher_user_id=NULL WHERE publisher_user_id=?").run(platformUserId);
+    // Legacy distinct-member buckets cannot be safely merged with an anonymous
+    // bucket. Explicit erasure removes only this publisher's obsolete aggregates.
+    if(hasTable("traderlink_community_content_daily_stats"))db.prepare("DELETE FROM traderlink_community_content_daily_stats WHERE publisher_user_id=?").run(platformUserId);
     for(const table of ["community_stats_members","community_stats_memberships","community_stats_voice_state"] as const)db.prepare(`DELETE FROM ${table} WHERE discord_user_id IN(SELECT value FROM json_each(?))`).run(currentIds);
     db.prepare(`DELETE FROM community_stats_identity_links WHERE platform_user_id=?`).run(platformUserId);
     const erasedAt=new Date().toISOString();
@@ -47,6 +56,7 @@ export function eraseCommunityStatsIdentity(db:Database.Database,platformUserId:
 
 export function exportCommunityStatsIdentity(db:Database.Database,platformUserId:string,atUtc=new Date().toISOString(),communityId?:string):readonly unknown[] {
   if(!communityStatsStorageReady(db))return [];
+  void atUtc; // Retained positional compatibility; exports no longer age out history.
   const cutoff="2015-01-01T00:00:00.000Z";
   const events=db.prepare(`SELECT e.community_id,e.event_id,e.discord_user_id,e.platform_user_id,e.kind,e.occurred_at_utc,e.received_at_utc,e.content_id,e.canonical_content_id,e.placement_id,e.content_type,e.title,e.path,e.username,e.display_name,e.nickname,e.nickname_state,e.identity_observed_at_utc
     FROM community_stats_events e WHERE e.occurred_at_utc>=? AND (? IS NULL OR e.community_id=?) AND(e.platform_user_id=? OR(e.surface='discord' AND EXISTS(SELECT 1 FROM community_stats_identity_links l WHERE l.platform_user_id=? AND l.community_id=e.community_id AND l.discord_user_id=e.discord_user_id AND e.occurred_at_utc>=l.from_utc AND(l.until_utc IS NULL OR e.occurred_at_utc<l.until_utc)))) ORDER BY e.occurred_at_utc,e.event_id`).all(cutoff,communityId??null,communityId??null,platformUserId,platformUserId);

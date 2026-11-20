@@ -27,18 +27,18 @@ export class CommunityStatsRepository {
     const received=statsUtcMs(event.receivedAtUtc),at=statsUtcMs(event.occurredAtUtc);
     if(at>received+5000||at<Date.parse("2015-01-01T00:00:00.000Z")||!event.eventId||event.eventId.length>180
       || !/^\d{1,32}$/u.test(event.discordUserId)||!Number.isInteger(event.durationSeconds)||event.durationSeconds<0)throw new Error("Invalid Stats event.");
-    const old=this.db.prepare(`SELECT discord_user_id,platform_user_id,kind,content_id,path FROM community_stats_events
-      WHERE community_id=? AND event_id=?`).get(communityId,event.eventId) as {discord_user_id:string;platform_user_id:string|null;kind:string;content_id:string|null;path:string|null}|undefined;
+    const old=this.db.prepare(`SELECT discord_user_id,platform_user_id,kind,content_id,path,canonical_content_id,placement_id,page_id FROM community_stats_events
+      WHERE community_id=? AND event_id=?`).get(communityId,event.eventId) as {discord_user_id:string;platform_user_id:string|null;kind:string;content_id:string|null;path:string|null;canonical_content_id:string|null;placement_id:string|null;page_id:string|null}|undefined;
     if(old){
-      if(old.discord_user_id!==event.discordUserId||old.platform_user_id!==event.platformUserId||old.kind!==event.kind||old.content_id!==event.contentId||old.path!==event.path)throw new Error("Conflicting Stats event identity.");
+      if(old.discord_user_id!==event.discordUserId||old.platform_user_id!==event.platformUserId||old.kind!==event.kind||old.content_id!==event.contentId||old.path!==event.path||old.canonical_content_id!==(event.canonicalContentId??null)||old.placement_id!==(event.placementId??null)||old.page_id!==(event.pageId??null))throw new Error("Conflicting Stats event identity.");
       return false;
     }
     this.db.prepare(`INSERT INTO community_stats_events(community_id,event_id,discord_user_id,platform_user_id,surface,kind,
       occurred_at_utc,received_at_utc,content_id,content_type,title,path,author_user_id,username,display_name,nickname,
-      identity_observed_at_utc,channel_id,duration_seconds,reply_to_event_id,reply_delay_seconds,source_link_id,canonical_content_id,placement_id,nickname_state)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(communityId,event.eventId,event.discordUserId,event.platformUserId,event.surface,event.kind,
+      identity_observed_at_utc,channel_id,duration_seconds,reply_to_event_id,reply_delay_seconds,source_link_id,canonical_content_id,placement_id,nickname_state,page_id,category_id,publisher_user_id)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(communityId,event.eventId,event.discordUserId,event.platformUserId,event.surface,event.kind,
       event.occurredAtUtc,event.receivedAtUtc,event.contentId,event.contentType,event.title,event.path,event.authorUserId,event.username,event.displayName,event.nickname,
-      event.identityObservedAtUtc,event.channelId,event.durationSeconds,event.replyToEventId,event.replyDelaySeconds,event.sourceLinkId,event.canonicalContentId??null,event.placementId??null,event.nicknameState??"not_collected");
+      event.identityObservedAtUtc,event.channelId,event.durationSeconds,event.replyToEventId,event.replyDelaySeconds,event.sourceLinkId,event.canonicalContentId??null,event.placementId??null,event.nicknameState??"not_collected",event.pageId??null,event.categoryId??null,event.publisherUserId??null);
     this.db.prepare(`UPDATE community_stats_source_state SET last_event_at_utc=max(coalesce(last_event_at_utc,''),?) WHERE community_id=? AND source=?`)
       .run(event.occurredAtUtc,communityId,event.surface);
     return true;

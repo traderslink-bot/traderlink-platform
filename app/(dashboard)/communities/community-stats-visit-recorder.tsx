@@ -4,11 +4,13 @@ import {normalizeStatsTrafficSource} from "@/src/modules/communities/contracts/c
 import {usePathname} from "next/navigation";
 
 /** Mount only after server authorization on an eligible public page. Never on a layout or private workspace. */
-export function CommunityStatsVisitRecorder({communitySlug}:{communitySlug:string}){
+export function CommunityStatsVisitRecorder({communitySlug,focus=null}:{communitySlug:string;focus?:string|null}){
   const pathname=usePathname(),navigation=useRef<{path:string;id:string}|null>(null);
   useEffect(()=>{
-    if(!pathname||!pathname.startsWith(`/communities/${communitySlug}`))return;
-    if(navigation.current?.path!==pathname)navigation.current={path:pathname,id:crypto.randomUUID()};
+    const prefix=`/communities/${communitySlug}`;
+    if(!pathname||(pathname!==prefix&&!pathname.startsWith(`${prefix}/`)))return;
+    const committedTarget=`${pathname}#${focus??""}`;
+    if(navigation.current?.path!==committedTarget)navigation.current={path:committedTarget,id:crypto.randomUUID()};
     const key=`community-stats-source:${communitySlug}`,now=Date.now();
     const query=new URLSearchParams(window.location.search);
     let referrerHost="";try{const referrer=new URL(document.referrer);if(!["accounts.google.com","accounts.google.co.uk"].includes(referrer.hostname)&&!(referrer.hostname==="discord.com"&&/^\/(?:oauth2|login)(?:\/|$)/u.test(referrer.pathname)))referrerHost=referrer.hostname;}catch{/* no referrer supplied */}
@@ -22,9 +24,9 @@ export function CommunityStatsVisitRecorder({communitySlug}:{communitySlug:strin
       traffic={referrerHost:clean.referrerHost??"",campaignSource:clean.campaignSource,campaignMedium:clean.campaignMedium,campaignName:clean.campaignName};
       sessionStorage.setItem(key,JSON.stringify({at:now,traffic}));
     }catch{/* collection also works when browser storage is disabled */}
-    const body=JSON.stringify({path:pathname,navigationId:navigation.current.id,...traffic});
+    const body=JSON.stringify({path:pathname,navigationId:navigation.current.id,...(focus?{focus}:{}),...traffic});
     // Effect runs after successful navigation commit. A repeated StrictMode effect keeps the same ID.
     void fetch(`/api/communities/${encodeURIComponent(communitySlug)}/stats/visits`,{method:"POST",headers:{"Content-Type":"application/json"},body,credentials:"same-origin",keepalive:true}).catch(()=>undefined);
-  },[communitySlug,pathname]);
+  },[communitySlug,pathname,focus]);
   return null;
 }

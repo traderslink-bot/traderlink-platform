@@ -13,6 +13,7 @@ export type PartnerAlertWorkflowCommand =
   | (Readonly<{ action: "savePartnerDraft" }> & WithoutRequest<"savePartnerDraft">)
   | (Readonly<{ action: "saveMappingDraft" }> & WithoutRequest<"saveMappingDraft">)
   | (Readonly<{ action: "removeDraftMapping" }> & WithoutRequest<"removeDraftMapping">)
+  | (Readonly<{ action: "removeDraftOffer" }> & WithoutRequest<"removeDraftOffer">)
   | (Readonly<{ action: "saveOfferVersion" }> & WithoutRequest<"saveOfferVersion">)
   | (Readonly<{ action: "acceptPublishingAgreement" }> & WithoutRequest<"acceptPublishingAgreement">)
   | (Readonly<{ action: "submitRequest" }> & WithoutRequest<"submitRequest">)
@@ -28,14 +29,14 @@ export type PartnerAlertWorkflowCommand =
   | (Readonly<{ action: "withdrawMapping" }> & WithoutRequest<"withdrawMapping">)
   | (Readonly<{ action: "withdrawOffer" }> & WithoutRequest<"withdrawOffer">);
 type RepositoryCommands = Pick<PartnerAlertRepository,
-  "savePartnerDraft" | "saveMappingDraft" | "removeDraftMapping" | "saveOfferVersion" | "acceptPublishingAgreement" | "submitRequest"
+  "savePartnerDraft" | "saveMappingDraft" | "removeDraftMapping" | "removeDraftOffer" | "saveOfferVersion" | "acceptPublishingAgreement" | "submitRequest"
   | "proposePublishingAgreement" | "confirmInspection" | "approveMapping" | "approveOffer" | "approvePartner" | "activatePartner" | "setPartnerState"
   | "requestChanges" | "declinePartner" | "withdrawMapping" | "withdrawOffer">;
 export type PartnerAlertWorkflowRepository = Omit<RepositoryCommands, "savePartnerDraft"> & Readonly<{
   savePartnerDraft: (input: Omit<Parameters<RepositoryCommands["savePartnerDraft"]>[0],
     "outputBotUserId" | "outputConfigurationRef">) => ReturnType<RepositoryCommands["savePartnerDraft"]>;
 }>;
-const COMMUNITY_ACTIONS = new Set(["savePartnerDraft", "saveMappingDraft", "removeDraftMapping", "saveOfferVersion", "acceptPublishingAgreement", "submitRequest"]);
+const COMMUNITY_ACTIONS = new Set(["savePartnerDraft", "saveMappingDraft", "removeDraftMapping", "removeDraftOffer", "saveOfferVersion", "acceptPublishingAgreement", "submitRequest"]);
 const OPERATOR_ACTIONS = new Set(["proposePublishingAgreement", "confirmInspection", "approveMapping", "approveOffer", "approvePartner", "activatePartner",
   "setPartnerState", "requestChanges", "declinePartner", "withdrawMapping", "withdrawOffer"]);
 
@@ -75,6 +76,10 @@ export function parsePartnerAlertWorkflowCommand(value: unknown, selected: Partn
     case "removeDraftMapping":
       keys(["mappingId"]);
       return Object.freeze({ ...base, action, mappingId: partnerAlertId(body.mappingId, "mappingId") });
+    case "removeDraftOffer":
+      keys(["offerId", "expectedLatestOfferVersion"]);
+      return Object.freeze({ ...base, action, offerId: partnerAlertId(body.offerId, "offerId"),
+        expectedLatestOfferVersion: partnerAlertInteger(body.expectedLatestOfferVersion, "expectedLatestOfferVersion", 1) });
     case "saveOfferVersion": {
       keys(["offer"]); const offer = parsePartnerAlertCheckoutOffer(body.offer);
       if (offer.communityId !== communityId) throw new PartnerAlertValidationError("communityId");
@@ -183,6 +188,7 @@ export class PartnerAlertWorkflow {
           case "savePartnerDraft": written = repository.savePartnerDraft({ ...command, requestId: input.requestId }); break;
           case "saveMappingDraft": written = repository.saveMappingDraft({ ...command, requestId: input.requestId }); break;
           case "removeDraftMapping": written = repository.removeDraftMapping({ ...command, requestId: input.requestId }); break;
+          case "removeDraftOffer": written = repository.removeDraftOffer({ ...command, requestId: input.requestId }); break;
           case "saveOfferVersion": written = repository.saveOfferVersion({ ...command, requestId: input.requestId }); break;
           case "acceptPublishingAgreement": written = repository.acceptPublishingAgreement({ ...command, requestId: input.requestId }); break;
           case "submitRequest": written = repository.submitRequest({ ...command, requestId: input.requestId }); break;

@@ -26,6 +26,10 @@ const view = { communityId, displayName: "Northstar", status: "draft", revision:
   contentPolicy: { blockedServerNames: ["Northstar Trading"], blockedPhrases: [], authorMode: "allowlist", allowedAuthorIds: ["850000000000000021"] } };
 const adminView = { ...view, status: "awaiting_approval", reviewRequested: true,
   mappings: mappings.map(mapping => ({ ...mapping, reviewState: "awaiting_approval" })) };
+const receivingPairs = [
+  { channelId: "850000000000000051", channelName: "Receiving Alpha", roleId: "850000000000000052", roleName: "Dedicated Alpha", available: true, reason: null },
+  { channelId: "850000000000000061", channelName: "Receiving Beta", roleId: "850000000000000062", roleName: "Dedicated Beta", available: true, reason: null },
+];
 let container: HTMLDivElement, root: Root;
 const transport = vi.fn();
 const posted: { body: Record<string, unknown>; headers: Record<string, string> }[] = [];
@@ -48,6 +52,14 @@ async function type(label: string, value: string) {
   });
 }
 async function click(node: HTMLElement) { await act(async () => { node.click(); }); }
+async function chooseReceivingPair(name: string) {
+  const combo = container.querySelector<HTMLElement>('[role="combobox"]');
+  expect(combo).not.toBeNull();
+  await act(async () => combo!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, button: 0 })));
+  const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(node => node.textContent?.includes(name));
+  expect(option).toBeDefined();
+  await click(option!);
+}
 async function mount(admin = false, stripeReady = true) {
   await act(async () => root.render(createElement(StrictMode, null,
     createElement(ThemeProvider, { theme: createTraderMaterialTheme("light") },
@@ -65,6 +77,13 @@ beforeEach(() => {
     }
     if (_url.endsWith("/source-channels")) {
       return Response.json({ ok: true, result: { guildName: "Northstar Trading", channels: [] } });
+    }
+    if (_url.includes("/resources?")) {
+      const mappingId = new URL(_url, "https://synthetic.example.com").searchParams.get("mappingId");
+      const mapping = adminView.mappings.find(row => row.mappingId === mappingId);
+      if (!mapping) return Response.json({ ok: false }, { status: 404 });
+      return Response.json({ ok: true, result: { communityId, mappingId, partnerRevision: adminView.revision,
+        mappingRevision: mapping.revision, destinationGuildId: "850000000000000001", options: receivingPairs } });
     }
     return Response.json({ ok: true, result: _url.startsWith("/api/admin/") ? adminView : view });
   });
@@ -140,27 +159,45 @@ describe("Partner owner and review interaction regressions", () => {
       offerId: offer.offerId, version: 4, title: offer.title, amountMinor: 1175, mappingIds: offer.mappingIds, cadence: offer.cadence,
     } });
   });
-  it("preserves both typed admin destinations in Strict Mode", async () => {
+  it("keeps a verified channel and its dedicated role together in Strict Mode", async () => {
     await mount(true);
-    await type("Destination channel ID", "850000000000000051");
-    await type("Dedicated role ID", "850000000000000052");
-    expect(field("Destination channel ID").value).toBe("850000000000000051");
-    expect(field("Dedicated role ID").value).toBe("850000000000000052");
+    expect(container.textContent).not.toContain("Destination channel ID");
+    await click(button("Choose receiving channel"));
+    await chooseReceivingPair("Receiving Alpha");
+    await chooseReceivingPair("Receiving Beta");
+    const combo = container.querySelector<HTMLElement>('[role="combobox"]');
+    expect(combo?.textContent).toContain("Receiving Beta");
+    expect(combo?.textContent).toContain("Dedicated Beta");
+    expect(posted).toHaveLength(0);
+    await click(button("Approve channel"));
+    expect(posted).toHaveLength(1);
+    expect(posted[0].body).toMatchObject({ action: "approveMapping", communityId,
+      mappingId: adminView.mappings[0].mappingId, expectedRevision: adminView.revision,
+      expectedMappingRevision: adminView.mappings[0].revision,
+      destinationChannelId: receivingPairs[1].channelId, destinationRoleId: receivingPairs[1].roleId });
   });
   it("does not claim rollback after a lost approval response and reuses the unchanged reference", async () => {
     await mount(true);
-    await type("Destination channel ID", "850000000000000051");
-    await type("Dedicated role ID", "850000000000000052");
+    await click(button("Choose receiving channel"));
+    await chooseReceivingPair("Receiving Alpha");
     transport.mockImplementation(async (_url: string, init?: RequestInit) => {
       if (init?.method !== "POST") return Response.json({ ok: true, result: adminView });
       posted.push({ body: JSON.parse(String(init.body)), headers: init.headers as Record<string, string> });
-      throw new Error("Synthetic response loss after possible commit");
+      if (posted.length === 1) throw new Error("Synthetic response loss after possible commit");
+      return Response.json({ ok: false }, { status: 403 });
     });
     await click(button("Approve channel"));
-    expect(container.textContent).toContain("review outcome could not be confirmed");
+    expect(container.textContent).toContain("original review outcome is unconfirmed");
     expect(container.textContent).not.toContain("Nothing was approved");
+    expect(button("Approve channel").hasAttribute("disabled")).toBe(true);
     await click(button("Approve channel"));
-    expect(posted).toHaveLength(2); expect(posted[1].headers).toEqual(posted[0].headers);
+    expect(posted).toHaveLength(1);
+    await click(button("Retry same review action"));
+    expect(posted).toHaveLength(2);
+    expect(posted[1].body).toEqual(posted[0].body);
+    expect(posted[1].headers).toEqual(posted[0].headers);
+    expect(container.textContent).toContain("original review outcome is unconfirmed");
+    expect(container.textContent).not.toContain("The review action was saved.");
   });
 });
 

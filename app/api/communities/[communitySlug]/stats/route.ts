@@ -7,7 +7,7 @@ import {requireCommunityOwnerReviewIdentity} from "@/src/modules/communities/ser
 import {requireTraderLinkPlatformRequestIdentity} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {openReadonlyPlatformDatabase} from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {openPlatformDatabase} from "@/src/modules/platform/server/database/open-platform-database";
-import {authorizeCommunityStats,assertStatsSameOrigin,readCommunityStatsJson,isCommunityStatsAccessDenied} from "@/src/modules/communities/server/stats/community-stats-access";
+import {revalidateCommunityStatsRequest,authorizeCommunityStats,assertStatsSameOrigin,readCommunityStatsJson,isCommunityStatsAccessDenied} from "@/src/modules/communities/server/stats/community-stats-access";
 import {COMMUNITY_STATS_TABS,readCommunityStats,openCommunityStatsEventExport} from "@/src/modules/communities/server/stats/community-stats-read";
 import type {CommunityStatsTab,CommunityStatsWindow} from "@/src/modules/communities/contracts/community-stats-contracts";
 import {CommunityStatsRepository,communityStatsStorageReady} from "@/src/modules/communities/server/stats/community-stats-repository";
@@ -39,6 +39,7 @@ export async function GET(request:Request,context:Context):Promise<Response>{
     database=openReadonlyPlatformDatabase();
     const query=new URL(request.url).searchParams;
     const scope=await authorizeCommunityStats(database,communitySlug,identity.scope.userId,query.get("personal")==="1"?"visit":"read");
+    revalidateCommunityStatsRequest(request,identity);
     if(query.get("personal")==="1")return Response.json({events:exportCommunityStatsIdentity(database,identity.scope.userId,new Date().toISOString(),scope.communityId)},{headers});
     const asOfUtc=new Date().toISOString(),throughDate=query.get("through")??asOfUtc.slice(0,10);
     const fromDate=query.get("from")??new Date(Date.parse(`${throughDate}T00:00:00.000Z`)-29*86_400_000).toISOString().slice(0,10);
@@ -138,6 +139,7 @@ export async function POST(request:Request,context:Context):Promise<Response>{
     const arrays=[body.channelIds,body.ownContentUserIds,body.exportUserIds];
     if(arrays.some(value=>!Array.isArray(value)||value.length>1000||value.some(item=>typeof item!=="string"||item.length>100)))return new Response(null,{status:400,headers});
     database=openPlatformDatabase({mode:"runtime"});const scope=await authorizeCommunityStats(database,communitySlug,identity.scope.userId,"settings");
+    revalidateCommunityStatsRequest(request,identity);
     if(!communityStatsStorageReady(database))return new Response(null,{status:503,headers});
     const channels=[...new Set(body.channelIds as string[])].sort(),own=[...new Set(body.ownContentUserIds as string[])],exports=[...new Set(body.exportUserIds as string[])];
     if(channels.some(channel=>!isStatsReviewChannel(scope.guildId,channel)))return new Response(null,{status:400,headers});

@@ -1,3 +1,4 @@
+import {statsPublicationUnits,statsPublishedIn,statsContributorId} from "./community-stats-analysts";
 import {statsSelectedChannels,statsChannelSql} from "./community-stats-channel-selection";
 import "server-only";
 import type Database from "better-sqlite3";
@@ -18,7 +19,7 @@ type Context={window:CommunityStatsWindow;page:number;pageSize:number;catalog:re
 
 export function readCommunityStatsTeam(db:Database.Database,scope:CommunityStatsRequestScope,context:Context):Pick<CommunityStatsReport,"columns"|"rows"|"totalRows"|"sections"|"metrics"|"notes">{
   const selectedChannels=statsSelectedChannels(db,scope),channelScope=statsChannelSql(selectedChannels);
-  const {window,page,pageSize,catalog,coverage,sources}=context,bounds=resolveStatsWindow(window);
+  const {window,page,pageSize,catalog,coverage}=context,bounds=resolveStatsWindow(window);
   const from=new Date(bounds.start).toISOString(),until=new Date(bounds.end).toISOString();
   const repository=new TraderLinkCommunityRepository(db);
   const people=db.prepare(`SELECT u.user_id,u.display_name,c.owner_user_id,m.status AS membership_status
@@ -44,10 +45,13 @@ export function readCommunityStatsTeam(db:Database.Database,scope:CommunityStats
       WHERE mapping.community_id=@community AND mapping.status='active' AND(mapping.discord_role_id=@guild OR EXISTS(SELECT 1 FROM json_each(d.role_ids_json) current_role WHERE current_role.value=mapping.discord_role_id))) ORDER BY r.name,r.role_id`).all({community:scope.communityId,user:person.user_id,guild:scope.guildId}) as {role_id:string;name:string}[];
     const name=person.display_name,identity=discordId?native?.username??"n/a":"Account not linked";
     rows.push({"Team member":name,"Discord username":identity,"TraderLink roles":[...(person.user_id===person.owner_user_id?["Community owner"]:[]),...assigned.map(role=>role.name)].join("; ")||"No current role assignment","Effective permissions":person.access.capabilities.map(key=>permissionLabels[key]??key).join("; ")||"No effective permissions",Membership:person.membership_status??"Owner without active membership",userId:person.user_id});
-    const idsFor=(kind:"alert"|"watchlist")=>JSON.stringify(catalog.filter(content=>content.authorUserId===person.user_id&&content.type===kind&&(kind!=="watchlist"||content.path.includes("/server-watchlists/"))).map(content=>content.id));
-    const alerts=db.prepare(`SELECT count(*) AS n,max(published_at_utc) AS last FROM traderlink_community_alerts WHERE community_id=? AND author_user_id=? AND alert_id IN(SELECT value FROM json_each(?)) AND status IN('published','archived') AND published_at_utc>=? AND published_at_utc<?`).get(scope.communityId,person.user_id,idsFor("alert"),from,until) as Publication;
-    const watchlists=db.prepare(`SELECT count(*) AS n,max(published_at_utc) AS last FROM traderlink_community_server_watchlists WHERE community_id=? AND author_user_id=? AND watchlist_id IN(SELECT value FROM json_each(?)) AND status IN('published','archived') AND published_at_utc>=? AND published_at_utc<?`).get(scope.communityId,person.user_id,idsFor("watchlist"),from,until) as Publication;
-    publishing.push({"Team member":name,"Alerts published":alerts.n,"Server watchlists published":watchlists.n,"Last alert published UTC":alerts.last,"Last server watchlist published UTC":watchlists.last});
+    const units=statsPublicationUnits(catalog),cohort=units.filter(item=>statsPublishedIn(item,from,until));
+    const owned=cohort.filter(item=>statsContributorId(item)===person.user_id);
+    const unknown=units.some(item=>item.targetKind==="watchlist_item"&&!statsContributorId(item)&&(!item.publishedAtUtc||statsPublishedIn(item,from,until)));
+    const personUnits=units.filter(item=>statsContributorId(item)===person.user_id);
+    const alerts=owned.filter(item=>item.type==="alert"),watchlists=owned.filter(item=>item.type==="watchlist");
+    publishing.push({"Team member":name,"Alerts published":personUnits.some(item=>item.type==="alert"&&!item.publishedAtUtc)?null:alerts.length,"Watchlists published":unknown||personUnits.some(item=>item.type==="watchlist"&&!item.publishedAtUtc)?null:watchlists.length,
+      "Last alert published UTC":alerts.map(item=>item.publishedAtUtc!).sort().at(-1)??null,"Last watchlist published UTC":watchlists.map(item=>item.publishedAtUtc!).sort().at(-1)??null});
     const count=(left:string,right:string)=>db.prepare(`SELECT coalesce(sum(surface='discord' AND kind IN('message','thread_reply','forum_post')),0) AS messages,coalesce(sum(surface='discord' AND kind='reaction_add'),0) AS reactions,coalesce(sum(surface='web'),0) AS visits,max(CASE WHEN surface='discord' THEN occurred_at_utc END) AS lastDiscord,max(CASE WHEN surface='web' THEN occurred_at_utc END) AS lastWeb FROM community_stats_events WHERE ${channelScope} AND community_id=@community AND occurred_at_utc>=@from AND occurred_at_utc<@until AND((surface='discord' AND discord_user_id=@discord) OR(surface='web' AND platform_user_id=@user AND content_id IN(SELECT value FROM json_each(@contents))))`).get({community:scope.communityId,from:left,until:right,discord:discordId,user:person.user_id,contents:contentIds}) as Totals;
     const current=count(from,until);
     participation.push({"Team member":name,"Discord username":identity,"Discord messages":volume(current.messages,"discord",!!discordId),"Webpage visits":volume(current.visits,"web",true),"Last Discord contribution UTC":current.lastDiscord,"Last webpage visit UTC":current.lastWeb});
@@ -61,7 +65,7 @@ export function readCommunityStatsTeam(db:Database.Database,scope:CommunityStats
   }
   const section=(title:string,columns:string[],items:CommunityStatsTableRow[])=>({title,columns,rows:items,totalRows:team.length,page,pageSize});
   return {columns:["Team member","Discord username","TraderLink roles","Effective permissions"],rows,totalRows:team.length,
-    sections:[section("Publishing",["Team member","Alerts published","Server watchlists published","Last alert published UTC","Last server watchlist published UTC"],publishing),section("Team activity",["Team member","Discord username","Discord messages","Webpage visits","Last Discord contribution UTC","Last webpage visit UTC"],participation),...(canManageCoaching?[section("Coaching",["Team member","Active coaching plans","Active students","Completed sessions","Delivered reviews","Last completed session UTC","Last delivered review UTC"],coaching)]:[])],
+    sections:[section("Publishing",["Team member","Alerts published","Watchlists published","Last alert published UTC","Last watchlist published UTC"],publishing),section("Team activity",["Team member","Discord username","Discord messages","Webpage visits","Last Discord contribution UTC","Last webpage visit UTC"],participation),...(canManageCoaching?[section("Coaching",["Team member","Active coaching plans","Active students","Completed sessions","Delivered reviews","Last completed session UTC","Last delivered review UTC"],coaching)]:[])],
     metrics:[{label:"Team members",value:team.length,unit:"people",previous:null}],
     notes:["All dates and times are UTC.","Includes everyone assigned a TradersLink team role, including people without activity. Roles reflect current assignments.","Activity uses the selected dates. Active coaching plans and students are current totals."]};
 }

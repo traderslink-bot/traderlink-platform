@@ -43,6 +43,15 @@ export type CommunityStagingQaCapability=Readonly<{
  remainingMs:()=>number;onStop:(callback:()=>void)=>()=>void;finish:(outcome:"completed"|"cancelled"|"failed")=>void;
 }>;
 export type CommunityStagingQaJob=CommunityStagingQaRun["jobs"][number];
+export type CommunityStagingQaSubjectSelector=Readonly<{raw:string;subjects:readonly string[]}>;
+/** Server-only ordered selector contract. The first two entries are the immutable student/coach pair. */
+export function parseCommunityStagingQaSubjectSelector(environment:NodeJS.ProcessEnv=process.env):CommunityStagingQaSubjectSelector{
+ const raw=environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT;
+ if(typeof raw!=="string")refused();
+ const subjects=raw.split(",").map(value=>value.trim());
+ if(subjects.length<2||subjects.some(value=>!id(value))||new Set(subjects).size!==subjects.length)refused();
+ return Object.freeze({raw,subjects:Object.freeze(subjects)});
+}
 /** Producer/issuer shared digest. It pins the selected queue row and its routing/content dependencies before admission. */
 export function communityStagingQaJobStateSha256(database:Database.Database,job:Pick<CommunityStagingQaJob,"table"|"id">):string{
  const key=job.table==="traderlink_community_publication_actions"?"action_id":"delivery_id";
@@ -199,8 +208,8 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
   if(!input.schemaLineagePath||!input.schemaLineageSha256||!digest(input.schemaLineageSha256)||run.principalSchemaLineageSha256!==input.schemaLineageSha256)refused();
   lineage=JSON.parse(readPrivate(input.schemaLineagePath,input.schemaLineageSha256)) as SchemaLineage;
  }else if(input.schemaLineagePath||input.schemaLineageSha256||run.principalSchemaLineageSha256)refused();
- const selectors=environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT?.split(",").map(x=>x.trim());
- if(!selectors||selectors.length!==2||selectors[0]===selectors[1]||principals.coach.subject!==selectors[1]||principals.student.subject!==selectors[0])refused();
+ const selector=parseCommunityStagingQaSubjectSelector(environment);
+ if(principals.coach.subject!==selector.subjects[1]||principals.student.subject!==selector.subjects[0])refused();
  const request=input.request,requestBinding=JSON.stringify([...request.headers]);
  const route=run.pipeline==="stats"?"community-stats-qa":run.pipeline==="shared-fixture"?"community-staging-qa":"community-delivery-qa";
  if(request.method!=="POST"||request.signal.aborted||new URL(request.url).href!==`${run.pins.origin}/__private/${route}/${run.nonce}`||request.headers.get("origin")!==run.pins.origin||request.headers.get("sec-fetch-site")==="cross-site")refused();
@@ -210,7 +219,7 @@ export function issueCommunityStagingQaCapability(input:Readonly<{
  const structural=()=>{
   assertCommunityStagingQaTarget(db,run.pins);
   assertPrincipalSchemaLineage(db,run,principals,lineage);
-  if(db.readonly||JSON.stringify([...request.headers])!==requestBinding||environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT?.split(",").map(x=>x.trim()).join(",")!==selectors.join(","))refused();
+  if(db.readonly||JSON.stringify([...request.headers])!==requestBinding||environment.TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT!==selector.raw)refused();
  };
  const deliveryPipeline=run.pipeline==="common-delivery"||run.pipeline==="shared-delivery";
  const pendingRows=()=>[

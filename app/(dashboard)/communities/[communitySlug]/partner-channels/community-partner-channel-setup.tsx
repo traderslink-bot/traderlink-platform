@@ -33,6 +33,7 @@ import { PARTNER_ALERT_MAX_SELECTION, PARTNER_ALERT_STRIPE_RENEWAL_LIMITS, parse
 import { requirePartnerAlertOfferCoverage } from "@/src/modules/partner-alerts/contracts/partner-alert-offer-coverage";
 
 import type { PartnerStripeSellerStatus } from "@/src/modules/partner-alerts/server/partner-alert-stripe-onboarding";
+import type { PartnerAlertInspectionContact } from "@/src/modules/partner-alerts/server/partner-alert-inspection-contact";
 import type { PartnerAlertReviewFeedback } from "@/src/modules/partner-alerts/server/partner-alert-read-model";
 import type { PartnerAlertDiscordSourceCatalog, PartnerAlertDiscordSourceChannel,
   PartnerAlertUnavailableDiscordSourceChannel } from "@/src/modules/partner-alerts/server/partner-alert-discord-channel-catalog";
@@ -52,6 +53,7 @@ type OfferTerms = Readonly<{ offerId: string; version: number; title: string; ma
   cadence: PartnerAlertCadence; billingProvider?: "stripe" }>;
 type SetupView = Readonly<{ communityId: string; displayName: string; status: string; revision: number;
   currentAgreementId: string | null; approvedAtUtc: string | null; reviewRequested: boolean; personalInspectionConfirmed: boolean;
+  initialDraftPublisher?: boolean;
   reviewFeedback?: PartnerAlertReviewFeedback;
   contentPolicy: Readonly<{ blockedServerNames: readonly string[]; blockedPhrases: readonly string[];
     authorMode: "all_humans" | "allowlist"; allowedAuthorIds: readonly string[] }>;
@@ -115,6 +117,7 @@ const unavailableChannelReason: Record<PartnerAlertUnavailableDiscordSourceChann
 export function CommunityPartnerChannelSetup({ communityId, stripeStatus, stripeExistingEnabled, stripeNotice, stripeOfferDrafts }: {
   communityId: string; stripeOfferDrafts?: boolean; stripeStatus?: PartnerStripeSellerStatus; stripeExistingEnabled?: boolean; stripeNotice?: "refresh" | "link_failed";
 }) {
+  const [inspectionContact, setInspectionContact] = useState<Readonly<{ state: "loading" | "unavailable" | "ready"; contact?: PartnerAlertInspectionContact }>>({ state: "loading" });
   const [consent, setConsent] = useState(false);
   const [step, setStep] = useState(0);
   const [view, setView] = useState<SetupView | null>(null);
@@ -237,6 +240,23 @@ export function CommunityPartnerChannelSetup({ communityId, stripeStatus, stripe
     } });
     return () => { controller.abort(); sourceCatalogGeneration.current += 1; };
   }, [communityId, step, view]);
+  useEffect(() => {
+    if (step !== 1) return;
+    const controller = new AbortController();
+    setInspectionContact({ state: "loading" });
+    void fetch(`/api/partner-channels/communities/${communityId}/inspection-contact`, {
+      cache: "no-store", credentials: "same-origin", signal: controller.signal,
+    }).then(async response => {
+      const body = await response.json() as { ok?: boolean; result?: { communityId?: string; contact?: PartnerAlertInspectionContact } };
+      const contact = body.result?.contact;
+      if (!response.ok || body.ok !== true || body.result?.communityId !== communityId || !contact
+        || !/^[1-9][0-9]{0,19}$/u.test(contact.discordUserId) || typeof contact.displayName !== "string"
+        || !contact.displayName.trim() || contact.displayName.length > 100
+        || contact.profileUrl !== `https://discord.com/users/${contact.discordUserId}`) throw Error("unavailable");
+      if (!controller.signal.aborted) setInspectionContact({ state: "ready", contact });
+    }).catch(() => { if (!controller.signal.aborted) setInspectionContact({ state: "unavailable" }); });
+    return () => controller.abort();
+  }, [communityId, step, view?.revision]);
   const refreshDiscordNames = async () => {
     if (saving) return;
     setPending(true);
@@ -264,7 +284,7 @@ export function CommunityPartnerChannelSetup({ communityId, stripeStatus, stripe
       setMessage({ severity: "warning", text: "The save outcome could not be confirmed. Retry this same save to check its original result. Your fields and request reference are retained." });
     };
     try {
-      const response = await fetch(`/api/partner-channels/communities/${communityId}`, {
+      const response = await fetch(`/api/partner-channels/communities/${attempt.body.communityId}`, {
         method: "POST", cache: "no-store", credentials: "same-origin",
         headers: { "content-type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1",
           [PARTNER_ALERT_IDEMPOTENCY_HEADER]: attempt.key },
@@ -287,23 +307,25 @@ export function CommunityPartnerChannelSetup({ communityId, stripeStatus, stripe
       const saved = envelope?.result && typeof envelope.result === "object"
         ? envelope.result as Record<string, unknown> : null;
       const offer = attempt.body.offer as Record<string, unknown> | undefined;
-      const expectedResource = attempt.body.action === "saveOfferVersion" ? offer?.offerId
+      const expectedResource = attempt.body.action === "removeDraftOffer" ? attempt.body.offerId
+        : attempt.body.action === "saveOfferVersion" ? offer?.offerId
         : attempt.body.action === "saveMappingDraft" || attempt.body.action === "removeDraftMapping"
           ? attempt.body.mappingId : communityId;
-      const expectedStates = attempt.body.action === "removeDraftMapping" ? ["withdrawn"]
+      const expectedStates = ["removeDraftMapping", "removeDraftOffer"].includes(String(attempt.body.action)) ? ["withdrawn"]
         : attempt.body.action === "submitRequest" ? ["active", "setup_required", "awaiting_approval"] : ["draft"];
       // A generic success flag is not the registered writer's committed result.
-      if (envelope?.ok !== true || !saved || typeof expectedResource !== "string" || saved.communityId !== communityId
+      if (envelope?.ok !== true || !saved || typeof expectedResource !== "string" || saved.communityId !== attempt.body.communityId
         || saved.resourceId !== expectedResource || saved.partnerRevision !== Number(attempt.body.expectedRevision) + 1
         || !Number.isSafeInteger(saved.resourceVersion) || Number(saved.resourceVersion) < 1
-        || !expectedStates.includes(String(saved.state))) { unconfirmed(); return; }
+        || !expectedStates.includes(String(saved.state))
+        || (attempt.body.action === "removeDraftOffer" && saved.resourceVersion !== attempt.body.expectedLatestOfferVersion)) { unconfirmed(); return; }
       requestKey.current = null; setUnconfirmedSave(null);
       if (attempt.savedStep === "details") detailsEdited.current = false;
       if (attempt.savedStep === "authors") authorsEdited.current = false;
       if (attempt.body.action === "saveMappingDraft" || attempt.body.action === "removeDraftMapping") {
         mappingDraftId.current = null; setSourceChannelId(""); setEditingMappingId(null);
       }
-      if (attempt.body.action === "saveOfferVersion") populateOffer(null);
+      if (attempt.body.action === "saveOfferVersion" || attempt.body.action === "removeDraftOffer") populateOffer(null);
       if (await load()) setMessage({ severity: "success", text: "This setup step was saved." });
       else {
         setRefreshRequired(true);
@@ -452,6 +474,14 @@ export function CommunityPartnerChannelSetup({ communityId, stripeStatus, stripe
             </Stack>}
             {step === 1 && <Stack spacing={1.5} sx={{ alignItems: "flex-start" }}>
               <Typography>Give the TraderLink owner free access to inspect all channels in your Discord server, including paid and private channels.</Typography>
+              {inspectionContact.state === "loading" ? <Typography role="status">Loading inspection contact…</Typography>
+                : inspectionContact.state === "unavailable" ? <Alert severity="info">The inspection contact is temporarily unavailable. You can continue preparing and submit your application; inspection remains pending.</Alert>
+                : inspectionContact.contact ? <Stack spacing={1}>
+                  <Typography sx={{ fontWeight: 700 }}>{inspectionContact.contact.displayName}</Typography>
+                  <Typography variant="body2">Discord user: {inspectionContact.contact.discordUserId}</Typography>
+                  <Button component="a" href={inspectionContact.contact.profileUrl} target="_blank" rel="noreferrer" variant="outlined">Open reviewer’s Discord profile</Button>
+                  <Typography variant="body2" color="text.secondary">Give this person free access to every channel, including paid and private channels. Opening their profile does not confirm inspection. TraderLink confirms it after the personal review.</Typography>
+                </Stack> : null}
               {view || missing ? <Chip label={inspectionStatus} color={view?.personalInspectionConfirmed ? "success" : "default"} /> : null}
             </Stack>}
             {step === 2 && <Stack spacing={1.5}><Typography color="text.secondary">Choose a Discord text or announcement channel to publish.</Typography>
@@ -532,6 +562,14 @@ export function CommunityPartnerChannelSetup({ communityId, stripeStatus, stripe
                     populateOffer(offer);
                     offerNameInput.current?.focus();
                   }}>Edit offer</Button> : null}
+                {view?.initialDraftPublisher && reviewState === "draft" ? <Button variant="outlined" color="error"
+                  sx={{ alignSelf: "flex-start" }} disabled={saving} aria-label={`Remove ${offer.title}`}
+                  onClick={() => { if (!view || saving) return;
+                    setSourceConfirmation(Object.freeze({ title: "Remove unpublished offer?", channelName: offer.title,
+                      command: Object.freeze({ action: "removeDraftOffer", offerId: offer.offerId,
+                        expectedLatestOfferVersion: offer.version }), expectedRevision: view.revision,
+                      offers: Object.freeze([offer]) }));
+                  }}>Remove draft offer</Button> : null}
               </Stack>)}
               {view?.reviewRequested ? <Typography color="text.secondary">Pricing changes can be made after this review ends.</Typography>
                 : !stripeOfferDrafts ? <Alert severity="info">
@@ -644,16 +682,18 @@ export function CommunityPartnerChannelSetup({ communityId, stripeStatus, stripe
             <Typography>These unpublished offers will be removed from this application in full:</Typography>
             {sourceConfirmation.offers.map(offer => <Typography key={offer.offerId} variant="body2">{offer.title} · version {offer.version}</Typography>)}
           </> : <Typography>No current offer includes this channel.</Typography>}
-          <Typography variant="body2" color="text.secondary">Earlier unpublished offer versions containing this channel are also retired. Newer coverage excluding it stays unchanged. Saved history is kept. Adding this draft channel back does not restore retired offers.</Typography>
+          <Typography variant="body2" color="text.secondary">{sourceConfirmation?.command.action === "removeDraftOffer"
+            ? "All earlier unpublished versions of this offer are also retired. Source channels and unrelated offers stay unchanged. Saved history is kept; removing this offer does not cancel a subscription."
+            : "Earlier unpublished offer versions containing this channel are also retired. Newer coverage excluding it stays unchanged. Saved history is kept. Adding this draft channel back does not restore retired offers."}</Typography>
         </Stack></DialogContent>
         <DialogActions>
           <Button disabled={saving} variant="outlined" onClick={() => setSourceConfirmation(null)}>Cancel</Button>
-          <Button disabled={saving || !sourceConfirmation} color={sourceConfirmation?.command.action === "removeDraftMapping" ? "error" : "primary"}
+          <Button disabled={saving || !sourceConfirmation} color={["removeDraftMapping", "removeDraftOffer"].includes(String(sourceConfirmation?.command.action)) ? "error" : "primary"}
             variant="contained" onClick={() => {
               if (!sourceConfirmation) return;
               const confirmed = sourceConfirmation; setSourceConfirmation(null);
               void submit(confirmed.command, { expectedRevision: confirmed.expectedRevision });
-            }}>{sourceConfirmation?.command.action === "removeDraftMapping" ? "Remove draft channel" : "Change draft channel"}</Button>
+            }}>{sourceConfirmation?.command.action === "removeDraftOffer" ? "Remove offer" : sourceConfirmation?.command.action === "removeDraftMapping" ? "Remove draft channel" : "Change draft channel"}</Button>
         </DialogActions>
       </Dialog>
     </Stack>

@@ -6,6 +6,7 @@ import {join} from "node:path";
 import {setTimeout as delay} from "node:timers/promises";
 import {afterEach,beforeEach,describe,expect,it,vi} from "vitest";
 import {traderLinkCommunityStatsMigration} from "../database/migrations/0173_traderlink_community_stats";
+import {traderLinkCommunityBrandedFeedsMigration} from "../database/migrations/0177_traderlink_community_branded_feeds";
 import {communityStatsHistoryStatements} from "./community-stats-history-schema";
 import {communityStatsAttributionStatements} from "./community-stats-attribution-schema";
 import {communityStatsForwardStatements} from "./community-stats-forward-schema";
@@ -33,6 +34,12 @@ function fixture():Fixture{
     CREATE TABLE cursor_state(id INTEGER PRIMARY KEY,value TEXT);
     INSERT INTO cursor_state VALUES(1,'original');`);
   for(const sql of [...traderLinkCommunityStatsMigration.statements,...communityStatsHistoryStatements,...communityStatsAttributionStatements,...communityStatsForwardStatements])db.exec(sql);
+  // The real recordEvent contract includes the registered branded-feed dimensions.
+  // Keep this isolated contention schema aligned without bypassing writer SQL.
+  const dimensions=traderLinkCommunityBrandedFeedsMigration.statements.join("\n")
+    .match(/ALTER TABLE community_stats_events ADD COLUMN (?:page_id|category_id|publisher_user_id) TEXT;/gu);
+  if(!dimensions||dimensions.length!==3)throw new Error("Canonical Stats event dimensions changed.");
+  for(const sql of dimensions)db.exec(sql);
   const at=new Date().toISOString();db.prepare("INSERT INTO platform_users VALUES(?,'active')").run(OWNER);
   db.prepare("INSERT INTO platform_auth_identities VALUES(?,'discord',?,'active')").run(OWNER,SUBJECT);
   db.prepare("INSERT INTO traderlink_communities VALUES(?,?,?,'active','unit-stats')").run(COMMUNITY,GUILD,OWNER);

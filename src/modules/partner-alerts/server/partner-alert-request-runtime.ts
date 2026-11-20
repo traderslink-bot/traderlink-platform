@@ -2,6 +2,8 @@ import { partnerAlertOwnerEvidenceTarget,refreshPartnerAlertOwnerEvidence } from
 import { partnerAlertOperatorEvidenceTarget, refreshPartnerAlertOperatorEvidence } from "./partner-alert-operator-evidence-refresh";
 import { isPartnerAlertReviewDiscordTarget } from "./partner-alert-review-discord";
 import "server-only";
+import { readPartnerAlertInspectionContact } from "./partner-alert-inspection-contact";
+import { readPartnerAlertAdminDiscordOptions } from "./partner-alert-admin-discord-options";
 
 import { createPartnerAlertReviewDiscordRoleRest as createPartnerAlertDiscordRoleRest, createPartnerAlertReviewDiscordResourceVerifier as createPartnerAlertDiscordResourceVerifier, createPartnerAlertReviewDiscordChannelCatalog as createPartnerAlertDiscordChannelCatalog, createPartnerAlertReviewDiscordRoleObserver as createPartnerAlertDiscordRoleObserver } from "./partner-alert-review-discord";
 
@@ -95,6 +97,8 @@ export type PartnerAlertRequestRuntime = Readonly<{
       coveredMappingIds?: readonly string[] }> | null>;
   writer: PartnerAlertRequestWriter;
   readSourceChannels: (request: Request, communityId: string) => Promise<Response>;
+  readInspectionContact: (request: Request, communityId: string) => Promise<Response>;
+  readReceivingOptions: (request: Request, communityId: string, mappingId: string) => Promise<Response>;
   checkSubscriberAccess: (request: Request, communityId: string, offerKey: string) => Promise<Response>;
   readSubscriberOfferState: (expected: PartnerAlertSubscriberOffer, signal: AbortSignal) =>
     ReturnType<typeof verifyPartnerAlertSubscriberOffer>;
@@ -311,6 +315,44 @@ export async function withPartnerAlertRequestRuntime<T>(
         if (refresh) requirePlatformMutationRequest(incoming);
         const source = await readVerifiedSource(incoming, communityId, undefined, refresh);
         return runtimeResponse(200, { ok: true, result: { communityId, ...source } });
+      } catch (error) { return partnerAlertPrivateReadFailure(error); }
+    };
+    const readInspectionContact = async (incoming: Request, communityId: string): Promise<Response> => {
+      if (incoming.method !== "GET") return runtimeResponse(405, { ok: false, code: "method_not_allowed" });
+      try {
+        const permit = writer.preauthorizeMetadataRead(incoming, { kind: "inspection_contact", communityId });
+        // New optional metadata routes do not depend on the old refresh URL selector.
+        const readConfiguration = () => readPartnerAlertOwnerDiscordDiscoveryConfiguration(environment, outputBotUserId, outputConfigurationRef);
+        const configuration = readConfiguration();
+        if (!configuration || !permit.reviewerDiscordUserId) return unavailable();
+        const fingerprint = providerConfigurationFingerprint(configuration);
+        const signal = AbortSignal.any([incoming.signal, AbortSignal.timeout(10_000)]);
+        const contact = await readPartnerAlertInspectionContact({ discordUserId: permit.reviewerDiscordUserId,
+          botToken: configuration.discordBotToken, signal, transport: (url, init) => fetch(url, init) });
+        const current = readConfiguration();
+        if (signal.aborted || !current || providerConfigurationFingerprint(current) !== fingerprint) return unavailable();
+        writer.revalidateMetadataRead(incoming, permit);
+        return runtimeResponse(200, { ok: true, result: { communityId, contact } });
+      } catch (error) { return partnerAlertPrivateReadFailure(error); }
+    };
+    const readReceivingOptions = async (incoming: Request, communityId: string, mappingId: string): Promise<Response> => {
+      if (incoming.method !== "GET") return runtimeResponse(405, { ok: false, code: "method_not_allowed" });
+      try {
+        const permit = writer.preauthorizeMetadataRead(incoming, { kind: "operator_resources", communityId, mappingId });
+        const readConfiguration = () => readPartnerAlertDiscordOutputConfiguration(environment, outputBotUserId, outputConfigurationRef);
+        const configuration = readConfiguration();
+        if (!configuration) return unavailable();
+        const fingerprint = providerConfigurationFingerprint(configuration);
+        const signal = AbortSignal.any([incoming.signal, AbortSignal.timeout(10_000)]);
+        const options = await readPartnerAlertAdminDiscordOptions({ permit, configuration, messageContentEnabled,
+          signal, transport: (url, init) => fetch(url, init) });
+        const current = readConfiguration();
+        if (signal.aborted || !current || providerConfigurationFingerprint(current) !== fingerprint
+          || environment.PARTNER_ALERT_DISCORD_MESSAGE_CONTENT_INTENT_ENABLED !== "true") return unavailable();
+        writer.revalidateMetadataRead(incoming, permit);
+        return runtimeResponse(200, { ok: true, result: { communityId, mappingId,
+          partnerRevision: permit.partnerRevision, mappingRevision: permit.mappingRevision,
+          destinationGuildId: permit.destinationGuildId, options } });
       } catch (error) { return partnerAlertPrivateReadFailure(error); }
     };
     const bound = bindSubscriberAuthority?.({ database, writer, admission });
@@ -662,7 +704,7 @@ export async function withPartnerAlertRequestRuntime<T>(
     const receiveWhopEvent: PartnerAlertRequestRuntime["receiveWhopEvent"] = (scope, input) => {
       new PartnerAlertWhopInbox(database!, { scope, nowUtc, createLeaseToken: randomUUID, manualRoleReview: true }).receiveSignedEvent(input);
     };
-    return await operation(Object.freeze({ http, writer, readSourceChannels, checkSubscriberAccess,
+    return await operation(Object.freeze({ http, writer, readSourceChannels, readInspectionContact, readReceivingOptions, checkSubscriberAccess,
       readSubscriberOfferState, receiveWhopEvent, reviewSubscriberRole, reviewStripeAdjustment,
       receiveStripeBillingEvent, startStripeCheckout, readStripeCatalogOffer, readUserPremium, readStripeSeller, startStripeSellerSetup, completeStripeSellerSetup }));
   } catch {

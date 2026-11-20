@@ -7,7 +7,8 @@ import { PARTNER_ALERT_MAX_SELECTION, parsePartnerAlertCadence, parsePartnerAler
   partnerAlertUtc } from "../contracts/partner-alert-validation";
 import type { PartnerAlertRepository } from "./partner-alert-repository";
 
-type PrivateRead = ReturnType<PartnerAlertRepository["readPartner"]>;
+type PrivateRead = Omit<ReturnType<PartnerAlertRepository["readPartner"]>, "initialDraftPublisher"> &
+  Readonly<{ initialDraftPublisher?: boolean }>;
 type ReviewRead = ReturnType<PartnerAlertRepository["listReviewRequests"]>;
 type PartnerState = "draft" | "awaiting_approval" | "setup_required" | "active" | "publishing_paused" | "suspended" | "ended";
 type ReviewState = "draft" | "awaiting_approval" | "approved" | "withdrawn";
@@ -20,6 +21,7 @@ export type PartnerAlertPrivateMappingView = Readonly<{
 }>;
 export type PartnerAlertPrivateView = Readonly<{
   communityId: string; displayName: string; sourceGuildId: string; status: PartnerState; revision: number;
+  initialDraftPublisher?: boolean;
   reviewRequested: boolean; currentAgreementId: string | null; approvedAtUtc: string | null;
   reviewFeedback?: PartnerAlertReviewFeedback;
   createdAtUtc: string; updatedAtUtc: string;
@@ -159,6 +161,7 @@ export function projectPartnerAlertPrivateRead(input: PrivateRead): PartnerAlert
   }
   return Object.freeze({ communityId, displayName: partnerAlertText(partner.display_name, "displayName"), sourceGuildId,
     status: partnerState(partner.status), revision: partnerAlertInteger(partner.revision, "revision", 1),
+    initialDraftPublisher: input.initialDraftPublisher === true,
     reviewRequested: flag(partner.review_requested), currentAgreementId: nullableId(partner.current_agreement_id),
     ...(reviewFeedback ? { reviewFeedback } : {}),
     approvedAtUtc: nullableUtc(partner.approved_at_utc), createdAtUtc, updatedAtUtc,

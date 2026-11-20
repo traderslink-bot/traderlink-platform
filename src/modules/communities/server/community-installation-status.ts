@@ -1,9 +1,10 @@
 import "server-only";
 import { COMMUNITY_INSTALLATION_MESSAGES, type CommunityInstallationStatus } from "../contracts/community-installation-status";
 import { verifyCommunityOwner } from "./community-onboarding-service";
+import type { CommunityOwnerReviewIntent } from "./community-owner-review-policy";
 
 /** Only a complete bot guild inventory can establish absence. Failures never mean absent. */
-export async function readCommunityInstallationStatus(guildId: string, ownerDiscordId: string, token: string, request: typeof fetch = fetch): Promise<CommunityInstallationStatus> {
+export async function readCommunityInstallationStatus(guildId: string, ownerDiscordId: string, token: string, request: typeof fetch = fetch, reviewIntent?: CommunityOwnerReviewIntent): Promise<CommunityInstallationStatus> {
   const result = (state: CommunityInstallationStatus["state"]): CommunityInstallationStatus => ({ state, message: COMMUNITY_INSTALLATION_MESSAGES[state] });
   if (!/^\d{1,32}$/u.test(guildId) || !/^\d{1,32}$/u.test(ownerDiscordId) || !token.trim()) return result("unavailable");
   try {
@@ -18,7 +19,7 @@ export async function readCommunityInstallationStatus(guildId: string, ownerDisc
       if (!Array.isArray(guilds) || guilds.length > 200 || guilds.some(guild => !guild || typeof guild.id !== "string" || !/^\d{1,32}$/u.test(guild.id))) return result("unavailable");
       if (guilds.some(guild => guild.id === guildId)) {
         // Uses the existing integration to verify current ownership, rather than trusting OAuth candidates.
-        await verifyCommunityOwner(guildId, ownerDiscordId, token, request);
+        await verifyCommunityOwner(guildId, ownerDiscordId, token, request, reviewIntent);
         return result("ready");
       }
       if (guilds.length < 200) return result("not_installed");
