@@ -1,3 +1,5 @@
+import { ErasureViewerProvider } from "./(dashboard)/account/account-erasure-controls";
+import { erasureViewerRef } from "@/src/modules/platform/server/privacy/platform-erasure-status-read";
 import { isCommunityReviewDiscordGuild } from "@/src/modules/communities/server/community-review-discord-guild";
 import { readCommunityHistoryEntry } from "@/src/modules/communities/contracts/community-history-entry";
 import { headers } from "next/headers";
@@ -265,7 +267,7 @@ async function TraderLinkPlatformDashboardFrameContent({
       appearance={dashboardContext.appearance}
       key={`${offlineScopeRef}:${accountSelectionRef ?? "platform"}`}
     >
-      <>
+      <ErasureViewerProvider viewerRef={erasureViewerRef(scope.userId)}>
         <TraderLinkPlatformDashboardTemplate
           accountCurrency={dashboardContext.activeAccount?.baseCurrency ?? null}
           accountSelectionRef={accountSelectionRef}
@@ -299,7 +301,7 @@ async function TraderLinkPlatformDashboardFrameContent({
           accountSelectionRef={accountSelectionRef}
           offlineScopeRef={offlineScopeRef}
         />
-      </>
+      </ErasureViewerProvider>
     </DashboardMuiProviders>
   );
   } finally {

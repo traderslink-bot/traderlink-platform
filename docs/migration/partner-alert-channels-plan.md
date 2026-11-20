@@ -1,6 +1,6 @@
 # Partner Channels — working implementation plan
 
-Updated November 17, 2026, America/Toronto, after the regular app and sandbox checks.
+Updated November 19, 2026, America/Toronto, for the current-712 draft correction batch.
 This is the current product and implementation plan. Later direct owner decisions
 supersede it. Historical implementation reports do not override its requirements.
 
@@ -88,6 +88,21 @@ This review restriction does not change unrelated global Membership behavior.
 6. Review selected channels, review-access status, offers and redistribution/content
    consent. No TradersLink publishing fee appears. Save drafts and corrections
    without losing other steps; reload restores persisted facts.
+   Before an application has ever been submitted or approved, allow an owner to
+   change or logically remove an eligible draft source. Confirm the displayed
+   application revision and current affected offer versions. Retire each entire
+   unpublished version containing that source, including earlier versions; keep
+   newer coverage excluding it unchanged. Retain all identities, JSON and links.
+   Re-add an eligible own-removed source with its same mapping ID, without restoring
+   retired offers. Persistent consent, inspection, review and approval history
+   excludes this initial-only path even when current draft flags have been reset.
+   Existing active-publisher new-source admission remains separate.
+   Content rules exposes the existing all-people or explicit-author policy; bot
+   authors require explicit IDs. Author and additional-phrase saves preserve the
+   other step's saved policy and pending edits. An unconfirmed save retains its
+   original full payload and request reference for identical retry. Submit stays
+   disabled until individual/package coverage includes every selected channel;
+   the native writer remains authoritative and inspection may still be pending.
 7. Submit a versioned application. Show **Under review**, not Publishing. The
    applicant can see the admin's reason after changes are requested or the
    application is declined. Resubmission creates a new review with its own consent.

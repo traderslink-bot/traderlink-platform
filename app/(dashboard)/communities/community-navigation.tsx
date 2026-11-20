@@ -3,13 +3,15 @@ import {isCoachingStaff} from "@/src/modules/communities/contracts/coaching-audi
 import {useEffect,useMemo,useRef} from "react";
 import {useCommunityNavigation,type CommunityMenuItem} from "@/app/community-navigation-context";
 import type {TraderLinkCommunityDashboardSnapshot} from "@/src/modules/communities/contracts/traderlink-community-platform-contracts";
+import type {SharedSourceNavigationAccess} from "@/src/modules/communities/contracts/shared-alerts-contracts";
 
-type CommunityNavigationSnapshot=Pick<TraderLinkCommunityDashboardSnapshot,"community"|"viewer"|"relationships"> & Partial<Pick<TraderLinkCommunityDashboardSnapshot,"teamMembers"|"contentPages">> & Readonly<{sharedAlertsUnreadCount?:number;statsOwnContentAccess?:boolean}>;
+export type CommunityNavigationSnapshot=Pick<TraderLinkCommunityDashboardSnapshot,"community"|"viewer"> & Readonly<{relationships:readonly Pick<TraderLinkCommunityDashboardSnapshot["relationships"][number],"studentUserId">[]}> & Partial<Pick<TraderLinkCommunityDashboardSnapshot,"teamMembers"|"contentPages">> & SharedSourceNavigationAccess & Readonly<{sharedAlertsUnreadCount?:number;statsOwnContentAccess?:boolean}>;
 type Item={label:string;href:string};
-function buildCommunityMenu(snapshot:CommunityNavigationSnapshot,base:string,scope?:"shared-alerts"){
+export function buildCommunityMenu(snapshot:CommunityNavigationSnapshot,base:string,scope?:"shared-alerts"){
+ const sourceEntry=snapshot.sourceAlertPublishingAllowed===true?[{label:"Shared alert publishing",href:`${base}/alerts`}]:[];
  if(scope==="shared-alerts"){
   const unread=snapshot.sharedAlertsUnreadCount??0;
-  return {base,name:snapshot.community.displayName,viewerId:snapshot.viewer.userId,focused:true,items:snapshot.community.isOwner?[{label:unread?`Shared alerts (${unread} unread)`:"Shared alerts",href:`${base}/manage/shared-alerts`}]:[]};
+  return {base,name:snapshot.community.displayName,viewerId:snapshot.viewer.userId,focused:true,items:[...sourceEntry,...(snapshot.community.isOwner?[{label:unread?`Shared alerts (${unread} unread)`:"Shared alerts",href:`${base}/manage/shared-alerts`},{label:"Source channel assignments",href:`${base}/manage/shared-alerts/source-channels`}]:[])]};
  }
  const has=(key:string)=>snapshot.viewer.capabilities.some(capability=>capability===key);
  const coach=isCoachingStaff(snapshot.viewer.capabilities);
@@ -25,7 +27,7 @@ function buildCommunityMenu(snapshot:CommunityNavigationSnapshot,base:string,sco
  if(coach)coaching.push({label:"Coaching work",href:`${base}/workspace`},{label:"Calendar",href:`${base}/workspace/calendar`},{label:"Students",href:`${base}/workspace/students`},{label:"Enrollment requests",href:`${base}/workspace/requests`});
  if(has("community.coaching.offer"))coaching.push({label:"Coaching plans",href:`${base}/workspace/plans`});
  const manage=[{label:"Alert publishing",key:"alerts",permission:"community.alerts.create"},{label:"Publishing destinations",key:"pages",permission:"community.manage"},{label:"Team",key:"team",permission:"community.team.manage"},{label:"Groups and access",key:"roles",permission:"community.roles.manage"},{label:"Members",key:"members",permission:"community.members.view"},{label:"Discord publishing",key:"channels",permission:"community.discord.manage"},{label:"Alert templates",key:"templates",permission:"community.alerts.manage_all"},{label:"Settings",key:"settings",permission:"community.manage"}].filter(item=>snapshot.community.isOwner||has(item.permission)||(item.key==="alerts"&&has("community.alerts.manage_all"))).map(item=>({label:item.label,href:`${base}/manage/${item.key}`}));
- const items:CommunityMenuItem[]=[{label:"Overview",href:base},...market];
+ const items:CommunityMenuItem[]=[{label:"Overview",href:base},...sourceEntry,...market];
  const setupItems=[{label:"Profile",href:`${base}/workspace/setup`},{label:"Plans",href:`${base}/workspace/setup/plans`},{label:"Included lessons",href:`${base}/workspace/teaching`}];
  const coachingItems:CommunityMenuItem[]=coaching.filter(item=>item.label!=="Coach setup");
  if(has("community.coaching.offer"))coachingItems.push({label:"Coach setup",children:setupItems});

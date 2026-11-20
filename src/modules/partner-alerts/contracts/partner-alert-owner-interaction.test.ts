@@ -7,6 +7,7 @@ import { createTraderMaterialTheme } from "@/app/mui-theme";
 import { CommunityPartnerChannelSetup } from "@/app/(dashboard)/communities/[communitySlug]/partner-channels/community-partner-channel-setup";
 import { PartnerChannelCatalog, type PartnerChannelCatalogItem } from "@/app/(dashboard)/partner-channels/partner-channel-catalog";
 import { PartnerChannelReviewDetail } from "@/app/admin/journal/partner-channels/[communityId]/partner-channel-review-detail";
+import { PARTNER_ALERT_IDEMPOTENCY_HEADER } from "./partner-alert-request";
 
 // Use the real client components and low-level design primitives. Transport is
 // simulated solely for interaction regressions, never paid/backend acceptance.
@@ -81,16 +82,31 @@ describe("Partner owner and review interaction regressions", () => {
     await click(button("5. Content rules")); await click(button("1. Community details"));
     expect(field("Additional blocked phrases").value).toBe("My draft");
   });
-  it("preserves current author restrictions and an unchanged retry reference after refusal", async () => {
+  it("preserves author restrictions and the frozen request through an explicit retry after an unconfirmed save", async () => {
     await mount(); await type("Additional blocked phrases", "My draft");
-    await click(button("Save changes")); await click(button("Save changes"));
+    await click(button("Save changes"));
+    expect(posted).toHaveLength(1);
+    expect(button("Save changes").hasAttribute("disabled")).toBe(true);
+    expect(field("Additional blocked phrases").disabled).toBe(true);
+    expect(container.textContent).toContain("The save outcome could not be confirmed");
+    expect(container.textContent).not.toContain("No publishing change was made");
+    await click(button("Save changes"));
+    expect(posted).toHaveLength(1);
+    await click(button("Retry same save"));
     expect(posted).toHaveLength(2);
     expect(posted[0].body.displayName).toBe("Northstar Trading");
-    expect(posted[0].body.contentPolicy).toMatchObject({ blockedServerNames: [],
+    expect(posted[0].body.expectedRevision).toBe(view.revision);
+    expect(posted[0].body.contentPolicy).toMatchObject({ blockedServerNames: [], blockedPhrases: ["My draft"],
       authorMode: "allowlist", allowedAuthorIds: view.contentPolicy.allowedAuthorIds });
+    expect(posted[0].headers[PARTNER_ALERT_IDEMPOTENCY_HEADER]).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
+    expect(posted[1].body).toEqual(posted[0].body);
     expect(posted[1].headers).toEqual(posted[0].headers);
     expect(field("Additional blocked phrases").value).toBe("My draft");
+    expect(field("Additional blocked phrases").disabled).toBe(true);
+    expect(button("Save changes").hasAttribute("disabled")).toBe(true);
     expect(container.textContent).toContain("You have unsaved changes");
+    expect(container.textContent).toContain("The save outcome could not be confirmed");
+    expect(container.textContent).not.toContain("No publishing change was made");
   });
   it("keeps Strict Mode channel selections matched to the clicked checkbox", async () => {
     await mount(); await click(button("4. Channel access and pricing"));

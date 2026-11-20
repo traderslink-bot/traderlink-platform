@@ -1,3 +1,6 @@
+import {sharedAlertsMigrationCarrier} from "@/src/modules/platform/server/database/platform-shared-alerts-production-carrier";
+import {isSharedAlertPublisher} from "@/src/modules/communities/server/shared-alerts-publisher-permissions";
+import type {SharedSourceNavigationAccess} from "@/src/modules/communities/contracts/shared-alerts-contracts";
 import {hasCommunityStatsOwnAccess} from "@/src/modules/communities/server/stats/community-stats-access";
 import type {CommunityStatsNavigationAccess} from "@/src/modules/communities/contracts/community-stats-contracts";
 import {readCommunityStatsViewerChannels} from "@/src/modules/communities/server/stats/community-stats-viewer-channels";
@@ -13,7 +16,7 @@ import { resolveTraderLinkCommunityViewer } from "@/src/modules/communities/serv
 import { notFound } from "next/navigation";
 import { isCommunityContentActivityPath } from "@/src/modules/communities/server/community-activity-scope";
 
-async function loadAuthorizedCommunityPublishingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
+async function loadAuthorizedCommunityPublishingDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess&SharedSourceNavigationAccess;isReview:boolean}>>{
   try {
     return await loadAuthorizedCommunityDashboard(communitySlug,path);
   } catch (error) {
@@ -22,7 +25,7 @@ async function loadAuthorizedCommunityPublishingDashboard(communitySlug:string,p
   }
 }
 
-async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess;isReview:boolean}>>{
+async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:string):Promise<Readonly<{snapshot:TraderLinkCommunityDashboardSnapshot&CommunityStatsNavigationAccess&SharedSourceNavigationAccess;isReview:boolean}>>{
   if(communitySlug==="review") {
     if(process.env.NODE_ENV==="production"&&process.env.RAILWAY_ENVIRONMENT_NAME!=="staging") notFound();
     const role=path?.includes("/workspace")?"coach":"owner";
@@ -101,7 +104,7 @@ async function loadAuthorizedCommunityDashboard(communitySlug:string,path?:strin
         community:{...current.community,isOwner:false,memberCount:0},viewer:{...current.viewer,capabilities:current.viewer.capabilities.filter(capability=>capability.startsWith('community.coaching.')&&capability!=='community.coaching.manage_all')},
         settings:{description:'',personalAlertTemplatesEnabled:false},contentPages:[],analytics:{views30Days:0,uniqueMembers30Days:0,alertViews30Days:0,watchlistViews30Days:0,coachingViews30Days:0,topPages:[],namedMemberPages:[],brandedPages:[]},referrals:{attributedMembers:0,tier2Members:0,estimatedEarningsMinor:0,currency:'USD',commissionLabel:'Not configured'}};
     }
-    return {...current,statsOwnContentAccess,lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
+    return {...current,statsOwnContentAccess,sourceAlertPublishingAllowed:sharedAlertsMigrationCarrier.state==="selected"&&(process.env.TRADERLINK_SHARED_ALERTS_DELIVERY_ENABLED==="1"||process.env.TRADERLINK_SHARED_ALERTS_OWNER_REVIEW_ENABLED==="1")&&!historyOnly&&current.viewer.capabilities.includes("community.view")&&isSharedAlertPublisher(database,current.community.communityId,viewer.userId,createCanonicalUtcTimestamp(),true),lifecycle:database.prepare(`SELECT bot_state botState,bot_checked_at_utc checkedAtUtc FROM traderlink_community_lifecycle WHERE community_id=?`).get(current.community.communityId) as {botState:string;checkedAtUtc:string|null}|undefined,deliveries,plans:current.plans.map(plan=>({...plan,activeStudents:counts.get(plan.planId)??0}))};
   });
   return Object.freeze({snapshot:{...snapshot,viewer:{...snapshot.viewer,activeJournalAccountId:identity.scope.activeAccountId??null,activeJournalAccountName}},isReview:false});
 }

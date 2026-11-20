@@ -72,6 +72,18 @@ export const PAID_PLAN_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     description: "Choose community alert channels and understand the two paid-access requirements.",
     sections: Object.freeze([
       Object.freeze({
+        id: "prepare-publisher-application",
+        title: "Prepare a publisher application",
+        summary: "Choose source channels, authors and offers before submitting for review.",
+        keywords: Object.freeze(["Publish channels", "source channel", "authors", "bot", "draft", "package"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Open Publish channels for a Discord community you own. TraderLink uses the connected server and channel names. Choose source channels and configure individual offers or same-server packages covering every selected channel. Personal review access can still be pending when you submit; the TraderLink owner must inspect your server before approval." }),
+          Object.freeze({ kind: "paragraph", text: "In Content rules, All people excludes bot and webhook messages. To allow selected people or a supported bot, choose Specific people or bots and enter their Discord author IDs, one per line. Save content rules separately from additional blocked phrases in Community details; unsaved edits in another step are retained on this page." }),
+          Object.freeze({ kind: "paragraph", text: "Before an initial application has ever been submitted, use Change channel or Remove beside an eligible draft source. Confirmation lists the current affected unpublished offers. Their entire included versions are retired, together with earlier unpublished versions containing the source; newer coverage excluding it stays unchanged. Saved versions and channel identities are kept. Adding a removed source back does not restore retired offers." }),
+          Object.freeze({ kind: "paragraph", text: "Submitted versions stay fixed during review. Existing approved or paid channels use their separate reviewed change process. A stale confirmation asks you to reload instead of applying it to newer terms. If a save result is unconfirmed, Retry same save retains its original fields and request reference; avoid leaving the page until its result is resolved." }),
+        ]),
+      }),
+      Object.freeze({
         id: "choose-partner-channels",
         title: "Choose Partner Channels",
         summary: "Review the community, channels, price and access requirements before continuing.",

@@ -6,6 +6,7 @@ import type {CoachingPlanConfiguration} from "./coaching-plan-configuration";
 export type CoachingAgreementTerms=Readonly<{
   planId:string;planRevision:number;planName:string;description:string;
   quoteRequired?:boolean;
+  packRepurchase?:import('./coaching-pack-repurchase').PackRepurchaseLineage;
   studentReviewPreferences?:import('./coaching-student-review-preferences').StudentReviewPreferences;
   commercialPolicy?:import('./coaching-commercial-policy').CoachingCommercialPolicy;
   priceAmountMinor:number;currency:string;billingCadence:string;paymentInstructions:string;

@@ -56,8 +56,14 @@ export async function handleSharedAlertsSourceHttp(request: Request, mutate: Sou
     const identity = requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers)), url = new URL(request.url);
     for (const key of ["communitySlug", "view", "alertId", "page"]) if (url.searchParams.getAll(key).length > 1) throw new SharedAlertError("invalid");
     const slug = url.searchParams.get("communitySlug") ?? "", view = url.searchParams.get("view") ?? "publisher";
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug) || slug.length > 100 || !["publisher", "owner"].includes(view)) throw new SharedAlertError("invalid");
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug) || slug.length > 100 || !["publisher", "owner", "owner_assignments"].includes(view)) throw new SharedAlertError("invalid");
+    const reauthorize = () => {
+      const current = requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers));
+      if (current.mode !== identity.mode || current.sessionId !== identity.sessionId || current.scope.userId !== identity.scope.userId
+        || current.scope.workspaceId !== identity.scope.workspaceId || current.scope.activeAccountId !== identity.scope.activeAccountId) throw new SharedAlertError("changed");
+    };
     await requireCommunityRequestAccess({ userId: identity.scope.userId, slug, reviewIntent: "shared-alerts" });
+    if (view === "owner_assignments") reauthorize();
     const database = openPlatformDatabase({ mode: "runtime" });
     try {
       const input = { communitySlug: slug, userId: identity.scope.userId, atUtc: createCanonicalUtcTimestamp() };
@@ -65,6 +71,10 @@ export async function handleSharedAlertsSourceHttp(request: Request, mutate: Sou
       const repository = new SharedAlertsRepository(database), owner = repository.localOwner(slug, identity.scope.userId);
       const discord = new SharedAlertsDiscord(process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim() ?? "", sharedAlertAwareDiscordRequest(fetch, operation => operation(database)));
       await verifySharedAlertOwner(repository, discord, owner);
+      if (view === "owner_assignments") {
+        reauthorize();
+        return Response.json(readSharedAlertsSourceOwner(database, { ...input, atUtc: createCanonicalUtcTimestamp() }), { headers: responseHeaders });
+      }
       const channels = await discord.channels(owner.guildId);
       return Response.json({ ...readSharedAlertsSourceOwner(database, { ...input, atUtc: createCanonicalUtcTimestamp() }), channels: channels.map(channel => ({ id: channel.channelId, name: channel.name })) }, { headers: responseHeaders });
     } finally { database.close(); }

@@ -1,5 +1,101 @@
 # Partner alert channels progress
 
+## November 19 — focused V2 unknown-save correction (checks complete; Core review pending)
+
+Core's exact V1 review333705ad/ed5dd0 requested PAID-CODE-01: refusal of a retry
+cannot establish non-commit of a prior lost-response save. The component now
+retains the original unknown body/key and frozen controls through denied,
+conflicting, rate-limited, unavailable, malformed and generic retry outcomes.
+Only a matching registered write-result shape settles it. Existing draft,
+active and setup-required submission result states remain supported. No server,
+native authority, schema or provider path changed. The existing Help guidance
+still matches this retained-request behavior; no further Help hunk is needed.
+
+Actual run jrbddzyh passed fifteen UI controls and failed one additional active
+publisher control because the synthetic shell mock lacked its secondary action.
+Adding that rendering-port export changed no production code. Only the failed
+case was repeated in71ein8it and passed. Sixteen unique mounted UI controls pass
+across15+1 receipts: four affected prior controls, nine unknown-retry cases and
+three supported submission-state positives. This is not a single final16-clean
+run. The exact mock-only carry proof and failed diagnostic remain preserved.
+React/jsdom fetch/state ports simulate the first commit and lost response; no
+native Auth, provider or actual browser proof is claimed.
+
+Native hooks now belong only to native cases. Both focused invocations skipped
+all fifteen native cases, emitted no native build marker and created no native
+consumption receipt. Native program constants and four backend/Help posts match
+V1. Earlier native15/full-types/typegen retain historical scopes. Changed2 lint
+passed; scoped types reached781 sources with zero diagnostics. Final controller
+3542744/sequence3542749 closed at2026-11-20 05:35:48.968585UTC, exit0/reaped/group
+empty; exact ownQA2883644 removed/common117534 FD closed. Prior failed UI run
+also closed safely. No resource slot remains.
+
+[Immutable V2 source/delta packet](paid-current712-draft-correction-source-v2/manifest.json)
+preserves V1manifest8629ca41 and its57members. Core focused delta review is
+pending. Combined full app build/native image and actual UI/full100/provider,
+role and retention acceptance remain required. No broad native rerun, duplicate
+feature build, live832 mutation, provider/hosted/configuration or Git action.
+
+## November 19 — current-712 coherent owner draft correction (local checks complete; review/runtime pending)
+
+The assigned lane is `community-combined-batch-20261118`, branch
+`codex/community-paid-currentmain-20261119`, base
+`71202f8f052ea26f2a54fdb3816f525b135aa4d0`. The original dirty Paid workspace,
+frozen proposals and complete 100-case ledger remain preserved. Core accepted
+proposal V2 `01b99bf4e8c335198ebaa834aa80a5ffcb7448a52e28ac52f4fa4c81b304d7b3`
+for implementation planning; this is not acceptance of the new code.
+
+The six-path batch adds explicit author controls, independent step drafts,
+owner-only initial source change/removal and same-ID eligible re-add, frozen
+revision confirmations, retained unknown-save payload/key, and submission
+readiness matching existing native offer coverage. All-version financial/review
+history refuses the initial-only operation; only whole matching draft versions
+are retired, leaving newer unrelated coverage intact. Existing active new-source
+behavior and the absolute-latest offer read remain separate and unchanged. The
+Partner Channels Help guide describes these controls and their limits.
+
+Current owner/admin reads and canonical-name 409 controls are recorded in the
+original Paid discovery ledger. Settled 390px Navy Source/Review and keyboard
+checks passed, with no document overflow or feature/provider writes. A distinct
+final owner read returned 503, so final whole-DTO equality and availability
+recovery remain unproven; the release coordinator is inspecting actual logs.
+No guessed availability, pricing or hosted configuration fix is included here.
+
+Fifteen local native Core/Auth/SQLite cases and four synthetic React-state
+controls have passed across two actual receipts: the first run passed seven and
+failed twelve on test-fixture assumptions; after fixture-only corrections, only
+those twelve were repeated and passed. This is nineteen unique passing controls,
+not a single clean nineteen-case run. The native cases consume the actual local
+473-input bundle with synthetic Discord/seller facts. The four React cases use
+synthetic API/state ports; neither scope proves hosted/provider behavior or visual
+appearance. The preserved diagnostics include the earlier collection/evidence-path
+failures, for which no case completion is claimed.
+
+Next type generation and six-path lint passed. Full TypeScript initially found
+three nullable-view diagnostics; exactly three erased non-null assertions repaired
+those diagnostics without changing JavaScript behavior. The type-erasure proof
+preserves the earlier functional controls. Changed-component lint and full
+nonincremental TypeScript then both exited zero. The final controller/child
+3513275/3513280 closed at 2026-11-20 04:15:50 UTC, with its group empty and its exact
+own QA/common guards released. No tests are repeated for unchanged passing code.
+
+The initial new-source path respects the existing 250-row private-read bound
+across preserved/withdrawn rows. Same-ID correction/re-add creates no new row;
+active-publisher new-source admission/counting stays unchanged. The native
+boundary case passed: a new initial row is refused without a receipt/audit while
+eligible re-add retains retired offers. This preserves the read contract rather
+than defining a new commercial channel allowance.
+
+The frozen six-path source packet and check attribution are at
+[Paid current-712 source review packet](paid-current712-draft-correction-source-v1/manifest.json).
+The packet also pins these plan/progress companions separately. Core's proposal
+acceptance is not final code acceptance. Independent exact implemented-code review
+and affected current-runtime UI verification remain pending. The full application
+build/native image remains required at the combined Release checkpoint; the manager
+explicitly declined a duplicate per-feature build absent a concrete additional
+compile/integration concern. No build slot is held. No Git, provider, worker,
+schema/configuration or deployment action was performed by Paid.
+
 ## Acceptance reconciliation
 
 The table below records the earlier 0206 checkpoint. The plan lists the latest
