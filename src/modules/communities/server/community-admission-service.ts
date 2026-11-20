@@ -8,6 +8,7 @@ import type { CommunityAdmissionAdminSnapshot, CommunityAdmissionCommand, Commun
 import { DEFAULT_COMMUNITY_ADMISSION_POLICY } from '../contracts/community-admission';
 import { CommunityBrandedContentRepository, CommunityPageAllowanceConflictError } from './community-branded-content-repository';
 import { TraderLinkPlatformError } from '../../platform/server/database/platform-migration-contract';
+import { hasCommunityAllowanceOperatorAuthority } from './community-allowance-operator-authority';
 /** Only server-owned count receipts may satisfy the configured total minimum. */
 export function evaluateCommunityAdmission(policy: CommunityAdmissionPolicy, evidence: CommunityAdmissionEvidence, atUtc: string): CommunityAdmissionEvaluation {
     if (!Number.isSafeInteger(policy.revision) || policy.revision < 0
@@ -100,7 +101,7 @@ export class CommunityAdmissionService {
         return decision(this.db.prepare('SELECT revision,kind,status,reason,actor_user_id,created_at_utc,admission_revision,source FROM traderlink_community_admission_decisions WHERE discord_guild_id=? AND kind=? ORDER BY revision DESC LIMIT 1').get(guildId, kind) as DecisionRow | undefined);
     }
     private destinationAllowance(guildId:string):CommunityAdmissionEntry['destinationAllowance']{
-        const canManage=Boolean(this.db.prepare("SELECT 1 FROM traderlink_community_operator_grants WHERE user_id=? AND status='active'").get(this.scope.userId));
+        const canManage=hasCommunityAllowanceOperatorAuthority(this.db,this.scope.userId);
         const community=this.db.prepare('SELECT community_id FROM traderlink_communities WHERE discord_guild_id=?').get(guildId) as {community_id:string}|undefined;
         if(!community)return {connectionState:'not_connected',state:'unconfigured',pageLimit:null,pagesUsed:0,mutationToken:null,updatedByUserId:null,canManage};
         const allowance=this.db.prepare('SELECT page_limit,updated_by_user_id,updated_at_utc FROM traderlink_community_page_allowances WHERE community_id=?').get(community.community_id) as {page_limit:number;updated_by_user_id:string|null;updated_at_utc:string}|undefined;
@@ -108,7 +109,7 @@ export class CommunityAdmissionService {
         return {connectionState:'connected',state:allowance?'configured':'unconfigured',pageLimit:allowance?.page_limit??null,pagesUsed,mutationToken:allowance?.updated_at_utc??null,updatedByUserId:allowance?.updated_by_user_id??null,canManage};
     }
     private allowanceTarget(guildId:string):string{
-        if(!this.db.prepare("SELECT 1 FROM traderlink_community_operator_grants WHERE user_id=? AND status='active'").get(this.scope.userId))throw new CommunityAdmissionError('Platform operator authorization required.',403);
+        if(!hasCommunityAllowanceOperatorAuthority(this.db,this.scope.userId))throw new CommunityAdmissionError('Platform operator authorization required.',403);
         if(this.latest(guildId,'admission')?.status!=='approved')throw new CommunityAdmissionError('Approve community admission before configuring publishing destinations.',400);
         const community=this.db.prepare('SELECT community_id FROM traderlink_communities WHERE discord_guild_id=?').get(guildId) as {community_id:string}|undefined;
         if(!community)throw new CommunityAdmissionError('Connect and verify the community before configuring publishing destinations.',400);

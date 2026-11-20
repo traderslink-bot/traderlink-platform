@@ -10,7 +10,7 @@ export const TRADERSLINK_APP_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         Object.freeze({kind:"paragraph",text:"First published by identifies the person recorded at a Watchlist item's original publication. It can differ from the current publisher after an authorized edit. Missing attribution is shown as n/a. Opening a board alone does not establish interest in an individual item. Traffic sources describe recorded webpage visits, not Discord message impressions."}),
       ])}),
       Object.freeze({id:"stats-access",title:"Access and exports",summary:"Keep the same permissions when filtering or exporting.",keywords:Object.freeze(["Team","Excel","permissions","Settings"]),blocks:Object.freeze([
-        Object.freeze({kind:"paragraph",text:"Your owner controls Stats access. An own-content grant does not reveal another person's named visits, the member roster, Team or Settings. Being a publisher on a Website destination alone does not grant Stats access. Export Excel follows the same report dates, filters and permissions; publication and audience populations are identified in the workbook."}),
+        Object.freeze({kind:"paragraph",text:"In Members, open a person to see their activity. Close member or browser Back returns to the same filtered list and position. Your owner controls Stats access. An own-content grant does not reveal another person's named visits, the member roster, Team or Settings. Being a publisher on a Website destination alone does not grant Stats access. Export Excel follows the same report dates, filters and permissions; publication and audience populations are identified in the workbook."}),
       ])}),
     ]),
   }),

@@ -1,6 +1,6 @@
 "use client";
 import Box from "@mui/material/Box";
-import {useEffect,useRef,useState,useSyncExternalStore} from "react";
+import {useEffect,useRef,useState,useSyncExternalStore,type SetStateAction} from "react";
 import type {CommunityStatsReport,CommunityStatsTab} from "@/src/modules/communities/contracts/community-stats-contracts";
 import {communityStatsValues,communityStatsPresentation} from "./community-stats-presentation";
 import {StatsSectionTable} from "./community-stats-section";
@@ -108,29 +108,78 @@ function restoreStatsNavigation(search:string,initialTab:CommunityStatsTab,today
   const member=saved.get("member");if(tab==="members"&&member&&/^\d{1,32}$/u.test(member))state.member=member;
   return state;
 }
-const subscribeToInitialLocation=()=>()=>{};
-const clientLocationSearch=()=>window.location.search;
+const statsLocationEvent="community-stats-location";
+const subscribeToInitialLocation=(notify:()=>void)=>{window.addEventListener("popstate",notify);window.addEventListener(statsLocationEvent,notify);return()=>{window.removeEventListener("popstate",notify);window.removeEventListener(statsLocationEvent,notify);};};
+type StatsReturnState={community:string;href:string;scrollY:number;focusMember:string;returnHref?:string;token?:string};
+function statsHistoryState(community:string,href:string):StatsReturnState|null{
+  const value=window.history.state?.communityStatsNavigation as StatsReturnState|undefined;
+  return value?.community===community&&value.href===href&&Number.isFinite(value.scrollY)&&value.scrollY>=0&&typeof value.focusMember==="string"?value:null;
+}
+/** Next's native-history adapter copies its own internals. Passing __NA/_N
+ * ourselves marks the call as internal and bypasses its URL synchronization. */
+function statsExternalHistoryState(value:StatsReturnState|undefined){
+  const state={...window.history.state,communityStatsNavigation:value};
+  delete state.__NA;delete state._N;delete state.__PRIVATE_NEXTJS_INTERNALS_TREE;
+  return state;
+}
+function ownsStatsLocation(location:string,community:string){
+  const path=location.split("?",1)[0],base=`/communities/${encodeURIComponent(community)}/stats`;
+  return path===base||["activity","analysts","team"].some(report=>path===`${base}/${report}`);
+}
+const statsSearchFromLocation=(location:string)=>location.includes("?")?location.slice(location.indexOf("?")):"";
+const clientLocationSearch=()=>window.location.pathname+window.location.search;
 const serverLocationSearch=()=>null;
 /** Wait for the client URL before mounting report state, keeping hydration and
  * the first request consistent without a post-render state reset. */
 export function CommunityStatsDashboard(props:{communitySlug:string;initialTab?:CommunityStatsTab}){
-  const search=useSyncExternalStore<string|null>(subscribeToInitialLocation,clientLocationSearch,serverLocationSearch);
-  return search===null?<Box sx={communityStatsPresentation} aria-busy><div className="cs-title"><h1>{props.initialTab==="authors"?"Analysts":props.initialTab==="team"?"Team":"Stats"}</h1></div><p role="status" className="cs-note">Loading Stats…</p></Box>:<CommunityStatsDashboardReport key={`${props.communitySlug}:${props.initialTab??"overview"}`} {...props} initialSearch={search}/>;
+  const location=useSyncExternalStore<string|null>(subscribeToInitialLocation,clientLocationSearch,serverLocationSearch);
+  if(location===null)return <Box sx={communityStatsPresentation} aria-busy><div className="cs-title"><h1>{props.initialTab==="authors"?"Analysts":props.initialTab==="team"?"Team":"Stats"}</h1></div><p role="status" className="cs-note">Loading Stats…</p></Box>;
+  if(!ownsStatsLocation(location,props.communitySlug))return null;
+  const path=location.split("?",1)[0],initialTab=path.endsWith("/analysts")?"authors":path.endsWith("/team")?"team":props.initialTab??"overview";
+  return <CommunityStatsDashboardReport key={props.communitySlug} {...props} initialTab={initialTab} initialLocation={location}/>;
 }
-function CommunityStatsDashboardReport({communitySlug,initialTab="overview",initialSearch}:{communitySlug:string;initialTab?:CommunityStatsTab;initialSearch:string}){
+function CommunityStatsDashboardReport({communitySlug,initialTab="overview",initialLocation}:{communitySlug:string;initialTab?:CommunityStatsTab;initialLocation:string}){
   const [today]=useState(()=>new Date().toISOString().slice(0,10));
-  const [initial]=useState(()=>restoreStatsNavigation(initialSearch,initialTab,today));
-  const [tab,setTab]=useState(initial.tab),[range,setRange]=useState(initial.range),[from,setFrom]=useState(initial.from),[through,setThrough]=useState(initial.through),[content,setContent]=useState(initial.content),[author,setAuthor]=useState(initial.author),[segment,setSegment]=useState(initial.segment),[page,setPage]=useState(initial.page),[member,setMember]=useState(initial.member),[reload,setReload]=useState(0);
-  const [response,setResponse]=useState<{key:string;report:CommunityStatsReport|null;error:string}|null>(null);
-  const [memberPage,setMemberPage]=useState(initial.memberPage);
-  const [postingPrior,setPostingPrior]=useState(initial.postingPrior),[postingQuiet,setPostingQuiet]=useState(initial.postingQuiet),[postingDays,setPostingDays]=useState(initial.postingDays);
+  const [initial]=useState(()=>restoreStatsNavigation(statsSearchFromLocation(initialLocation),initialTab,today));
+  const [navigation,setNavigation]=useState(initial);
+  const {tab,range,from,through,content,author,segment,page,member,memberPage,postingPrior,postingQuiet,postingDays,role,search:catalogSearch,contentKind}=navigation;
+  function change<K extends keyof typeof initial>(key:K,value:SetStateAction<(typeof initial)[K]>){setNavigation(previous=>({...previous,[key]:typeof value==="function"?(value as (old:(typeof initial)[K])=>(typeof initial)[K])(previous[key]):value}));}
+  const setTab=(value:SetStateAction<CommunityStatsTab>)=>change("tab",value);
+  const setRange=(value:SetStateAction<string>)=>change("range",value);
+  const setFrom=(value:SetStateAction<string>)=>change("from",value);
+  const setThrough=(value:SetStateAction<string>)=>change("through",value);
+  const setContent=(value:SetStateAction<string>)=>change("content",value);
+  const setAuthor=(value:SetStateAction<string>)=>change("author",value);
+  const setSegment=(value:SetStateAction<string>)=>change("segment",value);
+  const setPage=(value:SetStateAction<number>)=>change("page",value);
+  const setMember=(value:SetStateAction<string>)=>change("member",value);
+  const setMemberPage=(value:SetStateAction<number>)=>change("memberPage",value);
+  const setPostingPrior=(value:SetStateAction<string>)=>change("postingPrior",value);
+  const setPostingQuiet=(value:SetStateAction<string>)=>change("postingQuiet",value);
+  const setPostingDays=(value:SetStateAction<string>)=>change("postingDays",value);
+  const setRole=(value:SetStateAction<string>)=>change("role",value);
+  const setCatalogSearch=(value:SetStateAction<string>)=>change("search",value);
+  const setContentKind=(value:SetStateAction<""|"posts"|"alert"|"watchlist">)=>change("contentKind",value);
+  const [reload,setReload]=useState(0),[response,setResponse]=useState<{key:string;report:CommunityStatsReport|null;error:string}|null>(null);
   const [viewers,setViewers]=useState<StatsViewerSelection|null>(null);
-  const [role,setRole]=useState(initial.role);
-  const [catalogSearch,setCatalogSearch]=useState(initial.search);
-  const [contentKind,setContentKind]=useState<""|"posts"|"alert"|"watchlist">(initial.contentKind);
   const [hourlyFilters,setHourlyFilters]=useState<HourlyFilters>({search:"",content:"",author:""});
+  const [appliedLocation,setAppliedLocation]=useState(initialLocation);
+  const container=useRef<HTMLDivElement>(null),historyPush=useRef(false),ownedDetails=useRef(new Set<string>()),pendingFocus=useRef<"report"|"member"|"return"|null>(null);
+  const locationChanged=appliedLocation!==initialLocation;
+  // Adjust before children commit a different location, never in a URL-writing effect.
+  if(locationChanged){setAppliedLocation(initialLocation);setNavigation(restoreStatsNavigation(statsSearchFromLocation(initialLocation),initialTab,today));setViewers(null);}
+  useEffect(()=>{const returning=()=>{pendingFocus.current="return";setReload(value=>value+1);};window.addEventListener("popstate",returning);return()=>window.removeEventListener("popstate",returning);},[]);
+  const savePosition=(focusMember="")=>{
+    if(!ownsStatsLocation(window.location.pathname,communitySlug))return;
+    const href=window.location.pathname+window.location.search,previous=statsHistoryState(communitySlug,href);
+    const list=new URLSearchParams(window.location.search);list.delete("member");list.delete("memberPage");list.sort();
+    const listHref=`/communities/${encodeURIComponent(communitySlug)}/stats/activity?${list}`;
+    const origin=previous?.token&&ownedDetails.current.has(previous.token)&&previous.returnHref===listHref?{token:previous.token,returnHref:previous.returnHref}:{};
+    window.history.replaceState({...window.history.state,communityStatsNavigation:{community:communitySlug,href,scrollY:window.scrollY,focusMember,...origin}},"",href);
+  };
+  const beginNavigation=()=>{savePosition();historyPush.current=true;pendingFocus.current="report";};
   const query=new URLSearchParams({tab,from,through,quiet:"7",calendar:"calendar_days",page:String(page)});
-  if(content)query.set("content",content);if(author)query.set("author",author);if(segment)query.set("segment",segment);if(member){query.set("member",member);query.set("memberPage",String(memberPage));}
+  if(content)query.set("content",content);if(author)query.set("author",author);if(segment&&!(member&&segment==="stopped_posting"))query.set("segment",segment);if(member){query.set("member",member);query.set("memberPage",String(memberPage));}
   if(role&&tab!=="publishing")query.set("role",role);
   if(catalogSearch&&["pages","visits","authors","publishing"].includes(tab))query.set("search",catalogSearch);
   if(contentKind&&["pages","visits","authors"].includes(tab))query.set("contentKind",contentKind);
@@ -141,16 +190,66 @@ function CommunityStatsDashboardReport({communitySlug,initialTab="overview",init
   const reportKey=JSON.stringify([endpoint,queryText,reload]);
   const report=response?.key===reportKey?response.report:null,error=response?.key===reportKey?response.error:"",loading=response?.key!==reportKey;
   useEffect(()=>{
+    if(!ownsStatsLocation(window.location.pathname,communitySlug))return;
     const controller=new AbortController();
-    const timer=setTimeout(()=>{void fetch(`${endpoint}?${queryText}`,{signal:controller.signal,cache:"no-store",credentials:"same-origin"}).then(async response=>{if(!response.ok)throw new Error("This Stats report is unavailable. Check your access and date range.");return response.json() as Promise<CommunityStatsReport>;}).then(value=>{if(controller.signal.aborted)return;setResponse({key:reportKey,report:value,error:""});}).catch(reason=>{if(!controller.signal.aborted&&reason.name!=="AbortError"){setResponse(previous=>({key:reportKey,report:previous?.report??null,error:reason.message}));}});},250);
+    const timer=setTimeout(()=>{if(!ownsStatsLocation(window.location.pathname,communitySlug))return;void fetch(`${endpoint}?${queryText}`,{signal:controller.signal,cache:"no-store",credentials:"same-origin"}).then(async response=>{if(!response.ok)throw new Error("This Stats report is unavailable. Check your access and date range.");return response.json() as Promise<CommunityStatsReport>;}).then(value=>{if(controller.signal.aborted)return;setResponse({key:reportKey,report:value,error:""});}).catch(reason=>{if(!controller.signal.aborted&&reason.name!=="AbortError"){setResponse(previous=>({key:reportKey,report:previous?.report??null,error:reason.message}));}});},250);
     return()=>{clearTimeout(timer);controller.abort();};
-  },[endpoint,queryText,reload,reportKey]);
+  },[endpoint,queryText,reload,reportKey,communitySlug]);
+  const locationQuery=new URLSearchParams(queryText);
+  // The stopped-posting API derives a wider window; the URL retains the list's original dates.
+  locationQuery.set("from",from);locationQuery.set("through",through);
+  if(segment)locationQuery.set("segment",segment);
+  locationQuery.sort();
+  const locationQueryText=locationQuery.toString();
   useEffect(()=>{
+    if(locationChanged||!ownsStatsLocation(window.location.pathname,communitySlug))return;
     const path=`/communities/${encodeURIComponent(communitySlug)}/stats/${tab==="authors"?"analysts":tab==="team"?"team":"activity"}`;
-    const href=`${path}?${queryText}`;
-    if(window.location.pathname+window.location.search!==href)window.history.replaceState(window.history.state,"",href);
-  },[communitySlug,tab,queryText]);
-  const navigate=(next:CommunityStatsTab,analystId?:string)=>{const path=`/communities/${encodeURIComponent(communitySlug)}/stats/${next==="authors"?"analysts":next==="team"?"team":"activity"}`;if(window.location.pathname!==path)window.history.replaceState(window.history.state,"",path);if(next==="authors"&&!contentKind)setContentKind("posts");if(next==="team")setRole("");if(analystId){setAuthor(analystId);setContent("");setCatalogSearch("");}setTab(next);setPage(1);setMember("");setSegment("");if(!["pages","visits","authors","publishing"].includes(next)){setContent("");setAuthor("");setCatalogSearch("");setContentKind("");}};
+    const href=`${path}?${locationQueryText}`;
+    if(window.location.pathname+window.location.search!==href){
+      if(historyPush.current){
+        const previous=window.location.pathname+window.location.search,token=crypto.randomUUID();
+        if(member)ownedDetails.current.add(token);
+        window.history.pushState(statsExternalHistoryState({community:communitySlug,href,scrollY:0,focusMember:"",...(member?{returnHref:previous,token}:{})}),"",href);
+      }else {
+        const previous=statsHistoryState(communitySlug,window.location.pathname+window.location.search);
+        window.history.replaceState(statsExternalHistoryState(member&&previous?.token?{...previous,href}:undefined),"",href);
+      }
+      window.dispatchEvent(new Event(statsLocationEvent));
+    }
+    historyPush.current=false;
+  },[communitySlug,tab,member,locationQueryText,locationChanged]);
+  const navigate=(next:CommunityStatsTab,analystId?:string)=>{if(!ownsStatsLocation(window.location.pathname,communitySlug))return;if(next!==tab||member||analystId)beginNavigation();if(next==="authors"&&!contentKind)setContentKind("posts");if(next==="team")setRole("");if(analystId){setAuthor(analystId);setContent("");setCatalogSearch("");}setTab(next);setPage(1);setMember("");setSegment("");if(!["pages","visits","authors","publishing"].includes(next)){setContent("");setAuthor("");setCatalogSearch("");setContentKind("");}};
+  const openMember=(id:string)=>{
+    if(!ownsStatsLocation(window.location.pathname,communitySlug))return;
+    if(tab==="members"){savePosition(id);historyPush.current=true;}else beginNavigation();
+    pendingFocus.current="member";setTab("members");setMember(id);setMemberPage(1);
+    if(tab!=="members"){setContent("");setAuthor("");setCatalogSearch("");setSegment("");setPage(1);}
+  };
+  const closeMember=()=>{
+    if(!ownsStatsLocation(window.location.pathname,communitySlug))return;
+    const state=statsHistoryState(communitySlug,window.location.pathname+window.location.search),listQuery=new URLSearchParams(locationQueryText);listQuery.delete("member");listQuery.delete("memberPage");
+    const listHref=`/communities/${encodeURIComponent(communitySlug)}/stats/activity?${listQuery}`;
+    if(state?.token&&ownedDetails.current.has(state.token)&&state.returnHref===listHref){window.history.back();return;}
+    pendingFocus.current="return";setMember("");setMemberPage(1);
+  };
+  useEffect(()=>{
+    if(!report||error||loading||locationChanged||!pendingFocus.current||!ownsStatsLocation(window.location.pathname,communitySlug))return;
+    const mode=pendingFocus.current;pendingFocus.current=null;
+    const state=statsHistoryState(communitySlug,window.location.pathname+window.location.search);
+    const section=container.current?.querySelector<HTMLElement>(member?'section[aria-label^="Activity for "]':"[data-stats-list]");
+    let target=section?.querySelector<HTMLElement>("h2")??container.current?.querySelector<HTMLElement>("h1");
+    if(mode==="return"&&!member&&state?.focusMember){const index=report.rows.findIndex(row=>String(row.memberId)===state.focusMember);if(index>=0)target=section?.querySelectorAll<HTMLElement>("tbody tr")[index]?.querySelector<HTMLElement>("button.cs-link")??target;}
+    if(mode==="return"&&state)window.scrollTo({top:state.scrollY,behavior:"instant"});
+    else if(mode!=="return"&&target){
+      const header=[...document.querySelectorAll<HTMLElement>("header")].find(element=>{const style=getComputedStyle(element);return style.position==="fixed"&&Number.parseFloat(style.top)===0;});
+      const bottom=header?.getBoundingClientRect().bottom;
+      // Measure the real toolbar, including its mobile safe area and border.
+      // The fallback mirrors the shell's 64px contract when layout is not ready.
+      target.style.scrollMarginTop=bottom!==undefined&&Number.isFinite(bottom)&&bottom>0?`${Math.ceil(bottom)+16}px`:"calc(64px + env(safe-area-inset-top, 0px) + 16px)";
+      target.scrollIntoView?.({block:"start"});
+    }
+    if(target){if(!target.matches("button,a,input,select"))target.tabIndex=-1;target.focus({preventScroll:true});}
+  },[report,error,loading,locationChanged,member,communitySlug]);
   const chooseRange=(value:string)=>{setRange(value);setPage(1);if(value!=="custom"){setThrough(today);setFrom(value==="all"?"2015-01-01":dateBefore(today,Number(value)-1));}};
   const stoppedMode=tab==="members"&&segment==="stopped_posting";
   const webFilters=["pages","visits","authors","publishing"].includes(tab);
@@ -170,7 +269,7 @@ function CommunityStatsDashboardReport({communitySlug,initialTab="overview",init
   })():null;
   const participationLabels:Record<string,string>={both:"Discord + webpages",discord_any:"Discord contributors",web_any:"Webpage visitors"};
 
-  return <Box sx={communityStatsPresentation} aria-busy={loading}>
+  return <Box ref={container} sx={communityStatsPresentation} aria-busy={loading}>
     <div className="cs-title"><h1>{tab==="authors"?"Analysts":tab==="team"?"Team":"Stats"}</h1><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{report?.ready&&report.canExport&&!loading&&!error?<a className="cs-action" href={`${endpoint}?${excelQuery}&format=xlsx`}>Export Excel</a>:null}<button className="cs-action" onClick={()=>setReload(value=>value+1)} disabled={loading}>Refresh</button></div></div>
     <div className="cs-controls">{!stoppedMode?<><label className="cs-field">Date range<select value={range} onChange={event=>chooseRange(event.target.value)}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last year</option><option value="all">All time</option><option value="custom">Custom</option></select></label><label className="cs-field">From UTC<input type="date" value={from} min="2015-01-01" max={through} onChange={event=>{setFrom(event.target.value);setRange("custom");setPage(1);}}/></label></>:null}<label className="cs-field">{stoppedMode?"As of UTC":"Through UTC"}<input type="date" value={through} min={stoppedMode?"2015-01-01":from} max={today} onChange={event=>{setThrough(event.target.value);setRange("custom");setPage(1);}}/></label></div>
     <nav className="cs-tabs" aria-label="Stats reports">{availableTabs.map(([key,label])=><button key={key} aria-current={tab===key?"page":undefined} onClick={()=>navigate(key)}>{label}</button>)}</nav>
@@ -189,10 +288,10 @@ function CommunityStatsDashboardReport({communitySlug,initialTab="overview",init
       {tab==="pages"&&selectedPage?<section className="cs-panel"><div className="cs-panel-head"><h2>{selectedPage.title}</h2>{selectedPage.state==="published"&&selectedPage.path?<a className="cs-action" href={selectedPage.path}>Open published page</a>:null}{report.canReadNamed&&!own?<button className="cs-action" onClick={()=>setViewers({title:selectedPage.title,contentId:selectedPage.id,authorId:author||undefined})}>View viewers</button>:null}</div><dl><dt>{selectedPage.targetKind==="watchlist_item"?"First published by":"Author"}</dt><dd>{selectedPage.targetKind==="watchlist_item"?selectedPage.contributorName??"n/a":selectedPage.authorName??"Community"}</dd><dt>State</dt><dd>{communityStatsValues[selectedPage.state]??selectedPage.state}</dd><dt>Publication format</dt><dd>{communityStatsValues[selectedPage.publicationMode??"unknown"]}</dd></dl></section>:null}
       {tab==="overview"||tab==="messages"?<StatsHourlyActivity report={report} endpoint={endpoint} role={role} filters={hourlyFilters} onFilters={setHourlyFilters}/>:null}
       {tab==="overview"&&!own?<section className="cs-panel"><div className="cs-panel-head"><h2>Participation</h2><span className="cs-note">Selected dates</span><StatsCardCsv report={report} title="Participation summary" columns={["Participation","Members"]} rows={Object.entries(participationCounts??{}).map(([key,value])=>({Participation:participationLabels[key],Members:value}))}/></div>{participationKnown?<><div className="cs-segments">{["discord_any","web_any","both"].map(key=><button className="cs-segment" key={key} disabled={!report.canReadMembers} onClick={()=>{navigate("members");setSegment(key);}}>{participationLabels[key]}<strong>{participationCounts?.[key as keyof typeof participationCounts]??"n/a"}</strong></button>)}</div></>:<p className="cs-note">Participation will appear once Discord members are available.</p>}</section>:null}
-      {member&&report.member?<CommunityStatsMemberDetail member={report.member} onClose={()=>setMember("")} onPage={setMemberPage} timelineExportUrl={report.canExport?`${endpoint}?${queryText}&format=csv&timeline=1`:undefined}/>:null}
-      {member&&!report.member?<section className="cs-panel"><h2>Member detail n/a</h2><button className="cs-action" onClick={()=>setMember("")}>Close member</button></section>:null}
-      <div className="cs-report-grid">{report.columns.length&&tab!=="cohorts"&&tab!=="overview"&&tab!=="timing"?<section className={`cs-panel ${tab==="messages"?"cs-report-card-compact":report.columns.length<=5?"cs-report-card-compact":"cs-report-card-wide"}`}><div className="cs-panel-head"><h2>{tab==="team"?"Roles and permissions":tab==="messages"?"Server Members":tab==="members"&&segment==="stopped_posting"?"Members who stopped posting":tabs.find(([key])=>key===tab)?.[1]??"Activity"}</h2>{report.canExport?<a className="cs-action" aria-label={`Export ${tab==="team"?"roles and permissions":tabs.find(([key])=>key===tab)?.[1]??"activity"} CSV`} href={`${endpoint}?${queryText}&format=csv`}>Export CSV</a>:null}</div><CommunityStatsTable columns={report.columns} rows={report.rows} emptyMessage={report.postingStatus==="needs_tracking"?"Not enough tracking yet. Check channel tracking in Settings.":undefined} onMember={report.canReadMembers?id=>{if(report.postingStatus){setFrom(report.window.fromDate);setThrough(report.window.throughDate);setRange("custom");}setTab("members");setMember(id);setMemberPage(1);setContent("");setAuthor("");setCatalogSearch("");setSegment("");setPage(1);}:undefined} onContent={id=>{navigate("pages");setContent(id);setTab("pages");setMember("");setMemberPage(1);setSegment("");setPage(1);}} onViewers={report.canReadNamed&&!own?row=>setViewers({title:String(row.Analyst??row.Page??"Content"),authorId:row.authorId?String(row.authorId):author||undefined,contentId:row.contentId?String(row.contentId):undefined}):undefined} onAuthor={id=>{navigate("pages");setAuthor(id);setContent("");setTab("pages");setMember("");setMemberPage(1);setSegment("");setPage(1);}}/>{report.totalRows>report.pageSize?<div className="cs-pager"><button className="cs-action" disabled={page<=1||loading} onClick={()=>setPage(value=>value-1)}>Previous</button><span className="cs-note">Page {page} of {Math.ceil(report.totalRows/report.pageSize)}</span><button className="cs-action" disabled={page*report.pageSize>=report.totalRows||loading} onClick={()=>setPage(value=>value+1)}>Next</button></div>:null}</section>:null}
-      {report.sections.filter(section=>tab!=="overview"||!["Analyst engagement","Webpage audience","Discord messages by channel","Discord activity by type","Current members by join month"].includes(section.title)).map(section=><section className={`cs-panel ${section.columns.length<=5?"cs-report-card-compact":"cs-report-card-wide"}`} key={section.title}><div className="cs-panel-head"><h2>{section.title}</h2>{report.canExport?<a className="cs-action" aria-label={`Export ${section.title} CSV`} href={`${endpoint}?${queryText}&format=csv&section=${encodeURIComponent(section.title)}`}>Export CSV</a>:null}</div>{section.title==="Current members by join month"?<StatsMessageColumns rows={section.rows} label="Join month UTC" value="Current members"/>:tab!=="team"?<StatsSectionTable section={section} endpoint={endpoint} queryText={queryText} onMember={report.canReadMembers?id=>{navigate("members");setMember(id);setMemberPage(1);}:undefined}/>:<CommunityStatsTable columns={section.columns} rows={section.rows} onMember={report.canReadMembers?id=>{navigate("members");setMember(id);setMemberPage(1);}:undefined} emptyMessage={section.title==="Server Bots"?"n/a":undefined} timeColumns={["Shared alert deliveries","Discord corrections and announcements"].includes(section.title)?["Updated UTC"]:[]}/>}{tab==="team"&&section.totalRows!==undefined&&section.totalRows>report.pageSize?<div className="cs-pager"><button className="cs-action" disabled={page<=1} onClick={()=>setPage(value=>value-1)}>Previous report page</button><span className="cs-note">Page {page} of {Math.ceil(section.totalRows/report.pageSize)}</span><button className="cs-action" disabled={page*report.pageSize>=section.totalRows} onClick={()=>setPage(value=>value+1)}>Next report page</button></div>:null}</section>)}</div>
+      {member&&report.member?<CommunityStatsMemberDetail member={report.member} onClose={closeMember} onPage={setMemberPage} timelineExportUrl={report.canExport?`${endpoint}?${queryText}&format=csv&timeline=1`:undefined}/>:null}
+      {member&&!report.member?<section className="cs-panel"><h2>Member detail n/a</h2><button className="cs-action" onClick={closeMember}>Close member</button></section>:null}
+      <div className="cs-report-grid">{!member&&report.columns.length&&tab!=="cohorts"&&tab!=="overview"&&tab!=="timing"?<section data-stats-list className={`cs-panel ${tab==="messages"?"cs-report-card-compact":report.columns.length<=5?"cs-report-card-compact":"cs-report-card-wide"}`}><div className="cs-panel-head"><h2>{tab==="team"?"Roles and permissions":tab==="messages"?"Server Members":tab==="members"&&segment==="stopped_posting"?"Members who stopped posting":tabs.find(([key])=>key===tab)?.[1]??"Activity"}</h2>{report.canExport?<a className="cs-action" aria-label={`Export ${tab==="team"?"roles and permissions":tabs.find(([key])=>key===tab)?.[1]??"activity"} CSV`} href={`${endpoint}?${queryText}&format=csv`}>Export CSV</a>:null}</div><CommunityStatsTable columns={report.columns} rows={report.rows} emptyMessage={report.postingStatus==="needs_tracking"?"Not enough tracking yet. Check channel tracking in Settings.":undefined} onMember={report.canReadMembers?openMember:undefined} onContent={id=>{navigate("pages");setContent(id);setTab("pages");setMember("");setMemberPage(1);setSegment("");setPage(1);}} onViewers={report.canReadNamed&&!own?row=>setViewers({title:String(row.Analyst??row.Page??"Content"),authorId:row.authorId?String(row.authorId):author||undefined,contentId:row.contentId?String(row.contentId):undefined}):undefined} onAuthor={id=>{navigate("pages");setAuthor(id);setContent("");setTab("pages");setMember("");setMemberPage(1);setSegment("");setPage(1);}}/>{report.totalRows>report.pageSize?<div className="cs-pager"><button className="cs-action" disabled={page<=1||loading} onClick={()=>setPage(value=>value-1)}>Previous</button><span className="cs-note">Page {page} of {Math.ceil(report.totalRows/report.pageSize)}</span><button className="cs-action" disabled={page*report.pageSize>=report.totalRows||loading} onClick={()=>setPage(value=>value+1)}>Next</button></div>:null}</section>:null}
+      {!member&&report.sections.filter(section=>tab!=="overview"||!["Analyst engagement","Webpage audience","Discord messages by channel","Discord activity by type","Current members by join month"].includes(section.title)).map(section=><section className={`cs-panel ${section.columns.length<=5?"cs-report-card-compact":"cs-report-card-wide"}`} key={section.title}><div className="cs-panel-head"><h2>{section.title}</h2>{report.canExport?<a className="cs-action" aria-label={`Export ${section.title} CSV`} href={`${endpoint}?${queryText}&format=csv&section=${encodeURIComponent(section.title)}`}>Export CSV</a>:null}</div>{section.title==="Current members by join month"?<StatsMessageColumns rows={section.rows} label="Join month UTC" value="Current members"/>:tab!=="team"?<StatsSectionTable section={section} endpoint={endpoint} queryText={queryText} onMember={report.canReadMembers?openMember:undefined}/>:<CommunityStatsTable columns={section.columns} rows={section.rows} onMember={report.canReadMembers?openMember:undefined} emptyMessage={section.title==="Server Bots"?"n/a":undefined} timeColumns={["Shared alert deliveries","Discord corrections and announcements"].includes(section.title)?["Updated UTC"]:[]}/>}{tab==="team"&&section.totalRows!==undefined&&section.totalRows>report.pageSize?<div className="cs-pager"><button className="cs-action" disabled={page<=1} onClick={()=>setPage(value=>value-1)}>Previous report page</button><span className="cs-note">Page {page} of {Math.ceil(section.totalRows/report.pageSize)}</span><button className="cs-action" disabled={page*report.pageSize>=section.totalRows} onClick={()=>setPage(value=>value+1)}>Next report page</button></div>:null}</section>)}</div>
       <details className="cs-panel"><summary>About these stats</summary>{report.notes.map(note=><p key={note} className="cs-note" style={{marginTop:10}}>{note}</p>)}</details>
       </>}
     </>:null}

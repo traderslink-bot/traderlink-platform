@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useState,useSyncExternalStore} from "react";
 import Link from "next/link";
 import {Box,Breadcrumbs,Button,Collapse,List,ListItemButton,ListItemIcon,ListItemText,Typography} from "@mui/material";
 import ChevronRightRounded from "@mui/icons-material/ChevronRightRounded";
@@ -30,8 +30,20 @@ export function CommunitySidebar({menu,path,onNavigate,onShowTraderLink}:{menu:C
 }
 
 function menuLinks(items:CommunityMenuItem[]):CommunityMenuItem[]{return items.flatMap(item=>item.children?menuLinks(item.children):[item]);}
+const subscribeToStatsLocation=(notify:()=>void)=>{window.addEventListener("popstate",notify);window.addEventListener("community-stats-location",notify);return()=>{window.removeEventListener("popstate",notify);window.removeEventListener("community-stats-location",notify);};};
+const statsSearch=()=>window.location.search;
+const emptyStatsSearch=()=>"";
 export function CommunityBreadcrumbs({menu,path}:{menu:CommunityMenu;path:string}){
+ const search=useSyncExternalStore(subscribeToStatsLocation,statsSearch,emptyStatsSearch);
  function find(items:CommunityMenuItem[],parents:CommunityMenuItem[]=[]):CommunityMenuItem[][]{return items.flatMap(item=>item.children?find(item.children,[...parents,item]):item.href&&(path===item.href||(item.href!==menu.base&&path.startsWith(item.href+"/")))?[[...parents,item]]:[]);}
- const trail=find(menu.items).sort((a,b)=>(b.at(-1)?.href?.length??0)-(a.at(-1)?.href?.length??0))[0]??[];
+ let trail=find(menu.items).sort((a,b)=>(b.at(-1)?.href?.length??0)-(a.at(-1)?.href?.length??0))[0]??[];
+ // Only relabel the existing authorized activity leaf. This adds no menu entry or access.
+ if(menu.kind!=="coaching"&&path===`${menu.base}/stats/activity`&&trail.at(-1)?.href===path){
+  const query=new URLSearchParams(search),labels:Record<string,string>={overview:"Overview",server:"Server",messages:"Messages",pages:"Pages",members:"Members",publishing:"Publishing"};
+  const tab=query.get("tab")??"overview",known=Object.hasOwn(labels,tab),label=known?labels[tab]:"Overview";
+  query.set("tab",known?tab:"overview");query.delete("member");query.delete("memberPage");
+  trail=[...trail.slice(0,-1),{label,href:`${path}?${query}`}];
+  if(tab==="members"&&/^\d{1,32}$/u.test(new URLSearchParams(search).get("member")??""))trail.push({label:"Member detail"});
+ }
  return <Breadcrumbs aria-label={menu.kind==="coaching"?"Coaching breadcrumb":"Community breadcrumb"} sx={{mb:2,fontSize:13,"& a":{color:"text.secondary",textDecoration:"none","&:hover":{color:"primary.main",textDecoration:"underline"}}}}><Link href={menu.base}>{menu.name}</Link>{trail.filter(item=>item.href!==menu.base).map(item=>item.href?<Link key={item.label} href={item.href}>{item.label}</Link>:<Typography key={item.label} variant="body2" color="text.secondary">{item.label}</Typography>)}</Breadcrumbs>;
 }

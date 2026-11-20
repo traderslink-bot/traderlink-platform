@@ -15,6 +15,8 @@ const community='20000000-0000-4000-8000-000000000002';
 const otherCommunity='30000000-0000-4000-8000-000000000003';
 const guild='1559172784813514803';
 const otherGuild='1433570740430573642';
+const operatorGrant='40000000-0000-4000-8000-000000000004';
+const wrongActor='50000000-0000-4000-8000-000000000005';
 
 function scope():JournalAdminScope{return {userId:owner,role:'journal_owner_admin',mode:'production_discord_owner',authorizedAtUtc:at,discordOwnerVerifiedAtUtc:at,permissions:['manage_users']};}
 function fixture(){
@@ -27,6 +29,8 @@ function fixture(){
  CREATE TABLE traderlink_community_admission_member_counts(receipt_id TEXT,discord_guild_id TEXT,revision INTEGER,source TEXT,approximate_total_members INTEGER,observed_at_utc TEXT);
  CREATE TABLE traderlink_communities(community_id TEXT PRIMARY KEY,discord_guild_id TEXT UNIQUE,owner_user_id TEXT,status TEXT);
  CREATE TABLE traderlink_community_operator_grants(user_id TEXT PRIMARY KEY,status TEXT);
+ CREATE TABLE platform_operator_grants(operator_grant_id TEXT PRIMARY KEY,user_id TEXT,authority_key TEXT,operator_role TEXT,grant_state TEXT,
+   granted_by_kind TEXT,granted_by_user_id TEXT,grant_receipt_sha256 TEXT,recovery_of_grant_id TEXT,granted_at_utc TEXT,revoked_at_utc TEXT,updated_at_utc TEXT);
  CREATE TABLE traderlink_community_page_allowances(community_id TEXT PRIMARY KEY,page_limit INTEGER,updated_by_user_id TEXT,updated_at_utc TEXT);
  CREATE TABLE traderlink_community_content_pages(page_id TEXT PRIMARY KEY,community_id TEXT,status TEXT,updated_at_utc TEXT);
  CREATE TABLE traderlink_community_content_audit(audit_id TEXT PRIMARY KEY,community_id TEXT,actor_user_id TEXT,event_type TEXT,object_type TEXT,object_id TEXT,details_json TEXT,occurred_at_utc TEXT);
@@ -38,6 +42,8 @@ function fixture(){
  db.prepare("INSERT INTO traderlink_communities VALUES(?,?,?,'active')").run(community,guild,owner);
  db.prepare("INSERT INTO traderlink_communities VALUES(?,?,?,'active')").run(otherCommunity,otherGuild,owner);
  db.prepare("INSERT INTO traderlink_community_operator_grants VALUES(?,'active')").run(owner);
+ db.prepare("INSERT INTO platform_operator_grants VALUES(?,?,'journal_administration','journal_owner_admin','active','bootstrap_console',NULL,?,NULL,?,NULL,?)")
+   .run(operatorGrant,owner,'a'.repeat(64),at,at);
  return db;
 }
 function command(pageLimit:number,expectedMutationToken:string|null){return {action:'destination_allowance' as const,guildId:guild,pageLimit,expectedMutationToken,reason:'Private beta allowance review'};}
@@ -69,7 +75,7 @@ describe('Community destination allowance administration',()=>{
    expect(service.execute(command(2,null),key)).toEqual(first);
    expect(db.prepare('SELECT count(*) count FROM traderlink_community_content_audit').get()).toEqual({count:1});
    expect(()=>service.execute(command(4,null),crypto.randomUUID())).toThrow(expect.objectContaining({status:409}));
-   db.prepare("UPDATE traderlink_community_operator_grants SET status='revoked' WHERE user_id=?").run(owner);
+   db.prepare("UPDATE platform_operator_grants SET grant_state='revoked',revoked_at_utc=?,updated_at_utc=? WHERE operator_grant_id=?").run(at,at,operatorGrant);
    expect(()=>service.execute(command(2,null),key)).toThrow(expect.objectContaining({status:403}));
    expect(db.prepare('SELECT page_limit FROM traderlink_community_page_allowances WHERE community_id=?').get(community)).toEqual({page_limit:2});
    expect(db.prepare('SELECT count(*) count FROM traderlink_community_content_audit').get()).toEqual({count:1});
@@ -107,6 +113,62 @@ describe('Community destination allowance administration',()=>{
    db.prepare("UPDATE traderlink_community_admission_decisions SET status='approved' WHERE discord_guild_id=?").run(guild);
    db.prepare('DELETE FROM traderlink_communities WHERE community_id=?').run(community);
    expect(()=>new CommunityAdmissionService(db,scope(),at).execute(command(1,null),crypto.randomUUID())).toThrow(expect.objectContaining({status:400}));
+  }finally{db.close();}
+ });
+ it('uses only the canonical exact-actor grant and propagates singleton conflicts',()=>{
+  const db=fixture();try{
+   db.prepare("UPDATE platform_operator_grants SET grant_state='revoked',revoked_at_utc=?,updated_at_utc=? WHERE operator_grant_id=?").run(at,at,operatorGrant);
+   expect(new CommunityAdmissionService(db,scope(),at).read().entries.find(entry=>entry.guildId===guild)?.destinationAllowance.canManage).toBe(false);
+   expect(()=>new CommunityAdmissionService(db,scope(),at).execute(command(5,null),crypto.randomUUID())).toThrow(expect.objectContaining({status:403}));
+   db.prepare("INSERT INTO platform_operator_grants VALUES(?,?,'journal_administration','journal_owner_admin','active','bootstrap_console',NULL,?,NULL,?,NULL,?)")
+     .run('60000000-0000-4000-8000-000000000006',wrongActor,'b'.repeat(64),at,at);
+   expect(new CommunityAdmissionService(db,scope(),at).read().entries.find(entry=>entry.guildId===guild)?.destinationAllowance.canManage).toBe(false);
+   expect(()=>new CommunityAdmissionService(db,scope(),at).execute(command(5,null),crypto.randomUUID())).toThrow(expect.objectContaining({status:403}));
+   db.prepare("UPDATE platform_operator_grants SET user_id=?,authority_key='other_authority' WHERE operator_grant_id=?").run(owner,'60000000-0000-4000-8000-000000000006');
+   expect(new CommunityAdmissionService(db,scope(),at).read().entries.find(entry=>entry.guildId===guild)?.destinationAllowance.canManage).toBe(false);
+   expect(()=>new CommunityAdmissionService(db,scope(),at).execute(command(5,null),crypto.randomUUID())).toThrow(expect.objectContaining({status:403}));
+   db.prepare("UPDATE platform_operator_grants SET authority_key='journal_administration' WHERE operator_grant_id=?").run('60000000-0000-4000-8000-000000000006');
+   db.prepare("INSERT INTO platform_operator_grants VALUES(?,?,'journal_administration','journal_owner_admin','active','bootstrap_console',NULL,?,NULL,?,NULL,?)")
+     .run('70000000-0000-4000-8000-000000000007',owner,'c'.repeat(64),at,at);
+   expect(()=>new CommunityAdmissionService(db,scope(),at).read()).toThrow(expect.objectContaining({code:'TRADERLINK_JOURNAL_ADMIN_AUTHORITY_CONFLICT'}));
+   expect(()=>new CommunityAdmissionService(db,scope(),at).execute(command(5,null),crypto.randomUUID())).toThrow(expect.objectContaining({code:'TRADERLINK_JOURNAL_ADMIN_AUTHORITY_CONFLICT'}));
+  }finally{db.close();}
+ });
+ it('requires fresh production Journal Admin and Discord-owner evidence independently of the canonical grant',()=>{
+  const db=fixture();try{
+   const stale={...scope(),authorizedAtUtc:'2026-11-20T02:54:59.999Z'};
+   const future={...scope(),discordOwnerVerifiedAtUtc:'2026-11-20T03:00:00.001Z'};
+   expect(()=>new CommunityAdmissionService(db,stale,at)).toThrow(expect.objectContaining({status:403}));
+   expect(()=>new CommunityAdmissionService(db,future,at)).toThrow(expect.objectContaining({status:403}));
+   expect(db.prepare('SELECT count(*) count FROM traderlink_community_page_allowances').get()).toEqual({count:0});
+  }finally{db.close();}
+ });
+ it('does not let a legacy-only grant authorize allowance writes',()=>{
+  const db=fixture();try{
+   db.prepare('DELETE FROM platform_operator_grants').run();
+   expect(db.prepare("SELECT status FROM traderlink_community_operator_grants WHERE user_id=?").get(owner)).toEqual({status:'active'});
+   expect(()=>new CommunityBrandedContentRepository(db).setPageAllowance({communityId:community,pageLimit:5,platformActorUserId:owner,expectedMutationToken:null,reason:'Legacy is not authority',atUtc:at})).toThrow(expect.objectContaining({code:'TRADERLINK_WORKSPACE_ACCESS_DENIED'}));
+   expect(db.prepare('SELECT count(*) count FROM traderlink_community_page_allowances').get()).toEqual({count:0});
+   expect(db.prepare('SELECT count(*) count FROM traderlink_community_content_audit').get()).toEqual({count:0});
+  }finally{db.close();}
+ });
+ it('rechecks canonical authority inside the writer before CAS, audit or command mutation',()=>{
+  const db=fixture();try{
+   const originalTransaction=db.transaction.bind(db),repository=new CommunityBrandedContentRepository(db);
+   let writerEntered=false;
+   Object.defineProperty(db,'transaction',{configurable:true,value:(operation:()=>unknown)=>originalTransaction(()=>{
+    writerEntered=true;
+    expect(db.inTransaction).toBe(true);
+    db.prepare("UPDATE platform_operator_grants SET grant_state='revoked',revoked_at_utc=?,updated_at_utc=? WHERE operator_grant_id=?").run(at,at,operatorGrant);
+    return operation();
+   })});
+   expect(()=>repository.setPageAllowance({communityId:community,pageLimit:5,platformActorUserId:owner,expectedMutationToken:null,reason:'Revoke at writer entry',atUtc:at})).toThrow(expect.objectContaining({code:'TRADERLINK_WORKSPACE_ACCESS_DENIED'}));
+   expect(writerEntered).toBe(true);
+   expect(db.inTransaction).toBe(false);
+   expect(db.prepare("SELECT grant_state FROM platform_operator_grants WHERE operator_grant_id=?").get(operatorGrant)).toEqual({grant_state:'active'});
+   expect(db.prepare('SELECT count(*) count FROM traderlink_community_page_allowances').get()).toEqual({count:0});
+   expect(db.prepare('SELECT count(*) count FROM traderlink_community_content_audit').get()).toEqual({count:0});
+   expect(db.prepare('SELECT count(*) count FROM traderlink_community_admission_commands').get()).toEqual({count:0});
   }finally{db.close();}
  });
  it('enforces capacity for every archived to nonarchived transition',()=>{
