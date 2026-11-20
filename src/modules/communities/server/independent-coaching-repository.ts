@@ -1,4 +1,6 @@
 import {studentTradeReplacementPeriod} from '../contracts/coaching-student-trade-replacement';
+import {validatePackAcceptance,requirePackSubmissionAllowance} from './independent-coaching-pack-repurchase';
+import type {PackAcceptanceExpectation} from '../contracts/coaching-pack-repurchase';
 import {independentTradeHasSavedWork} from './coaching-student-replacement-locks';
 import {chooseStudentReviewSchedules,withTradeReviewStartDate,validateTradeReviewOffer} from '../contracts/coaching-review-schedule-choice';
 import {requireSubmissionAllowance,submissionPeriodForOffer,submissionDate} from '../contracts/coaching-request-submission-limits';
@@ -160,11 +162,15 @@ export class IndependentCoachingRepository {
     }).immediate();
   }
 
-  acceptAgreement(enrollmentId:string,agreementId:string,actorUserId:string,atUtc:string,checkNewStudent?:()=>void,studentPreferences?:StudentReviewPreferences,reviewSchedules?:Readonly<Record<string,unknown>>):void {
+  acceptAgreement(enrollmentId:string,agreementId:string,actorUserId:string,atUtc:string,checkNewStudent?:()=>void,studentPreferences?:StudentReviewPreferences,reviewSchedules?:Readonly<Record<string,unknown>>,packExpectation?:PackAcceptanceExpectation):void {
     at(atUtc);this.database.transaction(()=>{
       const enrollment=this.enrollment(enrollmentId,actorUserId);if(enrollment.student_user_id!==actorUserId)throw new Error("Only the student accepts the agreement.");
       if(!['pending','active'].includes(enrollment.status))throw new Error('This enrollment request is closed.');
       const row=this.database.prepare("SELECT status,terms_json FROM traderlink_coaching_accepted_terms WHERE agreement_id=? AND enrollment_id=?").get(agreementId,enrollmentId) as {status:string;terms_json:string}|undefined;
+      if(row&&JSON.parse(row.terms_json).packRepurchase){
+        if(!packExpectation)throw new Error('Open the exact new-pack confirmation before accepting.');
+        validatePackAcceptance(this.database,{...packExpectation,enrollmentId,agreementId,actorUserId});
+      }else if(packExpectation)throw new Error('This agreement is not a new-pack proposal.');
       if(row?.status==='accepted')return;if(row?.status!=='proposed')throw new Error("This agreement is no longer available.");
       requireCoachCommercialAccess(this.database,{coachUserId:enrollment.coach_user_id,scope:'platform',atUtc});
       requireStandaloneStudentCoachingAccess(this.database,enrollment.student_user_id,atUtc);
@@ -331,7 +337,7 @@ export class IndependentCoachingRepository {
         if(!required||verified.length!==required)throw new Error(`Select ${required||'at least one'} available ${required===1?'trade':'trades'} for this review.`);
       }
       const requestLimits=!item.timelineEnabled?agreement.terms.builderConfig?.offers[item.itemType]?.submissionLimits:undefined;
-      if(requestLimits){const history=this.database.prepare(`SELECT r.submitted_at_utc at,count(t.round_trip_id) quantity,coalesce((SELECT CASE WHEN json_valid(e.object_id) THEN json_extract(e.object_id,'$.quantity') END FROM traderlink_coaching_events e WHERE e.enrollment_id=r.enrollment_id AND e.kind='review_submission_quantity' AND json_valid(e.object_id) AND CASE WHEN json_valid(e.object_id) THEN json_extract(e.object_id,'$.reviewId') END=r.review_id ORDER BY e.created_at_utc LIMIT 1),count(t.round_trip_id)) submittedQuantity FROM traderlink_coaching_reviews r LEFT JOIN traderlink_coaching_review_trades t ON t.review_id=r.review_id WHERE r.agreement_id=? AND r.plan_item_id=? AND r.submitted_at_utc IS NOT NULL GROUP BY r.review_id`).all(review.agreementId,review.planItemId) as {at:string;quantity:number;submittedQuantity:number}[];
+      if(requestLimits&&!requirePackSubmissionAllowance(this.database,{enrollmentId:review.enrollmentId,agreementId:review.agreementId,serviceId:review.planItemId,actorUserId:input.actorUserId,quantity:ids.length,atUtc:input.atUtc})){const history=this.database.prepare(`SELECT r.submitted_at_utc at,count(t.round_trip_id) quantity,coalesce((SELECT CASE WHEN json_valid(e.object_id) THEN json_extract(e.object_id,'$.quantity') END FROM traderlink_coaching_events e WHERE e.enrollment_id=r.enrollment_id AND e.kind='review_submission_quantity' AND json_valid(e.object_id) AND CASE WHEN json_valid(e.object_id) THEN json_extract(e.object_id,'$.reviewId') END=r.review_id ORDER BY e.created_at_utc LIMIT 1),count(t.round_trip_id)) submittedQuantity FROM traderlink_coaching_reviews r LEFT JOIN traderlink_coaching_review_trades t ON t.review_id=r.review_id WHERE r.agreement_id=? AND r.plan_item_id=? AND r.submitted_at_utc IS NOT NULL GROUP BY r.review_id`).all(review.agreementId,review.planItemId) as {at:string;quantity:number;submittedQuantity:number}[];
        requireSubmissionAllowance(requestLimits,ids.length,input.atUtc,submissionPeriodForOffer(input.atUtc,item.frequency,agreement.terms.startDate??submissionDate(agreement.acceptedAtUtc!),agreement.terms.customIntervalDays,agreement.terms.builderConfig?.offers[item.itemType]?.tradeReviewFormat),history,agreement.terms.builderConfig?.offers[item.itemType]?.tradeReviewFormat);
       }
       this.database.prepare("DELETE FROM traderlink_coaching_review_trades WHERE review_id=?").run(review.reviewId);
@@ -701,7 +707,7 @@ export class IndependentCoachingRepository {
     const latest=(table:string)=>this.database.prepare(`SELECT body,revision FROM ${table} WHERE enrollment_id=? ORDER BY revision DESC LIMIT 1`).get(enrollmentId) as {body:string;revision:number}|undefined;
     return {notes:enrollment.coach_user_id===actorUserId?latest('traderlink_coaching_student_notes')??{body:'',revision:0}:null,
       goals:latest('traderlink_coaching_student_goals')??{body:'',revision:0},
-      history:this.database.prepare("SELECT kind,created_at_utc atUtc FROM traderlink_coaching_events WHERE enrollment_id=? ORDER BY created_at_utc DESC,event_id DESC LIMIT 100").all(enrollmentId) as {kind:string;atUtc:string}[]};
+      history:this.database.prepare("SELECT kind,created_at_utc atUtc FROM traderlink_coaching_events WHERE enrollment_id=? AND kind NOT IN ('checkout_product_observed_v1','checkout_variant_observed_v1') ORDER BY created_at_utc DESC,event_id DESC LIMIT 100").all(enrollmentId) as {kind:string;atUtc:string}[]};
   }
   saveStudentContext(input:{enrollmentId:string;actorUserId:string;kind:'notes'|'goals';body:string;expectedRevision:number;atUtc:string}):void{
     at(input.atUtc);if(typeof input.body!=='string'||input.body.length>20000||!Number.isSafeInteger(input.expectedRevision)||input.expectedRevision<0)throw new Error('Check your notes and reload before saving.');

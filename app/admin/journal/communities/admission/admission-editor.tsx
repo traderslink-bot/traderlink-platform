@@ -16,6 +16,9 @@ const clientHydrated = () => true;
 const serverHydrated = () => false;
 const labels = { pending: 'Pending review', approved: 'Approved', declined: 'Declined' };
 const exemptionLabels = { pending: 'Not assessed', approved: 'Eligible', declined: 'Not eligible' };
+export function needsDestinationAllowanceDecision(entry: CommunityAdmissionEntry): boolean {
+    return entry.destinationAllowance.connectionState === 'connected' && entry.admission?.status === 'approved' && entry.destinationAllowance.state === 'unconfigured';
+}
 function DecisionForm({ entry, kind, busy, onSave }: {
     entry: CommunityAdmissionEntry;
     kind: CommunityOwnerDecision['kind'];
@@ -41,11 +44,28 @@ function DecisionForm({ entry, kind, busy, onSave }: {
     <Box><Button type="submit" variant="outlined">{kind === 'admission' ? 'Save admission decision' : 'Save exemption decision'}</Button></Box>
   </Stack></Box></Box>;
 }
+function DestinationAllowanceForm({entry,busy,onSave}:{entry:CommunityAdmissionEntry;busy:boolean;onSave:(command:CommunityAdmissionCommand,form:HTMLFormElement)=>Promise<boolean>}){
+    const allowance=entry.destinationAllowance;
+    const connected=allowance.connectionState==='connected',approved=entry.admission?.status==='approved';
+    const configured=allowance.state==='configured',limit=allowance.pageLimit??0,full=configured&&allowance.pagesUsed>=limit;
+    const summary=!connected?'Community not connected':!configured?'Destination allowance not configured':limit===0?'0 destinations allowed':full?`Full — ${allowance.pagesUsed} of ${limit} destinations used`:`${allowance.pagesUsed} of ${limit} destinations used`;
+    const enabled=connected&&approved&&allowance.canManage;
+    return <Box component="form" key={allowance.mutationToken??'unconfigured'} method="post" onSubmit={async event=>{event.preventDefault();const form=event.currentTarget,data=new FormData(form);await onSave({action:'destination_allowance',guildId:entry.guildId,pageLimit:Number(data.get('pageLimit')),expectedMutationToken:allowance.mutationToken,reason:String(data.get('reason')??'')},form);}}><Box component="fieldset" disabled={busy||!enabled} sx={{border:0,p:0,m:0,minWidth:0}}><Stack spacing={2}>
+      <Typography component="h3" variant="subtitle1">Publishing destination allowance</Typography>
+      <Chip label={summary} color={full?'warning':configured?'default':'info'} sx={{alignSelf:'flex-start'}}/>
+      {!connected?<Alert severity="info">Connect and verify the community before configuring publishing destinations.</Alert>:null}
+      {connected&&!approved?<Alert severity="info">Approve community admission before configuring publishing destinations.</Alert>:null}
+      {connected&&approved&&!allowance.canManage?<Alert severity="warning">An active platform operator grant is required to change this allowance.</Alert>:null}
+      <TextField name="pageLimit" label="Maximum publishing destinations" type="number" defaultValue={allowance.pageLimit??''} required slotProps={{htmlInput:{min:0,max:1000,step:1}}} helperText="Set an explicit limit from 0 to 1,000. Admission does not grant a default."/>
+      <TextField name="reason" label="Private operator reason" required multiline minRows={2} slotProps={{htmlInput:{maxLength:2000}}} helperText="Stored in the private Community audit record; not shown to server members."/>
+      <Box><Button type="submit" variant="outlined">Save destination allowance</Button></Box>
+    </Stack></Box></Box>;
+}
 export function CommunityAdmissionEditor({ initial }: {
     initial: CommunityAdmissionAdminSnapshot;
 }) {
     const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated);
-    const [snapshot, setSnapshot] = useState(initial), [busy, setBusy] = useState(false), [message, setMessage] = useState(''), [failed, setFailed] = useState(false), [dirty, setDirty] = useState(false), [mode, setMode] = useState<'manual' | 'automatic'>(initial.policy.mode);
+    const [snapshot, setSnapshot] = useState(initial), [busy, setBusy] = useState(false), [message, setMessage] = useState(''), [failed, setFailed] = useState(false), [dirty, setDirty] = useState(false), [mode, setMode] = useState<'manual' | 'automatic'>(initial.policy.mode), [entryFilter, setEntryFilter] = useState<'all' | 'needs_allowance'>('all');
     const [history, setHistory] = useState<{
         guildId: string;
         kind: CommunityOwnerDecision['kind'];
@@ -129,6 +149,8 @@ export function CommunityAdmissionEditor({ initial }: {
             setBusy(false);
         }
     }
+    const allowanceQueueCount = snapshot.entries.filter(needsDestinationAllowanceDecision).length;
+    const visibleEntries = entryFilter === 'needs_allowance' ? snapshot.entries.filter(needsDestinationAllowanceDecision) : snapshot.entries;
     return <Stack ref={rootRef} spacing={3} onChange={event => {
             const form = (event.target as HTMLElement).closest('form');
             if (form)
@@ -166,8 +188,9 @@ export function CommunityAdmissionEditor({ initial }: {
     </Stack></Box></Box></JournalAdminPanel>
     <JournalAdminPanel title="Invited communities">
       <Stack spacing={3}>
-        {snapshot.entries.length === 0 ? <Typography>No invited communities on this page.</Typography> : null}
-        {snapshot.entries.map(entry => {
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'center' } }}><Chip label={`${allowanceQueueCount} need a destination allowance decision`} color={allowanceQueueCount ? 'warning' : 'default'}/><Button disabled={busy||dirty||!hydrated} variant={entryFilter === 'all' ? 'contained' : 'outlined'} onClick={() => setEntryFilter('all')}>All communities</Button><Button disabled={busy||dirty||!hydrated} variant={entryFilter === 'needs_allowance' ? 'contained' : 'outlined'} onClick={() => setEntryFilter('needs_allowance')}>Needs allowance decision</Button></Stack>
+        {snapshot.entries.length === 0 ? <Typography>No invited communities on this page.</Typography> : visibleEntries.length === 0 ? <Typography>No communities on this page need a destination allowance decision.</Typography> : null}
+        {visibleEntries.map(entry => {
             const exemptionCurrent = entry.exemption?.admissionRevision === entry.admission?.revision;
             const eligible = entry.admission?.status === 'approved' && entry.exemption?.status === 'approved' && exemptionCurrent;
             return <Box key={entry.guildId} sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: { xs: 2, sm: 3 } }}><Stack spacing={2}>
@@ -180,6 +203,7 @@ export function CommunityAdmissionEditor({ initial }: {
                             {entry.memberCount ? <Typography variant="body2">Discord approximate total members: {entry.memberCount.approximateTotalMembers} · Observed {entry.memberCount.observedAtUtc}. Includes bots; not an activity or quality score.</Typography> : <Typography variant="body2" color="text.secondary">No Discord member-count evidence collected.</Typography>}
                             <Box component="form" method="post" onSubmit={async (event) => { event.preventDefault(); await save({ action: 'collect_count', guildId: entry.guildId, expectedPolicyRevision: snapshot.policy.revision, expectedAdmissionRevision: entry.admission?.revision ?? 0 }, event.currentTarget); }}><Button type="submit" variant="outlined" disabled={busy || !hydrated}>Refresh Discord count and evaluate</Button></Box>
                             <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}><DecisionForm key={`admission-${entry.admission?.revision ?? 0}`} entry={entry} kind="admission" busy={busy || !hydrated} onSave={save}/><DecisionForm key={`exemption-${entry.exemption?.revision ?? 0}`} entry={entry} kind="coaching_exemption" busy={busy || !hydrated} onSave={save}/></Box>
+                            <DestinationAllowanceForm entry={entry} busy={busy||!hydrated} onSave={save}/>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}><Button disabled={busy || !hydrated} onClick={() => void showHistory(entry, 'admission')}>Admission history</Button><Button disabled={busy || !hydrated} onClick={() => void showHistory(entry, 'coaching_exemption')}>Exemption history</Button></Stack>
             {history?.guildId === entry.guildId ? <Box aria-live="polite"><Typography component="h3" variant="subtitle1">{history.kind === 'admission' ? 'Admission' : 'Exemption'} history</Typography>{history.items.length === 0 ? <Typography>No decisions yet.</Typography> : null}{history.items.map(item => <Box key={item.revision} sx={{ borderTop: 1, borderColor: 'divider', py: 1 }}><Typography variant="body2">{history.kind === 'admission' ? labels[item.status] : exemptionLabels[item.status]} · {item.decidedAtUtc} · Decision {item.revision}</Typography><Typography sx={{ overflowWrap: 'anywhere' }}>{item.reason}</Typography></Box>)}{history.more ? <Button disabled={busy || !hydrated} onClick={() => void showHistory(entry, history.kind, history.items.at(-1)?.revision)}>Older decisions</Button> : null}</Box> : null}
           </Stack></Box>;

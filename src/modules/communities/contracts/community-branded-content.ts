@@ -20,6 +20,7 @@ export type CommunityDestinationHub=Readonly<{family:CommunityDestinationFamily;
 export type CommunityWatchlistItem=Readonly<{itemId:string;pageId:string;symbol:string;publisherUserId:string;publisherName:string;categoryId:string|null;authored:Readonly<{targets:readonly string[];support:readonly string[];stopLoss:string|null;notes:string;publisherTake:string}>;metadata:Readonly<Record<string,unknown>>;status:"draft"|"published"|"removed";revision:number;publishedAtUtc:string|null;updatedAtUtc:string}>;
 export type CommunityContentDocument=Readonly<{documentId:string;pageId:string;categoryId:string|null;authorUserId:string;authorName:string;slug:string;templateKey:"article"|"research_report"|"guide"|"brief_update"|"custom";title:string;subtitle:string;sections:readonly Readonly<{kind:"text"|"heading"|"callout";text:string}>[];status:"draft"|"published"|"archived";revision:number;publishedAtUtc:string|null;updatedAtUtc:string}>;
 export type CommunityContentManagement=Readonly<{
+ pageAllowanceConfigured:boolean;
  pageLimit:number;
  pagesUsed:number;
  pages:readonly CommunityContentPage[];

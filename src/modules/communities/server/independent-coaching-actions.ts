@@ -1,4 +1,6 @@
 import {studentReviewPreferences} from '../contracts/coaching-student-review-preferences';
+import {requirePackEnvelope,packProposalExpectation,packAcceptanceExpectation,packWithdrawalExpectation,isAtomicPackIntent,PackActionRollbackRejection} from '../contracts/coaching-pack-repurchase';
+import {proposePackRepurchase,withdrawPackRepurchaseProposal,packAcknowledgement} from './independent-coaching-pack-repurchase';
 import {IndependentCoachingReviewFollowUp} from './independent-coaching-review-follow-up';
 import {createHash} from 'node:crypto';
 import {acceptCoachCommercialTerms,requireCoachCommercialAccess} from './coaching-commercial-access';
@@ -30,6 +32,19 @@ function performAction(database:Database.Database,input:{actorUserId:string;atUt
  const registration=['save_profile','accept_coach_terms','share_journal','save_student_goals','close_request'];
  if(!registration.includes(intent)&&database.prepare('SELECT 1 FROM traderlink_coaching_contexts WHERE coach_user_id=?').get(actor))requireCoachCommercialAccess(database,{coachUserId:actor,scope:'platform',atUtc:at});
  switch(intent){
+  case 'propose_pack_repurchase':{
+   const expected=packProposalExpectation(raw),agreementId=proposePackRepurchase(database,{...expected,actorUserId:actor,atUtc:at});
+   return packAcknowledgement(database,{enrollmentId:expected.enrollmentId,agreementId,actorUserId:actor,requestId:field(raw,'requestId'),kind:'proposed'});
+  }
+  case 'accept_pack_repurchase':{
+   const expected=packAcceptanceExpectation(raw);
+   repo.acceptAgreement(expected.enrollmentId,expected.agreementId,actor,at,()=>input.checkAdmission(expected.enrollmentId),studentReviewPreferences(raw.olderTrades,raw.earliestTradeDate),undefined,expected);
+   return packAcknowledgement(database,{enrollmentId:expected.enrollmentId,agreementId:expected.agreementId,actorUserId:actor,requestId:field(raw,'requestId'),kind:'accepted',proposalFingerprint:expected.expectedProposalFingerprint});
+  }
+  case 'withdraw_pack_repurchase_proposal':{
+   const expected=packWithdrawalExpectation(raw);withdrawPackRepurchaseProposal(database,{...expected,actorUserId:actor,atUtc:at});
+   return packAcknowledgement(database,{enrollmentId:expected.enrollmentId,agreementId:expected.agreementId,actorUserId:actor,requestId:field(raw,'requestId'),kind:'withdrawn',proposalFingerprint:expected.expectedProposalFingerprint});
+  }
   case 'accept_coach_terms':{if(raw.consent!=='yes')throw new Error('Confirm the coach signup terms.');const scope=raw.scope==='community'?'community':'platform';acceptCoachCommercialTerms(database,{coachUserId:actor,scope,communityId:scope==='community'?field(raw,'communityId'):undefined,policyVersion:field(raw,'policyVersion'),atUtc:at});return {};}
   case 'save_profile':repo.saveProfile(actor,{displayName:field(raw,'displayName'),headline:field(raw,'headline',true),biography:field(raw,'biography',true),deliverySummary:field(raw,'deliverySummary',true),socialLinks:parseIndependentCoachSocialLinks({stocktwits:field(raw,'stocktwitsUrl',true),x:field(raw,'xUrl',true),youtube:field(raw,'youtubeUrl',true)})},at);return {href:'/coaching/profile'};
   case 'save_plan':{
@@ -113,13 +128,25 @@ function performAction(database:Database.Database,input:{actorUserId:string;atUt
 /** Stable client retry key, scoped to the authenticated actor. Receipt and action
  * commit together; neither private form bodies nor credentials are persisted. */
 export function performIndependentCoachingAction(database:Database.Database,input:Parameters<typeof performAction>[1]):IndependentCoachingActionResult{
+ if(['propose_pack_repurchase','accept_pack_repurchase','withdraw_pack_repurchase_proposal'].includes(String(input.data.intent)))requirePackEnvelope(input.data);
  if(isMailboxIntent(input.data.intent))requireMailboxEnvelope(input.data);
  const requestId=input.data.requestId;if(requestId===undefined){if(isIndependentFeedbackIntent(input.data.intent))throw new Error('Reload this form before submitting.');return performAction(database,input);}
  if(typeof requestId!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId))throw new Error('Reload this form before submitting.');
  const hash=createHash('sha256').update(JSON.stringify(input.data)).digest('hex');
- return database.transaction(()=>{
+ let entered=false;
+ try{return database.transaction(()=>{
+  entered=true;
   const prior=database.prepare('SELECT payload_sha256,result_json FROM traderlink_coaching_action_receipts WHERE actor_user_id=? AND request_id=?').get(input.actorUserId,requestId) as {payload_sha256:string;result_json:string}|undefined;
   if(prior){if(prior.payload_sha256!==hash)throw new Error('This submission changed. Edit the form and submit again.');return JSON.parse(prior.result_json) as IndependentCoachingActionResult;}
   const result=performAction(database,input);database.prepare('INSERT INTO traderlink_coaching_action_receipts VALUES(?,?,?,?,?)').run(input.actorUserId,requestId,hash,JSON.stringify(result),input.atUtc);return result;
- }).immediate();
+ }).immediate();}catch(error){
+  // Only these three atomic, nonfinancial actions can prove no commit this way.
+  // A prior receipt, uncertain rollback/connection, or failed read is UNKNOWN.
+  if(entered&&isAtomicPackIntent(input.data.intent)&&typeof input.data.enrollmentId==='string'){
+   let absent=false;
+   try{if(!database.inTransaction)absent=!database.prepare('SELECT 1 FROM traderlink_coaching_action_receipts WHERE actor_user_id=? AND request_id=?').get(input.actorUserId,requestId);}catch{/* No proof. */}
+   if(absent)throw new PackActionRollbackRejection({actorUserId:input.actorUserId,requestId,intent:input.data.intent,enrollmentId:input.data.enrollmentId,payloadSha256:hash});
+  }
+  throw error;
+ }
 }

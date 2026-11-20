@@ -1,5 +1,18 @@
 export const SHARED_ALERT_BODY_MAX_LENGTH = 500;
 
+/** Presentation only; every source request independently checks publishing authority. */
+export type SharedSourceNavigationAccess = Readonly<{ sourceAlertPublishingAllowed?: boolean }>;
+export type SharedSourceAssignmentState = Readonly<{
+  destinationId: string;
+  publisherIds: readonly string[];
+  assignmentStateToken: string;
+  hasLegacyAssignments: boolean;
+}>;
+export type SharedSourceAssignmentDestination = SharedSourceAssignmentState & Readonly<{
+  id: string; name: string; channelId: string; active: boolean;
+}>;
+export type SharedSourceAssignmentPublisher = Readonly<{ id: string; name: string; available: boolean }>;
+
 export type SharedAlertCommunity = Readonly<{
   communityId: string;
   slug: string;

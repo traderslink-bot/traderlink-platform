@@ -36,6 +36,10 @@ const FIXTURE_DIRECTORY_PATTERN =
   /^(?:src\/docs\/trade-execution-import-fixtures|src\/lib\/execution-sources\/csv\/__fixtures__|src\/lib\/trader-analytics\/__fixtures__)\//;
 
 const APPROVED_SYNTHETIC_SECRET_FIXTURES = Object.freeze({
+  "src/modules/communities/server/independent-coaching-checkout-authority.test.ts": {
+    contentSha256: "4cd38e7933ba1db60e22e45a37a94edd1b78afdc70aafc9a39d8b55f7a9a477d",
+    literalSha256: "0e219b36aa0558c35a09dffdf79f2db317efd677aedfa5951bcb63c533a2b40a",
+  },
   "src/modules/partner-alerts/server/partner-alert-existing-whop-access.test.ts": {
     contentSha256: "c8f47ed1f54817f6b5f7fee01f8b52703d2e0693353d8978d655e2d448a9fa04",
     literalSha256: "17afd17e72a71dd7cc2f7842aa513a6664ad4f525ed21fa21c31a70a44ebe16a",

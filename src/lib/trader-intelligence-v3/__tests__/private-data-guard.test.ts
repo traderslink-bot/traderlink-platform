@@ -146,6 +146,37 @@ describe("Trader Intelligence v3 private-data repository guard", () => {
     }
   });
 
+  it.each(["worktree", "staged", "pr_history"] as const)(
+    "accepts only the exact Coaching transport fixture in %s records",
+    (sourceKind) => {
+      const path =
+        "src/modules/communities/server/independent-coaching-checkout-authority.test.ts";
+      const content = readFileSync(path, "utf8");
+      const record = { path, content, sourceKind, commit: "synthetic-coaching-history" };
+      expect(scanTraderIntelligencePrivateData([record])).toEqual([]);
+
+      const match = content.match(/\bapiKey:\s*["']([^"'\r\n]+)["']/);
+      expect(match?.[1]).toBeDefined();
+      const literal = match![1]!;
+      const changedLiteral = `${literal.slice(0, -1)}${literal.endsWith("x") ? "y" : "x"}`;
+      const mutations = [
+        { ...record, path: "src/modules/other/coaching-transport.test.ts" },
+        { ...record, content: `${content}\n// changed fixture body` },
+        { ...record, content: content.replace(literal, changedLiteral) },
+        { ...record, content: `${content}\nconst clientSecret = "${"R".repeat(24)}";` },
+      ];
+      for (const mutated of mutations) {
+        const findings = scanTraderIntelligencePrivateData([mutated]);
+        expect(findings).toContainEqual(expect.objectContaining({
+          code: "ti_v3_secret", path: mutated.path, sourceKind,
+          commit: record.commit,
+        }));
+        expect(JSON.stringify(findings)).not.toContain(literal);
+        expect(JSON.stringify(findings)).not.toContain(changedLiteral);
+      }
+    },
+  );
+
   it("accepts only the exact file-specific fixture hash", () => {
     const path =
       "src/docs/trade-execution-import-fixtures/moomoo-trade-history-sample.csv";

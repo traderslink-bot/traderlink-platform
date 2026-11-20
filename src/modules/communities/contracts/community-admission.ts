@@ -64,6 +64,15 @@ export type CommunityAdmissionEntry = Readonly<{
     exemption: CommunityOwnerDecision | null;
     memberCount: CommunityMemberCountReceipt | null;
     newConnectionAllowed: boolean;
+    destinationAllowance: Readonly<{
+        connectionState: 'not_connected' | 'connected';
+        state: 'unconfigured' | 'configured';
+        pageLimit: number | null;
+        pagesUsed: number;
+        mutationToken: string | null;
+        updatedByUserId: string | null;
+        canManage: boolean;
+    }>;
 }>;
 export type CommunityAdmissionAdminSnapshot = Readonly<{
     available: boolean;
@@ -89,6 +98,12 @@ export type CommunityAdmissionCommand = {
     expectedRevision: number;
     mode: 'manual' | 'automatic';
     minimumMembers: number | null;
+    reason: string;
+} | {
+    action: 'destination_allowance';
+    guildId: string;
+    pageLimit: number;
+    expectedMutationToken: string | null;
     reason: string;
 };
 /** Consumer fact for new business only. No notes, grants, roles or payment policy. */

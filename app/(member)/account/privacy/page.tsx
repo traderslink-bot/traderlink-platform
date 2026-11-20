@@ -6,6 +6,7 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { AccountErasureControls } from "../../../(dashboard)/account/account-erasure-controls";
 import { AccountSettingsLayout } from "../../../(dashboard)/account/account-settings-layout";
+import { erasureViewerRef } from "@/src/modules/platform/server/privacy/platform-erasure-status-read";
 
 export const metadata: Metadata = {
   description: "Permanently delete TraderLink data when you choose to leave.",
@@ -28,7 +29,7 @@ export default async function AccountPrivacyPage() {
       title="Delete Account"
     >
       <DashboardPanel title="Delete data">
-        <AccountErasureControls activeAccount={activeAccount} />
+        <AccountErasureControls activeAccount={activeAccount} viewerRef={erasureViewerRef(scope.userId)} journalAccountCount={profile.journalAccounts.length} />
       </DashboardPanel>
     </AccountSettingsLayout>
   );

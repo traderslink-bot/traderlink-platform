@@ -144,6 +144,7 @@ describe("Trader Intelligence route containment matrix", () => {
   it.each([
     "app/api/communities/[communitySlug]/coaching/reviews/[reviewId]/trades/[roundTripId]/route.ts",
     "app/api/admin/market-data/route.ts",
+    "app/api/platform/account-erasure/route.ts",
     "app/api/charts/provider/route.ts",
     "app/api/company/details/route.ts",
     "app/api/company/technicals/route.ts",

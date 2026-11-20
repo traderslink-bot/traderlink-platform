@@ -12,8 +12,9 @@ import { SharedAlertError } from "@/src/modules/communities/server/shared-alerts
 import { SharedAlertsSourcePolicy } from "@/src/modules/communities/server/shared-alerts-source-policy";
 import { SharedAlertsSourcePublication, type SharedSourceAlert } from "@/src/modules/communities/server/shared-alerts-source-publication";
 import { sharedOwnerContext } from "./shared-alerts-access";
+import type { SharedSourceAssignmentState } from "@/src/modules/communities/contracts/shared-alerts-contracts";
 
-export type SharedSourceActionResult = Readonly<{ status: "success" | "error"; message: string; alert?: SharedSourceAlert; destinationId?: string }>;
+export type SharedSourceActionResult = Readonly<{ status: "success" | "error"; message: string; alert?: SharedSourceAlert; destinationId?: string; assignment?: SharedSourceAssignmentState }>;
 
 function field(form: FormData, key: string, optional = false): string {
   const values = form.getAll(key);
@@ -28,11 +29,17 @@ export async function executeSharedAlertsSourceMutation(request: Request): Promi
     // Do not fabricate a POST, origin or mutation marker around a Server Action call.
     requirePlatformMutationRequest(request);
     const identity = requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers));
+    const reauthorize = () => {
+      const current = requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(request.headers));
+      if (current.mode !== identity.mode || current.sessionId !== identity.sessionId || current.scope.userId !== identity.scope.userId
+        || current.scope.workspaceId !== identity.scope.workspaceId || current.scope.activeAccountId !== identity.scope.activeAccountId) throw new SharedAlertError("changed");
+    };
     const type = request.headers.get("content-type") ?? "";
     if (!type.startsWith("multipart/form-data;") && !type.startsWith("application/x-www-form-urlencoded")) throw new SharedAlertError("invalid");
     const length = request.headers.get("content-length");
     if (length && (!/^\d+$/u.test(length) || Number(length) > 128_000)) throw new SharedAlertError("invalid");
     const form = await request.formData();
+    reauthorize();
     let fields = 0, characters = 0;
     for (const [, value] of form.entries()) {
       if (typeof value !== "string") throw new SharedAlertError("invalid");
@@ -45,6 +52,7 @@ export async function executeSharedAlertsSourceMutation(request: Request): Promi
     if (!["save_alert", "save_destination", "assign_publishers"].includes(command)) throw new SharedAlertError("invalid");
     const actorUserId = identity.scope.userId;
     await requireCommunityRequestAccess({ userId: actorUserId, slug, reviewIntent: "shared-alerts" });
+    reauthorize();
     const communityId = withPlatformDatabase({ mode: "runtime" }, database => {
       const row = database.prepare("SELECT community_id FROM traderlink_communities WHERE slug=? AND status='active'").get(slug) as { community_id: string } | undefined;
       if (!row) throw new SharedAlertError("unavailable");
@@ -85,10 +93,12 @@ export async function executeSharedAlertsSourceMutation(request: Request): Promi
       }).immediate());
     } else {
       const context = await sharedOwnerContext(slug, actorUserId);
+      reauthorize();
       if (context.owner.communityId !== communityId) throw new SharedAlertError("changed");
       if (command === "save_destination") {
         // Only the channel ID comes from the form. Guild/permissions/freshness evidence comes from Discord.
         const channel = await context.discord.verifyChannel(context.owner.guildId, field(form, "channelId"));
+        reauthorize();
         const active = field(form, "active", true);
         if (active && active !== "on") throw new SharedAlertError("invalid");
         const destinationId = withPlatformDatabase({ mode: "runtime" }, database => new SharedAlertsSourcePolicy(database).saveDestination({
@@ -99,19 +109,32 @@ export async function executeSharedAlertsSourceMutation(request: Request): Promi
       } else {
         const destinationId = field(form, "destinationId");
         assertCanonicalUuidV4(destinationId, "destinationId");
+        const expectedAssignmentState = field(form, "expectedAssignmentState");
+        if (!/^[a-f0-9]{64}$/u.test(expectedAssignmentState)) throw new SharedAlertError("invalid");
         const userIds = form.getAll("publisherId");
         if (userIds.length > 200 || userIds.some(value => typeof value !== "string") || new Set(userIds).size !== userIds.length) throw new SharedAlertError("invalid");
+        const initial = withPlatformDatabase({ mode: "runtime" }, database => {
+          const state = new SharedAlertsSourcePolicy(database).assignmentState({ communityId, ownerUserId: actorUserId, destinationId, atUtc: createCanonicalUtcTimestamp() });
+          if (state.assignmentStateToken !== expectedAssignmentState) throw new SharedAlertError("changed");
+          const target = database.prepare("SELECT discord_channel_id channelId FROM traderlink_community_discord_destinations WHERE community_id=? AND destination_id=? AND content_type='alerts'").get(communityId, destinationId) as { channelId: string };
+          return { state, channelId: target.channelId };
+        });
         for (const userId of userIds as string[]) {
           assertCanonicalUuidV4(userId, "publisherId");
           // Owner authorization above precedes verification of selected target members.
           await requireCommunityRequestAccess({ userId, slug, reviewIntent: "shared-alerts" });
+          reauthorize();
         }
-        withPlatformDatabase({ mode: "runtime" }, database => new SharedAlertsSourcePolicy(database).assignPublishers({ communityId, ownerUserId: actorUserId, destinationId, userIds: userIds as string[], atUtc: createCanonicalUtcTimestamp() }));
-        result = { status: "success", message: "Publisher channel assignments saved.", destinationId };
+        const additions = (userIds as string[]).some(userId => !initial.state.publisherIds.includes(userId));
+        const channel = additions ? await context.discord.verifyChannel(context.owner.guildId, initial.channelId) : undefined;
+        reauthorize();
+        const assignment = withPlatformDatabase({ mode: "runtime" }, database => new SharedAlertsSourcePolicy(database).assignPublishers({ communityId, ownerUserId: actorUserId, destinationId, userIds: userIds as string[], expectedAssignmentState, channel, atUtc: createCanonicalUtcTimestamp() }));
+        result = { status: "success", message: "Publisher channel assignments saved.", destinationId, assignment };
       }
     }
     revalidatePath(`/communities/${slug}/alerts`);
     revalidatePath(`/communities/${slug}/manage/shared-alerts`);
+    revalidatePath(`/communities/${slug}/manage/shared-alerts/source-channels`);
     return result;
   } catch (error) {
     unstable_rethrow(error);
