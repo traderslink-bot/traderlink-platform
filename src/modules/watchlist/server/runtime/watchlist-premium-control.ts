@@ -2,6 +2,7 @@
 export const WATCHLIST_PREMIUM_CONTROL = String.raw`<script>
 (() => {
  const state = new Map();
+ const expanded = new Set();
  const initialReads = new Map();
  const endpoint = '/api/admin/watchlist/analysis-visibility';
  async function request(symbol, premiumOnly, control) {
@@ -59,7 +60,13 @@ export const WATCHLIST_PREMIUM_CONTROL = String.raw`<script>
  }
  window.watchlistPremiumControl = (symbol,container) => {
   const access=container.closest('.watchlist-grouped-actions')?.querySelector('.watchlist-access-controls') || container;
-  attach(symbol,access,'ticker'); attach(symbol,access,'analysis'); attach(symbol,access,'levels'); attach(symbol,access,'indicators'); attach(symbol,access,'row'); attach(symbol,access,'added');
+  if (access.querySelector(':scope > .watchlist-premium-only')) return;
+  const details=document.createElement('details'), summary=document.createElement('summary'), controls=document.createElement('div');
+  details.className='watchlist-action-more watchlist-premium-only'; details.style.width='100%'; details.open=expanded.has(symbol);
+  summary.textContent='Premium only'; controls.className='watchlist-access-controls';
+  details.append(summary,controls); access.append(details);
+  details.addEventListener('toggle',()=>{if(details.isConnected){if(details.open)expanded.add(symbol);else expanded.delete(symbol);}});
+  attach(symbol,controls,'ticker'); attach(symbol,controls,'analysis'); attach(symbol,controls,'levels'); attach(symbol,controls,'indicators'); attach(symbol,controls,'row'); attach(symbol,controls,'added');
  };
  window.dispatchEvent(new Event('watchlist-review-updated'));
 })();

@@ -252,6 +252,13 @@ describe("owner control", () => {
     const container=dom.window.document.querySelector("div")!;
     try {
       win.watchlistPremiumControl("SECRET",container);
+      const disclosure=container.querySelector<HTMLDetailsElement>('details.watchlist-premium-only')!;
+      expect(disclosure.querySelector('summary')?.textContent).toBe('Premium only');
+      expect(disclosure.classList.contains('watchlist-action-more')).toBe(true);
+      expect(disclosure.open).toBe(false);
+      disclosure.open=true;
+      await new Promise(resolve=>setTimeout(resolve,0));
+
       const inputs=container.querySelectorAll("input");
       await vi.waitFor(()=>expect(inputs[5].disabled).toBe(false));
       expect(inputs).toHaveLength(6); expect(inputs[5].checked).toBe(false);
@@ -260,6 +267,11 @@ describe("owner control", () => {
       await vi.waitFor(()=>expect(inputs[5].disabled).toBe(false));
       expect(readTickerPremiumOnly(db,"SECRET")).toBe(false); expect(readRowHiddenFromFree(db,"SECRET")).toBe(false);
       container.replaceChildren(); win.watchlistPremiumControl("SECRET",container);
+      expect(container.querySelector<HTMLDetailsElement>('details.watchlist-premium-only')?.open).toBe(true);
+      expect(container.querySelectorAll('details.watchlist-premium-only input')).toHaveLength(6);
+      win.watchlistPremiumControl("SECRET",container);
+      expect(container.querySelectorAll('details.watchlist-premium-only')).toHaveLength(1);
+
       expect(container.querySelectorAll("input")[5].checked).toBe(true);
       expect(fetch.mock.calls.filter(([,o])=>o.method==="GET")).toHaveLength(1);
       expect(fetch.mock.calls.filter(([,o])=>o.method==="POST")).toHaveLength(1);
