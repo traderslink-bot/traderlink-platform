@@ -3,7 +3,7 @@ import "server-only";
 import type Database from "better-sqlite3";
 import { headers } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
-import { requireTraderLinkPlatformServerComponentPageIdentity } from "../../platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformRequestIdentity, requireTraderLinkPlatformServerComponentPageIdentity } from "../../platform/server/authentication/require-platform-request-scope";
 import { requireCommunityOwnerReviewIdentity } from "@/src/modules/communities/server/community-owner-review-request-identity";
 import { withReadonlyPlatformDatabase } from "../../platform/server/database/open-readonly-platform-database";
 import { openPlatformDatabase } from "../../platform/server/database/open-platform-database";
@@ -77,6 +77,12 @@ async function access(communitySlug: string) {
     if (selected.length !== 1 || selected[0].moduleNamespace !== required.moduleNamespace || selected[0].executionOrder !== required.executionOrder || calculatePlatformMigrationChecksum(selected[0]) !== required.checksumSha256) return null;
   }
   const identity = requireCommunityOwnerReviewIdentity(await requireTraderLinkPlatformServerComponentPageIdentity());
+  const originalHeaders = await headers();
+  const assertCurrentRequest = () => {
+    const current = requireCommunityOwnerReviewIdentity(requireTraderLinkPlatformRequestIdentity(originalHeaders));
+    if (current.mode !== identity.mode || current.sessionId !== identity.sessionId || current.scope.userId !== identity.scope.userId
+      || current.scope.workspaceId !== identity.scope.workspaceId || current.scope.activeAccountId !== identity.scope.activeAccountId) throw new SharedAlertError("changed");
+  };
   const ready = withReadonlyPlatformDatabase({}, database => {
     if (!sharedProductionPrerequisitesReady(database, platformMigrationManifest, carrier.prerequisiteMigrations, sharedProductionRequiredTables)) return false;
     for (const migration of requirements) {
@@ -89,7 +95,7 @@ async function access(communitySlug: string) {
   });
   if (!ready) return null;
   await requireCommunityRequestAccess({ slug: communitySlug, userId: identity.scope.userId, reviewIntent: "shared-alerts" });
-  return { communitySlug, userId: identity.scope.userId, atUtc: createCanonicalUtcTimestamp() };
+  return { communitySlug, userId: identity.scope.userId, atUtc: createCanonicalUtcTimestamp(), assertCurrentRequest };
 }
 
 export async function loadSharedAlertsSourcePublisherPage(communitySlug: string, options: Readonly<{ alertId?: string; page?: number }> = {}) {
@@ -101,15 +107,22 @@ export async function loadSharedAlertsSourcePublisherPage(communitySlug: string,
   });
 }
 
-export async function loadSharedAlertsSourceOwnerPage(communitySlug: string) {
+export async function loadSharedAlertsSourceOwnerPage(communitySlug: string, options: Readonly<{ mode?: "destinations" | "assignments" }> = {}) {
   const context = await access(communitySlug);
   if (!context) return null;
+  if (options.mode === "assignments") context.assertCurrentRequest();
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
     const repository = new SharedAlertsRepository(database), owner = repository.localOwner(communitySlug, context.userId);
     const request = sharedAlertAwareDiscordRequest(fetch, operation => operation(database));
     const discord = new SharedAlertsDiscord(process.env.TRADERLINK_DISCORD_BOT_TOKEN?.trim() ?? "", request);
     await verifySharedAlertOwner(repository, discord, owner);
+    if (options.mode === "assignments") {
+      context.assertCurrentRequest();
+      const atUtc = createCanonicalUtcTimestamp();
+      return { ...readSharedAlertsSourceOwner(database, { ...context, atUtc }), channels: undefined,
+        navigation: sourceNavigation(database, { ...context, atUtc }, owner.communityId) };
+    }
     const channels = await discord.channels(owner.guildId), atUtc = createCanonicalUtcTimestamp();
     return {
       ...readSharedAlertsSourceOwner(database, { ...context, atUtc }),

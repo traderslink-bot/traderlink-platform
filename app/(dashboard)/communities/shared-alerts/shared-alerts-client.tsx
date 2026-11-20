@@ -247,7 +247,7 @@ function ReceiverSettings({ snapshot, request }: { snapshot: Snapshot; request: 
   </Stack>;
 }
 function PublisherPermissions({ snapshot }: { snapshot:Snapshot }) {
-  return <DashboardPanel title="Publishers"><Stack spacing={1.5}>{snapshot.publishers.map(p=><SharedAlertsActionForm key={p.userId} sx={panelBorder}>
+  return <DashboardPanel title="Publishers"><Stack spacing={1.5}><Box><Button component={Link} prefetch={false} variant="outlined" href={`/communities/${snapshot.community.slug}/manage/shared-alerts/source-channels`}>Source channel assignments</Button></Box>{snapshot.publishers.map(p=><SharedAlertsActionForm key={p.userId} sx={panelBorder}>
     <Fields snapshot={snapshot} command="publisher" tab="settings" /><input type="hidden" name="userId" value={p.userId} />
     <Stack spacing={1}><Typography variant="subtitle1">{p.name}</Typography><FormControlLabel control={<Checkbox defaultChecked={p.canPublish} name="enabled" />} label="Publish alerts" /><Submit variant="outlined">Save permission</Submit></Stack>
   </SharedAlertsActionForm>)}{!snapshot.publishers.length?<Typography color="text.secondary">No connected team members.</Typography>:null}</Stack></DashboardPanel>;

@@ -12,9 +12,9 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
-import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { useAccountErasureRequest, useErasureViewer } from "./account/account-erasure-controls";
 import { isTradeAnalyzerNavigationPath, isTradeJournalNavigationPath } from "../dashboard-navigation";
 
 const CLEAR_CONFIRMATION = "DELETE ACCOUNT";
@@ -29,53 +29,37 @@ export function ClearDemoDataAction({
   expectedAccountSelectionRef: string;
 }) {
   const [confirmation, setConfirmation] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const viewerRef = useErasureViewer();
+  const request = useAccountErasureRequest(viewerRef);
+  const { error, working } = request;
+  const selection = useRef(expectedAccountSelectionRef);
+  useLayoutEffect(() => { selection.current = expectedAccountSelectionRef; }, [expectedAccountSelectionRef]);
+  const confirmationContext = useRef({ viewerRef, selectionRef: expectedAccountSelectionRef });
   const [open, setOpen] = useState(false);
-  const [working, setWorking] = useState(false);
   const confirmationMatches = normalizedConfirmation(confirmation) === CLEAR_CONFIRMATION;
 
   function close(): void {
     if (working) return;
     setConfirmation("");
-    setError(null);
     setOpen(false);
   }
 
   async function clearDemoData(): Promise<void> {
-    if (!confirmationMatches || working) return;
-    setWorking(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/platform/account-erasure", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "content-type": "application/json",
-          [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
-        },
-        body: JSON.stringify({
-          action: "demo_trade_tracker_account",
-          confirmation: CLEAR_CONFIRMATION,
-          expectedAccountSelectionRef,
-        }),
-      });
-      if (!response.ok) {
-        setError(response.status === 409
-          ? "Your selected Trade Tracker account changed. Refresh this page and try again."
-          : "TradersLink could not clear demo data. Nothing was deleted. Try again.");
-        return;
-      }
-      window.location.replace("/workspace");
-    } catch {
-      setError("TradersLink could not clear demo data. Nothing was deleted. Try again.");
-    } finally {
-      setWorking(false);
+    if (!confirmationMatches || working || !request.ready || !viewerRef) return;
+    if (confirmationContext.current.viewerRef !== viewerRef || confirmationContext.current.selectionRef !== expectedAccountSelectionRef) {
+      close(); return;
     }
+    const selected = expectedAccountSelectionRef;
+    const result = await request.send({ action: "demo_trade_tracker_account", confirmation: CLEAR_CONFIRMATION,
+      expectedAccountSelectionRef: selected, expectedViewerRef: viewerRef }, () => selection.current === selected);
+    if (result?.status === "deleted") window.location.replace("/workspace");
+    else if (result?.status === "known_not_submitted") { setOpen(false); setConfirmation(""); }
   }
 
   return (
     <>
-      <Button color="error" onClick={() => setOpen(true)} size="small" variant="outlined">
+      {error ? <Alert severity="warning">{error} <Button onClick={() => void request.check()}>Check saved request</Button><Button href="/account/privacy">View deletion status</Button></Alert> : null}
+      <Button disabled={!request.ready || working} color="error" onClick={() => { confirmationContext.current = { viewerRef, selectionRef: expectedAccountSelectionRef }; setOpen(true); }} size="small" variant="outlined">
         Clear demo data and start fresh →
       </Button>
       <Dialog fullWidth maxWidth="sm" onClose={close} open={open}>
@@ -111,7 +95,7 @@ export function ClearDemoDataAction({
           </Button>
           <Button
             color="error"
-            disabled={working || !confirmationMatches}
+            disabled={working || !confirmationMatches || !request.ready}
             onClick={() => void clearDemoData()}
             sx={{ width: { xs: "100%", sm: "auto" } }}
             variant="contained"

@@ -11,7 +11,7 @@ export class CoachingDirectPaymentService {
   /** Purchase is assembled from server-owned accepted terms, not deserialized from a public form. */
   async beginCheckout(input: Readonly<{
     purchase: CoachingDirectPurchase; actorUserId: string; returnPath: string;
-    platformAccountId: string; billing: CoachingWhopBillingExpectation; atUtc: string;
+    platformAccountId: string; billing: CoachingWhopBillingExpectation; atUtc: string; beforeRequest?:()=>void;
   }>): Promise<Readonly<{purchaseId: string; checkoutId: string; purchaseUrl: string}>> {
     const requested = snapshotCoachingDirectPurchase(input.purchase);
     if (input.actorUserId !== requested.studentUserId) throw new Error("Checkout belongs to the student accepting this purchase.");
@@ -21,7 +21,7 @@ export class CoachingDirectPaymentService {
     const existing = this.repository.readCheckout(snapshot.purchaseId);
     if (existing) return Object.freeze({ purchaseId: snapshot.purchaseId, ...existing });
     // Provider idempotency handles uncertain response/retry; original order is already durable.
-    const checkout = await this.whop.createCheckout(snapshot, input.returnPath, {platformAccountId: input.platformAccountId, billing: input.billing});
+    const checkout = await this.whop.createCheckout(snapshot, input.returnPath, {platformAccountId: input.platformAccountId, billing: input.billing,beforeRequest:input.beforeRequest});
     this.repository.recordCheckout(snapshot.purchaseId, checkout, input.atUtc);
     return Object.freeze({ purchaseId: snapshot.purchaseId, ...checkout });
   }

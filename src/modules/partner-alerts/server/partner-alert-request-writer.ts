@@ -94,7 +94,7 @@ type RequestPrincipalBinding = Readonly<{ userId: string; sessionId: string;
 type SourceChannelCatalogBinding = { writer: PartnerAlertRequestWriter; request: Request;
   principal: RequestPrincipalBinding; consumed: boolean };
 const sourceChannelCatalogBindings = new WeakMap<PartnerAlertSourceChannelCatalogPermit, SourceChannelCatalogBinding>();
-const MUTATION_ACTIONS = new Set(["savePartnerDraft", "saveMappingDraft", "saveOfferVersion",
+const MUTATION_ACTIONS = new Set(["savePartnerDraft", "saveMappingDraft", "removeDraftMapping", "saveOfferVersion",
   "acceptPublishingAgreement", "submitRequest", "proposePublishingAgreement", "confirmInspection", "approveMapping",
   "approveOffer", "approvePartner", "activatePartner", "setPartnerState", "requestChanges", "declinePartner", "withdrawMapping", "withdrawOffer"]);
 const RESULT_STATES = new Set(["draft", "awaiting_approval", "setup_required", "active", "publishing_paused",
@@ -144,6 +144,8 @@ function commandFingerprint(command: PartnerAlertPreparedCommand["command"], con
     case "saveMappingDraft": action = "mapping.draft_saved";
       payload = { expected, mappingId: command.mappingId, sourceChannelId: command.sourceChannelId,
         displayName: command.displayName }; break;
+    case "removeDraftMapping": action = "mapping.draft_removed";
+      payload = { expected, mappingId: command.mappingId }; break;
     case "saveOfferVersion": action = "offer.version_saved"; payload = { expected, offer: command.offer }; break;
     case "acceptPublishingAgreement": action = "agreement.accepted";
       payload = { expected, agreementId: command.agreementId, rulesVersion: command.rulesVersion,
@@ -714,6 +716,7 @@ export class PartnerAlertRequestWriter {
                     outputBotUserId: configuration.outputBotUserId,
                     outputConfigurationRef: configuration.outputConfigurationRef })),
                   saveMappingDraft: input => guarded(() => repository.saveMappingDraft(input)),
+                  removeDraftMapping: input => guarded(() => repository.removeDraftMapping(input)),
                   saveOfferVersion: input => guarded(() => repository.saveOfferVersion(input)),
                   acceptPublishingAgreement: input => guarded(() => repository.acceptPublishingAgreement(input)),
                   submitRequest: input => guarded(() => repository.submitRequest(input)),

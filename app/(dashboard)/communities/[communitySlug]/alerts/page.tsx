@@ -22,15 +22,15 @@ export default async function SharedSourceAlertsPage({ params, searchParams }: R
   catch (error) {
     unstable_rethrow(error);
     if (error instanceof SharedAlertError && error.code === "not_found") notFound();
-    return <DashboardPage><Typography variant="h1" component="h1">Alerts</Typography><DashboardPanel><Alert severity="warning">Publishing access is unavailable. Check your individual publishing permission and Discord connection.</Alert></DashboardPanel></DashboardPage>;
+    return <DashboardPage><Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, justifyContent: "space-between", alignItems: { sm: "center" } }}><Typography variant="h1" component="h1">Alerts</Typography><DashboardSecondaryAction href={`/communities/${communitySlug}`}>Back to community</DashboardSecondaryAction></Stack><DashboardPanel><Alert severity="warning">Publishing access is unavailable. Check your individual publishing permission and Discord connection.</Alert></DashboardPanel></DashboardPage>;
   }
   if (!source) return CommunitySectionPage({ params: Promise.resolve({ communitySlug, section: ["alerts"] }) });
   const base = `/communities/${communitySlug}/alerts`;
   return <DashboardPage>
     <CommunityNavigation scope="shared-alerts" snapshot={{...source.navigation, relationships: []}} />
-    <Typography variant="h1" component="h1">Alerts</Typography>
+    <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, justifyContent: "space-between", alignItems: { sm: "center" } }}><Typography variant="h1" component="h1">Alerts</Typography><DashboardSecondaryAction href={`/communities/${communitySlug}`}>Back to community</DashboardSecondaryAction></Stack>
     <DashboardPanel title={source.selected ? "Edit alert" : "Write an alert"}>
-      <SharedAlertsSourceClient view="publisher" communitySlug={communitySlug} audiences={source.audiences} destinations={source.destinations} initialAlert={source.selected ?? undefined} initialDestinationIds={source.initialDestinationIds} initialDistribution={source.initialDistribution} />
+      <SharedAlertsSourceClient view="publisher" communitySlug={communitySlug} isOwner={source.navigation.community.isOwner} audiences={source.audiences} destinations={source.destinations} initialAlert={source.selected ?? undefined} initialDestinationIds={source.initialDestinationIds} initialDistribution={source.initialDistribution} />
     </DashboardPanel>
     <DashboardPanel title="Saved alerts">
       <Stack spacing={2}>

@@ -179,6 +179,11 @@ function readSingleCookie(requestHeaders: Headers, name: string): string | null 
   }
 }
 
+/** Original request token only; preserves the normal duplicate/decode rules. */
+export function readTraderLinkPlatformSessionToken(requestHeaders: Headers): string | null {
+  return readSingleCookie(requestHeaders, platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE));
+}
+
 function derivePlatformSessionJournalScope(
   database: Parameters<typeof deriveAuthenticatedUserJournalScope>[0],
   userId: string,

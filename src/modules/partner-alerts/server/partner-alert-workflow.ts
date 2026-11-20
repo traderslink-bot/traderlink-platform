@@ -12,6 +12,7 @@ type WithoutRequest<K extends keyof PartnerAlertWorkflowRepository> =
 export type PartnerAlertWorkflowCommand =
   | (Readonly<{ action: "savePartnerDraft" }> & WithoutRequest<"savePartnerDraft">)
   | (Readonly<{ action: "saveMappingDraft" }> & WithoutRequest<"saveMappingDraft">)
+  | (Readonly<{ action: "removeDraftMapping" }> & WithoutRequest<"removeDraftMapping">)
   | (Readonly<{ action: "saveOfferVersion" }> & WithoutRequest<"saveOfferVersion">)
   | (Readonly<{ action: "acceptPublishingAgreement" }> & WithoutRequest<"acceptPublishingAgreement">)
   | (Readonly<{ action: "submitRequest" }> & WithoutRequest<"submitRequest">)
@@ -27,14 +28,14 @@ export type PartnerAlertWorkflowCommand =
   | (Readonly<{ action: "withdrawMapping" }> & WithoutRequest<"withdrawMapping">)
   | (Readonly<{ action: "withdrawOffer" }> & WithoutRequest<"withdrawOffer">);
 type RepositoryCommands = Pick<PartnerAlertRepository,
-  "savePartnerDraft" | "saveMappingDraft" | "saveOfferVersion" | "acceptPublishingAgreement" | "submitRequest"
+  "savePartnerDraft" | "saveMappingDraft" | "removeDraftMapping" | "saveOfferVersion" | "acceptPublishingAgreement" | "submitRequest"
   | "proposePublishingAgreement" | "confirmInspection" | "approveMapping" | "approveOffer" | "approvePartner" | "activatePartner" | "setPartnerState"
   | "requestChanges" | "declinePartner" | "withdrawMapping" | "withdrawOffer">;
 export type PartnerAlertWorkflowRepository = Omit<RepositoryCommands, "savePartnerDraft"> & Readonly<{
   savePartnerDraft: (input: Omit<Parameters<RepositoryCommands["savePartnerDraft"]>[0],
     "outputBotUserId" | "outputConfigurationRef">) => ReturnType<RepositoryCommands["savePartnerDraft"]>;
 }>;
-const COMMUNITY_ACTIONS = new Set(["savePartnerDraft", "saveMappingDraft", "saveOfferVersion", "acceptPublishingAgreement", "submitRequest"]);
+const COMMUNITY_ACTIONS = new Set(["savePartnerDraft", "saveMappingDraft", "removeDraftMapping", "saveOfferVersion", "acceptPublishingAgreement", "submitRequest"]);
 const OPERATOR_ACTIONS = new Set(["proposePublishingAgreement", "confirmInspection", "approveMapping", "approveOffer", "approvePartner", "activatePartner",
   "setPartnerState", "requestChanges", "declinePartner", "withdrawMapping", "withdrawOffer"]);
 
@@ -71,6 +72,9 @@ export function parsePartnerAlertWorkflowCommand(value: unknown, selected: Partn
       keys(["mappingId", "sourceChannelId", "displayName"]);
       return Object.freeze({ ...base, action, mappingId: partnerAlertId(body.mappingId, "mappingId"),
         sourceChannelId: partnerAlertSnowflake(body.sourceChannelId, "sourceChannelId"), displayName: partnerAlertText(body.displayName, "displayName") });
+    case "removeDraftMapping":
+      keys(["mappingId"]);
+      return Object.freeze({ ...base, action, mappingId: partnerAlertId(body.mappingId, "mappingId") });
     case "saveOfferVersion": {
       keys(["offer"]); const offer = parsePartnerAlertCheckoutOffer(body.offer);
       if (offer.communityId !== communityId) throw new PartnerAlertValidationError("communityId");
@@ -178,6 +182,7 @@ export class PartnerAlertWorkflow {
         switch (command.action) {
           case "savePartnerDraft": written = repository.savePartnerDraft({ ...command, requestId: input.requestId }); break;
           case "saveMappingDraft": written = repository.saveMappingDraft({ ...command, requestId: input.requestId }); break;
+          case "removeDraftMapping": written = repository.removeDraftMapping({ ...command, requestId: input.requestId }); break;
           case "saveOfferVersion": written = repository.saveOfferVersion({ ...command, requestId: input.requestId }); break;
           case "acceptPublishingAgreement": written = repository.acceptPublishingAgreement({ ...command, requestId: input.requestId }); break;
           case "submitRequest": written = repository.submitRequest({ ...command, requestId: input.requestId }); break;

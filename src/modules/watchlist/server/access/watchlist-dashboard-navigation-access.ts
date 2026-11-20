@@ -41,6 +41,18 @@ WHERE user_id = ?
 ) AS matches`).get(userId, discordSubject)?.matches === 1;
 }
 
+/** Same pilot predicate on an already-owned connection; no open or write. */
+export function hasWatchlistDashboardNavigationAccessInDatabase(
+  database: Database.Database,
+  identity: TraderLinkPlatformRequestIdentity,
+  environment: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (identity.mode === "local_development") return true;
+  const subjects = configuredDiscordSubjects(environment);
+  return subjects !== null && subjects.some((subject) =>
+    hasActiveDiscordIdentity(database, identity.scope.userId, subject));
+}
+
 export function hasWatchlistDashboardNavigationAccess(
   identity: TraderLinkPlatformRequestIdentity,
   options: Readonly<{
@@ -59,7 +71,6 @@ export function hasWatchlistDashboardNavigationAccess(
       environment,
       forbiddenRepositoryRoots: options.forbiddenRepositoryRoots,
     },
-    (database) => discordSubjects.some((discordSubject) =>
-      hasActiveDiscordIdentity(database, identity.scope.userId, discordSubject)),
+    (database) => hasWatchlistDashboardNavigationAccessInDatabase(database, identity, environment),
   );
 }

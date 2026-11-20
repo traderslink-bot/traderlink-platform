@@ -6,6 +6,8 @@ import { z } from 'zod';
 import type { JournalAdminScope } from '../../platform/contracts/journal-admin-scope';
 import type { CommunityAdmissionAdminSnapshot, CommunityAdmissionCommand, CommunityAdmissionEntry, CommunityOwnerDecision, } from '../contracts/community-admission';
 import { DEFAULT_COMMUNITY_ADMISSION_POLICY } from '../contracts/community-admission';
+import { CommunityBrandedContentRepository, CommunityPageAllowanceConflictError } from './community-branded-content-repository';
+import { TraderLinkPlatformError } from '../../platform/server/database/platform-migration-contract';
 /** Only server-owned count receipts may satisfy the configured total minimum. */
 export function evaluateCommunityAdmission(policy: CommunityAdmissionPolicy, evidence: CommunityAdmissionEvidence, atUtc: string): CommunityAdmissionEvaluation {
     if (!Number.isSafeInteger(policy.revision) || policy.revision < 0
@@ -59,6 +61,7 @@ export const communityAdmissionCommandSchema = z.discriminatedUnion('action', [
     z.object({ action: z.literal('invite'), guildId: guild, displayName: z.string().trim().min(1).max(120).refine(value => !/[\u0000-\u001f\u007f]/u.test(value)), reason }).strict(),
     z.object({ action: z.literal('decide'), guildId: guild, kind: z.enum(['admission', 'coaching_exemption']), status: z.enum(['pending', 'approved', 'declined']), expectedRevision: revision, expectedAdmissionRevision: revision.nullable().optional(), reason }).strict(),
     z.object({ action: z.literal('policy'), expectedRevision: revision, mode: z.enum(['manual', 'automatic']), minimumMembers: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullable(), reason }).strict(),
+    z.object({ action: z.literal('destination_allowance'), guildId: guild, pageLimit: z.number().int().min(0).max(1000), expectedMutationToken: z.string().datetime({ offset: false }).nullable(), reason }).strict(),
 ]);
 type DecisionRow = {
     revision: number;
@@ -96,6 +99,21 @@ export class CommunityAdmissionService {
     private latest(guildId: string, kind: CommunityOwnerDecision['kind']) {
         return decision(this.db.prepare('SELECT revision,kind,status,reason,actor_user_id,created_at_utc,admission_revision,source FROM traderlink_community_admission_decisions WHERE discord_guild_id=? AND kind=? ORDER BY revision DESC LIMIT 1').get(guildId, kind) as DecisionRow | undefined);
     }
+    private destinationAllowance(guildId:string):CommunityAdmissionEntry['destinationAllowance']{
+        const canManage=Boolean(this.db.prepare("SELECT 1 FROM traderlink_community_operator_grants WHERE user_id=? AND status='active'").get(this.scope.userId));
+        const community=this.db.prepare('SELECT community_id FROM traderlink_communities WHERE discord_guild_id=?').get(guildId) as {community_id:string}|undefined;
+        if(!community)return {connectionState:'not_connected',state:'unconfigured',pageLimit:null,pagesUsed:0,mutationToken:null,updatedByUserId:null,canManage};
+        const allowance=this.db.prepare('SELECT page_limit,updated_by_user_id,updated_at_utc FROM traderlink_community_page_allowances WHERE community_id=?').get(community.community_id) as {page_limit:number;updated_by_user_id:string|null;updated_at_utc:string}|undefined;
+        const pagesUsed=(this.db.prepare("SELECT count(*) count FROM traderlink_community_content_pages WHERE community_id=? AND status<>'archived'").get(community.community_id) as {count:number}).count;
+        return {connectionState:'connected',state:allowance?'configured':'unconfigured',pageLimit:allowance?.page_limit??null,pagesUsed,mutationToken:allowance?.updated_at_utc??null,updatedByUserId:allowance?.updated_by_user_id??null,canManage};
+    }
+    private allowanceTarget(guildId:string):string{
+        if(!this.db.prepare("SELECT 1 FROM traderlink_community_operator_grants WHERE user_id=? AND status='active'").get(this.scope.userId))throw new CommunityAdmissionError('Platform operator authorization required.',403);
+        if(this.latest(guildId,'admission')?.status!=='approved')throw new CommunityAdmissionError('Approve community admission before configuring publishing destinations.',400);
+        const community=this.db.prepare('SELECT community_id FROM traderlink_communities WHERE discord_guild_id=?').get(guildId) as {community_id:string}|undefined;
+        if(!community)throw new CommunityAdmissionError('Connect and verify the community before configuring publishing destinations.',400);
+        return community.community_id;
+    }
     policy(): CommunityAdmissionPolicy {
         this.requireStorage();
         const row = this.db.prepare('SELECT revision,mode,requirements_json FROM traderlink_community_admission_policy_versions ORDER BY revision DESC LIMIT 1').get() as {
@@ -117,7 +135,7 @@ export class CommunityAdmissionService {
             reason: string;
             actor_user_id: string;
         }[];
-        const entries: CommunityAdmissionEntry[] = rows.slice(0, 50).map(row => ({ guildId: row.discord_guild_id, displayName: row.display_name, invitedAtUtc: row.created_at_utc, invitationReason: row.reason, invitedByUserId: row.actor_user_id, admission: this.latest(row.discord_guild_id, 'admission'), exemption: this.latest(row.discord_guild_id, 'coaching_exemption'), memberCount: this.memberCount(row.discord_guild_id), newConnectionAllowed: canAdmitNewCommunity(this.db, row.discord_guild_id, false, this.atUtc) }));
+        const entries: CommunityAdmissionEntry[] = rows.slice(0, 50).map(row => ({ guildId: row.discord_guild_id, displayName: row.display_name, invitedAtUtc: row.created_at_utc, invitationReason: row.reason, invitedByUserId: row.actor_user_id, admission: this.latest(row.discord_guild_id, 'admission'), exemption: this.latest(row.discord_guild_id, 'coaching_exemption'), memberCount: this.memberCount(row.discord_guild_id), newConnectionAllowed: canAdmitNewCommunity(this.db, row.discord_guild_id, false, this.atUtc),destinationAllowance:this.destinationAllowance(row.discord_guild_id) }));
         return { available: true, entries, hasMore: rows.length > 50, policy: this.policy() };
     }
     history(guildId: string, beforeRevision?: number, kind: CommunityOwnerDecision['kind'] = 'admission') {
@@ -127,7 +145,8 @@ export class CommunityAdmissionService {
         return (this.db.prepare('SELECT revision,kind,status,reason,actor_user_id,created_at_utc,admission_revision,source FROM traderlink_community_admission_decisions WHERE discord_guild_id=? AND kind=? AND revision<? ORDER BY revision DESC LIMIT 51').all(guildId, kind, beforeRevision ?? Number.MAX_SAFE_INTEGER) as DecisionRow[]).map(row => decision(row)!);
     }
     execute(raw: unknown, requestKey: string): {
-        revision: number;
+        revision?: number;
+        mutationToken?: string;
         guildId: string | null;
         action: string;
     } {
@@ -137,7 +156,8 @@ export class CommunityAdmissionService {
             throw new CommunityAdmissionError('Check the community form and provide a request key.', 400);
         const command: CommunityAdmissionCommand = parsed.data;
         const hash = createHash('sha256').update(JSON.stringify(command)).digest('hex');
-        return this.db.transaction(() => {
+        try{return this.db.transaction(() => {
+            const allowanceCommunityId=command.action==='destination_allowance'?this.allowanceTarget(command.guildId):null;
             const previous = this.db.prepare('SELECT command_sha256,receipt_json FROM traderlink_community_admission_commands WHERE actor_user_id=? AND request_key=?').get(this.scope.userId, requestKey) as {
                 command_sha256: string;
                 receipt_json: string;
@@ -148,6 +168,7 @@ export class CommunityAdmissionService {
                 return JSON.parse(previous.receipt_json);
             }
             let nextRevision = 1;
+            let mutationToken:string|undefined;
             if (command.action === 'invite') {
                 if (this.db.prepare('SELECT 1 FROM traderlink_community_admission_invitations WHERE discord_guild_id=?').get(command.guildId))
                     throw new CommunityAdmissionError('This server is already in the invitation register.', 409);
@@ -167,6 +188,9 @@ export class CommunityAdmissionService {
                 }
                 this.db.prepare('INSERT INTO traderlink_community_admission_policy_versions VALUES (?,?,?,?,?,?)').run(nextRevision, command.mode, JSON.stringify(requirements), this.scope.userId, command.reason, this.atUtc);
             }
+            else if(command.action==='destination_allowance'){
+                mutationToken=new CommunityBrandedContentRepository(this.db).setPageAllowance({communityId:allowanceCommunityId!,pageLimit:command.pageLimit,platformActorUserId:this.scope.userId,expectedMutationToken:command.expectedMutationToken,reason:command.reason,atUtc:this.atUtc});
+            }
             else {
                 if (!this.db.prepare('SELECT 1 FROM traderlink_community_admission_invitations WHERE discord_guild_id=?').get(command.guildId))
                     throw new CommunityAdmissionError('Record the invited community first.', 400);
@@ -180,10 +204,10 @@ export class CommunityAdmissionService {
                 nextRevision = (current?.revision ?? 0) + 1;
                 this.db.prepare('INSERT INTO traderlink_community_admission_decisions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').run(randomUUID(), command.guildId, nextRevision, command.kind, command.status, this.scope.userId, command.reason, this.atUtc, command.kind === 'coaching_exemption' ? this.latest(command.guildId, 'admission')?.revision ?? null : null, 'owner', null, null);
             }
-            const receipt = { revision: nextRevision, guildId: command.action === 'policy' ? null : command.guildId, action: command.action };
+            const receipt = { ...(command.action==='destination_allowance'?{mutationToken}:{revision:nextRevision}), guildId: command.action === 'policy' ? null : command.guildId, action: command.action };
             this.db.prepare('INSERT INTO traderlink_community_admission_commands VALUES (?,?,?,?,?)').run(this.scope.userId, requestKey, hash, JSON.stringify(receipt), this.atUtc);
             return receipt;
-        }).immediate();
+        }).immediate();}catch(error){if(error instanceof CommunityAdmissionError)throw error;if(error instanceof CommunityPageAllowanceConflictError)throw new CommunityAdmissionError('Destination allowance changed. Reload before saving.',409);if(error instanceof TraderLinkPlatformError){if(error.code==='TRADERLINK_WORKSPACE_ACCESS_DENIED')throw new CommunityAdmissionError('Platform operator authorization required.',403);if(error.code==='TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED')throw new CommunityAdmissionError('Check the destination allowance form.',400);}throw error;}
     }
     memberCount(guildId: string): import('../contracts/community-admission').CommunityMemberCountReceipt | null {
         const row = this.db.prepare('SELECT receipt_id,source,approximate_total_members,observed_at_utc FROM traderlink_community_admission_member_counts WHERE discord_guild_id=? ORDER BY revision DESC LIMIT 1').get(guildId) as {

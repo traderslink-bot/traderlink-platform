@@ -1,4 +1,6 @@
 import { isSharedAlertReviewTarget } from "./shared-alerts-review-targets";
+import { createHash } from "node:crypto";
+import type { SharedSourceAssignmentState } from "../contracts/shared-alerts-contracts";
 import type Database from "better-sqlite3";
 import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4, createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
 import { isFreshCommunityEvidence } from "./community-launch-policy";
@@ -71,12 +73,31 @@ export class SharedAlertsSourcePolicy {
     }).immediate();
   }
 
-  assignPublishers(input: Readonly<{ communityId: string; ownerUserId: string; destinationId: string; userIds: readonly string[]; atUtc: string }>): void {
-    this.database.transaction(() => {
-      this.owner(input.communityId, input.ownerUserId, input.atUtc);
+  /** Current-state fingerprint, never an authority ticket or monotonic history proof. */
+  assignmentState(input: Readonly<{ communityId: string; ownerUserId: string; destinationId: string; atUtc: string }>): SharedSourceAssignmentState {
+    this.owner(input.communityId, input.ownerUserId, input.atUtc);
+    assertCanonicalUuidV4(input.destinationId, "destinationId");
+    const destination = this.database.prepare(`SELECT destination_id,community_id,name,discord_channel_id,content_type,status,updated_by_user_id,updated_at_utc
+      FROM traderlink_community_discord_destinations WHERE community_id=? AND destination_id=? AND content_type='alerts'`).get(input.communityId, input.destinationId);
+    if (!destination) throw new SharedAlertError("not_found");
+    const rows = this.database.prepare(`SELECT subject_kind,subject_id,updated_by_user_id,updated_at_utc FROM traderlink_community_destination_publishers
+      WHERE community_id=? AND destination_id=? ORDER BY subject_kind,subject_id`).all(input.communityId, input.destinationId) as { subject_kind: string; subject_id: string; updated_by_user_id: string | null; updated_at_utc: string }[];
+    return Object.freeze({ destinationId: input.destinationId, publisherIds: rows.filter(row => row.subject_kind === "user").map(row => row.subject_id),
+      hasLegacyAssignments: rows.some(row => row.subject_kind === "role"), assignmentStateToken: createHash("sha256").update(JSON.stringify({ destination, rows })).digest("hex") });
+  }
+
+  assignPublishers(input: Readonly<{ communityId: string; ownerUserId: string; destinationId: string; userIds: readonly string[]; expectedAssignmentState: string; channel?: VerifiedSharedAlertChannel; atUtc: string }>): SharedSourceAssignmentState {
+    return this.database.transaction(() => {
+      const owner = this.owner(input.communityId, input.ownerUserId, input.atUtc);
       assertCanonicalUuidV4(input.destinationId, "destinationId");
       if (input.userIds.length > 200 || new Set(input.userIds).size !== input.userIds.length) throw new SharedAlertError("invalid");
-      if (!this.database.prepare("SELECT 1 FROM traderlink_community_discord_destinations WHERE community_id=? AND destination_id=? AND content_type='alerts'").get(input.communityId, input.destinationId)) throw new SharedAlertError("not_found");
+      const state = this.assignmentState(input);
+      if (!/^[a-f0-9]{64}$/u.test(input.expectedAssignmentState) || state.assignmentStateToken !== input.expectedAssignmentState) throw new SharedAlertError("changed");
+      if (input.userIds.some(userId => !state.publisherIds.includes(userId))) {
+        const destination = this.database.prepare("SELECT discord_channel_id channelId FROM traderlink_community_discord_destinations WHERE community_id=? AND destination_id=?").get(input.communityId, input.destinationId) as { channelId: string };
+        if (!input.channel || input.channel.guildId !== owner.guildId || input.channel.channelId !== destination.channelId
+          || !isSharedAlertReviewTarget(owner.guildId, destination.channelId) || !isFreshCommunityEvidence(input.channel.verifiedAtUtc, input.atUtc)) throw new SharedAlertError("changed");
+      }
       for (const userId of input.userIds) this.requirePublisher(input.communityId, userId, input.atUtc);
       const before = this.database.prepare("SELECT subject_kind,subject_id FROM traderlink_community_destination_publishers WHERE community_id=? AND destination_id=? ORDER BY subject_kind,subject_id").all(input.communityId, input.destinationId);
       // Preserve pre-existing role/channel autonomy; this owner control changes individual assignments only.
@@ -86,6 +107,7 @@ export class SharedAlertsSourcePolicy {
       const after = this.database.prepare("SELECT subject_kind,subject_id FROM traderlink_community_destination_publishers WHERE community_id=? AND destination_id=? ORDER BY subject_kind,subject_id").all(input.communityId, input.destinationId);
       this.database.prepare(`INSERT INTO traderlink_community_destination_audit(audit_id,community_id,destination_id,actor_user_id,before_json,after_json,created_at_utc) VALUES(?,?,?,?,?,?,?)`)
         .run(createCanonicalUuidV4(), input.communityId, input.destinationId, input.ownerUserId, JSON.stringify(before), JSON.stringify(after), input.atUtc);
+      return this.assignmentState(input);
     }).immediate();
   }
 
