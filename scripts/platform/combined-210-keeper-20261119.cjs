@@ -24,6 +24,39 @@ function checkFile(file,expected){const fd=fs.openSync(file,fs.constants.O_RDONL
   if(!s.isFile()||s.nlink!==1||digest(fs.readFileSync(fd))!==expected)throw Error('installed_source_pin_mismatch');
 }finally{fs.closeSync(fd);}}
 
+// Capture exactly the bounded private bytes later parsed AND hashed.
+function readActivationRaw(root,file){
+  control.checkRoot(root);
+  const fd=fs.openSync(file,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
+  try{
+    const before=fs.fstatSync(fd,{bigint:true});
+    if(!before.isFile()||before.nlink!==1n||before.uid!==BigInt(process.getuid())
+      ||(before.mode&0o777n)!==0o600n||before.size<1n||before.size>32768n)throw Error('activation_record_identity');
+    const raw=fs.readFileSync(fd),after=fs.fstatSync(fd,{bigint:true});
+    for(const key of ['dev','ino','size','nlink','uid','mode','mtimeNs','ctimeNs'])if(before[key]!==after[key])throw Error('activation_record_changed');
+    if(BigInt(raw.length)!==before.size)throw Error('activation_record_length');
+    return raw;
+  }finally{fs.closeSync(fd);}
+}
+
+// A private source-bound receipt, never a native success/admission assertion.
+function recordTerminalKeeper({root,role,deployment,activationSha256,applicationImportAttempted}){
+  if(applicationImportAttempted||!/^[a-f0-9]{64}$/.test(activationSha256||''))return;
+  control.checkRoot(root);
+  const startTicks=fs.readFileSync('/proc/self/stat','utf8').split(') ').at(-1).split(' ')[19];
+  const instanceId=process.env.RAILWAY_REPLICA_ID||process.env.RAILWAY_INSTANCE_ID;
+  if(!/^[a-f0-9-]{36}$/.test(deployment)||!/^[a-f0-9-]{36}$/.test(instanceId||'')||!/^[0-9]+$/.test(startTicks))throw Error('terminal_receipt_identity');
+  const name='keeper-terminal-'+deployment+'-'+process.pid+'-'+startTicks+'.json';
+  control.write(root,name,{kind:'ROOT_INSTALLED_KEEPER_ACTIVATION_TERMINAL_V1',version:1,
+    runId:role.runId,source:role.applicationSource,schemaSha256:role.schemaSha256,
+    deployment,instanceId,pid:process.pid,startTicks,
+    keeperSha256:digest(fs.readFileSync(__filename)),
+    imageRoleSha256:digest(fs.readFileSync('/app/combined210-image-role.json')),
+    controlSha256:role.installedSourcePins['/app/combined-210-control-20261119.cjs'],
+    activationSha256,timerCleared:true,applicationImportAttempted:false,
+    nativeSuccessAsserted:false,recoveryAuthorized:false,atUtc:new Date().toISOString()});
+}
+
 async function main(){
   const role=control.read('/app/combined210-image-role.json');
   if(!['maintenance210','transitional210','final210','recovery210'].includes(role.role))throw Error('unknown210image_role');
@@ -44,9 +77,10 @@ async function main(){
   const activationPath=root+'/activate-runtime.json';let activating=false;
   const timer=setInterval(async()=>{
     if(activating||!fs.existsSync(activationPath))return;
-    activating=true;
+    activating=true;let activationSha256=null,applicationImportAttempted=false;
     try{
-      const activation=control.read(activationPath);
+      const activationRaw=readActivationRaw(root,activationPath);activationSha256=digest(activationRaw);
+      const activation=JSON.parse(activationRaw);
       if(activation.kind!=='ROOT_REVIEWED210_RUNTIME_ACTIVATION'||activation.deployment!==deployment
         ||activation.source!==role.applicationSource||activation.schemaSha256!==role.schemaSha256
         ||!/^sha256:[a-f0-9]{64}$/.test(activation.imageDigest)||!/^[a-f0-9]{64}$/.test(activation.admissionReceiptSha256)
@@ -63,12 +97,13 @@ async function main(){
       clearInterval(timer);
       await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
       checkFile('/app/application-server.js',role.applicationEntrySha256);
-      require('/app/application-server.js');
+      applicationImportAttempted=true;require('/app/application-server.js');
     }catch{
       // Never reopen rollback or expose raw paths/keys/SQL errors. Keep HOLD if
       // app was not loaded; after the milestone only compatible210 recovery.
-      activating=false;process.stderr.write('combined210_activation_hold\n');
-      clearInterval(timer); //one request, no blind retry
+      activating=false;clearInterval(timer); //one request, no blind retry
+      try{recordTerminalKeeper({root,role,deployment,activationSha256,applicationImportAttempted});}catch{}
+      process.stderr.write('combined210_activation_hold\n');
       if(!server.listening)process.exitCode=1;
     }
   },1000);
@@ -100,4 +135,4 @@ function activateVerifiedTarget({root,role,activation},loadVerifier){
 }
 
 if(require.main===module)main().catch(()=>{process.stderr.write('combined210_keeper_boot_hold\n');process.exitCode=1;});
-module.exports={maintenanceHandler,checkFile,activateVerifiedTarget};
+module.exports={maintenanceHandler,checkFile,activateVerifiedTarget,recordTerminalKeeper,readActivationRaw};
