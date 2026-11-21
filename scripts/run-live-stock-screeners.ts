@@ -1,3 +1,4 @@
+import { screenerPrivateWireEnabled } from "../src/modules/stock-screeners/private-publication-wire";
 import { constants } from "node:fs";
 import { open } from "node:fs/promises";
 import { isAbsolute } from "node:path";
@@ -37,7 +38,8 @@ async function runSelection(settings: Record<string, string>, transport: Screene
     const gateway = await privateConfiguration(settings.gatewayTokenFile);
     if (!gateway.token || gateway.token.length < 32 || !settings.gatewayUrl) throw Error("invalid_worker_configuration");
     environment = { NODE_ENV: "development", TRADERLINK_ALPACA_GATEWAY_URL: settings.gatewayUrl,
-      TRADERLINK_ALPACA_GATEWAY_TOKEN: gateway.token };
+      TRADERLINK_ALPACA_GATEWAY_TOKEN: gateway.token,
+      ...(process.env.TRADERLINK_GATEWAY_CONTRACT ? { TRADERLINK_GATEWAY_CONTRACT: process.env.TRADERLINK_GATEWAY_CONTRACT } : {}) };
   }
   const collector = new ScreenerSnapshotCollector(transport, selection, signal, credentials);
   async function snapshots() {
@@ -75,7 +77,7 @@ async function runSelection(settings: Record<string, string>, transport: Screene
           const symbols = reference.listings.stocks.map(row => row.symbol);
           let nextPublishWarning = 0;
           const publisher = new LiveScreenerPublisher({ origin: settings.origin, token: settings.publishToken,
-            window, signal, selection, onError: () => {
+            window, signal, selection, neutral: screenerPrivateWireEnabled(), onError: () => {
               if (Date.now() < nextPublishWarning) return;
               nextPublishWarning = Date.now() + 60_000;
               console.warn("screeners_live_publish_failed", selection.provider);

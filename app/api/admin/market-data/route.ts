@@ -5,6 +5,7 @@ import { withWatchlistIndicatorMoomooAccess } from "@/src/modules/watchlist/serv
 import { MARKET_DATA_FEATURES, changeMarketDataProvider, marketDataSelection, type MarketDataFeature, type MarketDataProvider } from "@/src/modules/market-data/server/provider-settings";
 import { readWatchlistMarketDataProfile, changeWatchlistMarketDataProfile } from "@/src/modules/watchlist/server/watchlist-market-data-profile";
 import type { MarketDataControl } from "@/src/modules/market-data/provider-contract";
+import { adminControlView } from "@/src/modules/market-data/server/admin-control-view";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ async function selections(): Promise<MarketDataControl[]> {
 }
 export async function GET(request: Request) {
   if (!owner(request)) return reply({ error: "not_found" }, 404);
-  try { return reply({ selections: await selections() }); }
+  try { return reply({ selections: (await selections()).map(adminControlView) }); }
   catch { return reply({ error: "selection_unavailable" }, 503); }
 }
 export async function POST(request: Request) {
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       if (input.provider === "moomoo" && input.feature !== "scanners") await withWatchlistIndicatorMoomooAccess(async () => undefined);
       await changeMarketDataProvider(input.feature, input.revision, input.provider);
     }
-    return reply({ selections: await selections() });
+    return reply({ selections: (await selections()).map(adminControlView) });
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     const conflict = /(?:conflict|busy)$/.test(code);

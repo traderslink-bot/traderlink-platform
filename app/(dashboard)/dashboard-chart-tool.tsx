@@ -19,8 +19,8 @@ import { DashboardSecondaryAction } from "../dashboard-template";
 import { chartSymbol } from "@/src/modules/scanner/alpaca/candles";
 
 const WorkspaceChart = lazy(async () => {
-  const { AlpacaLightweightChart } = await import("./charts/alpaca-lightweight-chart");
-  return { default: AlpacaLightweightChart };
+  const { MarketChart } = await import("./charts/market-chart");
+  return { default: MarketChart };
 });
 
 type DashboardChartContextValue = Readonly<{

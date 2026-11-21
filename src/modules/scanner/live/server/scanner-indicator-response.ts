@@ -1,4 +1,5 @@
 import {marketDataSelection} from "@/src/modules/market-data/server/provider-settings";
+import {matchesBrowserDataSession} from "@/src/modules/market-data/server/browser-data-session";
 import "server-only";
 import { chartSymbol, type Candle } from "@/src/modules/scanner/alpaca/candles";
 import type { ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
@@ -32,6 +33,7 @@ export async function scannerIndicatorResponse(request: Request, loadBars: (requ
   const now = Date.now();
   const window = Number.parseInt(frame, 10) * 60_000;
   const selection=marketDataSelection("scanners");
+  if(!matchesBrowserDataSession(url.searchParams,"scanners",selection))return Response.json({error:"provider_changed"},{status:409,headers});
   const key = `${selection.provider}:${selection.revision}:${symbol}:${frame}:${Math.floor(now / window)}`;
   let read = reads.get(key);
   if (!read) {

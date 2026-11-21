@@ -35,7 +35,7 @@ import { ColumnsDialog, ExchangesPicker, FilterCatalog, FilterEditor, MarketCapC
 import { StockScreenerResults, displayTime, displayValue, exactValue, type Inspect } from "./stock-screener-results";
 import { CommunityPresetsDialog, ScreenShareDialog } from "./stock-screener-sharing";
 
-const Chart = dynamic(() => import("../charts/alpaca-lightweight-chart").then(module => module.AlpacaLightweightChart),
+const Chart = dynamic(() => import("../charts/market-chart").then(module => module.MarketChart),
   { ssr: false, loading: () => <LinearProgress aria-label="Loading chart" /> });
 
 type DraftGroup = { key: string; rules: DraftRule[] };

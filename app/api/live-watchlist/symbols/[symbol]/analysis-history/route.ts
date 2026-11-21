@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
 import { canViewWatchlistAnalysisPrices } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 // Shared across viewers; cache only public date/price rows, never the private audit.
 const cache = new Map<string, { expires: number; rows: Promise<AnalysisHistoryRow[]> }>();
 
-export async function GET(request: NextRequest, context: { params: Promise<{ symbol: string }> }) {
+async function readGET(request: NextRequest, context: { params: Promise<{ symbol: string }> }) {
   const auth = await authorizeWatchlistMemberRequest(request);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const access = readWatchlistFeatureAccess(auth.principal.platformUserId);
@@ -52,3 +53,5 @@ export async function GET(request: NextRequest, context: { params: Promise<{ sym
   }
   return NextResponse.json({ rows: await entry.rows }, { headers: { "Cache-Control": "private, no-store" } });
 }
+
+export const GET = browserDataRead("analysis_history_unavailable", readGET);

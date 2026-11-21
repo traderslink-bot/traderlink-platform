@@ -10,6 +10,7 @@ import { MoomooChartHistory } from "./moomoo-chart-history";
 import { MoomooChartStream } from "./moomoo-chart-stream";
 import { requestMoomooMarketData } from "./moomoo-bridge";
 import { marketDataSelection, type MarketDataFeature } from "./provider-settings";
+import { browserChartEvent } from "./browser-chart-events";
 
 const shared = globalThis as typeof globalThis & {
   traderlinkMoomooCharts?: Map<string, { history: MoomooChartHistory; stream: MoomooChartStream; vwap: AlpacaVwapHistory }>;
@@ -66,7 +67,8 @@ export async function moomooChartResponse(request: Request, stream: boolean, sym
       release = services().stream.subscribe(symbol, daily, event => {
         if (closed) return;
         if (!current() || (controller.desiredSize ?? 0) < -16) { close(); return; }
-        controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`));
+        const output = browserChartEvent(event.type, event.data);
+        controller.enqueue(encoder.encode(`event: ${output.type}\ndata: ${JSON.stringify(output.data)}\n\n`));
       });
       if (closed) { release(); return; }
       timers.check = setInterval(() => {

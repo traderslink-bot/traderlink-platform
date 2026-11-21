@@ -18,7 +18,7 @@ const companyTabs = [
 type CompanyTab = typeof companyTabs[number][0];
 const number=new Intl.NumberFormat("en-US",{maximumFractionDigits:4});
 const profileFields=[
-  ["Exchange","exchange"],["Country","country"],["Industry","finnhubIndustry"],["Reported currency","currency"],
+  ["Exchange","exchange"],["Country","country"],["Industry","industry"],["Reported currency","currency"],
   ["IPO date","ipo"],["Phone","phone"],["Float","floatingShare"],["Shares outstanding","shareOutstanding"],["Market cap","marketCapitalization"],
 ] as const;
 const formNames:Record<string,string>={"10-K":"Annual report","10-Q":"Quarterly report","8-K":"Current report","20-F":"Foreign issuer annual report","40-F":"Canadian issuer annual report","6-K":"Foreign issuer update","S-1":"Registration statement","F-1":"Foreign issuer registration statement","4":"Insider transaction"};
@@ -58,10 +58,10 @@ export function CompanyDetails({company,news,technicalSample,levels,chart}:{
   const name=typeof profile?.name==="string"?profile.name:company.name;
   const website=typeof profile?.weburl==="string"&&/^https?:\/\//i.test(profile.weburl)?profile.weburl:enriched?.website;
   const profileRows: [string,ReactNode][]=profileFields.flatMap(([label,key])=>{
-    if(key==="finnhubIndustry"&&enriched?.industry)return [];
+    if(key==="industry"&&enriched?.industry)return [];
     const value=profile?.[key];
     return typeof value==="number"?[[label,`${number.format(value)}${["floatingShare","shareOutstanding","marketCapitalization"].includes(key)?"M":""}`]]:
-      typeof value==="string"&&value.trim()?[[label,key==="currency"?value.trim().toUpperCase():["exchange","country","finnhubIndustry"].includes(key)?formatProfileName(value.trim()):value.trim()]]:[];
+      typeof value==="string"&&value.trim()?[[label,key==="currency"?value.trim().toUpperCase():["exchange","country","industry"].includes(key)?formatProfileName(value.trim()):value.trim()]]:[];
   });
   if(enriched){
     profileRows.unshift(["Sector",enriched.sector],["Industry",enriched.industry]);

@@ -183,7 +183,7 @@ def site_page(sessions, aliases, path, *, indexable=False):
         session = sessions[day]
         title = f"Top Stock Gainers for {label(day)}"
         leader = session["rows"][0]
-        description = (f'{leader["symbol"]} led the Alpaca-covered U.S. gainers on {label(day)}. ' +
+        description = (f'{leader["symbol"]} led the U.S. gainers on {label(day)}. ' +
                        ('See all 10 stocks, their session highs, closes, max gains and dollar volume.' if session_high
                         else 'See all 10 stocks, their gains, closes and dollar volume.'))
         navigation = ['<a href="../">Stock gainers hub</a>',
@@ -194,7 +194,7 @@ def site_page(sessions, aliases, path, *, indexable=False):
             navigation.append(f'<a href="../{days[position - 1]}/">Next trading day</a>')
         body = (
             f'<nav aria-label="Trading dates">{"".join(navigation)}</nav><main><h1>{title}</h1>'
-            f'<p>{session["compared"]:,} stocks compared · Alpaca SIP · {method}</p>'
+            f'<p>{session["compared"]:,} stocks compared · {method}</p>'
             f'{method_note}{table(session)}<p>Estimated dollar volume uses unadjusted volume and VWAP.</p></main>'
         )
         return document(title, description, f"{day}/", body, indexable=indexable)

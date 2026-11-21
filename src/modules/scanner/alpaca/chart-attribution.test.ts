@@ -8,8 +8,8 @@ import { PublicWebsiteChrome } from "@/src/components/site/public-website-chrome
 import { singleChart } from "./chart-multiview";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/attributions" }));
-vi.mock("@/app/(dashboard)/charts/alpaca-lightweight-chart", () => ({
-  AlpacaLightweightChart: () => createElement("div", { "data-test-chart": true }),
+vi.mock("@/app/(dashboard)/charts/market-chart", () => ({
+  MarketChart: () => createElement("div", { "data-test-chart": true }),
 }));
 
 it("keeps attribution off the chart", async () => {

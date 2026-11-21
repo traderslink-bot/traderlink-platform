@@ -1,3 +1,4 @@
+import { gatewayWireEnabled, gatewayWireUrl, gatewayWireSubscription, decodeGatewayWire } from "../../market-data/transport/gateway-wire";
 import 'server-only';
 import { readFile } from 'node:fs/promises';
 import { chartSymbol } from './candles';
@@ -48,13 +49,14 @@ export class AlpacaScannerStream {
       const arm=()=>{clearTimeout(idle);idle=setTimeout(abort,12_000);};
       try{
         const base=this.environment.TRADERLINK_ALPACA_GATEWAY_URL;if(!base)throw Error('gateway_missing');
-        const url=new URL('scanner-stream',base.endsWith('/')?base:base+'/');
+        const wire=gatewayWireEnabled(this.environment);
+        const url=wire?gatewayWireUrl(base,'scanner-stream'):new URL('scanner-stream',base.endsWith('/')?base:base+'/');
         const local=this.environment.NODE_ENV!=='production';
         if(url.username||url.password||url.search||url.hash||(url.protocol!=='https:'&&!(local&&url.protocol==='http:'&&url.hostname==='127.0.0.1')))throw Error('invalid_gateway');
         let token=this.environment.TRADERLINK_ALPACA_GATEWAY_TOKEN;
         if(local&&this.environment.TRADERLINK_ALPACA_GATEWAY_TOKEN_FILE)token=JSON.parse(await readFile(this.environment.TRADERLINK_ALPACA_GATEWAY_TOKEN_FILE,'utf8')).token;
         if(!token)throw Error('gateway_token_missing');
-        arm();const response=await this.transport(url,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({symbols,regularClose}),signal:attempt.signal,redirect:'error',cache:'no-store'});
+        arm();const response=await this.transport(url,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(wire?gatewayWireSubscription({symbols,regularClose}):{symbols,regularClose}),signal:attempt.signal,redirect:'error',cache:'no-store'});
         if(!response.ok||!response.body)throw Error('stream_unavailable');
         reader=response.body.getReader();let buffer='';const decoder=new TextDecoder();
         while(!controller.signal.aborted){
@@ -63,7 +65,8 @@ export class AlpacaScannerStream {
           let end:number;
           while((end=buffer.indexOf('\n\n'))>=0){
             const event=buffer.slice(0,end);buffer=buffer.slice(end+2);const line=event.split('\n').find(line=>line.startsWith('data: '));if(!line)continue;
-            const frame=JSON.parse(line.slice(6)) as ScannerStreamFrame;
+            const payload=JSON.parse(line.slice(6));
+            const frame=(wire?decodeGatewayWire("scanner-stream",payload):payload) as ScannerStreamFrame;
             if(frame.feed!=='sip'||typeof frame.connected!=='boolean'||!Number.isSafeInteger(frame.at)||!frame.snapshots||!frame.sessionTotals)throw Error('invalid_stream_frame');
             if(controller.signal.aborted)return;
             if(!frame.connected){this.invalidate();continue;}

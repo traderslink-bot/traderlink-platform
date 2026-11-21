@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
@@ -7,7 +8,7 @@ import { companySymbol,readCompanySnapshot } from "@/src/modules/company/server/
 import { companyUniverseEntry } from "@/src/modules/company/server/company-market-data";
 import { companyTechnicalSample } from "@/src/modules/company/server/company-technical-samples";
 
-export async function GET(request:Request){
+async function readGET(request:Request){
   const headers={"Cache-Control":"private, no-store"};
   const reply=(body:unknown,status=200)=>Response.json(body,{status,headers});
   let identity;
@@ -26,3 +27,5 @@ export async function GET(request:Request){
       .map(article=>({id:article.id,title:article.headline,date:article.publishedAt,href:article.publicPath}))):[];
   return reply({company,news,technicalSample:local&&!process.env.TRADERLINK_ALPACA_GATEWAY_URL?companyTechnicalSample(symbol):undefined});
 }
+
+export const GET = browserDataRead("company_details_unavailable", (request: Request) => readGET(request));

@@ -13,8 +13,8 @@ import {
 
 const chart = vi.hoisted(() => ({ mount: vi.fn(), unmount: vi.fn() }));
 
-vi.mock("@/app/(dashboard)/charts/alpaca-lightweight-chart", () => ({
-  AlpacaLightweightChart: ({ symbol, compactIdentity, actions }: {
+vi.mock("@/app/(dashboard)/charts/market-chart", () => ({
+  MarketChart: ({ symbol, compactIdentity, actions }: {
     symbol: string;
     compactIdentity: ReactNode;
     actions: ReactNode;

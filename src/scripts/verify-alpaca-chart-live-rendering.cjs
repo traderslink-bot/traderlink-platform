@@ -8,11 +8,11 @@ async function main() {
   const build=await esbuild.build({stdin:{contents:`
     import React,{useState} from 'react';import{createRoot}from'react-dom/client';
     import{ThemeProvider,createTheme}from'@mui/material/styles';
-    import{AlpacaLightweightChart}from'./app/(dashboard)/charts/alpaca-lightweight-chart';
+    import{MarketChart}from'./app/(dashboard)/charts/market-chart';
     import{DEFAULT_CHART_PREFERENCES}from'./src/modules/scanner/alpaca/chart-preferences';
     import{easternDayStart}from'./src/modules/scanner/alpaca/candles';
     window.__defaults=DEFAULT_CHART_PREFERENCES;window.__dayStart=easternDayStart;
-    function Fixture(){const[symbol,setSymbol]=useState('AAA');window.__setSymbol=setSymbol;return <ThemeProvider theme={createTheme()}><AlpacaLightweightChart symbol={symbol}/></ThemeProvider>}
+    function Fixture(){const[symbol,setSymbol]=useState('AAA');window.__setSymbol=setSymbol;return <ThemeProvider theme={createTheme()}><MarketChart symbol={symbol}/></ThemeProvider>}
     const root=createRoot(document.getElementById('root'));root.render(<Fixture/>);window.__unmount=()=>root.unmount();
   `,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'iife',platform:'browser',define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'public-chart-observation',setup(build){build.onResolve({filter:/^lightweight-charts$/},()=>({path:'chart-observation',namespace:'chart-observation'}));build.onLoad({filter:/.*/,namespace:'chart-observation'},()=>({loader:'js',resolveDir:process.cwd(),contents:`
     export*from${JSON.stringify(packagePath)};import{createChart as original}from${JSON.stringify(packagePath)};
@@ -62,7 +62,7 @@ async function main() {
     }
     await page.getByRole('button',{name:'Indicators',exact:true}).click();await page.getByRole('button',{name:'Add EMA',exact:true}).click();await page.getByRole('button',{name:'Close chart preferences'}).click();
     await page.waitForFunction(()=>window.__charts.filter(c=>!c.removed)[0]?.series.length===3);
-    await page.evaluate(()=>window.__setSymbol('BBB'));await page.waitForFunction(()=>document.querySelector('[data-alpaca-chart="BBB"]')&&window.__charts.filter(c=>!c.removed)[0]?.series[0]?.data().length);
+    await page.evaluate(()=>window.__setSymbol('BBB'));await page.waitForFunction(()=>document.querySelector('[data-traderslink-chart="BBB"]')&&window.__charts.filter(c=>!c.removed)[0]?.series[0]?.data().length);
     assert.equal(preferences.indicators[0].type,'EMA');assert.equal(preferences.timeframe,'1D');
     await page.evaluate(()=>window.__unmount());assert.equal(await page.evaluate(()=>window.__sources.filter(s=>!s.closed).length),0);assert.equal(await page.evaluate(()=>window.__charts.filter(c=>!c.removed).length),0);
     assert.deepEqual(errors,[]);console.log('PASS real shared renderer: six timeframes, trade candle/volume, daily stream selection, indicator persistence, symbol switch, cleanup; no server/provider calls.');

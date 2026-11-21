@@ -1,0 +1,6 @@
+// @vitest-environment node
+import {afterEach,it,expect,vi} from 'vitest';
+vi.mock('@/src/lib/news/company-data-gateway',()=>({readCompanyData:async(kind:string)=>kind==='profile'?{ticker:'SHFS',name:'Company',currency:'USD',marketCapitalization:1.2345,finnhubIndustry:'Financial services',weburl:'https://issuer.example',logo:'https://finnhub.io/logo.png',apiKey:'fixture-private',source:'finnhub',phone:{token:'fixture-private'}}:kind==='metrics'?{metric:{beta:.9764,'52WeekHighDate':'2025-12-17',source:'finnhub',apiKey:'fixture-private',diagnostic:{url:'https://alpaca.invalid'}}}:kind==='directory'?{}:null}));
+import {readCompanySnapshot} from './company-snapshot';
+afterEach(()=>vi.unstubAllEnvs());
+it('contains diagnostic metadata from warm legacy reads while preserving public company and financial facts',async()=>{vi.stubEnv('NODE_ENV','production');const result=await readCompanySnapshot('SHFS');expect(result.profile).toEqual({ticker:'SHFS',name:'Company',currency:'USD',marketCapitalization:1.2345,weburl:'https://issuer.example',industry:'Financial services'});expect(result.metrics).toEqual({beta:.9764,'52WeekHighDate':'2025-12-17'});expect(JSON.stringify(result)).not.toMatch(/finnhub|alpaca|fixture-private|apiKey|diagnostic|logo/);});

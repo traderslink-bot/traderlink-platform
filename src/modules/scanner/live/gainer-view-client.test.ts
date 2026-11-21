@@ -16,7 +16,7 @@ vi.mock("@/app/dashboard-template", () => ({
     createElement("section", null, createElement("h2", null, title), action, children),
   DashboardPrimaryAction: ({ children }: { children: ReactNode }) => createElement("button", null, children),
 }));
-vi.mock("@/app/(dashboard)/charts/alpaca-lightweight-chart", () => ({ AlpacaLightweightChart: ({symbol}:{symbol:string}) => createElement("div",{"data-chart-symbol":symbol}) }));
+vi.mock("@/app/(dashboard)/charts/market-chart", () => ({ MarketChart: ({symbol}:{symbol:string}) => createElement("div",{"data-chart-symbol":symbol}) }));
 vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({ useMarketEventsData: () => ({}), ScreenerPressReleaseBoard: () => createElement("div", {"data-pr-instance": true}, "PR Scanner") }));
 vi.mock("@/app/(dashboard)/screeners/screener-market-halts-card", () => ({ ScreenerMarketHaltsCard: () => createElement("div", {"data-halt-instance": true}, "Halt Alerts") }));
 import { availableScannerGridHeight, GAINERS_EXPLANATION, LiveScreenersClient } from "@/app/(dashboard)/screeners/live-screeners-client";

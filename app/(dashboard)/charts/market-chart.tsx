@@ -62,15 +62,15 @@ type ChartCandleSnapshot = {
 const recentChartCandles = new Map<string, ChartCandleSnapshot>();
 const candleSnapshotLifetime = 5 * 60_000;
 
-export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick }: {
+export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick }: {
   tradeContext?: MarketTradeContext; tradeFocusRevision?: number; onTradeMarkClick?: (marks: readonly MarketTradeMark[]) => void;
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
   viewId?: string; viewWorkspace?: "main" | "scanner" | "workspace"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
   const baseTicker = symbol.split(":").at(-1)!.toUpperCase();
   const marketData = useChartMarketData();
-  const providerKey = `${marketData.provider}:${marketData.revision}`;
-  const providerQuery = `provider=${marketData.provider}&providerRevision=${marketData.revision}`;
+  const providerKey = marketData.generation;
+  const providerQuery = `generation=${marketData.generation}`;
   const {preferences:accountPreferences,ready,message,change,ownerKey,journalAccountRef}=useChartPreferences();
   const journalDisplay = useChartJournalDisplay(journalAccountRef);
   const journal = useChartJournalBridge(journalAccountRef, baseTicker);
@@ -381,7 +381,8 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       let chartHalted=false,haltStatusAt=0,lastGuidePrice:number|null=null;
       const bars = new Map<number, Candle>(cached?.bars.map(bar=>[bar.time,bar]));
       const queued = new Map<number, Candle>();
-      const calculationHistory=new ChartCalculationHistory(ticker,abort.signal,()=>easternClock(Date.now()).date,sharedChartFetch);
+      const calculationHistory=new ChartCalculationHistory(ticker,abort.signal,()=>easternClock(Date.now()).date,
+        (url,init)=>sharedChartFetch(`${url}&${providerQuery}`,init));
       const calculationContexts=new Map<string,CalculationHistory&{daily:boolean;through?:number}>(),contextCoverage=new Map<string,number>(),contextPending=new Set<string>(),contextFailures=new Map<string,number>();
       let calculationView:{from:number;to:number}|null=null,calculationViewKey="",calculationViewTimer:ReturnType<typeof setTimeout>|undefined;
       const seconds={"1m":60,"5m":300,"15m":900,"1h":3600,"4h":14400,"1D":86400};
@@ -505,7 +506,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
       const vwapParts=(indicator:typeof preferences.indicators[number],actual:Candle[],axis:DisplayCandle[]):IndicatorPlot[]=>{
         const frame=calendarFrame ? "1D" : indicator.calculationTimeframe ?? vwapDisplayFrame;
         if(indicator.hideOnDaily&&frame==='1D'||!actual.length)return [];
-        // Existing VWAP uses SIP sessions and seeds. BOATS has separate price and volume.
+        // Session VWAP and supplementary-session prices use separate volume.
         if (overnightBars.size) axis = axis.filter(bar => !overnightBuckets.has(bar.time));
         if (!axis.length) return [];
         const vwapRegularOnly = preferences.regular && !preferences.premarket && !preferences.postmarket;
@@ -854,6 +855,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
         if (disposed || overnightUnavailable || overnightPending.size >= 4 || overnightPending.has(query)) return;
         const params = new URLSearchParams(query);
         params.set("overnight", "1");
+        params.set("generation", providerKey);
         overnightPending.add(query);
         const requestedAt = overnightRevision;
         void sharedChartFetch(`/api/screeners/charts/bars?${params}`, { signal: abort.signal, credentials: "same-origin" })
@@ -1082,7 +1084,7 @@ export function AlpacaLightweightChart({ symbol, sx, timeframe: controlledTimefr
     onClick={journal.open} sx={{ width: compact ? 36 : 34, height: compact ? compactToolbarHeight : 34, flexShrink: 0 }}>
     <MenuBookOutlined fontSize="small" />
   </IconButton> : null;
-  return <Box data-alpaca-chart={ticker} sx={[{ borderRadius: 0, height: "100%", position: "relative", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }, ...(Array.isArray(sx) ? sx : [sx])]}>
+  return <Box data-traderslink-chart={ticker} sx={[{ borderRadius: 0, height: "100%", position: "relative", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }, ...(Array.isArray(sx) ? sx : [sx])]}>
     {compact ? <Stack data-chart-compact-toolbar direction="row" sx={{ alignItems: "center", px: 0.5, height: compactToolbarHeight, flexShrink: 0, gap: 0.5 }}>
       <Box data-chart-identity sx={{ flex: 1, minWidth: 0 }}>{chartIdentity ?? <Typography sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700 }}>{ticker}</Typography>}</Box>
       {status ? <Typography role="status" sx={chartIdentity ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" } : { fontSize: 10, color: "text.secondary", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", maxWidth: 100 }}>{status}</Typography> : null}

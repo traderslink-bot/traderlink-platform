@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import NativeSelect from "@mui/material/NativeSelect";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { GAINER_CARD_LABELS } from "@/src/modules/scanner/live/gainer-card-policy";
 
 export const scannerCardSlots = {
@@ -37,14 +38,15 @@ export function WorkspaceScannerTitle({ children, label }: { children?:ReactNode
   const choice=useContext(WorkspaceScannerTitleContext);
   if(!choice)return children;
   const selectedLabel=label && label !== scannerTitles[choice.scanner] ? label : undefined;
-  return <NativeSelect value={choice.scanner} disableUnderline
+  return <Select value={choice.scanner} variant="standard" disableUnderline autoWidth
+    renderValue={()=>selectedLabel ?? scannerTitles[choice.scanner]}
     inputProps={{"aria-label":`Scanner for ${scannerTitles[choice.slot]} card`}}
     onChange={event=>{if(isScannerCard(event.target.value))choice.onChange(event.target.value);}}
-    sx={{minWidth:0,maxWidth:"100%",fontSize:"0.9rem",fontWeight:850,
-      "& .MuiNativeSelect-select":{py:0,pl:0,pr:"19px !important",textOverflow:"ellipsis"},
-      "& .MuiNativeSelect-icon":{fontSize:17}}}>
-    {/* Keep the collapsed session title distinct from the full scanner choices. */}
-    {selectedLabel && <option hidden value={choice.scanner}>{selectedLabel}</option>}
-    {Object.entries(scannerTitles).map(([key,label])=><option key={key} value={key}>{label}</option>)}
-  </NativeSelect>;
+    sx={{minWidth:0,width:"fit-content",maxWidth:"100%",fontSize:"0.9rem",fontWeight:850,
+      "& .MuiSelect-select":{py:0,pl:0,pr:"24px !important",minWidth:"0 !important",textOverflow:"ellipsis"},
+      "& .MuiSelect-icon":{fontSize:20,right:0}}}>
+    {/* The trigger fits the current title; the menu fits its full, unwrapped choices. */}
+    {Object.entries(scannerTitles).map(([key,label])=><MenuItem key={key} value={key}
+      sx={{whiteSpace:"nowrap"}}>{label}</MenuItem>)}
+  </Select>;
 }

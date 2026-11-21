@@ -1,3 +1,4 @@
+import { companyWireEnabled, companyWireUrl, decodeCompanyData } from "@/src/modules/company/company-data-wire.mjs";
 import "server-only";
 import { unstable_cache } from "next/cache";
 
@@ -11,10 +12,12 @@ export async function readCompanyData<T>(kind: CompanyResource, key = "", revali
     const local = process.env.NODE_ENV !== "production" && url.protocol === "http:" && url.hostname === "127.0.0.1";
     if (url.username || url.password || url.search || url.hash || (url.protocol !== "https:" && !local))
       throw Error("Invalid company data gateway");
-    url.search = new URLSearchParams({kind,key}).toString();
-    const response = await fetch(url,{headers:{Authorization:`Bearer ${token}`},redirect:"error",signal:AbortSignal.timeout(10_000)});
+    const wire=companyWireEnabled(process.env);
+    const requestUrl=wire?companyWireUrl(base,kind,key):url;
+    if(!wire)requestUrl.search = new URLSearchParams({kind,key}).toString();
+    const response = await fetch(requestUrl,{headers:{Authorization:`Bearer ${token}`},redirect:"error",signal:AbortSignal.timeout(10_000)});
     if (!response.ok) throw Error("Company data unavailable");
-    return response.json();
+    const value=await response.json();return wire?decodeCompanyData(kind,value):value;
   },["company-data-vps-v1",base,kind,key],{revalidate});
   try { return await cached() as T; }
   catch { return null; }

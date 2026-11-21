@@ -34,7 +34,7 @@ it("uses the last valid market snapshot until a replacement recovers or the snap
     mkdirSync(directory, { mode: 0o700 });
     publish(market(3));
     const first = await createRun(identity, DEFAULT_DEFINITION);
-    expect(first).toMatchObject({ capturedAt: initialTime, source: "Alpaca SIP", total: 2, partial: false });
+    expect(first).toMatchObject({ capturedAt: initialTime, source: "TradersLink", total: 2, partial: false });
 
     vi.setSystemTime(initialTime + 6_000);
     publish("invalid snapshot");

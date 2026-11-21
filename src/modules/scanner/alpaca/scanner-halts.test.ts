@@ -14,7 +14,11 @@ vi.mock("@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-ac
 vi.mock("@/src/modules/platform/server/database/open-readonly-platform-database", () => ({ withReadonlyPlatformDatabase: (_: unknown, read: (db: unknown) => unknown) => readDatabase(read) }));
 vi.mock("@/src/modules/news/server/market-halt-dashboard", () => ({ listMarketHaltDashboard: () => ({ rows: officialRows() }) }));
 vi.mock("@/src/modules/scanner/live/server/runtime", () => ({
-  readLiveScannerRuntime: () => ({ tradingDate: "2026-11-11" }), subscribeLiveScannerRuntime: vi.fn(),
+  readLiveScannerRuntime: (): ScannerReadModel => ({
+    status: "ready", tradingDate: "2026-11-11", session: "regular", updatedAtUtc: null,
+    universeCount: 0, receivedCount: 0, missingSymbols: [], missingFloatCount: 0, issues: [],
+    gainers: { rows: [], focus: [], total: 0 }, momentum: { rows: [], focus: [], total: 0 },
+  }), subscribeLiveScannerRuntime: vi.fn(),
   readLiveScannerMarketMovements: vi.fn(), scannerUniverseStore: vi.fn(),
 }));
 vi.mock("@/src/modules/scanner/live/server/finnhub-exchange", () => ({ readFinnhubExchanges: vi.fn() }));

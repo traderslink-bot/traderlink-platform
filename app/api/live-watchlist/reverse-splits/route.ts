@@ -1,3 +1,4 @@
+import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireTraderLinkPlatformDiscordMemberRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { hasReverseSplitReviewAccess } from "@/src/modules/news/server/reverse-splits/access";
@@ -7,7 +8,7 @@ import { validTicker } from "@/src/modules/news/server/reverse-splits/contracts"
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+async function readGET(request: NextRequest): Promise<NextResponse> {
   const headers = { "Cache-Control": "private, no-store", Vary: "Cookie" };
   let allowed = false;
   try {
@@ -25,3 +26,5 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Reverse-split information is temporarily unavailable." }, { status: 503, headers });
   }
 }
+
+export const GET = browserDataRead("split_history_unavailable", readGET);

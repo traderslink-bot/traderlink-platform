@@ -1,3 +1,5 @@
+import { gatewayWireEnabled } from "../market-data/transport/gateway-wire";
+import { candleCacheWireUrl, decodeCandleCacheReply } from "../market-data/transport/candle-cache-wire";
 import { easternClock } from "../scanner/live/sessions";
 import { isObject, MAX_LISTINGS, tickerPattern } from "./contracts";
 
@@ -75,13 +77,15 @@ export async function* readScreenerVwapSeeds(
   const loopback = environment.NODE_ENV !== "production" && configured.protocol === "http:" && configured.hostname === "127.0.0.1";
   if (configured.username || configured.password || configured.search || configured.hash || (configured.protocol !== "https:" && !loopback))
     throw Error("screener_seed_gateway_invalid");
+  const wire=gatewayWireEnabled(environment);
   const url = new URL("screener-candle-bars", base.endsWith("/") ? base : base + "/");
 
   for (let offset = 0; offset < symbols.length; offset += BATCH_SIZE) {
     const batch = symbols.slice(offset, offset + BATCH_SIZE);
     url.search = new URLSearchParams({ symbols: batch.join(","), frame: "1m", start: String(startMs), end: String(endMs) }).toString();
     const timeout = AbortSignal.timeout(25_000);
-    const response = await fetch(url, {
+    const requestUrl=wire?candleCacheWireUrl(base,url.searchParams):url;
+    const response = await fetch(requestUrl, {
       headers: { Authorization: `Bearer ${token}` }, cache: "no-store", redirect: "error",
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });
@@ -89,7 +93,8 @@ export async function* readScreenerVwapSeeds(
       await response.body?.cancel();
       throw Error(response.status === 429 || response.status === 503 ? "screener_seed_gateway_busy" : "screener_seed_gateway_unavailable");
     }
-    const data: unknown = await response.json();
+    const payload:unknown=await response.json();
+    const data: unknown = wire?decodeCandleCacheReply(payload):payload;
     if (!isObject(data) || data.feed !== "sip" || data.adjustment !== "split" || data.frame !== "1m"
       || data.basisDate !== basisDate || data.end !== endMs || !isObject(data.bars) || !isObject(data.coverage))
       throw Error("screener_seed_gateway_invalid_reply");

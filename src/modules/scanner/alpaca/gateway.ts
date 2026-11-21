@@ -1,3 +1,4 @@
+import { encodeGatewayWire, gatewayWireOperation, gatewayWireQuery, gatewayWireSubscription } from "../../market-data/transport/gateway-wire";
 import { openStatusJournal } from "./status-journal";
 import { createServer, type ServerResponse } from "node:http";
 import { readFile, stat } from "node:fs/promises";
@@ -20,7 +21,7 @@ import { chartOvernightTradingDate } from "./chart-overnight-session";
 import { AlpacaTradingStatusBook } from "./trading-status";
 import { LivePriceHub, priceObservationOrder } from "./live-price-hub";
 
-type Client = { symbol: string; daily:boolean; response: ServerResponse };
+type Client = { symbol: string; daily:boolean; wire?:boolean; response: ServerResponse };
 type GatewayOptions = { keyId: string; secretKey: string; token: string; haltSource?: "alpaca" | "official"; haltStatusJournal?: string; overnightCharts?: boolean };
 
 // This service deliberately knows no trading/account-management API URL.
@@ -61,7 +62,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
   let retryCount = 0, stopped = false, requests = 0, windowStart = Date.now();
   const send = (client: Client, event: string, value: unknown) => {
     if (client.response.writableLength > 256_000) { client.response.destroy(); return; }
-    client.response.write(`event: ${event}\ndata: ${JSON.stringify(value)}\n\n`);
+    client.response.write(`event: ${event}\ndata: ${JSON.stringify(client.wire ? encodeGatewayWire("stream",value) : value)}\n\n`);
   };
   const status = (state: string) => { for (const client of clients) send(client, "status", { state, adjustment: "split", basisDate: easternClock(Date.now()).date }); };
   const sendTradingStatus=(client:Client)=>send(client,"trading-status",{symbol:client.symbol,available:authenticated&&statusesSubscribed,status:authenticated&&statusesSubscribed?tradingStatuses.read(client.symbol):null});
@@ -270,48 +271,51 @@ export function createAlpacaGateway(options: GatewayOptions) {
     response.setHeader("Cache-Control", "no-store");
     if (!timingSafeEqual(digest(request.headers.authorization ?? ""), digest(`Bearer ${options.token}`))) { response.writeHead(401); response.end(); return; }
     const url = new URL(request.url ?? "/", "http://localhost");
+    const operation=gatewayWireOperation(url.pathname);
+    const reply=(value:unknown)=>response.end(JSON.stringify(operation?encodeGatewayWire(operation,value):value));
     try {
+      if(operation){url.pathname="/"+operation;url.search=gatewayWireQuery(url.searchParams,true).toString();}
       if (url.pathname === "/halts" && request.method === "GET") {
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({feed:"sip",connected:authenticated,statusesSubscribed,observedSince:statusStartedAt,statuses:tradingStatuses.all(),events:tradingStatuses.events()}));return;
+        reply({feed:"sip",connected:authenticated,statusesSubscribed,observedSince:statusStartedAt,statuses:tradingStatuses.all(),events:tradingStatuses.events()});return;
       }
       if(url.pathname === "/prices" && request.method === "POST"){
         let body="";
         for await(const chunk of request){body+=chunk.toString();if(body.length>16_384)throw Error("invalid_symbol");}
-        const input=JSON.parse(body) as {symbols?:unknown};
+        const input=(operation?gatewayWireSubscription(JSON.parse(body),true):JSON.parse(body)) as {symbols?:unknown};
         if(!Array.isArray(input.symbols)||!input.symbols.length||input.symbols.length>400||input.symbols.some(value=>typeof value!=="string"))throw Error("invalid_symbol");
         const requested=input.symbols.map(value=>chartSymbol(value as string));
         if(new Set(requested).size!==requested.length||new Set([...symbols(),...requested]).size>4500)throw Error("invalid_symbol");
-        priceHub.add(requested,response);return;
+        priceHub.add(requested,response,operation?value=>encodeGatewayWire("prices",value):undefined);return;
       }
       if(url.pathname === "/scanner-stream" && request.method === "POST"){
         let body="";
         for await(const chunk of request){body+=chunk.toString();if(body.length>131_072)throw Error("invalid_symbol");}
-        const input=JSON.parse(body) as {symbols:unknown;regularClose:unknown};
+        const input=(operation?gatewayWireSubscription(JSON.parse(body),true):JSON.parse(body)) as {symbols:unknown;regularClose:unknown};
         if(!Array.isArray(input.symbols)||!input.symbols.length||input.symbols.length>4000||![780,960].includes(Number(input.regularClose)))throw Error("invalid_symbol");
         const requested=input.symbols.map(value=>chartSymbol(String(value)));
         if(new Set(requested).size!==requested.length||new Set([...leases.keys(),...requested]).size>4500)throw Error("invalid_symbol");
-        scannerHub.add(requested,Number(input.regularClose),response);subscribe();connect();return;
+        scannerHub.add(requested,Number(input.regularClose),response,operation?value=>encodeGatewayWire("scanner-stream",value):undefined);subscribe();connect();return;
       }
       if(request.method !== "GET"){response.writeHead(405);response.end();return;}
-      if (url.pathname === "/health") { response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ ready: true, feed: "sip" })); return; }
+      if (url.pathname === "/health") { response.setHeader("Content-Type", "application/json"); reply({ ready: true, feed: "sip" }); return; }
       if (url.pathname === "/scanner-listings") {
         const excluded = await listings.read();
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({ excluded })); return;
+        reply({ excluded }); return;
       }
       if(url.pathname==="/calendar"){
         const result=await chartCalendar.forYear(parseChartCalendarYear(url.searchParams));
-        response.setHeader("Content-Type","application/json");response.end(JSON.stringify(result));return;
+        response.setHeader("Content-Type","application/json");reply(result);return;
       }
       if (url.pathname === "/vwap-seed") {
         const result=await vwapHistory.read(parseVwapSeedRequest(url.searchParams));
-        response.setHeader("Content-Type","application/json");response.end(JSON.stringify(result));return;
+        response.setHeader("Content-Type","application/json");reply(result);return;
       }
       if (url.pathname === "/analyzer-splits") {
         const result = await corporateEvents.read(chartSymbol(url.searchParams.get("symbol") ?? ""), "Splits");
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify(result));
+        reply(result);
         return;
       }
       if (url.pathname === "/chart-overnight-history" && request.method === "GET") {
@@ -325,17 +329,17 @@ export function createAlpacaGateway(options: GatewayOptions) {
           bars: [], complete: true, nextPageToken: null,
         };
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({ ...result, bars: result.bars.filter(bar => bar.low > 0 && chartOvernightTradingDate(bar.time * 1000)) }));
+        reply({ ...result, bars: result.bars.filter(bar => bar.low > 0 && chartOvernightTradingDate(bar.time * 1000)) });
         return;
       }
       if (url.pathname === "/history") {
         const result = await rest.history(parseHistoryRequest(url.searchParams));
         if (result.adjustment === "raw") {
           response.setHeader("Content-Type", "application/json");
-          response.end(JSON.stringify(result));
+          reply(result);
           return;
         }
-        response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({...result,...(url.searchParams.get("timeframe")==="1Min"?{calendar:await chartCalendar.forBars(result.bars)}:{calendars:await chartCalendar.forHistory(result.bars)})})); return;
+        response.setHeader("Content-Type", "application/json"); reply({...result,...(url.searchParams.get("timeframe")==="1Min"?{calendar:await chartCalendar.forBars(result.bars)}:{calendars:await chartCalendar.forHistory(result.bars)})}); return;
       }
       if (url.pathname === "/quotes") {
         const requested = (url.searchParams.get("symbols") ?? "").split(",").map(chartSymbol);
@@ -358,24 +362,24 @@ export function createAlpacaGateway(options: GatewayOptions) {
         if (![780, 960].includes(regularClose)) throw Error("invalid_symbol");
         const totals = url.searchParams.get("sessions") === "1" ? Object.fromEntries(requested.map(symbol => [symbol, subscribedTrades.has(symbol) ? sessionBook.read(symbol, date, regularClose) : null])) : undefined;
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({ feed: "sip", connected: authenticated, snapshots: Object.fromEntries(requested.map(symbol => [symbol, quotes.has(symbol) ? { ...quotes.get(symbol), tradingStatus:statusesSubscribed?tradingStatuses.read(symbol):null, adjustedPreviousClose: adjustedCloses[symbol] ?? null } : null])), sessionTotals: totals })); return;
+        reply({ feed: "sip", connected: authenticated, snapshots: Object.fromEntries(requested.map(symbol => [symbol, quotes.has(symbol) ? { ...quotes.get(symbol), tradingStatus:statusesSubscribed?tradingStatuses.read(symbol):null, adjustedPreviousClose: adjustedCloses[symbol] ?? null } : null])), sessionTotals: totals }); return;
       }
       const symbol = chartSymbol(url.searchParams.get("symbol") ?? "");
       if (url.pathname === "/overnight") {
         const payload = await rest.get("/v2/stocks/trades/latest", new URLSearchParams({ symbols: symbol, feed: "boats" })) as { trades?: Record<string, unknown> };
-        response.setHeader("Content-Type", "application/json"); response.end(JSON.stringify({ feed: "boats", symbol, trade: payload.trades?.[symbol] ?? null }));
+        response.setHeader("Content-Type", "application/json"); reply({ feed: "boats", symbol, trade: payload.trades?.[symbol] ?? null });
       } else if (url.pathname === "/bars") {
         const daily = url.searchParams.get("daily") === "1";
         const bars = await history(symbol, daily);
         response.setHeader("Content-Type", "application/json");
-        response.end(JSON.stringify({ symbol, feed: "sip", baseTimeframe: daily ? "1D" : "1m", adjustment: "split", basisDate: easternClock(Date.now()).date, bars,...(!daily?{calendar:await chartCalendar.forBars(bars)}:{}) }));
+        reply({ symbol, feed: "sip", baseTimeframe: daily ? "1D" : "1m", adjustment: "split", basisDate: easternClock(Date.now()).date, bars,...(!daily?{calendar:await chartCalendar.forBars(bars)}:{}) });
       } else if (url.pathname === "/stream") {
         const chartSymbols = new Set([...clients].map(client => client.symbol));
         if (clients.size >= 16 || (!chartSymbols.has(symbol) && chartSymbols.size >= 8)) throw Error("busy");
         response.writeHead(200, { "Content-Type": "text/event-stream", "X-Accel-Buffering": "no" });
         response.write("retry: 3000\n\n");
         const daily=url.searchParams.get("daily")==="1",bookKey=`${symbol}|${daily}`;
-        const client = { symbol, daily, response }; clients.add(client);
+        const client = { symbol, daily, response, wire:operation!==null }; clients.add(client);
         const detachOvernight = !daily && url.searchParams.get("overnight") === "1" ? overnightFeed?.add(symbol, {
           status: state => send(client, "overnight-status", { state }),
           price: price => send(client, "overnight-price", price),
@@ -399,7 +403,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
       const code = error instanceof Error ? error.message : "provider_unavailable";
       const status = ["invalid_symbol", "invalid_history_request"].includes(code) ? 400 : code === "busy" ? 429 : 502;
       response.writeHead(status, { "Content-Type": "application/json" });
-      response.end(JSON.stringify({ error: status === 400 ? "invalid_symbol" : status === 429 ? "busy" : "provider_unavailable" }));
+      response.end(JSON.stringify({ error: status === 400 ? operation?"invalid_request":"invalid_symbol" : status === 429 ? "busy" : operation?"market_unavailable":"provider_unavailable" }));
     }
   });
   server.on("listening",()=>{if(options.haltSource === "alpaca")connect();});

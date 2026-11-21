@@ -5,3 +5,10 @@ export const MARKET_DATA_FEATURE_LABELS: Record<MarketDataFeature, string> = {
   scanners: "Scanners", screeners: "Screeners", charts: "Charts", "trade-analyzer": "Trade Analyzer", watchlist: "Watchlist",
 };
 export type MarketDataControl = { feature: MarketDataFeature; provider: MarketDataProvider | "custom"; revision: number; available: boolean; synchronized?: boolean };
+export type MarketDataAdminControl = MarketDataControl & { controls: {
+  selectedLabel: string;
+  primary: { provider: MarketDataProvider; label: string };
+  alternate: { provider: MarketDataProvider; label: string; ariaLabel: string; checked: boolean };
+  repair: { provider: MarketDataProvider; label: string } | null;
+  description?: string;
+} };

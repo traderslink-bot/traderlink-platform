@@ -190,7 +190,7 @@ export function TradeCandleReviewClient({
       >
         <Stack spacing={1.5}>
           <Typography color="text.secondary" variant="body2">
-            One-minute Yahoo candles are requested only when you use this action. Extended-hours candles are included. TraderLink saves normalized market facts and their verification digest, never the raw provider response.
+            One-minute candles are requested only when you use this action. Extended-hours candles are included. TraderLink saves normalized market facts and their verification digest, never the raw provider response.
           </Typography>
           <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
             <Chip label={`${trade.direction === "long" ? "Long" : "Short"} ${trade.symbol}`} size="small" />

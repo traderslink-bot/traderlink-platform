@@ -54,7 +54,7 @@ it("switches both accounts, isolates stale uploads/live books, and preserves imm
     sequence: 1, sentAt: now, reset: true, rows: [{ symbol: "A00", price: 100, priceAt: now - 1_000, vwap: 90, vwapAt: now - 1_000 }] };
   try {
     const original = await createRun(owner("one"), DEFAULT_DEFINITION);
-    expect(original.source).toBe("Alpaca SIP");
+    expect(original.source).toBe("TradersLink");
     expect((await live(request("stock-screeners-live", frame))).status).toBe(204);
     select(moomoo);
     await expect(createRun(owner("one"), DEFAULT_DEFINITION)).rejects.toThrow();
@@ -66,7 +66,7 @@ it("switches both accounts, isolates stale uploads/live books, and preserves imm
     expect((await upload(request("stock-screeners-pack", { ...moomoo, initial: true, pack: pack(moomoo, 500) }))).status).toBe(204);
     for (const user of [owner("one"), owner("two")]) {
       const result = await createRun(user, DEFAULT_DEFINITION);
-      expect(result.source).toBe("Moomoo");
+      expect(result.source).toBe("TradersLink");
       expect(result.total).toBe(55);
       expect(result.rows.find(row => row.symbol === "A00")?.values.price).toBe(20);
     }
@@ -92,7 +92,7 @@ it("switches both accounts, isolates stale uploads/live books, and preserves imm
     vi.setSystemTime(now + 31 * 60_000);
     for (const [identity, run] of [[owner("one"), a], [owner("two"), b]] as const) {
       expect(getRun(identity, run.id, 2, { metric: "ticker", dir: "asc" }).rows).toHaveLength(5);
-      expect(getRun(identity, run.id, 1, { metric: "price", dir: "desc" }).source).toBe("Moomoo");
+      expect(getRun(identity, run.id, 1, { metric: "price", dir: "desc" }).source).toBe("TradersLink");
     }
     expect(screenerPackFilename(returned)).toBe("market-alpaca-2.json");
   } finally { rmSync(root, { recursive: true, force: true }); }

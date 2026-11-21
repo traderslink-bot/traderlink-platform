@@ -8,8 +8,8 @@ import { CompanyDetails } from "../../ticker/[symbol]/company-details";
 import { ChartPreferencesContext, useChartPreferences } from "../../charts/use-chart-preferences";
 import { ScannerTickerDetails } from "../scanner-ticker-details";
 
-const Chart = lazy(() => import("../../charts/alpaca-lightweight-chart")
-  .then(module => ({ default: module.AlpacaLightweightChart })));
+const Chart = lazy(() => import("../../charts/market-chart")
+  .then(module => ({ default: module.MarketChart })));
 
 function CompanyChart({symbol,timeframe,onTimeframeChange}:{
   symbol:string;timeframe?:ChartTimeframe;onTimeframeChange:(timeframe:ChartTimeframe)=>void;

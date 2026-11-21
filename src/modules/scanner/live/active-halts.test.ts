@@ -51,3 +51,9 @@ it("does not expire an authoritative Alpaca pause after an hour or clear it usin
   const selected=selectActiveScannerHalts([row],new Date("2026-11-05T18:00:00Z"),[{symbol:"AAA",previousObservedAt:Date.parse("2026-11-05T17:00:00Z"),observedAt:Date.parse("2026-11-05T17:00:01Z")}]);
   expect(selected).toHaveLength(1);
 });
+
+it("keeps a confirmed pause after source projection, including a scheduled resume time",()=>{
+  const row={...halt('neutral-current','SHFS','10:05:00'),halted:true,chartExchange:'NASDAQ' as const};
+  expect(selectActiveScannerHalts([row],new Date('2026-11-05T19:00:00Z'))).toHaveLength(1);
+  expect(selectActiveScannerHalts([{...row,halted:false}],new Date('2026-11-05T15:01:00Z'))).toEqual([]);
+});

@@ -3,7 +3,7 @@ import { alpacaMinuteTradeRules } from "./session-book";
 
 export type LivePrice = { price: number; providerObservedAt: string; receiptAt: number };
 export type LivePriceFrame = { protocolVersion: 1; feed: "sip"; connected: boolean; kind: "snapshot" | "delta" | "status"; emittedAt: number; prices: Record<string, LivePrice> };
-type Consumer = { symbols: readonly string[]; response: ServerResponse; dirty: Set<string>; lastSent: number; initial: boolean };
+type Consumer = { symbols: readonly string[]; response: ServerResponse; dirty: Set<string>; lastSent: number; initial: boolean; encode?: (value:unknown)=>unknown };
 export function priceObservationOrder(value: string) {
   const at = Date.parse(value);
   return Number.isFinite(at) ? new Date(at).toISOString().slice(0,19) + (value.match(/\.(\d+)Z$/)?.[1] ?? "").padEnd(9,"0") : "";
@@ -18,9 +18,9 @@ export class LivePriceHub {
     this.timer=setInterval(()=>this.flush(),250);this.timer.unref();
   }
   symbols(): string[] { return [...new Set([...this.consumers].flatMap(consumer=>[...consumer.symbols]))]; }
-  add(symbols: readonly string[], response: ServerResponse) {
+  add(symbols: readonly string[], response: ServerResponse, encode?: (value:unknown)=>unknown) {
     if(this.consumers.size>=8)throw Error("busy");
-    const consumer:Consumer={symbols,response,dirty:new Set(),lastSent:0,initial:true};
+    const consumer:Consumer={symbols,response,dirty:new Set(),lastSent:0,initial:true,encode};
     this.consumers.add(consumer);
     response.writeHead(200,{"Content-Type":"text/event-stream","X-Accel-Buffering":"no"});response.write(": live prices\n\n");
     response.on("close",()=>{
@@ -66,7 +66,7 @@ export class LivePriceHub {
     if(consumer.response.destroyed)return;
     if(consumer.response.writableLength>2_000_000){consumer.response.destroy();return;}
     const frame:LivePriceFrame={protocolVersion:1,feed:"sip",connected:this.connected,kind,emittedAt:Date.now(),prices:this.connected?prices:{}};
-    consumer.response.write(`event: prices\ndata: ${JSON.stringify(frame)}\n\n`);consumer.lastSent=frame.emittedAt;
+    consumer.response.write(`event: prices\ndata: ${JSON.stringify(consumer.encode?consumer.encode(frame):frame)}\n\n`);consumer.lastSent=frame.emittedAt;
   }
   close(){clearInterval(this.timer);for(const consumer of this.consumers)consumer.response.end();this.consumers.clear();this.prices.clear();}
 }

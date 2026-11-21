@@ -1,5 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { scannerIndicatorResponse } from "./scanner-indicator-response";
+import { browserDataSession } from "@/src/modules/market-data/server/browser-data-session";
 
 const sourceSelection=vi.hoisted(()=>({provider:"alpaca",revision:0}));
 vi.mock("server-only", () => ({}));
@@ -82,4 +83,20 @@ it("isolates cached reads by source revision and rejects a mismatched feed",asyn
   expect((await scannerIndicatorResponse(request(),load)).status).toBe(503);
   expect((await scannerIndicatorResponse(request(),load)).status).toBe(200);expect(load).toHaveBeenCalledTimes(5);
  }finally{sourceSelection.provider="alpaca";sourceSelection.revision=0;vi.useRealTimers();}
+});
+
+it("rejects a stale neutral generation even when the server has a cached indicator read",async()=>{
+ const selection={provider:"alpaca" as const,revision:0};
+ const generation=browserDataSession("scanners",selection).generation;
+ sourceSelection.provider="moomoo";sourceSelection.revision=1;
+ const bars=Array.from({length:360},(_,i)=>({time:Math.floor(Date.now()/60000)*60-(360-i)*60,open:2,high:2.1,low:1.9,close:2,volume:100}));
+ const load=vi.fn(async()=>Response.json({symbol:"NEUTRAL",feed:"moomoo",adjustment:"split",bars}));
+ try{
+  const current=browserDataSession("scanners",{provider:"moomoo",revision:1}).generation;
+  const headers={"x-test-viewer":"viewer"};
+  expect((await scannerIndicatorResponse(new Request(`https://example.test/api/screeners/charts/bars?symbol=NEUTRAL&frame=5m&generation=${current}`,{headers}),load)).status).toBe(200);
+  load.mockClear();
+  const response=await scannerIndicatorResponse(new Request(`https://example.test/api/screeners/charts/bars?symbol=NEUTRAL&frame=5m&generation=${generation}`,{headers:{"x-test-viewer":"viewer"}}),load);
+  expect(response.status).toBe(409);expect(load).not.toHaveBeenCalled();
+ }finally{sourceSelection.provider="alpaca";sourceSelection.revision=0;}
 });
