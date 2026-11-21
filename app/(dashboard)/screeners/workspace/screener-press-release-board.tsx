@@ -158,7 +158,7 @@ export function useMarketEventsData(haltsManaged=true, enabled=true) {
     const symbols=[...new Set(compactArticles.map(article=>article.ticker))];
     if(!symbols.length)return;
     const request=new AbortController();
-    void fetch(`/api/admin/screeners/floats?symbols=${encodeURIComponent(symbols.join(","))}`,{cache:"no-store",signal:request.signal})
+    void fetch(`/api/platform/news/workspace-floats?symbols=${encodeURIComponent(symbols.join(","))}`,{cache:"no-store",signal:request.signal})
       .then(response=>response.ok?response.json():null).then((result:{exchanges?:Readonly<Record<string,"NASDAQ"|"NYSE"|"AMEX">>;floats?:Readonly<Record<string,{shares?:unknown}>>}|null)=>{
         if(!result)return;setExchangeByTicker(result.exchanges??{});setFloatByTicker(Object.fromEntries(Object.entries(result.floats??{}).flatMap(([symbol,fact])=>Number.isSafeInteger(fact.shares)&&Number(fact.shares)>0?[[symbol,Number(fact.shares)] as const]:[])));
       }).catch(()=>{});

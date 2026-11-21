@@ -39,8 +39,8 @@ function resolveChannel(segments: readonly string[] | undefined): PressReleaseCh
     default: return null;
   }
 }
-export async function generateMetadata(): Promise<Metadata> {
-  const title = "Press Releases";
+export async function generateMetadata({ params }: Pick<PageProps, "params">): Promise<Metadata> {
+  const title = resolveChannel((await params).channel) === "news_filtered" ? "PR Scanner" : "Press Releases";
   return {
     description: "Read TradersLink press releases and AI summaries in the dashboard.",
     title: `${title} | TraderLink Platform`,
@@ -64,7 +64,7 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
     );
   }
 
-  if (channel !== "all") {
+  if (channel !== "all" && channel !== "news_filtered") {
     const requested = (await searchParams).article;
     redirect("/press-releases" + (typeof requested === "string" && requested.length <= 64 ? `?article=${encodeURIComponent(requested)}` : ""));
   }
@@ -98,7 +98,7 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
     const selectedView = typeof requestedView === "string" ? savedViews.find(view => view.id === requestedView) : null;
     return Object.freeze({
       preference, savedViews, selectedViewId: selectedView?.id ?? "", alertsAllowed: canReceiveMembershipNotification(database,identity.scope.userId,"press_release"),
-      page: repository.listPage({ channel: "all", limit: 100, scope: identity.scope, filters: selectedView?.filters ?? preference?.filters ?? DEFAULT_NEWS_FILTERS }),
+      page: repository.listPage({ channel, limit: 100, scope: identity.scope, filters: selectedView?.filters ?? preference?.filters ?? DEFAULT_NEWS_FILTERS }),
       selectedArticle: articleId
         ? repository.find({ articleId, channel, scope: identity.scope })
         : null,
@@ -107,7 +107,7 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
 
   return (
     <PressReleaseFeed
-      key={identity.scope.userId}
+      key={`${identity.scope.userId}:${channel}`}
       channel={channel}
       initialArticles={page.articles}
       initialPage={page}

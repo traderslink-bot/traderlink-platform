@@ -15,6 +15,9 @@ const CONSOLE_PATHS = Object.freeze({
 const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist-admin-section-navigation-style">
   #traderslink-watchlist-admin-summary { display: grid; gap: 12px; margin: 0 0 16px; }
   #traderslink-watchlist-admin-summary > * { margin-top: 0; }
+  #traderslink-watchlist-admin-summary[hidden],
+  #traderslink-watchlist-admin-summary > [hidden],
+  #provider-health-grid > [data-watchlist-summary-source] { display: none !important; }
   #traderslink-watchlist-admin-provider-summary { display: grid; gap: 8px; }
   #traderslink-watchlist-admin-provider-summary h2 { margin: 0; font-size: 16px; }
   #traderslink-watchlist-admin-provider-summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%,110px), 1fr)); gap: 8px; }
@@ -66,6 +69,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
     if (document.getElementById("traderslink-watchlist-admin-section-navigation")) return;
     const root = rootFor();
     const blocks = new Map();
+    let activeSection = "watchlist";
     const summary = document.createElement("div");
     summary.id = "traderslink-watchlist-admin-summary";
     summary.setAttribute("aria-label", "Watchlist Admin summary");
@@ -129,6 +133,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
       ["ai-read-cost-grid", "ai-read-audit-grid"].forEach((id) => {
         const grid = document.getElementById(id);
         if (grid && grid.parentElement !== summary) summary.append(grid);
+        if (grid) grid.hidden = activeSection !== "runtime";
       });
       hideSkippedAuditCard();
     };
@@ -140,7 +145,12 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
           const label = normalize(card.querySelector(".runtime-label")?.textContent || "");
           return label === "Watchlist Market Data" || Boolean(card.dataset.watchlistProvider);
         });
-      providerSummaryCards.replaceChildren(...connectionCards.map((card) => card.cloneNode(true)));
+      providerSummaryCards.replaceChildren(...connectionCards.map((card) => {
+        card.setAttribute("data-watchlist-summary-source", "");
+        const copy = card.cloneNode(true);
+        copy.removeAttribute("data-watchlist-summary-source");
+        return copy;
+      }));
     };
     moveSummaryGrids();
     syncProviderSummary();
@@ -175,6 +185,9 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
         );
         return;
       }
+      activeSection = sectionId;
+      summary.hidden = sectionId !== "watchlist" && sectionId !== "runtime";
+      moveSummaryGrids();
       blocks.forEach((assignedSection, block) => {
         block.hidden = assignedSection !== sectionId;
       });
