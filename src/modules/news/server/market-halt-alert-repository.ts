@@ -14,6 +14,8 @@ import type { MarketHalt } from "./market-halt-feed";
 import { marketHaltMuteExpiresAtUtc } from "./market-halt-mute-expiry";
 import { MarketHaltDiscordRepository } from "./market-halt-discord-repository";
 import type { MarketHaltDirection } from "./market-halt-direction";
+import { readMarketHaltDetectionSettings } from "./market-halt-detection-settings";
+import { marketHaltEventAllowed } from "./market-halt-session-gate";
 
 function assertActive(database: Database.Database, scope: WorkspaceAccessScope): void {
   const found = database.prepare<[string, string], { found: number }>(`SELECT 1 AS found
@@ -337,6 +339,22 @@ first_seen_at_utc, updated_at_utc
     return Object.freeze({ haltId, inserted: true });
   }
 
+  observeConfirmedResumption(input: Readonly<{ ticker: string; haltDateEt: string; haltTimeEt: string; resumedAtUtc: string }>, observedAtUtc: string): void {
+    assertCanonicalUtcTimestamp(input.resumedAtUtc, "marketHaltResumedAt");
+    const events = this.database.prepare<[string, string, string], { halt_id: string }>(
+      "SELECT halt_id FROM news_market_halt_events WHERE ticker=? AND halt_date_et=? AND substr(halt_time_et,1,8)=?",
+    ).all(input.ticker, input.haltDateEt, input.haltTimeEt.slice(0, 8));
+    if (events.length !== 1) return;
+    const id = events[0].halt_id;
+    this.database.prepare("UPDATE news_market_halt_ticker_day_alert_sequences SET ended_at_utc=? WHERE first_halt_id=? AND ended_at_utc IS NULL")
+      .run(input.resumedAtUtc, id);
+    // Never replay or reclassify an in-flight/unknown outcome.
+    for (const table of ["news_market_halt_discord_deliveries", "news_market_halt_push_deliveries"]) {
+      this.database.prepare(`UPDATE ${table} SET state='expired',failure_code='halt_resumed',updated_at_utc=? WHERE halt_id=? AND state='pending'`)
+        .run(observedAtUtc, id);
+    }
+  }
+
   reconcileDeliveryLifecycle(input: Readonly<{ haltId: string; observedAtUtc: string; direction?: MarketHaltDirection | null }>): number {
     assertCanonicalUtcTimestamp(input.observedAtUtc, "marketHaltAlertLifecycleObservedAt");
     const event = this.database.prepare<[string], StoredHaltEvent>(`SELECT
@@ -358,6 +376,12 @@ LIMIT 1`).get(event.ticker, event.halt_date_et);
 FROM news_market_halt_ticker_day_alert_sequences
 WHERE ticker = ? AND halt_date_et = ?`).get(event.ticker, event.halt_date_et);
     if (!sequence) {
+      // Detection controls admit new alerts. They must not prevent silent
+      // lifecycle bookkeeping for an already anchored first-halt sequence.
+      try {
+        if (!marketHaltEventAllowed({ haltDateEt: event.halt_date_et, haltTimeEt: event.halt_time_et },
+          readMarketHaltDetectionSettings(), Date.parse(input.observedAtUtc))) return 0;
+      } catch { return 0; }
       if (!initialHaltIsTimely(event, input.observedAtUtc)) return 0;
       const count = this.enqueueStage({
         event,

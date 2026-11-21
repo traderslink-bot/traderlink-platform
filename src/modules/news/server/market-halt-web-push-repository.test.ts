@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 
 import Database from "better-sqlite3";
 import { vi } from "vitest";
+
+vi.mock("./market-halt-detection-settings", () => ({ readMarketHaltDetectionSettings: () => ({ enabled: true, source: "official", revision: 0, updatedAt: 0 }) }));
 import { PlatformMembershipRepository } from "../../platform/server/membership/platform-membership-repository";
 
 import type { PlatformWebPushEncryptionConfiguration } from "../../platform/server/notifications/platform-web-push-configuration";

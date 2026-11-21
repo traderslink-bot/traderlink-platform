@@ -173,6 +173,7 @@ const REVIEWED_COMBINED_API_ROUTES = [
 
 // Pages served through the shared signed-in Platform frame.
 const PLATFORM_DASHBOARD_PAGE_MODULES = [
+  "app/(dashboard)/admin/market-halts/page.tsx",
   "app/(dashboard)/communities/[communitySlug]/[...section]/page.tsx",
   "app/(dashboard)/communities/[communitySlug]/coaches/[coachSlug]/page.tsx",
   "app/(dashboard)/communities/[communitySlug]/page.tsx",
@@ -299,6 +300,7 @@ const PLATFORM_OWNER_API_ROUTES = [
 // Each method in this inventory directly imports and calls the Platform guard.
 const PLATFORM_SCOPED_API_ROUTES = [
   ["app/api/admin/market-data/route.ts", ["GET", "POST"], "owner_mutation"],
+  ["app/api/admin/market-halts/settings/route.ts", ["GET", "POST"], "owner_mutation"],
   ["app/api/charts/provider/route.ts", ["GET"], "owner_read"],
   ["app/api/coaching/action/route.ts", ["POST"], "owner_mutation"],
   ["app/api/coaching/review-resource/route.ts", ["GET"], "owner_read"],

@@ -1,4 +1,7 @@
 import Database from "better-sqlite3";
+import { vi } from "vitest";
+
+vi.mock("./market-halt-detection-settings", () => ({ readMarketHaltDetectionSettings: () => ({ enabled: true, source: "official", revision: 0, updatedAt: 0 }) }));
 
 import type { MarketHalt } from "./market-halt-feed";
 import { MarketHaltAlertRepository } from "./market-halt-alert-repository";
