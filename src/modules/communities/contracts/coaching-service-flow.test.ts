@@ -224,7 +224,11 @@ describe('review scheduling and submission rules',()=>{
   expect(()=>f.programs.setWorkspace({...before,workspaceKind:kind==='trade_review'?'trade':kind==='trading_day_review'?'trading_day':'performance',focusAreas:[],periodStart:'2026-10-01',periodEnd:'2026-10-02'})).toThrow('cannot be changed');
   expect(()=>f.programs.saveFocusFeedback({...before,feedback:{}})).toThrow('Available to start');
   expect(()=>f.platform.updateTradeReview({...before,coachFeedback:'Bypass',wentWell:'',needsWork:'',nextFocus:'',coachPrivateNotes:'',previousFocusStatus:null,previousFocusAssessment:'',status:'in_review'})).toThrow('Available to start');
+  vi.useFakeTimers({toFake:['Date']});
+  try{
+   vi.setSystemTime(new Date(before.atUtc));
   expect(()=>coachingReviewResourceScope(db,{coachUserId:f.actor.userId,reviewId,communitySlug:'qa-review'})).toThrow('Available to start');
+  }finally{vi.useRealTimers();}
   expect(()=>f.programs.startReview({...before,atUtc:'2026-11-21T04:59:59.999Z'})).toThrow('Available to start');f.programs.startReview({...before,atUtc:'2026-11-21T05:00:00.000Z'});
   expect(db.prepare('SELECT status FROM traderlink_community_coaching_trade_reviews WHERE review_id=?').get(reviewId)).toEqual({status:'in_review'});
  });
