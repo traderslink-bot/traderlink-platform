@@ -2,14 +2,15 @@ import { setTimeout as delay } from "node:timers/promises";
 import { AlpacaRestData } from "../scanner/alpaca/rest-data";
 import { parseCalendarSessions } from "../scanner/alpaca/chart-calendar";
 import { easternClock } from "../scanner/live/sessions";
-import { collectMarketPack, type BarCache } from "./collect-market";
+import { collectMarketPack, type BarCache, type ScreenerCalendarRange } from "./collect-market";
 import { collectListings } from "./listings";
 import { MoomooScreenerData } from "./moomoo-market-data";
 import { collectMoomooQuotePack } from "./moomoo-quote-pack";
 import { isObject, type ScreenerProviderSelection } from "./contracts";
 import type { ScreenerProviderTransport } from "./provider-transport";
 
-type Reference = { date: string; listings: Awaited<ReturnType<typeof collectListings>>; calendar: unknown; spacingMs?: number };
+type Reference = { date: string; listings: Awaited<ReturnType<typeof collectListings>>;
+  calendar: unknown; calendarRange: ScreenerCalendarRange; spacingMs?: number };
 const DAY = 86_400_000;
 type Credentials = { keyId: string; secretKey: string };
 
@@ -45,14 +46,16 @@ export class ScreenerSnapshotCollector {
       if (this.selection.provider === "moomoo") {
         const listings = await this.transport.universe(this.selection, date, this.signal);
         let calendar = this.reference?.date === date ? this.reference.calendar : undefined;
+        let calendarRange = this.reference?.date === date ? this.reference.calendarRange : { start, end };
         if (!calendar) {
           const payload = await this.transport.moomoo(this.selection, { operation: "calendar", start, end }, this.signal);
           const { moomooCalendarSessions } = await import("../market-data/moomoo-calendar");
           calendar = moomooCalendarSessions(payload, start, end);
+          calendarRange = { start, end };
         }
         const eligible = new Set(listings.stocks.map(stock => stock.symbol));
         for (const symbol of this.moomooSnapshots.keys()) if (!eligible.has(symbol)) this.moomooSnapshots.delete(symbol);
-        this.reference = { date, listings, calendar, spacingMs: listings.spacingMs };
+        this.reference = { date, listings, calendar, calendarRange, spacingMs: listings.spacingMs };
       } else {
         const credentials = this.requireCredentials();
         const headers = { "APCA-API-KEY-ID": credentials.keyId, "APCA-API-SECRET-KEY": credentials.secretKey };
@@ -60,7 +63,7 @@ export class ScreenerSnapshotCollector {
         url.search = new URLSearchParams({ start, end }).toString();
         const response = await fetch(url, { headers, redirect: "error", signal: AbortSignal.any([this.signal, AbortSignal.timeout(12_000)]) });
         if (!response.ok) throw Error("calendar_unavailable");
-        this.reference = { date, listings: await collectListings(headers), calendar: await response.json() };
+        this.reference = { date, listings: await collectListings(headers), calendar: await response.json(), calendarRange: { start, end } };
       }
     }
     this.referenceReadAt = Date.now();
@@ -80,7 +83,7 @@ export class ScreenerSnapshotCollector {
     const pack = await collectMarketPack({
       now, clock: Date.now, source: this.selection.provider === "alpaca" ? "Alpaca SIP" : "Moomoo",
       stocks: reference.listings.stocks, universeDate: reference.listings.listingDate, partialCaps: reference.listings.partialCaps,
-      calendar: reference.calendar, cache: this.cache,
+      calendar: reference.calendar, calendarRange: reference.calendarRange, cache: this.cache,
       data: { get: (path, params) => { this.signal.throwIfAborted(); return data.get(path, params); } },
       onBatch: () => this.signal.throwIfAborted(),
     });
@@ -94,8 +97,7 @@ export class ScreenerSnapshotCollector {
     if (this.selection.provider !== "moomoo") throw Error("screener_provider_invalid_selection");
     const reference = await this.referenceData();
     const now = Date.now();
-    const start = new Date(now - 540 * DAY).toISOString().slice(0, 10);
-    const end = new Date(now + 3 * DAY).toISOString().slice(0, 10);
+    const { start, end } = reference.calendarRange;
     return collectMoomooQuotePack({ now, clock: Date.now, signal: this.signal,
       stocks: reference.listings.stocks, universeDate: reference.listings.listingDate,
       calendar: parseCalendarSessions(reference.calendar, start, end),

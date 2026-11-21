@@ -63,9 +63,7 @@ async function runSelection(settings: Record<string, string>, transport: Screene
       try {
         const reference = await collector.referenceData();
         const date = easternClock(Date.now()).date;
-        const startDate = new Date(Date.now() - 540 * 86_400_000).toISOString().slice(0, 10);
-        const endDate = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
-        const days = parseCalendarSessions(reference.calendar, startDate, endDate);
+        const days = parseCalendarSessions(reference.calendar, reference.calendarRange.start, reference.calendarRange.end);
         const day = days.find(row => row.date === date);
         const session = day && (["premarket", "regular", "after_hours"] as const).find(phase => {
           const bounds = sessionBounds(day, phase);

@@ -6,6 +6,7 @@ import { decodeBar, marketWindows, sessionBounds, sessionMetrics, type ProviderB
 import { relativeVolumeAtTime, relativeVolumeHistory, relativeVolumeSchedule } from "./relative-volume";
 
 type Data = { get(path: string, params: URLSearchParams): Promise<unknown> };
+export type ScreenerCalendarRange = { start: string; end: string };
 const DAY = 86_400_000;
 const BATCH_SIZE = 100;
 type SymbolData<T> = { grouped: Map<string, T>; rejected: Set<string> };
@@ -103,7 +104,8 @@ async function refreshIntraday(
 }
 
 export async function collectMarketPack(input: {
-  data: Data; calendar: unknown; stocks: readonly Listing[]; universeDate: string; now: number;
+  data: Data; calendar: unknown; calendarRange?: ScreenerCalendarRange;
+  stocks: readonly Listing[]; universeDate: string; now: number;
   clock?: () => number;
   cache?: BarCache;
   partialCaps?: boolean;
@@ -111,8 +113,10 @@ export async function collectMarketPack(input: {
   source?: "Alpaca SIP" | "Moomoo";
 }): Promise<MarketPack> {
   const { data, now, universeDate } = input;
-  const calendarStart = new Date(now - 540 * DAY).toISOString().slice(0, 10);
-  const calendarEnd = new Date(now + 3 * DAY).toISOString().slice(0, 10);
+  // Cached calendars must be validated against their original request, even
+  // when UTC midnight passes before the Eastern trading date changes.
+  const calendarStart = input.calendarRange?.start ?? new Date(now - 540 * DAY).toISOString().slice(0, 10);
+  const calendarEnd = input.calendarRange?.end ?? new Date(now + 3 * DAY).toISOString().slice(0, 10);
   const days = parseCalendarSessions(input.calendar, calendarStart, calendarEnd);
   if (days.length < 300) throw Error("calendar_incomplete");
   const { latest, windows } = marketWindows(days, now);
