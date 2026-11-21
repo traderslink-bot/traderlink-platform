@@ -1,7 +1,13 @@
 import Database from "better-sqlite3";
+import { vi } from "vitest";
+
+vi.mock("../../market-halt-detection-settings", () => ({
+  readMarketHaltDetectionSettings: vi.fn(),
+}));
 
 import type { MarketHalt } from "../../market-halt-feed";
 import { MarketHaltAlertRepository } from "../../market-halt-alert-repository";
+import { readMarketHaltDetectionSettings } from "../../market-halt-detection-settings";
 import { newsMarketHaltDeliveryLifecycleMigration } from "./0121_news_market_halt_delivery_lifecycle";
 
 function halt(overrides: Partial<MarketHalt> = {}): MarketHalt {
@@ -21,7 +27,14 @@ function halt(overrides: Partial<MarketHalt> = {}): MarketHalt {
 }
 
 describe("0121 market halt delivery lifecycle migration", () => {
-  it("preserves an existing delivery as initial revision zero and anchors its first ticker-day halt", () => {
+  it.each(["enabled", "disabled", "unavailable", "closed session"] as const)("preserves an existing delivery as initial revision zero and anchors its first ticker-day halt (%s)", (detectionState) => {
+    vi.mocked(readMarketHaltDetectionSettings).mockImplementation(() => {
+      if (detectionState === "unavailable") throw new Error("synthetic settings unavailable");
+      return { enabled: detectionState !== "disabled", source: "official", revision: 0, updatedAt: 0 };
+    });
+    const reconciledAtUtc = detectionState === "closed session"
+      ? "2026-09-09T00:10:00.000Z"
+      : "2026-09-08T14:10:00.000Z";
     const database = new Database(":memory:");
     try {
       database.exec(`CREATE TABLE news_market_halt_events (
@@ -89,11 +102,25 @@ FROM news_market_halt_ticker_day_alert_sequences ORDER BY ticker`).all()).toEqua
       }]);
       const repository = new MarketHaltAlertRepository(database);
       const beforeUnchangedReconciliation = database.prepare(`SELECT count(*) AS count FROM news_market_halt_push_deliveries`).get() as { count: number };
-      expect(repository.reconcileDeliveryLifecycle({ haltId: firstHaltId, observedAtUtc: "2026-09-08T14:10:00.000Z" })).toBe(0);
+      expect(repository.reconcileDeliveryLifecycle({ haltId: firstHaltId, observedAtUtc: "2026-09-08T14:05:00.000Z" })).toBe(0);
+      expect(database.prepare(`SELECT ended_at_utc FROM news_market_halt_ticker_day_alert_sequences WHERE ticker = 'FCUV'`).get()).toEqual({ ended_at_utc: null });
+      expect(repository.reconcileDeliveryLifecycle({ haltId: firstHaltId, observedAtUtc: reconciledAtUtc })).toBe(0);
       expect(database.prepare(`SELECT count(*) AS count FROM news_market_halt_push_deliveries`).get()).toEqual(beforeUnchangedReconciliation);
       expect(database.prepare(`SELECT ended_at_utc FROM news_market_halt_ticker_day_alert_sequences WHERE ticker = 'FCUV'`).get()).toEqual({
-        ended_at_utc: "2026-09-08T14:10:00.000Z",
+        ended_at_utc: reconciledAtUtc,
       });
+      expect(repository.reconcileDeliveryLifecycle({ haltId: laterHaltId, observedAtUtc: reconciledAtUtc })).toBe(0);
+      expect(repository.reconcileDeliveryLifecycle({ haltId: firstHaltId, observedAtUtc: "2026-09-09T00:20:00.000Z" })).toBe(0);
+      expect(database.prepare(`SELECT first_halt_id, ended_at_utc FROM news_market_halt_ticker_day_alert_sequences WHERE ticker = 'FCUV'`).get()).toEqual({
+        first_halt_id: firstHaltId,
+        ended_at_utc: reconciledAtUtc,
+      });
+      if (detectionState !== "enabled") {
+        const unsequenced = repository.upsert({ halt: halt({ ticker: "LOCK", haltTimeEt: "10:10:00.000" }), observedAtUtc: reconciledAtUtc, sourceUrl: "https://example.test" });
+        expect(repository.reconcileDeliveryLifecycle({ haltId: unsequenced.haltId, observedAtUtc: reconciledAtUtc })).toBe(0);
+        expect(database.prepare(`SELECT count(*) AS count FROM news_market_halt_ticker_day_alert_sequences WHERE ticker = 'LOCK'`).get()).toEqual({ count: 0 });
+        expect(database.prepare(`SELECT count(*) AS count FROM news_market_halt_push_deliveries`).get()).toEqual(beforeUnchangedReconciliation);
+      }
       expect(database.prepare(`SELECT state, notification_stage, notification_revision FROM news_market_halt_push_deliveries
 WHERE halt_id = ? ORDER BY state`).all(firstHaltId)).toEqual([
         { state: "delivered", notification_stage: "initial", notification_revision: 0 },

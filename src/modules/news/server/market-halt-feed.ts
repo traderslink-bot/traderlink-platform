@@ -53,13 +53,13 @@ export const NASDAQ_TRADE_HALTS_RSS_URL = "https://nasdaqtrader.com/rss.aspx?fee
 export const NYSE_TRADE_HALTS_CSV_URL = "https://www.nyse.com/api/trade-halts/current/download?format=csv";
 export type MarketHaltSource = "nasdaq" | "nyse";
 export type MarketHaltSourceFailureCode = "connection" | "dns" | "timeout" | "tls";
-export type MarketHalt = Readonly<{ haltDateEt: string; haltTimeEt: string; issueName: string; market: string; reasonCode: string; reasonDescription: string; resumptionQuoteTimeEt: string | null; resumptionTradeTimeEt: string | null; source: MarketHaltSource; ticker: string }>;
+export type MarketHalt = Readonly<{ haltDateEt: string; haltTimeEt: string; issueName: string; market: string; reasonCode: string; reasonDescription: string; resumptionQuoteTimeEt: string | null; resumptionTradeTimeEt: string | null; source: MarketHaltSource; ticker: string; detectedBy?: "alpaca" | "official" }>;
 export function isSupportedMarketHaltMarket(market: string): boolean { return !/^(?:BATS|CBOE(?:\s+BZX)?)$/iu.test(market.trim()); }
 export type MarketHaltSourceStatus = Readonly<{
   available: boolean;
   failureCode?: MarketHaltSourceFailureCode;
   httpStatus: number | null;
-  source: MarketHaltSource;
+  source: MarketHaltSource | "alpaca";
 }>;
 export type OfficialMarketHalts = Readonly<{
   halts: readonly MarketHalt[];

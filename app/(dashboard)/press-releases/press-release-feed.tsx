@@ -56,7 +56,7 @@ export function PressReleaseFeed({
     setLoading(true);
     try {
       next = parseNewsFilters(next);
-      const result = await loadPressReleaseFeed({ filters: next, offset, asOf });
+      const result = await loadPressReleaseFeed({ filters: next, offset, asOf, channel: channel === "news_filtered" ? "news_filtered" : "all" });
       if (version !== requestVersion.current) return;
       if (!result.ok) { setMessage(result.message); return; }
       const applied = result.page.filtersAllowed ? result.page.filters ?? next : { ...DEFAULT_NEWS_FILTERS };
@@ -66,7 +66,7 @@ export function PressReleaseFeed({
       try { localStorage.setItem(`traderlink:news-view:v1:${preferenceKey}`, JSON.stringify(applied)); } catch { /* Browsing works without browser storage. */ }
     } catch { if (version === requestVersion.current) setMessage("News could not be loaded. Please try again."); }
     finally { if (version === requestVersion.current) setLoading(false); }
-  }, [preferenceKey]);
+  }, [preferenceKey, channel]);
   const invalidateRequests = useCallback(() => { requestVersion.current++; }, []);
   useEffect(() => {
     try {
@@ -152,7 +152,7 @@ export function PressReleaseFeed({
         sx={{ alignItems: { md: "flex-start" }, justifyContent: "space-between" }}
       >
         <Box>
-          <Typography component="h1" variant="h1">{definition.label}</Typography>
+          <Typography component="h1" variant="h1">{channel === "news_filtered" ? "PR Scanner" : definition.label}</Typography>
 
         </Box>
         <Button

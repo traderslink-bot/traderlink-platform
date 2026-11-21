@@ -57,12 +57,13 @@ export async function markPressReleaseChannelRead(channel: string): Promise<Acti
   }
 }
 
-export async function loadPressReleaseFeed(input: { filters?: unknown; offset?: number; asOf?: string }) {
+export async function loadPressReleaseFeed(input: { filters?: unknown; offset?: number; asOf?: string; channel?: "all" | "news_filtered" }) {
   try {
+    if (input.channel !== undefined && input.channel !== "all" && input.channel !== "news_filtered") throw new Error("Invalid feed channel.");
     const commandAt = createCanonicalUtcTimestamp();
     const identity = await identityWithAccess();
     const page = withReadonlyPlatformDatabase({}, database => new PressReleaseDashboardRepository(database).listPage({
-      channel: "all", scope: identity.scope, limit: 100, filters: input.filters, offset: input.offset, asOf: input.asOf,
+      channel: input.channel ?? "all", scope: identity.scope, limit: 100, filters: input.filters, offset: input.offset, asOf: input.asOf,
     }));
     let preferenceSaved = true;
     if (!input.offset && !input.asOf && page.filtersAllowed) {

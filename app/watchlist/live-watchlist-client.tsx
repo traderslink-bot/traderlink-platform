@@ -1554,11 +1554,11 @@ export function LiveWatchlistIndexClient({
     reversalWatchlistVisible,
     reversalWatchSymbols.length,
   );
-  const topRegularWatchlistVisible = !symbols.some(
-    (symbol) => symbol.topRegularWatchlistVisible === false,
-  );
   const topRegularSymbols = activeSymbols.filter(
     (symbol) => getLiveWatchlistEntryGroup(symbol) === "top_regular",
+  );
+  const showTopRegularWatchlist = topRegularSymbols.length > 0 && !symbols.some(
+    (symbol) => symbol.topRegularWatchlistVisible === false,
   );
   const mainSessionSymbols = activeSymbols.filter(
     (symbol) => getLiveWatchlistEntryGroup(symbol) === "main",
@@ -1567,6 +1567,9 @@ export function LiveWatchlistIndexClient({
   const generalSymbols = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === "general");
   const swingSymbols = activeSymbols.filter(symbol => getLiveWatchlistEntryGroup(symbol) === "swings");
   const overnightSymbols = activeSymbols.filter(symbol => isTopWatchesGroup(getLiveWatchlistEntryGroup(symbol)));
+  const hasVisibleSymbols = showTopRegularWatchlist || showReversalWatchlist ||
+    mainSessionSymbols.length > 0 || postmarketSymbols.length > 0 ||
+    generalSymbols.length > 0 || swingSymbols.length > 0 || overnightSymbols.length > 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -1657,13 +1660,13 @@ export function LiveWatchlistIndexClient({
         </div>
       </section>
 
-      {symbols.length === 0 ? (
+      {!hasVisibleSymbols ? (
         <section className="academy-card watchlist-empty">
           <h2>No tickers are currently in the watchlist</h2>
         </section>
       ) : (
         <div className="watchlist-session-lists">
-          {topRegularWatchlistVisible && topRegularSymbols.length > 0 ? (
+          {showTopRegularWatchlist ? (
             <section
               className="watchlist-session-list"
               aria-labelledby="watchlist-top-regular-heading"

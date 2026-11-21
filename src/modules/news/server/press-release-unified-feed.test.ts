@@ -127,3 +127,12 @@ it('keeps a relative-date pagination snapshot stable across Eastern midnight',()
   expect(second.articles).toHaveLength(80);expect(second.articles.some(article=>article.id==='next-day')).toBe(false);
  }finally{vi.useRealTimers();}
 });
+
+it("keeps the restored PR Scanner channel isolated across filtered pagination while the unified feed retains all channels",()=>{
+ const f=fixture();f.add("scanner-old","$2M",{tag:"default",date:"2026-01-01T12:00:00.000Z"});f.add("scanner-new","$3M",{tag:"spike",date:"2026-01-02T12:00:00.000Z"});f.add("other-channel","$1M",{tag:"market_cap_under_30m"});
+ const repository=new PressReleaseDashboardRepository(f.db), first=repository.listPage({channel:"news_filtered",scope:f.scope,limit:1,filters:{...DEFAULT_NEWS_FILTERS,maxCap:"5"}});
+ expect(first.articles.map(row=>row.id)).toEqual(["scanner-new"]);expect(first.more).toBe(true);
+ const second=repository.listPage({channel:"news_filtered",scope:f.scope,limit:1,filters:first.filters,asOf:first.asOf,offset:first.nextOffset});
+ expect(second.articles.map(row=>row.id)).toEqual(["scanner-old"]);expect(second.more).toBe(false);
+ expect(f.read().articles.map(row=>row.id)).toContain("other-channel");
+});
