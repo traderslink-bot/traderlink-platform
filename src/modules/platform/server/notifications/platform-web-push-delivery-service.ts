@@ -9,7 +9,6 @@ import type { PlatformWebPushClaimedDelivery } from "./platform-web-push-reposit
 
 export type PlatformWebPushDeliveryRepository = Readonly<{
   claimNext(nowUtc: string): PlatformWebPushClaimedDelivery | null;
-  beforeSend?(input: Readonly<{ deliveryRef: string; timestamp: string }>): boolean;
   delivered(input: Readonly<{
     deliveryRef: string;
     subscriptionRef: string;
@@ -62,7 +61,6 @@ export class PlatformWebPushDeliveryService {
       return true;
     }
     try {
-      if (this.repository.beforeSend && !this.repository.beforeSend({ deliveryRef: delivery.deliveryRef, timestamp: createCanonicalUtcTimestamp() })) return true;
       await webPush.sendNotification(
         {
           // Revalidate persisted subscriptions too, including pre-fix entries.

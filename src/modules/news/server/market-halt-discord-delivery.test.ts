@@ -1,6 +1,4 @@
 import Database from "better-sqlite3";
-
-vi.mock("./market-halt-detection-settings", () => ({ readMarketHaltDetectionSettings: () => ({ enabled: true, source: "official", revision: 0, updatedAt: 0 }) }));
 import { newsMarketHaltDiscordDeliveriesMigration } from "./database/migrations/0140_news_market_halt_discord_deliveries";
 import { MarketHaltDiscordRepository } from "./market-halt-discord-repository";
 import { MarketHaltDiscordDeliveryService } from "./market-halt-discord-delivery";
@@ -14,8 +12,8 @@ const configuration = { botToken: "synthetic-test-bot-token", channelId, guildId
 function fixture() {
   const database = new Database(":memory:");
   database.pragma("foreign_keys = ON");
-  database.exec("CREATE TABLE news_market_halt_events (halt_id TEXT PRIMARY KEY, halt_date_et TEXT, halt_time_et TEXT) STRICT; CREATE TABLE news_market_halt_ticker_day_alert_sequences(first_halt_id TEXT, ended_at_utc TEXT) STRICT");
-  database.prepare("INSERT INTO news_market_halt_events VALUES (?, '2026-09-24', '10:21:00')").run(haltId);
+  database.exec("CREATE TABLE news_market_halt_events (halt_id TEXT PRIMARY KEY) STRICT");
+  database.prepare("INSERT INTO news_market_halt_events VALUES (?)").run(haltId);
   for (const sql of newsMarketHaltDiscordDeliveriesMigration.statements) database.exec(sql);
   const repository = new MarketHaltDiscordRepository(database);
   const enqueue = (stage: "initial" | "trade_time" = "initial", occurredAtUtc = initialTime) => repository.enqueue({

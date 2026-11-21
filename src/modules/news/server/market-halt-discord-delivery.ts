@@ -60,7 +60,7 @@ export class MarketHaltDiscordDeliveryService {
   }
 
   private async send(delivery: ClaimedHaltDiscordDelivery): Promise<HaltDiscordDeliveryResult> {
-    if (!this.repository.canSend(delivery, this.now().toISOString())) return { code: "suppressed" };
+    if (this.now().toISOString() >= delivery.expires_at_utc) return { code: "provider_unavailable" };
     try {
       // All retries occur within two minutes, inside Discord's recent-nonce window.
       const nonce = createHash("sha256").update(`halt-discord:${delivery.delivery_id}`).digest("hex").slice(0, 25);
@@ -103,8 +103,7 @@ export class MarketHaltDiscordDeliveryService {
       const claimed = this.repository.claimNext(this.configuration.channelId, this.now().toISOString());
       if (!claimed) break;
       attempted++;
-      let result: HaltDiscordDeliveryResult | null = !this.repository.canSend(claimed, this.now().toISOString())
-        ? { code: "suppressed" } : channelValidated ? null : await this.validateChannel();
+      let result = channelValidated ? null : await this.validateChannel();
       if (!result) {
         channelValidated = true;
         result = await this.send(claimed);

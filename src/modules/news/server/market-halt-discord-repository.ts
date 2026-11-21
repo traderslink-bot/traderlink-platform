@@ -2,7 +2,6 @@ import "server-only";
 
 import type Database from "better-sqlite3";
 import { assertCanonicalUtcTimestamp, createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
-import { marketHaltDeliveryWindowOpen, storedMarketHaltDeliveryAllowed } from "./market-halt-delivery-gate";
 
 const DELIVERY_TTL_MS = 120_000;
 const CLAIM_LEASE_MS = 30_000;
@@ -18,7 +17,7 @@ export type ClaimedHaltDiscordDelivery = Readonly<{
 }>;
 
 export type HaltDiscordDeliveryResult = Readonly<{
-  code: "sent" | "rate_limited" | "provider_unavailable" | "provider_rejected" | "invalid_destination" | "suppressed";
+  code: "sent" | "rate_limited" | "provider_unavailable" | "provider_rejected" | "invalid_destination";
   messageId?: string;
   retryAfterMs?: number;
 }>;
@@ -50,7 +49,6 @@ export class MarketHaltDiscordRepository {
 
   claimNext(channelId: string, nowUtc: string): ClaimedHaltDiscordDelivery | null {
     assertCanonicalUtcTimestamp(nowUtc, "haltDiscordClaimedAt");
-    if (!marketHaltDeliveryWindowOpen(Date.parse(nowUtc))) return null;
     const staleLease = new Date(Date.parse(nowUtc) - CLAIM_LEASE_MS).toISOString();
     return this.database.transaction(() => {
       this.database.prepare(`UPDATE news_market_halt_discord_deliveries
@@ -83,17 +81,13 @@ WHERE delivery_id = ? AND state = 'pending' AND attempt_count < 5`).run(nowUtc, 
     }).immediate();
   }
 
-  canSend(delivery: ClaimedHaltDiscordDelivery, nowUtc: string): boolean {
-    return nowUtc < delivery.expires_at_utc && storedMarketHaltDeliveryAllowed(this.database, "discord", delivery.delivery_id, Date.parse(nowUtc));
-  }
-
   complete(delivery: ClaimedHaltDiscordDelivery, result: HaltDiscordDeliveryResult, nowUtc: string): void {
     assertCanonicalUtcTimestamp(nowUtc, "haltDiscordCompletedAt");
     const retryable = result.code === "provider_unavailable" || result.code === "rate_limited";
     const retryDelay = result.retryAfterMs ?? Math.min(15_000 * delivery.attempt_count, 60_000);
     const retryAt = new Date(Date.parse(nowUtc) + retryDelay).toISOString();
     const canRetry = retryable && delivery.attempt_count < 5 && retryAt < delivery.expires_at_utc;
-    const state = result.code === "suppressed" ? "expired" : result.code === "sent" ? "delivered" : canRetry ? "pending"
+    const state = result.code === "sent" ? "delivered" : canRetry ? "pending"
       : retryable && retryAt >= delivery.expires_at_utc ? "expired" : "failed";
     this.database.prepare(`UPDATE news_market_halt_discord_deliveries SET
   state = ?, available_at_utc = ?, blocked_until_utc = ?, discord_message_id = ?,

@@ -8,7 +8,6 @@ import type { PlatformWebPushEncryptionConfiguration } from "../../platform/serv
 import type { PlatformWebPushClaimedDelivery } from "../../platform/server/notifications/platform-web-push-repository";
 import { readClaimedWebPushSubscription } from "../../platform/server/notifications/platform-web-push-claim-subscription";
 import { assertCanonicalUtcTimestamp } from "../../platform/server/database/platform-migration-contract";
-import { marketHaltDeliveryWindowOpen, storedMarketHaltDeliveryAllowed } from "./market-halt-delivery-gate";
 
 const MARKET_HALT_PUSH_TTL_SECONDS = 2 * 60;
 
@@ -42,7 +41,6 @@ export class MarketHaltWebPushRepository {
 
   claimNext(nowUtc: string): PlatformWebPushClaimedDelivery | null {
     assertCanonicalUtcTimestamp(nowUtc, "marketHaltWebPushClaimedAt");
-    if (!marketHaltDeliveryWindowOpen(Date.parse(nowUtc))) return null;
     const staleBefore = new Date(Date.parse(nowUtc) - 5 * 60_000).toISOString();
     const staleAlertBefore = new Date(
       Date.parse(nowUtc) - MARKET_HALT_PUSH_TTL_SECONDS * 1_000,
@@ -129,14 +127,6 @@ WHERE state = 'pending' AND created_at_utc <= ?`).run(nowUtc, staleAlertBefore);
       if (result !== undefined) return result;
     }
     return null;
-  }
-
-  beforeSend(input: Readonly<{ deliveryRef: string; timestamp: string }>): boolean {
-    if (storedMarketHaltDeliveryAllowed(this.database, "push", input.deliveryRef, Date.parse(input.timestamp))) return true;
-    // Suppress this halt only: do not expire or otherwise change the user's device.
-    this.database.prepare("UPDATE news_market_halt_push_deliveries SET state='expired', failure_code='halt_detection_gate', updated_at_utc=? WHERE delivery_id=? AND state='sending'")
-      .run(input.timestamp, input.deliveryRef);
-    return false;
   }
 
   delivered(input: Readonly<{ deliveryRef: string; subscriptionRef: string; timestamp: string }>): void {

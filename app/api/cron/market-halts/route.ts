@@ -19,9 +19,6 @@ import { UniverseStore } from "@/src/modules/scanner/live/server/universe-store"
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import { listMarketHaltDashboard } from "@/src/modules/news/server/market-halt-dashboard";
 import { eodhdHaltResumptionMonitor } from "@/src/modules/news/server/eodhd-halt-resumption-monitor";
-import { readMarketHaltDetectionSettings } from "@/src/modules/news/server/market-halt-detection-settings";
-import { marketHaltEventAllowed, marketHaltWindowOpen } from "@/src/modules/news/server/market-halt-session-gate";
-import { ALPACA_HALT_SOURCE_URL, fetchSelectedMarketHalts } from "@/src/modules/news/server/market-halt-selected-feed";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -111,8 +108,6 @@ export async function GET(request: Request): Promise<Response> {
   let sources: Awaited<ReturnType<typeof fetchOfficialMarketHalts>>["sources"] | undefined;
   let stage: MarketHaltSchedulerStage = "database_open";
   try {
-    const selected = readMarketHaltDetectionSettings();
-    if (!marketHaltWindowOpen(selected, Date.now())) return Response.json({ ok: true, enabled: selected.enabled, detectionSource: selected.source, state: "inactive", created: 0, queued: 0, delivered: 0 });
     const runtimeDatabase = openPlatformDatabase({ mode: "runtime" });
     database = runtimeDatabase;
     timing.phase("health_begin");
@@ -123,7 +118,7 @@ export async function GET(request: Request): Promise<Response> {
     schedulerRunId = runId;
     timing.phase("source_fetch");
     stage = "source_fetch";
-    const fetched = await fetchSelectedMarketHalts(selected);
+    const fetched = await fetchOfficialMarketHalts();
     sources = fetched.sources;
     const unavailableSources = fetched.sources.filter((source) => !source.available);
     for (const source of unavailableSources) {
@@ -154,12 +149,6 @@ export async function GET(request: Request): Promise<Response> {
     const directions = new Map(await Promise.all([...directionCandidates].map(async ([key, halt]) =>
       [key, await marketHaltDirection(halt, directionObservedAtUtc)] as const)));
     const observedAtUtc = createCanonicalUtcTimestamp();
-    const latestSelection = readMarketHaltDetectionSettings();
-    if (latestSelection.revision !== selected.revision || latestSelection.source !== selected.source
-      || !marketHaltWindowOpen(latestSelection, Date.now())) {
-      health.fail({ runId, sources: fetched.sources });
-      return Response.json({ ok: true, state: "settings_changed", created: 0, queued: 0, delivered: 0 });
-    }
     let created = 0;
     let queued = 0;
     let discordConfiguration: ReturnType<typeof loadMarketHaltDiscordConfiguration> = null;
@@ -174,18 +163,16 @@ export async function GET(request: Request): Promise<Response> {
     timing.phase("reconcile");
     runtimeDatabase.transaction(() => {
       const repository = new MarketHaltAlertRepository(runtimeDatabase, discordConfiguration?.channelId ?? null);
-      for (const resumed of fetched.resumed) repository.observeConfirmedResumption(resumed, observedAtUtc);
       const observedHaltIds = new Set<string>();
       const haltDirectionsById = new Map<string, Awaited<ReturnType<typeof marketHaltDirection>>>();
       const eligibleKeys=new Set(eligibleHalts.map(halt=>`${halt.haltDateEt}:${halt.haltTimeEt}:${halt.ticker}`));
       for (const halt of fetched.halts) {
-        if (!marketHaltEventAllowed(halt, latestSelection, Date.now())) continue;
         const eligible=eligibleKeys.has(`${halt.haltDateEt}:${halt.haltTimeEt}:${halt.ticker}`);
         if(!eligible&&!repository.hasStoredLifecycle(halt))continue;
         const result = repository.upsert({
           halt,
           observedAtUtc,
-          sourceUrl: fetched.detectedBy === "alpaca" ? ALPACA_HALT_SOURCE_URL : halt.source === "nyse" ? NYSE_TRADE_HALTS_CSV_URL : NASDAQ_TRADE_HALTS_RSS_URL,
+          sourceUrl: halt.source === "nyse" ? NYSE_TRADE_HALTS_CSV_URL : NASDAQ_TRADE_HALTS_RSS_URL,
         });
         if (result.inserted) created += 1;
         if(eligible)observedHaltIds.add(result.haltId);

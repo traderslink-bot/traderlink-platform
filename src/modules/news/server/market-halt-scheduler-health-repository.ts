@@ -1,8 +1,6 @@
 import type Database from "better-sqlite3";
 
 import type { MarketHaltSourceStatus } from "./market-halt-feed";
-import { readMarketHaltDetectionSettings } from "./market-halt-detection-settings";
-import { marketHaltWindowOpen } from "./market-halt-session-gate";
 import {
   createCanonicalUtcTimestamp,
   createCanonicalUuidV4,
@@ -28,13 +26,11 @@ function sourceStates(value: string | null): readonly MarketHaltSourceStatus[] |
       const source = "source" in item ? item.source : null;
       const available = "available" in item ? item.available : null;
       const httpStatus = "httpStatus" in item ? item.httpStatus : null;
-      if ((source !== "nasdaq" && source !== "nyse" && source !== "alpaca") || typeof available !== "boolean" ||
+      if ((source !== "nasdaq" && source !== "nyse") || typeof available !== "boolean" ||
         !(typeof httpStatus === "number" || httpStatus === null)) return [];
       return [Object.freeze({ source, available, httpStatus })] as const;
     });
-    const alpaca = result.length === 1 && result[0].source === "alpaca";
-    const exchanges = result.length === 2 && result.some(item => item.source === "nasdaq") && result.some(item => item.source === "nyse");
-    if (!alpaca && !exchanges) return null;
+    if (result.length !== 2 || new Set(result.map((item) => item.source)).size !== 2) return null;
     return Object.freeze(result);
   } catch {
     return null;
@@ -96,11 +92,6 @@ LIMIT 1`).get();
     }
     const sources = sourceStates(run.source_statuses_json);
     if (!sources) return "unavailable";
-    try {
-      const selected = readMarketHaltDetectionSettings();
-      if (!marketHaltWindowOpen(selected, now.getTime()) || selected.updatedAt > finalizedAt
-        || (selected.source === "alpaca" ? sources.length !== 1 || sources[0].source !== "alpaca" : sources.some(source => source.source === "alpaca"))) return "unavailable";
-    } catch { return "unavailable"; }
     if (sources.every((source) => source.available)) return "ready";
     return sources.some((source) => source.available) ? "limited" : "unavailable";
   }
