@@ -23,14 +23,22 @@ export function useChartMultiview(workspace: "main" | "scanner") {
     if (!owner.current) return;
     const sequence = ++serial.current; setMessage("Saving view…");
     queue.current = queue.current.then(async () => {
+      const saveFailed = "View was not saved. Make the change again to retry.";
       try {
         const response = await fetch(`/api/charts/layout?workspace=${workspace}`, { method: "POST", credentials: "same-origin", keepalive: true,
           headers: { "Content-Type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" },
           body: JSON.stringify({ ownerKey: owner.current, revision: revision.current, layout: next }) });
-        if (!response.ok) throw Error(response.status === 409 ? "View changed elsewhere. Reload before editing again." : "View was not saved. Make the change again to retry.");
+        if (!response.ok) {
+          if (alive.current && serial.current === sequence) {
+            setMessage(response.status === 409 ? "View changed elsewhere. Reload before editing again." : saveFailed);
+          }
+          return;
+        }
         const result = await response.json(); revision.current = result.revision;
         if (alive.current && serial.current === sequence) setMessage("View saved");
-      } catch (error) { if (alive.current && serial.current === sequence) setMessage(error instanceof Error ? error.message : "View was not saved."); }
+      } catch {
+        if (alive.current && serial.current === sequence) setMessage(saveFailed);
+      }
     });
   }, [workspace]);
   return { layout, ready, message, change, clearViews: () => { if (owner.current) chartViews.clear(owner.current, workspace); } };

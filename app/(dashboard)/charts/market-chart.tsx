@@ -765,6 +765,8 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           else if (!disposed) void focusJournal();
         }
       };
+      const olderHistoryMargin = 40;
+      const emptyOlderHistoryNotice = "No candles in that period. Pan left again to continue.";
       const loadOlder = async () => {
         if(disposed||loading||loadingOlder||!indicatorsReady||nextBefore===null)return;
         loadingOlder=true;userPanned=false;setHistoryMessage("Loading older candles…");
@@ -774,7 +776,17 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           const combined=new Map(bars);for(const bar of page.bars as Candle[])if(!combined.has(bar.time))combined.set(bar.time,bar);
           const projected=displayCandles(aggregateCandles(combined.values(),timeframe,regularOnly),timeframe);
           if(projected.length>80_000){nextBefore=null;setHistoryMessage("Chart history limit reached. Use a larger timeframe for older dates.");}
-          else {setHistoryMessage("");bars.clear();for(const [time,bar] of combined)bars.set(time,bar);nextBefore=page.nextBefore??null;writeAll(false,true);if(!page.bars.length)setHistoryMessage("No candles in that period. Pan left again to continue.");}
+          else {
+            setHistoryMessage("");
+            bars.clear();
+            for (const [time, bar] of combined) bars.set(time, bar);
+            nextBefore = page.nextBefore ?? null;
+            writeAll(false, true);
+            const range = chart.timeScale().getVisibleLogicalRange();
+            if (!page.bars.length && range && range.from < olderHistoryMargin) {
+              setHistoryMessage(emptyOlderHistoryNotice);
+            }
+          }
 
         }catch(failure){if(!disposed)setHistoryMessage(failure instanceof Error?failure.message:"Older candles could not load.");}
         finally{loadingOlder=false;}
@@ -825,13 +837,19 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           autoScale:chart.priceScale("right").options().autoScale,preferenceAutoScale:preferences.autoScale,priceScalePolicy:1,logarithmic});
       }
       let previousVisibleTo = 0;
+      let wasNearOlderHistory = false;
       chart.timeScale().subscribeVisibleLogicalRangeChange(range=>{
         const movedRight = Boolean(range && range.to > previousVisibleTo);
         if (range) previousVisibleTo = range.to;
+        const nearOlderHistory = Boolean(range && range.from < olderHistoryMargin);
+        if (range && wasNearOlderHistory && !nearOlderHistory) {
+          setHistoryMessage(message => message === emptyOlderHistoryNotice ? "" : message);
+        }
+        wasNearOlderHistory = nearOlderHistory;
         updateDates();
         if (range && userPanned && !loadingOlder) {
           if (activeTradeContext && movedRight && range.to > displayPoints.length - 30) void loadLater();
-          else if (range.from < 40) void loadOlder();
+          else if (nearOlderHistory) void loadOlder();
         }
         if(range&&loaded&&!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??vwapDisplayFrame)==='1D')!==daily)){
           const key=range.from.toFixed(2)+':'+range.to.toFixed(2);

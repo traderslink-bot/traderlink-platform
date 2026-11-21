@@ -60,7 +60,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
     if(url.includes("channel=market_cap_under_30m"))return Response.json({articles:under30,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
     if(url.includes("view=recent"))return Response.json({articles:scanner,since:"2026-11-03T15:31:00.000Z",next:null});
     if(url.includes("view=expanded-summary"))return Response.json({articles:scanner,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
-    if(url.startsWith("/api/admin/screeners/floats?"))return Response.json({exchanges:{AAA:"NASDAQ",BBB:"NYSE",CCC:"NASDAQ"},floats:{AAA:{shares:500000},BBB:{shares:600000},CCC:{shares:700000}}});
+    if(url.startsWith("/api/platform/news/workspace-floats?"))return Response.json({exchanges:{AAA:"NASDAQ",BBB:"NYSE",CCC:"NASDAQ"},floats:{AAA:{shares:500000},BBB:{shares:600000},CCC:{shares:700000}}});
     if(url.includes("articleId=cap-1"))return Response.json({article:under30[0]});
     throw Error(`Unexpected request: ${url}`);
   });

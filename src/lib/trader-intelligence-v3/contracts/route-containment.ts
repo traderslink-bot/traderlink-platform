@@ -427,6 +427,7 @@ const PLATFORM_SCOPED_API_ROUTES = [
   ["app/api/market-news/general/articles/[articleId]/route.ts", ["GET"], "owner_read"],
   ["app/api/market-news/general/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/journal/chart/route.ts", ["GET", "PUT"], "owner_mutation"],
+  ["app/api/platform/news/workspace-floats/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/news/workspace-scanner/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/notes/session-summary/[sessionDate]/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/owner-market-data/route.ts", ["GET", "POST"], "owner_mutation"],
