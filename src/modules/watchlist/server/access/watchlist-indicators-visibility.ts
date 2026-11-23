@@ -5,14 +5,15 @@ import { withWatchlistAdminDatabase } from './watchlist-admin-authorization';
 import { requireTraderLinkPlatformAuthenticatedRequestIdentity } from '@/src/modules/platform/server/authentication/require-platform-request-scope';
 import { hasPlatformDiscordPremiumAccess } from './platform-discord-watchlist-entitlement';
 import { analysisVisibilitySymbol } from './watchlist-analysis-visibility';
+import { hasWatchlistPremiumPlanAccess, readWatchlistDefaultPremiumOnly } from './watchlist-plan-policy';
 
 export function readIndicatorsPremiumOnly(db:Database.Database,symbol:string):boolean {
  if (!analysisVisibilitySymbol.test(symbol)) throw Error('Invalid ticker.');
  // Compatible reads before the additive migration; writes never silently succeed.
- if (!db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_watchlist_indicators_visibility'").get()) return false;
+ if (!db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_watchlist_indicators_visibility'").get()) return readWatchlistDefaultPremiumOnly(db, symbol);
  const row=db.prepare<[string],{premium_only:number}>('SELECT premium_only FROM platform_watchlist_indicators_visibility WHERE symbol=?').get(symbol);
  if(row && row.premium_only!==0 && row.premium_only!==1)throw Error('Invalid access setting.');
- return row?.premium_only===1;
+ return row ? row.premium_only===1 : readWatchlistDefaultPremiumOnly(db, symbol);
 }
 export function saveIndicatorsPremiumOnly(db:Database.Database,input:{symbol:string;premiumOnly:boolean;actorUserId:string}):void {
  if(!analysisVisibilitySymbol.test(input.symbol)||typeof input.premiumOnly!=='boolean')throw Error('Invalid access setting.');
@@ -27,6 +28,7 @@ export function canViewWatchlistIndicators(headers:Headers,symbol:string):boolea
  try {if(withWatchlistAdminDatabase(headers,()=>true))return true;}catch{/* Ordinary member. */}
  try {
   const identity=requireTraderLinkPlatformAuthenticatedRequestIdentity(headers,{membershipFeatures:['watchlist.access']});
-  return withReadonlyPlatformDatabase({},db=> !readIndicatorsPremiumOnly(db,symbol.toUpperCase()) || Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord)));
+  return withReadonlyPlatformDatabase({},db=> !readIndicatorsPremiumOnly(db,symbol.toUpperCase()) || Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord)) ||
+    hasWatchlistPremiumPlanAccess(db, identity.scope.userId, "indicators"));
  }catch{return false;}
 }

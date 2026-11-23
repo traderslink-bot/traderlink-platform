@@ -484,13 +484,19 @@ export type LiveWatchlistLevelMap = {
 };
 
 export type LiveWatchlistSymbolState = {
+  /** Server-owned first-creation marker; absent on preserved legacy tickers. */
+  premiumDefaultsVersion?: 1;
   watchlistUpgradeLinks?: Partial<Record<"ticker" | "analysis" | "levels", string | null>>;
   premiumLevelsAllowed?: boolean;
+  membershipLevelsAllowed?: boolean;
+  premiumLevelsPreview?: import("./premium-level-preview").PremiumLevelsPreview | null;
   premiumAnalysisPricesAllowed?: boolean;
   premiumAnalysisPreview?: import("./premium-analysis-preview").PremiumAnalysisPreview | null;
   membershipAnalysisAllowed?: boolean;
   membershipIndicatorsAllowed?: boolean;
   premiumIndicatorsAllowed?: boolean;
+  /** Saved owner visibility, separate from permission-derived fetch suppression. */
+  indicatorCardOwnerVisible?: boolean;
   symbol: string;
   status: LiveWatchlistStatus;
   updatedAt: number;

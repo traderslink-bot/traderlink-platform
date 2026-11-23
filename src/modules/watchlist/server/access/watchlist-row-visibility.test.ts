@@ -13,6 +13,7 @@ import { watchlistRowVisibilityMigration } from "@/src/modules/platform/server/d
 const adapter = vi.hoisted(() => ({
   db: null as unknown, owner: true, premium: false, signedIn: true, offline: false,
   plans: new Map<string, boolean>(),
+  planFeatures: new Set<string>(),
 }));
 vi.mock("./watchlist-admin-authorization", () => ({
   withWatchlistAdminDatabase: (_headers: Headers, operation: (db: unknown, scope: unknown) => unknown) => {
@@ -33,7 +34,9 @@ vi.mock("@/src/modules/platform/server/authentication/require-platform-request-s
   },
 }));
 vi.mock("./platform-discord-watchlist-entitlement", () => ({ hasPlatformDiscordPremiumAccess: () => adapter.premium }));
-vi.mock("./watchlist-plan-policy", () => ({ readWatchlistPlanDecisions: () => adapter.plans }));
+vi.mock("./watchlist-plan-policy", async importOriginal => ({ ...await importOriginal<typeof import("./watchlist-plan-policy")>(), readWatchlistPlanDecisions: () => adapter.plans,
+  hasWatchlistPremiumPlanAccess: (_db: unknown, _userId: string, control: string) => adapter.planFeatures.has(control),
+}));
 
 import { readHiddenTickerAddedVisible, saveHiddenTickerAddedVisible, readRowHiddenFromFree, saveRowHiddenFromFree, saveTickerPremiumOnly, readTickerPremiumOnly, readAnalysisPremiumOnly, canViewWatchlistTicker } from "./watchlist-analysis-visibility";
 import { projectWatchlistTickerForViewer, projectWatchlistTickersForViewer } from "./watchlist-ticker-projection";
@@ -51,8 +54,8 @@ const save = (hidden: boolean) => saveRowHiddenFromFree(db, { symbol: "SECRET", 
 
 beforeEach(() => {
   db = new Database(":memory:"); db.pragma("foreign_keys = ON"); adapter.db = db;
-  Object.assign(adapter, { owner: true, premium: false, signedIn: true, offline: false, plans: new Map() });
-  db.exec("CREATE TABLE platform_users(user_id TEXT PRIMARY KEY); INSERT INTO platform_users VALUES('owner'); CREATE TABLE live_watchlist_symbols(symbol TEXT,state_json TEXT);");
+  Object.assign(adapter, { owner: true, premium: false, signedIn: true, offline: false, plans: new Map(), planFeatures: new Set() });
+  db.exec("CREATE TABLE platform_users(user_id TEXT PRIMARY KEY); INSERT INTO platform_users VALUES('owner'); CREATE TABLE live_watchlist_symbols(symbol TEXT,state_json TEXT); INSERT INTO live_watchlist_symbols VALUES('SECRET','{\"watchlistGroup\":\"main\"}');");
   for (const migration of [platformWatchlistPremiumAccessControlsMigration, platformWatchlistPremiumSupportResistanceMigration, watchlistRowVisibilityMigration, watchlistMaskedAddedDateMigration, watchlistIndicatorsVisibilityMigration]) {
     for (const statement of migration.statements) db.exec(statement);
   }
@@ -114,6 +117,20 @@ describe("per-ticker row visibility", () => {
     expect(projectWatchlistTickersForViewer(payload([{ ...item, watchlistGroup: "private" }]), headers).symbols).toEqual([]);
     adapter.owner = true;
     expect(projectWatchlistTickersForViewer(payload([{ ...item, watchlistGroup: "private" }]), headers).symbols).toHaveLength(1);
+  });
+  it("uses the ticker plan feature for Premium rows while keeping selected-plan and private restrictions", () => {
+    save(true); saveTickerPremiumOnly(db, { symbol: "SECRET", premiumOnly: true, actorUserId: "owner" });
+    adapter.owner = false;
+    adapter.planFeatures.add("analysis");
+    expect(projectWatchlistTickersForViewer(payload(), headers).symbols).toEqual([]);
+    adapter.planFeatures.add("ticker");
+    expect(projectWatchlistTickersForViewer(payload(), headers).symbols).toEqual([item]);
+    adapter.plans.set("SECRET", false);
+    expect(projectWatchlistTickersForViewer(payload(), headers).symbols).toEqual([]);
+    adapter.plans.set("SECRET", true);
+    expect(projectWatchlistTickersForViewer(payload([{ ...item, watchlistGroup: "private" }]), headers).symbols).toEqual([]);
+    adapter.planFeatures.clear(); adapter.plans.clear();
+    expect(projectWatchlistTickersForViewer(payload(), headers).symbols).toEqual([]);
   });
   it("restores the existing placeholder on uncheck and keeps detail access independent", () => {
     save(true); adapter.owner = false;
@@ -275,12 +292,12 @@ describe("owner control", () => {
       expect(container.querySelectorAll("input")[5].checked).toBe(true);
       expect(fetch.mock.calls.filter(([,o])=>o.method==="GET")).toHaveLength(1);
       expect(fetch.mock.calls.filter(([,o])=>o.method==="POST")).toHaveLength(1);
-      const indicator=container.querySelector<HTMLInputElement>('input[aria-label="SECRET Premium-only indicators"]')!;
-      expect(indicator).toBeTruthy();indicator.click();
+      const indicator=container.querySelector<HTMLInputElement>('input[aria-label="SECRET Show Indicator card to free members"]')!;
+      expect(indicator).toBeTruthy();expect(indicator.checked).toBe(true);indicator.click();
       await vi.waitFor(()=>expect(readIndicatorsPremiumOnly(db,"SECRET")).toBe(true));
       await vi.waitFor(()=>expect(indicator.disabled).toBe(false));
       container.replaceChildren();win.watchlistPremiumControl("SECRET",container);
-      expect(container.querySelector<HTMLInputElement>('input[aria-label="SECRET Premium-only indicators"]')!.checked).toBe(true);
+      expect(container.querySelector<HTMLInputElement>('input[aria-label="SECRET Show Indicator card to free members"]')!.checked).toBe(false);
       expect(readHiddenTickerAddedVisible(db,"SECRET")).toBe(true);expect(readAnalysisPremiumOnly(db,"SECRET")).toBe(false);
 
     } finally {dom.window.close();}

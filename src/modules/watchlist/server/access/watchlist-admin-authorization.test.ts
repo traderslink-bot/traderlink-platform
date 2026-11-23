@@ -21,7 +21,11 @@ vi.mock("@/src/modules/platform/server/database/open-platform-database", () => (
 vi.mock("@/src/modules/platform/server/database/open-readonly-platform-database", () => ({
   withReadonlyPlatformDatabase: (_options: unknown, operation: (database: unknown) => unknown) => operation(adapters.database),
 }));
-vi.mock("./watchlist-plan-policy", () => ({ readWatchlistPlanDecisions: () => new Map() }));
+vi.mock("./watchlist-plan-policy", async importOriginal => ({
+  ...await importOriginal<typeof import("./watchlist-plan-policy")>(),
+  readWatchlistPlanDecisions: () => new Map(),
+  hasWatchlistPremiumPlanAccess: () => false,
+}));
 vi.mock("@/src/modules/platform/server/membership/platform-membership-access", () => ({
   evaluateMembershipFeature: () => ({ allowed: true }),
 }));
@@ -140,7 +144,7 @@ describe("Watchlist route boundaries", () => {
     for (let index = 0; index < 20; index++) {
       const response = await readAccessSettings(new Request(`https://app.example.test/api/admin/watchlist/analysis-visibility?symbol=T${index}&control=all`));
       expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ symbol: `T${index}`, settings: { ticker: false, analysis: false, levels: false, indicators: false, row: false, added: false } });
+      expect(await response.json()).toEqual({ symbol: `T${index}`, settings: { ticker: true, analysis: true, levels: true, indicators: true, row: false, added: false } });
     }
     const after = db.prepare("SELECT count(*) n FROM platform_admin_audit_events").get() as { n: number };
     expect(after.n - before.n).toBe(20);

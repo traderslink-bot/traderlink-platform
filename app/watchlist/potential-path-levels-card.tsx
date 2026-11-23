@@ -1,4 +1,6 @@
 "use client";
+import type { PremiumLevelPreviewRow } from "@/src/lib/live-watchlist/premium-level-preview";
+import premiumStyles from "./premium-analysis-card.module.css";
 import { WatchlistPlanUpgrade } from "./watchlist-plan-upgrade";
 
 import Link from "next/link";
@@ -34,6 +36,8 @@ const watchlistTimeFormatter = new Intl.DateTimeFormat("en-US", {
 type PotentialPathSymbol = Pick<
   LiveWatchlistSymbolState,
   | "premiumLevelsAllowed"
+  | "membershipLevelsAllowed"
+  | "premiumLevelsPreview"
   | "watchlistUpgradeLinks"
   | "symbol"
   | "latestPrice"
@@ -70,26 +74,38 @@ function formatLevelMeta(level: WatchlistV2LevelRow): string {
   return [level.strengthLabel, level.sourceLabel].filter(Boolean).join(" / ") || "level";
 }
 
+function HiddenLevelValue({ date = false }: { date?: boolean }) {
+  return <span className={premiumStyles.price} aria-label={date ? "Date requires feature access" : "Price requires feature access"}>
+    <span aria-hidden="true">{date ? "••• ••" : "$••.••"}</span>
+  </span>;
+}
+
+function LevelRowView({ side, nearest, price, distance, meta, provenance }: {
+  side: "support" | "resistance"; nearest: boolean; price: ReactNode; distance: ReactNode; meta: ReactNode; provenance: ReactNode;
+}) {
+  return <li className="watchlist-v2-level-row" data-side={side} data-nearest={nearest ? "true" : "false"}>
+    <span className="watchlist-v2-level-price">{price}</span>
+    <span className="watchlist-v2-level-distance">{distance}</span>
+    <span className="watchlist-v2-level-meta"><span>{meta}</span>
+      {provenance ? <span className="watchlist-level-provenance">{provenance}</span> : null}
+    </span>
+  </li>;
+}
+
+function LockedLevelProvenance({ row }: { row: PremiumLevelPreviewRow }) {
+  return <>{row.provenance.map((label, index) => <span key={label}>{index > 0 ? " · " : ""}{label}{" "}<HiddenLevelValue date /></span>)}</>;
+}
+
+function LockedLevelRow({ side, row }: { side: "support" | "resistance"; row: PremiumLevelPreviewRow }) {
+  return <LevelRowView side={side} nearest={row.nearest} price={<HiddenLevelValue />}
+    distance={<span aria-label="Distance requires feature access" className={premiumStyles.price}><span aria-hidden="true">••.•%</span></span>}
+    meta={row.sessionHighReference ? "High of day / session reference" : [row.strength, row.source].filter(Boolean).join(" / ") || "level"}
+    provenance={row.provenance.length ? <LockedLevelProvenance row={row} /> : null} />;
+}
+
 function WatchlistV2LevelRowItem({ level }: { level: WatchlistV2LevelRow }) {
-  const provenance = formatLevelMarketDataProvenance(level);
-  return (
-    <li
-      className="watchlist-v2-level-row"
-      data-side={level.side}
-      data-nearest={level.isNearest ? "true" : "false"}
-    >
-      <span className="watchlist-v2-level-price">{formatWatchlistV2LevelPrice(level)}</span>
-      <span className="watchlist-v2-level-distance">
-        {formatWatchlistV2LevelDistance(level)}
-      </span>
-      <span className="watchlist-v2-level-meta">
-        <span>{formatLevelMeta(level)}</span>
-        {provenance ? (
-          <span className="watchlist-level-provenance">{provenance}</span>
-        ) : null}
-      </span>
-    </li>
-  );
+  return <LevelRowView side={level.side} nearest={level.isNearest} price={formatWatchlistV2LevelPrice(level)}
+    distance={formatWatchlistV2LevelDistance(level)} meta={formatLevelMeta(level)} provenance={formatLevelMarketDataProvenance(level)} />;
 }
 
 function WatchlistV2LevelSection({
@@ -97,16 +113,20 @@ function WatchlistV2LevelSection({
   side,
   levels,
   unavailable = false,
+  preview,
 }: {
   title: string;
   side: "support" | "resistance";
   levels: WatchlistV2LevelRow[];
   unavailable?: boolean;
+  preview?: PremiumLevelPreviewRow[];
 }) {
   return (
     <section className="watchlist-v2-level-section" data-side={side}>
       <h3>{title}</h3>
-      {levels.length > 0 ? (
+      {preview ? (
+        <ul className="watchlist-v2-level-list">{preview.map((row, index) => <LockedLevelRow key={index} side={side} row={row} />)}</ul>
+      ) : levels.length > 0 ? (
         <ul className="watchlist-v2-level-list">
           {levels.map((level) => (
             <WatchlistV2LevelRowItem
@@ -291,9 +311,15 @@ export function WatchlistV2PotentialPathCard({
 
         {symbol.premiumLevelsAllowed === false ? (
           <div>
-            <WatchlistPlanUpgrade href={symbol.watchlistUpgradeLinks?.levels} feature="Support and Resistance" premium />
+            <WatchlistPlanUpgrade href={symbol.watchlistUpgradeLinks?.levels} feature="Support and Resistance" premium={symbol.membershipLevelsAllowed !== false} />
+            {showNearestLevels ? <div className="watchlist-v2-nearest" aria-label="Nearest levels">
+              {(["support", "resistance"] as const).map(side => <div key={side} className="watchlist-v2-nearest-item" data-side={side}>
+                <span>{side === "resistance" && symbol.premiumLevelsPreview?.resistance.some(row => row.nearest && row.sessionHighReference) ? "High of day" : `Nearest ${side}`}</span><strong><HiddenLevelValue /></strong>
+              </div>)}
+            </div> : null}
             <div className="watchlist-v2-level-columns">
-              {['Support','Resistance'].map(title=><section key={title} aria-label={title+' requires feature access'}><h3>{title}</h3><div aria-hidden="true" style={{filter:'blur(5px)',userSelect:'none'}}>{[1,2,3].map(row=><p key={row}>$••.•• — ••••••</p>)}</div></section>)}
+              <WatchlistV2LevelSection title="Support" side="support" levels={[]} preview={symbol.premiumLevelsPreview?.support ?? []} />
+              <WatchlistV2LevelSection title={symbol.premiumLevelsPreview?.resistance.some(row => row.sessionHighReference) ? "Resistance / session high" : "Resistance"} side="resistance" levels={[]} preview={symbol.premiumLevelsPreview?.resistance ?? []} />
             </div>
           </div>
         ) : levelMap ? (
@@ -312,7 +338,15 @@ export function WatchlistV2PotentialPathCard({
       </article>
 
       {symbol.premiumLevelsAllowed === false ? (
-        <details className="watchlist-more-levels"><summary>Full ladder</summary><div className="watchlist-full-ladder-detail" aria-label="Full ladder requires feature access"><p aria-hidden="true" style={{filter:'blur(5px)',userSelect:'none'}}>$••.•• — ••••••<br />$••.•• — ••••••</p></div></details>
+        <details className="watchlist-more-levels"><summary>Full ladder</summary>
+          <div className="watchlist-full-ladder-detail" aria-label="Full ladder requires feature access">
+            <h3>Full level ladder</h3>
+            <pre>{(["resistance", "support"] as const).map(side => <span key={side}>
+              {side === "support" ? "Support" : "Resistance"}{"\n"}
+              {(symbol.premiumLevelsPreview?.[side] ?? []).map((row, index) => <span key={index}><HiddenLevelValue />{" — "}{[row.strength, row.source].filter(Boolean).join(" / ")}{" "}<LockedLevelProvenance row={row} />{"\n"}</span>)}
+            </span>)}</pre>
+          </div>
+        </details>
       ) : fullLadderBody ? (
         <details className="watchlist-more-levels">
           <summary>Full ladder</summary>

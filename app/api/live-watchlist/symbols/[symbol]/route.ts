@@ -41,7 +41,7 @@ async function readGET(
     generatedAt: Date.now(),
     marketDataStatus: health.marketDataStatus,
     marketDataUpdatedAt: health.marketDataUpdatedAt,
-    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators, canViewWatchlistIndicators(request.headers, state.symbol)),
+    symbol: watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(request.headers, state.symbol), canViewWatchlistLevels(request.headers, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators, canViewWatchlistIndicators(request.headers, state.symbol), features.levels),
   }, { headers: { "Cache-Control": "private, no-store" } });
 }
 

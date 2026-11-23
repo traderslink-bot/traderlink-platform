@@ -25,7 +25,7 @@ const neonHarness = vi.hoisted(() => {
     conflictCount: 0,
   };
 
-  function reset(row: StoredRow): void {
+  function reset(row: StoredRow | null): void {
     state.row = row;
     state.barrierReadCount = 0;
     state.conflictCount = 0;
@@ -139,6 +139,20 @@ describe("LiveWatchlistStore Neon concurrency", () => {
     resetLiveWatchlistStoreForTests();
   });
 
+  it("keeps the new default marker through a concurrent first insertion and retry", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "neon";
+    process.env.LIVE_WATCHLIST_DATABASE_URL = "postgres://watchlist-test";
+    neonHarness.reset(null);
+    const store = new LiveWatchlistStore();
+    await Promise.all([
+      store.upsertPatch({ symbol: "TEST", status: "live", updatedAt: 1000, cards: {} }),
+      store.upsertPatch({ symbol: "TEST", status: "live", updatedAt: 1001, cards: {} }),
+    ]);
+    const saved = await store.getSymbol("TEST");
+    expect(saved?.premiumDefaultsVersion).toBe(1);
+    expect(neonHarness.state.conflictCount).toBe(1);
+  });
+
   it("retries a conflicting card write without restoring a stale activation time", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "neon";
     process.env.LIVE_WATCHLIST_DATABASE_URL = "postgres://watchlist-test";
@@ -189,6 +203,7 @@ describe("LiveWatchlistStore Neon concurrency", () => {
 
     const saved = await store.getSymbol("KAPA");
     expect(saved?.firstPostedAt).toBe(1000);
+    expect(saved?.premiumDefaultsVersion).toBeUndefined();
     expect(saved?.cards.companyInfo?.title).toBe("Kairos Pharma Ltd");
     expect(neonHarness.state.conflictCount).toBe(1);
   });

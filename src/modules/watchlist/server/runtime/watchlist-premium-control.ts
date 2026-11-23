@@ -26,7 +26,9 @@ export const WATCHLIST_PREMIUM_CONTROL = String.raw`<script>
   return initialReads.get(symbol);
  }
  function attach(symbol, container, control) {
-  const labelText = control === 'added' ? 'Show Added date for hidden ticker' : control === 'row' ? 'Hide row from members without paid access' : control === 'levels' ? 'Premium-only support & resistance' : 'Premium-only ' + control;
+  const revealsFree = ['ticker','analysis','levels','indicators'].includes(control);
+  const revealLabels = { ticker: 'Show ticker to free members', analysis: 'Show analysis to free members', levels: 'Show support & resistance to free members', indicators: 'Show Indicator card to free members' };
+  const labelText = control === 'added' ? 'Show Added date for hidden ticker' : control === 'row' ? 'Hide row from members without paid access' : revealLabels[control];
   const key = symbol + ':' + control;
   let item = state.get(key);
   if (!item) { item = { loaded: false, busy: false, value: false, uncertain: false, error: '', loading: false }; state.set(key,item); }
@@ -35,10 +37,10 @@ export const WATCHLIST_PREMIUM_CONTROL = String.raw`<script>
   label.append(input,document.createTextNode(labelText));
   const option=document.createElement('div');option.className='watchlist-access-option';option.append(label,message);container.append(option);
   message.setAttribute('role','status');
-  const show = () => { input.checked=item.uncertain?false:item.value; input.indeterminate=item.uncertain; input.disabled=!item.loaded||item.busy||item.loading; message.textContent=item.error||(!item.loaded?'Loading access…':item.busy?'Saving…':''); };
+  const show = () => { input.checked=!item.loaded||item.uncertain?false:(revealsFree?!item.value:item.value); input.indeterminate=item.uncertain; input.disabled=!item.loaded||item.busy||item.loading; message.textContent=item.error||(!item.loaded?'Loading access…':item.busy?'Saving…':''); };
   const redraw = () => { show(); window.dispatchEvent(new Event('watchlist-review-updated')); };
   input.onchange = async () => {
-   const next=input.checked; item.busy=true; item.error=''; show();
+   const next=revealsFree?!input.checked:input.checked; item.busy=true; item.error=''; show();
    initialReads.delete(symbol);
    try { const result=await request(symbol,next,control); item.value=result.premiumOnly; item.uncertain=false; }
    catch {

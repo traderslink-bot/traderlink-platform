@@ -363,6 +363,35 @@ describe("LiveWatchlistStore", () => {
     }
   }, 15_000);
 
+  it("marks only newly created ticker states without rewriting legacy defaults or accepting a publisher override", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+    const created = await store.upsertPatch(buildCorePatch("ABCD", 1000));
+    expect(created.premiumDefaultsVersion).toBe(1);
+    expect((await store.getSymbol("ABCD"))?.premiumDefaultsVersion).toBe(1);
+    const changed = await store.upsertPatch({ symbol: "ABCD", updatedAt: 1100, watchlistGroup: "postmarket", cards: {} });
+    expect(changed.premiumDefaultsVersion).toBe(1);
+    expect(changed.cards).toEqual(created.cards);
+    const deactivated = await store.upsertPatch({ symbol: "ABCD", status: "deactivated", updatedAt: 1200, cards: {} });
+    expect(deactivated.premiumDefaultsVersion).toBe(1);
+    const reactivated = await store.upsertPatch({ symbol: "ABCD", status: "live", updatedAt: 1300, cards: {} });
+    expect(reactivated.premiumDefaultsVersion).toBe(1);
+    const { premiumDefaultsVersion: _marker, ...legacy } = created;
+    expect(_marker).toBe(1);
+    const malicious = { ...buildCorePatch("ABCD", 1400), premiumDefaultsVersion: 1 };
+    const retained = applyPatch(legacy, malicious);
+    expect(retained.premiumDefaultsVersion).toBeUndefined();
+    expect(applyPatch({ ...legacy, status: "deactivated" }, malicious).premiumDefaultsVersion).toBeUndefined();
+    const ignoredOverride = { ...malicious, premiumDefaultsVersion: undefined };
+    expect(applyPatch(created, ignoredOverride).premiumDefaultsVersion).toBe(1);
+    const firstPrice = await store.upsertTickerData({ type: "tickerData", symbol: "NEW", updatedAt: 1500, latestPrice: 1, nearestSupport: null, nearestResistance: null });
+    expect(firstPrice.premiumDefaultsVersion).toBe(1);
+    expect(firstPrice.status).toBe("deactivated"); // Price updates still cannot publish a ticker.
+    const laterPrice = await store.upsertTickerData({ type: "tickerData", symbol: "ABCD", updatedAt: 1600, latestPrice: 2, nearestSupport: null, nearestResistance: null });
+    expect(laterPrice.premiumDefaultsVersion).toBe(1);
+  });
+
   it("normalizes Neon bigint timestamp strings for archive rows", () => {
     expect(normalizeLiveWatchlistTimestamp("1782069488260")).toBe(1782069488260);
     expect(normalizeLiveWatchlistTimestamp(1782069488260)).toBe(1782069488260);

@@ -666,6 +666,7 @@ export function applyPatch(
 
   return deriveStateFields(prepareGain({
     symbol,
+    premiumDefaultsVersion: existing ? existing.premiumDefaultsVersion : 1,
     status: nextStatus,
     updatedAt: Math.max(patch.updatedAt, baseExisting?.updatedAt ?? 0),
     firstPostedAt: nextFirstPostedAt,
@@ -778,6 +779,7 @@ function applyTickerDataPatch(
   const gainState = existing ? observeGain(existing, patch.latestPrice, observedAt) : { potentialGain: null, gainTracking: undefined };
   return deriveStateFields({
     symbol: normalizeSymbol(patch.symbol),
+    premiumDefaultsVersion: existing ? existing.premiumDefaultsVersion : 1,
     // Ticker-data patches are price/level updates, never lifecycle transitions.
     // They cannot admit an unknown symbol or revive a deactivated one, even when
     // an older publisher still sends the legacy `status: "live"` field.

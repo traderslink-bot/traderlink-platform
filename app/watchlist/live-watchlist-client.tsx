@@ -6,7 +6,7 @@ import { analysisPullbacks } from "@/src/lib/live-watchlist/owner-analysis-pullb
 import { AnalysisTraderNotes } from "./analysis-trader-notes";
 import analysisLayout from "./analysis-layout.module.css";
 
-import { WatchlistPlanUpgrade } from "./watchlist-plan-upgrade";
+import { WATCHLIST_PREMIUM_URL, watchlistUpgradeLinkProps } from "./watchlist-upgrade-destination";
 import { watchlistDetailProjection } from "@/src/lib/live-watchlist/watchlist-member-projection";
 
 import { PremiumTickerLock } from "./premium-ticker-lock";
@@ -59,7 +59,7 @@ import {
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
 import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card";
 import { createVisibleWatchlistStream, createWatchlistRefreshController } from "@/src/lib/live-watchlist/watchlist-refresh-controller";
-import { WatchlistIndicatorsCard } from "./watchlist-indicators-card";
+import { WatchlistIndicatorsCard, WatchlistIndicatorsSample } from "./watchlist-indicators-card";
 import { WatchlistSetupsCard } from "./watchlist-setups-card";
 import groupHelpStyles from "./watchlist-group-help.module.css";
 import compactRows from "./watchlist-compact-rows.module.css";
@@ -1261,7 +1261,7 @@ function WatchlistTickerTable({
         <span>Details</span>
       </div>
       {symbols.map((symbol) => {
-                  if (symbol.premiumTickerHidden) return <a key={symbol.symbol} href="/plans?feature=watchlist.ticker_details" className={`watchlist-row ${compactRows.row} ${symbol.firstPostedAt != null ? compactRows.concealedDate : ""}`}>
+                  if (symbol.premiumTickerHidden) return <a key={symbol.symbol} href={WATCHLIST_PREMIUM_URL} {...watchlistUpgradeLinkProps(WATCHLIST_PREMIUM_URL)} className={`watchlist-row ${compactRows.row} ${symbol.firstPostedAt != null ? compactRows.concealedDate : ""}`}>
             <span className={`watchlist-symbol-cell ${compactRows.ticker}`}><strong aria-label="Premium ticker"><span aria-hidden="true" style={{filter:"blur(4px)",userSelect:"none"}}>••••</span></strong><small style={{color:"#b45309",display:"block"}}>Premium members only</small></span>
             {symbol.firstPostedAt != null ? <span className={`watchlist-mobile-field ${compactRows.added}`} data-mobile-label="Added" style={watchlistTimeCellStyle}>
               {formatListDateTime(symbol.firstPostedAt)}
@@ -1470,7 +1470,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
         showMeta={false}
         showOuterMeta={false}
       />
-      {symbol.membershipAnalysisAllowed === false ? <WatchlistPlanUpgrade feature="Trade analysis" href={symbol.watchlistUpgradeLinks?.analysis === undefined ? "/plans?feature=watchlist.trade_analysis" : symbol.watchlistUpgradeLinks.analysis} /> : symbol.premiumAnalysisPreview ? <PremiumAnalysisCard preview={symbol.premiumAnalysisPreview} symbol={symbol.symbol} upgradeHref={symbol.watchlistUpgradeLinks?.analysis} /> : symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
+      {symbol.tradersLinkAiReadCardVisible === false ? null : symbol.membershipAnalysisAllowed === false || symbol.premiumAnalysisPreview ? <PremiumAnalysisCard preview={symbol.premiumAnalysisPreview ?? { sections: [] }} symbol={symbol.symbol} upgradeHref={symbol.watchlistUpgradeLinks?.analysis} premium={symbol.membershipAnalysisAllowed !== false} /> : tradersLinkAiReadCard ? (
         <TradersLinkAiReadCard
           card={tradersLinkAiReadCard}
           traderNotes={symbol.cards.traderNotes?.body}
@@ -1479,13 +1479,12 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
           dipBuyPlanVisible={symbol.tradersLinkAiReadDipBuyPlanVisible !== false}
           failureRecoveryVisible={symbol.failureRecoveryVisible === true}
         />
-      ) : symbol.tradersLinkAiReadCardVisible !== false &&
-        (symbol.tradersLinkAiReadStatus === "analyzing" ||
+      ) : (symbol.tradersLinkAiReadStatus === "analyzing" ||
           symbol.tradersLinkAiReadStatus === "failed") ? (
         <TradersLinkAiReadStatusCard status={symbol.tradersLinkAiReadStatus} symbol={symbol} />
-      ) : symbol.tradersLinkAiReadCardVisible !== false ? (
+      ) : (
         <TradersLinkAiReadStatusCard status="failed" symbol={symbol} />
-      ) : null}
+      )}
       {symbol.cards.traderNotes?.body?.trim() && !(symbol.membershipAnalysisAllowed !== false && !symbol.premiumAnalysisPreview && symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard && parseTradersLinkAiRead(tradersLinkAiReadCard.body)) ? (
         <article className="academy-card watchlist-content-card" data-card-label="Trader notes" style={{ gridColumn: "1", minWidth: 0 }}>
           <h2 style={{ fontWeight: 700 }}>TRADER NOTES</h2>
@@ -1496,7 +1495,7 @@ function WatchlistDetailCards({ symbol, marketDataStatus = "offline" }: { symbol
       {symbol.membershipAnalysisAllowed !== false && symbol.premiumAnalysisPricesAllowed !== false && !symbol.premiumAnalysisPreview ? (
         <WatchlistSetupsCard key={`setups:${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} publicationIdentity={symbol.indicatorPublicationIdentity} />
       ) : null}
-      {symbol.membershipIndicatorsAllowed === false ? <WatchlistPlanUpgrade feature="Indicator card" premium={symbol.premiumIndicatorsAllowed === false} href={symbol.premiumIndicatorsAllowed === false ? "https://whop.com/traderslink-1049/premium-access-2026" : "/plans?feature=watchlist.indicators"} /> : symbol.indicatorCardVisible !== false ? (
+      {symbol.indicatorCardOwnerVisible === false ? null : symbol.membershipIndicatorsAllowed === false ? <WatchlistIndicatorsSample premium={symbol.premiumIndicatorsAllowed === false} /> : symbol.indicatorCardVisible !== false ? (
       <WatchlistIndicatorsCard key={`${symbol.symbol}:${symbol.indicatorPublicationIdentity ?? "unassigned"}`} symbol={symbol.symbol} firstPostedAt={symbol.firstPostedAt} publicationIdentity={symbol.indicatorPublicationIdentity} livePrice={symbol.latestPrice} />
       ) : null}
       {recentNewsFilingsCard && showRecentNewsFilingsCard ? (
@@ -1843,7 +1842,10 @@ export function LiveWatchlistDetailClient({
           next.membershipIndicatorsAllowed = payload.symbol.membershipIndicatorsAllowed;
           next.premiumIndicatorsAllowed = payload.symbol.premiumIndicatorsAllowed;
           next.indicatorCardVisible = payload.symbol.indicatorCardVisible;
+          next.indicatorCardOwnerVisible = payload.symbol.indicatorCardOwnerVisible;
           next.premiumLevelsAllowed = payload.symbol.premiumLevelsAllowed;
+          next.membershipLevelsAllowed = payload.symbol.membershipLevelsAllowed;
+          next.premiumLevelsPreview = payload.symbol.premiumLevelsPreview ?? null;
           next.watchlistUpgradeLinks = payload.symbol.watchlistUpgradeLinks;
           if(next.premiumLevelsAllowed !== false) { next.levelMap=payload.symbol.levelMap; next.nearestSupport=payload.symbol.nearestSupport; next.nearestResistance=payload.symbol.nearestResistance; next.nearestSupportLabel=payload.symbol.nearestSupportLabel; next.nearestResistanceLabel=payload.symbol.nearestResistanceLabel; for(const kind of ["levelMap","nearestSupportResistance","fullLadder"] as const) { if(payload.symbol.cards[kind]) next.cards[kind]=payload.symbol.cards[kind]; else delete next.cards[kind]; } }
           next.premiumAnalysisPricesAllowed = payload.symbol.premiumAnalysisPricesAllowed;
@@ -1902,7 +1904,7 @@ export function LiveWatchlistDetailClient({
       }
     };
   }, [initialSymbol.symbol]);
-  if (detailsDenied) return premiumTickerDenied ? <PremiumTickerLock upgradeHref={tickerUpgradeHref} /> : <WatchlistPlanUpgrade feature="Ticker details" href={tickerUpgradeHref === undefined ? "/plans?feature=watchlist.ticker_details" : tickerUpgradeHref} />;
+  if (detailsDenied) return <PremiumTickerLock upgradeHref={tickerUpgradeHref} premium={premiumTickerDenied} />;
 
   if (symbol.status === "deactivated") {
     return (

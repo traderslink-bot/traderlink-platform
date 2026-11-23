@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ensureJournalPlanFoundation, membershipAllowanceInBrief, membershipProductBrief, membershipProductDescription, membershipProductLabel, newMembershipProductFeature as f, storedMembershipProductFeatures, toggleMembershipProduct } from "./membership-product-features";
+import { ensureJournalPlanFoundation, membershipAllowanceInBrief, membershipFeatureDefaultEnforcement, membershipProductBrief, membershipProductDescription, membershipProductLabel, newMembershipProductFeature as f, storedMembershipProductFeatures, toggleMembershipProduct } from "./membership-product-features";
 import { isMembershipPlanSelectableFeature, derivedMembershipPlanNotificationKeys } from "./membership-plan-notifications";
 
 describe("Product-oriented plan features", () => {
@@ -25,6 +25,16 @@ describe("Product-oriented plan features", () => {
     expect(membershipProductLabel("watchlist.levels", "")).toBe("Support and Resistance");
     expect(membershipProductDescription("watchlist.access", features, "")).toContain("Indicator card");
     expect(toggleMembershipProduct(features, "watchlist.access", false).some(feature => children.includes(feature.key))).toBe(false);
+  });
+  it("keeps Watchlist selectable and default-open without automatically selecting its Premium cards", () => {
+    expect(isMembershipPlanSelectableFeature("watchlist.access")).toBe(true);
+    const selected = toggleMembershipProduct([], "watchlist.access", true);
+    expect(selected).toEqual([f("watchlist.access")]);
+    for (const key of ["watchlist.access", "watchlist.ticker_details", "watchlist.trade_analysis", "watchlist.levels", "watchlist.indicators"]) {
+      expect(membershipFeatureDefaultEnforcement(key)).toBe("off");
+    }
+    expect(membershipProductDescription("watchlist.access", selected, "Browse the shared Watchlist.")).toContain("Browse the shared Watchlist.");
+    expect(storedMembershipProductFeatures(selected)).toContainEqual(f("watchlist.access"));
   });
   it("keeps analysis-page access separate and puts Levels Generator allowance in its brief", () => {
     expect(isMembershipPlanSelectableFeature("trade_analyzer.analysis")).toBe(true);

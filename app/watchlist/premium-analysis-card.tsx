@@ -12,8 +12,8 @@ function PreviewText({ text }: { text: string }) {
   return <>{text.split(HIDDEN_ANALYSIS_PRICE).map((part, index) => <span key={index}>{index > 0 ? <HiddenPrice /> : null}{part}</span>)}</>;
 }
 
-export function PremiumAnalysisCard({ preview, symbol, upgradeHref }: { preview: PremiumAnalysisPreview; symbol: string; upgradeHref?: string | null }) {
-  if (preview.simpleRead) return <SimpleAnalysisCard read={preview.simpleRead} maskPrices premiumNotice={<div className={styles.notice}><WatchlistPlanUpgrade premium href={upgradeHref} feature="Trade analysis" /></div>} />;
+export function PremiumAnalysisCard({ preview, symbol, upgradeHref, premium = true }: { preview: PremiumAnalysisPreview; symbol: string; upgradeHref?: string | null; premium?: boolean }) {
+  if (preview.simpleRead) return <SimpleAnalysisCard read={preview.simpleRead} maskPrices premiumNotice={<WatchlistPlanUpgrade premium={premium} href={upgradeHref} feature="Trade analysis" />} />;
   const renderSection = (section: PremiumAnalysisPreview["sections"][number], index:number) => <section key={index} className="watchlist-ai-read-section">
     {section.title ? <h3>{section.title}</h3> : null}
     {section.priceHidden ? <HiddenPrice /> : null}
@@ -23,7 +23,7 @@ export function PremiumAnalysisCard({ preview, symbol, upgradeHref }: { preview:
   const targets = preview.sections.filter(section=>section.title === "Potential Targets (Volume Dependent)");
   return <article className="academy-card watchlist-content-card watchlist-ai-read-card" data-card-label="TradersLink Analysis">
     <div className="academy-card-topline"><span>TradersLink Analysis</span></div>
-    <div className={styles.notice}><WatchlistPlanUpgrade premium href={upgradeHref} feature="Trade analysis" /></div>
+    <WatchlistPlanUpgrade premium={premium} href={upgradeHref} feature="Trade analysis" />
     <h2 className="academy-card-title">{symbol} trade preparation</h2>
     {preview.sections.filter(section=>!bottom.includes(section)&&!targets.includes(section)).map(renderSection)}
     <div className={bottom.length ? layout.row : layout.single}><div>{targets.map(renderSection)}</div><div className={layout.side}>{bottom.map(renderSection)}</div></div>

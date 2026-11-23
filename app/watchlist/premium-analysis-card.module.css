@@ -3,4 +3,5 @@
 .price.price, .price.price > span { display: inline-block; }
 .price { display: inline-block; user-select: none; }
 .price > span { filter: blur(3px); }
-:global([data-theme="dark"]) .notice { color: #fb923c; }
+:global([data-theme="dark"]) .notice,
+:global([data-academy-theme="dark"]) .notice { color: #fb923c; }

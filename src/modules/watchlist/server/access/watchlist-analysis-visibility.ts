@@ -4,7 +4,7 @@ import type Database from "better-sqlite3";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { hasWatchlistDashboardNavigationAccess } from "./watchlist-dashboard-navigation-access";
 import { hasPlatformDiscordPremiumAccess } from "./platform-discord-watchlist-entitlement";
-import { readWatchlistPlanDecisions } from "./watchlist-plan-policy";
+import { hasWatchlistPremiumPlanAccess, readWatchlistDefaultPremiumOnly, readWatchlistPlanDecisions, watchlistDefaultPremiumOnly } from "./watchlist-plan-policy";
 import { requireTraderLinkPlatformAuthenticatedRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export const analysisVisibilitySymbol = /^[A-Z0-9][A-Z0-9.^-]{0,15}$/;
@@ -15,7 +15,7 @@ export function readAnalysisPremiumOnly(database: Database.Database, symbol: str
     "SELECT premium_only FROM platform_watchlist_analysis_visibility WHERE symbol = ?",
   ).get(symbol);
   if (row && row.premium_only !== 0 && row.premium_only !== 1) throw new Error("Invalid access setting.");
-  return row?.premium_only === 1;
+  return row ? row.premium_only === 1 : readWatchlistDefaultPremiumOnly(database, symbol);
 }
 
 export function saveAnalysisPremiumOnly(database: Database.Database, input: {
@@ -25,10 +25,11 @@ export function saveAnalysisPremiumOnly(database: Database.Database, input: {
   const now = new Date().toISOString();
   database.transaction(() => {
     const previous = readAnalysisPremiumOnly(database, input.symbol);
-    database.prepare(`INSERT INTO platform_watchlist_analysis_visibility(symbol,premium_only,updated_at_utc,updated_by_user_id)
-      VALUES(?,?,?,?) ON CONFLICT(symbol) DO UPDATE SET premium_only=excluded.premium_only,
+    const tickerPremiumOnly = readTickerPremiumOnly(database, input.symbol);
+    database.prepare(`INSERT INTO platform_watchlist_analysis_visibility(symbol,premium_only,ticker_premium_only,updated_at_utc,updated_by_user_id)
+      VALUES(?,?,?,?,?) ON CONFLICT(symbol) DO UPDATE SET premium_only=excluded.premium_only,
       updated_at_utc=excluded.updated_at_utc,updated_by_user_id=excluded.updated_by_user_id`)
-      .run(input.symbol, Number(input.premiumOnly), now, input.actorUserId);
+      .run(input.symbol, Number(input.premiumOnly), Number(tickerPremiumOnly), now, input.actorUserId);
     database.prepare(`INSERT INTO platform_watchlist_analysis_visibility_audit(symbol,previous_premium_only,premium_only,changed_at_utc,actor_user_id)
       VALUES(?,?,?,?,?)`).run(input.symbol, Number(previous), Number(input.premiumOnly), now, input.actorUserId);
   })();
@@ -40,7 +41,7 @@ export function readTickerPremiumOnly(database: Database.Database, symbol: strin
     "SELECT ticker_premium_only FROM platform_watchlist_analysis_visibility WHERE symbol = ?",
   ).get(symbol);
   if (row && row.ticker_premium_only !== 0 && row.ticker_premium_only !== 1) throw new Error("Invalid access setting.");
-  return row?.ticker_premium_only === 1;
+  return row ? row.ticker_premium_only === 1 : readWatchlistDefaultPremiumOnly(database, symbol);
 }
 
 export function saveTickerPremiumOnly(database: Database.Database, input: {
@@ -50,10 +51,11 @@ export function saveTickerPremiumOnly(database: Database.Database, input: {
   const now = new Date().toISOString();
   database.transaction(() => {
     const previous = readTickerPremiumOnly(database, input.symbol);
+    const analysisPremiumOnly = readAnalysisPremiumOnly(database, input.symbol);
     database.prepare(`INSERT INTO platform_watchlist_analysis_visibility(symbol,premium_only,ticker_premium_only,updated_at_utc,updated_by_user_id)
-      VALUES(?,0,?,?,?) ON CONFLICT(symbol) DO UPDATE SET ticker_premium_only=excluded.ticker_premium_only,
+      VALUES(?,?,?,?,?) ON CONFLICT(symbol) DO UPDATE SET ticker_premium_only=excluded.ticker_premium_only,
       updated_at_utc=excluded.updated_at_utc,updated_by_user_id=excluded.updated_by_user_id`)
-      .run(input.symbol, Number(input.premiumOnly), now, input.actorUserId);
+      .run(input.symbol, Number(analysisPremiumOnly), Number(input.premiumOnly), now, input.actorUserId);
     database.prepare(`INSERT INTO platform_watchlist_analysis_visibility_audit(symbol,control,previous_premium_only,premium_only,changed_at_utc,actor_user_id)
       VALUES(?,'ticker',?,?,?,?)`).run(input.symbol, Number(previous), Number(input.premiumOnly), now, input.actorUserId);
   })();
@@ -117,10 +119,20 @@ export function readWatchlistTickerPolicy(requestHeaders: Headers): { all: boole
   } catch { /* Normal free members may not have dashboard access. */ }
   try {
     const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders, { membershipFeatures: ["watchlist.access"] });
-    const restricted = withReadonlyPlatformDatabase({}, db => db.prepare<[], { symbol: string }>(
-      "SELECT symbol FROM platform_watchlist_analysis_visibility WHERE ticker_premium_only = 1").all());
+    const restricted = withReadonlyPlatformDatabase({}, db => {
+      const choices = new Map(db.prepare<[], { symbol: string; ticker_premium_only: number }>(
+        "SELECT symbol,ticker_premium_only FROM platform_watchlist_analysis_visibility").all().map(row => {
+        if (row.ticker_premium_only !== 0 && row.ticker_premium_only !== 1) throw new Error("Invalid access setting.");
+        return [row.symbol, row.ticker_premium_only === 1] as const;
+      }));
+      for (const row of db.prepare<[], { symbol: string; state_json: string }>("SELECT symbol,state_json FROM live_watchlist_symbols").all()) {
+        if (!choices.has(row.symbol)) choices.set(row.symbol, watchlistDefaultPremiumOnly(row.state_json));
+      }
+      return [...choices].filter(([, premiumOnly]) => premiumOnly).map(([symbol]) => ({ symbol }));
+    });
     const privateSymbols = withReadonlyPlatformDatabase({}, db => db.prepare<[], {symbol:string}>("SELECT symbol FROM live_watchlist_symbols WHERE json_extract(state_json,'$.watchlistGroup')='private'").all());
-    const premium = Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord));
+    const premium = Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord)) ||
+      withReadonlyPlatformDatabase({}, db => hasWatchlistPremiumPlanAccess(db, identity.scope.userId, "ticker"));
     const blocked = new Set(premium ? [] : restricted.map(row => row.symbol));
     const configuredHiddenRows = withReadonlyPlatformDatabase({}, db => {
       if (!db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_watchlist_row_visibility'").get()) return new Set<string>();
@@ -160,7 +172,8 @@ export function canViewWatchlistAnalysisPrices(requestHeaders: Headers, symbol: 
     if (hasWatchlistDashboardNavigationAccess(identity)) return true;
     const restricted = withReadonlyPlatformDatabase({}, db => readAnalysisPremiumOnly(db, symbol.toUpperCase()));
     if (!restricted) return true;
-    return Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord));
+    return Boolean(identity.discord && hasPlatformDiscordPremiumAccess(identity.discord)) ||
+      withReadonlyPlatformDatabase({}, db => hasWatchlistPremiumPlanAccess(db, identity.scope.userId, "analysis"));
   } catch {
     return false;
   }

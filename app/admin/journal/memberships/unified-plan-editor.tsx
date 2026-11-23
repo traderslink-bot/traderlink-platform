@@ -118,6 +118,7 @@ export function UnifiedPlanEditor({ initial, draftId, revision, features, provid
                     <EditorCheck label="Weekly calendar" checked={plan.features.some(f => f.key === "journal.calendar_week")} onChange={enabled => setting("journal.calendar_week", enabled)} />
                   </> : null}
                   {feature.key === "watchlist.access" ? <>
+                    <Typography variant="body2">Adding Watchlist to a plan keeps the main page open. Control which tickers and cards free members can see in Watchlist Admin. Requiring a plan for the whole page is a separate choice under Features.</Typography>
                     {[["watchlist.ticker_details", "Ticker details"], ["watchlist.trade_analysis", "Trade analysis"], ["watchlist.levels", "Support and Resistance"], ["watchlist.indicators", "Indicator card"]].map(([key, label]) => <EditorCheck key={key} label={label} checked={plan.features.some(f => f.key === key)} onChange={enabled => setting(key, enabled)} />)}
                   </> : null}
                   {feature.key === "analytics.trade_explorer" ? <EditorCheck label="Allow reports and exports" checked={plan.features.some(f => f.key === "analytics.exports")} onChange={enabled => setting("analytics.exports", enabled)} /> : null}

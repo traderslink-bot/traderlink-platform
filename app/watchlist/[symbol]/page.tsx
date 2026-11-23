@@ -1,6 +1,5 @@
 import { canViewWatchlistIndicators } from "@/src/modules/watchlist/server/access/watchlist-indicators-visibility";
 import { WatchlistMembershipNotice } from "../watchlist-membership-notice";
-import { WatchlistPlanUpgrade } from "@/app/watchlist/watchlist-plan-upgrade";
 import { readWatchlistUpgradeLinks } from "@/src/modules/watchlist/server/access/watchlist-plan-policy";
 import { canViewWatchlistLevels } from '@/src/modules/watchlist/server/access/watchlist-levels-visibility';
 import { canViewPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/watchlist-analysis-visibility";
@@ -82,7 +81,7 @@ export default async function LiveWatchlistSymbolPage({
   }
 
   const features = readWatchlistFeatureAccess(access.principal.platformUserId);
-  if (!features.tickerDetails) return <WatchlistDashboardFrame><div className="academy-container watchlist-container"><WatchlistPlanUpgrade feature="Ticker details" href={readWatchlistUpgradeLinks(symbol).ticker === undefined ? "/plans?feature=watchlist.ticker_details" : readWatchlistUpgradeLinks(symbol).ticker} /><Link href="/watchlist">Back to watchlist</Link></div></WatchlistDashboardFrame>;
+  if (!features.tickerDetails) return <WatchlistDashboardFrame><div className="academy-container watchlist-container"><PremiumTickerLock premium={false} upgradeHref={readWatchlistUpgradeLinks(symbol).ticker} /><Link href="/watchlist">Back to watchlist</Link></div></WatchlistDashboardFrame>;
   if (!canViewPrivateWatchlistTicker(requestHeaders, symbol)) notFound();
   if (!canViewWatchlistTicker(requestHeaders, symbol)) return <WatchlistDashboardFrame><PremiumTickerLock upgradeHref={readWatchlistUpgradeLinks(symbol).ticker} /></WatchlistDashboardFrame>;
   const state = await new LiveWatchlistStore().getSymbol(symbol);
@@ -135,7 +134,7 @@ export default async function LiveWatchlistSymbolPage({
         <WatchlistVisitRecorder pageKey={state.symbol} pageKind="detail" />
         <LiveWatchlistDetailClient
           initialMarketDataStatus={health.marketDataStatus}
-          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(requestHeaders, state.symbol), canViewWatchlistLevels(requestHeaders, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators, canViewWatchlistIndicators(requestHeaders, state.symbol))}
+          initialSymbol={watchlistDetailProjection(state, features.tradeAnalysis, canViewWatchlistAnalysisPrices(requestHeaders, state.symbol), canViewWatchlistLevels(requestHeaders, state.symbol), readWatchlistUpgradeLinks(state.symbol), features.indicators, canViewWatchlistIndicators(requestHeaders, state.symbol), features.levels)}
         />
       </div>
     </WatchlistDashboardFrame>

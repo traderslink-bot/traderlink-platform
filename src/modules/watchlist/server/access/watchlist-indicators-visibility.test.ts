@@ -5,11 +5,11 @@ import {watchlistIndicatorsVisibilityMigration} from '@/src/modules/platform/ser
 const adapter=vi.hoisted(()=>({db:null as unknown,owner:false,signed:true,premium:false}));
 vi.mock('./watchlist-admin-authorization',()=>({withWatchlistAdminDatabase:(_h:unknown,fn:()=>unknown)=>{if(!adapter.owner)throw Error('not owner');return fn();}}));
 vi.mock('@/src/modules/platform/server/database/open-readonly-platform-database',()=>({withReadonlyPlatformDatabase:(_o:unknown,fn:(db:unknown)=>unknown)=>fn(adapter.db)}));
-vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformAuthenticatedRequestIdentity:()=>{if(!adapter.signed)throw Error('not signed');return {discord:{guildOwner:false,roleIds:[]}};}}));
+vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformAuthenticatedRequestIdentity:()=>{if(!adapter.signed)throw Error('not signed');return {scope:{userId:'member'},discord:{guildOwner:false,roleIds:[]}};}}));
 vi.mock('./platform-discord-watchlist-entitlement',()=>({hasPlatformDiscordPremiumAccess:()=>adapter.premium}));
 import {readIndicatorsPremiumOnly,saveIndicatorsPremiumOnly,canViewWatchlistIndicators} from './watchlist-indicators-visibility';
 let db:Database.Database;
-beforeEach(()=>{db=new Database(':memory:');db.exec('CREATE TABLE platform_users(user_id TEXT PRIMARY KEY); INSERT INTO platform_users VALUES(\'owner\');');for(const sql of watchlistIndicatorsVisibilityMigration.statements)db.exec(sql);adapter.db=db;adapter.owner=false;adapter.signed=true;adapter.premium=false;});
+beforeEach(()=>{db=new Database(':memory:');db.exec('CREATE TABLE platform_users(user_id TEXT PRIMARY KEY); INSERT INTO platform_users VALUES(\'owner\'); CREATE TABLE live_watchlist_symbols(symbol TEXT,state_json TEXT); INSERT INTO live_watchlist_symbols VALUES(\'TEST\',\'{"watchlistGroup":"main"}\'),(\'OTHER\',\'{"watchlistGroup":"main"}\');');for(const sql of watchlistIndicatorsVisibilityMigration.statements)db.exec(sql);adapter.db=db;adapter.owner=false;adapter.signed=true;adapter.premium=false;});
 it('persists independent per-ticker state and audits each toggle',()=>{
  expect(readIndicatorsPremiumOnly(db,'TEST')).toBe(false);
  saveIndicatorsPremiumOnly(db,{symbol:'TEST',premiumOnly:true,actorUserId:'owner'});

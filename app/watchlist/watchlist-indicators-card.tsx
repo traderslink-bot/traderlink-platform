@@ -1,7 +1,10 @@
 "use client";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import Tooltip from "@mui/material/Tooltip";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
+import { WatchlistPlanUpgrade } from "./watchlist-plan-upgrade";
+import { SAMPLE_INDICATORS, SAMPLE_INDICATOR_PRICE } from "./watchlist-indicator-sample";
+import type { ReactNode } from "react";
 import { watchlistIndicatorGroups } from "./watchlist-indicator-groups";
 import type { IndicatorTimeframe } from "@/src/lib/live-watchlist/indicators/indicator-engine";
 import { memberIndicatorSnapshot, type WatchlistMemberIndicatorSnapshot } from "@/src/lib/live-watchlist/indicators/indicator-member-snapshot";
@@ -11,22 +14,23 @@ import styles from "./watchlist-indicators-card.module.css";
 const FRAMES: readonly IndicatorTimeframe[] = ["1m", "5m", "15m", "1d"];
 const PREFERENCE = "traderslink.watchlist.indicators.timeframe:v1";
 type MemberSnapshot = WatchlistMemberIndicatorSnapshot;
+function savedFrame(): IndicatorTimeframe {
+  try { const value = localStorage.getItem(PREFERENCE); return FRAMES.includes(value as IndicatorTimeframe) ? value as IndicatorTimeframe : "5m"; }
+  catch { return "5m"; }
+}
+function subscribePreference(notify: () => void) {
+  window.addEventListener("storage", notify);
+  return () => window.removeEventListener("storage", notify);
+}
+const defaultFrame = (): IndicatorTimeframe => "5m";
 const timestamp = (time: number | null | undefined) => typeof time === "number" && Number.isFinite(time)
   ? `${new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(time)} ET` : "—";
 
 export function WatchlistIndicatorsCard({ symbol, firstPostedAt, publicationIdentity, livePrice }: {
   symbol: string; firstPostedAt: number | null; publicationIdentity?: string; livePrice: number | null;
 }) {
-  const [selected, setSelected] = useState<IndicatorTimeframe>("5m");
   const [snapshot, setSnapshot] = useState<MemberSnapshot | null>(null);
-  const [openHelp, setOpenHelp] = useState<string | null>(null);
-  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
-  const id = useId();
   const activationId = publicationIdentity ?? null;
-  useEffect(() => {
-    try { const saved = localStorage.getItem(PREFERENCE); if (FRAMES.includes(saved as IndicatorTimeframe)) setSelected(saved as IndicatorTimeframe); }
-    catch { /* Preference persistence is optional. */ }
-  }, []);
   useEffect(() => {
     let active = true, pending = false;
     const controller = new AbortController();
@@ -53,19 +57,41 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, publicationIden
     return () => { active = false; controller.abort(); window.clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
   }, [symbol, firstPostedAt, activationId]);
   const current = snapshot?.activationId === activationId ? snapshot : null;
+  return <WatchlistIndicatorsView current={current} livePrice={livePrice} />;
+}
+
+/** The locked surface never mounts the connected card or its polling effect. */
+export function WatchlistIndicatorsSample({ premium = false, upgradeHref }: { premium?: boolean; upgradeHref?: string | null }) {
+  return <WatchlistIndicatorsView current={SAMPLE_INDICATORS} livePrice={SAMPLE_INDICATOR_PRICE} sample
+    notice={<WatchlistPlanUpgrade feature="Indicator card" premium={premium} href={upgradeHref} />} />;
+}
+
+export function WatchlistIndicatorsView({ current, livePrice, sample = false, notice }: {
+  current: MemberSnapshot | null; livePrice: number | null; sample?: boolean; notice?: ReactNode;
+}) {
+  const preference = useSyncExternalStore(subscribePreference, sample ? defaultFrame : savedFrame, defaultFrame);
+  const [selectedOverride, setSelected] = useState<IndicatorTimeframe | null>(null);
+  const selected = selectedOverride ?? preference;
+  const [openHelp, setOpenHelp] = useState<string | null>(null);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const id = useId();
   const result = current?.timeframes[selected];
   const rows = watchlistIndicatorGroups(indicatorDisplayRows({ result, timeframe: selected, livePrice, vwap: current?.vwap.value ?? null, vwapSignals: current?.vwap.signals }));
   const select = (frame: IndicatorTimeframe) => {
     setOpenHelp(null);
     setSelected(frame);
-    try { localStorage.setItem(PREFERENCE, frame); } catch { /* No market data or identifiers are stored. */ }
+    try { if (!sample) localStorage.setItem(PREFERENCE, frame); } catch { /* No market data or identifiers are stored. */ }
   };
-  return <article className={`academy-card watchlist-content-card ${styles.card}`} data-card-label="Indicators" aria-labelledby={`${id}-title`}>
+  return <article className={`academy-card watchlist-content-card ${styles.card}`} data-card-label="Indicators" data-sample={sample || undefined} aria-labelledby={`${id}-title`}>
     <h2 id={`${id}-title`} style={{ fontWeight: 700 }}>INDICATORS</h2>
+    {notice}
+    {sample ? <p className={styles.updated}>Sample readings — not this ticker’s data.</p> : null}
+    <div className={styles.sampleBody}>
+    {sample ? <div className={styles.watermarks} aria-hidden="true"><span>SAMPLE</span><span>SAMPLE</span><span>SAMPLE</span></div> : null}
     <div className={styles.summaries}>
       {FRAMES.slice(0, 3).map(frame => <div className={styles.summary} key={frame}>
         <strong>{frame}</strong><span>{indicatorSummary(current?.timeframes[frame])}</span>
-        <p className={styles.updated}>Last updated {timestamp(current?.timeframes[frame]?.dataThrough)}</p>
+        <p className={styles.updated}>{sample ? "Sample" : <>Last updated {timestamp(current?.timeframes[frame]?.dataThrough)}</>}</p>
       </div>)}
     </div>
     <div role="tablist" aria-label="Indicator timeframe" className={styles.tabs}>
@@ -78,7 +104,7 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, publicationIden
         }}>{indicatorFrameLabel(frame)}</button>)}
     </div>
     <section role="tabpanel" id={`${id}-details`} aria-labelledby={`${id}-${selected}`} tabIndex={0}>
-      <p className={styles.updated}>Last updated {timestamp(result?.dataThrough)}</p>
+      <p className={styles.updated}>{sample ? "Sample readings" : <>Last updated {timestamp(result?.dataThrough)}</>}</p>
       <ClickAwayListener onClickAway={() => setOpenHelp(null)}>
       <dl className={styles.rows} onKeyDown={event => { if (event.key === "Escape") setOpenHelp(null); }}>{rows.map((row, index) => <div className={styles.row} key={row.label}>
         <dt>{row.label}<Tooltip id={`${id}-help-${index}`} title={row.help} describeChild arrow
@@ -95,10 +121,11 @@ export function WatchlistIndicatorsCard({ symbol, firstPostedAt, publicationIden
               <strong>{signal.text}</strong>{" · "}<time dateTime={new Date(signal.at).toISOString()}>{timestamp(signal.at)}</time>
             </p>)}
           </div>)}
-          {row.label === "VWAP" ? <p className={styles.updated}>Last updated {timestamp(current?.vwap.dataThrough)}</p> : null}
+          {row.label === "VWAP" ? <p className={styles.updated}>{sample ? "Sample VWAP" : <>Last updated {timestamp(current?.vwap.dataThrough)}</>}</p> : null}
         </dd>
       </div>)}</dl>
       </ClickAwayListener>
     </section>
+    </div>
   </article>;
 }

@@ -5,8 +5,9 @@ import { PlatformMembershipRepository } from "@/src/modules/platform/server/memb
 import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { PlatformMembershipCatalogRepository } from "@/src/modules/platform/server/membership/platform-membership-catalog-repository";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { evaluateMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
+import { evaluateMembershipFeature, hasPlatformMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { PlatformDiscordMembershipRepository } from "@/src/modules/platform/server/authentication/platform-discord-membership-repository";
+import { TRADERLINK_PLATFORM_SESSION_TTL_MS } from "@/src/modules/platform/server/authentication/platform-session-service";
 import { resolveTraderLinkDiscordGuildId } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
 import { hasPlatformDiscordPremiumAccess } from "./platform-discord-watchlist-entitlement";
 
@@ -15,6 +16,44 @@ const symbolSchema = z.string().regex(/^[A-Z0-9][A-Z0-9.^-]{0,15}$/);
 const controlSchema = z.enum(["ticker", "analysis", "levels"]);
 const available = (db: Database.Database) => Boolean(db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_watchlist_plan_policies'").get());
 const features = { ticker: "watchlist.ticker_details", analysis: "watchlist.trade_analysis", levels: "watchlist.levels" } as const;
+
+/** Only new publications carry this marker. An explicit saved visibility choice
+ * is checked before this fallback; existing unmarked publications stay intact.
+ */
+export function watchlistDefaultPremiumOnly(stateJson: string | undefined): boolean {
+  if (stateJson === undefined) return true;
+  const state: unknown = JSON.parse(stateJson);
+  if (!state || typeof state !== "object" || Array.isArray(state)) throw new Error("Invalid Watchlist state.");
+  if (!Object.hasOwn(state, "premiumDefaultsVersion")) return false;
+  if ((state as { premiumDefaultsVersion: unknown }).premiumDefaultsVersion !== 1) throw new Error("Invalid Watchlist visibility defaults.");
+  return true;
+}
+
+export function readWatchlistDefaultPremiumOnly(db: Database.Database, symbol: string): boolean {
+  if (!symbolSchema.safeParse(symbol).success) throw new Error("Invalid ticker.");
+  if (!db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='live_watchlist_symbols'").get()) return true;
+  const state = db.prepare("SELECT state_json FROM live_watchlist_symbols WHERE symbol=?").get(symbol) as { state_json: string } | undefined;
+  return watchlistDefaultPremiumOnly(state?.state_json);
+}
+
+/** A default-open page is not a Premium grant. Each card needs its own current
+ * plan feature; explicit ticker-plan rules remain authoritative at the caller.
+ */
+export function hasWatchlistPremiumPlanAccess(db: Database.Database, userId: string,
+  control: WatchlistPlanControl | "indicators"): boolean {
+  return hasPlatformMembershipFeature(db, userId,
+    control === "indicators" ? "watchlist.indicators" : features[control]);
+}
+
+/** Match ordinary signed-in Discord evidence; a retained historical membership
+ * must not restore a disconnected identity, expired verification or recorded exit.
+ */
+export function readEffectiveWatchlistDiscordMembership(db: Database.Database, userId: string) {
+  const linked = db.prepare(`SELECT 1 FROM platform_auth_identities a JOIN platform_users u ON u.user_id=a.user_id
+    WHERE a.user_id=? AND a.auth_provider='discord' AND a.status='active' AND u.status='active'`).get(userId);
+  return linked ? new PlatformDiscordMembershipRepository(db).findEffective(userId,
+    resolveTraderLinkDiscordGuildId(process.env), new Date(), TRADERLINK_PLATFORM_SESSION_TTL_MS) : null;
+}
 /** Notification workers have a stable user, not browser headers. Keep this
  * private-data and commercial decision fail-closed at both enqueue and delivery.
  */
@@ -31,9 +70,11 @@ export function canNotifyWatchlistTicker(db: Database.Database, userId: string, 
       if (selected !== undefined) return selected;
       const column = control === "ticker" ? "ticker_premium_only" : "premium_only";
       const legacy = db.prepare(`SELECT ${column} restricted FROM platform_watchlist_analysis_visibility WHERE symbol=?`).get(symbol) as { restricted: number } | undefined;
-      if (!legacy || legacy.restricted === 0) return true;
-      if (legacy.restricted !== 1) return false;
-      const membership = new PlatformDiscordMembershipRepository(db).findCurrent(userId, resolveTraderLinkDiscordGuildId(process.env));
+      if (legacy && legacy.restricted !== 0 && legacy.restricted !== 1) return false;
+      const premiumOnly = legacy ? legacy.restricted === 1 : watchlistDefaultPremiumOnly(state.state_json);
+      if (!premiumOnly) return true;
+      if (hasWatchlistPremiumPlanAccess(db, userId, control)) return true;
+      const membership = readEffectiveWatchlistDiscordMembership(db, userId);
       return Boolean(membership && hasPlatformDiscordPremiumAccess(membership));
     };
     return permits("ticker") && (kind === "listing" ||

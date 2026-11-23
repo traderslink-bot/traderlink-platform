@@ -12,14 +12,26 @@ export type PremiumSimpleRead = Pick<TradersLinkAiReadPayload, "symbol" | "gener
 
 export const HIDDEN_ANALYSIS_PRICE = "[price hidden]";
 
+const PRICE_AMOUNT = "(?:[$€£]\\s*)?\\d+(?:,\\d{3})*(?:\\.\\d+)?";
+const PRICE_AREA = `${PRICE_AMOUNT}(?:\\s*(?:–|—|-|to|and|then)\\s*${PRICE_AMOUNT})*`;
+const LABELED_PRICE = new RegExp(
+  `(\\b(?:support|resistance|target|pullback|breakout|entry|reclaim|retest|stop(?:\\s+loss)?|buy\\s+zone|sell\\s+zone)s?` +
+  `(?:\\s+\\d+\\s*(?:is|at|:|=))?(?:\\s+(?:price|level|area|zone))?` +
+  `\\s*(?:(?:is|at|near|around)\\s+)?[:=]?\\s*)(${PRICE_AREA})(?![\\d\\w])`, "giu",
+);
+const CONTEXT_PRICE = new RegExp(`(\\b(?:above|below|at|near|toward|towards|through|reclaim|over|under)\\s+)(${PRICE_AREA})(?![\\d\\w])`, "giu");
+const maskPriceArea = (_match: string, prefix: string, area: string) =>
+  prefix + area.replace(new RegExp(PRICE_AMOUNT, "gu"), HIDDEN_ANALYSIS_PRICE);
+
 /** Dates, times, percentages and candle lengths are context, not prices. */
 export function concealAnalysisNumbers(text: string): string {
   const protectedParts: string[] = [];
   const protect = (value:string) => `\uE000${String.fromCharCode(0xE100 + protectedParts.push(value)-1)}\uE001`;
   return text.replace(/https?:\/\/\S+/giu, "")
     .replace(/\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{1,2}(?:,?\s+\d{4})?|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[/:]\d{1,2}(?:[/:]\d{2,4})?(?:\s*[ap]\.?m\.?)?|[-+]?\d+(?:\.\d+)?\s*%|\b\d+\s*(?:min(?:ute)?s?|hours?|days?|weeks?|months?|years?|[mh])\b/giu, protect)
+    .replace(LABELED_PRICE, maskPriceArea)
+    .replace(CONTEXT_PRICE, maskPriceArea)
     .replace(/[$€£]\s*\d[\d,.]*|\b\d+\.\d+\b|\b\d+(?:,\d{3})*(?:\s*(?:dollars?|cents?))\b/giu, HIDDEN_ANALYSIS_PRICE)
-    .replace(/\b(above|below|at|near|toward|towards|through|reclaim|over|under)\s+(\d+)\b/giu, `$1 ${HIDDEN_ANALYSIS_PRICE}`)
     .replace(/\uE000([\uE100-\uF8FF])\uE001/g, (_, key:string) => protectedParts[key.charCodeAt(0)-0xE100]);
 }
 

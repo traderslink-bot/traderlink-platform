@@ -1,4 +1,7 @@
 .card { grid-column: 1 / -1; }
+.sampleBody { position: relative; min-width: 0; }
+.watermarks { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; overflow: hidden; pointer-events: none; user-select: none; z-index: 1; }
+.watermarks span { transform: rotate(-25deg); font-size: clamp(3rem, 9vw, 6rem); font-weight: 900; letter-spacing: .12em; color: color-mix(in srgb, var(--academy-muted) 19%, transparent); }
 .summaries { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; margin: 1rem 0; }
 .summary { border: 1px solid var(--academy-border); border-radius: 8px; padding: .7rem; min-width: 0; }
 .summary strong, .summary span { display: block; }

@@ -5,8 +5,7 @@ import { reconcileFreeChatPublications } from "./watchlist-free-chat-runtime";
 import "server-only";
 import type Database from "better-sqlite3";
 import { withPlatformDatabase, openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { PlatformDiscordMembershipRepository } from "@/src/modules/platform/server/authentication/platform-discord-membership-repository";
-import { resolveTraderLinkDiscordGuildId } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
+import { readEffectiveWatchlistDiscordMembership } from "../access/watchlist-plan-policy";
 import { requestWatchlistRuntimeRaw } from "../runtime/watchlist-runtime-admin-client";
 import { publicationFromReview, type WatchlistApprovalIntent } from "./watchlist-publication-notification-contract";
 import { WatchlistPublicationNotificationStore } from "./watchlist-publication-notification-store";
@@ -21,11 +20,9 @@ export function watchlistNotificationAccess(database: Database.Database, userId:
   // obsolete platform_watchlist_visibility table was never part of this schema.
   if (!evaluateMembershipFeature(database, userId, "watchlist.access").allowed) return false;
   const active = database.prepare<[string], { n: number }>(`SELECT count(*) n FROM platform_users u
-    WHERE u.user_id=? AND u.status='active' AND EXISTS(SELECT 1 FROM platform_auth_identities a
-    WHERE a.user_id=u.user_id AND a.status='active' AND a.auth_provider='discord')`).get(userId);
+    WHERE u.user_id=? AND u.status='active'`).get(userId);
   if (active?.n && hasPlatformMembershipFeature(database, userId, "watchlist.access")) return true;
-  return Boolean(active?.n && new PlatformDiscordMembershipRepository(database)
-    .findCurrent(userId, resolveTraderLinkDiscordGuildId(process.env)));
+  return Boolean(active?.n && readEffectiveWatchlistDiscordMembership(database, userId));
 }
 
 /** Called only after existing owner authorization, before forwarding approval.
