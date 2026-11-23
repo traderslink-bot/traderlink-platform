@@ -14,7 +14,7 @@ export function watchlistPriceNote(symbol: Pick<LiveWatchlistSymbolState, "lates
   if (status === "live") return "";
   return typeof observedAt === "number" && Number.isFinite(observedAt) && observedAt > 0
     ? `Not live · Last price: ${priceTime.format(observedAt)} ET`
-    : "Not live · Price time unavailable";
+    : "Not live";
 }
 
 export function hasFreshWatchlistPrice(symbol: Pick<LiveWatchlistSymbolState, "latestPriceSource" | "latestPriceObservedAt">, now = Date.now()): boolean {

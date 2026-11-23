@@ -17,7 +17,7 @@ it("a confirmed live trade is not hidden by an older overnight reference",()=>{
 });
 it("an unavailable live trade retains the honestly marked fixed reference",()=>{
   const html=renderToStaticMarkup(createElement(WatchlistV2PotentialPathCard,{symbol,livePriceAvailable:false}));
-  expect(html).toContain("2.00");expect(html).toContain("Not live · Price time unavailable");
+  expect(html).toContain("2.00");expect(html).toContain("Not live");
   expect(html).toContain("until a newer live price arrives");
 });
 it("a dated BOATS reference displays the actual trade time rather than its later lookup time",()=>{
