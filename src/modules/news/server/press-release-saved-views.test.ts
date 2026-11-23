@@ -50,3 +50,13 @@ it.each([{type:'earnings'},{type:'sec'},{summary:'unavailable'}])('pauses legacy
  const reviewed=f.repo.save(f.one,{...view,alertsEnabled:true},'2026-11-18T20:02:00.000Z')[0];expect(reviewed).toMatchObject({alertsEnabled:true,requiresReview:false,alertsStartedAt:'2026-11-18T20:02:00.000Z'});
  expect(f.repo.hasMatchingAlert(f.one,'legacy-candidate')).toBe(false);f.article('after-review','$20M','2026-11-18T20:03:00.000Z');expect(f.repo.hasMatchingAlert(f.one,'after-review')).toBe(true);
 });
+
+it.each([{type:'earnings'},{type:'sec'},{summary:'available'}])('rejects stale clients creating or updating enabled alerts with retired criteria: %j',retired=>{
+ const f=fixture();const view=f.save(f.one,{alertsEnabled:true})[0];const original=f.db.prepare('SELECT filters_json,revision,alerts_started_at_utc FROM news_press_release_saved_views WHERE view_id=?').get(view.id);
+ expect(()=>f.save(f.one,{name:'Stale new alert',alertsEnabled:true,filters:{...view.filters,...retired}})).toThrow('Review');
+ expect(()=>f.repo.save(f.one,{...view,alertsEnabled:true,filters:{...view.filters,...retired}},at)).toThrow('Review');
+ expect(f.repo.list(f.one)).toHaveLength(1);expect(f.db.prepare('SELECT filters_json,revision,alerts_started_at_utc FROM news_press_release_saved_views WHERE view_id=?').get(view.id)).toEqual(original);
+});
+it('keeps older clients with inactive default retired fields compatible',()=>{
+ const f=fixture();const view=f.save(f.one,{alertsEnabled:true,filters:{...DEFAULT_NEWS_FILTERS,type:'all',summary:'all'}})[0];expect(view.alertsEnabled).toBe(true);expect(view.requiresReview).toBe(false);expect(view.filters).not.toHaveProperty('type');
+});

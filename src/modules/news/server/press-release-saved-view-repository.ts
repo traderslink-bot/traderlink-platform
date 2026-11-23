@@ -37,6 +37,7 @@ export class PressReleaseSavedViewRepository {
     this.writable(userId); assertCanonicalUtcTimestamp(atUtc,"updatedAtUtc");
     const name = newsViewName(input.name), filters = parseNewsFilters(input.filters), json = encodeNewsFilters(filters);
     if (typeof input.alertsEnabled !== "boolean") throw new Error("Choose whether this view sends alerts.");
+    if (input.alertsEnabled && newsFiltersRequireReview(JSON.stringify({ filters: input.filters }))) throw new Error("Review the remaining filters before enabling this alert. News type and summary-status filters are no longer supported.");
     this.database.transaction(() => {
       if (this.database.prepare("SELECT 1 FROM news_press_release_saved_views WHERE user_id=? AND name=? COLLATE NOCASE AND view_id<>?").get(userId,name,input.id ?? "")) throw new Error("You already have a saved view with this name.");
       if (input.id === null) {
