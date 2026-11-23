@@ -15,7 +15,7 @@ RUN mkdir -p /app/bin \
     /tmp/integrity-cache-release.c -o /app/bin/traderlink-integrity-cache-release
 
 FROM base AS builder
-ENV NODE_OPTIONS=--max-old-space-size=4096
+ENV NODE_OPTIONS=--max-old-space-size=6144
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

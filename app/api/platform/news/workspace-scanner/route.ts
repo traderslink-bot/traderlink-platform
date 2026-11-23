@@ -7,7 +7,7 @@ import type Database from "better-sqlite3";
 import { readScannerHeadlinesInChild } from "@/src/modules/news/server/press-release-unread-child";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import type { PressReleaseChannel } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
-import { easternSavedDate, recentTradingDates } from "@/src/modules/news/server/scanner-recent-press-releases";
+import { recentScannerTradingDates, scannerNewsEasternDate } from "@/src/modules/news/contracts/scanner-news-trading-dates";
 import { eligibleCompactMarketEvents } from "@/src/modules/news/server/market-events-cap";
 import { scannerSettingsStore } from "@/src/modules/scanner/live/server/runtime";
 import { DEFAULT_MARKET_EVENTS_PR_MAXIMUM_MARKET_CAP, marketEventsPressReleaseMaximumMarketCap } from "@/src/modules/scanner/live/settings";
@@ -157,9 +157,8 @@ export async function GET(request: Request): Promise<Response> {
         const next = responseArticles.length === 60 && last ? { publishedAt:last.publishedAt, id:last.id } : null;
         return Response.json({ articles, since, next, status:"ready" }, { headers });
       }
-      const now=new Date();
-      const easternDate=easternSavedDate(now);
-      const previousTradingDate=recentTradingDates(now).dates.find(date=>date<easternDate)??null;
+      const easternDate=scannerNewsEasternDate(new Date());
+      const previousTradingDate=recentScannerTradingDates(easternDate).dates.find(date=>date<easternDate)??null;
       let marketEventsPrMaximumMarketCap=DEFAULT_MARKET_EVENTS_PR_MAXIMUM_MARKET_CAP;
       try{marketEventsPrMaximumMarketCap=marketEventsPressReleaseMaximumMarketCap(await scannerSettingsStore().configuration());}catch{/* Keep news available with the approved default. */}
       const compactArticleIds = eligibleCompactMarketEvents(responseArticles, marketEventsPrMaximumMarketCap);
