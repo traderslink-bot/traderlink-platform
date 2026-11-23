@@ -59,7 +59,7 @@ beforeEach(() => {
 });
 
 it("serves continuous Scanners and the separate Stock Screeners workspace", async () => {
-  const scanner = renderToStaticMarkup(await ScannersPage());
+  const scanner = renderToStaticMarkup(await ScannersPage({}));
   const screener = renderToStaticMarkup(await loadScreeners());
   expect(scanner).toContain("scanner-builder live:gainers");
   expect(renderToStaticMarkup(await ScannersPage({ searchParams: Promise.resolve({ view: "live" }) }))).toContain("continuous-workspace");
@@ -75,16 +75,16 @@ it("serves continuous Scanners and the separate Stock Screeners workspace", asyn
 it("checks each member page independently while preserving the Stock Screeners availability gate", async () => {
   stock.enabled.mockReturnValue(false);
   await expect(loadScreeners()).rejects.toThrow("not_found");
-  expect(renderToStaticMarkup(await ScannersPage())).toContain("scanner-builder live:gainers");
+  expect(renderToStaticMarkup(await ScannersPage({}))).toContain("scanner-builder live:gainers");
 
   stock.enabled.mockReturnValue(true);
   auth.access.mockReturnValue(false);
   auth.identity.mockResolvedValue({ mode: "platform_session", discord: null, scope: { userId: "paid" } });
-  expect(renderToStaticMarkup(await ScannersPage())).toContain("scanner-builder live:gainers");
+  expect(renderToStaticMarkup(await ScannersPage({}))).toContain("scanner-builder live:gainers");
   expect(renderToStaticMarkup(await loadScreeners())).toContain("stock-screener-workspace");
   expect(renderToStaticMarkup(await LegacyScannerPage())).toContain("moomoo-scanner");
   auth.scannerAccess.mockReturnValue(false);
-  await expect(ScannersPage()).rejects.toThrow("not_found");
+  await expect(ScannersPage({})).rejects.toThrow("not_found");
   expect(renderToStaticMarkup(await loadScreeners())).toContain("stock-screener-workspace");
   auth.screenersAccess.mockReturnValue(false);
   await expect(loadScreeners()).rejects.toThrow("not_found");
@@ -92,7 +92,7 @@ it("checks each member page independently while preserving the Stock Screeners a
   await expect(LegacyScannerPage()).rejects.toThrow("not_found");
 
   auth.identity.mockRejectedValue(Error("authentication_required"));
-  await expect(ScannersPage()).rejects.toThrow("authentication_required");
+  await expect(ScannersPage({})).rejects.toThrow("authentication_required");
   await expect(loadScreeners()).rejects.toThrow("authentication_required");
   await expect(LegacyScannerPage()).rejects.toThrow("authentication_required");
   expect(stock.saved).toHaveBeenCalledTimes(2);

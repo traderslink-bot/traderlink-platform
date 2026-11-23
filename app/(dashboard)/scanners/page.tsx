@@ -12,7 +12,7 @@ export const revalidate = 0;
 
 export default async function ScannersPage({ searchParams }: {
   searchParams?: Promise<{ evidence?: string | string[]; view?: string | string[] }>;
-} = {}) {
+}) {
   const identity = await requireTraderLinkPlatformPageIdentity();
   if (!hasScannerDashboardAccess(identity)) notFound();
   const params = await searchParams;
