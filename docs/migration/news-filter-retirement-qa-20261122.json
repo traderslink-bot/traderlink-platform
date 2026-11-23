@@ -1,0 +1,74 @@
+{
+  "kind": "NEWS_FILTER_RETIREMENT_QA",
+  "atUtc": "2026-11-23T04:18:26.583640+00:00",
+  "base": "51735d0710c27fa8f3049383a4682f99d8db1e2c",
+  "scope": "Remove summary-status and unverified News-type filtering everywhere; retain article content/SEC labels and all factual filters",
+  "tests": [
+    {
+      "receipt": {
+        "path": "/tmp/news-filter-retirement-20261122/validation-result.json",
+        "sha256": "beb0e4af658c9725f839fc093db062f58795a1c9f93aef652e751ca80609d4a6"
+      },
+      "focusedPassed": 35,
+      "lint": 0,
+      "typeDiagnostics": 0
+    },
+    {
+      "receipt": {
+        "path": "/tmp/news-filter-retirement-20261122/completion-result.json",
+        "sha256": "d993c40e75812ec80e42f2b935ca6b87ae1b42ce4158d862cf11f2cfee4d406f"
+      },
+      "feedSuitePassed": 14,
+      "includesOneAdditionalCompatibilityCase": true,
+      "typeRoots": 24,
+      "reachable": 2180,
+      "typeDiagnostics": 0
+    },
+    {
+      "receipt": {
+        "path": "/tmp/news-filter-retirement-20261122/help-copy-result.json",
+        "sha256": "f93113cf2319a88859f72e1d96f67cee87a37d5ef1b55b0ccff0f6e11b2a8a52"
+      },
+      "lint": 0
+    }
+  ],
+  "native": {
+    "path": "/tmp/news-filter-retirement-20261122/native-result.json",
+    "sha256": "9f1c7f02fccff68317828f7c662271725496d1b9e14e180514b068ab26861343"
+  },
+  "browser": {
+    "path": "/tmp/news-filter-retirement-20261122/browser-result.json",
+    "sha256": "55b7eb05b75967d834f391c79f7075110ee3b95e982dc6b38d04c7d50625c7a2"
+  },
+  "nativePassed": 7,
+  "reviewPersistence": {
+    "path": "/tmp/news-filter-retirement-20261122/review-persistence.json",
+    "sha256": "f46f9e0cada002dd7c24386152b1624e2991711839006a770521f5c5811dd634"
+  },
+  "physical": {
+    "path": "/tmp/news-filter-retirement-20261122/physical-closeout.json",
+    "sha256": "a02791e564e9f02b058aa9c71dabb2169de80f3493f94a41cb8571830df5c0e2"
+  },
+  "retainedFailures": [
+    {
+      "path": "/tmp/news-filter-retirement-20261122/attempt1-drawer-transition/native-result.json",
+      "sha256": "bf61eaa965835a8db068992a0000559c8f274cc2a44140d522a7c8f48f46f290"
+    },
+    {
+      "path": "/tmp/news-filter-retirement-20261122/attempt1-drawer-transition/browser-result.json",
+      "sha256": "1c1f4ee07a79d9064324537f89ba29b38f9eb96014e43ef03b4484f79d448111"
+    }
+  ],
+  "guardRefusal": "One final check deferred without launching while common117534 was held elsewhere; later admitted and passed. No guard/process takeover.",
+  "productionEffects": 0,
+  "realProviderSends": 0,
+  "premium": "OFF_UNCHANGED",
+  "additionalMigrationRequired": false,
+  "earlier0227Migration": "Still independently on owner approval hold",
+  "deployed": false,
+  "unverified": [
+    "Integrated final release CI/compiled image",
+    "Production installation/behavior"
+  ],
+  "frozenPriorSourcePacketSha256": "28e3ad7d8524aa4f0aa1d09e0a9a0865d4dd89450a950c2646baa8e9577b5b14"
+}

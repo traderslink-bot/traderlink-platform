@@ -21,9 +21,7 @@ Recommended first release:
 | Market cap | Minimum and maximum in USD millions; shortcuts Under $30M, $30M–$50M, $50M–$100M, $100M–$300M, $300M–$500M, $500M+; include an explicit Unknown option. These are UI choices, never inferred from channel tags. |
 | Ticker | One or multiple exact tickers; separate headline keyword search. |
 | Published date | Today, last 7 days, last 30 days, custom From/To; clear Eastern-time boundaries. |
-| News type | Press releases and actual recorded types such as earnings, financing, SEC filings. No invented classifications from headline prose. |
 | Read state | All, unread, read. |
-| Summary | Any, summary available, summary unavailable. |
 
 Sort choices: `Newest first` (default), `Oldest first`, `Market cap: low to high`, `Market cap: high to low`, `Ticker: A–Z`. Every order has deterministic time/ID ties. Unknown market cap stays last in both cap orders.
 
@@ -67,3 +65,7 @@ Implementation and QA: [progress record](press-releases-unified-feed-progress-20
 ## Owner extension — account views and custom alerts
 
 The owner subsequently requested cross-device account persistence and notifications for several saved filtered sections, including custom market-cap ranges. This supersedes the browser-only persistence limit above. Follow [the extension plan](press-release-account-views-and-alerts-plan-20261119.md) and its progress record. Migration 0221/order296 is source-reserved; production sequencing/approval remains Coordinator-owned.
+
+Current ingestion/category preservation and toolbar follow-up: [News ingestion memberships plan](migration/news-ingestion-memberships-plan-20261122.md). Source/private QA only; owner deployment approval remains required.
+
+Owner correction: [retired filter correction](migration/news-filter-retirement-20261122.md) removes summary status and the unverified type selector. Other factual filters stay. Older saved alerts using removed criteria require explicit review before resuming. No deployment is authorized.

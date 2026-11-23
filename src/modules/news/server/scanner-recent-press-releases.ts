@@ -1,3 +1,4 @@
+import { NEWS_ROUTE_TAGS, newsCategoryPredicate } from "./news-category-memberships";
 import "server-only";
 
 import type Database from "better-sqlite3";
@@ -8,7 +9,7 @@ const easternDateFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
 });
 const closedDates = new Set(calendar.closedDates);
-const routeTags = ["default", "spike", "market_cap_under_30m", "market_cap_30m_to_50m", "market_cap_50m_to_100m"];
+const routeTags = NEWS_ROUTE_TAGS;
 
 export function easternSavedDate(value: string | Date): string {
   const parts = easternDateFormatter.formatToParts(typeof value === "string" ? new Date(value) : value);
@@ -70,9 +71,9 @@ export function listScannerRecentPressReleases(database: Database.Database, tick
   // The ticker index bounds the query; the Eastern-date filter below handles DST and closed dates.
   const rows = database.prepare(`
     SELECT id, ticker, headline, slug, created_at, summary, source_url, event_type, metadata_json
-    FROM news_articles
+    FROM news_articles article
     WHERE ticker = ? AND created_at >= ? AND created_at <= ?
-      AND route_tag IN (${routeTags.map(() => "?").join(", ")})
+      AND ${newsCategoryPredicate(database, routeTags)}
     ORDER BY created_at DESC, id ASC
   `).all(ticker, `${window.dates[4]}T00:00:00.000Z`, now.toISOString(), ...routeTags) as ArticleRow[];
   const articles = rows.filter((row) => includedDates.has(easternSavedDate(row.created_at))).map((row) => ({

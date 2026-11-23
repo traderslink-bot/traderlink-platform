@@ -1,0 +1,28 @@
+{
+  "kind": "NEWS_FINAL_COMBINED_QA_AND_STALE_CLIENT_CORRECTION",
+  "atUtc": "2026-11-23T04:28:11.186948+00:00",
+  "base": "8340a53c28aa16973490a2cdd4747b9be5494d3c",
+  "finding": "Stale clients could save an enabled alert with retired criteria; normalization would silently broaden it. Source review finding, not a production incident.",
+  "fix": "Reject create/update of enabled alerts that still supply active type/summary criteria, before any SQL mutation. Inactive legacy defaults all/all remain compatible. Explicit canonical review/save still resumes with new start time.",
+  "combinedTests": {
+    "files": 9,
+    "passed": 66,
+    "receipt": {
+      "path": "/tmp/news-final-qa-20261122/validation-result.json",
+      "sha256": "9270ce0bae392491cc53b83bdcde3a45728737cbb22264c01eeb36b4923b442f"
+    },
+    "log": {
+      "path": "/tmp/news-final-qa-20261122/combined.log",
+      "sha256": "18f8329ce24e0a6f7d7ff7067015cdf0e76ac568c386ef4b3f008a02792e0510"
+    }
+  },
+  "lintErrors": 0,
+  "typeDiagnostics": 0,
+  "typeRoots": 24,
+  "reachableFiles": 2180,
+  "existingVisualQa": "docs/migration/news-filter-retirement-qa-20261122.json; UI bytes unchanged by this two-file guard fix",
+  "productionIncidentObserved": false,
+  "newMigrationRequired": false,
+  "actualDeployed": false,
+  "providerOrProductionEffects": 0
+}

@@ -1,3 +1,4 @@
+import { newsCategoryPredicate } from "./news-category-memberships";
 import { DEFAULT_NEWS_FILTERS, NEWS_FILTERS_FEATURE, parseNewsFilters } from "../contracts/press-release-filters";
 import { pressReleaseFilterQuery } from "./press-release-filter-query";
 import { newsSummaryUnavailable } from "../contracts/news-outbound-link";
@@ -61,14 +62,13 @@ function routeTags(channel: PressReleaseChannel): readonly string[] {
       "market_cap_under_30m",
       "market_cap_30m_to_50m",
       "market_cap_50m_to_100m",
+      "market_cap_100m_to_300m",
+      "market_cap_300m_to_500m",
     ]);
     case "market_cap_under_30m": return Object.freeze([channel]);
     case "market_cap_30m_to_50m": return Object.freeze([channel]);
     case "market_cap_50m_to_100m": return Object.freeze([channel]);
   }
-}
-function placeholders(values: readonly unknown[]): string {
-  return values.map(() => "?").join(", ");
 }
 
 function parseRecord(value: string): Record<string, unknown> {
@@ -167,7 +167,7 @@ export class PressReleaseDashboardRepository {
 FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
-WHERE article.route_tag IN (${placeholders(tags)})
+WHERE ${newsCategoryPredicate(this.database, tags)}
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
 ${input.since ? "AND julianday(article.published_at) >= julianday(?)" : ""}
@@ -214,7 +214,7 @@ LIMIT ?`,
 FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
-WHERE article.route_tag IN (${placeholders(tags)})
+WHERE ${newsCategoryPredicate(this.database, tags)}
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
 ORDER BY article.published_at DESC, article.id
@@ -246,7 +246,7 @@ LIMIT ?`).all(input.scope.userId, ...tags, delaySeconds, delaySeconds, limit) as
 FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
-WHERE article.route_tag IN (${placeholders(tags)})
+WHERE ${newsCategoryPredicate(this.database, tags)}
   ${input.ticker ? "AND article.ticker = ?" : ""}
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
@@ -289,7 +289,7 @@ LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
 LEFT JOIN news_article_read_receipts snapshot_receipt
   ON snapshot_receipt.article_id = article.id AND snapshot_receipt.user_id = ? AND snapshot_receipt.read_at_utc <= ?
-WHERE article.route_tag IN (${placeholders(tags)})
+WHERE ${newsCategoryPredicate(this.database, tags)}
   ${input.ticker ? "AND article.ticker = ?" : ""}
   AND julianday(article.created_at) <= julianday(?) - ? / 86400.0
   AND julianday(article.published_at) <= julianday(?) - ? / 86400.0
@@ -318,7 +318,7 @@ LIMIT ? OFFSET ?`).all(input.scope.userId, input.scope.userId, asOf, ...tags, ..
 FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
-WHERE article.id = ? AND article.route_tag IN (${placeholders(tags)})
+WHERE article.id = ? AND ${newsCategoryPredicate(this.database, tags)}
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0
 LIMIT 1`).get(input.scope.userId, input.articleId, ...tags,
@@ -340,12 +340,12 @@ LIMIT 1`).get(input.scope.userId, input.articleId, ...tags,
     return Object.freeze({
       sql: `SELECT
 ${PRESS_RELEASE_CHANNELS.map((channel, index) =>
-  `COALESCE(SUM(CASE WHEN article.route_tag IN (${placeholders(channelTags[index])}) THEN 1 ELSE 0 END), 0) AS "${channel}"`).join(",\n")}
+  `COALESCE(SUM(CASE WHEN ${newsCategoryPredicate(this.database, channelTags[index])} THEN 1 ELSE 0 END), 0) AS "${channel}"`).join(",\n")}
 FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
 WHERE receipt.article_id IS NULL
-  AND article.route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})
+  AND ${newsCategoryPredicate(this.database, ALL_ELIGIBLE_ROUTE_TAGS)}
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0`,
       parameters: Object.freeze([...channelTags.flat(), scope.userId,
@@ -363,7 +363,7 @@ FROM news_articles article
 LEFT JOIN news_article_read_receipts receipt
   ON receipt.article_id = article.id AND receipt.user_id = ?
 WHERE receipt.article_id IS NULL
-  AND article.route_tag IN (${placeholders(tags)})
+  AND ${newsCategoryPredicate(this.database, tags)}
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0`).get(scope.userId, ...tags,
         ...Array(2).fill(readMembershipNewsDelaySeconds(this.database, scope.userId, "news.visibility_delay_seconds"))) as { count: number };
@@ -380,8 +380,8 @@ WHERE receipt.article_id IS NULL
     assertActiveUser(this.database, input.scope);
     assertMembershipFeature(this.database, input.scope.userId, "news.access");
     assertCanonicalUtcTimestamp(input.readAtUtc, "newsArticleReadAt");
-    const eligible = this.database.prepare(`SELECT 1 AS found FROM news_articles
-WHERE id = ? AND route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})
+    const eligible = this.database.prepare(`SELECT 1 AS found FROM news_articles article
+WHERE id = ? AND ${newsCategoryPredicate(this.database, ALL_ELIGIBLE_ROUTE_TAGS)}
   AND julianday(created_at) <= julianday('now') - ? / 86400.0
   AND julianday(published_at) <= julianday('now') - ? / 86400.0`).get(
       input.articleId,
@@ -407,7 +407,7 @@ WHERE id = ? AND route_tag IN (${placeholders(ALL_ELIGIBLE_ROUTE_TAGS)})
   article_id, user_id, read_at_utc
 )
 SELECT article.id, ?, ? FROM news_articles article
-WHERE article.route_tag IN (${placeholders(tags)})
+WHERE ${newsCategoryPredicate(this.database, tags)}
   AND julianday(article.created_at) <= julianday('now') - ? / 86400.0
   AND julianday(article.published_at) <= julianday('now') - ? / 86400.0`).run(
       input.scope.userId,

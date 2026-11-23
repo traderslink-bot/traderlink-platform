@@ -1,0 +1,277 @@
+{
+  "kind": "NEWS_INGESTION_MEMBERSHIPS_PRIVATE_QA",
+  "atUtc": "2026-11-23T03:44:20.442815+00:00",
+  "base": "8890b66f77faf4a4b37675acb9d1315f166cf402",
+  "workspace": "/home/traderlink/projects/news-ingestion-current-main-20261122",
+  "deployed": false,
+  "productionWrites": 0,
+  "realProviderCalls": 0,
+  "discordPosts": 0,
+  "premiumEnforcement": "UNCHANGED_OFF; no policy/config writes",
+  "policyObservation": {
+    "syntheticExplicitFilterPolicyRows": 0,
+    "effectiveSourceDefault": "off",
+    "source": "src/modules/platform/contracts/membership-product-features.ts; unchanged"
+  },
+  "migration": {
+    "id": "0227_news_article_ingestion_memberships",
+    "executionOrder": 306,
+    "productionApplied": false,
+    "syntheticApplied": true,
+    "prefixQualification": "Coordinator-owned; not a blanket migration admission"
+  },
+  "focusedCheckpoints": [
+    {
+      "receipt": {
+        "path": "/tmp/news-ingestion-qa-20261122/focused-result.json",
+        "sha256": "baa1bc6686ffbfb1e52c450329253dab81aaac3f188a28d1e63862d315d9c519"
+      },
+      "passed": 33
+    },
+    {
+      "receipt": {
+        "path": "/tmp/news-ingestion-qa-20261122/validation-result.json",
+        "sha256": "52250e94a33ab6bf22b047e86a60f3e2d809e7ed2803e170e9254787e3473834"
+      },
+      "endpointAndIngestionPassed": 9,
+      "lint": 0,
+      "types": "initial 13 test-fixture diagnostics retained; corrected later"
+    },
+    {
+      "receipt": {
+        "path": "/tmp/news-ingestion-qa-20261122/final-validation-result.json",
+        "sha256": "013dbb53e7a98db17d839846c052047d73f3ac78871b5a50caa1bac26261ca25"
+      },
+      "passed": 17,
+      "includesDashboardTemplate": true,
+      "lint": 0,
+      "typeDiagnostics": 0
+    },
+    {
+      "receipt": {
+        "path": "/tmp/news-ingestion-qa-20261122/completion-validation-result.json",
+        "sha256": "81aea3d3cc78d0717e14ecd513f468fb97841ca7105f114f0c6fb240493fda09"
+      },
+      "passed": 12,
+      "includesRawPayloadArrayAndIndependentConcurrentProcesses": true,
+      "lint": 0,
+      "typeDiagnostics": 0,
+      "typeRoots": 15,
+      "reachableSourceFiles": 2175
+    }
+  ],
+  "nativeHttpAcceptance": {
+    "path": "/tmp/news-ingestion-native-20261122/attempt2-drawer-selector/browser-result.json",
+    "sha256": "2c3cd5141c280d0d1286c4807bb0742edff63b96532acff014db4f7b3fbef993"
+  },
+  "nativeMainClosure": {
+    "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/result.json",
+    "sha256": "bcd48786b5516dcb384060c3f2b8c7c97de684d2d6c80691c594207568fa9969"
+  },
+  "nativeWorkspaceClosure": {
+    "path": "/tmp/news-ingestion-native-20261122/accepted-workspace-views/result.json",
+    "sha256": "5a5c0200f3e40c9ad307934f32590fe2dda6c1b1822b8584d696b4ae98bdadc7"
+  },
+  "nativeScannerClosure": {
+    "path": "/tmp/news-ingestion-native-20261122/screeners-result.json",
+    "sha256": "91e238124c0ff763b4e8ab5a68d030792cc59c46b72f674874bf3ed65ccb0f9d"
+  },
+  "visualCombinations": [
+    {
+      "case": "/press-releases desktop light labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/attempt3-consent-observation/browser-result.json",
+        "sha256": "97e010716562c0df6664dbea77e4664a56c73da155b4a4fc4d3b9f4e7f651ffb"
+      }
+    },
+    {
+      "case": "/press-releases desktop navy labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/attempt3-consent-observation/browser-result.json",
+        "sha256": "97e010716562c0df6664dbea77e4664a56c73da155b4a4fc4d3b9f4e7f651ffb"
+      }
+    },
+    {
+      "case": "/press-releases portrait light labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases portrait navy labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases landscape light labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases landscape navy labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases/news-filtered desktop light labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases/news-filtered desktop navy labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases/news-filtered portrait light labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases/news-filtered portrait navy labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases/news-filtered landscape light labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/press-releases/news-filtered landscape navy labeled drawer and aligned controls",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-main-views/browser-result.json",
+        "sha256": "8f398f8814f2ba2fc9c34d4857f66ab7d12281706765d6c19085eedc2a4eae76"
+      }
+    },
+    {
+      "case": "/trading-workspace desktop light cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-workspace-views/browser-result.json",
+        "sha256": "3cd6e7dceb1c205b75badac513638211c4ba7132f82b3838d9d017a286ed45f1"
+      }
+    },
+    {
+      "case": "/trading-workspace desktop navy cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-workspace-views/browser-result.json",
+        "sha256": "3cd6e7dceb1c205b75badac513638211c4ba7132f82b3838d9d017a286ed45f1"
+      }
+    },
+    {
+      "case": "/trading-workspace portrait light cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-workspace-views/browser-result.json",
+        "sha256": "3cd6e7dceb1c205b75badac513638211c4ba7132f82b3838d9d017a286ed45f1"
+      }
+    },
+    {
+      "case": "/trading-workspace portrait navy cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-workspace-views/browser-result.json",
+        "sha256": "3cd6e7dceb1c205b75badac513638211c4ba7132f82b3838d9d017a286ed45f1"
+      }
+    },
+    {
+      "case": "/trading-workspace landscape light cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-workspace-views/browser-result.json",
+        "sha256": "3cd6e7dceb1c205b75badac513638211c4ba7132f82b3838d9d017a286ed45f1"
+      }
+    },
+    {
+      "case": "/trading-workspace landscape navy cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/accepted-workspace-views/browser-result.json",
+        "sha256": "3cd6e7dceb1c205b75badac513638211c4ba7132f82b3838d9d017a286ed45f1"
+      }
+    },
+    {
+      "case": "/scanners desktop light cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/screeners-browser-result.json",
+        "sha256": "bee7a5c4ada0e72fd8aa690e29b928d40f9168b6f07607073831201b7d3179ac"
+      }
+    },
+    {
+      "case": "/scanners desktop navy cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/screeners-browser-result.json",
+        "sha256": "bee7a5c4ada0e72fd8aa690e29b928d40f9168b6f07607073831201b7d3179ac"
+      }
+    },
+    {
+      "case": "/scanners portrait light cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/screeners-browser-result.json",
+        "sha256": "bee7a5c4ada0e72fd8aa690e29b928d40f9168b6f07607073831201b7d3179ac"
+      }
+    },
+    {
+      "case": "/scanners portrait navy cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/screeners-browser-result.json",
+        "sha256": "bee7a5c4ada0e72fd8aa690e29b928d40f9168b6f07607073831201b7d3179ac"
+      }
+    },
+    {
+      "case": "/scanners landscape light cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/screeners-browser-result.json",
+        "sha256": "bee7a5c4ada0e72fd8aa690e29b928d40f9168b6f07607073831201b7d3179ac"
+      }
+    },
+    {
+      "case": "/scanners landscape navy cap/float card and article labels",
+      "receipt": {
+        "path": "/tmp/news-ingestion-native-20261122/screeners-browser-result.json",
+        "sha256": "bee7a5c4ada0e72fd8aa690e29b928d40f9168b6f07607073831201b7d3179ac"
+      }
+    }
+  ],
+  "distinctVisualCombinations": 24,
+  "browserJavaScriptErrors": 0,
+  "externalNetwork": "denied by fixture server and browser; no real providers; local fake company-profile endpoint only",
+  "syntheticDatabaseCounts": {
+    "articles": 8,
+    "sourceUrls": 8,
+    "sourceEvents": 10,
+    "categoryMemberships": 10
+  },
+  "physicalCloseout": {
+    "path": "/tmp/news-ingestion-qa-20261122/physical-closeout.json",
+    "sha256": "565a140fdfbb19049fe6668570edc88d0303028e98b368dfea6264f0489cfadb"
+  },
+  "retainedFailures": [
+    "initial independent-child test transpilation loader error and timeout",
+    "13 test-only incomplete-scope/invalid-property type errors",
+    "native fixture module resolution before application startup",
+    "drawer selector strictness and consent timing",
+    "own dev cgroup OOM while combining additional page compilation; first six Workspace visual cases retained",
+    "wrong harness route /screeners corrected to actual /scanners mount"
+  ],
+  "unverified": [
+    "Production existing-data collision inventory and migration-prefix qualification",
+    "production migration/backup application",
+    "final integrated CI and compiled production image",
+    "hosted public webpage serving and production runtime behavior"
+  ],
+  "handoff": "Source review/local preservation only. DO NOT DEPLOY until explicit owner approval."
+}
