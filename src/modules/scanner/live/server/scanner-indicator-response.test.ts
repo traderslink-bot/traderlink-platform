@@ -2,7 +2,7 @@ import { expect, it, vi } from "vitest";
 import { scannerIndicatorResponse } from "./scanner-indicator-response";
 import { browserDataSession } from "@/src/modules/market-data/server/browser-data-session";
 
-const sourceSelection=vi.hoisted(()=>({provider:"alpaca",revision:0}));
+const sourceSelection=vi.hoisted(()=>({provider:"alpaca" as "alpaca" | "moomoo",revision:0}));
 vi.mock("server-only", () => ({}));
 vi.mock("@/src/modules/market-data/server/provider-settings", () => ({
   marketDataSelection: () => ({...sourceSelection}),
@@ -68,8 +68,11 @@ it("isolates cached reads by source revision and rejects a mismatched feed",asyn
   const bars=Array.from({length:360},(_,i)=>({time:Date.now()/1000-(360-i)*60,open:2,high:2.1,low:1.9,close:2,volume:100}));
   const load=vi.fn(async(input:Request)=>{
    const query=new URL(input.url).searchParams;
-   expect(query.get("provider")).toBe(sourceSelection.provider);
-   expect(query.get("providerRevision")).toBe(String(sourceSelection.revision));
+   expect(Object.fromEntries(query)).toEqual({
+     symbol: "SWITCH",
+     scannerIndicators: "1",
+     ...browserDataSession("scanners", sourceSelection),
+   });
    return Response.json({symbol:"SWITCH",feed:sourceSelection.provider==="alpaca"?"sip":"moomoo",adjustment:"split",bars});
   });
   expect((await scannerIndicatorResponse(request(),load)).status).toBe(200);

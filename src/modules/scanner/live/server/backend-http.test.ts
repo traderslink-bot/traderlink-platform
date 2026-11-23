@@ -91,11 +91,22 @@ describe("scanner float HTTP",()=>{
 
 it("pushes completed scanner models immediately and cancels its subscription", async () => {
   let notify=()=>{};const unsubscribe=vi.fn();const abort=new AbortController();
+  const withHalt: ScannerReadModel = { ...model, activeHalts: [{
+    id: "alpaca:SHFS:2026-10-30T14:30:00Z", source: "alpaca", ticker: "SHFS", market: "NASDAQ",
+    haltTimeEt: "10:30:00", reasonCode: "LUDP", reason: "Volatility", quoteTimeEt: null, tradeTimeEt: null,
+  }] };
+  const snapshot = await handleLiveScannerGet(request("GET"),{ member:()=>true,read:()=>withHalt });
+  const snapshotModel: ScannerReadModel = await snapshot.json();
+  expect(snapshotModel.activeHalts?.[0].id).toMatch(/^[a-f0-9]{64}$/);
   const response=await handleLiveScannerGet(new Request("http://localhost/api/screeners/live?stream=1",{signal:abort.signal}),{
-    member:()=>true,read:async()=>model,subscribe:callback=>{notify=callback;return unsubscribe;},
+    member:()=>true,read:async()=>withHalt,subscribe:callback=>{notify=callback;return unsubscribe;},
   });
   expect(response.headers.get("content-type")).toBe("text/event-stream");
-  const reader=response.body!.getReader();const first=await reader.read();expect(new TextDecoder().decode(first.value)).toContain('event: scanner');
+  const reader=response.body!.getReader();const first=await reader.read();
+  const firstFrame = new TextDecoder().decode(first.value);
+  expect(firstFrame).toContain('event: scanner');
+  expect(firstFrame).toContain(snapshotModel.activeHalts?.[0].id);
+  expect(firstFrame).not.toContain("alpaca");
   notify();const second=await reader.read();expect(new TextDecoder().decode(second.value)).toContain('"gainers"');
   abort.abort();expect(unsubscribe).toHaveBeenCalledOnce();await reader.cancel();
 });

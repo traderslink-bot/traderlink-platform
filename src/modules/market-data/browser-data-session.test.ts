@@ -39,6 +39,18 @@ it("isolates features and source switches including switching back, without reve
   expect(matchesBrowserDataSession(query, "charts", again)).toBe(false);
   expect(matchesBrowserDataSession(query, "scanners", a)).toBe(false);
   expect(matchesBrowserDataSession(new URLSearchParams({ generation: "invalid" }), "charts", a)).toBe(false);
-  expect(matchesBrowserDataSession(new URLSearchParams({ provider: "alpaca", providerRevision: "0" }), "charts", a)).toBe(true);
-  expect(matchesBrowserDataSession(new URLSearchParams({ provider: "alpaca", providerRevision: "0" }), "charts", b)).toBe(false);
+});
+
+it("rejects retired routing parameters uniformly even with a current opaque generation", () => {
+  const selections = [{ provider: "alpaca", revision: 0 }, { provider: "moomoo", revision: 1 }] as const;
+  for (const selection of selections) {
+    const current = browserDataSession("charts", selection);
+    expect(matchesBrowserDataSession(new URLSearchParams(), "charts", selection)).toBe(true);
+    for (const input of ["provider=", "providerRevision=", "provider=alpaca&provider=moomoo", "%70roviderRevision=0"]) {
+      const query = new URLSearchParams(input);
+      expect(matchesBrowserDataSession(query, "charts", selection)).toBe(false);
+      query.set("generation", current.generation);
+      expect(matchesBrowserDataSession(query, "charts", selection)).toBe(false);
+    }
+  }
 });

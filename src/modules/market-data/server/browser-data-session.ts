@@ -21,9 +21,7 @@ export function browserDataSession(feature: MarketDataFeature, selection: Scanne
 
 /** The generation identifies a dataset; authentication and access remain separate. */
 export function matchesBrowserDataSession(query: URLSearchParams, feature: MarketDataFeature, selection: ScannerConnection): boolean {
-  if (query.has("generation") && query.get("generation") !== browserDataSession(feature, selection).generation) return false;
-  // Preserve existing server consumers and already-open older clients. New
-  // browser code sends only generation, never the selected supplier's name.
-  return (!query.has("provider") || query.get("provider") === selection.provider)
-    && (!query.has("providerRevision") || query.get("providerRevision") === String(selection.revision));
+  // Reject retired routing parameters regardless of their values or the active selection.
+  if (query.has("provider") || query.has("providerRevision")) return false;
+  return !query.has("generation") || query.get("generation") === browserDataSession(feature, selection).generation;
 }

@@ -22,11 +22,23 @@ it('returns the requested normalized year to signed-in accounts outside the scan
 });
 
 it('rejects an outdated source before reading data and a source changed during the read',async()=>{
- const stale=new Request('http://local/api/charts/calendar?year=2027&provider=moomoo&providerRevision=1');
+ const generation=browserDataSession('charts',{provider:'alpaca',revision:1}).generation;
+ const stale=new Request('http://local/api/charts/calendar?year=2027&generation='+generation);
  expect((await GET(stale)).status).toBe(409);expect(state.gateway).not.toHaveBeenCalled();
  // Use an actual complete normalized calendar so the stale-source check is exercised.
  state.gateway.mockImplementation(async()=>{state.selection={provider:"alpaca",revision:2};return {available:true,start:'2027-01-01',end:'2027-12-31',sessions:Array.from({length:252},(_,n)=>({date:new Date(Date.UTC(2027,0,1+n)).toISOString().slice(0,10),open:'09:30',close:'16:00'}))};});
  expect((await GET(request())).status).toBe(409);
+});
+
+it('rejects retired routing parameters with the same response before either provider is called',async()=>{
+ const legacy=new Request('http://local/api/charts/calendar?year=2027&provider=alpaca&providerRevision=0');
+ for(const selection of [{provider:'alpaca',revision:0},{provider:'moomoo',revision:1}]){
+  state.selection=selection;
+  const response=await GET(legacy);
+  expect(response.status).toBe(409);
+  expect(await response.json()).toEqual({error:'provider_changed'});
+ }
+ expect(state.gateway).not.toHaveBeenCalled();
 });
 
 it('rejects old neutral generations before calendar I/O, including switching back to the original source',async()=>{

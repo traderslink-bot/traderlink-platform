@@ -1,5 +1,9 @@
 import "server-only";
+import { createHmac, randomBytes } from "node:crypto";
 import type { LiveScreenResults, ScannerReadModel } from "../contracts";
+
+// JSON and stream responses use the same opaque halt IDs for the lifetime of the server process.
+const application = globalThis as typeof globalThis & { traderlinkBrowserHaltIdKey?: Buffer };
 
 const publicIssues = new Set(["invalid_row", "unexpected_symbol", "duplicate_symbol", "stale_or_invalid_provider_time",
   "session_timestamp_unverified", "provider_time_outside_session", "session_price_unavailable", "session_baseline_unavailable",
@@ -29,7 +33,10 @@ export function browserScannerModel(value: ScannerReadModel): ScannerReadModel {
     ...(value.dayGainers ? { dayGainers: screen(value.dayGainers) } : {}),
     ...(value.breakouts ? { breakouts: value.breakouts.map(facts) } : {}),
     ...(value.activeHalts ? { activeHalts: value.activeHalts.map(halt => {
-      const copy = { ...halt }; delete copy.source; return copy;
+      const key = application.traderlinkBrowserHaltIdKey ??= randomBytes(32);
+      const copy = { ...halt, id: createHmac("sha256", key).update(halt.id).digest("hex") };
+      delete copy.source;
+      return copy;
     }) } : {}),
   };
 }

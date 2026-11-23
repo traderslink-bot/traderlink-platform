@@ -1,5 +1,5 @@
 import {marketDataSelection} from "@/src/modules/market-data/server/provider-settings";
-import {matchesBrowserDataSession} from "@/src/modules/market-data/server/browser-data-session";
+import {browserDataSession, matchesBrowserDataSession} from "@/src/modules/market-data/server/browser-data-session";
 import "server-only";
 import { chartSymbol, type Candle } from "@/src/modules/scanner/alpaca/candles";
 import type { ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
@@ -37,7 +37,11 @@ export async function scannerIndicatorResponse(request: Request, loadBars: (requ
   const key = `${selection.provider}:${selection.revision}:${symbol}:${frame}:${Math.floor(now / window)}`;
   let read = reads.get(key);
   if (!read) {
-    url.search = new URLSearchParams({ symbol, scannerIndicators: "1", provider:selection.provider,providerRevision:String(selection.revision) }).toString();
+    url.search = new URLSearchParams({
+      symbol,
+      scannerIndicators: "1",
+      ...browserDataSession("scanners", selection),
+    }).toString();
     // The first viewer's cancellation must not cancel a read shared by other viewers.
     read = (async () => {
       const response = await loadBars(new Request(url, { headers: request.headers }));

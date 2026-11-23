@@ -6,14 +6,23 @@ it("keeps scanner rankings and facts while omitting supplier tags from every pub
   const row = { symbol: "SHFS", price: .0288, provider: "alpaca", activity: { oneMinuteVolume: 100 }, focusedAtUtc: "2026-11-19T14:30:00Z" } as unknown as LiveScannerRow & { focusedAtUtc: string };
   const screen = { rows: [row], focus: [row], total: 1,
     momentumSections: { confirmed: [row], early: [row], confirmedTotal: 1, earlyTotal: 1 } };
+  const firstId = "alpaca:SHFS:2026-11-19T14:30:00Z";
   const model = { provider: "alpaca", gainers: screen, momentum: screen, dayGainers: screen,
-    breakouts: [{ ...row, breakoutLevel: .0277 }], activeHalts: [{ source: "alpaca", ticker: "SHFS", reasonCode: "LUDP", tradeTimeEt: "09:35:00" }],
+    breakouts: [{ ...row, breakoutLevel: .0277 }], activeHalts: [
+      { id: firstId, source: "alpaca", ticker: "SHFS", reasonCode: "LUDP", tradeTimeEt: "09:35:00" },
+      { id: "alpaca:LSE:2026-11-19T14:30:00Z", source: "alpaca", ticker: "LSE", reasonCode: "LUDP" },
+    ],
   } as unknown as ScannerReadModel;
   const publicModel = browserScannerModel(model);
   expect(JSON.stringify(publicModel)).not.toContain("alpaca");
   expect(publicModel.gainers.rows[0].price).toBe(.0288);
   expect(publicModel.momentum.momentumSections?.early).toHaveLength(1);
   expect(publicModel.activeHalts?.[0].tradeTimeEt).toBe("09:35:00");
+  const ids = publicModel.activeHalts?.map(halt => halt.id);
+  expect(ids?.every(id => /^[a-f0-9]{64}$/.test(id))).toBe(true);
+  expect(new Set(ids).size).toBe(2);
+  expect(browserScannerModel(model).activeHalts?.map(halt => halt.id)).toEqual(ids);
+  expect(model.activeHalts?.[0].id).toBe(firstId);
   expect(model.gainers.rows[0].provider).toBe("alpaca");
 });
 
