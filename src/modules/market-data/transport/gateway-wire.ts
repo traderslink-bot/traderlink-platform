@@ -1,9 +1,12 @@
 /** Versioned TraderLink server-to-server vocabulary. Upstream adapters remain private. */
 export const GATEWAY_WIRE_VERSION = "traderslink.market.1";
 export const GATEWAY_WIRE_ROUTES = {
-  health: "availability", "scanner-listings": "instrument-rules", calendar: "trading-days",
-  "vwap-seed": "weighted-reference", "analyzer-splits": "capital-adjustments",
-  "chart-overnight-history": "extended-candles", history: "candle-window", quotes: "market-state",
+  health: "availability", "candle-history": "archived-candles", "scanner-listings": "instrument-rules", calendar: "trading-days",
+  "vwap-seed": "weighted-reference", "scanner-signal-bars": "signal-candles", "accepted-input": "accepted-input",
+  "accepted-input-candle": "accepted-input-candle", "accepted-daily-context": "accepted-daily-context",
+  "accepted-regular-opportunities": "accepted-regular-opportunities", "accepted-map-monitor": "accepted-map-monitor",
+  "analyzer-splits": "capital-adjustments", "chart-splits": "split-events",
+  "chart-overnight-history": "extended-candles", "chart-unadjusted-history": "original-candles", history: "candle-window", quotes: "market-state",
   overnight: "extended-price", bars: "recent-candles", stream: "chart-updates",
   "scanner-stream": "scanner-updates", prices: "price-updates", halts: "trading-pauses",
 } as const;
@@ -34,18 +37,44 @@ const sessionTotal = simple({volume:"shares",dollarVolume:"turnover",high:"peak"
 const sessionState = record({date:["day",scalar],regularClose:["closeMinute",scalar],complete:["finished",scalar],sessions:["periods",record({premarket:["beforeOpen",sessionTotal],regular:["openMarket",sessionTotal],after_hours:["afterClose",sessionTotal]})]});
 const session = simple({date:"day",open:"opens",close:"closes"});
 const calendar = record({available:["usable",scalar],start:["fromDay",scalar],end:["untilDay",scalar],sessions:["days",array(session)]});
-const request = simple({symbol:"ticker",timeframe:"interval",anchor:"reference",before:"until",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose"});
+const request = simple({symbol:"ticker",timeframe:"interval",anchor:"reference",before:"until",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",adjustment:"basis"});
 const events = record({symbol:["ticker",scalar],anchor:["reference",scalar],basisDate:["basisDay",scalar],dates:["days",array(scalar)],available:["usable",scalar]});
+const chartSplit = simple({id:"event",date:"effectiveDay",oldShares:"before",newShares:"after"});
+const chartSplits = record({symbol:["ticker",scalar],basisDate:["basisDay",scalar],
+  coverageStart:["coverageFrom",scalar],qualifiedThrough:["coverageThrough",scalar],splits:["events",array(chartSplit)]});
 const sums = simple({open:"first",high:"peak",low:"trough",close:"last",hl2:"midpoint",hlc3:"typical",ohlc4:"average",hlcc4:"weightedClose"});
 const moment = simple({mean:"average",m2:"dispersion"});
 const moments = record(Object.fromEntries(Object.entries({open:"first",high:"peak",low:"trough",close:"last",hl2:"midpoint",hlc3:"typical",ohlc4:"average",hlcc4:"weightedClose"}).map(([key,name])=>[key,[name,moment]])));
-const history = record({symbol:["ticker",scalar],feed:["coverage",scalar],adjustment:["basis",scalar],basisDate:["basisDay",scalar],bars:["candles",array(candle)],baseTimeframe:["interval",scalar],complete:["finished",scalar],nextPageToken:["continuation",scalar],calendar:["tradingDays",calendar],calendars:["tradingYears",array(calendar)]});
+const acceptedInput = simple({
+  id: "id", digest: "digest", upstreamRevision: "sourceRevision", instrumentId: "listingId",
+  symbol: "ticker", venue: "venue", frame: "resolution", datasetId: "dataset", priceBasisId: "priceVersion",
+  calendarRevision: "calendarVersion", sessionMode: "sessionMode", completedThroughMs: "completedThrough",
+  acceptedCutoffMs: "cutoff", availableAtMs: "observed", acceptedAtMs: "accepted",
+});
+const closedReturn = simple({ previousClose:"previous", close:"close", changePercent:"change", closedAtMs:"closedAt" });
+const history = record({symbol:["ticker",scalar],feed:["coverage",scalar],adjustment:["basis",scalar],basisDate:["basisDay",scalar],bars:["candles",array(candle)],baseTimeframe:["interval",scalar],complete:["finished",scalar],nextPageToken:["continuation",scalar],calendar:["tradingDays",calendar],calendars:["tradingYears",array(calendar)],chartPageStart:["windowStart",scalar],acceptedInput:["acceptedInput",acceptedInput]});
+const signalCandle = simple({time:"at",open:"first",high:"peak",low:"trough",close:"last",volume:"shares",vwap:"weighted"});
+const signalHistory = record({
+  feed:["coverage",scalar],adjustment:["basis",scalar],frame:["interval",scalar],basisDate:["basisDay",scalar],end:["until",scalar],
+  bars:["candles",dictionary(array(signalCandle))], sessionVwap:["includeWeightedSession",scalar],historyBars:["lookback",scalar],
+  coverage:["perInstrument",dictionary(simple({status:"state",completedThroughMs:"through"}))],
+});
 const market = record({feed:["coverage",scalar],connected:["online",scalar],at:["emitted",scalar],snapshots:["instruments",dictionary(nullable(snapshot))],sessionTotals:["periodTotals",dictionary(nullable(sessionState))]});
 const seed = record({events:["capitalEvents",events],complete:["finished",scalar],request:["selection",request],basisDate:["basisDay",scalar],anchorKey:["referenceDay",scalar],start:["from",scalar],volume:["shares",scalar],sums:["totals",sums],moments:["distribution",moments]});
 const priceFrame = record({protocolVersion:["revision",scalar],feed:["coverage",scalar],connected:["online",scalar],kind:["change",scalar],emittedAt:["emitted",scalar],prices:["values",dictionary(simple({price:"value",providerObservedAt:"observed",receiptAt:"received"}))]});
 const schemas: Record<GatewayOperation, Spec> = {
-  health:simple({ready:"ready",feed:"coverage"}),"scanner-listings":record({excluded:["excluded",array(scalar)]}),calendar,
-  "vwap-seed":seed,"analyzer-splits":events,"chart-overnight-history":history,history,quotes:market,
+  health:simple({ready:"ready",feed:"coverage"}),
+  "candle-history":record({state:["state",scalar],bars:["candles",array(candle)],start:["from",scalar],
+    end:["until",scalar],basisDate:["basisDay",scalar]}),"scanner-listings":record({excluded:["excluded",array(scalar)]}),calendar,
+  "accepted-input":acceptedInput, "accepted-input-candle":record({input:["receipt",acceptedInput],row:["candle",array(scalar)]}),
+  "accepted-daily-context":record({input:["receipt",acceptedInput],context:["context",record({daily:["day",closedReturn],weekly:["week",closedReturn]})]}),
+  "accepted-regular-opportunities":array(record({
+    ...Object.fromEntries(["dailyId","regularId","previousId","triggerId","savedAfterMs","startMs","mapId","mapRevision"].map(key => [key,[key,scalar] as const])),
+    calendars:["tradingDays",array(calendar)],
+    verifiedEmptyStarts:["verifiedQuietStarts",array(scalar)],
+  })),
+  "accepted-map-monitor":simple({admitted:"admitted"}),
+  "vwap-seed":seed,"scanner-signal-bars":signalHistory,"analyzer-splits":events,"chart-splits":chartSplits,"chart-overnight-history":history,"chart-unadjusted-history":history,history,quotes:market,
   overnight:record({feed:["coverage",scalar],symbol:["ticker",scalar],trade:["lastPrint",trade]}),bars:history,
   stream:record({state:["connection",scalar],adjustment:["basis",scalar],basisDate:["basisDay",scalar],price:["value",scalar],time:["observed",scalar],bar:["candle",candle],daily:["daily",scalar],provisional:["forming",scalar],symbol:["ticker",scalar],available:["usable",scalar],status:["tradingState",pause]}),
   "scanner-stream":market,prices:priceFrame,
@@ -93,7 +122,7 @@ export function decodeGatewayWire(operation: GatewayOperation, value: unknown): 
   return transform(schemas[operation],body.data,true,{nodes:0});
 }
 
-const queryNames: Record<string,string> = {symbol:"ticker",symbols:"tickers",timeframe:"resolution",start:"from",end:"until",daily:"dayBars",overnight:"extended",sessions:"periodTotals",regularClose:"closeMinute",before:"cutoff",anchor:"reference",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",year:"yearNumber",adjustment:"basis"};
+const queryNames: Record<string,string> = {symbol:"ticker",symbols:"tickers",timeframe:"resolution",frame:"signalFrame",start:"from",end:"until",daily:"dayBars",dailyStartup:"initialDaily",overnight:"extended",sessions:"periodTotals",regularClose:"closeMinute",before:"cutoff",anchor:"reference",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",year:"yearNumber",adjustment:"basis",acceptedEvidence:"includeAcceptance",session:"marketSession",sessionMode:"sessionMode",sessionVwap:"includeWeightedSession",historyBars:"lookback",id:"acceptedId",dailyId:"acceptedDailyId",regularId:"acceptedRegularId",mapId:"mapId",mapRevision:"mapRevision"};
 export function gatewayWireQuery(query: URLSearchParams, decode=false): URLSearchParams {
   const result=new URLSearchParams();
   for(const [from,to] of Object.entries(queryNames)){

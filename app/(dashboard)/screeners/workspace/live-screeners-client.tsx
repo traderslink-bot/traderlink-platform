@@ -12,10 +12,13 @@ import { ScannerLayoutHandles, ScannerLayoutToolbar, type CardViews, type NamedL
 import { validPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
 import { defaultTile, fromGrid, minimum, validTile } from "./scanner-split-layout";
 import { cardEntries, layoutSize, placeAddedCard, removePresetSpacing, tileToCards, validCardLayout, type CardLayout } from "./scanner-free-layout";
-import { isScannerCardSlot, readCardScanners, scannerCardSlots, scannerTitles, WorkspaceScannerTitle, WorkspaceScannerTitleContext, type CardScanners, type ScannerCardKind, type ScannerCardSlot } from "./workspace-scanner-title";
+import { isScannerCardSlot, readCardSavedScanIds, readCardScanners, scannerCardSlots, scannerTitles, WorkspaceScannerTitle, WorkspaceScannerTitleContext, workspaceScannerKind, type CardSavedScanIds, type CardScanners, type ScannerCardSlot } from "./workspace-scanner-title";
+import { useWorkspaceSavedScans } from "./use-workspace-saved-scans";
+import { WorkspaceSavedScanCard } from "./workspace-saved-scan-card";
 import { GainerSwitchControl } from "./gainer-switch-control";
 import { gainerCardTitle, gainerCardResults, gainerCardView, isGainerCard, readGainerSwitchPreferences, type GainerSwitchPreferences } from "@/src/modules/scanner/live/gainer-card-policy";
-import { ScannerPageChartButton, ScannerPageTicker, ScannerPageTickerSelection } from "./scanner-page-ticker";
+import { ScannerPageTicker, ScannerPageTickerSelection } from "./scanner-page-ticker";
+import { ScannerRowTools, scannerToolColumnSx } from "./scanner-row-tools";
 
 import { scannerGainColor } from "../scanner-gain-color";
 
@@ -75,20 +78,19 @@ import { ScannerWorkspaceCard } from "../scanner-workspace-card";
 import { DEFAULT_SCANNER_WORKSPACE_LAYOUT, type ScannerWorkspaceWidget } from "../scanner-workspace-layout";
 import { DeclinesCard } from "./declines-card";
 import { ScannerCountryFlag } from "../scanner-country-flag";
-import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
+import { ScannerStockCards, ScannerViewSettings, WorkspaceCardSections, WorkspaceVolumeCells, useWorkspaceVolumeColumns, type ScannerView } from "./scanner-stock-cards";
+import { readCardVolumePreferences, volumeColumnWidth, volumeLabels, workspaceVolumeFacts, type CardVolumePreferences, type OptionalVolumeColumn, type VolumeRow } from "./workspace-volume";
+import { readCardSectionPreferences, type CardSection, type CardSectionPreferences } from "./scanner-card-sections";
 import { ScannerProviderControls } from "../scanner-provider-controls";
 import { ScannerTickerDetails } from "../scanner-ticker-details";
-import { EMPTY_CHART_WORKSPACE, scannerChartWorkspace,replaceScannerChartPanel, type ScannerChartTarget } from "../scanner-chart-workspace";
-import { DEFAULT_DECLINE_CONTROLS, RAPID_DROP_RETENTION_MINUTES } from "@/src/modules/scanner/live/declines";
+import { EMPTY_CHART_WORKSPACE, scannerChartWorkspace,replaceScannerChartPanel,scannerChartWorkspaceFromLayout, type ScannerChartTarget } from "../scanner-chart-workspace";
 import { PremarketPullbacksCard } from "./premarket-pullbacks-card";
 import { ScreenerHaltIndicator } from "../screener-halt-indicator";
 import { ScannerNewsDrawerProvider, ScannerRowNews } from "../scanner-news-drawer-context";
-import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "@/src/modules/scanner/live/premarket-pullbacks";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 import type { LiveScannerRow, LiveScreenResults, ScannerActiveHalt, ScannerConfiguration, ScannerKind, ScannerReadModel,
   ScannerNewsItem, ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
-import { DEFAULT_MOMENTUM_DETECTION, DEFAULT_MOMENTUM_LIQUIDITY_BYPASS, marketEventsPressReleaseMaximumMarketCap, momentumDetectionControls, momentumLiquidityBypassControls } from "@/src/modules/scanner/live/settings";
 import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/gainer-view";
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
 import { memberScannerStatus, scannerOutsideActiveHours, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
@@ -198,20 +200,22 @@ function MomentumSignalRow({row,colSpan,leftOffset}:{row:LiveScannerRow;colSpan:
 
 function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop=false,twoRows=false }: { rows: readonly LiveScannerRow[]; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; compactDesktop?:boolean; twoRows?:boolean }) {
   const allowAdd=useSideCardChartControls();
+  const volumeColumns=useWorkspaceVolumeColumns();
+  const volumeHeaders=volumeColumns.map(key=>({label:volumeLabels[key],width:volumeColumnWidth(key)}));
   const [expandedSymbol,setExpandedSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(rows);
   const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
   const metric=(label:string,content:string,change?:number|null)=><Box sx={{ minWidth:0 }}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.9rem",fontWeight:750,lineHeight:1.3,mt:0.45,color:change===undefined?undefined:scannerGainColor(change) }}>{content}</Typography></Box>;
   const allHeaders=screen==="gainers"
-    ? [{label:"",width:allowAdd?104:80},{label:"Ticker",width:48},{label:"Price",width:54},{label:"Gain %",width:48},{label:"Vol",width:50},{label:"Float",width:50},{label:"T/O",width:58},{label:"RVOL",width:44},{label:"HOD",width:62}]
-    : [{label:"",width:allowAdd?104:80},{label:"Ticker",width:48},{label:"Price",width:54},{label:"Day %",width:48},{label:"1min %",width:48},{label:"5min %",width:48},{label:"1min Vol",width:58},{label:"5min Vol",width:58},{label:"1min ↑",width:48},{label:"5min ↑",width:48},{label:"Float",width:50},{label:"Spread",width:50}];
+    ? [{label:"",width:allowAdd?112:84},{label:"Ticker",width:48},{label:"Price",width:54},{label:"Gain %",width:48},...volumeHeaders,{label:"Float",width:50},{label:"T/O",width:58},{label:"RVOL",width:44},{label:"HOD",width:62}]
+    : [{label:"",width:allowAdd?112:84},{label:"Ticker",width:48},{label:"Price",width:54},{label:"Day %",width:48},{label:"1min %",width:48},{label:"5min %",width:48},{label:"1min Vol",width:58},{label:"5min Vol",width:58},{label:"1min ↑",width:48},{label:"5min ↑",width:48},...volumeHeaders,{label:"Float",width:50},{label:"Spread",width:50}];
   const headers=twoRows?allHeaders.slice(1):[...allHeaders,{label:"Country",width:44}];
   return <TableContainer aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact list`:undefined}
     role={compactDesktop?"region":undefined} tabIndex={compactDesktop?0:undefined}
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
     <Table aria-label={twoRows?`${SCREEN_LABELS[screen]} two-row stocks`:compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,...scannerStickyTickerSx,tableLayout:"fixed",width:headers.reduce((total,header)=>total+header.width,0),minWidth:headers.reduce((total,header)=>total+header.width,0),'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.2,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
-      <colgroup>{headers.map((header,index)=><col key={index} style={{width:header.width}}/>)}</colgroup>
-      <TableHead><TableRow>{headers.map((header,index)=><TableCell data-scanner-sticky-ticker={header.label==="Ticker"?true:undefined} align="left" aria-label={header.label||(index===0?"Chart, news and details":undefined)} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
+      <colgroup>{headers.map((header,index)=><Box component="col" key={index} sx={!header.label?scannerToolColumnSx(allowAdd):{width:header.width}}/>)}</colgroup>
+      <TableHead><TableRow>{headers.map((header,index)=><TableCell data-scanner-sticky-ticker={header.label==="Ticker"?true:undefined} align="left" aria-label={header.label||(index===0?"Chart, news and details":undefined)} key={`${header.label}-${index}`} sx={!header.label?scannerToolColumnSx(allowAdd):{width:header.width}}>{header.label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
         metric("HOD price",`$${priceValue(row.dayHigh)}`),
         metric("HOD",value(row.offHighPercent,"%"),row.offHighPercent),
@@ -225,7 +229,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         row.activity.episodeSeconds==null?null:metric("Episode time",`${number.format(row.activity.episodeSeconds)}s`),
         metric("Day %",value(row.sessionGain,"%"),row.sessionGain),
         row.postMarketGain===undefined?null:metric("Post %",value(row.postMarketGain,"%"),row.postMarketGain),
-        row.volume===null?null:metric("Session volume",compact.format(row.volume)),
+        ...workspaceVolumeFacts(row).map(([label,content])=>metric(label,content)),
         row.activity.fiveMinuteVolume==null?null:metric("5m Vol",compact.format(row.activity.fiveMinuteVolume)),
         row.activity.volumeAcceleration===null?null:metric("1m Vol Spike",`${number.format(row.activity.volumeAcceleration)}×`),
         row.activity.fiveMinuteVolumeSpike==null?null:metric("5m Vol Spike",`${number.format(row.activity.fiveMinuteVolumeSpike)}×`),
@@ -235,14 +239,14 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         metric("Session low",`$${priceValue(row.dayLow)}`),
         traded==null?null:metric("Turnover",traded),
         row.spreadPercent===null?null:metric("Spread",value(row.spreadPercent,"%")),
-      ]).filter(Boolean);const secondRowTools=<Box data-compact-row-controls sx={{display:"grid",gridTemplateColumns:allowAdd?"44px 20px 20px":"20px 20px 20px",alignItems:"center",columnGap:"8px",width:allowAdd?100:76}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerPageChartButton symbol={row.symbol}/><NewsLinks row={row}/></Box>;return <Fragment key={row.symbol}>
+      ]).filter(Boolean);const secondRowTools=<ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/>;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:twoRows||screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
-          {!twoRows?<TableCell sx={{px:"0.125rem !important"}}><Box data-compact-row-controls sx={{display:"grid",gridTemplateColumns:allowAdd?"44px 20px 20px":"20px 20px 20px",alignItems:"center",columnGap:"8px",width:allowAdd?100:76}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerPageChartButton symbol={row.symbol}/><NewsLinks row={row}/></Box></TableCell>:null}
+          {!twoRows?<TableCell sx={{px:"0.125rem !important"}}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>:null}
           <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25,minWidth:0}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell><Typography noWrap sx={{fontSize:"0.68rem",fontWeight:500,color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</Typography></TableCell>
           {screen==="gainers"?<>
             <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell>
-            <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{floatValue(row.float)}</TableCell>
+            <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell>
             <TableCell>{traded??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
             <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell>
           </>:<>
@@ -250,7 +254,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
             <TableCell sx={{color:scannerGainColor(row.activity.fiveMinuteGain)}}>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
             <TableCell>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"n/a":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
             <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
-            <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
+            <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
           </>}
           {!twoRows?<TableCell><ScannerCountryFlag country={row.country}/></TableCell>:null}
         </TableRow>
@@ -274,6 +278,8 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
 
 function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScreenResults; screen: ScannerKind; onOpenChart:(row:LiveScannerRow)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt> }) {
   const allowAdd=useSideCardChartControls();
+  const volumeColumns=useWorkspaceVolumeColumns();
+  const volumeHeaders=volumeColumns.map(key=>volumeLabels[key]);
   const [expandedDesktopSymbol,setExpandedDesktopSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(results.rows);
   const showPostGain=screen==="momentum"&&results.rows.some(row=>row.postMarketGain!==undefined);
@@ -281,40 +287,41 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
   const desktopTableSx={
     ...movementTableSx,...scannerStickyTickerSx,tableLayout:"fixed",
     width:"100%",
+    minWidth:(screen==="gainers"?535:710)+volumeColumns.reduce((width,column)=>width+volumeColumnWidth(column),0),
     '& .MuiTableCell-root':{ overflow:"hidden",px:0.25,py:0.42,fontSize:"0.68rem",textOverflow:"ellipsis",whiteSpace:"nowrap" },
     '& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.85 },
   };
   return <>
     <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
       {screen==="gainers"?<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
-        <TableCell aria-label="Chart and news" sx={{ px:"0 !important",width:72 }}/>
-        {['Ticker','Price','Gain%','Vol','Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label}>{label}</TableCell>)}
+        <TableCell aria-label="Chart and news" sx={{ px:"0 !important",...scannerToolColumnSx(allowAdd) }}/>
+        {['Ticker','Price','Gain%',...volumeHeaders,'Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
-        <TableCell sx={{ px:"0 !important",width:allowAdd?94:72 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><ScannerPageChartButton symbol={row.symbol}/><NewsLinks row={row}/></Stack></TableCell>
+        <TableCell sx={{ px:"0 !important",...scannerToolColumnSx(allowAdd) }}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>
         <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
         <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
-        <TableCell>{row.volume===null?"n/a":compact.format(row.volume)}</TableCell><TableCell>{floatValue(row.float)}</TableCell>
+        <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell>
         <TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
         <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell><TableCell><ScannerCountryFlag country={row.country}/></TableCell>
       </TableRow>)}</TableBody></Table>:<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
-        <TableCell aria-label="Chart and news" sx={{ px:"0.125rem !important",width:72 }}/>
-        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑','Float','Spread','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
+        <TableCell aria-label="Chart and news" sx={{ px:"0.125rem !important",...scannerToolColumnSx(allowAdd) }}/>
+        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑',...volumeHeaders,'Float','Spread','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=>{const expanded=expandedDesktopSymbol===row.symbol;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol)}
           onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}}}
           sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:"none"},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
-          <TableCell sx={{ px:"0.125rem !important",width:allowAdd?94:72 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><ScannerPageChartButton symbol={row.symbol}/><NewsLinks row={row}/></Stack></TableCell>
+          <TableCell sx={{ px:"0.125rem !important",...scannerToolColumnSx(allowAdd) }}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>
           <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
           {showPostGain?<TableCell sx={{ color:scannerGainColor(row.postMarketGain),fontWeight:750 }}>{value(row.postMarketGain,"%")}</TableCell>:null}
           <TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell sx={{color:scannerGainColor(row.activity.fiveMinuteGain)}}>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
           <TableCell>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"n/a":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
           <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
-          <TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
+          <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
           <TableCell><ScannerCountryFlag country={row.country}/></TableCell>
         </TableRow>
-        <MomentumSignalRow row={row} colSpan={showPostGain?14:13} leftOffset="3.4rem"/>
-        {expanded?<TableRow><TableCell colSpan={showPostGain?14:13} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
+        <MomentumSignalRow row={row} colSpan={(showPostGain?14:13)+volumeColumns.length} leftOffset="3.4rem"/>
+        {expanded?<TableRow><TableCell colSpan={(showPostGain?14:13)+volumeColumns.length} sx={{ bgcolor:"action.hover",p:"0 !important" }}>
           <Box sx={{...visibleExpandedPanelSx,display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:2,p:1.25}}>
             {[
               ["Detected",momentumSignalText(row)],
@@ -340,9 +347,7 @@ function ScannerResultView({ results,screen,onOpenChart,haltByTicker,now,compact
   if (!results) return <Skeleton height={440} variant="rounded"/>;
   if(displayMode==="cards")return results.rows.length?<ScannerStockCards rows={results.rows} screen={screen} now={now}
     renderHalt={symbol=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>}
-    renderTools={row=><Box sx={{display:"flex",alignItems:"center",gap:0.65,flexShrink:0}}>
-      <ChartButton row={row} onOpenChart={onOpenChart}/><ScannerPageChartButton symbol={row.symbol}/><NewsLinks row={row}/>
-    </Box>}/>:<Alert severity="info">No stocks currently qualify for this list.</Alert>;
+    renderTools={row=><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/>}/>:<Alert severity="info">No stocks currently qualify for this list.</Alert>;
   if(displayMode==="two-rows")return results.rows.length?<CompactStockTable twoRows compactDesktop haltByTicker={haltByTicker} rows={results.rows} screen={screen} onOpenChart={onOpenChart}/>
     :<Alert severity="info">No stocks currently qualify for this list.</Alert>;
   if(compactDesktop)return results.rows.length?<CompactStockTable compactDesktop haltByTicker={haltByTicker} rows={results.rows} screen={screen} onOpenChart={onOpenChart}/>
@@ -370,11 +375,11 @@ function SidebarScreenerCard({children}:{children:ReactNode}) {
     '& .MuiTableContainer-root':{overscrollBehaviorY:"auto",flex:"1 1 auto",minHeight:0,maxHeight:"none !important",overflow:"auto"}}}>{children}</Box>;
 }
 
-function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,onClose,onSelect,onRemove,onAdd,screeners,section,onSectionChange,stocks,fallbackQuotes,postMarket,layout,onLayoutChange,layoutReady,layoutMessage,defaultTimeframe}: {
+function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,onClose,onSelect,onRemove,onAdd,screeners,section,onSectionChange,stocks,fallbackQuotes,savedVolumeRows,postMarket,layout,onLayoutChange,layoutReady,layoutMessage,defaultTimeframe}: {
   open:boolean;temporary:boolean;onBack:()=>void;onSaveTemporary:()=>void;
   layout:ChartMultiview;onLayoutChange:(next:ChartMultiview)=>void;layoutReady:boolean;layoutMessage:string;defaultTimeframe:ChartTimeframe;
   charts:readonly ScannerChartTarget[];row:ScannerChartTarget|null;onClose:()=>void;onSelect:(symbol:string)=>void;onRemove:(symbol:string)=>void;onAdd:(symbol:string)=>void;
-  screeners:ReactNode;section:"details"|"screeners";onSectionChange:(section:"details"|"screeners")=>void;stocks:readonly LiveScannerRow[];fallbackQuotes:readonly {symbol:string;price:number;changePercent:number|null}[];postMarket:boolean;
+  screeners:ReactNode;section:"details"|"screeners";onSectionChange:(section:"details"|"screeners")=>void;stocks:readonly LiveScannerRow[];fallbackQuotes:readonly (VolumeRow&{price:number;changePercent:number|null})[];savedVolumeRows:readonly VolumeRow[];postMarket:boolean;
 }) {
   const tabsId=useId();
 
@@ -413,7 +418,7 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
       </Stack>
       <Box data-chart-workspace-scroll sx={{flex:1,minHeight:0,display:{xs:"block",md:"grid"},gridTemplateColumns:row?.showDetails?{xs:"1fr",md:"minmax(0,2fr) minmax(380px,1fr)"}:"1fr",overflowY:{xs:"auto",md:"hidden"},overscrollBehaviorY:"auto"}}>
         <Box data-workspace-charts sx={{display:"flex",minWidth:0,minHeight:0,height:{xs:"65dvh",md:"auto"},p:{xs:0,md:0.5}}}>
-          <ChartMultiviewCharts key={temporary?"temporary":"saved"} plain={temporary} viewPrefix={temporary?"temporary-":""} workspace="scanner" defaultTimeframe={defaultTimeframe} layout={layout} onChange={onLayoutChange} onSelectTicker={onSelect} activeSymbol={row?.symbol} allowEmpty ready={layoutReady}/>
+          <ChartMultiviewCharts key={temporary?"temporary":"saved"} plain={temporary} viewPrefix={temporary?"temporary-":""} workspace="scanner" defaultTimeframe={defaultTimeframe} layout={layout} onChange={onLayoutChange} activeSymbol={row?.symbol} allowEmpty ready={layoutReady}/>
         </Box>
         {row?.showDetails?<Stack component="aside" aria-label="Chart workspace details" spacing={0.5} sx={{minWidth:0,minHeight:0,pl:2,pr:0.5,py:0.5,borderLeft:{md:1},borderColor:"divider",overflow:{xs:"visible",md:"hidden"}}}>
           <Stack direction="row" sx={{alignItems:"center",gap:0.75,minWidth:0,flexShrink:0,borderBottom:1,borderColor:"divider"}}>
@@ -424,7 +429,8 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
             <Box data-levels-action-slot ref={setLevelsActionTarget} sx={{flexShrink:0}}/>
           </Stack>
           {charts.map(chart=><Box key={chart.symbol} role="tabpanel" id={`${tabsId}-${chart.symbol}-panel`} aria-labelledby={`${tabsId}-${chart.symbol}-tab`} hidden={section!=="details"||row.symbol!==chart.symbol} sx={{flex:{xs:"0 0 auto",md:1},minHeight:0,overflowY:{xs:"visible",md:"auto"}}}>
-            {visitedDetails.has(chart.symbol)&&<ScannerTickerDetails symbol={chart.symbol} stock={stocks.find(stock=>stock.symbol===chart.symbol)??chart.stock} quote={fallbackQuotes.find(quote=>quote.symbol===chart.symbol)} postMarket={postMarket} actionTarget={levelsActionTarget} active={row.symbol===chart.symbol} onGenerate={()=>onSectionChange("details")}/>}
+            {visitedDetails.has(chart.symbol)&&<ScannerTickerDetails symbol={chart.symbol} stock={stocks.find(stock=>stock.symbol===chart.symbol)??chart.stock} quote={fallbackQuotes.find(quote=>quote.symbol===chart.symbol)}
+              volumeBreakdown={savedVolumeRows.find(saved=>saved.symbol===chart.symbol)} postMarket={postMarket} actionTarget={levelsActionTarget} active={row.symbol===chart.symbol} onGenerate={()=>onSectionChange("details")}/>}
           </Box>)}
           <Box role="tabpanel" id={`${tabsId}-screeners-panel`} aria-labelledby={`${tabsId}-screeners-tab`} hidden={section!=="screeners"} sx={{flex:{xs:"0 0 auto",md:1},minHeight:0}}>{section==="screeners"?screeners:null}</Box>
         </Stack>:null}
@@ -433,30 +439,51 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
   </Drawer>;
 }
 
-function AdminControls({ configuration,onSaved }: { configuration: ScannerConfiguration; onSaved:(next:ScannerConfiguration)=>void }) {
+type AdminScannerConfiguration = ScannerConfiguration & Required<Pick<ScannerConfiguration,
+  "momentumDetection" | "momentumLiquidityBypass" | "declines" | "premarketPullbacks" | "marketEventsPressReleaseMaximumMarketCap"
+>>;
+
+const RAPID_DROP_RETENTION_LIMIT_MINUTES = 5;
+
+function readAdminScannerConfiguration(configuration: ScannerConfiguration | undefined): AdminScannerConfiguration {
+  if (!configuration?.momentumDetection || !configuration.momentumLiquidityBypass ||
+      !configuration.declines || !configuration.premarketPullbacks ||
+      !Number.isFinite(configuration.marketEventsPressReleaseMaximumMarketCap)) {
+    throw Error("scanner_settings_incomplete");
+  }
+  return configuration as AdminScannerConfiguration;
+}
+
+function AdminControls({ configuration,onSaved }: { configuration: AdminScannerConfiguration; onSaved:(next:AdminScannerConfiguration)=>void }) {
   const [draft,setDraft]=useState(configuration), [screen,setScreen]=useState<ScannerKind>("gainers"), [session,setSession]=useState<ScannerSession>("premarket");
   const [saving,setSaving]=useState(false), [message,setMessage]=useState<string|null>(null);
   const controls=draft[screen], filters=controls.filters[session];
-  const momentumDetection=momentumDetectionControls(draft)[session];
-  const allowEarlyLiquidityBypass=momentumLiquidityBypassControls(draft)[session];
-  const updateMomentumDetection=(next:Partial<typeof momentumDetection>)=>setDraft(current=>{const all=current.momentumDetection??DEFAULT_MOMENTUM_DETECTION;return {...current,momentumDetection:{...all,[session]:{...all[session],...next}}};});
-  const updateMomentumLiquidityBypass=(enabled:boolean)=>setDraft(current=>{const all=current.momentumLiquidityBypass??DEFAULT_MOMENTUM_LIQUIDITY_BYPASS;return {...current,momentumLiquidityBypass:{...all,[session]:enabled}};});
-  const declines=draft.declines??DEFAULT_DECLINE_CONTROLS;
-  const updateDeclines=(next:Partial<typeof declines>)=>setDraft(current=>({...current,declines:{...(current.declines??DEFAULT_DECLINE_CONTROLS),...next}}));
-  const pmPullbacks=draft.premarketPullbacks??DEFAULT_PREMARKET_PULLBACK_CONTROLS;
-  const updatePmPullbacks=(next:Partial<typeof pmPullbacks>)=>setDraft(current=>({...current,premarketPullbacks:{...(current.premarketPullbacks??DEFAULT_PREMARKET_PULLBACK_CONTROLS),...next}}));
+  const momentumDetection=draft.momentumDetection[session];
+  const allowEarlyLiquidityBypass=draft.momentumLiquidityBypass[session];
+  const updateMomentumDetection=(next:Partial<typeof momentumDetection>)=>setDraft(current=>({...current,momentumDetection:{
+    ...current.momentumDetection,[session]:{...current.momentumDetection[session],...next},
+  }}));
+  const updateMomentumLiquidityBypass=(enabled:boolean)=>setDraft(current=>({...current,momentumLiquidityBypass:{
+    ...current.momentumLiquidityBypass,[session]:enabled,
+  }}));
+  const declines=draft.declines;
+  const updateDeclines=(next:Partial<typeof declines>)=>setDraft(current=>({...current,declines:{...current.declines,...next}}));
+  const pmPullbacks=draft.premarketPullbacks;
+  const updatePmPullbacks=(next:Partial<typeof pmPullbacks>)=>setDraft(current=>({...current,premarketPullbacks:{...current.premarketPullbacks,...next}}));
   const updateControls=(next:Partial<typeof controls>)=>setDraft(current=>({ ...current,[screen]:{ ...current[screen],...next } }));
   const updateFilter=(next:Partial<ScreenFilters>)=>updateControls({ filters:{ ...controls.filters,[session]:{ ...filters,...next } } });
   const save=async()=>{ setSaving(true);setMessage(null);try{
     const response=await fetch('/api/admin/screeners/settings',{ method:'POST',credentials:'same-origin',headers:{ 'content-type':'application/json',[PLATFORM_MUTATION_REQUEST_HEADER]:'1' },body:JSON.stringify({ expectedRevision:configuration.revision,configuration:draft }) });
-    const payload=await response.json(); if(!response.ok) throw Error(payload.code||'save_failed'); setDraft(payload.configuration);onSaved(payload.configuration);setMessage('Scanner settings saved.');
+    const payload=await response.json(); if(!response.ok) throw Error(payload.code||'save_failed');
+    const saved=readAdminScannerConfiguration(payload.configuration);
+    setDraft(saved);onSaved(saved);setMessage('Scanner settings saved.');
   }catch(error){setMessage(error instanceof Error&&error.message==='scanner_settings_conflict'?'Settings changed. Reload the page before saving.':'Scanner settings were not saved.');}finally{setSaving(false);}};
   return <DashboardPanel title="Scanner controls" action={<DashboardPrimaryAction disabled={saving} onClick={()=>void save()}>{saving?'Saving…':'Save settings'}</DashboardPrimaryAction>}>
     <Stack spacing={2}>
       {message?<Alert severity={message.endsWith('saved.')?'success':'error'}>{message}</Alert>:null}
       <ScannerProviderControls/>
       <FormControlLabel control={<Switch checked={draft.enabled} onChange={event=>setDraft(current=>({ ...current,enabled:event.target.checked }))} />} label="Enable live scanners" />
-      <Box sx={{maxWidth:{xs:"100%",sm:320}}}><NumberField label="Market Events PR maximum market cap ($)" current={marketEventsPressReleaseMaximumMarketCap(draft)} onChange={next=>next!==null&&setDraft(current=>({...current,marketEventsPressReleaseMaximumMarketCap:next}))}/></Box>
+      <Box sx={{maxWidth:{xs:"100%",sm:320}}}><NumberField label="Market Events PR maximum market cap ($)" current={draft.marketEventsPressReleaseMaximumMarketCap} onChange={next=>next!==null&&setDraft(current=>({...current,marketEventsPressReleaseMaximumMarketCap:next}))}/></Box>
       <Tabs aria-label="Scanner settings" onChange={(_,next:ScannerKind)=>setScreen(next)} value={screen} variant="scrollable"><Tab label="Top Gainers" value="gainers"/><Tab label="Momentum" value="momentum"/></Tabs>
       <Box sx={{ display:"grid",gridTemplateColumns:{ xs:"1fr",sm:"repeat(2,minmax(0,1fr))",lg:"repeat(4,minmax(0,1fr))" },gap:1.5 }}>
         <NumberField label="List stocks" current={controls.displayLimit} onChange={next=>next!==null&&updateControls({ displayLimit:next })}/>
@@ -497,7 +524,7 @@ function AdminControls({ configuration,onSaved }: { configuration: ScannerConfig
         <NumberField label="List stocks" current={declines.displayLimit} onChange={next=>next!==null&&updateDeclines({displayLimit:next})}/>
         <NumberField label="Minimum rapid drop %" current={declines.minimumDropPercent} onChange={next=>next!==null&&updateDeclines({minimumDropPercent:next})}/>
         <NumberField label="Drop within (minutes)" current={declines.windowMinutes} onChange={next=>next!==null&&updateDeclines({windowMinutes:next})}/>
-        <NumberField label="Keep after detection (max 5 min)" current={Math.min(declines.retentionMinutes,RAPID_DROP_RETENTION_MINUTES)} onChange={next=>next!==null&&updateDeclines({retentionMinutes:Math.min(next,RAPID_DROP_RETENTION_MINUTES)})}/>
+        <NumberField label="Keep after detection (max 5 min)" current={Math.min(declines.retentionMinutes,RAPID_DROP_RETENTION_LIMIT_MINUTES)} onChange={next=>next!==null&&updateDeclines({retentionMinutes:Math.min(next,RAPID_DROP_RETENTION_LIMIT_MINUTES)})}/>
       </Box>
       <Typography component="h3" sx={{fontWeight:800}}>HOD Drops</Typography>
       <FormControlLabel control={<Switch checked={pmPullbacks.enabled} onChange={event=>updatePmPullbacks({enabled:event.target.checked})}/>} label="Enable HOD Drops"/>
@@ -540,25 +567,37 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   const {preferences:chartPreferences,ready:preferencesReady,message:preferencesMessage,ownerKey}=chartPreferenceState;
   const mobileEditor=useMobileWorkspaceLayout(ownerKey,orientation);
   const mobileLayout=mobileEditor.layout;
-  const [stored,setStored]=useState<{active:string;layouts:NamedLayout[]}>({active:"",layouts:[]});
+  const desktopStorageKey=ownerKey?`traderslink.scanner.desktop-layout.v4:${ownerKey}`:"traderslink.scanner.desktop-layout.v3";
+  const [desktopState,setStored]=useState<{key:string;active:string;layouts:NamedLayout[]}>();
+  const stored=desktopState?.key===desktopStorageKey?desktopState:{active:"",layouts:[] as NamedLayout[]};
+  const desktopStorageReady=desktopState?.key===desktopStorageKey&&(Boolean(ownerKey)||Boolean(preferencesMessage));
   const [draftViews,setDraftViews]=useState<CardViews>({});
+  const [draftSections,setDraftSections]=useState<CardSectionPreferences>({});
+  const [draftVolumeColumns,setDraftVolumeColumns]=useState<CardVolumePreferences>({});
   const [draftGainerSwitch,setDraftGainerSwitch]=useState<GainerSwitchPreferences>({});
   const [draftScanners,setDraftScanners]=useState<CardScanners>({});
-  const [draft,setDraft]=useState<CardLayout|null>(null);
+  const [draftSavedIds,setDraftSavedIds]=useState<CardSavedScanIds>({});
+  const [draftKey,setDraftKey]=useState<string>();
+  const [desktopDraft,setDraft]=useState<CardLayout|null>(null);
+  const draft=draftKey===desktopStorageKey?desktopDraft:null;
   const [undo,setUndo]=useState<(NamedLayout&{sourceName:string})[]>([]);
   const [visibilityMessage,setVisibilityMessage]=useState("");
   const [layoutName,setLayoutName]=useState("");
   const [draftSourceName,setDraftSourceName]=useState("");
   useEffect(()=>{
     const frame=requestAnimationFrame(()=>{
+      setDraft(null);
+      setUndo([]);
       try {
-        const value=JSON.parse(localStorage.getItem("traderslink.scanner.desktop-layout.v3")??
+        const scoped=ownerKey?localStorage.getItem(desktopStorageKey):null;
+        const value=JSON.parse(scoped??localStorage.getItem("traderslink.scanner.desktop-layout.v3")??
           localStorage.getItem("traderslink.scanner.desktop-layout.v2")??
           localStorage.getItem("traderslink.scanner.desktop-layout.v1")??"null");
-        if(!Array.isArray(value?.layouts))return;
+        if(!Array.isArray(value?.layouts)){setStored({key:desktopStorageKey,active:"",layouts:[]});return;}
         const layouts:NamedLayout[]=value.layouts.flatMap((item:NamedLayout&{positions?:DesktopPositions;tile?:unknown;visible?:typeof widgets})=>{
           if(!item||typeof item.name!=="string")return [];
-          if(validCardLayout(item.rectangles))return [{name:item.name,rectangles:removePresetSpacing(item.rectangles),scanners:readCardScanners(item.scanners),gainerAutoSwitch:readGainerSwitchPreferences(item.gainerAutoSwitch,Object.keys(scannerCardSlots)),views:Object.fromEntries(
+          if(validCardLayout(item.rectangles))return [{name:item.name,rectangles:removePresetSpacing(item.rectangles),scanners:readCardScanners(item.scanners),gainerAutoSwitch:readGainerSwitchPreferences(item.gainerAutoSwitch,Object.keys(scannerCardSlots)),sections:readCardSectionPreferences(item.sections),volumeColumns:readCardVolumePreferences(item.volumeColumns),
+            ...(scoped!==null?{savedScanIds:readCardSavedScanIds(item.savedScanIds)}:{}),views:Object.fromEntries(
             Object.entries(item.views??{}).filter(([slot,view])=>isScannerCardSlot(slot)&&
               (view==="table"||view==="two-rows"||view==="cards")))}];
           if(validTile(item.tile))return [{name:item.name,rectangles:tileToCards(item.tile)}];
@@ -567,27 +606,36 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
             !visible.every(widget=>widgets.includes(widget))||!validPositions(item.positions,visible))return [];
           return [{name:item.name,rectangles:tileToCards(fromGrid(item.positions,visible))}];
         });
-        setStored({layouts,active:layouts.some(item=>item.name===value.active)?value.active:""});
-      }catch{/* Default layout remains available. */}
+        setStored({key:desktopStorageKey,layouts,active:layouts.some(item=>item.name===value.active)?value.active:""});
+      }catch{setStored({key:desktopStorageKey,active:"",layouts:[]});}
     });
     return ()=>cancelAnimationFrame(frame);
-  },[]);
+  },[desktopStorageKey,ownerKey]);
   const saveLayouts=(active:string,layouts:NamedLayout[])=>{
+    if(!desktopStorageReady)return false;
     const next={active,layouts};
-    try{localStorage.setItem("traderslink.scanner.desktop-layout.v3",JSON.stringify(next));setStored(next);setVisibilityMessage("");return true;}
+    try{localStorage.setItem(desktopStorageKey,JSON.stringify(next));setStored({key:desktopStorageKey,...next});setVisibilityMessage("");return true;}
     catch{setVisibilityMessage("Changes could not be saved. Your saved layout is unchanged. Try again.");return false;}
   };
   const activeLayout=stored.layouts.find(item=>item.name===stored.active);
   const cardViews=mobile&&desktopLayout?mobileLayout.views:draft?draftViews:activeLayout?.views;
   const scannerChoices=mobile&&desktopLayout?mobileLayout.scanners:draft?draftScanners:activeLayout?.scanners;
   const cardGainerSwitch=mobile&&desktopLayout?mobileLayout.gainerAutoSwitch:draft?draftGainerSwitch:activeLayout?.gainerAutoSwitch;
-  const rememberDesktop=()=>{if(draft)setUndo(previous=>[...previous.slice(-19),{name:layoutName,sourceName:draftSourceName,rectangles:draft,scanners:draftScanners,views:draftViews,gainerAutoSwitch:draftGainerSwitch}]);};
-  const selectScanner=(slot:ScannerCardSlot,scanner:ScannerCardKind)=>{
-    const scanners={...scannerChoices,[slot]:scanner};
-    if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,scanners});return;}
-    if(draft){rememberDesktop();setDraftScanners(scanners);return;}
-    const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,scanners,views:cardViews,gainerAutoSwitch:cardGainerSwitch};
+  const cardSections=mobile&&desktopLayout?mobileLayout.sections:draft?draftSections:activeLayout?.sections;
+  const cardVolumeColumns=mobile&&desktopLayout?mobileLayout.volumeColumns:draft?draftVolumeColumns:activeLayout?.volumeColumns;
+  const savedScanIds=mobile&&desktopLayout?mobileLayout.savedScanIds:draft?draftSavedIds:activeLayout?.savedScanIds;
+  const rememberDesktop=()=>{if(draft)setUndo(previous=>[...previous.slice(-19),{name:layoutName,sourceName:draftSourceName,rectangles:draft,scanners:draftScanners,savedScanIds:draftSavedIds,views:draftViews,sections:draftSections,volumeColumns:draftVolumeColumns,gainerAutoSwitch:draftGainerSwitch}]);};
+  const saveScannerChoice=(scanners:CardScanners,ids:CardSavedScanIds)=>{
+    if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,scanners,savedScanIds:ids});return;}
+    if(draft){rememberDesktop();setDraftScanners(scanners);setDraftSavedIds(ids);return;}
+    const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,
+      scanners,savedScanIds:ids,views:cardViews,sections:cardSections,volumeColumns:cardVolumeColumns,gainerAutoSwitch:cardGainerSwitch};
     saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
+  };
+  const selectScanner=(slot:ScannerCardSlot,scanner:NonNullable<CardScanners[ScannerCardSlot]>)=>{
+    const ids={...savedScanIds};
+    delete ids[slot];
+    saveScannerChoice({...scannerChoices,[slot]:scanner},ids);
   };
   const rectangles=draft??activeLayout?.rectangles??defaultRectangles;
   const visible=mobile&&desktopLayout?mobileLayout.order:Object.keys(rectangles) as ScannerWorkspaceWidget[];
@@ -673,13 +721,23 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   }),[pageTicker,showWorkspaceChart,selectPageTicker,desktopLayout,openCompanyDetails]);
 
   const includeWidget = (widget: ScannerWorkspaceWidget) => desktopLayout?visible.includes(widget):!scannersOnly||(widget!=="market-events"&&widget!=="ticker-workspace");
+  const scannerKindFor=(slot:ScannerCardSlot)=>workspaceScannerKind(slot,desktopLayout?scannerChoices?.[slot]:undefined);
   const mobileScannerTabs=MOBILE_SCANNER_TABS.filter(({widget})=>includeWidget(widget)).map(tab=>{
-    const kind=isScannerCardSlot(tab.widget)?scannerChoices?.[tab.widget]:undefined;
+    const kind=isScannerCardSlot(tab.widget)&&scannerChoices?.[tab.widget]?scannerKindFor(tab.widget):undefined;
     return kind?{...tab,label:kind==="gainers"?"Top Gainers":scannerTitles[kind],accessibleLabel:scannerTitles[kind]}:tab;
   }).sort((a,b)=>mobile&&desktopLayout?mobileLayout.order.indexOf(a.widget)-mobileLayout.order.indexOf(b.widget):0);
   const selectedScanner=activeScanner;
   const displayedTab=includeWidget(selectedScanner)?selectedScanner:mobileScannerTabs[0]?.widget;
   const showScanner = (widget: ScannerWorkspaceWidget) => includeWidget(widget) && (!mobileTabs || widget===displayedTab);
+  const activeSavedIds=widgets.filter(isScannerCardSlot).filter(showScanner).flatMap(slot=>{
+    const id=savedScanIds?.[slot];
+    return id?[id]:[];
+  });
+  const savedScans=useWorkspaceSavedScans(desktopLayout?ownerKey:undefined,activeSavedIds);
+  const scanName=(id:string)=>savedScans.catalogue?.scans.find(scan=>scan.id===id)?.name;
+  const scanUnavailable=(id:string)=>savedScans.phase==="unavailable"||savedScans.results?.[id]?.state==="unavailable"||
+    Boolean(savedScans.catalogue&&!scanName(id));
+  const savedScanLabel=(id:string)=>scanUnavailable(id)?"Saved scan unavailable":scanName(id)??"Saved scan";
   const toggleMobileLayout = () => {
     if(desktopLayout&&mobile){mobileEditor.update({...mobileLayout,mode:mobileTabs?"stacked":"tabs"});return;}
     const next = !preferTabs;
@@ -688,14 +746,15 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     catch { /* Keep this choice for the current page. */ }
   };
   const {model,loadError,checkedAt,failedAt,phase,retry}=useLiveScannerModel(sample);
-  const [configuration,setConfiguration]=useState<ScannerConfiguration|null>(null);
+  const [configuration,setConfiguration]=useState<AdminScannerConfiguration|null>(null);
   const momentumSections = model?.momentum.momentumSections;
   const momentumStocks = momentumSections ? [...momentumSections.confirmed,...momentumSections.early] : model?.momentum.rows ?? [];
-  const [chartWorkspace,dispatchChart]=useReducer(scannerChartWorkspace,EMPTY_CHART_WORKSPACE);
+  const [chartState,dispatchChart]=useReducer(scannerChartWorkspace,EMPTY_CHART_WORKSPACE);
   const chartView=useChartMultiview("scanner");
   const chartOpeningReady=(preferencesReady||Boolean(preferencesMessage))&&(chartView.ready||Boolean(chartView.message));
   const pendingChart=useRef<ScannerChartTarget|null>(null);
-  const chartLayout=reconcileChartTickers(chartView.layout,chartWorkspace.charts.map(chart=>chart.symbol),defaultTimeframe);
+  const chartLayout=chartView.layout;
+  const chartWorkspace=scannerChartWorkspaceFromLayout(chartLayout,chartState.charts);
   const chartRow=chartWorkspace.charts.find(chart=>chart.symbol===chartWorkspace.selectedSymbol)??null;
   const [workspaceSection,setWorkspaceSection]=useState<"details"|"screeners">("details");
   const [drawerOpen,setDrawerOpen]=useState(false);
@@ -711,11 +770,13 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     chartView.change(next);
     dispatchChart({type:"configure",selectedSymbol:selectedChart(next)?.group.symbol??null,
       charts:next.groups.map(group=>chart?.symbol===group.symbol?chart:
-        chartWorkspace.charts.find(item=>item.symbol===group.symbol)??{symbol:group.symbol,exchange:"NASDAQ",showDetails:true})});
+        chartWorkspace.charts.find(item=>item.symbol===group.symbol)??{symbol:group.symbol,showDetails:true})});
   };
   const openChart=(request:ScannerChartTarget)=>{
     const chart={...request,showDetails:true,stock:request.stock??[...(model?.gainers.rows??[]),...(model?.dayGainers?.rows??[]),...(model?.momentum.rows??[])].find(stock=>stock.symbol===request.symbol)};
     if(chartLayout.groups.some(group=>group.symbol===chart.symbol)){
+      dispatchChart({type:"configure",selectedSymbol:chart.symbol,
+        charts:chartWorkspace.charts.map(item=>item.symbol===chart.symbol?chart:item)});
       setTemporary(null);selectSavedChart(chart.symbol);setWorkspaceSection("details");setDrawerOpen(true);return;
     }
     if(!request.addChart&&chartLayout.groups.length){
@@ -780,17 +841,19 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     return()=>{cancelAnimationFrame(frame);observer?.disconnect();window.removeEventListener("resize",schedule);window.visualViewport?.removeEventListener("resize",schedule);};
   },[scannersOnly]);
 
-  useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{setConfiguration(payload.configuration);setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
+  useEffect(()=>{if(!admin)return;const controller=new AbortController();void fetch('/api/admin/screeners/settings',{ cache:'no-store',credentials:'same-origin',signal:controller.signal }).then(async response=>{if(!response.ok)throw Error();return response.json();}).then(payload=>{if(controller.signal.aborted)return;setConfiguration(readAdminScannerConfiguration(payload.configuration));setSettingsError(false);}).catch(()=>{if(!controller.signal.aborted)setSettingsError(true);});return()=>controller.abort();},[admin]);
   const gainerView:GainerView=model?.session==="after_hours"?"post_market":"day";
   const selectedGainers=gainerViewResults(model,gainerView);
   const compactChartSymbol=!model&&!loadError ? null : scannerOutsideActiveHours(model,checkedAt) ? "IWM"
     : selectedGainers?.rows[0]?.symbol ?? momentumStocks[0]?.symbol ?? "SPY";
-  const marketEventsData=useMarketEventsData(true,!scannersOnly&&(!desktopLayout||visible.includes("market-events")||(drawerOpen&&workspaceScreenersSelected.events)));
+  const marketEventsVisible=widgets.some(slot=>isScannerCardSlot(slot)&&showScanner(slot)&&
+    !savedScanIds?.[slot]&&scannerKindFor(slot)==="market-events");
+  const marketEventsData=useMarketEventsData(true,!scannersOnly&&(!desktopLayout||marketEventsVisible||(drawerOpen&&workspaceScreenersSelected.events)));
   const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
   const haltWindow=model?{date:model.tradingDate,closed:model.status==="closed",checkedAt}:undefined;
   const haltByTicker=useMemo(()=>new Map(activeHalts.map(halt=>[halt.ticker,halt])),[activeHalts]);
   const gainerKindFor=(slot?:ScannerCardSlot)=>{
-    const choice=slot?scannerChoices?.[slot]:undefined;
+    const choice=slot?scannerKindFor(slot):undefined;
     return choice&&isGainerCard(choice)?choice:"gainers";
   };
   const gainerViewFor=(slot?:ScannerCardSlot)=>gainerCardView(gainerKindFor(slot),model?.session,slot?cardGainerSwitch?.[slot]!==false:true);
@@ -805,17 +868,17 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   </Tooltip></Stack>;
   const [fullScannerSlot,setFullScannerSlot]=useState<ScannerCardSlot>();
   const modeFor=(kind:ScannerCardSlot,slot?:ScannerCardSlot)=>
-    slot ? cardViews?.[slot]??"table" : kind==="breakouts"?"table":displayModes[kind];
+    slot ? cardViews?.[slot]??"table" : kind==="breakouts"||kind==="market-events"?"table":displayModes[kind];
   const changeMode=(kind:ScannerCardSlot,view:ScannerView,slot?:ScannerCardSlot)=>{
     if(!slot){
-      if(kind!=="breakouts")setDisplayModes(previous=>({...previous,[kind]:view}));
+      if(kind!=="breakouts"&&kind!=="market-events")setDisplayModes(previous=>({...previous,[kind]:view}));
       return;
     }
     const views={...cardViews,[slot]:view};
     if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,views});return;}
     if(draft){rememberDesktop();setDraftViews(views);return;}
     const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,
-      scanners:scannerChoices,views,gainerAutoSwitch:cardGainerSwitch};
+      scanners:scannerChoices,savedScanIds,views,sections:cardSections,volumeColumns:cardVolumeColumns,gainerAutoSwitch:cardGainerSwitch};
     saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
   };
   const changeGainerSwitch=(slot:ScannerCardSlot,automatic:boolean)=>{
@@ -823,8 +886,28 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,gainerAutoSwitch});return;}
     if(draft){rememberDesktop();setDraftGainerSwitch(gainerAutoSwitch);return;}
     const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,
-      scanners:scannerChoices,views:cardViews,gainerAutoSwitch};
+      scanners:scannerChoices,savedScanIds,views:cardViews,sections:cardSections,volumeColumns:cardVolumeColumns,gainerAutoSwitch};
     saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
+  };
+  const sectionsFor=(slot:ScannerCardSlot|undefined)=>{
+    if(!slot)return null;
+    const setVolumeColumns=(columns:readonly OptionalVolumeColumn[])=>{
+      const volumeColumns={...cardVolumeColumns,[slot]:columns};
+      if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,volumeColumns});return;}
+      if(draft){rememberDesktop();setDraftVolumeColumns(volumeColumns);return;}
+      const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,
+        scanners:scannerChoices,savedScanIds,views:cardViews,sections:cardSections,volumeColumns,gainerAutoSwitch:cardGainerSwitch};
+      saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
+    };
+    return {sections:cardSections?.[slot],volumeColumns:cardVolumeColumns?.[slot],updateVolumeColumns:setVolumeColumns,
+      afterHoursVolume:!savedScanIds?.[slot]&&isGainerCard(scannerKindFor(slot))&&gainerViewFor(slot)==="post_market",update:(value:readonly CardSection[])=>{
+      const sections={...cardSections,[slot]:value};
+      if(mobile&&desktopLayout){mobileEditor.update({...mobileLayout,sections});return;}
+      if(draft){rememberDesktop();setDraftSections(sections);return;}
+      const next={name:stored.active,rectangles:activeLayout?.rectangles??defaultRectangles,
+        scanners:scannerChoices,savedScanIds,views:cardViews,sections,volumeColumns:cardVolumeColumns,gainerAutoSwitch:cardGainerSwitch};
+      saveLayouts(stored.active,[...stored.layouts.filter(item=>item.name!==stored.active),next]);
+    }};
   };
   const viewSettings=(kind:ScannerKind,slot?:ScannerCardSlot)=><ScannerViewSettings label={kind==="gainers"?gainerTitleFor(slot):SCREEN_LABELS[kind]} view={modeFor(kind,slot)}
     onViewChange={view=>changeMode(kind,view,slot)}>
@@ -870,19 +953,19 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     {!admin&&<Portal container={scannerToolbar}>
       <Stack direction="row" sx={{justifyContent:desktopLayout?"flex-start":"flex-end",alignItems:"center",minWidth:0}}>
         <ScannerConnectionIndicator phase={phase} onRetry={retry}/>
-      {desktopLayout&&mobile&&<MobileWorkspaceLayoutEditor key={orientation} editor={mobileEditor} orientation={orientation}/>}{desktopLayout&&!mobile&&<ScannerLayoutToolbar mobile={mobile} editing={draft!==null} name={layoutName} active={stored.active} sourceName={draft?draftSourceName:stored.active}
-        onEdit={()=>{setDraftSourceName(stored.active);setLayoutName(stored.active);setUndo([]);setVisibilityMessage("");setDraftScanners(scannerChoices??{});setDraftViews(cardViews??{});setDraftGainerSwitch(cardGainerSwitch??{});setDraft(rectangles);}}
+      {desktopLayout&&mobile&&<MobileWorkspaceLayoutEditor key={orientation} editor={mobileEditor} orientation={orientation}/>}{desktopLayout&&!mobile&&desktopStorageReady&&<ScannerLayoutToolbar mobile={mobile} editing={draft!==null} name={layoutName} active={stored.active} sourceName={draft?draftSourceName:stored.active}
+        onEdit={()=>{setDraftKey(desktopStorageKey);setDraftSourceName(stored.active);setLayoutName(stored.active);setUndo([]);setVisibilityMessage("");setDraftScanners(scannerChoices??{});setDraftSavedIds(savedScanIds??{});setDraftViews(cardViews??{});setDraftSections(cardSections??{});setDraftVolumeColumns(cardVolumeColumns??{});setDraftGainerSwitch(cardGainerSwitch??{});setDraft(rectangles);}}
         setName={setLayoutName} saved={stored.layouts.filter(item=>item.name)} visible={visible} onToggle={toggleWidget} message={visibilityMessage}
         onSelect={name=>{
           const selected=stored.layouts.find(item=>item.name===name);
           setDraftSourceName(name);setLayoutName(name);
-          setDraftScanners(selected?.scanners??{});
-          setDraftViews(selected?.views??{});setDraftGainerSwitch(selected?.gainerAutoSwitch??{});
+          setDraftScanners(selected?.scanners??{});setDraftSavedIds(selected?.savedScanIds??{});
+          setDraftViews(selected?.views??{});setDraftSections(selected?.sections??{});setDraftVolumeColumns(selected?.volumeColumns??{});setDraftGainerSwitch(selected?.gainerAutoSwitch??{});
           changeLayout(selected?.rectangles??defaultRectangles);
           setVisibilityMessage("");
         }}
         onCancel={()=>setDraft(null)}
-        onReset={()=>{setDraftScanners({});setDraftViews({});setDraftGainerSwitch({});changeLayout(defaultRectangles);setVisibilityMessage("");}}
+        onReset={()=>{setDraftScanners({});setDraftSavedIds({});setDraftViews({});setDraftSections({});setDraftVolumeColumns({});setDraftGainerSwitch({});changeLayout(defaultRectangles);setVisibilityMessage("");}}
         onPreset={next=>{
           const required=minimum(next,0);
           if(required.w>layoutBounds.w||required.h>layoutBounds.h){
@@ -893,11 +976,11 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
           setVisibilityMessage("");
         }}
         canUndo={undo.length>0}
-        onUndo={()=>{const previous=undo.at(-1);if(previous){setDraft(previous.rectangles);setLayoutName(previous.name);setDraftSourceName(previous.sourceName);setDraftScanners(previous.scanners??{});setDraftViews(previous.views??{});setDraftGainerSwitch(previous.gainerAutoSwitch??{});setUndo(undo.slice(0,-1));}}}
+        onUndo={()=>{const previous=undo.at(-1);if(previous){setDraft(previous.rectangles);setLayoutName(previous.name);setDraftSourceName(previous.sourceName);setDraftScanners(previous.scanners??{});setDraftSavedIds(previous.savedScanIds??{});setDraftViews(previous.views??{});setDraftSections(previous.sections??{});setDraftVolumeColumns(previous.volumeColumns??{});setDraftGainerSwitch(previous.gainerAutoSwitch??{});setUndo(undo.slice(0,-1));}}}
         onSave={()=>{
           const name=layoutName.trim();
           if(!draft||!name)return;
-          const saved=saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,views:draftViews,gainerAutoSwitch:draftGainerSwitch}]);
+          const saved=saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,savedScanIds:draftSavedIds,views:draftViews,sections:draftSections,volumeColumns:draftVolumeColumns,gainerAutoSwitch:draftGainerSwitch}]);
           if(saved)setDraft(null);return saved;
         }}/>}
         {((desktopLayout&&mobile)||(!drawerOpen&&chartWorkspace.charts.length>0))&&
@@ -926,8 +1009,12 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
           aria-label="Scanner cards" variant="scrollable" scrollButtons={false}
           sx={{flex:1,minWidth:0,minHeight:36,"& .MuiTab-root":{minWidth:0,minHeight:36,px:0.85,py:0.3,
             textTransform:"none",fontSize:"0.71rem",fontWeight:700,whiteSpace:"nowrap"}}}>
-          {mobileScannerTabs.map(({widget,label,accessibleLabel})=><Tab key={widget} value={widget} label={desktopLayout&&isScannerCardSlot(widget)&&scannerChoices?.[widget]?scannerTitles[scannerChoices[widget]]:label}
-            id={`${mobileTabsId}-${widget}`} aria-label={desktopLayout&&isScannerCardSlot(widget)&&scannerChoices?.[widget]?scannerTitles[scannerChoices[widget]]:accessibleLabel} aria-controls={`${mobileTabsId}-panel`}/>)}
+          {mobileScannerTabs.map(({widget,label,accessibleLabel})=>{
+            const savedId=isScannerCardSlot(widget)?savedScanIds?.[widget]:undefined;
+            const savedLabel=savedId?savedScanLabel(savedId):undefined;
+            return <Tab key={widget} value={widget} label={savedLabel??label} id={`${mobileTabsId}-${widget}`}
+              aria-label={savedLabel??accessibleLabel} aria-controls={`${mobileTabsId}-panel`}/>;
+          })}
         </Tabs>:<Box sx={{flex:1}}/>}
         {!desktopLayout&&(mobileTabs?<Tooltip title="Use stacked layout">
           <IconButton size="small" aria-label="Use stacked layout" onClick={toggleMobileLayout}
@@ -961,11 +1048,18 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
       '& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 },
     }}>
       {widgets.filter(isScannerCardSlot).filter(showScanner).filter(slot=>!admin||slot!=="breakouts").map(slot=>{
-        const kind=desktopLayout?(scannerChoices?.[slot]??slot):slot;
+        const kind=scannerKindFor(slot);
         const viewSlot=desktopLayout?slot:undefined;
         const isGainer=isGainerCard(kind);
         const screen:ScannerKind=isGainer?"gainers":"momentum";
-        const panel=isGainer||kind==="momentum"?(<DashboardPanel hideHeader>
+        const savedId=desktopLayout?savedScanIds?.[slot]:undefined;
+        const savedLabel=savedId?savedScanLabel(savedId):undefined;
+        const panel=savedId&&savedLabel?<WorkspaceSavedScanCard label={savedLabel} entry={savedScans.results?.[savedId]}
+          unavailable={scanUnavailable(savedId)} retrying={savedScans.phase==="retrying"} view={modeFor(slot,slot)}
+          onViewChange={view=>changeMode(slot,view,slot)} now={checkedAt} onOpenChart={setChartRow}/>
+        :kind==="market-events"?<ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts}
+          haltWindow={haltWindow} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/>
+        :isGainer||kind==="momentum"?(<DashboardPanel hideHeader>
           <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5,minHeight:22}}>
             {kind==="momentum"?<WorkspaceScannerTitle><Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box></WorkspaceScannerTitle>:renderGainerTitle(desktopLayout,viewSlot)}
             <Stack direction="row" spacing={0.5} sx={{alignItems:"center",flexShrink:0}}>
@@ -986,12 +1080,13 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
         return <ScannerWorkspaceCard key={slot} slot={workspaceLayout.assignments[slot]} widget={slot}>
           <WorkspaceScannerTitleContext.Provider value={desktopLayout?{
             slot,scanner:kind,onChange:scanner=>selectScanner(slot,scanner),
+            savedScanId:savedId,savedLabel,savedScans:savedScans.catalogue?.scans,onOpen:savedScans.refreshCatalogue,
+            onSelectSavedScan:id=>{if(scanName(id))saveScannerChoice(scannerChoices??{},{...savedScanIds,[slot]:id});},
           }:null}>
-            {panel}
+            <WorkspaceCardSections.Provider value={sectionsFor(viewSlot)}>{panel}</WorkspaceCardSections.Provider>
           </WorkspaceScannerTitleContext.Provider>
         </ScannerWorkspaceCard>;
       })}
-      {showScanner("market-events")&&<ScannerWorkspaceCard slot={workspaceLayout.assignments["market-events"]} widget="market-events"><ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts} haltWindow={haltWindow} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/></ScannerWorkspaceCard>}
       {!admin&&showScanner("ticker-workspace")&&<ChartPreferencesContext.Provider value={chartPreferenceState}><ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={pageChartsReady?compactChartSymbol:null} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} fillMobile={mobile&&desktopLayout} keepMounted={!mobile&&draft!==null}/></ChartPreferencesContext.Provider>}
       {mobile&&desktopLayout&&mobileEditor.editing&&!mobileTabs&&<MobileCardResizeHandles rootRef={gridRef} layout={mobileLayout} viewport={mobileHeight} onChange={mobileEditor.update}/>}{draft&&tiled&&<ScannerLayoutHandles rectangles={draft} onChange={changeLayout} onMessage={setVisibilityMessage}/>}
     </Box></Box></ScannerNewsDrawerProvider>
@@ -1003,13 +1098,13 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${fullScanner==="gainers"?gainerTitleFor(fullScannerSlot):SCREEN_LABELS[fullScanner]} full view`:undefined,
         sx:{width:{xs:"100vw",md:"90vw",xl:"85vw"},maxWidth:"100vw"}}}}>
-      {fullScanner?<Stack sx={{height:"100dvh",minHeight:0}}>
+      {fullScanner?<WorkspaceCardSections.Provider value={sectionsFor(fullScannerSlot)}><Stack sx={{height:"100dvh",minHeight:0}}>
         <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",borderBottom:1,borderColor:"divider",px:2,py:1.25}}>
           <Typography component="h2" variant="h6" sx={{fontWeight:800}}>{fullScanner==="gainers"?gainerTitleFor(fullScannerSlot):SCREEN_LABELS[fullScanner]}</Typography>
           <Stack direction="row" sx={{alignItems:"center"}}>{viewSettings(fullScanner,fullScannerSlot)}<IconButton aria-label="Close full scanner view" onClick={()=>setFullScanner(null)}><CloseRoundedIcon/></IconButton></Stack>
         </Stack>
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0,p:2})}>{fullScanner==="gainers"?renderGainerTitle(false,fullScannerSlot):null}{contents(fullScanner,false,false,fullScannerSlot)}</Box>
-      </Stack>:null}
+      </Stack></WorkspaceCardSections.Provider>:null}
     </Drawer>
     </ScannerPageTickerSelection>
     <ScannerChartDrawer open={drawerOpen} temporary={Boolean(temporary)} defaultTimeframe={defaultTimeframe}
@@ -1028,6 +1123,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
       onClose={()=>{setDrawerOpen(false);}} row={temporary?.chart??chartRow}
       screeners={workspaceScreeners} section={temporary?"details":workspaceSection}
       onSectionChange={temporary?()=>{}:setWorkspaceSection} stocks={[...(model?.dayGainers?.rows??[]),...(model?.momentum.rows??[]),...(selectedGainers?.rows??[])]}
+      savedVolumeRows={drawerOpen?Object.values(savedScans.results??{}).flatMap(entry=>entry.state==="ready"?entry.result.rows:[]):[]}
       fallbackQuotes={[...(model?.declines?.losers??[]),...(model?.premarketPullbacks?.rows??[]),...(model?.declines?.rapid??[])]} postMarket={model?.session==="after_hours"}/>
     <Dialog open={Boolean(replacement)} onClose={()=>setReplacement(null)} aria-labelledby="replace-scanner-chart-title">
       <DialogTitle id="replace-scanner-chart-title">Choose a chart to replace</DialogTitle>

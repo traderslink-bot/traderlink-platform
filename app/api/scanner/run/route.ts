@@ -1,4 +1,4 @@
-import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
+import { hasLegacyScannerDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { MoomooStockScreenService } from "@/src/modules/scanner/server/moomoo-stock-screen-service";
 import { SCANNER_FILTER_IDS, type ScannerFilterId, type ScannerRunRequest, type ScannerSort } from "@/src/modules/scanner/scanner-contract";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -40,10 +40,15 @@ function parse(body: unknown): ScannerRunRequest | null {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  let identity: ReturnType<typeof requireTraderLinkPlatformRequestIdentity>;
+  try {
+    identity = requireTraderLinkPlatformRequestIdentity(request.headers);
+    if (!hasLegacyScannerDashboardAccess(identity)) return Response.json({ code: "not_found" }, { status: 404 });
+  } catch {
+    return Response.json({ code: "not_found" }, { status: 404 });
+  }
   let database: ReturnType<typeof openPlatformDatabase> | null = null;
   try {
-    const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
-    if (!hasScannerEarlyAccess(identity)) return Response.json({ code: "not_found" }, { status: 404 });
     let body: unknown;
     try { body = await readBoundedRequestJson(request, 32 * 1024); }
     catch (error) { return Response.json({ code: "invalid_request" }, { status: error instanceof RequestBodyLimitError ? 413 : 400 }); }

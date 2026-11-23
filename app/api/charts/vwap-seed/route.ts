@@ -1,3 +1,4 @@
+import {hasSharedChartDataAccess} from "@/src/modules/market-data/server/chart-dashboard-access";
 import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import {browserVwapSeed} from "@/src/modules/market-data/server/browser-vwap-seed";
 import {marketDataSelection} from "@/src/modules/market-data/server/provider-settings";
@@ -9,7 +10,9 @@ import {easternClock} from '@/src/modules/scanner/live/sessions';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const reply=(body:unknown,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'private, no-store'}});
 async function readGET(request:Request){
- try{requireTraderLinkPlatformRequestIdentity(request.headers);}catch{return reply({error:'not_authenticated'},401);}
+ let identity: ReturnType<typeof requireTraderLinkPlatformRequestIdentity>;
+ try{identity=requireTraderLinkPlatformRequestIdentity(request.headers);}catch{return reply({error:'not_authenticated'},401);}
+ if(!hasSharedChartDataAccess(identity))return reply({error:'chart_access_denied'},403);
  let query:ReturnType<typeof parseVwapSeedRequest>;
  try{query=parseVwapSeedRequest(new URL(request.url).searchParams);}catch{return reply({error:'invalid_vwap_seed'},400);}
  const selection=marketDataSelection("charts"),params=new URL(request.url).searchParams;

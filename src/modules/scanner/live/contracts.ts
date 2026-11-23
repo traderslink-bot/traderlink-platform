@@ -1,6 +1,16 @@
 export type ScannerKind = "gainers" | "momentum";
 export type ScannerSession = "premarket" | "regular" | "after_hours";
-export type UniverseStock = Readonly<{ symbol: string; exchange: "NASDAQ" | "NYSE" | "AMEX"; marketCapAtCollection: number }>;
+export const SCANNER_OPENING_RANGE_MINUTES = [5, 15, 30] as const;
+export type ScannerOpeningRangeMinutes = typeof SCANNER_OPENING_RANGE_MINUTES[number];
+export type ScannerOpeningRanges = Partial<Record<ScannerOpeningRangeMinutes, Readonly<{ high: number; low: number }>>>;
+export type ScannerDailyHighs = Readonly<{
+  lastFiveSessions?: number;
+  lastSevenDays?: number;
+  previousWeek?: number;
+}>;
+export type UniverseStock = Readonly<{ symbol: string; exchange: "NASDAQ" | "NYSE" | "AMEX";
+  marketCapAtCollection: number; sector?: import("./sectors").ScannerSector;
+  securityType?: import("./security-types").ScannerSecurityType }>;
 export type UniverseSourceUrl = UniverseUpload["metadata"]["source_url"];
 export type UniverseSourceImport = Readonly<{
   sourceUrl: UniverseSourceUrl; sourceHash: string; collectionFinishedAtUtc: string; uploadCount: number;
@@ -64,6 +74,10 @@ export type ScannerConfiguration = Readonly<{
   /** Exclusive upper bound for press releases shown in the compact Market Events card. */
   marketEventsPressReleaseMaximumMarketCap?: number;
 }>;
+export type ScannerAdminConfiguration = ScannerConfiguration &
+  Required<Pick<ScannerConfiguration, "momentumDetection" | "momentumLiquidityBypass" |
+    "declines" | "premarketPullbacks" | "marketEventsPressReleaseMaximumMarketCap">>;
+
 export type NormalizedSnapshot = Readonly<{
   provider?: "moomoo" | "alpaca";
   symbol: string; company: string; session: ScannerSession; tradingDate: string;
@@ -72,13 +86,36 @@ export type NormalizedSnapshot = Readonly<{
   regularClosePrice?: number | null;
   /** Separate provider session aggregate; never substituted with regular-session HOD. */
   premarketHigh?: number | null;
+  premarketLow?: number | null;
   premarketVolume?: number | null;
-  /** Separate session highs supplied by Alpaca's trade aggregates. */
+  /** Separate sessions supplied by Alpaca's trade aggregates. */
   regularHigh?: number | null;
+  regularLow?: number | null;
+  regularVolume?: number | null;
   postMarketHigh?: number | null;
+  postMarketLow?: number | null;
+  postMarketVolume?: number | null;
   /** The provider clock is preserved even when it describes the regular close. */
   priceTimeBasis?: "provider" | "session_observation";
   volume: number | null; dollarVolume: number | null; bid: number | null; ask: number | null;
+  quoteObservedAt?: number;
+  halted?: boolean;
+  tradeResumedAt?: number;
+  sessionOpen?: number;
+  previousDayHigh?: number;
+  previousDayLow?: number;
+  averageDailyVolume20?: number;
+  averageDailyRange20?: number;
+  dailyClosedAt?: number;
+  weeklyClosedAt?: number;
+  closedDailyReturn?: number;
+  closedWeeklyReturn?: number;
+  dailyCloseVsSma20?: number;
+  weeklyCloseVsSma4?: number;
+  dailyRelativeToSpy?: number;
+  weeklyRelativeToSpy?: number;
+  recentDailyHighs?: ScannerDailyHighs;
+  openingRanges?: ScannerOpeningRanges;
   marketCap: number | null; dayHigh: number; dayLow: number; providerVolumeRatio: number | null;
 }>;
 export type RollingActivity = Readonly<{
@@ -93,7 +130,7 @@ export type RollingActivity = Readonly<{
   episodeShares?:number|null; episodeDollarVolume?:number|null; episodeSeconds?:number|null;
 }>;
 export type MomentumSignal = "volume_ignition"|"building_volume"|"price_burst"|"developing_activity"|"one_minute_momentum"|"five_minute_momentum";
-export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt: string; url: string | null; typeLabel: string }>;
+export type ScannerNewsItem = Readonly<{ id: string; headline: string; createdAt: string; publishedAt?: string; url: string | null; typeLabel: string }>;
 export type ScannerActiveHalt = Readonly<{
   source?: "alpaca" | "nasdaq" | "nyse"; halted?: boolean;
   quoteTimeScheduled?: boolean; tradeTimeScheduled?: boolean;
@@ -101,7 +138,15 @@ export type ScannerActiveHalt = Readonly<{
   id:string; ticker:string; market:string; haltTimeEt:string; reasonCode:string; reason:string;
   quoteTimeEt:string|null; tradeTimeEt:string|null; chartExchange?:"NASDAQ"|"NYSE"|"AMEX"|null;
 }>;
-export type LiveScannerRow = Readonly<{
+/** Current trading date, in shares. Missing coverage is null. */
+export type ScannerVolumeBreakdown = Readonly<{
+  dayVolume?: number | null;
+  premarketVolume?: number | null;
+  regularVolume?: number | null;
+  postMarketVolume?: number | null;
+}>;
+
+export type LiveScannerRow = ScannerVolumeBreakdown & Readonly<{
   /** Finnhub company-profile country; absent while background enrichment is pending. */
   country?: string | null;
   symbol: string; exchange: "NASDAQ" | "NYSE" | "AMEX"; company: string; price: number;
@@ -128,7 +173,7 @@ export type LiveScannerRow = Readonly<{
   momentumCoolingUntilUtc?:string;
 }>;
 export type FocusStock = LiveScannerRow & Readonly<{ focusedAtUtc: string }>;
-export type DeclineRow = Readonly<{
+export type DeclineRow = ScannerVolumeBreakdown & Readonly<{
   country?: string | null;
   symbol: string; exchange: "NASDAQ" | "NYSE" | "AMEX"; company: string; price: number;
   changePercent: number | null; comparisonPrice: number | null;
@@ -145,7 +190,7 @@ export type DeclineResults = Readonly<{
   rapid: readonly DeclineRow[]; losers: readonly DeclineRow[];
   rapidTotal: number; loserTotal: number; controls: DeclineControls;
 }>;
-export type PremarketPullbackRow = Readonly<{
+export type PremarketPullbackRow = ScannerVolumeBreakdown & Readonly<{
   country?: string | null;
   symbol:string; exchange:"NASDAQ"|"NYSE"|"AMEX"; company:string; price:number;
   premarketHigh:number|null; regularHigh:number|null; postMarketHigh:number|null;

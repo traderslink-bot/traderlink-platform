@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DashboardPage } from "@/app/dashboard-template";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { hasTradingWorkspaceDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { LiveScreenersClient } from "../screeners/workspace/live-screeners-client";
 
 export const metadata: Metadata = { title: "Trading Workspace | TraderLink Platform" };
@@ -11,6 +11,6 @@ export const revalidate = 0;
 
 export default async function TradingWorkspacePage() {
   const identity = await requireTraderLinkPlatformPageIdentity();
-  if (!hasWatchlistDashboardNavigationAccess(identity)) notFound();
+  if (!hasTradingWorkspaceDashboardAccess(identity)) notFound();
   return <DashboardPage><LiveScreenersClient /></DashboardPage>;
 }

@@ -1,6 +1,6 @@
 import { reconcileChartTickers, selectedChart, singleChart } from "../alpaca/chart-multiview";
 import {expect,it} from 'vitest';
-import {EMPTY_CHART_WORKSPACE,replaceScannerChartPanel,scannerChartWorkspace,type ScannerChartWorkspace} from '@/app/(dashboard)/screeners/scanner-chart-workspace';
+import {EMPTY_CHART_WORKSPACE,replaceScannerChartPanel,scannerChartWorkspace,scannerChartWorkspaceFromLayout,type ScannerChartWorkspace} from '@/app/(dashboard)/screeners/scanner-chart-workspace';
 const open=(state:ScannerChartWorkspace,symbol:string)=>scannerChartWorkspace(state,{type:'open',chart:{symbol,exchange:'NASDAQ',showDetails:true}});
 it('selects duplicates and keeps existing charts unchanged when the fourth slot is filled',()=>{
  let state=EMPTY_CHART_WORKSPACE;
@@ -29,4 +29,32 @@ it("replaces only the selected slot and opens the new symbol at the default time
   expect(next.groups.flatMap(group => group.panels.map(panel => [group.symbol, panel.timeframe])))
     .toEqual([["POAS", "1m"], ["OMH", "5m"], ["NXXT", "5m"], ["QQQ", "15m"]]);
   expect(selectedChart(next)?.group.symbol).toBe("QQQ");
+});
+
+it("restores the selected saved ticker and retains only matching display metadata", () => {
+  const first = singleChart("AAPL", "1m");
+  const layout = {
+    ...first,
+    groups: [...first.groups, {
+      id: "ticker-2", symbol: "SPY",
+      panels: [
+        { id: "chart-2", timeframe: "5m" as const },
+        { id: "chart-3", timeframe: "15m" as const },
+      ],
+    }],
+    selectedPanel: "chart-3",
+  };
+  const known = { symbol: "SPY", exchange: "NYSE" as const, showDetails: true };
+  expect(scannerChartWorkspaceFromLayout(layout, [])).toEqual({
+    charts: [{ symbol: "AAPL", showDetails: true }, { symbol: "SPY", showDetails: true }],
+    selectedSymbol: "SPY",
+  });
+  expect(scannerChartWorkspaceFromLayout(layout, [known, { symbol: "REMOVED" }])).toEqual({
+    charts: [{ symbol: "AAPL", showDetails: true }, known],
+    selectedSymbol: "SPY",
+  });
+  expect(selectedChart(layout)?.panel.timeframe).toBe("15m");
+  expect(scannerChartWorkspaceFromLayout({ ...layout, groups: [], selectedPanel: null }, [known])).toEqual({
+    charts: [], selectedSymbol: null,
+  });
 });

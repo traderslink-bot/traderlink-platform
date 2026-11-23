@@ -41,11 +41,17 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it("preserves overnight choices and defines the next Eastern session across the weekend", () => {
-  expect(chartShowsOvernight(DEFAULT_CHART_PREFERENCES)).toBe(true);
+it("keeps overnight chart requests off even for saved overnight or extended-session preferences", () => {
+  expect(chartShowsOvernight(DEFAULT_CHART_PREFERENCES)).toBe(false);
+  expect(chartShowsOvernight({ premarket: true, postmarket: true })).toBe(false);
+  expect(chartShowsOvernight({ ...DEFAULT_CHART_PREFERENCES, overnight: true })).toBe(false);
   expect(chartShowsOvernight({ premarket: false, postmarket: false })).toBe(false);
+  expect(parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, overnight: true }).overnight).toBe(true);
   expect(parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, overnight: false }).overnight).toBe(false);
   expect(() => parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, overnight: "true" })).toThrow();
+});
+
+it("defines the next Eastern overnight session across the weekend", () => {
   expect(chartOvernightTradingDate(Date.parse("2026-11-14T01:00:00Z"))).toBeNull(); // Friday evening
   expect(chartOvernightTradingDate(Date.parse("2026-11-16T00:59:59Z"))).toBeNull();
   expect(chartOvernightTradingDate(Date.parse("2026-11-16T01:00:00Z"))).toBe("2026-11-16");

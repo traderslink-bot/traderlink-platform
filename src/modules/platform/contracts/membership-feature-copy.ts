@@ -1,6 +1,9 @@
 export type MembershipFeatureCopy = Readonly<{ brief: string; details: string }>;
 
 const COPY: Readonly<Record<string, readonly [string, string]>> = {
+  "charts.access": ["Research stocks with Market Charts.", "Open the available Market Charts and save your chart settings with your TraderLink account. Discord membership is not required. Live Scanners, Stock Screeners, the shared Watchlist and private Journal data retain their separate permissions. Chart data depends on the connected market-data service."],
+  "scanners.access": ["Find stocks matching live market conditions.", "Use Live Scanners and the available scanner results. This feature works with your TraderLink account without joining a Discord server. Stock Screeners, Charts and the shared Watchlist are separate plan choices; available results depend on the connected market-data service."],
+  "screeners.access": ["Build and run your own stock screens.", "Use Stock Screeners to save criteria and review matching stocks. Your saved screens keep their existing privacy and sharing controls. Live Scanners, Charts and the shared Watchlist are separate plan choices, and Discord membership is not required."],
   "watchlist.indicators": ["Read the shared Watchlist Indicator card.", "Review the available trend, momentum, RSI, moving averages, volume and ATR readings for the selected ticker and timeframe."],
   "watchlist.levels": ["Read Watchlist support, resistance and the full ladder.", "Access the Potential Path levels included by this plan. Ticker-specific restrictions still apply; this permission does not expose otherwise restricted tickers or analysis."],
   "private_watchlist.access": ["Keep your own private ticker list.", "Add and organize tickers in your personal Watchlist, separate from the shared group list. Analysis, indicators, levels and generation allowances can be included independently."],

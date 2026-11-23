@@ -3,9 +3,9 @@ import {browserDataSession, matchesBrowserDataSession} from "@/src/modules/marke
 import "server-only";
 import { chartSymbol, type Candle } from "@/src/modules/scanner/alpaca/candles";
 import type { ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
-import { indicatorDisplayRows, type IndicatorDisplayRow } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
+import { indicatorDisplayRows, type IndicatorDisplayRow } from "@/src/modules/market-data/indicators/indicator-presentation";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { hasMarketToolsDashboardReadAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { historyCalendar, scannerIndicatorResults } from "../scanner-indicator-calculation";
 import { SCANNER_INDICATOR_FRAMES, prepareScannerIndicatorRows, type ScannerIndicatorRead } from "../scanner-indicator-read";
 
@@ -16,7 +16,7 @@ const limit = 300;
 
 export async function scannerIndicatorResponse(request: Request, loadBars: (request: Request) => Promise<Response>) {
   try {
-    if (!hasWatchlistDashboardNavigationAccess(requireTraderLinkPlatformRequestIdentity(request.headers))) {
+    if (!hasMarketToolsDashboardReadAccess(requireTraderLinkPlatformRequestIdentity(request.headers))) {
       return Response.json({ error: "unavailable" }, { status: 404, headers });
     }
   } catch {

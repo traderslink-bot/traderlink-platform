@@ -21,9 +21,9 @@ async function evaluate(path, imports) {
   }, module, module.exports);
   return module.exports;
 }
-const signalModule = await evaluate("../lib/live-watchlist/indicators/indicator-signals.ts", {});
+const signalModule = await evaluate("../modules/market-data/indicators/indicator-signals.ts", {});
 const imports = { "./indicator-signals": signalModule };
-const presentation = await evaluate("../lib/live-watchlist/indicators/indicator-presentation.ts", imports);
+const presentation = await evaluate("../modules/market-data/indicators/indicator-presentation.ts", imports);
 const member = await evaluate("../lib/live-watchlist/indicators/indicator-member-snapshot.ts", imports);
 const help = await evaluate("../../app/watchlist/watchlist-indicator-help.ts", {});
 const groups = await evaluate("../../app/watchlist/watchlist-indicator-groups.ts", { "./watchlist-indicator-help": help });

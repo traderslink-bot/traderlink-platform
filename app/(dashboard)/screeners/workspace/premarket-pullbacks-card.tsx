@@ -3,10 +3,12 @@
 import { WorkspaceScannerTitle } from "./workspace-scanner-title";
 import { scannerPrice as price } from "../scanner-price";
 
-import { ScannerPageChartButton, ScannerPageTicker } from "./scanner-page-ticker";
+import { ScannerPageTicker } from "./scanner-page-ticker";
+import { ScannerRowTools, scannerToolColumnSx } from "./scanner-row-tools";
 
 import { ScannerCountryFlag } from "../scanner-country-flag";
-import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
+import { workspaceVolumeFacts } from "./workspace-volume";
+import { ScannerStockCards, ScannerViewSettings, WorkspaceVolumeHeaders, WorkspaceVolumeCells, useWorkspaceVolumeColumns, type ScannerView } from "./scanner-stock-cards";
 import { scannerGainColor } from "../scanner-gain-color";
 
 import Alert from "@mui/material/Alert";
@@ -35,7 +37,7 @@ import { DashboardPanel } from "@/app/dashboard-template";
 import type { DeclineRow, PremarketPullbackResults, PremarketPullbackRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "../screener-halt-indicator";
-import { ScannerNewsLink, ScannerRowNews } from "../scanner-news-drawer-context";
+import { ScannerNewsLink } from "../scanner-news-drawer-context";
 
 const wholePercent=new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
 const compact=new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
@@ -69,37 +71,36 @@ function RapidMarker() {
 }
 
 function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;twoRows:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
+  const volumeColumns=useWorkspaceVolumeColumns();
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="HOD Drops list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
-    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{...scannerStickyTickerSx,tableLayout:"fixed",minWidth:twoRows?380:438,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
-      <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:72}} aria-label="Chart and news"/></>}<TableCell data-scanner-sticky-ticker sx={{width:"5.75rem"}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
-        <TableCell sx={{width:48}}>Drop</TableCell><TableCell sx={{width:"5.5rem"}}>High</TableCell><TableCell sx={{width:58}}>Vol</TableCell>
+    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{...scannerStickyTickerSx,minWidth:(twoRows?336:394)+62*(volumeColumns.length-1),'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      <TableHead><TableRow>{!twoRows&&<><TableCell sx={scannerToolColumnSx()} aria-label="Chart and news"/></>}<TableCell data-scanner-sticky-ticker sx={{width:"1%"}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
+        <TableCell sx={{width:48}}>Drop</TableCell><TableCell sx={{width:"5.5rem"}}>High</TableCell><WorkspaceVolumeHeaders columns={volumeColumns}/>
       {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const source=row.referenceSession==="premarket"?"PRE":row.referenceSession==="regular"?"REG":"POST";
         const rapidMetrics:[string,string][]=row.rapidDrop?[["Rapid start",price(row.rapidDrop.startPrice)],["Rapid low",price(row.rapidDrop.lowPrice)],["Rapid fall time",rapidFallTime(row.rapidDrop.durationSeconds)]]:[];
-        const metrics:[string,string][]=open?[["Premarket high",optionalPrice(row.premarketHigh)],["Regular high",optionalPrice(row.regularHigh)],["Post-market high",optionalPrice(row.postMarketHigh)],
-          ["Reference high",price(row.referenceHigh)],["Below reference high",`${wholePercent.format(row.belowHighPercent)}%`],["Back to reference high",`+${wholePercent.format(row.backToHighPercent)}%`],["Premarket volume",shares(row.premarketVolume)],
-          ["Session volume",shares(row.sessionVolume)],["1min volume",shares(row.oneMinuteVolume)],["5min volume",shares(row.fiveMinuteVolume)],
+        const metrics:readonly (readonly [string,string])[]=open?[["Premarket high",optionalPrice(row.premarketHigh)],["Regular high",optionalPrice(row.regularHigh)],["Post-market high",optionalPrice(row.postMarketHigh)],
+          ["Reference high",price(row.referenceHigh)],["Below reference high",`${wholePercent.format(row.belowHighPercent)}%`],["Back to reference high",`+${wholePercent.format(row.backToHighPercent)}%`],...workspaceVolumeFacts(row),
+          ["1min volume",shares(row.oneMinuteVolume)],["5min volume",shares(row.fiveMinuteVolume)],
           ["Float",floatShares(row.float)],["Spread",row.spreadPercent===null?"n/a":`${wholePercent.format(row.spreadPercent)}%`],
           ...rapidMetrics,
           ["Quote received",`${clock.format(new Date(row.receivedAtUtc))} ET`]]:[];
         return <Fragment key={row.symbol}><TableRow hover tabIndex={0} aria-expanded={open} onClick={toggle}
           onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();toggle();}}}
           sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
-          {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><Stack direction="row" sx={{alignItems:"center",gap:0.4}}><ChartButton row={row} onOpenChart={onOpenChart}/><ScannerPageChartButton symbol={row.symbol}/><ScannerRowNews news={row.news}/></Stack></TableCell>
+          {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>
           </>}
-          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.5,flexWrap:"nowrap",pr:0.75}}><ScannerPageTicker symbol={row.symbol}/>{row.rapidDrop?<RapidMarker/>:null}<ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-          <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(-row.belowHighPercent),fontWeight:750}}>{wholePercent.format(row.belowHighPercent)}%</TableCell><TableCell sx={{whiteSpace:"nowrap", "&&":{pr:0.85}}}><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><TableCell>{shares(row.sessionVolume)}</TableCell>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{display:"inline-flex",alignItems:"center",gap:0.5,whiteSpace:"nowrap"}}><ScannerPageTicker symbol={row.symbol}/>{row.rapidDrop?<RapidMarker/>:null}<ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(-row.belowHighPercent),fontWeight:750}}>{wholePercent.format(row.belowHighPercent)}%</TableCell><TableCell sx={{whiteSpace:"nowrap", "&&":{pr:0.85}}}><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><WorkspaceVolumeCells row={row} columns={volumeColumns}/>
         {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
           </TableRow>
           {twoRows&&<TableRow data-two-row-tools={row.symbol}>
             <TableCell data-scanner-sticky-ticker><ScannerCountryFlag country={row.country}/></TableCell>
-            <TableCell colSpan={4}><Stack direction="row" sx={{alignItems:"center",gap:0.8,pb:0.3}}>
-              <ChartButton row={row} onOpenChart={onOpenChart}/><ScannerPageChartButton symbol={row.symbol}/><ScannerRowNews news={row.news}/>
-            </Stack></TableCell>
-          </TableRow>}{open?<TableRow><TableCell colSpan={twoRows?5:7} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
+            <TableCell colSpan={3+volumeColumns.length}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>
+          </TableRow>}{open?<TableRow><TableCell colSpan={(twoRows?4:6)+volumeColumns.length} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
             {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45,color:label==="Below reference high"?scannerGainColor(-row.belowHighPercent):undefined}}>{value}</Typography></Box>)}
           </Box><Stack direction="row" sx={{gap:1,flexWrap:"wrap",justifyContent:"space-between",alignItems:"center"}}>
@@ -122,11 +123,10 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
       <Box role="list" sx={theme=>({...scannerScrollStyles(theme),overflowX:"hidden",maxHeight:110})}>
         {rows.map(row=>row.drop&&<Stack key={row.symbol} role="listitem" direction="row"
           sx={{alignItems:"center",gap:0.6,minHeight:25,fontSize:"0.68rem"}}>
-          <ChartButton row={row} onOpenChart={onOpenChart}/>
-          <ScannerPageChartButton symbol={row.symbol} showOnMobile/>
+          <ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>} showPageChartOnMobile/>
           <ScannerPageTicker symbol={row.symbol}/>
           <RapidMarker/>
-          <ScannerCountryFlag country={row.country}/><ScannerRowNews news={row.news}/>
+          <ScannerCountryFlag country={row.country}/>
           <ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>
           <Typography variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.drop.maximumDropPercent)}}>{wholePercent.format(row.drop.maximumDropPercent)}%</Typography>
           <Typography variant="inherit" color="text.secondary">in {rapidFallTime(row.drop.durationSeconds)}</Typography>
@@ -143,7 +143,7 @@ export function PremarketPullbacksCard({results,view="table",onViewChange,now=0,
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>:!results?<Skeleton height={260}/>
       :results.rows.length?(view==="cards"?<ScannerStockCards screen="high-drops" rows={results.rows} now={now}
         renderHalt={symbol=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>}
-        renderTools={row=><>{row.rapidDrop&&<RapidMarker/>}<ChartButton row={row} onOpenChart={onOpenChart}/><ScannerPageChartButton symbol={row.symbol}/><ScannerRowNews news={row.news}/></>}/>
+        renderTools={row=><>{row.rapidDrop&&<RapidMarker/>}<ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></>}/>
         :<HighDropsTable twoRows={view==="two-rows"} rows={results.rows} full={wide} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>):<Alert severity="info">No stocks currently qualify for this list.</Alert>}
   </Stack>;
   return <><DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">HOD Drops</Typography></WorkspaceScannerTitle><Tooltip title={`HOD Drops ranks stocks by how far they are below the session high. The bolt marks a rapid drop. ${RAPID_DROP_HELP}`}><IconButton aria-label="Explain HOD Drops" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><Stack direction="row" sx={{alignItems:"center",gap:0.4}}>{viewSettings}<IconButton size="small" aria-label="Open HOD Drops full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack></Stack>{contents(false)}</DashboardPanel>

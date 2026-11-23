@@ -24,7 +24,7 @@ const rsi=(x:readonly number[],p:number)=>{
  });
 };
 for(const frame of CHART_CALCULATION_TIMEFRAMES)for(const source of PRICE_SOURCES)it(`standard studies honour ${source} on ${frame}`,()=>{
- const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
+ const step={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1D':86400}[frame];
  const bars:Candle[]=Array.from({length:45},(_,n)=>{const low=10+(n*17)%23;return {time:1700000000+n*step,low,high:low+9,open:low+n%7,close:low+(n*3)%8,volume:100+n};});
  const x=bars.map(bar=>referenceSource(bar,source));
  const study=(type:ChartIndicator['type'],extra:Partial<ChartIndicator>={}):ChartIndicator=>({id:'matrix',type,period:7,source,color:'#2962ff',width:2,...extra});

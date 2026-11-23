@@ -4,7 +4,7 @@ import type { TraderLinkPlatformRequestIdentity } from "../platform/server/authe
 import { collectMarketPack, type BarCache } from "./collect-market";
 import { DEFAULT_DEFINITION, parseDefinition, parseThreshold } from "./contracts";
 import { marketWindows, sessionBounds, type ProviderBar } from "./market-metrics";
-import { canReadPressReleaseRun, HOUR_MS, latestPressReleases, memberRecentArticles } from "./press-releases";
+import { canReadPressReleaseRun, HOUR_MS, latestPressReleases, memberRecentArticles, memberScannerPressReleaseRecords } from "./press-releases";
 import { matchesRule } from "./query";
 import { relativeVolumeAtTime, relativeVolumeHistory, relativeVolumeSchedule } from "./relative-volume";
 
@@ -176,6 +176,42 @@ describe("recent press releases", () => {
     expect(parseThreshold("2%", "relativeVolume")).toBeNaN();
     expect(parseThreshold("24 h", "pressReleaseAge")).toBe(24);
     expect(() => parseDefinition({ ...DEFAULT_DEFINITION, rules: [{ metric: "pressReleaseAge", operator: "lte", value: 49 }] })).toThrow("invalid_rule");
+  });
+
+  it("keeps longer Scanner release lookbacks behind the same News access and delay", () => {
+    const database = new Database(":memory:");
+    const identity = { scope: { userId: "scanner-member" } } as TraderLinkPlatformRequestIdentity;
+    newsAccess.database = database;
+    newsAccess.delay = 3600;
+    try {
+      database.exec("CREATE TABLE news_articles(id TEXT PRIMARY KEY, ticker TEXT, published_at TEXT, created_at TEXT, route_tag TEXT, event_type TEXT, headline TEXT, slug TEXT)");
+      const insert = database.prepare("INSERT INTO news_articles VALUES (?, 'AAA', ?, ?, ?, ?, ?, ?)");
+      function add(id: string, publishedHours: number, createdHours: number, tag = "default", type = "press_release") {
+        insert.run(id, new Date(recent - publishedHours * HOUR_MS).toISOString(),
+          new Date(recent - createdHours * HOUR_MS).toISOString(), tag, type, id, id);
+      }
+      add("older-visible", 90, 89);
+      add("delayed", 0.5, 0.2);
+      add("new-filing", 4, 4, "default", "sec_filing");
+      add("private", 6, 5, "other");
+      expect(latestPressReleases(database, ["AAA"], recent, 3600).size).toBe(0);
+      expect(memberScannerPressReleaseRecords(identity, ["AAA"], recent, 168)?.get("AAA")).toMatchObject({
+        id: "older-visible", headline: "older-visible", publishedAt: recent - 90 * HOUR_MS,
+      });
+      expect(memberScannerPressReleaseRecords(identity, ["AAA"], recent, 168, recent + HOUR_MS)?.get("AAA")?.id)
+        .toBe("delayed");
+      expect(memberScannerPressReleaseRecords(identity, ["AAA"], recent - HOUR_MS, 168, recent + HOUR_MS)?.get("AAA")?.id)
+        .toBe("older-visible");
+      newsAccess.delay = 0;
+      expect(memberScannerPressReleaseRecords(identity, ["AAA"], recent, 168)?.get("AAA")?.id).toBe("delayed");
+      newsAccess.allowed = false;
+      expect(memberScannerPressReleaseRecords(identity, ["AAA"], recent, 168)).toBeUndefined();
+    } finally {
+      newsAccess.allowed = true;
+      newsAccess.delay = 0;
+      newsAccess.database = undefined;
+      database.close();
+    }
   });
 
   it("applies member access, visibility delay and a rolling publication window to Recent News", () => {

@@ -40,7 +40,7 @@ export default async function HomePage() {
     }
     throw error;
   }
-  const { dashboard, homePages, journal, weekAhead, sessionTracker } = withReadonlyPlatformDatabase({}, database => {
+  const { dashboard, homePages, journal, charts, weekAhead, sessionTracker } = withReadonlyPlatformDatabase({}, database => {
     const access = readPlatformHomeAccess(database, identity, requestHeaders);
     if (!access.homePages.welcome) redirect(PLATFORM_HOME_PAGES["journal-workspace"].href);
 
@@ -58,7 +58,10 @@ export default async function HomePage() {
     ...(homePages["trading-workspace"] ? [PLATFORM_HOME_PAGES["trading-workspace"]] : []),
     ...(homePages.scanners ? [PLATFORM_HOME_PAGES.scanners] : []),
     ...(homePages.screeners ? [PLATFORM_HOME_PAGES.screeners] : []),
-    ...(dashboard ? [{ href: "/charts", label: "Market Charts" }] : [{ href: "/plans", label: "Explore Trading Tools plans" }]),
+    ...(charts ? [{ href: "/charts", label: "Market Charts" }] : [{
+      href: dashboard ? "/plans?feature=charts.access" : "/plans",
+      label: dashboard ? "Explore Market Charts plans" : "Explore Trading Tools plans",
+    }]),
   ];
   const pressReleaseLinks = dashboard && hasPressReleaseDashboardAccess(identity)
     ? ([

@@ -35,8 +35,10 @@ import {
   createCanonicalUtcTimestamp,
   isTraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
-import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
+import { stockScreenersEnabled } from "@/src/modules/stock-screeners/service";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { hasLegacyScannerDashboardAccess, hasStockScreenersDashboardAccess, readMarketToolsDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
+import { hasChartsDashboardAccess } from "@/src/modules/market-data/server/chart-dashboard-access";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { DashboardMuiProviders } from "./mui-provider";
 import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
@@ -193,10 +195,13 @@ async function TraderLinkPlatformDashboardFrameContent({
     ? withReadonlyPlatformDatabase({}, database => readMembershipDiscordConnection(database, scope.userId)) : null;
   timing.next(null);
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
-  const scannerEarlyAccess = hasScannerEarlyAccess(identity);
+  const scannerEarlyAccess = hasLegacyScannerDashboardAccess(identity);
+  const screenersDashboardAccess = stockScreenersEnabled(identity.mode) && hasStockScreenersDashboardAccess(identity);
+  const chartsDashboardAccess = hasChartsDashboardAccess(identity);
   const ownerMarketDataAccess = hasOwnerMarketDataAccess(identity);
   const generalMarketNewsAccess = hasGeneralMarketNewsAccess(identity);
   const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
+  const marketToolsAccess = readMarketToolsDashboardAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
   timing.next("context");
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
@@ -283,7 +288,11 @@ async function TraderLinkPlatformDashboardFrameContent({
           watchlistMemberNavigationAccess
           ownerMarketDataAccess={ownerMarketDataAccess}
           generalMarketNewsAccess={generalMarketNewsAccess}
-        watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
+          scannerDashboardAccess={marketToolsAccess.scanner}
+          screenersDashboardAccess={screenersDashboardAccess}
+          chartsDashboardAccess={chartsDashboardAccess}
+          tradingWorkspaceDashboardAccess={marketToolsAccess.tradingWorkspace}
+          watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
           communityNavigationHref={dashboardContext.communityNavigationHref}
           partnerChannelsNavigationAccess={watchlistAdminNavigationAccess}
           coachingNavigationHref={dashboardContext.coachingNavigationHref}

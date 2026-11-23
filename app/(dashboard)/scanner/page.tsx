@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
+import { hasLegacyScannerDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { ScannerClient } from "./scanner-client";
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const revalidate = 0;
 
 export default async function ScannerPage() {
   const identity = await requireTraderLinkPlatformPageIdentity();
-  if (!hasScannerEarlyAccess(identity)) notFound();
+  if (!hasLegacyScannerDashboardAccess(identity)) notFound();
 
   return <ScannerClient />;
 }

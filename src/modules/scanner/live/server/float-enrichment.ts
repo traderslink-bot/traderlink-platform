@@ -5,7 +5,7 @@ import type { FloatFact } from "../engine";
 const SYMBOL = /^[A-Z][A-Z0-9.-]{0,15}$/u;
 const EODHD_MAX_BATCH = 100;
 const DEFAULT_FINNHUB_SPACING_MS = 1_050;
-type FloatCacheRecord = Readonly<{ tradingDate: string; facts: Readonly<Record<string,FloatFact>>; countries?: Readonly<Record<string,string|null>> }>;
+type FloatCacheRecord = Readonly<{ tradingDate: string; facts: Readonly<Record<string,FloatFact>>; countries?: Readonly<Record<string,string|null>>; industries?: Readonly<Record<string,string>> }>;
 export type FloatCachePersistence = Readonly<{
   read: (tradingDate: string) => Promise<unknown>;
   write: (record: FloatCacheRecord) => Promise<void>;
@@ -30,6 +30,23 @@ function parseCountries(value: unknown, tradingDate: string): Map<string,string|
   if(record.tradingDate!==tradingDate || !record.countries || typeof record.countries!=="object" || Array.isArray(record.countries))return new Map();
   return new Map(Object.entries(record.countries).filter((entry):entry is [string,string|null]=>SYMBOL.test(entry[0])&&(entry[1]===null||typeof entry[1]==="string"&&/^[A-Z]{2}$/.test(entry[1]))));
 }
+function profileIndustry(value:unknown):string | undefined {
+  if (typeof value !== "string") return;
+  const normalized = value.trim().replace(/\s+/gu," ");
+  return normalized.length > 0 && normalized.length <= 100 && !/[\p{Cc}\p{Cf}]/u.test(normalized) ? normalized : undefined;
+}
+
+function parseIndustries(value:unknown, tradingDate:string):Map<string,string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return new Map();
+  const record = value as Partial<FloatCacheRecord>;
+  if (record.tradingDate !== tradingDate || !record.industries || typeof record.industries !== "object" ||
+    Array.isArray(record.industries)) return new Map();
+  return new Map(Object.entries(record.industries).flatMap(([symbol, raw]) => {
+    const industry = profileIndustry(raw);
+    return SYMBOL.test(symbol) && industry ? [[symbol, industry] as const] : [];
+  }));
+}
+
 function positiveSafeInteger(value: unknown): number | null {
   if (typeof value !== "number" && typeof value !== "string") return null;
   try {
@@ -89,6 +106,7 @@ export class DailyFloatEnricher {
     const stored = await this.input.persistence.read(tradingDate);
     const facts = parseCache(stored,tradingDate);
     const countries = parseCountries(stored,tradingDate);
+    const industries = parseIndustries(stored,tradingDate);
     let missing = [...new Set(symbols)].filter(symbol => !facts.has(symbol)||!countries.has(symbol));
     const request = this.input.request ?? fetch;
     const now = this.input.now ?? Date.now;
@@ -111,6 +129,9 @@ export class DailyFloatEnricher {
             if(typeof profile.ticker==="string"&&profile.ticker.trim().toUpperCase()===symbol){
               const country=typeof profile.country==="string"?profile.country.trim().toUpperCase():"";
               countries.set(symbol,/^[A-Z]{2}$/.test(country)?country:null);
+              const industry = profileIndustry(profile.finnhubIndustry ?? profile.industry);
+              if (industry) industries.set(symbol, industry);
+              else industries.delete(symbol);
             }
           }
           const shares = finnhubShares(payload,symbol);
@@ -134,7 +155,8 @@ export class DailyFloatEnricher {
         for (const [symbol,fact] of parseEodhd(await response.json(),new Set(batch),retrievedAtUtc)) facts.set(symbol,fact);
       } catch { continue; }
     }
-    await this.input.persistence.write({ tradingDate,facts:Object.freeze(Object.fromEntries(facts)),countries:Object.freeze(Object.fromEntries(countries)) });
+    await this.input.persistence.write({ tradingDate,facts:Object.freeze(Object.fromEntries(facts)),countries:Object.freeze(Object.fromEntries(countries)),
+      ...(industries.size ? {industries:Object.freeze(Object.fromEntries(industries))} : {}) });
     return facts;
   }
 }
@@ -152,6 +174,9 @@ export class ScannerFloatFeed {
     private readonly now: () => number = Date.now) {}
   async readCountries(date:string):Promise<ReadonlyMap<string,string>> {
     return new Map([...parseCountries(await this.persistence.read(date),date)].filter((entry):entry is [string,string]=>entry[1]!==null));
+  }
+  async readIndustries(date:string):Promise<ReadonlyMap<string,string>> {
+    return parseIndustries(await this.persistence.read(date),date);
   }
   async read(date: string, symbols: readonly string[]): Promise<ReadonlyMap<string,FloatFact>> {
     const stored=await this.persistence.read(date);

@@ -6,7 +6,8 @@ import { vwapAnchorKey } from "@/src/modules/scanner/alpaca/chart-indicators";
 import { PRICE_SOURCES } from "@/src/modules/scanner/alpaca/chart-preferences";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 
-const state=vi.hoisted(()=>({selection:{provider:"alpaca" as "alpaca"|"moomoo",revision:0},authenticated:true,gateway:vi.fn(),alternative:vi.fn()}));
+const state=vi.hoisted(()=>({selection:{provider:"alpaca" as "alpaca"|"moomoo",revision:0},authenticated:true,sharedChart:true,gateway:vi.fn(),alternative:vi.fn()}));
+vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasSharedChartDataAccess:()=>state.sharedChart}));
 vi.mock("./server/provider-settings",()=>({marketDataSelection:()=>({...state.selection})}));
 vi.mock("@/src/modules/scanner/alpaca/client",()=>({requestAlpacaGateway:state.gateway}));
 vi.mock("./server/moomoo-chart-response",()=>({readMoomooChartVwapSeed:state.alternative}));
@@ -18,7 +19,7 @@ function seed(query:URLSearchParams){
  const request=parseVwapSeedRequest(query),basisDate=easternClock(Date.now()).date;
  return {complete:true,request,basisDate,anchorKey:vwapAnchorKey(easternClock(request.before*1000).date,request.anchor),start:vwapSeedStart(request),volume:100,sums:Object.fromEntries(PRICE_SOURCES.map(source=>[source,200]))};
 }
-afterEach(()=>{state.selection={provider:"alpaca",revision:0};state.authenticated=true;state.gateway.mockReset();state.alternative.mockReset();});
+afterEach(()=>{state.selection={provider:"alpaca",revision:0};state.authenticated=true;state.sharedChart=true;state.gateway.mockReset();state.alternative.mockReset();});
 
 it("keeps VWAP sums identical across sources while its browser generation stays neutral",async()=>{
  const params=parameters(),expected=seed(params);
@@ -48,4 +49,12 @@ it('strips extra seed metadata and contains both sources thrown failures',async(
  expect(await(await GET(new Request('https://app.example/api?'+params))).json()).toEqual(expected);
  for(const provider of ['alpaca','moomoo'] as const){state.selection={provider,revision:3};state.gateway.mockRejectedValue(Error('Alpaca private-value'));state.alternative.mockRejectedValue(Error('Moomoo private-value'));
   const response=await GET(new Request('https://app.example/api?'+params));expect(response.status).toBe(503);expect(await response.json()).toEqual({error:'vwap_history_unavailable'});}
+});
+
+it("denies a VWAP seed before reading either provider without shared chart access", async () => {
+  state.sharedChart = false;
+  const request = new Request("https://app.example/api/charts/vwap-seed?" + parameters());
+  expect((await GET(request)).status).toBe(403);
+  expect(state.gateway).not.toHaveBeenCalled();
+  expect(state.alternative).not.toHaveBeenCalled();
 });

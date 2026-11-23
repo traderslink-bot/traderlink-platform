@@ -1,13 +1,9 @@
 import type { ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { CHART_TIMEFRAMES, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
-import type { IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
+import type { IndicatorDisplayChoices } from "@/src/modules/scanner/alpaca/chart-preferences";
 
-export type ChartIndicatorDisplay = {
-  hidden: ReadonlySet<IndicatorType>;
-  enabled: Readonly<Partial<Record<IndicatorType, boolean>>>;
-};
-export const defaultIndicatorDisplay: ChartIndicatorDisplay = { hidden: new Set(), enabled: {} };
+export const defaultIndicatorDisplay: IndicatorDisplayChoices = {};
 
 type Range = { from: number; to: number };
 export type ChartViewSnapshot = {
@@ -34,7 +30,7 @@ function valid(value: unknown): value is ChartViewSnapshot {
 const key = (panel: string, symbol: string, timeframe: ChartTimeframe, sessions: string) => JSON.stringify([panel, symbol, timeframe, sessions]);
 /** Only small view coordinates are retained. No candles, charts, streams or timers. */
 export class ChartViewMemory {
-  private indicatorDisplays = new Map<string, Map<string, { symbol: string; display: ChartIndicatorDisplay }>>();
+  private indicatorDisplays = new Map<string, Map<string, { symbol: string; display: IndicatorDisplayChoices }>>();
   private states = new Map<string, State>();
   constructor(private storage: () => Storage | undefined) {}
   private scope(owner: string, workspace: string) { return `${owner}:${workspace}`; }
@@ -68,7 +64,7 @@ export class ChartViewMemory {
     const entry = this.indicatorDisplays.get(this.scope(owner, workspace))?.get(panel);
     return entry?.symbol === symbol ? entry.display : defaultIndicatorDisplay;
   }
-  writeIndicatorDisplay(owner: string, workspace: string, panel: string, symbol: string, display: ChartIndicatorDisplay) {
+  writeIndicatorDisplay(owner: string, workspace: string, panel: string, symbol: string, display: IndicatorDisplayChoices) {
     const scope = this.scope(owner, workspace);
     if (this.state(scope).panels[panel] !== symbol) return;
     const displays = this.indicatorDisplays.get(scope) ?? new Map();

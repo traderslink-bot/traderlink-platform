@@ -403,6 +403,10 @@ function DashboardShellContent({
   pressReleaseUnreadCounts: initialPressReleaseUnreadCounts = null,
   deferPressReleaseUnreadCounts = false,
   scannerEarlyAccess = false,
+  scannerDashboardAccess = false,
+  screenersDashboardAccess = false,
+  chartsDashboardAccess = false,
+  tradingWorkspaceDashboardAccess = false,
   watchlistMemberNavigationAccess = false,
   ownerMarketDataAccess = false,
   generalMarketNewsAccess = false,
@@ -419,6 +423,10 @@ function DashboardShellContent({
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   deferPressReleaseUnreadCounts?: boolean;
   scannerEarlyAccess?: boolean;
+  scannerDashboardAccess?: boolean;
+  screenersDashboardAccess?: boolean;
+  chartsDashboardAccess?: boolean;
+  tradingWorkspaceDashboardAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
   ownerMarketDataAccess?: boolean;
   generalMarketNewsAccess?: boolean;
@@ -543,8 +551,10 @@ function DashboardShellContent({
               (item.href !== "/market-news/general" || generalMarketNewsAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
               (item.href !== "/private-watchlist" || watchlistAdminNavigationAccess) &&
-              ((item.href !== "/scanners" && item.href !== "/trading-workspace") || watchlistAdminNavigationAccess) &&
-              (item.href !== "/screeners" || watchlistAdminNavigationAccess) &&
+              (item.href !== "/scanners" || scannerDashboardAccess) &&
+              (item.href !== "/trading-workspace" || tradingWorkspaceDashboardAccess) &&
+              (item.href !== "/screeners" || screenersDashboardAccess) &&
+              (item.href !== "/charts" || chartsDashboardAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&
               (item.href !== "/admin/scanners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/market-data" || ownerMarketDataAccess) &&

@@ -1141,7 +1141,7 @@ function decodeDrawings(raw:string|null):readonly Drawing[]{
       (!isGann(d.tool)||d.anchors.length===2&&d.anchors[0]&&d.anchors[1]&&validGannAnchors(d.anchors[0],d.anchors[1]))&&
       (d.regression===undefined||d.tool==="regressionTrend"&&validRegressionSettings(d.regression))&&
       (d.tool==="fixedRangeProfile"
-        ? [60,300,900,3600,14400,86400].includes(d.volumeInterval)&&
+        ? [60,300,900,1800,3600,14400,86400].includes(d.volumeInterval)&&
           (d.volumeTimeframe===undefined||d.volumeInterval===86400&&isCalendarChartTimeframe(d.volumeTimeframe))
         : d.volumeInterval===undefined&&d.volumeTimeframe===undefined)&&
       (d.tool==="barsPattern"?validPattern(d.pattern):d.pattern===undefined)&&
@@ -1517,7 +1517,8 @@ export class ChartDrawings implements IPanePrimitive<Time>{
   private readonly views:IPanePrimitivePaneView[]=[{zOrder:()=>"top",renderer:()=>this.renderer}];
   constructor(private readonly toPrice:(y:number)=>number|null,private readonly toY:(price:number)=>number|null,
     private readonly dark:boolean,private readonly getCandles:()=>readonly DisplayCandle[],readonly interval:number,private readonly getVolumeCandles:()=>readonly Candle[],
-    readonly calendarFrame:CalendarChartTimeframe|null=null){}
+    readonly calendarFrame:CalendarChartTimeframe|null=null,
+    private readonly ensureVolumeCoverage?:(start:number,end:number)=>boolean){}
 
   capturePattern(first:number,last:number){
     return copyPattern(this.getCandles(),first,last);
@@ -1554,7 +1555,7 @@ export class ChartDrawings implements IPanePrimitive<Time>{
     const axis=this.getCandles(),scale=this.attachedTo?.chart.timeScale();
     const view=scale?.getVisibleLogicalRange();
     const start=drawing.anchors[0].time;
-    if(!axis.length||!scale||!view||start<axis[0].time)return null;
+    if(!axis.length||!scale||!view||start<axis[0].time||this.ensureVolumeCoverage?.(start,Infinity)===false)return null;
     let first=candleIndexAtOrAfter(axis,start);
     const barEnd=(time:number)=>this.calendarFrame?nextChartCalendarPeriod(time,this.calendarFrame):time+this.interval;
     if(first>0&&barEnd(axis[first-1].time)>start)first--;
@@ -1635,7 +1636,7 @@ export class ChartDrawings implements IPanePrimitive<Time>{
     const lastAnchor=anchored?start:Math.max(drawing.anchors[0].time,drawing.anchors[1].time);
     const end=anchored?Infinity:drawing.volumeTimeframe
       ?nextChartCalendarPeriod(lastAnchor,drawing.volumeTimeframe):lastAnchor+drawing.volumeInterval!;
-    if(!axis.length||start<axis[0].time||!anchored&&(right<0||left>w))return null;
+    if(!axis.length||start<axis[0].time||!anchored&&(right<0||left>w)||this.ensureVolumeCoverage?.(start,end)===false)return null;
     const bars=this.getVolumeCandles();
     const last=anchored?bars.at(-1):bars[candleIndexAtOrAfter(bars,end)-1];
     let cached=this.profileCache.get(drawing);

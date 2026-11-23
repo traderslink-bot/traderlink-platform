@@ -1,9 +1,12 @@
-export const CHART_CALCULATION_TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1D"] as const;
+export const CHART_CALCULATION_TIMEFRAMES = ["1m", "5m", "15m", "30m", "1h", "4h", "1D"] as const;
 const CALENDAR_TIMEFRAMES = ["1W", "1M", "1Y"] as const;
 export const CHART_TIMEFRAMES = [...CHART_CALCULATION_TIMEFRAMES, ...CALENDAR_TIMEFRAMES] as const;
 export type ChartCalculationTimeframe = typeof CHART_CALCULATION_TIMEFRAMES[number];
 export type CalendarChartTimeframe = typeof CALENDAR_TIMEFRAMES[number];
 export type ChartTimeframe = typeof CHART_TIMEFRAMES[number];
+export const CHART_FRAME_SECONDS = {
+  "1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14400, "1D": 86400,
+} as const satisfies Record<ChartCalculationTimeframe, number>;
 export function isCalendarChartTimeframe(timeframe: ChartTimeframe): timeframe is CalendarChartTimeframe {
   return timeframe === "1W" || timeframe === "1M" || timeframe === "1Y";
 }
@@ -94,7 +97,7 @@ export function candleBucket(time: number, timeframe: ChartTimeframe, regularOnl
     const boundary = anchor + Math.floor((wall-anchor)/14400)*14400;
     return boundary - (wall - time);
   }
-  const seconds = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600 }[timeframe];
+  const seconds = CHART_FRAME_SECONDS[timeframe];
   const offset=regularOnly&&timeframe==="1h"?1800:0;
   return Math.floor((time-offset) / seconds) * seconds+offset;
 }
@@ -117,7 +120,7 @@ export type DisplayCandle = Candle & { carried: boolean };
 export function displayCandles(input: readonly Candle[], timeframe: ChartTimeframe, through?: number): DisplayCandle[] {
   if (usesDailyCandles(timeframe)) return input.map(bar => ({ ...bar, carried: false }));
   const result: DisplayCandle[] = [];
-  const step = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "4h": 14400 }[timeframe];
+  const step = CHART_FRAME_SECONDS[timeframe];
   const session = (time: number) => {
     const parts = Object.fromEntries(easternParts.formatToParts(new Date(time * 1000)).map(part => [part.type, part.value]));
     return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: +parts.hour };

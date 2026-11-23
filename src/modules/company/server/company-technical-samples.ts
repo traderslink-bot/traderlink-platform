@@ -1,4 +1,5 @@
 import { companySessionRanges, type CompanyTechnicals } from "../company-technicals";
+import { scannerVolumeBreakdown } from "@/src/modules/scanner/live/volume";
 import type { LiveScannerRow } from "@/src/modules/scanner/live/contracts";
 
 export function companyTechnicalSample(symbol:string):CompanyTechnicals {
@@ -14,6 +15,10 @@ export function companyTechnicalSample(symbol:string):CompanyTechnicals {
     offHighPercent:-6.25,floatRetrievedAtUtc:receivedAtUtc,spreadPercent:1.2,providerAtUtc:receivedAtUtc,receivedAtUtc,
     activity:{oneMinuteGain:1.2,fiveMinuteGain:3.4,oneMinuteVolume:13200,fiveMinuteVolume:82400,oneMinuteDollarVolume:396,
       fiveMinuteVolumeSpike:2.1,volumeAcceleration:1.4},reasons:[],news:[]};
-  return {sample:true,days:companySessionRanges(bars,[previous,date].map(date=>({date,open:"09:30",close:"16:00"}))).reverse(),
-    row,yearRange:{high:0.2562,low:0.0182,highDate:"2025-12-17",lowDate:"2026-11-10"},splitAdjustedYearRange:{high:0.5124,low:0.0182,highDate:"2025-12-17",lowDate:"2026-11-10"},bid:0.0298,ask:0.0302,scannerSignals:["Top Gainers","Momentum"]};
+  const days=companySessionRanges(bars,[previous,date].map(date=>({date,open:"09:30",close:"16:00"}))).reverse();
+  const [premarket,regular]=days[0].ranges;
+  const {dayVolume}=scannerVolumeBreakdown({
+    session:"regular",premarketVolume:premarket?.volume,regularVolume:regular?.volume,
+  });
+  return {sample:true,days,dayVolume,row,yearRange:{high:0.2562,low:0.0182,highDate:"2025-12-17",lowDate:"2026-11-10"},splitAdjustedYearRange:{high:0.5124,low:0.0182,highDate:"2025-12-17",lowDate:"2026-11-10"},bid:0.0298,ask:0.0302,scannerSignals:["Top Gainers","Momentum"]};
 }

@@ -14,7 +14,8 @@ import { ScannerChartLaunchControls } from "./scanner-chart-launch-controls";
 import { ScannerCountryFlag } from "./scanner-country-flag";
 import { scannerGainColor } from "./scanner-gain-color";
 import { ScannerRowNews } from "./scanner-news-drawer-context";
-import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
+import { SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
+import { ScannerStockCards, ScannerViewSettings, useScannerVolumeColumns, type ScannerView } from "./scanner-stock-cards";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 
 const shares = new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
@@ -29,6 +30,8 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
   rows?: readonly BreakoutRow[]; now:number; notice:string|null;
   haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; onOpenChart:(row:BreakoutRow)=>void;
 }) {
+  const { selected } = useScannerVolumeColumns("breakouts");
+  const volumes = ["dayVolume", ...selected] as const;
   const [view,setView]=useState<ScannerView>("table");
   const twoRows=view==="two-rows";
   const tools=(row:BreakoutRow)=><Stack component="span" direction="row" sx={{alignItems:"center",gap:0.65}}>
@@ -38,7 +41,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
   return <DashboardPanel hideHeader>
     <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5}}>
       <Typography component="h2" variant="h2">Breakouts</Typography>
-      <ScannerViewSettings label="Breakouts" view={view} onViewChange={setView}/>
+      <ScannerViewSettings volumeCard="breakouts" label="Breakouts" view={view} onViewChange={setView}/>
     </Stack>
     {notice ? <Alert severity="info">{notice}</Alert> :
       !rows ? <Skeleton height={160}/> :
@@ -52,7 +55,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
         }}>
           <TableHead><TableRow>
             {!twoRows&&<TableCell/>}<TableCell data-scanner-sticky-ticker>Ticker</TableCell><TableCell>Price</TableCell>
-            <TableCell>PM high</TableCell><TableCell>Status</TableCell><TableCell>Vol</TableCell><TableCell>Float</TableCell>
+            <TableCell>PM high</TableCell><TableCell>Status</TableCell>{volumes.map(metric => <TableCell key={metric} sx={{minWidth:metric === "postMarketVolume" ? 82 : 54}}>{SCANNER_VOLUME_LABELS[metric]}</TableCell>)}<TableCell>Float</TableCell>
             {!twoRows&&<TableCell>Country</TableCell>}
           </TableRow></TableHead>
           <TableBody>{rows.map(row=><Fragment key={row.symbol}>
@@ -61,11 +64,11 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
               <TableCell data-scanner-sticky-ticker><ScannerPageTicker symbol={row.symbol}/>{halt(row.symbol)}</TableCell>
               <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{price(row.price)}</TableCell>
               <TableCell>{price(row.breakoutLevel)}</TableCell><TableCell><BreakoutStatus row={row}/></TableCell>
-              <TableCell>{row.volume===null?"—":shares.format(row.volume)}</TableCell>
+              {volumes.map(metric => <TableCell key={metric}>{row[metric] == null ? "—" : shares.format(row[metric])}</TableCell>)}
               <TableCell>{row.float===null?"—":shares.format(row.float)}</TableCell>
               {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
             </TableRow>
-            {twoRows&&<TableRow><TableCell data-scanner-sticky-ticker><ScannerCountryFlag country={row.country}/></TableCell><TableCell colSpan={5}>{tools(row)}</TableCell></TableRow>}
+            {twoRows&&<TableRow><TableCell data-scanner-sticky-ticker><ScannerCountryFlag country={row.country}/></TableCell><TableCell colSpan={5 + selected.length}>{tools(row)}</TableCell></TableRow>}
           </Fragment>)}</TableBody>
         </Table>
       </TableContainer>}

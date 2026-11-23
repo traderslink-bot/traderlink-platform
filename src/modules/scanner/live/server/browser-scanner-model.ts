@@ -28,8 +28,10 @@ function screen(value: LiveScreenResults): LiveScreenResults {
 }
 
 /** Preserve the scanner's facts and ranking; supplier routing remains internal. */
-export function browserScannerModel(value: ScannerReadModel): ScannerReadModel {
+export function browserScannerModel(value: ScannerReadModel) {
   return { ...facts(value), issues: browserIssues(value.issues), gainers: screen(value.gainers), momentum: screen(value.momentum),
+    ...(value.declines ? { declines: { ...value.declines, controls: { enabled: value.declines.controls.enabled } } } : {}),
+    ...(value.premarketPullbacks ? { premarketPullbacks: { ...value.premarketPullbacks, controls: { enabled: value.premarketPullbacks.controls.enabled } } } : {}),
     ...(value.dayGainers ? { dayGainers: screen(value.dayGainers) } : {}),
     ...(value.breakouts ? { breakouts: value.breakouts.map(facts) } : {}),
     ...(value.activeHalts ? { activeHalts: value.activeHalts.map(halt => {

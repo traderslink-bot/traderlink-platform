@@ -1,7 +1,7 @@
 // Focused, offline checkpoint: Node built-ins only; no server, provider calls or AI.
 import assert from "node:assert/strict";
 import { advanceIndicator, calculateIndicatorHistory, calculateSessionVwap, createIndicatorCheckpoint }
-  from "../lib/live-watchlist/indicators/indicator-engine.ts";
+  from "../modules/market-data/indicators/indicator-engine.ts";
 import { aggregateIndicatorMinutes } from "../lib/live-watchlist/indicators/indicator-aggregation.ts";
 
 const start = Date.UTC(2026, 8, 11, 13, 30);

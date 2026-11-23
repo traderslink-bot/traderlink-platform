@@ -7,14 +7,14 @@ import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halt
 import { readLiveScannerMarketMovements, readLiveScannerRuntime, scannerUniverseStore, subscribeLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
 import { handleLiveScannerGet } from "@/src/modules/scanner/live/server/backend-http";
 import { readFinnhubExchanges } from "@/src/modules/scanner/live/server/finnhub-exchange";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { hasMarketToolsDashboardReadAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { eodhdResumedHaltIds } from "@/src/modules/news/server/eodhd-halt-resumption-monitor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
   return handleLiveScannerGet(request,{ subscribe:subscribeLiveScannerRuntime, member: candidate => {
-    try { return hasWatchlistDashboardNavigationAccess(requireTraderLinkPlatformRequestIdentity(candidate.headers)); } catch { return false; }
+    try { return hasMarketToolsDashboardReadAccess(requireTraderLinkPlatformRequestIdentity(candidate.headers)); } catch { return false; }
   },read: async () => {
     const scanner=readLiveScannerRuntime();
     if (marketHaltSource() === "alpaca") {

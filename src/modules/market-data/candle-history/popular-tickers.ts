@@ -1,0 +1,17 @@
+export const POPULAR_HISTORY_TICKERS = Object.freeze([
+  "SPY", "QQQ", "IWM", "DIA", "SMH", "TQQQ", "SQQQ", "VOO", "VTI", "RSP", "VXX", "XLF",
+  "XLK", "XLE", "XLY", "XLV", "XLI", "XLU", "XLP", "GLD", "SLV", "USO", "TLT", "HYG",
+  "IBIT", "NVDA", "AAPL", "MSFT", "AMZN", "GOOGL", "GOOG", "META", "TSLA", "AMD", "AVGO", "ORCL",
+  "INTC", "MU", "TSM", "ASML", "ARM", "QCOM", "AMAT", "LRCX", "KLAC", "MRVL", "TXN", "ADI",
+  "NXPI", "ON", "WDC", "CRWV", "SPCX", "PLTR", "IBM", "DELL", "SMCI", "CSCO", "ANET", "HPE",
+  "NOW", "CRM", "SNOW", "DDOG", "MDB", "NET", "CRWD", "PANW", "OKTA", "ZS", "SHOP", "TEAM",
+  "APP", "IREN", "NBIS", "UBER", "LYFT", "ABNB", "BKNG", "DASH", "WMT", "COST", "TGT", "HD",
+  "LOW", "NKE", "DIS", "NFLX", "SBUX", "MCD", "CMG", "KO", "PEP", "PG", "EL", "UL",
+  "LULU", "RBLX", "JPM", "BAC", "C", "WFC", "GS", "MS", "V", "MA", "AXP", "SCHW",
+  "BLK", "BRK.B", "PYPL", "XYZ", "SOFI", "HOOD", "COIN", "MSTR", "MARA", "RIOT", "CLSK", "IBKR",
+  "ICE", "GME", "AMC", "RIVN", "LCID", "F", "GM", "NIO", "BABA", "PDD", "JD", "BIDU",
+  "BILI", "TME", "BA", "GE", "RTX", "LMT", "NOC", "RKLB", "ASTS", "JOBY", "ACHR", "OKLO",
+  "SMR", "XOM", "CVX", "OXY", "COP", "SLB", "HAL", "FCX", "NEM", "CCJ", "UUUU", "UNH",
+  "LLY", "NVO", "ABBV", "MRK", "PFE", "BMY", "JNJ", "TMO", "ISRG", "MRNA", "BNTX", "ALNY",
+  "CELH", "HIMS", "QS", "PLUG", "OPEN", "SPOT", "VRT",
+]);

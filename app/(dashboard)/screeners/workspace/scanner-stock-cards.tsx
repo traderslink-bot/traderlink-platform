@@ -13,21 +13,48 @@ import IconButton from "@mui/material/IconButton";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
+import TableCell from "@mui/material/TableCell";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
-import { startTransition, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, startTransition, useContext, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
-import type { DeclineRow, LiveScannerRow, PremarketPullbackRow, ScannerKind } from "@/src/modules/scanner/live/contracts";
+import type { DeclineRow, LiveScannerRow, PremarketPullbackRow, ScannerKind, ScannerNewsItem } from "@/src/modules/scanner/live/contracts";
 
+import type { ScanResultRow } from "@/src/modules/scanner/custom/definition";
 import { momentumSignalText } from "../momentum-signal-text";
 import { useSideCardChartControls } from "../scanner-chart-launch-controls";
 import { ScannerCountryFlag } from "../scanner-country-flag";
 import { scannerCardLabelColor, ScannerIndicatorReads, ScannerIndicatorSettings } from "../scanner-card-indicators";
 import { ScannerNewsLink } from "../scanner-news-drawer-context";
 
-const SECTION_LABELS = { stats: "Stats", indicators: "Indicators", catalyst: "Catalyst" } as const;
-type Section = keyof typeof SECTION_LABELS;
-const SECTIONS: readonly Section[] = ["stats", "indicators", "catalyst"];
+import { CARD_SECTION_LABELS as SECTION_LABELS, CARD_SECTIONS as SECTIONS, readCardSections, type CardSection } from "./scanner-card-sections";
+
+import { optionalVolumeColumns, volumeColumnWidth, volumeLabels, workspaceVolumeColumns, workspaceVolumeValue,
+  type OptionalVolumeColumn, type VolumeColumn, type VolumeRow } from "./workspace-volume";
+
+export const WorkspaceCardSections = createContext<{
+  sections?: readonly CardSection[];
+  update: (sections: readonly CardSection[]) => void;
+  afterHoursVolume?: boolean;
+  volumeColumns?: readonly OptionalVolumeColumn[];
+  updateVolumeColumns?: (columns: readonly OptionalVolumeColumn[]) => void;
+} | null>(null);
+export function useWorkspaceVolumeColumns() {
+  const workspace = useContext(WorkspaceCardSections);
+  return workspaceVolumeColumns(workspace?.afterHoursVolume === true, workspace?.volumeColumns);
+}
+
+export function WorkspaceVolumeHeaders({ columns }: { columns: readonly VolumeColumn[] }) {
+  return columns.map(column => <TableCell key={column} scope="col" align="right"
+    sx={{ minWidth: volumeColumnWidth(column), whiteSpace: "nowrap" }}>
+    {volumeLabels[column]}
+  </TableCell>);
+}
+
+export function WorkspaceVolumeCells({ row, columns }: { row: VolumeRow; columns: readonly VolumeColumn[] }) {
+  return columns.map(column => <TableCell key={column} align="right">{workspaceVolumeValue(row, column)}</TableCell>);
+}
+
 const LEGACY_KEY = "traderslink.scanner.ticker-card-sections.v1";
 const KEY = "traderslink.scanner.ticker-card-sections.v2";
 let storedSections = "stats";
@@ -48,9 +75,14 @@ function readSections() {
 }
 
 export function useTickerCardSections() {
+  const workspace = useContext(WorkspaceCardSections);
   const stored = useSyncExternalStore(subscribe, readSections, () => "stats");
-  const sections = [...new Set(stored.split(",").filter((value): value is Section => SECTIONS.includes(value as Section)))];
-  const update = (next: readonly Section[]) => {
+  const sections = workspace?.sections ?? readCardSections(stored.split(","));
+  const update = (next: readonly CardSection[]) => {
+    if (workspace) {
+      workspace.update(next);
+      return;
+    }
     storedSections = next.join(",");
     try { window.localStorage.setItem(KEY, storedSections); } catch { /* Keep the preference in this tab. */ }
     listeners.forEach(listener => listener());
@@ -63,6 +95,9 @@ export type ScannerView = keyof typeof scannerViews;
 
 export function ScannerViewSettings({ label, view, onViewChange, children }: { label: string; view: ScannerView; onViewChange: (view: ScannerView) => void; children?: ReactNode }) {
   const { sections, update } = useTickerCardSections();
+  const workspace = useContext(WorkspaceCardSections);
+  const volumeColumns = workspace?.volumeColumns ?? [];
+  const selectableVolumes = optionalVolumeColumns.filter(column => column !== "postMarketVolume" || !workspace?.afterHoursVolume);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const id = useId();
   return <>
@@ -91,6 +126,14 @@ export function ScannerViewSettings({ label, view, onViewChange, children }: { l
           </Button>)}
       </Box>
       {children}
+      {workspace?.updateVolumeColumns && <Box role="group" aria-label="Volume columns"
+        sx={{borderTop:1,borderColor:"divider",mt:0.75,pt:0.75}}>
+        <Typography variant="body2" sx={{fontWeight:700,px:0.5}}>Volume columns</Typography>
+        {selectableVolumes.map(column => <FormControlLabel key={column} sx={{m:0,display:"flex"}}
+          label={volumeLabels[column]} control={<Checkbox size="small" checked={volumeColumns.includes(column)}
+            onChange={(_, checked) => workspace.updateVolumeColumns?.(checked
+              ? [...volumeColumns, column] : volumeColumns.filter(key => key !== column))}/>}/>)}
+      </Box>}
       {view==="cards"&&<Box role="group" aria-label="Ticker card sections" sx={{borderTop:1,borderColor:"divider",mt:0.75,pt:0.75}}>
       <Typography variant="body2" sx={{fontWeight:700,px:0.5}}>Card sections</Typography>
       {[...sections, ...SECTIONS.filter(section => !sections.includes(section))].map(section => {
@@ -128,26 +171,34 @@ const date = new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", mon
 const shares = (n: number | null) => n === null ? "—" : compact.format(n);
 const percent = (n: number | null, signed = false) => n === null ? "—" : `${signed && n > 0 ? "+" : ""}${decimal.format(n)}%`;
 
-function Reading({ label, value }: { label: string; value: string }) {
+function Reading({ label, value }: { label: string; value: ReactNode }) {
   return <Box sx={{minWidth:0,textAlign:"left"}}>
     <Typography component="dt" sx={{color:scannerCardLabelColor,fontWeight:700,fontSize:"0.62rem",lineHeight:1.15}}>{label}</Typography>
     <Typography component="dd" sx={{m:0,fontWeight:650,fontSize:"0.72rem",lineHeight:1.25,overflowWrap:"anywhere"}}>{value}</Typography>
   </Box>;
 }
 
-type ScannerCardRow = LiveScannerRow | DeclineRow | PremarketPullbackRow;
+type ScannerCardRow = LiveScannerRow | DeclineRow | PremarketPullbackRow | ScanResultRow;
+export function savedScanRowNews(row: ScanResultRow): ScannerNewsItem[] {
+  const article = row.pressRelease;
+  if (!article || !Number.isFinite(new Date(article.at).getTime())) return [];
+  const publishedAt = new Date(article.at).toISOString();
+  return [{ id: article.id, headline: article.title, createdAt: publishedAt, publishedAt,
+    url: article.url, typeLabel: "Press Release" }];
+}
 const isLiveRow = (row: ScannerCardRow): row is LiveScannerRow => "sessionGain" in row;
 const isHodRow = (row: ScannerCardRow): row is PremarketPullbackRow => "referenceHigh" in row;
-type ScannerCardScreen = ScannerKind | "top-losers" | "high-drops" | "breakouts";
+type ScannerCardScreen = ScannerKind | "top-losers" | "high-drops" | "breakouts" | "saved";
 const stockCardLabels: Record<ScannerCardScreen,string> = {
-  gainers:"Top Gainers", momentum:"Momentum", "top-losers":"Top Losers", "high-drops":"HOD Drops", breakouts:"Breakouts",
+  gainers:"Top Gainers", momentum:"Momentum", "top-losers":"Top Losers", "high-drops":"HOD Drops", breakouts:"Breakouts", saved:"Saved scan",
 };
 
-export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, now, renderTools, renderHalt, renderSignal }: {
+export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, now, renderTools, renderHalt, renderSignal, additionalStats }: {
   rows: readonly Row[];
   screen: ScannerCardScreen;
   now: number;
   renderSignal?: (row: Row) => ReactNode;
+  additionalStats?: (row: Row) => readonly (readonly [label: string, value: ReactNode])[];
   renderTools: (row: Row) => ReactNode;
   renderHalt: (symbol: string) => ReactNode;
 }) {
@@ -173,21 +224,28 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
     observer.observe(node);
     return ()=>observer.disconnect();
   },[hasMore,limit,rows.length]);
+  const volumeColumns = useWorkspaceVolumeColumns();
   return <Box role="list" aria-label={`${stockCardLabels[screen]} stock cards`}
     sx={theme=>({...scannerScrollStyles(theme),minWidth:0,minHeight:0,maxHeight:420,overflowX:"hidden",flex:"1 1 auto"})}>
     {(inDrawer?rows.slice(0,limit):rows).map(row => {
       const live = isLiveRow(row) ? row : null;
       const hod = isHodRow(row) ? row : null;
-      const change = isLiveRow(row) ? row.sessionGain : row.changePercent;
+      const saved = "dayChange" in row;
+      const change = saved ? row.dayChange : isLiveRow(row) ? row.sessionGain : row.changePercent;
       const movement = hod ? -hod.belowHighPercent : change;
-      const volume = isHodRow(row) ? row.sessionVolume : row.volume;
-      const turnover = volume !== null && row.float !== null && row.float > 0 ? 100 * volume / row.float : null;
-      const catalyst = row.news.find(item => Number.isFinite(Date.parse(item.createdAt)));
+      const sessionVolume = isHodRow(row) ? row.sessionVolume : row.volume;
+      const turnover = sessionVolume !== null && row.float !== null && row.float > 0 ? 100 * sessionVolume / row.float : null;
+      const volumes = volumeColumns.map(column => [volumeLabels[column], workspaceVolumeValue(row, column)]);
+      const catalyst = (saved ? savedScanRowNews(row) : row.news).find(item => Number.isFinite(Date.parse(item.createdAt)));
       const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
-      const stats = hod ? [
-        ["Vol",shares(volume)],["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",percent(row.spreadPercent)],
+      const stats = saved ? [
+        ...volumes,["Dollar vol",row.dollarVolume === null ? "—" : "$" + compact.format(row.dollarVolume)],
+        ["Float",shares(row.float)],["Market cap",row.marketCap === null ? "—" : "$" + compact.format(row.marketCap)],
+        ["T/O",percent(turnover)],
+      ] : hod ? [
+        ...volumes,["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",percent(row.spreadPercent)],
       ] : [
-        ["Vol",shares(volume)],["Float",shares(row.float)],["T/O",percent(turnover)],
+        ...volumes,["Float",shares(row.float)],["T/O",percent(turnover)],
         live ? ["RVOL",live.relativeVolume === null ? "—" : `${decimal.format(live.relativeVolume)}×`] : ["Spread",percent(row.spreadPercent)],
       ];
       return <Box role="listitem" key={row.symbol} data-scanner-stock-card={row.symbol}
@@ -214,6 +272,8 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
         {sections.map(section => section === "stats" ? <Box key={section} component="dl" aria-label="Stats"
           sx={{m:0,mt:0.65,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:0.55,fontVariantNumeric:"tabular-nums"}}>
           {stats.map(([label,value]) => <Reading key={label} label={label} value={value}/>)}
+          {additionalStats?.(row).map(([label,value],index) =>
+            <Reading key={`${index}:${label}`} label={label} value={value}/>)}
         </Box> : section === "indicators" || catalyst ? <Box component="section" key={section}
           aria-label={SECTION_LABELS[section]} sx={{minWidth:0,mt:0.65}}>
           {section === "indicators" ? <ScannerIndicatorReads row={row} now={now}/> : catalyst && (

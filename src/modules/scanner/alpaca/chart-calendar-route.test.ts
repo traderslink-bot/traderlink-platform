@@ -1,6 +1,7 @@
 // @vitest-environment node
 import {beforeEach,expect,it,vi} from 'vitest';
-const state=vi.hoisted(()=>({authenticated:true,access:true,gateway:vi.fn(),selection:{provider:"alpaca",revision:0}}));
+const state=vi.hoisted(()=>({authenticated:true,access:true,sharedChart:true,gateway:vi.fn(),selection:{provider:"alpaca",revision:0}}));
+vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasSharedChartDataAccess:()=>state.sharedChart}));
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!state.authenticated)throw Error();return {};}}));
 vi.mock('@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access',()=>({hasWatchlistDashboardNavigationAccess:()=>state.access}));
 vi.mock('./client',()=>({requestAlpacaGateway:state.gateway}));
@@ -8,7 +9,7 @@ vi.mock('@/src/modules/market-data/server/provider-settings',()=>({marketDataSel
 import {GET} from '@/app/api/charts/calendar/route';
 import {browserDataSession} from '@/src/modules/market-data/server/browser-data-session';
 const request=(year='2027')=>new Request('http://local/api/charts/calendar?year='+year);
-beforeEach(()=>{state.authenticated=true;state.access=true;state.gateway.mockReset();state.selection={provider:"alpaca",revision:0};});
+beforeEach(()=>{state.authenticated=true;state.access=true;state.sharedChart=true;state.gateway.mockReset();state.selection={provider:"alpaca",revision:0};});
 it('requires authenticated chart access before requesting calendar facts',async()=>{
  state.authenticated=false;expect((await GET(request())).status).toBe(401);expect(state.gateway).not.toHaveBeenCalled();
 });
@@ -48,4 +49,10 @@ it('rejects old neutral generations before calendar I/O, including switching bac
  expect((await GET(stale)).status).toBe(409);
  state.selection={provider:'alpaca',revision:2};
  expect((await GET(stale)).status).toBe(409);expect(state.gateway).not.toHaveBeenCalled();
+});
+
+it("skips the provider when the signed-in member has no chart access", async () => {
+  state.sharedChart = false;
+  expect((await GET(new Request("https://app.example/api/charts/calendar?year=2026"))).status).toBe(403);
+  expect(state.gateway).not.toHaveBeenCalled();
 });

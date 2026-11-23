@@ -1,18 +1,16 @@
 "use client";
 
-import { dashboardPressReleaseSourceLink, SUMMARY_UNAVAILABLE_MESSAGE } from "@/src/modules/news/contracts/news-outbound-link";
+import { WorkspaceScannerTitle } from "./workspace-scanner-title";
+import { ScannerPageChartButton, ScannerPageTicker } from "./scanner-page-ticker";
 
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import type { ScannerChartTarget } from "../scanner-chart-workspace";
-import { ScannerChartLaunchControls, useSideCardChartControls } from "../scanner-chart-launch-controls";
+import { ScannerChartLaunchControls } from "../scanner-chart-launch-controls";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import CircularProgress from "@mui/material/CircularProgress";
-import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
@@ -23,19 +21,19 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 
 import { DashboardPanel } from "@/app/dashboard-template";
+import { PressReleaseArticleContent, PressReleaseDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import type { MarketHaltDashboardReadModel } from "@/src/modules/news/contracts/market-halt-dashboard-contracts";
 import type { PressReleaseArticle, PressReleaseChannel } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import type { ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
 import { selectMarketEventsHalts } from "@/src/modules/scanner/live/market-events-halts";
 import { markPressReleaseRead } from "../../press-releases/press-release-actions";
-import { PressReleaseDetailSection } from "../../press-releases/press-release-detail-section";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 
 type Headline=Pick<PressReleaseArticle,"id"|"ticker"|"headline"|"isRead"|"marketCap"|"publishedAt">;
 type NewsCursor={publishedAt:string;id:string};
 type RecentNewsPage={articles:readonly Headline[];next:NewsCursor|null;since:string};
-type HeadlineResponse=Readonly<{articles?:readonly Headline[];easternDate?:string;previousTradingDate?:string|null;marketEventsPrMaximumMarketCap?:number;status?:string}>;
+type HeadlineResponse=Readonly<{articles?:readonly Headline[];easternDate?:string;previousTradingDate?:string|null;compactArticleIds?:readonly string[];status?:string}>;
 type ChannelOption=Readonly<{channel:PressReleaseChannel;label:string;href:string;subLabel?:string}>;
 const CHANNELS:readonly ChannelOption[]=[
   {channel:"news_filtered",label:"PR Scanner",href:"/press-releases/news-filtered"},
@@ -53,17 +51,9 @@ function easternDate(value:string):string{
   const part=(type:Intl.DateTimeFormatPartTypes)=>parts.find(item=>item.type===type)?.value??"";
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
-export function pressReleaseMarketCapValue(value:string|null):number|null{
-  if(!value)return null;
-  const normalized=value.trim().replace(/[$,\s]/gu,"").toUpperCase();
-  const match=normalized.match(/^([0-9]+(?:\.[0-9]+)?)([KMBT])?$/u);
-  if(!match)return null;
-  const multiplier=match[2]==="K"?1e3:match[2]==="M"?1e6:match[2]==="B"?1e9:match[2]==="T"?1e12:1;
-  const result=Number(match[1])*multiplier;
-  return Number.isFinite(result)?result:null;
-}
-export function selectCompactArticles(articles:readonly Headline[],dates:{today:string;previous:string|null},maximumMarketCap=200_000_000):readonly Headline[]{
-  const eligible=articles.filter(article=>{const cap=pressReleaseMarketCapValue(article.marketCap);return cap===null||cap<maximumMarketCap;});
+export function selectCompactArticles(articles:readonly Headline[],dates:{today:string;previous:string|null},compactArticleIds:readonly string[]):readonly Headline[]{
+  const eligibleIds=new Set(compactArticleIds);
+  const eligible=articles.filter(article=>eligibleIds.has(article.id));
   const today=eligible.filter(article=>easternDate(article.publishedAt)===dates.today);
   const previous=dates.previous?eligible.filter(article=>easternDate(article.publishedAt)===dates.previous):[];
   return [...today,...previous].slice(0,10);
@@ -80,52 +70,32 @@ function shortTime(value:string|null):string{
   const [hour="",minute=""]=value.split(":");
   return hour&&minute?`${hour}:${minute}`:value;
 }
-function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBack:()=>void;onClose:()=>void}){
-  const articleLink=dashboardPressReleaseSourceLink(article);
-  return <Stack sx={{height:"100dvh",minHeight:0}}>
-    <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",px:{xs:1,sm:2},py:1}}>
-      <Button onClick={onBack} startIcon={<ArrowBackRoundedIcon/>}>Back to list</Button>
-      <IconButton aria-label="Close Recent News" onClick={onClose}><CloseRoundedIcon/></IconButton>
-    </Stack>
-    <Stack spacing={2} sx={theme=>({...scannerScrollStyles(theme),overflow:"auto",p:{xs:2,sm:3}})}>
-      <Box><Typography color="warning.main" sx={{fontSize:"1.35rem",fontWeight:900}}>{article.ticker}</Typography>
-        <Typography color="text.secondary" variant="caption">{dateFormatter.format(new Date(article.publishedAt))} · {timeFormatter.format(new Date(article.publishedAt))} ET{article.marketCap?` · Market cap ${article.marketCap}`:""}</Typography>
-      </Box>
-      <Typography component="h2" variant="h2">{article.headline}</Typography>
-      {article.summaryUnavailable?<Typography variant="body2">{SUMMARY_UNAVAILABLE_MESSAGE}</Typography>:article.summary?<Box><Typography component="h3" sx={{fontWeight:800}} variant="subtitle2">Summary</Typography><Typography sx={{mt:1,whiteSpace:"pre-wrap"}} variant="body2">{article.summary}</Typography></Box>:null}
-      {!article.summaryUnavailable?<PressReleaseDetailSection items={article.positives} title="Positives"/>:null}
-      {!article.summaryUnavailable?<PressReleaseDetailSection items={article.negatives} title="Negatives"/>:null}
-      {!article.summaryUnavailable?<PressReleaseDetailSection items={article.riskFlags} title="Risk flags"/>:null}
-      {!article.summaryUnavailable?<PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance"/>:null}
-      <Stack direction={{xs:"column",sm:"row"}} spacing={1}>
-        {articleLink?<Button component="a" endIcon={<LaunchRoundedIcon/>} href={articleLink} target="_blank" variant="contained">{article.eventType?.toLowerCase().startsWith("sec_")?"Open SEC Filing":"Open source article"}</Button>:null}
-
-      </Stack>
-    </Stack>
-  </Stack>;
-}
 function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article:Headline;exchange:"NASDAQ"|"NYSE"|"AMEX"|undefined;float:number|undefined;older:boolean;onOpen:(article:Headline)=>void;onOpenChart?:(row:ScannerChartTarget)=>void}){
-  const allowAdd=useSideCardChartControls();
-  return <Box sx={{borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:onOpenChart?(allowAdd?"3.25rem minmax(0,1fr)":"2.25rem minmax(0,1fr)"):"minmax(0,1fr)",minHeight:42,minWidth:420}}>
-    {onOpenChart?<ScannerChartLaunchControls row={exchange?{symbol:article.ticker,exchange}:{symbol:article.ticker}} onOpenChart={onOpenChart}/>:null}
+  return <Box sx={{borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:"auto max-content minmax(0,1fr)",
+    alignItems:"center",columnGap:0.5,minHeight:42,px:0.5}}>
+    <Stack direction="row" sx={{alignItems:"center",gap:0.7}}>
+      {onOpenChart?<ScannerChartLaunchControls row={{symbol:article.ticker,exchange}} onOpenChart={onOpenChart}/>:null}
+      <ScannerPageChartButton symbol={article.ticker} showOnMobile/>
+    </Stack>
+    <Box sx={{fontSize:"0.78rem",lineHeight:1.2}}>
+      <ScannerPageTicker symbol={article.ticker}/>
+      {older?<Typography color="text.secondary" sx={{fontSize:"0.58rem",lineHeight:1.25}}>Yesterday</Typography>:null}
+      <Typography color="text.secondary" noWrap sx={{fontSize:"0.58rem",lineHeight:1.25}}>{timeFormatter.format(new Date(article.publishedAt))}</Typography>
+    </Box>
     <ButtonBase aria-label={`Open ${article.ticker} article: ${article.headline}`} onClick={()=>onOpen(article)}
-      sx={{display:"grid",gridTemplateColumns:"3.5rem minmax(0,1fr)",minHeight:42,px:0.5,py:0.45,textAlign:"left",width:"100%"}}>
-      <Box sx={{alignSelf:"center",minWidth:0}}>
-        <Typography noWrap sx={{color:"warning.main",fontSize:"0.78rem",fontWeight:900,lineHeight:1.2}}>{article.ticker}</Typography>
-        <Typography color="text.secondary" noWrap sx={{fontSize:"0.58rem",lineHeight:1.25}}>{older?"Yesterday · ":""}{timeFormatter.format(new Date(article.publishedAt))}</Typography>
-      </Box>
-      <Box sx={{minWidth:0}}>
-        <Typography color="text.secondary" noWrap sx={{fontSize:"0.6rem",fontWeight:700,lineHeight:1.15}}>{article.marketCap?`Market cap ${article.marketCap}`:"Market cap n/a"} · Float {floatValue(float)}</Typography>
-        <Typography noWrap sx={{fontSize:"0.68rem",fontWeight:article.isRead?600:800,lineHeight:1.25}}>{article.headline}</Typography>
-      </Box>
+      sx={{display:"flex",flexDirection:"column",alignItems:"stretch",minWidth:0,minHeight:42,py:0.45,textAlign:"left"}}>
+      <Typography color="text.secondary" noWrap sx={{fontSize:"0.6rem",fontWeight:700,lineHeight:1.15}}>{article.marketCap?`Market cap ${article.marketCap}`:"Market cap n/a"} · Float {floatValue(float)}</Typography>
+      <Typography sx={{fontSize:"0.68rem",fontWeight:article.isRead?600:800,lineHeight:1.25,overflow:"hidden",
+        display:"-webkit-box",WebkitBoxOrient:"vertical",WebkitLineClamp:{xs:2,md:1}}}>{article.headline}</Typography>
     </ButtonBase>
   </Box>;
 }
 
 export function useMarketEventsData(haltsManaged=true, enabled=true) {
   const [articles,setArticles]=useState<readonly Headline[]|null>(null);
+  const [headlineStatus,setHeadlineStatus]=useState<"loading"|"ready"|"unavailable"|"denied">("loading");
   const [dates,setDates]=useState<{today:string;previous:string|null}|null>(null);
-  const [maximumMarketCap,setMaximumMarketCap]=useState(200_000_000);
+  const [compactArticleIds,setCompactArticleIds]=useState<readonly string[]>([]);
   const [floatByTicker,setFloatByTicker]=useState<Readonly<Record<string,number>>>({});
   const [exchangeByTicker,setExchangeByTicker]=useState<Readonly<Record<string,"NASDAQ"|"NYSE"|"AMEX">>>({});
   const [halts,setHalts]=useState<MarketHaltDashboardReadModel|null>(null);
@@ -136,10 +106,27 @@ export function useMarketEventsData(haltsManaged=true, enabled=true) {
     const loadArticles=async()=>{
       try{
         const response=await fetch("/api/platform/news/workspace-scanner?view=expanded-summary&channel=news_filtered",{cache:"no-store",signal:controller.signal});
+        if(!active)return;
+        if(response.status===401||response.status===403){
+          setArticles(null);
+          setDates(null);
+          setCompactArticleIds([]);
+          setFloatByTicker({});
+          setExchangeByTicker({});
+          setHeadlineStatus("denied");
+          return;
+        }
         if(!response.ok)throw Error();
         const result=await response.json() as HeadlineResponse,next=(result.articles??[]);
-        if(active){setArticles(next);setDates(result.easternDate?{today:result.easternDate,previous:result.previousTradingDate??null}:null);if(Number.isFinite(result.marketEventsPrMaximumMarketCap)&&Number(result.marketEventsPrMaximumMarketCap)>0)setMaximumMarketCap(Number(result.marketEventsPrMaximumMarketCap));}
-      }catch{/* Keep the last successful events. */}
+        if(active){
+          setArticles(next);
+          setDates(result.easternDate?{today:result.easternDate,previous:result.previousTradingDate??null}:null);
+          setCompactArticleIds(result.compactArticleIds??[]);
+          setHeadlineStatus("ready");
+        }
+      }catch{
+        if(active)setHeadlineStatus(current=>current==="denied"?"denied":"unavailable");
+      }
       finally{if(active)articleTimer=setTimeout(()=>void loadArticles(),30_000);}
     };
     const loadHalts=async()=>{
@@ -152,20 +139,20 @@ export function useMarketEventsData(haltsManaged=true, enabled=true) {
   },[enabled,haltsManaged]);
   const compactArticles=useMemo(()=>{
     if(!articles||!dates)return [];
-    return selectCompactArticles(articles,dates,maximumMarketCap);
-  },[articles,dates,maximumMarketCap]);
+    return selectCompactArticles(articles,dates,compactArticleIds);
+  },[articles,dates,compactArticleIds]);
   useEffect(()=>{
     const symbols=[...new Set(compactArticles.map(article=>article.ticker))];
     if(!symbols.length)return;
     const request=new AbortController();
     void fetch(`/api/platform/news/workspace-floats?symbols=${encodeURIComponent(symbols.join(","))}`,{cache:"no-store",signal:request.signal})
       .then(response=>response.ok?response.json():null).then((result:{exchanges?:Readonly<Record<string,"NASDAQ"|"NYSE"|"AMEX">>;floats?:Readonly<Record<string,{shares?:unknown}>>}|null)=>{
-        if(!result)return;setExchangeByTicker(result.exchanges??{});setFloatByTicker(Object.fromEntries(Object.entries(result.floats??{}).flatMap(([symbol,fact])=>Number.isSafeInteger(fact.shares)&&Number(fact.shares)>0?[[symbol,Number(fact.shares)] as const]:[])));
+        if(!result||request.signal.aborted)return;setExchangeByTicker(result.exchanges??{});setFloatByTicker(Object.fromEntries(Object.entries(result.floats??{}).flatMap(([symbol,fact])=>Number.isSafeInteger(fact.shares)&&Number(fact.shares)>0?[[symbol,Number(fact.shares)] as const]:[])));
       }).catch(()=>{});
     return()=>request.abort();
   },[compactArticles]);
 
-  return {articles,setArticles,dates,setDates,maximumMarketCap,floatByTicker,exchangeByTicker,halts,compactArticles};
+  return {articles,headlineStatus,setArticles,dates,setDates,floatByTicker,exchangeByTicker,halts,compactArticles};
 }
 
 export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltWindow,haltSourceUnavailable,data,compact=false}:{onOpenChart?:(row:ScannerChartTarget)=>void;managedActiveHalts?:readonly ScannerActiveHalt[];haltWindow?:Readonly<{date:string;closed:boolean;checkedAt:number}>;haltSourceUnavailable?:boolean;data:ReturnType<typeof useMarketEventsData>;compact?:boolean}){
@@ -179,7 +166,8 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltWi
   const requestRef=useRef<AbortController|null>(null);
 
 
-  const {articles,setArticles,dates,floatByTicker,exchangeByTicker,halts,compactArticles}=data;
+  const {articles,headlineStatus,setArticles,dates,floatByTicker,exchangeByTicker,halts,compactArticles}=data;
+  const headlinesDenied=headlineStatus==="denied";
   const [page,setPage]=useState<RecentNewsPage|null>(null);
   const [newsError,setNewsError]=useState(false);
   const newsRequest=useRef<AbortController|null>(null);
@@ -220,6 +208,14 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltWi
     setDrawerOpen(false);setSelected(null);
     requestRef.current?.abort();newsRequest.current?.abort();newsRequest.current=null;
   };
+  const clearDeniedNews=useEffectEvent(()=>{
+    closeDrawer();
+    setPage(null);
+    setNewsError(false);
+    setChannelLoading(false);
+    setOpening(false);
+  });
+  useEffect(()=>{if(headlinesDenied)clearDeniedNews();},[headlinesDenied]);
   const refreshNews=useEffectEvent(()=>{if(page&&!newsError)void fetchNews(channel,"refresh");});
   useEffect(()=>{
     if(!drawerOpen||selected)return;
@@ -251,24 +247,27 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltWi
   return <><Box data-market-events-fill-card sx={{height:compact?"100%":{xs:"auto",md:"100%"},minHeight:0,overflow:{md:"hidden"},'& > [data-traderlink-platform-dashboard-card="panel"]':{height:compact?"100%":{xs:"auto",md:"100%"}},'& > [data-traderlink-platform-dashboard-card="panel"] > .MuiCardContent-root':{display:"flex",flexDirection:"column",height:compact?"100%":{xs:"auto",md:"100%"},minHeight:0,boxSizing:"border-box",
       "& > .MuiBox-root:last-child":{display:"flex",flexDirection:"column",flex:"1 1 auto",minHeight:0,overflow:{md:"hidden"}}}}}><DashboardPanel hideHeader>
     <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:0.6,minHeight:22}}>
-      <Stack direction="row" sx={{alignItems:"center",gap:0.4}}><Typography component="h2" variant="h2">Market Events</Typography>
+      <Stack direction="row" sx={{alignItems:"center",gap:0.4}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">Market Events</Typography></WorkspaceScannerTitle>
         <Tooltip title="Halt alerts clear at the trade resume time, after one hour, or at post-market close, whichever comes first."><IconButton aria-label="Explain Market Events" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
       </Stack>
 
     </Stack>
     {haltSourceUnavailable && <Typography role="status" color="text.secondary" sx={{fontSize:"0.65rem",mb:0.5}}>Halt status unavailable</Typography>}
     {active.length?<Box aria-label="Current halts" role="region" sx={theme=>({...scannerScrollStyles(theme),mb:1.25,maxHeight:90,flexShrink:0,overflow:"auto"})}>{active.map(halt=><Stack direction="row" key={halt.id} sx={{alignItems:"center",borderTop:1,borderColor:"divider",gap:0.7,minHeight:30,px:0.5,py:0.35}}>
-      {onOpenChart?<ScannerChartLaunchControls row={halt.chartExchange?{symbol:halt.ticker,exchange:halt.chartExchange}:{symbol:"SPY",exchange:"AMEX" as const}} onOpenChart={onOpenChart}/>:null}
-      <Box sx={{minWidth:48}}><Typography sx={{color:"error.main",fontSize:"0.72rem",fontWeight:900,lineHeight:1.1}}>{halt.ticker}</Typography><Typography color="text.secondary" sx={{fontSize:"0.56rem"}}>{shortTime(halt.haltTimeEt)} ET</Typography></Box>
+      {onOpenChart?<ScannerChartLaunchControls row={{symbol:halt.ticker,exchange:halt.chartExchange??undefined}} onOpenChart={onOpenChart}/>:null}
+      <ScannerPageChartButton symbol={halt.ticker} showOnMobile/>
+      <Box sx={{minWidth:48,fontSize:"0.72rem",lineHeight:1.1}}><ScannerPageTicker symbol={halt.ticker}/><Typography color="text.secondary" sx={{fontSize:"0.56rem"}}>{shortTime(halt.haltTimeEt)} ET</Typography></Box>
       <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}><Box component="span" sx={{color:"error.main",fontWeight:900}}>HALT</Box> · {halt.reasonCode} · Quote {halt.quoteTimeScheduled ? "sched. " : ""}{halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?"error.main":"text.secondary"}}>Trade {halt.tradeTimeScheduled ? "sched. " : ""}{halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
     </Stack>)}</Box>:null}
-    {articles===null?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
+    {articles===null?(headlineStatus==="loading"
+      ?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
+      :<Typography role="status" color="text.secondary" sx={{p:1}} variant="body2">Press releases unavailable.</Typography>)
       :<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),flex:{xs:"0 0 auto",md:"1 1 0"},maxHeight:{xs:126,md:"none"},minHeight:0,overflowX:"auto",overflowY:"auto"})}>{!compactArticles.length&&<Typography color="text.secondary" sx={{p:1}} variant="body2">No recent press releases.</Typography>}{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);loadChannel("news_filtered");void openArticle(item);}} onOpenChart={onOpenChart}/>)}
         <Box sx={{borderTop:1,borderColor:"divider",px:0.75,py:0.55}}><Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{fontSize:"0.7rem"}} type="button" underline="hover">More news</Link></Box></Box>}
-    {opening?<Typography color="text.secondary" role="status" variant="caption">Opening article…</Typography>:null}
+    {opening&&!headlinesDenied?<Typography color="text.secondary" role="status" variant="caption">Opening article…</Typography>:null}
   </DashboardPanel></Box>
-  <Drawer anchor="right" open={drawerOpen} onClose={closeDrawer} slotProps={{paper:{role:"dialog","aria-label":"Recent News",sx:{maxWidth:"100vw",width:{xs:"100vw",md:"65vw"}}}}}>
-    {selected?<ArticleView article={selected} onBack={back} onClose={closeDrawer}/>:<Stack sx={{height:"100dvh",minHeight:0}}>
+  <PressReleaseDrawer open={drawerOpen&&!headlinesDenied} onClose={closeDrawer} label={selected?"Press release article":"Recent News"}>
+    {headlinesDenied?null:selected?<PressReleaseArticleContent article={selected} onBack={back} onClose={closeDrawer}/>:<Stack sx={{height:"100dvh",minHeight:0}}>
       <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",px:{xs:1,sm:2},py:1}}>
         <Typography component="h2" sx={{fontWeight:850}} variant="h6">Recent News</Typography><IconButton aria-label="Close Recent News" onClick={closeDrawer}><CloseRoundedIcon/></IconButton>
       </Stack>
@@ -294,5 +293,5 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltWi
         </Box>}
       </Box>}
     </Stack>}
-  </Drawer></>;
+  </PressReleaseDrawer></>;
 }

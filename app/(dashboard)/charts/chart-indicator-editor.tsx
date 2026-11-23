@@ -6,7 +6,8 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
-import Switch from '@mui/material/Switch';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -20,7 +21,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import DeleteOutline from '@mui/icons-material/DeleteForeverOutlined';
 import {CHART_CALCULATION_TIMEFRAMES,CHART_TIMEFRAMES} from '@/src/modules/scanner/alpaca/candles';
-import {INDICATOR_LINE_WIDTHS,type IndicatorLineWidth,defaultVwapBands,type VwapBandLevel,type VwapBands,INDICATOR_TYPES,VWAP_ANCHORS,MA_TYPES,PRICE_SOURCES,MAX_SAVED_INDICATOR_PRESETS,MAX_SAVED_INDICATOR_PRESET_BYTES,MAX_INDICATOR_PRESET_NAME_LENGTH,type ChartIndicator,type PlotStyle,type SavedIndicatorPreset} from '@/src/modules/scanner/alpaca/chart-preferences';
+import {INDICATOR_LINE_WIDTHS,indicatorDisplayChoice,type IndicatorDisplayAction,type IndicatorDisplayChoices,type IndicatorLineWidth,defaultVwapBands,type VwapBandLevel,type VwapBands,INDICATOR_TYPES,VWAP_ANCHORS,MA_TYPES,PRICE_SOURCES,MAX_SAVED_INDICATOR_PRESETS,MAX_SAVED_INDICATOR_PRESET_BYTES,MAX_INDICATOR_PRESET_NAME_LENGTH,type ChartIndicator,type PlotStyle,type SavedIndicatorPreset} from '@/src/modules/scanner/alpaca/chart-preferences';
 import {indicatorPresets, indicatorPresetRows, nextMovingAverageLine} from '@/src/modules/scanner/alpaca/chart-indicator-presets';
 import {indicatorPlotStyle,indicatorValues} from '@/src/modules/scanner/alpaca/chart-indicators';
 
@@ -31,7 +32,8 @@ function NumberInput({label,value,onChange,min=1,max=10000,integer=true,disabled
 function NumberSetting(props:Parameters<typeof NumberInput>[0]){return <NumberInput key={props.value} {...props}/>;}
 const name=(i:ChartIndicator)=>i.type==='EMA'||i.type==='SMA'||i.type==='RSI'?`${i.type} ${i.period}`:i.type==='MACD'?`MACD ${i.fastLength??12}, ${i.slowLength??26}, ${i.signalLength??9}`:i.type==='Bollinger'?`Bollinger Bands ${i.period}, ${i.deviation??2}`:'VWAP';
 const typeName = (type: ChartIndicator['type']) => type === 'Bollinger' ? 'Bollinger Bands' : type;
-export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresetsChange,initialType,defaultPriceScaleLabels,display,onDisplayChange,overlayLineWidth,onOverlayLineWidthChange}:{
+export function ChartIndicatorEditor({ticker,indicators,onChange,savedPresets,onPresetsChange,initialType,defaultPriceScaleLabels,display,accountDisplay,onDisplayChange,onAccountDisplayChange,overlayLineWidth,onOverlayLineWidthChange}:{
+ ticker:string;
  indicators:ChartIndicator[];
  onChange:(value:ChartIndicator[])=>void;
  savedPresets:SavedIndicatorPreset[];
@@ -39,14 +41,19 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
  defaultPriceScaleLabels: boolean;
  overlayLineWidth: IndicatorLineWidth;
  onOverlayLineWidthChange: (value: IndicatorLineWidth) => void;
- display: import('./chart-view-memory').ChartIndicatorDisplay;
- onDisplayChange: (type: ChartIndicator['type'], action: 'hidden' | 'enabled', value: boolean) => void;
+ display: IndicatorDisplayChoices;
+ accountDisplay?: IndicatorDisplayChoices;
+ onDisplayChange: (type: ChartIndicator['type'], action: IndicatorDisplayAction, value: boolean) => void;
+ onAccountDisplayChange: (type: ChartIndicator['type'], action: IndicatorDisplayAction, value: boolean) => void;
  onPresetsChange:(presets:SavedIndicatorPreset[])=>void;
 }){
+ const [editAllCharts,setEditAllCharts]=useState(false);
+ const chartDisplay=editAllCharts?undefined:display;
+ const changeDisplay=editAllCharts?onAccountDisplayChange:onDisplayChange;
  const [selected,setSelected]=useState(()=>indicators.find(indicator=>indicator.type===initialType)?.id??''),[tab,setTab]=useState('inputs');
  const [presetName,setPresetName]=useState(''),[presetError,setPresetError]=useState('');
  const [openLine,setOpenLine]=useState<string>();
- const [removal,setRemoval]=useState<{kind:'line'|'indicator';id:string;type:ChartIndicator['type'];label?:string}>();
+ const [removal,setRemoval]=useState<{kind:'line';id:string;type:ChartIndicator['type'];label:string}|{kind:'indicator';type:ChartIndicator['type']}>();
  const settingsId = useId();
  const confirmationId = useId();
  const widthConfirmationId = useId();
@@ -213,43 +220,15 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
     {lines.map((line, index) => <MenuItem key={line.id} value={line.id}>{name(line)} ({index + 1})</MenuItem>)}
    </TextField>}
    {!movingAverage && plotSettings}
-   <Button variant="outlined" color="error" size="small" sx={{mt:2,textTransform:'none'}} onClick={()=>setRemoval({kind:'indicator',id:active.id,type:active.type})}>Remove indicator</Button>
   </Box> : null;
- const allChartsHeading = `${settingsId}-defaults`;
- const chartHeading = `${settingsId}-chart`;
  return <>
-  {indicators.length > 0 && <Stack component="section" aria-labelledby={chartHeading} spacing={1}>
-   <Stack direction="row" sx={{alignItems:'baseline',justifyContent:'space-between',px:'9px'}}>
-    <Typography component="h3" id={chartHeading} sx={{fontWeight:700}}>This chart</Typography>
-    <Typography variant="caption" color="text.secondary" sx={{width:40,textAlign:'center'}}>On</Typography>
-   </Stack>
-   {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
-    const enabled = display.enabled[type] ?? indicators.some(indicator => indicator.type === type && indicator.visible !== false);
-    const label = typeName(type);
-    return <Stack key={type} direction="row" sx={{alignItems:'center',minHeight:44,px:1,gap:0.5,border:1,borderColor:'divider'}}>
-     <Typography variant="body2" sx={{flex:1,fontWeight:600}}>{label}</Typography>
-     <FormControlLabel label="Show values" sx={{mx:0,'& .MuiFormControlLabel-label':{fontSize:'0.8125rem'}}}
-      control={<Checkbox size="small" color="default" checked={!display.hidden.has(type)}
-       slotProps={{input:{'aria-label':`Show ${label} values on this chart`}}}
-       onChange={(_,checked)=>onDisplayChange(type,'hidden',!checked)}/>}/>
-     <Switch size="small" color="default" checked={enabled} slotProps={{input:{role:'switch','aria-label':`Enable ${label} on this chart`}}}
-      onChange={(_,checked)=>onDisplayChange(type,'enabled',checked)}/>
-    </Stack>;
-   })}
-  </Stack>}
-
-  <Stack component="section" aria-labelledby={allChartsHeading} spacing={1}>
-  <Typography component="h3" id={allChartsHeading} sx={{fontWeight:700}}>All charts</Typography>
-  <Typography variant="body2" color="text.secondary">These indicator settings and presets are saved to your account.</Typography>
-  <Stack direction="row" sx={{alignItems:'center',gap:1,flexWrap:'wrap'}}>
-   <TextField select size="small" label="Line width over candles" value={selectedWidth}
-    onChange={event=>setWidthChoice({base:overlayLineWidth,value:Number(event.target.value) as IndicatorLineWidth})}
-    slotProps={{inputLabel:{shrink:true}}} sx={{width:165}}>
-    {INDICATOR_LINE_WIDTHS.map(value=><MenuItem key={value} value={value}>{value} px</MenuItem>)}
-   </TextField>
-   <Button color="inherit" variant="outlined" size="small" sx={{textTransform:'none'}}
-    onClick={()=>setPendingWidth(selectedWidth)}>Apply to all lines</Button>
-  </Stack>
+  <RadioGroup row aria-label="Apply indicator changes to" value={editAllCharts?'all':'current'}
+    onChange={(_,value)=>setEditAllCharts(value==='all')} sx={{columnGap:1,flexWrap:'nowrap'}}>
+   <FormControlLabel value="current" control={<Radio size="small" color="warning"/>}
+     sx={{m:0,minHeight:44,minWidth:0,'& .MuiFormControlLabel-label':{overflowWrap:'anywhere'}}}
+     label={<><Box component="span" sx={{color:'warning.main',fontWeight:700}}>{ticker}</Box> chart</>}/>
+   <FormControlLabel value="all" control={<Radio size="small" color="warning"/>} sx={{m:0,minHeight:44,flexShrink:0}} label="All charts"/>
+  </RadioGroup>
   <TextField select fullWidth size="small" label="Add or edit indicator" inputRef={indicatorSelectRef} value="" onChange={event=>add(event.target.value as ChartIndicator['type'])}>
    {[...INDICATOR_TYPES].sort((a,b)=>Number(indicators.some(i=>i.type===b))-Number(indicators.some(i=>i.type===a))).map(type=>{
     const added=indicators.some(indicator=>indicator.type===type);
@@ -259,6 +238,43 @@ export function ChartIndicatorEditor({indicators,onChange,savedPresets,onPresets
    })}
   </TextField>
   {settings}
+  {indicators.length > 0 && <Stack spacing={1}>
+   {Array.from(new Set(indicators.map(indicator => indicator.type))).map(type => {
+    const enabled = indicatorDisplayChoice(accountDisplay,chartDisplay,type,'enabled') ??
+      indicators.some(indicator => indicator.type === type && indicator.visible !== false);
+    const showValues = !indicatorDisplayChoice(accountDisplay,chartDisplay,type,'hidden');
+    const label = typeName(type);
+    return <Stack key={type} sx={{px:1,py:0.5,border:1,borderColor:'divider'}}>
+     <Stack direction="row" sx={{alignItems:'center',justifyContent:'space-between',gap:1}}>
+      <Typography variant="body2" sx={{fontWeight:600}}>{label}</Typography>
+      <Button variant="outlined" color="error" size="small" aria-label={`Remove ${label} indicator`}
+       onClick={()=>setRemoval({kind:'indicator',type})}
+       sx={{minHeight:44,textTransform:'none'}}>Remove indicator</Button>
+     </Stack>
+     <Stack direction="row" useFlexGap sx={{alignItems:'center',columnGap:1,flexWrap:'wrap'}}>
+      <FormControlLabel label="Show values" labelPlacement="start" sx={{m:0,minHeight:44,'& .MuiFormControlLabel-label':{fontSize:'0.8125rem'}}}
+       control={<Checkbox size="small" color="default" checked={showValues}
+        slotProps={{input:{'aria-label':`Show ${label} values`}}}
+        onChange={(_,checked)=>changeDisplay(type,'hidden',!checked)}/>}/>
+      <FormControlLabel label="Show indicator" labelPlacement="start" sx={{m:0,minHeight:44,'& .MuiFormControlLabel-label':{fontSize:'0.8125rem'}}}
+       control={<Checkbox size="small" color="default" checked={enabled}
+        slotProps={{input:{'aria-label':`Show ${label} indicator`}}}
+        onChange={(_,checked)=>changeDisplay(type,'enabled',checked)}/>}/>
+     </Stack>
+    </Stack>;
+   })}
+  </Stack>}
+
+  <Stack spacing={1}>
+  <Stack direction="row" sx={{alignItems:'center',gap:1,flexWrap:'wrap'}}>
+   <TextField select size="small" label="Line width over candles" value={selectedWidth}
+    onChange={event=>setWidthChoice({base:overlayLineWidth,value:Number(event.target.value) as IndicatorLineWidth})}
+    slotProps={{inputLabel:{shrink:true}}} sx={{width:205}}>
+    {INDICATOR_LINE_WIDTHS.map(value=><MenuItem key={value} value={value}>{value} px</MenuItem>)}
+   </TextField>
+   <Button color="inherit" variant="outlined" size="small" sx={{textTransform:'none'}}
+    onClick={()=>setPendingWidth(selectedWidth)}>Apply to all lines</Button>
+  </Stack>
   </Stack>
 
   <Dialog open={pendingWidth!==undefined} onClose={()=>{setPendingWidth(undefined);setWidthChoice(undefined);}}

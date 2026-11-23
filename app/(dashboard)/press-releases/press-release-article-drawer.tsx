@@ -1,5 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
+
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import Box from "@mui/material/Box";
@@ -38,37 +41,57 @@ export function pressReleaseType(article: PressReleaseArticle): string {
   return "News";
 }
 
+export function PressReleaseDrawer({ open, label, onClose, children }: Readonly<{
+  open: boolean;
+  label: string;
+  onClose: () => void;
+  children: ReactNode;
+}>) {
+  return <Drawer anchor="right" onClose={onClose} open={open} slotProps={{
+    paper: { role: "dialog", "aria-label": label, sx: { maxWidth: "100%", width: { xs: "100%", sm: 620 } } },
+  }}>{children}</Drawer>;
+}
+
+export function PressReleaseArticleContent({ article, onClose, onBack }: Readonly<{
+  article: PressReleaseArticle;
+  onClose: () => void;
+  onBack?: () => void;
+}>) {
+  const articleLink = dashboardPressReleaseSourceLink(article);
+  return <Stack spacing={2.25} sx={{ p: { xs: 2, sm: 3 } }}>
+    {onBack ? <Box><Button onClick={onBack} startIcon={<ArrowBackRoundedIcon />}>Back to list</Button></Box> : null}
+    <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography color="primary" sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" }, fontWeight: 900, lineHeight: 1.15 }}>{article.ticker}</Typography>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", flexWrap: "wrap", mt: 0.75 }}>
+          {article.marketCap ? <Chip label={`Market cap ${article.marketCap}`} size="small" variant="outlined" /> : null}
+          <Chip label={pressReleaseType(article)} size="small" variant="outlined" />
+          <Typography color="text.secondary" variant="caption">{pressReleaseEasternTime(article.publishedAt, true)} ET</Typography>
+        </Stack>
+      </Box>
+      <Tooltip title="Close article"><IconButton aria-label="Close article" onClick={onClose}><CloseRoundedIcon /></IconButton></Tooltip>
+    </Stack>
+    <Typography component="h2" variant="h2">{article.headline}</Typography>
+    {!article.summaryUnavailable && article.summary ? <Box><Typography component="h3" sx={{ fontWeight: 800 }} variant="subtitle2">AI summary</Typography><Typography sx={{ mt: 1, whiteSpace: "pre-wrap" }} variant="body2">{article.summary}</Typography></Box> : null}
+    {article.summaryUnavailable ? <Typography variant="body2">{SUMMARY_UNAVAILABLE_MESSAGE}</Typography> : null}
+    <Divider />
+    {article.summaryUnavailable ? null : <PressReleaseDetailSection items={article.positives} title="Positives" />}
+    {article.summaryUnavailable ? null : <PressReleaseDetailSection items={article.negatives} title="Negatives" />}
+    {!article.summaryUnavailable ? <PressReleaseDetailSection items={article.riskFlags} title="Risk flags" /> : null}
+    {!article.summaryUnavailable ? <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance" /> : null}
+    <Divider />
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+      {articleLink ? <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={articleLink} variant="contained">{pressReleaseType(article) === "SEC filing" ? "Open SEC Filing" : "Open source article"}</Button> : null}
+      <Button component={NextLink} href="/account/trading#pwa-app" variant="outlined">Set up the TradersLink app</Button>
+    </Stack>
+  </Stack>;
+}
+
 export function PressReleaseArticleDrawer({ article, onClose }: Readonly<{
   article: PressReleaseArticle | null;
   onClose: () => void;
 }>) {
-  const articleLink = article ? dashboardPressReleaseSourceLink(article) : null;
-  return <Drawer anchor="right" onClose={onClose} open={article !== null} slotProps={{ paper: { sx: { maxWidth: "100%", width: { xs: "100%", sm: 620 } } } }}>
-    {article ? <Stack spacing={2.25} sx={{ p: { xs: 2, sm: 3 } }}>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography color="primary" sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" }, fontWeight: 900, lineHeight: 1.15 }}>{article.ticker}</Typography>
-          <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", flexWrap: "wrap", mt: 0.75 }}>
-            {article.marketCap ? <Chip label={`Market cap ${article.marketCap}`} size="small" variant="outlined" /> : null}
-            <Chip label={pressReleaseType(article)} size="small" variant="outlined" />
-            <Typography color="text.secondary" variant="caption">{pressReleaseEasternTime(article.publishedAt, true)} ET</Typography>
-          </Stack>
-        </Box>
-        <Tooltip title="Close article"><IconButton aria-label="Close article" onClick={onClose}><CloseRoundedIcon /></IconButton></Tooltip>
-      </Stack>
-      <Typography component="h2" variant="h2">{article.headline}</Typography>
-      {!article.summaryUnavailable && article.summary ? <Box><Typography component="h3" sx={{ fontWeight: 800 }} variant="subtitle2">AI summary</Typography><Typography sx={{ mt: 1, whiteSpace: "pre-wrap" }} variant="body2">{article.summary}</Typography></Box> : null}
-      {article.summaryUnavailable ? <Typography variant="body2">{SUMMARY_UNAVAILABLE_MESSAGE}</Typography> : null}
-      <Divider />
-      {article.summaryUnavailable ? null : <PressReleaseDetailSection items={article.positives} title="Positives" />}
-      {article.summaryUnavailable ? null : <PressReleaseDetailSection items={article.negatives} title="Negatives" />}
-      {!article.summaryUnavailable ? <PressReleaseDetailSection items={article.riskFlags} title="Risk flags" /> : null}
-      {!article.summaryUnavailable ? <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance" /> : null}
-      <Divider />
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-        {articleLink ? <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={articleLink} variant="contained">{pressReleaseType(article) === "SEC filing" ? "Open SEC Filing" : "Open source article"}</Button> : null}
-        <Button component={NextLink} href="/account/trading#pwa-app" variant="outlined">Set up the TradersLink app</Button>
-      </Stack>
-    </Stack> : null}
-  </Drawer>;
+  return <PressReleaseDrawer open={article !== null} onClose={onClose} label="Press release article">
+    {article ? <PressReleaseArticleContent article={article} onClose={onClose} /> : null}
+  </PressReleaseDrawer>;
 }

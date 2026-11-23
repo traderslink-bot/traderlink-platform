@@ -10,8 +10,8 @@ vi.mock("@/src/modules/market-data/server/provider-settings", () => ({
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope", () => ({
   requireTraderLinkPlatformRequestIdentity: (headers: Headers) => headers.get("x-test-viewer"),
 }));
-vi.mock("@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access", () => ({
-  hasWatchlistDashboardNavigationAccess: (viewer: string | null) => Boolean(viewer),
+vi.mock("@/src/modules/market-data/server/market-tools-dashboard-access", () => ({
+  hasMarketToolsDashboardReadAccess: (viewer: string | null) => Boolean(viewer),
 }));
 
 it("coalesces reads across authorized viewers, separates timeframes, and checks access on cache hits", async () => {

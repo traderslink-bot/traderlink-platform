@@ -43,14 +43,15 @@ const reviewedFeaturePanelFiles = new Set([
   // Catalog filters use a mobile bottom sheet inside the shared dashboard layout.
   join(dashboardRoot, "partner-channels", "partner-channel-catalog.tsx"),
   join(dashboardRoot, "scanner", "scanner-client.tsx"),
+  // Feature drawers stay inside the shared DashboardPage and DashboardPanel.
+  join(dashboardRoot, "scanners", "custom-scanners-client.tsx"),
+  join(dashboardRoot, "scanners", "shared", "[id]", "shared-scan-results.tsx"),
   join(dashboardRoot, "screeners", "declines-card.tsx"),
   join(dashboardRoot, "screeners", "live-screeners-client.tsx"),
   join(dashboardRoot, "screeners", "premarket-pullbacks-card.tsx"),
-  join(dashboardRoot, "screeners", "screener-press-release-board.tsx"),
   join(dashboardRoot, "screeners", "workspace", "declines-card.tsx"),
   join(dashboardRoot, "screeners", "workspace", "live-screeners-client.tsx"),
   join(dashboardRoot, "screeners", "workspace", "premarket-pullbacks-card.tsx"),
-  join(dashboardRoot, "screeners", "workspace", "screener-press-release-board.tsx"),
   join(dashboardRoot, "screeners", "workspace", "scanner-company-drawer.tsx"),
   // Bottom feature editor for card order, sizes and saved layouts; not dashboard navigation.
   join(dashboardRoot, "screeners", "workspace", "scanner-mobile-layout-editor.tsx"),
@@ -61,6 +62,12 @@ const reviewedFeaturePanelFiles = new Set([
   join(dashboardRoot, "workspace", "workspace-trade-analyzer-panel.tsx"),
   join(dashboardRoot, "workspace", "workspace-trade-library-client.tsx"),
 ]);
+
+const pressReleaseDrawerFile = join(dashboardRoot, "press-releases", "press-release-article-drawer.tsx");
+const reviewedSharedPressReleaseDrawerConsumers = [
+  join(dashboardRoot, "screeners", "screener-press-release-board.tsx"),
+  join(dashboardRoot, "screeners", "workspace", "screener-press-release-board.tsx"),
+];
 
 function filesBelow(root: string): readonly string[] {
   return readdirSync(root).flatMap((entry) => {
@@ -174,6 +181,24 @@ describe("TraderLink Platform dashboard template enforcement", () => {
     );
     expect(labPage).not.toContain("analytics-lab-client");
     expect(labPage).not.toContain("lab-runtime");
+  });
+
+  it("keeps Market Events on the reviewed shared Press Releases drawer", () => {
+    const sharedDrawer = readFileSync(pressReleaseDrawerFile, "utf8");
+    expect(sharedDrawer).toContain("export function PressReleaseDrawer(");
+    expect(sharedDrawer).toContain("<Drawer");
+
+    const consumers = filesBelow(dashboardRoot)
+      .filter((path) => path.endsWith(".tsx") && path !== pressReleaseDrawerFile)
+      .filter((path) => /<PressReleaseDrawer\b/.test(readFileSync(path, "utf8")));
+    expect(consumers.sort()).toEqual([...reviewedSharedPressReleaseDrawerConsumers].sort());
+
+    for (const path of reviewedSharedPressReleaseDrawerConsumers) {
+      const source = readFileSync(path, "utf8");
+      expect(source).toMatch(
+        /import\s*\{[^}]*\bPressReleaseDrawer\b[^}]*\}\s*from\s*["']@\/app\/\(dashboard\)\/press-releases\/press-release-article-drawer["']/,
+      );
+    }
   });
 
   it("requires dashboard routes to consume the public template API", () => {

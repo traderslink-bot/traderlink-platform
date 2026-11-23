@@ -1,4 +1,4 @@
-import {candleBucket,easternDayStart,isCalendarChartTimeframe,nextChartCalendarPeriod,type ChartCalculationTimeframe,type ChartTimeframe} from './candles';
+import {CHART_FRAME_SECONDS,candleBucket,easternDayStart,isCalendarChartTimeframe,nextChartCalendarPeriod,type ChartCalculationTimeframe,type ChartTimeframe} from './candles';
 import type {ChartPreferences} from './chart-preferences';
 import type {ChartSessionCalendar} from './chart-calendar';
 import type {VwapChartSlot} from './chart-vwap-projection';
@@ -12,7 +12,7 @@ export function calculationInterval(time:number,timeframe:Exclude<ChartCalculati
  // US supported sessions do not cross the DST transition hour within a day.
  const regularOnly=sessions.regular&&!sessions.premarket&&!sessions.postmarket;
  const start=candleBucket(time,timeframe,regularOnly);
- const seconds={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400}[timeframe];
+ const seconds=CHART_FRAME_SECONDS[timeframe];
  const segments:[[number,number,boolean],[number,number,boolean],[number,number,boolean]]=[[240,570,sessions.premarket],[570,closeMinute,sessions.regular],[closeMinute,closeMinute+240,sessions.postmarket]];
  let end=-Infinity;
  for(const [from,to,enabled]of segments){
@@ -31,7 +31,6 @@ export function futureCalculationAxis(axis:readonly number[],count:number,timefr
   for(let i=0;i<count;i++)result.push(nextChartCalendarPeriod(result.at(-1)!,timeframe));
   return result;
  }
- const seconds={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400};
  for(const row of calendar.knownSessions()){
   const midnight=easternDayStart(Date.parse(row.date+'T12:00:00Z')/1000);
   if(timeframe==='1D'){
@@ -46,7 +45,7 @@ export function futureCalculationAxis(axis:readonly number[],count:number,timefr
      const bucket=candleBucket(time,timeframe,regularOnly);
      if(bucket>result.at(-1)!)result.push(bucket);
      if(result.length>=axis.length+count)return result;
-     time=bucket+seconds[timeframe];
+     time=bucket+CHART_FRAME_SECONDS[timeframe];
     }
    }
   }

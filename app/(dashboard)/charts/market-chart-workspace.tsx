@@ -7,7 +7,9 @@ import FullscreenExitRounded from "@mui/icons-material/FullscreenExitRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
 import MenuRounded from "@mui/icons-material/MenuRounded";
 import { chartSymbol, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
+import type { ResolvedChartEvidence } from "@/src/modules/market-data/chart-evidence/contracts";
 import { chartCount, selectedChart, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
+import { MarketChart } from "./market-chart";
 import { ChartMultiviewCharts } from "./chart-multiview";
 import { ChartMultiviewMenu } from "./chart-multiview-menu";
 import { ChartPreferencesContext, useChartPreferences } from "./use-chart-preferences";
@@ -18,7 +20,26 @@ import { chartTabPrefix, chartTabDisplayLabel, chartWorkspaceViews, closeSelecte
 const desktopToolbar = () => document.getElementById("dashboard-chart-toolbar");
 const NEW_MULTI_TICKER = ":new-multi-ticker";
 
-export function MarketChartWorkspace() {
+export type MarketChartEvidenceHandoff = Readonly<{
+  reference: string;
+  timeframe: ChartTimeframe;
+  evidence: ResolvedChartEvidence;
+}>;
+
+function MarketChartHandoffView({ handoff }: { handoff: MarketChartEvidenceHandoff }) {
+  const [timeframe, setTimeframe] = useState(handoff.timeframe);
+  return <MarketChart symbol={handoff.evidence.basis.symbol} timeframe={timeframe} onTimeframeChange={setTimeframe}
+    evidence={handoff.evidence} compactMobile
+    sx={{ height: "calc(100dvh - 112px)", minHeight: 300 }} />;
+}
+
+export function MarketChartWorkspace({ evidenceHandoff }: { evidenceHandoff?: MarketChartEvidenceHandoff } = {}) {
+  return evidenceHandoff
+    ? <MarketChartHandoffView key={evidenceHandoff.reference} handoff={evidenceHandoff} />
+    : <SavedMarketChartWorkspace />;
+}
+
+function SavedMarketChartWorkspace() {
   const {book,change:changeBook,ready,message}=useChartTabs();
   const chartPreferences = useChartPreferences();
   const { preferences, ready: preferencesReady, message: preferencesMessage } = chartPreferences;

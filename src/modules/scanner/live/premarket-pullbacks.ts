@@ -1,3 +1,4 @@
+import { scannerVolumeBreakdown } from "./volume";
 import type { DailyUniverse, DeclineRow, NormalizedSnapshot, PremarketPullbackControls, PremarketPullbackResults, PremarketPullbackRow, RollingActivity, ScannerSession } from "./contracts";
 import type { FloatFact } from "./engine";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
@@ -87,7 +88,8 @@ export class PremarketPullbackBook {
       const validComparison=typeof comparison==="number"&&Number.isFinite(comparison)&&comparison>0?comparison:null;
       rows.push({symbol,exchange:members.get(symbol)!.exchange,company:quote.company,price:quote.price,
         premarketHigh,regularHigh:highs.regular,postMarketHigh:highs.afterHours,referenceSession:reference.session,referenceHigh:reference.high,
-        premarketVolume:ref?.volume??null,sessionVolume:quote.volume,
+        ...scannerVolumeBreakdown(quote.provider === "alpaca" ? quote : { ...quote, premarketVolume: ref?.volume }),
+        sessionVolume:quote.volume,
         float:fact&&Number.isSafeInteger(fact.shares)&&fact.shares>0&&at<=input.now&&input.now-at<=30*60*60000?fact.shares:null,
         changePercent:validComparison===null?null:(quote.price/validComparison-1)*100,
         belowHighPercent:below,backToHighPercent:(reference.high/quote.price-1)*100,

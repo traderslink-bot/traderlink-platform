@@ -1,6 +1,9 @@
 import { easternClock } from "../live/sessions";
 import type { ChartPreferences } from "./chart-preferences";
 
+// BOATS is disabled. Keep saved preferences for a future explicit reactivation.
+export const CHART_OVERNIGHT_ENABLED = false;
+
 /** The evening session is part of the following Eastern trading date. */
 export function chartOvernightTradingDate(at: number): string | null {
   if (!Number.isFinite(at)) return null;
@@ -13,5 +16,5 @@ export function chartOvernightTradingDate(at: number): string | null {
 }
 
 export function chartShowsOvernight(preferences: Pick<ChartPreferences, "overnight" | "premarket" | "postmarket">): boolean {
-  return preferences.overnight ?? (preferences.premarket && preferences.postmarket);
+  return CHART_OVERNIGHT_ENABLED && (preferences.overnight ?? (preferences.premarket && preferences.postmarket));
 }

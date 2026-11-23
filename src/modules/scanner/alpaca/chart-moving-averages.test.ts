@@ -10,7 +10,7 @@ it('distinguishes first-source EMA initialization from SMA-seeded Wilder smoothi
  expect(movingAverage([10,20,40,80],1,'EMA')).toEqual([10,20,40,80]);
 });
 for(const frame of CHART_CALCULATION_TIMEFRAMES)it(`supports independent custom EMA periods on ${frame}`,()=>{
- const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
+ const step={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1D':86400}[frame];
  const bars:Candle[]=Array.from({length:260},(_,n)=>({time:1700000000+n*step,open:10,high:20,low:5,close:n?20:10,volume:100}));
  const studies=[1,9,20,50,200,233].map(study);
  const saved=parseChartPreferences({...DEFAULT_CHART_PREFERENCES,timeframe:frame,indicators:studies});

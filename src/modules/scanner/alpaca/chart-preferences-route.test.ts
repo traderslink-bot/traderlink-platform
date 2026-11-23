@@ -1,6 +1,7 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {mkdirSync,mkdtempSync,rmSync,writeFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
-const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true,activeAccount:'',journalAllowed:true}));
+const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true,sharedChart:true,activeAccount:'',journalAllowed:true}));
+vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasSharedChartDataAccess:()=>setup.sharedChart}));
 vi.mock('@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access',()=>({hasWatchlistDashboardNavigationAccess:()=>setup.privateChart}));
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!setup.user)throw Error('unauthenticated');return {mode:'platform_session',scope:{userId:setup.user,activeAccountId:setup.activeAccount}};},currentJournalAccountSelectionRef:(scope:{activeAccountId:string})=>'ref-'+scope.activeAccountId}));
 vi.mock('@/src/modules/platform/server/database/open-readonly-platform-database',()=>({withReadonlyPlatformDatabase:(_:unknown,read:(db:unknown)=>unknown)=>read({})}));
@@ -9,7 +10,7 @@ vi.mock('@/src/modules/platform/server/authentication/platform-mutation-request-
 vi.mock('@/src/modules/platform/server/database/platform-database-config',()=>({resolvePlatformDatabaseConfig:()=>({databasePath:join(setup.directory,'test.sqlite')})}));
 import {GET,POST} from '@/app/api/charts/preferences/route';
 import {chartPreferenceOwnerKey} from './chart-preference-store';
-beforeEach(()=>{setup.user='user-a';setup.allowed=true;setup.privateChart=true;setup.activeAccount='';setup.journalAllowed=true;setup.directory=mkdtempSync(join(tmpdir(),'chart-pref-route-'));});afterEach(()=>rmSync(setup.directory,{recursive:true,force:true}));
+beforeEach(()=>{setup.user='user-a';setup.allowed=true;setup.privateChart=true;setup.sharedChart=true;setup.activeAccount='';setup.journalAllowed=true;setup.directory=mkdtempSync(join(tmpdir(),'chart-pref-route-'));});afterEach(()=>rmSync(setup.directory,{recursive:true,force:true}));
 const request=(body:unknown)=>new Request('http://localhost/api/charts/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 it('round-trips account preferences and keeps separate users isolated',async()=>{
  const original=await (await GET(new Request('http://localhost/api'))).json();const value={...original,preferences:{...original.preferences,grid:false,scalePriceOnly:true,indicators:[{id:'vwap',type:'VWAP',period:20,color:'#123456',width:2,calculationTimeframe:'4h',waitForClose:true,offset:2,timeframes:['1m','5m']}]}};
@@ -67,4 +68,10 @@ it('shares the active Journal account only for entitled charts',async()=>{
  expect((await get()).journalAccountRef).toBe('ref-journal-b');
  setup.journalAllowed=false;
  expect((await get()).journalAccountRef).toBeUndefined();
+});
+
+it("requires shared chart access before fetching or saving preferences", async () => {
+  setup.sharedChart = false;
+  expect((await GET(new Request("http://localhost/api/charts/preferences"))).status).toBe(403);
+  expect((await POST(request({}))).status).toBe(403);
 });

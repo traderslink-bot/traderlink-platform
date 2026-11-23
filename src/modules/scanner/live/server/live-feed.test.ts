@@ -3,6 +3,8 @@ import { mkdtemp, readFile, rm, symlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
+import { EMPTY_SCAN } from "../../custom/definition";
+import type { ScannerSignalBars, ScannerSignalBarsResult } from "../../alpaca/scanner-signal-bars";
 import { initialConfiguration } from "../settings";
 import type { DailyUniverse } from "../contracts";
 import { LiveScannerFeed, scannerRequestMarketCap } from "./live-feed";
@@ -114,6 +116,101 @@ function dependencies(overrides: Record<string,unknown> = {}) {
 }
 
 describe("LiveScannerFeed", () => {
+  it("publishes Alpaca RVOL with the original live rankings and shares the completed history", async () => {
+    const at = NOW + 7_000;
+    const candle = (day: number, hour: string, volume: number) => ({
+      time: Date.parse(`2026-10-${day}T${hour}:00Z`) / 1000, open: 2, high: 2, low: 2, close: 2, volume,
+    });
+    const loadSignalBars = vi.fn(async (request: ScannerSignalBars): Promise<ScannerSignalBarsResult> => ({
+      feed: "sip", adjustment: "split", frame: request.frame, basisDate: "2026-10-30", end: request.end,
+      bars: { ABCD: [27, 28, 29].map(day => candle(day, "13:30", 100_000)).concat(candle(30, "13:45", 300_000)) },
+      coverage: { ABCD: { status: "complete", completedThroughMs: request.end } },
+    }));
+    const feed = new LiveScannerFeed(dependencies({ provider: "alpaca", now: () => at, loadSignalBars }));
+    const cold = await feed.scanOnce();
+    expect(cold.gainers.rows).toMatchObject([{ symbol: "ABCD", relativeVolume: null }]);
+    await vi.waitFor(async () => {
+      const next = await feed.scanOnce();
+      expect(next.gainers.rows).toMatchObject([{ symbol: "ABCD", relativeVolume: 3 }]);
+      expect(next.dayGainers?.rows).toMatchObject([{ symbol: "ABCD", relativeVolume: 3 }]);
+    });
+    expect(loadSignalBars).toHaveBeenCalledTimes(1);
+    expect(loadSignalBars.mock.calls[0][0]).toMatchObject({ frame: "15m", symbols: ["ABCD"], end: NOW });
+    expect(feed.read().gainers.rows.map(row => row.symbol)).toEqual(cold.gainers.rows.map(row => row.symbol));
+  });
+
+  it("supplies one shared completed history read to active live indicator filters", async () => {
+    const source = Promise.withResolvers<void>();
+    const loadSignalBars = vi.fn(async (request: ScannerSignalBars): Promise<ScannerSignalBarsResult> => {
+      await source.promise;
+      return {
+        feed: "sip", adjustment: "split", frame: request.frame, basisDate: "2026-10-30", end: request.end,
+        bars: { ABCD: Array.from({ length: 40 }, (_, index) => {
+          const close = 1 + index * 0.01;
+          return { time: request.end / 1000 - (40 - index) * 60, open: close, high: close,
+            low: close, close, volume: 100 };
+        }) },
+        coverage: { ABCD: { status: "complete", completedThroughMs: request.end } },
+      };
+    });
+    const feed = new LiveScannerFeed(dependencies({ loadSignalBars }));
+    const first = feed.openCustomScans(), second = feed.openCustomScans();
+    const query = { key: "signals", definition: { ...EMPTY_SCAN, rules: [
+      { metric: "rsi14" as const, frame: "1m" as const, minimum: 90, maximum: null },
+    ] }, page: 1 };
+    const releaseFirst = first.market.attachQueries([query]);
+    const releaseSecond = second.market.attachQueries([query]);
+    try {
+      await feed.scanOnce();
+      expect(first.market.query(query)).toMatchObject({ total: 0, incomplete: 1 });
+      await vi.waitFor(() => expect(loadSignalBars).toHaveBeenCalledTimes(1));
+      source.resolve();
+      await vi.waitFor(async () => {
+        await feed.scanOnce();
+        expect(second.market.query(query)).toMatchObject({ total: 1, incomplete: 0, rows: [{ symbol: "ABCD", matches: [100] }] });
+      });
+      expect(loadSignalBars).toHaveBeenCalledTimes(1);
+    } finally {
+      source.resolve();
+      releaseFirst?.();
+      releaseSecond?.();
+      first.close();
+      second.close();
+    }
+  });
+
+  it("streams the existing normalized quote pass with actual coverage and releases idle builder history", async () => {
+    const snapshotPass = vi.fn(dependencies().snapshotPass);
+    const feed = new LiveScannerFeed(dependencies({
+      snapshotPass,
+      universe: async () => ({ ...universe, stocks: [...universe.stocks, { symbol:"MISSING", exchange:"NYSE", marketCapAtCollection:10_000_000 }] }),
+    }));
+    const query = { key:"main", definition:{ ...EMPTY_SCAN, rules:[{ metric:"price" as const, minimum:1.5, maximum:2.5 }] }, page:1 };
+    const first = feed.openCustomScans();
+    expect(first.market.query(query).status).toBe("waiting");
+    const second = feed.openCustomScans();
+    expect(second.market).toBe(first.market);
+    const update = vi.fn();
+    const unsubscribe = second.market.subscribe(update);
+    try {
+      await feed.scanOnce();
+      expect(snapshotPass).toHaveBeenCalledTimes(1);
+      expect(second.market.query(query)).toMatchObject({ status:"open", eligible:2, total:1,
+        incomplete:1, rows:[{ symbol:"ABCD", price:2, matches:[2] }] });
+      expect(update).toHaveBeenCalledOnce();
+      first.close();
+      first.close();
+      expect(second.market.query(query).rows).toHaveLength(1);
+    } finally {
+      unsubscribe();
+      first.close();
+      second.close();
+    }
+    const fresh = feed.openCustomScans();
+    try { expect(fresh.market.query(query).status).toBe("waiting"); }
+    finally { fresh.close(); }
+  });
+
   it("filters the provider request universe by the active configured market-cap ceiling", async () => {
     const configuration={...initialConfiguration(),enabled:true};
     const reserveScannerBudget=vi.fn(async()=>{}),floats=vi.fn(async()=>new Map([

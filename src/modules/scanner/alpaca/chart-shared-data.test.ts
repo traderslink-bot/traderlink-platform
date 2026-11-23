@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { sharedChartFetch, sharedChartStream } from "../../../../app/(dashboard)/charts/shared-chart-data";
+import { readCompletedChartHistory, sharedChartFetch, sharedChartStream } from "../../../../app/(dashboard)/charts/shared-chart-data";
 afterEach(() => vi.unstubAllGlobals());
 it("shares one connection for the same symbol and keeps it until its last chart closes", async () => {
   const sources: Source[] = [];
@@ -68,4 +68,18 @@ it("reuses the daily stream and replays the current candle when changing views",
     vi.runOnlyPendingTimers();
     vi.useRealTimers();
   }
+});
+
+it("requests completed history separately and treats a verified empty page as a hit", async () => {
+  const window = { frame: "30m", session: "regular", start: 1795012200, end: 1795014000 } as const;
+  const emptyPage = { state: "ready", start: window.start, end: window.end, basisDate: "2026-11-18", bars: [] };
+  const transport = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json(emptyPage))
+    .mockResolvedValueOnce(Response.json({ state: "miss" }));
+  vi.stubGlobal("fetch", transport);
+  const { signal } = new AbortController();
+  expect(await readCompletedChartHistory("OMH", window, "generation=selected", signal)).toStrictEqual(emptyPage);
+  const [url, options] = transport.mock.calls[0];
+  expect(url).toBe("/api/screeners/charts/bars?archive=1&symbol=OMH&frame=30m&session=regular&start=1795012200&end=1795014000&generation=selected");
+  expect(options?.credentials).toBe("same-origin");
+  expect(await readCompletedChartHistory("OMH", window, "generation=selected", signal)).toBeNull();
 });

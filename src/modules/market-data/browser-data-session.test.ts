@@ -2,14 +2,16 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { browserDataSession, matchesBrowserDataSession } from "./server/browser-data-session";
 
-const state = vi.hoisted(() => ({ provider: "alpaca" as "alpaca" | "moomoo", revision: 0, authenticated: true }));
+const state = vi.hoisted(() => ({ provider: "alpaca" as "alpaca" | "moomoo", revision: 0, authenticated: true, sharedChart: true, scanner: false }));
+vi.mock("./server/chart-dashboard-access", () => ({ hasSharedChartDataAccess: () => state.sharedChart }));
+vi.mock("./server/market-tools-dashboard-access", () => ({ hasMarketToolsDashboardReadAccess: () => state.scanner }));
 vi.mock("./server/provider-settings", () => ({ marketDataSelection: () => ({ provider: state.provider, revision: state.revision }) }));
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope", () => ({
   requireTraderLinkPlatformRequestIdentity: () => { if (!state.authenticated) throw Error("unauthenticated"); return {}; },
 }));
 import { GET } from "@/app/api/charts/provider/route";
 
-afterEach(() => { state.provider = "alpaca"; state.revision = 0; state.authenticated = true; });
+afterEach(() => { state.provider = "alpaca"; state.revision = 0; state.authenticated = true; state.sharedChart = true; state.scanner = false; });
 
 it("exposes only an opaque generation and keeps authentication and feature validation", async () => {
   const request = () => new Request("https://app.example/api/charts/provider?feature=charts");
@@ -53,4 +55,15 @@ it("rejects retired routing parameters uniformly even with a current opaque gene
       expect(matchesBrowserDataSession(query, "charts", selection)).toBe(false);
     }
   }
+});
+
+it("requires each provider generation's own access decision", () => {
+  const charts = new Request("https://app.example/api/charts/provider?feature=charts");
+  const scanners = new Request("https://app.example/api/charts/provider?feature=scanners");
+  expect(GET(charts).status).toBe(200);
+  expect(GET(scanners).status).toBe(403);
+  state.sharedChart = false;
+  expect(GET(charts).status).toBe(403);
+  state.scanner = true;
+  expect(GET(scanners).status).toBe(200);
 });

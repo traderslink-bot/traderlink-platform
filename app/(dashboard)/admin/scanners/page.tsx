@@ -4,6 +4,7 @@ import Stack from "@mui/material/Stack";
 import { DashboardPage, DashboardSecondaryAction } from "@/app/dashboard-template";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { hasCandleHistoryOwnerAccess } from "@/src/modules/market-data/server/candle-history-owner";
 import { ScannerAuditControls } from "./scanner-audit-controls";
 import { LiveScreenersClient } from "../../screeners/live-screeners-client";
 
@@ -14,5 +15,5 @@ export const revalidate = 0;
 export default async function ScannerAdminPage() {
   const identity = await requireTraderLinkPlatformPageIdentity();
   if (!hasWatchlistDashboardNavigationAccess(identity)) notFound();
-  return <DashboardPage><Stack direction="row" sx={{justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:1}}><ScannerAuditControls/><DashboardSecondaryAction href="/admin/scanners/audit">Scanner audit</DashboardSecondaryAction></Stack><LiveScreenersClient admin /></DashboardPage>;
+  return <DashboardPage><Stack direction="row" sx={{justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:1}}><ScannerAuditControls/>{hasCandleHistoryOwnerAccess(identity) ? <DashboardSecondaryAction href="/admin/scanners/candle-history">Candle history</DashboardSecondaryAction> : null}<DashboardSecondaryAction href="/admin/scanners/audit">Scanner audit</DashboardSecondaryAction></Stack><LiveScreenersClient admin /></DashboardPage>;
 }

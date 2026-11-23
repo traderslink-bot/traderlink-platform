@@ -12,6 +12,7 @@ import ScreenersPage from "@/app/(dashboard)/screeners/page";
 import { GET, POST } from "@/app/api/stock-screeners/route";
 import { POST as receiveLiveFrame } from "@/app/api/internal/stock-screeners-live/route";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
+import { MARKET_TOOLS_ACCESS_MODE, MARKET_TOOLS_REVIEW_USER_IDS } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import { platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "@/src/modules/platform/server/authentication/platform-session-service";
@@ -96,7 +97,8 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
   vi.stubEnv("TRADERLINK_STOCK_SCREENERS_ENABLED", "1");
   vi.stubEnv("DISCORD_GUILD_ID", guild);
   vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", premium);
-  vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", `${authorSubject},${recipientSubject}`);
+  vi.stubEnv(MARKET_TOOLS_ACCESS_MODE, undefined);
+  vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", undefined);
   try {
     const database = openPristinePlatformTestDatabase({ mode: "initializer", databasePath });
     let author: string, recipient: string;
@@ -105,10 +107,13 @@ it("shares opening-range and VWAP rules across two accounts and revokes the link
       const signIn = new PlatformDiscordSignInService(database);
       function testMember(authSubject: string, name: string) {
         return signIn.signIn({ authSubject, username: name, globalDisplayName: name, avatarHash: null,
-          guildId: guild, roleIds: [premium], guildOwner: false, joinedAtUtc: null }).session.token;
+          guildId: guild, roleIds: [premium], guildOwner: false, joinedAtUtc: null });
       }
-      author = testMember(authorSubject, "Test Author");
-      recipient = testMember(recipientSubject, "Test Recipient");
+      const authorAccount = testMember(authorSubject, "Test Author");
+      const recipientAccount = testMember(recipientSubject, "Test Recipient");
+      vi.stubEnv(MARKET_TOOLS_REVIEW_USER_IDS, `${authorAccount.userId},${recipientAccount.userId}`);
+      author = authorAccount.session.token;
+      recipient = recipientAccount.session.token;
     } finally { database.close(); }
 
     const directory = join(root, "stock-screeners-v1");

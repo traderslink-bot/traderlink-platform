@@ -22,7 +22,7 @@ function reference(x:number[],v:number[],length:number,type:MaType):(number|null
 }
 for(const frame of CHART_CALCULATION_TIMEFRAMES)for(const type of ['EMA','SMA','RSI'] as const)for(const smoothing of [...MA_TYPES,'SMA+BB','None'] as const){
  it(`${type} optional ${smoothing} smoothing on ${frame}`,()=>{
-  const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
+  const step={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1D':86400}[frame];
   const bars:Candle[]=Array.from({length:60},(_,n)=>{const close=10+(n*17)%31;return {time:1700000000+n*step,open:close,high:close+1,low:close-1,close,volume:n%7?100+n:0};});
   const study:ChartIndicator={id:'smoothing',type,period:7,color:'#2962ff',width:2};
   const original=indicatorValues(bars,study,frame);

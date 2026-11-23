@@ -15,8 +15,9 @@ function card(value: LiveWatchlistCardContent | null): LiveWatchlistCardContent 
 
 /** Public envelope only. Stored evidence and runtime provider records stay intact. */
 export function browserStockLevelsMap(map: StockLevelsMap): StockLevelsMap {
-  const { symbol, referencePrice, referencePriceAsOf, calculatedAt, cacheStatus, levelMap } = map;
+  const { symbol, referencePrice, referencePriceAsOf, referencePriceBasis, calculatedAt, cacheStatus, levelMap } = map;
   return { symbol, referencePrice, referencePriceAsOf, calculatedAt, cacheStatus, levelMap: publicMarketMetadata(levelMap),
+    ...(referencePriceBasis === "last_trade" || referencePriceBasis === "reference" ? { referencePriceBasis } : {}),
     fullLadderCard: card(map.fullLadderCard), nearestSupportResistanceCard: card(map.nearestSupportResistanceCard) };
 }
 

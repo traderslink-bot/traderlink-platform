@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { indicatorTradingDay, normalizeIndicatorSessions, indicatorVwapCoverage, indicatorMarketDate }
-  from "../lib/live-watchlist/indicators/indicator-sessions.ts";
+  from "../modules/market-data/indicators/indicator-sessions.ts";
 
 const calendar = JSON.parse(await readFile(new URL("../modules/coach/server/market-calendar/us-equities-review-calendar.v1.json", import.meta.url), "utf8"));
 let assertions = 0;

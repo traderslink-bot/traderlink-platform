@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import type { UniverseStock, UniverseUpload } from "./contracts";
+import { scannerSector } from "./sectors";
+import { scannerSecurityType } from "./security-types";
 
 export const MAX_UNIVERSE_ROWS = 4000;
 export const MAX_UPLOAD_BYTES = 512_000;
@@ -27,20 +29,28 @@ function cell(value: string): string {
 export function parseUniverseCsv(csv: string): readonly UniverseStock[] {
   if (typeof csv !== "string" || Buffer.byteLength(csv) > MAX_UPLOAD_BYTES || csv.includes("\0")) fail("csv_invalid");
   const lines = csv.replace(/^\uFEFF/u,"").trim().split(/\r?\n/u);
+  const header = lines[0].split(",").map(cell).join(",");
+  const withSector = header === "symbol,exchange,market_cap,sector";
+  const withSecurityType = header === "symbol,exchange,market_cap,sector,security_type";
   if (lines.length < 2 || lines.length > MAX_UNIVERSE_ROWS + 1
-    || lines[0].split(",").map(cell).join(",") !== "symbol,exchange,market_cap") fail("csv_invalid");
+    || (!withSector && !withSecurityType && header !== "symbol,exchange,market_cap")) fail("csv_invalid");
   const symbols = new Set<string>();
   return lines.slice(1).map(line => {
     const parts = line.split(",").map(cell);
-    if (parts.length !== 3) fail("csv_invalid");
-    const [symbol, exchange, cap] = parts;
+    if (parts.length !== (withSecurityType ? 5 : withSector ? 4 : 3)) fail("csv_invalid");
+    const [symbol, exchange, cap, sectorValue, typeValue] = parts;
+    const sector = scannerSector(sectorValue);
+    if (sectorValue && !sector) fail("sector_invalid");
+    const securityType = scannerSecurityType(typeValue);
+    if (typeValue && !securityType) fail("security_type_invalid");
     if (!SYMBOL.test(symbol) || (exchange !== "NASDAQ" && exchange !== "NYSE" && exchange !== "AMEX")
       || !/^\d+$/u.test(cap)) fail("row_invalid");
     const marketCapAtCollection = Number(cap);
     if (!Number.isSafeInteger(marketCapAtCollection) || marketCapAtCollection <= 0 || marketCapAtCollection > MAX_UNIVERSE_MARKET_CAP) fail("market_cap_invalid");
     if (symbols.has(symbol)) fail("duplicate_symbol");
     symbols.add(symbol);
-    return { symbol, exchange: exchange as "NASDAQ" | "NYSE" | "AMEX", marketCapAtCollection };
+    return { symbol, exchange: exchange as "NASDAQ" | "NYSE" | "AMEX", marketCapAtCollection,
+      ...(sector ? { sector } : {}), ...(securityType ? { securityType } : {}) };
   }).sort((a,b) => a.symbol.localeCompare(b.symbol));
 }
 export function validateUniverseUpload(value: unknown, now: number): Readonly<{ input: UniverseUpload; stocks: readonly UniverseStock[]; hash: string }> {
@@ -61,6 +71,8 @@ export function validateUniverseUpload(value: unknown, now: number): Readonly<{ 
     || filters.exchanges.some(exchange => !["NASDAQ","NYSE","AMEX"].includes(exchange))
     || !filters.exchanges.includes("NASDAQ") || !filters.exchanges.includes("NYSE")) fail("filters_invalid");
   const stocks = parseUniverseCsv(input.csv);
+  if (meta.source_url !== "https://api.nasdaq.com/api/screener/stocks" && stocks.some(stock => stock.sector)) fail("sector_source_invalid");
+  if (meta.source_url !== "https://api.nasdaq.com/api/screener/stocks" && stocks.some(stock => stock.securityType)) fail("security_type_source_invalid");
   if(stocks.some(stock=>!filters.exchanges.includes(stock.exchange)))fail("filters_invalid");
   if(stocks.some(stock=>stock.marketCapAtCollection>expectedCap))fail("market_cap_invalid");
   if (!Number.isSafeInteger(meta.displayed_total) || meta.displayed_total !== stocks.length

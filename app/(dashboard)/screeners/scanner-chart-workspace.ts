@@ -1,4 +1,4 @@
-import { reconcileChartTickers, removeChartPanel, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
+import { reconcileChartTickers, removeChartPanel, selectedChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import type { LiveScannerRow } from "@/src/modules/scanner/live/contracts";
 
@@ -21,6 +21,18 @@ export function scannerChartWorkspace(state:ScannerChartWorkspace,action:Scanner
   if(state.charts[0]&&!state.charts[0].showDetails)return {charts:[action.chart],selectedSymbol:action.chart.symbol,limitReached:false};
   if(state.charts.length===4)return {...state,limitReached:true};
   return {charts:[...state.charts,{...action.chart,showDetails:state.charts.length?true:action.chart.showDetails}],selectedSymbol:action.chart.symbol,limitReached:false};
+}
+
+export function scannerChartWorkspaceFromLayout(
+  layout: ChartMultiview,
+  targets: readonly ScannerChartTarget[],
+): Pick<ScannerChartWorkspace, "charts" | "selectedSymbol"> {
+  return {
+    charts: layout.groups.map(({ symbol }) =>
+      targets.find(target => target.symbol === symbol) ?? { symbol, showDetails: true },
+    ),
+    selectedSymbol: selectedChart(layout)?.group.symbol ?? null,
+  };
 }
 
 export function replaceScannerChartPanel(layout: ChartMultiview, panelId: string, symbol: string, defaultTimeframe: ChartTimeframe): ChartMultiview {

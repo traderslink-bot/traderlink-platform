@@ -38,6 +38,7 @@ export default async function AccountPreferencesPage() {
   const { scope } = identity;
   const { savedNewsViews, allowSavedNewsFilters, upgradePlans, allowedCategories, allowHalts, allowPressReleases, allowWatchlist, marketHaltAlertsEnabled, appearance, homePage, homePages, notificationPreferences, notificationEmailStatus, pressReleasePushChannels, watchlistPreferences } = withReadonlyPlatformDatabase({}, (database) => {
     const { homePages } = readPlatformHomeAccess(database, identity, requestHeaders);
+    const canChooseHomePage = homePages.welcome || homePages.scanners || homePages["trading-workspace"];
 
     return Object.freeze({
       savedNewsViews: new PressReleaseSavedViewRepository(database).list(scope.userId),
@@ -53,7 +54,7 @@ export default async function AccountPreferencesPage() {
       marketHaltAlertsEnabled: new MarketHaltAlertRepository(database).read(scope).enabled,
       watchlistPreferences: new WatchlistPublicationNotificationStore(database).readPreferences(scope.userId),
       appearance: new PlatformUserPreferenceRepository(database).getActiveWorkspaceAppearance(scope),
-      homePage: homePages.welcome ? new PlatformUserPreferenceRepository(database).getActiveUserHomePage(scope.userId) : null,
+      homePage: canChooseHomePage ? new PlatformUserPreferenceRepository(database).getActiveUserHomePage(scope.userId) : null,
       homePages,
       notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
       notificationEmailStatus: (() => {

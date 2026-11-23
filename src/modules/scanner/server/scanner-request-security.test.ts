@@ -2,7 +2,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({ allowed: false, run: vi.fn().mockResolvedValue({ status: "ready" }) }));
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope", () => ({ requireTraderLinkPlatformRequestIdentity: () => ({ scope: {} }) }));
-vi.mock("./scanner-early-access", () => ({ hasScannerEarlyAccess: () => state.allowed }));
+vi.mock("@/src/modules/market-data/server/market-tools-dashboard-access", () => ({
+  hasLegacyScannerDashboardAccess: () => state.allowed,
+}));
 vi.mock("@/src/modules/platform/server/database/open-platform-database", () => ({ openPlatformDatabase: () => ({ close: vi.fn() }) }));
 vi.mock("@/src/modules/platform/server/broker-connections/moomoo-connection-repository", () => ({ MoomooConnectionRepository: class {} }));
 vi.mock("./moomoo-stock-screen-service", () => ({ MoomooStockScreenService: class { run = state.run; } }));

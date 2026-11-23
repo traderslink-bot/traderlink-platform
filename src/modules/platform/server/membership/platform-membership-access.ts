@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 import { journalTagPresetForName } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import { membershipFeatureDefaultEnforcement } from "../../contracts/membership-product-features";
+import { MARKET_TOOL_MEMBERSHIP_KEYS } from "../../contracts/membership-market-tools";
 import { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE, MEMBERSHIP_IMPORT_REQUIRED_MESSAGE } from "../../contracts/platform-membership-messages";
 export { MEMBERSHIP_FEATURE_REQUIRED_MESSAGE } from "../../contracts/platform-membership-messages";
 import { isPlatformMembershipCatalogAvailable } from "./platform-membership-catalog-repository";
@@ -35,7 +36,7 @@ export function hasPlatformMembershipFeature(database: Database.Database, userId
   if (feature === "dashboard.access") {
     // Dashboard admission is implied by an active app product, not a separately
     // selectable plan feature. Product-specific permissions remain independent.
-    const products = new Set(["dashboard.access", "journal.access", "journal.session_tracker", "analytics.access",
+    const products = new Set([...Object.values(MARKET_TOOL_MEMBERSHIP_KEYS), "dashboard.access", "journal.access", "journal.session_tracker", "analytics.access",
       "analytics.trade_explorer", "analytics.compare_trades", "ai.reviews", "ai.chat", "academy.access", "watchlist.access",
       "trade_analyzer.analysis", "news.access", "news.week_ahead", "coaching.access", "community.access"]);
     return access.booleanFeatures.some(key => products.has(key)) || ["trade_analyzer.analyses", "levels.generations"].some(key =>

@@ -8,6 +8,7 @@ import { readScannerHeadlinesInChild } from "@/src/modules/news/server/press-rel
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import type { PressReleaseChannel } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { easternSavedDate, recentTradingDates } from "@/src/modules/news/server/scanner-recent-press-releases";
+import { eligibleCompactMarketEvents } from "@/src/modules/news/server/market-events-cap";
 import { scannerSettingsStore } from "@/src/modules/scanner/live/server/runtime";
 import { DEFAULT_MARKET_EVENTS_PR_MAXIMUM_MARKET_CAP, marketEventsPressReleaseMaximumMarketCap } from "@/src/modules/scanner/live/settings";
 
@@ -161,7 +162,10 @@ export async function GET(request: Request): Promise<Response> {
       const previousTradingDate=recentTradingDates(now).dates.find(date=>date<easternDate)??null;
       let marketEventsPrMaximumMarketCap=DEFAULT_MARKET_EVENTS_PR_MAXIMUM_MARKET_CAP;
       try{marketEventsPrMaximumMarketCap=marketEventsPressReleaseMaximumMarketCap(await scannerSettingsStore().configuration());}catch{/* Keep news available with the approved default. */}
-      return timing.measure("serialization", () => Response.json({ articles: responseArticles,easternDate,previousTradingDate,marketEventsPrMaximumMarketCap,status: "ready" }, { headers }));
+      const compactArticleIds = eligibleCompactMarketEvents(responseArticles, marketEventsPrMaximumMarketCap);
+      return timing.measure("serialization", () => Response.json({
+        articles: responseArticles, easternDate, previousTradingDate, compactArticleIds, status: "ready",
+      }, { headers }));
     }
     const responseArticles = timing.database(database => {
       const repository = new PressReleaseDashboardRepository(database);

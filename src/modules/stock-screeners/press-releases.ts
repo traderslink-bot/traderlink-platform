@@ -20,14 +20,13 @@ function headline(row: ArticleRow): NewsHeadline {
   };
 }
 
-/** Look up the newest visible release with one indexed query over the screener universe. */
-export function latestPressReleases(database: Database.Database, symbols: readonly string[], now: number, delaySeconds: number) {
-  const from = now - PRESS_RELEASE_LOOKBACK_HOURS * HOUR_MS;
-  const visibleThrough = now - delaySeconds * 1000;
-  const releases = new Map<string, NewsHeadline>();
-  if (visibleThrough < from) return releases;
-  const rows = database.prepare(`
-    SELECT release.ticker, release.published_at, release.headline, release.slug
+function visiblePressReleaseRows(database: Database.Database, symbols: readonly string[], asOf: number,
+  delaySeconds: number, lookbackHours: number, policyAt = asOf) {
+  const from = asOf - lookbackHours * HOUR_MS;
+  const visibleThrough = Math.min(asOf, policyAt - delaySeconds * 1000);
+  if (visibleThrough < from) return [];
+  return (database.prepare(`
+    SELECT release.id, release.ticker, release.published_at, release.headline, release.slug
     FROM json_each(@symbols) symbol
     JOIN news_articles release ON release.id = (
       SELECT article.id
@@ -41,12 +40,17 @@ export function latestPressReleases(database: Database.Database, symbols: readon
     )
   `).all({
     symbols: JSON.stringify(symbols), from: new Date(from).toISOString(), visibleThrough: new Date(visibleThrough).toISOString(),
-  }) as ArticleRow[];
-  for (const row of rows) {
+  }) as (ArticleRow & { id: string })[]).flatMap(row => {
     const article = headline(row);
-    if (article.publishedAt >= from && article.publishedAt <= visibleThrough) releases.set(row.ticker, article);
-  }
-  return releases;
+    return article.publishedAt >= from && article.publishedAt <= visibleThrough
+      ? [[row.ticker, { id: row.id, ...article }] as const] : [];
+  });
+}
+
+/** Look up the newest visible release with one indexed query over the screener universe. */
+export function latestPressReleases(database: Database.Database, symbols: readonly string[], now: number, delaySeconds: number) {
+  return new Map(visiblePressReleaseRows(database, symbols, now, delaySeconds, PRESS_RELEASE_LOOKBACK_HOURS)
+    .map(([ticker, { publishedAt, headline, url }]) => [ticker, { publishedAt, headline, url }] as const));
 }
 
 function recentArticles(database: Database.Database, ticker: string, now: number, delaySeconds: number): NewsHeadline[] {
@@ -83,6 +87,14 @@ export function memberPressReleases(identity: TraderLinkPlatformRequestIdentity,
   return withPressReleaseAccess(identity, now, (database, delaySeconds) => ({
     delaySeconds, releases: latestPressReleases(database, symbols, now, delaySeconds),
   }));
+}
+
+export function memberScannerPressReleaseRecords(
+  identity: TraderLinkPlatformRequestIdentity, symbols: readonly string[], asOf: number, lookbackHours: number, policyAt = asOf,
+) {
+  if (!Number.isFinite(lookbackHours) || lookbackHours <= 0) return;
+  return withPressReleaseAccess(identity, policyAt, (database, delay) =>
+    new Map(visiblePressReleaseRows(database, symbols, asOf, delay, lookbackHours, policyAt)));
 }
 
 export function memberRecentArticles(identity: TraderLinkPlatformRequestIdentity, ticker: string, now: number) {

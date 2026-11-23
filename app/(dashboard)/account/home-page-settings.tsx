@@ -27,10 +27,13 @@ export function HomePageSettings({
   const [saved, setSaved] = useState(homePage);
   const [feedback, setFeedback] = useState<{ message: string; severity: "error" | "success" } | null>(null);
   const [working, startTransition] = useTransition();
+  const canSave = (page: PlatformHomePage) =>
+    available[page] && (available.welcome || page === "scanners" || page === "trading-workspace");
+  const fallback = available.welcome ? PLATFORM_DEFAULT_HOME_PAGE : "journal-workspace";
 
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (working || selected === saved || !available[selected]) return;
+    if (working || selected === saved || !canSave(selected)) return;
 
     setFeedback(null);
     startTransition(async () => {
@@ -70,18 +73,18 @@ export function HomePageSettings({
           value={selected}
         >
           {Object.entries(PLATFORM_HOME_PAGES).map(([value, { label }]) => (
-            <MenuItem disabled={!isPlatformHomePage(value) || !available[value]} key={value} value={value}>
+            <MenuItem disabled={!isPlatformHomePage(value) || !canSave(value)} key={value} value={value}>
               {label}
             </MenuItem>
           ))}
         </TextField>
-        <DashboardPrimaryAction disabled={working || selected === saved || !available[selected]} type="submit">
+        <DashboardPrimaryAction disabled={working || selected === saved || !canSave(selected)} type="submit">
           {working ? "Saving…" : "Save"}
         </DashboardPrimaryAction>
       </Stack>
       {!available[saved] ? (
         <Typography color="text.secondary" variant="body2">
-          {PLATFORM_HOME_PAGES[saved].label} is currently unavailable. TraderLink opens {PLATFORM_HOME_PAGES[PLATFORM_DEFAULT_HOME_PAGE].label}.
+          {PLATFORM_HOME_PAGES[saved].label} is currently unavailable. TraderLink opens {PLATFORM_HOME_PAGES[fallback].label}.
         </Typography>
       ) : null}
       {feedback ? <Alert severity={feedback.severity}>{feedback.message}</Alert> : null}

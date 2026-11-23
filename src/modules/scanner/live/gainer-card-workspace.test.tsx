@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTraderMaterialTheme } from "@/app/mui-theme";
+import { SAVED_SCAN_STREAM_PATH } from "../custom/definition";
 import type { LiveScannerRow, ScannerReadModel } from "./contracts";
 import { DEFAULT_CHART_PREFERENCES } from "../alpaca/chart-preferences";
 import { EMPTY_MULTIVIEW } from "../alpaca/chart-multiview";
@@ -22,8 +23,9 @@ vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({
 }));
 import { LiveScreenersClient } from "@/app/(dashboard)/screeners/workspace/live-screeners-client";
 
-const desktopKey = "traderslink.scanner.desktop-layout.v3";
-const mobileKey = "traderslink.workspace.mobile.v1:gainer-card-test";
+const ownerKey = "gainer-card-test";
+const desktopKey = `traderslink.scanner.desktop-layout.v4:${ownerKey}`;
+const mobileKey = `traderslink.workspace.mobile.v1:${ownerKey}`;
 const now = "2026-11-19T21:30:00Z";
 const empty = { rows: [], total: 0, focus: [] };
 const base = {
@@ -56,8 +58,9 @@ beforeEach(() => {
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("IntersectionObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
-    if (String(input) === "/api/charts/preferences") return Response.json({ ownerKey: "gainer-card-test", revision: 1, preferences: DEFAULT_CHART_PREFERENCES });
-    if (String(input) === "/api/charts/layout?workspace=scanner") return Response.json({ ownerKey: "gainer-card-test", revision: 1, layout: EMPTY_MULTIVIEW });
+    if (String(input) === "/api/charts/preferences") return Response.json({ ownerKey, revision: 1, preferences: DEFAULT_CHART_PREFERENCES });
+    if (String(input) === "/api/charts/layout?workspace=scanner") return Response.json({ ownerKey, revision: 1, layout: EMPTY_MULTIVIEW });
+    if (String(input) === SAVED_SCAN_STREAM_PATH) return Response.json({ revision: 1, scans: [] });
     throw Error("Unexpected request: " + String(input));
   }));
 });
@@ -78,9 +81,31 @@ async function mount(initial = model, dark = false) {
 }
 const card = (slot: string) => container.querySelector(`[data-scanner-workspace-card="${slot}"]`)!;
 async function click(element: Element | null) { expect(element).not.toBeNull(); await act(async () => { (element as HTMLElement).click(); await vi.advanceTimersByTimeAsync(50); }); }
+const scannerPicker = (slot: string) => card(slot).querySelector<HTMLElement>('[role="combobox"]')!;
+async function openScannerMenu(slot: string) {
+  const picker = scannerPicker(slot);
+  await act(async () => {
+    picker.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, button: 0 }));
+    await vi.advanceTimersByTimeAsync(100);
+  });
+  const menu = document.getElementById(picker.getAttribute("aria-controls")!);
+  expect(menu?.getAttribute("role")).toBe("listbox");
+  return menu!;
+}
+async function closeScannerMenu(menu: HTMLElement) {
+  await act(async () => {
+    menu.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await vi.advanceTimersByTimeAsync(150);
+  });
+}
 async function select(slot: string, kind: string) {
-  const field = card(slot).querySelector("select") as HTMLSelectElement;
-  await act(async () => { field.value = kind; field.dispatchEvent(new Event("change", { bubbles: true })); await vi.advanceTimersByTimeAsync(50); });
+  const menu = await openScannerMenu(slot);
+  await click(menu.querySelector(`[role="option"][data-value="${kind}"]`));
+}
+async function expectDefaultGainerSelection() {
+  const menu = await openScannerMenu("gainers");
+  expect(menu.querySelector('[role="option"][aria-selected="true"]')?.getAttribute("data-value")).toBe("live:gainers");
+  await closeScannerMenu(menu);
 }
 async function options(slot: string) {
   await click(card(slot).querySelector('[aria-haspopup="dialog"]'));
@@ -94,30 +119,33 @@ describe("actual Trading Workspace gainer-card choices", () => {
     expect(card("gainers").textContent).toContain("DAY"); expect(card("gainers").textContent).not.toContain("POST");
     expect(card("momentum").textContent).toContain("POST"); expect(card("momentum").textContent).not.toContain("DAY");
     expect(card("gainers").textContent).toContain("120%"); expect(card("momentum").textContent).toContain("10%");
-    expect(card("gainers").querySelector('select')?.textContent).toContain("Top Gainers (pre/reg + post)");
+    const menu = await openScannerMenu("gainers");
+    expect(menu.querySelector('[role="option"][data-value="live:gainers"]')?.textContent).toBe("Top Gainers");
+    expect(menu.querySelector('[role="option"][aria-selected="true"]')?.textContent).toBe("Top Gainers (pre/reg)");
+    await closeScannerMenu(menu);
     expect(card("gainers").querySelector('[aria-label$="view: Table"]')).not.toBeNull();
     expect(card("momentum").querySelector('[aria-label$="view: Two rows"]')).not.toBeNull();
-    await select("momentum", "gainers");
-    expect(JSON.parse(localStorage.getItem(desktopKey)!).layouts[0].scanners).toMatchObject({ gainers: "day-gainers", momentum: "gainers" });
+    await select("momentum", "live:gainers");
+    expect(JSON.parse(localStorage.getItem(desktopKey)!).layouts[0].scanners).toMatchObject({ gainers: "day-gainers", momentum: "live:gainers" });
     expect(card("gainers").textContent).toContain("DAY");
   });
   it("saves each combined card's switch immediately and restores it after remount", async () => {
     seed({ gainers: "gainers", momentum: "gainers" }); await mount();
     expect(card("gainers").textContent).toContain("POST");
-    const title=card("gainers").querySelector("select")!;
-    expect(title.selectedOptions[0].textContent).toBe("Top Gainers (post)");
-    expect(Array.from(title.options).filter(option=>!option.hidden).find(option=>option.value==="gainers")?.textContent).toBe("Top Gainers (pre/reg + post)");
+    expect(scannerPicker("gainers").textContent).toBe("Top Gainers (post)");
+    await expectDefaultGainerSelection();
     await options("gainers"); expect((switchInput() as HTMLInputElement).checked).toBe(true);
     await click(switchInput());
     expect(card("gainers").textContent).toContain("DAY"); expect(card("momentum").textContent).toContain("POST");
-    expect((card("gainers").querySelector("select") as HTMLSelectElement).selectedOptions[0].textContent).toBe("Top Gainers (pre/reg)");
+    expect(scannerPicker("gainers").textContent).toBe("Top Gainers (pre/reg)");
     expect(JSON.parse(localStorage.getItem(desktopKey)!).layouts[0].gainerAutoSwitch).toEqual({ gainers: false });
     await act(async () => root!.unmount()); root = undefined; document.body.replaceChildren(); await mount();
     expect(card("gainers").textContent).toContain("DAY"); expect(card("momentum").textContent).toContain("POST");
   });
   it("keeps new fixed choices out of the default layout and explains a post-market view before it opens", async () => {
     await mount({ ...model, session: "regular", updatedAtUtc: "2026-11-19T20:30:00Z" });
-    expect(Array.from(container.querySelectorAll("select")).filter(el => el.value === "day-gainers" || el.value === "post-market-gainers")).toHaveLength(0);
+    await expectDefaultGainerSelection();
+    expect(scannerPicker("momentum").textContent).toBe("Momentum");
     await select("momentum", "post-market-gainers");
     expect(card("momentum").textContent).toContain("Post-market gainers begin after the regular session closes.");
     expect(card("momentum").textContent).not.toContain("POST");
@@ -140,7 +168,9 @@ describe("actual Trading Workspace gainer-card choices", () => {
     await options("gainers"); await click(switchInput());
     await click(document.querySelector('[aria-label="Close view settings"]'));
     await click(document.querySelector('[aria-label="Layout settings"]'));
-    const name = document.querySelector('[role="region"][aria-label="Layout settings"] input[type="text"]') as HTMLInputElement;
+    const panel = document.querySelector('[role="region"][aria-label="Layout settings"]')!;
+    const label = Array.from(panel.querySelectorAll("label")).find(element => element.textContent === "Layout name")!;
+    const name = label.control as HTMLInputElement;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(name, "Evening");
       name.dispatchEvent(new Event("input", { bubbles: true }));
@@ -164,7 +194,8 @@ describe("actual Trading Workspace gainer-card choices", () => {
     await click(Array.from(document.querySelectorAll("button")).find(node => node.textContent === "Undo") ?? null);
     expect(card("gainers").textContent).toContain("POST");
     await click(Array.from(document.querySelectorAll("button")).find(node => node.textContent === "Reset to default") ?? null);
-    expect(Array.from(container.querySelectorAll("select")).filter(el => el.value === "day-gainers" || el.value === "post-market-gainers")).toHaveLength(0);
+    await expectDefaultGainerSelection();
+    expect(scannerPicker("momentum").textContent).toBe("Momentum");
     expect(container.querySelectorAll('[data-scanner-workspace-card]')).toHaveLength(7);
     await click(Array.from(document.querySelectorAll("button[data-layout-editor-action]")).find(node => node.textContent === "Cancel") ?? null);
     expect(localStorage.getItem(desktopKey)).toBe(before);
@@ -172,13 +203,12 @@ describe("actual Trading Workspace gainer-card choices", () => {
   it("keeps portrait and landscape scanner choices and switch preferences separate on rotation", async () => {
     width = 390; height = 844;
     const layouts = defaultMobileLayouts();
-    layouts.portrait.layouts[0].layout.scanners = { gainers: "gainers", momentum: "post-market-gainers" };
+    layouts.portrait.layouts[0].layout.scanners = { gainers: "live:gainers", momentum: "post-market-gainers" };
     layouts.landscape.layouts[0].layout.scanners = { gainers: "post-market-gainers", momentum: "day-gainers" };
     localStorage.setItem(mobileKey, JSON.stringify(layouts)); await mount();
     expect(card("gainers").textContent).toContain("POST");
-    const title=card("gainers").querySelector("select")!;
-    expect(title.selectedOptions[0].textContent).toBe("Top Gainers (post)");
-    expect(Array.from(title.options).filter(option=>!option.hidden).find(option=>option.value==="gainers")?.textContent).toBe("Top Gainers (pre/reg + post)");
+    expect(scannerPicker("gainers").textContent).toBe("Top Gainers (post)");
+    await expectDefaultGainerSelection();
     await options("gainers"); await click(switchInput());
     await click(document.querySelector('[aria-label="Close view settings"]'));
     expect(card("gainers").textContent).toContain("DAY");

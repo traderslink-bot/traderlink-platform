@@ -1,36 +1,13 @@
 import "server-only";
 
 import type Database from "better-sqlite3";
-import calendar from "./scanner-news-calendar.json";
+import { recentScannerTradingDates, scannerNewsEasternDate } from "../contracts/scanner-news-trading-dates";
 import { newsArticleLink, newsSummaryUnavailable } from "../contracts/news-outbound-link";
 
-const easternDateFormatter = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
-});
-const closedDates = new Set(calendar.closedDates);
 const routeTags = ["default", "spike", "market_cap_under_30m", "market_cap_30m_to_50m", "market_cap_50m_to_100m"];
 
-export function easternSavedDate(value: string | Date): string {
-  const parts = easternDateFormatter.formatToParts(typeof value === "string" ? new Date(value) : value);
-  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)!.value;
-  return `${part("year")}-${part("month")}-${part("day")}`;
-}
-
-export function recentTradingDates(now: Date): { dates: string[]; holidaysCovered: boolean } {
-  const cursor = new Date(`${easternSavedDate(now)}T12:00:00.000Z`);
-  const dates: string[] = [];
-  let holidaysCovered = true;
-  while (dates.length < 5) {
-    const day = cursor.toISOString().slice(0, 10);
-    if (day < calendar.coverageStart || day > calendar.coverageEnd) holidaysCovered = false;
-    if (cursor.getUTCDay() !== 0 && cursor.getUTCDay() !== 6 && !closedDates.has(day)) dates.push(day);
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
-  return { dates, holidaysCovered };
-}
-
 type ArticleRow = {
-  id: string; ticker: string; headline: string; slug: string; created_at: string;
+  id: string; ticker: string; headline: string; slug: string; created_at: string; published_at: string;
   summary: string | null; source_url: string | null; event_type: string | null; metadata_json: string;
 };
 
@@ -65,19 +42,19 @@ function articleLink(row: ArticleRow): string | null {
 }
 
 export function listScannerRecentPressReleases(database: Database.Database, ticker: string, now = new Date()) {
-  const window = recentTradingDates(now);
+  const window = recentScannerTradingDates(scannerNewsEasternDate(now));
   const includedDates = new Set(window.dates);
   // The ticker index bounds the query; the Eastern-date filter below handles DST and closed dates.
   const rows = database.prepare(`
-    SELECT id, ticker, headline, slug, created_at, summary, source_url, event_type, metadata_json
+    SELECT id, ticker, headline, slug, created_at, published_at, summary, source_url, event_type, metadata_json
     FROM news_articles
     WHERE ticker = ? AND created_at >= ? AND created_at <= ?
       AND route_tag IN (${routeTags.map(() => "?").join(", ")})
     ORDER BY created_at DESC, id ASC
   `).all(ticker, `${window.dates[4]}T00:00:00.000Z`, now.toISOString(), ...routeTags) as ArticleRow[];
-  const articles = rows.filter((row) => includedDates.has(easternSavedDate(row.created_at))).map((row) => ({
-    id: row.id, ticker: row.ticker, headline: row.headline, createdAt: row.created_at,
-    savedDate: easternSavedDate(row.created_at), url: articleLink(row), typeLabel: articleTypeLabel(row),
+  const articles = rows.filter((row) => includedDates.has(scannerNewsEasternDate(row.created_at))).map((row) => ({
+    id: row.id, ticker: row.ticker, headline: row.headline, createdAt: row.created_at, publishedAt: row.published_at,
+    savedDate: scannerNewsEasternDate(row.created_at), url: articleLink(row), typeLabel: articleTypeLabel(row),
   }));
   return { ...window, articles };
 }

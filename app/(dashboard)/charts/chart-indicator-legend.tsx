@@ -10,11 +10,10 @@ import type { IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferenc
 const indicatorName = (type: IndicatorType) => type === "Bollinger" ? "BOLL" : type;
 
 /** Fold presentation only: retain the readout nodes used by the chart's live painter. */
-export function ChartIndicatorLegend({ legendRef, types, hidden, compact, dark, openType, onOpenOptions }: {
+export function ChartIndicatorLegend({ legendRef, types, hidden, dark, openType, onOpenOptions }: {
   legendRef: Ref<HTMLDivElement>;
   types: readonly IndicatorType[];
   hidden: ReadonlySet<IndicatorType>;
-  compact: boolean;
   dark: boolean;
   openType?: IndicatorType;
   onOpenOptions: (type: IndicatorType, anchor: HTMLElement) => void;
@@ -25,7 +24,7 @@ export function ChartIndicatorLegend({ legendRef, types, hidden, compact, dark, 
   const label = collapsed ? `Expand indicator details (${count})` : "Collapse indicator details";
   const color = dark ? "#e3e8ef" : "#243246";
   return <Box ref={legendRef} data-chart-indicator-legend sx={{
-    position:"absolute",zIndex:1,top:compact?22:4,left:8,right:65,pointerEvents:"none",
+    position:"absolute",zIndex:1,top:22,left:8,right:65,pointerEvents:"none",
     fontSize:11,lineHeight:1.25,display:"flex",alignItems:"flex-start",gap:0.25,
   }}>
     {count > 0 && <ButtonBase type="button" aria-label={label} title={label}

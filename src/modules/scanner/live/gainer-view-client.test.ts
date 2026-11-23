@@ -103,6 +103,38 @@ describe("actual Top Gainers pushed model and tab interaction", () => {
     expect(page.stream).toHaveBeenCalledTimes(1);expectOnlyInitialChartRequests(page.fetch);
     expect(page.stream).toHaveBeenCalledWith("/api/screeners/live?stream=1");
   });
+  it("shows the combined day volume then switches the main Gainers column to after-hours at the close", async () => {
+    const before = momentumModel(undefined);
+    const page = await mount({ ...before, gainers: before.momentum, dayGainers: before.momentum });
+    const gainerTable = () => page.container.querySelector('table[aria-label="Top Gainers compact stocks"]')!;
+    expect(gainerTable().querySelector("thead")?.textContent).toContain("Day Vol");
+    expect(gainerTable().querySelector("tbody")?.textContent).toContain("400K");
+    expect(gainerTable().querySelector("thead")?.textContent).not.toContain("Pre Vol");
+
+    const toggle = page.container.querySelector<HTMLButtonElement>('[aria-label="Top Gainers view: Table"]')!;
+    await act(async () => toggle.click());
+    const preferences = document.querySelector('[aria-label="Top Gainers view settings"]')!;
+    const pre = [...preferences.querySelectorAll("label")].find(label => label.textContent === "Pre Vol")!.querySelector("input")!;
+    try {
+      await act(async () => pre.click());
+      expect(gainerTable().querySelector("thead")?.textContent).toContain("Pre Vol");
+      expect(gainerTable().querySelector("tbody")?.textContent).toContain("150K");
+      expect(page.container.querySelector('table[aria-label="Momentum compact stocks"] thead')?.textContent).not.toContain("Pre Vol");
+
+      const after = momentumModel(20);
+      const gainers = { ...after.momentum, rows: after.momentum.rows.map(row => ({
+        ...row, gainBasis: "today_regular_close" as const, postMarketVolume: 0,
+      })) };
+      await page.update({ ...after, gainers, dayGainers: before.momentum });
+      const columns = [...gainerTable().querySelectorAll("thead th")].map(cell => cell.textContent);
+      expect(columns).toContain("After-hours Vol");
+      expect(columns).not.toContain("Day Vol");
+      expect(gainerTable().querySelectorAll("tbody tr:first-child td")[columns.indexOf("After-hours Vol")].textContent).toBe("0");
+      expectOnlyInitialChartRequests(page.fetch);
+    } finally {
+      window.localStorage.removeItem("traderslink.scanner.volume-columns.v1.gainers");
+    }
+  });
   it("returns to the day comparison when the reported session is regular", async () => {
     const page = await mount(model("after_hours"));
     expect(page.container.querySelector('[data-gainer-title]')?.textContent).toBe("Top Gainers (post)");
@@ -116,7 +148,8 @@ describe("actual Top Gainers pushed model and tab interaction", () => {
 function momentumModel(post: number | null | undefined): ScannerReadModel {
   const row: LiveScannerRow = { symbol: "TEST", exchange: "NASDAQ", company: "Synthetic test company", price: 2.4,
     sessionGain: (2.4/3.17-1)*100, ...(post===undefined?{}:{postMarketGain:post}),
-    country: "CA", volume: 100000, dollarVolume: 240000, marketCap: 1000000, marketCapAtCollection: 1000000, float: 500000,
+    country: "CA", volume: 100000, dayVolume: 400000, premarketVolume: 150000, regularVolume: 250000,
+    postMarketVolume: post === undefined ? null : 100000, dollarVolume: 240000, marketCap: 1000000, marketCapAtCollection: 1000000, float: 500000,
     relativeVolume: 2, dayHigh: 2.6, dayLow: 1.5, offHighPercent: -7.69,
     floatRetrievedAtUtc: "2026-11-02T21:00:00Z", spreadPercent: 1,
     providerAtUtc: "2026-11-02T21:00:10Z", receivedAtUtc: "2026-11-02T21:00:10Z",
@@ -164,15 +197,15 @@ describe("Momentum context rendering", () => {
     await act(async()=>news.click());
     expect(page.fetch).toHaveBeenCalledWith("/api/platform/news/workspace-scanner?articleId=article-1",expect.objectContaining({cache:"no-store"}));
   });
-  it("renders distinct Day/Post columns and keeps one/five-minute changes and volumes intact", async () => {
+  it("renders Day and Post columns, keeping one/five-minute changes and volumes intact", async () => {
     const page = await mount(momentumModel((2.4/1.69-1)*100));
     const drawer = await openFullView(page.container);
     const header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).toContain("Post %");
     const table = header.closest("table")!;
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
-    expect(cells.slice(4,11)).toEqual(["-24%","42%","8%","20%","10K","50K","2×"]);
-    expect(header.querySelectorAll("th").length).toBe(15);
+    expect(cells.slice(4,12)).toEqual(["-24%","42%","400K","8%","20%","10K","50K","2×"]);
+    expect(header.querySelectorAll("th").length).toBe(16);
     await act(async () => (drawer.querySelector('[aria-label="Close full scanner view"]') as HTMLElement).click());
     const compact = page.container.querySelector('table[aria-label="Momentum compact stocks"]')!;
     const compactRow = compact.querySelector("tbody tr") as HTMLElement;
@@ -188,7 +221,7 @@ describe("Momentum context rendering", () => {
     const drawer = await openFullView(page.container);
     let header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).not.toContain("Post %");
-    expect(header.querySelectorAll("th").length).toBe(14);
+    expect(header.querySelectorAll("th").length).toBe(15);
     await page.update(momentumModel(null));
     header = [...drawer.querySelectorAll("thead tr")].find(row => row.textContent?.includes("Day %"))!;
     expect(header.textContent).toContain("Post %");
@@ -196,7 +229,8 @@ describe("Momentum context rendering", () => {
     const cells = [...table.querySelectorAll("tbody tr:first-child td")].map(cell => cell.textContent);
     expect(cells[4]).toBe("-24%");
     expect(cells[5]).toBe("n/a");
-    expect(cells[6]).toBe("8%");
+    expect(cells[6]).toBe("400K");
+    expect(cells[7]).toBe("8%");
     expect(page.stream).toHaveBeenCalledTimes(1);expectOnlyInitialChartRequests(page.fetch);
   });
 });
@@ -223,7 +257,7 @@ describe("compact scanner grid and full view", () => {
     const page = await mount({...initial, gainers: scannerRows, dayGainers: scannerRows, momentum: scannerRows});
     expect(page.container.querySelectorAll('[data-pr-instance]').length).toBe(1);
     expect(page.container.querySelectorAll('[data-scanner-workspace-card]').length).toBe(7);
-    for (const [label,columnCount] of [["Top Gainers",10],["Momentum",13]] as const) {
+    for (const [label,columnCount] of [["Top Gainers",10],["Momentum",14]] as const) {
       const table = page.container.querySelector(`table[aria-label="${label} compact stocks"]`)!;
       expect(table.querySelectorAll('thead th').length).toBe(columnCount);
       expect(table.querySelector('thead')?.textContent).not.toContain('$ × Vol');
@@ -340,11 +374,11 @@ describe("alternative stock card view", () => {
     const cards=page.container.querySelector('[aria-label="Top Gainers stock cards"]')!;
     expect(cards).not.toBeNull();
     expect(cards.querySelector('[aria-label="Canada flag"]')).not.toBeNull();
-    expect([...cards.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
+    expect([...cards.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Day Vol','Float','T/O','RVOL']);
     expect(page.container.querySelector('table[aria-label="Momentum compact stocks"]')).not.toBeNull();
     await switchView(page.container,"Momentum","Cards");
     const momentum=page.container.querySelector('[aria-label="Momentum stock cards"]')!;
-    expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
+    expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Day Vol','Float','T/O','RVOL']);
     expect(momentum.querySelector('[aria-label="Open TEST chart only"]')).not.toBeNull();
     expect(momentum.querySelector('[aria-label="Expand TEST card details"]')).toBeNull();
     expect(momentum.querySelector('[aria-label="Indicators"]')).toBeNull();

@@ -1,12 +1,13 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
-const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true}));
-vi.mock('@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access',()=>({hasWatchlistDashboardNavigationAccess:()=>setup.privateChart}));
+const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true,ordinaryChart:true}));
+vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasChartsDashboardAccess:()=>setup.ordinaryChart}));
+vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({hasMarketToolsDashboardReadAccess:()=>setup.privateChart}));
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!setup.user)throw Error('unauthenticated');return {scope:{userId:setup.user}};}}));
 vi.mock('@/src/modules/platform/server/authentication/platform-mutation-request-security',()=>({requirePlatformMutationRequest:()=>{if(!setup.allowed)throw Error('csrf');}}));
 vi.mock('@/src/modules/platform/server/database/platform-database-config',()=>({resolvePlatformDatabaseConfig:()=>({databasePath:join(setup.directory,'test.sqlite')})}));
 import {GET,POST} from '@/app/api/charts/layout/route';
-beforeEach(()=>{setup.user='user-a';setup.allowed=true;setup.privateChart=true;setup.directory=mkdtempSync(join(tmpdir(),'chart-pref-route-'));});afterEach(()=>rmSync(setup.directory,{recursive:true,force:true}));
+beforeEach(()=>{setup.user='user-a';setup.allowed=true;setup.privateChart=true;setup.ordinaryChart=true;setup.directory=mkdtempSync(join(tmpdir(),'chart-pref-route-'));});afterEach(()=>rmSync(setup.directory,{recursive:true,force:true}));
 const request=(body:unknown)=>new Request('http://localhost/api/charts/layout?workspace=main',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 
 const get = (workspace="main") => GET(new Request(`http://localhost/api/charts/layout?workspace=${workspace}`));
@@ -28,4 +29,12 @@ it("keeps authentication, permission, mutation, size and conflict gates on layou
  setup.user="";expect((await get()).status).toBe(401);setup.user="user-a";
  setup.privateChart=false;expect((await get()).status).toBe(200);expect((await get("scanner")).status).toBe(403);
  expect((await get("invalid")).status).toBe(400);
+});
+
+it("requires Charts access for the main layout, while a drawer retains its own layout", async () => {
+  const original = await (await get()).json();
+  setup.ordinaryChart = false;
+  expect((await get()).status).toBe(403);
+  expect((await POST(request(original))).status).toBe(403);
+  expect((await get("scanner")).status).toBe(200);
 });

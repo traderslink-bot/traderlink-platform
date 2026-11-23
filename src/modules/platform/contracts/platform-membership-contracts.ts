@@ -1,8 +1,10 @@
 import { MEMBERSHIP_NOTIFICATION_FEATURES } from "./membership-notification-features";
 import { MEMBERSHIP_NEWS_DELAY_FEATURES } from "./membership-news-delays";
 import { MEMBERSHIP_PRIVATE_WATCHLIST_FEATURES } from "./membership-private-watchlist-features";
+import { MARKET_TOOL_MEMBERSHIP_FEATURES } from "./membership-market-tools";
 
 export const PLATFORM_MEMBERSHIP_FEATURES = Object.freeze([
+  ...MARKET_TOOL_MEMBERSHIP_FEATURES,
   ...MEMBERSHIP_PRIVATE_WATCHLIST_FEATURES,
   ...MEMBERSHIP_NOTIFICATION_FEATURES,
   ...MEMBERSHIP_NEWS_DELAY_FEATURES,

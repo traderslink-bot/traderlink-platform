@@ -1,8 +1,8 @@
 import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { join } from "node:path";
-import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformAuthenticatedRequestIdentity, requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { hasStockScreenersDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { isObject, MAX_LISTINGS, parseDefinition, parseSort, tickerPattern } from "@/src/modules/stock-screeners/contracts";
 import { memberRecentArticles } from "@/src/modules/stock-screeners/press-releases";
 import { PAGE_SIZE } from "@/src/modules/stock-screeners/query";
@@ -20,7 +20,7 @@ const reply = (value: unknown, status = 200) => Response.json(value, {
 function scope(request: Request) {
   try {
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
-    return stockScreenersEnabled(identity.mode) && hasWatchlistDashboardNavigationAccess(identity) ? identity : null;
+    return stockScreenersEnabled(identity.mode) && hasStockScreenersDashboardAccess(identity) ? identity : null;
   } catch {
     return null;
   }
@@ -55,7 +55,15 @@ async function readGET(request: Request) {
   if (open !== null) {
     if (!SHARED_SCREEN_ID.test(open)) return reply({ error: "not_found" }, 404);
     const path = sharedScreenPath(open);
-    const location = identity ? path : "/api/auth/discord/login?returnTo=" + encodeURIComponent(path);
+    let location = path;
+    if (!identity) {
+      try {
+        requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers);
+        return reply({ error: "not_found" }, 404);
+      } catch {
+        location = "/login?returnTo=" + encodeURIComponent(path);
+      }
+    }
     return new Response(null, { status: 303, headers: { Location: location, "Cache-Control": "private, no-store" } });
   }
   if (!identity) return reply({ error: "not_found" }, 404);

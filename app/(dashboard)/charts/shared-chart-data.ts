@@ -1,6 +1,7 @@
 "use client";
 
 import type { Candle } from "@/src/modules/scanner/alpaca/candles";
+import { readChartArchivePage, type ChartArchiveWindow } from "@/src/modules/scanner/alpaca/chart-archive-history";
 // Page-local only: neither a cross-user cache nor an additional provider connection.
 type SharedStream = {
   source: EventSource;
@@ -90,6 +91,7 @@ export async function sharedChartFetch(url: string, init: RequestInit = {}, requ
 
 type CandleHistory = {
   bars: Candle[];
+  adjustment?: "raw" | "split";
   basisDate: string;
   nextBefore: number | null;
   catchUpFrom?: number;
@@ -115,6 +117,8 @@ export async function readChartCandleHistory(
     throw Error(response.status === 429 ? "Chart requests are busy. Try again shortly." : "Candles unavailable. Try again.");
   }
   const history = await response.json() as CandleHistory;
+  const expected = new URLSearchParams(url.split("?")[1]).get("adjustment") ?? "split";
+  if ((history.adjustment ?? "split") !== expected) throw Error("Candles unavailable for the selected historical price setting.");
   signal.throwIfAborted();
   if (key && history.basisDate === dailyScope?.basisDate && Array.isArray(history.bars)) {
     dailyHistory.delete(key);
@@ -122,6 +126,24 @@ export async function readChartCandleHistory(
     while (dailyHistory.size > MAX_DAILY_HISTORY_WINDOWS) dailyHistory.delete(dailyHistory.keys().next().value!);
   }
   return history;
+}
+
+/** A separate completed-bucket lane. Missing or incompatible archives use base history. */
+export async function readCompletedChartHistory(
+  symbol: string, window: ChartArchiveWindow, providerQuery: string, signal: AbortSignal,
+) {
+  const query = new URLSearchParams({
+    archive: "1", symbol, frame: window.frame, session: window.session,
+    start: String(window.start), end: String(window.end),
+  });
+  try {
+    const response = await sharedChartFetch(`/api/screeners/charts/bars?${query}&${providerQuery}`,
+      { signal, credentials: "same-origin", cache: "no-store" });
+    return response.ok ? readChartArchivePage(await response.json(), window) : null;
+  } catch {
+    signal.throwIfAborted();
+    return null;
+  }
 }
 
 // The chart gateway can calculate two distinct VWAP seeds at a time.

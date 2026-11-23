@@ -2,7 +2,6 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
-import type { IndicatorType } from './chart-preferences';
 import { ChartIndicatorEditor } from '@/app/(dashboard)/charts/chart-indicator-editor';
 
 it('keeps the account-wide overlay setting separate and confirms before saving', async () => {
@@ -13,13 +12,16 @@ it('keeps the account-wide overlay setting separate and confirms before saving',
  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);
  try {
   await act(async()=>root.render(createElement(ChartIndicatorEditor,{
+   ticker:'TEST',
    indicators:[{id:'ema',type:'EMA',period:9,color:'#ff9900',width:3}],
    onChange:vi.fn(),savedPresets:[],onPresetsChange:vi.fn(),
    overlayLineWidth:1,onOverlayLineWidthChange,
-   defaultPriceScaleLabels:false,display:{enabled:{},hidden:new Set<IndicatorType>()},
-   onDisplayChange:vi.fn(),
+   defaultPriceScaleLabels:false,display:{},
+   onDisplayChange:vi.fn(),onAccountDisplayChange:vi.fn(),
   })));
-  expect([...host.querySelectorAll('h3')].map(heading=>heading.textContent)).toEqual(['This chart','All charts']);
+  const scope=host.querySelector('[role="radiogroup"][aria-label="Apply indicator changes to"]')!;
+  expect([...scope.querySelectorAll('label')].map(label=>label.textContent)).toEqual(['TEST chart','All charts']);
+  expect(scope.querySelector<HTMLInputElement>('input[value="current"]')?.checked).toBe(true);
   const field=[...host.querySelectorAll('[role="combobox"]')].find(element=>
    element.getAttribute('aria-labelledby')?.split(' ').some(id=>document.getElementById(id)?.textContent==='Line width over candles'))!;
   expect(field.textContent).toBe('1 px');

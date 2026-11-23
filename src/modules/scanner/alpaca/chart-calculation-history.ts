@@ -1,7 +1,7 @@
 import {usesDailyCandles,type Candle,type ChartTimeframe} from './candles';
 import {ChartSessionCalendar} from './chart-calendar';
 
-type HistoryPage={bars:Candle[];basisDate:string;nextBefore:number|null;calendar?:unknown;calendars?:unknown[]};
+type HistoryPage={bars:Candle[];adjustment?:"raw"|"split";basisDate:string;nextBefore:number|null;calendar?:unknown;calendars?:unknown[]};
 export type CalculationHistory={bars:Candle[];basisDate:string;calendar:ChartSessionCalendar};
 type State={bars:Map<number,Candle>;live:Map<number,Candle>;loaded:boolean;basisDate:string;through?:number;nextBefore:number|null;calendar:ChartSessionCalendar;abort:AbortController;pending?:Promise<void>};
 export const CALCULATION_HISTORY_LIMIT=150000;
@@ -13,7 +13,7 @@ function validBar(bar:Candle):boolean{
 /** Per-chart, abortable contexts. Daily SIP bars stay separate from minute bars. */
 export class ChartCalculationHistory{
  private states=new Map<boolean,State>();
- constructor(private readonly symbol:string,private readonly signal:AbortSignal,private readonly basis:()=>string,private readonly fetchPage:(url:string,init:RequestInit)=>Promise<Response>=(url,init)=>fetch(url,init)){}
+ constructor(private readonly symbol:string,private readonly signal:AbortSignal,private readonly basis:()=>string,private readonly fetchPage:(url:string,init:RequestInit)=>Promise<Response>=(url,init)=>fetch(url,init),private readonly adjustment:"split"|"raw"="split"){}
 
  /** Reconnects require fresh authoritative history; old requests cannot rejoin. */
  invalidate():void{for(const state of this.states.values())state.abort.abort();this.states.clear();}
@@ -56,6 +56,7 @@ export class ChartCalculationHistory{
   for(let pageCount=0;pageCount<64;pageCount++){
    if(this.signal.aborted)throw Error('calculation_history_aborted');
    const query=new URLSearchParams({history:'1',symbol:this.symbol,daily:daily?'1':'0'});
+   if(this.adjustment==="raw")query.set("adjustment","raw");
    if(initial&&state.through!==undefined)query.set('before',String(state.through*1000));
    if(!initial&&state.nextBefore!==null)query.set('before',String(state.nextBefore));
    let response:Response;
@@ -65,7 +66,7 @@ export class ChartCalculationHistory{
    const page=await response.json() as HistoryPage;
    if(this.signal.aborted)throw Error('calculation_history_aborted');
    if(this.states.get(daily)!==state)throw Error('calculation_history_invalidated');
-   if(state.basisDate!==this.basis()||page.basisDate!==state.basisDate)throw Error('calculation_history_basis_changed');
+   if(state.basisDate!==this.basis()||page.basisDate!==state.basisDate||(page.adjustment??"split")!==this.adjustment)throw Error('calculation_history_basis_changed');
    if(!Array.isArray(page.bars)||page.bars.length>CALCULATION_HISTORY_LIMIT||!page.bars.every(bar=>validBar(bar)&&(state.through===undefined||bar.time<=state.through))||page.nextBefore!==null&&(!Number.isFinite(page.nextBefore)||page.nextBefore<=0))throw Error('invalid_calculation_history');
    if(!initial&&page.nextBefore!==null&&page.nextBefore>=state.nextBefore!)throw Error('calculation_history_cursor_stalled');
    const combined=new Map(state.bars);

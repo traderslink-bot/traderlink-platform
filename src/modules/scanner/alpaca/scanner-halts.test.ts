@@ -10,7 +10,7 @@ const { requestGateway, officialRows, readDatabase } = vi.hoisted(() => ({
 }));
 vi.mock("./client", () => ({ requestAlpacaGateway: requestGateway }));
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope", () => ({ requireTraderLinkPlatformRequestIdentity: vi.fn() }));
-vi.mock("@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access", () => ({ hasWatchlistDashboardNavigationAccess: () => true }));
+vi.mock("@/src/modules/market-data/server/market-tools-dashboard-access", () => ({ hasMarketToolsDashboardReadAccess: () => true }));
 vi.mock("@/src/modules/platform/server/database/open-readonly-platform-database", () => ({ withReadonlyPlatformDatabase: (_: unknown, read: (db: unknown) => unknown) => readDatabase(read) }));
 vi.mock("@/src/modules/news/server/market-halt-dashboard", () => ({ listMarketHaltDashboard: () => ({ rows: officialRows() }) }));
 vi.mock("@/src/modules/scanner/live/server/runtime", () => ({

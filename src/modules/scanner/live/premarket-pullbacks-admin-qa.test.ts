@@ -2,7 +2,9 @@
 import { act, createElement, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
-import { initialConfiguration } from "./settings";
+import type { ScannerAdminConfiguration } from "./contracts";
+import { DEFAULT_DECLINE_CONTROLS } from "./declines";
+import { initialConfiguration, marketEventsPressReleaseMaximumMarketCap, momentumDetectionControls, momentumLiquidityBypassControls } from "./settings";
 import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "./premarket-pullbacks";
 vi.mock("@/app/dashboard-template",()=>({DashboardPanel:({title,action,children}:{title?:string;action?:ReactNode;children:ReactNode})=>createElement("section",null,createElement("h2",null,title),action,children),DashboardSecondaryAction:({children}:{children:ReactNode})=>createElement("button",null,children),DashboardPrimaryAction:({children,onClick,disabled}:{children:ReactNode;onClick:()=>void;disabled:boolean})=>createElement("button",{onClick,disabled},children)}));
 vi.mock("@/app/(dashboard)/charts/trading-view-chart",()=>({TradingViewChart:()=>null}));
@@ -14,7 +16,17 @@ let root:Root|undefined;
 afterEach(async()=>{if(root)await act(async()=>root!.unmount());root=undefined;vi.useRealTimers();vi.unstubAllGlobals();document.body.replaceChildren();});
 it("saves the dedicated enable control without changing Gainer, Momentum or decline controls",async()=>{
   vi.useFakeTimers();vi.setSystemTime(new Date("2026-11-02T15:00:00Z"));
-  const configuration={...initialConfiguration(),enabled:true};let saved:Record<string,unknown>|undefined;
+  const initial = initialConfiguration();
+  const configuration: ScannerAdminConfiguration = {
+    ...initial,
+    enabled: true,
+    momentumDetection: momentumDetectionControls(initial),
+    momentumLiquidityBypass: momentumLiquidityBypassControls(initial),
+    marketEventsPressReleaseMaximumMarketCap: marketEventsPressReleaseMaximumMarketCap(initial),
+    declines: DEFAULT_DECLINE_CONTROLS,
+    premarketPullbacks: DEFAULT_PREMARKET_PULLBACK_CONTROLS,
+  };
+  let saved: Record<string, unknown> | undefined;
   const fetch=vi.fn(async(input:RequestInfo|URL,options?:RequestInit)=>{
     if(String(input)==="/api/admin/screeners/settings"){
       if(options?.method==="POST"){saved=JSON.parse(String(options.body));return Response.json({configuration:{...(saved!.configuration as object),revision:1}});}

@@ -1,3 +1,4 @@
+import { scannerVolumeBreakdown } from "./volume";
 import type { DeclineControls, DeclineResults, DeclineRow, DailyUniverse, NormalizedSnapshot, ScannerSession } from "./contracts";
 import type { FloatFact } from "./engine";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
@@ -78,6 +79,7 @@ export class DeclineBook {
       const fact=input.floats.get(quote.symbol),at=fact?Date.parse(fact.retrievedAtUtc):NaN;
       return {symbol:quote.symbol,exchange:members.get(quote.symbol)!.exchange,company:quote.company,price:quote.price,
         comparisonPrice:validBase,changePercent:validBase===null?null:percent(quote.price,validBase),volume:quote.volume,
+        ...scannerVolumeBreakdown(quote),
         float:fact&&Number.isSafeInteger(fact.shares)&&fact.shares>0&&at<=input.now&&input.now-at<=30*60*60000?fact.shares:null,
         spreadPercent:quote.bid!==null&&quote.ask!==null&&quote.bid>0&&quote.ask>=quote.bid?(quote.ask-quote.bid)/((quote.ask+quote.bid)/2)*100:null,
         receivedAtUtc:new Date(quote.receivedAt).toISOString(),news:[]};

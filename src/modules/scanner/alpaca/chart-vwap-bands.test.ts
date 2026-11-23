@@ -26,7 +26,7 @@ it('resets deviation at a new anchor and leaves disabled bands empty',()=>{
  expect(plots[3].points).toEqual([]);expect(plots[5].points).toEqual([]);
 });
 for(const frame of CHART_CALCULATION_TIMEFRAMES)it(`keeps monthly weighted bands correct on ${frame}`,()=>{
- const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
+ const step={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1D':86400}[frame];
  const plots=indicatorValues([bar(0,10,100),bar(step,20,200)],study({anchor:'Month'}),frame);
  expect(plots[0].points.at(-1)?.value).toBeCloseTo(50/3,12);
  expect(plots[1].points.at(-1)?.value).toBeCloseTo(50/3+Math.sqrt(200/9),12);

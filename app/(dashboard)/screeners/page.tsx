@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { join } from "node:path";
 import { DashboardPage } from "@/app/dashboard-template";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { hasStockScreenersDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { readSaved } from "@/src/modules/stock-screeners/saved-store";
 import { stockScreenersDirectory, stockScreenersEnabled } from "@/src/modules/stock-screeners/service";
 import type { SharedScreen } from "@/src/modules/stock-screeners/sharing-contracts";
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ScreenersPage({ searchParams }: { searchParams: Promise<{ shared?: string | string[] }> }) {
   const identity = await requireTraderLinkPlatformPageIdentity();
-  if (!hasWatchlistDashboardNavigationAccess(identity) || !stockScreenersEnabled(identity.mode)) notFound();
+  if (!stockScreenersEnabled(identity.mode) || !hasStockScreenersDashboardAccess(identity)) notFound();
   const preview = identity.mode === "local_development" && process.env.NODE_ENV !== "production";
   const directory = stockScreenersDirectory();
   let saved;

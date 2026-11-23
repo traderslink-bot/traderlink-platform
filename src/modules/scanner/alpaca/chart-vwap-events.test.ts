@@ -15,6 +15,9 @@ it('coalesces readers without sharing mutable results and resets the cache on th
 });
 it.each([
  {corporate_actions:{reverse_splits:[split('bad',{symbol:'OTHER'})]}},
+ {corporate_actions:{reverse_splits:[split('bad',{symbol:'OTHER',new_symbol:'DIFFERENT'})]}},
+ {corporate_actions:{reverse_splits:[split('bad',{symbol:'',new_symbol:'TEST'})]}},
+ {corporate_actions:{forward_splits:[split('bad',{symbol:'OTHER',new_symbol:'TEST'})]}},
  {corporate_actions:{reverse_splits:[split('bad',{ex_date:null})]}},
  {corporate_actions:{reverse_splits:[split('bad',{old_rate:0})]}},
  {corporate_actions:{reverse_splits:[split('bad',{process_date:'2026-12-01'})]}},
@@ -23,6 +26,26 @@ it.each([
  {corporate_actions:null},
 ])('rejects contradictory, incomplete or misrouted event facts',async payload=>{
  const book=new AlpacaVwapCorporateEvents(credentials,async()=>Response.json(payload),()=>now);await expect(book.read('TEST','Splits')).rejects.toThrow();
+});
+it("qualifies an Alpaca reverse split explicitly linked to the requested successor symbol", async () => {
+ const transport = vi.fn<typeof fetch>(async () => Response.json({ corporate_actions: {
+  reverse_splits: [split("rename", { symbol: "FORMER", new_symbol: "TEST" }), split("prior", { ex_date: "2026-11-02" })],
+ }, next_page_token: null }));
+ const book = new AlpacaVwapCorporateEvents(credentials, transport, () => now);
+ const events = await book.read("TEST", "Splits");
+ expect(events).toEqual({ symbol: "TEST", anchor: "Splits", basisDate: "2026-11-09", dates: ["2026-11-02", "2026-11-06"] });
+ const revision = await book.splitRevision("TEST");
+ expect(revision).toMatch(/^[0-9a-f]{64}$/);
+ expect(await book.splitHistory("TEST")).toEqual({
+  symbol: "TEST", basisDate: "2026-11-09", revision,
+  events: [
+   { providerEventId: "prior", kind: "reverse", reportedSymbol: "TEST", successorSymbol: null,
+    effectiveDate: "2026-11-02", processedDate: "2026-11-09", oldShares: 20, newShares: 1 },
+   { providerEventId: "rename", kind: "reverse", reportedSymbol: "FORMER", successorSymbol: "TEST",
+    effectiveDate: "2026-11-06", processedDate: "2026-11-09", oldShares: 20, newShares: 1 },
+  ],
+ });
+ expect(transport).toHaveBeenCalledTimes(1);
 });
 it('rejects repeated pagination tokens and refuses to publish partial results after a failed later page',async()=>{
  const loop=new AlpacaVwapCorporateEvents(credentials,async()=>Response.json({corporate_actions:{reverse_splits:[split()]},next_page_token:'same'}),()=>now);await expect(loop.read('TEST','Splits')).rejects.toThrow('pagination');

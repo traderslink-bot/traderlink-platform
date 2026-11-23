@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { ensureJournalPlanFoundation, membershipAllowanceInBrief, membershipFeatureDefaultEnforcement, membershipProductBrief, membershipProductDescription, membershipProductLabel, newMembershipProductFeature as f, storedMembershipProductFeatures, toggleMembershipProduct } from "./membership-product-features";
 import { isMembershipPlanSelectableFeature, derivedMembershipPlanNotificationKeys } from "./membership-plan-notifications";
+import { MARKET_TOOL_MEMBERSHIP_KEYS } from "./membership-market-tools";
+import { defaultMembershipFeatureCopy } from "./membership-feature-copy";
 
 describe("Product-oriented plan features", () => {
+  it("keeps market tools separate and preserves owner-edited feature descriptions", () => {
+    const keys = Object.values(MARKET_TOOL_MEMBERSHIP_KEYS);
+    for (const key of keys) {
+      expect(isMembershipPlanSelectableFeature(key)).toBe(true);
+      const selected = [{ ...f(key), brief: "My brief", details: "My details" }];
+      expect(storedMembershipProductFeatures(selected).filter(feature => keys.includes(feature.key as typeof key))).toEqual(selected);
+      expect(derivedMembershipPlanNotificationKeys(selected)).toEqual([]);
+      expect(defaultMembershipFeatureCopy(key, key).details).toContain("Discord");
+    }
+  });
   it("keeps press release filters inside Stock Press Releases without enabling unrelated settings", () => {
     const filters = f("news.filters_sorting");
     expect(isMembershipPlanSelectableFeature(filters.key)).toBe(false);

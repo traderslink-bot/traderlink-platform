@@ -1,8 +1,12 @@
 import type { UniverseStock, UniverseUpload } from "../contracts";
+import { scannerSector } from "../sectors";
 import { scannerUniverseSymbolEligible } from "../universe-validation";
+import { readNasdaqSecurityTypes } from "./nasdaq-security-types";
+import { coalescedMetadata } from "./coalesced-cache";
 
 const SOURCE_URL="https://api.nasdaq.com/api/screener/stocks" as const;
 const MAX_MARKET_CAP=500_000_000 as const;
+const exchanges = ["NASDAQ", "NYSE", "AMEX"] as const;
 const MAX_RESPONSE_BYTES=3_000_000;
 const SYMBOL=/^[A-Z][A-Z0-9.-]{0,15}$/u;
 const RETRY_MS=15*60_000;
@@ -10,7 +14,7 @@ const RETRY_MS=15*60_000;
 type ObjectValue=Record<string,unknown>;
 const object=(value:unknown):value is ObjectValue=>Boolean(value&&typeof value==="object"&&!Array.isArray(value));
 
-async function rowsFor(exchange:"NASDAQ"|"NYSE"|"AMEX",request:typeof fetch):Promise<readonly UniverseStock[]> {
+async function rowsFor(exchange:"NASDAQ"|"NYSE"|"AMEX",request:typeof fetch, marketCapCeiling: number):Promise<readonly UniverseStock[]> {
   const url=new URL(SOURCE_URL);
   url.searchParams.set("exchange",exchange.toLowerCase());
   url.searchParams.set("download","true");
@@ -27,27 +31,51 @@ async function rowsFor(exchange:"NASDAQ"|"NYSE"|"AMEX",request:typeof fetch):Pro
   for(const value of payload.data.rows){
     if(!object(value)||typeof value.symbol!=="string")continue;
     const symbol=value.symbol.trim().toUpperCase(),cap=typeof value.marketCap==="string"?Number(value.marketCap):value.marketCap;
-    if(!SYMBOL.test(symbol)||!scannerUniverseSymbolEligible(symbol)||typeof cap!=="number"||!Number.isFinite(cap)||cap<=0||cap>MAX_MARKET_CAP)continue;
+    if(!SYMBOL.test(symbol)||!scannerUniverseSymbolEligible(symbol)||typeof cap!=="number"||!Number.isFinite(cap)||cap<=0||cap>marketCapCeiling)continue;
     const marketCapAtCollection=Math.round(cap);
     if(!Number.isSafeInteger(marketCapAtCollection)||marketCapAtCollection<=0)continue;
-    stocks.push({symbol,exchange,marketCapAtCollection});
+    const sector = scannerSector(value.sector);
+    stocks.push({symbol,exchange,marketCapAtCollection,...(sector ? { sector } : {})});
   }
   return stocks;
 }
 
+async function collectStocks(request: typeof fetch, ceiling: number) {
+  const bySymbol = new Map<string, UniverseStock>();
+  for (const stock of (await Promise.all(exchanges.map(exchange => rowsFor(exchange, request, ceiling)))).flat()) {
+    const previous = bySymbol.get(stock.symbol);
+    if (previous && previous.exchange !== stock.exchange) throw Error("scanner_nasdaq_universe_exchange_conflict");
+    bySymbol.set(stock.symbol, stock);
+  }
+  return [...bySymbol.values()].sort((a, b) => a.symbol.localeCompare(b.symbol));
+}
+
+/** Archive coverage can follow an owner-selected cap above the live listing ceiling. */
+async function collectArchiveCensus(request: typeof fetch) {
+  const stocks = await collectStocks(request, Number.MAX_SAFE_INTEGER);
+  if (stocks.length < 100 || stocks.length > 12_000) throw Error("scanner_nasdaq_universe_population_invalid");
+  return stocks;
+}
+
+const cachedArchiveCensus = coalescedMetadata(() => collectArchiveCensus(fetch), 300_000);
+
+export async function collectNasdaqCandleHistoryRoster(ceiling: number, request?: typeof fetch) {
+  const stocks = request ? await collectArchiveCensus(request) : await cachedArchiveCensus();
+  return stocks.filter(stock => stock.marketCapAtCollection <= ceiling)
+    .map(({ symbol, marketCapAtCollection }) => ({ symbol, marketCap: marketCapAtCollection }));
+}
+
 export async function collectNasdaqUniverseUpload(input:Readonly<{tradingDate:string;request?:typeof fetch;now?:()=>number}>):Promise<UniverseUpload>{
   const request=input.request??fetch,started=(input.now??Date.now)();
-  const sets=await Promise.all([rowsFor("NASDAQ",request),rowsFor("NYSE",request),rowsFor("AMEX",request)]);
-  const bySymbol=new Map<string,UniverseStock>();
-  for(const stock of sets.flat()){
-    const previous=bySymbol.get(stock.symbol);
-    if(previous&&previous.exchange!==stock.exchange)throw Error("scanner_nasdaq_universe_exchange_conflict");
-    bySymbol.set(stock.symbol,stock);
-  }
-  const stocks=[...bySymbol.values()].sort((a,b)=>a.symbol.localeCompare(b.symbol));
+  const [stocks, securityTypes] = await Promise.all([
+    collectStocks(request, MAX_MARKET_CAP),
+    readNasdaqSecurityTypes(input.tradingDate, request),
+  ]);
   if(stocks.length<100||stocks.length>4000)throw Error("scanner_nasdaq_universe_population_invalid");
   const finished=(input.now??Date.now)();
-  return {tradingDate:input.tradingDate,csv:["symbol,exchange,market_cap",...stocks.map(stock=>`${stock.symbol},${stock.exchange},${stock.marketCapAtCollection}`)].join("\n"),metadata:{
+  return {tradingDate:input.tradingDate,csv:["symbol,exchange,market_cap,sector,security_type",...stocks.map(stock=>
+    [stock.symbol, stock.exchange, stock.marketCapAtCollection, stock.sector ?? "", securityTypes.get(stock.exchange + "/" + stock.symbol) ?? ""].join(","),
+  )].join("\n"),metadata:{
     completeness_status:"complete",source_url:SOURCE_URL,collection_started_at_utc:new Date(started).toISOString(),collection_finished_at_utc:new Date(finished).toISOString(),
     displayed_total:stocks.length,extracted_unique_count:stocks.length,applied_filters:{exchanges:["NASDAQ","NYSE","AMEX"],market_cap_max:MAX_MARKET_CAP},
   }};
@@ -57,7 +85,8 @@ export class NasdaqUniverseRefresher{
   private completedDate:string|null=null;
   private nextAttemptAt=0;
   private running:Promise<void>|null=null;
-  constructor(private readonly input:Readonly<{store:{import:(value:unknown,now:number)=>Promise<unknown>};request?:typeof fetch;now?:()=>number}>){ }
+  constructor(private readonly input:Readonly<{store:{import:(value:unknown,now:number)=>Promise<unknown>};request?:typeof fetch;
+    now?:()=>number; afterImport?: (tradingDate: string) => Promise<void>}>){ }
   async refresh(tradingDate:string):Promise<void>{
     const now=(this.input.now??Date.now)();
     if(this.completedDate===tradingDate||now<this.nextAttemptAt)return;
@@ -68,6 +97,7 @@ export class NasdaqUniverseRefresher{
         await this.input.store.import(upload,(this.input.now??Date.now)());
         this.completedDate=tradingDate;
         this.nextAttemptAt=0;
+        void this.input.afterImport?.(tradingDate).catch(() => {});
       }catch(error){this.nextAttemptAt=(this.input.now??Date.now)()+RETRY_MS;throw error;}
       finally{this.running=null;}
     })();

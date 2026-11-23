@@ -1,6 +1,18 @@
 import assert from 'node:assert/strict';
-import { indicatorDisplayRows } from '../lib/live-watchlist/indicators/indicator-presentation.ts';
-import { calculateSessionVwap } from '../lib/live-watchlist/indicators/indicator-engine.ts';
+import { registerHooks } from 'node:module';
+import { calculateSessionVwap } from '../modules/market-data/indicators/indicator-engine.ts';
+
+const presentationPath = new URL('../modules/market-data/indicators/indicator-presentation.ts', import.meta.url);
+registerHooks({
+  resolve(specifier, context, next) {
+    if (context.parentURL === presentationPath.href && specifier === './indicator-signals') {
+      return next('./indicator-signals.ts', context);
+    }
+    return next(specifier, context);
+  },
+});
+const { indicatorDisplayRows } = await import(presentationPath.href);
+
 const rows = indicatorDisplayRows({ timeframe: '1m', livePrice: 2, vwap: null,
   result: { volume: null, volumeRatio: 0, volumeChangePercent: -100, ema9: 1.9, ema20: 1.8, rsi14: 60 } });
 assert.equal(rows.find(r => r.label === 'Volume').value, 'Unavailable');

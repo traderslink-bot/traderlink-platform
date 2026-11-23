@@ -13,6 +13,7 @@ import HomePage from "@/app/(dashboard)/home/page";
 import { GET } from "@/app/dashboard-entry/route";
 import manifest from "@/app/manifest";
 import { isDashboardSignInNavigation } from "@/app/pwa/dashboard-sign-in-navigation";
+import { MARKET_TOOLS_ACCESS_MODE, MARKET_TOOLS_REVIEW_USER_IDS } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { platformAuthCookieName } from "../authentication/platform-auth-cookies";
 import { PlatformDiscordSignInService } from "../authentication/platform-discord-sign-in-service";
 import { PlatformLoginService } from "../authentication/platform-login-service";
@@ -20,6 +21,7 @@ import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "../authentication/platform-s
 import { openPlatformDatabase } from "../database/open-platform-database";
 import { platformMigrationManifest } from "../database/platform-migration-manifest";
 import { runPlatformMigrations } from "../database/run-platform-migrations";
+import { hasPlatformMembershipFeature } from "../membership/platform-membership-access";
 import { PlatformMembershipRepository } from "../membership/platform-membership-repository";
 import { PlatformUserPreferenceRepository } from "./platform-user-preference-repository";
 
@@ -48,6 +50,7 @@ function fixture() {
   vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", discordSubjects.join(","));
   vi.stubEnv("DISCORD_GUILD_ID", discordGuild);
   vi.stubEnv("TRADERLINK_STOCK_SCREENERS_ENABLED", "1");
+  vi.stubEnv(MARKET_TOOLS_ACCESS_MODE, "standard");
   const database = openPlatformDatabase({ mode: "initializer", databasePath, forbiddenRepositoryRoots: [] });
   return { database, databasePath };
 }
@@ -98,9 +101,11 @@ describe("Platform home page", () => {
         name: "Journal", visibility: "public", atUtc: at, features: [{ featureKey: "journal.access", limitValue: null }],
       });
       memberships.publishPlanVersion({ actorUserId: trader.userId, planVersionId: plan.planVersionId, atUtc: at });
-      memberships.grantEntitlement({ actorUserId: trader.userId, userId: trader.userId, planVersionId: plan.planVersionId,
-        sourceType: "free_plan", sourceRef: "home-fixture", startsAtUtc: at, endsAtUtc: null, atUtc: at,
-      });
+      for (const owner of [trader, otherTrader]) {
+        memberships.grantEntitlement({ actorUserId: trader.userId, userId: owner.userId, planVersionId: plan.planVersionId,
+          sourceType: "free_plan", sourceRef: "home-fixture", startsAtUtc: at, endsAtUtc: null, atUtc: at,
+        });
+      }
 
       requestState.headers = new Headers({ cookie: cookie(trader.session.token) });
       for (const [homePage, href] of [
@@ -152,12 +157,65 @@ describe("Platform home page", () => {
       requestState.headers = new Headers({ cookie: cookie(otherTrader.session.token) });
       expect(await saveHomePage("welcome")).toEqual({ ok: true, homePage: "welcome" });
       vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", discordSubjects[0]);
+      expect((await entry(otherTrader.session.token, installed.start_url)).headers.get("location")).toBe(origin + "/home");
+      // Future enforcement is fixture-only. Removing a Watchlist pilot must not
+      // put currently released tools behind a paywall for dashboard members.
+      for (const feature of ["scanners.access", "screeners.access", "charts.access"]) {
+        database.prepare(`INSERT INTO platform_membership_feature_policies VALUES (?,'enforced',?,?)
+          ON CONFLICT(feature_key) DO UPDATE SET enforcement_mode=excluded.enforcement_mode`)
+          .run(feature, trader.userId, at);
+      }
       expect((await entry(otherTrader.session.token, installed.start_url)).headers.get("location")).toBe(origin + "/workspace");
       await expect(HomePage()).rejects.toMatchObject({
         digest: expect.stringContaining(";/workspace;"),
       });
       expect(await saveHomePage("welcome")).toMatchObject({ ok: false });
       expect(preferences.getActiveUserHomePage(otherTrader.userId)).toBe("welcome");
+
+      vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", undefined);
+      vi.stubEnv("TRADERLINK_SCANNER_DASHBOARD_DISCORD_SUBJECT", discordSubjects[0]);
+      vi.stubEnv("TRADERLINK_TRADING_WORKSPACE_DASHBOARD_DISCORD_SUBJECT", discordSubjects[1]);
+      for (const [selectedTrader, allowed, denied, href] of [
+        [trader, "scanners", "trading-workspace", "/scanners"],
+        [otherTrader, "trading-workspace", "scanners", "/trading-workspace"],
+      ] as const) {
+        requestState.headers = new Headers({ cookie: cookie(selectedTrader.session.token) });
+        expect(hasPlatformMembershipFeature(database, selectedTrader.userId, "dashboard.access")).toBe(true);
+        expect(hasPlatformMembershipFeature(database, selectedTrader.userId, "watchlist.access")).toBe(false);
+        expect(await saveHomePage(allowed)).toEqual({ ok: true, homePage: allowed });
+        expect(await saveHomePage(denied)).toMatchObject({ ok: false });
+        expect(await saveHomePage("welcome")).toMatchObject({ ok: false });
+        expect((await entry(selectedTrader.session.token, installed.start_url)).headers.get("location")).toBe(origin + href);
+      }
+      expect((await entry(member.token)).headers.get("location")).toBe(origin + "/workspace");
+
+      vi.stubEnv(MARKET_TOOLS_ACCESS_MODE, undefined);
+      vi.stubEnv(MARKET_TOOLS_REVIEW_USER_IDS, [trader.userId, otherTrader.userId].join(","));
+      vi.stubEnv("TRADERLINK_STOCK_SCREENERS_ENABLED", "1");
+      for (const selected of [trader, otherTrader]) {
+        requestState.headers = new Headers({ cookie: cookie(selected.session.token) });
+        for (const homePage of ["trading-workspace", "scanners", "screeners"] as const) {
+          expect(await saveHomePage(homePage)).toEqual({ ok: true, homePage });
+          expect((await entry(selected.session.token)).headers.get("location")).toBe(origin + "/" + homePage);
+        }
+      }
+
+      const ordinaryDashboard = memberships.createPlan({ actorUserId: trader.userId, planKey: "dashboard-fixture",
+        name: "Ordinary dashboard", visibility: "public", atUtc: at,
+        features: [{ featureKey: "dashboard.access", limitValue: null }],
+      });
+      memberships.publishPlanVersion({ actorUserId: trader.userId, planVersionId: ordinaryDashboard.planVersionId, atUtc: at });
+      memberships.grantEntitlement({ actorUserId: trader.userId, userId: member.session.userId,
+        planVersionId: ordinaryDashboard.planVersionId, sourceType: "free_plan",
+        sourceRef: "dashboard-fixture", startsAtUtc: at, endsAtUtc: null, atUtc: at,
+      });
+      expect(hasPlatformMembershipFeature(database, member.session.userId, "dashboard.access")).toBe(true);
+      requestState.headers = new Headers({ cookie: cookie(member.token) });
+      for (const homePage of ["trading-workspace", "scanners", "screeners"] as const) {
+        expect(await saveHomePage(homePage)).toMatchObject({ ok: false });
+        preferences.updateActiveUserHomePage({ userId: member.session.userId, homePage, updatedAtUtc: at });
+        expect((await entry(member.token)).headers.get("location")).not.toBe(origin + "/" + homePage);
+      }
 
       requestState.headers = new Headers();
       expect(await saveHomePage("welcome")).toMatchObject({ ok: false });

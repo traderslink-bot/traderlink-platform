@@ -30,8 +30,8 @@ export class AlpacaVwapHistory{
   for(let cursor=start;cursor<request.before;){
    if(this.now()-began>90_000||easternClock(this.now()).date!==basisDate)throw Error('vwap_history_unavailable');
    const next=Math.min(request.before,easternDayStart(cursor+(request.timeframe==='1D'?3650:30)*86400));if(next<=cursor)throw Error('vwap_history_unavailable');
-   const history=await this.rest.history({symbol:request.symbol,timeframe:request.timeframe==='1D'?'1Day':'1Min',start:cursor*1000,end:next*1000-1});
-   if(history.basisDate!==basisDate||!history.complete||history.adjustment!=='split'||history.feed!==this.expectedFeed||history.symbol!==request.symbol)throw Error('vwap_history_unavailable');
+   const history=await this.rest.history({symbol:request.symbol,timeframe:request.timeframe==='1D'?'1Day':'1Min',start:cursor*1000,end:next*1000-1,...(request.adjustment?{adjustment:request.adjustment}:{})});
+   if(history.basisDate!==basisDate||!history.complete||history.adjustment!==(request.adjustment??'split')||history.feed!==this.expectedFeed||history.symbol!==request.symbol)throw Error('vwap_history_unavailable');
    const inputs:Candle[]=history.bars;let sessionCalendar:ChartSessionCalendar|undefined;
    if(request.timeframe!=='1D'&&inputs.length){const facts=await this.calendar.forBars(inputs);if(!facts.available)throw Error('vwap_calendar_unavailable');const calendar=new ChartSessionCalendar();calendar.merge(facts);if(!inputs.every(bar=>calendar.covers(bar.time)))throw Error('vwap_calendar_unavailable');sessionCalendar=calendar;}
    const buckets=new Map<number,Candle>();

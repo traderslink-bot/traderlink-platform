@@ -46,7 +46,7 @@ describe("chart-only missing-interval marks",()=>{
   expect(result[1]).toEqual({time:utc("2026-11-06T15:01:00Z"),open:2,high:2,low:2,close:2,volume:0,carried:true});
   expect(result[2].carried).toBe(true);expect(result[3].carried).toBe(false);expect(input).toHaveLength(2);expect(result.reduce((s,b)=>s+b.volume,0)).toBe(30);
  });
- it.each([['5m',300],['15m',900],['1h',3600],['4h',14400]] as const)("fills %s intervals using the selected duration",(frame,step)=>{
+ it.each([['5m',300],['15m',900],['30m',1800],['1h',3600],['4h',14400]] as const)("fills %s intervals using the selected duration",(frame,step)=>{
   const start=utc("2026-11-06T09:00:00Z");const result=displayCandles([bar(start,2),bar(start+step*2,3)],frame);expect(result.map(b=>b.time)).toEqual([start,start+step,start+step*2]);expect(result[1].carried).toBe(true);
  });
  it("replaces a placeholder with a late candle and propagates its close through following gaps",()=>{

@@ -7,6 +7,37 @@ const nativeFetch=globalThis.fetch;
 class Socket extends EventTarget {static OPEN=1;readyState=0;send(){}close(){this.readyState=3;}}
 afterEach(()=>vi.unstubAllGlobals());
 describe("versioned gateway HTTP compatibility",()=>{
+ it("serves original-price candles separately from adjusted history", async () => {
+  const provider = vi.fn<typeof fetch>(async input => {
+   const url = new URL(String(input));
+   if (!url.pathname.endsWith("/bars")) return new Response(null, { status: 503 });
+   const raw = url.searchParams.get("adjustment") === "raw";
+   const price = raw ? 0.1065 : 3.195;
+   return Response.json({ bars: { OPTT: [{
+    t: "2026-09-11T14:30:00Z", o: price, h: price, l: price, c: price, v: raw ? 300 : 10,
+   }] }, next_page_token: null });
+  });
+  vi.stubGlobal("fetch", provider);
+  vi.stubGlobal("WebSocket", Socket);
+  const gateway = createAlpacaGateway({ keyId: "fixture", secretKey: "fixture", token: "fixture" });
+  await new Promise<void>(resolve => gateway.server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${(gateway.server.address() as AddressInfo).port}/`;
+  const headers = { Authorization: "Bearer fixture" };
+  const query = new URLSearchParams({ symbol: "OPTT", timeframe: "1Min",
+   start: String(Date.parse("2026-09-10T00:00:00Z")), end: String(Date.parse("2026-09-15T00:00:00Z")) });
+  try {
+   for (const [operation, adjustment, close, volume] of [
+    ["history", "split", 3.195, 10], ["chart-unadjusted-history", "raw", 0.1065, 300],
+   ] as const) {
+    const response = await nativeFetch(gatewayWireUrl(base, operation, query), { headers });
+    expect(response.status).toBe(200);
+    expect(decodeGatewayWire(operation, await response.json())).toMatchObject({ adjustment, bars: [{ close, volume }] });
+   }
+  } finally {
+   gateway.close();
+   gateway.server.closeAllConnections();
+  }
+ });
  it("serves authenticated neutral routes and identical existing legacy history without extra upstream requests",async()=>{
   const provider=vi.fn(async()=>Response.json({bars:{SHFS:[{t:'2026-11-18T14:30:00Z',o:.0277,h:.0295,l:.0265,c:.029,v:12345}]},next_page_token:null}));vi.stubGlobal('fetch',provider);vi.stubGlobal('WebSocket',Socket);
   const gateway=createAlpacaGateway({keyId:'dummy-key',secretKey:'dummy-secret',token:'fixture-only-token'});
@@ -36,6 +67,23 @@ describe("versioned gateway HTTP compatibility",()=>{
   const domain={feed:'sip',connected:false,snapshots:{},sessionTotals:{}};const transport=vi.fn<typeof fetch>(async()=>Response.json(encodeGatewayWire('quotes',domain)));vi.stubGlobal('fetch',transport);
   const value=await requestAlpacaGateway('quotes',new URLSearchParams({symbols:'SHFS'}),{NODE_ENV:'production',TRADERLINK_ALPACA_GATEWAY_URL:'https://private.example/',TRADERLINK_ALPACA_GATEWAY_TOKEN:'dummy',TRADERLINK_GATEWAY_CONTRACT:'traderslink.market.1'});
   expect(value).toEqual(domain);expect(String(transport.mock.calls[0][0])).toBe('https://private.example/'+gatewayWirePath('quotes')+'?tickers=SHFS');expect(transport.mock.calls[0][1]?.headers).toEqual({Authorization:'Bearer dummy'});
+ });
+ it("rejects a monitor request without private authentication or current saved receipts before observing data", async () => {
+  const observeScannerLevelsInterval = vi.fn(async () => undefined);
+  const gateway = createAlpacaGateway({ keyId: "fixture", secretKey: "fixture", token: "monitor-fixture", observeScannerLevelsInterval });
+  await new Promise<void>(resolve => gateway.server.listen(0, "127.0.0.1", resolve));
+  const base = `http://127.0.0.1:${(gateway.server.address() as AddressInfo).port}/`;
+  const body = JSON.stringify({ regularId: "unretained" });
+  try {
+   expect((await nativeFetch(gatewayWireUrl(base, "accepted-map-monitor"), { method: "POST", body })).status).toBe(401);
+   expect((await nativeFetch(gatewayWireUrl(base, "accepted-map-monitor"), {
+    method: "POST", headers: { Authorization: "Bearer monitor-fixture" }, body,
+   })).status).toBe(409);
+   expect(observeScannerLevelsInterval).not.toHaveBeenCalled();
+  } finally {
+   gateway.close();
+   gateway.server.closeAllConnections();
+  }
  });
  it("reassembles fragmented JSON events without leaking wire names to chart consumers",()=>{
   const payload={bar:{time:1795000000,open:.0277,high:.0295,low:.0265,close:.029,volume:5000},daily:false};const text='retry: 3000\n\nevent: bar\ndata: '+JSON.stringify(encodeGatewayWire('stream',payload))+'\n\n';const bytes=new TextEncoder().encode(text),frames=new GatewayWireFrames('stream');let output='';for(let i=0;i<bytes.length;i+=7)output+=new TextDecoder().decode(frames.write(bytes.slice(i,i+7)));frames.finish();expect(output).toBe('retry: 3000\n\nevent: bar\ndata: '+JSON.stringify(payload)+'\n\n');

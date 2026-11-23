@@ -3,7 +3,8 @@
 import { WorkspaceScannerTitle } from "./workspace-scanner-title";
 import { scannerPrice as price } from "../scanner-price";
 
-import { ScannerPageChartButton, ScannerPageTicker } from "./scanner-page-ticker";
+import { ScannerPageTicker } from "./scanner-page-ticker";
+import { ScannerRowTools } from "./scanner-row-tools";
 
 import Alert from "@mui/material/Alert";
 import { Fragment, useState } from "react";
@@ -14,8 +15,7 @@ import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanne
 import { ScannerChartLaunchControls } from "../scanner-chart-launch-controls";
 import { ScannerCountryFlag } from "../scanner-country-flag";
 import { scannerGainColor } from "../scanner-gain-color";
-import { ScannerRowNews } from "../scanner-news-drawer-context";
-import { ScannerStockCards, ScannerViewSettings, type ScannerView } from "./scanner-stock-cards";
+import { ScannerStockCards, ScannerViewSettings, WorkspaceVolumeHeaders, WorkspaceVolumeCells, useWorkspaceVolumeColumns, type ScannerView } from "./scanner-stock-cards";
 import { ScreenerHaltIndicator } from "../screener-halt-indicator";
 
 const shares = new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
@@ -34,9 +34,8 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
   const [localView,setLocalView]=useState<ScannerView>("table");
   const view=controlledView??localView;
   const twoRows=view==="two-rows";
-  const tools=(row:BreakoutRow)=><Stack component="span" direction="row" sx={{alignItems:"center",gap:0.65}}>
-    <ScannerChartLaunchControls row={row} onOpenChart={onOpenChart}/><ScannerPageChartButton symbol={row.symbol}/><ScannerRowNews news={row.news}/>
-  </Stack>;
+  const volumeColumns=useWorkspaceVolumeColumns();
+  const tools=(row:BreakoutRow)=><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ScannerChartLaunchControls row={row} onOpenChart={onOpenChart}/>}/>;
   const halt=(symbol:string)=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>;
   return <DashboardPanel hideHeader>
     <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5}}>
@@ -55,7 +54,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
         }}>
           <TableHead><TableRow>
             {!twoRows&&<TableCell/>}<TableCell data-scanner-sticky-ticker>Ticker</TableCell><TableCell>Price</TableCell>
-            <TableCell>PM high</TableCell><TableCell>Status</TableCell><TableCell>Vol</TableCell><TableCell>Float</TableCell>
+            <TableCell>PM high</TableCell><TableCell>Status</TableCell><WorkspaceVolumeHeaders columns={volumeColumns}/><TableCell>Float</TableCell>
             {!twoRows&&<TableCell>Country</TableCell>}
           </TableRow></TableHead>
           <TableBody>{rows.map(row=><Fragment key={row.symbol}>
@@ -64,11 +63,11 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
               <TableCell data-scanner-sticky-ticker><ScannerPageTicker symbol={row.symbol}/>{halt(row.symbol)}</TableCell>
               <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{price(row.price)}</TableCell>
               <TableCell>{price(row.breakoutLevel)}</TableCell><TableCell><BreakoutStatus row={row}/></TableCell>
-              <TableCell>{row.volume===null?"—":shares.format(row.volume)}</TableCell>
+              <WorkspaceVolumeCells row={row} columns={volumeColumns}/>
               <TableCell>{row.float===null?"—":shares.format(row.float)}</TableCell>
               {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
             </TableRow>
-            {twoRows&&<TableRow><TableCell data-scanner-sticky-ticker><ScannerCountryFlag country={row.country}/></TableCell><TableCell colSpan={5}>{tools(row)}</TableCell></TableRow>}
+            {twoRows&&<TableRow><TableCell data-scanner-sticky-ticker><ScannerCountryFlag country={row.country}/></TableCell><TableCell colSpan={4+volumeColumns.length}>{tools(row)}</TableCell></TableRow>}
           </Fragment>)}</TableBody>
         </Table>
       </TableContainer>}

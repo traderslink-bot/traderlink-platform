@@ -17,14 +17,17 @@ import { isStockLevelsMap, type StockLevelsMap, type StockLevelsResult } from "@
 import { buildWatchlistV2LevelRows, formatWatchlistV2LevelPrice } from "@/src/lib/live-watchlist/watchlist-v2-levels";
 import { formatLevelMarketDataProvenance } from "@/src/lib/live-watchlist/live-watchlist-level-provenance";
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
-import type { LiveScannerRow, ScannerNewsItem } from "@/src/modules/scanner/live/contracts";
+import { SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
+import type { LiveScannerRow, ScannerNewsItem, ScannerVolumeBreakdown } from "@/src/modules/scanner/live/contracts";
+import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 const stamp = (n: number | string) => new Date(n).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET";
 
-export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionTarget, active=true, onGenerate, levelsOnly=false }: {
-  symbol: string; stock: LiveScannerRow | undefined; quote?: {price:number;changePercent:number|null}; postMarket?: boolean;
-  actionTarget?:HTMLElement|null;active?:boolean;onGenerate?:()=>void;levelsOnly?:boolean;
+export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionTarget, active=true, onGenerate, levelsOnly=false, verifiedLevels=false, volumeBreakdown }: {
+  symbol: string; stock: LiveScannerRow | undefined; quote?: ScannerVolumeBreakdown & {price:number;changePercent:number|null}; postMarket?: boolean;
+  volumeBreakdown?: ScannerVolumeBreakdown;
+  actionTarget?:HTMLElement|null;active?:boolean;onGenerate?:()=>void;levelsOnly?:boolean;verifiedLevels?:boolean;
 }) {
   const [map, setMap] = useState<StockLevelsMap | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,7 +56,11 @@ export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionT
     const controller = new AbortController(); pending.current = controller;
     setBusy(true); setError(null);
     try {
-      const response = await fetch("/api/levels", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ symbol }), signal: controller.signal });
+      const response = await fetch("/api/levels", {
+        method: "POST", credentials: "same-origin", signal: controller.signal,
+        headers: { "content-type": "application/json", [PLATFORM_MUTATION_REQUEST_HEADER]: "1" },
+        body: JSON.stringify(verifiedLevels ? { symbol, profile: "scanner-regular-4h-v1" } : { symbol }),
+      });
       const result = await response.json() as StockLevelsResult;
       if (controller.signal.aborted) return;
       if (response.ok && result.state === "ready" && isStockLevelsMap(result.map) && result.map.symbol === symbol) {
@@ -71,12 +78,16 @@ export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionT
   const priceGain = dayGain === undefined ? postGain : dayGain;
   const changeFact = (label: string, change: number | null): [string, string, string] =>
     [label, change == null ? "—" : `${change.toFixed(0)}%`, scannerGainColor(change)];
-  const facts: [string, string, string?][] = levelsOnly || currentPrice === undefined ? [] : [
-    ["Price", price(currentPrice), scannerGainColor(priceGain)],
+  const breakdown = stock ?? quote ?? volumeBreakdown;
+  const facts: [string, string, string?][] = levelsOnly || (currentPrice === undefined && !volumeBreakdown) ? [] : [
+    ...(currentPrice === undefined ? [] : [["Price", price(currentPrice), scannerGainColor(priceGain)] as [string, string, string]]),
     ...(dayGain === undefined ? [] : [changeFact("Day change", dayGain)]),
     ...(postGain === undefined ? [] : [changeFact("Post-market change", postGain)]),
+    ...(["dayVolume", ...SCANNER_SESSION_VOLUME_COLUMNS] as const).map((metric): [string, string] => {
+      const value = breakdown?.[metric];
+      return [SCANNER_VOLUME_LABELS[metric], value == null ? "—" : value.toLocaleString("en-US")];
+    }),
     ...(stock ? [
-      ["Vol", stock.volume == null ? "—" : compact.format(stock.volume)],
       ["Float", stock.float == null ? "—" : compact.format(stock.float)],
       ["Market cap", stock.marketCap == null ? "—" : `$${compact.format(stock.marketCap)}`],
       ["RVOL", stock.relativeVolume == null ? "—" : `${stock.relativeVolume.toFixed(1)}×`],

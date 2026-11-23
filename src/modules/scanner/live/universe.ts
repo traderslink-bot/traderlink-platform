@@ -18,12 +18,19 @@ export function importDailyUniverse(previous: DailyUniverse | null, upload: unkn
     if (earlier && earlier.exchange !== stock.exchange) throw Error("scanner_universe_exchange_conflict");
     // Preserve the first qualifying cap: crossing the ceiling does not remove today's member.
     if (!earlier) retained.set(stock.symbol, stock);
+    else if ((stock.sector && stock.sector !== earlier.sector) || (stock.securityType && stock.securityType !== earlier.securityType)) {
+      retained.set(stock.symbol, { ...earlier, ...(stock.sector ? { sector: stock.sector } : {}),
+        ...(stock.securityType ? { securityType: stock.securityType } : {}) });
+    }
   }
   if (retained.size > MAX_UNIVERSE_ROWS) throw Error("scanner_universe_population_limit");
   return { idempotent: false, universe: {
     version: 1, tradingDate: checked.input.tradingDate, acceptedAtUtc: new Date(now).toISOString(),
     lastCollectionAtUtc: checked.input.metadata.collection_finished_at_utc,
     latestUploadCount: qualifyingStocks.length, sourceHashes: [...(previous?.sourceHashes ?? []), checked.hash],
+    sourceImports: [...(previous?.sourceImports ?? []), { sourceUrl: checked.input.metadata.source_url,
+      sourceHash: checked.hash, collectionFinishedAtUtc: checked.input.metadata.collection_finished_at_utc,
+      uploadCount: qualifyingStocks.length }],
     stocks: [...retained.values()].sort((a,b) => a.symbol.localeCompare(b.symbol)),
   } };
 }

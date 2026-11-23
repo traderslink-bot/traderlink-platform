@@ -41,7 +41,7 @@ it("retains display choices for the same chart while pruning closed or replaced 
     {id:"group-2",symbol:"OMH",panels:[{id:"two",timeframe:"5m" as const}]},
   ]};
   memory.retain("owner","main",layout);
-  const display={hidden:new Set(["EMA"] as const),enabled:{SMA:false}};
+  const display={EMA:{hidden:{value:true,revision:0}},SMA:{enabled:{value:false,revision:0}}};
   memory.writeIndicatorDisplay("owner","main","one","NCT",display);
   expect(memory.readIndicatorDisplay("owner","main","one","NCT")).toBe(display);
   expect(memory.readIndicatorDisplay("owner","main","two","OMH")).toBe(defaultIndicatorDisplay);

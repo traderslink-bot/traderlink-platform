@@ -46,7 +46,7 @@ it('uses the developing lower-frame value on an open daily candle regardless of 
 
 for(const chartFrame of CHART_CALCULATION_TIMEFRAMES)for(const calculationFrame of CHART_CALCULATION_TIMEFRAMES){
  it(`projects ${calculationFrame} calculations on ${chartFrame} without lookahead`,()=>{
-  const seconds={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400};
+  const seconds={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1D':86400};
   const step=seconds[chartFrame],size=seconds[calculationFrame],end=Math.max(step,size)*2;
   const chart=Array.from({length:end/step},(_,n)=>({time:n*step,close:(n+1)*step}));
   const values=Array.from({length:end/size},(_,n)=>({time:n*size,close:(n+1)*size,value:n+1}));

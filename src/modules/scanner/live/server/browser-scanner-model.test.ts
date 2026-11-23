@@ -31,3 +31,14 @@ it("normalizes supplier-specific or unexpected scanner failures without mutating
   expect(browserScannerModel(model).issues).toEqual(['session_warming','snapshot_pass_unavailable','market_data_unavailable']);
   expect(model.issues[0]).toBe('alpaca_session_warming');
 });
+
+it("omits the actual private thresholds from live member results", () => {
+  const model = { issues: [], gainers: { rows: [], focus: [], total: 0 }, momentum: { rows: [], focus: [], total: 0 },
+    declines: { rapid: [], losers: [], rapidTotal: 0, loserTotal: 0, controls: { enabled: true, minimumDropPercent: 98.76 } },
+    premarketPullbacks: { rows: [], total: 0, missingReferenceCount: 0, controls: { enabled: false, minimumPullbackPercent: 12.34 } },
+  } as unknown as ScannerReadModel;
+  const result = browserScannerModel(model);
+  expect(result.declines?.controls).toEqual({ enabled: true });
+  expect(result.premarketPullbacks?.controls).toEqual({ enabled: false });
+  expect(JSON.stringify(result)).not.toMatch(/98\.76|12\.34/);
+});

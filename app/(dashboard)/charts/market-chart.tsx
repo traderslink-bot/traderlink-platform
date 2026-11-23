@@ -4,6 +4,9 @@ import {chartLogarithmic,setChartLogarithmic} from '@/src/modules/scanner/alpaca
 import { useChartMarketData } from "./use-chart-market-data";
 import { ChartIndicatorLegend } from "./chart-indicator-legend";
 import { ChartDrawings } from "./chart-drawings";
+import { ChartEvidenceZones } from "./chart-evidence-zones";
+import { projectChartOverlay, type ChartOverlay } from "@/src/modules/market-data/chart-evidence/overlay";
+import type { ChartEvidenceEvent, ResolvedChartEvidence } from "@/src/modules/market-data/chart-evidence/contracts";
 import { candleIndexAtOrAfter } from "./chart-drawing-volume";
 import { useDrawingControls } from "./chart-drawing-controls";
 import Menu from "@mui/material/Menu";
@@ -16,7 +19,7 @@ import MenuBookOutlined from "@mui/icons-material/MenuBookOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import NetworkCheck from "@mui/icons-material/NetworkCheck";
 import {useChartPreferences} from "./use-chart-preferences";
-import {parseVwapSeedRequest,validVwapSeed,type VwapSeed} from "@/src/modules/scanner/alpaca/chart-vwap-seed";
+import {localVwapSeed,parseVwapSeedRequest,validVwapSeed,type VwapSeed} from "@/src/modules/scanner/alpaca/chart-vwap-seed";
 import {easternClock} from "@/src/modules/scanner/live/sessions";
 import { chartVwapCache } from "./chart-vwap-cache";
 import {ChartBandFill} from "@/src/modules/scanner/alpaca/chart-band-fill";
@@ -26,22 +29,24 @@ import {calculationInterval,futureCalculationAxis} from "@/src/modules/scanner/a
 import {carryVwapPoints,offsetVwap,projectVwap,indicatorReadoutIndex,sampleCalendarVwap} from "@/src/modules/scanner/alpaca/chart-vwap-projection";
 import {readChartCalendarYear} from "@/src/modules/scanner/alpaca/chart-calendar-request";
 import {ChartSessionCalendar} from "@/src/modules/scanner/alpaca/chart-calendar";
+import { chartArchiveWindow, mergeChartArchivePages, type ChartArchivePage } from "@/src/modules/scanner/alpaca/chart-archive-history";
 import { chartOvernightTradingDate, chartShowsOvernight } from "@/src/modules/scanner/alpaca/chart-overnight-session";
 import {type IndicatorPlot,vwapAnchorKey,indicatorOverlayWidth,indicatorPlotStyle,indicatorHistogramColor,indicatorValues,isVisibleSession,visibleSessionBars} from "@/src/modules/scanner/alpaca/chart-indicators";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { chartTickLabel, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
 import type { ISeriesApi, ISeriesMarkersPluginApi, Time } from "lightweight-charts";
-import { aggregateCandles, candleBucket, displayCandles, easternDayStart, isCalendarChartTimeframe, nextChartCalendarPeriod, usesDailyCandles, CHART_TIMEFRAMES, type ChartCalculationTimeframe, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
+import { aggregateCandles, candleBucket, displayCandles, easternDayStart, isCalendarChartTimeframe, nextChartCalendarPeriod, usesDailyCandles, CHART_FRAME_SECONDS, CHART_TIMEFRAMES, type ChartCalculationTimeframe, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
 
 import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-view";
-import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorDisplay } from "./chart-view-memory";
-import { DEFAULT_CHART_CROSSHAIR_MODE, indicatorPriceScaleLabels, withoutOverlayWidthOverrides, type ChartIndicator, type ChartPreferences, type IndicatorLineWidth, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
-import { readChartCandleHistory, readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
+import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange } from "./chart-view-memory";
+import { DEFAULT_CHART_CROSSHAIR_MODE, INDICATOR_TYPES, changeIndicatorDisplayChoice, indicatorDisplayChoice, indicatorPriceScaleLabels, withoutOverlayWidthOverrides, type ChartIndicator, type ChartPreferences, type IndicatorDisplayAction, type IndicatorDisplayChoices, type IndicatorLineWidth, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
+import { chartSplitLabel, parseChartSplits, projectChartSplits, type ChartSplit } from "@/src/modules/scanner/alpaca/chart-splits";
+import { readChartCandleHistory, readCompletedChartHistory, readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
 
 import { makeJournalMarkers, chartJournalDayAt, chartJournalFocusBounds } from "./chart-journal-model";
 import { useChartJournalDisplay } from "./chart-journal-display";
@@ -62,8 +67,22 @@ type ChartCandleSnapshot = {
 const recentChartCandles = new Map<string, ChartCandleSnapshot>();
 const candleSnapshotLifetime = 5 * 60_000;
 
-export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick }: {
+const evidenceEventLabels: Record<ChartEvidenceEvent["kind"], string> = {
+  swing: "Swing",
+  "swing-break": "Swing break",
+  "structure-break": "Structure break",
+  "change-of-character": "Change of character",
+  "level-break": "Level break",
+  failure: "Failed break",
+};
+const evidencePrice = new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 });
+const subDollarEvidencePrice = new Intl.NumberFormat("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+const evidenceTime = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit", timeZoneName: "short" });
+const formatEvidencePrice = (value: number) => `$${(value < 1 ? subDollarEvidencePrice : evidencePrice).format(value)}`;
+
+export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick, evidence }: {
   tradeContext?: MarketTradeContext; tradeFocusRevision?: number; onTradeMarkClick?: (marks: readonly MarketTradeMark[]) => void;
+  evidence?: ResolvedChartEvidence;
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
   viewId?: string; viewWorkspace?: "main" | "scanner" | "workspace"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
@@ -72,8 +91,9 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const providerKey = marketData.generation;
   const providerQuery = `generation=${marketData.generation}`;
   const {preferences:accountPreferences,ready,message,change,ownerKey,journalAccountRef}=useChartPreferences();
-  const journalDisplay = useChartJournalDisplay(journalAccountRef);
-  const journal = useChartJournalBridge(journalAccountRef, baseTicker);
+  const chartJournalAccountRef = evidence ? undefined : journalAccountRef;
+  const journalDisplay = useChartJournalDisplay(chartJournalAccountRef);
+  const journal = useChartJournalBridge(chartJournalAccountRef, baseTicker);
   const { engineBridge: journalEngineBridge, scope: journalScope } = journal;
   const ticker = journal.current?.reviewSymbol ?? baseTicker;
   const activeTradeContext = ticker === baseTicker ? tradeContext : undefined;
@@ -88,7 +108,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const alwaysShowDrawingToolbar=accountPreferences.alwaysShowDrawingToolbar??false;
   const chartOptionsKey=useMemo(()=>JSON.stringify({
     ...accountPreferences,alwaysShowDrawingToolbar:undefined,autosaveDrawings:undefined,savedIndicatorPresets:undefined,
-    indicatorOverlayLineWidth:undefined,indicators:accountPreferences.indicators.map(withoutOverlayWidthOverrides),
+    indicatorDisplay:undefined,indicatorOverlayLineWidth:undefined,indicators:accountPreferences.indicators.map(withoutOverlayWidthOverrides),
   }),[accountPreferences]);
   const overlayAppearance=useRef({width:1 as IndicatorLineWidth,indicators:new Map<string,ChartIndicator>()});
   const overlaySeries=useRef<{series:ISeriesApi<"Line">;id:string;key:string}[]>([]);
@@ -103,10 +123,17 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       if(series.options().lineWidth!==lineWidth)series.applyOptions({lineWidth});
     }
   },[accountPreferences.indicators,accountPreferences.indicatorOverlayLineWidth]);
-  const preferences=useMemo(()=>JSON.parse(chartOptionsKey) as ChartPreferences,[chartOptionsKey]);
+  const regularEvidence = evidence?.basis.sessionMode === "regular" &&
+    evidence.basis.symbol === ticker && evidence.chartGeneration === providerKey;
+  const preferences=useMemo(()=>{
+    const saved = JSON.parse(chartOptionsKey) as ChartPreferences;
+    return regularEvidence ? { ...saved, premarket: false, regular: true, postmarket: false, overnight: false } : saved;
+  },[chartOptionsKey,regularEvidence]);
+  const priceAdjustment = evidence ? "split" : preferences.priceAdjustment ?? "split";
+  const unadjusted = priceAdjustment === "raw";
   const [drawingEngine,setDrawingEngine]=useState<ChartDrawings|null>(null);
-  const {toolbar:drawingToolbar,leftToolbar:drawingLeftToolbar,leftToolbarShown,overlay:drawingOverlay,saveError:drawingSaveError}=useDrawingControls(
-    drawingEngine,ownerKey,ticker,compact,alwaysShowDrawingToolbar,accountPreferences.autosaveDrawings??true,
+  const {toolbar:drawingToolbar,leftToolbar:drawingLeftToolbar,overlay:drawingOverlay,saveError:drawingSaveError}=useDrawingControls(
+    unadjusted ? null : drawingEngine,ownerKey,ticker,compact,alwaysShowDrawingToolbar,accountPreferences.autosaveDrawings??true,
   );
   const dark = preferences.theme === "dark" || preferences.theme === "auto" && theme.palette.mode === "dark";
   const [panel,setPanel]=useState<"indicators"|"settings"|null>(null);
@@ -118,13 +145,14 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const [initialIndicator,setInitialIndicator]=useState<IndicatorType>();
   const [indicatorMenu,setIndicatorMenu]=useState<{anchor:HTMLElement;type:IndicatorType}|null>(null);
   const displayKey=JSON.stringify([ownerKey,viewWorkspace,viewId,ticker]);
-  const [localDisplay,setLocalDisplay]=useState<{key:string;value:ChartIndicatorDisplay}>();
+  const [localDisplay,setLocalDisplay]=useState<{key:string;value:IndicatorDisplayChoices}>();
   if(localDisplay&&localDisplay.key!==displayKey)setLocalDisplay(undefined);
   const indicatorDisplay=localDisplay?.key===displayKey?localDisplay.value:
     ownerKey&&viewId?chartViews.readIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker):defaultIndicatorDisplay;
-  const changeIndicatorDisplay=(type:IndicatorType,action:"hidden"|"enabled",value:boolean)=>{
-    const next=action==="enabled"?{...indicatorDisplay,enabled:{...indicatorDisplay.enabled,[type]:value}}:
-      {...indicatorDisplay,hidden:new Set(value?[...indicatorDisplay.hidden,type]:[...indicatorDisplay.hidden].filter(item=>item!==type))};
+  const accountIndicatorDisplay=accountPreferences.indicatorDisplay;
+  const changeIndicatorDisplay=(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>{
+    const revision=accountIndicatorDisplay?.[type]?.[action]?.revision??0;
+    const next=changeIndicatorDisplayChoice(indicatorDisplay,type,action,value,revision);
     setLocalDisplay({key:displayKey,value:next});
     if(ownerKey&&viewId)chartViews.writeIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker,next);
   };
@@ -137,6 +165,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const journalPortal = useCallback(() => container.current?.closest<HTMLElement>("[data-journal-chart-drawer]") ?? null, []);
   const dateAxis = useRef<HTMLDivElement>(null);
   const indicatorLegend = useRef<HTMLDivElement>(null);
+  const [selectedSplits, setSelectedSplits] = useState<readonly ChartSplit[]>([]);
   const [historyMessage,setHistoryMessage] = useState("");
   const crosshairDetails = useRef<HTMLDivElement>(null);
   const [activeTimeframe,setActiveTimeframe]=useState<ChartTimeframe|null>(null);
@@ -145,8 +174,12 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const daily = usesDailyCandles(timeframe);
   const calendarFrame = isCalendarChartTimeframe(timeframe) ? timeframe : null;
   const vwapDisplayFrame = calendarFrame ? "1D" : timeframe as ChartCalculationTimeframe;
-  const enabledOverrides=indicatorDisplay.enabled;
+  const enabledOverridesKey=JSON.stringify(Object.fromEntries(INDICATOR_TYPES.map(type=>
+    [type,indicatorDisplayChoice(accountIndicatorDisplay,indicatorDisplay,type,"enabled")])));
+  const hiddenIndicatorValues=new Set(INDICATOR_TYPES.filter(type=>
+    indicatorDisplayChoice(accountIndicatorDisplay,indicatorDisplay,type,"hidden")===true));
   const activeIndicators=useMemo(()=>{
+    const enabledOverrides=JSON.parse(enabledOverridesKey) as Partial<Record<IndicatorType,boolean>>;
     const visibleTypes=new Set(preferences.indicators.filter(indicator=>indicator.visible!==false).map(indicator=>indicator.type));
     return preferences.indicators.flatMap(indicator=>{
       const enabled=enabledOverrides[indicator.type];
@@ -154,7 +187,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       if(indicator.visible!==false)return [indicator];
       return enabled===true&&!visibleTypes.has(indicator.type)?[{...indicator,visible:true}]:[];
     });
-  },[preferences.indicators,enabledOverrides,timeframe,calendarFrame]);
+  },[preferences.indicators,enabledOverridesKey,timeframe,calendarFrame]);
   const crosshairLines=useMemo(()=>activeIndicators.flatMap(indicator=>indicatorValues([],indicator,timeframe)
     .filter(plot=>!plot.pane&&!plot.histogram&&indicatorPlotStyle(indicator,plot.key).visible)
     .map(plot=>({value:`indicator:${indicator.id}:${plot.key}` as const,label:plot.label}))),[activeIndicators,timeframe]);
@@ -170,13 +203,29 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState("Loading candles…");
   const [error, setError] = useState<string | null>(null);
+  const [structureVisible, setStructureVisible] = useState(true);
+  const [levelsVisible, setLevelsVisible] = useState(true);
+  const [showCurrentEvidence, setShowCurrentEvidence] = useState(false);
+  const evidenceContext: "current" | "match" = evidence?.match && !showCurrentEvidence ? "match" : "current";
+  const [readout, setReadout] = useState<{ overlay: ChartOverlay; evidence: ResolvedChartEvidence; context: typeof evidenceContext; frame: ChartTimeframe }>();
+  const evidenceInput = useRef<{ evidence?: ResolvedChartEvidence; evidenceContext: "current" | "match"; structureVisible: boolean; levelsVisible: boolean }>({
+    evidence, evidenceContext, structureVisible, levelsVisible,
+  });
+  const evidenceRender = useRef<(() => void) | undefined>(undefined);
+  useLayoutEffect(() => {
+    evidenceInput.current = { evidence, evidenceContext, structureVisible, levelsVisible };
+    evidenceRender.current?.();
+  }, [evidence, evidenceContext, structureVisible, levelsVisible]);
+
+  const archiveDailyStartup = timeframe === "1D" && !unadjusted && !activeTradeContext && !evidence;
 
   useEffect(() => {
     const element = container.current;
     if (!element || !ready || !marketData.ready) return;
     const sipSessions = [preferences.premarket, preferences.regular, preferences.postmarket];
-    const sipSessionKey = JSON.stringify([...sipSessions, providerKey]);
-    const sessionKey = showOvernight ? JSON.stringify([...sipSessions, true, providerKey]) : sipSessionKey;
+    const priceBasisKey = unadjusted ? providerKey + ":raw" : providerKey;
+    const sipSessionKey = JSON.stringify([...sipSessions, priceBasisKey]);
+    const sessionKey = showOvernight ? JSON.stringify([...sipSessions, true, priceBasisKey]) : sipSessionKey;
     const basis = easternClock(Date.now()).date;
     const cacheKey = ownerKey && viewId && viewWorkspace === "main"
       ? JSON.stringify([ownerKey, viewId, ticker, timeframe, sessionKey])
@@ -195,7 +244,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       : displayTime.format(time * 1000) + " " + zoneLabel;
     let disposed = false, auxiliarySource: ChartStreamHandle | undefined, source: ChartStreamHandle | undefined, removeChart: (() => void) | undefined;
     const abort = new AbortController();
-    setStatus("Loading candles…"); setError(null); setHistoryMessage("");
+    setStatus("Loading candles…"); setError(null); setHistoryMessage(""); setSessionMessage(""); setSelectedSplits([]);
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
     const useRecentHistory = !activeTradeContext && timeframe !== "4h" && !daily;
@@ -214,6 +263,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     const overnightHistoryRequests = new Set<string>();
     let readOvernightHistory = (query: string) => { overnightHistoryRequests.add(query); };
     const readHistory = (query: URLSearchParams, reuseDaily = true) => {
+      if (unadjusted) query.set("adjustment", "raw");
       const history = readChartCandleHistory(
         `/api/screeners/charts/bars?${query}&${providerQuery}`, abort.signal,
         daily && ownerKey ? { owner: `${ownerKey}:${providerKey}`, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
@@ -231,6 +281,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       if (recent) query.set("recent", "1");
       if (from !== null) query.set("catchUpFrom", String(from));
       if (contextThrough !== null && (!daily || contextThrough < latestHistoryBar)) query.set("before", String(contextThrough));
+      if (archiveDailyStartup && !journalEngineBridge.getFocus() && !query.has("before")) query.set("dailyStartup", "1");
       return readHistory(query, reuseDaily);
     };
     const initialHistory = requestHistory(useRecentHistory && !cached, catchUpFrom, attempt === 0);
@@ -254,20 +305,55 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       removeChart = () => { overlaySeries.current=[]; chart.remove(); };
       chart.priceScale("right").applyOptions({autoScale:restorePrice?savedView!.autoScale:preferences.autoScale,mode:logarithmic?PriceScaleMode.Logarithmic:PriceScaleMode.Normal});
       const candles = preferences.kind==="line" ? chart.addSeries(LineSeries,{color:preferences.upColor}) : preferences.kind==="bars" ? chart.addSeries(BarSeries,{upColor:preferences.upColor,downColor:preferences.downColor}) : chart.addSeries(CandlestickSeries, { upColor: preferences.upColor, downColor: preferences.downColor, borderVisible: false, wickUpColor: preferences.upColor, wickDownColor: preferences.downColor, priceFormat: { type: "price", precision: 4, minMove: 0.0001 } });
-      const drawingInterval={"1m":60,"5m":300,"15m":900,"1h":3600,"4h":14400,"1D":86400}[vwapDisplayFrame];
+      const drawingInterval=CHART_FRAME_SECONDS[vwapDisplayFrame];
       let drawingVolumeBars:Candle[]|undefined;
+      let drawingVolumeHistory: CalculationHistory | undefined;
+      let drawingVolumeFrom = Infinity, drawingVolumeRetryAt = 0, drawingVolumePending = false;
       const drawings=new ChartDrawings(y=>candles.coordinateToPrice(y),price=>candles.priceToCoordinate(price),
         dark,()=>displayPoints,drawingInterval,()=>{
           if(!drawingVolumeBars){
-            const input=[...bars.values()];
-            drawingVolumeBars=(daily?input:visibleSessionBars(input,preferences,
-              calendarReady?marketCalendar.current:undefined)).sort((a,b)=>a.time-b.time);
+            const volumeSource = new Map(drawingVolumeHistory?.bars.map(bar => [bar.time, bar]));
+            for (const bar of bars.values()) volumeSource.set(bar.time, bar);
+            const input = [...volumeSource.values()];
+            const visible = daily ? input : visibleSessionBars(input, preferences,
+              drawingVolumeHistory?.calendar ?? (calendarReady ? marketCalendar.current : undefined));
+            visible.sort((a,b)=>a.time-b.time);
+            drawingVolumeBars = timeframe === "1m" || timeframe === "1D"
+              ? mergeChartArchivePages(visible, archivePages) : visible;
           }
           return drawingVolumeBars;
-        },calendarFrame);
-      chart.panes()[0].attachPrimitive(drawings);
+        },calendarFrame,(start,end)=>{
+          if (timeframe === "1m" || timeframe === "1D" || drawingVolumeFrom <= start ||
+              !archivePages.some(page => page.start < end && start < page.end)) return true;
+          if (!disposed && !drawingVolumePending && Date.now() >= drawingVolumeRetryAt) {
+            drawingVolumePending = true;
+            void calculationHistory.read("1m",start).then(value=>{
+              if (disposed || value.basisDate !== historyBasisDate) return;
+              drawingVolumeHistory = value;
+              drawingVolumeFrom = start;
+              writeAll(false,false,true);
+            }).catch(()=>{ drawingVolumeRetryAt = Date.now()+30_000; })
+              .finally(()=>{ drawingVolumePending = false; });
+          }
+          return false;
+        });
+      if (!unadjusted) chart.panes()[0].attachPrimitive(drawings);
+      let splitMarkers: ISeriesMarkersPluginApi<Time> | undefined;
+      let splits: ChartSplit[] = [];
+      let splitsDate = "";
+      let splitsPending = false;
+      let splitRetryAt = 0;
+      let splitMarkerKey = "";
+      let splitByMarker = new Map<string, ChartSplit>();
+      let splitsByCandle = new Map<number, ChartSplit[]>();
       chart.subscribeClick(({ point, time, paneIndex, hoveredObjectId }) => {
         if (!point || paneIndex !== 0) return;
+        const split = typeof hoveredObjectId === "string" ? splitByMarker.get(hoveredObjectId) : undefined;
+        // Touch taps can report the candle time without a hovered marker.
+        const touched = typeof time === "number" && window.matchMedia("(pointer: coarse)").matches
+          ? splitsByCandle.get(time) : undefined;
+        setSelectedSplits(split ? [split] : touched ?? []);
+        if (split) return;
         const listener = journalEngineBridge.getInteraction();
         if (typeof hoveredObjectId === "string") {
           const marker = journalMarkerBuckets.get(hoveredObjectId);
@@ -290,7 +376,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         }
         drawings.togglePin(point);
       });
-      setDrawingEngine(drawings);
+      setDrawingEngine(unadjusted ? null : drawings);
       const volume = preferences.volume?chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceLineVisible: false, lastValueVisible: false }, 1):undefined;
       chart.panes()[0].setStretchFactor(100-preferences.volumeHeight);if(volume)chart.panes()[1].setStretchFactor(preferences.volumeHeight);
       let nextPane=volume?2:1;
@@ -319,7 +405,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const legendStudies=[...studies].sort((a,b)=>a.indicator.id===b.indicator.id&&a.indicator.type==="Bollinger"
         ? (bandOrder[a.key]??3)-(bandOrder[b.key]??3) : 0);
       const legendValues=new Map<typeof studies[number],HTMLSpanElement>();
-      const cacheOwner=`${ownerKey??""}:${providerKey}`;
+      const cacheOwner=`${ownerKey??""}:${priceBasisKey}`;
       const vwapReadoutKeys=new Map(studies.filter(study=>study.indicator.type==="VWAP").map(study=>
         [study,JSON.stringify([ticker,timeframe,sessionKey,study.indicator,study.key])]));
       const flushVwap=()=>chartVwapCache.flush(cacheOwner);
@@ -381,12 +467,20 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       let chartHalted=false,haltStatusAt=0,lastGuidePrice:number|null=null;
       const bars = new Map<number, Candle>(cached?.bars.map(bar=>[bar.time,bar]));
       const queued = new Map<number, Candle>();
+      const archivePages: ChartArchivePage[] = [];
       const calculationHistory=new ChartCalculationHistory(ticker,abort.signal,()=>easternClock(Date.now()).date,
-        (url,init)=>sharedChartFetch(`${url}&${providerQuery}`,init));
+        (url,init)=>sharedChartFetch(`${url}&${providerQuery}`,init),priceAdjustment);
       const calculationContexts=new Map<string,CalculationHistory&{daily:boolean;through?:number}>(),contextCoverage=new Map<string,number>(),contextPending=new Set<string>(),contextFailures=new Map<string,number>();
       let calculationView:{from:number;to:number}|null=null,calculationViewKey="",calculationViewTimer:ReturnType<typeof setTimeout>|undefined;
-      const seconds={"1m":60,"5m":300,"15m":900,"1h":3600,"4h":14400,"1D":86400};
+      const seconds=CHART_FRAME_SECONDS;
       let vwapProblem="";
+      let vwapRetryAt = Infinity;
+      let vwapRetryTimer: ReturnType<typeof setTimeout> | undefined;
+      const waitForVwapRetry = (failedAt: number | undefined) => {
+        if (failedAt === undefined || failedAt + 30_000 <= Date.now()) return false;
+        vwapRetryAt = Math.min(vwapRetryAt, failedAt + 30_000);
+        return true;
+      };
       let calendarReady=false,calendarRetryAt=0,historyBasisDate="";
       let seedLoading=false,seedError=false;
       const pendingCalendarYears=new Set<number>(),calendarYearFailures=new Map<number,number>();
@@ -484,13 +578,18 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         if(!actual.length||calculationFrame==='1D'&&indicator.hideOnDaily)return undefined;
         const basisDate=easternClock(Date.now()).date;
         if(historyBasisDate!==basisDate){seedError=true;return undefined;}
-        const query=new URLSearchParams({symbol:ticker,timeframe:calculationFrame,anchor:indicator.anchor??'Session',before:String(actual[0].time),premarket:preferences.premarket?'1':'0',regular:preferences.regular?'1':'0',postmarket:preferences.postmarket?'1':'0'}),request=parseVwapSeedRequest(query),key=basisDate+query.toString();
+        const query=new URLSearchParams({symbol:ticker,timeframe:calculationFrame,anchor:indicator.anchor??'Session',before:String(actual[0].time),premarket:preferences.premarket?'1':'0',regular:preferences.regular?'1':'0',postmarket:preferences.postmarket?'1':'0'});
+        if (unadjusted) query.set("adjustment", "raw");
+        const request=parseVwapSeedRequest(query);
+        const localSeed=localVwapSeed(request,basisDate);
+        if(localSeed)return localSeed;
+        const key=basisDate+query.toString();
         const cachedEntry=chartVwapCache.readSeed(cacheOwner,key),cached=cachedEntry?.value,validCached=cached&&validVwapSeed(cached,request,basisDate)?cached:undefined;
         const expired=validCached&&cachedEntry&&Date.now()-cachedEntry.at>=300_000;
         const needsMoments=indicator.vwapBands?.mode==='Standard deviation'&&indicator.vwapBands.levels.some(level=>level.enabled);
         const missingMoments=validCached&&validCached.volume>0&&needsMoments&&!validCached.moments;
         if(validCached&&!expired&&(!missingMoments||Date.now()-(seedMomentAttempts.get(key)??0)<30_000))return validCached;
-        if(Date.now()-(seedFailures.get(key)??0)<30_000){if(!validCached)seedError=true;return validCached;}
+        if(waitForVwapRetry(seedFailures.get(key))){if(!validCached)seedError=true;return validCached;}
         if(!validCached)seedLoading=true;
         if(!pendingSeeds.has(key)){
           if(missingMoments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
@@ -515,7 +614,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           const demand=calculationDemand(axis,calculationView);if(!demand)return [];
           const {before,through}=demand,daily=frame==='1D',key=`${historyBasisDate}:${daily}:${through??'live'}`,cached=calculationContexts.get(key);
           if(!cached||cached.basisDate!==historyBasisDate||(contextCoverage.get(key)??Infinity)>before){
-            if(Date.now()-(contextFailures.get(key)??0)<30_000){seedError=true;return [];}
+            if(waitForVwapRetry(contextFailures.get(key))){seedError=true;return [];}
             seedLoading=true;
             if(!contextPending.has(key)){
               contextPending.add(key);
@@ -563,10 +662,13 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       };
       const writeAll = (initial: boolean, prepend = false, keepView = false) => {
         drawingVolumeBars=undefined;
-        seedLoading=false;seedError=false;vwapProblem="";vwapFrameCache.clear();futureIndicatorTimes.clear();
+        seedLoading=false;seedError=false;vwapProblem="";vwapRetryAt=Infinity;vwapFrameCache.clear();futureIndicatorTimes.clear();
         calendarReady=daily||[...bars.values()].every(bar=>marketCalendar.current.covers(bar.time));
         setSessionMessage(studies.some(study=>study.indicator.type==="VWAP")&&!calendarReady?"VWAP unavailable: trading-session data could not load.":"");
-        const actual = aggregateCandles(daily ? bars.values() : visibleChartBars(), timeframe, regularOnly);
+        const actual = mergeChartArchivePages(
+          aggregateCandles(daily ? bars.values() : visibleChartBars(), timeframe, regularOnly),
+          archivePages,
+        );
         const data = displayCandles(actual, timeframe, connected ? candleBucket(Math.floor(Date.now() / 1000) - 60, timeframe,regularOnly) : undefined).filter(bar=>daily||!bar.carried||isVisibleSession(bar.time,preferences,calendarReady?marketCalendar.current:undefined));
         const oldFirst = displayPoints[0]?.time;
         const range = chart.timeScale().getVisibleLogicalRange();
@@ -591,7 +693,13 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         updateStudyFormats();updateIndicatorLegend();
         updateBandFills();
         const hasVwapSnapshot=[...vwapReadoutKeys.values()].some(key=>chartVwapCache.readReadout(cacheOwner,historyBasisDate+key));
-        if(calendarReady)setSessionMessage(vwapProblem|| (seedError&&!hasVwapSnapshot?'VWAP history could not load. Retrying shortly.':seedLoading&&!hasVwapSnapshot?'Loading VWAP history…':''));
+        if(calendarReady)setSessionMessage(vwapProblem ||
+          (!hasVwapSnapshot && (seedLoading || seedError) ? "Calculating VWAP…" : ""));
+        clearTimeout(vwapRetryTimer);
+        if (Number.isFinite(vwapRetryAt)) {
+          vwapRetryTimer = setTimeout(() => { if (!disposed) writeAll(false, false, true); },
+            Math.max(0, vwapRetryAt - Date.now()));
+        }
         if(initial){
           const from=typeof restore?.range?.from==="number"&&data.length?Math.max(restore.range.from,data[0].time):null;
           const to=typeof restore?.range?.to==="number"&&data.length?Math.min(restore.range.to,data[data.length-1].time):null;
@@ -610,7 +718,109 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         }
         updateDates();
         renderJournalOverlay();
+        renderEvidence();
+        renderSplitMarkers();
       };
+      function renderSplitMarkers() {
+        if (!splits.length && !splitMarkers) return;
+        const observed = daily ? [...bars.values()] : visibleChartBars();
+        for (const page of archivePages) observed.push(...page.bars);
+        const projected = projectChartSplits(splits, observed, timeframe, regularOnly,
+          nextBefore === null ? undefined : Math.ceil(nextBefore / 1000))
+          .filter(marker => displayed.has(marker.time));
+        const key = JSON.stringify(projected);
+        if (key === splitMarkerKey) return;
+        splitMarkerKey = key;
+        splitByMarker = new Map(projected.map(({ split }) => [`split:${split.id}`, split]));
+        splitsByCandle = new Map();
+        for (const { time, split } of projected) {
+          const events = splitsByCandle.get(time);
+          if (events) events.push(split);
+          else splitsByCandle.set(time, [split]);
+        }
+        const markers = projected.map(({ split, time }) => ({
+          id: `split:${split.id}`, time: time as Stamp, position: "aboveBar" as const, shape: "square" as const,
+          text: "Split", color: dark ? "#c4b5fd" : "#6941c6",
+        }));
+        if (splitMarkers) splitMarkers.setMarkers(markers);
+        else if (markers.length) splitMarkers = createSeriesMarkers(candles, markers, { autoScale: false });
+      }
+
+      function loadSplitMarkers() {
+        const date = easternClock(Date.now()).date;
+        if (splitsDate === date || splitsPending || Date.now() < splitRetryAt) return;
+        splitsPending = true;
+        const query = new URLSearchParams({ symbol: ticker, generation: providerKey });
+        void sharedChartFetch(`/api/charts/splits?${query}`, { cache: "no-store", signal: abort.signal })
+          .then(async response => {
+            if (!response.ok) throw Error("split_history_unavailable");
+            const result = await response.json();
+            if (disposed || result.symbol !== ticker || result.basisDate !== date ||
+              date !== easternClock(Date.now()).date) return;
+            splits = parseChartSplits(result.splits);
+            if (result.coverageStart === null) splitRetryAt = Date.now() + 60_000;
+            else splitsDate = date;
+            renderSplitMarkers();
+          }).catch(() => { splitRetryAt = Date.now() + 30_000; })
+          .finally(() => { splitsPending = false; });
+      }
+
+      let evidenceMarkers: ISeriesMarkersPluginApi<Time> | undefined;
+      let evidenceZones: ChartEvidenceZones | undefined;
+      let previousEvidenceKey = "";
+      let previousEvidence: ResolvedChartEvidence | undefined;
+
+      function renderEvidence(changedTime?: number) {
+        const input = evidenceInput.current;
+        const nextEvidence = input.evidence;
+        if (!nextEvidence && !previousEvidence) return;
+        if (changedTime !== undefined && nextEvidence === previousEvidence && nextEvidence) {
+          const layer = nextEvidence[input.evidenceContext]?.events;
+          if (layer?.state !== "ready" || !layer.facts.some(event => event.trigger.plotTime === changedTime)) return;
+        }
+        const overlay = nextEvidence && projectChartOverlay({
+          evidence: nextEvidence,
+          context: input.evidenceContext,
+          generation: providerKey,
+          symbol: ticker,
+          frame: timeframe,
+          sessionMode: showOvernight ? "overnight" : regularOnly ? "regular" : "extended",
+          candleAt: time => displayed.get(time),
+        });
+        const key = JSON.stringify([input.evidenceContext, input.structureVisible, input.levelsVisible, overlay]);
+        if (key === previousEvidenceKey && nextEvidence === previousEvidence) return;
+        previousEvidenceKey = key;
+        previousEvidence = nextEvidence;
+        setReadout(overlay && nextEvidence ? { overlay, evidence: nextEvidence, context: input.evidenceContext, frame: timeframe } : undefined);
+        const events = input.structureVisible ? overlay?.events ?? [] : [];
+        const markers = events.map(event => ({
+          id: `evidence:${event.id}`,
+          time: event.trigger.plotTime as Stamp,
+          position: (event.kind === "swing" ? event.direction === "up" : event.direction === "down") ? "aboveBar" as const : "belowBar" as const,
+          shape: event.kind === "swing" ? "circle" as const : event.direction === "up" ? "arrowUp" as const : "arrowDown" as const,
+          color: event.direction === "up" ? preferences.upColor : preferences.downColor,
+        })).sort((left, right) => left.time - right.time);
+        if (markers.length) {
+          if (evidenceMarkers) evidenceMarkers.setMarkers(markers);
+          else evidenceMarkers = createSeriesMarkers(candles, markers, { autoScale: false });
+        } else if (evidenceMarkers) {
+          evidenceMarkers.detach();
+          evidenceMarkers = undefined;
+        }
+        const zones = input.levelsVisible ? overlay?.zones ?? [] : [];
+        if (zones.length) {
+          if (!evidenceZones) {
+            evidenceZones = new ChartEvidenceZones(price => candles.priceToCoordinate(price), {
+              support: preferences.upColor, resistance: preferences.downColor, text: dark ? "#c7d2df" : "#354358",
+            });
+            chart.panes()[0].attachPrimitive(evidenceZones);
+          }
+          evidenceZones.update(zones);
+        } else if (evidenceZones) {
+          chart.panes()[0].detachPrimitive(evidenceZones);
+          evidenceZones = undefined;
+        }
+      }
       let journalMarkers: ISeriesMarkersPluginApi<Time> | undefined;
       let journalMarkerBuckets: ReturnType<typeof makeJournalMarkers>["buckets"] = new Map();
 
@@ -727,8 +937,17 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             data.nextBefore=history.bars.length?history.bars[0].time*1000-1:data.nextBefore;
           }
           const basisDate=easternClock(Date.now()).date;
-          if(data.basisDate!==basisDate)throw Error("Adjusted candle history could not load. Try again.");
+          if(data.basisDate!==basisDate)throw Error("Candle history could not load on the selected price basis. Try again.");
           const newBasis=historyBasisDate!==basisDate;historyBasisDate=basisDate;
+          if (newBasis) {
+            if (splitsDate !== basisDate) {
+              splits = [];
+              setSelectedSplits([]);
+            }
+            archivePages.length = 0;
+            drawingVolumeHistory = undefined;
+            drawingVolumeFrom = Infinity;
+          }
           marketCalendar.current.merge(data.calendar);if(Array.isArray(data.calendars))for(const value of data.calendars)marketCalendar.current.merge(value);
           const initial = !loaded;
           if (!recent) indicatorsReady = true;
@@ -751,6 +970,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             warmupTimer = setTimeout(() => { if (!disposed && !loading && !indicatorsReady) void loadHistory(); }, 0);
           }
           setStatus(idleStatus());
+          loadSplitMarkers();
         } catch (failure) {
           if (!disposed && warmup) setSessionMessage("Indicator history could not load. Retrying shortly.");
           else if (!disposed && catchingUp) setStatus("Catching up…");
@@ -771,10 +991,36 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         if(disposed||loading||loadingOlder||!indicatorsReady||nextBefore===null)return;
         loadingOlder=true;userPanned=false;setHistoryMessage("Loading older candles…");
         try {
-          const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0", before: String(nextBefore) });
+          const before = nextBefore;
+          // Journal focus and VWAP still need the legacy minute and calendar inputs.
+          const journalNeedsBaseHistory = () => Boolean(activeTradeContext || focusingJournal || journalEngineBridge.getFocus());
+          const archiveWindow = !unadjusted && !showOvernight && !journalNeedsBaseHistory() &&
+            !studies.some(study => study.indicator.type === "VWAP")
+            ? chartArchiveWindow(before, timeframe, preferences) : null;
+          if (archiveWindow) {
+            const completed = await readCompletedChartHistory(ticker, archiveWindow, providerQuery, abort.signal);
+            if (disposed) return;
+            if (completed?.basisDate === historyBasisDate && historyBasisDate === easternClock(Date.now()).date &&
+                !journalNeedsBaseHistory()) {
+              const merged = mergeChartArchivePages(displayPoints.filter(bar => !bar.carried), [completed]);
+              if (displayCandles(merged, timeframe).length > 80_000) {
+                nextBefore = null;
+                setHistoryMessage("Chart history limit reached. Use a larger timeframe for older dates.");
+              } else {
+                archivePages.push(completed);
+                nextBefore = completed.start * 1000 - 1;
+                setHistoryMessage(completed.bars.length ? "" : emptyOlderHistoryNotice);
+                writeAll(false, true);
+              }
+              return;
+            }
+          }
+          const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0", before: String(before) });
           const page=await readHistory(query).catch(() => { throw Error("Older candles could not load. Pan left again to retry."); });if(disposed)return;if(page.basisDate!==historyBasisDate||historyBasisDate!==easternClock(Date.now()).date)throw Error("Price adjustments changed. Reload the chart.");marketCalendar.current.merge(page.calendar);if(Array.isArray(page.calendars))for(const value of page.calendars)marketCalendar.current.merge(value);
           const combined=new Map(bars);for(const bar of page.bars as Candle[])if(!combined.has(bar.time))combined.set(bar.time,bar);
-          const projected=displayCandles(aggregateCandles(combined.values(),timeframe,regularOnly),timeframe);
+          const projected=displayCandles(mergeChartArchivePages(
+            aggregateCandles(combined.values(), timeframe, regularOnly), archivePages,
+          ), timeframe);
           if(projected.length>80_000){nextBefore=null;setHistoryMessage("Chart history limit reached. Use a larger timeframe for older dates.");}
           else {
             setHistoryMessage("");
@@ -873,6 +1119,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         if (disposed || overnightUnavailable || overnightPending.size >= 4 || overnightPending.has(query)) return;
         const params = new URLSearchParams(query);
         params.set("overnight", "1");
+        if (unadjusted) params.set("adjustment", "raw");
         params.set("generation", providerKey);
         overnightPending.add(query);
         const requestedAt = overnightRevision;
@@ -880,8 +1127,9 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           .then(async response => {
             if (response.status === 404) { overnightUnavailable = true; return; }
             if (!response.ok || disposed) return;
-            const result = await response.json() as { bars: Candle[]; basisDate: string };
-            if (disposed || !Array.isArray(result.bars) || result.basisDate !== easternClock(Date.now()).date) return;
+            const result = await response.json() as { bars: Candle[]; basisDate: string; adjustment?: "raw" | "split" };
+            if (disposed || !Array.isArray(result.bars) || (result.adjustment ?? "split") !== priceAdjustment ||
+              result.basisDate !== easternClock(Date.now()).date) return;
             selectOvernightBasis(result.basisDate);
             for (const bar of result.bars) {
               if ((overnightLiveRevisions.get(bar.time) ?? 0) <= requestedAt && (overnightBars.has(bar.time) || overnightBars.size < 80_000)) {
@@ -912,6 +1160,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         const message = JSON.parse((event as MessageEvent).data) as { bar: Candle; daily: boolean };
         if (message.daily !== daily) return;
         const bar = message.bar;
+        if (unadjusted && easternClock(bar.time * 1000).date !== easternClock(Date.now()).date) return;
         if (overnight) {
           if (!chartOvernightTradingDate(bar.time * 1000)) return;
           selectOvernightBasis(easternClock(Date.now()).date);
@@ -956,6 +1205,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
               }else drawingVolumeBars[index]=bar;
             }
             candles.update(point(updated)); volume?.update(volumePoint(updated));
+            renderEvidence(bucket);
             const actual = studies.length ? displayPoints.filter(value => !value.carried) : [];
             vwapFrameCache.clear();
             for (const study of indicatorsReady ? studies : []) {
@@ -1020,7 +1270,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         auxiliarySource.addEventListener('bar',event=>{
           if(disposed)return;
           const message=JSON.parse((event as MessageEvent).data) as {bar:Candle;daily:boolean};
-          if(message.daily!==daily)return;
+          if(message.daily!==daily || unadjusted && easternClock(message.bar.time * 1000).date !== easternClock(Date.now()).date)return;
           calculationHistory.acceptLive(message.bar,daily);
           for(const cached of calculationContexts.values())if(cached.daily===daily&&cached.through===undefined&&cached.basisDate===easternClock(Date.now()).date){const combined=new Map(cached.bars.map(bar=>[bar.time,bar]));combined.set(message.bar.time,message.bar);cached.bars=[...combined.values()].sort((a,b)=>a.time-b.time);}
           if(loaded)writeAll(false);
@@ -1062,13 +1312,18 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       removeChart = () => {
         detachJournalEngine?.();
         journalMarkers?.detach();
- document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);if(cacheKey && loaded && !catchingUp && indicatorsReady && bars.size && bars.size+overnightBars.size<=20_000){
+        evidenceMarkers?.detach();
+        splitMarkers?.detach();
+        if (evidenceZones) chart.panes()[0].detachPrimitive(evidenceZones);
+        if (evidenceRender.current === renderEvidence) evidenceRender.current = undefined;
+ document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);clearTimeout(vwapRetryTimer);if(cacheKey && loaded && !catchingUp && indicatorsReady && !archivePages.length && bars.size && bars.size+overnightBars.size<=20_000){
         recentChartCandles.delete(cacheKey);
         recentChartCandles.set(cacheKey,{basisDate:historyBasisDate,bars:[...bars.values()],
           ...(overnightBars.size && overnightBasis === historyBasisDate ? {overnightBars:[...overnightBars.values()]} : {}),
           nextBefore,calendar:marketCalendar.current,savedAt:Date.now()});
         while(recentChartCandles.size>4)recentChartCandles.delete(recentChartCandles.keys().next().value!);
       } element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
+      evidenceRender.current = renderEvidence;
       if (cached) {
         historyBasisDate = cached.basisDate;
         loaded = true;
@@ -1082,7 +1337,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready]);
+  }, [logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready, priceAdjustment, unadjusted, archiveDailyStartup]);
 
   useEffect(() => {
     if (!activeTradeContext || !ready) return;
@@ -1102,12 +1357,37 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     onClick={journal.open} sx={{ width: compact ? 36 : 34, height: compact ? compactToolbarHeight : 34, flexShrink: 0 }}>
     <MenuBookOutlined fontSize="small" />
   </IconButton> : null;
-  return <Box data-traderslink-chart={ticker} sx={[{ borderRadius: 0, height: "100%", position: "relative", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }, ...(Array.isArray(sx) ? sx : [sx])]}>
-    {compact ? <Stack data-chart-compact-toolbar direction="row" sx={{ alignItems: "center", px: 0.5, height: compactToolbarHeight, flexShrink: 0, gap: 0.5 }}>
-      <Box data-chart-identity sx={{ flex: 1, minWidth: 0 }}>{chartIdentity ?? <Typography sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700 }}>{ticker}</Typography>}</Box>
-      {status ? <Typography role="status" sx={chartIdentity ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" } : { fontSize: 10, color: "text.secondary", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", maxWidth: 100 }}>{status}</Typography> : null}
-      <Button aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready} sx={{ minWidth: 44, height: compactToolbarHeight, px: 0.5 }}>{timeframe}</Button>
-      <IconButton aria-label={`${ticker} chart options`} aria-haspopup="menu" onClick={event => setMenuAnchor(event.currentTarget)} sx={{ width: 44, height: compactToolbarHeight }}><SettingsOutlined fontSize="small" /></IconButton>
+  const evidenceButtonSize = {
+    minWidth: 44, px: compact ? 0.625 : 0.75, flexShrink: 0, whiteSpace: "nowrap",
+    minHeight: compact ? compactToolbarHeight : { xs: 44, md: 27 },
+    fontSize: compact ? 12 : undefined, textTransform: compact ? "none" : undefined,
+  };
+  const evidenceButtons = evidence && <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+    <Button size="small" aria-pressed={structureVisible} onClick={() => setStructureVisible(value => !value)}
+      sx={{ ...evidenceButtonSize, bgcolor: structureVisible ? "action.selected" : undefined }}>Structure</Button>
+    <Button size="small" aria-pressed={levelsVisible} onClick={() => setLevelsVisible(value => !value)}
+      sx={{ ...evidenceButtonSize, bgcolor: levelsVisible ? "action.selected" : undefined }}>Levels</Button>
+  </Box>;
+  const crosshairReadout = <Box ref={crosshairDetails} data-chart-crosshair-details sx={{
+    flex: 1, minWidth: 0, minHeight: 16,
+    zIndex: 2, pointerEvents: "none", px: 0.5, fontSize: 10, color: "text.secondary",
+    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+  }} />;
+  const overlayReadout = evidence?.chartGeneration === providerKey &&
+    readout?.evidence === evidence && readout?.context === evidenceContext && readout?.frame === timeframe
+    ? readout.overlay : undefined;
+  return <Box data-traderslink-chart={ticker} data-chart-price-adjustment={priceAdjustment} sx={[{ borderRadius: 0, height: "100%", position: "relative", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }, ...(Array.isArray(sx) ? sx : [sx])]}>
+    {compact ? <Stack data-chart-compact-toolbar direction="row" sx={{
+      alignItems: "center", px: 0.375, minHeight: compactToolbarHeight, flexShrink: 0, flexWrap: "wrap", gap: 0.5,
+    }}>
+      <Box data-chart-identity sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: "1 1 32px", minWidth: 0 }}>
+        {chartIdentity ?? <Typography noWrap sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700, flexShrink: 0, maxWidth: "100%" }}>{ticker}</Typography>}
+      </Box>
+      <Button aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
+        sx={{ minWidth: 44, height: compactToolbarHeight, px: 0.5, flexShrink: 0 }}>{timeframe}</Button>
+      <IconButton aria-label={`${ticker} chart options`} aria-haspopup="menu" onClick={event => setMenuAnchor(event.currentTarget)}
+        sx={{ width: 44, height: compactToolbarHeight, flexShrink: 0 }}><SettingsOutlined fontSize="small" /></IconButton>
+      {evidenceButtons}
       {drawingToolbar}
       {journalButton}
       {multiviewButton}
@@ -1122,6 +1402,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         disabled={!ready} onClick={()=>openIndicators()} sx={{width:mainToolbar?34:44,height:mainToolbar?34:44}}>
         <NetworkCheck fontSize="small"/>
       </IconButton>
+      {evidenceButtons}
       {drawingToolbar}
       {journalButton}
       {multiviewButton}
@@ -1142,17 +1423,61 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     {drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
     {activeTradeContext && journal.status && !journal.current?.open && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>{journal.status}</Typography>}
-    {sessionMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{sessionMessage}</Typography>:null}
     {historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
+    {unadjusted && <Typography variant="caption" sx={{ px: 0.5 }}>Unadjusted prices</Typography>}
+    {evidence && preferences.priceAdjustment === "raw" && <Typography variant="caption" sx={{ px: 0.5 }}>
+      Matched evidence uses split-adjusted prices
+    </Typography>}
+    {selectedSplits.map(split => <Typography key={split.id} role="status" sx={{ fontSize: 11, px: 0.5 }}>
+      {chartSplitLabel(split)} · Effective {split.date}
+    </Typography>)}
+    {evidence && <Box component="details" data-chart-evidence={evidenceContext} sx={{ px: 0.75, fontSize: 11 }}>
+      <Box component="summary" sx={{ cursor: "pointer" }}>{evidenceContext === "match" ? "Matched evidence" : "Chart evidence"}</Box>
+      {evidence.match && <Button size="small" onClick={() => setShowCurrentEvidence(value => !value)}>
+        {evidenceContext === "match" ? "Show current evidence" : "Show matched evidence"}
+      </Button>}
+      <Box sx={{ maxHeight: 80, overflow: "auto" }}>
+        {marketData.ready && evidence.chartGeneration !== providerKey && <Typography variant="caption" component="div">
+          Evidence unavailable for this data connection
+        </Typography>}
+        {overlayReadout?.missingEvent && structureVisible && <Typography variant="caption" component="div">
+          {evidenceContext === "match"
+            ? overlayReadout.missingCandle ? "Original candle unavailable" : "Original structure unavailable"
+            : overlayReadout.missingCandle ? "Evidence candle unavailable" : "Structure unavailable"}
+        </Typography>}
+        {overlayReadout?.missingZone && levelsVisible && <Typography variant="caption" component="div">
+          {evidenceContext === "match" ? "Original Levels unavailable" : "Levels unavailable"}
+        </Typography>}
+        {structureVisible && overlayReadout?.events.slice(-8).map(event => <Typography key={event.id} variant="caption" component="div"
+          data-chart-event={event.id} data-candle-revision={event.trigger.revision} data-candle-time={event.trigger.plotTime}>
+          {event.trigger.frame.toUpperCase()} {event.direction === "up" ? "↑" : "↓"} {evidenceEventLabels[event.kind]} · {evidenceTime.format(event.knownAt * 1000)}
+        </Typography>)}
+        {levelsVisible && overlayReadout?.zones.map(zone => <Typography key={JSON.stringify([zone.mapId, zone.mapRevision, zone.zoneId])}
+          variant="caption" component="div" data-chart-zone={zone.zoneId} data-map-revision={zone.mapRevision}
+          data-zone-frame={zone.sourceFrame} data-zone-lower={zone.lower} data-zone-upper={zone.upper}>
+          {zone.sourceFrame === "1D" ? "Daily" : zone.sourceFrame.toUpperCase()} {zone.side} {formatEvidencePrice(zone.lower)}–{formatEvidencePrice(zone.upper)}
+          {zone.freshness === "stale" ? " · Historical" : ""}
+        </Typography>)}
+      </Box>
+    </Box>}
     {error ? <Stack role="alert" direction="row" sx={{ alignItems: "center", px: 1, gap: 1 }}><Typography sx={{ fontSize: 12 }}>{error}</Typography><Button size="small" onClick={() => setAttempt(value => value + 1)}>Retry</Button></Stack> : null}
-    <Box ref={crosshairDetails} data-chart-crosshair-details sx={{position:compact?"absolute":"static",top:compact?compactToolbarHeight:undefined,left:compact&&leftToolbarShown?44:0,right:0,zIndex:2,pointerEvents:"none",minHeight:compact?0:16,mb:compact?0:0.5,px:0.5,fontSize:10,color:"text.secondary",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} />
     <Box sx={{display:"flex",flex:1,minHeight:0,minWidth:0}}>
     {drawingLeftToolbar}
-    <Box sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}><Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/><ChartIndicatorLegend legendRef={indicatorLegend} types={readoutTypes} hidden={indicatorDisplay.hidden}
-      compact={compact} dark={dark} openType={indicatorMenu?.type}
+    <Box sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}><Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/>
+    <Box sx={{ position: "absolute", top: 2, left: 8, right: "var(--chart-indicator-right, 65px)", zIndex: 2,
+      display: "flex", alignItems: "baseline", pointerEvents: "none" }}>
+      {crosshairReadout}
+      {compact && status && <Typography role="status" noWrap sx={chartIdentity
+        ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }
+        : { fontSize: 10, color: "text.secondary", maxWidth: "50%", pr: 0.5 }}>{status}</Typography>}
+    </Box>
+    <ChartIndicatorLegend legendRef={indicatorLegend} types={readoutTypes} hidden={hiddenIndicatorValues}
+      dark={dark} openType={indicatorMenu?.type}
       onOpenOptions={(type,anchor)=>setIndicatorMenu({anchor,type})}/>
     <Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/>{drawingOverlay}</Box>
     </Box>
+    {sessionMessage && <Typography role="status" data-chart-vwap-status
+      sx={{ flexShrink: 0, fontSize: 11, px: 0.75, color: "text.secondary" }}>{sessionMessage}</Typography>}
     <Menu anchorEl={indicatorMenu?.anchor} open={Boolean(indicatorMenu)} onClose={()=>setIndicatorMenu(null)}>
       {indicatorMenu?[
         <MenuItem key="settings" onClick={()=>{openIndicators(indicatorMenu.type);setIndicatorMenu(null);}}>Settings</MenuItem>,
@@ -1166,6 +1491,6 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         onReview={journal.review} focusStatus={journal.status} register={journal.register}
         setOverlay={journal.setOverlay} panelId={journal.panelId} />
     </Suspense>}
-    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel timeframe={timeframe} panel={panel} onClose={()=>setPanel(null)} preferences={{...accountPreferences,logarithmic}} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
+    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel ticker={ticker} timeframe={timeframe} panel={panel} onClose={()=>setPanel(null)} preferences={{...accountPreferences,logarithmic}} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
   </Box>;
 }

@@ -3,7 +3,7 @@ import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
-import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
+import { hasMarketToolsDashboardReadAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { companySymbol,readCompanySnapshot } from "@/src/modules/company/server/company-snapshot";
 import { companyUniverseEntry } from "@/src/modules/company/server/company-market-data";
 import { companyTechnicalSample } from "@/src/modules/company/server/company-technical-samples";
@@ -14,7 +14,7 @@ async function readGET(request:Request){
   let identity;
   try{identity=requireTraderLinkPlatformRequestIdentity(request.headers);}
   catch{return reply({},401);}
-  if(!hasWatchlistDashboardNavigationAccess(identity))return reply({},404);
+  if(!hasMarketToolsDashboardReadAccess(identity))return reply({},404);
   const symbol=companySymbol(new URL(request.url).searchParams.get("symbol")??"");
   if(!symbol)return reply({},404);
   const local=identity.mode==="local_development"&&process.env.NODE_ENV!=="production";

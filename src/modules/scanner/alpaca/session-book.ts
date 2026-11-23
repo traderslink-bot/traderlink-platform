@@ -1,15 +1,22 @@
 import type { AlpacaRestData } from "./rest-data";
+import { easternDayStart, type Candle } from "./candles";
+import { SCANNER_OPENING_RANGE_MINUTES, type ScannerOpeningRanges } from "../live/contracts";
 import { easternClock } from "../live/sessions";
 
-export type AlpacaSessionTotal = { volume: number; dollarVolume: number; high: number | null; low: number | null; price: number | null; providerAt: number | null };
-export type AlpacaSessionState = { date: string; regularClose: number; complete: boolean; sessions: Record<"premarket" | "regular" | "after_hours", AlpacaSessionTotal> };
+export type AlpacaSessionTotal = { volume: number; dollarVolume: number; high: number | null; low: number | null; price: number | null; providerAt: number | null; open?: number; firstTradeAt?: string };
+export type AlpacaSessionState = { date: string; regularClose: number; complete: boolean; openingRanges?: ScannerOpeningRanges; sessions: Record<"premarket" | "regular" | "after_hours", AlpacaSessionTotal> };
 type Trade = { T?: string; S?: string; t: string; p: number; s: number; i: number | string; x: string; c?: string[]; z?: string };
-type Entry = { state: AlpacaSessionState; pending: Trade[]; cutoff: number | null; coveredThrough: number | null; overflow: boolean; working: boolean; retryAt: number };
+type OpeningBars = (symbol: string, date: string, start: number, end: number) => readonly Pick<Candle, "time" | "high" | "low">[] | null;
+type OpeningRead = { checkedAt: number; requestedMinutes: number; verifiedMinutes: number; ranges: ScannerOpeningRanges };
+type Entry = { state: AlpacaSessionState; pending: Trade[]; cutoff: number | null; coveredThrough: number | null; overflow: boolean; working: boolean; retryAt: number; openingRead?: OpeningRead };
+const openingReadIntervalMs = 30_000;
+function fractionNanoseconds(timestamp: string) {
+  return Number((/\.(\d+)Z$/.exec(timestamp)?.[1] ?? "").padEnd(9, "0"));
+}
 function afterCutoff(timestamp: string, cutoff: number): boolean {
   const milliseconds = Date.parse(timestamp);
   if (!Number.isFinite(milliseconds)) return false;
-  const fraction = /\.(\d+)Z$/.exec(timestamp)?.[1] ?? "";
-  const remainder = Number(fraction.padEnd(9, "0").slice(3, 9));
+  const remainder = fractionNanoseconds(timestamp) % 1_000_000;
   return milliseconds > cutoff || milliseconds === cutoff && remainder > 0;
 }
 const empty = (): AlpacaSessionTotal => ({ volume: 0, dollarVolume: 0, high: null, low: null, price: null, providerAt: null });
@@ -22,6 +29,29 @@ export function alpacaMinuteTradeRules(trade: Pick<Trade, "c" | "z">) {
     volume: !conditions.some(condition => ["M", "Q", "9"].includes(condition)),
     prices: !conditions.some(condition => ["C", "G", "H", "I", "M", "N", "P", "Q", "R", "U", "V", "W", "Z", "4", "7", "9"].includes(condition) || (condition === "B" && trade.z !== "C")),
   };
+}
+
+function extendOpeningRanges(state: AlpacaSessionState, minute: number, price: number) {
+  if (minute < 570 || minute >= 600 || minute >= state.regularClose) return false;
+  const ranges = state.openingRanges ??= {};
+  let changed = false;
+  for (const minutes of SCANNER_OPENING_RANGE_MINUTES) {
+    if (minute >= 570 + minutes) continue;
+    const range = ranges[minutes];
+    if (range && price >= range.low && price <= range.high) continue;
+    ranges[minutes] = { high: Math.max(range?.high ?? price, price), low: Math.min(range?.low ?? price, price) };
+    changed = true;
+  }
+  return changed;
+}
+
+function lateOpeningTradeMinute(state: AlpacaSessionState, trade: Trade) {
+  const at = Date.parse(trade.t);
+  if (!Number.isFinite(at) || !Number.isFinite(trade.p) || trade.p <= 0 || !Number.isSafeInteger(trade.s) || trade.s < 0) return;
+  const clock = easternClock(at);
+  if (clock.date !== state.date || clock.minute < 570 || clock.minute >= Math.min(600, state.regularClose)) return;
+  const rules = alpacaMinuteTradeRules(trade);
+  if (rules.known && rules.prices) return clock.minute;
 }
 
 /** SIP trade-condition rules: Alpaca Market Data FAQ, stock minute-bar rules. */
@@ -38,6 +68,14 @@ export function applyAlpacaTrade(state: AlpacaSessionState, trade: Trade): boole
   if (volume) { total.volume += trade.s; total.dollarVolume += trade.p * trade.s; }
   if (prices) {
     total.high = Math.max(total.high ?? trade.p, trade.p); total.low = Math.min(total.low ?? trade.p, trade.p);
+    if (session === "regular") extendOpeningRanges(state, clock.minute, trade.p);
+    const first = total.firstTradeAt;
+    const firstMs = first ? Date.parse(first) : undefined;
+    if (firstMs === undefined || time < firstMs || (time === firstMs &&
+      fractionNanoseconds(trade.t) < fractionNanoseconds(first!))) {
+      total.open = trade.p;
+      total.firstTradeAt = trade.t;
+    }
     if (total.providerAt === null || time >= total.providerAt) { total.price = trade.p; total.providerAt = time; }
   }
   return true;
@@ -50,7 +88,9 @@ export class AlpacaSessionBook {
   private readonly seen = new Map<string, true>();
   private workers = 0;
   private generation = 0;
-  constructor(private readonly rest: AlpacaRestData,private readonly changed?:(symbol:string)=>void) {}
+  private openingSession?: { date: string; start: number };
+  constructor(private readonly rest: AlpacaRestData, private readonly changed?: (symbol: string) => void,
+    private readonly readOpeningBars?: OpeningBars) {}
   invalidate() {
     this.generation++;
     for (const entry of this.entries.values()) { entry.state.complete = false; entry.overflow = true; entry.retryAt = 0; }
@@ -62,12 +102,18 @@ export class AlpacaSessionBook {
     if (trade.T === "c" || trade.T === "x") { entry.state.complete = false; entry.overflow = true; return; }
     if (trade.T !== "t") return;
     if (entry.working && entry.cutoff !== null) {
-      if (Date.parse(trade.t) >= entry.cutoff) entry.pending.push(trade);
+      if (Date.parse(trade.t) >= entry.cutoff || lateOpeningTradeMinute(entry.state, trade) !== undefined) entry.pending.push(trade);
       if (entry.pending.length > 50_000) { entry.pending.length = 0; entry.overflow = true; }
       return;
     }
     if (!entry.state.complete) return;
-    if (entry.coveredThrough !== null && !afterCutoff(trade.t, entry.coveredThrough)) return;
+    if (entry.coveredThrough !== null && !afterCutoff(trade.t, entry.coveredThrough)) {
+      const minute = lateOpeningTradeMinute(entry.state, trade);
+      // A late price can extend a range even if history omitted that execution.
+      // Keep volume and other session counters on the deduplicated history boundary.
+      if (minute !== undefined && extendOpeningRanges(entry.state, minute, trade.p)) this.changed?.(trade.S);
+      return;
+    }
     const key = `${trade.S}:${trade.x}:${trade.i}:${trade.t}`;
     if (this.seen.has(key)) return;
     this.seen.set(key, true);
@@ -81,7 +127,50 @@ export class AlpacaSessionBook {
       this.entries.set(symbol, entry);
     }
     if (!entry.state.complete && !entry.working && entry.retryAt <= Date.now() && !this.queue.includes(symbol)) this.queue.push(symbol);
-    this.pump(); return structuredClone(entry.state);
+    this.pump();
+    const snapshot = structuredClone(entry.state);
+    if (snapshot.complete && this.readOpeningBars) this.reconcileOpeningRanges(symbol, entry, snapshot, this.readOpeningBars);
+    return snapshot;
+  }
+
+  private reconcileOpeningRanges(symbol: string, entry: Entry, snapshot: AlpacaSessionState, readBars: OpeningBars) {
+    const now = Date.now();
+    if (this.openingSession?.date !== snapshot.date) {
+      const midnight = easternDayStart(Date.parse(snapshot.date + "T12:00:00Z") / 1_000);
+      this.openingSession = { date: snapshot.date, start: midnight + 570 * 60 };
+    }
+    const open = this.openingSession.start;
+    const closed = SCANNER_OPENING_RANGE_MINUTES.filter(minutes => (open + minutes * 60) * 1_000 <= now);
+    const requestedMinutes = closed.at(-1);
+    if (!requestedMinutes) return;
+
+    let verified = entry.openingRead;
+    if (!verified || verified.requestedMinutes !== requestedMinutes || now - verified.checkedAt >= openingReadIntervalMs) {
+      verified = { checkedAt: now, requestedMinutes, verifiedMinutes: 0, ranges: {} };
+      for (const minutes of [...closed].reverse()) {
+        const bars = readBars(symbol, snapshot.date, open, open + minutes * 60);
+        if (!bars) continue;
+        verified.verifiedMinutes = minutes;
+        for (const period of closed) {
+          if (period > minutes) break;
+          const inside = bars.filter(bar => bar.time < open + period * 60);
+          if (inside.length) verified.ranges[period] = {
+            high: Math.max(...inside.map(bar => bar.high)), low: Math.min(...inside.map(bar => bar.low)),
+          };
+        }
+        break;
+      }
+      entry.openingRead = verified;
+    }
+
+    if (!verified.verifiedMinutes) return;
+    const ranges = snapshot.openingRanges ??= {};
+    for (const minutes of closed) {
+      if (minutes > verified.verifiedMinutes) break;
+      const range = verified.ranges[minutes];
+      if (range) ranges[minutes] = { ...range };
+      else delete ranges[minutes];
+    }
   }
   remove(symbol: string) { this.entries.delete(symbol); }
   private pump() {
@@ -116,6 +205,11 @@ export class AlpacaSessionBook {
       }
       if (!complete || entry.overflow || generation !== this.generation || this.entries.get(symbol) !== entry) return;
       for (const trade of entry.pending) {
+        if (Date.parse(trade.t) < cutoff) {
+          const minute = lateOpeningTradeMinute(rebuilt, trade);
+          if (minute !== undefined) extendOpeningRanges(rebuilt, minute, trade.p);
+          continue;
+        }
         const key = `${symbol}:${trade.x}:${trade.i}:${trade.t}`;
         if (boundary.has(key)) continue;
         boundary.add(key);

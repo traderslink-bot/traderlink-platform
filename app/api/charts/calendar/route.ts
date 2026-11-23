@@ -1,3 +1,4 @@
+import {hasSharedChartDataAccess} from "@/src/modules/market-data/server/chart-dashboard-access";
 import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import {marketDataSelection} from "@/src/modules/market-data/server/provider-settings";
 import {matchesBrowserDataSession} from "@/src/modules/market-data/server/browser-data-session";
@@ -7,7 +8,9 @@ import {parseChartCalendarYear,readChartCalendarYear} from '@/src/modules/scanne
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const reply=(body:unknown,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'private, no-store'}});
 async function readGET(request:Request){
- try{requireTraderLinkPlatformRequestIdentity(request.headers);}catch{return reply({error:'not_authenticated'},401);}
+ let identity: ReturnType<typeof requireTraderLinkPlatformRequestIdentity>;
+ try{identity=requireTraderLinkPlatformRequestIdentity(request.headers);}catch{return reply({error:'not_authenticated'},401);}
+ if(!hasSharedChartDataAccess(identity))return reply({error:'chart_access_denied'},403);
  let year:number;try{year=parseChartCalendarYear(new URL(request.url).searchParams);}catch{return reply({error:'invalid_calendar_year'},400);}
  const selection=marketDataSelection("charts"),params=new URL(request.url).searchParams;
  if(!matchesBrowserDataSession(params,"charts",selection))return reply({error:"provider_changed"},409);

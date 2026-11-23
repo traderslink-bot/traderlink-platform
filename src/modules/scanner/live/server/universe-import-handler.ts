@@ -73,6 +73,12 @@ export async function handleUniverseImport(request: Request, options: Options = 
   try {
     const save: Save = options.save ?? ((input,at) => new UniverseStore(join(dirname(resolvePlatformDatabaseConfig({ environment }).databasePath),"scanner-live-v1")).import(input,at));
     const result = await save(checked.input,now);
+    if (environment.TRADERLINK_ALPACA_CANDLE_HISTORY_ADMIN_TOKEN) {
+      try {
+        const { syncCandleHistoryRoster } = await import("../../../market-data/candle-history/roster");
+        await syncCandleHistoryRoster(result.universe, environment);
+      } catch { /* The accepted import remains durable; the next import or admin save retries the archive roster. */ }
+    }
     return response(result.idempotent ? 200 : 201,result.idempotent ? "scanner_universe_already_imported" : "scanner_universe_imported",{
       tradingDate: result.universe.tradingDate, uploadCount: checked.stocks.length, retainedCount: result.universe.stocks.length,
       idempotent: result.idempotent, sourceHash: checked.hash,

@@ -1,3 +1,4 @@
+import { scannerVolumeBreakdown } from "./volume";
 import { LEGACY_SCAN_MS } from "./event-timing";
 import type { DailyUniverse, FocusControls, FocusStock, LiveScannerRow, LiveScreenResults, MomentumSignal, NormalizedSnapshot,
   ScannerConfiguration, ScannerNewsItem, ScannerSession, ScreenFilters } from "./contracts";
@@ -167,6 +168,7 @@ export class LiveScannerEngine {
           typeof snapshot.regularClosePrice === "number" && Number.isFinite(snapshot.regularClosePrice) && snapshot.regularClosePrice > 0
             ? (snapshot.price/snapshot.regularClosePrice-1)*100 : null } : {}),
         volume: snapshot.volume, dollarVolume: snapshot.dollarVolume, marketCap: snapshot.marketCap,
+        ...scannerVolumeBreakdown(snapshot),
         marketCapAtCollection: stock.marketCapAtCollection, float, floatRetrievedAtUtc,
         relativeVolume: input.session === "premarket" ? null : snapshot.providerVolumeRatio,
         dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow,

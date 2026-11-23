@@ -1,4 +1,4 @@
-import type { IndicatorDisplayRow } from "@/src/lib/live-watchlist/indicators/indicator-presentation";
+import type { IndicatorDisplayRow } from "@/src/modules/market-data/indicators/indicator-presentation";
 import type { scannerIndicatorResults } from "./scanner-indicator-calculation";
 
 export const SCANNER_INDICATOR_FRAMES = ["1m", "5m", "15m"] as const;

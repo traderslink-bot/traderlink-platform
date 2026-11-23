@@ -2,6 +2,7 @@ import "server-only";
 import { readCompanyData } from "@/src/lib/news/company-data-gateway";
 import type { UniverseStock } from "@/src/modules/scanner/live/contracts";
 import { scannerUniverseStore,readLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
+import { scannerVolumeBreakdown } from "@/src/modules/scanner/live/volume";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { scannerIndicatorResults } from "@/src/modules/scanner/live/scanner-indicator-calculation";
 import { easternDayStart } from "@/src/modules/scanner/alpaca/candles";
@@ -15,7 +16,7 @@ export async function companyUniverseEntry(symbol:string){
   return universe?.stocks.find(stock=>stock.symbol===symbol&&stock.marketCapAtCollection>0&&stock.marketCapAtCollection<=COMPANY_MARKET_CAP_LIMIT);
 }
 
-type MarketRanges=Pick<CompanyTechnicals,"days"|"bid"|"ask"|"dollarVolume"|"sessionVwap"|"candleActivity"|"relativeVolume">;
+type MarketRanges=Pick<CompanyTechnicals,"days"|"bid"|"ask"|"dollarVolume"|"dayVolume"|"sessionVwap"|"candleActivity"|"relativeVolume">;
 const ranges=new Map<string,{expires:number;read:Promise<MarketRanges>}>();
 const calendars=new Map<number,ReturnType<typeof fetchCalendar>>();
 function fetchCalendar(year:number){
@@ -65,6 +66,12 @@ async function fetchRanges(symbol:string, now:number):Promise<MarketRanges>{
   const completed=history.bars.filter(bar=>(bar.time+60)*1000<=through);
   const {vwap}=scannerIndicatorResults(completed,"5m",through);
   const clock=easternClock(now);
+  const dayVolume = totals?.complete && totals.date === today && sessions.at(-1)?.date === today
+    ? scannerVolumeBreakdown({
+      session: clock.minute < 570 ? "premarket" : clock.minute < close ? "regular" : "after_hours",
+      premarketVolume: totals.sessions.premarket.volume,
+      regularVolume: totals.sessions.regular.volume,
+    }).dayVolume : undefined;
   const recent=completed.filter(bar=>{
     const time=easternClock(bar.time*1000);
     return time.date===today&&time.minute>=240&&time.minute<(close===780?1020:1200)
@@ -84,7 +91,7 @@ async function fetchRanges(symbol:string, now:number):Promise<MarketRanges>{
     fiveMinuteVolumeSpike:five&&previousFive>0?windowVolume(5,0)/previousFive:undefined,
     volumeAcceleration:preceding>0?last.volume/(preceding/5):undefined, intervalVolumeRate:last.volume/60,
   }:undefined;
-  return {days,relativeVolume,dollarVolume,sessionVwap:vwap?.value??undefined,candleActivity,
+  return {days,relativeVolume,dollarVolume,dayVolume,sessionVwap:vwap?.value??undefined,candleActivity,
     ...(usable?{bid:quote.bp,ask:quote.ap}:{})};
 }
 function readRanges(symbol:string){

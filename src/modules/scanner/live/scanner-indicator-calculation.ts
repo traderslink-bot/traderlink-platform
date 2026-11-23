@@ -1,6 +1,6 @@
-import { calculateIndicatorHistory, calculateSessionVwap } from "@/src/lib/live-watchlist/indicators/indicator-engine";
+import { calculateIndicatorHistory, calculateSessionVwap } from "@/src/modules/market-data/indicators/indicator-engine";
 import { aggregateCandles, type Candle } from "@/src/modules/scanner/alpaca/candles";
-import { indicatorMarketDate, indicatorSessionWindow, indicatorTradingDay, normalizeIndicatorSessions, type IndicatorCalendar } from "@/src/lib/live-watchlist/indicators/indicator-sessions";
+import { indicatorMarketDate, indicatorSessionWindow, indicatorTradingDay, normalizeIndicatorSessions, type IndicatorCalendar } from "@/src/modules/market-data/indicators/indicator-sessions";
 import exchangeCalendar from "@/src/modules/coach/server/market-calendar/us-equities-review-calendar.v1.json";
 import { calendarDate, parseCalendarSessions, type ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
 import type { ScannerIndicatorFrame } from "./scanner-indicator-read";

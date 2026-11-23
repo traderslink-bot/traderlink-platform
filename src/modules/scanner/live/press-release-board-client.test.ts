@@ -5,7 +5,8 @@ import { afterEach, beforeAll, expect, it, vi } from "vitest";
 
 vi.mock("@/app/dashboard-template",()=>({DashboardPanel:({children}:{children:ReactNode})=>createElement("section",null,children)}));
 vi.mock("@/app/(dashboard)/press-releases/press-release-actions",()=>({markPressReleaseRead:vi.fn()}));
-import { pressReleaseMarketCapValue, ScreenerPressReleaseBoard, useMarketEventsData, selectCompactArticles, tradeResumeHasPassedToday } from "@/app/(dashboard)/screeners/screener-press-release-board";
+import { eligibleCompactMarketEvents, pressReleaseMarketCapValue } from "@/src/modules/news/server/market-events-cap";
+import { ScreenerPressReleaseBoard, useMarketEventsData, selectCompactArticles, tradeResumeHasPassedToday } from "@/app/(dashboard)/screeners/screener-press-release-board";
 
 beforeAll(()=>{(globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;});
 let root:Root|null=null;
@@ -37,7 +38,48 @@ it("excludes compact-card releases at or above the configured market-cap boundar
   const high={...article("high","HIGH",date),marketCap:"1.2B"};
   const unknown={...article("unknown","UNKNOWN",date),marketCap:null};
   expect(pressReleaseMarketCapValue("$12.5M")).toBe(12_500_000);
-  expect(selectCompactArticles([low,boundary,high,unknown],dates,200_000_000).map(item=>item.id)).toEqual(["low","unknown"]);
+  expect(selectCompactArticles([low,boundary,high,unknown],dates,new Set(eligibleCompactMarketEvents([low,boundary,high,unknown],200_000_000))).map(item=>item.id)).toEqual(["low","unknown"]);
+});
+
+it("settles an unavailable news read while keeping live halts and recovering on the next good response",async()=>{
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-11-05T15:31:00.000Z"));
+  const release=article("recovery","LIVE","2026-11-05T15:30:00.000Z");
+  let status=403;
+  vi.stubGlobal("fetch",vi.fn(async(input:RequestInfo|URL)=>{
+    if(String(input).startsWith("/api/platform/news/workspace-floats?")) return Response.json({});
+    return status===200 ? Response.json({
+      articles:[release],compactArticleIds:[release.id],easternDate:"2026-11-05",
+    }) : Response.json({status:"unavailable"},{status});
+  }));
+  function MarketEvents() {
+    const data=useMarketEventsData();
+    return createElement(ScreenerPressReleaseBoard,{data,managedActiveHalts:[{
+      id:"halt",ticker:"PAUSE",market:"NASDAQ",haltTimeEt:"10:30:00",reasonCode:"T1",
+      reason:"News pending",quoteTimeEt:null,tradeTimeEt:null,halted:true,
+    }]});
+  }
+  const container=document.createElement("div");document.body.append(container);root=createRoot(container);
+  await act(async()=>root!.render(createElement(MarketEvents)));
+  expect(container.querySelector('[role="status"]')?.textContent).toBe("Press releases unavailable.");
+  expect(container.querySelector('[aria-label="Loading market events"]')).toBeNull();
+  expect(container.querySelector('[aria-label="Current halts"]')?.textContent).toContain("PAUSE");
+  expect(container.textContent).not.toContain("More news");
+
+  status=200;
+  await act(async()=>{await vi.advanceTimersByTimeAsync(30_000);});
+  expect(container.textContent).toContain("Headline recovery");
+  expect(container.textContent).not.toContain("Press releases unavailable.");
+
+  status=503;
+  await act(async()=>{await vi.advanceTimersByTimeAsync(30_000);});
+  expect(container.textContent).toContain("Headline recovery");
+
+  status=403;
+  await act(async()=>{await vi.advanceTimersByTimeAsync(30_000);});
+  expect(container.textContent).not.toContain("Headline recovery");
+  expect(container.textContent).toContain("Press releases unavailable.");
+  expect(container.querySelector('[aria-label="Current halts"]')?.textContent).toContain("PAUSE");
 });
 
 it("combines active halts with three PRs and uses one drawer for lists and article reading",async()=>{
@@ -59,7 +101,7 @@ it("combines active halts with three PRs and uses one drawer for lists and artic
     ]});
     if(url.includes("channel=market_cap_under_30m"))return Response.json({articles:under30,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
     if(url.includes("view=recent"))return Response.json({articles:scanner,since:"2026-11-03T15:31:00.000Z",next:null});
-    if(url.includes("view=expanded-summary"))return Response.json({articles:scanner,easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
+    if(url.includes("view=expanded-summary"))return Response.json({articles:scanner,compactArticleIds:scanner.map(item=>item.id),easternDate:"2026-11-05",previousTradingDate:"2026-11-04"});
     if(url.startsWith("/api/platform/news/workspace-floats?"))return Response.json({exchanges:{AAA:"NASDAQ",BBB:"NYSE",CCC:"NASDAQ"},floats:{AAA:{shares:500000},BBB:{shares:600000},CCC:{shares:700000}}});
     if(url.includes("articleId=cap-1"))return Response.json({article:under30[0]});
     throw Error(`Unexpected request: ${url}`);

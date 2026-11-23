@@ -12,7 +12,7 @@ import {
   type StockLevelsResult,
 } from "../stock-levels-contract";
 import { recordStockLevelsActivity } from "./stock-levels-admin-activity-service";
-import { requestStockLevels } from "./stock-levels-runtime-client";
+import { requestStockLevels, type ScannerEvidenceOperation } from "./stock-levels-runtime-client";
 import { stockLevelsNewYorkDate } from "./stock-levels-time";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -231,13 +231,22 @@ export async function getStockLevels(
   {
     noRequestLimit = false,
     replaceSavedMapId = null,
-  }: Readonly<{ noRequestLimit?: boolean; replaceSavedMapId?: string | null }> = {},
+    evidenceOperation,
+  }: Readonly<{
+    noRequestLimit?: boolean;
+    replaceSavedMapId?: string | null;
+    evidenceOperation?: ScannerEvidenceOperation;
+  }> = {},
 ): Promise<StockLevelsResult> {
   const now = Date.now();
   const feedbackBefore = feedback(scope, now, noRequestLimit);
   if (feedbackBefore.membership && feedbackBefore.membership.included === false) return { state: "unavailable", code: "limit_reached", message: "Unlock Levels Generator to create support and resistance maps. Choose a plan that includes it.", ...feedbackBefore };
   const symbol = symbolFrom(input);
   if (!symbol) return { state: "unavailable", code: "invalid_symbol", message: "Enter a valid ticker.", ...feedbackBefore };
+  if (evidenceOperation && (replaceSavedMapId || evidenceOperation.request.signal.aborted ||
+      evidenceOperation.ownerUserId !== scope.userId || evidenceOperation.symbol !== symbol)) {
+    return { state: "unavailable", code: "market_data_unavailable", message: "Data is not available for this ticker right now, try again later.", ...feedbackBefore };
+  }
   if (replaceSavedMapId) {
     const database = openPlatformDatabase({ mode: "runtime" });
     try {
@@ -248,7 +257,9 @@ export async function getStockLevels(
     } finally { database.close(); }
   }
   if ((feedbackBefore.membership || !noRequestLimit) && (feedbackBefore.remainingHourly === 0 || feedbackBefore.remainingNewYorkDay === 0)) return { state: "unavailable", code: "limit_reached", message: "Your generation allowance has been reached. View plans for more access, or wait for your reset if one is scheduled.", ...feedbackBefore };
-  const runtimeReply = await requestStockLevels(symbol);
+  const runtimeReply = evidenceOperation
+    ? await requestStockLevels(symbol, evidenceOperation)
+    : await requestStockLevels(symbol);
   if (!runtimeReply) return { state: "unavailable", code: "runtime_unavailable", message: "A reliable Stock Levels map is unavailable right now. Try again later.", ...feedbackBefore };
   if (!("map" in runtimeReply)) {
     return runtimeReply.code === "unsupported_equity" ||
@@ -256,6 +267,9 @@ export async function getStockLevels(
       runtimeReply.code === "market_data_unavailable"
       ? { state: "unavailable", code: "market_data_unavailable", message: "Data is not available for this ticker right now, try again later.", ...feedbackBefore }
       : { state: "unavailable", code: runtimeReply.code, message: runtimeReply.message, ...feedbackBefore };
+  }
+  if (evidenceOperation?.request.signal.aborted) {
+    return { state: "unavailable", code: "market_data_unavailable", message: "Data is not available for this ticker right now, try again later.", ...feedbackBefore };
   }
   const { map } = runtimeReply;
   const completedAt = Date.now();

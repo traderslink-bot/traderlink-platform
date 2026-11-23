@@ -5,6 +5,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Accordion, AccordionSummary, AccordionDetails, Box, IconButton, MenuItem, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
 import type { CompanyTechnicals } from "@/src/modules/company/company-technicals";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { DashboardPanel } from "@/app/dashboard-ui";
@@ -210,6 +211,7 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   const dayChange=headerBasis&&current!=null?(current/headerBasis-1)*100:null;
   const gap=regularClose&&regularOpen?(regularOpen/regularClose-1)*100:null;
   const sessionRanges=todayRanges?.filter(range=>range!==null)??[];
+  const dayVolume = row?.dayVolume ?? snapshot?.dayVolume;
   const volume=row?.volume??(sessionRanges.length?sessionRanges.reduce((sum,range)=>sum+range.volume,0):null);
   const float=row?.float??snapshot?.listedFloat;
   const turnover=float&&volume!=null?volume/float*100:null;
@@ -221,7 +223,8 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   const afterHours=row?.postMarketGain??(post&&todayClose?(post.close/todayClose-1)*100:null);
   const displayed=[
     ["Price",current,"$"],["Day change",dayChange,"%"],["Prev regular close",regularClose??basis,"$"],["Regular open",regularOpen,"$"],
-    ["Gap",gap,"%"],["Volume",volume,""],["Dollar Vol",row?.dollarVolume??snapshot?.dollarVolume,"$compact"],["Float",float,""],
+    ["Gap",gap,"%"],
+    [SCANNER_VOLUME_LABELS.dayVolume,dayVolume,"shares"],["Dollar Vol",row?.dollarVolume??snapshot?.dollarVolume,"$compact"],["Float",float,""],
     ["Float turnover",turnover,"%"],["Relative Vol",row?.relativeVolume??snapshot?.relativeVolume,"×"],["Market cap",row?.marketCap??snapshot?.listedMarketCap,"$compact"],
     ["Distance from high",offHigh,"%"],["After-hours change",afterHours,"%"],["Day high",high,"$"],["Day low",low,"$"],
     ["10d avg vol",averageVolumes[0],""],["3mth avg vol",averageVolumes[1],""],
@@ -229,13 +232,13 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
     ["1m change",activity?.oneMinuteGain??candleActivity?.oneMinuteGain,"%"],["5m change",activity?.fiveMinuteGain??candleActivity?.fiveMinuteGain,"%"],["1m Vol",activity?.oneMinuteVolume??candleActivity?.oneMinuteVolume,""],
     ["5m Vol",activity?.fiveMinuteVolume??candleActivity?.fiveMinuteVolume,""],["1min dollar vol",activity?.oneMinuteDollarVolume,"$compact"],["5min Vol spike",activity?.fiveMinuteVolumeSpike??candleActivity?.fiveMinuteVolumeSpike,"×"],
   ] as const;
-  const snapshotLabels=new Set(["Volume","Float","Float turnover","Relative Vol","Market cap","Distance from high","Prev regular close","Regular open","Gap","Day high","Day low","10d avg vol","3mth avg vol"]);
+  const snapshotLabels=new Set([SCANNER_VOLUME_LABELS.dayVolume,"Float","Float turnover","Relative Vol","Market cap","Distance from high","Prev regular close","Regular open","Gap","Day high","Day low","10d avg vol","3mth avg vol"]);
   const metrics=(entries:readonly (readonly [string,number|null|undefined,string])[])=>(
     <Box component="dl" sx={{m:0,display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",sm:"repeat(4,minmax(0,1fr))"},columnGap:1,rowGap:1.5}}>
       {entries.map(([label,n,unit])=><Box key={label} sx={{minWidth:0}}>
         <Typography component="dt" variant="caption" sx={theme=>({fontWeight:600,color:"#4f6075",...theme.applyStyles("dark",{color:"#a6b6cc"})})}>{label}</Typography>
         <Typography component="dd" variant="body2" sx={{m:0,fontSize:"0.9375rem",lineHeight:1.35,color:changeLabels.has(label)?changeColor(n??null):undefined}}>
-          {n==null||!Number.isFinite(n)?"—":unit==="$"?price(n):unit==="$compact"?`$${compact(n)}`:changeLabels.has(label)?signedPercent(n):unit===""?compact(n):value(n,unit)}
+          {n==null||!Number.isFinite(n)?"—":unit==="$"?price(n):unit==="$compact"?`$${compact(n)}`:changeLabels.has(label)?signedPercent(n):unit==="shares"?n.toLocaleString("en-US"):unit===""?compact(n):value(n,unit)}
         </Typography></Box>)}
     </Box>
   );

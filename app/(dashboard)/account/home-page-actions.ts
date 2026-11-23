@@ -20,7 +20,8 @@ export async function saveHomePage(value: unknown): Promise<
     const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders);
     const saved = withPlatformDatabase({ mode: "runtime" }, database => {
       const { homePages } = readPlatformHomeAccess(database, identity, requestHeaders);
-      if (!homePages.welcome || !homePages[value]) return false;
+      const independentMarketTool = value === "trading-workspace" || value === "scanners";
+      if (!homePages[value] || (!homePages.welcome && !independentMarketTool)) return false;
 
       new PlatformUserPreferenceRepository(database).updateActiveUserHomePage({
         homePage: value,

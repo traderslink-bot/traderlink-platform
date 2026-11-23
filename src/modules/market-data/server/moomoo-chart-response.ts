@@ -6,10 +6,11 @@ import { chartCatchUpWindow, chartHistoryPage, chartHistoryWindow } from "@/src/
 import type { AlpacaHistoryRequest } from "@/src/modules/scanner/alpaca/rest-data";
 import { AlpacaVwapHistory } from "@/src/modules/scanner/alpaca/chart-vwap-history";
 import type { VwapSeedRequest } from "@/src/modules/scanner/alpaca/chart-vwap-seed";
-import { MoomooChartHistory } from "./moomoo-chart-history";
+import { MoomooChartHistory, moomooSplits } from "./moomoo-chart-history";
 import { MoomooChartStream } from "./moomoo-chart-stream";
 import { requestMoomooMarketData } from "./moomoo-bridge";
 import { marketDataSelection, type MarketDataFeature } from "./provider-settings";
+import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { browserChartEvent } from "./browser-chart-events";
 
 const shared = globalThis as typeof globalThis & {
@@ -31,6 +32,17 @@ function services(environment: NodeJS.ProcessEnv = process.env) {
   }
   return current;
 }
+export async function readMoomooChartSplits(symbol: string) {
+  const basisDate = easternClock(Date.now()).date;
+  const splits = moomooSplits(await services().history.corporateActions(symbol))
+    .filter(event => event.date <= basisDate && event.ratio !== 1)
+    .map(({ date, ratio }) => ({
+      id: date, date,
+      oldShares: ratio > 1 ? ratio : 1,
+      newShares: ratio > 1 ? 1 : 1 / ratio,
+    }));
+  return { symbol, basisDate, splits };
+}
 export const readMoomooChartCalendar = (year: number) => services().history.forYear(year);
 export const readMoomooChartVwapSeed = (request: VwapSeedRequest) => services().vwap.read(request);
 
@@ -44,11 +56,12 @@ export async function moomooChartResponse(request: Request, stream: boolean, sym
     if (from !== null && (!paged || daily || query.has("before") || query.has("recent"))) throw Error("invalid_history_range");
     const window = from === null ? chartHistoryWindow(query.get("before"), daily, Date.now(), query.get("recent") === "1") : chartCatchUpWindow(from);
     const history = services().history;
-    const result = await history.history({ symbol, timeframe: daily ? "1Day" : "1Min", start: window.start, end: window.end });
+    const adjustment = query.get("adjustment") === "raw" ? "raw" : undefined;
+    const result = await history.history({ symbol, timeframe: daily ? "1Day" : "1Min", start: window.start, end: window.end, adjustment });
     const calendar = daily ? { calendars: await history.forHistory(result.bars) } : { calendar: await history.forBars(result.bars) };
     if (!current()) return Response.json({ error: "provider_changed" }, { status: 409, headers });
     return Response.json({ ...result, ...(paged ? chartHistoryPage(result.bars, window, daily) : { baseTimeframe: daily ? "1D" : "1m" }),
-      ...(from !== null ? { catchUpFrom: window.start } : {}), ...calendar }, { headers });
+      ...(from !== null ? { catchUpFrom: window.start } : {}), adjustment: result.adjustment, ...calendar }, { headers });
   }
   let close = () => {};
   const body = new ReadableStream<Uint8Array>({

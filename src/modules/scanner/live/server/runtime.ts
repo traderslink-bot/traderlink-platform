@@ -9,6 +9,7 @@ import { coalescedMetadata } from "./coalesced-cache";
 import { dirname, join } from "node:path";
 import { resolvePlatformDatabaseConfig } from "../../../platform/server/database/platform-database-config";
 import { withReadonlyPlatformDatabase } from "../../../platform/server/database/open-readonly-platform-database";
+import { syncCandleHistoryRoster } from "../../../market-data/candle-history/roster";
 import { CoachUsEquitiesReviewCalendarService } from "../../../coach/server/market-calendar/coach-us-equities-review-calendar-service";
 import { withWatchlistIndicatorMoomooAccess } from "../../../watchlist/server/moomoo-watchlist-candle-bridge";
 import { getMoomooSharedTransport, sharedMoomooFetch } from "../../../platform/server/broker-connections/moomoo-shared-transport";
@@ -25,7 +26,7 @@ import { NasdaqUniverseRefresher } from "./nasdaq-universe-source";
 import { sendScannerUniverseAlert } from "./universe-alert";
 import { pacedSnapshotPass, scannerSnapshotSpacing } from "./snapshot-pacing";
 import { ScannerAuditRecorder, ScannerAuditStore } from "../audit/server/audit-store";
-import { alpacaMarketDataEnabled, requestAlpacaGateway } from "../../alpaca/client";
+import { alpacaMarketDataEnabled, readAlpacaScannerSignalBars, requestAlpacaGateway } from "../../alpaca/client";
 import { normalizeAlpacaScannerBatch } from "../../alpaca/scanner-snapshots";
 
 const SNAPSHOT_URL = "https://webapi.moomoo.com/api/v1.0/quote/snapshot";
@@ -50,7 +51,8 @@ function newsFor(symbols: readonly string[], environment: NodeJS.ProcessEnv): Re
   if (symbols.length === 0) return new Map();
   return withReadonlyPlatformDatabase({ environment },database =>
     new Map(symbols.map(symbol => [symbol,listScannerRecentPressReleases(database,symbol).articles.map(article => ({
-      id: article.id, headline: article.headline, createdAt: article.createdAt, url: article.url?.startsWith("https://traderslink.pro/news/") ? `/press-releases?article=${encodeURIComponent(article.id)}` : article.url, typeLabel: article.typeLabel,
+      id: article.id, headline: article.headline, createdAt: article.createdAt, publishedAt: article.publishedAt,
+      url: article.url?.startsWith("https://traderslink.pro/news/") ? `/press-releases?article=${encodeURIComponent(article.id)}` : article.url, typeLabel: article.typeLabel,
     }))])));
 }
 const reusableAudits=registry.audits??=new Map<string,ScannerAuditRecorder>();
@@ -71,7 +73,13 @@ function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime 
   const settings = new ScannerSettingsStore(directory);
   const universe = new UniverseStore(directory);
   const manualTickers = new ManualTickerStore(join(directory,"manual-tickers.json"));
-  const nasdaqUniverse = new NasdaqUniverseRefresher({store:universe});
+  const nasdaqUniverse = new NasdaqUniverseRefresher({ store: universe,
+    afterImport: async date => {
+      if (!environment.TRADERLINK_ALPACA_CANDLE_HISTORY_ADMIN_TOKEN) return;
+      const census = await universe.read(date);
+      if (census) await syncCandleHistoryRoster(census, environment);
+    },
+  });
   const floatPersistence = settings.floatCache();
   const floatEnricher = new DailyFloatEnricher({ finnhubToken:environment.FINNHUB_API_KEY?.trim(),
     eodhdToken:environment.EODHD_API_TOKEN?.trim(),persistence:floatPersistence });
@@ -150,7 +158,9 @@ function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime 
     },
     floats: (date,symbols) => floatFeed.read(date,symbols),
     countries: date => floatFeed.readCountries(date),
+    industries: date => floatFeed.readIndustries(date),
     news: async symbols => newsFor(symbols,environment),
+    ...(provider === "alpaca" ? { loadSignalBars: request => readAlpacaScannerSignalBars(request, environment) } : {}),
     qualification: (session,context) => sessionQualifier.observe(session,context),
     audit,
   };
@@ -159,6 +169,7 @@ function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime 
     universe:coalescedMetadata(dependencies.universe,5000,date=>date),
     floats:coalescedMetadata(dependencies.floats,5000,(date,symbols)=>date+":"+symbols.join(",")),
     countries:dependencies.countries?coalescedMetadata(dependencies.countries,300_000,date=>date):undefined,
+    industries:dependencies.industries?coalescedMetadata(dependencies.industries,300_000,date=>date):undefined,
     news:coalescedMetadata(dependencies.news,5000,symbols=>symbols.join(",")),
   }:dependencies);
   const runtime:ScannerRuntime={ feed,settings,audit,provider,stopSource:()=>eventStream?.stop() };
@@ -174,6 +185,10 @@ export function startConfiguredLiveScannerRuntime(inputEnvironment: NodeJS.Proce
   try { current.stop=startLiveScannerFeed(current.feed,environment); }
   catch (error) { registry.started.delete(current.feed); throw error; }
 }
+export function openLiveCustomScans() {
+  return configuredRuntime(process.env).feed.openCustomScans();
+}
+
 export function readLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.env): ScannerReadModel {
   return configuredRuntime(environment).feed.read();
 }

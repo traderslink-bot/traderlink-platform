@@ -3,18 +3,23 @@ import { describe, expect, it, vi } from "vitest";
 import { GET, POST } from "@/app/api/stock-screeners/route";
 import { sharedScreenPath } from "./sharing-contracts";
 
-const session = vi.hoisted(() => ({ eligible: false, userId: "" }));
+const session = vi.hoisted(() => ({ eligible: false, dashboard: true, enabled: true, userId: "" }));
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope", () => ({
   requireTraderLinkPlatformRequestIdentity() {
+    if (!session.dashboard) throw Error("dashboard_denied");
     if (!session.userId) throw Error("unauthenticated");
-    return { mode: "platform_session", displayName: "TraderLink test member", scope: { userId: session.userId } };
+    return { mode: "platform_session", displayName: "TraderLink test member", discord: null, scope: { userId: session.userId } };
+  },
+  requireTraderLinkPlatformAuthenticatedRequestIdentity() {
+    if (!session.userId) throw Error("unauthenticated");
+    return { mode: "platform_session", discord: null, scope: { userId: session.userId } };
   },
 }));
-vi.mock("@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access", () => ({
-  hasWatchlistDashboardNavigationAccess: () => session.eligible,
+vi.mock("@/src/modules/market-data/server/market-tools-dashboard-access", () => ({
+  hasStockScreenersDashboardAccess: () => session.eligible,
 }));
 vi.mock("./service", () => ({
-  stockScreenersEnabled: () => true,
+  stockScreenersEnabled: () => session.enabled,
   takeScreenBudget: () => true,
 }));
 
@@ -27,17 +32,25 @@ describe("stock screener sharing access", () => {
     const response = await GET(new Request(endpoint + "?open=" + id));
     expect(response.status).toBe(303);
     const login = new URL(response.headers.get("location")!, endpoint);
-    expect(login.pathname).toBe("/api/auth/discord/login");
+    expect(login.pathname).toBe("/login");
     expect(login.searchParams.get("returnTo")).toBe(sharedScreenPath(id));
     expect((await GET(new Request(endpoint + "?community=1"))).status).toBe(404);
 
     session.userId = "member";
     session.eligible = false;
+    expect((await GET(new Request(endpoint + "?open=" + id))).status).toBe(404);
     expect((await GET(new Request(endpoint + "?community=1"))).status).toBe(404);
     session.eligible = true;
     const signedIn = await GET(new Request(endpoint + "?open=" + id));
     expect(signedIn.status).toBe(303);
     expect(signedIn.headers.get("location")).toBe(sharedScreenPath(id));
+    session.dashboard = false;
+    expect((await GET(new Request(endpoint + "?open=" + id))).status).toBe(404);
+    session.dashboard = true;
+    session.enabled = false;
+    expect((await GET(new Request(endpoint + "?open=" + id))).status).toBe(404);
+    expect((await GET(new Request(endpoint + "?community=1"))).status).toBe(404);
+    session.enabled = true;
   });
 
   it("requires the existing same-origin mutation contract for sharing", async () => {

@@ -22,7 +22,7 @@ function numerator(bar:Candle,source:PriceSource):bigint{
 }
 for(const frame of CHART_CALCULATION_TIMEFRAMES)for(const source of PRICE_SOURCES){
  it(`matches exact weighted rational reference for ${source} on ${frame}`,()=>{
-  const step={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400,'1D':86400}[frame];
+  const step={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1D':86400}[frame];
   const start=Date.parse('2026-11-09T15:00:00Z')/1000;
   const bars:Candle[]=Array.from({length:16},(_,n)=>{
    const low=80+(n*37)%59,high=low+4+(n*13)%31;

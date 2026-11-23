@@ -1,6 +1,6 @@
 // @vitest-environment node
 import {expect,it} from 'vitest';
-import {DEFAULT_CHART_PREFERENCES,defaultVwapBands,parseChartPreferences,setAllIndicatorOverlayWidths,withoutOverlayWidthOverrides,type ChartIndicator} from './chart-preferences';
+import {DEFAULT_CHART_PREFERENCES,changeIndicatorDisplayChoice,indicatorDisplayChoice,defaultVwapBands,parseChartPreferences,setAllIndicatorOverlayWidths,withoutOverlayWidthOverrides,type ChartIndicator} from './chart-preferences';
 import {indicatorValues,indicatorHistogramColor,indicatorPlotStyle,movingAverage,visibleSessionBars} from './chart-indicators';
 import type {Candle} from './candles';
 const study=(type:ChartIndicator['type'],options:Partial<ChartIndicator>={}):ChartIndicator=>({id:'test',type,period:3,color:'#ff9900',width:2,...options});
@@ -10,6 +10,20 @@ it('preserves multiple independent EMA/SMA lengths and all supported settings th
  expect(parseChartPreferences({...DEFAULT_CHART_PREFERENCES,indicators}).indicators).toEqual(indicators);
  expect(parseChartPreferences({...DEFAULT_CHART_PREFERENCES,indicators:[study('SMA',{period:1})]}).indicators[0].period).toBe(1);
  for(const options of [{source:'invented'},{signalLength:0},{basisMa:'invalid'},{deviation:-1},{levels:{upper:20,middle:50,lower:80}},{plots:{main:{color:'red'}}},{smoothing:{type:'EMA',length:0,deviation:2}}])expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,indicators:[study('EMA',options as Partial<ChartIndicator>)]})).toThrow();
+});
+it('applies an account change over earlier local changes, one indicator control at a time',()=>{
+ const chart=changeIndicatorDisplayChoice(undefined,'EMA','enabled',true,0);
+ const defaults=changeIndicatorDisplayChoice(undefined,'EMA','enabled',false,1);
+ expect(indicatorDisplayChoice(undefined,chart,'EMA','enabled')).toBe(true);
+ expect(indicatorDisplayChoice(defaults,chart,'EMA','enabled')).toBe(false);
+ const local=changeIndicatorDisplayChoice(chart,'EMA','enabled',true,1);
+ const hidden=changeIndicatorDisplayChoice(defaults,'EMA','hidden',true,1);
+ expect(indicatorDisplayChoice(hidden,local,'EMA','enabled')).toBe(true);
+ expect(indicatorDisplayChoice(hidden,undefined,'EMA','enabled')).toBe(false);
+ expect(indicatorDisplayChoice(hidden,local,'EMA','hidden')).toBe(true);
+ expect(indicatorDisplayChoice(hidden,local,'RSI','enabled')).toBeUndefined();
+ expect(parseChartPreferences({...DEFAULT_CHART_PREFERENCES,indicatorDisplay:hidden}).indicatorDisplay).toEqual(hidden);
+ expect(()=>parseChartPreferences({...DEFAULT_CHART_PREFERENCES,indicatorDisplay:{EMA:{enabled:{value:true,revision:0}}}})).toThrow('invalid_preferences');
 });
 it('honours independently selected MA periods and price sources',()=>{
  const input=bars([1,2,4,8]);

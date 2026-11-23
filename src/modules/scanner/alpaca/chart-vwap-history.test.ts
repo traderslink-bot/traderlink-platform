@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {expect,it,vi} from 'vitest';
 import {AlpacaVwapHistory} from './chart-vwap-history';
-import {parseVwapSeedRequest,validVwapSeed,type VwapSeedRequest} from './chart-vwap-seed';
+import {localVwapSeed,parseVwapSeedRequest,validVwapSeed,type VwapSeedRequest} from './chart-vwap-seed';
 import {indicatorValues} from './chart-indicators';
 import {easternClock} from '../live/sessions';
 import type {AlpacaHistoryResult} from './rest-data';
@@ -13,6 +13,18 @@ const request:VwapSeedRequest={symbol:'TEST',timeframe:'1m',anchor:'Month',befor
 const bar=(at:string,price:number):Candle=>({time:Date.parse(at)/1000,open:price-2,high:price+4,low:price-4,close:price,volume:100});
 const input=[bar('2026-11-06T15:00:00Z',10),bar('2026-11-09T14:00:00Z',20)];
 const calendar={forBars:async(bars:readonly Candle[]):Promise<ChartCalendar>=>({available:true,start:'2026-01-01',end:'2026-12-31',sessions:[...new Set(bars.map(value=>easternClock(value.time*1000).date))].map(date=>({date,open:'09:30',close:'16:00'}))})};
+it('calculates a Daily session from its first candle without an earlier history request',()=>{
+ const daily:VwapSeedRequest={...request,timeframe:'1D',anchor:'Session',before:Date.parse('2026-11-09T05:00:00Z')/1000};
+ const seed=localVwapSeed(daily,basisDate);
+ expect(validVwapSeed(seed,daily,basisDate)).toBe(true);
+ const points=indicatorValues([bar('2026-11-09T05:00:00Z',12)],
+  {id:'vwap',type:'VWAP',period:20,color:'#123456',width:2,anchor:'Session',source:'close'},
+  '1D',{vwapSeed:seed})[0].points;
+ expect(points.at(-1)?.value).toBe(12);
+ expect(localVwapSeed({...daily,anchor:'Month'},basisDate)).toBeUndefined();
+ expect(localVwapSeed({...daily,anchor:'Splits'},basisDate)).toBeUndefined();
+ expect(localVwapSeed({...daily,before:daily.before+60},basisDate)).toBeUndefined();
+});
 it('loads the full anchor prefix, then combines with visible bars instead of starting at the viewport',async()=>{
  const history=vi.fn(async(query:{start:number;end:number}):Promise<AlpacaHistoryResult>=>({symbol:'TEST',basisDate,feed:'sip',adjustment:'split',complete:true,nextPageToken:null,bars:input.filter(bar=>bar.time*1000>=query.start&&bar.time*1000<=query.end)}));
  const book=new AlpacaVwapHistory({history},calendar,()=>now);

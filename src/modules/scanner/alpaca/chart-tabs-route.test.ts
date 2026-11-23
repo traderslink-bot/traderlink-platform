@@ -1,6 +1,7 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
-const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true}));
+const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true,ordinaryChart:true}));
+vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasChartsDashboardAccess:()=>setup.ordinaryChart}));
 vi.mock('@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access',()=>({hasWatchlistDashboardNavigationAccess:()=>setup.privateChart}));
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!setup.user)throw Error('unauthenticated');return {scope:{userId:setup.user}};}}));
 vi.mock('@/src/modules/platform/server/authentication/platform-mutation-request-security',()=>({requirePlatformMutationRequest:()=>{if(!setup.allowed)throw Error('csrf');}}));
@@ -9,7 +10,7 @@ import {GET,POST} from '@/app/api/charts/tabs/route';
 import {initialChartTabs,MAX_CHART_TABS_BYTES} from './chart-tabs';
 import {singleChart} from './chart-multiview';
 import {writeChartMultiview} from './chart-multiview-store';
-beforeEach(()=>{setup.user='user-a';setup.allowed=true;setup.privateChart=true;setup.directory=mkdtempSync(join(tmpdir(),'chart-pref-route-'));});afterEach(()=>rmSync(setup.directory,{recursive:true,force:true}));
+beforeEach(()=>{setup.user='user-a';setup.allowed=true;setup.privateChart=true;setup.ordinaryChart=true;setup.directory=mkdtempSync(join(tmpdir(),'chart-pref-route-'));});afterEach(()=>rmSync(setup.directory,{recursive:true,force:true}));
 const request=(body:unknown)=>new Request('http://localhost/api/charts/layout?workspace=main',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 
 const get=()=>GET(new Request('http://localhost/api/charts/tabs'));
@@ -26,4 +27,11 @@ it("enforces private-owner access, mutation, size and strict payload validation"
  expect((await POST(request({...original,layout:{...original.layout,admin:true}}))).status).toBe(400);
  expect((await POST(request({...original,padding:"x".repeat(MAX_CHART_TABS_BYTES)}))).status).toBe(400);
  setup.user="";expect((await get()).status).toBe(401);setup.user="user-a";setup.privateChart=false;const response=await get();expect(response.status).toBe(200);expect((await POST(request(await response.json()))).status).toBe(200);
+});
+
+it("requires Charts access to read and write standalone tabs", async () => {
+  const original = await (await get()).json();
+  setup.ordinaryChart = false;
+  expect((await get()).status).toBe(403);
+  expect((await POST(request(original))).status).toBe(403);
 });

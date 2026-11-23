@@ -1,8 +1,11 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import type { StockLevelsMap } from "../stock-levels-contract";
+import { stockLevelsReferencePriceLabel, type StockLevelsMap } from "../stock-levels-contract";
 import { browserStockLevelsMap } from "./browser-stock-levels";
 
-const state = vi.hoisted(() => ({ fail: false, authenticated: true, included: true }));
+const state = vi.hoisted(() => ({
+  fail: false, authenticated: true, included: true,
+  currentMap: undefined as StockLevelsMap | undefined,
+}));
 const card = { source: "Alpaca", title: "Potential Path", body: "Support $0.0277", updatedAt: 123, priceWhenPosted: .029,
   metadata: { provider: "finnhub", gatewayUrl: "https://private.invalid", evidenceCount: 5, country: "US" } };
 const level = { side: "support" as const, price: .0277, distancePct: -4.48, label: "Daily support",
@@ -17,16 +20,21 @@ vi.mock("@/src/modules/platform/server/authentication/require-platform-request-s
 }));
 vi.mock("@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access", () => ({ hasWatchlistDashboardNavigationAccess: () => false }));
 vi.mock("./stock-levels-service", () => ({
-  listSavedStockLevelsMaps: () => { if (state.fail) throw Error("Alpaca token=private-key"); return [{ savedMapId: "saved", map }]; },
+  listSavedStockLevelsMaps: () => { if (state.fail) throw Error("Alpaca token=private-key"); return [{ savedMapId: "saved", map: state.currentMap ?? map }]; },
   getStockLevelsQuotaFeedback: () => quota,
   getStockLevels: async () => state.fail
     ? { state: "unavailable", code: state.included ? "invalid_symbol" : "limit_reached", message: "Moomoo https://private.invalid?token=private-key", ...quota,
       ...(!state.included ? { membership: { included: false, remaining: 0, resetsAtUtc: null, resetDays: null } } : {}) }
-    : { state: "ready", map, savedMap: { savedMapId: "saved", map }, ...quota },
+    : { state: "ready", map: state.currentMap ?? map, savedMap: { savedMapId: "saved", map: state.currentMap ?? map }, ...quota },
   deleteSavedStockLevelsMap: () => { if (state.fail) throw Error("Finnhub private-key"); return true; },
 }));
 import { GET, POST, DELETE } from "@/app/api/levels/route";
-beforeEach(() => { state.fail = false; state.authenticated = true; state.included = true; });
+beforeEach(() => {
+  state.fail = false;
+  state.authenticated = true;
+  state.included = true;
+  state.currentMap = undefined;
+});
 const request = (body?: object) => new Request("http://localhost/api/levels", body ? { method: "POST", body: JSON.stringify(body) } : undefined);
 
 it("projects fresh and saved maps without changing level proof, precision or quota", async () => {
@@ -37,6 +45,31 @@ it("projects fresh and saved maps without changing level proof, precision or quo
   expect(await (await GET(request())).json()).toEqual({ savedMaps: [{ savedMapId: "saved", map: expected }], ...quota });
   expect(await (await POST(request({ symbol: "SHFS" }))).json()).toEqual({ state: "ready", map: expected, savedMap: { savedMapId: "saved", map: expected }, ...quota });
   expect(JSON.stringify(map)).toBe(original);
+});
+it.each([
+  { basis: "last_trade", label: "Last traded price" },
+  { basis: "reference", label: "Reference price" },
+  { basis: undefined, label: "Reference price" },
+] as const)("retains the public price label for $basis on generated and saved maps", async ({ basis, label }) => {
+  state.currentMap = {
+    ...map,
+    ...(basis ? { referencePriceBasis: basis } : {}),
+    chartEvidenceProvenance: {
+      version: 1,
+      instrument: { id: "fixture-listing", symbol: map.symbol, venue: "XNAS" },
+      calculatedAtMs: 123,
+      inputs: [],
+      zones: [],
+    },
+  };
+  const fresh = await (await POST(request({ symbol: map.symbol }))).json();
+  const saved = await (await GET(request())).json();
+  for (const browserMap of [fresh.map, fresh.savedMap.map, saved.savedMaps[0].map]) {
+    if (basis) expect(browserMap.referencePriceBasis).toBe(basis);
+    else expect(browserMap).not.toHaveProperty("referencePriceBasis");
+    expect(stockLevelsReferencePriceLabel(browserMap)).toBe(label);
+    expect(browserMap).not.toHaveProperty("chartEvidenceProvenance");
+  }
 });
 it("removes future nested routing fields while retaining level evidence clocks", () => {
   const contaminated = structuredClone(map);

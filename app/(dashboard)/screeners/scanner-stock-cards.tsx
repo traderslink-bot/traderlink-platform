@@ -17,6 +17,7 @@ import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { startTransition, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
+import { SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
 import type { DeclineRow, LiveScannerRow, PremarketPullbackRow, ScannerKind } from "@/src/modules/scanner/live/contracts";
 
 import { momentumSignalText } from "./momentum-signal-text";
@@ -61,8 +62,29 @@ export function useTickerCardSections() {
 const scannerViews = { table: "Table", cards: "Cards", "two-rows": "Two rows" } as const;
 export type ScannerView = keyof typeof scannerViews;
 
-export function ScannerViewSettings({ label, view, onViewChange }: { label: string; view: ScannerView; onViewChange: (view: ScannerView) => void }) {
+export function useScannerVolumeColumns(screen?: ScannerCardScreen) {
+  const key = "traderslink.scanner.volume-columns.v1." + screen;
+  const read = () => {
+    if (!screen) return "";
+    try { return window.localStorage.getItem(key) ?? ""; }
+    catch { return ""; }
+  };
+  const stored = useSyncExternalStore(subscribe, read, () => "");
+  const selected = SCANNER_SESSION_VOLUME_COLUMNS.filter(metric => stored.split(",").includes(metric));
+  const toggle = (metric: typeof SCANNER_SESSION_VOLUME_COLUMNS[number], checked: boolean) => {
+    const columns = read().split(",").filter(value => value && value !== metric);
+    if (checked) columns.push(metric);
+    try { window.localStorage.setItem(key, columns.join(",")); } catch { return; }
+    listeners.forEach(listener => listener());
+  };
+  return { selected, toggle };
+}
+
+export function ScannerViewSettings({ label, view, onViewChange, volumeCard }: {
+  label: string; view: ScannerView; onViewChange: (view: ScannerView) => void; volumeCard?: ScannerCardScreen;
+}) {
   const { sections, update } = useTickerCardSections();
+  const { selected, toggle } = useScannerVolumeColumns(volumeCard);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const id = useId();
   return <>
@@ -90,6 +112,12 @@ export function ScannerViewSettings({ label, view, onViewChange }: { label: stri
             {text}
           </Button>)}
       </Box>
+      {volumeCard && <Box role="group" aria-label="Session volume columns" sx={{borderTop:1,borderColor:"divider",mt:0.75,pt:0.75}}>
+        <Typography variant="body2" sx={{fontWeight:700,px:0.5}}>Session volumes</Typography>
+        {SCANNER_SESSION_VOLUME_COLUMNS.map(metric => <FormControlLabel key={metric} sx={{m:0,display:"flex"}}
+          label={SCANNER_VOLUME_LABELS[metric]} control={<Checkbox size="small" checked={selected.includes(metric)}
+            onChange={(_, checked) => toggle(metric, checked)}/>}/>)}
+      </Box>}
       {view==="cards"&&<Box role="group" aria-label="Ticker card sections" sx={{borderTop:1,borderColor:"divider",mt:0.75,pt:0.75}}>
       <Typography variant="body2" sx={{fontWeight:700,px:0.5}}>Card sections</Typography>
       {[...sections, ...SECTIONS.filter(section => !sections.includes(section))].map(section => {
@@ -151,6 +179,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
   renderHalt: (symbol: string) => ReactNode;
 }) {
   const { sections } = useTickerCardSections();
+  const { selected } = useScannerVolumeColumns(screen);
   const inDrawer = useSideCardChartControls();
   const batchSize = 6;
   const [limit,setLimit]=useState(batchSize);
@@ -183,10 +212,13 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
       const turnover = volume !== null && row.float !== null && row.float > 0 ? 100 * volume / row.float : null;
       const catalyst = row.news.find(item => Number.isFinite(Date.parse(item.createdAt)));
       const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
+      const mainVolume = post ? "postMarketVolume" : "dayVolume";
+      const volumeStats = ([mainVolume, ...selected.filter(metric => metric !== mainVolume)] as const)
+        .map(metric => [SCANNER_VOLUME_LABELS[metric], shares(row[metric] ?? null)]);
       const stats = hod ? [
-        ["Vol",shares(volume)],["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",percent(row.spreadPercent)],
+        ...volumeStats,["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",percent(row.spreadPercent)],
       ] : [
-        ["Vol",shares(volume)],["Float",shares(row.float)],["T/O",percent(turnover)],
+        ...volumeStats,["Float",shares(row.float)],["T/O",percent(turnover)],
         live ? ["RVOL",live.relativeVolume === null ? "—" : `${decimal.format(live.relativeVolume)}×`] : ["Spread",percent(row.spreadPercent)],
       ];
       return <Box role="listitem" key={row.symbol} data-scanner-stock-card={row.symbol}

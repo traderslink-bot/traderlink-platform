@@ -122,3 +122,118 @@ it("coalesces overlapping symbol batches and retries a shared failure without ra
   vi.setSystemTime(now + 10_001);
   expect((await book.read(["AAA"], date)).AAA?.price).toBe(2.1);
 });
+
+it("batches identical archive gaps across the roster without fetching already covered dates", async () => {
+  const tickers = Array.from({ length: 160 }, (_, index) => `S${String(index).padStart(3, "0")}`);
+  const closeTime = Date.parse("2026-11-06T05:00:00Z") / 1_000;
+  const olderEnd = Date.parse("2026-11-04T05:00:00Z") / 1_000;
+  const savedBar = { time: closeTime, close: 3, open: 3, low: 3, high: 3, volume: 100 };
+  const archive = {
+    read: vi.fn((symbol: string, start: number) => symbol === "SPY" ? { bars: [savedBar], missing: null } :
+      Number(symbol.slice(1)) % 2 === 0 ? { bars: [savedBar], missing: { start, end: olderEnd } } : null),
+    remember: vi.fn(),
+  };
+  const get = vi.fn(async (_path: string, query: URLSearchParams) => {
+    const end = Date.parse(query.get("end")!);
+    const symbols = query.get("symbols")!.split(",");
+    const older = end < closeTime * 1_000;
+    return { bars: Object.fromEntries(symbols.map(symbol => [symbol, older ? [bar(2, "2026-11-03T05:00:00Z")] : [bar(4)]])) };
+  });
+  const book = new AlpacaPreviousCloseBook({ get }, { forYear: async () => ({ available: false }) }, archive);
+  const pending = Promise.all([book.read(tickers, date), book.read(["S000", "S159"], date)]);
+  expect(archive.read).toHaveBeenCalledTimes(128);
+  await vi.advanceTimersByTimeAsync(0);
+  const [result, overlap] = await pending;
+  expect(get).toHaveBeenCalledTimes(4);
+  expect(get.mock.calls.map(([, query]) => query.get("symbols")!.split(",").length)).toEqual([50, 30, 50, 30]);
+  expect(get.mock.calls[0][1].get("end")).toBe(new Date(olderEnd * 1_000 - 1).toISOString());
+  expect(result.S000?.price).toBe(3);
+  expect(result.S159?.price).toBe(4);
+  expect(overlap.S000).toEqual(result.S000);
+  expect(overlap.S159).toEqual(result.S159);
+  expect(archive.remember).toHaveBeenCalledTimes(4);
+});
+
+it("uses verified quiet days for weekly trends and volume without admitting a gap", async () => {
+  const sessions = Array.from({ length: 35 }, (_, index) => new Date(Date.parse("2026-10-05T12:00:00Z") + index * 86_400_000))
+    .filter(day => day.getUTCDay() >= 1 && day.getUTCDay() <= 5)
+    .map(day => ({ date: day.toISOString().slice(0, 10), open: "09:30", close: "16:00" }));
+  const calendar = { available: true as const, start: "2026-10-05", end: "2026-11-09", sessions };
+  const closes = sessions.map(({ date: day }, index) => {
+    const offset = day < "2026-11-01" ? "04" : "05";
+    const time = Date.parse(day + "T" + offset + ":00:00Z") / 1_000;
+    return { time, close: index + 10, high: index + 10, low: index + 10, open: index + 10, volume: 100 };
+  });
+  const friday = closes.at(-1)!;
+  const monday = Date.parse("2026-11-09T05:00:00Z") / 1_000;
+  const archive = {
+    read: (symbol: string) => ({ bars: symbol === "SPY" ? closes : closes.slice(0, -1),
+      missing: symbol === "UNCOVERED" ? { start: friday.time, end: monday } : null }),
+    remember: vi.fn(),
+  };
+  const get = vi.fn(async () => ({ bars: {} }));
+  const book = new AlpacaPreviousCloseBook({ get }, { forYear: async () => calendar }, archive);
+  const { QUIET, UNCOVERED } = await book.read(["QUIET", "UNCOVERED"], date);
+  const priorFriday = closes.find(bar => bar.time === Date.parse("2026-10-30T04:00:00Z") / 1_000)!;
+  const thursday = closes.at(-2)!;
+  const weekly = (thursday.close / priorFriday.close - 1) * 100;
+  expect(QUIET?.price).toBe(thursday.close);
+  expect(QUIET?.barAt).toBe(thursday.time * 1_000);
+  expect(QUIET?.statistics?.weekly).toEqual({ from: "2026-10-30", through: "2026-11-06", percent: weekly });
+  expect(QUIET?.statistics?.weeklyRelativeToSpy).toBeCloseTo((thursday.close - friday.close) / priorFriday.close * 100);
+  expect(QUIET?.statistics?.weeklyCloseVsSma4).toBeGreaterThan(0);
+  expect(QUIET?.statistics?.recentHighs?.previousWeek).toBe(thursday.high);
+  expect(QUIET?.statistics?.averageVolume20).toBe(95);
+  expect(QUIET?.statistics?.daily).toBeUndefined();
+  expect(QUIET?.statistics?.averageDailyRange20).toBeUndefined();
+  expect(UNCOVERED?.statistics?.weekly).toBeUndefined();
+  expect(UNCOVERED?.statistics?.averageVolume20).toBeUndefined();
+  expect(UNCOVERED?.statistics?.recentHighs?.previousWeek).toBeUndefined();
+  expect(get).toHaveBeenCalledTimes(1);
+});
+
+it("computes covered daily and weekly returns and benchmarks only aligned completed dates", async () => {
+  const { scannerDailyStatistics, relativeToScannerBenchmark } = await import("./scanner-daily-statistics");
+  const sessions = Array.from({length:35},(_,i)=>new Date(Date.parse("2026-10-12T12:00:00Z")+i*86_400_000))
+    .filter(day=>day.getUTCDay() >= 1 && day.getUTCDay() <= 5)
+    .map(day=>({date:day.toISOString().slice(0,10),open:"09:30",close:day.getUTCDate() === 13 ? "13:00" : "16:00"}));
+  const calendar = { available:true as const, start:"2026-10-01",end:"2026-12-01",sessions };
+  const candles = new Map(sessions.map((day,index)=>[day.date,{
+    time:Date.parse(day.date+"T12:00:00Z")/1000,close:100+index,
+    open:100+index,high:101+index,low:99+index,volume:500+index,
+  }]));
+  const stats = scannerDailyStatistics("2026-11-16",candles,[calendar]);
+  expect(stats).toMatchObject({
+    daily:{from:"2026-11-12",through:"2026-11-13"},
+    dailyClosedAt: Date.parse("2026-11-13T18:00:00Z"),
+    weeklyClosedAt: Date.parse("2026-11-13T18:00:00Z"),
+    weekly:{from:"2026-11-06",through:"2026-11-13"}, averageVolume20:514.5,
+    dailyCloseVsSma20: expect.closeTo((124 / 114.5 - 1) * 100),
+    weeklyCloseVsSma4: expect.closeTo((124 / 116.5 - 1) * 100),
+    recentHighs: { lastFiveSessions: 125, lastSevenDays: 125, previousWeek: 125 },
+  });
+  expect(relativeToScannerBenchmark(stats?.daily,{from:"2026-11-12",through:"2026-11-13",percent:0})).toBe(stats?.daily?.percent);
+  expect(relativeToScannerBenchmark(stats?.daily,stats?.weekly)).toBeUndefined();
+  candles.delete("2026-11-12");
+  expect(scannerDailyStatistics("2026-11-16",candles,[calendar])).toEqual({
+    daily:undefined,weekly:undefined,averageVolume20:undefined,averageDailyRange20:undefined,
+  });
+});
+
+it("qualifies the prior five sessions, seven dates and completed week independently", async () => {
+  const { scannerDailyStatistics } = await import("./scanner-daily-statistics");
+  const date = "2026-11-16";
+  const days = ["2026-11-06", "2026-11-09", "2026-11-10", "2026-11-12", "2026-11-13", date];
+  const calendar = { available: true as const, start: "2026-10-01", end: date,
+    sessions: days.map(day => ({ date: day, open: "09:30", close: "16:00" })) };
+  const prices = [16, 12, 10, 11, 9, 50];
+  const bars = new Map(days.map((day, index) => [day, { time: Date.parse(day) / 1000,
+    open: prices[index], high: prices[index], low: prices[index], close: prices[index], volume: 50 }]));
+  expect(scannerDailyStatistics(date, bars, [calendar])?.recentHighs).toEqual({
+    lastFiveSessions: 16, lastSevenDays: 12, previousWeek: 12,
+  });
+  bars.delete("2026-11-06");
+  expect(scannerDailyStatistics(date, bars, [calendar])?.recentHighs).toEqual({
+    lastFiveSessions: undefined, lastSevenDays: 12, previousWeek: 12,
+  });
+});

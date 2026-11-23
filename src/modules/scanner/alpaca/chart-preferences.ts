@@ -2,6 +2,30 @@ import {CHART_CALCULATION_TIMEFRAMES,CHART_TIMEFRAMES,type ChartCalculationTimef
 export const MAX_CHART_PREFERENCE_BYTES=64*1024;
 export const INDICATOR_TYPES=['EMA','SMA','VWAP','RSI','MACD','Bollinger'] as const;
 export type IndicatorType=typeof INDICATOR_TYPES[number];
+export type IndicatorDisplayAction = 'hidden' | 'enabled';
+type IndicatorDisplayChoice = { value: boolean; revision: number };
+export type IndicatorDisplayChoices = Partial<Record<IndicatorType, Partial<Record<IndicatorDisplayAction, IndicatorDisplayChoice>>>>;
+
+export function indicatorDisplayChoice(
+ defaults: IndicatorDisplayChoices | undefined,
+ chart: IndicatorDisplayChoices | undefined,
+ type: IndicatorType,
+ action: IndicatorDisplayAction,
+): boolean | undefined {
+ const accountChoice = defaults?.[type]?.[action];
+ const chartChoice = chart?.[type]?.[action];
+ return chartChoice?.revision === (accountChoice?.revision ?? 0) ? chartChoice.value : accountChoice?.value;
+}
+
+export function changeIndicatorDisplayChoice(
+ choices: IndicatorDisplayChoices | undefined,
+ type: IndicatorType,
+ action: IndicatorDisplayAction,
+ value: boolean,
+ revision: number,
+): IndicatorDisplayChoices {
+ return { ...choices, [type]: { ...choices?.[type], [action]: { value, revision } } };
+}
 export const PRICE_SOURCES=["close","open","high","low","hl2","hlc3","ohlc4","hlcc4"] as const;
 export const VWAP_ANCHORS=["Session","Week","Month","Quarter","Year","Decade","Century","Splits","Dividends"] as const;
 export const MA_TYPES=["SMA","EMA","RMA","WMA","VWMA"] as const;
@@ -26,7 +50,8 @@ export type SavedIndicatorPreset = { id: string; name: string; type: IndicatorTy
 export type ChartCrosshairMode = "price" | "normal" | "nearest" | `indicator:${string}:${string}`;
 // The retired crosshairTarget field is ignored so existing accounts start in free movement.
 export const DEFAULT_CHART_CROSSHAIR_MODE: ChartCrosshairMode = "normal";
-export type ChartPreferences={version:1;alwaysShowDrawingToolbar?:boolean;autosaveDrawings?:boolean;crosshairMode?:ChartCrosshairMode;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;priceScaleByTimeframe?:Partial<Record<ChartTimeframe,boolean>>;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;indicatorOverlayLineWidth?:IndicatorLineWidth;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;overnight?:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
+export type ChartPriceAdjustment = "split" | "raw";
+export type ChartPreferences={version:1;indicatorDisplay?:IndicatorDisplayChoices;priceAdjustment?:ChartPriceAdjustment;alwaysShowDrawingToolbar?:boolean;autosaveDrawings?:boolean;crosshairMode?:ChartCrosshairMode;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;priceScaleByTimeframe?:Partial<Record<ChartTimeframe,boolean>>;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;indicatorOverlayLineWidth?:IndicatorLineWidth;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;overnight?:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
 export const DEFAULT_CHART_PREFERENCES:ChartPreferences={version:1,crosshairMode:DEFAULT_CHART_CROSSHAIR_MODE,timeframe:'1m',theme:'auto',kind:'candles',grid:true,volume:true,volumeHeight:20,logarithmic:false,autoScale:true,timezone:'America/New_York',upColor:'#16a085',downColor:'#e45757',premarket:true,regular:true,postmarket:true,indicators:[]};
 // Legacy account-wide logarithmic values are deliberately ignored by this policy.
 // An absent per-timeframe choice adopts the new defaults for every account.
@@ -79,11 +104,32 @@ export function parseChartPreferences(value:unknown):ChartPreferences{
  if(p.indicatorOverlayLineWidth!==undefined&&!INDICATOR_LINE_WIDTHS.includes(p.indicatorOverlayLineWidth))throw Error('invalid_preferences');
  if(p.indicatorPriceScaleLabels!==undefined&&typeof p.indicatorPriceScaleLabels!=='boolean')throw Error('invalid_preferences');
  if(p.crosshairMode!==undefined&&(typeof p.crosshairMode!=="string"||!/^(?:price|normal|nearest|indicator:[A-Za-z0-9_-]{1,80}:[A-Za-z0-9_-]{1,40})$/u.test(p.crosshairMode)))throw Error('invalid_preferences');
+ if(p.priceAdjustment!==undefined&&p.priceAdjustment!=='split'&&p.priceAdjustment!=='raw')throw Error('invalid_preferences');
  if(p.scalePriceOnly!==undefined&&typeof p.scalePriceOnly!=='boolean')throw Error('invalid_preferences');
  if(!color(p.upColor)||!color(p.downColor)||!Array.isArray(p.indicators)||p.indicators.length>20)throw Error('invalid_preferences');
  if(p.priceScaleByTimeframe!==undefined&&(!p.priceScaleByTimeframe||typeof p.priceScaleByTimeframe!=='object'||Array.isArray(p.priceScaleByTimeframe)||Object.entries(p.priceScaleByTimeframe).some(([frame,value])=>!CHART_TIMEFRAMES.includes(frame as ChartTimeframe)||typeof value!=='boolean')))throw Error('invalid_preferences');
+ const indicatorDisplay = p.indicatorDisplay === undefined ? undefined : parseIndicatorDisplayChoices(p.indicatorDisplay);
  const presets = p.savedIndicatorPresets === undefined ? undefined : parseSavedIndicatorPresets(p.savedIndicatorPresets);
- return {version:1,...(p.autosaveDrawings!==undefined?{autosaveDrawings:p.autosaveDrawings}:{}),...(p.alwaysShowDrawingToolbar!==undefined?{alwaysShowDrawingToolbar:p.alwaysShowDrawingToolbar}:{}),crosshairMode:p.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,...(p.priceScaleByTimeframe?{priceScaleByTimeframe:{...p.priceScaleByTimeframe}}:{}),autoScale:p.autoScale,...(p.indicatorOverlayLineWidth!==undefined?{indicatorOverlayLineWidth:p.indicatorOverlayLineWidth}:{}),...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,...(p.overnight!==undefined?{overnight:p.overnight}:{}),indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
+ return {version:1,...(indicatorDisplay?{indicatorDisplay}:{}),...(p.priceAdjustment!==undefined?{priceAdjustment:p.priceAdjustment}:{}),...(p.autosaveDrawings!==undefined?{autosaveDrawings:p.autosaveDrawings}:{}),...(p.alwaysShowDrawingToolbar!==undefined?{alwaysShowDrawingToolbar:p.alwaysShowDrawingToolbar}:{}),crosshairMode:p.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,...(p.priceScaleByTimeframe?{priceScaleByTimeframe:{...p.priceScaleByTimeframe}}:{}),autoScale:p.autoScale,...(p.indicatorOverlayLineWidth!==undefined?{indicatorOverlayLineWidth:p.indicatorOverlayLineWidth}:{}),...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,...(p.overnight!==undefined?{overnight:p.overnight}:{}),indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
+}
+
+function parseIndicatorDisplayChoices(raw: unknown): IndicatorDisplayChoices {
+ if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw Error('invalid_preferences');
+ const result: IndicatorDisplayChoices = {};
+ for (const [type, value] of Object.entries(raw)) {
+  if (!INDICATOR_TYPES.includes(type as IndicatorType) || !value || typeof value !== 'object' || Array.isArray(value)) throw Error('invalid_preferences');
+  const choices: NonNullable<IndicatorDisplayChoices[IndicatorType]> = {};
+  for (const [action, choice] of Object.entries(value)) {
+   if ((action !== 'enabled' && action !== 'hidden') || !choice || typeof choice !== 'object' ||
+       !('value' in choice) || !('revision' in choice)) throw Error('invalid_preferences');
+   const { value: enabled, revision } = choice;
+   if (typeof enabled !== 'boolean' || typeof revision !== 'number' ||
+       !Number.isSafeInteger(revision) || revision < 1) throw Error('invalid_preferences');
+   choices[action] = { value: enabled, revision };
+  }
+  result[type as IndicatorType] = choices;
+ }
+ return result;
 }
 
 function parseIndicators(indicators: ChartIndicator[]): ChartIndicator[] {

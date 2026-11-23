@@ -5,8 +5,10 @@ import { browserDataSession } from "./server/browser-data-session";
 const state = vi.hoisted(() => ({
   selection: { provider: "alpaca" as "alpaca" | "moomoo", revision: 0 },
   authenticated: true,
+  sharedChart: true,
   alternative: vi.fn(),
 }));
+vi.mock("./server/chart-dashboard-access", () => ({ hasSharedChartDataAccess: () => state.sharedChart }));
 vi.mock("./server/provider-settings", () => ({ marketDataSelection: () => ({ ...state.selection }) }));
 vi.mock("./server/moomoo-chart-response", () => ({ moomooChartResponse: state.alternative }));
 vi.mock("@/src/modules/platform/server/authentication/require-platform-request-scope", () => ({
@@ -25,7 +27,7 @@ function configure() {
   vi.stubEnv("TRADERLINK_ALPACA_GATEWAY_URL", "https://private-gateway.example/market/");
   vi.stubEnv("TRADERLINK_ALPACA_GATEWAY_TOKEN", "server-only-token");
 }
-afterEach(() => { state.selection = { provider: "alpaca", revision: 0 }; state.authenticated = true; state.alternative.mockReset(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+afterEach(() => { state.selection = { provider: "alpaca", revision: 0 }; state.authenticated = true; state.sharedChart = true; state.alternative.mockReset(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 it("serves identical neutral candle contracts from both sources while leaving internal indicator data intact", async () => {
   configure();
@@ -100,4 +102,52 @@ it('keeps nested metadata out of paged primary and alternate histories without c
  let response=await proxyAlpacaChart(new Request(url),false);expect(response.status).toBe(200);let result=await response.json();expect(result.bars).toEqual([bar]);expect(result.calendar.sessions[0]).toEqual({date:'2026-11-19',open:'09:30',close:'16:00'});expect(JSON.stringify(result)).not.toMatch(/alpaca|moomoo/);
  state.selection={provider:'moomoo',revision:1};state.alternative.mockResolvedValue(Response.json({...payload,feed:'moomoo'}));url.searchParams.set('generation',browserDataSession('charts',state.selection).generation);
  response=await proxyAlpacaChart(new Request(url),false);result=await response.json();expect(result.bars).toEqual([bar]);expect(JSON.stringify(result)).not.toMatch(/alpaca|moomoo/);
+});
+
+it("authenticates completed archive reads and keeps the server-to-server response narrow", async () => {
+  configure();
+  const start = Date.parse("2026-11-18T14:30:00Z") / 1000;
+  const end = start + 1800;
+  const query = new URLSearchParams({ archive: "1", frame: "30m", session: "regular", start: String(start), end: String(end) });
+  const archived = { ...bar, time: start };
+  const fetcher = vi.fn<typeof fetch>(async () => Response.json({
+    state: "ready", start, end, basisDate: "2026-11-19",
+    bars: [{ ...archived, privateRule: "hidden" }], privateMetadata: "hidden",
+  }));
+  vi.stubGlobal("fetch", fetcher);
+  const archiveRequest = () => new Request(request().url + "&" + query.toString());
+  state.authenticated = false;
+  expect((await proxyAlpacaChart(archiveRequest(), false)).ok).toBe(false);
+  expect(fetcher).not.toHaveBeenCalled();
+  state.authenticated = true;
+  const result = await proxyAlpacaChart(archiveRequest(), false);
+  expect(await result.json()).toStrictEqual({ state: "ready", start, end, basisDate: "2026-11-19", bars: [archived] });
+  const [url, options] = fetcher.mock.calls[0];
+  expect(new URL(String(url)).pathname).toBe("/market/candle-history");
+  expect(Object.fromEntries(new URL(String(url)).searchParams)).toStrictEqual({
+    symbol: "SHFS", frame: "30m", session: "regular", start: String(start), end: String(end),
+  });
+  expect(new Headers(options?.headers).get("authorization")).toBe("Bearer server-only-token");
+  fetcher.mockResolvedValueOnce(Response.json({ state: "miss" }));
+  expect(await (await proxyAlpacaChart(archiveRequest(), false)).json()).toStrictEqual({ state: "miss" });
+  state.selection = { provider: "moomoo", revision: 1 };
+  expect(await (await proxyAlpacaChart(archiveRequest(), false)).json()).toStrictEqual({ state: "miss" });
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(state.alternative).not.toHaveBeenCalled();
+});
+
+it("rejects unentitled bars and streams and prevents the raw proxy from selecting Scanner history", async () => {
+  configure();
+  const fetcher = vi.fn<typeof fetch>();
+  vi.stubGlobal("fetch", fetcher);
+  state.sharedChart = false;
+  expect((await proxyAlpacaChart(request(), false)).status).toBe(403);
+  expect((await proxyAlpacaChart(request(), true)).status).toBe(403);
+  state.sharedChart = true;
+  const scannerQuery = new URL(request().url);
+  scannerQuery.searchParams.set("scannerIndicators", "1");
+  expect((await proxyAlpacaChart(new Request(scannerQuery), false)).status).toBe(400);
+  expect((await proxyAlpacaChart(new Request(scannerQuery), true)).status).toBe(400);
+  expect(fetcher).not.toHaveBeenCalled();
+  expect(state.alternative).not.toHaveBeenCalled();
 });

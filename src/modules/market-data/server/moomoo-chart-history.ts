@@ -7,6 +7,7 @@ import { easternClock } from "@/src/modules/scanner/live/sessions";
 import type { ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
 import type { VwapCorporateEvents, VwapCorporateAnchor } from "@/src/modules/scanner/alpaca/chart-vwap-events";
 
+type HistoryInput = { symbol: string; timeframe: "1Min" | "1Day"; start: number; end: number; adjustment?: "raw" | "split" };
 type Loader = (request: MoomooDataRequest) => Promise<Record<string, unknown>>;
 export type SplitEvent = { date: string; ratio: number };
 export function moomooSplits(payload: Record<string, unknown>): SplitEvent[] {
@@ -83,7 +84,7 @@ export class MoomooChartHistory {
     return { symbol, anchor, basisDate, dates: [...new Set(dates.filter(date => date <= basisDate))].sort() };
   }
 
-  async history(input: { symbol: string; timeframe: "1Min" | "1Day"; start: number; end: number }) {
+  async history(input: HistoryInput) {
     const key = JSON.stringify([easternClock(this.now()).date, input]), saved = this.cache.get(key);
     if (saved && this.now() - saved.at < 30_000) return saved.value;
     const pending = this.pending.get(key);
@@ -97,12 +98,13 @@ export class MoomooChartHistory {
     return load;
   }
 
-  private async loadHistory(input: { symbol: string; timeframe: "1Min" | "1Day"; start: number; end: number }) {
+  private async loadHistory(input: HistoryInput) {
+    const { adjustment = "split", ...request } = input;
     const basisDate = easternClock(this.now()).date, daily = input.timeframe === "1Day", bars = new Map<number, Candle>();
     const cursors = new Set<string>();
     let nextTime: number | undefined, pageToken: string | undefined, complete = false;
     for (let page = 0; page < 128; page++) {
-      const payload = await this.loader({ operation: "history", ...input, ...(nextTime ? { nextTime } : {}), ...(pageToken ? { pageToken } : {}) });
+      const payload = await this.loader({ operation: "history", ...request, ...(nextTime ? { nextTime } : {}), ...(pageToken ? { pageToken } : {}) });
       const data = payload.data as { kline_list?: unknown; next_time?: unknown };
       if (!data || !Array.isArray(data.kline_list) || data.kline_list.length > 370) throw Error("invalid_moomoo_history");
       for (const raw of data.kline_list) {
@@ -124,10 +126,11 @@ export class MoomooChartHistory {
       cursors.add(signature);
     }
     if (!complete) throw Error("moomoo_history_incomplete");
-    const splits = moomooSplits(await this.corporateActions(input.symbol));
+    const candles = [...bars.values()].sort((a, b) => a.time - b.time);
+    const splits = adjustment === "split" ? moomooSplits(await this.corporateActions(input.symbol)) : [];
     if (easternClock(this.now()).date !== basisDate) throw Error("adjustment_basis_changed");
-    return { symbol: input.symbol, feed: "moomoo" as const, adjustment: "split" as const, basisDate, complete: true,
-      nextPageToken: null, bars: adjustMoomooBars([...bars.values()].sort((a, b) => a.time - b.time), splits, basisDate) };
+    return { symbol: input.symbol, feed: "moomoo" as const, adjustment, basisDate, complete: true,
+      nextPageToken: null, bars: adjustment === "raw" ? candles : adjustMoomooBars(candles, splits, basisDate) };
   }
 
   async calendar(start: string, end: string): Promise<ChartCalendar> {

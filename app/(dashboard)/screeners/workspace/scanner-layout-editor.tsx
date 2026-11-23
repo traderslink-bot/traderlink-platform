@@ -12,11 +12,14 @@ import { cardAtPoint, cardEntries, cardFits, layoutSize, moveCard, type CardLayo
 import type { ScannerWorkspaceWidget as Widget } from "../scanner-workspace-layout";
 
 import type { ScannerView } from "./scanner-stock-cards";
-import type { CardScanners, ScannerCardSlot } from "./workspace-scanner-title";
+import type { CardSectionPreferences } from "./scanner-card-sections";
+import type { CardSavedScanIds, CardScanners, ScannerCardSlot } from "./workspace-scanner-title";
+
+import type { CardVolumePreferences } from "./workspace-volume";
 
 export type CardViews = Partial<Record<ScannerCardSlot, ScannerView>>;
 import type { GainerSwitchPreferences } from "@/src/modules/scanner/live/gainer-card-policy";
-export type NamedLayout = { name: string; rectangles: CardLayout; scanners?: CardScanners; views?: CardViews; gainerAutoSwitch?: GainerSwitchPreferences };
+export type NamedLayout = { name: string; rectangles: CardLayout; scanners?: CardScanners; savedScanIds?: CardSavedScanIds; views?: CardViews; sections?: CardSectionPreferences; volumeColumns?: CardVolumePreferences; gainerAutoSwitch?: GainerSwitchPreferences };
 const edges: Edge[] = ["top", "right", "bottom", "left"];
 const placement = (rect: Rect) => ({
   position:"absolute" as const, left:`${rect.x / 10}%`, top:`${rect.y / 10}%`,

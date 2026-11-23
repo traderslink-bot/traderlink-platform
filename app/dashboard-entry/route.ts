@@ -39,11 +39,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const page = withReadonlyPlatformDatabase({}, (database) => {
     const { homePages } = readPlatformHomeAccess(database, identity, request.headers);
-    if (!homePages.welcome) return "journal-workspace";
+    if (!homePages.welcome && !homePages["trading-workspace"] && !homePages.scanners) return "journal-workspace";
 
     const storedPage = new PlatformUserPreferenceRepository(database)
       .getActiveUserHomePage(identity.scope.userId);
-    return homePages[storedPage] ? storedPage : PLATFORM_DEFAULT_HOME_PAGE;
+    if (homePages[storedPage]) return storedPage;
+    return homePages.welcome ? PLATFORM_DEFAULT_HOME_PAGE : "journal-workspace";
   });
   const destination = new URL(PLATFORM_HOME_PAGES[page].href, resolvePlatformPublicOrigin(request));
 

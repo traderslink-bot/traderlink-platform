@@ -1,10 +1,12 @@
 import {widgets} from './scanner-desktop-layout';
 import type {ScannerWorkspaceWidget as Widget} from '../scanner-workspace-layout';
-import {isScannerCardSlot,scannerCardSlots,readCardScanners,type CardScanners} from './workspace-scanner-title';
+import {isScannerCardSlot,scannerCardSlots,readCardSavedScanIds,readCardScanners,type CardSavedScanIds,type CardScanners} from './workspace-scanner-title';
 import {readGainerSwitchPreferences,type GainerSwitchPreferences} from '@/src/modules/scanner/live/gainer-card-policy';
 import type {CardViews} from './scanner-layout-editor';
+import {readCardSectionPreferences,type CardSectionPreferences} from './scanner-card-sections';
+import {readCardVolumePreferences,type CardVolumePreferences} from './workspace-volume';
 export type MobileOrientation='portrait'|'landscape';
-export type MobileLayout={order:Widget[];heights:Partial<Record<Widget,number>>;wide:Widget[];placement?:Partial<Record<Widget,1|2>>;columns:1|2;mode:'tabs'|'stacked';selected:Widget;scanners:CardScanners;views:CardViews;gainerAutoSwitch?:GainerSwitchPreferences};
+export type MobileLayout={order:Widget[];heights:Partial<Record<Widget,number>>;wide:Widget[];placement?:Partial<Record<Widget,1|2>>;columns:1|2;mode:'tabs'|'stacked';selected:Widget;scanners:CardScanners;savedScanIds?:CardSavedScanIds;views:CardViews;sections?:CardSectionPreferences;volumeColumns?:CardVolumePreferences;gainerAutoSwitch?:GainerSwitchPreferences};
 export type MobileNamedLayout={name:string;layout:MobileLayout};
 export type MobileLane={active:string;layouts:MobileNamedLayout[]};
 export type MobileLayouts=Record<MobileOrientation,MobileLane>;
@@ -14,7 +16,7 @@ export function readMobileLayout(value:unknown,orientation:MobileOrientation):Mo
  const p=value as MobileLayout;if(!p||!Array.isArray(p.order)||!p.order.length||p.order.length>widgets.length||new Set(p.order).size!==p.order.length||p.order.some(w=>!widgets.includes(w)))throw Error('invalid_mobile_layout');
  const heights:MobileLayout['heights']={};for(const [key,value] of Object.entries(p.heights??{})){if(!widgets.includes(key as Widget)||typeof value!=='number'||!Number.isFinite(value)||value<0.35||value>3)throw Error('invalid_mobile_height');heights[key as Widget]=value;}
  const views:CardViews={};for(const [key,value] of Object.entries(p.views??{}))if(isScannerCardSlot(key)&&['table','cards','two-rows'].includes(value))views[key]=value;
- return {order:[...p.order],heights,wide:Array.isArray(p.wide)?p.wide.filter((w,i,a)=>widgets.includes(w)&&a.indexOf(w)===i):[],columns:orientation==='landscape'&&p.columns===2?2:1,mode:p.mode==='stacked'?'stacked':'tabs',selected:p.order.includes(p.selected)?p.selected:p.order[0],placement:Object.fromEntries(Object.entries(p.placement??{}).filter(([w,c])=>widgets.includes(w as Widget)&&(c===1||c===2))),scanners:readCardScanners(p.scanners),views,...(p.gainerAutoSwitch?{gainerAutoSwitch:readGainerSwitchPreferences(p.gainerAutoSwitch,Object.keys(scannerCardSlots))}:{})};
+ return {order:[...p.order],heights,wide:Array.isArray(p.wide)?p.wide.filter((w,i,a)=>widgets.includes(w)&&a.indexOf(w)===i):[],columns:orientation==='landscape'&&p.columns===2?2:1,mode:p.mode==='stacked'?'stacked':'tabs',selected:p.order.includes(p.selected)?p.selected:p.order[0],placement:Object.fromEntries(Object.entries(p.placement??{}).filter(([w,c])=>widgets.includes(w as Widget)&&(c===1||c===2))),scanners:readCardScanners(p.scanners),views,...(p.savedScanIds?{savedScanIds:readCardSavedScanIds(p.savedScanIds)}:{}),...(p.sections?{sections:readCardSectionPreferences(p.sections)}:{}),...(p.volumeColumns?{volumeColumns:readCardVolumePreferences(p.volumeColumns)}:{}),...(p.gainerAutoSwitch?{gainerAutoSwitch:readGainerSwitchPreferences(p.gainerAutoSwitch,Object.keys(scannerCardSlots))}:{})};
 }
 export function readMobileLayouts(value:unknown):MobileLayouts{
  const result=defaultMobileLayouts();if(!value||typeof value!=='object')return result;

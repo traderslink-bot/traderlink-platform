@@ -38,6 +38,10 @@ export function TraderLinkPlatformDashboardTemplate({
   pressReleaseUnreadCounts = null,
   deferPressReleaseUnreadCounts = false,
   scannerEarlyAccess = false,
+  scannerDashboardAccess = false,
+  screenersDashboardAccess = false,
+  chartsDashboardAccess = false,
+  tradingWorkspaceDashboardAccess = false,
   watchlistMemberNavigationAccess = false,
   ownerMarketDataAccess = false,
   generalMarketNewsAccess = false,
@@ -59,6 +63,10 @@ export function TraderLinkPlatformDashboardTemplate({
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   deferPressReleaseUnreadCounts?: boolean;
   scannerEarlyAccess?: boolean;
+  scannerDashboardAccess?: boolean;
+  screenersDashboardAccess?: boolean;
+  chartsDashboardAccess?: boolean;
+  tradingWorkspaceDashboardAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
   ownerMarketDataAccess?: boolean;
   generalMarketNewsAccess?: boolean;
@@ -75,6 +83,10 @@ export function TraderLinkPlatformDashboardTemplate({
       pressReleaseUnreadCounts={pressReleaseUnreadCounts}
       deferPressReleaseUnreadCounts={deferPressReleaseUnreadCounts}
       scannerEarlyAccess={scannerEarlyAccess}
+      scannerDashboardAccess={scannerDashboardAccess}
+      screenersDashboardAccess={screenersDashboardAccess}
+      chartsDashboardAccess={chartsDashboardAccess}
+      tradingWorkspaceDashboardAccess={tradingWorkspaceDashboardAccess}
       watchlistMemberNavigationAccess={watchlistMemberNavigationAccess}
       ownerMarketDataAccess={ownerMarketDataAccess}
       generalMarketNewsAccess={generalMarketNewsAccess}
