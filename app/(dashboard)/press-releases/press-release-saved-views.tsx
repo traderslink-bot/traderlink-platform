@@ -45,10 +45,11 @@ export function PressReleaseSavedViews({initialViews,currentFilters,onApply,init
   const list=<Stack spacing={1.25}>{views.length?views.map(view=><Box key={view.id} sx={{border:1,borderColor:"divider",borderRadius:1,p:1.5,minWidth:0}}>
     <Typography sx={{fontWeight:700,overflowWrap:"anywhere"}}>{view.name}</Typography>
     <Typography variant="body2" color="text.secondary" sx={{overflowWrap:"anywhere",mt:0.5}}>{newsViewFilterSummary(view.filters)}</Typography>
-    <FormControlLabel label={`Alerts for ${view.name}`} control={<Checkbox checked={view.alertsEnabled} disabled={working||(!alertsAllowed&&!view.alertsEnabled)} onChange={(_,enabled)=>perform(()=>setPressReleaseViewAlerts({id:view.id,revision:view.revision,enabled}),enabled?"Filtered alerts turned on.":"Filtered alerts turned off.")}/>}/>
+    {view.requiresReview ? <Alert severity="warning">This view used filters that are no longer supported. Review and save the remaining filters before enabling alerts.</Alert> : null}
+    <FormControlLabel label={`Alerts for ${view.name}`} control={<Checkbox checked={view.alertsEnabled} disabled={working||view.requiresReview||(!alertsAllowed&&!view.alertsEnabled)} onChange={(_,enabled)=>perform(()=>setPressReleaseViewAlerts({id:view.id,revision:view.revision,enabled}),enabled?"Filtered alerts turned on.":"Filtered alerts turned off.")}/>}/>
     <Stack direction="row" useFlexGap sx={{gap:1,flexWrap:"wrap"}}>
       {onApply?<Button disabled={working||!filtersAllowed} onClick={()=>{setSelectedId(view.id);onApply(view.filters);close();}}>Use {view.name}</Button>:<Button component={Link} href={`/press-releases?view=${encodeURIComponent(view.id)}`}>Edit filters</Button>}
-      <Button disabled={working||!filtersAllowed} onClick={()=>edit(view,true)}>Rename view</Button>
+      <Button disabled={working||!filtersAllowed} onClick={()=>edit(view,true)}>{view.requiresReview ? "Review view" : "Rename view"}</Button>
       <Button color="error" disabled={working} onClick={()=>{setDeleting(view);setReturnToManage(onApply!==undefined);setPanel("delete");}}>Delete view</Button>
     </Stack>
   </Box>):<Typography color="text.secondary">No saved views yet. Choose filters in Press Releases, then select Save view.</Typography>}</Stack>;

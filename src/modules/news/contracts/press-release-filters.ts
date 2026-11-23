@@ -3,13 +3,14 @@ export const NEWS_SORTS = ["newest", "oldest", "cap_asc", "cap_desc", "ticker"] 
 export type NewsFilters = {
   search: string; tickers: string; minCap: string; maxCap: string; capStatus: "any" | "known" | "unknown";
   datePeriod: "any" | "custom" | "today" | "last_7_days" | "last_30_days";
-  from: string; to: string; type: "all" | "press_release" | "earnings" | "financing" | "sec";
-  read: "all" | "unread" | "read"; summary: "all" | "available" | "unavailable";
+  from: string; to: string;
+  read: "all" | "unread" | "read";
   sort: typeof NEWS_SORTS[number];
 };
-export const DEFAULT_NEWS_FILTERS: NewsFilters = { search: "", tickers: "", minCap: "", maxCap: "", capStatus: "any", datePeriod: "any", from: "", to: "", type: "all", read: "all", summary: "all", sort: "newest" };
+export const DEFAULT_NEWS_FILTERS: NewsFilters = { search: "", tickers: "", minCap: "", maxCap: "", capStatus: "any", datePeriod: "any", from: "", to: "", read: "all", sort: "newest" };
 export function parseNewsFilters(input: unknown, reference = new Date()): NewsFilters {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid filters.");
+  // Retired type/summary keys in older preferences are intentionally ignored.
   const raw = input as Record<string, unknown>;
   const result = { ...DEFAULT_NEWS_FILTERS };
   for (const key of Object.keys(result) as (keyof NewsFilters)[]) {
@@ -18,7 +19,7 @@ export function parseNewsFilters(input: unknown, reference = new Date()): NewsFi
       Object.assign(result, { [key]: raw[key].trim() });
     }
   }
-  const choices: Partial<Record<keyof NewsFilters, readonly string[]>> = { datePeriod: ["any", "custom", "today", "last_7_days", "last_30_days"], capStatus: ["any", "known", "unknown"], type: ["all", "press_release", "earnings", "financing", "sec"], read: ["all", "unread", "read"], summary: ["all", "available", "unavailable"], sort: NEWS_SORTS };
+  const choices: Partial<Record<keyof NewsFilters, readonly string[]>> = { datePeriod: ["any", "custom", "today", "last_7_days", "last_30_days"], capStatus: ["any", "known", "unknown"], read: ["all", "unread", "read"], sort: NEWS_SORTS };
   for (const [key, values] of Object.entries(choices)) if (!values.includes(result[key as keyof NewsFilters])) throw new Error("Invalid filter choice.");
   for (const key of ["minCap", "maxCap"] as const) if (result[key] && (!/^\d+(?:\.\d{1,6})?$/u.test(result[key]) || Number(result[key]) > 1e9)) throw new Error("Enter a valid market cap in USD millions.");
   if (result.minCap && result.maxCap && Number(result.minCap) > Number(result.maxCap)) throw new Error("Minimum market cap must not exceed maximum.");

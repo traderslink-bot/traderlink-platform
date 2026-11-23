@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import IconButton from "@mui/material/IconButton";
 import Box from "@mui/material/Box";
@@ -15,8 +15,8 @@ import Alert from "@mui/material/Alert";
 import { DEFAULT_NEWS_FILTERS, parseNewsFilters, type NewsFilters } from "@/src/modules/news/contracts/press-release-filters";
 
 const sorts = { newest: "Newest first", oldest: "Oldest first", cap_asc: "Market cap: low to high", cap_desc: "Market cap: high to low", ticker: "Ticker: A–Z" };
-const names: Record<keyof NewsFilters, string> = { datePeriod: "Published date", search: "Search", tickers: "Tickers", minCap: "Min cap ($M)", maxCap: "Cap below ($M)", capStatus: "Market cap", from: "From (ET)", to: "To (ET)", type: "News type", read: "Read status", summary: "AI summary", sort: "Sort" };
-export function PressReleaseFilterControls({ value, onApply, disabled, initialOpen = false }: { value: NewsFilters; onApply: (value: NewsFilters) => void; disabled: boolean; initialOpen?: boolean }) {
+const names: Record<keyof NewsFilters, string> = { datePeriod: "Published date", search: "Search", tickers: "Tickers", minCap: "Min cap ($M)", maxCap: "Cap below ($M)", capStatus: "Market cap", from: "From (ET)", to: "To (ET)", read: "Read status", sort: "Sort" };
+export function PressReleaseFilterControls({ value, onApply, disabled, initialOpen = false, actions }: { value: NewsFilters; onApply: (value: NewsFilters) => void; disabled: boolean; initialOpen?: boolean; actions?: ReactNode }) {
   const [open, setOpen] = useState(initialOpen), [draft, setDraft] = useState(value), [search, setSearch] = useState({ applied: value.search, text: value.search }), [error, setError] = useState("");
   if (search.applied !== value.search) setSearch({ applied: value.search, text: value.search });
   const change = (key: keyof NewsFilters, next: string) => setDraft(current => ({ ...current, [key]: next, ...(["from", "to"].includes(key) ? { datePeriod: "custom" as const } : {}), ...(key === "capStatus" && next === "unknown" ? { minCap: "", maxCap: "" } : {}) }));
@@ -28,13 +28,14 @@ export function PressReleaseFilterControls({ value, onApply, disabled, initialOp
   }
   const choice = (key: keyof NewsFilters, values: Record<string, string>) => <TextField select fullWidth label={names[key]} value={draft[key]} onChange={event => change(key, event.target.value)}>{Object.entries(values).map(([id, label]) => <MenuItem key={id} value={id}>{label}</MenuItem>)}</TextField>;
   return <Stack spacing={1.25}>
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-      <Box component="form" onSubmit={event => { event.preventDefault(); onApply({ ...value, search: search.text.trim() }); }} sx={{ display: "flex", gap: 1, flex: 1 }}>
+    <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: "flex-start", flexWrap: "wrap" }}>
+      <Box component="form" onSubmit={event => { event.preventDefault(); onApply({ ...value, search: search.text.trim() }); }} sx={{ display: "flex", gap: 1, flex: 1, minWidth: { xs: "100%", sm: 280 } }}>
         <TextField fullWidth label="Search ticker or headline" size="small" value={search.text} onChange={event => setSearch({ applied: value.search, text: event.target.value })} slotProps={{ htmlInput: { maxLength: 200 } }} />
         <Button type="submit" variant="outlined" disabled={disabled}>Search</Button>
       </Box>
       <Button variant="outlined" disabled={disabled} onClick={() => { setDraft(value); setError(""); setOpen(true); }}>Filters</Button>
       <TextField select label="Sort" size="small" value={value.sort} disabled={disabled} onChange={event => onApply({ ...value, sort: event.target.value as NewsFilters["sort"] })} sx={{ minWidth: 205 }}>{Object.entries(sorts).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}</TextField>
+      {actions}
     </Stack>
     <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
       {(Object.keys(value) as (keyof NewsFilters)[]).filter(key => value[key] !== DEFAULT_NEWS_FILTERS[key] && !(key === "datePeriod" && value.datePeriod === "custom") && !(["from", "to"].includes(key) && !["any", "custom"].includes(value.datePeriod))).map(key => <Chip key={key} label={`${names[key]}: ${key === "sort" ? sorts[value.sort] : key === "datePeriod" ? ({ today: "Today", last_7_days: "Last 7 days", last_30_days: "Last 30 days", any: "Any date", custom: "Custom dates" }[value.datePeriod]) : value[key]}`} size="small" onDelete={disabled ? undefined : () => onApply({ ...value, [key]: DEFAULT_NEWS_FILTERS[key], ...(key === "datePeriod" ? { from: "", to: "" } : {}) })} />)}
@@ -55,9 +56,7 @@ export function PressReleaseFilterControls({ value, onApply, disabled, initialOp
           <Stack direction="row" spacing={0.5}>{[["Today", 1], ["Last 7 days", 7], ["Last 30 days", 30]].map(([label, days]) => <Button key={label} size="small" onClick={() => datePreset(Number(days))}>{label}</Button>)}</Stack>
           <TextField sx={{ colorScheme: theme => theme.palette.mode }} type="date" label="From (ET)" value={draft.from} onChange={event => change("from", event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
           <TextField sx={{ colorScheme: theme => theme.palette.mode }} type="date" label="To (ET)" value={draft.to} onChange={event => change("to", event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-          {choice("type", { all: "All news types", press_release: "Press releases", earnings: "Earnings", financing: "Financing", sec: "SEC filings" })}
           {choice("read", { all: "All articles", unread: "Unread", read: "Read" })}
-          {choice("summary", { all: "Any summary status", available: "Summary available", unavailable: "Summary unavailable" })}
           <Stack direction="row" spacing={1}><Button type="submit" variant="contained" disabled={disabled}>Apply filters</Button><Button onClick={() => { setDraft({ ...DEFAULT_NEWS_FILTERS }); setError(""); }}>Reset</Button><Button onClick={() => setOpen(false)}>Cancel</Button></Stack>
         </Stack>
       </Box>

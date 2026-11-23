@@ -49,7 +49,7 @@ export function PressReleaseArticleDrawer({ article, onClose }: Readonly<{
         <Box sx={{ minWidth: 0 }}>
           <Typography color="primary" sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" }, fontWeight: 900, lineHeight: 1.15 }}>{article.ticker}</Typography>
           <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", flexWrap: "wrap", mt: 0.75 }}>
-            {article.marketCap ? <Chip label={article.marketCap} size="small" variant="outlined" /> : null}
+            {article.marketCap ? <Chip label={`Market cap ${article.marketCap}`} size="small" variant="outlined" /> : null}
             <Chip label={pressReleaseType(article)} size="small" variant="outlined" />
             <Typography color="text.secondary" variant="caption">{pressReleaseEasternTime(article.publishedAt, true)} ET</Typography>
           </Stack>

@@ -144,6 +144,11 @@ export function PressReleaseFeed({
     });
   }
 
+  const feedActions = <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: "center", flexWrap: "wrap", ml: "auto" }}>
+    <Button component={NextLink} href="/account/preferences#push-notifications" startIcon={<NotificationsActiveRoundedIcon />} sx={{ whiteSpace: "nowrap" }} variant="outlined">Manage alerts</Button>
+    <Button disabled={working || articles.every((article) => article.isRead)} onClick={markChannelRead} startIcon={<CheckRoundedIcon />} sx={{ whiteSpace: "nowrap" }} variant="outlined">Mark all read</Button>
+  </Stack>;
+
   return (
     <DashboardPage>
       <Stack
@@ -155,15 +160,6 @@ export function PressReleaseFeed({
           <Typography component="h1" variant="h1">{channel === "news_filtered" ? "PR Scanner" : definition.label}</Typography>
 
         </Box>
-        <Button
-          component={NextLink}
-          href="/account/preferences#push-notifications"
-          startIcon={<NotificationsActiveRoundedIcon />}
-          sx={{ alignSelf: "flex-start", display: { xs: "inline-flex", md: "none" }, whiteSpace: "nowrap" }}
-          variant="outlined"
-        >
-          Manage press release alerts
-        </Button>
       </Stack>
 
       {!preferenceSaved?<Alert severity="warning" action={<Button disabled={savingPreference} onClick={()=>startSavingPreference(async()=>{const result=await retrySavingPressReleasePreference(filters);setPreferenceSaved(result.ok);})}>Retry saving</Button>}>Your news loaded, but this view could not be saved to your account.</Alert>:null}
@@ -175,29 +171,9 @@ export function PressReleaseFeed({
 
       {page.filtersAllowed?<PressReleaseSavedViews initialViews={initialSavedViews} currentFilters={filters} initialSelectedId={initialSelectedViewId} onApply={next=>void fetchFeed(next)} alertsAllowed={alertsAllowed}/>:null}
       <DashboardPanel hideHeader>
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={1.25}
-          sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}
-        >
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            {page.filtersAllowed ? <PressReleaseFilterControls value={filters} onApply={next => void fetchFeed(next)} disabled={loading} initialOpen={initialFiltersOpen} /> : null}
-          </Box>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-            <Button
-              component={NextLink}
-              href="/account/preferences#push-notifications"
-              startIcon={<NotificationsActiveRoundedIcon />}
-              sx={{ display: { xs: "none", md: "inline-flex" }, whiteSpace: "nowrap" }}
-              variant="outlined"
-            >
-              Manage press release alerts
-            </Button>
-            <Button disabled={working || articles.every((article) => article.isRead)} onClick={markChannelRead} startIcon={<CheckRoundedIcon />}>
-              Mark all read
-            </Button>
-          </Stack>
-        </Stack>
+        {page.filtersAllowed
+          ? <PressReleaseFilterControls value={filters} onApply={next => void fetchFeed(next)} disabled={loading} initialOpen={initialFiltersOpen} actions={feedActions} />
+          : feedActions}
 
         <Box aria-busy={loading} sx={{ mt: 2 }}>
           {loading ? <Typography variant="body2" role="status">Loading news…</Typography> : null}
@@ -210,7 +186,7 @@ export function PressReleaseFeed({
               fontSize: 11,
               fontWeight: 800,
               gap: 1.5,
-              gridTemplateColumns: "12px 74px 72px 106px 112px minmax(260px, 1fr)",
+              gridTemplateColumns: "12px 74px 72px 132px 112px minmax(230px, 1fr)",
               letterSpacing: "0.04em",
               px: 1.25,
               py: 1,
@@ -251,7 +227,7 @@ export function PressReleaseFeed({
                 display: { xs: "block", md: "grid" },
                 font: "inherit",
                 gap: { md: 1.5 },
-                gridTemplateColumns: { md: "12px 74px 72px 106px 112px minmax(260px, 1fr)" },
+                gridTemplateColumns: { md: "12px 74px 72px 132px 112px minmax(230px, 1fr)" },
                 minHeight: { xs: 76, md: 56 },
                 p: { xs: 1.5, md: 1.25 },
                 textAlign: "left",
@@ -273,7 +249,7 @@ export function PressReleaseFeed({
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                     <Typography noWrap sx={{ fontWeight: article.isRead ? 700 : 850 }} variant="body2">{article.ticker}</Typography>
                     <Typography color="text.secondary" noWrap variant="caption">{pressReleaseEasternTime(article.publishedAt, true)}</Typography>
-                    {article.marketCap ? <Typography color="text.secondary" noWrap variant="caption">{article.marketCap}</Typography> : null}
+                    {article.marketCap ? <Typography color="text.secondary" noWrap variant="caption">{`Market cap ${article.marketCap}`}</Typography> : null}
                   </Stack>
                   <Typography
                     sx={{ fontWeight: article.isRead ? 500 : 720, mt: 0.35, overflowWrap: "anywhere" }}
@@ -286,7 +262,7 @@ export function PressReleaseFeed({
               <Box aria-hidden sx={{ bgcolor: article.isRead ? "transparent" : "primary.main", borderRadius: "50%", display: { xs: "none", md: "block" }, height: 8, width: 8 }} />
               <Box sx={{ display: { xs: "none", md: "block" } }}><Typography color="text.secondary" variant="caption" component="div">{new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }).format(new Date(article.publishedAt))}</Typography><Typography color="text.secondary" noWrap variant="caption">{pressReleaseEasternTime(article.publishedAt)}</Typography></Box>
               <Typography noWrap sx={{ display: { xs: "none", md: "block" }, fontWeight: article.isRead ? 700 : 850 }} variant="body2">{article.ticker}</Typography>
-              <Typography color="text.secondary" noWrap sx={{ display: { xs: "none", md: "block" } }} variant="caption">{article.marketCap ?? "Unknown"}</Typography>
+              <Typography color="text.secondary" noWrap sx={{ display: { xs: "none", md: "block" } }} variant="caption">{article.marketCap ? `Market cap ${article.marketCap}` : "Market cap unknown"}</Typography>
               <Typography color="text.secondary" noWrap sx={{ display: { xs: "none", md: "block" }, textTransform: "capitalize" }} variant="caption">{pressReleaseType(article)}</Typography>
               <Typography
                 noWrap

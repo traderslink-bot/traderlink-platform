@@ -1,7 +1,7 @@
 import "server-only";
 import type Database from "better-sqlite3";
 import { DEFAULT_NEWS_FILTERS, NEWS_FILTERS_FEATURE, parseNewsFilters } from "../contracts/press-release-filters";
-import { decodeNewsFilters, encodeNewsFilters, MAX_SAVED_NEWS_VIEWS, newsAlertFilters, newsViewName, type NewsViewPreference, type SavedNewsView, type SaveNewsViewInput } from "../contracts/press-release-saved-views";
+import { decodeNewsFilters, encodeNewsFilters, newsFiltersRequireReview, MAX_SAVED_NEWS_VIEWS, newsAlertFilters, newsViewName, type NewsViewPreference, type SavedNewsView, type SaveNewsViewInput } from "../contracts/press-release-saved-views";
 import { assertCanonicalUtcTimestamp, assertCanonicalUuidV4, createCanonicalUuidV4 } from "../../platform/server/database/platform-migration-contract";
 import { assertMembershipFeature, evaluateMembershipFeature } from "../../platform/server/membership/platform-membership-access";
 import { pressReleaseFilterQuery } from "./press-release-filter-query";
@@ -31,12 +31,13 @@ export class PressReleaseSavedViewRepository {
   list(userId: string): readonly SavedNewsView[] {
     this.active(userId);
     const rows = this.database.prepare("SELECT view_id,name,filters_json,revision,alerts_enabled,alerts_started_at_utc FROM news_press_release_saved_views WHERE user_id=? ORDER BY name COLLATE NOCASE,view_id").all(userId) as ViewRow[];
-    return rows.map(row => ({ id: row.view_id, name: row.name, filters: decodeNewsFilters(row.filters_json), revision: row.revision, alertsEnabled: row.alerts_enabled === 1, alertsStartedAt: row.alerts_started_at_utc }));
+    return rows.map(row => ({ id: row.view_id, name: row.name, filters: decodeNewsFilters(row.filters_json), revision: row.revision, requiresReview: newsFiltersRequireReview(row.filters_json), alertsEnabled: row.alerts_enabled === 1 && !newsFiltersRequireReview(row.filters_json), alertsStartedAt: row.alerts_started_at_utc }));
   }
   save(userId: string, input: SaveNewsViewInput, atUtc: string): readonly SavedNewsView[] {
     this.writable(userId); assertCanonicalUtcTimestamp(atUtc,"updatedAtUtc");
     const name = newsViewName(input.name), filters = parseNewsFilters(input.filters), json = encodeNewsFilters(filters);
     if (typeof input.alertsEnabled !== "boolean") throw new Error("Choose whether this view sends alerts.");
+    if (input.alertsEnabled && newsFiltersRequireReview(JSON.stringify({ filters: input.filters }))) throw new Error("Review the remaining filters before enabling this alert. News type and summary-status filters are no longer supported.");
     this.database.transaction(() => {
       if (this.database.prepare("SELECT 1 FROM news_press_release_saved_views WHERE user_id=? AND name=? COLLATE NOCASE AND view_id<>?").get(userId,name,input.id ?? "")) throw new Error("You already have a saved view with this name.");
       if (input.id === null) {
@@ -48,7 +49,7 @@ export class PressReleaseSavedViewRepository {
         if (!Number.isSafeInteger(input.revision) || Number(input.revision)<1) throw new Error("Refresh this saved view before changing it.");
         const old = this.database.prepare("SELECT filters_json,alerts_enabled,alerts_started_at_utc FROM news_press_release_saved_views WHERE user_id=? AND view_id=? AND revision=?").get(userId,input.id,input.revision) as Pick<ViewRow,"filters_json"|"alerts_enabled"|"alerts_started_at_utc"> | undefined;
         if (!old) throw new Error("This saved view changed elsewhere. Refresh before saving.");
-        const changed = JSON.stringify(newsAlertFilters(decodeNewsFilters(old.filters_json))) !== JSON.stringify(newsAlertFilters(filters));
+        const changed = newsFiltersRequireReview(old.filters_json) || JSON.stringify(newsAlertFilters(decodeNewsFilters(old.filters_json))) !== JSON.stringify(newsAlertFilters(filters));
         const startsAt = input.alertsEnabled ? (!old.alerts_enabled || changed ? atUtc : old.alerts_started_at_utc) : old.alerts_started_at_utc;
         this.database.prepare("UPDATE news_press_release_saved_views SET name=?,filters_json=?,alerts_enabled=?,alerts_started_at_utc=?,revision=revision+1,updated_at_utc=? WHERE user_id=? AND view_id=? AND revision=?").run(name,json,Number(input.alertsEnabled),startsAt,atUtc,userId,input.id,input.revision);
       }
@@ -66,6 +67,10 @@ export class PressReleaseSavedViewRepository {
     this.active(userId); assertCanonicalUuidV4(id,"viewId"); assertCanonicalUtcTimestamp(atUtc,"updatedAtUtc");
     if (enabled) assertMembershipFeature(this.database,userId,NEWS_FILTERS_FEATURE);
     if (typeof enabled !== "boolean" || !Number.isSafeInteger(revision) || revision < 1) throw new Error("Refresh this view before changing alerts.");
+    if (enabled) {
+      const row = this.database.prepare("SELECT filters_json FROM news_press_release_saved_views WHERE user_id=? AND view_id=? AND revision=?").get(userId,id,revision) as {filters_json:string} | undefined;
+      if (row && newsFiltersRequireReview(row.filters_json)) throw new Error("Review and save this view before enabling alerts.");
+    }
     const result=this.database.prepare("UPDATE news_press_release_saved_views SET alerts_enabled=?, alerts_started_at_utc=CASE WHEN ?=1 AND alerts_enabled=0 THEN ? ELSE alerts_started_at_utc END,revision=revision+1,updated_at_utc=? WHERE user_id=? AND view_id=? AND revision=?").run(Number(enabled),Number(enabled),atUtc,atUtc,userId,id,revision);
     if(result.changes!==1)throw new Error("This saved view changed elsewhere. Refresh before changing alerts.");
     return this.list(userId);
@@ -80,6 +85,7 @@ export class PressReleaseSavedViewRepository {
     registerPressReleaseFilterFunctions(this.database);
     const rows = this.database.prepare("SELECT filters_json,alerts_started_at_utc FROM news_press_release_saved_views WHERE user_id=? AND alerts_enabled=1").all(userId) as Pick<ViewRow,"filters_json"|"alerts_started_at_utc">[];
     for (const row of rows) {
+      if (newsFiltersRequireReview(row.filters_json)) continue;
       if (!row.alerts_started_at_utc || Date.parse(article.created_at)<Date.parse(row.alerts_started_at_utc)) continue;
       const filters = { ...decodeNewsFilters(row.filters_json,new Date(article.created_at)), read: DEFAULT_NEWS_FILTERS.read, sort: DEFAULT_NEWS_FILTERS.sort };
       const query = pressReleaseFilterQuery(filters);
