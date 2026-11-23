@@ -89,7 +89,7 @@ function ArticleView({article,onBack,onClose}:{article:PressReleaseArticle;onBac
     </Stack>
     <Stack spacing={2} sx={theme=>({...scannerScrollStyles(theme),overflow:"auto",p:{xs:2,sm:3}})}>
       <Box><Typography color="warning.main" sx={{fontSize:"1.35rem",fontWeight:900}}>{article.ticker}</Typography>
-        <Typography color="text.secondary" variant="caption">{dateFormatter.format(new Date(article.publishedAt))} · {timeFormatter.format(new Date(article.publishedAt))} ET{article.marketCap?` · Mkt Cap ${article.marketCap}`:""}</Typography>
+        <Typography color="text.secondary" variant="caption">{dateFormatter.format(new Date(article.publishedAt))} · {timeFormatter.format(new Date(article.publishedAt))} ET{article.marketCap?` · Market cap ${article.marketCap}`:""}</Typography>
       </Box>
       <Typography component="h2" variant="h2">{article.headline}</Typography>
       {article.summaryUnavailable?<Typography variant="body2">{SUMMARY_UNAVAILABLE_MESSAGE}</Typography>:article.summary?<Box><Typography component="h3" sx={{fontWeight:800}} variant="subtitle2">Summary</Typography><Typography sx={{mt:1,whiteSpace:"pre-wrap"}} variant="body2">{article.summary}</Typography></Box>:null}
@@ -115,7 +115,7 @@ function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article
         <Typography color="text.secondary" noWrap sx={{fontSize:"0.58rem",lineHeight:1.25}}>{older?"Yesterday · ":""}{timeFormatter.format(new Date(article.publishedAt))}</Typography>
       </Box>
       <Box sx={{minWidth:0}}>
-        <Typography color="text.secondary" noWrap sx={{fontSize:"0.6rem",fontWeight:700,lineHeight:1.15}}>{article.marketCap?`Mkt Cap ${article.marketCap}`:"Mkt Cap n/a"} · Float {floatValue(float)}</Typography>
+        <Typography color="text.secondary" noWrap sx={{fontSize:"0.6rem",fontWeight:700,lineHeight:1.15}}>{article.marketCap?`Market cap ${article.marketCap}`:"Market cap n/a"} · Float {floatValue(float)}</Typography>
         <Typography noWrap sx={{fontSize:"0.68rem",fontWeight:article.isRead?600:800,lineHeight:1.25}}>{article.headline}</Typography>
       </Box>
     </ButtonBase>
@@ -283,7 +283,7 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltWi
           sx={{alignItems:{xs:"flex-start",sm:"center"},borderBottom:1,borderColor:"divider",display:"grid",gap:1,gridTemplateColumns:{xs:"5rem minmax(0,1fr)",sm:"7.5rem 4.5rem 7rem minmax(0,1fr)"},minHeight:54,px:2,py:1,textAlign:"left",width:"100%"}}>
           <Typography color="text.secondary" sx={{fontSize:"0.68rem"}}>{dateFormatter.format(new Date(article.publishedAt))} · {timeFormatter.format(new Date(article.publishedAt))} ET</Typography>
           <Typography sx={{color:"warning.main",fontSize:"0.78rem",fontWeight:900}}>{article.ticker}</Typography>
-          <Typography color="text.secondary" sx={{display:{xs:"none",sm:"block"},fontSize:"0.68rem"}}>{article.marketCap??"n/a"}</Typography>
+          <Typography color="text.secondary" sx={{display:{xs:"none",sm:"block"},fontSize:"0.68rem"}}>{article.marketCap ? `Market cap ${article.marketCap}` : "Market cap n/a"}</Typography>
           <Typography sx={{fontSize:"0.76rem",fontWeight:article.isRead?600:800,overflowWrap:"anywhere"}}>{article.headline}</Typography>
         </ButtonBase>)}
         {(page?.next||newsError)&&<Box sx={{p:1.5,textAlign:"center"}}>

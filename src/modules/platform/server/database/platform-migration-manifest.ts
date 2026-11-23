@@ -1,3 +1,4 @@
+import { newsArticleIngestionMembershipsMigration } from "@/src/modules/news/server/database/migrations/0227_news_article_ingestion_memberships";
 import { newsAccountFiltersAndSavedViewsMigration } from "@/src/modules/news/server/database/migrations/0221_news_account_filters_and_saved_views";
 import { traderLinkCommunityStatsForwardCheckpointsMigration } from "@/src/modules/communities/server/database/migrations/0217_traderlink_community_stats_forward_checkpoints";
 import { platformPremiumCurrentAccessEventsMigration } from "./migrations/0216_platform_premium_current_access_events";
@@ -797,6 +798,7 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0220_watchlist_trader_notes_notifications.ts", migration: watchlistTraderNotesNotificationsMigration }),
     Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0221_news_account_filters_and_saved_views.ts", migration: newsAccountFiltersAndSavedViewsMigration }),
     Object.freeze({ sourcePath: "src/modules/platform/server/database/migrations/0222_watchlist_indicators_visibility.ts", migration: watchlistIndicatorsVisibilityMigration }),
+    Object.freeze({ sourcePath: "src/modules/news/server/database/migrations/0227_news_article_ingestion_memberships.ts", migration: newsArticleIngestionMembershipsMigration }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -919,6 +921,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0220_watchlist_trader_notes_notifications": Object.freeze(["platform_watchlist_notes_notifications", "platform_watchlist_notes_deliveries"]),
     "0218_watchlist_row_visibility": Object.freeze(["platform_watchlist_row_visibility", "platform_watchlist_row_visibility_audit"]),
     "0219_watchlist_masked_added_date": Object.freeze(["platform_watchlist_hidden_added_visibility", "platform_watchlist_hidden_added_visibility_audit"]),
+    "0227_news_article_ingestion_memberships": Object.freeze(["news_article_source_urls", "news_article_source_events", "news_article_category_memberships"]),
     "0221_news_account_filters_and_saved_views": Object.freeze(["news_press_release_view_preferences", "news_press_release_saved_views"]),
     "0185_news_general_market_news": Object.freeze(["news_general_articles", "news_general_symbols", "news_general_revisions", "news_general_deliveries", "news_general_status"]),
     "0187_journal_chart_entries": Object.freeze(["journal_chart_entries"]),

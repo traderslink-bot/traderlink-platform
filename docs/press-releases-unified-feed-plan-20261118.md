@@ -67,3 +67,5 @@ Implementation and QA: [progress record](press-releases-unified-feed-progress-20
 ## Owner extension — account views and custom alerts
 
 The owner subsequently requested cross-device account persistence and notifications for several saved filtered sections, including custom market-cap ranges. This supersedes the browser-only persistence limit above. Follow [the extension plan](press-release-account-views-and-alerts-plan-20261119.md) and its progress record. Migration 0221/order296 is source-reserved; production sequencing/approval remains Coordinator-owned.
+
+Current ingestion/category preservation and toolbar follow-up: [News ingestion memberships plan](migration/news-ingestion-memberships-plan-20261122.md). Source/private QA only; owner deployment approval remains required.
