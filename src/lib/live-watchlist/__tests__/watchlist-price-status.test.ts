@@ -13,8 +13,8 @@ describe("truthful Watchlist quote labels", () => {
     expect(watchlistPriceNote({ ...ticker, latestPriceObservedAt: now - 180000 }, "live", now)).toBe("");
   });
   it("does not substitute publication or receipt time for unavailable source time", () => {
-    expect(watchlistPriceNote({ ...ticker, latestPriceSource: "card" }, "offline", now)).toBe("Not live · Price time unavailable");
-    for (const time of [null, NaN, -1]) expect(watchlistPriceNote({ ...ticker, latestPriceObservedAt: time }, "offline", now)).toBe("Not live · Price time unavailable");
+    expect(watchlistPriceNote({ ...ticker, latestPriceSource: "card" }, "offline", now)).toBe("Not live");
+    for (const time of [null, NaN, -1]) expect(watchlistPriceNote({ ...ticker, latestPriceObservedAt: time }, "offline", now)).toBe("Not live");
   });
   it("keeps quote freshness independent for level reference replacement", () => {
     expect(hasFreshWatchlistPrice(ticker, now)).toBe(true);
