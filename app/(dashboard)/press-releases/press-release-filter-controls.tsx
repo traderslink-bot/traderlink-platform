@@ -15,7 +15,7 @@ import Alert from "@mui/material/Alert";
 import { DEFAULT_NEWS_FILTERS, parseNewsFilters, type NewsFilters } from "@/src/modules/news/contracts/press-release-filters";
 
 const sorts = { newest: "Newest first", oldest: "Oldest first", cap_asc: "Market cap: low to high", cap_desc: "Market cap: high to low", ticker: "Ticker: A–Z" };
-const names: Record<keyof NewsFilters, string> = { datePeriod: "Published date", search: "Search", tickers: "Tickers", minCap: "Min cap ($M)", maxCap: "Cap below ($M)", capStatus: "Market cap", from: "From (ET)", to: "To (ET)", type: "News type", read: "Read status", summary: "AI summary", sort: "Sort" };
+const names: Record<keyof NewsFilters, string> = { datePeriod: "Published date", search: "Search", tickers: "Tickers", minCap: "Min cap ($M)", maxCap: "Cap below ($M)", capStatus: "Market cap", from: "From (ET)", to: "To (ET)", read: "Read status", sort: "Sort" };
 export function PressReleaseFilterControls({ value, onApply, disabled, initialOpen = false, actions }: { value: NewsFilters; onApply: (value: NewsFilters) => void; disabled: boolean; initialOpen?: boolean; actions?: ReactNode }) {
   const [open, setOpen] = useState(initialOpen), [draft, setDraft] = useState(value), [search, setSearch] = useState({ applied: value.search, text: value.search }), [error, setError] = useState("");
   if (search.applied !== value.search) setSearch({ applied: value.search, text: value.search });
@@ -56,9 +56,7 @@ export function PressReleaseFilterControls({ value, onApply, disabled, initialOp
           <Stack direction="row" spacing={0.5}>{[["Today", 1], ["Last 7 days", 7], ["Last 30 days", 30]].map(([label, days]) => <Button key={label} size="small" onClick={() => datePreset(Number(days))}>{label}</Button>)}</Stack>
           <TextField sx={{ colorScheme: theme => theme.palette.mode }} type="date" label="From (ET)" value={draft.from} onChange={event => change("from", event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
           <TextField sx={{ colorScheme: theme => theme.palette.mode }} type="date" label="To (ET)" value={draft.to} onChange={event => change("to", event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-          {choice("type", { all: "All news types", press_release: "Press releases", earnings: "Earnings", financing: "Financing", sec: "SEC filings" })}
           {choice("read", { all: "All articles", unread: "Unread", read: "Read" })}
-          {choice("summary", { all: "Any summary status", available: "Summary available", unavailable: "Summary unavailable" })}
           <Stack direction="row" spacing={1}><Button type="submit" variant="contained" disabled={disabled}>Apply filters</Button><Button onClick={() => { setDraft({ ...DEFAULT_NEWS_FILTERS }); setError(""); }}>Reset</Button><Button onClick={() => setOpen(false)}>Cancel</Button></Stack>
         </Stack>
       </Box>

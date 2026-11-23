@@ -36,7 +36,7 @@ it('filters the stored population before pagination, with stable cap ordering an
   expect(rest.articles.at(-1)?.id).toBe('unknown');
   expect(new Set([...first.articles,...rest.articles].map(a => a.id)).size).toBe(183);
 });
-it('combines exact tickers, keywords, type, dates and summary status', () => {
+it('combines exact tickers, keywords and dates while ignoring retired criteria', () => {
   const f=fixture(); f.add('match','$10M',{ticker:'ABCD',summary:null,type:'press_release_earnings'}); f.add('other','$10M',{ticker:'OTHER'});
   expect(f.read({...DEFAULT_NEWS_FILTERS,tickers:'abcd',search:'match',type:'earnings',summary:'unavailable',from:'2026-01-01',to:'2026-01-01'}).articles.map(a=>a.id)).toEqual(['match']);
 });
@@ -109,8 +109,8 @@ it('supports every offered sort and recorded category with deterministic time/ID
  const f=fixture();f.add('a','$50M',{ticker:'ZZZ',type:'press_release_financing'});f.add('b','$20M',{ticker:'AAA',type:'sec_current_report'});f.add('c',null,{ticker:'AAA',date:'2026-01-02T16:00:00.000Z'});
  expect(f.read({...DEFAULT_NEWS_FILTERS,sort:'oldest'}).articles.map(a=>a.id)).toEqual(['a','b','c']);
  expect(f.read({...DEFAULT_NEWS_FILTERS,sort:'ticker'}).articles.map(a=>a.id)).toEqual(['c','b','a']);
- expect(f.read({...DEFAULT_NEWS_FILTERS,type:'financing'}).articles.map(a=>a.id)).toEqual(['a']);
- expect(f.read({...DEFAULT_NEWS_FILTERS,type:'sec'}).articles.map(a=>a.id)).toEqual(['b']);
+ expect(f.read({...DEFAULT_NEWS_FILTERS,type:'financing'}).articles).toHaveLength(3);
+ expect(f.read({...DEFAULT_NEWS_FILTERS,type:'sec'}).articles).toHaveLength(3);
  expect(f.read({...DEFAULT_NEWS_FILTERS,capStatus:'unknown'}).articles.map(a=>a.id)).toEqual(['c']);
  expect(f.read({...DEFAULT_NEWS_FILTERS,capStatus:'known',summary:'available'}).articles.map(a=>a.id)).toEqual(['a','b']);
 });
@@ -135,4 +135,11 @@ it("keeps the restored PR Scanner channel isolated across filtered pagination wh
  const second=repository.listPage({channel:"news_filtered",scope:f.scope,limit:1,filters:first.filters,asOf:first.asOf,offset:first.nextOffset});
  expect(second.articles.map(row=>row.id)).toEqual(["scanner-old"]);expect(second.more).toBe(false);
  expect(f.read().articles.map(row=>row.id)).toContain("other-channel");
+});
+
+it('ignores retired type and summary criteria without dropping factual market-cap filtering', () => {
+ const f=fixture();f.add('summary','$2M',{type:'press_release',summary:'PC summary'});f.add('source-only','$3M',{type:'sec_current_report',summary:null});f.add('outside','$40M');
+ const filters={...DEFAULT_NEWS_FILTERS,maxCap:'5',type:'earnings',summary:'available'};
+ expect(f.read(filters).articles.map(a=>a.id).sort()).toEqual(['source-only','summary']);
+ expect(parseNewsFilters(filters)).not.toHaveProperty('type');expect(parseNewsFilters(filters)).not.toHaveProperty('summary');
 });
