@@ -3,16 +3,22 @@
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 import { revalidatePath } from "next/cache";
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { PrivateWatchlistRepository } from "@/src/modules/watchlist/server/member-watchlists/private-watchlist-repository";
 import type { MembershipActionState } from "../../admin/journal/memberships/membership-form";
 import { PrivateWatchlistGenerationService } from "@/src/modules/watchlist/server/member-watchlists/private-watchlist-generation-service";
 import { PrivateWatchlistRuntimeClient } from "@/src/modules/watchlist/server/member-watchlists/private-watchlist-runtime-client";
+import { readPrivateWatchlistPilotPageIdentity } from "@/src/modules/watchlist/server/access/private-watchlist-owner-pilot-access";
+
+const PILOT_UNAVAILABLE: MembershipActionState = Object.freeze({
+  error: "Private Watchlist is not available for this account.",
+  success: null,
+});
 
 export async function generatePrivateWatchlist(_previous: MembershipActionState, form: FormData): Promise<MembershipActionState> {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await readPrivateWatchlistPilotPageIdentity();
+  if (!identity) return PILOT_UNAVAILABLE;
   try {
     const service = new PrivateWatchlistGenerationService(read => withPlatformDatabase({ mode: "runtime" }, database => read(new PrivateWatchlistRepository(database))), new PrivateWatchlistRuntimeClient());
     const operation = String(form.get("operation") ?? "");
@@ -33,7 +39,8 @@ export async function generatePrivateWatchlist(_previous: MembershipActionState,
 }
 
 export async function changePrivateWatchlist(_previous: MembershipActionState, form: FormData): Promise<MembershipActionState> {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await readPrivateWatchlistPilotPageIdentity();
+  if (!identity) return PILOT_UNAVAILABLE;
   try {
     const symbol = String(form.get("symbol") ?? "");
     const operation = String(form.get("operation") ?? "");

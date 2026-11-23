@@ -4,20 +4,22 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { DashboardPage, DashboardPanel, DashboardUnavailableState } from "../../dashboard-template";
 import { MembershipForm } from "../../admin/journal/memberships/membership-form";
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { evaluateMembershipFeature, isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { PrivateWatchlistRepository } from "@/src/modules/watchlist/server/member-watchlists/private-watchlist-repository";
 import { formatWatchlistBudget } from "@/src/modules/platform/contracts/membership-watchlist-budget";
 import { changePrivateWatchlist } from "./actions";
 import { PrivateTicker } from "./private-ticker";
+import { readPrivateWatchlistPilotPageIdentity } from "@/src/modules/watchlist/server/access/private-watchlist-owner-pilot-access";
 import type { ComponentProps } from "react";
+import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function PrivateWatchlistPage() {
-  const identity = await requireTraderLinkPlatformPageIdentity();
+  const identity = await readPrivateWatchlistPilotPageIdentity();
+  if (!identity) notFound();
   let entries: ReturnType<PrivateWatchlistRepository["list"]>;
   let usage: ReturnType<PrivateWatchlistRepository["usage"]>;
   let tickers: ComponentProps<typeof PrivateTicker>[];

@@ -542,6 +542,7 @@ function DashboardShellContent({
               (item.href !== "/scanner" || scannerEarlyAccess) &&
               (item.href !== "/market-news/general" || generalMarketNewsAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
+              (item.href !== "/private-watchlist" || watchlistAdminNavigationAccess) &&
               ((item.href !== "/scanners" && item.href !== "/trading-workspace") || watchlistAdminNavigationAccess) &&
               (item.href !== "/screeners" || watchlistAdminNavigationAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&
