@@ -115,14 +115,14 @@ describe("notification eligibility with protected defaults", () => {
     db.prepare("UPDATE platform_membership_entitlements SET status='revoked' WHERE entitlement_id=?").run(ticker.entitlementId);
     expect(canNotifyWatchlistTicker(db, member, "TEST", "analysis")).toBe(false);
   });
-  it("honors independent owner reveals and keeps unmarked legacy publications compatible", () => {
+  it("honors independent owner reveals and protects unmarked publications without a saved choice", () => {
     restrict("ticker", false);
     expect(canNotifyWatchlistTicker(db, member, "TEST")).toBe(true);
     expect(canNotifyWatchlistTicker(db, member, "TEST", "analysis")).toBe(false);
     restrict("analysis", false);
     expect(canNotifyWatchlistTicker(db, member, "TEST", "analysis")).toBe(true);
     db.prepare("INSERT INTO live_watchlist_symbols VALUES ('LEGACY',?)").run(JSON.stringify({ watchlistGroup: "main" }));
-    expect(canNotifyWatchlistTicker(db, member, "LEGACY", "analysis")).toBe(true);
+    expect(canNotifyWatchlistTicker(db, member, "LEGACY", "analysis")).toBe(false);
   });
   it("retains verified legacy Premium eligibility without a plan", () => {
     linkPremium();
@@ -216,11 +216,11 @@ describe("new-ticker defaults and independent first saves", () => {
   function readSettings() {
     return Object.fromEntries(controls.map(control => [control, settings[control](db, "TEST")]));
   }
-  it("protects unpublished and marked-new tickers while retaining legacy publications", () => {
+  it("protects unpublished, marked-new and legacy tickers until the owner reveals them", () => {
     expect(readSettings()).toEqual({ ticker: true, analysis: true, levels: true, indicators: true });
     state({ watchlistGroup: "main" });
-    expect(readSettings()).toEqual({ ticker: false, analysis: false, levels: false, indicators: false });
-    expect(read()).toEqual({ ticker: true, analysis: true, levels: true, indicators: true });
+    expect(readSettings()).toEqual({ ticker: true, analysis: true, levels: true, indicators: true });
+    expect(read()).toEqual({ ticker: false, analysis: false, levels: false, indicators: false });
     state({ watchlistGroup: "main", premiumDefaultsVersion: 1 });
     const before = db.prepare("SELECT total_changes() n").get();
     expect(readSettings()).toEqual({ ticker: true, analysis: true, levels: true, indicators: true });
@@ -245,12 +245,35 @@ describe("new-ticker defaults and independent first saves", () => {
     expect(db.prepare("SELECT control,previous_premium_only,premium_only FROM platform_watchlist_analysis_visibility_audit ORDER BY audit_id").all())
       .toEqual([{ control: first, previous_premium_only: 1, premium_only: 0 }, { control: second, previous_premium_only: 1, premium_only: 0 }, { control: first, previous_premium_only: 0, premium_only: 1 }]);
   });
-  it.each(["ticker", "analysis"] as const)("preserves old legacy visibility when %s is saved first", first => {
+  it.each(["ticker", "analysis"] as const)("keeps the other control protected when %s is saved first on an unmarked ticker", first => {
     state({ watchlistGroup: "main" });
     const second = first === "ticker" ? "analysis" : "ticker";
     restrict(first, true);
     expect(settings[first](db, "TEST")).toBe(true);
-    expect(settings[second](db, "TEST")).toBe(false);
+    expect(settings[second](db, "TEST")).toBe(true);
+  });
+  it.each(Array.from({ length: 16 }, (_, flags) => flags))("retains only explicit reveal choices through every category move (%i)", flags => {
+    state({ watchlistGroup: "main" });
+    for (const [index, control] of controls.entries()) restrict(control, !(flags & (1 << index)));
+    const expected = readSettings();
+    const accessTables = ["platform_watchlist_analysis_visibility", "platform_watchlist_analysis_visibility_audit",
+      "platform_watchlist_levels_visibility", "platform_watchlist_levels_visibility_audit",
+      "platform_watchlist_indicators_visibility", "platform_watchlist_indicators_visibility_audit"];
+    const snapshot = () => accessTables.map(table => db.prepare(`SELECT * FROM ${table}`).all());
+    const saved = snapshot();
+    for (const watchlistGroup of ["postmarket", "top_watches:2026-11-24", "general", "swings", "private", "main"]) {
+      state({ watchlistGroup });
+      expect(readSettings()).toEqual(expected);
+      expect(snapshot()).toEqual(saved);
+    }
+  });
+  it("never reveals absent choices when an unmarked ticker changes categories", () => {
+    for (const watchlistGroup of ["main", "postmarket", "top_watches:2026-11-24", "general", "swings", "private", "main"]) {
+      state({ watchlistGroup });
+      const before = db.prepare("SELECT total_changes() n").get();
+      expect(readSettings()).toEqual({ ticker: true, analysis: true, levels: true, indicators: true });
+      expect(db.prepare("SELECT total_changes() n").get()).toEqual(before);
+    }
   });
   it("preserves explicit owner choices over new defaults without coupling the cards", () => {
     for (const control of controls) restrict(control, false);

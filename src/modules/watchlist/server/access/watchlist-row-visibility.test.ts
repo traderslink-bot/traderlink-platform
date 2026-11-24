@@ -69,7 +69,7 @@ describe("per-ticker row visibility", () => {
     save(true); save(false); save(true);
     expect(readRowHiddenFromFree(db, "SECRET")).toBe(true);
     expect(readTickerPremiumOnly(db, "SECRET")).toBe(true);
-    expect(readAnalysisPremiumOnly(db, "SECRET")).toBe(false);
+    expect(readAnalysisPremiumOnly(db, "SECRET")).toBe(true);
     expect(db.prepare("SELECT previous_hidden_from_free,hidden_from_free FROM platform_watchlist_row_visibility_audit ORDER BY audit_id").all())
       .toEqual([{ previous_hidden_from_free: 0, hidden_from_free: 1 }, { previous_hidden_from_free: 1, hidden_from_free: 0 }, { previous_hidden_from_free: 0, hidden_from_free: 1 }]);
   });
@@ -81,6 +81,7 @@ describe("per-ticker row visibility", () => {
     expect(() => saveRowHiddenFromFree(db, { symbol: "SECRET", premiumOnly: 1 as unknown as boolean, actorUserId: "owner" })).toThrow();
   });
   it("keeps pre-migration reads compatible without silently accepting writes", () => {
+    saveTickerPremiumOnly(db, { symbol: "SECRET", premiumOnly: false, actorUserId: "owner" });
     db.exec("DROP TABLE platform_watchlist_row_visibility");
     expect(readRowHiddenFromFree(db, "SECRET")).toBe(false);
     expect(() => save(true)).toThrow();
@@ -133,6 +134,7 @@ describe("per-ticker row visibility", () => {
     expect(projectWatchlistTickersForViewer(payload(), headers).symbols).toEqual([]);
   });
   it("restores the existing placeholder on uncheck and keeps detail access independent", () => {
+    saveTickerPremiumOnly(db, { symbol: "SECRET", premiumOnly: false, actorUserId: "owner" });
     save(true); adapter.owner = false;
     expect(canViewWatchlistTicker(headers, "SECRET")).toBe(true);
     expect(projectWatchlistTickersForViewer(payload(), headers).symbols).toEqual([]);
@@ -144,6 +146,8 @@ describe("per-ticker row visibility", () => {
     expect(JSON.stringify(rows)).not.toContain("SECRET");
   });
   it("hides only the selected ticker and keeps category placement for eligible members", () => {
+    saveTickerPremiumOnly(db, { symbol: "SECRET", premiumOnly: false, actorUserId: "owner" });
+    saveTickerPremiumOnly(db, { symbol: "PUBLIC", premiumOnly: false, actorUserId: "owner" });
     save(true); adapter.owner = false;
     const other = { ...item, symbol: "PUBLIC", watchlistGroup: "swings" } as LiveWatchlistListSymbol;
     const source = payload([item, other]);
@@ -227,7 +231,7 @@ describe("hidden ticker Added date", () => {
     const request = new Request("https://app.example.test/api/admin/watchlist/analysis-visibility", {method:"POST",body:JSON.stringify({symbol:"SECRET",control:"added",premiumOnly:true}),headers:{host:"app.example.test",origin:"https://app.example.test","sec-fetch-site":"same-origin","x-traderlink-journal-admin-request":"1"}});
     expect((await POST(request)).status).toBe(200);
     expect(await (await GET(new Request("https://app.example.test/api/admin/watchlist/analysis-visibility?symbol=SECRET&control=added"))).json()).toEqual({symbol:"SECRET",premiumOnly:true});
-    expect(readRowHiddenFromFree(db,"SECRET")).toBe(false); expect(readTickerPremiumOnly(db,"SECRET")).toBe(false);
+    expect(readRowHiddenFromFree(db,"SECRET")).toBe(false); expect(readTickerPremiumOnly(db,"SECRET")).toBe(true);
     adapter.owner=false;
     expect((await GET(new Request("https://app.example.test/api/admin/watchlist/analysis-visibility?symbol=SECRET&control=added"))).status).toBe(404);
   });
@@ -241,7 +245,7 @@ describe("row access owner API", () => {
     expect(await (await GET(new Request("https://app.example.test/api/admin/watchlist/analysis-visibility?symbol=SECRET&control=row"))).json()).toEqual({ symbol: "SECRET", premiumOnly: false });
     expect((await POST(request({ symbol: "SECRET", control: "row", premiumOnly: true }))).status).toBe(200);
     expect(await (await GET(new Request("https://app.example.test/api/admin/watchlist/analysis-visibility?symbol=SECRET&control=row"))).json()).toEqual({ symbol: "SECRET", premiumOnly: true });
-    expect(readTickerPremiumOnly(db, "SECRET")).toBe(false);
+    expect(readTickerPremiumOnly(db, "SECRET")).toBe(true);
     expect(readRowHiddenFromFree(db, "OTHER")).toBe(false);
   });
   it("rejects member writes, invalid booleans, unknown controls and missing CSRF", async () => {
@@ -282,7 +286,7 @@ describe("owner control", () => {
       expect(inputs[5].getAttribute("aria-label")).toBe("SECRET Show Added date for hidden ticker");
       inputs[5].click(); await vi.waitFor(()=>expect(readHiddenTickerAddedVisible(db,"SECRET")).toBe(true));
       await vi.waitFor(()=>expect(inputs[5].disabled).toBe(false));
-      expect(readTickerPremiumOnly(db,"SECRET")).toBe(false); expect(readRowHiddenFromFree(db,"SECRET")).toBe(false);
+      expect(readTickerPremiumOnly(db,"SECRET")).toBe(true); expect(readRowHiddenFromFree(db,"SECRET")).toBe(false);
       container.replaceChildren(); win.watchlistPremiumControl("SECRET",container);
       expect(container.querySelector<HTMLDetailsElement>('details.watchlist-premium-only')?.open).toBe(true);
       expect(container.querySelectorAll('details.watchlist-premium-only input')).toHaveLength(6);
@@ -293,12 +297,12 @@ describe("owner control", () => {
       expect(fetch.mock.calls.filter(([,o])=>o.method==="GET")).toHaveLength(1);
       expect(fetch.mock.calls.filter(([,o])=>o.method==="POST")).toHaveLength(1);
       const indicator=container.querySelector<HTMLInputElement>('input[aria-label="SECRET Show Indicator card to free members"]')!;
-      expect(indicator).toBeTruthy();expect(indicator.checked).toBe(true);indicator.click();
-      await vi.waitFor(()=>expect(readIndicatorsPremiumOnly(db,"SECRET")).toBe(true));
+      expect(indicator).toBeTruthy();expect(indicator.checked).toBe(false);indicator.click();
+      await vi.waitFor(()=>expect(readIndicatorsPremiumOnly(db,"SECRET")).toBe(false));
       await vi.waitFor(()=>expect(indicator.disabled).toBe(false));
       container.replaceChildren();win.watchlistPremiumControl("SECRET",container);
-      expect(container.querySelector<HTMLInputElement>('input[aria-label="SECRET Show Indicator card to free members"]')!.checked).toBe(false);
-      expect(readHiddenTickerAddedVisible(db,"SECRET")).toBe(true);expect(readAnalysisPremiumOnly(db,"SECRET")).toBe(false);
+      expect(container.querySelector<HTMLInputElement>('input[aria-label="SECRET Show Indicator card to free members"]')!.checked).toBe(true);
+      expect(readHiddenTickerAddedVisible(db,"SECRET")).toBe(true);expect(readAnalysisPremiumOnly(db,"SECRET")).toBe(true);
 
     } finally {dom.window.close();}
   });

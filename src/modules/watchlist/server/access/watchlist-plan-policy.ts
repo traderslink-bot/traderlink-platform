@@ -17,14 +17,14 @@ const controlSchema = z.enum(["ticker", "analysis", "levels"]);
 const available = (db: Database.Database) => Boolean(db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='platform_watchlist_plan_policies'").get());
 const features = { ticker: "watchlist.ticker_details", analysis: "watchlist.trade_analysis", levels: "watchlist.levels" } as const;
 
-/** Only new publications carry this marker. An explicit saved visibility choice
- * is checked before this fallback; existing unmarked publications stay intact.
+/** Free access requires an explicit saved owner choice. The publication marker
+ * is still validated, but its absence never opts a ticker into free access.
  */
 export function watchlistDefaultPremiumOnly(stateJson: string | undefined): boolean {
   if (stateJson === undefined) return true;
   const state: unknown = JSON.parse(stateJson);
   if (!state || typeof state !== "object" || Array.isArray(state)) throw new Error("Invalid Watchlist state.");
-  if (!Object.hasOwn(state, "premiumDefaultsVersion")) return false;
+  if (!Object.hasOwn(state, "premiumDefaultsVersion")) return true;
   if ((state as { premiumDefaultsVersion: unknown }).premiumDefaultsVersion !== 1) throw new Error("Invalid Watchlist visibility defaults.");
   return true;
 }

@@ -11,23 +11,25 @@ import {readIndicatorsPremiumOnly,saveIndicatorsPremiumOnly,canViewWatchlistIndi
 let db:Database.Database;
 beforeEach(()=>{db=new Database(':memory:');db.exec('CREATE TABLE platform_users(user_id TEXT PRIMARY KEY); INSERT INTO platform_users VALUES(\'owner\'); CREATE TABLE live_watchlist_symbols(symbol TEXT,state_json TEXT); INSERT INTO live_watchlist_symbols VALUES(\'TEST\',\'{"watchlistGroup":"main"}\'),(\'OTHER\',\'{"watchlistGroup":"main"}\');');for(const sql of watchlistIndicatorsVisibilityMigration.statements)db.exec(sql);adapter.db=db;adapter.owner=false;adapter.signed=true;adapter.premium=false;});
 it('persists independent per-ticker state and audits each toggle',()=>{
- expect(readIndicatorsPremiumOnly(db,'TEST')).toBe(false);
- saveIndicatorsPremiumOnly(db,{symbol:'TEST',premiumOnly:true,actorUserId:'owner'});
- expect(readIndicatorsPremiumOnly(db,'TEST')).toBe(true);expect(readIndicatorsPremiumOnly(db,'OTHER')).toBe(false);
+ expect(readIndicatorsPremiumOnly(db,'TEST')).toBe(true);
+ expect(readIndicatorsPremiumOnly(db,'OTHER')).toBe(true);
  expect(canViewWatchlistIndicators(new Headers(),'TEST')).toBe(false);
  adapter.premium=true;expect(canViewWatchlistIndicators(new Headers(),'TEST')).toBe(true);
  adapter.premium=false;adapter.owner=true;expect(canViewWatchlistIndicators(new Headers(),'TEST')).toBe(true);
  adapter.owner=false;saveIndicatorsPremiumOnly(db,{symbol:'TEST',premiumOnly:false,actorUserId:'owner'});
  expect(canViewWatchlistIndicators(new Headers(),'TEST')).toBe(true);
- expect(db.prepare('SELECT previous_premium_only,premium_only FROM platform_watchlist_indicators_visibility_audit ORDER BY audit_id').all()).toEqual([{previous_premium_only:0,premium_only:1},{previous_premium_only:1,premium_only:0}]);
+ expect(readIndicatorsPremiumOnly(db,'OTHER')).toBe(true);
  adapter.signed=false;expect(canViewWatchlistIndicators(new Headers(),'TEST')).toBe(false);
+ adapter.signed=true;saveIndicatorsPremiumOnly(db,{symbol:'TEST',premiumOnly:true,actorUserId:'owner'});
+ expect(canViewWatchlistIndicators(new Headers(),'TEST')).toBe(false);
+ expect(db.prepare('SELECT previous_premium_only,premium_only FROM platform_watchlist_indicators_visibility_audit ORDER BY audit_id').all()).toEqual([{previous_premium_only:1,premium_only:0},{previous_premium_only:0,premium_only:1}]);
  db.close();
 });
 it('rejects invalid settings and rolls back failed audit writes',()=>{
  expect(()=>saveIndicatorsPremiumOnly(db,{symbol:'../bad',premiumOnly:true,actorUserId:'owner'})).toThrow();
  db.exec('DROP TABLE platform_watchlist_indicators_visibility_audit');
- expect(()=>saveIndicatorsPremiumOnly(db,{symbol:'TEST',premiumOnly:true,actorUserId:'owner'})).toThrow();
- expect(readIndicatorsPremiumOnly(db,'TEST')).toBe(false);db.close();
+ expect(()=>saveIndicatorsPremiumOnly(db,{symbol:'TEST',premiumOnly:false,actorUserId:'owner'})).toThrow();
+ expect(readIndicatorsPremiumOnly(db,'TEST')).toBe(true);db.close();
 });
 it('new preference and audit tables follow the real account erasure closure without affecting another owner',async()=>{
  const {captureErasureClosure}=await import('@/src/modules/platform/server/privacy/platform-erasure-closure');
