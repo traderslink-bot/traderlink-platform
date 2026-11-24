@@ -4,18 +4,13 @@ import type Database from "better-sqlite3";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { hasWatchlistDashboardNavigationAccess } from "./watchlist-dashboard-navigation-access";
 import { hasPlatformDiscordPremiumAccess } from "./platform-discord-watchlist-entitlement";
-import { hasWatchlistPremiumPlanAccess, readWatchlistDefaultPremiumOnly, readWatchlistPlanDecisions, watchlistDefaultPremiumOnly } from "./watchlist-plan-policy";
+import { hasWatchlistPremiumPlanAccess, readWatchlistPairedPremiumOnly, readWatchlistPlanDecisions, readWatchlistTickerPremiumChoices, watchlistDefaultPremiumOnly } from "./watchlist-plan-policy";
 import { requireTraderLinkPlatformAuthenticatedRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export const analysisVisibilitySymbol = /^[A-Z0-9][A-Z0-9.^-]{0,15}$/;
 
 export function readAnalysisPremiumOnly(database: Database.Database, symbol: string): boolean {
-  if (!analysisVisibilitySymbol.test(symbol)) throw new Error("Invalid ticker.");
-  const row = database.prepare<[string], { premium_only: number }>(
-    "SELECT premium_only FROM platform_watchlist_analysis_visibility WHERE symbol = ?",
-  ).get(symbol);
-  if (row && row.premium_only !== 0 && row.premium_only !== 1) throw new Error("Invalid access setting.");
-  return row ? row.premium_only === 1 : readWatchlistDefaultPremiumOnly(database, symbol);
+  return readWatchlistPairedPremiumOnly(database, symbol, "analysis");
 }
 
 export function saveAnalysisPremiumOnly(database: Database.Database, input: {
@@ -36,12 +31,7 @@ export function saveAnalysisPremiumOnly(database: Database.Database, input: {
 }
 
 export function readTickerPremiumOnly(database: Database.Database, symbol: string): boolean {
-  if (!analysisVisibilitySymbol.test(symbol)) throw new Error("Invalid ticker.");
-  const row = database.prepare<[string], { ticker_premium_only: number }>(
-    "SELECT ticker_premium_only FROM platform_watchlist_analysis_visibility WHERE symbol = ?",
-  ).get(symbol);
-  if (row && row.ticker_premium_only !== 0 && row.ticker_premium_only !== 1) throw new Error("Invalid access setting.");
-  return row ? row.ticker_premium_only === 1 : readWatchlistDefaultPremiumOnly(database, symbol);
+  return readWatchlistPairedPremiumOnly(database, symbol, "ticker");
 }
 
 export function saveTickerPremiumOnly(database: Database.Database, input: {
@@ -120,11 +110,7 @@ export function readWatchlistTickerPolicy(requestHeaders: Headers): { all: boole
   try {
     const identity = requireTraderLinkPlatformAuthenticatedRequestIdentity(requestHeaders, { membershipFeatures: ["watchlist.access"] });
     const restricted = withReadonlyPlatformDatabase({}, db => {
-      const choices = new Map(db.prepare<[], { symbol: string; ticker_premium_only: number }>(
-        "SELECT symbol,ticker_premium_only FROM platform_watchlist_analysis_visibility").all().map(row => {
-        if (row.ticker_premium_only !== 0 && row.ticker_premium_only !== 1) throw new Error("Invalid access setting.");
-        return [row.symbol, row.ticker_premium_only === 1] as const;
-      }));
+      const choices = readWatchlistTickerPremiumChoices(db);
       for (const row of db.prepare<[], { symbol: string; state_json: string }>("SELECT symbol,state_json FROM live_watchlist_symbols").all()) {
         if (!choices.has(row.symbol)) choices.set(row.symbol, watchlistDefaultPremiumOnly(row.state_json));
       }

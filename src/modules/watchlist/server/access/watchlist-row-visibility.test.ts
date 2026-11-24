@@ -38,7 +38,7 @@ vi.mock("./watchlist-plan-policy", async importOriginal => ({ ...await importOri
   hasWatchlistPremiumPlanAccess: (_db: unknown, _userId: string, control: string) => adapter.planFeatures.has(control),
 }));
 
-import { readHiddenTickerAddedVisible, saveHiddenTickerAddedVisible, readRowHiddenFromFree, saveRowHiddenFromFree, saveTickerPremiumOnly, readTickerPremiumOnly, readAnalysisPremiumOnly, canViewWatchlistTicker } from "./watchlist-analysis-visibility";
+import { readHiddenTickerAddedVisible, saveHiddenTickerAddedVisible, readRowHiddenFromFree, saveRowHiddenFromFree, saveTickerPremiumOnly, saveAnalysisPremiumOnly, readTickerPremiumOnly, readAnalysisPremiumOnly, canViewWatchlistTicker } from "./watchlist-analysis-visibility";
 import { projectWatchlistTickerForViewer, projectWatchlistTickersForViewer } from "./watchlist-ticker-projection";
 import { createLiveWatchlistStream, broadcastLiveWatchlistUpdate } from "@/src/lib/live-watchlist/live-watchlist-events";
 import { WATCHLIST_PREMIUM_CONTROL } from "../runtime/watchlist-premium-control";
@@ -91,7 +91,8 @@ describe("per-ticker row visibility", () => {
   it.each(Array.from({ length: 32 }, (_, flags) => flags))("preserves the existing checkbox combinations (%i)", flags => {
     const ticker = Boolean(flags & 1), analysis = Boolean(flags & 2), levels = Boolean(flags & 4), hidden = Boolean(flags & 8), added = Boolean(flags & 16);
     saveHiddenTickerAddedVisible(db, { symbol: "SECRET", premiumOnly: added, actorUserId: "owner" });
-    db.prepare("INSERT INTO platform_watchlist_analysis_visibility VALUES(?,?,?,?,?)").run("SECRET", Number(analysis), Number(ticker), "2026-11-18", "owner");
+    saveTickerPremiumOnly(db, { symbol: "SECRET", premiumOnly: ticker, actorUserId: "owner" });
+    saveAnalysisPremiumOnly(db, { symbol: "SECRET", premiumOnly: analysis, actorUserId: "owner" });
     db.prepare("INSERT INTO platform_watchlist_levels_visibility VALUES(?,?,?,?)").run("SECRET", Number(levels), "2026-11-18", "owner");
     save(hidden); adapter.owner = false;
     const rows = projectWatchlistTickersForViewer(payload(), headers).symbols;

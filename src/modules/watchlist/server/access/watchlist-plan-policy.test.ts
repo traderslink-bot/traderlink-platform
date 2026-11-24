@@ -252,6 +252,34 @@ describe("new-ticker defaults and independent first saves", () => {
     expect(settings[first](db, "TEST")).toBe(true);
     expect(settings[second](db, "TEST")).toBe(true);
   });
+  it.each(["ticker", "analysis"] as const)("retains the historical %s reveal and closes its implicit companion", first => {
+    state({ watchlistGroup: "main" });
+    const companion = first === "ticker" ? "analysis" : "ticker";
+    // Before the default changed to Premium, the first save copied the
+    // implicit free value into the other column without an audit for it.
+    db.prepare("INSERT INTO platform_watchlist_analysis_visibility VALUES ('TEST',0,0,?,?)").run(at, actor);
+    const audit = db.prepare(`INSERT INTO platform_watchlist_analysis_visibility_audit
+      (symbol,control,previous_premium_only,premium_only,changed_at_utc,actor_user_id) VALUES ('TEST',?,?,?, ?,?)`);
+    audit.run(first, 0, 0, at, actor);
+    const before = db.prepare("SELECT total_changes() n").get();
+    expect(settings[first](db, "TEST")).toBe(false);
+    expect(settings[companion](db, "TEST")).toBe(true);
+    expect(readers[first](headers, "TEST")).toBe(true);
+    expect(readers[companion](headers, "TEST")).toBe(false);
+    expect(canNotifyWatchlistTicker(db, member, "TEST")).toBe(first === "ticker");
+    expect(canNotifyWatchlistTicker(db, member, "TEST", "analysis")).toBe(false);
+    expect(db.prepare("SELECT total_changes() n").get()).toEqual(before);
+
+    restrict(companion, false);
+    expect(readSettings()).toEqual({ ticker: false, analysis: false, levels: true, indicators: true });
+    expect(canNotifyWatchlistTicker(db, member, "TEST", "analysis")).toBe(true);
+
+    // A newer restriction for the same control cannot be defeated by an
+    // earlier reveal, even if the current column still contains zero.
+    audit.run(first, 0, 1, at, actor);
+    expect(settings[first](db, "TEST")).toBe(true);
+    expect(settings[companion](db, "TEST")).toBe(false);
+  });
   it.each(Array.from({ length: 16 }, (_, flags) => flags))("retains only explicit reveal choices through every category move (%i)", flags => {
     state({ watchlistGroup: "main" });
     for (const [index, control] of controls.entries()) restrict(control, !(flags & (1 << index)));

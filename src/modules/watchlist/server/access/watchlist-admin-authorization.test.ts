@@ -59,6 +59,7 @@ beforeEach(() => {
   db.exec(`CREATE TABLE platform_auth_identities(user_id TEXT, auth_provider TEXT, auth_subject TEXT, status TEXT);
     CREATE TABLE platform_admin_audit_events(audit_event_id TEXT,actor_kind TEXT,actor_user_id TEXT,actor_role TEXT,action TEXT,target_kind TEXT,target_ref_sha256 TEXT,outcome TEXT,reason_code TEXT,correlation_ref_sha256 TEXT,preview_receipt_sha256 TEXT,details_json TEXT,created_at_utc TEXT);
     CREATE TABLE platform_watchlist_analysis_visibility(symbol TEXT,premium_only INTEGER,ticker_premium_only INTEGER);
+    CREATE TABLE platform_watchlist_analysis_visibility_audit(audit_id INTEGER PRIMARY KEY,symbol TEXT,control TEXT,premium_only INTEGER);
     INSERT INTO platform_watchlist_analysis_visibility VALUES ('TEST',1,1);
     CREATE TABLE platform_watchlist_levels_visibility(symbol TEXT,premium_only INTEGER);
     INSERT INTO platform_watchlist_levels_visibility VALUES ('TEST',1);

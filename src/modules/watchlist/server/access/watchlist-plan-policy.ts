@@ -36,6 +36,40 @@ export function readWatchlistDefaultPremiumOnly(db: Database.Database, symbol: s
   return watchlistDefaultPremiumOnly(state?.state_json);
 }
 
+type PairedWatchlistControl = "ticker" | "analysis";
+type PairedWatchlistChoice = { symbol: string; premium_only: number; saved_premium_only: number | null };
+
+function pairedWatchlistChoiceQuery(control: PairedWatchlistControl) {
+  const column = control === "ticker" ? "ticker_premium_only" : "premium_only";
+  return `SELECT visibility.symbol, visibility.${column} AS premium_only,
+    CASE WHEN visibility.${column}=0 THEN (
+      SELECT audit.premium_only FROM platform_watchlist_analysis_visibility_audit audit
+      WHERE audit.symbol=visibility.symbol AND audit.control=?
+      ORDER BY audit.audit_id DESC LIMIT 1
+    ) END AS saved_premium_only
+    FROM platform_watchlist_analysis_visibility visibility`;
+}
+
+function isPairedWatchlistPremiumOnly(choice: PairedWatchlistChoice): boolean {
+  if (choice.premium_only !== 0 && choice.premium_only !== 1) throw new Error("Invalid access setting.");
+  // Older first saves copied the free default into the untouched companion
+  // column. A reveal requires the latest audit for this control to confirm it.
+  return choice.premium_only !== 0 || choice.saved_premium_only !== 0;
+}
+
+export function readWatchlistPairedPremiumOnly(db: Database.Database, symbol: string, control: PairedWatchlistControl): boolean {
+  if (!symbolSchema.safeParse(symbol).success) throw new Error("Invalid ticker.");
+  const choice = db.prepare<[PairedWatchlistControl, string], PairedWatchlistChoice>(
+    pairedWatchlistChoiceQuery(control) + " WHERE visibility.symbol=?",
+  ).get(control, symbol);
+  return choice ? isPairedWatchlistPremiumOnly(choice) : readWatchlistDefaultPremiumOnly(db, symbol);
+}
+
+export function readWatchlistTickerPremiumChoices(db: Database.Database): Map<string, boolean> {
+  const choices = db.prepare<[PairedWatchlistControl], PairedWatchlistChoice>(pairedWatchlistChoiceQuery("ticker")).all("ticker");
+  return new Map(choices.map(choice => [choice.symbol, isPairedWatchlistPremiumOnly(choice)]));
+}
+
 /** A default-open page is not a Premium grant. Each card needs its own current
  * plan feature; explicit ticker-plan rules remain authoritative at the caller.
  */
@@ -68,11 +102,7 @@ export function canNotifyWatchlistTicker(db: Database.Database, userId: string, 
     const permits = (control: "ticker" | "analysis"): boolean => {
       const selected = readWatchlistPlanDecisions(db, userId, control).get(symbol);
       if (selected !== undefined) return selected;
-      const column = control === "ticker" ? "ticker_premium_only" : "premium_only";
-      const legacy = db.prepare(`SELECT ${column} restricted FROM platform_watchlist_analysis_visibility WHERE symbol=?`).get(symbol) as { restricted: number } | undefined;
-      if (legacy && legacy.restricted !== 0 && legacy.restricted !== 1) return false;
-      const premiumOnly = legacy ? legacy.restricted === 1 : watchlistDefaultPremiumOnly(state.state_json);
-      if (!premiumOnly) return true;
+      if (!readWatchlistPairedPremiumOnly(db, symbol, control)) return true;
       if (hasWatchlistPremiumPlanAccess(db, userId, control)) return true;
       const membership = readEffectiveWatchlistDiscordMembership(db, userId);
       return Boolean(membership && hasPlatformDiscordPremiumAccess(membership));
