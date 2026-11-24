@@ -44,3 +44,43 @@ export function isReviewed210PremiumEventsLedgerPrefix(
   const vector = rows.map(row => [row.migration_id, row.module_namespace, row.execution_order, row.checksum_sha256]);
   return createHash("sha256").update(JSON.stringify(vector)).digest("hex") === canonical210DescriptorVectorSha256;
 }
+
+const newsMemberships211 = Object.freeze({
+  migrationId: "0227_news_article_ingestion_memberships",
+  namespace: "news",
+  executionOrder: 306,
+  checksum: "0fc66a860e938c4b3c9d5a583459ca6c9fa4c78644c2e84868ed29bddaec4c6b",
+  predecessorSchema: "9124f4989232f8b9a6a2dcf393fb9adde7a480023f0de5097545aa553e80ab89",
+  successorSchema: "e2b148f268e6ca409263612d1bc3b3457955db2e6ef07c390c3ba8a45e063016",
+});
+
+type DescriptorWithSchema = Pick<AppliedPlatformMigrationRow,
+  "migration_id" | "module_namespace" | "execution_order" | "checksum_sha256" | "post_schema_sha256">;
+
+/** Exact 0227 successor to the already reviewed full 210 vector. This checks
+ * ledger identity only. Callers retain their current schema and policy checks.
+ */
+export function isReviewed211NewsMembershipsLedger(rows: readonly DescriptorWithSchema[]): boolean {
+  if (rows.length !== 211 || rows[209]?.post_schema_sha256 !== newsMemberships211.predecessorSchema) return false;
+  const added = rows[210];
+  return !!added
+    && added.migration_id === newsMemberships211.migrationId
+    && added.module_namespace === newsMemberships211.namespace
+    && added.execution_order === newsMemberships211.executionOrder
+    && added.checksum_sha256 === newsMemberships211.checksum
+    && added.post_schema_sha256 === newsMemberships211.successorSchema
+    && isReviewed210PremiumEventsLedgerPrefix(rows.slice(0, 210));
+}
+
+export function isReviewed211NewsMembershipsPremiumEventsBoundary(
+  rows: readonly AppliedPlatformMigrationRow[], manifest: readonly PlatformMigration[],
+): boolean {
+  if (manifest.length !== 211 || !isReviewed211NewsMembershipsLedger(rows)) return false;
+  const added = manifest[210];
+  return !!added
+    && added.migrationId === newsMemberships211.migrationId
+    && added.moduleNamespace === newsMemberships211.namespace
+    && added.executionOrder === newsMemberships211.executionOrder
+    && calculatePlatformMigrationChecksum(added) === newsMemberships211.checksum
+    && isReviewed210PremiumEventsBoundary(rows.slice(0, 210), manifest.slice(0, 210));
+}

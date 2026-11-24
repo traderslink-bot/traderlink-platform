@@ -1,4 +1,4 @@
-import { isReviewed210PremiumEventsBoundary } from "./platform-erasure-210-boundary";
+import { isReviewed210PremiumEventsBoundary, isReviewed211NewsMembershipsPremiumEventsBoundary } from "./platform-erasure-210-boundary";
 import { calculatePlatformMigrationChecksum } from "../database/platform-migration-contract";
 import { platformPremiumCurrentAccessEventsMigration } from "../database/migrations/0216_platform_premium_current_access_events";
 import { PLATFORM_PREMIUM_ROLE_SCHEMA_SQL_CURRENT_ACCESS } from "../membership/platform-premium-role-current-access-schema";
@@ -62,7 +62,7 @@ type ReviewedProfile = Readonly<{ profileRef: string; retentionPolicyRef: string
 type ReviewedCatalog = Readonly<{ schemaSha256: string; profiles: readonly ReviewedProfile[] }>;
 function verifyNativeArtifacts(): void {
   const pins: Readonly<Record<string,string>> = {
-    "membership/platform-premium-authority-repository.ts": "b96948b3f322767d90e73a8f040699926b6a606f3e54bde07f63be0f91f93267",
+    "membership/platform-premium-authority-repository.ts": "f6ebb4fd6b1afba84efbbcad0ff89d0743a9f859c588fde58f74a6106d11314b",
     "membership/platform-premium-whop-native.ts": "0c6e1ad9b402e5bde926284865c38de1f7a7502dcf72c623d6300b8b85637718",
     "privacy/platform-premium-signer-redaction.ts": "364aa7982a87f4cee623dbcc1d50b3c53a94825a1c964278de18c1481bdc9f76",
   };
@@ -154,7 +154,8 @@ function qualifyRegisteredSchema(database: Database.Database, required: readonly
         && appended.module_namespace === "community" && appended.execution_order === 292
         && canonicalAppend?.migrationId === appended.migration_id && canonicalAppend.moduleNamespace === "community"
         && canonicalAppend.executionOrder === 292 && appended.checksum_sha256 === calculatePlatformMigrationChecksum(canonicalAppend)
-      || isReviewed210PremiumEventsBoundary(rows, platformMigrationManifest);
+      || isReviewed210PremiumEventsBoundary(rows, platformMigrationManifest)
+      || isReviewed211NewsMembershipsPremiumEventsBoundary(rows, platformMigrationManifest);
     if (!reviewedBoundary || !declared || declared.moduleNamespace !== "platform"
       || declared.executionOrder !== 291 || installed.execution_order !== 291 || installed.module_namespace !== "platform"
       || installed.checksum_sha256 !== checksum || calculatePlatformMigrationChecksum(declared) !== checksum

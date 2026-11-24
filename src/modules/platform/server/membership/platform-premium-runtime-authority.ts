@@ -1,4 +1,4 @@
-import { isReviewed210PremiumEventsLedgerPrefix } from "../privacy/platform-erasure-210-boundary";
+import { isReviewed210PremiumEventsLedgerPrefix, isReviewed211NewsMembershipsLedger } from "../privacy/platform-erasure-210-boundary";
 import "server-only";
 import { createHash } from "node:crypto";
 import type Database from "better-sqlite3";
@@ -126,7 +126,8 @@ export function issuePlatformPremiumSelfSubscriberRuntimeAuthority(input:Readonl
     && ledger[203].execution_order === 291 && ledger[203].checksum_sha256 === "a40694720ff085f768b60cc08d5c7971a53f165371aeeed350920f9e076ea539"
     && last?.migration_id === "0217_traderlink_community_stats_forward_checkpoints" && last.module_namespace === "community"
     && last.execution_order === 292 && last.checksum_sha256 === "d0d493935a53c473a73d164101c1bab6193487ca56a4b678ea26cff4d9f7dbec"
-   || isReviewed210PremiumEventsLedgerPrefix(ledger);
+   || isReviewed210PremiumEventsLedgerPrefix(ledger)
+   || isReviewed211NewsMembershipsLedger(ledger);
  if(!core||core.schemaSha256!==pins.schemaSha256||!reviewedLedger)return refused();
  const identity=requireTraderLinkPlatformAuthenticatedRequestIdentity(request.headers,{environment:process.env,databasePath:db.name});
  if(identity.mode!=="platform_session"||!identity.sessionId||identity.scope.userId!==ticket.scope.userId)return refused();
