@@ -34,10 +34,12 @@ export class BreakoutBook {
     }
     const level = previous?.breakoutLevel ?? this.references.get(row.symbol);
     if (level === undefined || (!previous && (snapshot.session !== "regular" || row.price <= level)) || snapshot.session === "premarket") return;
+    const priceAtUtc = new Date(at).toISOString();
     this.rows.set(row.symbol, {
       ...row,
       breakoutLevel: level,
-      breakoutAtUtc: previous?.breakoutAtUtc ?? new Date(at).toISOString(),
+      breakoutAtUtc: previous?.breakoutAtUtc ?? priceAtUtc,
+      breakoutPriceAtUtc: priceAtUtc,
       breakoutState: row.price > level ? "above" : row.price < level ? "below" : "at",
     });
   }

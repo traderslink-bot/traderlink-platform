@@ -216,6 +216,8 @@ export type LiveScreenResults = Readonly<{ rows: readonly LiveScannerRow[]; focu
 export type BreakoutRow = LiveScannerRow & Readonly<{
   breakoutLevel: number;
   breakoutAtUtc: string;
+  /** Time of the price used for the current state, independent of the original breakout. */
+  breakoutPriceAtUtc?: string;
   breakoutState: "above" | "at" | "below";
 }>;
 export type ScannerReadModel = Readonly<{

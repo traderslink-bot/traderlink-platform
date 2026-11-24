@@ -1,5 +1,6 @@
 "use client";
 
+import { scannerPercent, scannerRelativeVolume } from "../scanner-number-format";
 import { scannerPrice as price } from "../scanner-price";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
@@ -243,10 +244,10 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
         ["Float",shares(row.float)],["Market cap",row.marketCap === null ? "—" : "$" + compact.format(row.marketCap)],
         ["T/O",percent(turnover)],
       ] : hod ? [
-        ...volumes,["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",percent(row.spreadPercent)],
+        ...volumes,["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",scannerPercent(row.spreadPercent, "—")],
       ] : [
         ...volumes,["Float",shares(row.float)],["T/O",percent(turnover)],
-        live ? ["RVOL",live.relativeVolume === null ? "—" : `${decimal.format(live.relativeVolume)}×`] : ["Spread",percent(row.spreadPercent)],
+        live ? ["RVOL",scannerRelativeVolume(live.relativeVolume, "—")] : ["Spread",scannerPercent(row.spreadPercent, "—")],
       ];
       return <Box role="listitem" key={row.symbol} data-scanner-stock-card={row.symbol}
         sx={{border:1,borderColor:"divider",borderRadius:0,mb:0.55,px:0.7,py:0.55,minWidth:0,bgcolor:"background.paper"}}>

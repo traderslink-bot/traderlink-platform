@@ -1,5 +1,6 @@
 "use client";
 
+import { scannerPercent, scannerRelativeVolume } from "../scanner-number-format";
 import {useWorkspaceChartLayout} from './use-workspace-chart-layout';
 import {useWorkspaceMobileOrientation} from './use-workspace-mobile-orientation';
 import {useMobileWorkspaceLayout} from './use-mobile-workspace-layout';
@@ -220,7 +221,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         metric("HOD price",`$${priceValue(row.dayHigh)}`),
         metric("HOD",value(row.offHighPercent,"%"),row.offHighPercent),
         metric("Session low",`$${priceValue(row.dayLow)}`),
-        row.relativeVolume==null?null:metric("RVOL",`${number.format(row.relativeVolume)}×`),
+        row.relativeVolume==null?null:metric("RVOL",scannerRelativeVolume(row.relativeVolume)),
         traded==null?null:metric("T/O",traded),
       ]:[
         row.momentumHit || row.momentumSignals?.length ? metric("Detected",momentumSignalText(row)) : null,
@@ -233,12 +234,12 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         row.activity.fiveMinuteVolume==null?null:metric("5m Vol",compact.format(row.activity.fiveMinuteVolume)),
         row.activity.volumeAcceleration===null?null:metric("1m Vol Spike",`${number.format(row.activity.volumeAcceleration)}×`),
         row.activity.fiveMinuteVolumeSpike==null?null:metric("5m Vol Spike",`${number.format(row.activity.fiveMinuteVolumeSpike)}×`),
-        row.relativeVolume==null?null:metric("RVOL",`${number.format(row.relativeVolume)}×`),
+        row.relativeVolume==null?null:metric("RVOL",scannerRelativeVolume(row.relativeVolume)),
         metric("HOD price",`$${priceValue(row.dayHigh)}`),
         metric("Below HOD",value(row.offHighPercent,"%"),row.offHighPercent),
         metric("Session low",`$${priceValue(row.dayLow)}`),
         traded==null?null:metric("Turnover",traded),
-        row.spreadPercent===null?null:metric("Spread",value(row.spreadPercent,"%")),
+        row.spreadPercent===null?null:metric("Spread",scannerPercent(row.spreadPercent)),
       ]).filter(Boolean);const secondRowTools=<ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/>;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:twoRows||screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
           {!twoRows?<TableCell sx={{px:"0.125rem !important"}}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>:null}
@@ -247,14 +248,14 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
           {screen==="gainers"?<>
             <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell>
             <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell>
-            <TableCell>{traded??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
+            <TableCell>{traded??"n/a"}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
             <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell>
           </>:<>
-            <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell><TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{value(row.activity.oneMinuteGain,"%")}</TableCell>
-            <TableCell sx={{color:scannerGainColor(row.activity.fiveMinuteGain)}}>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
+            <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell><TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{scannerPercent(row.activity.oneMinuteGain)}</TableCell>
+            <TableCell sx={{color:scannerGainColor(row.activity.fiveMinuteGain)}}>{scannerPercent(row.activity.fiveMinuteGain)}</TableCell>
             <TableCell>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"n/a":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
             <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
-            <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
+            <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell><TableCell>{scannerPercent(row.spreadPercent)}</TableCell>
           </>}
           {!twoRows?<TableCell><ScannerCountryFlag country={row.country}/></TableCell>:null}
         </TableRow>
@@ -301,7 +302,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
         <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
         <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
         <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell>
-        <TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`}</TableCell>
+        <TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
         <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell><TableCell><ScannerCountryFlag country={row.country}/></TableCell>
       </TableRow>)}</TableBody></Table>:<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart and news" sx={{ px:"0.125rem !important",...scannerToolColumnSx(allowAdd) }}/>
@@ -314,10 +315,10 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
           <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.3rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
           <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
           {showPostGain?<TableCell sx={{ color:scannerGainColor(row.postMarketGain),fontWeight:750 }}>{value(row.postMarketGain,"%")}</TableCell>:null}
-          <TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{value(row.activity.oneMinuteGain,"%")}</TableCell><TableCell sx={{color:scannerGainColor(row.activity.fiveMinuteGain)}}>{value(row.activity.fiveMinuteGain,"%")}</TableCell>
+          <TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{scannerPercent(row.activity.oneMinuteGain)}</TableCell><TableCell sx={{color:scannerGainColor(row.activity.fiveMinuteGain)}}>{scannerPercent(row.activity.fiveMinuteGain)}</TableCell>
           <TableCell>{row.activity.oneMinuteVolume==null?"n/a":compact.format(row.activity.oneMinuteVolume)}</TableCell><TableCell>{row.activity.fiveMinuteVolume==null?"n/a":compact.format(row.activity.fiveMinuteVolume)}</TableCell>
           <TableCell>{row.activity.volumeAcceleration==null?"n/a":`${number.format(row.activity.volumeAcceleration)}×`}</TableCell><TableCell>{row.activity.fiveMinuteVolumeSpike==null?"n/a":`${number.format(row.activity.fiveMinuteVolumeSpike)}×`}</TableCell>
-          <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell><TableCell>{value(row.spreadPercent,"%")}</TableCell>
+          <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell><TableCell>{scannerPercent(row.spreadPercent)}</TableCell>
           <TableCell><ScannerCountryFlag country={row.country}/></TableCell>
         </TableRow>
         <MomentumSignalRow row={row} colSpan={(showPostGain?14:13)+volumeColumns.length} leftOffset="3.4rem"/>
@@ -329,7 +330,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
               ["Episode $ volume",row.activity.episodeDollarVolume==null?"n/a":`$${compact.format(row.activity.episodeDollarVolume)}`],
               ["Episode time",row.activity.episodeSeconds==null?"n/a":`${number.format(row.activity.episodeSeconds)}s`],
               ["$ × Vol",row.dollarVolume===null?"n/a":`$${compact.format(row.dollarVolume)}`],
-              ["RVOL",row.relativeVolume==null?"n/a":`${number.format(row.relativeVolume)}×`],
+              ["RVOL",scannerRelativeVolume(row.relativeVolume)],
               ["HOD price",`$${priceValue(row.dayHigh)}`],
               ["Below HOD",value(row.offHighPercent,"%")],
               ["Session low",`$${priceValue(row.dayLow)}`],
@@ -759,6 +760,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
   const [workspaceSection,setWorkspaceSection]=useState<"details"|"screeners">("details");
   const [drawerOpen,setDrawerOpen]=useState(false);
   const [temporary,setTemporary]=useState<{chart:ScannerChartTarget;layout:ChartMultiview}|null>(null);
+  const canReopenChart = Boolean(temporary) || chartWorkspace.charts.length > 0;
   const [replacement,setReplacement]=useState<ScannerChartTarget|null>(null);
   const selectSavedChart=(symbol:string)=>{
     const group=chartLayout.groups.find(item=>item.symbol===symbol);
@@ -983,11 +985,11 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false }:
           const saved=saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,savedScanIds:draftSavedIds,views:draftViews,sections:draftSections,volumeColumns:draftVolumeColumns,gainerAutoSwitch:draftGainerSwitch}]);
           if(saved)setDraft(null);return saved;
         }}/>}
-        {((desktopLayout&&mobile)||(!drawerOpen&&chartWorkspace.charts.length>0))&&
-          <Tooltip title={drawerOpen?"Chart drawer is open":chartWorkspace.charts.length?"Reopen chart drawer":"No saved chart drawer"}>
+        {((desktopLayout&&mobile)||(!drawerOpen&&canReopenChart))&&
+          <Tooltip title={drawerOpen?"Chart drawer is open":canReopenChart?"Reopen chart drawer":"No chart to reopen"}>
             <Box component="span" sx={{display:"inline-flex",mx:0.25,flexShrink:0,"@media(max-width:359px)":{mx:0}}}>
-              <ButtonBase aria-label="Reopen chart drawer" disabled={drawerOpen||chartWorkspace.charts.length===0}
-                onClick={()=>{setTemporary(null);setDrawerOpen(true);}}
+              <ButtonBase aria-label="Reopen chart drawer" disabled={drawerOpen||!canReopenChart}
+                onClick={()=>setDrawerOpen(true)}
                 sx={{...scannerChartActionSx,width:36,height:36,"@media(max-width:359px)":{width:34},"&.Mui-disabled":{opacity:0.6}}}>
                 <CandlestickChartRounded fontSize="small"/>
               </ButtonBase>

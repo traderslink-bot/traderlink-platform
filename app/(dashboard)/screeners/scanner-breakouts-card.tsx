@@ -17,14 +17,9 @@ import { ScannerRowNews } from "./scanner-news-drawer-context";
 import { SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
 import { ScannerStockCards, ScannerViewSettings, useScannerVolumeColumns, type ScannerView } from "./scanner-stock-cards";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
+import { BreakoutStatus } from "./scanner-breakout-status";
 
 const shares = new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
-const stateText = { above:"Above", at:"At level", below:"Back below" };
-export function BreakoutStatus({row}:{row:BreakoutRow}) {
-  return <Typography component="span" variant="inherit" sx={{color:scannerGainColor(row.price-row.breakoutLevel)}}>
-    {stateText[row.breakoutState]}
-  </Typography>;
-}
 
 export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenChart }: {
   rows?: readonly BreakoutRow[]; now:number; notice:string|null;
@@ -47,7 +42,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
       !rows ? <Skeleton height={160}/> :
       rows.length===0 ? <Alert severity="info">No stocks currently qualify for this list.</Alert> :
       view==="cards" ? <ScannerStockCards screen="breakouts" rows={rows} now={now} renderHalt={halt} renderTools={tools}
-        renderSignal={row=><>PM high {price(row.breakoutLevel)} · <BreakoutStatus row={row}/></>}/> :
+        renderSignal={row=><>PM high {price(row.breakoutLevel)} · <BreakoutStatus row={row} now={now}/></>}/> :
       <TableContainer sx={theme=>({...scannerScrollStyles(theme),maxHeight:420})}>
         <Table size="small" stickyHeader aria-label="Breakouts" sx={{
           ...scannerStickyTickerSx,
@@ -63,7 +58,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
               {!twoRows&&<TableCell>{tools(row)}</TableCell>}
               <TableCell data-scanner-sticky-ticker><ScannerPageTicker symbol={row.symbol}/>{halt(row.symbol)}</TableCell>
               <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{price(row.price)}</TableCell>
-              <TableCell>{price(row.breakoutLevel)}</TableCell><TableCell><BreakoutStatus row={row}/></TableCell>
+              <TableCell>{price(row.breakoutLevel)}</TableCell><TableCell><BreakoutStatus row={row} now={now}/></TableCell>
               {volumes.map(metric => <TableCell key={metric}>{row[metric] == null ? "—" : shares.format(row[metric])}</TableCell>)}
               <TableCell>{row.float===null?"—":shares.format(row.float)}</TableCell>
               {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}

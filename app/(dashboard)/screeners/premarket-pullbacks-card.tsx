@@ -1,5 +1,6 @@
 "use client";
 
+import { scannerPercent } from "./scanner-number-format";
 import { scannerPrice as price } from "./scanner-price";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
@@ -84,7 +85,7 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
         const metrics:[string,string][]=open?[["Premarket high",optionalPrice(row.premarketHigh)],["Regular high",optionalPrice(row.regularHigh)],["Post-market high",optionalPrice(row.postMarketHigh)],
           ["Reference high",price(row.referenceHigh)],["Below reference high",`${wholePercent.format(row.belowHighPercent)}%`],["Back to reference high",`+${wholePercent.format(row.backToHighPercent)}%`],["Premarket volume",shares(row.premarketVolume)],
           ["Session volume",shares(row.sessionVolume)],["1min volume",shares(row.oneMinuteVolume)],["5min volume",shares(row.fiveMinuteVolume)],
-          ["Float",floatShares(row.float)],["Spread",row.spreadPercent===null?"n/a":`${wholePercent.format(row.spreadPercent)}%`],
+          ["Float",floatShares(row.float)],["Spread",scannerPercent(row.spreadPercent)],
           ...rapidMetrics,
           ["Quote received",`${clock.format(new Date(row.receivedAtUtc))} ET`]]:[];
         return <Fragment key={row.symbol}><TableRow hover tabIndex={0} aria-expanded={open} onClick={toggle}

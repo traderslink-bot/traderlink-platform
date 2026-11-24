@@ -24,8 +24,11 @@ it("keeps one breakout at the original level through a pullback, retest and recl
   expect(run("premarket",2,0)).toEqual([]);
   expect(run("regular",2,1)).toEqual([]);
   const [first]=run("regular",2.01,2)!;
-  expect(first).toMatchObject({breakoutLevel:2,breakoutState:"above",float:null});
-  expect(run("regular",1.9,3,{premarketHigh:null})).toMatchObject([{breakoutAtUtc:first.breakoutAtUtc,breakoutLevel:2,breakoutState:"below",price:1.9}]);
+  expect(first).toMatchObject({breakoutLevel:2,breakoutState:"above",float:null,breakoutPriceAtUtc:first.breakoutAtUtc});
+  expect(run("regular",1.9,3,{premarketHigh:null,providerAt:now+2_500})).toMatchObject([{
+    breakoutAtUtc:first.breakoutAtUtc,breakoutPriceAtUtc:new Date(now+2_500).toISOString(),
+    breakoutLevel:2,breakoutState:"below",price:1.9,
+  }]);
   expect(run("regular",2,4)).toMatchObject([{breakoutState:"at"}]);
   expect(run("regular",2.05,5)).toMatchObject([{breakoutAtUtc:first.breakoutAtUtc,breakoutState:"above"}]);
 });
@@ -34,6 +37,8 @@ it("requires a PM level, rejects older quotes and clears on the next trading dat
   const run=setup();
   expect(run("regular",2.5,0,{premarketHigh:null})).toEqual([]);
   expect(run("regular",2.5,1)).toHaveLength(1);
-  expect(run("regular",1.5,2,{providerAt:now})).toMatchObject([{price:2.5,breakoutState:"above"}]);
+  expect(run("regular",1.5,2,{providerAt:now})).toMatchObject([{
+    price:2.5,breakoutState:"above",breakoutPriceAtUtc:new Date(now+1_000).toISOString(),
+  }]);
   expect(run("regular",2.5,86400,{tradingDate:"2026-11-13",premarketHigh:null})).toEqual([]);
 });

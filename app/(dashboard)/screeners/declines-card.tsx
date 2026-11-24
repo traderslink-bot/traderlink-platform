@@ -1,5 +1,6 @@
 "use client";
 
+import { scannerPercent } from "./scanner-number-format";
 import { scannerPrice as price } from "./scanner-price";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
@@ -63,7 +64,7 @@ function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
       {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol;const toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
-        const metrics:[string,string][]=open?[["Session volume",shares(row.volume)],["Float",floatShares(row.float)],["Spread",pct(row.spreadPercent)],
+        const metrics:[string,string][]=open?[["Session volume",shares(row.volume)],["Float",floatShares(row.float)],["Spread",scannerPercent(row.spreadPercent)],
           ["Quote received",`${stamp(row.receivedAtUtc)} ET`],["Comparison price",row.comparisonPrice===null?"n/a":price(row.comparisonPrice)]]:[];
         return <Fragment key={row.symbol}>
           <TableRow hover tabIndex={0} aria-expanded={open} onClick={toggle} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();toggle();}}}
@@ -73,7 +74,7 @@ function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
           <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
             <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(row.changePercent),fontWeight:750}}>{pct(row.changePercent)}</TableCell>
             {volumes.map(metric => <TableCell key={metric}>{shares(row[metric] ?? null)}</TableCell>)}
-            <TableCell>{floatShares(row.float)}</TableCell><TableCell>{pct(row.spreadPercent)}</TableCell>
+            <TableCell>{floatShares(row.float)}</TableCell><TableCell>{scannerPercent(row.spreadPercent)}</TableCell>
           {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
           </TableRow>
           {twoRows&&<TableRow data-two-row-tools={row.symbol}>

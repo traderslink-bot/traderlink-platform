@@ -8,7 +8,7 @@ it("keeps scanner rankings and facts while omitting supplier tags from every pub
     momentumSections: { confirmed: [row], early: [row], confirmedTotal: 1, earlyTotal: 1 } };
   const firstId = "alpaca:SHFS:2026-11-19T14:30:00Z";
   const model = { provider: "alpaca", gainers: screen, momentum: screen, dayGainers: screen,
-    breakouts: [{ ...row, breakoutLevel: .0277 }], activeHalts: [
+    breakouts: [{ ...row, breakoutLevel: .0277, breakoutAtUtc: "2026-11-19T14:30:00Z", breakoutPriceAtUtc: "2026-11-19T14:32:01Z" }], activeHalts: [
       { id: firstId, source: "alpaca", ticker: "SHFS", reasonCode: "LUDP", tradeTimeEt: "09:35:00" },
       { id: "alpaca:LSE:2026-11-19T14:30:00Z", source: "alpaca", ticker: "LSE", reasonCode: "LUDP" },
     ],
@@ -17,6 +17,9 @@ it("keeps scanner rankings and facts while omitting supplier tags from every pub
   expect(JSON.stringify(publicModel)).not.toContain("alpaca");
   expect(publicModel.gainers.rows[0].price).toBe(.0288);
   expect(publicModel.momentum.momentumSections?.early).toHaveLength(1);
+  expect(publicModel.breakouts?.[0]).toMatchObject({
+    breakoutAtUtc: "2026-11-19T14:30:00Z", breakoutPriceAtUtc: "2026-11-19T14:32:01Z",
+  });
   expect(publicModel.activeHalts?.[0].tradeTimeEt).toBe("09:35:00");
   const ids = publicModel.activeHalts?.map(halt => halt.id);
   expect(ids?.every(id => /^[a-f0-9]{64}$/.test(id))).toBe(true);

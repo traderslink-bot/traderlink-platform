@@ -20,6 +20,7 @@ vi.mock("@/app/(dashboard)/charts/market-chart", () => ({ MarketChart: ({symbol}
 vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({ useMarketEventsData: () => ({}), ScreenerPressReleaseBoard: () => createElement("div", {"data-pr-instance": true}, "PR Scanner") }));
 vi.mock("@/app/(dashboard)/screeners/screener-market-halts-card", () => ({ ScreenerMarketHaltsCard: () => createElement("div", {"data-halt-instance": true}, "Halt Alerts") }));
 import { availableScannerGridHeight, GAINERS_EXPLANATION, LiveScreenersClient } from "@/app/(dashboard)/screeners/live-screeners-client";
+import { LiveScreenersClient as TradingWorkspaceClient } from "@/app/(dashboard)/screeners/workspace/live-screeners-client";
 import { DEFAULT_SCANNER_WORKSPACE_LAYOUT } from "@/app/(dashboard)/screeners/scanner-workspace-layout";
 
 beforeAll(() => { (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true; });
@@ -32,7 +33,9 @@ function model(session: "regular" | "after_hours"): ScannerReadModel {
     universeCount: 3, receivedCount: 3, missingSymbols: [], missingFloatCount: 0,
     gainers: empty, dayGainers: empty, momentum: empty, issues: [] };
 }
-async function mount(initial: ScannerReadModel, options: { admin?: boolean; now?: string; fail?: boolean } = {}) {
+async function mount(initial: ScannerReadModel, options: {
+  admin?: boolean; now?: string; fail?: boolean; workspace?: boolean;
+} = {}) {
   vi.useFakeTimers(); vi.setSystemTime(new Date(options.now ?? "2026-11-02T21:00:10Z")); let response = initial;
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal("IntersectionObserver", class { observe() {} unobserve() {} disconnect() {} });
@@ -69,7 +72,10 @@ async function mount(initial: ScannerReadModel, options: { admin?: boolean; now?
   }
   vi.stubGlobal("EventSource",FakeSource);
   const container = document.createElement("div"); document.body.append(container); root = createRoot(container);
-  await act(async () => { root!.render(createElement(LiveScreenersClient,{admin:options.admin})); });
+  await act(async () => {
+    root!.render(options.workspace ? createElement(TradingWorkspaceClient, {scannersOnly:true})
+      : createElement(LiveScreenersClient, {admin:options.admin}));
+  });
   return { container, fetch, stream, connections, savedLayout: () => layout, update: async (next: ScannerReadModel) => {
     response = next; await act(async () => { await vi.advanceTimersByTimeAsync(5000); connections.at(-1)!.emit(next); });
   } };
@@ -158,6 +164,80 @@ function momentumModel(post: number | null | undefined): ScannerReadModel {
     momentumSignals: ["volume_ignition","price_burst"] };
   return { ...model(post===undefined?"regular":"after_hours"), momentum: { rows: [row], focus: [], total: 1 } };
 }
+
+describe.each([{surface:"Scanner",workspace:false},{surface:"Trading Workspace",workspace:true}])("$surface live display fixes", ({workspace}) => {
+  it("keeps Momentum percentage precision and formats larger RVOL values consistently", async () => {
+    const frame = momentumModel(undefined);
+    const base = frame.momentum.rows[0];
+    const rows = [
+      { ...base, relativeVolume:4246.03, spreadPercent:0.46, activity:{...base.activity,oneMinuteGain:-0.001,fiveMinuteGain:1.857585} },
+      { ...base, symbol:"FLAT", relativeVolume:5.01, spreadPercent:0 },
+      { ...base, symbol:"UNKNOWN", relativeVolume:null, spreadPercent:null },
+    ];
+    const results = { ...frame.momentum, rows, total:rows.length };
+    const { container } = await mount({...frame,momentum:results,gainers:results,dayGainers:results}, {workspace});
+    const momentum = container.querySelector('[aria-label="Momentum compact stocks"]')!;
+    const cells = (table:Element, ticker:string) => {
+      const headers = [...table.querySelectorAll("thead th")].map(cell => cell.textContent);
+      const row = [...table.querySelectorAll("tbody tr")].find(item => item.querySelector("[data-scanner-sticky-ticker]")?.textContent === ticker)!;
+      return Object.fromEntries([...row.querySelectorAll("td")].map((cell,index) => [headers[index],cell.textContent]));
+    };
+    expect(cells(momentum,"TEST")).toMatchObject({"1min %":"0%","5min %":"1.86%","Spread":"0.46%"});
+    expect(cells(momentum,"FLAT").Spread).toBe("0%");
+    expect(cells(momentum,"UNKNOWN").Spread).toBe("n/a");
+    const gainers = container.querySelector('[aria-label="Top Gainers compact stocks"]')!;
+    expect(cells(gainers,"TEST").RVOL).toBe("4,246×");
+    expect(cells(gainers,"FLAT").RVOL).toBe("5.01×");
+  });
+
+  it("shows the age of the retained Breakouts price beside its status", async () => {
+    const frame = momentumModel(undefined);
+    const base = frame.momentum.rows[0];
+    const originalEventAt = new Date(Date.parse(base.receivedAtUtc)-600_000).toISOString();
+    const olderPriceAt = new Date(Date.parse(base.receivedAtUtc)-198_190).toISOString();
+    const breakouts: NonNullable<ScannerReadModel["breakouts"]> = [
+      { ...base, breakoutLevel:2, breakoutAtUtc:originalEventAt, breakoutPriceAtUtc:olderPriceAt, breakoutState:"above" },
+    ];
+    const page = await mount({...frame,breakouts}, {workspace});
+    const table = page.container.querySelector('[aria-label="Breakouts"]')!;
+    expect(table.textContent).toContain("Above");
+    expect(table.querySelector("time")?.textContent).toBe("Price 3m old");
+    expect(table.querySelector("time")?.getAttribute("datetime")).toBe(olderPriceAt);
+    await page.update({...frame,breakouts:[{...breakouts[0],breakoutPriceAtUtc:base.receivedAtUtc,breakoutState:"below"}]});
+    expect(table.textContent).toContain("Back below");
+    expect(table.querySelector("time")).toBeNull();
+  });
+
+  it("reopens the recently viewed quick chart and keeps the saved chart available", async () => {
+    const frame = momentumModel(undefined);
+    const base = frame.momentum.rows[0];
+    const results = { ...frame.momentum, rows:[{...base,symbol:"ONFO"},{...base,symbol:"AKAN"}], total:2 };
+    const { container, savedLayout } = await mount({...frame,gainers:results,dayGainers:results}, {workspace});
+    const open = async (symbol:string) => {
+      const button = container.querySelector<HTMLElement>(`[aria-label="Open ${symbol} chart only"]`)!;
+      await act(async () => button.click());
+    };
+    const drawer = () => document.querySelector('[role="dialog"][aria-label="Chart workspace"]')!;
+    const close = async () => {
+      await act(async () => drawer().querySelector<HTMLElement>('[aria-label="Close chart"]')!.click());
+      await act(async () => {await vi.advanceTimersByTimeAsync(500);});
+    };
+    await open("ONFO");
+    await close();
+    await open("AKAN");
+    expect(drawer().querySelector('[data-workspace-chart="AKAN"]')).not.toBeNull();
+    await close();
+    const reopen = document.querySelector<HTMLButtonElement>('button[aria-label="Reopen chart drawer"]')!;
+    expect(reopen.disabled).toBe(false);
+    await act(async () => reopen.click());
+    expect(drawer().querySelector('[data-workspace-chart="AKAN"]')).not.toBeNull();
+    expect(savedLayout().groups.map(group => group.symbol)).toEqual(["ONFO"]);
+    const back = [...drawer().querySelectorAll("button")].find(button => button.textContent === "Back to saved charts")!;
+    await act(async () => back.click());
+    expect(drawer().querySelector('[data-workspace-chart="ONFO"]')).not.toBeNull();
+  });
+});
+
 describe("Momentum context rendering", () => {
   it("shows Alpaca pause icons for SMX and OMH in Top Gainers and Momentum until each resumes", async () => {
     const base = momentumModel(42);

@@ -184,6 +184,8 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
   const [filters,setFilters] = useState(false);
   const [search,setSearch] = useState("");
   const [filterTarget,setFilterTarget] = useState<string|null>(null);
+  const filterContent = useRef<HTMLDivElement>(null);
+  const pendingFilterFocus = useRef<string | null>(null);
   const [saveMode,setSaveMode] = useState<"new" | "update" | "rename">();
   const [confirmationRevision,setConfirmationRevision] = useState<number>();
   const [name,setName] = useState("");
@@ -197,6 +199,15 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
   const shownDefinition = shown?.definition ?? applied;
   const returnKey = "traderlink:scanner-chart-return:" + returnScope;
   useEffect(() => () => newsRequest.current?.abort(), []);
+  useEffect(() => {
+    const id = pendingFilterFocus.current;
+    if (!id) return;
+    const rule = filterContent.current?.querySelector<HTMLElement>(`[data-scan-rule="${id}"]`);
+    pendingFilterFocus.current = null;
+    if (!rule) return;
+    rule.focus({ preventScroll: true });
+    rule.scrollIntoView({ block: "start" });
+  }, [draft]);
   async function openNews(articleId: string) {
     newsRequest.current?.abort();
     const request = new AbortController();
@@ -283,6 +294,7 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
       ...(metric==="confirmed4hBreak"?{direction:"either" as const}:{}),
       ...(metric==="pressRelease"?{releaseUnit:"Hours" as const}:{}),...(isDirectionalPriceMove(metric)?{direction:"up" as const}:{}),
     };
+    pendingFilterFocus.current = rule.id;
     setDraft(current=>filterTarget?{...current,groups:current.groups.map(group=>group.id===filterTarget
       ?{...group,rules:[...group.rules,rule]}:group)}:{...current,rules:[...current.rules,rule]});
   };
@@ -373,7 +385,9 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
       <MenuItem value="all">All</MenuItem><MenuItem value="any">Any</MenuItem>
     </TextField>;
   const renderRule=(rule:Draft)=>
-    <Box key={rule.id} sx={{p:1,border:1,borderColor:"divider"}}>
+    <Box key={rule.id} data-scan-rule={rule.id} role="group" aria-label={SCAN_METRICS[rule.metric].label + " filter"}
+      tabIndex={-1} sx={{ p: 1, border: 1, borderColor: "divider", scrollMarginBlock: 8,
+        "&:focus": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 } }}>
           <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5}}>
             <Typography variant="subtitle2">{SCAN_METRICS[rule.metric].label}</Typography>
             <IconButton size="small" aria-label={"Remove " + SCAN_METRICS[rule.metric].label + " filter"} onClick={()=>removeRule(rule.id)}><CloseRounded fontSize="small"/></IconButton>
@@ -530,11 +544,11 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
       </>}
     </>}
   </Stack>;
-  if (original) return <DashboardPanel action={toolbar} title="Scan builder">
+  if (original) return <DashboardPanel action={toolbar} title="Scanners">
     <OriginalScannerResults key={original.widget} singleScanner={original.widget} verifiedLevels={verifiedLevels}/>
   </DashboardPanel>;
   return <>
-    <DashboardPanel action={toolbar} title="Scan builder">
+    <DashboardPanel action={toolbar} title="Scanners">
       <Stack spacing={1}>
         {error && <Alert severity="warning">{error}</Alert>}
         {newsError && <Alert severity="warning" onClose={() => setNewsError(false)}>This press release is unavailable.</Alert>}
@@ -641,7 +655,7 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
         <Typography component="h2" variant="h6">Filters</Typography>
         <IconButton aria-label="Close filters" onClick={closeFilters}><CloseRounded/></IconButton>
       </Stack>
-      <Stack spacing={1.25} sx={{p:2,overflowY:"auto",minHeight:0}}>
+      <Stack ref={filterContent} spacing={1.25} sx={{p:2,overflowY:"auto",minHeight:0}}>
         <Stack direction="row" sx={{alignItems:"center",gap:0.75,flexWrap:"wrap"}}>
           <TextField select size="small" label="Sort by" value={sortKey(actualSort)} sx={{width:sortWidth,maxWidth:"100%"}}
             onChange={event=>{const next=availableSorts.find(sort=>sortKey(sort)===event.target.value);if(next)setDraft(current=>({...current,sort:{...next,direction:current.sort.direction}}));}}>
