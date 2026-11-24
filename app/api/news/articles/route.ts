@@ -1,3 +1,4 @@
+import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { timingSafeEqual } from "node:crypto";
 import { publicNewsUrl } from "@/src/modules/news/contracts/public-news-url";
 import { revalidatePath } from "next/cache";
@@ -6,10 +7,6 @@ import {
   type NewsArticleInput,
   upsertNewsArticle,
 } from "@/src/lib/news/news-article-store";
-import {
-  formatFinnhubMarketCap,
-  getFinnhubCompanyProfile,
-} from "@/src/lib/news/finnhub-company-profile";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { loadPlatformWebPushConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
 import { PlatformWebPushDeliveryService } from "@/src/modules/platform/server/notifications/platform-web-push-delivery-service";
@@ -47,35 +44,6 @@ function authorizePublisher(request: Request): PublisherAuthorization {
     : "unauthorized";
 }
 
-async function enrichMissingMarketCap(
-  input: NewsArticleInput,
-): Promise<NewsArticleInput> {
-  const metadata = input.metadata ?? {};
-  const suppliedMarketCap =
-    typeof metadata.marketCap === "string" ? metadata.marketCap.trim() : "";
-  const suppliedMarketCapValue = Number(metadata.marketCapValue);
-  if (
-    suppliedMarketCap ||
-    (Number.isFinite(suppliedMarketCapValue) && suppliedMarketCapValue > 0)
-  ) {
-    return input;
-  }
-
-  const profile = await getFinnhubCompanyProfile(input.ticker);
-  const marketCap = formatFinnhubMarketCap(profile?.marketCapitalization ?? null);
-  if (!profile?.marketCapitalization || !marketCap) return input;
-
-  return {
-    ...input,
-    metadata: {
-      ...metadata,
-      marketCap,
-      marketCapValue: profile.marketCapitalization * 1_000_000,
-      marketCapSource: "finnhub_company_profile",
-    },
-  };
-}
-
 export async function POST(request: Request): Promise<Response> {
   const authorization = authorizePublisher(request);
   if (authorization === "unconfigured") {
@@ -98,7 +66,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    const article = await upsertNewsArticle(await enrichMissingMarketCap(input));
+    const article = await upsertNewsArticle(input);
     const articlePath = `/news/${encodeURIComponent(
       article.ticker,
     )}/${encodeURIComponent(article.slug)}`;
@@ -117,7 +85,7 @@ export async function POST(request: Request): Promise<Response> {
       const database = openPlatformDatabase({ mode: "runtime" });
       try {
         const repository = new PressReleaseWebPushRepository(database, configuration.encryption);
-        repository.enqueueArticle(article);
+        repository.enqueueArticle({ ...article, routeTag: typeof input.routeTag === "string" ? input.routeTag.trim().toLowerCase() : null });
         await new PlatformWebPushDeliveryService(repository, configuration).runAvailable(100);
       } finally {
         database.close();
@@ -147,6 +115,12 @@ export async function POST(request: Request): Promise<Response> {
       freeArticleUrl: publicNewsUrl(freeArticlePath),
     });
   } catch (error) {
+    if (isTraderLinkPlatformError(error) && error.safeContext.reason === "source_issuer_conflict") {
+      return Response.json({
+        ok: false, code: "news_article_issuer_conflict", retryable: false,
+        message: "This source URL or event already belongs to another recorded ticker. Review the issuer before resubmitting.",
+      }, { status: 409 });
+    }
     console.error("News article publish rejected.", {
       errorName: error instanceof Error ? error.name : "UnknownError",
     });

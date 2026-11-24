@@ -1,3 +1,5 @@
+import { newsArticleIngestionMembershipsMigration } from "@/src/modules/news/server/database/migrations/0227_news_article_ingestion_memberships";
+import { NEWS_ROUTE_TAGS } from "@/src/modules/news/server/news-category-memberships";
 import { createHash, randomBytes } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import DatabaseConstructor from "better-sqlite3";
@@ -86,7 +88,8 @@ function explicitTestDatabasePath(): string | undefined {
 function initializeNewsTestDatabase(database: SqliteDatabase): void {
   database.pragma("foreign_keys = ON");
   database.pragma("busy_timeout = 5000");
-  for (const statement of newsContentMigration.statements) {
+  if (database.prepare("SELECT 1 FROM sqlite_master WHERE name='news_article_category_memberships'").get()) return;
+  for (const statement of [...newsContentMigration.statements, ...newsArticleIngestionMembershipsMigration.statements]) {
     database.exec(statement);
   }
 }
@@ -210,43 +213,46 @@ function routePriority(routeTag: unknown): number {
   return 0;
 }
 
-function mergeCanonicalInput(
-  normalized: ReturnType<typeof normalizeInput>,
-  existing: Record<string, unknown> | null,
-) {
-  if (!existing || routePriority(normalized.routeTag) >= routePriority(existing.route_tag)) {
-    const existingMetadata = parseJsonObject(existing?.metadata_json);
-    const incomingMetadata = parseJsonObject(normalized.metadataJson);
-    if (
-      existingMetadata.supportResistanceLevels &&
-      !incomingMetadata.supportResistanceLevels
-    ) {
-      normalized.metadataJson = JSON.stringify({
-        ...incomingMetadata,
-        supportResistanceLevels: existingMetadata.supportResistanceLevels,
-      });
+/** Empty values never remove accepted facts. Scanner content wins conflicts,
+ * while a lower-priority destination can still fill facts it uniquely supplies. */
+function mergeUseful(existing: unknown, incoming: unknown, incomingWins: boolean): unknown {
+  const empty = (value: unknown): boolean => value == null || (typeof value === "string" && !value.trim())
+    || (Array.isArray(value) && !value.length) || (typeof value === "object" && !Array.isArray(value) && !Object.keys(value as object).length);
+  if (empty(incoming)) return existing;
+  if (empty(existing)) return incoming;
+  if (typeof existing === "object" && !Array.isArray(existing) && typeof incoming === "object" && !Array.isArray(incoming)) {
+    const result = { ...existing as Record<string, unknown> };
+    for (const [key, value] of Object.entries(incoming as Record<string, unknown>)) {
+      if (["__proto__", "constructor", "prototype"].includes(key)) continue;
+      result[key] = mergeUseful(result[key], value, incomingWins);
     }
-    return normalized;
+    return result;
   }
+  return incomingWins ? incoming : existing;
+}
 
+function mergeCanonicalInput(normalized: ReturnType<typeof normalizeInput>, existing: Record<string, unknown> | null) {
+  if (!existing) return normalized;
+  const wins = routePriority(normalized.routeTag) >= routePriority(existing.route_tag);
+  const mergeObject = (value: string, previous: unknown) => JSON.stringify(mergeUseful(parseJsonObject(previous), parseJsonObject(value), wins));
+  const mergeArray = (value: string, previous: unknown) => JSON.stringify(mergeUseful(parseJsonArray(previous), parseJsonArray(value), wins));
+  const text = (value: unknown, previous: unknown) => mergeUseful(previous, value, wins) as string | null;
   return {
     ...normalized,
-    headline: String(existing.headline),
-    summary: typeof existing.summary === "string" ? existing.summary : null,
-    articleText:
-      typeof existing.article_text === "string" ? existing.article_text : null,
-    eventType:
-      typeof existing.event_type === "string" ? existing.event_type : null,
-    routeTag: typeof existing.route_tag === "string" ? existing.route_tag : null,
+    ticker: String(existing.ticker),
+    headline: text(normalized.headline, existing.headline)!,
+    summary: text(normalized.summary, existing.summary),
+    articleText: text(normalized.articleText, existing.article_text),
+    eventType: text(normalized.eventType, existing.event_type),
+    routeTag: wins ? normalized.routeTag ?? existing.route_tag as string | null : existing.route_tag as string | null,
     publishedAt: toIsoString(existing.published_at),
-    sourceUrl:
-      typeof existing.source_url === "string" ? existing.source_url : null,
-    metadataJson: JSON.stringify(parseJsonObject(existing.metadata_json)),
-    positivesJson: JSON.stringify(parseJsonArray(existing.positives_json)),
-    negativesJson: JSON.stringify(parseJsonArray(existing.negatives_json)),
-    riskFlagsJson: JSON.stringify(parseJsonArray(existing.risk_flags_json)),
-    diagnosticsJson: JSON.stringify(parseJsonObject(existing.diagnostics_json)),
-    rawPayloadJson: JSON.stringify(parseJsonObject(existing.raw_payload_json)),
+    sourceUrl: typeof existing.source_url === "string" ? existing.source_url : normalized.sourceUrl,
+    metadataJson: mergeObject(normalized.metadataJson, existing.metadata_json),
+    diagnosticsJson: mergeObject(normalized.diagnosticsJson, existing.diagnostics_json),
+    rawPayloadJson: JSON.stringify(mergeUseful(parseJsonValue(existing.raw_payload_json), parseJsonValue(normalized.rawPayloadJson), wins)),
+    positivesJson: mergeArray(normalized.positivesJson, existing.positives_json),
+    negativesJson: mergeArray(normalized.negativesJson, existing.negatives_json),
+    riskFlagsJson: mergeArray(normalized.riskFlagsJson, existing.risk_flags_json),
   };
 }
 
@@ -261,6 +267,11 @@ export function buildNewsArticleSlug(headline: string, publishedAt: string): str
   const datePart = cleanText(publishedAt).slice(0, 10);
 
   return [base || "press-release", datePart].filter(Boolean).join("-");
+}
+
+function parseJsonValue(value: unknown): unknown {
+  if (typeof value !== "string") return value ?? {};
+  try { return JSON.parse(value); } catch { return {}; }
 }
 
 function parseJsonObject(value: unknown): Record<string, unknown> {
@@ -356,7 +367,7 @@ function rowToArticle(row: Record<string, unknown>): NewsArticle {
     negatives: parseJsonArray(row.negatives_json),
     riskFlags: parseJsonArray(row.risk_flags_json),
     diagnostics: parseJsonObject(row.diagnostics_json),
-    rawPayload: parseJsonObject(row.raw_payload_json),
+    rawPayload: parseJsonValue(row.raw_payload_json),
   };
 }
 
@@ -383,6 +394,9 @@ function normalizeInput(input: NewsArticleInput) {
   const publishedAt = publishedDate.toISOString();
 
   const sourceUrl = cleanText(input.sourceUrl) || null;
+  const metadata = { ...input.metadata };
+  if ("marketCapValue" in metadata && (!Number.isFinite(Number(metadata.marketCapValue)) || Number(metadata.marketCapValue) <= 0)) delete metadata.marketCapValue;
+  if (typeof metadata.marketCap === "string" && /^(?:n\/?a|unknown|[-—]|\s*)$/iu.test(metadata.marketCap.trim())) delete metadata.marketCap;
 
   return {
     id: stableIdForInput(input),
@@ -397,8 +411,8 @@ function normalizeInput(input: NewsArticleInput) {
     sourceUrl,
     canonicalSourceKey: buildCanonicalSourceKey(ticker, sourceUrl),
     eventType: cleanText(input.eventType) || null,
-    routeTag: cleanText(input.routeTag) || null,
-    metadataJson: JSON.stringify(input.metadata ?? {}),
+    routeTag: cleanText(input.routeTag).toLowerCase() || null,
+    metadataJson: JSON.stringify(metadata),
     positivesJson: JSON.stringify(input.positives ?? []),
     negativesJson: JSON.stringify(input.negatives ?? []),
     riskFlagsJson: JSON.stringify(input.riskFlags ?? []),
@@ -535,22 +549,28 @@ async function upsertNewsArticleSqlite(
   let savedArticleId = "";
   db.transaction(() => {
     let normalized = requested;
-    const canonicalRow = normalized.canonicalSourceKey
-      ? (db
-          .prepare("SELECT * FROM news_articles WHERE canonical_source_key = ?")
-          .get(normalized.canonicalSourceKey) as Record<string, unknown> | undefined)
-      : undefined;
-    const eventRow = normalized.sourceEventId
-      ? (db
-          .prepare("SELECT * FROM news_articles WHERE source_event_id = ?")
-          .get(normalized.sourceEventId) as Record<string, unknown> | undefined)
-      : undefined;
-    if (canonicalRow && eventRow && canonicalRow.id !== eventRow.id) {
-      platformFailure("TRADERLINK_NEWS_STORAGE_INVALID", {
-        reason: "source_identity_conflict",
-      });
+    const normalizedUrl = normalized.canonicalSourceKey?.slice(normalized.canonicalSourceKey.indexOf("|") + 1) ?? null;
+    const canonicalRow = normalizedUrl ? db.prepare(`SELECT article.* FROM news_article_source_urls identity
+      JOIN news_articles article ON article.id=identity.article_id WHERE identity.normalized_url=?`).get(normalizedUrl) as Record<string, unknown> | undefined : undefined;
+    const eventRow = normalized.sourceEventId ? db.prepare(`SELECT article.* FROM news_article_source_events event
+      JOIN news_articles article ON article.id=event.article_id WHERE event.source_event_id=?`).get(normalized.sourceEventId) as Record<string, unknown> | undefined : undefined;
+    if (eventRow && normalizedUrl && eventRow.canonical_source_key && String(eventRow.canonical_source_key).split("|").slice(1).join("|") !== normalizedUrl) {
+      platformFailure("TRADERLINK_NEWS_STORAGE_INVALID", { reason: "source_identity_conflict" });
     }
-    const existingRow = canonicalRow ?? eventRow ?? null;
+    const tickerRow = requested.canonicalSourceKey ? db.prepare("SELECT * FROM news_articles WHERE canonical_source_key=?")
+      .get(requested.canonicalSourceKey) as Record<string, unknown> | undefined : undefined;
+    // A historical source event belongs to its original issuer row. A known
+    // ticker|URL alias is preserved as well; neither is retargeted to another issuer.
+    if (eventRow && tickerRow && eventRow.id !== tickerRow.id) {
+      platformFailure("TRADERLINK_NEWS_STORAGE_INVALID", { reason: "source_issuer_conflict" });
+    }
+    if (canonicalRow && eventRow && canonicalRow.id !== eventRow.id && !eventRow.canonical_source_key) {
+      platformFailure("TRADERLINK_NEWS_STORAGE_INVALID", { reason: "source_identity_conflict" });
+    }
+    const existingRow = eventRow ?? tickerRow ?? canonicalRow ?? null;
+    if (existingRow && String(existingRow.ticker) !== requested.ticker) {
+      platformFailure("TRADERLINK_NEWS_STORAGE_INVALID", { reason: "source_issuer_conflict" });
+    }
     normalized = mergeCanonicalInput(normalized, existingRow);
     const slug = existingRow
       ? String(existingRow.slug)
@@ -561,7 +581,15 @@ async function upsertNewsArticleSqlite(
     const createdAt = existingRow ? String(existingRow.created_at) : now;
     const content = storedContentFromInput(normalized, existingRow, slug);
     const contentSha256 = calculateNewsArticleContentSha256(content);
+    const saveEvidence = () => {
+      if (normalizedUrl) db.prepare("INSERT OR IGNORE INTO news_article_source_urls VALUES (?, ?)").run(normalizedUrl, id);
+      if (requested.sourceEventId) db.prepare("INSERT OR IGNORE INTO news_article_source_events VALUES (?, ?)").run(requested.sourceEventId, id);
+      if (NEWS_ROUTE_TAGS.includes(requested.routeTag as typeof NEWS_ROUTE_TAGS[number])) {
+        db.prepare("INSERT OR IGNORE INTO news_article_category_memberships VALUES (?, ?)").run(id, requested.routeTag);
+      }
+    };
     if (existingRow && String(existingRow.content_sha256) === contentSha256) {
+      saveEvidence();
       return;
     }
     const revision = existingRow ? Number(existingRow.revision) + 1 : 1;
@@ -649,7 +677,8 @@ ON CONFLICT(id) DO UPDATE SET
         contentSha256,
         "publisher",
       );
-  })();
+    saveEvidence();
+  }).immediate();
 
   const article = db
     .prepare("SELECT * FROM news_articles WHERE id = ?")

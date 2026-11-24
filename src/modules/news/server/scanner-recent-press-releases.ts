@@ -3,8 +3,7 @@ import "server-only";
 import type Database from "better-sqlite3";
 import { recentScannerTradingDates, scannerNewsEasternDate } from "../contracts/scanner-news-trading-dates";
 import { newsArticleLink, newsSummaryUnavailable } from "../contracts/news-outbound-link";
-
-const routeTags = ["default", "spike", "market_cap_under_30m", "market_cap_30m_to_50m", "market_cap_50m_to_100m"];
+import { NEWS_ROUTE_TAGS, newsCategoryPredicate } from "./news-category-memberships";
 
 type ArticleRow = {
   id: string; ticker: string; headline: string; slug: string; created_at: string; published_at: string;
@@ -47,11 +46,11 @@ export function listScannerRecentPressReleases(database: Database.Database, tick
   // The ticker index bounds the query; the Eastern-date filter below handles DST and closed dates.
   const rows = database.prepare(`
     SELECT id, ticker, headline, slug, created_at, published_at, summary, source_url, event_type, metadata_json
-    FROM news_articles
+    FROM news_articles article
     WHERE ticker = ? AND created_at >= ? AND created_at <= ?
-      AND route_tag IN (${routeTags.map(() => "?").join(", ")})
+      AND ${newsCategoryPredicate(database, NEWS_ROUTE_TAGS)}
     ORDER BY created_at DESC, id ASC
-  `).all(ticker, `${window.dates[4]}T00:00:00.000Z`, now.toISOString(), ...routeTags) as ArticleRow[];
+  `).all(ticker, `${window.dates[4]}T00:00:00.000Z`, now.toISOString(), ...NEWS_ROUTE_TAGS) as ArticleRow[];
   const articles = rows.filter((row) => includedDates.has(scannerNewsEasternDate(row.created_at))).map((row) => ({
     id: row.id, ticker: row.ticker, headline: row.headline, createdAt: row.created_at, publishedAt: row.published_at,
     savedDate: scannerNewsEasternDate(row.created_at), url: articleLink(row), typeLabel: articleTypeLabel(row),
