@@ -1,10 +1,11 @@
 // @vitest-environment node
 import {randomBytes,randomUUID,createHash} from "node:crypto";
 import {realpathSync as unitRealpath} from "node:fs";
-import type Database from "better-sqlite3";
-import {afterEach,beforeEach,describe,it,expect,vi} from "vitest";
+import Database from "better-sqlite3";
+import {afterEach,beforeAll,beforeEach,describe,it,expect,vi} from "vitest";
 import {NextRequest} from "next/server";
-import {openPristinePlatformTestDatabase} from "@/src/test/pristine-platform-test-database";
+import {platformMigrationManifest} from "@/src/modules/platform/server/database/platform-migration-manifest";
+import {runPlatformMigrations} from "@/src/modules/platform/server/database/run-platform-migrations";
 import {PlatformDiscordSignInService} from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import {PlatformOperatorRepository} from "@/src/modules/platform/server/administration/platform-operator-repository";
 import {platformAuthCookieName} from "@/src/modules/platform/server/authentication/platform-auth-cookies";
@@ -42,12 +43,26 @@ class ProtocolSocket{
  send(raw:string){const p=JSON.parse(raw);if(p.op===2){Promise.resolve().then(()=>{this.dispatch("READY",{session_id:"UNIT_ONLY_SESSION",resume_gateway_url:"wss://gateway.discord.gg",user:{id:"99999"}});this.dispatch("GUILD_CREATE",{id:GUILD,owner_id:"12345",roles:[{id:GUILD,name:"everyone",permissions:"66560"}],channels:[{id:GENERAL,type:0,name:"unit-general",permission_overwrites:[]}],threads:[]});});}if(p.op===8)Promise.resolve().then(()=>{this.dispatch("GUILD_MEMBERS_CHUNK",{guild_id:GUILD,nonce:p.d.nonce,chunk_count:1,chunk_index:0,members:[{user:{id:"99999",username:"unitbot",bot:true},roles:[]},{user:{id:"12345",username:"unitowner"},roles:[]},{user:{id:"67890",username:"unitstudent"},roles:[]}]});if(unit.wantMessage)this.dispatch("MESSAGE_CREATE",{guild_id:GUILD,channel_id:GENERAL,id:"1572000000000000001",author:{id:"67890",username:"unitstudent",global_name:"Unit Student"},type:0,timestamp:AT,content:"UNIT_BODY_MUST_NOT_ESCAPE"});});if(p.op===1)Promise.resolve().then(()=>this.emit({op:11,d:null}));}
  close(){this.readyState=3;}
 }
+// The private Stats staging capability validates a fixed 203-to-210 lineage.
+vi.mock("@/src/modules/platform/server/database/platform-migration-manifest",async importOriginal=>{
+ const actual=await importOriginal<typeof import("@/src/modules/platform/server/database/platform-migration-manifest")>();
+ return {...actual,platformMigrationManifest:actual.platformMigrationManifest.slice(0,210)};
+});
+let stagingSchema210:Buffer;
+beforeAll(()=>{
+ const db=new Database(":memory:");
+ try {
+  db.pragma("foreign_keys=ON");
+  runPlatformMigrations(db,{manifest:platformMigrationManifest});
+  stagingSchema210=db.serialize();
+ } finally {db.close();}
+});
 beforeEach(()=>{
  vi.useFakeTimers();vi.setSystemTime(new Date(AT));vi.spyOn(process,"getuid").mockReturnValue(1001);vi.spyOn(Math,"random").mockReturnValue(0.5);unit.mode="disabled_isolated_staging";unit.files.clear();unit.fds.clear();unit.unsafe="";unit.targetBad=false;unit.sockets=0;unit.requests=0;unit.methods=[];unit.wantMessage=true;
  vi.stubGlobal("WebSocket",ProtocolSocket);vi.stubGlobal("fetch",async(_url:unknown,options?:RequestInit)=>{unit.requests++;unit.methods.push(options?.method??"GET");throw Error("No network in UNIT protocol replay");});
  for(const[k,v]of Object.entries({NODE_ENV:"production",DISCORD_GUILD_ID:GUILD,TRADERLINK_COMMUNITY_APPROVED_GUILD_IDS:GUILD,TRADERLINK_PLATFORM_INITIAL_OWNER_DISCORD_SUBJECT:"12345",TRADERLINK_PLATFORM_STORAGE_BACKEND:"sqlite_single_node",TRADERLINK_PLATFORM_DB_PATH:"/data/community-combined-review-20261117/platform.sqlite",TRADERLINK_PLATFORM_PUBLIC_ORIGIN:ORIGIN,TRADERLINK_COMMUNITY_STATS_ENABLED:"1",TRADERLINK_PLATFORM_ADMIN_RATE_LIMIT_SECRET:randomBytes(32).toString("hex"),TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT:"67890,12345",TRADERLINK_DISCORD_BOT_TOKEN:"SYNTHETIC_UNIT_BOT_NOT_A_REAL_TOKEN"}))vi.stubEnv(k,v);
  expect(unitRealpath(DIR)).toBe(DIR);
- const db=unit.db=openPristinePlatformTestDatabase();unit.closedEvents=0;const originalClose=db.close.bind(db);vi.spyOn(db,"close").mockImplementation(()=>{unit.closedEvents=Number((db.prepare("SELECT count(*) n FROM community_stats_events").get() as {n:number}).n);return originalClose();});const migrationCount=(db.prepare("SELECT count(*) n FROM platform_schema_migrations").get() as {n:number}).n;expect(migrationCount).toBe(210);const signin=new PlatformDiscordSignInService(db,{now:()=>new Date(AT)});
+ const db=unit.db=new Database(Buffer.from(stagingSchema210));db.pragma("foreign_keys=ON");unit.closedEvents=0;const originalClose=db.close.bind(db);vi.spyOn(db,"close").mockImplementation(()=>{unit.closedEvents=Number((db.prepare("SELECT count(*) n FROM community_stats_events").get() as {n:number}).n);return originalClose();});const migrationCount=(db.prepare("SELECT count(*) n FROM platform_schema_migrations").get() as {n:number}).n;expect(migrationCount).toBe(210);const signin=new PlatformDiscordSignInService(db,{now:()=>new Date(AT)});
  owner=signin.signIn({authSubject:"12345",username:"unitowner",globalDisplayName:"Unit Owner",avatarHash:null,guildId:GUILD,roleIds:[],guildOwner:true,joinedAtUtc:null},{deferDemoActivation:true});student=signin.signIn({authSubject:"67890",username:"unitstudent",globalDisplayName:"Unit Student",avatarHash:null,guildId:GUILD,roleIds:[],guildOwner:false,joinedAtUtc:null},{deferDemoActivation:true});
  new PlatformOperatorRepository(db).insert({operatorGrantId:randomUUID(),userId:owner.userId,grantedByKind:"bootstrap_console",grantedByUserId:null,grantReceiptSha256:hash("UNIT_ONLY"),recoveryOfGrantId:null,grantedAtUtc:AT});communityId=randomUUID();db.prepare("INSERT INTO traderlink_communities(community_id,discord_guild_id,slug,display_name,status,owner_user_id,created_at_utc,updated_at_utc) VALUES(?,?,'unit-stats','Unit Stats','active',?,?,?)").run(communityId,GUILD,owner.userId,AT,AT);for(const user of [owner,student])db.prepare("INSERT INTO traderlink_community_memberships VALUES(?,?,'active',?,?,?)").run(communityId,user.userId,AT,AT,AT);new CommunityStatsRepository(db).ensureCommunity(communityId,AT);db.prepare("UPDATE community_stats_settings SET discord_enabled=1,channel_ids_json=?,discord_configuration_version=1 WHERE community_id=?").run(JSON.stringify([GENERAL]),communityId);
  const rows=db.prepare("SELECT migration_id,module_namespace,execution_order,checksum_sha256,post_schema_sha256 FROM platform_schema_migrations ORDER BY execution_order").all() as Record<string,any>[];const pins=rows.map(r=>({migrationId:r.migration_id,moduleNamespace:r.module_namespace,executionOrder:r.execution_order,checksumSha256:r.checksum_sha256,postSchemaSha256:r.post_schema_sha256}));const schema=calculatePlatformSchemaDigest(db);nonce=randomBytes(16).toString("hex");const principals={kind:"coaching-staging-principals-v1",nonce:"UNIT_ORIGINAL_PRINCIPALS",pins:{origin:ORIGIN,sourceCommit:"a".repeat(40),sourceVectorSha256:"b".repeat(64),schemaSha256:pins[202].postSchemaSha256},coach:{userId:owner.userId,workspaceId:owner.workspaceId,subject:"12345",session:owner.session},student:{userId:student.userId,workspaceId:student.workspaceId,subject:"67890",session:student.session}};
