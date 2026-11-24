@@ -1,6 +1,6 @@
 import "server-only";
 import type Database from "better-sqlite3";
-import type { FreeChatDeliveryResult } from "./watchlist-free-chat-delivery";
+import type { FreeChatDeliveryResult, FreeChatOwnerCopy } from "./watchlist-free-chat-delivery";
 
 const MOVE_DELIVERY_LIFETIME_MS = 86_400_000;
 
@@ -17,18 +17,18 @@ export function readFreeChatMoveDelivery(database: Database.Database, input: Mov
 }
 
 /** Retry only the failed Free Chat receipt; never create an intent or replay a move. */
-export function retryFreeChatMoveDelivery(database: Database.Database, input: MoveDeliveryIdentity, now = Date.now()) {
-  return database.prepare(`UPDATE platform_watchlist_free_chat_posts SET state='pending',next_attempt_at_ms=0,updated_at_ms=?
+export function retryFreeChatMoveDelivery(database: Database.Database, input: MoveDeliveryIdentity & {ownerCopy?:FreeChatOwnerCopy}, now = Date.now()) {
+  return database.prepare(`UPDATE platform_watchlist_free_chat_posts SET state='pending',next_attempt_at_ms=0,updated_at_ms=?,owner_copy_json=COALESCE(?,owner_copy_json)
     WHERE post_key=? AND ticker=? AND owner_user_id=? AND state='failed' AND next_attempt_at_ms<=? AND requested_at_ms>=?`)
-    .run(now, `${input.cycleId}:move:${input.id}`, input.symbol, input.ownerUserId, now, now - MOVE_DELIVERY_LIFETIME_MS).changes === 1;
+    .run(now, input.ownerCopy?JSON.stringify(input.ownerCopy):null, `${input.cycleId}:move:${input.id}`, input.symbol, input.ownerUserId, now, now - MOVE_DELIVERY_LIFETIME_MS).changes === 1;
 }
 
 /** Distinct owner move intent. NULL approval avoids colliding with an earlier
  * analysis share; the worker resolves the move's frozen published approval. */
-export function queueFreeChatMove(database:Database.Database,input:{cycleId:string;ticker:string;ownerUserId:string;operationId:string},now=Date.now()) {
+export function queueFreeChatMove(database:Database.Database,input:{cycleId:string;ticker:string;ownerUserId:string;operationId:string;ownerCopy?:FreeChatOwnerCopy},now=Date.now()) {
   return database.prepare(`INSERT OR IGNORE INTO platform_watchlist_free_chat_posts
-    (post_key,cycle_id,ticker,owner_user_id,origin,state,requested_at_ms,updated_at_ms)
-    VALUES(?,?,?,?,'manual','pending',?,?)`).run(`${input.cycleId}:move:${input.operationId}`,input.cycleId,input.ticker,input.ownerUserId,now,now).changes===1;
+    (post_key,cycle_id,ticker,owner_user_id,origin,state,requested_at_ms,updated_at_ms,owner_copy_json)
+    VALUES(?,?,?,?,'manual','pending',?,?,?)`).run(`${input.cycleId}:move:${input.operationId}`,input.cycleId,input.ticker,input.ownerUserId,now,now,input.ownerCopy?JSON.stringify(input.ownerCopy):null).changes===1;
 }
 
 export function setFreeChatAutomatic(database: Database.Database, input: { cycleId: string; ticker: string; ownerUserId: string; enabled: boolean }, now = Date.now()) {

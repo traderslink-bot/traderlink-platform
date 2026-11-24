@@ -6,7 +6,7 @@ import { withPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { isFreeChatListingOnly, readFreeChatReview, publishedFreeChatApprovals } from "./watchlist-free-chat-runtime";
 import { setFreeChatAutomatic, queueFreeChatPublication } from "./watchlist-free-chat-store";
 
-import { FreeChatInputError, freeChatPreview, freeChatVisibilityKey, validateFreeChatOwnerCopy, type FreeChatOwnerCopy } from "./watchlist-free-chat-delivery";
+import { FreeChatInputError, freeChatPreview, freeChatVisibilityKey, validateFreeChatOwnerCopy, readFreeChatImageChoice, type FreeChatOwnerCopy } from "./watchlist-free-chat-delivery";
 import { readFreeChatVisibility } from "./watchlist-free-chat-visibility";
 
 type DeliveryRow = {
@@ -57,16 +57,20 @@ export async function handleFreeChatAdmin(method: "GET" | "POST", url: URL, body
       mode === "move" ? url.searchParams.get("to") ?? undefined : undefined);
     const draftRevision = review.events.filter(event => event.body.kind === "original" || event.body.kind === "edit").at(-1)?.revision ?? null;
     let savedMessage: string | undefined;
+    let savedIncludeImages = false;
     if (mode === "approval" && draftRevision) {
       try {
         const saved = withReadonlyPlatformDatabase({}, database => database.prepare<[string,string], {owner_copy_json:string|null}>(
           "SELECT owner_copy_json FROM platform_watchlist_free_chat_posts WHERE post_key=? AND owner_user_id=?",
         ).get(`${review.cycleId}:draft:${draftRevision}`,ownerUserId));
         const copy = saved?.owner_copy_json ? JSON.parse(saved.owner_copy_json) as FreeChatOwnerCopy : null;
-        if (copy?.visibilityKey === preview.visibilityKey) savedMessage = validateFreeChatOwnerCopy(input.symbol,copy.message,readFreeChatVisibility(input.symbol,false));
+        if (copy?.visibilityKey === preview.visibilityKey) {
+          savedMessage = validateFreeChatOwnerCopy(input.symbol,copy.message,readFreeChatVisibility(input.symbol,false));
+          savedIncludeImages = readFreeChatImageChoice(copy.includeImages) && preview.canIncludeImages;
+        }
       } catch { /* Default preview remains available; publication never depends on receipt lookup. */ }
     }
-    return { preview, cycleId:review.cycleId, draftRevision, ...(savedMessage === undefined ? {} : {savedMessage}) };
+    return { preview, cycleId:review.cycleId, draftRevision, savedIncludeImages, ...(savedMessage === undefined ? {} : {savedMessage}) };
   }
   if(isPrivateWatchlistTicker(input.symbol)) throw new Error("Move this ticker out of Private before publishing.");
   const review = await readFreeChatReview(input.symbol,ownerUserId);
@@ -75,10 +79,10 @@ export async function handleFreeChatAdmin(method: "GET" | "POST", url: URL, body
   const approval = approvals.sort((a,b) => b.revision-a.revision)[0];
   const visibility = approval && input.action !== "automatic" ? readFreeChatVisibility(input.symbol, false) : null;
   let ownerCopy: FreeChatOwnerCopy | undefined;
-  if (method === "POST" && input.action === "send" && (input.message !== undefined || input.visibilityKey !== undefined)) {
+  if (method === "POST" && input.action === "send" && (input.message !== undefined || input.visibilityKey !== undefined || input.includeImages !== undefined)) {
     if (!approval || input.approvalRevision !== approval.revision) throw new FreeChatInputError("The published Watchlist entry changed. Reopen Free Chat.");
     if (!visibility || input.visibilityKey !== freeChatVisibilityKey(visibility)) throw new FreeChatInputError("Premium settings changed. Reopen Free Chat and review the post.");
-    ownerCopy = {message:validateFreeChatOwnerCopy(input.symbol,input.message,visibility),visibilityKey:input.visibilityKey};
+    ownerCopy = {message:validateFreeChatOwnerCopy(input.symbol,input.message,visibility),visibilityKey:input.visibilityKey,includeImages:readFreeChatImageChoice(input.includeImages)};
   }
   return withPlatformDatabase({mode:"runtime"}, database => {
     const run = database.transaction(() => {
@@ -103,10 +107,11 @@ export async function handleFreeChatAdmin(method: "GET" | "POST", url: URL, body
       const existing = delivery?.owner_copy_json ? JSON.parse(delivery.owner_copy_json) as FreeChatOwnerCopy : null;
       const listingOnly = Boolean(approval && isFreeChatListingOnly(approval));
       const preview = approval && visibility ? freeChatPreview(review.symbol, approvals.some(event => event.revision < approval.revision), visibility,
-        undefined, listingOnly) : null;
+        undefined, listingOnly, undefined, existing?.visibilityKey === freeChatVisibilityKey(visibility) && readFreeChatImageChoice(existing.includeImages)) : null;
       return {cycleId:review.cycleId,automaticEnabled:preference?.automatic_enabled === 1,hasPublishedAnalysis:Boolean(approval) && !listingOnly,canShare:Boolean(approval),posts,
         approvalRevision:approval?.revision,delivery:deliveryStatus(delivery),preview,
-        savedMessage:existing?.visibilityKey === preview?.visibilityKey ? existing?.message ?? null : null};
+        savedMessage:existing?.visibilityKey === preview?.visibilityKey ? existing?.message ?? null : null,
+        savedIncludeImages:preview?.includeImages === true};
     });
     return method === "POST" ? run.immediate() : run.deferred();
   });

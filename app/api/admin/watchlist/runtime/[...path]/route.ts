@@ -4,7 +4,8 @@ import { isPrivateWatchlistTicker } from "@/src/modules/watchlist/server/access/
 import { recordCategoryMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications";
 import { handleXAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-x-admin";
 import { recordXApprovalIntent } from "@/src/modules/watchlist/server/notifications/watchlist-x-runtime";
-import { FreeChatInputError } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-delivery";
+import { FreeChatInputError, freeChatVisibilityKey, validateFreeChatOwnerCopy, readFreeChatImageChoice, type FreeChatOwnerCopy } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-delivery";
+import { readFreeChatVisibility } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-visibility";
 import { handleFreeChatAdmin } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin";
 import { recordFreeChatApprovalIntent, recordFreeChatMoveIntent } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime";
 import { readFreeChatMoveDelivery, retryFreeChatMoveDelivery } from "@/src/modules/watchlist/server/notifications/watchlist-free-chat-store";
@@ -162,7 +163,13 @@ async function relay(
         item.id === input.id && item.symbol === input.symbol && item.cycleId === input.cycleId && item.to === input.to);
       if (!canRetryFreeChatMove(move)) return unavailable();
       const ownerUserId = reviewActor.slice("platform-owner:".length);
-      const queued = withPlatformDatabase({mode:"runtime"}, db => retryFreeChatMoveDelivery(db, {...move, ownerUserId}));
+      let ownerCopy: FreeChatOwnerCopy | undefined;
+      if(input.freeChatCopy!==undefined) {
+        const copy=input.freeChatCopy, visibility=readFreeChatVisibility(input.symbol,false);
+        if(!copy||copy.cycleId!==input.cycleId||copy.visibilityKey!==freeChatVisibilityKey(visibility))return unavailable();
+        ownerCopy={message:validateFreeChatOwnerCopy(input.symbol,copy.message,visibility),visibilityKey:copy.visibilityKey,includeImages:readFreeChatImageChoice(copy.includeImages)};
+      }
+      const queued = withPlatformDatabase({mode:"runtime"}, db => retryFreeChatMoveDelivery(db, {...move, ownerUserId,ownerCopy}));
       return queued ? Response.json({ok:true}, {headers:{"cache-control":"private, no-store"}}) : unavailable();
     } catch { return unavailable(); }
   }
@@ -221,6 +228,7 @@ async function relay(
       console.error('[Watchlist move notification]',{stage:'save_intent',code});
       return Response.json({error:'Move notification could not be prepared. No move or notification was sent. Please retry.'},{status:503,headers:{'cache-control':'private, no-store'}});
     }
+    try {const input=JSON.parse(body);delete input.freeChatCopy;body=JSON.stringify(input);}catch {/* Runtime validates malformed move input. */}
   }
   const result = await requestWatchlistRuntimeRaw({
     reviewActor,

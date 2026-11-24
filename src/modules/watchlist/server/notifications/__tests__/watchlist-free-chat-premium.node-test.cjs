@@ -27,13 +27,13 @@ test('all Free Chat move headings say moved to the destination without revealing
   for (const group of ['main', 'top_regular', 'postmarket', 'general', 'swings', 'top_watches:2026-11-19']) {
     for (const ticker of [false, true]) for (const analysis of [false, true]) for (const levels of [false, true]) {
       const visibility = { ticker, analysis, levels };
-      const preview = delivery.freeChatPreview('TEST', true, visibility, undefined, false, group);
+      const preview = delivery.freeChatPreview('TEST', true, visibility, undefined, false, group, true);
       assert.match(preview.heading, /moved to /);
       if(group.startsWith("top_watches:")){assert.match(preview.heading,/moved to Overnight\*\*$/);assert.doesNotMatch(preview.content,/Overnight Watches/);}
       assert.doesNotMatch(preview.heading, /added|Updated/);
       assert.equal(preview.includeImages, !ticker && !analysis && !levels);
       if (ticker) assert.doesNotMatch(preview.content, /TEST|watchlist\//);
-      const payload = delivery.freeChatPayload({ ...publication, moveTo: group }, visibility);
+      const payload = delivery.freeChatPayload({ ...publication, moveTo: group }, visibility, {message:preview.defaultMessage,visibilityKey:preview.visibilityKey,includeImages:true});
       assert.equal(payload.content, preview.content);
       const custom = delivery.freeChatPreview('TEST', false, visibility, 'My move note.', false, group);
       assert.match(custom.content, /My move note\./);
@@ -66,10 +66,10 @@ test('all eight settings produce matching previews and wire payloads, with no at
     const result = await delivery.deliverFreeChatPublication(publication, () => {
       assert.equal(mock.verified(), 1, 'read policy after webhook verification');
       return policy;
-    }, mock.transport, env);
+    }, mock.transport, env, {message:delivery.freeChatPreview(publication.symbol,publication.updated,policy).defaultMessage,visibilityKey:delivery.freeChatVisibilityKey(policy),includeImages:true});
     assert.equal(result.state, 'sent');
     const [{payload, files}] = mock.posts;
-    const preview = delivery.freeChatPreview(publication.symbol, publication.updated, policy);
+    const preview = delivery.freeChatPreview(publication.symbol, publication.updated, policy, undefined, false, undefined, true);
     assert.equal(payload.content, preview.content);
     const restricted = ticker || analysis || levels;
     assert.equal(preview.includeImages, !restricted);
@@ -98,7 +98,7 @@ test('every attempt reads current settings after a cooldown or explicit retry; u
   const send = () => delivery.deliverFreeChatPublication(publication, () => {
     if (!policy) throw Error('unavailable');
     return policy;
-  }, mock.transport, env);
+  }, mock.transport, env, policy ? {message:'',visibilityKey:delivery.freeChatVisibilityKey(policy),includeImages:true} : undefined);
   assert.equal((await send()).state, 'retry');
   policy = { ...publicPolicy, analysis: true };
   assert.equal((await send()).state, 'failed');
@@ -182,6 +182,7 @@ test('manual review freezes copy durably and reads the exact owner approval rece
   migration('0213_watchlist_free_chat_owner_copy');
   assert.equal(db.prepare('SELECT owner_copy_json FROM platform_watchlist_free_chat_posts WHERE cycle_id=\'legacy\'').get().owner_copy_json,null);
   const review={cycleId:'current',symbol:'TEST',events:[]};
+  let visibility={ticker:true,analysis:true,levels:true};
   let reviewReads=0;
   const admin=load('admin',{
     '../access/watchlist-analysis-visibility':{isPrivateWatchlistTicker:()=>false},
@@ -189,7 +190,7 @@ test('manual review freezes copy durably and reads the exact owner approval rece
     '@/src/modules/platform/server/database/open-readonly-platform-database':{withReadonlyPlatformDatabase:(_options,run)=>run(db)},
     './watchlist-free-chat-runtime':{readFreeChatReview:async()=>{reviewReads++;return review;},publishedFreeChatApprovals:()=>[{revision:3,at:10}],isFreeChatListingOnly:()=>false},
     './watchlist-free-chat-store':store,'./watchlist-free-chat-delivery':delivery,
-    './watchlist-free-chat-visibility':{readFreeChatVisibility:()=>({ticker:true,analysis:true,levels:true})},
+    './watchlist-free-chat-visibility':{readFreeChatVisibility:()=>visibility},
   });
   const url=new URL('https://watchlist.test/free-chat?symbol=TEST');
   const poll=new URL('https://watchlist.test/free-chat?symbol=TEST&cycleId=current&delivery=3');
@@ -211,6 +212,15 @@ test('manual review freezes copy durably and reads the exact owner approval rece
   db.prepare("UPDATE platform_watchlist_free_chat_posts SET state='failed',post_key='current:draft:2' WHERE cycle_id='current'").run();
   assert.equal((await send({message:'Revised retry note'})).savedMessage,'Revised retry note');
   assert.equal((await admin.handleFreeChatAdmin('GET',poll,undefined,'owner')).delivery.state,'pending');
+  visibility=publicPolicy;review.cycleId='images';
+  const imageSend=input=>send({cycleId:'images',visibilityKey:'000',message:'Custom image post.',...input});
+  assert.equal((await imageSend({includeImages:true})).savedIncludeImages,true);
+  assert.equal((await imageSend({includeImages:false,message:'Unqueued replacement.'})).savedIncludeImages,true);
+  const readImages=()=>admin.handleFreeChatAdmin('GET',url,undefined,'owner');
+  assert.equal((await readImages()).savedIncludeImages,true);
+  db.prepare("UPDATE platform_watchlist_free_chat_posts SET state='failed' WHERE cycle_id='images'").run();
+  assert.equal((await imageSend({includeImages:false})).savedIncludeImages,false);
+  assert.equal((await readImages()).savedIncludeImages,false);
 });
 
 test('ticker-only Free Chat payload has no analysis images and respects all eight Premium settings', async () => {
@@ -239,7 +249,25 @@ test('restricted-analysis Free Chat drops the generic sentence and owner text or
   assert.equal(payload.content,delivery.freeChatPreview('TEST',publication.updated,policy,message).content);assert.doesNotMatch(payload.content,/See what|available on the ticker|\n{3}/);
   if(message)assert.match(payload.content,/My own update\./);assert.match(payload.content,/@everyone$/);
  }
- const publicPolicy={ticker:false,analysis:false,levels:false};const empty=delivery.freeChatPreview('TEST',false,publicPolicy,'');assert.doesNotMatch(empty.content,/Images show part/);assert.equal(empty.includeImages,true);
+ const publicPolicy={ticker:false,analysis:false,levels:false};const empty=delivery.freeChatPreview('TEST',false,publicPolicy,'');assert.doesNotMatch(empty.content,/Images show part/);assert.equal(empty.includeImages,false);
+});
+
+test('images require a separate explicit selection, never merely free app access', async () => {
+  for(const includeImages of [undefined,false,true]) {
+    const copy=includeImages===undefined?undefined:{message:'My custom note.',visibilityKey:'000',includeImages};
+    const mock=intercept();
+    assert.equal((await delivery.deliverFreeChatPublication(publication,()=>publicPolicy,mock.transport,env,copy)).state,'sent');
+    assert.equal(mock.posts[0].files.length,includeImages===true?1:0);
+    const preview=delivery.freeChatPreview('TEST',true,publicPolicy,copy?.message,false,undefined,includeImages);
+    assert.equal(preview.canIncludeImages,true);
+    assert.equal(preview.includeImages,includeImages===true);
+    assert.equal(mock.posts[0].payload.content,preview.content);
+    assert.doesNotMatch(preview.content,/Images show|images will/i);
+  }
+  for(const invalid of [null,'true',1,{}]) assert.throws(()=>delivery.readFreeChatImageChoice(invalid),/Invalid Free Chat image/);
+  const copy={message:'My custom note.',visibilityKey:'000',includeImages:true};
+  assert.equal(delivery.freeChatPayload({...publication,images:[]},publicPolicy,copy).images.length,0);
+  assert.match(delivery.freeChatPayload(publication,publicPolicy,copy).content,/My custom note/);
 });
 
 test('initial approval stores separate Free Chat copy before publication; duplicate requests retain it and preview recovers it',async t=>{

@@ -28,13 +28,18 @@ export function freeChatWebhook(environment = process.env): URL | null {
 
 export type FreeChatVisibility = { ticker: boolean; analysis: boolean; levels: boolean };
 
-export type FreeChatOwnerCopy = { message: string; visibilityKey: string };
+export type FreeChatOwnerCopy = { message: string; visibilityKey: string; includeImages?: boolean };
 
 export function freeChatVisibilityKey(visibility: FreeChatVisibility): string {
   return [visibility.ticker, visibility.analysis, visibility.levels].map(Number).join("");
 }
 
 export class FreeChatInputError extends Error {}
+
+export function readFreeChatImageChoice(value: unknown): boolean {
+  if (value !== undefined && typeof value !== "boolean") throw new FreeChatInputError("Invalid Free Chat image selection.");
+  return value === true;
+}
 
 export function validateFreeChatOwnerCopy(symbol: string, value: unknown, visibility: FreeChatVisibility): string {
   if (typeof value !== "string" || value.length > 1200) throw new FreeChatInputError("Enter a message of up to 1,200 characters.");
@@ -51,22 +56,23 @@ export function validateFreeChatOwnerCopy(symbol: string, value: unknown, visibi
   return message;
 }
 
-export function freeChatPreview(symbol: string, updated: boolean, visibility: FreeChatVisibility, message?: string, listingOnly = false, moveTo?: string) {
-  const includeImages = !listingOnly && !visibility.ticker && !visibility.analysis && !visibility.levels;
+export function freeChatPreview(symbol: string, updated: boolean, visibility: FreeChatVisibility, message?: string, listingOnly = false, moveTo?: string, imagesRequested = false) {
+  const canIncludeImages = !listingOnly && !visibility.ticker && !visibility.analysis && !visibility.levels;
+  const includeImages = readFreeChatImageChoice(imagesRequested) && canIncludeImages;
   const tickerUrl = `https://app.traderslink.pro/watchlist/${encodeURIComponent(symbol)}`;
   const labels: Record<string, string> = { main: "Main Session", top_regular: "Top Regular Hour Watches", postmarket: "Post-Market", general: "General Watchlist", swings: "Swings" };
   const destination = moveTo === undefined ? undefined : /^top_watches:\d{4}-\d{2}-\d{2}$/.test(moveTo) ? "Overnight" : labels[moveTo];
   if (moveTo !== undefined && !destination) throw new FreeChatInputError("Invalid category move.");
   const heading = destination ? `**${visibility.ticker ? "$•••• — Premium ticker" : "$" + symbol} moved to ${destination}**` : visibility.ticker ? "**$•••• — Premium ticker**" :
     listingOnly ? `**$${symbol} on the TradersLink Watchlist**` :
-    includeImages ? `Free $${symbol} TradersLink Analysis${updated ? " — Updated" : ""}` : `**$${symbol} added to the Watchlist**`;
+    canIncludeImages ? `Free $${symbol} TradersLink Analysis${updated ? " — Updated" : ""}` : `**$${symbol} added to the Watchlist**`;
   const defaultMessage = visibility.ticker ? "On the TradersLink Watchlist." :
     listingOnly ? "See the ticker page for available details." :
-    includeImages ? "Images show part of the analysis. View full analysis in the app 👇" : "";
+    canIncludeImages ? "View full analysis in the app 👇" : "";
   const footer = visibility.ticker ? "View Watchlist ↓\nhttps://app.traderslink.pro/watchlist\n\n@everyone" :
-    includeImages ? `${tickerUrl}\nhttps://app.traderslink.pro/watchlist\n\n@everyone` : `View $${symbol} ↓\n${tickerUrl}\n\n@everyone`;
+    canIncludeImages ? `${tickerUrl}\nhttps://app.traderslink.pro/watchlist\n\n@everyone` : `View $${symbol} ↓\n${tickerUrl}\n\n@everyone`;
   return { content: [heading, message === undefined ? defaultMessage : message.trim(), footer].filter(Boolean).join("\n\n"), heading, defaultMessage, footer, includeImages,
-    visibilityKey: freeChatVisibilityKey(visibility) };
+    canIncludeImages, visibilityKey: freeChatVisibilityKey(visibility) };
 }
 
 export function freeChatPayload(publication: FreeChatPublication, visibility: FreeChatVisibility, ownerCopy?: FreeChatOwnerCopy) {
@@ -78,7 +84,8 @@ export function freeChatPayload(publication: FreeChatPublication, visibility: Fr
     throw new FreeChatInputError("Premium settings changed. Open the Free Chat preview and try again.");
   }
   const preview = freeChatPreview(symbol, publication.updated, visibility,
-    ownerCopy && validateFreeChatOwnerCopy(symbol, ownerCopy.message, visibility), publication.listingOnly, publication.moveTo);
+    ownerCopy && validateFreeChatOwnerCopy(symbol, ownerCopy.message, visibility), publication.listingOnly, publication.moveTo,
+    readFreeChatImageChoice(ownerCopy?.includeImages));
   const images = (preview.includeImages ? publication.images : []).map((image, index) => {
     const bytes = Buffer.from(image.base64, "base64");
     if (bytes.length < 33 || bytes.length > 8 * 1024 * 1024 || bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") {
