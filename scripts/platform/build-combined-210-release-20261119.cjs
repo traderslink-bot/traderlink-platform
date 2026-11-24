@@ -7,7 +7,7 @@ const {buildSync}=require('esbuild');
 const root=process.cwd(),out=path.join(root,'combined210-package');
 const source=process.env.RAILWAY_GIT_COMMIT_SHA;
 a.match(source||'',/^[a-f0-9]{40}$/u);a.equal(root,'/app');
-const schema='9124f4989232f8b9a6a2dcf393fb9adde7a480023f0de5097545aa553e80ab89';
+const schema='e2b148f268e6ca409263612d1bc3b3457955db2e6ef07c390c3ba8a45e063016';
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const catalogPath='docs/migration/partner-alert-erasure-profile-qualification.json';
 const catalog=JSON.parse(fs.readFileSync(path.join(root,catalogPath)));
@@ -17,8 +17,8 @@ a.equal(JSON.parse(fs.readFileSync('node_modules/better-sqlite3/package.json')).
 a(!fs.existsSync(out));fs.mkdirSync(out,{mode:0o700});
 const rawEntries={
  'server.js':'scripts/platform/combined-210-keeper-20261119.cjs',
- 'combined-210-control-20261119.cjs':'scripts/platform/combined-210-control-20261119.cjs',
- 'combined-210-copy-protocol-20261119.py':'scripts/platform/combined-210-copy-protocol-20261119.py',
+ 'combined-210-control-20261119.cjs':'scripts/platform/combined-211-control-20261124.cjs',
+ 'combined-210-copy-protocol-20261119.py':'scripts/platform/combined-211-copy-protocol-20261124.py',
  'combined-210-raw-install-20261119.py':'scripts/platform/combined-210-raw-install-20261119.py',
  'combined210-image-predeploy.cjs':'scripts/platform/combined-210-image-predeploy-20261119.cjs',
  'combined210-resource-collector.py':'scripts/platform/combined-210-resource-collector-20261119.py',
@@ -65,7 +65,7 @@ const installedSourcePins={};
 for(const name of [...Object.keys(rawEntries),...Object.keys(entries),'combined210-build-provenance.json',...copies])
  installedSourcePins['/app/'+name]=hash(fs.readFileSync(path.join(out,name)));
 const applicationEntrySha256=hash(fs.readFileSync(path.join(root,'.next/standalone/server.js')));
-const role={version:1,role:'final210',expectedRuntimeUid:0,expectedRuntimeGid:0,runId:'54b58fe4-4a79-4f1a-9071-2ce69e599cb2',targetCount:210,
+const role={version:1,role:'final211',expectedRuntimeUid:0,expectedRuntimeGid:0,runId:'d2c81619-015e-4a59-89c3-dacf953a52c6',targetCount:211,nativeTargetContract:'news0227_211_v1',
  projectId:'49fc9197-07c9-45c7-b528-57d0393c2cca',environmentId:'666e1624-a1eb-4e94-8e16-5ed73ad4b4af',serviceId:'fda2d2e9-d5ae-47b5-9cc1-42b371eaa4fb',
  databasePath:'/data/traderlink-platform.sqlite',applicationSource:source,schemaSha256:schema,
  applicationEntrySha256,readOnlyVerifierSha256:installedSourcePins['/app/combined210-readonly-verifier.cjs'],installedSourcePins,

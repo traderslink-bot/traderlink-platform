@@ -16,7 +16,7 @@ function catalog(expected){a.match(expected,/^[a-f0-9]{64}$/);const file=path.re
   const data=artifact(file);a.equal(data.sha256,expected);const value=JSON.parse(data.raw);
   const {platformPremiumAuthoritySchemaDescriptorV2}=require('../../src/modules/platform/server/membership/platform-premium-authority-repository.ts');
   const {platformPremiumSignerRedactionSchemaDescriptor}=require('../../src/modules/platform/server/privacy/platform-premium-signer-redaction.ts');
-  for(const [rel,pin]of Object.entries({'membership/platform-premium-authority-repository.ts':'b96948b3f322767d90e73a8f040699926b6a606f3e54bde07f63be0f91f93267',
+  for(const [rel,pin]of Object.entries({'membership/platform-premium-authority-repository.ts':'f6ebb4fd6b1afba84efbbcad0ff89d0743a9f859c588fde58f74a6106d11314b',
     'membership/platform-premium-whop-native.ts':'0c6e1ad9b402e5bde926284865c38de1f7a7502dcf72c623d6300b8b85637718',
     'privacy/platform-premium-signer-redaction.ts':'364aa7982a87f4cee623dbcc1d50b3c53a94825a1c964278de18c1481bdc9f76'}))
     a.equal(artifact(path.resolve(process.cwd(),'src/modules/platform/server',rel),256*1024).sha256,pin);
@@ -51,7 +51,7 @@ function qualifyRuntimePolicyAfterSetup(input){return c.locked(input.root,input.
     const until=[release[15],backup[6],cat.value.qualificationValidUntilUtc,profile.valid_until_utc].sort()[0];
     a(Number.isFinite(Date.parse(until))&&Date.parse(until)>Date.now());
     a.equal(configurationFingerprint(),config);a.deepEqual(signedArtifactPins(),pins);
-    const receipt={kind:'ACTUAL210_POST_BARRIER_CANONICAL_RUNTIME_QUALIFICATION',version:1,runId:input.runId,source:input.source,
+    const receipt={kind:'ACTUAL211_POST_BARRIER_CANONICAL_RUNTIME_QUALIFICATION',version:1,runId:input.runId,source:input.source,
       schemaSha256:input.schemaSha256,profileCatalogSha256:input.profileCatalogSha256,profileRef:input.profileRef,
       profileGeneration:input.profileGeneration,appliedLedgerSha256:v.sha(JSON.stringify(ledger)),configurationFingerprint:config,
       ...pins,validUntilUtc:until,atUtc:new Date().toISOString(),canonicalWorkerBootstrapAndProfileVerified:true,
@@ -61,7 +61,7 @@ function qualifyRuntimePolicyAfterSetup(input){return c.locked(input.root,input.
 });}
 function verifyRuntimePolicyArtifacts(input){a(input.qualificationReceipt);const {path:receiptPath,sha256}=input.qualificationReceipt;
   const data=artifact(receiptPath,32768),s=fs.lstatSync(receiptPath);a.equal(s.uid,process.getuid());a.equal(s.mode&0o777,0o600);a.equal(data.sha256,sha256);
-  const proof=JSON.parse(data.raw);a.equal(proof.kind,'ACTUAL210_POST_BARRIER_CANONICAL_RUNTIME_QUALIFICATION');
+  const proof=JSON.parse(data.raw);a.equal(proof.kind,'ACTUAL211_POST_BARRIER_CANONICAL_RUNTIME_QUALIFICATION');
   a.equal(proof.canonicalWorkerBootstrapAndProfileVerified,true);a.equal(proof.effectMode,'no_discord_effects');
   a.equal(proof.schemaSha256,input.schemaSha256);a.equal(proof.profileCatalogSha256,input.profileCatalogSha256);
   a.equal(proof.profileRef,input.profileRef);a.equal(proof.profileGeneration,input.profileGeneration);

@@ -59,11 +59,11 @@ function recordTerminalKeeper({root,role,deployment,activationSha256,application
 
 async function main(){
   const role=control.read('/app/combined210-image-role.json');
-  if(!['maintenance210','transitional210','final210','recovery210'].includes(role.role))throw Error('unknown210image_role');
+  if(!['maintenance211','transitional211','final211','recovery211'].includes(role.role))throw Error('unknown210image_role');
   for(const [name,value]of Object.entries({RAILWAY_PROJECT_ID:role.projectId,RAILWAY_ENVIRONMENT_ID:role.environmentId,
     RAILWAY_SERVICE_ID:role.serviceId,TRADERLINK_PLATFORM_DB_PATH:role.databasePath}))if(process.env[name]!==value)throw Error('wrong210target');
   const deployment=process.env.RAILWAY_DEPLOYMENT_ID;
-  if(!/^[a-f0-9-]{36}$/.test(deployment||'')||role.targetCount!==210||!/^[a-f0-9]{40}$/.test(role.applicationSource)
+  if(!/^[a-f0-9-]{36}$/.test(deployment||'')||role.targetCount!==control.targetCount||role.nativeTargetContract!==control.nativeTargetContract||!/^[a-f0-9]{40}$/.test(role.applicationSource)
     ||!/^[a-f0-9]{64}$/.test(role.schemaSha256))throw Error('unbound210image');
   const root=process.env.TRADERLINK_210_PROTOCOL_ROOT;
   // The protocol directory/state can be absent, corrupt, or left by a partial
@@ -73,7 +73,7 @@ async function main(){
   for(const [file,sha256]of Object.entries(role.installedSourcePins||{}))checkFile(file,sha256);
   const server=http.createServer(maintenanceHandler({root,runId:role.runId,role:role.role,deployment}));
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(Number(process.env.PORT||3000),'0.0.0.0',resolve);});
-  if(role.role==='maintenance210')return; //no activation/application path exists
+  if(role.role==='maintenance211')return; //no activation/application path exists
   const activationPath=root+'/activate-runtime.json';let activating=false;
   const timer=setInterval(async()=>{
     if(activating||!fs.existsSync(activationPath))return;
@@ -81,7 +81,7 @@ async function main(){
     try{
       const activationRaw=readActivationRaw(root,activationPath);activationSha256=digest(activationRaw);
       const activation=JSON.parse(activationRaw);
-      if(activation.kind!=='ROOT_REVIEWED210_RUNTIME_ACTIVATION'||activation.deployment!==deployment
+      if(activation.kind!=='ROOT_REVIEWED211_RUNTIME_ACTIVATION'||activation.deployment!==deployment
         ||activation.source!==role.applicationSource||activation.schemaSha256!==role.schemaSha256
         ||!/^sha256:[a-f0-9]{64}$/.test(activation.imageDigest)||!/^[a-f0-9]{64}$/.test(activation.admissionReceiptSha256)
         ||!Number.isFinite(Date.parse(activation.validUntilUtc))||Date.parse(activation.validUntilUtc)<=Date.now())throw Error('activation_binding');
@@ -118,7 +118,7 @@ function activateVerifiedTarget({root,role,activation},loadVerifier){
     // A partial-file state or active Python install/copyback cannot even load it.
     const verifier=loadVerifier();
     const structure=verifier.verifyStructure({databasePath:role.databasePath,expectedSchemaSha256:role.schemaSha256});
-    if(structure.count!==210||structure.schemaSha256!==role.schemaSha256)throw Error('current210structure_mismatch');
+    if(structure.count!==211||structure.schemaSha256!==role.schemaSha256)throw Error('current210structure_mismatch');
     const policy=verifier.verifyRuntimePolicyArtifacts({databasePath:role.databasePath,schemaSha256:role.schemaSha256,
       profileCatalogSha256:activation.profileCatalogSha256,profileRef:activation.erasureProfileRef,
       profileGeneration:activation.profileGeneration,qualificationReceipt:activation.policyQualificationReceipt});
@@ -129,7 +129,7 @@ function activateVerifiedTarget({root,role,activation},loadVerifier){
       actualRuntimeOrdinaryAccountAndCatalogQualified:activation.actualRuntimeOrdinaryAccountAndCatalogQualified};
     // Every post-write activation, including the SAME image after native setup,
     // needs its own genuine runtime qualification and reviewed image allowlist.
-    if(state.phase==='TARGET_WRITES_ADMITTED')return control.admitForwardTargetWrites({...input,current210ReadOnlyStructureVerified:true});
+    if(state.phase==='TARGET_WRITES_ADMITTED')return control.admitForwardTargetWrites({...input,current211ReadOnlyStructureVerified:true,nativeTargetContract:control.nativeTargetContract});
     return control.admitTargetWrites(input);
   });
 }

@@ -2,7 +2,7 @@
   "version": "core_partner_erasure_profiles_v1",
   "reviewStatus": "INDEPENDENTLY_REVIEWED",
   "technicalRefsAndExpiryStatus": "independently_reviewed",
-  "schemaSha256": "9124f4989232f8b9a6a2dcf393fb9adde7a480023f0de5097545aa553e80ab89",
+  "schemaSha256": "e2b148f268e6ca409263612d1bc3b3457955db2e6ef07c390c3ba8a45e063016",
   "authoritySchemaSha256": "b8a968de4880cf6e5574906a2b569a502bdfd16b7519ddaf41cadab9c77a0961",
   "privacySchemaSha256": "b53da413ac0cc52615171ed4ad337eec41464c553e866995953a96687b7a2c2f",
   "nativeSourceArtifactSha256": "364aa7982a87f4cee623dbcc1d50b3c53a94825a1c964278de18c1481bdc9f76",
@@ -28,9 +28,9 @@
   "qualificationValidUntilUtc": "2027-11-19T05:14:42.950Z",
   "schemaEvidence": {
     "reviewStatus": "INDEPENDENTLY_REVIEWED",
-    "observedSchemaSha256": "9124f4989232f8b9a6a2dcf393fb9adde7a480023f0de5097545aa553e80ab89",
-    "artifactSha256": "cb25977c15088d74bfd3c0da077f18dd93661511b62eb0e6d82f8c1f364e05ee",
-    "scope": "Fresh isolated synthetic native d352 source with full437inputs and defaultFK-aware210 migrations; exact437 applicability independently verified against a7. Not actual hosted ledger/image/backup preservation."
+    "observedSchemaSha256": "e2b148f268e6ca409263612d1bc3b3457955db2e6ef07c390c3ba8a45e063016",
+    "artifactSha256": "0bb472e59a292366afdbcd0fd470ff4ba61b8d71e960e6a51e476eb67ea1eadb",
+    "scope": "Independently reviewed exact synthetic 210→211 schema delta and editorial ownership classification. Production source and image qualification, native profile CAS, current signed inputs, and fresh runtime qualification remain separate."
   },
   "profiles": [
     {
@@ -38,39 +38,42 @@
       "retentionPolicyRef": "paid_partner_retention_7d_v2",
       "backupPolicyRef": "paid_partner_restore_safety_v2",
       "validUntilUtc": "2027-11-19T05:14:42.950Z",
-      "status": "PRODUCTION_PURPOSE_STATIC_POLICY_REVIEWED_NOT_INSTALLED"
+      "status": "LOCAL_POLICY_REVIEWED_NATIVE_PROFILE_CAS_REQUIRED"
     }
   ],
   "sourceQualification": {
-    "status": "INDEPENDENTLY_REVIEWED_EXACT_SOURCE_NATIVE_POLICY_ONLY",
-    "currentSourceCommit": "a7b81b3689fd020e3f8346478d89f8e28e12cbc0",
-    "currentSourceTree": "1f1309e406b1e9b6eec9fee74d999385edd9a09d",
-    "nativeExecutedSourceCommit": "d3521f14f86487d856f2ecccb88f0d454c6ce3d7",
-    "nativeExecutedSourceTree": "6d7553d3b934dc42eb01804f423e5fe3f4e797cb",
-    "nativeInputCount": 437,
-    "frozenNativeIndexSha256": "544fc388c040b3e6f1a9668e362904a4f7872aa5d85265dc80cc25d5d9c3aab0",
-    "currentNativeAcceptanceSha256": "da2ee15115fd15982556f63c875b17c9ad9abce20af6ddccc9bb537dcf363ccf",
-    "nativeAuthorityPhysicalSourceSha256": "b96948b3f322767d90e73a8f040699926b6a606f3e54bde07f63be0f91f93267",
-    "canonical210DescriptorVectorSha256": "ac8d6541ca0ccc95fdac2a7f322411064c55a6cd3a6b9ed42120e9d9507e1f38",
-    "applicability": "All437 immutable source pins independently match a7. Sole d352-to-a7 delta is Docker USER nextjs-to-root; actual built image/predeploy/Main actor still separately required.",
-    "runtimeOrProductionApproval": false
+    "status": "LOCAL_INDEPENDENTLY_REVIEWED_SYNTHETIC_DELTA_ONLY",
+    "currentSourceCommit": "b588bcfc659a3a4d70e474a7d9f4a47b555018af",
+    "currentSourceTree": "d8f8490dd3a622ead9e45710fee4db787fe9e04f",
+    "predecessorCatalogSha256": "c4a0dcb2ac5453d4ad7897ea5fcb2deb3211859e0b914223c82d7b6950bb7172",
+    "scopeEvidence": {
+      "path": "/home/traderlink/projects/traderslink-coordinator/operations/news-0227-erasure-catalog-20261124/schema211-news-erasure-scope-evidence.independently-reviewed.json",
+      "sha256": "0bb472e59a292366afdbcd0fd470ff4ba61b8d71e960e6a51e476eb67ea1eadb"
+    },
+    "exact0227Checksum": "0fc66a860e938c4b3c9d5a583459ca6c9fa4c78644c2e84868ed29bddaec4c6b",
+    "runtimeSourceDraft": {
+      "path": "/home/traderlink/projects/traderslink-coordinator/operations/news-0227-runtime-source-20261124/source-only-manifest.json",
+      "sha256": "884e47499088238f4d6356d20e125bcad16bf4cc921ea1615af83e309d45dcd2"
+    },
+    "runtimeOrProductionApproval": false,
+    "finalPhysicalSourceAndImageReviewRequired": true
   },
   "technicalQualification": {
-    "receiptRef": "stats_current210_a7_final_static_review_20261119_v1",
-    "purpose": "Fresh365day ceiling for exact immutable production-purpose source/schema/catalog-policy qualification.",
+    "receiptRef": "news_0227_catalog_211_exact_independent_local_review_20261124_v1",
+    "purpose": "Preserve the previously reviewed erasure policy and its original static deadline across only the exact 0227 schema transition. Independently renewed factual inventory and native runtime qualification remain required.",
     "invalidation": "Relevant source/schema/policy/nativeABI/artifact/caller/signing-key trust change requires fresh independent delta review before changed image activation, even before annual expiry. No automatic future source approval. Runtime enforces its actual schema/catalog/native/dynamic checks; full source/caller invalidation also requires Root release gating.",
     "dynamicIndependence": "Static catalog/profile expiry is not clamped to short-lived backup inventory. Inventory must independently be genuinely signed and current for each operation. No Auth/session/native/worker/effect deadline is extended; worker and role-proof30seconds and Core maximum300000ms retained.",
     "backupExposure": "Reviewed explicit until_confirmed_disposition v2 requires minimal authenticated encrypted recovery-point pins, no fake finite horizon, active until genuine confirmed disposition; missing/stale/conflicting inventory or uncovered recovery points hold. Ordinary native root deletion and paid-obligation hold are independently reviewed local cases, not hosted acceptance.",
     "renewal": "Fresh review before365day expiry or relevant earlier trust change. Routine independently signed inventory renewal alone does not require catalog/profile renewal or OwnerCAS. Real profile change uses canonical expected-generation owner-authorized install/CAS; do not reset grants/users/epochs.",
-    "laterCarrier": "Later operational/census/catalog-carrier additions require explicit immutable delta and437source applicability verification. This catalog does not preapprove them.",
+    "laterCarrier": "Exact candidate compiler/native applicability still requires separate review.",
     "runtimeQualified": false
   },
-  "productionTrust": "No production keys/signatures/config/profile installation/OwnerCAS/SELF or actual image/backup/install/HTTP/health admission minted. Root owns those gates. Historical205/79d reviews and prior failed0f8 tests remain separate.",
+  "productionTrust": "Independent local policy and synthetic schema scope reviewed. Final physical source and image, existing owner session CAS for the selected profile, genuine signed evidence, fresh factual renewal and runtime qualification remain required. This artifact confers no production authority or signature.",
   "independentReview": {
     "status": "accepted",
-    "reviewerRef": "stats_existing_chat_independent_review",
-    "receiptRef": "stats_current210_a7_final_static_review_20261119_v1",
-    "reviewedAtUtc": "2026-11-19T05:14:42.950Z",
-    "catalogContentSha256": "d0175d0a2dca908dd872e6f98966895dd0315eaea006d2f12428c33656c85239"
+    "reviewerRef": "vps_release_independent_local_review",
+    "receiptRef": "news_0227_catalog_211_exact_independent_local_review_20261124_v1",
+    "reviewedAtUtc": "2026-11-24T02:09:59.005Z",
+    "catalogContentSha256": "5f8d532fd8ff3409f13e21446313bcd211546137aa5bcb8bcc8c39a85db52342"
   }
 }

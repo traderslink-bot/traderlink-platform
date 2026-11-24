@@ -32,7 +32,7 @@ function runWithinOwnedControl(input){
     const before=fs.lstatSync(input.databasePath,{bigint:true});a(before.isFile()&&!before.isSymbolicLink()&&before.nlink===1n);
     a.equal(String(before.dev),state.originalLiveIdentity.device);a.equal(String(before.ino),state.originalLiveIdentity.inode);
     db=new Database(input.databasePath,{fileMustExist:true,timeout:5000});configurePlatformDatabaseConnection(db,'runtime');
-    a.equal(platformMigrationManifest.length,210);
+    a.equal(platformMigrationManifest.length,211);
     a.equal(verifyPlatformMaintenancePreflightStructure(db,platformMigrationManifest).finalSchemaSha256,input.schemaSha256);
     requirePlatformMutationRequest(input.request);
     const now=()=>new Date();
@@ -51,7 +51,7 @@ function runWithinOwnedControl(input){
     });
     const after=core.profile(command.profileRef);
     a.equal(after.generation,(command.expectedGeneration??0)+1);a.equal(after.schema_sha256,input.schemaSha256);
-    return {kind:'GENUINE210_NATIVE_PROFILE_SETUP_RESULT',profileRef:command.profileRef,generation:after.generation,
+    return {kind:'GENUINE211_NATIVE_PROFILE_SETUP_RESULT',profileRef:command.profileRef,generation:after.generation,
       schemaSha256:input.schemaSha256,validUntilUtc:after.valid_until_utc,oldCheckpointCopybackForbidden:true,
       normalApplicationQualified:false,meaning:'Profile setup only; ordinary-account config/renewal and actual runtime qualification still required.'};
   }finally{

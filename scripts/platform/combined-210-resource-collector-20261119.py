@@ -268,7 +268,7 @@ def role_input(e, path, expected_sha):
 
 def lease_observation(e, cfg):
     root = literal(cfg['protocolRoot'])
-    require(root == '/data/backups/community-production210-' + cfg['runId'], 'protocol_path_binding')
+    require(root == '/data/backups/news-production211-' + cfg['runId'], 'protocol_path_binding')
     for parent in [*Path(root).parents, Path(root)]:
         ps = os.lstat(parent)
         require(stat.S_ISDIR(ps.st_mode) and not stat.S_ISLNK(ps.st_mode), 'protocol_ancestor_alias')
@@ -452,7 +452,7 @@ def memory_metadata(e):
 
 def collect(e, cfg):
     require(os.getuid() == 0 and os.getgid() == 0, 'actual_production_root_actor_required')
-    require(cfg['kind'] == 'ROOT210_READONLY_STORAGE_COLLECTION' and cfg['version'] == 1, 'config_kind')
+    require(cfg['kind'] == 'ROOT211_READONLY_STORAGE_COLLECTION' and cfg['version'] == 1, 'config_kind')
     require(cfg['quotaBytes'] == '100000000000', 'unexpected_entitlement')
     require(re.fullmatch('[a-f0-9-]{36}', cfg['deploymentId']) is not None
             and re.fullmatch('sha256:[a-f0-9]{64}', cfg['imageDigest']) is not None,
@@ -460,7 +460,7 @@ def collect(e, cfg):
     require(cfg['rolePath'] == '/app/combined210-image-role.json'
             and cfg['imageCensusPath'] == '/app/combined210-image-census.json', 'unexpected_image_metadata_path')
     require(re.fullmatch('[a-f0-9-]{36}', cfg['runId']) is not None, 'invalid_run_id')
-    out = {'kind': 'ROOT210_READONLY_RESOURCE_EVIDENCE_V1', 'source': cfg['source'],
+    out = {'kind': 'ROOT211_READONLY_RESOURCE_EVIDENCE_V1', 'source': cfg['source'],
            'runId': cfg['runId'], 'atUtc': dt.datetime.now(dt.timezone.utc).isoformat()}
     e.partial = out
     for key in ('imageCensusSha256', 'imageCensusReviewSha256', 'quotaEvidenceSha256', 'roleSha256'):
@@ -468,7 +468,7 @@ def collect(e, cfg):
     role = role_input(e, cfg['rolePath'], cfg['roleSha256'])
     require(role['applicationSource'] == cfg['source'] and role['runId'] == cfg['runId'], 'role_source_or_run')
     require(role['expectedRuntimeUid'] == 0 and role['expectedRuntimeGid'] == 0, 'role_actor')
-    require(role['role'] in ('final210', 'recovery210', 'maintenance210', 'transitional210'), 'role_kind')
+    require(role['role'] in ('final211', 'recovery211', 'maintenance211', 'transitional211'), 'role_kind')
     lease_before = lease_observation(e, cfg)
     out['protocolOwnerBefore'] = lease_before
     mount_rows, mounts_before = mounts(e)
@@ -546,7 +546,7 @@ def collect(e, cfg):
         e.unknown('PROTOCOL_OWNER_OR_STATE_CHANGED')
     ledger = e.summary()
     observed = ledger['categories']['possible_container_quota']['maxLogicalOrAllocatedBytes']
-    out.update({'kind': 'ROOT210_READONLY_RESOURCE_EVIDENCE_V1',
+    out.update({'kind': 'ROOT211_READONLY_RESOURCE_EVIDENCE_V1',
         'atUtc': dt.datetime.now(dt.timezone.utc).isoformat(), 'uid': os.getuid(), 'gid': os.getgid(),
         'pid': os.getpid(), 'source': cfg['source'], 'runId': cfg['runId'],
         'suppliedDeploymentId': cfg['deploymentId'], 'suppliedImageDigest': cfg['imageDigest'],
@@ -622,7 +622,7 @@ def main():
     args = parser.parse_args()
     # Limit only this metadata child, never a shared service/cgroup/host setting.
     e = Evidence()
-    out = {'kind': 'ROOT210_RESOURCE_COLLECTION_INCOMPLETE'}
+    out = {'kind': 'ROOT211_RESOURCE_COLLECTION_INCOMPLETE'}
     signal.signal(signal.SIGALRM, lambda *_: (_ for _ in ()).throw(Stop('wall_time_limit')))
     signal.alarm(HARD['wallSeconds'])
     maximum = HARD['maxOutputBytes']
@@ -648,7 +648,7 @@ def main():
         e.unknown(type(error).__name__ + ':' + text[0], text[1] if len(text) > 1 else '', error)
         if isinstance(error, MemoryError):
             e.inodes.clear()
-            out = {'kind': 'ROOT210_RESOURCE_COLLECTION_INCOMPLETE', 'reason': 'collector_memory_limit'}
+            out = {'kind': 'ROOT211_RESOURCE_COLLECTION_INCOMPLETE', 'reason': 'collector_memory_limit'}
     finally:
         signal.alarm(0)
     sys.stdout.buffer.write(render(out, e, maximum))

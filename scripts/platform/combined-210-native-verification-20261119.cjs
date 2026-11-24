@@ -1,5 +1,5 @@
 'use strict';
-// Compile this module with the EXACT release manifest, not a copied descriptor
+// Exact211 source preparation: compile with the ACTUAL211 release manifest, not a copied descriptor
 // list. Import is inert. No Auth, normal app bootstrap, or provider calls.
 const fs=require('node:fs'),path=require('node:path'),a=require('node:assert/strict'),crypto=require('node:crypto');
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -37,21 +37,19 @@ function dataSnapshot(db,original=null,guard=()=>{}){const x=api();
     const rowid=without?null:original?original[index].rowid:['_rowid_','rowid','oid'].find(c=>!columns.includes(c));
     const order=rowid?quote(rowid):info.filter(c=>c.pk>0).sort((a,b)=>a.pk-b.pk).map(c=>quote(c.name)).join(',');a(order,'deterministic_order_required');
     const selected=[...(rowid?[rowid]:[]),...columns].flatMap(c=>['typeof('+quote(c)+')',"CASE WHEN typeof("+quote(c)+")='text' THEN CAST("+quote(c)+" AS BLOB) ELSE "+quote(c)+' END']).join(',');
-    // 0205 adds precisely one disabled retention principal. It is not an
-    // original customer row; source capture proves its reserved identity absent.
-    const seed='00000000-0000-4000-8000-000000000195';
-    const excludeSeed=original?original[index].excludeSeed:table==='platform_users';
-    if(!original&&excludeSeed)a.equal(db.prepare('SELECT 1 FROM platform_users WHERE user_id=?').get(seed),undefined,'reserved_principal_already_in_original');
-    const where=excludeSeed?" WHERE NOT(user_id='"+seed+"' AND auth_provider='erasure' AND auth_subject='paid-partner-retained-principal-v1' AND status='disabled')":'';
+    // The exact210 predecessor ALREADY contains its retained erasure principal.
+    // These two new migrations do not create an authorized row exception. Hash
+    // every original row/column, including the retained principal, without filters.
+    const where='';
     const statement=db.prepare('SELECT '+selected+' FROM '+quote(table)+where+' ORDER BY '+order).raw(true).safeIntegers(true);
     const h=crypto.createHash('sha256');let count=0;for(const row of statement.iterate()){if(count++%4096===0)guard();h.update('ROW[');
       for(let i=0;i<row.length;i+=2){h.update(row[i]+':');fieldHash(h,row[i+1]);}h.update(']');}
-    return {table,columns,rowid,excludeSeed,count,sha256:h.digest('hex')};});}
+    return {table,columns,rowid,count,sha256:h.digest('hex')};});}
 function verifyStructure(input){const x=api(),db=open(input.databasePath);try{
-  a.equal(x.platformMigrationManifest.length,210);
+  a.equal(x.platformMigrationManifest.length,211);
   const result=x.verifyPlatformMaintenancePreflightStructure(db,x.platformMigrationManifest);
   a.equal(result.finalSchemaSha256,input.expectedSchemaSha256);
-  return {count:210,schemaSha256:result.finalSchemaSha256,appliedLedgerSha256:sha(JSON.stringify(x.readAppliedPlatformMigrations(db)))};
+  return {count:211,schemaSha256:result.finalSchemaSha256,appliedLedgerSha256:sha(JSON.stringify(x.readAppliedPlatformMigrations(db)))};
 }finally{db.close();}}
 function verifyFullFile(input){const x=api(),db=open(input.databasePath);try{
   const manifest=x.platformMigrationManifest.slice(0,input.count);a.equal(manifest.length,input.count);

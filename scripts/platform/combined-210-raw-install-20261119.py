@@ -78,14 +78,14 @@ def run(config_path, expected_config_sha):
     p.require(len(raw) <= p.MAX_RECORD_BYTES and hashlib.sha256(raw).hexdigest() == expected_config_sha,
               'raw_driver_config_binding')
     cfg = json.loads(raw)
-    p.require(cfg['kind'] == 'ROOT_REVIEWED210_RAW_TRANSFER', 'raw_driver_admission_kind')
+    p.require(cfg['kind'] == 'ROOT_REVIEWED211_RAW_TRANSFER', 'raw_driver_admission_kind')
     for key, value in dict(NODE_ENV='production', RAILWAY_PROJECT_ID='49fc9197-07c9-45c7-b528-57d0393c2cca',
                            RAILWAY_ENVIRONMENT_ID='666e1624-a1eb-4e94-8e16-5ed73ad4b4af',
                            RAILWAY_SERVICE_ID='fda2d2e9-d5ae-47b5-9cc1-42b371eaa4fb',
                            RAILWAY_DEPLOYMENT_ID=cfg['deployment'], RAILWAY_GIT_COMMIT_SHA=cfg['source']).items():
         p.require(os.environ.get(key) == value, 'raw_driver_wrong_target')
     p.require(cfg['databasePath'] == '/data/traderlink-platform.sqlite', 'raw_driver_wrong_live_path')
-    p.require(cfg['ownerWindowEndUtc'] == '2026-11-19T10:00:00.000Z', 'raw_driver_owner_window')
+    p.require(cfg['ownerWindowEndUtc'] == '2026-11-24T10:00:00.000Z', 'raw_driver_owner_window')
     import datetime
     deadline_ms = int(datetime.datetime.fromisoformat(cfg['ownerWindowEndUtc'].replace('Z', '+00:00')).timestamp() * 1000)
     with p.Control(cfg['root'], cfg['runId']) as control:
@@ -98,7 +98,7 @@ def run(config_path, expected_config_sha):
         source_id = state['offlineTargetIdentity'] if action == 'install' else state['originalBackupIdentity']
         source_sha = state['offlineTargetSha256'] if action == 'install' else state['originalBackupSha256']
         receipt = p.read_record(cfg['capacityReceiptPath'])
-        p.require(receipt['kind'] == 'ROOT_STORAGE_REVIEWED210_RAW_CAPACITY' and receipt['runId'] == cfg['runId']
+        p.require(receipt['kind'] == 'ROOT_STORAGE_REVIEWED211_RAW_CAPACITY' and receipt['runId'] == cfg['runId']
                   and receipt['deployment'] == cfg['deployment'] and receipt['action'] == action, 'raw_capacity_binding')
         for key in ('completeNamespaceAndVolumeWriterCustody', 'sparseFillAndCopybackCovered',
                     'filesystemMetadataAndCowCovered', 'oneChunkOvershootReserved'):
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     try:
         p.require(len(sys.argv) == 3, 'raw_driver_arguments')
         result = run(sys.argv[1], sys.argv[2])
-        print(json.dumps(dict(kind='EXACT210_RAW_TRANSFER_HASH_ONLY_NOT_SQL_VERIFICATION', result=result)))
+        print(json.dumps(dict(kind='EXACT211_RAW_TRANSFER_HASH_ONLY_NOT_SQL_VERIFICATION', result=result)))
     except BaseException:
         # Private durable intent remains authoritative. No database/secret/path
         # exception is exported and no automatic restore, cleanup or retry runs.

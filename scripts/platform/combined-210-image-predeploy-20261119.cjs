@@ -18,7 +18,7 @@ function main(){
  a.equal(process.getuid(),0);a.equal(process.getgid(),0);a.equal(process.cwd(),'/app');
  a.equal(process.platform,'linux');a.equal(process.versions.node.split('.')[0],'24');a.equal(process.versions.modules,'137');
  const roleBytes=bytes('/app/combined210-image-role.json',MAX_MANIFEST),role=JSON.parse(roleBytes);
- a(['final210','recovery210'].includes(role.role));a.equal(role.targetCount,210);
+ a(['final211','recovery211'].includes(role.role));a.equal(role.targetCount,211);a.equal(role.nativeTargetContract,"news0227_211_v1");
  a.equal(role.expectedRuntimeUid,0);a.equal(role.expectedRuntimeGid,0);
  a.equal(role.projectId,'49fc9197-07c9-45c7-b528-57d0393c2cca');
  a.equal(role.environmentId,'666e1624-a1eb-4e94-8e16-5ed73ad4b4af');a.equal(role.serviceId,'fda2d2e9-d5ae-47b5-9cc1-42b371eaa4fb');
@@ -44,7 +44,7 @@ function main(){
  const censusBytes=bytes('/app/combined210-image-census.json',64*1024*1024),census=JSON.parse(censusBytes);
  a.equal(census.kind,'FINAL_IMAGE_METADATA_CENSUS_V1');a.equal(census.unknownCount,0);a.equal(census.source,role.applicationSource);
  a.equal(census.roleSha256,hash(roleBytes));a(Array.isArray(census.entries)&&census.entries.length>0&&census.entries.length<=250000);
- const proof={kind:'ACTUAL_SAME_SERVICE_210_PREDEPLOY_IMAGE_QUALIFICATION',atUtc:new Date().toISOString(),
+ const proof={kind:'ACTUAL_SAME_SERVICE_211_PREDEPLOY_IMAGE_QUALIFICATION',atUtc:new Date().toISOString(),
   deploymentId:process.env.RAILWAY_DEPLOYMENT_ID,source:role.applicationSource,role:role.role,
   manifestSha256:hash(roleBytes),imageRole:role,readOnlyVerifierSha256:role.readOnlyVerifierSha256,installedPinsSha256:hash(Buffer.from(JSON.stringify(hashes))),installedPinCount:pins.length,
   imageCensusSha256:hash(censusBytes),imageCensusBytes:censusBytes.length,imageCensusEntryCount:census.entries.length,
