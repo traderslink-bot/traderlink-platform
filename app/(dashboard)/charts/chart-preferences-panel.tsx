@@ -15,8 +15,8 @@ import CloseRounded from '@mui/icons-material/CloseRounded';
 import {useTheme} from '@mui/material/styles';
 import {ChartIndicatorEditor} from './chart-indicator-editor';
 import {CHART_TIMEFRAMES,type ChartTimeframe} from '@/src/modules/scanner/alpaca/candles';
-import {DEFAULT_CHART_CROSSHAIR_MODE,changeIndicatorDisplayChoice,INDICATOR_TYPES,setAllIndicatorOverlayWidths,setAllIndicatorPriceScaleLabels,type ChartPreferences,type IndicatorDisplayAction,type IndicatorDisplayChoices,type IndicatorType} from '@/src/modules/scanner/alpaca/chart-preferences';
-export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange}:{ticker:string;timeframe:ChartTimeframe;panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:IndicatorDisplayChoices;onIndicatorDisplayChange:(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>void}){
+import {CHART_PRICE_STYLES,isReviewChartStyle,DEFAULT_CHART_CROSSHAIR_MODE,changeIndicatorDisplayChoice,INDICATOR_TYPES,setAllIndicatorOverlayWidths,setAllIndicatorPriceScaleLabels,type ChartPreferences,type IndicatorDisplayAction,type IndicatorDisplayChoices,type IndicatorType} from '@/src/modules/scanner/alpaca/chart-preferences';
+export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange,reviewChartStyles=false}:{ticker:string;timeframe:ChartTimeframe;panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:IndicatorDisplayChoices;reviewChartStyles?:boolean;onIndicatorDisplayChange:(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>void}){
  const theme=useTheme(),mobile=useMediaQuery(theme.breakpoints.down('md'));
  const set=<K extends keyof ChartPreferences>(key:K,value:ChartPreferences[K])=>onChange({...p,[key]:value});
  const changeAllCharts=(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>{
@@ -37,7 +37,22 @@ export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preference
   <Stack direction="row" sx={{px:2,py:1,alignItems:'center',justifyContent:'space-between',borderBottom:1,borderColor:'divider',flexShrink:0}}><Typography component="h2" sx={{fontSize:18,fontWeight:700}}>{panel==='indicators'?'Indicators':'Chart settings'}</Typography><IconButton aria-label="Close chart preferences" onClick={onClose} sx={{minWidth:44,minHeight:44}}><CloseRounded/></IconButton></Stack>
   <Stack spacing={2} sx={{p:2,overflowY:'auto',minHeight:0}}>
   {panel==='indicators'?<ChartIndicatorEditor ticker={ticker} key={`${ticker}:${initialIndicator??"list"}`} initialType={initialIndicator} overlayLineWidth={p.indicatorOverlayLineWidth??1} onOverlayLineWidthChange={width=>onChange(setAllIndicatorOverlayWidths(p,width))} defaultPriceScaleLabels={p.indicatorPriceScaleLabels??false} display={indicatorDisplay} accountDisplay={p.indicatorDisplay} onDisplayChange={onIndicatorDisplayChange} onAccountDisplayChange={changeAllCharts} indicators={p.indicators} savedPresets={p.savedIndicatorPresets ?? []} onChange={changeIndicators} onPresetsChange={presets=>set('savedIndicatorPresets',presets)}/>:<>
-   <TextField select label="Chart type" value={p.kind} onChange={e=>set('kind',e.target.value as ChartPreferences['kind'])} size="small">{[['candles','Candlesticks'],['bars','OHLC bars'],['line','Line']].map(([v,label])=><MenuItem key={v} value={v}>{label}</MenuItem>)}</TextField>
+   <TextField select label="Chart type" value={p.kind}
+     helperText={p.kind==="heikinAshi"?"Smoothed candles. The price marker and crosshair readout show market prices.":undefined}
+     onChange={e=>set('kind',e.target.value as ChartPreferences['kind'])} size="small">{Object.entries(CHART_PRICE_STYLES).filter(([kind])=>reviewChartStyles||!isReviewChartStyle(kind)).map(([v,label])=><MenuItem key={v} value={v}>{label}</MenuItem>)}</TextField>
+   {(p.kind==="renko"||p.kind==="range")&&<TextField key={p.movementStep??0.01} label={p.kind==="renko"?"Brick size ($)":"Range size ($)"}
+     type="number" size="small" defaultValue={p.movementStep??0.01}
+     onChange={event=>event.target.setCustomValidity("")}
+     onBlur={event=>{
+       const value=Number(event.target.value);
+       if(!event.target.value||!event.target.checkValidity()){
+         event.target.value=String(p.movementStep??0.01);
+         return;
+       }
+       if(value!==(p.movementStep??0.01))set("movementStep",value);
+     }}
+     slotProps={{htmlInput:{min:0.0001,max:100,step:0.0001}}}
+     helperText="Regular-session trades" sx={{width:165}}/>}
    <TextField select label="Chart theme" value={p.theme} onChange={e=>set('theme',e.target.value as ChartPreferences['theme'])} size="small">{[['auto','Follow app theme'],['light','Light'],['dark','Dark']].map(([v,label])=><MenuItem key={v} value={v}>{label}</MenuItem>)}</TextField>
    <Stack direction="row" spacing={1}>{color('Up color',p.upColor,v=>set('upColor',v))}{color('Down color',p.downColor,v=>set('downColor',v))}</Stack>
    <TextField select label="Crosshair" size="small" value={p.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE}
