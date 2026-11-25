@@ -5,7 +5,7 @@ import type Database from "better-sqlite3";
 import { stockScreenersEnabled } from "@/src/modules/stock-screeners/service";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { hasStockScreenersDashboardAccess, MARKET_TOOLS_ACCESS_MODE, readMarketToolsDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
-import { hasChartsDashboardAccess } from "@/src/modules/market-data/server/chart-dashboard-access";
+import { hasChartMembershipDataAccess, hasChartsDashboardAccess } from "@/src/modules/market-data/server/chart-dashboard-access";
 import { MARKET_TOOL_MEMBERSHIP_KEYS } from "../../contracts/membership-market-tools";
 import type { PlatformHomePage } from "../../contracts/platform-home-page";
 import {
@@ -56,7 +56,8 @@ export function readPlatformHomeAccess(
   const screeners = dashboard && screenersEnabled && hasStockScreenersDashboardAccess(identity);
   const journal = identity.mode === "local_development" || hasJournalWorkspaceAccess(database, identity.scope.userId);
   const homePages: Record<PlatformHomePage, boolean> = {
-    welcome: homeTrial || hasHomeToolAccess || charts || privateReviewHome,
+    welcome: homeTrial || hasHomeToolAccess || charts || privateReviewHome ||
+      (dashboard && hasChartMembershipDataAccess(identity)),
     "trading-workspace": marketTools?.tradingWorkspace ?? false,
     scanners: marketTools?.scanner ?? false,
     screeners,

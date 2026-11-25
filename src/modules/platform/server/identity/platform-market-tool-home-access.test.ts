@@ -41,6 +41,7 @@ describe("Tool-only native Platform sessions", () => {
     vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", databasePath);
     vi.stubEnv("TRADERLINK_STOCK_SCREENERS_ENABLED", "1");
     vi.stubEnv("TRADERLINK_MARKET_TOOLS_ACCESS_MODE", "standard");
+    vi.stubEnv("TRADERLINK_MARKET_TOOLS_REVIEW_USER_IDS", [randomUUID(), randomUUID()].join(","));
     vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", "123456789012345678");
     vi.stubEnv("DISCORD_GUILD_ID", "987654321098765432");
     const network = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("No provider requests in this fixture"));
@@ -96,7 +97,7 @@ describe("Tool-only native Platform sessions", () => {
       expect(access.homePages.scanners).toBe(prePaywallCase || key === "scanners.access");
       expect(access.homePages.screeners).toBe(prePaywallCase || key === "screeners.access");
       expect(access.homePages["trading-workspace"]).toBe(false);
-      expect(access.charts).toBe(ownerCase || prePaywallCase || key === "charts.access");
+      expect(access.charts).toBe(false);
       expect(access.journal).toBe(ownerCase);
       for (const feature of ["watchlist.access", "journal.access", "community.access"]) {
         expect(hasPlatformMembershipFeature(database, member.session.userId, feature)).toBe(false);

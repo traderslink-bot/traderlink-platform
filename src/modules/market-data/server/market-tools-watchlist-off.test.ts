@@ -399,7 +399,10 @@ it("saves and restores drawer layouts per account with Watchlist off and retains
   const mainLayout = "/api/charts/layout?workspace=main";
   fixture.toolPolicies.set("charts.access", "enforced");
   fixture.toolGrants.set("charts-only:charts.access", Date.now() + 60_000);
-  expect((await readLayout(request(mainLayout, "charts-only"))).status).toBe(200);
+  const reviewer = "aabbccdd-eeff-4000-8000-010000000001";
+  vi.stubEnv(MARKET_TOOLS_REVIEW_USER_IDS, reviewer + ",aabbccdd-eeff-4000-8000-010000000002");
+  expect((await readLayout(request(mainLayout, reviewer))).status).toBe(200);
+  expect((await readLayout(request(mainLayout, "charts-only"))).status).toBe(403);
   expect((await readLayout(request(mainLayout, "scanner"))).status).toBe(403);
   expect((await readLayout(request(mainLayout, "unlisted"))).status).toBe(403);
   expect((await readLayout(request(drawer, "charts-only"))).status).toBe(403);
