@@ -1,5 +1,6 @@
 "use client";
-import {useMarketDataSelection} from "../charts/use-chart-market-data";
+import {useChartMarketData, useMarketDataSelection} from "../charts/use-chart-market-data";
+import {useWorkspaceBrokerChart} from "../charts/workspace-broker-chart-context";
 
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import Box from "@mui/material/Box";
@@ -74,14 +75,13 @@ let active = 0;
 function pump() {
   while (active<3 && queue.length) queue.shift()?.();
 }
-function readsFor(symbol: string, frame: Frame, minute: number, providerQuery:string): Promise<ScannerIndicatorRead | null> {
-  const key = `${symbol}:${frame}:${providerQuery}`;
+function readsFor(key: string, symbol: string, frame: Frame, minute: number): Promise<ScannerIndicatorRead | null> {
   const existing=histories.get(key);
   if(existing?.minute===minute) return existing.promise;
   const promise=new Promise<ScannerIndicatorRead | null>(resolve=>{
     queue.push(()=>{
       active++;
-      void fetch(`/api/screeners/charts/bars?symbol=${encodeURIComponent(symbol)}&scannerIndicators=1&frame=${frame}&${providerQuery}`,{cache:"no-store",signal:AbortSignal.timeout(15000)})
+      void fetch(key,{cache:"no-store",signal:AbortSignal.timeout(15000)})
         .then(async response=>{
           if(!response.ok) return null;
           const value=await response.json() as ScannerIndicatorRead;
@@ -147,11 +147,28 @@ function RecentSignal({ signal, compact = false }: { signal: DisplaySignal; comp
   </Typography>;
 }
 
-export function ScannerIndicatorReads({ row,now }: { row:Pick<LiveScannerRow,"symbol"|"price">; now:number }) {
-  const { frame,selected }=useSettings();
+type IndicatorReadsProps = { row: Pick<LiveScannerRow, "symbol" | "price">; now: number };
+
+export function ScannerIndicatorReads(props: IndicatorReadsProps) {
+  return useWorkspaceBrokerChart() ? <BrokerIndicatorReads {...props}/> : <DefaultIndicatorReads {...props}/>;
+}
+
+function DefaultIndicatorReads(props: IndicatorReadsProps) {
   const provider=useMarketDataSelection("scanners");
-  const providerQuery=`generation=${provider.generation}`;
-  const readKey=`${row.symbol}:${frame}:${providerQuery}`;
+  return <IndicatorReads {...props} provider={provider} endpoint="/api/screeners/charts/bars?scannerIndicators=1"/>;
+}
+
+function BrokerIndicatorReads(props: IndicatorReadsProps) {
+  const provider=useChartMarketData();
+  return <IndicatorReads {...props} provider={provider} endpoint="/api/trading-workspace/broker/company-technicals?compact=1"/>;
+}
+
+function IndicatorReads({ row, now, provider, endpoint }: IndicatorReadsProps & {
+  provider: { generation: string; ready: boolean };
+  endpoint: string;
+}) {
+  const { frame,selected }=useSettings();
+  const readKey=`${endpoint}&symbol=${encodeURIComponent(row.symbol)}&frame=${frame}&generation=${provider.generation}`;
   const ref=useRef<HTMLDivElement|null>(null);
   const [visible,setVisible]=useState(false);
   const enabled = selected.length > 0;
@@ -166,11 +183,11 @@ export function ScannerIndicatorReads({ row,now }: { row:Pick<LiveScannerRow,"sy
   useEffect(()=>{
     if(!visible||!enabled||!provider.ready) return;
     let current=true;
-    void readsFor(row.symbol,frame,historyWindow,providerQuery).then(value=>{
+    void readsFor(readKey,row.symbol,frame,historyWindow).then(value=>{
       if(current && value) startTransition(()=>setSavedRead({key:readKey,value}));
     });
     return ()=>{current=false;};
-  },[row.symbol,frame,historyWindow,visible,enabled,provider.ready,providerQuery,readKey]);
+  },[row.symbol,frame,historyWindow,visible,enabled,provider.ready,readKey]);
   const chosen = history?.symbol===row.symbol && history.frame===frame ? history.rows.flatMap(reading => {
     if (!selected.includes(reading.name)) return [];
     const signals = reading.signals.filter(signal=>isRecentScannerSignal(signal.at,now));

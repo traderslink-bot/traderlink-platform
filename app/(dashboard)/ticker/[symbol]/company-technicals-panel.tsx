@@ -5,7 +5,9 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Accordion, AccordionSummary, AccordionDetails, Box, IconButton, MenuItem, Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
+import { scannerVolumeBreakdown, SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
+import type { BrokerReadings } from "@/src/modules/market-data/workspace-broker-rows";
+import type { ScannerSession } from "@/src/modules/scanner/live/contracts";
 import type { CompanyTechnicals } from "@/src/modules/company/company-technicals";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { DashboardPanel } from "@/app/dashboard-ui";
@@ -14,7 +16,7 @@ import { indicatorDisplayRows, type IndicatorDisplayRow } from "@/src/lib/live-w
 import indicatorStyles from "@/app/watchlist/watchlist-indicators-card.module.css";
 import { sharedChartStream, type ChartStreamHandle } from "../../charts/shared-chart-data";
 
-type IndicatorRead = {frame:string;vwap:number|null;readings:IndicatorDisplayRow[]};
+type IndicatorRead = {frame:string;vwap:number|null;readings:IndicatorDisplayRow[];days?:CompanyTechnicals["days"]};
 const technicalSections = [
   ["stats", "Stats"], ["indicators", "Indicators"], ["sessions", "Sessions"],
 ] as const;
@@ -73,10 +75,13 @@ function sampleReads(frame:Frame): CompanyIndicatorReading[] {
   ];
 }
 
-export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,children,averageVolumes}:{
-  symbol:string;sample?:CompanyTechnicals;active:boolean;inDrawer:boolean;
+type BrokerTechnicals = BrokerReadings & { session: ScannerSession | null; asOf: number };
+
+export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,children,averageVolumes,broker=false,brokerProfileFacts}:{
+  symbol:string;sample?:CompanyTechnicals;active:boolean;inDrawer:boolean;broker?:boolean;
   header:(latestPrice:string|null, change:number|null)=>ReactNode;
   children?:ReactNode;
+  brokerProfileFacts?:{float:number|null;marketCap:number|null};
   averageVolumes:readonly (number|null)[];
 }){
   const indicatorId=useId();
@@ -88,6 +93,8 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   const statsActive=active&&(!sectionTabs||section==="stats");
   const indicatorsActive=active&&(!sectionTabs||section==="indicators");
   const snapshotActive=!inDrawer||active&&(!sectionTabs||section!=="indicators");
+  const brokerHistoryActive=broker&&active;
+  const technicalsPath=broker?"/api/trading-workspace/broker/company-technicals":"/api/company/technicals";
   const sectionProps=(id:TechnicalSection)=>sectionTabs?{
     id:`${indicatorId}-${id}-panel`, role:"tabpanel",
     "aria-labelledby":`${indicatorId}-${id}-tab`, hidden:section!==id,
@@ -101,6 +108,35 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   const [livePrice,setLivePrice]=useState<{price:number;time:number}>();
   const [frame,setFrame]=useState<Frame>("5m");
   const [reads,setReads]=useState<IndicatorRead|null>(null);
+  const [brokerTechnicals,setBrokerTechnicals]=useState<BrokerTechnicals|null>(null);
+  useEffect(()=>{
+    if(!brokerHistoryActive)return;
+    let source:EventSource|undefined;
+    const open=()=>{
+      source?.close();
+      if(document.hidden){setBrokerTechnicals(null);return;}
+      const connection=new EventSource(`/api/trading-workspace/broker/company-technicals?symbol=${encodeURIComponent(symbol)}`);
+      source=connection;
+      connection.onmessage=event=>{
+        if(source!==connection)return;
+        try{setBrokerTechnicals(JSON.parse(event.data) as BrokerTechnicals);}
+        catch{setBrokerTechnicals(null);}
+      };
+      connection.onerror=()=>{
+        if(source!==connection)return;
+        setBrokerTechnicals(null);
+        setRanges({});
+        setReads(null);
+      };
+    };
+    open();
+    document.addEventListener("visibilitychange",open);
+    return ()=>{
+      source?.close();
+      source=undefined;
+      document.removeEventListener("visibilitychange",open);
+    };
+  },[symbol,brokerHistoryActive]);
   useEffect(()=>{
     if(sample||!statsActive)return;
     const controller=new AbortController();
@@ -108,20 +144,25 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
       if(document.hidden)return;
       await Promise.all(rangeBases.map(async ([basis])=>{
         try{
-          const response=await fetch(`/api/company/technicals?symbol=${encodeURIComponent(symbol)}&range=52w&adjustment=${basis}`,{signal:controller.signal});
-          if(!response.ok)return;
+          const response=await fetch(`${technicalsPath}?symbol=${encodeURIComponent(symbol)}&range=52w&adjustment=${basis}`,{signal:controller.signal});
+          if(!response.ok){
+            if(broker&&!controller.signal.aborted)setRanges(current=>({...current,[basis]:undefined}));
+            return;
+          }
           const {yearRange}=await response.json() as Pick<CompanyTechnicals,"yearRange">;
-          if(yearRange&&!controller.signal.aborted)setRanges(current=>({...current,[basis]:yearRange}));
-        }catch{/* Keep the last successful range. */}
+          if((yearRange||broker)&&!controller.signal.aborted)setRanges(current=>({...current,[basis]:yearRange}));
+        }catch{
+          if(broker&&!controller.signal.aborted)setRanges(current=>({...current,[basis]:undefined}));
+        }
       }));
     };
     void load();
     const timer=setInterval(()=>void load(),15*60_000);
     return ()=>{controller.abort();clearInterval(timer);};
-  },[symbol,sample,statsActive]);
+  },[symbol,sample,statsActive,broker,technicalsPath]);
 
   useEffect(()=>{
-    if(sample)return;
+    if(broker||sample)return;
     const controller=new AbortController();
     let timer:ReturnType<typeof setTimeout>;
     const read=async()=>{
@@ -144,10 +185,10 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
     };
     void read();
     return ()=>{controller.abort();clearTimeout(timer);};
-  },[symbol,sample,snapshotActive]);
+  },[symbol,sample,snapshotActive,broker]);
 
   useEffect(()=>{
-    if(sample)return;
+    if(broker||sample)return;
     let stream:ChartStreamHandle|undefined;
     const open=()=>{
       stream?.close();stream=undefined;
@@ -165,29 +206,36 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
     const retry=setInterval(()=>{if(!document.hidden)stream?.reconnectIfClosed();},15_000);
     open();document.addEventListener("visibilitychange",open);
     return ()=>{stream?.close();clearInterval(retry);document.removeEventListener("visibilitychange",open);};
-  },[symbol,sample]);
+  },[symbol,sample,broker]);
 
   useEffect(()=>{
-    if(sample||!indicatorsActive)return;
+    if(sample||(!indicatorsActive&&!brokerHistoryActive))return;
     const controller=new AbortController();
     let timer:ReturnType<typeof setTimeout>;
     const load=async()=>{
       if(!document.hidden){
         try{
-          const response=await fetch(`/api/screeners/charts/bars?scannerIndicators=1&details=1&symbol=${encodeURIComponent(symbol)}&frame=${frame}`,{signal:controller.signal});
+          const params = `symbol=${encodeURIComponent(symbol)}&frame=${frame}`;
+          const url = broker ? `${technicalsPath}?${params}` : `/api/screeners/charts/bars?scannerIndicators=1&details=1&${params}`;
+          const response=await fetch(url,{signal:controller.signal});
           if(response.ok){const payload=await response.json() as IndicatorRead;if(!controller.signal.aborted)setReads(payload);}
-        }catch{/* Keep the last available read for this timeframe. */}
+          else if(broker&&!controller.signal.aborted)setReads(null);
+        }catch{if(broker&&!controller.signal.aborted)setReads(null);}
       }
       const period=Number.parseInt(frame,10)*60_000;
       if(!controller.signal.aborted)timer=setTimeout(load,period-Date.now()%period+1500);
     };
     void load();
     return ()=>{controller.abort();clearTimeout(timer);};
-  },[symbol,frame,sample,indicatorsActive]);
+  },[symbol,frame,sample,indicatorsActive,broker,brokerHistoryActive,technicalsPath]);
 
   const row=snapshot?.row;
-  const days=snapshot?.days??[];
-  const current=livePrice&&(livePrice.time>=Date.parse(row?.providerAtUtc??"")||!row)?livePrice.price:row?.price??days[0]?.ranges.findLast(Boolean)?.close;
+  const days=(broker?reads?.days:snapshot?.days)??[];
+  const brokerQuote=brokerTechnicals?.quote;
+  const brokerBook=brokerTechnicals?.book;
+  const brokerSession=brokerTechnicals?.session;
+  const brokerVolumes=brokerSession&&brokerQuote?scannerVolumeBreakdown({session:brokerSession,...brokerQuote}):null;
+  const current=broker?brokerQuote?.price:livePrice&&(livePrice.time>=Date.parse(row?.providerAtUtc??"")||!row)?livePrice.price:row?.price??days[0]?.ranges.findLast(Boolean)?.close;
   const readings=sample?sampleReads(frame):reads?.frame===frame?reads.readings??[]:[];
   const indicatorRows=indicatorNames.flatMap<CompanyIndicatorReading & {name:string}>(([label,name])=>{
     const read=readings.find(item=>item.label===label);
@@ -198,41 +246,51 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
     }
     return [{...read,name}];
   });
-  const activity=row?.activity;
+  const activity=broker?brokerTechnicals?.activity:row?.activity;
   const candleActivity=snapshot?.candleActivity;
-  const currentDate=marketClock?.date??"";
+  const brokerClock = brokerTechnicals?.asOf == null ? undefined : easternClock(brokerTechnicals.asOf);
+  const currentDate=(broker?brokerClock:marketClock)?.date??"";
   const minute=marketClock?.minute??-1;
-  const activeSession=sample?1:minute>=240&&minute<1200 ? minute<570?0:minute<960?1:2 : -1;
+  const activeSession=broker?(brokerSession==="premarket"?0:brokerSession==="regular"?1:brokerSession==="after_hours"?2:-1):sample?1:minute>=240&&minute<1200 ? minute<570?0:minute<960?1:2 : -1;
   const todayRanges=sample?days[0]?.ranges:days.find(day=>day.date===currentDate)?.ranges;
-  const regularClose=sample?days[1]?.ranges[1]?.close:days.find(day=>day.date<currentDate)?.ranges[1]?.close;
+  const regularClose=broker?brokerQuote?.previousClose??days.find(day=>day.date<currentDate)?.ranges[1]?.close:sample?days[1]?.ranges[1]?.close:days.find(day=>day.date<currentDate)?.ranges[1]?.close;
   const regularOpen=todayRanges?.[1]?.open;
   const basis=row?.comparisonPrice??regularClose;
   const headerBasis=row?.gainBasis==="previous_regular_close"?basis:regularClose;
   const dayChange=headerBasis&&current!=null?(current/headerBasis-1)*100:null;
   const gap=regularClose&&regularOpen?(regularOpen/regularClose-1)*100:null;
   const sessionRanges=todayRanges?.filter(range=>range!==null)??[];
-  const dayVolume = row?.dayVolume ?? snapshot?.dayVolume;
-  const volume=row?.volume??(sessionRanges.length?sessionRanges.reduce((sum,range)=>sum+range.volume,0):null);
-  const float=row?.float??snapshot?.listedFloat;
+  const dayVolume = broker?brokerVolumes?.dayVolume:row?.dayVolume ?? snapshot?.dayVolume;
+  const volume=broker?(brokerSession==="premarket"?brokerVolumes?.premarketVolume:brokerSession==="regular"?brokerVolumes?.regularVolume:brokerVolumes?.postMarketVolume):row?.volume??(sessionRanges.length?sessionRanges.reduce((sum,range)=>sum+range.volume,0):null);
+  const float=broker?brokerProfileFacts?.float:row?.float??snapshot?.listedFloat;
+  const brokerRelativeVolume = brokerTechnicals?.relativeVolume ?? null;
   const turnover=float&&volume!=null?volume/float*100:null;
-  const high=row?.dayHigh??(sessionRanges.length?Math.max(...sessionRanges.map(range=>range.high)):null);
-  const low=row?.dayLow??(sessionRanges.length?Math.min(...sessionRanges.map(range=>range.low)):null);
+  const high=broker?brokerQuote?.dayHigh:row?.dayHigh??(sessionRanges.length?Math.max(...sessionRanges.map(range=>range.high)):null);
+  const low=broker?brokerQuote?.dayLow:row?.dayLow??(sessionRanges.length?Math.min(...sessionRanges.map(range=>range.low)):null);
   const offHigh=high&&current!=null?(current/high-1)*100:row?.offHighPercent;
   const post=todayRanges?.[2];
   const todayClose=todayRanges?.[1]?.close;
-  const afterHours=row?.postMarketGain??(post&&todayClose?(post.close/todayClose-1)*100:null);
+  const afterHours=broker?(brokerSession==="after_hours"&&brokerQuote?.regularClose?(brokerQuote.price/brokerQuote.regularClose-1)*100:null):row?.postMarketGain??(post&&todayClose?(post.close/todayClose-1)*100:null);
+  const bid=broker?brokerBook?.bid:snapshot?.bid;
+  const ask=broker?brokerBook?.ask:snapshot?.ask;
   const displayed=[
     ["Price",current,"$"],["Day change",dayChange,"%"],["Prev regular close",regularClose??basis,"$"],["Regular open",regularOpen,"$"],
     ["Gap",gap,"%"],
-    [SCANNER_VOLUME_LABELS.dayVolume,dayVolume,"shares"],["Dollar Vol",row?.dollarVolume??snapshot?.dollarVolume,"$compact"],["Float",float,""],
-    ["Float turnover",turnover,"%"],["Relative Vol",row?.relativeVolume??snapshot?.relativeVolume,"×"],["Market cap",row?.marketCap??snapshot?.listedMarketCap,"$compact"],
+    [SCANNER_VOLUME_LABELS.dayVolume,dayVolume,"shares"],
+    ...(broker?([
+      [SCANNER_VOLUME_LABELS.premarketVolume,brokerVolumes?.premarketVolume,"shares"],
+      [SCANNER_VOLUME_LABELS.regularVolume,brokerVolumes?.regularVolume,"shares"],
+      [SCANNER_VOLUME_LABELS.postMarketVolume,brokerVolumes?.postMarketVolume,"shares"],
+    ] as const):[]),
+    ["Dollar Vol",broker?brokerQuote?.sessionTurnover:row?.dollarVolume??snapshot?.dollarVolume,"$compact"],["Float",float,""],
+    ["Float turnover",turnover,"%"],["Relative Vol",broker?brokerRelativeVolume:row?.relativeVolume??snapshot?.relativeVolume,"×"],["Market cap",broker?brokerProfileFacts?.marketCap:row?.marketCap??snapshot?.listedMarketCap,"$compact"],
     ["Distance from high",offHigh,"%"],["After-hours change",afterHours,"%"],["Day high",high,"$"],["Day low",low,"$"],
-    ["10d avg vol",averageVolumes[0],""],["3mth avg vol",averageVolumes[1],""],
-    ["Bid",snapshot?.bid,"$"],["Ask",snapshot?.ask,"$"],["Spread",snapshot?.bid&&snapshot.ask?(snapshot.ask-snapshot.bid)/((snapshot.ask+snapshot.bid)/2)*100:row?.spreadPercent,"%"],["VWAP",(reads?.frame===frame?reads.vwap:null)??snapshot?.sessionVwap,"$"],
+    ["10d avg vol",broker?null:averageVolumes[0],""],["3mth avg vol",broker?null:averageVolumes[1],""],
+    ["Bid",bid,"$"],["Ask",ask,"$"],["Spread",bid&&ask?(ask-bid)/((ask+bid)/2)*100:row?.spreadPercent,"%"],["VWAP",(reads?.frame===frame?reads.vwap:null)??snapshot?.sessionVwap,"$"],
     ["1m change",activity?.oneMinuteGain??candleActivity?.oneMinuteGain,"%"],["5m change",activity?.fiveMinuteGain??candleActivity?.fiveMinuteGain,"%"],["1m Vol",activity?.oneMinuteVolume??candleActivity?.oneMinuteVolume,""],
     ["5m Vol",activity?.fiveMinuteVolume??candleActivity?.fiveMinuteVolume,""],["1min dollar vol",activity?.oneMinuteDollarVolume,"$compact"],["5min Vol spike",activity?.fiveMinuteVolumeSpike??candleActivity?.fiveMinuteVolumeSpike,"×"],
   ] as const;
-  const snapshotLabels=new Set([SCANNER_VOLUME_LABELS.dayVolume,"Float","Float turnover","Relative Vol","Market cap","Distance from high","Prev regular close","Regular open","Gap","Day high","Day low","10d avg vol","3mth avg vol"]);
+  const snapshotLabels=new Set([...Object.values(SCANNER_VOLUME_LABELS),"Float","Float turnover","Relative Vol","Market cap","Distance from high","Prev regular close","Regular open","Gap","Day high","Day low","10d avg vol","3mth avg vol"]);
   const metrics=(entries:readonly (readonly [string,number|null|undefined,string])[])=>(
     <Box component="dl" sx={{m:0,display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",sm:"repeat(4,minmax(0,1fr))"},columnGap:1,rowGap:1.5}}>
       {entries.map(([label,n,unit])=><Box key={label} sx={{minWidth:0}}>
@@ -256,6 +314,9 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
         <DashboardPanel hideHeader>
           <Stack spacing={1.25}>
             {sample&&<Typography variant="caption" color="text.secondary">Sample market data</Typography>}
+            {broker&&(brokerQuote
+              ? <Typography variant="caption" color="text.secondary">Moomoo quote · {eventTime.format(brokerQuote.observedAt)}</Typography>
+              : <Typography variant="caption" color="text.secondary">Moomoo quote unavailable.</Typography>)}
             {metrics(displayed.filter(([label])=>snapshotLabels.has(label)))}
             <Box sx={{pt:1}}>
               <Typography variant="body2" sx={theme=>theme.applyStyles("dark",{color:"#a6b6cc",fontWeight:600})}>52-week range</Typography>

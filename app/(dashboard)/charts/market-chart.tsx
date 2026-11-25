@@ -17,6 +17,7 @@ import IconButton from "@mui/material/IconButton";
 import GridViewOutlined from "@mui/icons-material/GridViewOutlined";
 import MenuBookOutlined from "@mui/icons-material/MenuBookOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import NetworkCheck from "@mui/icons-material/NetworkCheck";
 import {useChartPreferences} from "./use-chart-preferences";
 import {localVwapSeed,parseVwapSeedRequest,validVwapSeed,type VwapSeed} from "@/src/modules/scanner/alpaca/chart-vwap-seed";
@@ -88,6 +89,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
 }) {
   const baseTicker = symbol.split(":").at(-1)!.toUpperCase();
   const marketData = useChartMarketData();
+  const { broker, endpoints } = marketData;
   const providerKey = marketData.generation;
   const providerQuery = `generation=${marketData.generation}`;
   const {preferences:accountPreferences,ready,message,change,ownerKey,journalAccountRef}=useChartPreferences();
@@ -103,7 +105,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const theme = useTheme();
   const narrow = useMediaQuery(theme.breakpoints.down("md")), landscape = useMediaQuery("(orientation: landscape) and (max-height: 600px) and (max-width: 1200px)");
   const compact = compactToolbar || (compactMobile && (narrow || landscape));
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null), [frameAnchor, setFrameAnchor] = useState<HTMLElement | null>(null);
+  const [frameAnchor, setFrameAnchor] = useState<HTMLElement | null>(null);
   // Toolbar visibility must not restart candles or subscriptions.
   const alwaysShowDrawingToolbar=accountPreferences.alwaysShowDrawingToolbar??false;
   const chartOptionsKey=useMemo(()=>JSON.stringify({
@@ -193,7 +195,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     .map(plot=>({value:`indicator:${indicator.id}:${plot.key}` as const,label:plot.label}))),[activeIndicators,timeframe]);
   const crosshairTarget=preferences.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE;
   const readoutTypes=[...new Set(activeIndicators.map(indicator=>indicator.type))];
-  const showOvernight = !daily && chartShowsOvernight(preferences);
+  const showOvernight = !broker && !daily && chartShowsOvernight(preferences);
   const regularOnly = preferences.regular && !preferences.premarket && !preferences.postmarket && !showOvernight;
   if(ready&&controlledTimeframe===undefined&&activeTimeframe===null)setActiveTimeframe(preferences.timeframe);
   const changePreferences = (next: ChartPreferences) => {
@@ -217,7 +219,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     evidenceRender.current?.();
   }, [evidence, evidenceContext, structureVisible, levelsVisible]);
 
-  const archiveDailyStartup = timeframe === "1D" && !unadjusted && !activeTradeContext && !evidence;
+  const archiveDailyStartup = !broker && timeframe === "1D" && !unadjusted && !activeTradeContext && !evidence;
 
   useEffect(() => {
     const element = container.current;
@@ -265,7 +267,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     const readHistory = (query: URLSearchParams, reuseDaily = true) => {
       if (unadjusted) query.set("adjustment", "raw");
       const history = readChartCandleHistory(
-        `/api/screeners/charts/bars?${query}&${providerQuery}`, abort.signal,
+        `${endpoints.bars}?${query}&${providerQuery}`, abort.signal,
         daily && ownerKey ? { owner: `${ownerKey}:${providerKey}`, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
       );
       if (showOvernight) void history.then(() => {
@@ -469,7 +471,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const queued = new Map<number, Candle>();
       const archivePages: ChartArchivePage[] = [];
       const calculationHistory=new ChartCalculationHistory(ticker,abort.signal,()=>easternClock(Date.now()).date,
-        (url,init)=>sharedChartFetch(`${url}&${providerQuery}`,init),priceAdjustment);
+        (url,init)=>sharedChartFetch(`${url.replace('/api/screeners/charts/bars', endpoints.bars)}&${providerQuery}`,init),priceAdjustment);
       const calculationContexts=new Map<string,CalculationHistory&{daily:boolean;through?:number}>(),contextCoverage=new Map<string,number>(),contextPending=new Set<string>(),contextFailures=new Map<string,number>();
       let calculationView:{from:number;to:number}|null=null,calculationViewKey="",calculationViewTimer:ReturnType<typeof setTimeout>|undefined;
       const seconds=CHART_FRAME_SECONDS;
@@ -489,7 +491,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         while(year<=axisYear+3&&calendar.covers(Date.parse(`${year}-07-01T12:00:00Z`)/1000))year++;
         if(year>axisYear+3||year>9999||Date.now()-(calendarYearFailures.get(year)??0)<30_000)return false;
         seedLoading=true;if(pendingCalendarYears.has(year))return true;pendingCalendarYears.add(year);
-        void sharedChartFetch('/api/charts/calendar?year='+year+'&'+providerQuery,{credentials:'same-origin',signal:abort.signal,cache:'no-store'}).then(async response=>{
+        void sharedChartFetch(endpoints.calendar+'?year='+year+'&'+providerQuery,{credentials:'same-origin',signal:abort.signal,cache:'no-store'}).then(async response=>{
           if(!response.ok)throw Error('calendar_year_unavailable');const value=readChartCalendarYear(await response.json(),year);
           calendar.merge(value);marketCalendar.current.merge(value);for(const context of calculationContexts.values())context.calendar.merge(value);
         }).catch(()=>{if(!abort.signal.aborted){calendarYearFailures.set(year,Date.now());while(calendarYearFailures.size>8)calendarYearFailures.delete(calendarYearFailures.keys().next().value!);}}).finally(()=>{pendingCalendarYears.delete(year);if(!disposed)writeAll(false);});
@@ -594,7 +596,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         if(!pendingSeeds.has(key)){
           if(missingMoments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
           pendingSeeds.add(key);
-          void readChartVwapSeed('/api/charts/vwap-seed?'+query.toString()+'&'+providerQuery,abort.signal,async response=>{
+          void readChartVwapSeed(endpoints.vwapSeed+'?'+query.toString()+'&'+providerQuery,abort.signal,async response=>{
             if(!response.ok)throw Error();const value=await response.json();if(!validVwapSeed(value,request,basisDate))throw Error();
             if(needsMoments&&value.volume>0&&!value.moments){seedMomentAttempts.set(key,Date.now());while(seedMomentAttempts.size>64)seedMomentAttempts.delete(seedMomentAttempts.keys().next().value!);}
             chartVwapCache.writeSeed(cacheOwner,key,value);
@@ -751,7 +753,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         if (splitsDate === date || splitsPending || Date.now() < splitRetryAt) return;
         splitsPending = true;
         const query = new URLSearchParams({ symbol: ticker, generation: providerKey });
-        void sharedChartFetch(`/api/charts/splits?${query}`, { cache: "no-store", signal: abort.signal })
+        void sharedChartFetch(`${endpoints.splits}?${query}`, { cache: "no-store", signal: abort.signal })
           .then(async response => {
             if (!response.ok) throw Error("split_history_unavailable");
             const result = await response.json();
@@ -994,7 +996,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           const before = nextBefore;
           // Journal focus and VWAP still need the legacy minute and calendar inputs.
           const journalNeedsBaseHistory = () => Boolean(activeTradeContext || focusingJournal || journalEngineBridge.getFocus());
-          const archiveWindow = !unadjusted && !showOvernight && !journalNeedsBaseHistory() &&
+          const archiveWindow = !broker && !unadjusted && !showOvernight && !journalNeedsBaseHistory() &&
             !studies.some(study => study.indicator.type === "VWAP")
             ? chartArchiveWindow(before, timeframe, preferences) : null;
           if (archiveWindow) {
@@ -1123,7 +1125,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         params.set("generation", providerKey);
         overnightPending.add(query);
         const requestedAt = overnightRevision;
-        void sharedChartFetch(`/api/screeners/charts/bars?${params}`, { signal: abort.signal, credentials: "same-origin" })
+        void sharedChartFetch(`${endpoints.bars}?${params}`, { signal: abort.signal, credentials: "same-origin" })
           .then(async response => {
             if (response.status === 404) { overnightUnavailable = true; return; }
             if (!response.ok || disposed) return;
@@ -1224,7 +1226,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         }
       };
       if (!activeTradeContext) {
-      source = sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily ? "1" : "0"}&${providerQuery}${showOvernight ? "&overnight=1" : ""}`, daily);
+      source = sharedChartStream(`${endpoints.stream}?symbol=${encodeURIComponent(ticker)}&daily=${daily ? "1" : "0"}&${providerQuery}${showOvernight ? "&overnight=1" : ""}${broker && unadjusted ? "&adjustment=raw" : ""}`, daily);
       source.addEventListener("status", event => {
         if (disposed) return;
         const state = JSON.parse((event as MessageEvent).data).state;
@@ -1266,7 +1268,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       }
       if(!calendarFrame&&studies.some(study=>study.indicator.type==='VWAP'&&((study.indicator.calculationTimeframe??vwapDisplayFrame)==='1D')!==daily)){
         const daily=!usesDailyCandles(timeframe);
-        auxiliarySource=sharedChartStream(`/api/screeners/charts/stream?symbol=${encodeURIComponent(ticker)}&daily=${daily?'1':'0'}&${providerQuery}`, daily);
+        auxiliarySource=sharedChartStream(`${endpoints.stream}?symbol=${encodeURIComponent(ticker)}&daily=${daily?'1':'0'}&${providerQuery}`, daily);
         auxiliarySource.addEventListener('bar',event=>{
           if(disposed)return;
           const message=JSON.parse((event as MessageEvent).data) as {bar:Candle;daily:boolean};
@@ -1337,7 +1339,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready, priceAdjustment, unadjusted, archiveDailyStartup]);
+  }, [logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready, broker, endpoints, priceAdjustment, unadjusted, archiveDailyStartup]);
 
   useEffect(() => {
     if (!activeTradeContext || !ready) return;
@@ -1346,6 +1348,19 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   }, [activeTradeContext, focusScope, journalEngineBridge, ready, ticker, timeframe, tradeFocusRevision]);
 
   const mainToolbar = viewWorkspace === "main";
+  const preferenceButtonHeight = compact ? compactToolbarHeight : mainToolbar ? 34 : 44;
+  const preferencesButtons = <>
+    <IconButton size="small" aria-label="Chart settings" title="Chart settings" aria-haspopup="dialog"
+      disabled={!ready} onClick={() => openPreferences("settings")}
+      sx={{ width: 44, height: preferenceButtonHeight, flexShrink: 0 }}>
+      <SettingsOutlined fontSize="small" />
+    </IconButton>
+    <IconButton size="small" aria-label="Indicators" title="Indicators" aria-haspopup="dialog"
+      disabled={!ready} onClick={() => openIndicators()}
+      sx={{ width: compact || !mainToolbar ? 44 : 34, height: preferenceButtonHeight, flexShrink: 0 }}>
+      <NetworkCheck fontSize="small" />
+    </IconButton>
+  </>;
   const multiviewButton = onOpenMultiview && (
     <IconButton size="small" aria-label="Open Multiview for this chart view" title="Multiview" aria-haspopup="dialog" disabled={!ready}
       onClick={onOpenMultiview} sx={{ width: compact ? 44 : 34, height: compact ? compactToolbarHeight : 34, flexShrink: 0 }}>
@@ -1383,10 +1398,14 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       <Box data-chart-identity sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: "1 1 32px", minWidth: 0 }}>
         {chartIdentity ?? <Typography noWrap sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700, flexShrink: 0, maxWidth: "100%" }}>{ticker}</Typography>}
       </Box>
-      <Button aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
-        sx={{ minWidth: 44, height: compactToolbarHeight, px: 0.5, flexShrink: 0 }}>{timeframe}</Button>
-      <IconButton aria-label={`${ticker} chart options`} aria-haspopup="menu" onClick={event => setMenuAnchor(event.currentTarget)}
-        sx={{ width: 44, height: compactToolbarHeight, flexShrink: 0 }}><SettingsOutlined fontSize="small" /></IconButton>
+      <Button variant="outlined" color="inherit" endIcon={<KeyboardArrowDown fontSize="small" />}
+        aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" aria-expanded={Boolean(frameAnchor)}
+        onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
+        sx={{ minWidth: 56, height: compactToolbarHeight, px: 0.75, flexShrink: 0, textTransform: "none",
+          color: "text.primary", borderColor: "divider", gap: 0.25, "& .MuiButton-endIcon": { m: 0 } }}>
+        {timeframe}
+      </Button>
+      {preferencesButtons}
       {evidenceButtons}
       {drawingToolbar}
       {journalButton}
@@ -1396,12 +1415,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     </Stack> : <>    <Stack direction="row" sx={{ alignItems: "center", gap: 0.25, px: 0.5, minHeight: 27, flexWrap: "wrap" }}>
       <Typography sx={{ color:dark?"warning.main":"#354358",fontSize: 11, fontWeight: 700, mr: 0.5 }}>{ticker}</Typography>
       {CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
-      <IconButton size="small" disabled={!ready} aria-label="Chart options" aria-haspopup="menu"
-        onClick={event=>setMenuAnchor(event.currentTarget)} sx={{minWidth:44,minHeight:mainToolbar?34:44}}><SettingsOutlined fontSize="small"/></IconButton>
-      <IconButton size="small" aria-label="Indicators" title="Indicators" aria-haspopup="dialog"
-        disabled={!ready} onClick={()=>openIndicators()} sx={{width:mainToolbar?34:44,height:mainToolbar?34:44}}>
-        <NetworkCheck fontSize="small"/>
-      </IconButton>
+      {preferencesButtons}
       {evidenceButtons}
       {drawingToolbar}
       {journalButton}
@@ -1415,11 +1429,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     {compact ? <Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}>
       {CHART_TIMEFRAMES.map(value => <MenuItem key={value} selected={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => { if (onTimeframeChange) onTimeframeChange(value); else setActiveTimeframe(value); setFrameAnchor(null); }}>{value}</MenuItem>)}
     </Menu> : null}
-    <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
-      {compact&&<MenuItem disabled={!ready} onClick={() => { setFrameAnchor(menuAnchor); setMenuAnchor(null); }}>Timeframe</MenuItem>}
-      {compact&&<MenuItem disabled={!ready} onClick={() => { openIndicators(); setMenuAnchor(null); }}>Indicators</MenuItem>}
-      <MenuItem disabled={!ready} onClick={() => { openPreferences("settings"); setMenuAnchor(null); }}>Chart settings</MenuItem>
-    </Menu>
+    {marketData.message && <Typography role="status" sx={{ px: 1, fontSize: 11 }}>{marketData.message}</Typography>}
     {drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
     {activeTradeContext && journal.status && !journal.current?.open && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>{journal.status}</Typography>}

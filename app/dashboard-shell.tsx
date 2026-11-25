@@ -407,6 +407,8 @@ function DashboardShellContent({
   screenersDashboardAccess = false,
   chartsDashboardAccess = false,
   tradingWorkspaceDashboardAccess = false,
+  brokerWorkspaceAccess = false,
+  tradingWorkspaceAdminAccess = false,
   watchlistMemberNavigationAccess = false,
   ownerMarketDataAccess = false,
   generalMarketNewsAccess = false,
@@ -427,6 +429,8 @@ function DashboardShellContent({
   screenersDashboardAccess?: boolean;
   chartsDashboardAccess?: boolean;
   tradingWorkspaceDashboardAccess?: boolean;
+  brokerWorkspaceAccess?: boolean;
+  tradingWorkspaceAdminAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
   ownerMarketDataAccess?: boolean;
   generalMarketNewsAccess?: boolean;
@@ -438,7 +442,7 @@ function DashboardShellContent({
   const theme = useTheme();
   const pathname = usePathname();
   const chartWorkspacePage = pathname === "/charts";
-  const compactMarketPage = chartWorkspacePage || ["/trading-workspace", "/scanners", "/screeners", "/admin/scanners"].includes(pathname);
+  const compactMarketPage = chartWorkspacePage || ["/trading-workspace", "/trading-workspace/broker", "/scanners", "/screeners", "/admin/scanners"].includes(pathname);
 
   const [loadedUnreadCounts, setLoadedUnreadCounts] = useState<{
     pathname: string; counts: PressReleaseUnreadCounts;
@@ -553,6 +557,8 @@ function DashboardShellContent({
               (item.href !== "/private-watchlist" || watchlistAdminNavigationAccess) &&
               (item.href !== "/scanners" || scannerDashboardAccess) &&
               (item.href !== "/trading-workspace" || tradingWorkspaceDashboardAccess) &&
+              (item.href !== "/trading-workspace/broker" || brokerWorkspaceAccess) &&
+              (item.href !== "/admin/trading-workspace" || tradingWorkspaceAdminAccess) &&
               (item.href !== "/screeners" || screenersDashboardAccess) &&
               (item.href !== "/charts" || chartsDashboardAccess) &&
               (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess) &&

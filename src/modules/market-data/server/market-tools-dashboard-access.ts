@@ -6,6 +6,8 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { isCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { hasMarketToolDashboardAdmission, readMarketToolMembershipAccess } from "@/src/modules/platform/server/membership/membership-market-tool-access";
 import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
+import { readWorkspaceMarketSettings } from "./workspace-market-settings-store";
+import { workspaceAudienceAllows, type WorkspaceMarketSettings } from "../workspace-market-settings";
 
 export const SCANNER_DASHBOARD_SUBJECTS = "TRADERLINK_SCANNER_DASHBOARD_DISCORD_SUBJECT";
 export const STOCK_SCREENERS_DASHBOARD_SUBJECTS = "TRADERLINK_STOCK_SCREENERS_DASHBOARD_DISCORD_SUBJECT";
@@ -25,9 +27,18 @@ type MarketToolsDashboardAccess = Readonly<{ scanner: boolean; tradingWorkspace:
 
 function reviewAdmission(identity: TraderLinkPlatformRequestIdentity, environment: NodeJS.ProcessEnv): boolean | undefined {
   if (environment[MARKET_TOOLS_ACCESS_MODE] === "standard") return;
+  return isTradingWorkspaceReviewAccount(identity, environment);
+}
+
+function isTradingWorkspaceReviewAccount(identity: TraderLinkPlatformRequestIdentity, environment: NodeJS.ProcessEnv): boolean {
+  if (identity.mode === "local_development") return true;
   const ids = environment[MARKET_TOOLS_REVIEW_USER_IDS]?.split(",").map(id => id.trim()) ?? [];
   return ids.length === 2 && ids.every(isCanonicalUuidV4) && ids[0] !== ids[1] &&
     ids.includes(identity.scope.userId);
+}
+
+export function canOpenBrokerWorkspace(identity: TraderLinkPlatformRequestIdentity, settings: WorkspaceMarketSettings, environment = process.env): boolean {
+  return workspaceAudienceAllows(settings.brokerAudience, isTradingWorkspaceReviewAccount(identity, environment));
 }
 
 function subjects(value: string | undefined): readonly string[] {
@@ -66,8 +77,15 @@ export function readMarketToolsDashboardAccess(
   if (identity.mode === "local_development") return { scanner: true, tradingWorkspace: true };
 
   const environment = options.environment ?? process.env;
+  let workspaceRollout: boolean | undefined;
+  try {
+    const settings = readWorkspaceMarketSettings(environment);
+    if (settings.revision > 0) workspaceRollout =
+      workspaceAudienceAllows(settings.currentAudience, isTradingWorkspaceReviewAccount(identity, environment));
+  }
+  catch { /* Preserve existing admission if the optional settings are unavailable. */ }
   const review = reviewAdmission(identity, environment);
-  if (review !== undefined) return { scanner: review, tradingWorkspace: review };
+  if (review !== undefined) return { scanner: review, tradingWorkspace: workspaceRollout ?? review };
   const legacy = environment[LEGACY_PILOT_SUBJECTS];
   const scanner = subjects(environment[SCANNER_DASHBOARD_SUBJECTS] ?? legacy);
   const tradingWorkspace = subjects(environment[TRADING_WORKSPACE_DASHBOARD_SUBJECTS] ?? legacy);
@@ -78,7 +96,7 @@ export function readMarketToolsDashboardAccess(
     return {
       scanner: admitsMarketTool(database, userId, "scanners.access", scanner.some(subject => active.has(subject)),
         () => hasMarketToolDashboardAdmission(database, identity, environment)),
-      tradingWorkspace: tradingWorkspace.some(subject => active.has(subject)),
+      tradingWorkspace: workspaceRollout ?? tradingWorkspace.some(subject => active.has(subject)),
     };
   });
 }
@@ -133,4 +151,16 @@ export function hasMarketToolsDashboardReadAccess(
 ): boolean {
   const access = readMarketToolsDashboardAccess(identity, options);
   return access.scanner || access.tradingWorkspace;
+}
+
+/** Shared non-quote reads and account settings are usable in either workspace. */
+export function hasSharedWorkspaceAccess(
+  identity: TraderLinkPlatformRequestIdentity,
+  options: AccessOptions = {},
+): boolean {
+  const environment = options.environment ?? process.env;
+  try {
+    if (canOpenBrokerWorkspace(identity, readWorkspaceMarketSettings(environment), environment)) return true;
+  } catch { /* Existing market-tool access does not depend on optional broker settings. */ }
+  return hasMarketToolsDashboardReadAccess(identity, options);
 }

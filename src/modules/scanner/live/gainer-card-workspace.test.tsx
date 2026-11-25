@@ -36,7 +36,7 @@ const base = {
   activity: { oneMinuteGain: null, fiveMinuteGain: null, oneMinuteVolume: null, oneMinuteDollarVolume: null,
     fiveMinuteVolume: null, fiveMinuteVolumeSpike: null, volumeAcceleration: null },
 } as const;
-const day: LiveScannerRow = { ...base, symbol: "DAY", sessionGain: 120, comparisonPrice: 1, gainBasis: "previous_regular_close" };
+const day: LiveScannerRow = { ...base, symbol: "DAY", dayVolume: 125_000, sessionGain: 120, comparisonPrice: 1, gainBasis: "previous_regular_close" };
 const post: LiveScannerRow = { ...base, symbol: "POST", sessionGain: 10, comparisonPrice: 2, gainBasis: "today_regular_close" };
 const model: ScannerReadModel = { status: "ready", session: "after_hours", tradingDate: "2026-11-19", updatedAtUtc: now,
   universeCount: 2, receivedCount: 2, missingSymbols: [], missingFloatCount: 0, issues: [],
@@ -119,6 +119,14 @@ describe("actual Trading Workspace gainer-card choices", () => {
     expect(card("gainers").textContent).toContain("DAY"); expect(card("gainers").textContent).not.toContain("POST");
     expect(card("momentum").textContent).toContain("POST"); expect(card("momentum").textContent).not.toContain("DAY");
     expect(card("gainers").textContent).toContain("120%"); expect(card("momentum").textContent).toContain("10%");
+    const headers = [...card("gainers").querySelectorAll("thead th")];
+    const volumeIndex = headers.findIndex(cell => cell.textContent === "Vol");
+    expect(volumeIndex).toBeGreaterThan(-1);
+    expect(headers[volumeIndex].classList.contains("MuiTableCell-alignRight")).toBe(true);
+    const volume = card("gainers").querySelectorAll("tbody tr:first-child td")[volumeIndex];
+    expect(volume.textContent).toBe("125K");
+    expect(volume.classList.contains("MuiTableCell-alignRight")).toBe(true);
+    expect(card("momentum").querySelector("thead")?.textContent).toContain("After-hours Vol");
     const menu = await openScannerMenu("gainers");
     expect(menu.querySelector('[role="option"][data-value="live:gainers"]')?.textContent).toBe("Top Gainers");
     expect(menu.querySelector('[role="option"][aria-selected="true"]')?.textContent).toBe("Top Gainers (pre/reg)");

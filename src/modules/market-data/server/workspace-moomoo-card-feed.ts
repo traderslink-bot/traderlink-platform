@@ -1,0 +1,215 @@
+import "server-only";
+
+import type { WorkspaceMarketSettings } from "../workspace-market-settings";
+import type { WorkspaceMoomooBook, WorkspaceMoomooQuote, WorkspaceQuoteSession } from "../workspace-moomoo-quotes";
+import type { WorkspaceMoomooConnection } from "./workspace-moomoo-access";
+import { runWorkspaceRestCards, runWorkspaceWebSocketCards, type WorkspaceCardTransportStatus } from "./workspace-moomoo-card-transport";
+import { RollingActivityBook } from "@/src/modules/scanner/live/activity";
+import { readWorkspaceRelativeVolume, workspaceVolumeThrough } from "./workspace-broker-volume-history";
+
+type QuoteEntry = Readonly<{ quote?: WorkspaceMoomooQuote; book?: WorkspaceMoomooBook }>;
+type CardViewer = {
+  connection: WorkspaceMoomooConnection;
+  symbols: readonly string[];
+  notify(): void;
+};
+
+function mergeQuote(prior: WorkspaceMoomooQuote | undefined, incoming: WorkspaceMoomooQuote): WorkspaceMoomooQuote {
+  if (!prior) return incoming;
+  const [latest, earlier] = incoming.observedAt >= prior.observedAt ? [incoming, prior] : [prior, incoming];
+  const premarketHigh = latest.premarketHigh ?? earlier.premarketHigh;
+  const dayHigh = premarketHigh === null ? latest.dayHigh : Math.max(latest.dayHigh ?? latest.price, premarketHigh);
+  const next = {
+    ...latest, dayHigh, premarketHigh,
+    previousClose: latest.previousClose ?? earlier.previousClose,
+    regularClose: latest.regularClose ?? earlier.regularClose,
+    premarketVolume: latest.premarketVolume ?? earlier.premarketVolume,
+  };
+  return latest === prior && next.dayHigh === prior.dayHigh && next.premarketHigh === prior.premarketHigh &&
+    next.previousClose === prior.previousClose && next.regularClose === prior.regularClose &&
+    next.premarketVolume === prior.premarketVolume ? prior : next;
+}
+
+const processState = globalThis as typeof globalThis & { traderlinkWorkspaceMoomooCardFeeds?: Map<string, WorkspaceMoomooCardFeed> };
+const feeds = processState.traderlinkWorkspaceMoomooCardFeeds ??= new Map<string, WorkspaceMoomooCardFeed>();
+
+class WorkspaceMoomooCardFeed {
+  private viewers = new Set<CardViewer>();
+  private latest = new Map<string, QuoteEntry>();
+  private published = new Map<string, QuoteEntry>();
+  private pending?: ReturnType<typeof setTimeout>;
+  private transport?: AbortController;
+  private sessionKey: string | null = null;
+  private transportKey: string | null = null;
+  private settings?: WorkspaceMarketSettings;
+  private session: WorkspaceQuoteSession | null = null;
+  private status: WorkspaceCardTransportStatus = "connecting";
+  private demanded: readonly string[] = [];
+  private lastPublishAt = 0;
+  private activity = new RollingActivityBook(true);
+  private relativeVolumes = new Map<string, { value: number | null; through: number; retryAt: number }>();
+  private volumeHistoryInProgress = false;
+
+  constructor(private readonly onEmpty: () => void) {}
+
+  attach(connection: WorkspaceMoomooConnection, notify: () => void) {
+    const viewer: CardViewer = { connection, symbols: [], notify };
+    this.viewers.add(viewer);
+    return {
+      update: (symbols: readonly string[], session: WorkspaceQuoteSession | null, settings: WorkspaceMarketSettings) => {
+        if (!this.viewers.has(viewer)) return;
+        viewer.symbols = symbols;
+        this.configure(session, settings);
+      },
+      quote: (symbol: string) => this.published.get(symbol),
+      activity: (symbol: string) => this.activity.metrics(symbol, this.lastPublishAt),
+      relativeVolume: (symbol: string) => {
+        const reading = this.relativeVolumes.get(symbol);
+        return reading?.through === workspaceVolumeThrough(Date.now()) ? reading.value ?? undefined : undefined;
+      },
+      status: () => this.status,
+      close: () => {
+        this.viewers.delete(viewer);
+        if (this.viewers.size === 0) {
+          this.stopTransport();
+          this.onEmpty();
+        } else if (this.settings) {
+          this.configure(this.session, this.settings);
+        }
+      },
+    };
+  }
+
+  private configure(session: WorkspaceQuoteSession | null, settings: WorkspaceMarketSettings) {
+    const sessionKey = session ? JSON.stringify(session) : null;
+    const transportKey = settings.cardTransport === "websocket" ? "websocket"
+      : JSON.stringify(["rest", settings.restBatchSize, settings.restSpacingMs, settings.restPassWaitMs]);
+    const changedTransport = this.sessionKey !== sessionKey || this.transportKey !== transportKey;
+    const changedInterval = this.settings?.cardRefreshMs !== settings.cardRefreshMs;
+    if (this.sessionKey !== sessionKey) this.relativeVolumes.clear();
+    this.sessionKey = sessionKey;
+    this.transportKey = transportKey;
+    this.session = session;
+    this.settings = settings;
+    this.demanded = [...new Set([...this.viewers].filter(viewer => viewer.connection.current()).flatMap(viewer => viewer.symbols))];
+    const active = new Set(this.demanded);
+    this.activity.retain(this.demanded);
+    for (const symbol of this.latest.keys()) {
+      if (!active.has(symbol)) {
+        this.latest.delete(symbol);
+        this.published.delete(symbol);
+      }
+    }
+    if (changedTransport || !session || !this.demanded.length) this.stopTransport();
+    if (changedTransport) {
+      this.latest.clear();
+      this.published.clear();
+      this.activity.clear();
+      this.lastPublishAt = 0;
+      this.status = "connecting";
+    }
+    if (changedInterval) {
+      clearTimeout(this.pending);
+      this.pending = undefined;
+      if (this.latest.size > 0) this.schedulePublish();
+    }
+    if (!session || !this.demanded.length || this.transport) return;
+    const controller = new AbortController();
+    this.transport = controller;
+    const { signal } = controller;
+    const input = {
+      connection: () => [...this.viewers].find(viewer => viewer.connection.current())?.connection,
+      symbols: () => this.demanded,
+      context: session, settings, signal,
+      status: (value: WorkspaceCardTransportStatus) => {
+        if (!signal.aborted && this.status !== value) {
+          this.status = value;
+          this.notify();
+        }
+      },
+      accept: (symbol: string, quote: WorkspaceMoomooQuote | null, book: WorkspaceMoomooBook | null) => {
+        if (signal.aborted || !this.demanded.includes(symbol)) return;
+        const previous = this.latest.get(symbol) ?? {};
+        const nextQuote = quote ? mergeQuote(previous.quote, quote) : previous.quote;
+        const nextBook = book && (!previous.book || book.observedAt >= previous.book.observedAt) ? book : previous.book;
+        if (previous.quote === nextQuote && previous.book === nextBook) return;
+        if (nextQuote && (!previous.quote || quote && quote.observedAt >= previous.quote.observedAt)) {
+          this.activity.observe({
+            provider: "moomoo", symbol, company: symbol, session: session.session, tradingDate: session.date,
+            providerAt: nextQuote.observedAt, receivedAt: Date.now(), price: nextQuote.price, baseline: nextQuote.previousClose,
+            volume: session.session === "premarket" ? nextQuote.premarketVolume
+              : session.session === "regular" ? nextQuote.regularVolume : nextQuote.postMarketVolume,
+            dollarVolume: nextQuote.sessionTurnover, bid: null, ask: null, marketCap: null,
+            dayHigh: nextQuote.dayHigh ?? nextQuote.price, dayLow: nextQuote.dayLow ?? nextQuote.price, providerVolumeRatio: null,
+          });
+        }
+        this.latest.set(symbol, { quote: nextQuote, book: nextBook });
+        this.schedulePublish();
+        if (nextQuote) void this.primeRelativeVolume(input.connection, session, signal);
+      },
+    };
+    const run = settings.cardTransport === "websocket" ? runWorkspaceWebSocketCards : runWorkspaceRestCards;
+    void run(input).catch(() => input.status("unavailable")).finally(() => {
+      if (this.transport === controller) this.transport = undefined;
+    });
+  }
+
+  private stopTransport() {
+    this.transport?.abort();
+    this.transport = undefined;
+    clearTimeout(this.pending);
+    this.pending = undefined;
+  }
+
+  private schedulePublish() {
+    if (this.pending) return;
+    const remaining = (this.settings?.cardRefreshMs ?? 0) - (Date.now() - this.lastPublishAt);
+    if (remaining <= 0) this.publish();
+    else this.pending = setTimeout(() => this.publish(), remaining);
+  }
+
+  private publish() {
+    this.pending = undefined;
+    this.lastPublishAt = Date.now();
+    this.published = new Map(this.latest);
+    this.notify();
+  }
+
+  private notify() {
+    for (const viewer of this.viewers) viewer.notify();
+  }
+
+  private async primeRelativeVolume(connection: () => WorkspaceMoomooConnection | undefined, session: WorkspaceQuoteSession, signal: AbortSignal) {
+    if (this.volumeHistoryInProgress) return;
+    this.volumeHistoryInProgress = true;
+    try {
+      while (!signal.aborted) {
+        const active = connection();
+        const now = Date.now();
+        const through = workspaceVolumeThrough(now);
+        const symbol = this.demanded.find(candidate => {
+          const existing = this.relativeVolumes.get(candidate);
+          return Boolean(this.latest.get(candidate)?.quote &&
+            (existing?.through !== through || existing.retryAt <= now));
+        });
+        if (!active || !symbol) return;
+        const volume = await readWorkspaceRelativeVolume(symbol, session, through, active, signal).catch(() => null);
+        if (signal.aborted) return;
+        this.relativeVolumes.set(symbol, { value: volume, through, retryAt: volume === null ? Date.now() + 300_000 : Infinity });
+        if (this.relativeVolumes.size > 2000) this.relativeVolumes.delete(this.relativeVolumes.keys().next().value!);
+        this.schedulePublish();
+      }
+    } finally {
+      this.volumeHistoryInProgress = false;
+    }
+  }
+}
+
+export function subscribeWorkspaceMoomooCards(key: string, connection: WorkspaceMoomooConnection, notify: () => void) {
+  let feed = feeds.get(key);
+  if (!feed) {
+    feed = new WorkspaceMoomooCardFeed(() => feeds.delete(key));
+    feeds.set(key, feed);
+  }
+  return feed.attach(connection, notify);
+}

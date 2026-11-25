@@ -76,6 +76,23 @@ describe("durable Moomoo attention episodes", () => {
       expect(f.repo.find(f.scopes[0]!)!.state).toBe("active");expect(count(f.db,"platform_notifications")).toBe(0);
     } finally {f.db.close();}
   });
+  it("keeps the authorization identity on token refresh and changes it on a new connection", () => {
+    const fixtureData = fixture();
+    try {
+      const scope = fixtureData.scopes[0]!;
+      const saved = fixtureData.authorize();
+      const authorization = fixtureData.repo.latestAuthorizationId(scope, saved.connectionId);
+      expect(authorization).toBeTruthy();
+      expect(fixtureData.repo.latestAuthorizationId(fixtureData.scopes[1]!, saved.connectionId)).toBeNull();
+      fixtureData.repo.saveAuthorized(scope, {
+        encrypted: { ...saved.encrypted, ciphertext: "d".repeat(32) }, authorizedScopes: saved.authorizedScopes,
+        timestamp: at, accessTokenExpiresAtUtc: at, expectedCredentialCiphertext: saved.encrypted.ciphertext,
+      });
+      expect(fixtureData.repo.latestAuthorizationId(scope, saved.connectionId)).toBe(authorization);
+      fixtureData.authorize(0, at, "e".repeat(32));
+      expect(fixtureData.repo.latestAuthorizationId(scope, saved.connectionId)).not.toBe(authorization);
+    } finally { fixtureData.db.close(); }
+  });
   it("rolls back transition and episode if notification creation fails", () => {
     const f=fixture();try {f.authorize();f.db.exec(`CREATE TRIGGER qa_reject_notification BEFORE INSERT ON platform_notifications WHEN NEW.recipient_user_id='${f.scopes[1]!.userId}' BEGIN SELECT RAISE(ABORT,'synthetic failure'); END;`);
       expect(()=>f.repo.markReauthorizationRequired(f.scopes[0]!,at)).toThrow("synthetic failure");

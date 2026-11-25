@@ -48,8 +48,8 @@ function MetricColumns({rows}:{rows:readonly (readonly [string,ReactNode])[]}){
   </Box>;
 }
 
-export function CompanyDetails({company,news,technicalSample,levels,chart}:{
-  company:Company;news:News[];technicalSample?:CompanyTechnicals;levels?:ReactNode;chart?:ReactNode;
+export function CompanyDetails({company,news,technicalSample,levels,chart,broker=false}:{
+  company:Company;news:News[];technicalSample?:CompanyTechnicals;broker?:boolean;levels?:ReactNode;chart?:ReactNode;
 }){
   const [tab,setTab]=useState<CompanyTab>("technicals");
   const [limit,setLimit]=useState(10);
@@ -86,11 +86,15 @@ export function CompanyDetails({company,news,technicalSample,levels,chart}:{
   const rowsFor=(market:boolean)=>metrics
     .filter(([key])=>!/^52week(?:high|low)(?:date)?$/i.test(key)&&!averageVolumeKeys.some(volumeKey=>volumeKey===key)&&marketMetric.test(key)===market && !(key==="marketCapitalization"&&typeof profile?.marketCapitalization==="number"))
     .map(([key,value])=>[humanize(key),typeof value==="number"?number.format(value):String(value)] as const);
-  const technicals=rowsFor(true);
+  const technicals=broker?[]:rowsFor(true);
   const financialMetrics=rowsFor(false);
+  const brokerProfileFacts = broker ? {
+    float: typeof profile?.floatingShare === "number" ? profile.floatingShare * 1_000_000 : null,
+    marketCap: typeof profile?.marketCapitalization === "number" ? profile.marketCapitalization * 1_000_000 : null,
+  } : undefined;
   const visible=tab==="filings"?company.filings:news;
   return <Stack spacing={1.5} sx={{minWidth:0}}>
-    <CompanyTechnicalsPanel key={company.symbol} symbol={company.symbol} sample={technicalSample} active={tab==="technicals"}
+    <CompanyTechnicalsPanel key={company.symbol} symbol={company.symbol} sample={technicalSample} broker={broker} brokerProfileFacts={brokerProfileFacts} active={tab==="technicals"}
       inDrawer={Boolean(chart)} averageVolumes={averageVolumes}
       header={(latestPrice, change)=><>
         <Stack direction="row" sx={theme=>({alignItems:"baseline",gap:1,flexWrap:"wrap",...theme.applyStyles("dark",{"& .company-identity":{color:"#fff"}})})}>

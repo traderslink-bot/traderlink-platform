@@ -2,6 +2,7 @@ import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {mkdirSync,mkdtempSync,rmSync,writeFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
 const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true,sharedChart:true,activeAccount:'',journalAllowed:true}));
 vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasSharedChartDataAccess:()=>setup.sharedChart}));
+vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({hasSharedWorkspaceAccess:()=>false}));
 vi.mock('@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access',()=>({hasWatchlistDashboardNavigationAccess:()=>setup.privateChart}));
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!setup.user)throw Error('unauthenticated');return {mode:'platform_session',scope:{userId:setup.user,activeAccountId:setup.activeAccount}};},currentJournalAccountSelectionRef:(scope:{activeAccountId:string})=>'ref-'+scope.activeAccountId}));
 vi.mock('@/src/modules/platform/server/database/open-readonly-platform-database',()=>({withReadonlyPlatformDatabase:(_:unknown,read:(db:unknown)=>unknown)=>read({})}));

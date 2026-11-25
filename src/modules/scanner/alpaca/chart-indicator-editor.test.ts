@@ -19,9 +19,12 @@ it('keeps the account-wide overlay setting separate and confirms before saving',
    defaultPriceScaleLabels:false,display:{},
    onDisplayChange:vi.fn(),onAccountDisplayChange:vi.fn(),
   })));
-  const scope=host.querySelector('[role="radiogroup"][aria-label="Apply indicator changes to"]')!;
-  expect([...scope.querySelectorAll('label')].map(label=>label.textContent)).toEqual(['TEST chart','All charts']);
-  expect(scope.querySelector<HTMLInputElement>('input[value="current"]')?.checked).toBe(true);
+  const scope = [...host.querySelectorAll('[role="combobox"]')].find(element =>
+   element.getAttribute('aria-labelledby')?.split(' ').some(id => document.getElementById(id)?.textContent === 'Apply to'));
+  expect(scope?.textContent?.replace(/\s+/g, ' ')).toBe('TEST chart');
+  const advanced=host.querySelector<HTMLElement>('summary')!;
+  expect(advanced.textContent).toBe('Line widths');
+  await act(async()=>advanced.click());
   const field=[...host.querySelectorAll('[role="combobox"]')].find(element=>
    element.getAttribute('aria-labelledby')?.split(' ').some(id=>document.getElementById(id)?.textContent==='Line width over candles'))!;
   expect(field.textContent).toBe('1 px');

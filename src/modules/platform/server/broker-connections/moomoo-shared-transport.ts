@@ -47,24 +47,32 @@ export class MoomooSharedTransport {
     fetcher: typeof fetch = fetch, maximumWaitMs = 60_000): Promise<Response> {
     return new Promise<Response>((resolve,reject) => {
       const started = this.now();
-      this.queue.push({ priority, sequence: this.sequence++, run: async () => {
+      const entry: QueueEntry = { priority, sequence: this.sequence++, run: async () => {
         try {
+          init?.signal?.throwIfAborted();
           await this.load();
           for (;;) {
+            init?.signal?.throwIfAborted();
             const now = this.now();
             if (now-started > maximumWaitMs) throw Error("moomoo_shared_budget_timeout");
             const decision = admitMoomooRequest(this.state!,{ now, priority, scannerQueued: this.queue.some(entry => entry.priority === "scanner") });
             this.state = decision.state;
             if (decision.allowed) break;
+            if (this.queue.some(waiting => PRIORITY[waiting.priority] < PRIORITY[priority])) {
+              this.queue.push(entry);
+              return;
+            }
             await this.persist(); await (this.input.pause ?? sleep)(Math.max(1,Math.min(decision.retryAt-this.now(),1000)));
           }
           await this.persist();
+          init?.signal?.throwIfAborted();
           const response = await fetcher(url,init);
           const now = this.now();
           this.state = response.status === 429 ? recordMoomoo429(this.state!,now,retryAfter(response,now)) : recordMoomooAccepted(this.state!);
           await this.persist(); resolve(response);
         } catch (error) { reject(error); }
-      }});
+      }};
+      this.queue.push(entry);
       void this.pump();
     });
   }

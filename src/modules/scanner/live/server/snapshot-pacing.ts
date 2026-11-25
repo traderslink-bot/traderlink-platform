@@ -17,7 +17,7 @@ export async function pacedSnapshotPass<T>(
 ): Promise<T[]> {
   const now = options.now ?? Date.now;
   const pause = options.pause ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)));
-  if (!Number.isInteger(options.spacingMs) || options.spacingMs < 500 || options.spacingMs > 5000) throw Error("scanner_snapshot_spacing_invalid");
+  if (!Number.isInteger(options.spacingMs) || options.spacingMs < 500 || options.spacingMs > 2_147_483_647) throw Error("scanner_snapshot_spacing_invalid");
   const results: T[] = [];
   let previousStart: number | null = null;
   for (const symbols of batches) {

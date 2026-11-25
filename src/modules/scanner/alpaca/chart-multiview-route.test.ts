@@ -2,7 +2,7 @@ import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
 const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true,ordinaryChart:true}));
 vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasChartsDashboardAccess:()=>setup.ordinaryChart}));
-vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({hasMarketToolsDashboardReadAccess:()=>setup.privateChart}));
+vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({hasSharedWorkspaceAccess:()=>setup.privateChart}));
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!setup.user)throw Error('unauthenticated');return {scope:{userId:setup.user}};}}));
 vi.mock('@/src/modules/platform/server/authentication/platform-mutation-request-security',()=>({requirePlatformMutationRequest:()=>{if(!setup.allowed)throw Error('csrf');}}));
 vi.mock('@/src/modules/platform/server/database/platform-database-config',()=>({resolvePlatformDatabaseConfig:()=>({databasePath:join(setup.directory,'test.sqlite')})}));

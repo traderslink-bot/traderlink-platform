@@ -197,6 +197,7 @@ const PLATFORM_DASHBOARD_PAGE_MODULES = [
   "app/(dashboard)/admin/scanners/audit/page.tsx",
   "app/(dashboard)/admin/scanners/candle-history/page.tsx",
   "app/(dashboard)/admin/scanners/page.tsx",
+  "app/(dashboard)/admin/trading-workspace/page.tsx",
   "app/(dashboard)/admin/watchlist/page.tsx",
   "app/(dashboard)/ai-chat/page.tsx",
   "app/(dashboard)/ai-reviews/benchmark-preview/page.tsx",
@@ -238,6 +239,7 @@ const PLATFORM_DASHBOARD_PAGE_MODULES = [
   "app/(dashboard)/trade-tracker/swings/[positionRef]/page.tsx",
   "app/(dashboard)/trade-tracker/swings/page.tsx",
   "app/(dashboard)/trading-workspace/page.tsx",
+  "app/(dashboard)/trading-workspace/broker/page.tsx",
   "app/(dashboard)/home/page.tsx",
 ] as const;
 
@@ -412,6 +414,7 @@ const PLATFORM_SCOPED_API_ROUTES = [
   ["app/api/admin/journal/users/[userRef]/detail-access/route.ts", ["POST"], "owner_mutation"],
   ["app/api/admin/journal/users/route.ts", ["GET", "POST"], "owner_mutation"],
   ["app/api/admin/scanners/candle-history/route.ts", ["GET", "POST", "PUT"], "owner_mutation"],
+  ["app/api/admin/trading-workspace/route.ts", ["GET", "PUT"], "owner_mutation"],
   ["app/api/admin/screeners/audit/control/route.ts", ["DELETE", "GET", "POST"], "owner_mutation"],
   ["app/api/admin/screeners/floats/route.ts", ["GET"], "owner_read"],
   ["app/api/admin/screeners/manual-tickers/route.ts", ["DELETE", "GET", "POST"], "owner_mutation"],
@@ -439,10 +442,15 @@ const PLATFORM_SCOPED_API_ROUTES = [
   ["app/api/platform/notes/session-summary/[sessionDate]/route.ts", ["GET"], "owner_read"],
   ["app/api/platform/owner-market-data/route.ts", ["GET", "POST"], "owner_mutation"],
   ["app/api/scanners/evidence/route.ts", ["GET"], "owner_read"],
+  ["app/api/scanners/saved/route.ts", ["GET", "POST"], "owner_mutation"],
   ["app/api/screeners/charts/bars/route.ts", ["GET"], "owner_read"],
   ["app/api/screeners/charts/stream/route.ts", ["GET"], "owner_read"],
   ["app/api/screeners/live/route.ts", ["GET"], "owner_read"],
   ["app/api/stock-screeners/route.ts", ["GET", "POST"], "owner_mutation"],
+  ["app/api/trading-workspace/broker/charts/[resource]/route.ts", ["GET"], "owner_read"],
+  ["app/api/trading-workspace/broker/company-technicals/route.ts", ["GET"], "owner_read"],
+  ["app/api/trading-workspace/broker/saved-scans/route.ts", ["GET", "POST"], "owner_mutation"],
+  ["app/api/trading-workspace/broker/scanner/route.ts", ["GET"], "owner_read"],
 ] as const;
 
 const PLATFORM_CRON_ROUTES = [
