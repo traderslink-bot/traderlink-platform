@@ -65,6 +65,8 @@ jobs:
           printf '%s\n' "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" > /data/.level-analysis-e2e-owner
 
       - name: Build production application
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
         run: npm run build
 
       - name: Run seeded browser flow with loopback-only networking
