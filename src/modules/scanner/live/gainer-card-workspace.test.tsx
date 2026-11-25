@@ -5,6 +5,8 @@ import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTraderMaterialTheme } from "@/app/mui-theme";
 import { SAVED_SCAN_STREAM_PATH } from "../custom/definition";
+import { DEFAULT_DECLINE_CONTROLS } from "./declines";
+import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "./premarket-pullbacks";
 import type { LiveScannerRow, ScannerReadModel } from "./contracts";
 import { DEFAULT_CHART_PREFERENCES } from "../alpaca/chart-preferences";
 import { EMPTY_MULTIVIEW } from "../alpaca/chart-multiview";
@@ -122,10 +124,10 @@ describe("actual Trading Workspace gainer-card choices", () => {
     const headers = [...card("gainers").querySelectorAll("thead th")];
     const volumeIndex = headers.findIndex(cell => cell.textContent === "Vol");
     expect(volumeIndex).toBeGreaterThan(-1);
-    expect(headers[volumeIndex].classList.contains("MuiTableCell-alignRight")).toBe(true);
+    expect(headers[volumeIndex].classList.contains("MuiTableCell-alignLeft")).toBe(true);
     const volume = card("gainers").querySelectorAll("tbody tr:first-child td")[volumeIndex];
     expect(volume.textContent).toBe("125K");
-    expect(volume.classList.contains("MuiTableCell-alignRight")).toBe(true);
+    expect(volume.classList.contains("MuiTableCell-alignLeft")).toBe(true);
     expect(card("momentum").querySelector("thead")?.textContent).toContain("After-hours Vol");
     const menu = await openScannerMenu("gainers");
     expect(menu.querySelector('[role="option"][data-value="live:gainers"]')?.textContent).toBe("Top Gainers");
@@ -226,4 +228,68 @@ describe("actual Trading Workspace gainer-card choices", () => {
     expect(restored.portrait.layouts[0].layout.gainerAutoSwitch).toEqual({ gainers: false });
     expect(restored.landscape.layouts[0].layout.gainerAutoSwitch).toBeUndefined();
   });
+});
+
+const spacingSlots = ["gainers", "top-losers", "high-drops", "momentum", "breakouts"] as const;
+
+async function mountSpacingFixture(view: "table" | "cards", saved = false) {
+  const scanId = "abcde000-1234-5678-9abc-abcde0000000";
+  if (saved) {
+    const normalRead = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation((input, options) => {
+      if (String(input) !== SAVED_SCAN_STREAM_PATH) return normalRead(input, options);
+      const frame = { revision: 1, scans: [{ id: scanId, name: "Saved fixture" }], results: {
+        [scanId]: { state: "ready", result: { status: "open", total: 1, eligible: 1, incomplete: 0,
+          updatedAt: Date.parse(now), rows: [{ ...day, dayChange: 4, belowHigh: null, sortValue: 10, matches: [] }] } },
+      } };
+      return Promise.resolve(new Response(new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(JSON.stringify(frame) + "\n"));
+          options?.signal?.addEventListener("abort", () => controller.close(), { once: true });
+        },
+      })));
+    });
+  }
+  localStorage.setItem(desktopKey, JSON.stringify({ active: "Spacing", layouts: [{
+    name: "Spacing", rectangles: tileToCards(defaultTile),
+    views: Object.fromEntries(spacingSlots.map(slot => [slot, view])),
+    ...(saved ? { savedScanIds: { breakouts: scanId } } : {}),
+  }] }));
+  await mount({
+    ...model,
+    session: "regular",
+    gainers: { rows: [day], total: 1, focus: [] },
+    momentum: { rows: [day], total: 1, focus: [], momentumSections: {
+      confirmed: [day], early: [], confirmedTotal: 1, earlyTotal: 0,
+    } },
+    declines: { rapid: [], rapidTotal: 0, loserTotal: 1, controls: DEFAULT_DECLINE_CONTROLS,
+      losers: [{ ...day, changePercent: -4, comparisonPrice: 2.3 }] },
+    premarketPullbacks: { total: 1, missingReferenceCount: 0, controls: DEFAULT_PREMARKET_PULLBACK_CONTROLS,
+      rows: [{ ...day, changePercent: -4, referenceSession: "regular", referenceHigh: 2.3,
+        premarketHigh: null, regularHigh: 2.3, postMarketHigh: null, premarketVolume: null,
+        sessionVolume: 100_000, belowHighPercent: 4, backToHighPercent: 4.5,
+        oneMinuteVolume: null, fiveMinuteVolume: null }] },
+    breakouts: [{ ...day, breakoutLevel: 2.1, breakoutAtUtc: now, breakoutState: "above" }],
+  });
+}
+
+it.each(["table","cards"] as const)("matches the Workspace scanner header in %s view and retains Confirmed", async view => {
+  await mountSpacingFixture(view);
+  const reference = card("gainers").querySelector("[data-workspace-scanner-header]");
+  expect(reference).not.toBeNull();
+  for (const slot of spacingSlots) {
+    const panel = card(slot);
+    expect(panel.querySelector("[data-workspace-scanner-header]")?.className).toBe(reference?.className);
+    expect(panel.querySelector(view === "table" ? "thead" : "[data-scanner-stock-card]")).not.toBeNull();
+  }
+  expect(card("momentum").querySelector("[data-momentum-sections] h3")?.textContent).toContain("Confirmed");
+});
+
+it.each(["table","cards"] as const)("matches the Workspace saved-scan header in %s view", async view => {
+  await mountSpacingFixture(view, true);
+  const panel = card("breakouts");
+  expect(panel.querySelector("[data-workspace-scanner-header]")?.className)
+    .toBe(card("gainers").querySelector("[data-workspace-scanner-header]")?.className);
+  expect(panel.textContent).toContain("Saved fixture");
+  expect(panel.querySelector(view === "table" ? "thead" : "[data-scanner-stock-card]")).not.toBeNull();
 });

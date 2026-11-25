@@ -2,7 +2,7 @@
 
 import { type WorkspaceDecline, type WorkspaceDeclineResults, workspacePrice as price } from "./broker-workspace-data";
 import { scannerPercent } from "../scanner-number-format";
-import { WorkspaceScannerTitle } from "./workspace-scanner-title";
+import { WorkspaceScannerCardHeader, workspaceScannerTableHeaderSx, WorkspaceScannerTitle } from "./workspace-scanner-title";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
 import { ScannerRowTools, scannerToolColumnSx } from "./scanner-row-tools";
@@ -57,7 +57,7 @@ function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
   return <TableContainer role="region" aria-label="Top Losers list" tabIndex={0}
     sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 190px)":420})}>
     <Table size="small" stickyHeader aria-label="Top Losers stocks"
-      sx={{...scannerStickyTickerSx,tableLayout:"fixed",minWidth:(twoRows?370:414)+62*(volumeColumns.length-1),'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+      sx={{...scannerStickyTickerSx,tableLayout:"fixed",minWidth:(twoRows?370:414)+62*(volumeColumns.length-1),'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& .MuiTableCell-head':workspaceScannerTableHeaderSx}}>
       <TableHead><TableRow>{!twoRows&&<><TableCell sx={scannerToolColumnSx(allowAdd)} aria-label={allowAdd?"Open or add chart and news":"Chart and news"}/></>}<TableCell data-scanner-sticky-ticker sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell><TableCell sx={{width:48}}>Change</TableCell>
         <WorkspaceVolumeHeaders columns={volumeColumns}/><TableCell>Float</TableCell><TableCell>Spread</TableCell>
       {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
@@ -100,7 +100,7 @@ export function DeclinesCard({results,view="table",onViewChange,now=0,notice,ses
   const [full,setFull]=useState(false);
   const viewSettings=onViewChange&&<ScannerViewSettings label="Top Losers" view={view} onViewChange={onViewChange}/>;
   const losersTitle=session==="after_hours"?"Top Losers Post Market":"Top Losers";
-  const title=<Stack direction="row" sx={{alignItems:"flex-start",gap:0.6,minWidth:0}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">{losersTitle}</Typography></WorkspaceScannerTitle>
+  const title=<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">{losersTitle}</Typography></WorkspaceScannerTitle>
     <Tooltip title="Top Losers during premarket and regular hours are calculated from yesterday’s regular-session close. During post-market, they are calculated from today’s regular-session close."><IconButton aria-label="Explain Top Losers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
   </Stack>;
   const contents=(wide:boolean)=><Stack data-scanner-results spacing={1}>
@@ -111,7 +111,7 @@ export function DeclinesCard({results,view="table",onViewChange,now=0,notice,ses
         :<TopLosersTable twoRows={view==="two-rows"} full={wide} rows={results.losers} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>}
   </Stack>;
   return <>
-    <DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}>{title}<Stack direction="row" sx={{alignItems:"center",gap:0.4}}>{viewSettings}<IconButton size="small" aria-label="Open Top Losers full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack></Stack>{contents(false)}</DashboardPanel>
+    <DashboardPanel hideHeader><WorkspaceScannerCardHeader>{title}<Stack direction="row" sx={{alignItems:"center",gap:0.4}}>{viewSettings}<IconButton size="small" sx={{p:0.25}} aria-label="Open Top Losers full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack></WorkspaceScannerCardHeader>{contents(false)}</DashboardPanel>
     <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"Top Losers full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>
       <Stack sx={{p:2,minHeight:0,height:"100dvh"}} spacing={1}>
         <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">{losersTitle}</Typography><Stack direction="row" sx={{alignItems:"center",gap:0.5}}>{viewSettings}<IconButton aria-label="Close Top Losers full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack></Stack>

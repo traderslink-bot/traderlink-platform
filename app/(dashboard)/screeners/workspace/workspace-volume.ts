@@ -1,5 +1,5 @@
 import type { ScannerVolumeBreakdown } from "@/src/modules/scanner/live/contracts";
-import { SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
+import { SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS, scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
 import { isScannerCardSlot, type ScannerCardSlot } from "./workspace-scanner-title";
 
 export const optionalVolumeColumns = SCANNER_SESSION_VOLUME_COLUMNS;
@@ -30,7 +30,7 @@ export function workspaceVolumeValue(row: VolumeRow | undefined, key: VolumeColu
 }
 
 export function workspaceVolumeFacts(row: VolumeRow | undefined): readonly (readonly [string, string])[] {
-  return workspaceVolumeColumns(false, optionalVolumeColumns).map(key => [volumeLabels[key], workspaceVolumeValue(row, key)]);
+  return workspaceVolumeColumns(false, optionalVolumeColumns).map(key => [scannerVolumeLabel(key), workspaceVolumeValue(row, key)]);
 }
 
 export function readCardVolumePreferences(value: unknown): CardVolumePreferences {
@@ -45,5 +45,5 @@ export function readCardVolumePreferences(value: unknown): CardVolumePreferences
 }
 
 export function volumeColumnWidth(column: VolumeColumn): number {
-  return column === "postMarketVolume" ? 86 : 62;
+  return column === "dayVolume" ? 52 : column === "postMarketVolume" ? 86 : 62;
 }

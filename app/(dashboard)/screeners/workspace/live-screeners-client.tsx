@@ -1,6 +1,7 @@
 "use client";
 
 import { scannerPercent, scannerRelativeVolume } from "../scanner-number-format";
+import {WorkspaceChartReplacement} from './workspace-chart-replacement';
 import {useWorkspaceChartLayout} from './use-workspace-chart-layout';
 import {useWorkspaceMobileOrientation} from './use-workspace-mobile-orientation';
 import {useMobileWorkspaceLayout} from './use-mobile-workspace-layout';
@@ -13,7 +14,7 @@ import { ScannerLayoutHandles, ScannerLayoutToolbar, type CardViews, type NamedL
 import { validPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
 import { defaultTile, fromGrid, minimum, validTile } from "./scanner-split-layout";
 import { cardEntries, layoutSize, placeAddedCard, removePresetSpacing, tileToCards, validCardLayout, type CardLayout } from "./scanner-free-layout";
-import { isScannerCardSlot, readCardSavedScanIds, readCardScanners, scannerCardSlots, scannerTitles, WorkspaceScannerTitle, WorkspaceScannerTitleContext, workspaceScannerKind, type CardSavedScanIds, type CardScanners, type ScannerCardSlot } from "./workspace-scanner-title";
+import { isScannerCardSlot, readCardSavedScanIds, readCardScanners, scannerCardSlots, scannerTitles, WorkspaceScannerCardHeader, workspaceScannerTableHeaderSx, WorkspaceScannerTitle, WorkspaceScannerTitleContext, workspaceScannerKind, type CardSavedScanIds, type CardScanners, type ScannerCardSlot } from "./workspace-scanner-title";
 import { useWorkspaceSavedScans } from "./use-workspace-saved-scans";
 import { WorkspaceSavedScanCard } from "./workspace-saved-scan-card";
 import { GainerSwitchControl } from "./gainer-switch-control";
@@ -48,6 +49,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Skeleton from "@mui/material/Skeleton";
+import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Tab from "@mui/material/Tab";
@@ -202,7 +204,11 @@ function MomentumSignalRow({row,colSpan,leftOffset}:{row:WorkspaceStock;colSpan:
 function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop=false,twoRows=false }: { rows: readonly WorkspaceStock[]; screen: ScannerKind; onOpenChart:(row:WorkspaceStock)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; compactDesktop?:boolean; twoRows?:boolean }) {
   const allowAdd=useSideCardChartControls();
   const volumeColumns=useWorkspaceVolumeColumns();
-  const volumeHeaders=volumeColumns.map(key=>({label:scannerVolumeLabel(key, screen === "gainers"),align:"right" as const,width:volumeColumnWidth(key)}));
+  const volumeHeaders=volumeColumns.map(key=>{
+    const primaryDayVolume=key==="dayVolume";
+    return {label:scannerVolumeLabel(key),align:primaryDayVolume?"left" as const:"right" as const,
+      width:volumeColumnWidth(key)};
+  });
   const [expandedSymbol,setExpandedSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(rows);
   const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
@@ -214,7 +220,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
   return <TableContainer aria-label={compactDesktop?`${SCREEN_LABELS[screen]} compact list`:undefined}
     role={compactDesktop?"region":undefined} tabIndex={compactDesktop?0:undefined}
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
-    <Table aria-label={twoRows?`${SCREEN_LABELS[screen]} two-row stocks`:compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,...scannerStickyTickerSx,tableLayout:"fixed",width:headers.reduce((total,header)=>total+header.width,0),minWidth:headers.reduce((total,header)=>total+header.width,0),'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.2,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
+    <Table aria-label={twoRows?`${SCREEN_LABELS[screen]} two-row stocks`:compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,...scannerStickyTickerSx,tableLayout:"fixed",width:headers.reduce((total,header)=>total+header.width,0),minWidth:headers.reduce((total,header)=>total+header.width,0),'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.2,py:0.34 },'& .MuiTableCell-head':workspaceScannerTableHeaderSx }}>
       <colgroup>{headers.map((header,index)=><Box component="col" key={index} sx={!header.label?scannerToolColumnSx(allowAdd):{width:header.width}}/>)}</colgroup>
       <TableHead><TableRow>{headers.map((header,index)=><TableCell data-scanner-sticky-ticker={header.label==="Ticker"?true:undefined} align={"align" in header ? header.align : "left"} aria-label={header.label||(index===0?"Chart, news and details":undefined)} key={`${header.label}-${index}`} sx={!header.label?scannerToolColumnSx(allowAdd):{width:header.width}}>{header.label}</TableCell>)}</TableRow></TableHead>
       <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
@@ -280,7 +286,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
 function Results({ results,screen,onOpenChart,haltByTicker }: { results: WorkspaceScreenResults; screen: ScannerKind; onOpenChart:(row:WorkspaceStock)=>void; haltByTicker:ReadonlyMap<string,ScannerActiveHalt> }) {
   const allowAdd=useSideCardChartControls();
   const volumeColumns=useWorkspaceVolumeColumns();
-  const volumeHeaders=volumeColumns.map(key=>scannerVolumeLabel(key, screen === "gainers"));
+  const volumeHeaders=volumeColumns.map(key=>scannerVolumeLabel(key));
   const [expandedDesktopSymbol,setExpandedDesktopSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(results.rows);
   const showPostGain=screen==="momentum"&&results.rows.some(row=>row.postMarketGain!==undefined);
@@ -296,7 +302,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: Workspa
     <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
       {screen==="gainers"?<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart and news" sx={{ px:"0 !important",...scannerToolColumnSx(allowAdd) }}/>
-        {['Ticker','Price','Gain%',...volumeHeaders,'Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} align={volumeHeaders.includes(label) ? "right" : "left"}>{label}</TableCell>)}
+        {['Ticker','Price','Gain%',...volumeHeaders,'Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} align={label!=="Vol"&&volumeHeaders.includes(label) ? "right" : "left"}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
         <TableCell sx={{ px:"0 !important",...scannerToolColumnSx(allowAdd) }}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>
         <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
@@ -306,7 +312,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: Workspa
         <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell><TableCell><ScannerCountryFlag country={row.country}/></TableCell>
       </TableRow>)}</TableBody></Table>:<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart and news" sx={{ px:"0.125rem !important",...scannerToolColumnSx(allowAdd) }}/>
-        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑',...volumeHeaders,'Float','Spread','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} align={volumeHeaders.includes(label) ? "right" : "left"} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
+        {['Ticker','Price','Day %',...(showPostGain?['Post %']:[]),'1min','5min','1min Vol','5min Vol','1min ↑','5min ↑',...volumeHeaders,'Float','Spread','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} align={label!=="Vol"&&volumeHeaders.includes(label) ? "right" : "left"} title={label==='Day %'?"Change from the previous trading day's regular close":label==='Post %'?"After-hours change from today's regular close":undefined}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=>{const expanded=expandedDesktopSymbol===row.symbol;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol)}
           onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setExpandedDesktopSymbol(current=>current===row.symbol?null:row.symbol);}}}
@@ -681,26 +687,25 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
   },[mobile,desktopLayout,mobileEditor.ready,ownerKey,orientation,mobileEditor.selectedName,mobileLayout.selected]);
 
   const defaultTimeframe=chartPreferences.timeframe;
-  const {layout:pageCharts,change:setPageCharts,ready:pageChartsReady}=useWorkspaceChartLayout(ownerKey);
+  const {layout:pageCharts,change:setPageCharts,ready:pageChartsReady,openTicker:openPageTicker}=useWorkspaceChartLayout(ownerKey);
+  const [pageChartsFull,setPageChartsFull]=useState(false);
+  const [pageReplacement,setPageReplacement]=useState<{symbol:string;layout:ChartMultiview}|null>(null);
+  const activePageReplacement=pageReplacement?.layout===pageCharts?pageReplacement:null;
   const pendingPageTicker=useRef<{symbol:string;owner:string|undefined}|null>(null);
   const pageTicker=pageCharts?selectedChart(pageCharts)?.group.symbol??null:null;
-  const selectPageTicker=useCallback((symbol:string)=>{
+  const selectPageTicker=useCallback((symbol:string,replacePanel?:string)=>{
     if(!pageChartsReady){pendingPageTicker.current={symbol,owner:ownerKey};return;}
     pendingPageTicker.current=null;
-    setPageCharts(current=>{
-      if(!current)return singleChart(symbol,defaultTimeframe);
-      const existing=current.groups.find(group=>group.symbol===symbol);
-      if(existing)return {...current,selectedPanel:existing.panels[0].id};
-      const selected=selectedChart(current);
-      if(!selected)return singleChart(symbol,defaultTimeframe);
-      return {...current,groups:current.groups.map(group=>group.id===selected.group.id?{...group,symbol}:group)};
-    });
+    const result=openPageTicker(symbol,defaultTimeframe,replacePanel);
+    setPageReplacement(result==="choose"&&pageCharts?{symbol,layout:pageCharts}:null);
+    setPageChartsFull(result==="full");
+    if(result!=="opened")return;
     if(mobileTabs)setActiveScanner("ticker-workspace");
     else if(mobile){
       gridRef.current?.querySelector('[data-scanner-workspace-card="ticker-workspace"]')
         ?.scrollIntoView({block:"nearest"});
     }
-  },[defaultTimeframe,mobile,mobileTabs,setPageCharts,pageChartsReady,ownerKey]);
+  },[defaultTimeframe,mobile,mobileTabs,openPageTicker,pageCharts,pageChartsReady,ownerKey]);
   useEffect(()=>{
     if(!pageChartsReady||!pendingPageTicker.current)return;
     const frame=requestAnimationFrame(()=>{
@@ -950,7 +955,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
         sx={{m:0,'& .MuiFormControlLabel-label':{fontSize:"0.75rem"}}}/>)}
     </Box>
     <Box sx={{display:"grid",gridTemplateColumns:{xs:"minmax(0,1fr)",md:"repeat(2,minmax(0,1fr))"},gap:0.5,flex:{md:1},minHeight:0,gridTemplateRows:{md:`repeat(${Math.max(2,Math.ceil(Object.values(workspaceScreenersSelected).filter(Boolean).length/2))},minmax(0,1fr))`},alignItems:"stretch",'& > *':{minWidth:0}}}>
-    {(['gainers','momentum'] as const).filter(kind=>workspaceScreenersSelected[kind]).map(kind=><SidebarScreenerCard key={kind}><DashboardPanel title={SCREEN_LABELS[kind]} action={viewSettings(kind)}>{contents(kind,true,true)}</DashboardPanel></SidebarScreenerCard>)}
+    {(['gainers','momentum'] as const).filter(kind=>workspaceScreenersSelected[kind]).map(kind=><SidebarScreenerCard key={kind}><DashboardPanel hideHeader><WorkspaceScannerCardHeader><Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>{SCREEN_LABELS[kind]}</Box>{viewSettings(kind)}</WorkspaceScannerCardHeader>{contents(kind,true,true)}</DashboardPanel></SidebarScreenerCard>)}
     {workspaceScreenersSelected.declines?<SidebarScreenerCard><DeclinesCard now={checkedAt} view={displayModes["top-losers"]} onViewChange={view=>setDisplayModes(previous=>({...previous,"top-losers":view}))} results={model?.declines} notice={memberNotice} session={model?.session??null} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     {workspaceScreenersSelected.pullbacks?<SidebarScreenerCard><PremarketPullbacksCard now={checkedAt} view={displayModes["high-drops"]} onViewChange={view=>setDisplayModes(previous=>({...previous,"high-drops":view}))} rapid={model?.declines?.rapid} results={model?.premarketPullbacks} notice={memberNotice} haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
     {!scannersOnly&&workspaceScreenersSelected.events?<SidebarScreenerCard><ScreenerPressReleaseBoard compact data={marketEventsData} managedActiveHalts={activeHalts} haltWindow={haltWindow} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={row=>setChartRow({...row,showDetails:true})}/></SidebarScreenerCard>:null}
@@ -1090,14 +1095,14 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
         :kind==="market-events"?<ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts}
           haltWindow={haltWindow} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/>
         :isGainer||kind==="momentum"?(<DashboardPanel hideHeader>
-          <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5,minHeight:22}}>
+          <WorkspaceScannerCardHeader>
             {kind==="momentum"?<WorkspaceScannerTitle><Box component="h2" sx={{fontSize:"0.9rem",fontWeight:850,lineHeight:1.2,m:0}}>Momentum</Box></WorkspaceScannerTitle>:renderGainerTitle(desktopLayout,viewSlot)}
             <Stack direction="row" spacing={0.5} sx={{alignItems:"center",flexShrink:0}}>
           {viewSettings(screen,viewSlot)}
           {admin&&resultsFor(screen,viewSlot)?<Chip label={`${resultsFor(screen,viewSlot)!.total}`} size="small" aria-label={`${resultsFor(screen,viewSlot)!.total} qualifying`}/>:null}
           <IconButton size="small" sx={{p:0.25}} aria-label={`Open ${scannerTitles[kind]} full view`} title={`Open ${scannerTitles[kind]} full view`} onClick={()=>{setFullScannerSlot(viewSlot);setFullScanner(screen);}}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton>
             </Stack>
-          </Stack>
+          </WorkspaceScannerCardHeader>
           {contents(screen,true,false,viewSlot)}
         </DashboardPanel>):
           kind==="top-losers"?<DeclinesCard now={checkedAt} view={modeFor("top-losers",viewSlot)} onViewChange={view=>changeMode("top-losers",view,viewSlot)} results={model?.declines}
@@ -1166,5 +1171,9 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
       </DialogContent>
       <DialogActions><Button onClick={()=>setReplacement(null)}>Cancel</Button></DialogActions>
     </Dialog>
+    <WorkspaceChartReplacement request={activePageReplacement} onClose={()=>setPageReplacement(null)}
+      onReplace={panelId=>{if(activePageReplacement)selectPageTicker(activePageReplacement.symbol,panelId);}}/>
+    <Snackbar open={pageChartsFull} onClose={()=>setPageChartsFull(false)} autoHideDuration={5000}
+      message="Multiview is full. All four charts were kept." />
   </Stack>;
 }

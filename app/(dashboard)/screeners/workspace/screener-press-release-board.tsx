@@ -1,6 +1,6 @@
 "use client";
 
-import { WorkspaceScannerTitle } from "./workspace-scanner-title";
+import { WorkspaceScannerCardHeader, WorkspaceScannerTitle } from "./workspace-scanner-title";
 import { ScannerPageChartButton, ScannerPageTicker } from "./scanner-page-ticker";
 
 import type { ScannerChartTarget } from "../scanner-chart-workspace";
@@ -71,7 +71,7 @@ function shortTime(value:string|null):string{
   return hour&&minute?`${hour}:${minute}`:value;
 }
 function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article:Headline;exchange:"NASDAQ"|"NYSE"|"AMEX"|undefined;float:number|undefined;older:boolean;onOpen:(article:Headline)=>void;onOpenChart?:(row:ScannerChartTarget)=>void}){
-  return <Box sx={{borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:"auto max-content minmax(0,1fr)",
+  return <Box sx={{borderTop:1,borderColor:"divider",display:"grid",gridTemplateColumns:"max-content max-content max-content",width:"max-content",minWidth:"100%",
     alignItems:"center",columnGap:0.5,minHeight:42,px:0.5}}>
     <Stack direction="row" sx={{alignItems:"center",gap:0.7}}>
       {onOpenChart?<ScannerChartLaunchControls row={{symbol:article.ticker,exchange}} onOpenChart={onOpenChart}/>:null}
@@ -85,8 +85,7 @@ function CompactPrRow({article,exchange,float,older,onOpen,onOpenChart}:{article
     <ButtonBase aria-label={`Open ${article.ticker} article: ${article.headline}`} onClick={()=>onOpen(article)}
       sx={{display:"flex",flexDirection:"column",alignItems:"stretch",minWidth:0,minHeight:42,py:0.45,textAlign:"left"}}>
       <Typography color="text.secondary" noWrap sx={{fontSize:"0.6rem",fontWeight:700,lineHeight:1.15}}>{article.marketCap?`Market cap ${article.marketCap}`:"Market cap n/a"} · Float {floatValue(float)}</Typography>
-      <Typography sx={{fontSize:"0.68rem",fontWeight:article.isRead?600:800,lineHeight:1.25,overflow:"hidden",
-        display:"-webkit-box",WebkitBoxOrient:"vertical",WebkitLineClamp:{xs:2,md:1}}}>{article.headline}</Typography>
+      <Typography noWrap sx={{fontSize:"0.68rem",fontWeight:article.isRead?600:800,lineHeight:1.25}}>{article.headline}</Typography>
     </ButtonBase>
   </Box>;
 }
@@ -245,24 +244,28 @@ export function ScreenerPressReleaseBoard({onOpenChart,managedActiveHalts,haltWi
   const selectedDefinition=CHANNELS.find(item=>item.channel===channel)!;
 
   return <><Box data-market-events-fill-card sx={{height:compact?"100%":{xs:"auto",md:"100%"},minHeight:0,overflow:{md:"hidden"},'& > [data-traderlink-platform-dashboard-card="panel"]':{height:compact?"100%":{xs:"auto",md:"100%"}},'& > [data-traderlink-platform-dashboard-card="panel"] > .MuiCardContent-root':{display:"flex",flexDirection:"column",height:compact?"100%":{xs:"auto",md:"100%"},minHeight:0,boxSizing:"border-box",
+      ...(!compact&&{p:1.25,"&:last-child":{pb:1.25}}),
       "& > .MuiBox-root:last-child":{display:"flex",flexDirection:"column",flex:"1 1 auto",minHeight:0,overflow:{md:"hidden"}}}}}><DashboardPanel hideHeader>
-    <Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:0.6,minHeight:22}}>
+    <WorkspaceScannerCardHeader>
       <Stack direction="row" sx={{alignItems:"center",gap:0.4}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">Market Events</Typography></WorkspaceScannerTitle>
         <Tooltip title="Halt alerts clear at the trade resume time, after one hour, or at post-market close, whichever comes first."><IconButton aria-label="Explain Market Events" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip>
       </Stack>
 
-    </Stack>
+    </WorkspaceScannerCardHeader>
     {haltSourceUnavailable && <Typography role="status" color="text.secondary" sx={{fontSize:"0.65rem",mb:0.5}}>Halt status unavailable</Typography>}
-    {active.length?<Box aria-label="Current halts" role="region" sx={theme=>({...scannerScrollStyles(theme),mb:1.25,maxHeight:90,flexShrink:0,overflow:"auto"})}>{active.map(halt=><Stack direction="row" key={halt.id} sx={{alignItems:"center",borderTop:1,borderColor:"divider",gap:0.7,minHeight:30,px:0.5,py:0.35}}>
+    {active.length?<Box aria-label="Current halts" role="region" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),mb:1.25,maxHeight:90,flexShrink:0,overflow:"auto"})}>{active.map(halt=><Stack direction="row" key={halt.id} sx={{alignItems:"center",borderTop:1,borderColor:"divider",gap:0.7,width:"max-content",minWidth:"100%",minHeight:30,px:0.5,py:0.35}}>
       {onOpenChart?<ScannerChartLaunchControls row={{symbol:halt.ticker,exchange:halt.chartExchange??undefined}} onOpenChart={onOpenChart}/>:null}
       <ScannerPageChartButton symbol={halt.ticker} showOnMobile/>
-      <Box sx={{minWidth:48,fontSize:"0.72rem",lineHeight:1.1}}><ScannerPageTicker symbol={halt.ticker}/><Typography color="text.secondary" sx={{fontSize:"0.56rem"}}>{shortTime(halt.haltTimeEt)} ET</Typography></Box>
-      <Typography noWrap sx={{fontSize:"0.65rem",fontWeight:700}}><Box component="span" sx={{color:"error.main",fontWeight:900}}>HALT</Box> · {halt.reasonCode} · Quote {halt.quoteTimeScheduled ? "sched. " : ""}{halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?"error.main":"text.secondary"}}>Trade {halt.tradeTimeScheduled ? "sched. " : ""}{halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Typography>
+      <Box sx={{minWidth:48,fontSize:"0.72rem",lineHeight:1.1}}><ScannerPageTicker symbol={halt.ticker} halted/><Typography color="text.secondary" sx={{fontSize:"0.56rem"}}>{shortTime(halt.haltTimeEt)} ET</Typography></Box>
+      <Typography component="div" noWrap sx={{fontSize:"0.65rem",fontWeight:700,lineHeight:1.1}}>
+        <Box><Box component="span" sx={{color:"error.main",fontWeight:900}}>HALT</Box> · {halt.reasonCode}</Box>
+        <Box>Quote {halt.quoteTimeScheduled ? "sched. " : ""}{halt.quoteTimeEt?`${shortTime(halt.quoteTimeEt)} ET`:"Pending"} · <Box component="span" sx={{color:halt.tradeTimeEt?"error.main":"text.secondary"}}>Trade {halt.tradeTimeScheduled ? "sched. " : ""}{halt.tradeTimeEt?`${shortTime(halt.tradeTimeEt)} ET`:"Pending"}</Box></Box>
+      </Typography>
     </Stack>)}</Box>:null}
     {articles===null?(headlineStatus==="loading"
       ?<Box sx={{display:"grid",minHeight:100,placeItems:"center"}}><CircularProgress aria-label="Loading market events" size={22}/></Box>
       :<Typography role="status" color="text.secondary" sx={{p:1}} variant="body2">Press releases unavailable.</Typography>)
-      :<Box aria-label="Latest PR Scanner releases" role="region" sx={theme=>({...scannerScrollStyles(theme),flex:{xs:"0 0 auto",md:"1 1 0"},maxHeight:{xs:126,md:"none"},minHeight:0,overflowX:"auto",overflowY:"auto"})}>{!compactArticles.length&&<Typography color="text.secondary" sx={{p:1}} variant="body2">No recent press releases.</Typography>}{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);loadChannel("news_filtered");void openArticle(item);}} onOpenChart={onOpenChart}/>)}
+      :<Box aria-label="Latest PR Scanner releases" role="region" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),flex:{xs:"0 0 auto",md:"1 1 0"},maxHeight:{xs:126,md:"none"},minHeight:0,overflowX:"auto",overflowY:"auto"})}>{!compactArticles.length&&<Typography color="text.secondary" sx={{p:1}} variant="body2">No recent press releases.</Typography>}{compactArticles.map(article=><CompactPrRow article={article} exchange={exchangeByTicker[article.ticker]} float={floatByTicker[article.ticker]} key={article.id} older={Boolean(dates&&easternDate(article.publishedAt)!==dates.today)} onOpen={item=>{setDrawerOpen(true);loadChannel("news_filtered");void openArticle(item);}} onOpenChart={onOpenChart}/>)}
         <Box sx={{borderTop:1,borderColor:"divider",px:0.75,py:0.55}}><Link component="button" onClick={()=>{setDrawerOpen(true);void loadChannel("news_filtered");}} sx={{fontSize:"0.7rem"}} type="button" underline="hover">More news</Link></Box></Box>}
     {opening&&!headlinesDenied?<Typography color="text.secondary" role="status" variant="caption">Opening article…</Typography>:null}
   </DashboardPanel></Box>

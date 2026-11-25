@@ -116,8 +116,8 @@ describe("actual Top Gainers pushed model and tab interaction", () => {
     const headers = [...gainerTable().querySelectorAll("thead th")];
     const volumeIndex = headers.findIndex(cell => cell.textContent === "Vol");
     expect(volumeIndex).toBeGreaterThan(-1);
-    expect(headers[volumeIndex].classList.contains("MuiTableCell-alignRight")).toBe(true);
-    expect(gainerTable().querySelectorAll("tbody tr:first-child td")[volumeIndex].classList.contains("MuiTableCell-alignRight")).toBe(true);
+    expect(headers[volumeIndex].classList.contains("MuiTableCell-alignLeft")).toBe(true);
+    expect(gainerTable().querySelectorAll("tbody tr:first-child td")[volumeIndex].classList.contains("MuiTableCell-alignLeft")).toBe(true);
     expect(gainerTable().querySelector("tbody")?.textContent).toContain("400K");
     expect(gainerTable().querySelector("thead")?.textContent).not.toContain("Pre Vol");
 
@@ -462,7 +462,7 @@ describe("alternative stock card view", () => {
     expect(page.container.querySelector('table[aria-label="Momentum compact stocks"]')).not.toBeNull();
     await switchView(page.container,"Momentum","Cards");
     const momentum=page.container.querySelector('[aria-label="Momentum stock cards"]')!;
-    expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Day Vol','Float','T/O','RVOL']);
+    expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
     expect(momentum.querySelector('[aria-label="Open TEST chart only"]')).not.toBeNull();
     expect(momentum.querySelector('[aria-label="Expand TEST card details"]')).toBeNull();
     expect(momentum.querySelector('[aria-label="Indicators"]')).toBeNull();

@@ -1,14 +1,14 @@
 "use client";
 
 import { type WorkspaceBreakout, workspacePrice as price } from "./broker-workspace-data";
-import { WorkspaceScannerTitle } from "./workspace-scanner-title";
+import { WorkspaceScannerCardHeader, workspaceScannerTableHeaderSx, WorkspaceScannerTitle } from "./workspace-scanner-title";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
 import { ScannerRowTools } from "./scanner-row-tools";
 
 import Alert from "@mui/material/Alert";
 import { Fragment, useState } from "react";
-import { Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { DashboardPanel } from "@/app/dashboard-template";
 import type { ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
@@ -34,10 +34,10 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
   const tools=(row:WorkspaceBreakout)=><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ScannerChartLaunchControls row={row} onOpenChart={onOpenChart}/>}/>;
   const halt=(symbol:string)=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>;
   return <DashboardPanel hideHeader>
-    <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5}}>
+    <WorkspaceScannerCardHeader>
       <WorkspaceScannerTitle><Typography component="h2" variant="h2">Breakouts</Typography></WorkspaceScannerTitle>
       <ScannerViewSettings label="Breakouts" view={view} onViewChange={onViewChange??setLocalView}/>
-    </Stack>
+    </WorkspaceScannerCardHeader>
     {notice ? <Alert severity="info">{notice}</Alert> :
       !rows ? <Skeleton height={160}/> :
       rows.length===0 ? <Alert severity="info">No stocks currently qualify for this list.</Alert> :
@@ -47,6 +47,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
         <Table size="small" stickyHeader aria-label="Breakouts" sx={{
           ...scannerStickyTickerSx,
           "& .MuiTableCell-root":{px:0.5,py:0.5,fontSize:"0.72rem",whiteSpace:"nowrap"},
+          "& .MuiTableCell-head":workspaceScannerTableHeaderSx,
         }}>
           <TableHead><TableRow>
             {!twoRows&&<TableCell/>}<TableCell data-scanner-sticky-ticker>Ticker</TableCell><TableCell>Price</TableCell>

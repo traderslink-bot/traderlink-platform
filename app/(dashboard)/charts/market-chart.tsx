@@ -81,7 +81,7 @@ const subDollarEvidencePrice = new Intl.NumberFormat("en-US", { minimumFractionD
 const evidenceTime = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit", timeZoneName: "short" });
 const formatEvidencePrice = (value: number) => `$${(value < 1 ? subDollarEvidencePrice : evidencePrice).format(value)}`;
 
-export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 40, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick, evidence }: {
+export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 32, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick, evidence }: {
   tradeContext?: MarketTradeContext; tradeFocusRevision?: number; onTradeMarkClick?: (marks: readonly MarketTradeMark[]) => void;
   evidence?: ResolvedChartEvidence;
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
@@ -1393,17 +1393,22 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     ? readout.overlay : undefined;
   return <Box data-traderslink-chart={ticker} data-chart-price-adjustment={priceAdjustment} sx={[{ borderRadius: 0, height: "100%", position: "relative", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }, ...(Array.isArray(sx) ? sx : [sx])]}>
     {compact ? <Stack data-chart-compact-toolbar direction="row" sx={{
-      alignItems: "center", px: 0.375, minHeight: compactToolbarHeight, flexShrink: 0, flexWrap: "wrap", gap: 0.5,
+      alignItems: "center", px: 0.375, height: compactToolbarHeight, flexShrink: 0, gap: 0.25,
+      overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none",
+      "& > *": { flexShrink: 0 },
+      "& > .MuiIconButton-root": { minHeight: 0, maxHeight: compactToolbarHeight, minWidth: 0, maxWidth: compactToolbarHeight, p: 0.5 },
     }}>
-      <Box data-chart-identity sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: "1 1 32px", minWidth: 0 }}>
+      <Box data-chart-identity sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: "1 1 auto",
+        minWidth: chartIdentity ? 64 : 32, "& .MuiTabs-root, & .MuiTab-root": { minHeight: compactToolbarHeight, py: 0 } }}>
         {chartIdentity ?? <Typography noWrap sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700, flexShrink: 0, maxWidth: "100%" }}>{ticker}</Typography>}
       </Box>
-      <Button variant="outlined" color="inherit" endIcon={<KeyboardArrowDown fontSize="small" />}
+      <Button size="small" variant="outlined" color="inherit"
         aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" aria-expanded={Boolean(frameAnchor)}
         onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
-        sx={{ minWidth: 56, height: compactToolbarHeight, px: 0.75, flexShrink: 0, textTransform: "none",
-          color: "text.primary", borderColor: "divider", gap: 0.25, "& .MuiButton-endIcon": { m: 0 } }}>
+        sx={{ minWidth: 0, minHeight: 0, height: 24, px: 0.5, py: 0, flexShrink: 0, textTransform: "none",
+          color: "text.primary", borderColor: "divider", fontSize: 12, lineHeight: 1, gap: 0.25 }}>
         {timeframe}
+        <KeyboardArrowDown sx={{ fontSize: 14 }} />
       </Button>
       {preferencesButtons}
       {evidenceButtons}
@@ -1426,7 +1431,8 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       {mainToolbar && closeAction && <Box sx={{ ml: "auto" }}>{closeAction}</Box>}
     </Stack>
 </>}
-    {compact ? <Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}>
+    {compact ? <Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}
+      slotProps={{ list: { dense: true, sx: { py: 0.5, "& .MuiMenuItem-root": { minHeight: 32, px: 1.25 } } } }}>
       {CHART_TIMEFRAMES.map(value => <MenuItem key={value} selected={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => { if (onTimeframeChange) onTimeframeChange(value); else setActiveTimeframe(value); setFrameAnchor(null); }}>{value}</MenuItem>)}
     </Menu> : null}
     {marketData.message && <Typography role="status" sx={{ px: 1, fontSize: 11 }}>{marketData.message}</Typography>}

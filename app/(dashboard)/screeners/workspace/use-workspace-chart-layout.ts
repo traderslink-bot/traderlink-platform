@@ -1,6 +1,8 @@
 'use client';
 import {useCallback,useEffect,useLayoutEffect,useRef,useState,type SetStateAction} from 'react';
-import {parseChartMultiview,type ChartMultiview} from '@/src/modules/scanner/alpaca/chart-multiview';
+import {chartSymbol,type ChartTimeframe} from '@/src/modules/scanner/alpaca/candles';
+import {chartCount,parseChartMultiview,reconcileChartTickers,singleChart,type ChartMultiview} from '@/src/modules/scanner/alpaca/chart-multiview';
+import {replaceWorkspaceChart} from './workspace-chart-panels';
 import {chartViews} from '../../charts/chart-view-memory';
 
 export const workspaceChartKey=(owner:string)=>`traderslink.workspace.charts.v1:${owner}`;
@@ -39,5 +41,35 @@ export function useWorkspaceChartLayout(owner:string|undefined){
   try{if(layout)localStorage.setItem(workspaceChartKey(owner),JSON.stringify(layout));else localStorage.removeItem(workspaceChartKey(owner));}catch{/* Keep this session usable if browser storage is unavailable. */}
   current.current={owner,layout};setState(current.current);
  },[owner]);
- return {layout:state.owner===owner?state.layout:null,ready:!!owner&&state.owner===owner,change};
+ const openTicker=useCallback((ticker:string,timeframe:ChartTimeframe,replacePanel?:string)=>{
+  if(!owner||committedOwner.current!==owner||current.current.owner!==owner)return "unavailable";
+  const symbol=chartSymbol(ticker);
+  const layout=current.current.layout??singleChart(symbol,timeframe);
+  const group=layout.groups.find(item=>item.symbol===symbol);
+  if(group){
+   const selectedPanel=group.panels.some(panel=>panel.id===layout.selectedPanel)
+    ?layout.selectedPanel:group.panels[0].id;
+   change(selectedPanel===layout.selectedPanel?layout:{...layout,selectedPanel});
+   return "opened";
+  }
+  const count=chartCount(layout);
+  if(count===1){
+   change({...layout,groups:[{...layout.groups[0],symbol}]});
+   return "opened";
+  }
+  if(count>=4){
+   const action=layout.fullGridAction??"ask";
+   if(!replacePanel&&action==="keep")return "full";
+   const panelId=replacePanel??(action==="selected"?layout.selectedPanel:null);
+   if(!panelId)return "choose";
+   const next=replaceWorkspaceChart(layout,panelId,symbol);
+   if(next===layout)return "choose";
+   change(next);
+   return "opened";
+  }
+  const next=reconcileChartTickers(layout,[...layout.groups.map(item=>item.symbol),symbol],timeframe);
+  change({...next,selectedPanel:next.groups.at(-1)!.panels[0].id});
+  return "opened";
+ },[change,owner]);
+ return {layout:state.owner===owner?state.layout:null,ready:!!owner&&state.owner===owner,change,openTicker};
 }

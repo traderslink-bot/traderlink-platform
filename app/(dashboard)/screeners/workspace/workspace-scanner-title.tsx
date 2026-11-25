@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
+import Stack from "@mui/material/Stack";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import ListSubheader from "@mui/material/ListSubheader";
@@ -64,6 +65,23 @@ export const WorkspaceScannerTitleContext = createContext<{
   onSelectSavedScan: (id: string) => void;
   onOpen?: () => void;
 }|null>(null);
+
+export function WorkspaceScannerCardHeader({ children }: { children: ReactNode }) {
+  return <Stack data-workspace-scanner-header direction="row"
+    sx={{ alignItems: "center", justifyContent: "space-between", gap: 0.5, mb: 0.5, minHeight: 22 }}>
+    {children}
+  </Stack>;
+}
+
+export const workspaceScannerTableHeaderSx = {
+  color: "text.secondary",
+  fontSize: "0.6rem",
+  fontWeight: 750,
+  lineHeight: 1,
+  pt: 0.34,
+  pb: 0.7,
+  whiteSpace: "nowrap",
+} as const;
 
 export function WorkspaceScannerTitle({ children, label }: { children?:ReactNode; label?:string }) {
   const choice=useContext(WorkspaceScannerTitleContext);

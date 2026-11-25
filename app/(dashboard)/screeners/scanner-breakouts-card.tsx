@@ -14,7 +14,7 @@ import { ScannerChartLaunchControls } from "./scanner-chart-launch-controls";
 import { ScannerCountryFlag } from "./scanner-country-flag";
 import { scannerGainColor } from "./scanner-gain-color";
 import { ScannerRowNews } from "./scanner-news-drawer-context";
-import { SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
+import { scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
 import { ScannerStockCards, ScannerViewSettings, useScannerVolumeColumns, type ScannerView } from "./scanner-stock-cards";
 import { ScreenerHaltIndicator } from "./screener-halt-indicator";
 import { BreakoutStatus } from "./scanner-breakout-status";
@@ -50,7 +50,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
         }}>
           <TableHead><TableRow>
             {!twoRows&&<TableCell/>}<TableCell data-scanner-sticky-ticker>Ticker</TableCell><TableCell>Price</TableCell>
-            <TableCell>PM high</TableCell><TableCell>Status</TableCell>{volumes.map(metric => <TableCell key={metric} sx={{minWidth:metric === "postMarketVolume" ? 82 : 54}}>{SCANNER_VOLUME_LABELS[metric]}</TableCell>)}<TableCell>Float</TableCell>
+            <TableCell>PM high</TableCell><TableCell>Status</TableCell>{volumes.map(metric => <TableCell key={metric} sx={{minWidth:metric === "postMarketVolume" ? 82 : 54}}>{scannerVolumeLabel(metric)}</TableCell>)}<TableCell>Float</TableCell>
             {!twoRows&&<TableCell>Country</TableCell>}
           </TableRow></TableHead>
           <TableBody>{rows.map(row=><Fragment key={row.symbol}>

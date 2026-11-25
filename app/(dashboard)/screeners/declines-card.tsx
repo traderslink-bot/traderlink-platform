@@ -6,7 +6,7 @@ import { scannerPrice as price } from "./scanner-price";
 import { ScannerPageTicker } from "./scanner-page-ticker";
 
 import { ScannerCountryFlag } from "./scanner-country-flag";
-import { SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
+import { scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
 import { ScannerStockCards, ScannerViewSettings, useScannerVolumeColumns, type ScannerView } from "./scanner-stock-cards";
 import { ScannerRowNews } from "./scanner-news-drawer-context";
 import { scannerGainColor } from "./scanner-gain-color";
@@ -60,7 +60,7 @@ function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
     <Table size="small" stickyHeader aria-label="Top Losers stocks"
       sx={{...scannerStickyTickerSx,tableLayout:"fixed",minWidth:(twoRows?370:414) + selected.length * 68,'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
       <TableHead><TableRow>{!twoRows&&<><TableCell sx={{width:allowAdd?68:48}} aria-label={allowAdd?"Open or add chart and news":"Chart and news"}/><TableCell sx={{width:24}} aria-label="Expand"/></>}<TableCell data-scanner-sticky-ticker sx={{width:48}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell><TableCell sx={{width:48}}>Change</TableCell>
-        {volumes.map(metric => <TableCell key={metric} sx={{minWidth:metric === "postMarketVolume" ? 82 : 54}}>{SCANNER_VOLUME_LABELS[metric]}</TableCell>)}<TableCell>Float</TableCell><TableCell>Spread</TableCell>
+        {volumes.map(metric => <TableCell key={metric} sx={{minWidth:metric === "postMarketVolume" ? 82 : 54}}>{scannerVolumeLabel(metric)}</TableCell>)}<TableCell>Float</TableCell><TableCell>Spread</TableCell>
       {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol;const toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);

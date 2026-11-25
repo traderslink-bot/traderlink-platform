@@ -11,9 +11,9 @@ export const ScannerPageTickerSelection = createContext<{
   openDetails?: (ticker: string) => void;
 } | null>(null);
 
-export function ScannerPageTicker({ symbol }: { symbol: string }): ReactNode {
+export function ScannerPageTicker({ symbol, halted = false }: { symbol: string; halted?: boolean }): ReactNode {
   const selection = useContext(ScannerPageTickerSelection);
-  const style = {color:"warning.main",font:"inherit",fontWeight:800,whiteSpace:"nowrap"};
+  const style = {color:halted?"error.main":"warning.main",font:"inherit",fontWeight:800,whiteSpace:"nowrap"};
   if (!selection?.openDetails) return <Box component="span" sx={style}>{symbol}</Box>;
   return <ButtonBase aria-label={`Open ${symbol} company details`}
     onClick={event=>{event.stopPropagation();selection.openDetails?.(symbol);}}

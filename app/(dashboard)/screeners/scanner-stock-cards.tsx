@@ -215,7 +215,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
       const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
       const mainVolume = post ? "postMarketVolume" : "dayVolume";
       const volumeStats = ([mainVolume, ...selected.filter(metric => metric !== mainVolume)] as const)
-        .map(metric => [scannerVolumeLabel(metric, screen === "gainers"), shares(row[metric] ?? null)]);
+        .map(metric => [scannerVolumeLabel(metric), shares(row[metric] ?? null)]);
       const stats = hod ? [
         ...volumeStats,["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",scannerPercent(row.spreadPercent, "—")],
       ] : [

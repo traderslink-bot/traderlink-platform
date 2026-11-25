@@ -76,6 +76,6 @@ it("persists only supported optional volume columns, independently per card", ()
   expect(workspaceVolumeColumns(false, layout.volumeColumns?.momentum)).toEqual(["dayVolume","regularVolume"]);
   const row = { symbol:"TEST", volume:42, premarketVolume:12, regularVolume:30, postMarketVolume:0 };
   expect(workspaceVolumeFacts(row)).toEqual([
-    ["Day Vol","—"],["Pre Vol","12"],["Regular Vol","30"],["After-hours Vol","0"],
+    ["Vol","—"],["Pre Vol","12"],["Regular Vol","30"],["After-hours Vol","0"],
   ]);
 });

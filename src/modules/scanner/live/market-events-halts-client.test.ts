@@ -214,3 +214,21 @@ it("selects only server-eligible compact headlines in current and previous day o
     .toEqual([...current, ...previous.slice(0, 2)].map(article => article.id));
   expect(selectCompactArticles(articles, dates, [])).toEqual([]);
 });
+
+it("shows two lines of halt details, matches the HALT color, and supports keyboard scrolling", async () => {
+  await withMarketEvents([() => withHeadline("Example headline")], async container => {
+    const halts = container.querySelector<HTMLElement>('[aria-label="Current halts"]')!;
+    const news = container.querySelector<HTMLElement>('[aria-label="Latest PR Scanner releases"]')!;
+    const haltTicker = halts.querySelector('[aria-label="Open HALT company details"]')!;
+    const haltLabel = [...halts.querySelectorAll("span")].find(item => item.textContent === "HALT")!;
+    const newsTicker = news.querySelector('[aria-label="Open TEST company details"]')!;
+
+    const reason = haltLabel.parentElement!;
+    expect(reason.textContent).toBe("HALT · P");
+    expect(reason.nextElementSibling?.textContent).toBe("Quote Pending · Trade Pending");
+    expect(getComputedStyle(haltTicker).color).toBe(getComputedStyle(haltLabel).color);
+    expect(getComputedStyle(haltTicker).color).not.toBe(getComputedStyle(newsTicker).color);
+    expect(halts.tabIndex).toBe(0);
+    expect(news.tabIndex).toBe(0);
+  }, { select: vi.fn(), openDetails: vi.fn(), openChart: vi.fn() });
+});

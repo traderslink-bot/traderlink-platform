@@ -10,13 +10,14 @@ import Tabs from "@mui/material/Tabs";
 import Skeleton from "@mui/material/Skeleton";
 import { createContext, lazy, Suspense, useContext, useEffect, useRef, useState, type FormEvent, type Dispatch, type SetStateAction } from "react";
 import { chartSymbol, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
-import { changeChartTimeframe, parseChartMultiview, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
+import { changeChartTimeframe, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { ChartMultiviewMenu } from "../../charts/chart-multiview-menu";
 import { ChartPreferencesContext } from "../../charts/use-chart-preferences";
 import { DashboardPanel } from "@/app/dashboard-template";
 import type { ScannerWorkspaceSlotId } from "../scanner-workspace-layout";
 import { ScannerWorkspaceCard } from "../scanner-workspace-card";
 
+import {replaceWorkspaceChart,workspaceChartPanels} from './workspace-chart-panels';
 import {workspaceChartHasVisibleArea} from './workspace-chart-visibility';
 
 const Chart = lazy(() => import("../../charts/market-chart").then(module => ({default:module.MarketChart})));
@@ -123,10 +124,11 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
     };
   }, [symbol, covered, visible, layout, defaultTimeframe, onLayoutChange]);
 
-  const panels = layout?.groups.flatMap(group => group.panels.map(panel => ({group, panel}))) ?? [];
-  const columns = panels.length > 1 && room.width >= 566 ? 2 : 1;
+  const panels = layout ? workspaceChartPanels(layout) : [];
+  const multiview = panels.length > 1;
+  const columns = multiview && room.width >= 566 ? 2 : 1;
   const rows = Math.ceil(panels.length / columns);
-  const tabs = panels.length > 1 && room.height < rows * 176 + (rows - 1) * 6;
+  const tabs = multiview && room.height < rows * 176 + (rows - 1) * 6;
   const fallback = accountPreferences && !accountPreferences.ready && accountPreferences.message
     ? <Box role="alert" sx={{minWidth:0,p:1.5,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
         <Typography color="text.primary" variant="body2">Chart settings could not load.</Typography>
@@ -138,47 +140,59 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
 
   const replaceTicker = (panelId: string, timeframe: ChartTimeframe, symbol: string) => {
     if (!layout) return;
-    const source = layout.groups.find(group => group.panels.some(panel => panel.id === panelId));
-    if (!source || source.symbol === symbol) return;
-    const destination = layout.groups.find(group => group.symbol === symbol);
-    if (destination?.panels.some(panel => panel.timeframe === timeframe)) {
-      return `${symbol} ${timeframe} is already open.`;
+    const next = replaceWorkspaceChart(layout, panelId, symbol, timeframe);
+    if (next === layout) {
+      if (panels.some(({group,panel})=>group.symbol===symbol&&panel.timeframe===timeframe&&panel.id!==panelId)) {
+        return `${symbol} ${timeframe} is already open.`;
+      }
+      return;
     }
-    const panel = { id: panelId, timeframe };
-    const groups = layout.groups.flatMap(group => {
-      if (group === destination) return [{ ...group, panels: [...group.panels, panel] }];
-      if (group !== source) return [group];
-      if (group.panels.length === 1) return destination ? [] : [{ ...group, symbol }];
-      const remaining = { ...group, panels: group.panels.filter(item => item.id !== panelId) };
-      return destination ? [remaining] : [remaining, { id: crypto.randomUUID(), symbol, panels: [panel] }];
-    });
-    onLayoutChange(parseChartMultiview({ ...layout, groups, selectedPanel:panelId }));
+    onLayoutChange(next);
   };
 
-  return <ScannerWorkspaceCard slot={slot} widget="ticker-workspace">
+  const selectPanel = (id: string) => onLayoutChange(current => {
+    if (!current || current.selectedPanel === id || !current.groups.some(group => group.panels.some(panel => panel.id === id))) return current;
+    return { ...current, selectedPanel: id };
+  });
+
+  return <ScannerWorkspaceCard slot={slot} widget="ticker-workspace" contentPaddingTop={multiview ? 0 : undefined}>
     <DashboardPanel hideHeader>
       <Box ref={viewport} aria-label="Workspace charts" sx={{height:fillMobile?"100%":{xs:320,md:"100%"},flex:1,minHeight:0,display:"flex",flexDirection:"column"}}>
         {layout && tabs && <Tabs aria-label="Workspace chart panels" value={selected?.panel.id ?? false} variant="scrollable"
-            onChange={(_, id:string)=>onLayoutChange({...layout,selectedPanel:id})}
+            onChange={(_, id:string)=>selectPanel(id)}
             sx={{mr:"auto",minWidth:0,minHeight:30,"& .MuiTab-root":{minHeight:30,minWidth:0,px:0.75,py:0,fontSize:11,textTransform:"none"}}}>
             {panels.map(({group,panel})=><Tab key={panel.id} value={panel.id} label={`${group.symbol} ${panel.timeframe}`}/>)}
           </Tabs>}
         <Box ref={panelArea} sx={{flex:1,minHeight:0,minWidth:0,display:"grid",gap:"6px",
           gridTemplateColumns:`repeat(${tabs?1:columns}, minmax(0,1fr))`,gridAutoRows:"minmax(0,1fr)"}}>
-          {layout && (visible || keepMounted && hasShown) && !covered ? shown.map(({group,panel},index)=>
-            <Box key={panel.id} data-workspace-chart-panel={panel.id} sx={{minWidth:0,minHeight:0,overflow:"hidden"}}>
+          {layout && (visible || keepMounted && hasShown) && !covered ? shown.map(({group,panel},index)=>{
+            const active=layout.selectedPanel===panel.id;
+            const selectable=!tabs&&panels.length>1;
+            return <Box key={panel.id} data-workspace-chart-panel={panel.id} data-selected={active||undefined}
+              role="group" aria-label={`${group.symbol} ${panel.timeframe} chart${active&&selectable?" (selected)":""}`}
+              onPointerDownCapture={event=>{if(selectable&&event.currentTarget.contains(event.target as Node))selectPanel(panel.id);}}
+              onFocusCapture={event=>{if(selectable&&event.currentTarget.contains(event.target as Node))selectPanel(panel.id);}}
+              sx={{minWidth:0,minHeight:0,overflow:"hidden",
+                outline:selectable&&active?"1px solid":"none",outlineColor:"warning.main",outlineOffset:-1}}>
+
               <Suspense fallback={fallback}>
                 <Chart symbol={group.symbol} timeframe={panel.timeframe} disabledTimeframes={group.panels.filter(other=>other.id!==panel.id).map(other=>other.timeframe)}
                   onTimeframeChange={timeframe=>onLayoutChange(changeChartTimeframe(layout,panel.id,timeframe))}
                   compactIdentity={<TickerSearch key={group.symbol} symbol={group.symbol} timeframe={panel.timeframe}
                     onSubmit={symbol=>replaceTicker(panel.id,panel.timeframe,symbol)}/>}
                   actions={index===0&&<ChartMultiviewMenu layout={layout} defaultTimeframe={defaultTimeframe}
-                    onChange={onLayoutChange} chartTabs iconOnly/>}
+                    onChange={onLayoutChange} chartTabs iconOnly workspaceFullGrid/>}
                   viewId={`workspace-card-${panel.id}`} viewWorkspace="workspace" compactMobile compactToolbar
-                  compactToolbarHeight={28} sx={{"& [data-chart-compact-toolbar]":{px:0, "& > .MuiIconButton-root":{width:30,height:28}}}}/>
+                  compactToolbarHeight={28} sx={{"& [data-chart-compact-toolbar]":{
+                    px:0,
+                    ...(multiview && {height:{xs:28,md:27},boxSizing:"border-box",pb:{md:"1px"}}),
+                    "& > .MuiIconButton-root":{
+                      width:30,height:multiview ? {xs:28,md:26} : 28,
+                    },
+                  }}}/>
               </Suspense>
-            </Box>
-          ) : fallback}
+            </Box>;
+          }) : fallback}
         </Box>
       </Box>
     </DashboardPanel>

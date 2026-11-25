@@ -2,7 +2,13 @@ import { CHART_TIMEFRAMES, chartSymbol, type ChartTimeframe } from "./candles";
 
 export type ChartPanel = Readonly<{ id: string; timeframe: ChartTimeframe }>;
 export type ChartTickerGroup = Readonly<{ id: string; symbol: string; panels: readonly ChartPanel[] }>;
-export type ChartMultiview = Readonly<{ version: 1; groups: readonly ChartTickerGroup[]; selectedPanel: string | null; mobileLayout?: "tabs" | "stack"; landscapeLayout?: "tabs" | "stack" | "grid"; comparisonPanels?: readonly string[] }>;
+export const FULL_GRID_ACTIONS = {
+  ask: "Ask which chart to replace",
+  selected: "Replace the selected chart",
+  keep: "Keep all four charts",
+} as const;
+export type FullGridAction = keyof typeof FULL_GRID_ACTIONS;
+export type ChartMultiview = Readonly<{ version: 1; groups: readonly ChartTickerGroup[]; selectedPanel: string | null; mobileLayout?: "tabs" | "stack"; landscapeLayout?: "tabs" | "stack" | "grid"; comparisonPanels?: readonly string[]; fullGridAction?: FullGridAction; panelOrder?: readonly string[] }>;
 export const EMPTY_MULTIVIEW: ChartMultiview = { version: 1, groups: [], selectedPanel: null };
 export const MAX_WORKSPACE_TICKERS = 10;
 export const MAX_MULTIVIEW_BYTES = 8192;
@@ -12,7 +18,10 @@ export const chartCount = (layout: ChartMultiview) => layout.groups.reduce((sum,
 export function parseChartMultiview(value: unknown, expanded = false): ChartMultiview {
   if (!value || typeof value !== "object") throw Error("invalid_layout");
   const layout = value as Record<string, unknown>;
-  if (!exact(layout, ["version", "groups", "selectedPanel", ...(expanded && Object.hasOwn(layout, "comparisonPanels") ? ["comparisonPanels"] : []), ...(Object.hasOwn(layout, "mobileLayout") ? ["mobileLayout"] : []), ...(Object.hasOwn(layout, "landscapeLayout") ? ["landscapeLayout"] : [])]) || (Object.hasOwn(layout, "mobileLayout") && layout.mobileLayout !== "tabs" && layout.mobileLayout !== "stack") || (Object.hasOwn(layout, "landscapeLayout") && !["tabs", "stack", "grid"].includes(layout.landscapeLayout as string)) || layout.version !== 1 || !Array.isArray(layout.groups) || layout.groups.length > (expanded ? MAX_WORKSPACE_TICKERS : 4)) throw Error("invalid_layout");
+  if (!exact(layout, ["version", "groups", "selectedPanel", ...(expanded && Object.hasOwn(layout, "comparisonPanels") ? ["comparisonPanels"] : []), ...(Object.hasOwn(layout, "fullGridAction") ? ["fullGridAction"] : []), ...(Object.hasOwn(layout, "panelOrder") ? ["panelOrder"] : []), ...(Object.hasOwn(layout, "mobileLayout") ? ["mobileLayout"] : []), ...(Object.hasOwn(layout, "landscapeLayout") ? ["landscapeLayout"] : [])]) || (Object.hasOwn(layout, "mobileLayout") && layout.mobileLayout !== "tabs" && layout.mobileLayout !== "stack") || (Object.hasOwn(layout, "landscapeLayout") && !["tabs", "stack", "grid"].includes(layout.landscapeLayout as string)) || layout.version !== 1 || !Array.isArray(layout.groups) || layout.groups.length > (expanded ? MAX_WORKSPACE_TICKERS : 4)) throw Error("invalid_layout");
+  if (Object.hasOwn(layout, "fullGridAction") && (typeof layout.fullGridAction !== "string" || !Object.hasOwn(FULL_GRID_ACTIONS, layout.fullGridAction))) throw Error("invalid_layout");
+  const order = layout.panelOrder;
+  if (Object.hasOwn(layout, "panelOrder") && (!Array.isArray(order) || order.length > 4 || !order.every(validId) || new Set(order).size !== order.length)) throw Error("invalid_layout");
   const ids = new Set<string>(), symbols = new Set<string>();
   const groups = layout.groups.map((raw: unknown): ChartTickerGroup => {
     if (!raw || typeof raw !== "object") throw Error("invalid_layout");
@@ -33,8 +42,13 @@ export function parseChartMultiview(value: unknown, expanded = false): ChartMult
   const panelIds = new Set(groups.flatMap(group => group.panels.map(panel => panel.id)));
   if (Object.hasOwn(layout, "comparisonPanels") && (!Array.isArray(comparison) || comparison.length > 4 || new Set(comparison).size !== comparison.length || comparison.some(id => !panelIds.has(id)))) throw Error("invalid_layout");
   const result: ChartMultiview = { version: 1, groups, selectedPanel: layout.selectedPanel as string | null, ...(Array.isArray(comparison) ? { comparisonPanels: comparison as string[] } : {}), ...(Object.hasOwn(layout, "mobileLayout") ? { mobileLayout: layout.mobileLayout as "tabs" | "stack" } : {}), ...(Object.hasOwn(layout, "landscapeLayout") ? { landscapeLayout: layout.landscapeLayout as "tabs" | "stack" | "grid" } : {}) };
+  const ordered = Array.isArray(order) ? order.filter(id => panelIds.has(id)) : undefined;
   if ((!expanded && chartCount(result) > 4) || (groups.length ? !groups.some(group => group.panels.some(panel => panel.id === layout.selectedPanel)) : layout.selectedPanel !== null)) throw Error("invalid_layout");
-  return result;
+  return {
+    ...result,
+    ...(layout.fullGridAction ? { fullGridAction: layout.fullGridAction as FullGridAction } : {}),
+    ...(ordered?.length ? { panelOrder: ordered } : {}),
+  };
 }
 export function singleChart(symbol: string, timeframe: ChartTimeframe = "1m"): ChartMultiview {
   return { version: 1, groups: [{ id: "ticker-1", symbol: chartSymbol(symbol), panels: [{ id: "chart-1", timeframe }] }], selectedPanel: "chart-1" };

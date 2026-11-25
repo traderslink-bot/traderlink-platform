@@ -23,7 +23,7 @@ import { scannerPrice } from "../scanner-price";
 import { ScannerPageTicker } from "./scanner-page-ticker";
 import { ScannerRowTools } from "./scanner-row-tools";
 import { savedScanRowNews, ScannerStockCards, ScannerViewSettings, WorkspaceVolumeHeaders, WorkspaceVolumeCells, useWorkspaceVolumeColumns, type ScannerView } from "./scanner-stock-cards";
-import { WorkspaceScannerTitle } from "./workspace-scanner-title";
+import { WorkspaceScannerCardHeader, workspaceScannerTableHeaderSx, WorkspaceScannerTitle } from "./workspace-scanner-title";
 
 const compact = new Intl.NumberFormat("en-US", {notation: "compact", maximumFractionDigits: 1});
 const decimal = new Intl.NumberFormat("en-US", {maximumFractionDigits: 1, signDisplay: "exceptZero"});
@@ -82,10 +82,10 @@ export function WorkspaceSavedScanCard({ label, entry, unavailable, retrying, vi
   const twoRows = view === "two-rows";
   const volumeColumns = useWorkspaceVolumeColumns();
   return <DashboardPanel hideHeader>
-    <Stack direction="row" sx={{alignItems:"center", justifyContent:"space-between", gap:0.5, mb:0.5, minHeight:22}}>
+    <WorkspaceScannerCardHeader>
       <WorkspaceScannerTitle/>
       <ScannerViewSettings label={label} view={view} onViewChange={onViewChange}/>
-    </Stack>
+    </WorkspaceScannerCardHeader>
     {message || !result ? <Alert severity={retrying ? "warning" : "info"}>{message}</Alert> :
       view === "cards" ? <ScannerStockCards rows={result.rows} screen="saved" now={now} renderTools={tools}
         additionalStats={columns?.length ? row => columns.map(column => [column.label,savedScanColumnValue(column,row)]) : undefined}
@@ -93,7 +93,9 @@ export function WorkspaceSavedScanCard({ label, entry, unavailable, retrying, vi
       : <TableContainer tabIndex={0} role="region" aria-label="Saved scan results"
         sx={theme=>({...scannerScrollStyles(theme), flex:1, minHeight:0, maxHeight:420})}>
         <Table size="small" stickyHeader sx={{...scannerStickyTickerSx,
-          "& .MuiTableCell-root":{px:0.5, py:0.3, whiteSpace:"nowrap", fontSize:"0.68rem", fontVariantNumeric:"tabular-nums"}}}>
+          "& .MuiTableCell-root":{px:0.5, py:0.3, whiteSpace:"nowrap", fontSize:"0.68rem", fontVariantNumeric:"tabular-nums"},
+          "& .MuiTableCell-head":workspaceScannerTableHeaderSx,
+        }}>
           <TableHead><TableRow>
             <TableCell data-scanner-sticky-ticker scope="col">Ticker</TableCell>
             <TableCell scope="col" aria-label="Chart and news"/>

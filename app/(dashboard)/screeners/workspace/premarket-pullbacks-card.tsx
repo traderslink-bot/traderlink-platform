@@ -2,7 +2,7 @@
 
 import { type WorkspaceDecline, type WorkspacePullback, type WorkspacePullbackResults, workspacePrice as price } from "./broker-workspace-data";
 import { scannerPercent } from "../scanner-number-format";
-import { WorkspaceScannerTitle } from "./workspace-scanner-title";
+import { WorkspaceScannerCardHeader, workspaceScannerTableHeaderSx, WorkspaceScannerTitle } from "./workspace-scanner-title";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
 import { ScannerRowTools, scannerToolColumnSx } from "./scanner-row-tools";
@@ -75,7 +75,7 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
   const volumeColumns=useWorkspaceVolumeColumns();
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="HOD Drops list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
-    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{...scannerStickyTickerSx,minWidth:(twoRows?336:394)+62*(volumeColumns.length-1),'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& th':{color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap"}}}>
+    <Table size="small" stickyHeader aria-label="HOD Drops stocks" sx={{...scannerStickyTickerSx,minWidth:(twoRows?336:394)+62*(volumeColumns.length-1),'& td, & th':{px:0.2,py:0.34,fontSize:"0.68rem",fontWeight:500},'& .MuiTableCell-head':workspaceScannerTableHeaderSx}}>
       <TableHead><TableRow>{!twoRows&&<><TableCell sx={scannerToolColumnSx()} aria-label="Chart and news"/></>}<TableCell data-scanner-sticky-ticker sx={{width:"1%"}}>Ticker</TableCell><TableCell sx={{width:54}}>Price</TableCell>
         <TableCell sx={{width:48}}>Drop</TableCell><TableCell sx={{width:"5.5rem"}}>High</TableCell><WorkspaceVolumeHeaders columns={volumeColumns}/>
       {!twoRows&&<TableCell sx={{width:42}}>Country</TableCell>}
@@ -148,7 +148,7 @@ export function PremarketPullbacksCard({results,view="table",onViewChange,now=0,
         renderTools={row=><>{"rapidDrop" in row&&row.rapidDrop&&<RapidMarker/>}<ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></>}/>
         :<HighDropsTable twoRows={view==="two-rows"} rows={results.rows} full={wide} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>):<Alert severity="info">No stocks currently qualify for this list.</Alert>}
   </Stack>;
-  return <><DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">HOD Drops</Typography></WorkspaceScannerTitle><Tooltip title={`HOD Drops ranks stocks by how far they are below the session high. The bolt marks a rapid drop. ${RAPID_DROP_HELP}`}><IconButton aria-label="Explain HOD Drops" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><Stack direction="row" sx={{alignItems:"center",gap:0.4}}>{viewSettings}<IconButton size="small" aria-label="Open HOD Drops full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack></Stack>{contents(false)}</DashboardPanel>
+  return <><DashboardPanel hideHeader><WorkspaceScannerCardHeader><Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">HOD Drops</Typography></WorkspaceScannerTitle><Tooltip title={`HOD Drops ranks stocks by how far they are below the session high. The bolt marks a rapid drop. ${RAPID_DROP_HELP}`}><IconButton aria-label="Explain HOD Drops" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><Stack direction="row" sx={{alignItems:"center",gap:0.4}}>{viewSettings}<IconButton size="small" sx={{p:0.25}} aria-label="Open HOD Drops full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack></WorkspaceScannerCardHeader>{contents(false)}</DashboardPanel>
     <Drawer anchor="right" open={full} onClose={()=>setFull(false)} slotProps={{paper:{role:"dialog","aria-label":"HOD Drops full view","aria-modal":true,sx:{width:{xs:"100vw",md:"85vw"}}}}}>
       <Stack spacing={1} sx={{p:2,height:"100dvh",minHeight:0}}><Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center"}}><Typography component="h2" variant="h6">HOD Drops</Typography><Stack direction="row" sx={{alignItems:"center",gap:0.5}}>{viewSettings}<IconButton aria-label="Close HOD Drops full view" onClick={()=>setFull(false)}><CloseRoundedIcon/></IconButton></Stack></Stack>
         <Box sx={theme=>({...scannerScrollStyles(theme),minHeight:0})}>{contents(true)}</Box></Stack>

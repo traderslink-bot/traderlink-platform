@@ -46,14 +46,18 @@ export function useWorkspaceVolumeColumns() {
 }
 
 export function WorkspaceVolumeHeaders({ columns }: { columns: readonly VolumeColumn[] }) {
-  return columns.map(column => <TableCell key={column} scope="col" align="right"
+  return columns.map(column => <TableCell key={column} scope="col" align={column === "dayVolume" ? "left" : "right"}
     sx={{ minWidth: volumeColumnWidth(column), whiteSpace: "nowrap" }}>
-    {volumeLabels[column]}
+    {scannerVolumeLabel(column)}
   </TableCell>);
 }
 
-export function WorkspaceVolumeCells({ row, columns }: { row: VolumeRow; columns: readonly VolumeColumn[] }) {
-  return columns.map(column => <TableCell key={column} align="right">{workspaceVolumeValue(row, column)}</TableCell>);
+export function WorkspaceVolumeCells({ row, columns }: {
+  row: VolumeRow; columns: readonly VolumeColumn[];
+}) {
+  return columns.map(column => <TableCell key={column} align={column === "dayVolume" ? "left" : "right"}>
+    {workspaceVolumeValue(row, column)}
+  </TableCell>);
 }
 
 const LEGACY_KEY = "traderslink.scanner.ticker-card-sections.v1";
@@ -236,7 +240,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
       const movement = hod ? (hod.belowHighPercent==null?null:-hod.belowHighPercent) : change;
       const sessionVolume = isHodRow(row) ? row.sessionVolume : row.volume;
       const turnover = sessionVolume !== null && row.float !== null && row.float > 0 ? 100 * sessionVolume / row.float : null;
-      const volumes = volumeColumns.map(column => [scannerVolumeLabel(column, screen === "gainers"), workspaceVolumeValue(row, column)]);
+      const volumes = volumeColumns.map(column => [scannerVolumeLabel(column), workspaceVolumeValue(row, column)]);
       const catalyst = (saved ? savedScanRowNews(row) : row.news).find(item => Number.isFinite(Date.parse(item.createdAt)));
       const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
       const stats = saved ? [
