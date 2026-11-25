@@ -6,11 +6,15 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { hasMarketToolDashboardAdmission, readMarketToolMembershipAccess } from "@/src/modules/platform/server/membership/membership-market-tool-access";
 import { hasPlatformMembershipFeature } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { stockScreenersEnabled } from "@/src/modules/stock-screeners/service";
-import { hasMarketToolsDashboardReadAccess, hasStockScreenersDashboardAccess } from "./market-tools-dashboard-access";
+import { hasMarketToolsDashboardReadAccess, hasStockScreenersDashboardAccess, isTradingWorkspaceReviewAccount } from "./market-tools-dashboard-access";
 
 const chartsKey = "charts.access";
 
 export function hasChartsDashboardAccess(identity: TraderLinkPlatformRequestIdentity): boolean {
+  return isTradingWorkspaceReviewAccount(identity);
+}
+
+function hasChartMembershipDataAccess(identity: TraderLinkPlatformRequestIdentity): boolean {
   if (identity.mode === "local_development") return true;
   const userId = identity.scope.userId;
   return withReadonlyPlatformDatabase({}, database => {
@@ -28,7 +32,7 @@ export function hasChartsDashboardAccess(identity: TraderLinkPlatformRequestIden
 
 /** Only the settings and market data used by actual embedded chart consumers. */
 export function hasSharedChartDataAccess(identity: TraderLinkPlatformRequestIdentity): boolean {
-  if (hasChartsDashboardAccess(identity) || hasMarketToolsDashboardReadAccess(identity)) return true;
+  if (hasChartsDashboardAccess(identity) || hasMarketToolsDashboardReadAccess(identity) || hasChartMembershipDataAccess(identity)) return true;
   if (stockScreenersEnabled(identity.mode) && hasStockScreenersDashboardAccess(identity)) return true;
   // The Trade Analyzer drawer lives inside an account-scoped Journal session.
   // A policy in off or shadow mode does not confer shared market data access.

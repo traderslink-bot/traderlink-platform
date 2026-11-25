@@ -1,6 +1,8 @@
 "use client";
 
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import CloseRounded from "@mui/icons-material/CloseRounded";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
@@ -17,7 +19,7 @@ import { DashboardPanel } from "@/app/dashboard-template";
 import type { ScannerWorkspaceSlotId } from "../scanner-workspace-layout";
 import { ScannerWorkspaceCard } from "../scanner-workspace-card";
 
-import {replaceWorkspaceChart,workspaceChartPanels} from './workspace-chart-panels';
+import {closeWorkspaceChart,replaceWorkspaceChart,singleWorkspaceChart,workspaceChartPanels} from './workspace-chart-panels';
 import {workspaceChartHasVisibleArea} from './workspace-chart-visibility';
 
 const Chart = lazy(() => import("../../charts/market-chart").then(module => ({default:module.MarketChart})));
@@ -165,13 +167,13 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
           </Tabs>}
         <Box ref={panelArea} sx={{flex:1,minHeight:0,minWidth:0,display:"grid",gap:"6px",
           gridTemplateColumns:`repeat(${tabs?1:columns}, minmax(0,1fr))`,gridAutoRows:"minmax(0,1fr)"}}>
-          {layout && (visible || keepMounted && hasShown) && !covered ? shown.map(({group,panel},index)=>{
+          {layout && (visible || keepMounted && hasShown) && !covered ? shown.map(({group,panel})=>{
             const active=layout.selectedPanel===panel.id;
             const selectable=!tabs&&panels.length>1;
             return <Box key={panel.id} data-workspace-chart-panel={panel.id} data-selected={active||undefined}
               role="group" aria-label={`${group.symbol} ${panel.timeframe} chart${active&&selectable?" (selected)":""}`}
-              onPointerDownCapture={event=>{if(selectable&&event.currentTarget.contains(event.target as Node))selectPanel(panel.id);}}
-              onFocusCapture={event=>{if(selectable&&event.currentTarget.contains(event.target as Node))selectPanel(panel.id);}}
+              onPointerDownCapture={event=>{if(selectable&&event.target instanceof Element&&event.currentTarget.contains(event.target)&&!event.target.closest("[data-workspace-chart-close]"))selectPanel(panel.id);}}
+              onFocusCapture={event=>{if(selectable&&event.target instanceof Element&&event.currentTarget.contains(event.target)&&!event.target.closest("[data-workspace-chart-close]"))selectPanel(panel.id);}}
               sx={{minWidth:0,minHeight:0,overflow:"hidden",
                 outline:selectable&&active?"1px solid":"none",outlineColor:"warning.main",outlineOffset:-1}}>
 
@@ -180,14 +182,23 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
                   onTimeframeChange={timeframe=>onLayoutChange(changeChartTimeframe(layout,panel.id,timeframe))}
                   compactIdentity={<TickerSearch key={group.symbol} symbol={group.symbol} timeframe={panel.timeframe}
                     onSubmit={symbol=>replaceTicker(panel.id,panel.timeframe,symbol)}/>}
-                  actions={index===0&&<ChartMultiviewMenu layout={layout} defaultTimeframe={defaultTimeframe}
-                    onChange={onLayoutChange} chartTabs iconOnly workspaceFullGrid/>}
+                  actions={!multiview&&<ChartMultiviewMenu layout={layout} defaultTimeframe={defaultTimeframe}
+                    onChange={onLayoutChange} resolveEmptyLayout={draft=>singleWorkspaceChart(draft,symbol,defaultTimeframe)}
+                    chartTabs iconOnly workspaceFullGrid/>}
+                  closeAction={multiview&&<IconButton data-workspace-chart-close aria-label={`Close ${group.symbol} ${panel.timeframe} chart`}
+                    title={`Close ${group.symbol} ${panel.timeframe} chart`} size="small"
+                    onClick={()=>onLayoutChange(current=>current?closeWorkspaceChart(current,panel.id):null)}>
+                    <CloseRounded fontSize="small"/>
+                  </IconButton>}
                   viewId={`workspace-card-${panel.id}`} viewWorkspace="workspace" compactMobile compactToolbar
                   compactToolbarHeight={28} sx={{"& [data-chart-compact-toolbar]":{
                     px:0,
                     ...(multiview && {height:{xs:28,md:27},boxSizing:"border-box",pb:{md:"1px"}}),
                     "& > .MuiIconButton-root":{
                       width:30,height:multiview ? {xs:28,md:26} : 28,
+                    },
+                    "& > [data-workspace-chart-close]":{
+                      position:"sticky",right:0,ml:"auto",flexShrink:0,zIndex:1,bgcolor:"background.paper",
                     },
                   }}}/>
               </Suspense>

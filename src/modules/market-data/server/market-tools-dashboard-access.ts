@@ -30,7 +30,7 @@ function reviewAdmission(identity: TraderLinkPlatformRequestIdentity, environmen
   return isTradingWorkspaceReviewAccount(identity, environment);
 }
 
-function isTradingWorkspaceReviewAccount(identity: TraderLinkPlatformRequestIdentity, environment: NodeJS.ProcessEnv): boolean {
+export function isTradingWorkspaceReviewAccount(identity: TraderLinkPlatformRequestIdentity, environment: NodeJS.ProcessEnv = process.env): boolean {
   if (identity.mode === "local_development") return true;
   const ids = environment[MARKET_TOOLS_REVIEW_USER_IDS]?.split(",").map(id => id.trim()) ?? [];
   return ids.length === 2 && ids.every(isCanonicalUuidV4) && ids[0] !== ids[1] &&

@@ -956,7 +956,7 @@ function DashboardShellContent({
               variant="outlined"
             />
           ) : null}
-          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : (pathname === "/scanners" || pathname === "/trading-workspace") ? "dashboard-scanner-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
+          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : ["/scanners", "/trading-workspace", "/trading-workspace/broker"].includes(pathname) ? "dashboard-scanner-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
           <NotificationCenter notifications={notifications} />
           <Tooltip title={helpLabel}>
             <IconButton
