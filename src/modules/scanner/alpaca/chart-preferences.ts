@@ -51,7 +51,21 @@ export type ChartCrosshairMode = "price" | "normal" | "nearest" | `indicator:${s
 // The retired crosshairTarget field is ignored so existing accounts start in free movement.
 export const DEFAULT_CHART_CROSSHAIR_MODE: ChartCrosshairMode = "normal";
 export type ChartPriceAdjustment = "split" | "raw";
-export type ChartPreferences={version:1;indicatorDisplay?:IndicatorDisplayChoices;priceAdjustment?:ChartPriceAdjustment;alwaysShowDrawingToolbar?:boolean;autosaveDrawings?:boolean;crosshairMode?:ChartCrosshairMode;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:'candles'|'bars'|'line';grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;priceScaleByTimeframe?:Partial<Record<ChartTimeframe,boolean>>;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;indicatorOverlayLineWidth?:IndicatorLineWidth;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;overnight?:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
+export const CHART_PRICE_STYLES = {
+ candles: "Candlesticks",
+ hollow: "Hollow Candles",
+ heikinAshi: "Heikin Ashi",
+ bars: "OHLC Bars",
+ line: "Line",
+ baseline: "Baseline",
+ columns: "Columns",
+ renko: "Renko",
+ range: "Range Bars",
+} as const;
+export const isReviewChartStyle = (kind: unknown) =>
+ typeof kind === "string" && Object.hasOwn(CHART_PRICE_STYLES, kind) &&
+ kind !== "candles" && kind !== "bars" && kind !== "line";
+export type ChartPreferences={version:1;movementStep?:number;indicatorDisplay?:IndicatorDisplayChoices;priceAdjustment?:ChartPriceAdjustment;alwaysShowDrawingToolbar?:boolean;autosaveDrawings?:boolean;crosshairMode?:ChartCrosshairMode;timeframe:ChartTimeframe;theme:'auto'|'light'|'dark';kind:keyof typeof CHART_PRICE_STYLES;grid:boolean;volume:boolean;volumeHeight:number;logarithmic:boolean;priceScaleByTimeframe?:Partial<Record<ChartTimeframe,boolean>>;autoScale:boolean;scalePriceOnly?:boolean;indicatorPriceScaleLabels?:boolean;indicatorOverlayLineWidth?:IndicatorLineWidth;timezone:'America/New_York'|'UTC'|'America/Toronto';upColor:string;downColor:string;premarket:boolean;regular:boolean;postmarket:boolean;overnight?:boolean;indicators:ChartIndicator[];savedIndicatorPresets?:SavedIndicatorPreset[]};
 export const DEFAULT_CHART_PREFERENCES:ChartPreferences={version:1,crosshairMode:DEFAULT_CHART_CROSSHAIR_MODE,timeframe:'1m',theme:'auto',kind:'candles',grid:true,volume:true,volumeHeight:20,logarithmic:false,autoScale:true,timezone:'America/New_York',upColor:'#16a085',downColor:'#e45757',premarket:true,regular:true,postmarket:true,indicators:[]};
 // Legacy account-wide logarithmic values are deliberately ignored by this policy.
 // An absent per-timeframe choice adopts the new defaults for every account.
@@ -94,7 +108,8 @@ export function setAllIndicatorOverlayWidths(preferences: ChartPreferences, widt
 
 export function parseChartPreferences(value:unknown):ChartPreferences{
  if(!value||typeof value!=='object')throw Error('invalid_preferences');const p=value as ChartPreferences;
- if(p.version!==1||!CHART_TIMEFRAMES.includes(p.timeframe)||!['auto','light','dark'].includes(p.theme)||!['candles','bars','line'].includes(p.kind)||!['America/New_York','America/Toronto','UTC'].includes(p.timezone)||!Number.isInteger(p.volumeHeight)||p.volumeHeight<10||p.volumeHeight>40)throw Error('invalid_preferences');
+ if(p.movementStep!==undefined&&(!Number.isFinite(p.movementStep)||p.movementStep<0.0001||p.movementStep>100||Math.abs(p.movementStep*10000-Math.round(p.movementStep*10000))>1e-8))throw Error("invalid_preferences");
+ if(p.version!==1||!CHART_TIMEFRAMES.includes(p.timeframe)||!['auto','light','dark'].includes(p.theme)||(typeof p.kind!=='string'||!Object.hasOwn(CHART_PRICE_STYLES,p.kind))||!['America/New_York','America/Toronto','UTC'].includes(p.timezone)||!Number.isInteger(p.volumeHeight)||p.volumeHeight<10||p.volumeHeight>40)throw Error('invalid_preferences');
  for(const key of ['grid','volume','logarithmic','autoScale','premarket','regular','postmarket'] as const)if(typeof p[key]!=='boolean')throw Error('invalid_preferences');
  if(!p.premarket&&!p.regular&&!p.postmarket)throw Error('invalid_preferences');
  const color=(s:unknown)=>typeof s==='string'&&/^#[a-f0-9]{6}$/i.test(s);
@@ -110,7 +125,7 @@ export function parseChartPreferences(value:unknown):ChartPreferences{
  if(p.priceScaleByTimeframe!==undefined&&(!p.priceScaleByTimeframe||typeof p.priceScaleByTimeframe!=='object'||Array.isArray(p.priceScaleByTimeframe)||Object.entries(p.priceScaleByTimeframe).some(([frame,value])=>!CHART_TIMEFRAMES.includes(frame as ChartTimeframe)||typeof value!=='boolean')))throw Error('invalid_preferences');
  const indicatorDisplay = p.indicatorDisplay === undefined ? undefined : parseIndicatorDisplayChoices(p.indicatorDisplay);
  const presets = p.savedIndicatorPresets === undefined ? undefined : parseSavedIndicatorPresets(p.savedIndicatorPresets);
- return {version:1,...(indicatorDisplay?{indicatorDisplay}:{}),...(p.priceAdjustment!==undefined?{priceAdjustment:p.priceAdjustment}:{}),...(p.autosaveDrawings!==undefined?{autosaveDrawings:p.autosaveDrawings}:{}),...(p.alwaysShowDrawingToolbar!==undefined?{alwaysShowDrawingToolbar:p.alwaysShowDrawingToolbar}:{}),crosshairMode:p.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,...(p.priceScaleByTimeframe?{priceScaleByTimeframe:{...p.priceScaleByTimeframe}}:{}),autoScale:p.autoScale,...(p.indicatorOverlayLineWidth!==undefined?{indicatorOverlayLineWidth:p.indicatorOverlayLineWidth}:{}),...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,...(p.overnight!==undefined?{overnight:p.overnight}:{}),indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
+ return {version:1,...(p.movementStep!==undefined?{movementStep:p.movementStep}:{}),...(indicatorDisplay?{indicatorDisplay}:{}),...(p.priceAdjustment!==undefined?{priceAdjustment:p.priceAdjustment}:{}),...(p.autosaveDrawings!==undefined?{autosaveDrawings:p.autosaveDrawings}:{}),...(p.alwaysShowDrawingToolbar!==undefined?{alwaysShowDrawingToolbar:p.alwaysShowDrawingToolbar}:{}),crosshairMode:p.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE,timeframe:p.timeframe,theme:p.theme,kind:p.kind,grid:p.grid,volume:p.volume,volumeHeight:p.volumeHeight,logarithmic:p.logarithmic,...(p.priceScaleByTimeframe?{priceScaleByTimeframe:{...p.priceScaleByTimeframe}}:{}),autoScale:p.autoScale,...(p.indicatorOverlayLineWidth!==undefined?{indicatorOverlayLineWidth:p.indicatorOverlayLineWidth}:{}),...(p.indicatorPriceScaleLabels!==undefined?{indicatorPriceScaleLabels:p.indicatorPriceScaleLabels}:{}),...(p.scalePriceOnly!==undefined?{scalePriceOnly:p.scalePriceOnly}:{}),timezone:p.timezone,upColor:p.upColor,downColor:p.downColor,premarket:p.premarket,regular:p.regular,postmarket:p.postmarket,...(p.overnight!==undefined?{overnight:p.overnight}:{}),indicators:parseIndicators(p.indicators),...(presets?.length ? {savedIndicatorPresets:presets} : {})};
 }
 
 function parseIndicatorDisplayChoices(raw: unknown): IndicatorDisplayChoices {

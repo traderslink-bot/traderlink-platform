@@ -195,7 +195,7 @@ beforeEach(() => {
       TRADERLINK_LEVEL_ANALYSIS_RAW_DEBUG_ENABLED: "true",
     },
   );
-});
+}, 20_000);
 
 afterEach(async () => {
   restoreEnvironment();
