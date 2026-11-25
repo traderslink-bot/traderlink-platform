@@ -21,6 +21,7 @@ import { easternClock } from "../live/sessions";
 import { AlpacaPreviousCloseBook } from "./previous-close";
 import { ScannerSplitReference } from "./scanner-split-reference";
 import { ChartLiveBook } from "./chart-live-book";
+import { ChartTradeTapeHub } from "./chart-trade-tape";
 import { ChartOvernightFeed } from "./chart-overnight-feed";
 import { chartOvernightTradingDate } from "./chart-overnight-session";
 import { AlpacaTradingStatusBook } from "./trading-status";
@@ -86,7 +87,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
   const statusStartedAt = new Date().toISOString();
   const chartBooks = new Map<string, ChartLiveBook>();
   const priceUpdates=new Map<string,{price:number;time:string}>();
-  const priceTimer=setInterval(()=>{for(const client of clients){const price=priceUpdates.get(client.symbol);if(price)send(client,"price",price);}priceUpdates.clear();for(const [key,book] of chartBooks){void book.warm();const [symbol,daily]=key.split("|");for(const bar of book.drain())for(const client of clients)if(client.symbol===symbol&&client.daily===(daily==="true"))send(client,"bar",{bar,daily:daily==="true",provisional:true});}},250);priceTimer.unref();
+  const priceTimer=setInterval(()=>{for(const client of clients){const price=priceUpdates.get(client.symbol);if(price)send(client,"price",price);}priceUpdates.clear();for(const [key,book] of chartBooks){void book.warm();const [symbol,daily]=key.split("|");for(const bar of book.drain())for(const client of clients)if(client.symbol===symbol&&client.daily===(daily==="true"))send(client,"bar",{bar,daily:daily==="true",provisional:true});}chartTape.tick();},250);priceTimer.unref();
   const cache = new Map<string, { at: number; bars: Candle[] }>();
   const pending = new Map<string, Promise<Candle[]>>();
   const rest = new AlpacaRestData(options);
@@ -99,6 +100,10 @@ export function createAlpacaGateway(options: GatewayOptions) {
     finally { signalReads--; }
   }, 5_000, request => JSON.stringify(request), SCANNER_SIGNAL_CONCURRENCY);
   const chartCalendar = new AlpacaChartCalendar(options);
+  const chartTape = new ChartTradeTapeHub(rest, chartCalendar, removed => {
+    if (removed && !symbols().includes(removed) && authenticated && socket?.readyState === WebSocket.OPEN) unsubscribeForeground([removed]);
+    if (needsSocket()) { if (!removed) subscribe(); connect(); }
+  });
   const accepted = options.acceptedInputs ?? new AcceptedSeriesPublisher();
   const levelsMonitor = options.observeScannerLevelsInterval && createVerifiedScannerLevelsMonitor(accepted, options.observeScannerLevelsInterval);
   const levelsMonitorTimer = levelsMonitor && setInterval(() => { void levelsMonitor.poll(); }, 15_000);
@@ -149,10 +154,10 @@ export function createAlpacaGateway(options: GatewayOptions) {
   let previousPriceSymbols = new Set<string>();
   const priceHub = new LivePriceHub(() => {
     const wanted = new Set(priceHub.symbols());
-    const removed = [...previousPriceSymbols].filter(symbol => !wanted.has(symbol) && !leases.has(symbol) && ![...clients].some(client=>client.symbol===symbol));
+    const removed = [...previousPriceSymbols].filter(symbol => !wanted.has(symbol) && !leases.has(symbol) && !chartTape.symbols().includes(symbol) && ![...clients].some(client=>client.symbol===symbol));
     previousPriceSymbols = wanted;
     if (authenticated && socket?.readyState === WebSocket.OPEN && removed.length) unsubscribeForeground(removed);
-    if (!needsSocket()) { clearTimeout(retry); const old=socket;socket=null;authenticated=false;priceHub.state(false);old?.close(); }
+    if (!needsSocket()) { clearTimeout(retry); const old=socket;socket=null;authenticated=false;priceHub.state(false);chartTape.disconnected();old?.close(); }
     else { subscribe(); connect(); }
   }, bootstrapLivePrices);
   async function bootstrapLivePrices(requested: readonly string[]) {
@@ -162,7 +167,8 @@ export function createAlpacaGateway(options: GatewayOptions) {
     if(generation!==priceGeneration)return;
     for(const symbol of requested)priceHub.observe(symbol,snapshots[symbol]?.latestTrade);
   }
-  const symbols = () => [...new Set([...clients].map(client => client.symbol).concat([...leases.keys()],priceHub.symbols()))];
+  const chartAndScannerSymbols = () => [...new Set([...clients].map(client => client.symbol).concat([...leases.keys()],priceHub.symbols()))];
+  const symbols = () => [...new Set([...chartAndScannerSymbols(), ...chartTape.symbols()])];
   const archiveBackground = () => archive?.backgroundSymbols() ?? [];
   const needsSocket = () => options.haltSource === "alpaca" || symbols().length > 0 || archiveBackground().length > 0;
 
@@ -180,7 +186,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
   }
 
   function refreshArchiveSubscriptions(previous: readonly string[]) {
-    const foreground = new Set(symbols());
+    const foreground = new Set(chartAndScannerSymbols());
     const background = new Set(archiveBackground());
     const removed = previous.filter(symbol => !foreground.has(symbol) && !background.has(symbol));
     if (authenticated && socket?.readyState === WebSocket.OPEN && removed.length) {
@@ -192,7 +198,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
     } else {
       clearTimeout(retry);
       const old = socket;
-      socket = null; authenticated = false;
+      socket = null; authenticated = false; chartTape.disconnected();
       old?.close();
     }
   }
@@ -224,9 +230,10 @@ export function createAlpacaGateway(options: GatewayOptions) {
     if (authenticated && socket?.readyState === WebSocket.OPEN) {
       if(subscriptionKind){subscriptionQueued=true;return;}
       subscriptionKind="prices";
-      const wanted = symbols();
-      const bars = [...new Set([...wanted, ...archiveBackground()])];
-      socket.send(JSON.stringify({ action: "subscribe", trades: wanted, quotes: [...new Set([...leases.keys(),...priceHub.symbols()])], bars, updatedBars: bars, dailyBars: wanted }));
+      const foreground = chartAndScannerSymbols();
+      const trades = [...new Set([...foreground, ...chartTape.symbols()])];
+      const bars = [...new Set([...foreground, ...archiveBackground()])];
+      socket.send(JSON.stringify({ action: "subscribe", trades, quotes: [...new Set([...leases.keys(),...priceHub.symbols()])], bars, updatedBars: bars, dailyBars: foreground }));
     }
   }
   function requestStatuses(){
@@ -257,7 +264,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
       for (const message of messages) {
         if (message.T === "t") priceHub.observe(message.S,message);
         if (["t", "q", "b", "u", "d", "c", "x"].includes(message.T) && typeof message.S === "string") scannerHub.mark(message.S);
-        if (["t", "c", "x"].includes(message.T)) { sessionBook.observe(message); for(const daily of [false,true])chartBooks.get(`${message.S}|${daily}`)?.observe(message); }
+        if (["t", "c", "x"].includes(message.T)) { sessionBook.observe(message); for(const daily of [false,true])chartBooks.get(`${message.S}|${daily}`)?.observe(message); chartTape.observe(message); }
         if(message.T === "t" && alpacaMinuteTradeRules(message).known && alpacaMinuteTradeRules(message).prices && Number.isFinite(message.p) && message.p>0){
           if([...clients].some(client=>client.symbol===message.S)){const prior=priceUpdates.get(message.S);if(!prior||priceObservationOrder(message.t)>=priceObservationOrder(prior.time))priceUpdates.set(message.S,{price:message.p,time:message.t});}
         }
@@ -270,6 +277,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
           statusesSubscribed = !statusesRejected && statusPersistenceHealthy && Array.isArray(message.statuses) && message.statuses.includes("*");
           if(completed==="statuses"&&!statusesSubscribed)statusesRejected=true;
           subscribedTrades = new Set(Array.isArray(message.trades) ? message.trades : []);
+          chartTape.acknowledge(message.trades, message.corrections, message.cancelErrors);
           const corrections = new Set(Array.isArray(message.updatedBars) ? message.updatedBars : []);
           subscribedBars = new Set((Array.isArray(message.bars) ? message.bars : []).filter((symbol: string) => corrections.has(symbol)));
           scannerHub.refresh();priceHub.state(true);void bootstrapLivePrices(priceHub.symbols()).catch(()=>{});status("connected");
@@ -334,6 +342,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
       if (socket !== candidate) return;
       socket = null; authenticated = false; statusesSubscribed = false; subscriptionKind=null;clearTimeout(statusAttemptTimer);
       subscribedTrades.clear();subscribedBars.clear();priceGeneration++;priceHub.state(false);
+      chartTape.disconnected();
       quotes.clear();priceUpdates.clear();
       for(const book of chartBooks.values())book.invalidate();
       sessionBook.invalidate();
@@ -353,10 +362,10 @@ export function createAlpacaGateway(options: GatewayOptions) {
     const expired = [...leases].filter(([, until]) => until < Date.now()).map(([symbol]) => symbol);
     for (const symbol of expired) { leases.delete(symbol); quotes.delete(symbol); sessionBook.remove(symbol); }
     if (expired.length && authenticated && socket?.readyState === WebSocket.OPEN) {
-      const unusedBars = expired.filter(symbol => ![...clients].some(client => client.symbol === symbol) && !priceHub.symbols().includes(symbol));
+      const unusedBars = expired.filter(symbol => !symbols().includes(symbol));
       if (unusedBars.length) unsubscribeForeground(unusedBars);
     }
-    if (!needsSocket()) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
+    if (!needsSocket()) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; chartTape.disconnected(); old?.close(); }
   }, 5000);
   leaseTimer.unref();
   async function history(symbol: string, daily: boolean): Promise<Candle[]> {
@@ -393,6 +402,30 @@ export function createAlpacaGateway(options: GatewayOptions) {
     const reply=(value:unknown)=>response.end(JSON.stringify(operation?encodeGatewayWire(operation,value):value));
     try {
       if(operation){url.pathname="/"+operation;url.search=gatewayWireQuery(url.searchParams,true).toString();}
+      if (url.pathname === "/chart-trades/stream") {
+        if (request.method !== "GET") { response.writeHead(405, { Allow: "GET" }).end(); return; }
+        if (url.searchParams.getAll("symbol").length !== 1 || [...url.searchParams.keys()].some(key => key !== "symbol")) {
+          throw Error("invalid_symbol");
+        }
+        const symbol = chartSymbol(url.searchParams.get("symbol") ?? "");
+        const write = (frame: string) => {
+          if (response.destroyed || response.writableEnded) return;
+          if (response.writableLength > 256_000) { response.destroy(); return; }
+          response.write(frame);
+        };
+        response.setHeader("Content-Type", "text/event-stream");
+        response.setHeader("X-Accel-Buffering", "no");
+        const detach = chartTape.attach(symbol, {
+          tape: frame => write(`event: tape\ndata: ${JSON.stringify(frame)}\n\n`),
+          status: state => write(`event: status\ndata: ${JSON.stringify({ state })}\n\n`),
+          close: () => response.end(),
+        });
+        write("retry: 3000\n\n");
+        const heartbeat = setInterval(() => write(": heartbeat\n\n"), 15_000);
+        heartbeat.unref();
+        response.once("close", () => { clearInterval(heartbeat); detach(); });
+        return;
+      }
       if (url.pathname === "/candle-history" && request.method === "GET") {
         const reader = archive || archiveReader;
         if (!reader) { response.writeHead(404).end(); return; }
@@ -670,7 +703,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
         response.on("close", () => {
           clearInterval(heartbeat); detachOvernight?.(); clients.delete(client);
           if(![...clients].some(item=>item.symbol===symbol&&item.daily===daily)){chartBooks.get(bookKey)?.invalidate();chartBooks.delete(bookKey);}
-          if (!needsSocket()) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; old?.close(); }
+          if (!needsSocket()) { clearTimeout(retry); const old = socket; socket = null; authenticated = false; chartTape.disconnected(); old?.close(); }
           else if (!symbols().includes(symbol) && authenticated && socket?.readyState === WebSocket.OPEN) unsubscribeForeground([symbol]);
         });
       } else { response.writeHead(404); response.end(); }
@@ -683,7 +716,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
     }
   });
   server.on("listening",()=>{if(needsSocket())connect();});
-  return { server, close() { stopped = true; archive?.close(); clearInterval(levelsMonitorTimer); levelsMonitor?.stop(); overnightFeed?.close(); clearTimeout(statusAttemptTimer);statusJournal?.close(); clearInterval(priceTimer); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
+  return { server, close() { stopped = true; archive?.close(); clearInterval(levelsMonitorTimer); levelsMonitor?.stop(); overnightFeed?.close(); clearTimeout(statusAttemptTimer);statusJournal?.close(); clearInterval(priceTimer); chartTape.close(); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
 }
 
 export async function readPrivateJson(path: string): Promise<Record<string, string>> {
