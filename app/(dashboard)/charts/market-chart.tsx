@@ -17,6 +17,7 @@ import IconButton from "@mui/material/IconButton";
 import GridViewOutlined from "@mui/icons-material/GridViewOutlined";
 import MenuBookOutlined from "@mui/icons-material/MenuBookOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import NetworkCheck from "@mui/icons-material/NetworkCheck";
 import {useChartPreferences} from "./use-chart-preferences";
 import {localVwapSeed,parseVwapSeedRequest,validVwapSeed,type VwapSeed} from "@/src/modules/scanner/alpaca/chart-vwap-seed";
@@ -103,7 +104,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const theme = useTheme();
   const narrow = useMediaQuery(theme.breakpoints.down("md")), landscape = useMediaQuery("(orientation: landscape) and (max-height: 600px) and (max-width: 1200px)");
   const compact = compactToolbar || (compactMobile && (narrow || landscape));
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null), [frameAnchor, setFrameAnchor] = useState<HTMLElement | null>(null);
+  const [frameAnchor, setFrameAnchor] = useState<HTMLElement | null>(null);
   // Toolbar visibility must not restart candles or subscriptions.
   const alwaysShowDrawingToolbar=accountPreferences.alwaysShowDrawingToolbar??false;
   const chartOptionsKey=useMemo(()=>JSON.stringify({
@@ -1346,6 +1347,19 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   }, [activeTradeContext, focusScope, journalEngineBridge, ready, ticker, timeframe, tradeFocusRevision]);
 
   const mainToolbar = viewWorkspace === "main";
+  const preferenceButtonHeight = compact ? compactToolbarHeight : mainToolbar ? 34 : 44;
+  const preferencesButtons = <>
+    <IconButton size="small" aria-label="Chart settings" title="Chart settings" aria-haspopup="dialog"
+      disabled={!ready} onClick={() => openPreferences("settings")}
+      sx={{ width: 44, height: preferenceButtonHeight, flexShrink: 0 }}>
+      <SettingsOutlined fontSize="small" />
+    </IconButton>
+    <IconButton size="small" aria-label="Indicators" title="Indicators" aria-haspopup="dialog"
+      disabled={!ready} onClick={() => openIndicators()}
+      sx={{ width: compact || !mainToolbar ? 44 : 34, height: preferenceButtonHeight, flexShrink: 0 }}>
+      <NetworkCheck fontSize="small" />
+    </IconButton>
+  </>;
   const multiviewButton = onOpenMultiview && (
     <IconButton size="small" aria-label="Open Multiview for this chart view" title="Multiview" aria-haspopup="dialog" disabled={!ready}
       onClick={onOpenMultiview} sx={{ width: compact ? 44 : 34, height: compact ? compactToolbarHeight : 34, flexShrink: 0 }}>
@@ -1383,10 +1397,14 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       <Box data-chart-identity sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: "1 1 32px", minWidth: 0 }}>
         {chartIdentity ?? <Typography noWrap sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700, flexShrink: 0, maxWidth: "100%" }}>{ticker}</Typography>}
       </Box>
-      <Button aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
-        sx={{ minWidth: 44, height: compactToolbarHeight, px: 0.5, flexShrink: 0 }}>{timeframe}</Button>
-      <IconButton aria-label={`${ticker} chart options`} aria-haspopup="menu" onClick={event => setMenuAnchor(event.currentTarget)}
-        sx={{ width: 44, height: compactToolbarHeight, flexShrink: 0 }}><SettingsOutlined fontSize="small" /></IconButton>
+      <Button variant="outlined" color="inherit" endIcon={<KeyboardArrowDown fontSize="small" />}
+        aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" aria-expanded={Boolean(frameAnchor)}
+        onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
+        sx={{ minWidth: 56, height: compactToolbarHeight, px: 0.75, flexShrink: 0, textTransform: "none",
+          color: "text.primary", borderColor: "divider", gap: 0.25, "& .MuiButton-endIcon": { m: 0 } }}>
+        {timeframe}
+      </Button>
+      {preferencesButtons}
       {evidenceButtons}
       {drawingToolbar}
       {journalButton}
@@ -1396,12 +1414,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     </Stack> : <>    <Stack direction="row" sx={{ alignItems: "center", gap: 0.25, px: 0.5, minHeight: 27, flexWrap: "wrap" }}>
       <Typography sx={{ color:dark?"warning.main":"#354358",fontSize: 11, fontWeight: 700, mr: 0.5 }}>{ticker}</Typography>
       {CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
-      <IconButton size="small" disabled={!ready} aria-label="Chart options" aria-haspopup="menu"
-        onClick={event=>setMenuAnchor(event.currentTarget)} sx={{minWidth:44,minHeight:mainToolbar?34:44}}><SettingsOutlined fontSize="small"/></IconButton>
-      <IconButton size="small" aria-label="Indicators" title="Indicators" aria-haspopup="dialog"
-        disabled={!ready} onClick={()=>openIndicators()} sx={{width:mainToolbar?34:44,height:mainToolbar?34:44}}>
-        <NetworkCheck fontSize="small"/>
-      </IconButton>
+      {preferencesButtons}
       {evidenceButtons}
       {drawingToolbar}
       {journalButton}
@@ -1415,11 +1428,6 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     {compact ? <Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}>
       {CHART_TIMEFRAMES.map(value => <MenuItem key={value} selected={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => { if (onTimeframeChange) onTimeframeChange(value); else setActiveTimeframe(value); setFrameAnchor(null); }}>{value}</MenuItem>)}
     </Menu> : null}
-    <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
-      {compact&&<MenuItem disabled={!ready} onClick={() => { setFrameAnchor(menuAnchor); setMenuAnchor(null); }}>Timeframe</MenuItem>}
-      {compact&&<MenuItem disabled={!ready} onClick={() => { openIndicators(); setMenuAnchor(null); }}>Indicators</MenuItem>}
-      <MenuItem disabled={!ready} onClick={() => { openPreferences("settings"); setMenuAnchor(null); }}>Chart settings</MenuItem>
-    </Menu>
     {drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
     {activeTradeContext && journal.status && !journal.current?.open && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>{journal.status}</Typography>}
