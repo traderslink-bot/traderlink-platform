@@ -37,8 +37,10 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { stockScreenersEnabled } from "@/src/modules/stock-screeners/service";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
-import { hasLegacyScannerDashboardAccess, hasStockScreenersDashboardAccess, readMarketToolsDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
+import { canOpenBrokerWorkspace, hasLegacyScannerDashboardAccess, hasStockScreenersDashboardAccess, readMarketToolsDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { hasChartsDashboardAccess } from "@/src/modules/market-data/server/chart-dashboard-access";
+import { hasCandleHistoryOwnerAccess } from "@/src/modules/market-data/server/candle-history-owner";
+import { readWorkspaceMarketSettings } from "@/src/modules/market-data/server/workspace-market-settings-store";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 import { DashboardMuiProviders } from "./mui-provider";
 import { TraderLinkCommunityRepository } from "@/src/modules/communities/server/traderlink-community-repository";
@@ -202,6 +204,10 @@ async function TraderLinkPlatformDashboardFrameContent({
   const generalMarketNewsAccess = hasGeneralMarketNewsAccess(identity);
   const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
   const marketToolsAccess = readMarketToolsDashboardAccess(identity);
+  const tradingWorkspaceAdminAccess = hasCandleHistoryOwnerAccess(identity);
+  let brokerWorkspaceAccess = false;
+  try { brokerWorkspaceAccess = canOpenBrokerWorkspace(identity, readWorkspaceMarketSettings()); }
+  catch { /* Broker workspace remains private if its settings cannot be read. */ }
   const readAtUtc = createCanonicalUtcTimestamp();
   timing.next("context");
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
@@ -292,6 +298,8 @@ async function TraderLinkPlatformDashboardFrameContent({
           screenersDashboardAccess={screenersDashboardAccess}
           chartsDashboardAccess={chartsDashboardAccess}
           tradingWorkspaceDashboardAccess={marketToolsAccess.tradingWorkspace}
+          brokerWorkspaceAccess={brokerWorkspaceAccess}
+          tradingWorkspaceAdminAccess={tradingWorkspaceAdminAccess}
           watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
           communityNavigationHref={dashboardContext.communityNavigationHref}
           partnerChannelsNavigationAccess={watchlistAdminNavigationAccess}

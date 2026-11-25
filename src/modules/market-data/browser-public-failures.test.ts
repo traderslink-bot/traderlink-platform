@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 const state=vi.hoisted(()=>({authenticated:true,allowed:true,plan:true,fail:true}));
 const failed=()=>{throw Error('Alpaca gateway https://private.finnhub.io?token=private-value moomoo');};
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!state.authenticated)throw Error('private-value');return{mode:'platform_session',scope:{userId:'fixture'}};}}));
-vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({hasMarketToolsDashboardReadAccess:()=>state.allowed}));
+vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({hasMarketToolsDashboardReadAccess:()=>state.allowed,hasSharedWorkspaceAccess:()=>state.allowed}));
 vi.mock('@/src/modules/news/server/press-release-dashboard-access',()=>({hasPressReleaseDashboardAccess:()=>false}));
 vi.mock('@/src/modules/company/server/company-market-data',()=>({companyUniverseEntry:async()=>{if(state.fail)failed();return{symbol:'SHFS'};},readCompanyTechnicals:async()=>({symbol:'SHFS',stats:{price:.029,change:4.69}}),readCompanyYearRange:async()=>({high:1,low:.01})}));
 vi.mock('@/src/modules/company/server/company-snapshot',()=>({companySymbol:(s:string)=>s==='SHFS'?s:null,readCompanySnapshot:async()=>({companyProfile:{name:'Company'}})}));

@@ -7,7 +7,7 @@ import { easternClock } from "@/src/modules/scanner/live/sessions";
 import type { ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
 import type { VwapCorporateEvents, VwapCorporateAnchor } from "@/src/modules/scanner/alpaca/chart-vwap-events";
 
-type HistoryInput = { symbol: string; timeframe: "1Min" | "1Day"; start: number; end: number; adjustment?: "raw" | "split" };
+type HistoryInput = { symbol: string; timeframe: "1Min" | "15Min" | "1Day"; start: number; end: number; adjustment?: "raw" | "split" };
 type Loader = (request: MoomooDataRequest) => Promise<Record<string, unknown>>;
 export type SplitEvent = { date: string; ratio: number };
 export function moomooSplits(payload: Record<string, unknown>): SplitEvent[] {
@@ -28,7 +28,7 @@ export function moomooSplits(payload: Record<string, unknown>): SplitEvent[] {
   });
 }
 
-export function moomooChartBar(raw: unknown, daily: boolean): Candle | null {
+export function moomooChartBar(raw: unknown, daily: boolean, intradaySeconds = 60): Candle | null {
   if (!raw || typeof raw !== "object") throw Error("invalid_moomoo_candle");
   const row = raw as Record<string, unknown>;
   const timestamp = row.time_key ?? row.time_ms;
@@ -41,7 +41,7 @@ export function moomooChartBar(raw: unknown, daily: boolean): Candle | null {
   if (low <= 0 || high < Math.max(open, close) || low > Math.min(open, close) || volume < 0) throw Error("invalid_moomoo_candle");
   // Moomoo's native minute history is end-labelled. The shared chart uses starts.
   const tradingDate = typeof row.date === "number" && /^\d{8}$/.test(String(row.date)) ? String(row.date).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3") : null;
-  const time = daily ? easternDayStart(tradingDate ? Date.parse(tradingDate + "T12:00:00Z") / 1000 : Number(timestamp) / 1000) : Number(timestamp) / 1000 - 60;
+  const time = daily ? easternDayStart(tradingDate ? Date.parse(tradingDate + "T12:00:00Z") / 1000 : Number(timestamp) / 1000) : Number(timestamp) / 1000 - intradaySeconds;
   if (!Number.isSafeInteger(time)) throw Error("invalid_moomoo_candle");
   return { time, open, high, low, close, volume };
 }
@@ -108,7 +108,7 @@ export class MoomooChartHistory {
       const data = payload.data as { kline_list?: unknown; next_time?: unknown };
       if (!data || !Array.isArray(data.kline_list) || data.kline_list.length > 370) throw Error("invalid_moomoo_history");
       for (const raw of data.kline_list) {
-        const bar = moomooChartBar(raw, daily);
+        const bar = moomooChartBar(raw, daily, input.timeframe === "15Min" ? 900 : 60);
         if (bar && bar.time * 1000 >= input.start && bar.time * 1000 <= input.end) bars.set(bar.time, bar);
       }
       const pagination = payload.pagination as { has_more?: unknown; next_page_token?: unknown } | undefined;

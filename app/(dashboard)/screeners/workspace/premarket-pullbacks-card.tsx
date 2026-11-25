@@ -1,8 +1,8 @@
 "use client";
 
+import { type WorkspaceDecline, type WorkspacePullback, type WorkspacePullbackResults, workspacePrice as price } from "./broker-workspace-data";
 import { scannerPercent } from "../scanner-number-format";
 import { WorkspaceScannerTitle } from "./workspace-scanner-title";
-import { scannerPrice as price } from "../scanner-price";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
 import { ScannerRowTools, scannerToolColumnSx } from "./scanner-row-tools";
@@ -35,7 +35,7 @@ import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
-import type { DeclineRow, PremarketPullbackResults, PremarketPullbackRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
+import type { ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "../screener-halt-indicator";
 import { ScannerNewsLink } from "../scanner-news-drawer-context";
@@ -47,7 +47,7 @@ const optionalPrice=(value:number|null)=>value===null?"n/a":price(value);
 const shares=(value:number|null)=>value===null?"n/a":compact.format(value);
 const floatShares=(value:number|null)=>value===null?"—":compact.format(value);
 
-type DropChartTarget = Pick<DeclineRow, "symbol" | "exchange" | "price">;
+type DropChartTarget = Pick<WorkspaceDecline, "symbol" | "exchange" | "price">;
 
 function ChartButton<T extends DropChartTarget>({row,onOpenChart}:{row:T;onOpenChart:(row:T)=>void}){
   return <ButtonBase aria-label={`Open ${row.symbol} chart`} onClick={event=>{event.stopPropagation();onOpenChart(row);}}
@@ -71,7 +71,7 @@ function RapidMarker() {
   </Tooltip>;
 }
 
-function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly PremarketPullbackRow[];full:boolean;twoRows:boolean;onOpenChart:(row:PremarketPullbackRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
+function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly WorkspacePullback[];full:boolean;twoRows:boolean;onOpenChart:(row:WorkspacePullback)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const volumeColumns=useWorkspaceVolumeColumns();
   const [expanded,setExpanded]=useState<string|null>(null);
   return <TableContainer role="region" aria-label="HOD Drops list" tabIndex={0} sx={theme=>({...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:full?"calc(100dvh - 150px)":420})}>
@@ -82,9 +82,10 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
       </TableRow></TableHead>
       <TableBody>{rows.map(row=>{const open=expanded===row.symbol,toggle=()=>setExpanded(value=>value===row.symbol?null:row.symbol);
         const source=row.referenceSession==="premarket"?"PRE":row.referenceSession==="regular"?"REG":"POST";
-        const rapidMetrics:[string,string][]=row.rapidDrop?[["Rapid start",price(row.rapidDrop.startPrice)],["Rapid low",price(row.rapidDrop.lowPrice)],["Rapid fall time",rapidFallTime(row.rapidDrop.durationSeconds)]]:[];
+        const rapidDrop = "rapidDrop" in row ? row.rapidDrop : undefined;
+        const rapidMetrics:[string,string][] = rapidDrop ?[["Rapid start",price(rapidDrop.startPrice)],["Rapid low",price(rapidDrop.lowPrice)],["Rapid fall time",rapidFallTime(rapidDrop.durationSeconds)]]:[];
         const metrics:readonly (readonly [string,string])[]=open?[["Premarket high",optionalPrice(row.premarketHigh)],["Regular high",optionalPrice(row.regularHigh)],["Post-market high",optionalPrice(row.postMarketHigh)],
-          ["Reference high",price(row.referenceHigh)],["Below reference high",`${wholePercent.format(row.belowHighPercent)}%`],["Back to reference high",`+${wholePercent.format(row.backToHighPercent)}%`],...workspaceVolumeFacts(row),
+          ["Reference high",price(row.referenceHigh)],["Below reference high",row.belowHighPercent==null?"—":`${wholePercent.format(row.belowHighPercent)}%`],["Back to reference high",row.backToHighPercent==null?"—":`+${wholePercent.format(row.backToHighPercent)}%`],...workspaceVolumeFacts(row),
           ["1min volume",shares(row.oneMinuteVolume)],["5min volume",shares(row.fiveMinuteVolume)],
           ["Float",floatShares(row.float)],["Spread",scannerPercent(row.spreadPercent)],
           ...rapidMetrics,
@@ -94,8 +95,8 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
           sx={{cursor:"pointer",'&:focus-visible':{outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2}}}>
           {!twoRows&&<><TableCell sx={{px:"0.125rem !important"}}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>
           </>}
-          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{display:"inline-flex",alignItems:"center",gap:0.5,whiteSpace:"nowrap"}}><ScannerPageTicker symbol={row.symbol}/>{row.rapidDrop?<RapidMarker/>:null}<ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
-          <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(-row.belowHighPercent),fontWeight:750}}>{wholePercent.format(row.belowHighPercent)}%</TableCell><TableCell sx={{whiteSpace:"nowrap", "&&":{pr:0.85}}}><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><WorkspaceVolumeCells row={row} columns={volumeColumns}/>
+          <TableCell data-scanner-sticky-ticker><Stack direction="row" sx={{display:"inline-flex",alignItems:"center",gap:0.5,whiteSpace:"nowrap"}}><ScannerPageTicker symbol={row.symbol}/>{rapidDrop?<RapidMarker/>:null}<ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
+          <TableCell sx={{color:scannerGainColor(row.changePercent)}}>{price(row.price)}</TableCell><TableCell sx={{color:scannerGainColor(row.belowHighPercent==null?null:-row.belowHighPercent),fontWeight:750}}>{row.belowHighPercent==null?"—":`${wholePercent.format(row.belowHighPercent)}%`}</TableCell><TableCell sx={{whiteSpace:"nowrap", "&&":{pr:0.85}}}><Typography component="span" sx={{font:"inherit"}}>{price(row.referenceHigh)}</Typography><Typography component="span" sx={{color:"warning.main",fontSize:"0.55rem",fontWeight:800,ml:0.4}}>{source}</Typography></TableCell><WorkspaceVolumeCells row={row} columns={volumeColumns}/>
         {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}
           </TableRow>
           {twoRows&&<TableRow data-two-row-tools={row.symbol}>
@@ -103,7 +104,7 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
             <TableCell colSpan={3+volumeColumns.length}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>
           </TableRow>}{open?<TableRow><TableCell colSpan={(twoRows?4:6)+volumeColumns.length} sx={{bgcolor:"action.hover",p:"0 !important"}}><Box sx={{boxSizing:"border-box",left:0,p:1,position:"sticky",width:"100cqw"}}>
           <Box sx={{display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",md:full?"repeat(4,minmax(0,1fr))":"repeat(2,minmax(0,1fr))"},gap:1.5,py:1}}>
-            {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45,color:label==="Below reference high"?scannerGainColor(-row.belowHighPercent):undefined}}>{value}</Typography></Box>)}
+            {metrics.map(([label,value])=><Box key={label}><Typography color="warning.main" sx={{display:"block",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase"}}>{label}</Typography><Typography variant="body2" sx={{fontWeight:700,mt:0.45,color:label==="Below reference high"?scannerGainColor(row.belowHighPercent==null?null:-row.belowHighPercent):undefined}}>{value}</Typography></Box>)}
           </Box><Stack direction="row" sx={{gap:1,flexWrap:"wrap",justifyContent:"space-between",alignItems:"center"}}>
             <Stack direction="row" spacing={1}>{row.news.slice(0,3).map(item=><ScannerNewsLink item={item} key={item.id} label={item.typeLabel}/>)}</Stack>
             <Button size="small" aria-label={`Open ${row.symbol} chart`} onClick={()=>onOpenChart(row)}>View Chart</Button>
@@ -116,7 +117,7 @@ function HighDropsTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
 }
 
 function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
-  rows: readonly DeclineRow[]; onOpenChart: (row: DropChartTarget) => void;
+  rows: readonly WorkspaceDecline[]; onOpenChart: (row: DropChartTarget) => void;
   haltByTicker: ReadonlyMap<string,ScannerActiveHalt>;
 }) {
   if (rows.length===0) return null;
@@ -129,22 +130,22 @@ function RecentRapidDrops({ rows, onOpenChart, haltByTicker }: {
           <RapidMarker/>
           <ScannerCountryFlag country={row.country}/>
           <ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/>
-          <Typography variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.drop.maximumDropPercent)}}>{wholePercent.format(row.drop.maximumDropPercent)}%</Typography>
+          <Typography variant="inherit" sx={{fontWeight:750,color:scannerGainColor(row.drop.maximumDropPercent)}}>{row.drop.maximumDropPercent==null?"—":`${wholePercent.format(row.drop.maximumDropPercent)}%`}</Typography>
           <Typography variant="inherit" color="text.secondary">in {rapidFallTime(row.drop.durationSeconds)}</Typography>
         </Stack>)}
       </Box>
   </Box>;
 }
 
-export function PremarketPullbacksCard({results,view="table",onViewChange,now=0,rapid=[],notice,onOpenChart,haltByTicker=new Map()}:{view?:ScannerView;onViewChange?:(view:ScannerView)=>void;now?:number;results:PremarketPullbackResults|undefined;rapid?:readonly DeclineRow[];notice:string|null;onOpenChart:(row:DropChartTarget)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
+export function PremarketPullbacksCard({results,view="table",onViewChange,now=0,rapid=[],notice,onOpenChart,haltByTicker=new Map()}:{view?:ScannerView;onViewChange?:(view:ScannerView)=>void;now?:number;results:WorkspacePullbackResults|undefined;rapid?:readonly WorkspaceDecline[];notice:string|null;onOpenChart:(row:DropChartTarget)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
   const [full,setFull]=useState(false);
   const viewSettings=onViewChange&&<ScannerViewSettings label="HOD Drops" view={view} onViewChange={onViewChange}/>;
   const contents=(wide:boolean)=><Stack data-scanner-results spacing={1}>
     {!notice&&results?.controls.enabled&&<RecentRapidDrops rows={rapid} onOpenChart={onOpenChart} haltByTicker={haltByTicker}/>}
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>:!results?<Skeleton height={260}/>
-      :results.rows.length?(view==="cards"?<ScannerStockCards screen="high-drops" rows={results.rows} now={now}
+      :results.rows.length?(view==="cards"?<ScannerStockCards<WorkspacePullback> screen="high-drops" rows={results.rows} now={now}
         renderHalt={symbol=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>}
-        renderTools={row=><>{row.rapidDrop&&<RapidMarker/>}<ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></>}/>
+        renderTools={row=><>{"rapidDrop" in row&&row.rapidDrop&&<RapidMarker/>}<ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></>}/>
         :<HighDropsTable twoRows={view==="two-rows"} rows={results.rows} full={wide} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>):<Alert severity="info">No stocks currently qualify for this list.</Alert>}
   </Stack>;
   return <><DashboardPanel hideHeader><Stack direction="row" sx={{alignItems:"flex-start",justifyContent:"space-between",mb:1.25,minHeight:22}}><Stack direction="row" sx={{alignItems:"flex-start",gap:0.6}}><WorkspaceScannerTitle><Typography component="h2" variant="h2">HOD Drops</Typography></WorkspaceScannerTitle><Tooltip title={`HOD Drops ranks stocks by how far they are below the session high. The bolt marks a rapid drop. ${RAPID_DROP_HELP}`}><IconButton aria-label="Explain HOD Drops" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton></Tooltip></Stack><Stack direction="row" sx={{alignItems:"center",gap:0.4}}>{viewSettings}<IconButton size="small" aria-label="Open HOD Drops full view" title="Open full view" onClick={()=>setFull(true)}><OpenInFullRoundedIcon sx={{fontSize:18}}/></IconButton></Stack></Stack>{contents(false)}</DashboardPanel>

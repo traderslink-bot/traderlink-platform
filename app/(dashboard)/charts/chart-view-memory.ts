@@ -1,7 +1,7 @@
 import type { ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { CHART_TIMEFRAMES, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
-import type { IndicatorDisplayChoices } from "@/src/modules/scanner/alpaca/chart-preferences";
+import { INDICATOR_TYPES, type IndicatorDisplayChoices } from "@/src/modules/scanner/alpaca/chart-preferences";
 
 export const defaultIndicatorDisplay: IndicatorDisplayChoices = {};
 
@@ -13,8 +13,11 @@ export type ChartViewSnapshot = {
   priceScalePolicy?: 1; autoScale: boolean; preferenceAutoScale: boolean; logarithmic: boolean;
 };
 type Storage = Pick<globalThis.Storage, "getItem" | "setItem" | "removeItem">;
-type State = { panels: Record<string, string>; views: Record<string, ChartViewSnapshot> };
+type StoredViews = { panels: Record<string, string>; views: Record<string, ChartViewSnapshot> };
+type State = StoredViews & { displays: Map<string, IndicatorDisplayChoices> };
 const prefix = "traderlink.chart-views.v1:";
+const displayKey = (scope: string, panel: string) => `traderlink.chart-indicators.v1:${scope}:${panel}`;
+const savedScope = (): State => ({ panels: {}, views: {}, displays: new Map() });
 const finite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const range = (value: unknown): value is Range => !!value && typeof value === "object" && finite((value as Range).from) && finite((value as Range).to) && (value as Range).to > (value as Range).from;
 function valid(value: unknown): value is ChartViewSnapshot {
@@ -28,48 +31,75 @@ function valid(value: unknown): value is ChartViewSnapshot {
     && typeof s.autoScale === "boolean" && typeof s.preferenceAutoScale === "boolean" && typeof s.logarithmic === "boolean";
 }
 const key = (panel: string, symbol: string, timeframe: ChartTimeframe, sessions: string) => JSON.stringify([panel, symbol, timeframe, sessions]);
-/** Only small view coordinates are retained. No candles, charts, streams or timers. */
+function readDisplay(raw: string | null, symbol: string): IndicatorDisplayChoices {
+  if (!raw || raw.length > 2048) return defaultIndicatorDisplay;
+  const entry = JSON.parse(raw) as { symbol?: string; choices?: IndicatorDisplayChoices } | null;
+  if (entry?.symbol !== symbol) return defaultIndicatorDisplay;
+  const display: IndicatorDisplayChoices = {};
+  for (const type of INDICATOR_TYPES) {
+    for (const action of ["hidden", "enabled"] as const) {
+      const choice = entry.choices?.[type]?.[action];
+      if (typeof choice?.value !== "boolean" || !Number.isSafeInteger(choice.revision) || choice.revision < 0) continue;
+      (display[type] ??= {})[action] = { value: choice.value, revision: choice.revision };
+    }
+  }
+  return display;
+}
+
+/** Retain open-chart coordinates and indicator visibility, without candle or stream state. */
 export class ChartViewMemory {
-  private indicatorDisplays = new Map<string, Map<string, { symbol: string; display: IndicatorDisplayChoices }>>();
   private states = new Map<string, State>();
   constructor(private storage: () => Storage | undefined) {}
   private scope(owner: string, workspace: string) { return `${owner}:${workspace}`; }
   private state(scope: string): State {
     const existing = this.states.get(scope); if (existing) return existing;
-    let state: State = { panels: {}, views: {} };
+    const state = savedScope();
     try {
       const raw = this.storage()?.getItem(prefix + scope);
       if (raw && raw.length <= 524288) {
-        const parsed = JSON.parse(raw) as State;
+        const parsed = JSON.parse(raw) as StoredViews;
         if (parsed && parsed.panels && parsed.views && typeof parsed.panels === "object" && typeof parsed.views === "object" && Object.keys(parsed.panels).length <= 320 && Object.keys(parsed.views).length <= 192) {
           const panels = Object.entries(parsed.panels).filter(([id, symbol]) => /^[a-zA-Z0-9_-]{1,128}$/.test(id) && typeof symbol === "string");
-          state = { panels: Object.fromEntries(panels), views: Object.fromEntries(Object.entries(parsed.views).filter(([k, v]) => k.length <= 400 && valid(v))) };
+          state.panels = Object.fromEntries(panels);
+          state.views = Object.fromEntries(Object.entries(parsed.views).filter(([k, v]) => k.length <= 400 && valid(v)));
         }
       }
     } catch { /* Storage may be unavailable; navigation within this document still works. */ }
     this.states.set(scope, state); return state;
   }
-  private persist(scope: string, state: State) { try { this.storage()?.setItem(prefix + scope, JSON.stringify(state)); } catch { /* Preserve the in-memory view when storage is full or blocked. */ } }
+  private persist(scope: string, { panels, views }: State) { try { this.storage()?.setItem(prefix + scope, JSON.stringify({ panels, views })); } catch { /* Preserve the in-memory view when storage is full or blocked. */ } }
+  private removeDisplay(scope: string, state: State, panel: string) {
+    state.displays.delete(panel);
+    try { this.storage()?.removeItem(displayKey(scope, panel)); } catch { /* Browser storage may be unavailable. */ }
+  }
   retain(owner: string, workspace: string, layout: ChartMultiview) {
     const scope = this.scope(owner, workspace), state = this.state(scope);
-    state.panels = Object.fromEntries(layout.groups.flatMap(g => g.panels.map(p => [p.id, g.symbol])));
-    for (const k of Object.keys(state.views)) { try { const [panel, symbol] = JSON.parse(k); if (state.panels[panel] !== symbol) delete state.views[k]; } catch { delete state.views[k]; } }
-    const displays = this.indicatorDisplays.get(scope);
-    if (displays) for (const [panel, entry] of displays) {
-      if (state.panels[panel] !== entry.symbol) displays.delete(panel);
+    const panels = Object.fromEntries(layout.groups.flatMap(g => g.panels.map(p => [p.id, g.symbol])));
+    for (const [panel, symbol] of Object.entries(state.panels)) {
+      if (panels[panel] !== symbol) this.removeDisplay(scope, state, panel);
     }
+    state.panels = panels;
+    for (const k of Object.keys(state.views)) { try { const [panel, symbol] = JSON.parse(k); if (state.panels[panel] !== symbol) delete state.views[k]; } catch { delete state.views[k]; } }
     this.persist(scope, state);
   }
   readIndicatorDisplay(owner: string, workspace: string, panel: string, symbol: string) {
-    const entry = this.indicatorDisplays.get(this.scope(owner, workspace))?.get(panel);
-    return entry?.symbol === symbol ? entry.display : defaultIndicatorDisplay;
+    const scope = this.scope(owner, workspace), state = this.state(scope);
+    if (state.panels[panel] !== symbol) return defaultIndicatorDisplay;
+    const cached = state.displays.get(panel);
+    if (cached) return cached;
+    let saved = defaultIndicatorDisplay;
+    try { saved = readDisplay(this.storage()?.getItem(displayKey(scope, panel)) ?? null, symbol); }
+    catch { /* Missing or invalid browser state uses chart defaults. */ }
+    state.displays.set(panel, saved);
+    return saved;
   }
   writeIndicatorDisplay(owner: string, workspace: string, panel: string, symbol: string, display: IndicatorDisplayChoices) {
     const scope = this.scope(owner, workspace);
-    if (this.state(scope).panels[panel] !== symbol) return;
-    const displays = this.indicatorDisplays.get(scope) ?? new Map();
-    displays.set(panel, { symbol, display });
-    this.indicatorDisplays.set(scope, displays);
+    const state = this.state(scope);
+    if (state.panels[panel] !== symbol) return;
+    state.displays.set(panel, display);
+    try { this.storage()?.setItem(displayKey(scope, panel), JSON.stringify({ symbol, choices: display })); }
+    catch { /* The open chart still keeps its choices in memory. */ }
   }
   read(owner: string, workspace: string, panel: string, symbol: string, timeframe: ChartTimeframe, sessions: string) {
     const state = this.state(this.scope(owner, workspace));
@@ -87,7 +117,9 @@ export class ChartViewMemory {
     this.persist(scope, state);
   }
   clear(owner: string, workspace: string) {
-    const scope = this.scope(owner, workspace); this.indicatorDisplays.delete(scope); this.states.set(scope, { panels: {}, views: {} });
+    const scope = this.scope(owner, workspace), state = this.state(scope);
+    for (const panel of Object.keys(state.panels)) this.removeDisplay(scope, state, panel);
+    this.states.set(scope, savedScope());
     try { this.storage()?.removeItem(prefix + scope); } catch { /* No storage access. */ }
   }
 }

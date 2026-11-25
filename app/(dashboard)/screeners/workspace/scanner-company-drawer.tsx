@@ -26,7 +26,7 @@ function CompanyChart({symbol,timeframe,onTimeframeChange}:{
   </Box>;
 }
 
-function CompanyDrawerContent({symbol}:{symbol:string}){
+function CompanyDrawerContent({symbol,broker}:{symbol:string;broker:boolean}){
   const [details,setDetails]=useState<ComponentProps<typeof CompanyDetails>>();
   const [failed,setFailed]=useState(false);
   const [timeframe,setTimeframe]=useState<ChartTimeframe>();
@@ -39,18 +39,19 @@ function CompanyDrawerContent({symbol}:{symbol:string}){
     return ()=>controller.abort();
   },[symbol]);
   if(!details)return <Box role="status">{failed?"Company details unavailable.":"Loading…"}</Box>;
-  return <CompanyDetails {...details} levels={<ScannerTickerDetails symbol={symbol} stock={undefined} levelsOnly/>}
+  return <CompanyDetails {...details} broker={broker} technicalSample={broker?undefined:details.technicalSample}
+    levels={broker?undefined:<ScannerTickerDetails symbol={symbol} stock={undefined} levelsOnly/>}
     chart={<CompanyChart symbol={symbol} timeframe={timeframe} onTimeframeChange={setTimeframe}/>}/>;
 }
 
-export function ScannerCompanyDrawer({symbol,onClose}:{symbol:string|null;onClose:()=>void}){
+export function ScannerCompanyDrawer({symbol,onClose,broker=false}:{symbol:string|null;onClose:()=>void;broker?:boolean}){
   return <Drawer anchor="right" open={Boolean(symbol)} onClose={onClose}
     slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":"Company Details",sx:{width:{xs:"100%",md:900},maxWidth:"100vw",borderRadius:0}}}}>
     {symbol&&<Box sx={{p:{xs:1.5,md:2},minWidth:0}}>
       <Stack direction="row" sx={{justifyContent:"flex-end",alignItems:"center",gap:1}}>
         <IconButton aria-label="Close Company Details" onClick={onClose}><CloseRoundedIcon/></IconButton>
       </Stack>
-      <CompanyDrawerContent key={symbol} symbol={symbol}/>
+      <CompanyDrawerContent key={symbol} symbol={symbol} broker={broker}/>
     </Box>}
   </Drawer>;
 }

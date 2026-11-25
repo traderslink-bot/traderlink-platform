@@ -113,7 +113,11 @@ describe("actual Top Gainers pushed model and tab interaction", () => {
     const before = momentumModel(undefined);
     const page = await mount({ ...before, gainers: before.momentum, dayGainers: before.momentum });
     const gainerTable = () => page.container.querySelector('table[aria-label="Top Gainers compact stocks"]')!;
-    expect(gainerTable().querySelector("thead")?.textContent).toContain("Day Vol");
+    const headers = [...gainerTable().querySelectorAll("thead th")];
+    const volumeIndex = headers.findIndex(cell => cell.textContent === "Vol");
+    expect(volumeIndex).toBeGreaterThan(-1);
+    expect(headers[volumeIndex].classList.contains("MuiTableCell-alignRight")).toBe(true);
+    expect(gainerTable().querySelectorAll("tbody tr:first-child td")[volumeIndex].classList.contains("MuiTableCell-alignRight")).toBe(true);
     expect(gainerTable().querySelector("tbody")?.textContent).toContain("400K");
     expect(gainerTable().querySelector("thead")?.textContent).not.toContain("Pre Vol");
 
@@ -134,7 +138,7 @@ describe("actual Top Gainers pushed model and tab interaction", () => {
       await page.update({ ...after, gainers, dayGainers: before.momentum });
       const columns = [...gainerTable().querySelectorAll("thead th")].map(cell => cell.textContent);
       expect(columns).toContain("After-hours Vol");
-      expect(columns).not.toContain("Day Vol");
+      expect(columns).not.toContain("Vol");
       expect(gainerTable().querySelectorAll("tbody tr:first-child td")[columns.indexOf("After-hours Vol")].textContent).toBe("0");
       expectOnlyInitialChartRequests(page.fetch);
     } finally {
@@ -454,7 +458,7 @@ describe("alternative stock card view", () => {
     const cards=page.container.querySelector('[aria-label="Top Gainers stock cards"]')!;
     expect(cards).not.toBeNull();
     expect(cards.querySelector('[aria-label="Canada flag"]')).not.toBeNull();
-    expect([...cards.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Day Vol','Float','T/O','RVOL']);
+    expect([...cards.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
     expect(page.container.querySelector('table[aria-label="Momentum compact stocks"]')).not.toBeNull();
     await switchView(page.container,"Momentum","Cards");
     const momentum=page.container.querySelector('[aria-label="Momentum stock cards"]')!;

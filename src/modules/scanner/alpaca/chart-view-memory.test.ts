@@ -52,4 +52,31 @@ it("retains display choices for the same chart while pruning closed or replaced 
   expect(memory.readIndicatorDisplay("owner","main","one","NCT")).toBe(defaultIndicatorDisplay);
 });
 
+it("restores hidden values after reload until explicitly shown or the chart is closed", () => {
+  const { memory, storage } = fixture();
+  const layout = singleChart("OMH", "15m");
+  const hidden = { VWAP: { hidden: { value: true, revision: 0 } } };
+  const shown = { VWAP: { hidden: { value: false, revision: 0 } } };
+  memory.retain("owner", "main", layout);
+  memory.writeIndicatorDisplay("owner", "main", "chart-1", "OMH", hidden);
+
+  const reopened = new ChartViewMemory(() => storage);
+  reopened.retain("owner", "main", layout);
+  expect(reopened.readIndicatorDisplay("owner", "main", "chart-1", "OMH")).toEqual(hidden);
+  expect(reopened.readIndicatorDisplay("other-owner", "main", "chart-1", "OMH")).toEqual(defaultIndicatorDisplay);
+  reopened.writeIndicatorDisplay("owner", "main", "chart-1", "OMH", shown);
+  expect(new ChartViewMemory(() => storage).readIndicatorDisplay("owner", "main", "chart-1", "OMH")).toEqual(shown);
+
+  reopened.writeIndicatorDisplay("owner", "main", "chart-1", "OMH", hidden);
+  reopened.retain("owner", "main", singleChart("SAFX", "15m"));
+  reopened.retain("owner", "main", layout);
+  expect(new ChartViewMemory(() => storage).readIndicatorDisplay("owner", "main", "chart-1", "OMH")).toEqual(defaultIndicatorDisplay);
+
+  reopened.writeIndicatorDisplay("owner", "main", "chart-1", "OMH", hidden);
+  reopened.retain("owner", "main", { version: 1, groups: [], selectedPanel: null });
+  reopened.writeIndicatorDisplay("owner", "main", "chart-1", "OMH", hidden);
+  reopened.retain("owner", "main", layout);
+  expect(new ChartViewMemory(() => storage).readIndicatorDisplay("owner", "main", "chart-1", "OMH")).toEqual(defaultIndicatorDisplay);
+});
+
 it("ignores legacy manual price scale but keeps its time range",()=>{const legacy={...view,priceScalePolicy:undefined};expect(canRestoreChartPrice(legacy,{autoScale:true,logarithmic:false},view.basisDate)).toBe(false);expect(restoreChartRange(legacy,[80,100,120,140,160,180,200])).toEqual(restoreChartRange(view,[80,100,120,140,160,180,200]));});

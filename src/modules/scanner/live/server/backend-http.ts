@@ -7,6 +7,7 @@ const json = (value: unknown,status=200) => Response.json(value,{ status,headers
 export type LiveScannerHttpDependencies = Readonly<{
   member: (request: Request) => boolean;
   read: () => ScannerReadModel | Promise<ScannerReadModel>;
+  project?: (model: ScannerReadModel) => unknown;
   subscribe?: (notify:()=>void)=>()=>void;
 }>;
 export type ScannerSettingsHttpDependencies = Readonly<{
@@ -43,7 +44,11 @@ async function body(request: Request): Promise<unknown> {
 export async function handleLiveScannerGet(request: Request, dependencies: LiveScannerHttpDependencies): Promise<Response> {
   if (request.method !== "GET" || !dependencies.member(request)) return json({ code: "not_found" },404);
   if(new URL(request.url).searchParams.get("stream")==="1"&&dependencies.subscribe)return scannerModelStream(request,dependencies);
-  try { return json(browserScannerModel(await dependencies.read())); }
+  try {
+    const model = await dependencies.read();
+    if (dependencies.project && !dependencies.member(request)) return json({ code: "not_found" },404);
+    return json((dependencies.project ?? browserScannerModel)(model));
+  }
   catch { return json({ code: "scanner_unavailable" },503); }
 }
 export async function handleScannerFloatsGet(request:Request,dependencies:ScannerFloatsHttpDependencies):Promise<Response>{
@@ -94,7 +99,8 @@ function scannerModelStream(request:Request,dependencies:LiveScannerHttpDependen
         try{while(dirty&&!closed&&(controller.desiredSize??0)>0){
           dirty=false;if(!dependencies.member(request)){close();break;}
           const model=await dependencies.read();if(closed)break;
-          const message=encoder.encode(`event: scanner\ndata: ${JSON.stringify(browserScannerModel(model))}\n\n`);
+          if(dependencies.project&&!dependencies.member(request)){close();break;}
+          const message=encoder.encode(`event: scanner\ndata: ${JSON.stringify((dependencies.project ?? browserScannerModel)(model))}\n\n`);
           if(message.byteLength>1_000_000){close();break;}
           controller.enqueue(message);
         }}catch{close();}finally{running=false;}

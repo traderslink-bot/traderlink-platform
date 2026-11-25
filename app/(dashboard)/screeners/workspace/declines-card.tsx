@@ -1,8 +1,8 @@
 "use client";
 
+import { type WorkspaceDecline, type WorkspaceDeclineResults, workspacePrice as price } from "./broker-workspace-data";
 import { scannerPercent } from "../scanner-number-format";
 import { WorkspaceScannerTitle } from "./workspace-scanner-title";
-import { scannerPrice as price } from "../scanner-price";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
 import { ScannerRowTools, scannerToolColumnSx } from "./scanner-row-tools";
@@ -34,7 +34,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Fragment, useState } from "react";
 import { DashboardPanel } from "@/app/dashboard-template";
-import type { DeclineResults, DeclineRow, ScannerActiveHalt, ScannerSession } from "@/src/modules/scanner/live/contracts";
+import type { ScannerActiveHalt, ScannerSession } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { ScreenerHaltIndicator } from "../screener-halt-indicator";
 
@@ -45,11 +45,11 @@ const pct=(value:number|null)=>value===null?"n/a":`${value>0?"+":""}${wholePerce
 const floatShares=(value:number|null)=>value===null?"—":compact.format(value);
 const stamp=(value:string)=>clock.format(new Date(value));
 
-function ChartButton({row,onOpenChart}:{row:DeclineRow;onOpenChart:(row:DeclineRow)=>void}){
+function ChartButton({row,onOpenChart}:{row:WorkspaceDecline;onOpenChart:(row:WorkspaceDecline)=>void}){
   return <ScannerChartLaunchControls row={row} onOpenChart={onOpenChart}/>;
 }
 
-function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly DeclineRow[];full:boolean;twoRows:boolean;onOpenChart:(row:DeclineRow)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
+function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:readonly WorkspaceDecline[];full:boolean;twoRows:boolean;onOpenChart:(row:WorkspaceDecline)=>void;haltByTicker:ReadonlyMap<string,ScannerActiveHalt>}){
   const volumeColumns=useWorkspaceVolumeColumns();
   const allowAdd=useSideCardChartControls();
   const [expanded,setExpanded]=useState<string|null>(null);
@@ -96,7 +96,7 @@ function TopLosersTable({rows,full,twoRows,onOpenChart,haltByTicker}:{rows:reado
   </TableContainer>;
 }
 
-export function DeclinesCard({results,view="table",onViewChange,now=0,notice,session,onOpenChart,haltByTicker=new Map()}:{view?:ScannerView;onViewChange?:(view:ScannerView)=>void;now?:number;results:DeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:DeclineRow)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
+export function DeclinesCard({results,view="table",onViewChange,now=0,notice,session,onOpenChart,haltByTicker=new Map()}:{view?:ScannerView;onViewChange?:(view:ScannerView)=>void;now?:number;results:WorkspaceDeclineResults|undefined;notice:string|null;session:ScannerSession|null;onOpenChart:(row:WorkspaceDecline)=>void;haltByTicker?:ReadonlyMap<string,ScannerActiveHalt>}){
   const [full,setFull]=useState(false);
   const viewSettings=onViewChange&&<ScannerViewSettings label="Top Losers" view={view} onViewChange={onViewChange}/>;
   const losersTitle=session==="after_hours"?"Top Losers Post Market":"Top Losers";
@@ -105,7 +105,7 @@ export function DeclinesCard({results,view="table",onViewChange,now=0,notice,ses
   </Stack>;
   const contents=(wide:boolean)=><Stack data-scanner-results spacing={1}>
     {results&&!results.controls.enabled?<Alert severity="info">Disabled</Alert>:notice?<Alert severity="info">{notice}</Alert>
-      :!results?<Skeleton height={260}/>:view==="cards"&&results.losers.length?<ScannerStockCards screen="top-losers" rows={results.losers} now={now}
+      :!results?<Skeleton height={260}/>:view==="cards"&&results.losers.length?<ScannerStockCards<WorkspaceDecline> screen="top-losers" rows={results.losers} now={now}
         renderHalt={symbol=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>}
         renderTools={row=><><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></>}/>
         :<TopLosersTable twoRows={view==="two-rows"} full={wide} rows={results.losers} haltByTicker={haltByTicker} onOpenChart={onOpenChart}/>}

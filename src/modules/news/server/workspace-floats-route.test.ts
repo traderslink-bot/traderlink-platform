@@ -2,7 +2,7 @@
 import {afterEach,expect,it,vi} from "vitest";
 const state=vi.hoisted(()=>({news:true,watchlist:true,marketTools:false,identity:vi.fn(()=>({scope:{userId:"one"}})),floats:vi.fn(async()=>({AAA:{shares:260000}})),universe:vi.fn(async()=>({stocks:[{symbol:"AAA",exchange:"NASDAQ"},{symbol:"OTHER",exchange:"NYSE"}]}))}));
 vi.mock("../../platform/server/authentication/require-platform-request-scope",()=>({requireTraderLinkPlatformRequestIdentity:state.identity}));
-vi.mock("@/src/modules/market-data/server/market-tools-dashboard-access",()=>({hasMarketToolsDashboardReadAccess:()=>state.marketTools}));
+vi.mock("@/src/modules/market-data/server/market-tools-dashboard-access",()=>({hasSharedWorkspaceAccess:()=>state.marketTools}));
 vi.mock("./press-release-dashboard-access",()=>({hasPressReleaseDashboardAccess:()=>state.news}));
 vi.mock("../../watchlist/server/access/watchlist-dashboard-navigation-access",()=>({hasWatchlistDashboardNavigationAccess:()=>state.watchlist}));
 vi.mock("../../scanner/live/server/runtime",()=>({readLiveScannerRuntime:()=>({tradingDate:"2026-11-21"}),scannerSettingsStore:()=>({readFloatFacts:vi.fn()}),scannerUniverseStore:()=>({readLatestOnOrBefore:state.universe})}));

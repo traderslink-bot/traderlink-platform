@@ -29,11 +29,12 @@ const positive = (value: unknown): number | null => typeof value === "number" &&
 const counter = (value: unknown, integer = false): number | null => typeof value === "number" && Number.isFinite(value) && value >= 0
   && (!integer || Number.isSafeInteger(value)) ? value : null;
 
-export function snapshotBatches(symbols: readonly string[]): readonly (readonly string[])[] {
+export function snapshotBatches(symbols: readonly string[], batchSize = SNAPSHOT_BATCH_SIZE): readonly (readonly string[])[] {
   if (symbols.length === 0 || symbols.length > 4000 || new Set(symbols).size !== symbols.length
+    || !Number.isSafeInteger(batchSize) || batchSize < 1 || batchSize > SNAPSHOT_BATCH_SIZE
     || symbols.some(symbol => !/^[A-Z][A-Z0-9.-]{0,15}$/u.test(symbol))) throw Error("scanner_snapshot_symbols_invalid");
   const batches: string[][] = [];
-  for (let index = 0; index < symbols.length; index += SNAPSHOT_BATCH_SIZE) batches.push(symbols.slice(index,index+SNAPSHOT_BATCH_SIZE));
+  for (let index = 0; index < symbols.length; index += batchSize) batches.push(symbols.slice(index,index+batchSize));
   return batches;
 }
 

@@ -10,14 +10,14 @@ const read = vi.fn<typeof fetch>();
 let root: Root;
 let current: ReturnType<typeof useWorkspaceSavedScans>;
 
-function Probe({ owner, ids }: { owner: string; ids: string[] }) {
-  const result = useWorkspaceSavedScans(owner, ids);
+function Probe({ owner, ids, broker }: { owner: string; ids: string[]; broker: boolean }) {
+  const result = useWorkspaceSavedScans(owner, ids, broker);
   useEffect(() => { current = result; }, [result]);
   return null;
 }
 
-async function render(owner: string, ids: string[]) {
-  await act(async () => root.render(<Probe owner={owner} ids={ids}/>));
+async function render(owner: string, ids: string[], broker = false) {
+  await act(async () => root.render(<Probe owner={owner} ids={ids} broker={broker}/>));
 }
 
 function stream(signal?: AbortSignal | null) {
@@ -92,5 +92,23 @@ it("hides results across a batch or owner change and treats access denial separa
   expect(current.catalogue).toBeUndefined();
   await act(async () => complete(Response.json({ revision: 2, scans: [{ id: scanId, name: "Stale title" }] })));
   expect(current.catalogue).toBeUndefined();
+  expect(current.results).toBeUndefined();
+});
+
+it("clears current-provider results when the same owner uses the broker route", async () => {
+  let publish: ReturnType<typeof stream>;
+  read.mockImplementationOnce(async (_, request) => {
+    publish = stream(request?.signal);
+    return publish.response;
+  });
+  await render("owner-a", [scanId]);
+  await act(async () => publish.send({ revision: 1, scans: [],
+    results: { [scanId]: { state: "ready", result: { rows: [{ symbol: "TEST", price: 2 }] } } } }));
+  expect(current.results?.[scanId].state).toBe("ready");
+
+  read.mockImplementationOnce(async (_, request) => stream(request?.signal).response);
+  await render("owner-a", [scanId], true);
+  expect(read).toHaveBeenLastCalledWith("/api/trading-workspace/broker/saved-scans", expect.objectContaining({ method: "POST" }));
+  expect(read.mock.calls[0][1]?.signal?.aborted).toBe(true);
   expect(current.results).toBeUndefined();
 });

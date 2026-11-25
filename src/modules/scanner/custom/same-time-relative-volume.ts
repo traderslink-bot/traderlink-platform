@@ -6,7 +6,7 @@ import type { ScannerSession } from "../live/contracts";
 const INTERVAL = 15 * 60_000;
 const DAY = 86_400_000;
 const LOOKBACK_SESSIONS = 3;
-const calendar = sessionCalendar as IndicatorCalendar;
+const defaultCalendar = sessionCalendar as IndicatorCalendar;
 
 function sessionBounds(day: IndicatorTradingDay, session: ScannerSession): [number, number] {
   if (session === "premarket") return [day.preOpen, day.regularOpen];
@@ -15,7 +15,7 @@ function sessionBounds(day: IndicatorTradingDay, session: ScannerSession): [numb
 }
 
 export function sameTimeSessionVolumeRatio(packed: Float64Array, stride: number, through: number,
-  coveredFrom?: number, session: ScannerSession = "regular"): number | null {
+  coveredFrom?: number, session: ScannerSession = "regular", calendar = defaultCalendar): number | null {
   const date = indicatorMarketDate(through - 1);
   const today = indicatorTradingDay(calendar, date);
   if (!today) return null;

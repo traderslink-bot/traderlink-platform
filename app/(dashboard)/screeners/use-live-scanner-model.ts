@@ -1,11 +1,24 @@
 "use client";
 
 import { startTransition, useCallback, useEffect, useReducer, useRef } from "react";
+import { brokerScannerPath, isBrokerQuoteStatus, type BrokerScannerFrame, type WorkspaceScannerModel } from "./workspace/broker-workspace-data";
 import type { ScannerReadModel } from "@/src/modules/scanner/live/contracts";
 import { initialScannerConnection, isScannerModel, scannerConnection } from "@/src/modules/scanner/live/connection-state";
 import { memberScannerStatus, scannerOutsideActiveHours, SCANNER_TRANSIENT_FAILURE_GRACE_MS } from "@/src/modules/scanner/live/member-status";
 
-export function useLiveScannerModel(sample?: ScannerReadModel) {
+export function useLiveScannerModel(sample?: ScannerReadModel): ReturnType<typeof useScannerConnection>;
+export function useLiveScannerModel(sample: ScannerReadModel | undefined, broker: boolean, cards?: string): Omit<ReturnType<typeof useScannerConnection>, "model"> & { model: WorkspaceScannerModel | null };
+export function useLiveScannerModel(sample?: ScannerReadModel, broker = false, cards?: string) {
+  const result = useScannerConnection(sample, broker, cards);
+  // The shared reducer inspects the envelope and row counts, never quote values.
+  const model = result.model;
+  return { ...result, model: model && hasBrokerStatus(model) === broker ? model as WorkspaceScannerModel : null };
+}
+
+function useScannerConnection(sample: ScannerReadModel | undefined, broker: boolean, cards?: string) {
+  const path = broker ? brokerScannerPath : "/api/screeners/live";
+  const snapshotUrl = broker && cards !== undefined ? `${path}?cards=${encodeURIComponent(cards)}` : path;
+  const streamUrl = `${snapshotUrl}${snapshotUrl === path ? "?" : "&"}stream=1`;
   const [state, dispatch] = useReducer(scannerConnection, undefined, () =>
     initialScannerConnection(sample ?? null, sample?.updatedAtUtc ? Date.parse(sample.updatedAtUtc) : Date.now()));
   const retryRef = useRef<() => void>(() => {});
@@ -43,13 +56,13 @@ export function useLiveScannerModel(sample?: ScannerReadModel) {
       clearTimers(); close();
       if (disposed || document.hidden) return;
       recovering = false;
-      const connection = new EventSource("/api/screeners/live?stream=1"); source = connection;
+      const connection = new EventSource(streamUrl); source = connection;
       armWatchdog();
       connection.addEventListener("scanner", event => {
         if (source !== connection) return;
         try {
           const model: unknown = JSON.parse((event as MessageEvent).data);
-          if (!isScannerModel(model)) throw Error("invalid_scanner_model");
+          if (!isScannerModel(model) || (broker && !hasBrokerStatus(model))) throw Error("invalid_scanner_model");
           attempts = 0; recovering = false; armWatchdog();
           startTransition(() => dispatch({ type: "model", model, now: Date.now() }));
         } catch { dispatch({ type: "failure", now: Date.now() }); }
@@ -72,7 +85,7 @@ export function useLiveScannerModel(sample?: ScannerReadModel) {
       try {
         // Recovery only: check the same member-protected snapshot boundary before
         // reusing results. Never infer lost access merely from EventSource.CLOSED.
-        const response = await fetch("/api/screeners/live", {
+        const response = await fetch(snapshotUrl, {
           credentials: "same-origin", cache: "no-store", redirect: "error", signal: controller.signal,
         });
         if (disposed || controller.signal.aborted || probe !== controller) return;
@@ -81,7 +94,7 @@ export function useLiveScannerModel(sample?: ScannerReadModel) {
         } else if (response.ok) {
           const model: unknown = await response.json();
           if (disposed || controller.signal.aborted || probe !== controller) return;
-          if (!isScannerModel(model)) throw Error("invalid_scanner_model");
+          if (!isScannerModel(model) || (broker && !hasBrokerStatus(model))) throw Error("invalid_scanner_model");
           dispatch({ type: "model", model, now: Date.now() });
           recovered = true;
         }
@@ -111,7 +124,7 @@ export function useLiveScannerModel(sample?: ScannerReadModel) {
       document.removeEventListener("visibilitychange", wake);
       window.removeEventListener("online", wake); window.removeEventListener("focus", wake);
     };
-  }, [sample]);
+  }, [broker, sample, snapshotUrl, streamUrl]);
   useEffect(() => {
     if (state.failedAt === null) return;
     const timer = window.setTimeout(() => dispatch({ type: "expire", now: Date.now() }),
@@ -123,4 +136,9 @@ export function useLiveScannerModel(sample?: ScannerReadModel) {
   const phase: "unavailable" | "reconnecting" | "refreshing" | null = scannerOutsideActiveHours(state.model, state.checkedAt) || state.model?.status === "disabled" ? null
     : loadError ? notice ? "unavailable" : "reconnecting" : state.continuity.emptySince !== null ? "refreshing" : null;
   return { model: state.model, loadError, checkedAt: state.checkedAt, failedAt: state.failedAt, phase, retry };
+}
+
+function hasBrokerStatus(model: ScannerReadModel) {
+  const status = (model as Partial<BrokerScannerFrame>).brokerQuoteStatus;
+  return isBrokerQuoteStatus(status);
 }

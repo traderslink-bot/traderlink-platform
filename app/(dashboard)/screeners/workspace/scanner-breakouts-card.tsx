@@ -1,7 +1,7 @@
 "use client";
 
+import { type WorkspaceBreakout, workspacePrice as price } from "./broker-workspace-data";
 import { WorkspaceScannerTitle } from "./workspace-scanner-title";
-import { scannerPrice as price } from "../scanner-price";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
 import { ScannerRowTools } from "./scanner-row-tools";
@@ -10,27 +10,28 @@ import Alert from "@mui/material/Alert";
 import { Fragment, useState } from "react";
 import { Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { DashboardPanel } from "@/app/dashboard-template";
-import type { BreakoutRow, ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
+import type { ScannerActiveHalt } from "@/src/modules/scanner/live/contracts";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { ScannerChartLaunchControls } from "../scanner-chart-launch-controls";
 import { ScannerCountryFlag } from "../scanner-country-flag";
 import { scannerGainColor } from "../scanner-gain-color";
 import { ScannerStockCards, ScannerViewSettings, WorkspaceVolumeHeaders, WorkspaceVolumeCells, useWorkspaceVolumeColumns, type ScannerView } from "./scanner-stock-cards";
 import { ScreenerHaltIndicator } from "../screener-halt-indicator";
+import type { BreakoutRow } from "@/src/modules/scanner/live/contracts";
 import { BreakoutStatus } from "../scanner-breakout-status";
 
 const shares = new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:1});
 
 export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenChart, view: controlledView, onViewChange }: {
   view?: ScannerView; onViewChange?: (view:ScannerView)=>void;
-  rows?: readonly BreakoutRow[]; now:number; notice:string|null;
-  haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; onOpenChart:(row:BreakoutRow)=>void;
+  rows?: readonly WorkspaceBreakout[]; now:number; notice:string|null;
+  haltByTicker:ReadonlyMap<string,ScannerActiveHalt>; onOpenChart:(row:WorkspaceBreakout)=>void;
 }) {
   const [localView,setLocalView]=useState<ScannerView>("table");
   const view=controlledView??localView;
   const twoRows=view==="two-rows";
   const volumeColumns=useWorkspaceVolumeColumns();
-  const tools=(row:BreakoutRow)=><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ScannerChartLaunchControls row={row} onOpenChart={onOpenChart}/>}/>;
+  const tools=(row:WorkspaceBreakout)=><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ScannerChartLaunchControls row={row} onOpenChart={onOpenChart}/>}/>;
   const halt=(symbol:string)=><ScreenerHaltIndicator halt={haltByTicker.get(symbol)}/>;
   return <DashboardPanel hideHeader>
     <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5,mb:0.5}}>
@@ -41,7 +42,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
       !rows ? <Skeleton height={160}/> :
       rows.length===0 ? <Alert severity="info">No stocks currently qualify for this list.</Alert> :
       view==="cards" ? <ScannerStockCards screen="breakouts" rows={rows} now={now} renderHalt={halt} renderTools={tools}
-        renderSignal={row=><>PM high {price(row.breakoutLevel)} · <BreakoutStatus row={row} now={now}/></>}/> :
+        renderSignal={row=><>PM high {price(row.breakoutLevel)} · {row.breakoutLevel==null?"—":<BreakoutStatus row={row as BreakoutRow} now={now}/>}</>}/> :
       <TableContainer sx={theme=>({...scannerScrollStyles(theme),maxHeight:420})}>
         <Table size="small" stickyHeader aria-label="Breakouts" sx={{
           ...scannerStickyTickerSx,
@@ -57,7 +58,7 @@ export function ScannerBreakoutsCard({ rows, now, notice, haltByTicker, onOpenCh
               {!twoRows&&<TableCell>{tools(row)}</TableCell>}
               <TableCell data-scanner-sticky-ticker><ScannerPageTicker symbol={row.symbol}/>{halt(row.symbol)}</TableCell>
               <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{price(row.price)}</TableCell>
-              <TableCell>{price(row.breakoutLevel)}</TableCell><TableCell><BreakoutStatus row={row} now={now}/></TableCell>
+              <TableCell>{price(row.breakoutLevel)}</TableCell><TableCell>{row.breakoutLevel==null?"—":<BreakoutStatus row={row as BreakoutRow} now={now}/>}</TableCell>
               <WorkspaceVolumeCells row={row} columns={volumeColumns}/>
               <TableCell>{row.float===null?"—":shares.format(row.float)}</TableCell>
               {!twoRows&&<TableCell><ScannerCountryFlag country={row.country}/></TableCell>}

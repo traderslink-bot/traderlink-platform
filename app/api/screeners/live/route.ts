@@ -1,46 +1,14 @@
-import { enrichAlpacaResumeSchedule, readActiveAlpacaScannerHalts } from "@/src/modules/scanner/alpaca/scanner-halts";
-import { marketHaltSource } from "@/src/modules/scanner/alpaca/halt-source";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { listMarketHaltDashboard } from "@/src/modules/news/server/market-halt-dashboard";
-import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
-import { readLiveScannerMarketMovements, readLiveScannerRuntime, scannerUniverseStore, subscribeLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
 import { handleLiveScannerGet } from "@/src/modules/scanner/live/server/backend-http";
-import { readFinnhubExchanges } from "@/src/modules/scanner/live/server/finnhub-exchange";
 import { hasMarketToolsDashboardReadAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
-import { eodhdResumedHaltIds } from "@/src/modules/news/server/eodhd-halt-resumption-monitor";
+import { subscribeLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
+import { readLiveWorkspaceScannerModel } from "@/src/modules/scanner/live/server/live-workspace-model";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
   return handleLiveScannerGet(request,{ subscribe:subscribeLiveScannerRuntime, member: candidate => {
     try { return hasMarketToolsDashboardReadAccess(requireTraderLinkPlatformRequestIdentity(candidate.headers)); } catch { return false; }
-  },read: async () => {
-    const scanner=readLiveScannerRuntime();
-    if (marketHaltSource() === "alpaca") {
-      try {
-        const active = await readActiveAlpacaScannerHalts();
-        if (!active.length) return { ...scanner, activeHalts: active };
-        try {
-          const schedule = withReadonlyPlatformDatabase({}, database => listMarketHaltDashboard(database, new Date(), 50).rows);
-          return { ...scanner, activeHalts: enrichAlpacaResumeSchedule(active, schedule) };
-        } catch {
-          return { ...scanner, activeHalts: active };
-        }
-      } catch {
-        return { ...scanner, activeHalts: [], activeHaltSourceUnavailable: true };
-      }
-    }
-    try{
-      const now=new Date();
-      const halts=withReadonlyPlatformDatabase({},database=>listMarketHaltDashboard(database,now,50).rows);
-      const universe=await scannerUniverseStore().readLatestOnOrBefore(scanner.tradingDate);
-      const universeExchanges=new Map((universe?.stocks??[]).map(stock=>[stock.symbol,stock.exchange] as const));
-      const selected=selectActiveScannerHalts(halts,now,readLiveScannerMarketMovements(),universeExchanges,eodhdResumedHaltIds());
-      const missing=selected.filter(halt=>halt.chartExchange===null).map(halt=>halt.ticker);
-      const resolved=readFinnhubExchanges({tradingDate:scanner.tradingDate,symbols:missing,token:process.env.FINNHUB_API_KEY});
-      const activeHalts=selected.map(halt=>halt.chartExchange?halt:{...halt,chartExchange:resolved.get(halt.ticker)??null});
-      return {...scanner,activeHalts};
-    }catch{return {...scanner,activeHalts:[]};}
-  } });
+  }, read: readLiveWorkspaceScannerModel });
 }

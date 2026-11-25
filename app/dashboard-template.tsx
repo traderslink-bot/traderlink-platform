@@ -42,6 +42,8 @@ export function TraderLinkPlatformDashboardTemplate({
   screenersDashboardAccess = false,
   chartsDashboardAccess = false,
   tradingWorkspaceDashboardAccess = false,
+  brokerWorkspaceAccess = false,
+  tradingWorkspaceAdminAccess = false,
   watchlistMemberNavigationAccess = false,
   ownerMarketDataAccess = false,
   generalMarketNewsAccess = false,
@@ -67,6 +69,8 @@ export function TraderLinkPlatformDashboardTemplate({
   screenersDashboardAccess?: boolean;
   chartsDashboardAccess?: boolean;
   tradingWorkspaceDashboardAccess?: boolean;
+  brokerWorkspaceAccess?: boolean;
+  tradingWorkspaceAdminAccess?: boolean;
   watchlistMemberNavigationAccess?: boolean;
   ownerMarketDataAccess?: boolean;
   generalMarketNewsAccess?: boolean;
@@ -87,6 +91,8 @@ export function TraderLinkPlatformDashboardTemplate({
       screenersDashboardAccess={screenersDashboardAccess}
       chartsDashboardAccess={chartsDashboardAccess}
       tradingWorkspaceDashboardAccess={tradingWorkspaceDashboardAccess}
+      brokerWorkspaceAccess={brokerWorkspaceAccess}
+      tradingWorkspaceAdminAccess={tradingWorkspaceAdminAccess}
       watchlistMemberNavigationAccess={watchlistMemberNavigationAccess}
       ownerMarketDataAccess={ownerMarketDataAccess}
       generalMarketNewsAccess={generalMarketNewsAccess}
