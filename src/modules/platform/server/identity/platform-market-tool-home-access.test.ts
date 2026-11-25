@@ -41,6 +41,7 @@ describe("Tool-only native Platform sessions", () => {
     vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", databasePath);
     vi.stubEnv("TRADERLINK_STOCK_SCREENERS_ENABLED", "1");
     vi.stubEnv("TRADERLINK_MARKET_TOOLS_ACCESS_MODE", "standard");
+    vi.stubEnv("TRADERLINK_MARKET_TOOLS_REVIEW_USER_IDS", [randomUUID(), randomUUID()].join(","));
     vi.stubEnv("TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT", "123456789012345678");
     vi.stubEnv("DISCORD_GUILD_ID", "987654321098765432");
     const network = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("No provider requests in this fixture"));
@@ -96,7 +97,7 @@ describe("Tool-only native Platform sessions", () => {
       expect(access.homePages.scanners).toBe(prePaywallCase || key === "scanners.access");
       expect(access.homePages.screeners).toBe(prePaywallCase || key === "screeners.access");
       expect(access.homePages["trading-workspace"]).toBe(false);
-      expect(access.charts).toBe(ownerCase || prePaywallCase || key === "charts.access");
+      expect(access.charts).toBe(false);
       expect(access.journal).toBe(ownerCase);
       for (const feature of ["watchlist.access", "journal.access", "community.access"]) {
         expect(hasPlatformMembershipFeature(database, member.session.userId, feature)).toBe(false);
@@ -122,7 +123,7 @@ describe("Tool-only native Platform sessions", () => {
           const released = readPlatformHomeAccess(database, identity, headers);
           expect(released.homePages.scanners).toBe(mode !== "enforced");
           expect(released.homePages.screeners).toBe(mode !== "enforced");
-          expect(released.charts).toBe(mode !== "enforced");
+          expect(released.charts).toBe(false);
           expect(released.homePages.welcome).toBe(mode !== "enforced");
         }
         database.prepare("UPDATE platform_membership_feature_policies SET enforcement_mode='off' WHERE feature_key='scanners.access'").run();
@@ -139,7 +140,7 @@ describe("Tool-only native Platform sessions", () => {
         const disabledScreeners = readPlatformHomeAccess(database, identity, headers);
         expect(disabledScreeners.homePages.screeners).toBe(false);
         expect(disabledScreeners.homePages.scanners).toBe(true);
-        expect(disabledScreeners.charts).toBe(true);
+        expect(disabledScreeners.charts).toBe(false);
       }
       if (ownerCase) {
         memberships.grantEntitlement({ actorUserId: member.session.userId, userId: other.session.userId,
@@ -148,10 +149,10 @@ describe("Tool-only native Platform sessions", () => {
         for (const mode of ["off", "enforced"]) {
           database.prepare("UPDATE platform_membership_feature_policies SET enforcement_mode=? WHERE feature_key='charts.access'").run(mode);
           const ownerAccess = readPlatformHomeAccess(database, identity, headers);
-          expect(ownerAccess.charts).toBe(true);
+          expect(ownerAccess.charts).toBe(false);
           expect(ownerAccess.homePages.welcome).toBe(true);
           const ordinaryAccess = readPlatformHomeAccess(database, ordinaryIdentity, denied);
-          expect(ordinaryAccess.charts).toBe(mode !== "enforced");
+          expect(ordinaryAccess.charts).toBe(false);
           expect(ordinaryAccess.homePages.welcome).toBe(mode !== "enforced");
         }
         const revokedAt = new Date().toISOString();

@@ -1,7 +1,8 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {mkdirSync,mkdtempSync,rmSync,writeFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
 const setup=vi.hoisted(()=>({user:'user-a',directory:'',allowed:true,privateChart:true,sharedChart:true,activeAccount:'',journalAllowed:true}));
-vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasSharedChartDataAccess:()=>setup.sharedChart}));
+const review=vi.hoisted(()=>({admitted:false}));
+vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasChartsDashboardAccess:()=>review.admitted,hasSharedChartDataAccess:()=>setup.sharedChart}));
 vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({hasSharedWorkspaceAccess:()=>false}));
 vi.mock('@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access',()=>({hasWatchlistDashboardNavigationAccess:()=>setup.privateChart}));
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!setup.user)throw Error('unauthenticated');return {mode:'platform_session',scope:{userId:setup.user,activeAccountId:setup.activeAccount}};},currentJournalAccountSelectionRef:(scope:{activeAccountId:string})=>'ref-'+scope.activeAccountId}));
@@ -75,4 +76,19 @@ it("requires shared chart access before fetching or saving preferences", async (
   setup.sharedChart = false;
   expect((await GET(new Request("http://localhost/api/charts/preferences"))).status).toBe(403);
   expect((await POST(request({}))).status).toBe(403);
+});
+
+it("hides and denies the new styles for a shared chart user outside the review roster", async()=>{
+ const get=async()=>await (await GET(new Request("http://localhost/api"))).json();
+ const state=await get();
+ expect(state.reviewChartStyles).toBe(false);
+ expect((await POST(request({...state,preferences:{...state.preferences,kind:"renko"}}))).status).toBe(403);
+ expect((await get()).preferences.kind).toBe("candles");
+ try {
+  review.admitted=true;
+  expect((await POST(request({...state,preferences:{...state.preferences,kind:"renko"}}))).status).toBe(200);
+  expect((await get()).reviewChartStyles).toBe(true);
+  expect((await get()).preferences.kind).toBe("renko");
+ } finally { review.admitted=false; }
+ expect((await get()).preferences.kind).toBe("candles");
 });

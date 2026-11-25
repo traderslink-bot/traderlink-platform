@@ -27,7 +27,8 @@ vi.mock("@/src/modules/platform/server/database/open-readonly-platform-database"
 vi.mock("@/src/modules/stock-screeners/service", () => ({
   stockScreenersEnabled: () => state.screenersEnabled,
 }));
-vi.mock("./market-tools-dashboard-access", () => ({
+vi.mock("./market-tools-dashboard-access", async importOriginal => ({
+  ...await importOriginal<typeof import("./market-tools-dashboard-access")>(),
   hasMarketToolsDashboardReadAccess: () => state.scannerOrWorkspace,
   hasStockScreenersDashboardAccess: () => state.screeners,
 }));
@@ -126,11 +127,10 @@ beforeEach(() => {
   grantFeature(member.scope.userId, "dashboard.access");
 });
 
-afterEach(() => state.database?.close());
+afterEach(() => { state.database?.close(); vi.unstubAllEnvs(); });
 
 it.each(["missing", "off", "shadow"] as const)("admits an authenticated dashboard member with %s Charts policy", mode => {
   setPolicy(mode);
-  expect(hasChartsDashboardAccess(member)).toBe(true);
   expect(hasSharedChartDataAccess(member)).toBe(true);
 });
 
@@ -138,28 +138,25 @@ it("preserves Discord dashboard admission before the policy table exists", () =>
   state.database!.exec("DROP TABLE platform_membership_feature_policies");
   state.database!.prepare("UPDATE platform_dashboard_member_access_settings SET allow_all_discord_members = 1").run();
   const discordMember = { ...member, discord: { guildOwner: false, roleIds: [] } };
-  expect(hasChartsDashboardAccess(discordMember)).toBe(true);
-  expect(hasChartsDashboardAccess(member)).toBe(false);
+  expect(hasSharedChartDataAccess(discordMember)).toBe(true);
+  expect(hasSharedChartDataAccess(member)).toBe(false);
 });
 
 it("keeps Charts closed to a billing-only identity during open launch", () => {
   setPolicy("off");
-  expect(hasChartsDashboardAccess(owner)).toBe(false);
   expect(hasSharedChartDataAccess(owner)).toBe(false);
 });
 
 it("requires an independent current Charts grant for an ordinary member under enforcement", () => {
-  expect(hasChartsDashboardAccess(member)).toBe(false);
+  expect(hasSharedChartDataAccess(member)).toBe(false);
   expect(hasSharedChartDataAccess(member)).toBe(false);
   grantFeature(member.scope.userId, "charts.access");
-  expect(hasChartsDashboardAccess(member)).toBe(true);
   expect(hasSharedChartDataAccess(member)).toBe(true);
 });
 
 it.each(["missing", "off", "shadow", "enforced"] as const)("preserves Charts for the active operator with %s policy and no paid grant", mode => {
   setPolicy(mode);
   grantOperator();
-  expect(hasChartsDashboardAccess(owner)).toBe(true);
   expect(hasSharedChartDataAccess(owner)).toBe(true);
 });
 
@@ -172,16 +169,14 @@ it("denies a revoked operator without a paid grant and still accepts their own c
     reasonCode: "fixture_revocation",
     revokedAtUtc: "2026-11-22T18:01:00.000Z",
   });
-  expect(hasChartsDashboardAccess(owner)).toBe(false);
   expect(hasSharedChartDataAccess(owner)).toBe(false);
   grantFeature(owner.scope.userId, "charts.access");
-  expect(hasChartsDashboardAccess(owner)).toBe(true);
+  expect(hasSharedChartDataAccess(owner)).toBe(true);
 });
 
 it("keeps a different user with workspace ownership on the ordinary paid path", () => {
   grantOperator();
   const workspaceOwner = { ...member, scope: { ...member.scope, workspaceRole: "owner" as const } };
-  expect(hasChartsDashboardAccess(workspaceOwner)).toBe(false);
   expect(hasSharedChartDataAccess(workspaceOwner)).toBe(false);
 });
 
@@ -212,4 +207,23 @@ it("preserves the local development chart", () => {
   const local = { ...member, mode: "local_development" as const };
   expect(hasChartsDashboardAccess(local)).toBe(true);
   expect(hasSharedChartDataAccess(local)).toBe(true);
+});
+
+it("admits exactly the two review identities to the page and hides it from other entitled users", () => {
+  const outsider = { ...member, scope: { ...member.scope, userId: randomUUID() } };
+  vi.stubEnv("TRADERLINK_MARKET_TOOLS_REVIEW_USER_IDS", `${owner.scope.userId},${outsider.scope.userId}`);
+  grantFeature(member.scope.userId, "charts.access");
+  expect(hasChartsDashboardAccess(owner)).toBe(true);
+  expect(hasChartsDashboardAccess(outsider)).toBe(true);
+  expect(hasChartsDashboardAccess(member)).toBe(false);
+  expect(hasSharedChartDataAccess(member)).toBe(true);
+});
+
+it("fails closed for duplicate or missing review identities even for the operator", () => {
+  grantOperator();
+  for (const configured of ["", owner.scope.userId, `${owner.scope.userId},${owner.scope.userId}`]) {
+    vi.stubEnv("TRADERLINK_MARKET_TOOLS_REVIEW_USER_IDS", configured);
+    expect(hasChartsDashboardAccess(owner)).toBe(false);
+    expect(hasSharedChartDataAccess(owner)).toBe(true);
+  }
 });

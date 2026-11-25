@@ -41,11 +41,15 @@ export class BrowserChartFrames {
   private decoder = new TextDecoder();
   private encoder = new TextEncoder();
   private pending = "";
+  constructor(
+    private readonly parseEvent = browserChartEvent,
+    private readonly maxFrameLength = 128_000,
+  ) {}
   write(chunk: Uint8Array): Uint8Array {
     this.pending = (this.pending + this.decoder.decode(chunk, { stream: true })).replace(/\r\n/g, "\n");
     let output = "", boundary: number;
     while ((boundary = this.pending.indexOf("\n\n")) >= 0) {
-      if (boundary > 128_000) throw Error("chart_frame_too_large");
+      if (boundary > this.maxFrameLength) throw Error("chart_frame_too_large");
       const frame = this.pending.slice(0, boundary); this.pending = this.pending.slice(boundary + 2);
       const lines = frame.split("\n"), values = lines.filter(line => line.startsWith("data:")).map(line => line.slice(5).trimStart());
       if (!values.length) {
@@ -54,11 +58,11 @@ export class BrowserChartFrames {
         continue;
       }
       let event: ReturnType<typeof browserChartEvent> = connectionFailure;
-      try { event = browserChartEvent(lines.find(line => line.startsWith("event:"))?.slice(6).trim() ?? "message", JSON.parse(values.join("\n"))); }
+      try { event = this.parseEvent(lines.find(line => line.startsWith("event:"))?.slice(6).trim() ?? "message", JSON.parse(values.join("\n"))); }
       catch { /* Malformed upstream data has the same public connection failure. */ }
       output += `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
     }
-    if (this.pending.length > 128_000) throw Error("chart_frame_too_large");
+    if (this.pending.length > this.maxFrameLength) throw Error("chart_frame_too_large");
     return this.encoder.encode(output);
   }
 }
