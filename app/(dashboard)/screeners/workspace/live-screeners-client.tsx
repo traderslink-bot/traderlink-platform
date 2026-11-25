@@ -75,6 +75,7 @@ import { Fragment, memo, startTransition, useCallback, useEffect, useEffectEvent
 import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/press-release-article-drawer";
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard, useMarketEventsData } from "./screener-press-release-board";
+import { keepSelectedWorkspaceChart, singleWorkspaceChart } from "./workspace-chart-panels";
 import { ScannerCompactChart, ScannerCompactChartCovered } from "./scanner-compact-chart";
 import { ScannerBreakoutsCard } from "./scanner-breakouts-card";
 import { ScannerWorkspaceCard } from "../scanner-workspace-card";
@@ -1018,6 +1019,11 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
           const saved=saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,savedScanIds:draftSavedIds,views:draftViews,sections:draftSections,volumeColumns:draftVolumeColumns,gainerAutoSwitch:draftGainerSwitch}]);
           if(saved)setDraft(null);return saved;
         }}/>}
+        {showWorkspaceChart&&pageCharts&&chartCount(pageCharts)>1&&
+          <ChartMultiviewMenu layout={pageCharts} defaultTimeframe={defaultTimeframe}
+            onChange={setPageCharts} resolveEmptyLayout={draft=>singleWorkspaceChart(draft,compactChartSymbol,defaultTimeframe)}
+            onCloseView={()=>setPageCharts(current=>current?keepSelectedWorkspaceChart(current):null)}
+            closeViewLabel="Return to one chart" chartTabs iconOnly workspaceFullGrid/>}
         {((desktopLayout&&mobile)||(!drawerOpen&&canReopenChart))&&
           <Tooltip title={drawerOpen?"Chart drawer is open":canReopenChart?"Reopen chart drawer":"No chart to reopen"}>
             <Box component="span" sx={{display:"inline-flex",mx:0.25,flexShrink:0,"@media(max-width:359px)":{mx:0}}}>

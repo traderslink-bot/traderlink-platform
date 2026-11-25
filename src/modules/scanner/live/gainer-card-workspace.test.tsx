@@ -9,7 +9,8 @@ import { DEFAULT_DECLINE_CONTROLS } from "./declines";
 import { DEFAULT_PREMARKET_PULLBACK_CONTROLS } from "./premarket-pullbacks";
 import type { LiveScannerRow, ScannerReadModel } from "./contracts";
 import { DEFAULT_CHART_PREFERENCES } from "../alpaca/chart-preferences";
-import { EMPTY_MULTIVIEW } from "../alpaca/chart-multiview";
+import { EMPTY_MULTIVIEW, reconcileChartTickers, singleChart } from "../alpaca/chart-multiview";
+import { workspaceChartKey } from "@/app/(dashboard)/screeners/workspace/use-workspace-chart-layout";
 import { defaultMobileLayouts, readMobileLayouts } from "@/app/(dashboard)/screeners/workspace/scanner-mobile-layout";
 import { defaultTile } from "@/app/(dashboard)/screeners/workspace/scanner-split-layout";
 import { tileToCards } from "@/app/(dashboard)/screeners/workspace/scanner-free-layout";
@@ -19,7 +20,10 @@ vi.mock("@/app/dashboard-template", () => ({
     <section>{!hideHeader && <header>{title}{action}</header>}{children}</section>,
   DashboardPrimaryAction: ({ children }: { children: ReactNode }) => <button>{children}</button>,
 }));
-vi.mock("@/app/(dashboard)/charts/market-chart", () => ({ MarketChart: () => <div data-chart-fixture /> }));
+vi.mock("@/app/(dashboard)/charts/market-chart", () => ({
+  MarketChart: ({ actions, closeAction }: { actions?: ReactNode; closeAction?: ReactNode }) =>
+    <div data-chart-fixture>{actions}{closeAction}</div>,
+}));
 vi.mock("@/app/(dashboard)/screeners/screener-press-release-board", () => ({
   useMarketEventsData: () => ({}), ScreenerPressReleaseBoard: () => <div data-news-fixture />,
 }));
@@ -292,4 +296,54 @@ it.each(["table","cards"] as const)("matches the Workspace saved-scan header in 
     .toBe(card("gainers").querySelector("[data-workspace-scanner-header]")?.className);
   expect(panel.textContent).toContain("Saved fixture");
   expect(panel.querySelector(view === "table" ? "thead" : "[data-scanner-stock-card]")).not.toBeNull();
+});
+
+const pageChartKey = workspaceChartKey(ownerKey);
+
+function seedChartMultiview() {
+  const layout = reconcileChartTickers(singleChart("LVWR", "5m"), ["LVWR", "AKAN", "BENF", "APUS"], "5m");
+  localStorage.setItem(pageChartKey, JSON.stringify({ ...layout, selectedPanel: layout.groups[2].panels[0].id }));
+  const bounds = new DOMRect(10, 10, 780, 650);
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(bounds);
+  vi.stubGlobal("ResizeObserver", class {
+    constructor(private readonly callback: ResizeObserverCallback) {}
+    observe(target: Element) { this.callback([{ target, contentRect: bounds } as ResizeObserverEntry], this); }
+    unobserve() {}
+    disconnect() {}
+  });
+}
+
+const currentWorkspaceCharts = () => JSON.parse(localStorage.getItem(pageChartKey)!);
+const workspaceMultiviewButton = () => document.querySelector('#dashboard-scanner-toolbar button[aria-label="Multiview"]');
+const dialogButton = (label: string) => [...document.querySelectorAll('[role="dialog"] button')].find(button => button.textContent === label) ?? null;
+const regularWorkspace = { ...model, session: "regular" as const, gainers: model.dayGainers! };
+
+it("puts the active Multiview button in the Workspace top nav and closes individual charts", async () => {
+  seedChartMultiview();
+  await mount(regularWorkspace);
+  expect(workspaceMultiviewButton()?.getAttribute("aria-pressed")).toBe("true");
+  expect(card("ticker-workspace").querySelector('[aria-label="Multiview"]')).toBeNull();
+  expect(card("ticker-workspace").querySelectorAll('[data-workspace-chart-close]')).toHaveLength(4);
+  const original = currentWorkspaceCharts();
+  await click(card("ticker-workspace").querySelector('[aria-label="Close AKAN 5m chart"]'));
+  expect(currentWorkspaceCharts().groups.map((group: {symbol: string}) => group.symbol)).toEqual(["LVWR", "BENF", "APUS"]);
+  expect(currentWorkspaceCharts().selectedPanel).toBe(original.selectedPanel);
+
+  await click(workspaceMultiviewButton());
+  await click(dialogButton("Return to one chart"));
+  expect(currentWorkspaceCharts().groups).toEqual([original.groups[2]]);
+  expect(workspaceMultiviewButton()).toBeNull();
+  expect(card("ticker-workspace").querySelector('[aria-label="Multiview"]')).not.toBeNull();
+  expect(card("ticker-workspace").querySelector('[data-workspace-chart-close]')).toBeNull();
+});
+
+it("returns to the Workspace startup ticker on Apply when every ticker is removed", async () => {
+  seedChartMultiview();
+  await mount(regularWorkspace);
+  await click(workspaceMultiviewButton());
+  for (let count = 0; count < 4; count++) await click(dialogButton("Remove ticker"));
+  await click(dialogButton("Apply"));
+  expect(currentWorkspaceCharts().groups.map((group: {symbol: string}) => group.symbol)).toEqual(["DAY"]);
+  expect(workspaceMultiviewButton()).toBeNull();
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
