@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { ScannerTickerDetails } from "../scanner-ticker-details";
+import { brokerWorkspaceSavedResults } from "@/src/modules/market-data/workspace-broker-rows";
+import type { WorkspaceSavedEntry } from "./broker-workspace-data";
 import type { OptionalVolumeColumn } from "./workspace-volume";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -35,7 +37,7 @@ const entry: SavedScanResults["results"][string] = {
   },
 };
 
-function render(view: "table" | "two-rows" | "cards", showStats = true, data = entry, volumeColumns?: readonly OptionalVolumeColumn[]) {
+function render(view: "table" | "two-rows" | "cards", showStats = true, data: WorkspaceSavedEntry = entry, volumeColumns?: readonly OptionalVolumeColumn[]) {
   const html = renderToStaticMarkup(
     <WorkspaceCardSections.Provider value={{sections:showStats ? ["stats"] : [],update:()=>{},volumeColumns}}>
       <WorkspaceSavedScanCard label="Saved fixture" entry={data} unavailable={false} retrying={false}
@@ -121,4 +123,13 @@ it("keeps quote details ahead of saved-only volume and keeps levels-only output 
   expect(contents(false).querySelector("dl")?.textContent).toContain("2,000,001");
   expect(contents(false).querySelector("dl")?.textContent).not.toContain("1,200,001");
   expect(contents(true).querySelector("dl")).toBeNull();
+});
+
+it.each(["table", "two-rows", "cards"] as const)("keeps a saved broker match with no quote in %s", view => {
+  const projected = brokerWorkspaceSavedResults({ revision: 1, scans: [], results: { test: entry } }, () => ({}), "regular", 0);
+  const dom = render(view, true, projected.results.test);
+  expect(dom.body.textContent).toContain("TEST");
+  expect(dom.body.textContent).toContain("—");
+  expect(dom.body.textContent).not.toContain("$0.0000");
+  expect(dom.body.textContent).not.toContain("$0.0269");
 });

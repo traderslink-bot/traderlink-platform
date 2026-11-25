@@ -18,7 +18,7 @@ import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { startTransition, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
-import { SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
+import { SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS, scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
 import type { DeclineRow, LiveScannerRow, PremarketPullbackRow, ScannerKind } from "@/src/modules/scanner/live/contracts";
 
 import { momentumSignalText } from "./momentum-signal-text";
@@ -215,7 +215,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
       const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
       const mainVolume = post ? "postMarketVolume" : "dayVolume";
       const volumeStats = ([mainVolume, ...selected.filter(metric => metric !== mainVolume)] as const)
-        .map(metric => [SCANNER_VOLUME_LABELS[metric], shares(row[metric] ?? null)]);
+        .map(metric => [scannerVolumeLabel(metric, screen === "gainers"), shares(row[metric] ?? null)]);
       const stats = hod ? [
         ...volumeStats,["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",scannerPercent(row.spreadPercent, "—")],
       ] : [

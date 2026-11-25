@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SAVED_SCAN_STREAM_PATH, type SavedScanCatalogue, type SavedScanResults } from "@/src/modules/scanner/custom/definition";
+import { SAVED_SCAN_STREAM_PATH, type SavedScanCatalogue } from "@/src/modules/scanner/custom/definition";
+import { brokerSavedScansPath, type WorkspaceSavedEntry } from "./broker-workspace-data";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
 type RequestState = {
   ownerKey: string;
+  path: string;
   batchKey: string;
   phase: "ready" | "unavailable" | "retrying";
   catalogue?: SavedScanCatalogue;
-  results?: SavedScanResults["results"];
+  results?: Readonly<Record<string, WorkspaceSavedEntry>>;
 };
 
 export function workspaceSavedScanBatch(ids: readonly string[]): string {
@@ -18,7 +20,8 @@ export function workspaceSavedScanBatch(ids: readonly string[]): string {
 
 const maximumLine = 2_000_000;
 
-export function useWorkspaceSavedScans(ownerKey: string | undefined, ids: readonly string[]) {
+export function useWorkspaceSavedScans(ownerKey: string | undefined, ids: readonly string[], broker = false) {
+  const path = broker ? brokerSavedScansPath : SAVED_SCAN_STREAM_PATH;
   const batchKey = workspaceSavedScanBatch(ids);
   const [state, setState] = useState<RequestState>();
   const [attempt, setAttempt] = useState(0);
@@ -26,8 +29,8 @@ export function useWorkspaceSavedScans(ownerKey: string | undefined, ids: readon
     if (!ownerKey) return;
     const abort = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const publish = (fields: Omit<RequestState, "ownerKey" | "batchKey">) => {
-      if (!abort.signal.aborted) setState({ ownerKey, batchKey, ...fields });
+    const publish = (fields: Omit<RequestState, "ownerKey" | "batchKey" | "path">) => {
+      if (!abort.signal.aborted) setState({ path, ownerKey, batchKey, ...fields });
     };
     const reconnect = (notice: boolean) => {
       if (abort.signal.aborted) return;
@@ -37,7 +40,7 @@ export function useWorkspaceSavedScans(ownerKey: string | undefined, ids: readon
 
     async function connect() {
       try {
-        const response = await fetch(SAVED_SCAN_STREAM_PATH, {
+        const response = await fetch(path, {
           credentials: "same-origin",
           cache: "no-store",
           signal: abort.signal,
@@ -73,7 +76,7 @@ export function useWorkspaceSavedScans(ownerKey: string | undefined, ids: readon
             for (const line of lines) {
               if (!line) continue;
               if (line.length > maximumLine) throw Error("saved_scan_frame_too_large");
-              const { revision, scans, results } = JSON.parse(line) as SavedScanResults;
+              const { revision, scans, results } = JSON.parse(line) as SavedScanCatalogue & { results: Readonly<Record<string, WorkspaceSavedEntry>> };
               publish({ phase: "ready", catalogue: { revision, scans }, results });
             }
           }
@@ -94,9 +97,9 @@ export function useWorkspaceSavedScans(ownerKey: string | undefined, ids: readon
       abort.abort();
       clearTimeout(timer);
     };
-  }, [ownerKey, batchKey, attempt]);
+  }, [path, ownerKey, batchKey, attempt]);
 
-  const current = state?.ownerKey === ownerKey ? state : undefined;
+  const current = state?.ownerKey === ownerKey && state?.path === path ? state : undefined;
   return {
     catalogue: current?.catalogue,
     results: current?.batchKey === batchKey ? current?.results : undefined,

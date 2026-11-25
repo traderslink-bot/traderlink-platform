@@ -1,7 +1,7 @@
 "use client";
 
+import { type WorkspaceStock, type WorkspaceDecline, type WorkspacePullback, type WorkspaceSavedRow, workspacePrice as price } from "./broker-workspace-data";
 import { scannerPercent, scannerRelativeVolume } from "../scanner-number-format";
-import { scannerPrice as price } from "../scanner-price";
 
 import { ScannerPageTicker } from "./scanner-page-ticker";
 
@@ -19,9 +19,9 @@ import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import { createContext, startTransition, useContext, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
-import type { DeclineRow, LiveScannerRow, PremarketPullbackRow, ScannerKind, ScannerNewsItem } from "@/src/modules/scanner/live/contracts";
+import type { LiveScannerRow, ScannerKind, ScannerNewsItem } from "@/src/modules/scanner/live/contracts";
 
-import type { ScanResultRow } from "@/src/modules/scanner/custom/definition";
+import { scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
 import { momentumSignalText } from "../momentum-signal-text";
 import { useSideCardChartControls } from "../scanner-chart-launch-controls";
 import { ScannerCountryFlag } from "../scanner-country-flag";
@@ -179,16 +179,16 @@ function Reading({ label, value }: { label: string; value: ReactNode }) {
   </Box>;
 }
 
-type ScannerCardRow = LiveScannerRow | DeclineRow | PremarketPullbackRow | ScanResultRow;
-export function savedScanRowNews(row: ScanResultRow): ScannerNewsItem[] {
+type ScannerCardRow = WorkspaceStock | WorkspaceDecline | WorkspacePullback | WorkspaceSavedRow;
+export function savedScanRowNews(row: WorkspaceSavedRow): ScannerNewsItem[] {
   const article = row.pressRelease;
   if (!article || !Number.isFinite(new Date(article.at).getTime())) return [];
   const publishedAt = new Date(article.at).toISOString();
   return [{ id: article.id, headline: article.title, createdAt: publishedAt, publishedAt,
     url: article.url, typeLabel: "Press Release" }];
 }
-const isLiveRow = (row: ScannerCardRow): row is LiveScannerRow => "sessionGain" in row;
-const isHodRow = (row: ScannerCardRow): row is PremarketPullbackRow => "referenceHigh" in row;
+const isLiveRow = (row: ScannerCardRow): row is WorkspaceStock => "sessionGain" in row;
+const isHodRow = (row: ScannerCardRow): row is WorkspacePullback => "referenceHigh" in row;
 type ScannerCardScreen = ScannerKind | "top-losers" | "high-drops" | "breakouts" | "saved";
 const stockCardLabels: Record<ScannerCardScreen,string> = {
   gainers:"Top Gainers", momentum:"Momentum", "top-losers":"Top Losers", "high-drops":"HOD Drops", breakouts:"Breakouts", saved:"Saved scan",
@@ -233,10 +233,10 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
       const hod = isHodRow(row) ? row : null;
       const saved = "dayChange" in row;
       const change = saved ? row.dayChange : isLiveRow(row) ? row.sessionGain : row.changePercent;
-      const movement = hod ? -hod.belowHighPercent : change;
+      const movement = hod ? (hod.belowHighPercent==null?null:-hod.belowHighPercent) : change;
       const sessionVolume = isHodRow(row) ? row.sessionVolume : row.volume;
       const turnover = sessionVolume !== null && row.float !== null && row.float > 0 ? 100 * sessionVolume / row.float : null;
-      const volumes = volumeColumns.map(column => [volumeLabels[column], workspaceVolumeValue(row, column)]);
+      const volumes = volumeColumns.map(column => [scannerVolumeLabel(column, screen === "gainers"), workspaceVolumeValue(row, column)]);
       const catalyst = (saved ? savedScanRowNews(row) : row.news).find(item => Number.isFinite(Date.parse(item.createdAt)));
       const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
       const stats = saved ? [
@@ -267,7 +267,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
           </Box>
         </Box>
         {screen === "momentum" && live && <Typography sx={{fontSize:"0.65rem",color:theme=>theme.palette.mode==="dark"?"#c4b5fd":"#7c3aed",mt:0.4,overflowWrap:"anywhere"}}>
-          {momentumSignalText(live)}
+          {momentumSignalText(live as LiveScannerRow)}
         </Typography>}
         {renderSignal&&<Typography sx={{fontSize:"0.7rem",mt:0.4}}>{renderSignal(row)}</Typography>}
         {sections.map(section => section === "stats" ? <Box key={section} component="dl" aria-label="Stats"
@@ -277,7 +277,7 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
             <Reading key={`${index}:${label}`} label={label} value={value}/>)}
         </Box> : section === "indicators" || catalyst ? <Box component="section" key={section}
           aria-label={SECTION_LABELS[section]} sx={{minWidth:0,mt:0.65}}>
-          {section === "indicators" ? <ScannerIndicatorReads row={row} now={now}/> : catalyst && (
+          {section === "indicators" ? row.price == null ? <Typography variant="caption" color="text.secondary">Indicators unavailable.</Typography> : <ScannerIndicatorReads row={{symbol:row.symbol,price:row.price}} now={now}/> : catalyst && (
             <Box sx={{display:"flex",alignItems:"baseline",gap:0.6,minWidth:0,overflowWrap:"anywhere",fontSize:"0.68rem","& button":{minWidth:0,textAlign:"left",fontWeight:550,lineHeight:1.25}}}>
               <Typography component="time" dateTime={catalyst.createdAt} variant="inherit" color="text.secondary" sx={{flexShrink:0,whiteSpace:"nowrap"}}>
                 {date.format(new Date(catalyst.createdAt))}

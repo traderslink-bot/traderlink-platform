@@ -75,6 +75,10 @@ export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preference
    {CHART_OVERNIGHT_ENABLED&&<FormControlLabel label="Overnight · 20:00–4:00 ET"
      control={<Checkbox checked={chartShowsOvernight(p)} onChange={(_,visible)=>set('overnight',visible)}/>}/>}
   </>}
-  </Stack><Typography role="status" sx={{px:2,py:1,fontSize:12,borderTop:1,borderColor:'divider',flexShrink:0}}>{message||'Changes save automatically to your account.'}</Typography>
+  </Stack><Typography role="status" sx={{px:2,py:1,fontSize:12,borderTop:1,borderColor:'divider',flexShrink:0}}>
+   {message||(panel==='indicators'
+    ? 'Visibility changes for this chart stay with the open chart on this device. Changes for all charts save to your account.'
+    : 'Changes save automatically to your account.')}
+  </Typography>
  </Drawer>;
 }

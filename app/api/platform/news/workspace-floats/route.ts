@@ -1,6 +1,6 @@
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
-import { hasMarketToolsDashboardReadAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
+import { hasSharedWorkspaceAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import { readLiveScannerRuntime, scannerSettingsStore, scannerUniverseStore } from "@/src/modules/scanner/live/server/runtime";
 import { readCompanyData } from "@/src/lib/news/company-data-gateway";
@@ -12,7 +12,7 @@ export async function GET(request:Request):Promise<Response>{
   const authorized=()=>{
     const identity=requireTraderLinkPlatformRequestIdentity(request.headers);
     if(!hasPressReleaseDashboardAccess(identity)||
-      !(hasMarketToolsDashboardReadAccess(identity)||hasWatchlistDashboardNavigationAccess(identity)))throw new Error("Unavailable");
+      !(hasSharedWorkspaceAccess(identity)||hasWatchlistDashboardNavigationAccess(identity)))throw new Error("Unavailable");
     return identity.scope.userId;
   };
   let actor:string;

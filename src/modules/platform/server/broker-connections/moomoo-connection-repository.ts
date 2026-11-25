@@ -77,6 +77,15 @@ export class MoomooConnectionRepository {
     return row ? map(row) : null;
   }
 
+  latestAuthorizationId(scope: WorkspaceAccessScope, connectionId: string): string | null {
+    const row = this.database.prepare<[string, string, string], { connection_attempt_id: string }>(`
+      SELECT connection_attempt_id FROM platform_broker_connection_attempts
+      WHERE connection_id = ? AND user_id = ? AND workspace_id = ? AND provider = 'moomoo' AND outcome = 'connected'
+      ORDER BY occurred_at_utc DESC, rowid DESC LIMIT 1
+    `).get(connectionId, scope.userId, scope.workspaceId);
+    return row?.connection_attempt_id ?? null;
+  }
+
   /** Preserve saved connections on downgrade. The oldest connected rows occupy
    * the available slots; a revoked row no longer occupies one. */
   assertAuthorizationAllowed(scope: Pick<WorkspaceAccessScope,"userId"|"workspaceId">): void {

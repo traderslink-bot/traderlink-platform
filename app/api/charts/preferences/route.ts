@@ -1,4 +1,5 @@
 import {hasSharedChartDataAccess} from "@/src/modules/market-data/server/chart-dashboard-access";
+import {hasSharedWorkspaceAccess} from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import {dirname,join} from 'node:path';
 import {currentJournalAccountSelectionRef,requireTraderLinkPlatformRequestIdentity} from '@/src/modules/platform/server/authentication/require-platform-request-scope';
 import {requirePlatformMutationRequest} from '@/src/modules/platform/server/authentication/platform-mutation-request-security';
@@ -9,7 +10,7 @@ import {MAX_CHART_PREFERENCE_BYTES} from '@/src/modules/scanner/alpaca/chart-pre
 import {chartPreferenceOwnerKey,readChartPreferences,writeChartPreferences} from '@/src/modules/scanner/alpaca/chart-preference-store';
 export const runtime='nodejs';export const dynamic='force-dynamic';
 const reply=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'private, no-store'}});
-function scope(request:Request){const identity=requireTraderLinkPlatformRequestIdentity(request.headers);if(!hasSharedChartDataAccess(identity))throw Error('chart_access_denied');return {identity,user:identity.scope.userId,directory:join(dirname(resolvePlatformDatabaseConfig().databasePath),'chart-preferences-v1')};}
+function scope(request:Request){const identity=requireTraderLinkPlatformRequestIdentity(request.headers);if(!hasSharedChartDataAccess(identity)&&!hasSharedWorkspaceAccess(identity))throw Error('chart_access_denied');return {identity,user:identity.scope.userId,directory:join(dirname(resolvePlatformDatabaseConfig().databasePath),'chart-preferences-v1')};}
 export async function GET(request:Request){let s:ReturnType<typeof scope>;try{s=scope(request);}catch(error){return error instanceof Error&&error.message==='chart_access_denied'?reply({error:'chart_access_denied'},403):reply({error:'not_authenticated'},401);}try{
  const {scope,mode}=s.identity;
  const journalAccountRef=scope.activeAccountId&&(mode==='local_development'||withReadonlyPlatformDatabase({},db=>evaluateMembershipFeature(db,scope.userId,'journal.access').allowed))

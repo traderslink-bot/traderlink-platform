@@ -21,6 +21,15 @@ describe("live scanner HTTP", () => {
     expect(response.status).toBe(200); expect(response.headers.get("cache-control")).toContain("private, no-store");
     expect(await response.json()).toEqual(model);
   });
+  it("checks projected snapshot access again before returning Scanner data", async () => {
+    let member = true;
+    const project = vi.fn();
+    const response = await handleLiveScannerGet(request("GET"), {
+      member: () => member, project, async read() { member = false; return model; },
+    });
+    expect(response.status).toBe(404);
+    expect(project).not.toHaveBeenCalled();
+  });
   it("suppresses private read failures", async () => {
     const response = await handleLiveScannerGet(request("GET"),{ member: () => true,read: () => { throw Error("/private/path"); } });
     expect(response.status).toBe(503); expect(JSON.stringify(await response.json())).not.toContain("private");

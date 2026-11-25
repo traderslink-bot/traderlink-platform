@@ -7,6 +7,7 @@ import Database from "better-sqlite3";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { GET as readLayout, POST as saveLayout } from "@/app/api/charts/layout/route";
+import { GET as readChartPreferences } from "@/app/api/charts/preferences/route";
 import { GET as readSplits } from "@/app/api/charts/splits/route";
 import { GET as readCompany } from "@/app/api/company/details/route";
 import { GET as readTechnicals } from "@/app/api/company/technicals/route";
@@ -18,6 +19,8 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contrac
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import type { ScannerReadModel } from "@/src/modules/scanner/live/contracts";
+import { DEFAULT_WORKSPACE_MARKET_SETTINGS } from "../workspace-market-settings";
+import { saveWorkspaceMarketSettings } from "./workspace-market-settings-store";
 import {
   hasLegacyScannerDashboardAccess,
   hasStockScreenersDashboardAccess,
@@ -116,6 +119,36 @@ function request(path: string, actor: string | null, init?: RequestInit) {
   if (actor) headers.set("x-fixture-session", actor);
   return new Request(origin + path, { ...init, headers });
 }
+
+it("opens shared facts and chart settings for broker members without opening the current quote routes", async () => {
+  const actor = "standalone";
+  const company = "/api/company/details?symbol=NWGL";
+  const preferences = "/api/charts/preferences";
+  expect((await readCompany(request(company, actor))).status).toBe(404);
+  saveWorkspaceMarketSettings({ ...DEFAULT_WORKSPACE_MARKET_SETTINGS, brokerAudience: "members" });
+  expect((await readCompany(request(company, actor))).status).toBe(200);
+  expect((await readLayout(request(drawer, actor))).status).toBe(200);
+  expect((await readChartPreferences(request(preferences, actor))).status).toBe(200);
+  expect((await readCompany(request(company, null))).status).toBe(401);
+  expect((await readTechnicals(request("/api/company/technicals?symbol=NWGL", actor))).status).toBe(404);
+  expect((await readLiveScanner(request("/api/screeners/live", actor))).status).toBe(404);
+  expect((await readScannerBars(request("/api/screeners/charts/bars?symbol=NWGL", actor))).status).toBe(403);
+});
+
+it("withdraws explicitly closed Workspace admission from legacy subjects while preserving independent Scanner access", async () => {
+  const first = "aabbccdd-eeff-4000-8000-010000000001";
+  const second = "aabbccdd-eeff-4000-8000-010000000002";
+  vi.stubEnv(MARKET_TOOLS_REVIEW_USER_IDS, [first, second].join(","));
+  expect(readMarketToolsDashboardAccess(session("workspace")).tradingWorkspace).toBe(true);
+  const opened = saveWorkspaceMarketSettings({ ...DEFAULT_WORKSPACE_MARKET_SETTINGS, currentAudience: "members" });
+  expect(readMarketToolsDashboardAccess(session("standalone")).tradingWorkspace).toBe(true);
+  saveWorkspaceMarketSettings({ ...opened, currentAudience: "review", brokerAudience: "members" });
+  expect(readMarketToolsDashboardAccess(session(first)).tradingWorkspace).toBe(true);
+  expect(readMarketToolsDashboardAccess(session(second)).tradingWorkspace).toBe(true);
+  expect(readMarketToolsDashboardAccess(session("workspace")).tradingWorkspace).toBe(false);
+  expect(readMarketToolsDashboardAccess(session("scanner"))).toEqual({ scanner: true, tradingWorkspace: false });
+  expect((await readLiveScanner(request("/api/screeners/live", "workspace"))).status).toBe(404);
+});
 
 beforeEach(() => {
   fixture.membershipReadAvailable = true;

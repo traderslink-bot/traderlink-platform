@@ -9,6 +9,10 @@ export const SCANNER_VOLUME_LABELS = {
   postMarketVolume: "After-hours Vol",
 } as const;
 
+export function scannerVolumeLabel(column: keyof typeof SCANNER_VOLUME_LABELS, topGainers: boolean): string {
+  return topGainers && column === "dayVolume" ? "Vol" : SCANNER_VOLUME_LABELS[column];
+}
+
 export function scannerVolumeBreakdown(snapshot: Pick<NormalizedSnapshot,
   "session" | "premarketVolume" | "regularVolume" | "postMarketVolume"
 >): Required<ScannerVolumeBreakdown> {

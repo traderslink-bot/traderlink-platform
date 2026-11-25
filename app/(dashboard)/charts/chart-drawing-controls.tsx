@@ -36,6 +36,8 @@ import { anchorCounts, applyDrawingChanges, drawingStoragePrefix, positionDefaul
 import { drawingGroups } from "./chart-drawing-groups";
 import { DrawingToolIcon } from "./chart-drawing-icons";
 
+const trendlineDragThreshold = 4;
+
 const groupIcons = {
   "Trend lines and channels": TimelineOutlined,
   "Fibonacci and Gann": StairsOutlined,
@@ -63,6 +65,10 @@ function DrawingRailButton({ label, compact, onClick, children, disabled, expand
     </IconButton>;
   return <Tooltip title={label} placement="right">{disabled?<span>{button}</span>:button}</Tooltip>;
 }
+
+function isTrendlineDrag(origin: Point, end: Point) {
+  return Math.hypot(end.x - origin.x, end.y - origin.y) >= trendlineDragThreshold;
+}
 import { patternLabels } from "./chart-drawing-patterns";
 import { defaultRegression, regressionSources, validDeviation, type RegressionSettings } from "./chart-drawing-regression";
 
@@ -89,6 +95,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
   const selection=current?.action?undefined:draft??drawings.find(d=>d.id===current?.selected);
   const drag=useRef<({drawing:Drawing;index?:number;next:Drawing;origin:Point;pointerId:number}&
     ({start:Anchor;space:"data"}|{start:Point;space:"viewport"}))|null>(null);
+  const trendlinePlacement=useRef<{anchor:Anchor;origin:Point;pointerId:number}|null>(null);
   const pendingFrame=useRef(0);
   const stroke=useRef<{drawing:Drawing;last:Point;pointerId:number;spacing:number}|null>(null);
   const [saveError,setSaveError]=useState("");
@@ -120,6 +127,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
     cancelAnimationFrame(pendingFrame.current);
     pendingFrame.current=0;
     drag.current=null;
+    trendlinePlacement.current=null;
     stroke.current=null;
   },[engine,key]);
   const commit=(next:readonly Drawing[])=>{
@@ -187,7 +195,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
     return Boolean(origin&&edge&&side&&validFibonacciWedge(origin,edge,side));
   };
   const place=(event:PointerEvent<HTMLDivElement>)=>{
-    if(!engine||!current||current.draft||event.button!==0)return;
+    if(!engine||!current||current.draft||event.button!==0||trendlinePlacement.current)return;
     const p=point(event),size=engine.size();
     if(p.x<0||p.y<0||p.x>=size.w||p.y>=size.h)return;
     if(current.tool==="anchoredNote"){
@@ -235,6 +243,11 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
     if(!anchor)return;
     event.preventDefault();
     event.currentTarget.focus({preventScroll:true});
+    if(current.tool==="trendline"&&!first){
+      trendlinePlacement.current={anchor,origin:p,pointerId:event.pointerId};
+      event.currentTarget.setPointerCapture(event.pointerId);
+      return;
+    }
     if(isFreehand(current.tool)){
       if(stroke.current)return;
       const drawing={id:crypto.randomUUID(),tool:current.tool,anchors:[anchor],
@@ -279,6 +292,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
       return;
     }
     const placed=current.anchors??[];
+    if(current.tool==="trendline"&&first?.time===anchor.time&&first.price===anchor.price)return;
     if(current.tool==="positionForecast"&&(anchor.price<=0||placed.length&&anchor.time<=placed[0].time)){
       setPlacementError(placed.length?"Place the target after the entry":"Place the entry above zero");
       return;
@@ -423,8 +437,28 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
       ?{...drawing,anchors}:drawing;
     if(paint)engine.update(visibleDrawings.map(d=>d.id===drawing.id?active.next:d),drawing.id);
   };
+  const trendlineEnd=(placement:NonNullable<typeof trendlinePlacement.current>,p:Point)=>{
+    if(!engine||!isTrendlineDrag(placement.origin,p))return;
+    const {w,h}=engine.size();
+    if(p.x<0||p.y<0||p.x>=w||p.y>=h)return;
+    const anchor=engine.anchor(engine.snapDrawingPoint(p,options?.magnet??"off"));
+    if(anchor&&(anchor.time!==placement.anchor.time||anchor.price!==placement.anchor.price))return anchor;
+  };
   const move=(event:PointerEvent<HTMLDivElement>)=>{
     const p=point(event), preserveRatio=event.shiftKey;
+    const placement=trendlinePlacement.current;
+    if(placement){
+      if(placement.pointerId!==event.pointerId)return;
+      cancelAnimationFrame(pendingFrame.current);
+      pendingFrame.current=requestAnimationFrame(()=>{
+        pendingFrame.current=0;
+        const end=trendlineEnd(placement,p);
+        if(!end){engine?.update(visibleDrawings,"");return;}
+        const preview:Drawing={id:"draft",tool:"trendline",anchors:[placement.anchor,end],color:"#38bdf8",text:""};
+        engine?.update([...visibleDrawings,preview],preview.id);
+      });
+      return;
+    }
     const freehand=stroke.current;
     if(freehand){
       if(freehand.pointerId!==event.pointerId)return;
@@ -464,9 +498,26 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
   const finish=(commitDrag:boolean,event?:PointerEvent<HTMLDivElement>)=>{
     const freehand=stroke.current;
     const active=drag.current;
-    if(event&&(freehand&&event.pointerId!==freehand.pointerId||active&&event.pointerId!==active.pointerId))return;
+    const placement=trendlinePlacement.current;
+    if(event&&(freehand&&event.pointerId!==freehand.pointerId||active&&event.pointerId!==active.pointerId||placement&&event.pointerId!==placement.pointerId))return;
     cancelAnimationFrame(pendingFrame.current);
     pendingFrame.current=0;
+    if(placement){
+      trendlinePlacement.current=null;
+      if(commitDrag&&event){
+        const p=point(event);
+        const end=trendlineEnd(placement,p);
+        if(end){
+          addDrawing("trendline",[placement.anchor,end]);
+          return;
+        }
+        if(!isTrendlineDrag(placement.origin,p)){
+          setSession({key,tool:"trendline",anchors:[placement.anchor]});
+        }
+      }
+      engine?.update(visibleDrawings,"");
+      return;
+    }
     if(freehand){
       if(commitDrag&&event)collectStrokePoint(point(event),true);
       stroke.current=null;
@@ -696,7 +747,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
       }}
       onDoubleClick={()=>finishPolyline()} onPointerDown={place} onPointerMove={move}
       onPointerUp={event=>{if(!isPolyline(current.tool))finish(true,event);}} onPointerCancel={event=>finish(false,event)}
-      onLostPointerCapture={event=>{if(stroke.current||drag.current)finish(false,event);}}
+      onLostPointerCapture={event=>{if(stroke.current||drag.current||trendlinePlacement.current)finish(false,event);}}
       sx={{position:"absolute",inset:0,pointerEvents:"auto",touchAction:"none",cursor:current.action==="erase"?"crosshair":current.tool==="select"?"default":"crosshair"}}/>
     <Box sx={{position:"absolute",top:4,left:4,right:4,display:"flex",alignItems:"center",flexWrap:"wrap",gap:.5,
       width:"fit-content",maxWidth:"100%",bgcolor:"background.paper",border:1,borderColor:"divider",p:.25,pointerEvents:"auto"}}>
@@ -760,6 +811,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
 
 
 function placementHint(tool: Tool,count:number){
+  if(tool==="trendline"&&count===0)return "Drag to draw or place the start";
   if(isFreehand(tool))return "Drag to draw";
   if(tool==="path")return count?"Place another point or finish the path":"Place the starting point";
   if(tool==="polyline")return count?"Place another point or finish the polyline":"Place the starting point";

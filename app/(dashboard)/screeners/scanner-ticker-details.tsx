@@ -1,5 +1,6 @@
 "use client";
 
+import type { WorkspaceStock } from "./workspace/broker-workspace-data";
 import { scannerPrice as price } from "./scanner-price";
 
 import { scannerGainColor } from "./scanner-gain-color";
@@ -18,14 +19,14 @@ import { buildWatchlistV2LevelRows, formatWatchlistV2LevelPrice } from "@/src/li
 import { formatLevelMarketDataProvenance } from "@/src/lib/live-watchlist/live-watchlist-level-provenance";
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 import { SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS } from "@/src/modules/scanner/live/volume";
-import type { LiveScannerRow, ScannerNewsItem, ScannerVolumeBreakdown } from "@/src/modules/scanner/live/contracts";
+import type { ScannerNewsItem, ScannerVolumeBreakdown } from "@/src/modules/scanner/live/contracts";
 import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/platform-request-security";
 
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
 const stamp = (n: number | string) => new Date(n).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET";
 
-export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionTarget, active=true, onGenerate, levelsOnly=false, verifiedLevels=false, volumeBreakdown }: {
-  symbol: string; stock: LiveScannerRow | undefined; quote?: ScannerVolumeBreakdown & {price:number;changePercent:number|null}; postMarket?: boolean;
+export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionTarget, active=true, onGenerate, levelsOnly=false, verifiedLevels=false, volumeBreakdown, broker=false }: {
+  symbol: string; broker?:boolean; stock: WorkspaceStock | undefined; quote?: ScannerVolumeBreakdown & {price:number|null;changePercent:number|null}; postMarket?: boolean;
   volumeBreakdown?: ScannerVolumeBreakdown;
   actionTarget?:HTMLElement|null;active?:boolean;onGenerate?:()=>void;levelsOnly?:boolean;verifiedLevels?:boolean;
 }) {
@@ -52,7 +53,7 @@ export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionT
     } catch { if (!controller.signal.aborted) setArticleStatus("unavailable"); }
   }
   async function generate() {
-    if (pending.current) return;
+    if (broker || pending.current) return;
     const controller = new AbortController(); pending.current = controller;
     setBusy(true); setError(null);
     try {
@@ -79,8 +80,8 @@ export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionT
   const changeFact = (label: string, change: number | null): [string, string, string] =>
     [label, change == null ? "—" : `${change.toFixed(0)}%`, scannerGainColor(change)];
   const breakdown = stock ?? quote ?? volumeBreakdown;
-  const facts: [string, string, string?][] = levelsOnly || (currentPrice === undefined && !volumeBreakdown) ? [] : [
-    ...(currentPrice === undefined ? [] : [["Price", price(currentPrice), scannerGainColor(priceGain)] as [string, string, string]]),
+  const facts: [string, string, string?][] = levelsOnly || (currentPrice == null && !volumeBreakdown && !broker) ? [] : [
+    ...(currentPrice == null && !broker ? [] : [["Price", currentPrice == null ? "—" : price(currentPrice), scannerGainColor(priceGain)] as [string, string, string]]),
     ...(dayGain === undefined ? [] : [changeFact("Day change", dayGain)]),
     ...(postGain === undefined ? [] : [changeFact("Post-market change", postGain)]),
     ...(["dayVolume", ...SCANNER_SESSION_VOLUME_COLUMNS] as const).map((metric): [string, string] => {
@@ -99,10 +100,10 @@ export function ScannerTickerDetails({ symbol, stock, quote, postMarket, actionT
         {facts.map(([label, content, color]) => <Box key={label}><Typography component="dt" sx={{ color: "text.secondary", fontSize: "0.65rem" }}>{label}</Typography><Typography component="dd" sx={{ m: 0, fontSize: "0.8rem", fontWeight: 750, color }}>{content}</Typography></Box>)}
       </Box> : null}
     <Box sx={{minWidth:0,gridColumn:facts.length?undefined:"1 / -1"}}>
-      {actionTarget===undefined?levelAction:active&&actionTarget?createPortal(levelAction,actionTarget):null}
+      {!broker&&(actionTarget===undefined?levelAction:active&&actionTarget?createPortal(levelAction,actionTarget):null)}
       {map?<Typography data-level-reference sx={{color:"text.secondary",fontSize:"0.65rem",lineHeight:1.3,textAlign:"left",mb:1}}>Reference {price(map.referencePrice)} · {stamp(map.referencePriceAsOf)}</Typography>:null}
       {error ? <Alert severity="warning" sx={{ mb: 1 }}>{error}</Alert> : null}
-      {!map && !busy ? <Typography sx={{ color: "text.secondary", fontSize: "0.75rem" }}>Generate a map for this ticker.</Typography> : null}
+      {broker ? <Typography color="text.secondary" variant="caption">Levels are unavailable for Moomoo.</Typography> : !map && !busy ? <Typography sx={{ color: "text.secondary", fontSize: "0.75rem" }}>Generate a map for this ticker.</Typography> : null}
       {map ? <>
         <Box data-level-columns sx={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:1,minWidth:0}}>
         {([['Resistance', rows.resistance], ['Support', rows.support]] as const).map(([title, levels]) => <Box key={title} sx={{ mb: 1.5 }}>

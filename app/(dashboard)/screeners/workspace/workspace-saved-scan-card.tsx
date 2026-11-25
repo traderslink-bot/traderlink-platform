@@ -1,5 +1,6 @@
 "use client";
 
+import { type WorkspaceSavedRow, type WorkspaceSavedEntry, workspacePrice } from "./broker-workspace-data";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -12,7 +13,7 @@ import TableRow from "@mui/material/TableRow";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
 import { DashboardPanel } from "@/app/dashboard-template";
 import { CLOSED_SCAN_MESSAGE, isEventScanMetric, isSignedScanMetric, SCAN_METRICS,
-  type SavedScanResults, type ScanResultColumn, type ScanResultRow } from "@/src/modules/scanner/custom/definition";
+  type ScanResultColumn } from "@/src/modules/scanner/custom/definition";
 import { scannerScrollStyles, scannerStickyTickerSx } from "@/src/modules/scanner/live/scroll-styles";
 import { ScannerChartLaunchControls } from "../scanner-chart-launch-controls";
 import type { ScannerChartTarget } from "../scanner-chart-workspace";
@@ -37,7 +38,7 @@ const eventTime = new Intl.DateTimeFormat("en-US", {
 });
 const columnKey = ({metric,index}: ScanResultColumn) => `${metric}:${index ?? "sort"}`;
 
-function savedScanColumnValue({metric,index,cross}: ScanResultColumn, row: ScanResultRow) {
+function savedScanColumnValue({metric,index,cross}: ScanResultColumn, row: WorkspaceSavedRow) {
   const value = index === undefined ? row.sortValue : row.matches[index];
   if (value == null || !Number.isFinite(value)) return "—";
   if (cross || isEventScanMetric(metric)) return Number.isFinite(new Date(value).getTime()) ? eventTime.format(value) : "—";
@@ -58,7 +59,7 @@ const halted = <PauseRoundedIcon role="img" aria-label="Trading halted" color="e
 
 export function WorkspaceSavedScanCard({ label, entry, unavailable, retrying, view, onViewChange, now, onOpenChart }: {
   label: string;
-  entry?: SavedScanResults["results"][string];
+  entry?: WorkspaceSavedEntry;
   unavailable: boolean;
   retrying: boolean;
   view: ScannerView;
@@ -76,7 +77,7 @@ export function WorkspaceSavedScanCard({ label, entry, unavailable, retrying, vi
     : result.rows.length ? null
     : result.incomplete > 0 ? "Some stocks need more data before this scan can check them."
     : "No stocks currently qualify for this scan.";
-  const tools = (row: ScanResultRow) => <ScannerRowTools symbol={row.symbol} news={savedScanRowNews(row)} showPageChartOnMobile
+  const tools = (row: WorkspaceSavedRow) => <ScannerRowTools symbol={row.symbol} news={savedScanRowNews(row)} showPageChartOnMobile
     chart={<ScannerChartLaunchControls row={{symbol:row.symbol, exchange:row.exchange}} onOpenChart={onOpenChart}/>}/>;
   const twoRows = view === "two-rows";
   const volumeColumns = useWorkspaceVolumeColumns();
@@ -116,9 +117,9 @@ export function WorkspaceSavedScanCard({ label, entry, unavailable, retrying, vi
                 </Stack>
               </TableCell>
               <TableCell>{tools(row)}{twoRows && <Stack direction="row" spacing={0.5} sx={{color:change}}>
-                <span>{scannerPrice(row.price)}</span><span>{dayChange(row.dayChange)}</span>
+                <span>{workspacePrice(row.price)}</span><span>{dayChange(row.dayChange)}</span>
               </Stack>}</TableCell>
-              {!twoRows && <><TableCell align="right" sx={{color:change}}>{scannerPrice(row.price)}</TableCell>
+              {!twoRows && <><TableCell align="right" sx={{color:change}}>{workspacePrice(row.price)}</TableCell>
                 <TableCell align="right" sx={{color:change}}>{dayChange(row.dayChange)}</TableCell></>}
               <WorkspaceVolumeCells row={row} columns={volumeColumns}/>
               <TableCell align="right">{compactDollars(row.dollarVolume)}</TableCell>

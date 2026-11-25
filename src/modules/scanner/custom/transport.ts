@@ -115,7 +115,7 @@ export function streamCustomScans(market: CustomScanMarket, queries: readonly Sc
 }
 
 export function streamSavedScans({
-  market, ids, initialBook, signal, readBook, subscribeBook, close, readPress, readLevelBreaks,
+  market, ids, initialBook, signal, readBook, subscribeBook, close, readPress, readLevelBreaks, projection,
 }: {
   market: CustomScanMarket;
   ids: readonly string[];
@@ -127,6 +127,10 @@ export function streamSavedScans({
   close: () => void;
   readPress?: ReadScanPressReleases;
   readLevelBreaks?: () => Promise<ReadScanLevelBreak>;
+  projection?: {
+    project(publication: SavedScanResults): unknown;
+    subscribe(listener: () => void): () => void;
+  };
 }) {
   const encoder = new TextEncoder();
   let emit = () => {};
@@ -144,6 +148,9 @@ export function streamSavedScans({
       let readLevelBreak: ReadScanLevelBreak | undefined;
       let checkingLevels = false;
       let pending = false;
+      let publication: SavedScanResults | undefined;
+      let projectionPending = false;
+      let lastProjection = "";
 
       function install(book: SavedScanBook) {
         releaseQueries?.();
@@ -158,8 +165,21 @@ export function streamSavedScans({
         ]));
         releaseQueries = market.attachQueries([...queries.values()]);
       }
+      const emitProjection = () => {
+        if (stopped || signal.aborted || !projectionPending || !projection || !publication || (controller.desiredSize ?? 0) <= 0) return;
+        projectionPending = false;
+        try {
+          const serialized = JSON.stringify(projection.project(publication));
+          if (serialized === lastProjection) return;
+          lastProjection = serialized;
+          controller.enqueue(encoder.encode(serialized + "\n"));
+        } catch {
+          stop();
+        }
+      };
       emit = () => {
-        if (stopped || signal.aborted || !pending || (controller.desiredSize ?? 0) <= 0) return;
+        if (stopped || signal.aborted || (controller.desiredSize ?? 0) <= 0) return;
+        if (!pending) { emitProjection(); return; }
         let changed = lastRevision !== catalogue.revision;
         const results: SavedScanResults["results"] = {};
         for (const id of ids) {
@@ -171,9 +191,11 @@ export function streamSavedScans({
           results[id] = result ? { state: "ready", result, columns: columns.get(id) ?? [] } : { state: "unavailable" };
         }
         pending = false;
-        if (!changed) return;
+        if (!changed) { emitProjection(); return; }
         lastRevision = catalogue.revision;
-        controller.enqueue(encoder.encode(JSON.stringify({ ...catalogue, results } satisfies SavedScanResults) + "\n"));
+        publication = { ...catalogue, results };
+        if (projection) { projectionPending = true; emitProjection(); }
+        else controller.enqueue(encoder.encode(JSON.stringify(publication) + "\n"));
       };
       const publish = () => { pending = true; emit(); };
       const stop = () => {
@@ -200,7 +222,9 @@ export function streamSavedScans({
       install(initialBook);
       const unsubscribeMarket = market.subscribe(publish);
       const unsubscribeBook = subscribeBook(refresh);
+      const unsubscribeProjection = projection?.subscribe(() => { projectionPending = true; emit(); });
       const heartbeat = setInterval(() => {
+        if (projection) projectionPending = true;
         refresh();
         if (!stopped && (controller.desiredSize ?? 0) > 0) controller.enqueue(encoder.encode("\n"));
       }, 10_000);
@@ -211,6 +235,7 @@ export function streamSavedScans({
         releaseQueries?.();
         unsubscribeMarket();
         unsubscribeBook();
+        unsubscribeProjection?.();
         signal.removeEventListener("abort", stop);
         close();
       };

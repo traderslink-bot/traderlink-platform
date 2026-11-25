@@ -40,11 +40,14 @@ const registry = processState.__traderlinkLiveScannerRuntimeV1 ??= { instances:n
 function root(environment: NodeJS.ProcessEnv): string {
   return join(dirname(resolvePlatformDatabaseConfig({ environment }).databasePath),"scanner-live-v1");
 }
-function marketDay(date: string): MarketDay {
-  const session = new CoachUsEquitiesReviewCalendarService().session(date);
+let scannerCalendar: CoachUsEquitiesReviewCalendarService | undefined;
+let recentMarketDay: MarketDay | undefined;
+export function marketDay(date: string): MarketDay {
+  if (recentMarketDay?.date === date) return recentMarketDay;
+  const session = (scannerCalendar ??= new CoachUsEquitiesReviewCalendarService()).session(date);
   const early = session.sessionKind === "scheduled_early_close";
   const expectedExtended = early ? "17:00" : "20:00";
-  return { date, verified: session.state === "closed" || session.postMarketEndEastern === expectedExtended,
+  return recentMarketDay = { date, verified: session.state === "closed" || session.postMarketEndEastern === expectedExtended,
     open: session.state === "open", regularCloseEastern: early ? "13:00" : "16:00", extendedCloseEastern: expectedExtended };
 }
 function newsFor(symbols: readonly string[], environment: NodeJS.ProcessEnv): ReadonlyMap<string,readonly ScannerNewsItem[]> {

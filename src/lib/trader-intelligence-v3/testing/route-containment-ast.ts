@@ -227,6 +227,8 @@ const DELEGATED_PLATFORM_GUARDS: Readonly<Record<string, readonly string[]>> = {
   "@/src/modules/watchlist/server/access/watchlist-admin-authorization": ["withWatchlistAdminDatabase"],
   "@/src/modules/platform/server/authentication/platform-sign-out-request-security": ["isSameOriginPlatformSignOutRequest"],
   "@/src/modules/scanner/alpaca/proxy": ["proxyAlpacaChart"],
+  "@/src/modules/market-data/server/workspace-moomoo-access": ["readWorkspaceMoomooAccess"],
+  "@/src/modules/scanner/custom/server/saved-scans-http": ["savedScansCatalogueResponse", "savedScansStreamResponse"],
   "@/src/modules/news/server/general-market-news-http": ["generalNewsFeedResponse", "generalNewsArticleResponse"],
   "app/api/admin/journal/admin-route-runtime": ["withJournalAdminRequest"],
 };
