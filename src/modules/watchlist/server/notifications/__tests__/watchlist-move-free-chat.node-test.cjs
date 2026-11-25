@@ -5,6 +5,7 @@ const operation='12345678-1234-4123-8123-123456789abc';
 function setup(t){
  const db=new Database(':memory:');t.after(()=>db.close());db.exec('CREATE TABLE platform_users(user_id TEXT PRIMARY KEY);');db.prepare('INSERT INTO platform_users VALUES(?)').run('owner');
  for(const sql of load('src/modules/platform/server/database/migrations/0149_watchlist_free_chat.ts').watchlistFreeChatMigration.statements)db.exec(sql);
+ for(const sql of load('src/modules/platform/server/database/migrations/0213_watchlist_free_chat_owner_copy.ts').watchlistFreeChatOwnerCopyMigration.statements)db.exec(sql);
  const store=load('src/modules/watchlist/server/notifications/watchlist-free-chat-store.ts');let sent=0,destination='confirmed',current=true,reviewCycle='cycle',choice=true,listingOnly=false,acknowledged=true,publications=[],result={state:'sent',message:'Posted',messageId:'111111111111111111'};
  const review=()=>({symbol:'TEST',cycleId:reviewCycle,cancelled:false,events:[{revision:3,at:1,actor:'platform-owner:owner',body:{kind:'approve',draftRevision:listingOnly?0:2,publication:listingOnly?{notificationKind:'listing',website:{cards:{}}}:{website:{cards:{tradersLinkAiRead:{body:'saved'}}}}}},{body:{kind:'delivery',channel:'website',status:acknowledged?'acknowledged':'failed',approvalRevision:3}}]});
  const requests=[];
@@ -14,7 +15,7 @@ function setup(t){
   './watchlist-automatic-notifications':{readAutomaticAnalysisEvents:async()=>[]},
   './watchlist-free-chat-store':store,
   './watchlist-free-chat-visibility':{readFreeChatVisibility:()=>({ticker:false,analysis:false,levels:false})},
-  './watchlist-free-chat-delivery':{deliverFreeChatPublication:async publication=>{publications.push(publication);sent++;return result;}}
+  './watchlist-free-chat-delivery':{...load('src/modules/watchlist/server/notifications/watchlist-free-chat-delivery.ts'),deliverFreeChatPublication:async publication=>{publications.push(publication);sent++;return result;}}
  });
  const input={symbol:'TEST',cycleId:'cycle',id:operation,to:'postmarket',notify:true,freeChat:true};
  return {db,store,worker,input,requests,publications,sent:()=>sent,set:value=>{if('listingOnly'in value)listingOnly=value.listingOnly;if('acknowledged'in value)acknowledged=value.acknowledged;if('destination'in value)destination=value.destination;if('current'in value)current=value.current;if('reviewCycle'in value)reviewCycle=value.reviewCycle;if('choice'in value)choice=value.choice;if('result'in value)result=value.result;},queue:()=>worker.recordFreeChatMoveIntent(JSON.stringify(input),'platform-owner:owner'),state:()=>db.prepare('SELECT * FROM platform_watchlist_free_chat_posts WHERE post_key=?').get('cycle:move:'+operation)};
@@ -28,6 +29,22 @@ test('move event is distinct from an earlier Free Chat analysis share and is ide
 test('unchecked Free Chat or silent move does not queue a post',t=>{
  const h=setup(t);for(const input of [{...h.input,freeChat:false},{...h.input,notify:false},{...h.input,to:'private'}])h.worker.recordFreeChatMoveIntent(JSON.stringify(input),'platform-owner:owner');
  assert.equal(h.db.prepare('SELECT count(*) n FROM platform_watchlist_free_chat_posts').get().n,0);
+});
+
+test('move image choice is durable and a duplicate intent cannot replace the confirmed copy',t=>{
+ const h=setup(t),copy={cycleId:'cycle',visibilityKey:'000',message:'My move comment.',includeImages:true};
+ const queue=freeChatCopy=>h.worker.recordFreeChatMoveIntent(JSON.stringify({...h.input,freeChatCopy}),'platform-owner:owner');
+ queue(copy);
+ const saved=()=>JSON.parse(h.db.prepare('SELECT owner_copy_json FROM platform_watchlist_free_chat_posts').get().owner_copy_json);
+ assert.equal(saved().includeImages,true);assert.equal(saved().message,'My move comment.');
+ queue({...copy,includeImages:false,message:'Later unqueued comment.'});
+ assert.equal(saved().includeImages,true);assert.equal(saved().message,'My move comment.');
+ const identity={symbol:'TEST',cycleId:'cycle',id:operation,ownerUserId:'owner',ownerCopy:{message:'Retry without images.',visibilityKey:'000',includeImages:false}};
+ assert.equal(h.store.retryFreeChatMoveDelivery(h.db,identity),false);
+ assert.equal(saved().includeImages,true);
+ h.db.prepare("UPDATE platform_watchlist_free_chat_posts SET state='failed'").run();
+ assert.equal(h.store.retryFreeChatMoveDelivery(h.db,identity),true);
+ assert.equal(saved().includeImages,false);assert.equal(saved().message,'Retry without images.');
 });
 test('waits for confirmed paid destination without sending or changing the move',async t=>{
  const h=setup(t);h.queue();h.set({destination:'uncertain'});await h.worker.reconcileFreeChatPublications();assert.equal(h.sent(),0);assert.equal(h.state().state,'pending');assert.ok(h.state().next_attempt_at_ms>Date.now());assert.ok(h.requests.every(request=>request.method==='GET'));
@@ -86,7 +103,8 @@ test('Free Chat retry proxy reads the exact current move and never forwards a pl
   '@/src/modules/watchlist/server/notifications/watchlist-category-move-notifications':{recordCategoryMoveIntent:()=>assert.fail('retry must not create a notification intent')},
   '@/src/modules/watchlist/server/notifications/watchlist-x-admin':{},
   '@/src/modules/watchlist/server/notifications/watchlist-x-runtime':{},
-  '@/src/modules/watchlist/server/notifications/watchlist-free-chat-delivery':{},
+  '@/src/modules/watchlist/server/notifications/watchlist-free-chat-delivery':load('src/modules/watchlist/server/notifications/watchlist-free-chat-delivery.ts'),
+  '@/src/modules/watchlist/server/notifications/watchlist-free-chat-visibility':{readFreeChatVisibility:()=>({ticker:false,analysis:false,levels:false})},
   '@/src/modules/watchlist/server/notifications/watchlist-free-chat-admin':{},
   '@/src/modules/watchlist/server/notifications/watchlist-free-chat-runtime':{recordFreeChatMoveIntent:()=>assert.fail('retry must not create a Free Chat intent')},
   '@/src/modules/watchlist/server/notifications/watchlist-free-chat-store':h.store,
@@ -102,9 +120,10 @@ test('Free Chat retry proxy reads the exact current move and never forwards a pl
   '@/src/modules/watchlist/server/notifications/watchlist-notification-runtime':{},
   '@/src/modules/watchlist/server/notifications/watchlist-automatic-notifications':{},
  });
- const retry=()=>route.POST(new Request('https://app.test/api/admin/watchlist/runtime/watchlist/analysis-review/category-move?retry=free-chat',{method:'POST',body:JSON.stringify(h.input)}),{params:Promise.resolve({path:['watchlist','analysis-review','category-move']})});
+ const retry=()=>route.POST(new Request('https://app.test/api/admin/watchlist/runtime/watchlist/analysis-review/category-move?retry=free-chat',{method:'POST',body:JSON.stringify({...h.input,freeChatCopy:{cycleId:'cycle',visibilityKey:'000',message:'Retry text.',includeImages:false}})}),{params:Promise.resolve({path:['watchlist','analysis-review','category-move']})});
  current=false;assert.equal((await retry()).status,409);assert.equal(h.state().state,'failed');
  current=true;assert.equal((await retry()).status,200);assert.equal(h.state().state,'pending');
+ assert.equal(JSON.parse(h.db.prepare('SELECT owner_copy_json FROM platform_watchlist_free_chat_posts').get().owner_copy_json).includeImages,false);
  assert.equal((await retry()).status,409);
  assert.equal(requests.length,3);assert.ok(requests.every(req=>req.method==='GET'));assert.equal(h.sent(),0);
 });
@@ -150,7 +169,6 @@ test('the owner can preview and queue a published ticker with no analysis', asyn
   './watchlist-free-chat-runtime':h.worker,'./watchlist-free-chat-store':h.store,'./watchlist-free-chat-delivery':delivery,
   './watchlist-free-chat-visibility':{readFreeChatVisibility:()=>({ticker:false,analysis:false,levels:false})},
  });
- for(const sql of load('src/modules/platform/server/database/migrations/0213_watchlist_free_chat_owner_copy.ts').watchlistFreeChatOwnerCopyMigration.statements)h.db.exec(sql);
  const url=new URL('https://preview.test/free-chat?symbol=TEST');
  const read=()=>admin.handleFreeChatAdmin('GET',url,undefined,'owner');
  const unpublished=await read();

@@ -3,7 +3,7 @@ import { withPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { requestWatchlistRuntimeRaw } from "../runtime/watchlist-runtime-admin-client";
 import { readAutomaticAnalysisEvents } from "./watchlist-automatic-notifications";
 import { claimFreeChatPost, finishFreeChatPost, queueFreeChatPublication, queueFreeChatMove } from "./watchlist-free-chat-store";
-import { deliverFreeChatPublication, type FreeChatPublication, type FreeChatOwnerCopy, validateFreeChatOwnerCopy, freeChatVisibilityKey, FreeChatInputError } from "./watchlist-free-chat-delivery";
+import { deliverFreeChatPublication, type FreeChatPublication, type FreeChatOwnerCopy, validateFreeChatOwnerCopy, readFreeChatImageChoice, freeChatVisibilityKey, FreeChatInputError } from "./watchlist-free-chat-delivery";
 
 import { readFreeChatVisibility } from "./watchlist-free-chat-visibility";
 
@@ -16,7 +16,14 @@ export function recordFreeChatMoveIntent(body:string,actor:string) {
   const input=JSON.parse(body);
   if(input.freeChat!==true||input.notify!==true||input.to==='private')return;
   if(!/^platform-owner:[A-Za-z0-9_-]{1,128}$/.test(actor)||!/^[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,2})?$/.test(input.symbol??'')||typeof input.cycleId!=='string'||!input.cycleId||input.cycleId.length>200||! /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.id??''))throw Error('Invalid Free Chat move choice.');
-  withPlatformDatabase({mode:'runtime'},database=>queueFreeChatMove(database,{cycleId:input.cycleId,ticker:input.symbol,ownerUserId:actor.slice('platform-owner:'.length),operationId:input.id}));
+  const copy=input.freeChatCopy;
+  let ownerCopy: FreeChatOwnerCopy | undefined;
+  if(copy!==undefined) {
+    const visibility=readFreeChatVisibility(input.symbol,false);
+    if(!copy||copy.cycleId!==input.cycleId||copy.visibilityKey!==freeChatVisibilityKey(visibility))throw new FreeChatInputError('Free Chat preview changed. Open its preview again.');
+    ownerCopy={message:validateFreeChatOwnerCopy(input.symbol,copy.message,visibility),visibilityKey:copy.visibilityKey,includeImages:readFreeChatImageChoice(copy.includeImages)};
+  }
+  withPlatformDatabase({mode:'runtime'},database=>queueFreeChatMove(database,{cycleId:input.cycleId,ticker:input.symbol,ownerUserId:actor.slice('platform-owner:'.length),operationId:input.id,ownerCopy}));
 }
 
 export async function readFreeChatReview(symbol: string, ownerUserId: string): Promise<Review> {
@@ -53,7 +60,7 @@ export function recordFreeChatApprovalIntent(body: string, actor: string) {
     if (!copy || typeof copy !== "object" || copy.cycleId !== input.cycleId || copy.draftRevision !== input.draftRevision) throw new FreeChatInputError("Free Chat preview changed. Open its preview again.");
     const visibility = readFreeChatVisibility(input.symbol, false);
     if (copy.visibilityKey !== freeChatVisibilityKey(visibility)) throw new FreeChatInputError("Premium settings changed. Open the Free Chat preview again.");
-    ownerCopy = {message:validateFreeChatOwnerCopy(input.symbol,copy.message,visibility),visibilityKey:copy.visibilityKey};
+    ownerCopy = {message:validateFreeChatOwnerCopy(input.symbol,copy.message,visibility),visibilityKey:copy.visibilityKey,includeImages:readFreeChatImageChoice(copy.includeImages)};
   }
   withPlatformDatabase({ mode: "runtime" }, database => database.prepare(`INSERT OR IGNORE INTO platform_watchlist_free_chat_posts
     (post_key,cycle_id,ticker,owner_user_id,draft_revision,origin,state,requested_at_ms,updated_at_ms,owner_copy_json)

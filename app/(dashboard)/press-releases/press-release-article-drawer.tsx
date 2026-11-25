@@ -81,7 +81,7 @@ export function PressReleaseArticleContent({ article, onClose, onBack }: Readonl
     {!article.summaryUnavailable ? <PressReleaseDetailSection items={article.supportResistanceLevels} title="Support and resistance" /> : null}
     <Divider />
     <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-      {articleLink ? <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={articleLink} variant="contained">{pressReleaseType(article) === "SEC filing" ? "Open SEC Filing" : "Open source article"}</Button> : null}
+      {articleLink ? <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={articleLink} target={pressReleaseType(article) === "SEC filing" ? "_blank" : undefined} rel={pressReleaseType(article) === "SEC filing" ? "noopener noreferrer" : undefined} variant="contained">{pressReleaseType(article) === "SEC filing" ? "Open SEC Filing" : "Open source article"}</Button> : null}
       <Button component={NextLink} href="/account/trading#pwa-app" variant="outlined">Set up the TradersLink app</Button>
     </Stack>
   </Stack>;
