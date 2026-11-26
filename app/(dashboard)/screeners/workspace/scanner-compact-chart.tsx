@@ -13,6 +13,7 @@ import Skeleton from "@mui/material/Skeleton";
 import { createContext, lazy, Suspense, useContext, useEffect, useRef, useState, type FormEvent, type Dispatch, type SetStateAction } from "react";
 import { chartSymbol, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import { changeChartTimeframe, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
+import { ChartCrosshairGroup } from "../../charts/chart-crosshair-group";
 import { ChartMultiviewMenu } from "../../charts/chart-multiview-menu";
 import { ChartPreferencesContext } from "../../charts/use-chart-preferences";
 import { DashboardPanel } from "@/app/dashboard-template";
@@ -158,6 +159,7 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
   });
 
   return <ScannerWorkspaceCard slot={slot} widget="ticker-workspace" contentPaddingTop={multiview ? 0 : undefined}>
+    <ChartCrosshairGroup enabled={shown.length > 1}>
     <DashboardPanel hideHeader>
       <Box ref={viewport} aria-label="Workspace charts" sx={{height:fillMobile?"100%":{xs:320,md:"100%"},flex:1,minHeight:0,display:"flex",flexDirection:"column"}}>
         {layout && tabs && <Tabs aria-label="Workspace chart panels" value={selected?.panel.id ?? false} variant="scrollable"
@@ -207,5 +209,6 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
         </Box>
       </Box>
     </DashboardPanel>
+    </ChartCrosshairGroup>
   </ScannerWorkspaceCard>;
 }

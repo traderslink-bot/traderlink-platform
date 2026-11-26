@@ -92,3 +92,23 @@ it("hides and denies the new styles for a shared chart user outside the review r
  } finally { review.admitted=false; }
  expect((await get()).preferences.kind).toBe("candles");
 });
+
+it('normalizes saved Toronto preferences and round-trips device and city choices', async () => {
+ const get=async()=>await (await GET(new Request('http://localhost/api'))).json();
+ const defaults=(await get()).preferences;
+ expect(defaults.timezone).toBe('America/New_York');
+ const directory=join(setup.directory,'chart-preferences-v1');
+ mkdirSync(directory);
+ const legacy={...defaults,timezone:'America/Toronto',grid:false};
+ writeFileSync(join(directory,chartPreferenceOwnerKey(setup.user)+'.json'),JSON.stringify({revision:2,preferences:legacy}));
+ expect((await get()).preferences).toMatchObject({timezone:'America/New_York',grid:false});
+ for(const timezone of ['device','Asia/Tokyo','America/Los_Angeles','UTC']){
+  const state=await get();
+  const response=await POST(request({...state,preferences:{...state.preferences,timezone}}));
+  expect(response.status).toBe(200);
+  expect((await get()).preferences).toMatchObject({timezone,grid:false});
+ }
+ const state=await get();
+ expect((await POST(request({...state,preferences:{...state.preferences,timezone:'America/Not_A_City'}}))).status).toBe(400);
+ expect((await get()).revision).toBe(state.revision);
+});

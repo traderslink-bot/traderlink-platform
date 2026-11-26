@@ -2,6 +2,8 @@ import type { IChartApi, UTCTimestamp } from "lightweight-charts";
 import type { DisplayCandle } from "@/src/modules/scanner/alpaca/candles";
 import type { ChartPreferences } from "@/src/modules/scanner/alpaca/chart-preferences";
 
+import { HlcAreaSeries } from "./chart-hlc-area";
+
 type Style = Pick<ChartPreferences, "kind" | "upColor" | "downColor">;
 type Library = typeof import("lightweight-charts");
 
@@ -39,7 +41,7 @@ export function createChartPriceStyle(
 ) {
   const { kind, upColor, downColor } = style;
   const heikinAshi = kind === "heikinAshi";
-  const { BaselineSeries, HistogramSeries, CandlestickSeries, LineSeries, BarSeries } = library;
+  const { AreaSeries, BaselineSeries, HistogramSeries, CandlestickSeries, LineSeries, LineType, BarSeries, customSeriesDefaultOptions } = library;
   const priceFormat = { type: "price" as const, precision: 4, minMove: 0.0001 };
   const baseline = kind === "baseline" ? chart.addSeries(BaselineSeries, {
     priceFormat, lineWidth: 2,
@@ -47,7 +49,15 @@ export function createChartPriceStyle(
     bottomLineColor: downColor, bottomFillColor1: downColor + "10", bottomFillColor2: downColor + "48",
   }) : undefined;
   const columns = kind === "columns" ? chart.addSeries(HistogramSeries, { priceFormat, color: upColor }) : undefined;
-  const series = baseline ?? columns ?? (kind === "line" ? chart.addSeries(LineSeries, { color: upColor })
+  const area = kind === "area" ? chart.addSeries(AreaSeries, {
+    priceFormat, lineColor: upColor, topColor: upColor + "55", bottomColor: upColor + "0a",
+  }) : undefined;
+  const hlc = kind === "hlcArea" ? chart.addCustomSeries(
+    new HlcAreaSeries(customSeriesDefaultOptions, upColor), { priceFormat, priceLineColor: upColor },
+  ) : undefined;
+  const series = baseline ?? columns ?? area ?? hlc ?? (
+    kind === "line" || kind === "stepLine"
+      ? chart.addSeries(LineSeries, { color: upColor, ...(kind === "stepLine" ? { lineType: LineType.WithSteps, priceFormat } : {}) })
     : kind === "bars" ? chart.addSeries(BarSeries, { upColor, downColor })
     : chart.addSeries(CandlestickSeries, {
       upColor, downColor, wickUpColor: upColor, wickDownColor: downColor, borderVisible: kind === "hollow", priceFormat,

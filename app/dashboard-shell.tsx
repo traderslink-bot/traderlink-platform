@@ -1060,6 +1060,7 @@ function DashboardShellContent({
         sx={{
           ml: { xs: 0, lg: `${desktopWidth}px` },
           minWidth: 0,
+          ...(chartWorkspacePage ? { height: "100dvh", boxSizing: "border-box", display: "flex", flexDirection: "column" } : {}),
           pt: {
             xs: "calc(64px + env(safe-area-inset-top))",
             sm: "64px",
@@ -1074,13 +1075,19 @@ function DashboardShellContent({
           component="main"
           sx={{
             minWidth: 0,
-            pb: compactMarketPage ? { xs: "max(8px, env(safe-area-inset-bottom))", sm: 1 } : { xs: "max(16px, env(safe-area-inset-bottom))", sm: 2.5 },
+            pb: chartWorkspacePage ? 0 : compactMarketPage ? { xs: "max(8px, env(safe-area-inset-bottom))", sm: 1 } : { xs: "max(16px, env(safe-area-inset-bottom))", sm: 2.5 },
             position: "relative",
-            px: pathname === "/trading-workspace" ? { xs: "env(safe-area-inset-left, 0px)", sm: 0 } : compactMarketPage ? 1 : { xs: 1.5, sm: 2.5, xl: 3 },
+            px: chartWorkspacePage ? 0 : pathname === "/trading-workspace" ? { xs: "env(safe-area-inset-left, 0px)", sm: 0 } : compactMarketPage ? 1 : { xs: 1.5, sm: 2.5, xl: 3 },
             pr: pathname === "/trading-workspace" ? { xs: "env(safe-area-inset-right, 0px)", sm: 0 } : undefined,
-            pt: pathname === "/trading-workspace" ? 0 : compactMarketPage ? 1 : { xs: 2, sm: 2.5 },
+            pt: chartWorkspacePage || pathname === "/trading-workspace" ? 0 : compactMarketPage ? 1 : { xs: 2, sm: 2.5 },
+            ...(chartWorkspacePage ? {
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              "& > [data-traderlink-platform-dashboard-page]": { flex: 1, minHeight: 0 },
+            } : {}),
             ...(compactMarketPage ? {
-              "--market-chart-height": "calc(100dvh - 80px - env(safe-area-inset-top, 0px) - max(0px, env(safe-area-inset-bottom, 0px) - 8px))",
               '& [data-traderlink-platform-dashboard-page] > :not(style) ~ :not(style)': { marginTop: 0 },
             } : {}),
             width: "100%",

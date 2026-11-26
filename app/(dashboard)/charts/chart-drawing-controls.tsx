@@ -535,7 +535,7 @@ export function useDrawingControls(engine:ChartDrawings|null, owner:string|undef
     }
     drag.current=null;
     if(commitDrag&&active&&active.next!==active.drawing)update(active.next);
-    else engine?.update(visibleDrawings,selection?.id??"");
+    else if(!draft)engine?.update(visibleDrawings,selection?.id??"");
   };
   const done=()=>{finish(false);setPlacementError("");setSession(null);};
   const saveSelection=()=>{

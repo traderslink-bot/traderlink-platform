@@ -1,6 +1,8 @@
 "use client";
 import {chartLogarithmic,setChartLogarithmic} from '@/src/modules/scanner/alpaca/chart-preferences';
 
+import { ChartCrosshairContext } from "./chart-crosshair-group";
+import { linkedCandleTime } from "@/src/modules/scanner/alpaca/chart-linked-crosshair";
 import { createChartPriceStyle } from "./chart-price-style";
 import { useChartMarketData } from "./use-chart-market-data";
 import { ChartIndicatorLegend } from "./chart-indicator-legend";
@@ -38,8 +40,9 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { chartTickLabel, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
+import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { EXCHANGE_CHART_TIME_ZONE, resolveChartTimeZone } from "@/src/modules/scanner/alpaca/chart-time-zone";
+import { createChartTickFormatter, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
 import type { ISeriesApi, ISeriesMarkersPluginApi, Time } from "lightweight-charts";
 import { aggregateCandles, candleBucket, displayCandles, easternDayStart, isCalendarChartTimeframe, nextChartCalendarPeriod, usesDailyCandles, CHART_FRAME_SECONDS, CHART_TIMEFRAMES, type ChartCalculationTimeframe, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
@@ -55,6 +58,7 @@ import { useChartJournalDisplay } from "./chart-journal-display";
 import { useChartJournalBridge } from "./chart-journal-bridge";
 import type { MarketTradeContext, MarketTradeMark } from "./chart-trade-context";
 
+const BarReplayChart = lazy(() => import("./bar-replay-chart"));
 const PriceMovementChart = lazy(() => import("./price-movement-chart"));
 const ChartJournalPanel = lazy(() => import("./chart-journal-panel"));
 const ChartPreferencesPanel = lazy(() => import("./chart-preferences-panel").then(module => ({ default: module.ChartPreferencesPanel })));
@@ -89,6 +93,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
   viewId?: string; viewWorkspace?: "main" | "scanner" | "workspace"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
+  const crosshairLink = useContext(ChartCrosshairContext);
   const baseTicker = symbol.split(":").at(-1)!.toUpperCase();
   const marketData = useChartMarketData();
   const { broker, endpoints } = marketData;
@@ -142,6 +147,8 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     unadjusted ? null : drawingEngine,ownerKey,ticker,compact,alwaysShowDrawingToolbar,accountPreferences.autosaveDrawings??true,
   );
   const dark = preferences.theme === "dark" || preferences.theme === "auto" && theme.palette.mode === "dark";
+  const [replaying, setReplaying] = useState(false);
+  const replayActive = replaying && !movementKind && !evidence && !activeTradeContext && !journal.current?.open;
   const [panel,setPanel]=useState<"indicators"|"settings"|null>(null);
   const [preferencesOpened,setPreferencesOpened]=useState(false);
   const openPreferences=(next: "indicators"|"settings")=>{
@@ -203,6 +210,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const regularOnly = preferences.regular && !preferences.premarket && !preferences.postmarket && !showOvernight;
   if(ready&&controlledTimeframe===undefined&&activeTimeframe===null)setActiveTimeframe(preferences.timeframe);
   const changePreferences = (next: ChartPreferences) => {
+    if (next.kind === "renko" || next.kind === "range") setReplaying(false);
     change(next.logarithmic!==logarithmic?setChartLogarithmic(next,timeframe,next.logarithmic):next);
     if (next.timeframe !== preferences.timeframe) onDefaultTimeframeChange?.(next.timeframe);
   };
@@ -227,7 +235,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
 
   useEffect(() => {
     const element = container.current;
-    if (!element || !ready || !marketData.ready || movementKind) return;
+    if (!element || !ready || !marketData.ready || movementKind || replayActive) return;
     const sipSessions = [preferences.premarket, preferences.regular, preferences.postmarket];
     const priceBasisKey = unadjusted ? providerKey + ":raw" : providerKey;
     const sipSessionKey = JSON.stringify([...sipSessions, priceBasisKey]);
@@ -243,11 +251,16 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     const restorePrice=canRestoreChartPrice(savedView,{autoScale:preferences.autoScale,logarithmic},basis);
     const restore=savedView?{...savedView,priceRange:restorePrice?savedView.priceRange:null}:null;
     marketCalendar.current = cached?.calendar ?? new ChartSessionCalendar();
-    const displayTime=new Intl.DateTimeFormat("en-US",{timeZone:preferences.timezone,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
-    const zoneLabel=preferences.timezone==="UTC"?"UTC":"ET";
+    const displayZone = resolveChartTimeZone(preferences.timezone);
+    const zoneSuffix = displayZone === EXCHANGE_CHART_TIME_ZONE ? " ET" : displayZone === "UTC" ? " UTC" : "";
+    const displayTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: displayZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+      timeZoneName: zoneSuffix ? undefined : "short",
+    });
+    const tickLabel = createChartTickFormatter(timeframe, displayZone);
     const formatChartTime = (time: number) => calendarFrame
-      ? chartTickLabel(time, calendarFrame, true, preferences.timezone)
-      : displayTime.format(time * 1000) + " " + zoneLabel;
+      ? tickLabel(time, true)
+      : displayTime.format(time * 1000) + zoneSuffix;
     let disposed = false, auxiliarySource: ChartStreamHandle | undefined, source: ChartStreamHandle | undefined, removeChart: (() => void) | undefined;
     const abort = new AbortController();
     setStatus("Loading candles…"); setError(null); setHistoryMessage(""); setSessionMessage(""); setSelectedSplits([]);
@@ -298,7 +311,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const { createChart, createSeriesMarkers, HistogramSeries, LineSeries, ColorType, TickMarkType, PriceScaleMode, CrosshairMode } = library;
       if (disposed) return;
       let displayPoints: DisplayCandle[] = [];
-      const dateKey = new Intl.DateTimeFormat("en-CA", { timeZone: preferences.timezone, year: "numeric", month: "numeric", day: "numeric" });
+      const dateKey = new Intl.DateTimeFormat("en-CA", { timeZone: displayZone, year: "numeric", month: "numeric", day: "numeric" });
       const dayKey = (time: number) => dateKey.format(time * 1000);
       const chart = createChart(element!, {
         autoSize: true,
@@ -306,8 +319,8 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         crosshair: { mode: crosshairTarget==="nearest"?CrosshairMode.Magnet:CrosshairMode.Normal },
         layout: { background: { type: ColorType.Solid, color: dark ? "#101722" : "#ffffff" }, textColor: dark ? "#c7d2df" : "#354358", fontSize: 11, attributionLogo: false },
         grid: { vertLines: { visible:preferences.grid,color: dark ? "#1d2939" : "#eef1f5" }, horzLines: { visible:preferences.grid,color: dark ? "#1d2939" : "#eef1f5" } },
-        timeScale: { minBarSpacing: 0.001, timeVisible: !daily, secondsVisible: false, rightOffset: 4, tickMarkFormatter: (time: Time, tickMarkType: number) => chartTickLabel(time, timeframe, tickMarkType <= TickMarkType.DayOfMonth &&
-          (typeof time !== "number" || isChartDateStart(displayPoints, time, dayKey)), preferences.timezone) },
+        timeScale: { minBarSpacing: 0.001, timeVisible: !daily, secondsVisible: false, rightOffset: 4, tickMarkFormatter: (time: Time, tickMarkType: number) => tickLabel(time, tickMarkType <= TickMarkType.DayOfMonth &&
+          (typeof time !== "number" || isChartDateStart(displayPoints, time, dayKey))) },
         localization: { timeFormatter: (time: Time) => typeof time === "number" ? formatChartTime(time) : String(time) },
       });
       removeChart = () => { overlaySeries.current=[]; chart.remove(); };
@@ -409,7 +422,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const snapSeries=crosshairTarget.startsWith("indicator:")?studies.find(study=>
         `indicator:${study.indicator.id}:${study.key}`===crosshairTarget&&study.series.options().visible)?.series:undefined;
       const indicatorAxis=studies.some(study=>study.indicator.type==='VWAP'&&(study.indicator.offset??0)>0)?chart.addSeries(LineSeries,{visible:false,priceLineVisible:false,lastValueVisible:false},0):undefined;
-      let activeCrosshair:import("lightweight-charts").MouseEventParams<Time>|undefined;
+      let activeCrosshair: { time: Time; point: { x: number } } | undefined;
       const studyPoints=new Map<typeof studies[number],readonly {time:number;value:number}[]>();
       const appliedPrecisions=new Map<typeof studies[number],number>();
       const studyPrecision=(study:typeof studies[number])=>{const format=candles.options().priceFormat;return study.indicator.output?.precision??('precision' in format?format.precision:2);};
@@ -539,7 +552,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const updateDateVisibility=()=>{
         const axis=dateAxis.current;if(!axis)return;const labels=Array.from(axis.children) as HTMLElement[];
         let from=-Infinity,to=-Infinity;
-        if(activeCrosshair?.point&&activeCrosshair.time!==undefined){
+        if(activeCrosshair){
           const layout=chart.options().layout;if(captionMeasure)captionMeasure.font=`${layout.fontSize}px ${layout.fontFamily}`;
           const text=chart.options().localization.timeFormatter?.(activeCrosshair.time)??'';
           const width=Math.min(chart.timeScale().width(),(captionMeasure?.measureText(String(text)).width??String(text).length*layout.fontSize)+20);
@@ -548,7 +561,38 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         const bounds=labels.map(label=>({label,left:Number.parseFloat(label.style.left),width:label.getBoundingClientRect().width}));
         for(const {label,left,width}of bounds)label.style.visibility=left<to&&left+width>from?'hidden':'visible';
       };
+      const updateHover = () => {
+        updateIndicatorLegend();
+        updateDateVisibility();
+        const time = activeCrosshair?.time;
+        if (!crosshairDetails.current) return;
+        const bar = typeof time === "number" ? displayed.get(time) : undefined;
+        const priceFormatter = candles.priceFormatter();
+        const timePrefix = bar && element!.clientWidth >= 520 ? `${formatChartTime(bar.time)} · ` : "";
+        crosshairDetails.current.textContent = bar ? `${timePrefix}${bar.carried ? `Carried-forward price $${priceFormatter.format(bar.close)} · No candle returned` : `O ${priceFormatter.format(bar.open)} H ${priceFormatter.format(bar.high)} L ${priceFormatter.format(bar.low)} C ${priceFormatter.format(bar.close)} · Vol ${bar.volume.toLocaleString()}`}` : "";
+      };
+      const crosshairOwner = Symbol(ticker);
+      let applyingLinkedCrosshair = false;
+      const detachCrosshair = crosshairLink?.attach(crosshairOwner, time => {
+        const bar = time === null ? undefined : displayed.get(linkedCandleTime(time, timeframe, regularOnly));
+        const x = bar && !bar.carried ? chart.timeScale().timeToCoordinate(bar.time as Stamp) : null;
+        applyingLinkedCrosshair = true;
+        try {
+          if (bar && x !== null && x >= 0 && x < chart.timeScale().width()) {
+            activeCrosshair = { point: { x }, time: bar.time as Stamp };
+            chart.setCrosshairPosition(bar.close, bar.time as Stamp, candles);
+          } else {
+            activeCrosshair = undefined;
+            chart.clearCrosshairPosition();
+          }
+          updateHover();
+        } finally { applyingLinkedCrosshair = false; }
+      });
+      const removeLinkedChart = removeChart;
+      removeChart = () => { detachCrosshair?.(); removeLinkedChart?.(); };
       chart.subscribeCrosshairMove(event => {
+        if (applyingLinkedCrosshair) return;
+        crosshairLink?.publish(crosshairOwner, event.point && typeof event.time === "number" ? event.time : null);
         if(event.point&&event.time!==undefined&&event.paneIndex===0&&crosshairTarget!=="normal"&&crosshairTarget!=="nearest"){
           const indicator=snapSeries?event.seriesData.get(snapSeries):undefined;
           const candle=event.seriesData.get(candles);
@@ -556,14 +600,10 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             candle&&"close" in candle?candle.close:candle&&"value" in candle?candle.value:undefined;
           if(typeof price==="number"&&Number.isFinite(price))chart.setCrosshairPosition(price,event.time,candles);
         }
-        activeCrosshair=event.point&&event.time!==undefined?event:undefined;updateIndicatorLegend();updateDateVisibility();
-        if (!crosshairDetails.current) return;
-        const bar = typeof event.time === "number" ? displayed.get(event.time) : undefined;
-        const priceFormatter = candles.priceFormatter();
-        const timePrefix = bar && element!.clientWidth >= 520 ? `${formatChartTime(bar.time)} · ` : "";
-        crosshairDetails.current.textContent = bar ? `${timePrefix}${bar.carried ? `Carried-forward price $${priceFormatter.format(bar.close)} · No candle returned` : `O ${priceFormatter.format(bar.open)} H ${priceFormatter.format(bar.high)} L ${priceFormatter.format(bar.low)} C ${priceFormatter.format(bar.close)} · Vol ${bar.volume.toLocaleString()}`}` : "";
+        activeCrosshair = event.point && event.time !== undefined ? { point: event.point, time: event.time } : undefined;
+        updateHover();
       });
-      const dateFormat = new Intl.DateTimeFormat("en-US",{timeZone:preferences.timezone,month:"short",day:"numeric"});
+      const dateFormat = new Intl.DateTimeFormat("en-US",{timeZone:displayZone,month:"short",day:"numeric"});
       const updateDates = () => {
         const axis=dateAxis.current,range=chart.timeScale().getVisibleLogicalRange();
         const right=Math.max(0,element!.clientWidth-chart.timeScale().width());
@@ -1352,7 +1392,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [movementKind,logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready, broker, endpoints, priceAdjustment, unadjusted, archiveDailyStartup]);
+  }, [crosshairLink,replayActive,movementKind,logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready, broker, endpoints, priceAdjustment, unadjusted, archiveDailyStartup]);
 
   useEffect(() => {
     if (!activeTradeContext || !ready) return;
@@ -1368,7 +1408,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       sx={{ width: 44, height: preferenceButtonHeight, flexShrink: 0 }}>
       <SettingsOutlined fontSize="small" />
     </IconButton>
-    {!movementKind && <IconButton size="small" aria-label="Indicators" title="Indicators" aria-haspopup="dialog"
+    {!movementKind && !replayActive && <IconButton size="small" aria-label="Indicators" title="Indicators" aria-haspopup="dialog"
       disabled={!ready} onClick={() => openIndicators()}
       sx={{ width: compact || !mainToolbar ? 44 : 34, height: preferenceButtonHeight, flexShrink: 0 }}>
       <NetworkCheck fontSize="small" />
@@ -1416,7 +1456,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         minWidth: chartIdentity ? 64 : 32, "& .MuiTabs-root, & .MuiTab-root": { minHeight: compactToolbarHeight, py: 0 } }}>
         {chartIdentity ?? <Typography noWrap sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700, flexShrink: 0, maxWidth: "100%" }}>{ticker}</Typography>}
       </Box>
-      {movementKind ? <Typography variant="caption" noWrap>{movementKind==="renko"?"Renko":"Range Bars"} · ${preferences.movementStep??0.01}</Typography> :
+      {replayActive ? <Typography variant="caption" color="text.secondary" noWrap>Bar Replay</Typography> : movementKind ? <Typography variant="caption" noWrap>{movementKind==="renko"?"Renko":"Range Bars"} · ${preferences.movementStep??0.01}</Typography> :
       <Button size="small" variant="outlined" color="inherit"
         aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" aria-expanded={Boolean(frameAnchor)}
         onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
@@ -1427,22 +1467,22 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       </Button>}
       {preferencesButtons}
       {evidenceButtons}
-      {!movementKind && drawingToolbar}
+      {!movementKind && !replayActive && drawingToolbar}
       {journalButton}
       {multiviewButton}
       {actions}
       {closeAction}
     </Stack> : <>    <Stack direction="row" sx={{ alignItems: "center", gap: 0.25, px: 0.5, minHeight: 27, flexWrap: "wrap" }}>
       <Typography sx={{ color:dark?"warning.main":"#354358",fontSize: 11, fontWeight: 700, mr: 0.5 }}>{ticker}</Typography>
-      {movementKind ? <Typography variant="caption" noWrap>{movementKind==="renko"?"Renko":"Range Bars"} · ${preferences.movementStep??0.01}</Typography> : CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
+      {replayActive ? <Typography variant="caption" color="text.secondary" noWrap>Bar Replay</Typography> : movementKind ? <Typography variant="caption" noWrap>{movementKind==="renko"?"Renko":"Range Bars"} · ${preferences.movementStep??0.01}</Typography> : CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
       {preferencesButtons}
       {evidenceButtons}
-      {!movementKind && drawingToolbar}
+      {!movementKind && !replayActive && drawingToolbar}
       {journalButton}
       {multiviewButton}
       {actions}
       {!mainToolbar && closeAction}
-      {!movementKind&&status?<Typography role="status" sx={{ ml: "auto", fontSize: 10, color: "text.secondary" }}>{status}</Typography>:null}
+      {!movementKind&&!replayActive&&status?<Typography role="status" sx={{ ml: "auto", fontSize: 10, color: "text.secondary" }}>{status}</Typography>:null}
       {mainToolbar && closeAction && <Box sx={{ ml: "auto" }}>{closeAction}</Box>}
     </Stack>
 </>}
@@ -1451,10 +1491,10 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       {CHART_TIMEFRAMES.map(value => <MenuItem key={value} selected={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => { if (onTimeframeChange) onTimeframeChange(value); else setActiveTimeframe(value); setFrameAnchor(null); }}>{value}</MenuItem>)}
     </Menu> : null}
     {marketData.message && <Typography role="status" sx={{ px: 1, fontSize: 11 }}>{marketData.message}</Typography>}
-    {!movementKind&&drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
+    {!movementKind&&!replayActive&&drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
     {activeTradeContext && journal.status && !journal.current?.open && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>{journal.status}</Typography>}
-    {!movementKind&&historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
+    {!movementKind&&!replayActive&&historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
     {!movementKind && unadjusted && <Typography variant="caption" sx={{ px: 0.5 }}>Unadjusted prices</Typography>}
     {evidence && preferences.priceAdjustment === "raw" && <Typography variant="caption" sx={{ px: 0.5 }}>
       Matched evidence uses split-adjusted prices
@@ -1491,8 +1531,12 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         </Typography>)}
       </Box>
     </Box>}
-    {!movementKind&&error ? <Stack role="alert" direction="row" sx={{ alignItems: "center", px: 1, gap: 1 }}><Typography sx={{ fontSize: 12 }}>{error}</Typography><Button size="small" onClick={() => setAttempt(value => value + 1)}>Retry</Button></Stack> : null}
-    {movementKind ? marketData.ready && <Suspense fallback={<Typography role="status" variant="caption">Loading trade chart…</Typography>}>
+    {!movementKind&&!replayActive&&error ? <Stack role="alert" direction="row" sx={{ alignItems: "center", px: 1, gap: 1 }}><Typography sx={{ fontSize: 12 }}>{error}</Typography><Button size="small" onClick={() => setAttempt(value => value + 1)}>Retry</Button></Stack> : null}
+    {replayActive ? <Suspense fallback={<Typography role="status" variant="caption">Loading replay…</Typography>}>
+      <BarReplayChart key={JSON.stringify([ticker, providerKey, preferences.priceAdjustment, preferences.premarket, preferences.regular, preferences.postmarket])}
+        symbol={ticker} generation={providerKey} initialTimeframe={timeframe}
+        preferences={preferences} dark={dark} barsEndpoint={endpoints.bars} onClose={()=>setReplaying(false)}/>
+    </Suspense> : movementKind ? marketData.ready && <Suspense fallback={<Typography role="status" variant="caption">Loading trade chart…</Typography>}>
       <PriceMovementChart key={`${ticker}:${movementKind}:${providerKey}`} kind={movementKind} symbol={ticker} generation={providerKey}
         step={preferences.movementStep??0.01} dark={dark} style={preferences}/>
     </Suspense> : <Box sx={{display:"flex",flex:1,minHeight:0,minWidth:0}}>
@@ -1510,7 +1554,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       onOpenOptions={(type,anchor)=>setIndicatorMenu({anchor,type})}/>
     <Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/>{drawingOverlay}</Box>
     </Box>}
-    {!movementKind&&sessionMessage && <Typography role="status" data-chart-vwap-status
+    {!movementKind&&!replayActive&&sessionMessage && <Typography role="status" data-chart-vwap-status
       sx={{ flexShrink: 0, fontSize: 11, px: 0.75, color: "text.secondary" }}>{sessionMessage}</Typography>}
     <Menu anchorEl={indicatorMenu?.anchor} open={Boolean(indicatorMenu)} onClose={()=>setIndicatorMenu(null)}>
       {indicatorMenu?[
@@ -1525,6 +1569,6 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         onReview={journal.review} focusStatus={journal.status} register={journal.register}
         setOverlay={journal.setOverlay} panelId={journal.panelId} />
     </Suspense>}
-    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel reviewChartStyles={reviewChartStyles} ticker={ticker} timeframe={timeframe} panel={panel} onClose={()=>setPanel(null)} preferences={{...accountPreferences,logarithmic}} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
+    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel onBarReplay={marketData.ready&&!movementKind&&!evidence&&!activeTradeContext&&!journal.current?.open&&!replayActive?()=>{setPanel(null);setReplaying(true);}:undefined} reviewChartStyles={reviewChartStyles} ticker={ticker} timeframe={timeframe} panel={panel} onClose={()=>setPanel(null)} preferences={{...accountPreferences,logarithmic}} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
   </Box>;
 }

@@ -7,11 +7,17 @@ const periodFormats = {
   "1Y": new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric" }),
 };
 
-export function chartTickLabel(time: Time | number, timeframe: ChartTimeframe, dayBoundary: boolean, timezone="America/New_York"): string {
-  const showDate = usesDailyCandles(timeframe) || dayBoundary;
-  if(typeof time!=="number")return String(time);
-  if (timeframe === "1M" || timeframe === "1Y") return periodFormats[timeframe].format(time * 1000);
-  return (timezone==="America/New_York"?(showDate?date:clock):new Intl.DateTimeFormat("en-US",{timeZone:timezone,...(showDate?{month:"short",day:"numeric"} as const:{hour:"numeric",minute:"2-digit"} as const)})).format(time*1000);
+export function createChartTickFormatter(timeframe: ChartTimeframe, timezone="America/New_York") {
+  const period = timeframe === "1M" || timeframe === "1Y" ? periodFormats[timeframe] : undefined;
+  const dayFormat = timezone === "America/New_York" ? date
+    : new Intl.DateTimeFormat("en-US", { timeZone: timezone, month: "short", day: "numeric" });
+  const timeFormat = timezone === "America/New_York" ? clock
+    : new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", minute: "2-digit" });
+  const daily = usesDailyCandles(timeframe);
+  return (time: Time | number, dayBoundary: boolean): string => {
+    if (typeof time !== "number") return String(time);
+    return (period ?? (daily || dayBoundary ? dayFormat : timeFormat)).format(time * 1000);
+  };
 }
 export function firstVisibleChartTime(points: readonly { time: number }[], range: { from: number; to: number } | null) {
   if (!range || range.to < 0) return undefined;

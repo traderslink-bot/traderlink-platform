@@ -6,6 +6,7 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { phoneChartLayout, chartCount, changeChartTimeframe, removeChartPanel, selectedChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
+import { ChartCrosshairGroup } from "./chart-crosshair-group";
 import { MarketChart } from "./market-chart";
 import { ChartMultiviewMenu } from "./chart-multiview-menu";
 
@@ -33,10 +34,11 @@ export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenM
     ? layout.groups.map(group=>({...group,panels:main?group.panels.filter(panel=>panel.id===layout.selectedPanel):group.symbol===active?group.panels:[]})).filter(group=>group.panels.length)
     : layout.groups;
   const renderedCount = groups.reduce((sum, group) => sum + group.panels.length, 0);
+  const showPanelBorders = !main || renderedCount > 1;
   const unevenFourChartGrid = !mobile && renderedCount === 4 &&
     (groups.length === 3 || groups.some(group => group.panels.length === 3));
   const select = (symbol: string, id: string) => { if (layout.selectedPanel !== id) onChange({ ...layout, selectedPanel: id }); onSelectTicker?.(symbol); };
-  return <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
+  return <ChartCrosshairGroup enabled={renderedCount > 1}><Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
     {(!compactMobile || !mobile) && byTicker && layout.groups.length > 1 ? <Tabs value={active} variant="scrollable" aria-label="Chart tickers" onChange={(_, symbol: string) => { const group = layout.groups.find(group => group.symbol === symbol)!; select(symbol, group.panels[0].id); }} sx={{ flexShrink: 0, minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}>{layout.groups.map(group => <Tab key={group.id} value={group.symbol} label={group.symbol} />)}</Tabs> : null}
     <Box ref={viewport} data-multiview-charts data-mobile-layout={mode} data-chart-count={renderedCount} sx={{ flex: 1, minHeight: 0, minWidth: 0, display: "grid", overflowY: mobile ? "auto" : "hidden", gap: 0.5,
       gridTemplateColumns: (grid || (!mobile && groups.length > 1)) ? "repeat(2,minmax(0,1fr))" : "minmax(0,1fr)",
@@ -48,7 +50,7 @@ export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenM
         gridTemplateRows: mobile ? "none" : groups.length === 1 ? group.panels.length > 2 ? "repeat(2,minmax(0,1fr))" : "minmax(0,1fr)" : `repeat(${group.panels.length},minmax(0,1fr))` }}>
         {group.panels.map((panel, panelIndex) => <Box key={panel.id} data-chart-panel={panel.id} data-workspace-chart={group.symbol} data-chart-timeframe={panel.timeframe} data-selected={layout.selectedPanel === panel.id}
           onPointerDown={() => select(group.symbol, panel.id)} onFocusCapture={() => select(group.symbol, panel.id)}
-          sx={{ display: "flex", minWidth: 0, height: mobile && landscape ? "var(--mobile-chart-height,240px)" : undefined, minHeight: mobile ? landscape ? 180 : 330 : 0, border: 1, borderColor: layout.selectedPanel === panel.id ? "warning.main" : "divider", borderRadius: 0, overflow: "hidden",
+          sx={{ display: "flex", minWidth: 0, height: mobile && landscape ? "var(--mobile-chart-height,240px)" : undefined, minHeight: mobile ? landscape ? 180 : 330 : 0, border: showPanelBorders ? 1 : 0, borderColor: showPanelBorders && layout.selectedPanel === panel.id ? "warning.main" : "divider", borderRadius: 0, overflow: "hidden",
             gridColumn: !mobile && groups.length === 1 && group.panels.length === 3 && panelIndex === 2 ? "1 / -1" : "auto" }}>
           <MarketChart viewId={viewPrefix+panel.id} viewWorkspace={workspace} compactMobile={compactMobile} compactIdentity={compactMobile && mobile && panelIndex === 0 && (main ? tabbed && layout.groups.length>1 : byTicker && layout.groups.length>1) ? <Tabs value={main?layout.selectedPanel:active} variant="scrollable" scrollButtons={false} aria-label={main?"Charts in this view":"Chart tickers"} onChange={(_, id:string)=>{
               if(main){const target=layout.groups.find(item=>item.panels.some(p=>p.id===id))!;select(target.symbol,id);}
@@ -69,5 +71,5 @@ export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenM
         </Box>)}
       </Box>)}
     </Box>
-  </Box>;
+  </Box></ChartCrosshairGroup>;
 }

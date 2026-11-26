@@ -1,4 +1,6 @@
 "use client";
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
+import Button from "@mui/material/Button";
 
 import { CHART_OVERNIGHT_ENABLED, chartShowsOvernight } from "@/src/modules/scanner/alpaca/chart-overnight-session";
 import Checkbox from '@mui/material/Checkbox';
@@ -16,7 +18,12 @@ import {useTheme} from '@mui/material/styles';
 import {ChartIndicatorEditor} from './chart-indicator-editor';
 import {CHART_TIMEFRAMES,type ChartTimeframe} from '@/src/modules/scanner/alpaca/candles';
 import {CHART_PRICE_STYLES,isReviewChartStyle,DEFAULT_CHART_CROSSHAIR_MODE,changeIndicatorDisplayChoice,INDICATOR_TYPES,setAllIndicatorOverlayWidths,setAllIndicatorPriceScaleLabels,type ChartPreferences,type IndicatorDisplayAction,type IndicatorDisplayChoices,type IndicatorType} from '@/src/modules/scanner/alpaca/chart-preferences';
-export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange,reviewChartStyles=false}:{ticker:string;timeframe:ChartTimeframe;panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:IndicatorDisplayChoices;reviewChartStyles?:boolean;onIndicatorDisplayChange:(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>void}){
+import {chartTimeZoneLabel,chartTimeZoneOptions,chartTimeZoneSearchText} from '@/src/modules/scanner/alpaca/chart-time-zone';
+
+const timeZones = chartTimeZoneOptions();
+const filterTimeZones = createFilterOptions<string>({ stringify: chartTimeZoneSearchText, limit: 75 });
+
+export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange,onBarReplay,reviewChartStyles=false}:{ticker:string;timeframe:ChartTimeframe;panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:IndicatorDisplayChoices;reviewChartStyles?:boolean;onBarReplay?:()=>void;onIndicatorDisplayChange:(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>void}){
  const theme=useTheme(),mobile=useMediaQuery(theme.breakpoints.down('md'));
  const set=<K extends keyof ChartPreferences>(key:K,value:ChartPreferences[K])=>onChange({...p,[key]:value});
  const changeAllCharts=(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>{
@@ -37,6 +44,7 @@ export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preference
   <Stack direction="row" sx={{px:2,py:1,alignItems:'center',justifyContent:'space-between',borderBottom:1,borderColor:'divider',flexShrink:0}}><Typography component="h2" sx={{fontSize:18,fontWeight:700}}>{panel==='indicators'?'Indicators':'Chart settings'}</Typography><IconButton aria-label="Close chart preferences" onClick={onClose} sx={{minWidth:44,minHeight:44}}><CloseRounded/></IconButton></Stack>
   <Stack spacing={2} sx={{p:2,overflowY:'auto',minHeight:0}}>
   {panel==='indicators'?<ChartIndicatorEditor ticker={ticker} key={`${ticker}:${initialIndicator??"list"}`} initialType={initialIndicator} overlayLineWidth={p.indicatorOverlayLineWidth??1} onOverlayLineWidthChange={width=>onChange(setAllIndicatorOverlayWidths(p,width))} defaultPriceScaleLabels={p.indicatorPriceScaleLabels??false} display={indicatorDisplay} accountDisplay={p.indicatorDisplay} onDisplayChange={onIndicatorDisplayChange} onAccountDisplayChange={changeAllCharts} indicators={p.indicators} savedPresets={p.savedIndicatorPresets ?? []} onChange={changeIndicators} onPresetsChange={presets=>set('savedIndicatorPresets',presets)}/>:<>
+   {onBarReplay && <Button size="small" variant="outlined" onClick={onBarReplay} sx={{alignSelf:"flex-start",textTransform:"none"}}>Bar Replay</Button>}
    <TextField select label="Chart type" value={p.kind}
      helperText={p.kind==="heikinAshi"?"Smoothed candles. The price marker and crosshair readout show market prices.":undefined}
      onChange={e=>set('kind',e.target.value as ChartPreferences['kind'])} size="small">{Object.entries(CHART_PRICE_STYLES).filter(([kind])=>reviewChartStyles||!isReviewChartStyle(kind)).map(([v,label])=><MenuItem key={v} value={v}>{label}</MenuItem>)}</TextField>
@@ -70,7 +78,13 @@ export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preference
      <MenuItem value="split">Split-adjusted</MenuItem>
      <MenuItem value="raw">Unadjusted (prices as traded)</MenuItem>
    </TextField>
-   <TextField select label="Timezone" value={p.timezone} onChange={e=>set('timezone',e.target.value as ChartPreferences['timezone'])} size="small">{[['America/New_York','Eastern'],['America/Toronto','Toronto'],['UTC','UTC']].map(([v,label])=><MenuItem key={v} value={v}>{label}</MenuItem>)}</TextField>
+   <Autocomplete size="small" disableClearable autoHighlight openOnFocus
+     value={p.timezone} options={timeZones.includes(p.timezone) ? timeZones : [...timeZones, p.timezone]}
+     getOptionLabel={chartTimeZoneLabel} getOptionKey={zone=>zone} filterOptions={filterTimeZones}
+     onChange={(_,zone)=>set('timezone',zone)}
+     noOptionsText="No matching time zones"
+     slotProps={{listbox:{sx:{maxHeight:'min(40dvh, 280px)',boxSizing:'border-box'}}}}
+     renderInput={params=><TextField {...params} label="Time zone" placeholder="Search cities" />}/>
    {(['grid','volume','autoScale','logarithmic'] as const).map(key=><FormControlLabel key={key} label={{grid:'Show grid',volume:'Show volume',autoScale:'Automatic price scale',logarithmic:`Logarithmic price scale · ${timeframe}`}[key]} control={<Checkbox checked={p[key]} onChange={(_,v)=>set(key,v)}/>}/>)}
    <FormControlLabel label="Indicator labels on price scale" control={<Checkbox checked={p.indicatorPriceScaleLabels??false} onChange={(_,visible)=>onChange(setAllIndicatorPriceScaleLabels(p,visible))}/>}/>
    <Typography variant="caption" color="text.secondary">Sets labels for all indicators. Adjust individual indicators in Style.</Typography>

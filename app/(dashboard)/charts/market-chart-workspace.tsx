@@ -30,7 +30,7 @@ function MarketChartHandoffView({ handoff }: { handoff: MarketChartEvidenceHando
   const [timeframe, setTimeframe] = useState(handoff.timeframe);
   return <MarketChart symbol={handoff.evidence.basis.symbol} timeframe={timeframe} onTimeframeChange={setTimeframe}
     evidence={handoff.evidence} compactMobile
-    sx={{ height: "calc(100dvh - 112px)", minHeight: 300 }} />;
+    sx={{ flex: 1, height: "auto" }} />;
 }
 
 export function MarketChartWorkspace({ evidenceHandoff }: { evidenceHandoff?: MarketChartEvidenceHandoff } = {}) {
@@ -131,14 +131,6 @@ function SavedMarketChartWorkspace() {
   const [focus, setFocus] = useState(false), [search, setSearch] = useState(false);
   const [draft, setDraft] = useState(""), [error, setError] = useState("");
   const active = selectedChart(layout);
-  const container = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const element = container.current; if (!element) return;
-    const measure = () => { const available = Math.max(180, Math.floor((window.visualViewport?.height ?? window.innerHeight) - element.getBoundingClientRect().top - 8)); element.style.setProperty("--chart-available-height", `${available}px`); };
-    const observer = new ResizeObserver(measure); if (element.parentElement) observer.observe(element.parentElement);
-    window.addEventListener("resize", measure); window.visualViewport?.addEventListener("resize", measure); measure();
-    return () => { observer.disconnect(); window.removeEventListener("resize", measure); window.visualViewport?.removeEventListener("resize", measure); };
-  }, []);
   useEffect(() => { if (!focus) return; const escape = (event: KeyboardEvent) => { if (event.key === "Escape") setFocus(false); }; window.addEventListener("keydown", escape); return () => window.removeEventListener("keydown", escape); }, [focus]);
   const openSymbol = (event: FormEvent) => {
     event.preventDefault();
@@ -179,10 +171,10 @@ function SavedMarketChartWorkspace() {
         <Box sx={{ display: "flex", flex: 1, minWidth: 0 }}>{viewRow}</Box>
       </Stack>
     </Portal>}
-    <Box ref={container} data-main-chart-workspace data-focus-mode={compact && focus ? "true" : "false"} sx={{ color: "text.primary", bgcolor: "background.paper", border: 1, borderColor: "divider", borderRadius: 0,
+    <Box data-main-chart-workspace data-focus-mode={compact && focus ? "true" : "false"} sx={{ color: "text.primary", bgcolor: "background.paper",
       margin: compact ? "0 !important" : undefined, position: compact ? "fixed" : "relative", top: compact ? 0 : undefined,
       left: compact ? 0 : undefined, right: compact ? 0 : undefined, bottom: compact ? 0 : undefined, zIndex: compact ? theme.zIndex.appBar + 1 : undefined,
-      height: compact ? "auto" : "var(--chart-available-height, var(--market-chart-height, calc(100dvh - 80px)))", minHeight: 0, pt: compact ? "env(safe-area-inset-top, 0px)" : 0, pb: compact ? "env(safe-area-inset-bottom, 0px)" : 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      flex: 1, minHeight: 0, pt: compact ? "env(safe-area-inset-top, 0px)" : 0, pb: compact ? "env(safe-area-inset-bottom, 0px)" : 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {compact ? <Stack data-chart-workspace-toolbar direction="row" sx={{ display: focus ? "none" : "flex", alignItems: "center", height: 44, flexShrink: 0, px: 0.5, borderBottom: 1, borderColor: "divider", "@media (max-width: 359px)": { "& > .MuiIconButton-root": { width: 36, minWidth: 36, flexShrink: 0 } } }}>
         <IconButton aria-label="Open dashboard navigation" onClick={navigation} sx={{ width: 44, height: 44 }}><MenuRounded /></IconButton>
         <IconButton aria-label="Search chart symbol" onClick={()=>setSearch(true)} sx={{width:44,height:44,color:"warning.main"}}><SearchRounded/></IconButton>

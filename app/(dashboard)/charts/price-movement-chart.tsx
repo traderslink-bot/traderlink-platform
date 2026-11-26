@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 import type { Logical, Time, UTCTimestamp } from "lightweight-charts";
 import type { PriceMovementBar, PriceMovementKind } from "@/src/modules/scanner/alpaca/chart-price-movement";
 import { createChartTradeReplay, readChartTradeReplayFrame } from "@/src/modules/scanner/alpaca/chart-trade-replay";
+import { resolveChartTimeZone } from "@/src/modules/scanner/alpaca/chart-time-zone";
 import type { ChartPreferences } from "@/src/modules/scanner/alpaca/chart-preferences";
 
 type Style = Pick<ChartPreferences, "upColor" | "downColor" | "timezone" | "grid">;
@@ -34,7 +35,7 @@ export default function PriceMovementChart({ kind, symbol, generation, step, dar
       let bars: readonly PriceMovementBar[] = [];
       let published = false;
       const timestamp = new Intl.DateTimeFormat("en-GB", {
-        timeZone: timezone, hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit",
+        timeZone: resolveChartTimeZone(timezone), hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit",
       });
       const label = (position: unknown) => {
         const bar = typeof position === "number" ? bars[position - 1] : undefined;
