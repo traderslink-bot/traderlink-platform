@@ -420,7 +420,8 @@ export function createAlpacaGateway(options: GatewayOptions) {
           status: state => write(`event: status\ndata: ${JSON.stringify({ state })}\n\n`),
           close: () => response.end(),
         });
-        write("retry: 3000\n\n");
+        // A warm subscription can queue a full snapshot synchronously.
+        // The browser owns retry timing, so let that snapshot drain before the next heartbeat.
         const heartbeat = setInterval(() => write(": heartbeat\n\n"), 15_000);
         heartbeat.unref();
         response.once("close", () => { clearInterval(heartbeat); detach(); });

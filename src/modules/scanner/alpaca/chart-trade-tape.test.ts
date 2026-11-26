@@ -47,10 +47,8 @@ function frameReader(response: Response) {
   return { next, close: () => reader.cancel() };
 }
 
-it("streams authenticated paged history joined to the live spike, then recovers correction, cancel and transport loss", async () => {
-  const nativeFetch = globalThis.fetch;
-  const sockets: FixtureWebSocket[] = [];
-  class FixtureWebSocket extends EventTarget {
+function fixtureWebSocket(sockets: Array<EventTarget & { emit(...messages: unknown[]): void; close(): void }>) {
+  return class FixtureWebSocket extends EventTarget {
     static OPEN = 1;
     readyState = 1;
     constructor() { super(); sockets.push(this); queueMicrotask(() => this.dispatchEvent(new Event("open"))); }
@@ -62,8 +60,13 @@ it("streams authenticated paged history joined to the live spike, then recovers 
         corrections: data.trades, cancelErrors: data.trades, bars: data.bars, updatedBars: data.updatedBars }));
     }
     close() { this.readyState = 3; this.dispatchEvent(new Event("close")); }
-  }
-  vi.stubGlobal("WebSocket", FixtureWebSocket);
+  };
+}
+
+it("streams authenticated paged history joined to the live spike, then recovers correction, cancel and transport loss", async () => {
+  const nativeFetch = globalThis.fetch;
+  const sockets: Array<EventTarget & { emit(...messages: unknown[]): void; close(): void }> = [];
+  vi.stubGlobal("WebSocket", fixtureWebSocket(sockets));
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(at("14:31:00")));
   const queries: URL[] = [];
@@ -133,6 +136,39 @@ it("streams authenticated paged history joined to the live spike, then recovers 
     await browser.close();
   } finally { release(); gateway.close(); gateway.server.closeAllConnections(); }
 }, 10_000);
+
+it("delivers a full warm snapshot larger than the pending-write limit", async () => {
+  const nativeFetch = globalThis.fetch;
+  vi.stubGlobal("WebSocket", fixtureWebSocket([]));
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(at("16:30:00")));
+  const trades = Array.from({ length: 8_000 }, (_, index) => row(index + 1,
+    new Date(Date.parse(at("14:30:01")) + index).toISOString(), 0.5 + (index % 4) * 0.01));
+  let requests = 0;
+  vi.stubGlobal("fetch", vi.fn<typeof fetch>(async input => {
+    if (new URL(String(input)).pathname === "/v2/calendar") return Response.json(providerCalendar());
+    requests++;
+    return Response.json({ trades: { VIVS: trades }, next_page_token: null });
+  }));
+  const gateway = createAlpacaGateway({ keyId: "fixture", secretKey: "fixture", token: "fixture" });
+  await new Promise<void>(resolve => gateway.server.listen(0, "127.0.0.1", resolve));
+  const path = `http://127.0.0.1:${(gateway.server.address() as AddressInfo).port}/chart-trades/stream?symbol=VIVS`;
+  const options = { headers: { Authorization: "Bearer fixture" }, signal: AbortSignal.timeout(5_000) };
+  try {
+    const cold = frameReader(await nativeFetch(path, options));
+    const full = await cold.next("snapshot");
+    expect(full.through).toBe(trades.length);
+    expect(Buffer.byteLength(JSON.stringify(full))).toBeGreaterThan(256_000);
+    const warm = frameReader(await nativeFetch(path, options));
+    expect(await warm.next("snapshot")).toEqual(full);
+    expect(requests).toBe(1);
+    await warm.close();
+    await cold.close();
+  } finally {
+    gateway.close();
+    gateway.server.closeAllConnections();
+  }
+}, 8_000);
 
 it.each([
   { reply: { trades: { VIVS: [] }, next_page_token: "repeated" }, status: "unavailable", calls: 2 },
