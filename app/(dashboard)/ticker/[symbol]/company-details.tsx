@@ -15,7 +15,7 @@ const companyTabs = [
   ["profile", "Profile"], ["financials", "Financials"],
   ["filings", "SEC Filings"], ["news", "News"],
 ] as const;
-type CompanyTab = typeof companyTabs[number][0];
+export type CompanyTab = typeof companyTabs[number][0];
 const number=new Intl.NumberFormat("en-US",{maximumFractionDigits:4});
 const profileFields=[
   ["Exchange","exchange"],["Country","country"],["Industry","industry"],["Reported currency","currency"],
@@ -48,8 +48,10 @@ function MetricColumns({rows}:{rows:readonly (readonly [string,ReactNode])[]}){
   </Box>;
 }
 
-export function CompanyDetails({company,news,technicalSample,levels,chart,broker=false}:{
-  company:Company;news:News[];technicalSample?:CompanyTechnicals;broker?:boolean;levels?:ReactNode;chart?:ReactNode;
+export function CompanyDetails({company,news,technicalSample,levels,chart,onTabChange,deferredCompany,deferredNews,allowSupplementalReads=true,broker=false}:{
+  company:Pick<Company,"symbol">&Partial<Omit<Company,"symbol">>;news:News[];technicalSample?:CompanyTechnicals;
+  levels?:ReactNode;chart?:ReactNode;onTabChange?:(tab:CompanyTab)=>void;deferredCompany?:ReactNode;deferredNews?:ReactNode;
+  allowSupplementalReads?:boolean;broker?:boolean;
 }){
   const [tab,setTab]=useState<CompanyTab>("technicals");
   const [limit,setLimit]=useState(10);
@@ -92,10 +94,11 @@ export function CompanyDetails({company,news,technicalSample,levels,chart,broker
     float: typeof profile?.floatingShare === "number" ? profile.floatingShare * 1_000_000 : null,
     marketCap: typeof profile?.marketCapitalization === "number" ? profile.marketCapitalization * 1_000_000 : null,
   } : undefined;
-  const visible=tab==="filings"?company.filings:news;
+  const financials=company.financials??[];
+  const visible=tab==="filings"?company.filings??[]:news;
   return <Stack spacing={1.5} sx={{minWidth:0}}>
     <CompanyTechnicalsPanel key={company.symbol} symbol={company.symbol} sample={technicalSample} broker={broker} brokerProfileFacts={brokerProfileFacts} active={tab==="technicals"}
-      inDrawer={Boolean(chart)} averageVolumes={averageVolumes}
+      inDrawer={Boolean(chart)} averageVolumes={averageVolumes} allowSupplementalReads={allowSupplementalReads}
       header={(latestPrice, change)=><>
         <Stack direction="row" sx={theme=>({alignItems:"baseline",gap:1,flexWrap:"wrap",...theme.applyStyles("dark",{"& .company-identity":{color:"#fff"}})})}>
           <Typography className="company-identity" component="h1" variant="h4" color="warning.main">{company.symbol}</Typography>
@@ -104,7 +107,7 @@ export function CompanyDetails({company,news,technicalSample,levels,chart,broker
           {change!=null&&<Typography sx={{fontWeight:700,color:change>0?"success.main":change<0?"error.main":"text.secondary"}}
             title="Change from previous regular close">{change>0?"+":""}{number.format(change)}%</Typography>}
         </Stack>
-        <Tabs value={tab} onChange={(_,value:CompanyTab)=>{setTab(value);setLimit(10);}}
+        <Tabs value={tab} onChange={(_,value:CompanyTab)=>{setTab(value);setLimit(10);onTabChange?.(value);}}
           variant="scrollable" scrollButtons={false} aria-label="Company details"
           sx={{minHeight:42,"& .MuiTab-root":{minHeight:42,minWidth:0,px:{xs:1.25,sm:2},textTransform:"none"}}}>
           {companyTabs.filter(([value])=>{
@@ -118,7 +121,7 @@ export function CompanyDetails({company,news,technicalSample,levels,chart,broker
       {technicals.length>0&&<MetricColumns rows={technicals}/>}
     </CompanyTechnicalsPanel>
     <Box role="tabpanel" id="company-profile-panel" aria-labelledby="company-profile-tab" hidden={tab!=="profile"} sx={{width:"100%",maxWidth:{md:460}}}>
-    {tab==="profile"&&
+    {tab==="profile"&&(deferredCompany??
       <DashboardPanel title="Company profile">
         {enriched&&<Typography variant="body2" sx={{mb:1.5}}>{enriched.description}</Typography>}
         {profileRows.length>0&&<Stack component="dl" spacing={0.75} sx={{m:0}}>
@@ -127,14 +130,14 @@ export function CompanyDetails({company,news,technicalSample,levels,chart,broker
             <Box component="dd" sx={{display:"inline",m:0}}>{value}</Box>
           </Box>)}
         </Stack>}
-      </DashboardPanel>}
+      </DashboardPanel>)}
     </Box>
     <Box role="tabpanel" id="company-financials-panel" aria-labelledby="company-financials-tab" hidden={tab!=="financials"}>
-      {tab==="financials"&&<DashboardPanel title="Financials">
+      {tab==="financials"&&(deferredCompany??<DashboardPanel title="Financials">
         <Typography component="h3" variant="subtitle2" sx={{mb:1}}>Reported financials</Typography>
-        {company.financials.length?<TableContainer><Table size="small" aria-label="SEC reported financials">
+        {financials.length?<TableContainer><Table size="small" aria-label="SEC reported financials">
           <TableHead><TableRow>{["Metric","Reported value","Period","Filed"].map(label=><TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>
-          <TableBody>{company.financials.map(f=><TableRow key={f.label+f.accession+(f.start??"")}>
+          <TableBody>{financials.map(f=><TableRow key={f.label+f.accession+(f.start??"")}>
             <TableCell>{f.label}</TableCell><TableCell sx={{whiteSpace:"nowrap"}}>{number.format(f.value)} {f.unit}</TableCell>
             <TableCell sx={{whiteSpace:"nowrap"}}>{f.start?`${f.start} – `:""}{f.end}</TableCell>
             <TableCell>{f.href?<Link href={f.href} target="_blank" rel="noopener noreferrer">{f.filed}</Link>:f.filed}</TableCell>
@@ -144,7 +147,7 @@ export function CompanyDetails({company,news,technicalSample,levels,chart,broker
           <Typography component="h3" variant="subtitle2" sx={{mb:1}}>Ratios and valuation</Typography>
           <MetricColumns rows={financialMetrics}/>
         </Box>}
-      </DashboardPanel>}
+      </DashboardPanel>)}
     </Box>
     {levels&&<Box id="company-levels-panel" role="tabpanel" aria-labelledby="company-levels-tab" hidden={tab!=="levels"}>{levels}</Box>}
     {chart&&<Box id="company-chart-panel" role="tabpanel" aria-labelledby="company-chart-tab" hidden={tab!=="chart"}>
@@ -152,7 +155,7 @@ export function CompanyDetails({company,news,technicalSample,levels,chart,broker
     </Box>}
     {(["filings","news"] as const).map(section=><Box key={section} id={`company-${section}-panel`}
       role="tabpanel" aria-labelledby={`company-${section}-tab`} hidden={tab!==section}>
-      {tab===section&&<DashboardPanel title={section==="filings"?"SEC Filings":"News"}>
+      {tab===section&&((section==="filings"?deferredCompany:deferredNews)??<DashboardPanel title={section==="filings"?"SEC Filings":"News"}>
         {tab==="filings"&&<Typography variant="caption" color="text.secondary">Last 12 months</Typography>}
         {visible.slice(0,limit).map(item=>{
           const filing="form" in item;
@@ -167,7 +170,7 @@ export function CompanyDetails({company,news,technicalSample,levels,chart,broker
         {visible.length>limit&&<Button variant="outlined" size="small" sx={{mt:1}} onClick={()=>setLimit(value=>value+10)}>Load more</Button>}
         {tab==="filings"&&company.cik&&<Link sx={{display:"inline-block",ml:visible.length>limit?1.5:0,mt:1}} variant="body2"
           href={`https://www.sec.gov/edgar/browse/?CIK=${company.cik}`} target="_blank" rel="noopener noreferrer">View all filings on SEC</Link>}
-      </DashboardPanel>}
+      </DashboardPanel>)}
     </Box>)}
   </Stack>;
 }

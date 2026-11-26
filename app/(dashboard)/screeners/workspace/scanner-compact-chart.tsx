@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import InputBase from "@mui/material/InputBase";
@@ -12,15 +13,17 @@ import Tabs from "@mui/material/Tabs";
 import Skeleton from "@mui/material/Skeleton";
 import { createContext, lazy, Suspense, useContext, useEffect, useRef, useState, type FormEvent, type Dispatch, type SetStateAction } from "react";
 import { chartSymbol, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
-import { changeChartTimeframe, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
+import { changeChartTimeframe, singleChart } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { ChartCrosshairGroup } from "../../charts/chart-crosshair-group";
 import { ChartMultiviewMenu } from "../../charts/chart-multiview-menu";
 import { ChartPreferencesContext } from "../../charts/use-chart-preferences";
 import { DashboardPanel } from "@/app/dashboard-template";
 import type { ScannerWorkspaceSlotId } from "../scanner-workspace-layout";
 import { ScannerWorkspaceCard } from "../scanner-workspace-card";
+import { swapWorkspaceCharts, workspaceChartArrangement, workspaceChartTrackSizes, type WorkspaceChartArrangement, type WorkspaceChartLayout } from "./workspace-chart-arrangement";
+import { WorkspaceChartArrangeControls, workspaceChartGridTracks } from "./workspace-chart-arrange-controls";
 
-import {closeWorkspaceChart,replaceWorkspaceChart,singleWorkspaceChart,workspaceChartPanels} from './workspace-chart-panels';
+import {closeWorkspaceChart,replaceWorkspaceChart,singleWorkspaceChart} from './workspace-chart-panels';
 import {workspaceChartHasVisibleArea} from './workspace-chart-visibility';
 
 const Chart = lazy(() => import("../../charts/market-chart").then(module => ({default:module.MarketChart})));
@@ -62,13 +65,15 @@ function TickerSearch({ symbol, timeframe, onSubmit }: {
   </Box>;
 }
 
-export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTimeframe, slot, keepMounted = false, fillMobile = false }: {
+export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTimeframe, slot, keepMounted = false, fillMobile = false, arrange = false, onEndArrange }: {
   symbol: string | null;
-  layout: ChartMultiview | null;
-  onLayoutChange: Dispatch<SetStateAction<ChartMultiview|null>>;
+  layout: WorkspaceChartLayout | null;
+  onLayoutChange: Dispatch<SetStateAction<WorkspaceChartLayout|null>>;
   defaultTimeframe: ChartTimeframe;
   slot: ScannerWorkspaceSlotId;
   keepMounted?: boolean;fillMobile?:boolean;
+  arrange?: boolean;
+  onEndArrange?: () => void;
 }) {
   const covered = useContext(Covered);
   const accountPreferences = useContext(ChartPreferencesContext);
@@ -77,6 +82,13 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
   const [hasShown,setHasShown]=useState(false);
   const panelArea = useRef<HTMLDivElement>(null);
   const [room, setRoom] = useState({ width: 0, height: 0 });
+  const [arrangementDraft, setArrangementDraft] = useState<{ layout: WorkspaceChartLayout; arrangement: WorkspaceChartArrangement } | null>(null);
+  const arrangeHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (!arrange) return;
+    const frame = requestAnimationFrame(() => arrangeHeading.current?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(frame);
+  }, [arrange]);
 
   useEffect(() => {
     const node = panelArea.current;
@@ -127,11 +139,22 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
     };
   }, [symbol, covered, visible, layout, defaultTimeframe, onLayoutChange]);
 
-  const panels = layout ? workspaceChartPanels(layout) : [];
+  const savedArrangement = layout ? workspaceChartArrangement(layout, layout.arrangement) : null;
+  const arranging = arrange && layout !== null;
+  const arrangement = arranging && arrangementDraft?.layout === layout ? arrangementDraft.arrangement : savedArrangement;
+  const panelsById = new Map(layout?.groups.flatMap(group => group.panels.map(panel => [panel.id, {group, panel}] as const)));
+  const panels = arrangement?.order.map(id => panelsById.get(id)!) ?? [];
   const multiview = panels.length > 1;
   const columns = multiview && room.width >= 566 ? 2 : 1;
-  const rows = Math.ceil(panels.length / columns);
-  const tabs = multiview && room.height < rows * 176 + (rows - 1) * 6;
+  const rows = Math.max(1, Math.ceil(panels.length / columns));
+  const gap = 6;
+  const tabs = multiview && room.height < rows * 176 + (rows - 1) * gap;
+  const columnSpace = room.width - (columns - 1) * gap;
+  const rowSpace = room.height - (rows - 1) * gap;
+  const columnMinimum = columns > 1 ? 220 / Math.max(1, columnSpace) : 0;
+  const rowMinimum = rows > 1 ? 128 / Math.max(1, rowSpace) : 0;
+  const columnSizes = workspaceChartTrackSizes(columns, arrangement?.columnSizes, columnMinimum);
+  const rowSizes = workspaceChartTrackSizes(rows, arrangement?.rowSizes, rowMinimum);
   const fallback = accountPreferences && !accountPreferences.ready && accountPreferences.message
     ? <Box role="alert" sx={{minWidth:0,p:1.5,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
         <Typography color="text.primary" variant="body2">Chart settings could not load.</Typography>
@@ -140,7 +163,16 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
     : <Skeleton animation={false} variant="rectangular" sx={{height:"100%"}}/>;
   const selected = panels.find(({panel}) => panel.id === layout?.selectedPanel) ?? panels[0];
   const shown = tabs && selected ? [selected] : panels;
-
+  const editArrangement = (next: WorkspaceChartArrangement) => {
+    if (layout) setArrangementDraft({ layout, arrangement: next });
+  };
+  const finishArrangement = (save: boolean) => {
+    if (save && arrangementDraft?.layout === layout) {
+      onLayoutChange(current => current === layout && current ? { ...current, arrangement: arrangementDraft.arrangement } : current);
+    }
+    setArrangementDraft(null);
+    onEndArrange?.();
+  };
   const replaceTicker = (panelId: string, timeframe: ChartTimeframe, symbol: string) => {
     if (!layout) return;
     const next = replaceWorkspaceChart(layout, panelId, symbol, timeframe);
@@ -161,18 +193,29 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
   return <ScannerWorkspaceCard slot={slot} widget="ticker-workspace" contentPaddingTop={multiview ? 0 : undefined}>
     <ChartCrosshairGroup enabled={shown.length > 1}>
     <DashboardPanel hideHeader>
-      <Box ref={viewport} aria-label="Workspace charts" sx={{height:fillMobile?"100%":{xs:320,md:"100%"},flex:1,minHeight:0,display:"flex",flexDirection:"column"}}>
-        {layout && tabs && <Tabs aria-label="Workspace chart panels" value={selected?.panel.id ?? false} variant="scrollable"
+      <Box ref={viewport} aria-label="Workspace charts"
+        onKeyDown={event=>{if(arranging&&event.key==="Escape"){event.stopPropagation();finishArrangement(false);}}}
+        sx={{height:fillMobile?"100%":{xs:320,md:"100%"},flex:1,minHeight:0,display:"flex",flexDirection:"column"}}>
+        {arranging && <Stack direction="row" sx={{alignItems:"center",gap:0.5,flexWrap:"wrap",px:0.5,py:0.25}}>
+          <Typography ref={arrangeHeading} component="h2" tabIndex={-1} variant="subtitle2" sx={{mr:"auto"}}>Arrange charts</Typography>
+          <Button size="small" variant="outlined" color="inherit" onClick={()=>finishArrangement(false)}>Cancel</Button>
+          <Button size="small" variant="contained" onClick={()=>finishArrangement(true)}>Done</Button>
+          <Typography variant="caption" color="text.secondary" sx={{width:"100%"}}>
+            {tabs ? "Drag or select two charts to swap their tabs." : "Drag or select two charts to swap them. Drag a divider to resize."}
+          </Typography>
+        </Stack>}
+        {layout && tabs && !arranging && <Tabs aria-label="Workspace chart panels" value={selected?.panel.id ?? false} variant="scrollable"
             onChange={(_, id:string)=>selectPanel(id)}
             sx={{mr:"auto",minWidth:0,minHeight:30,"& .MuiTab-root":{minHeight:30,minWidth:0,px:0.75,py:0,fontSize:11,textTransform:"none"}}}>
             {panels.map(({group,panel})=><Tab key={panel.id} value={panel.id} label={`${group.symbol} ${panel.timeframe}`}/>)}
           </Tabs>}
-        <Box ref={panelArea} sx={{flex:1,minHeight:0,minWidth:0,display:"grid",gap:"6px",
-          gridTemplateColumns:`repeat(${tabs?1:columns}, minmax(0,1fr))`,gridAutoRows:"minmax(0,1fr)"}}>
+        <Box ref={panelArea} sx={{position:"relative",flex:1,minHeight:0,minWidth:0,display:"grid",gap:`${gap}px`,
+          gridTemplateColumns:tabs?"minmax(0,1fr)":workspaceChartGridTracks(columnSizes),
+          gridTemplateRows:tabs?"minmax(0,1fr)":workspaceChartGridTracks(rowSizes)}}>
           {layout && (visible || keepMounted && hasShown) && !covered ? shown.map(({group,panel})=>{
             const active=layout.selectedPanel===panel.id;
-            const selectable=!tabs&&panels.length>1;
-            return <Box key={panel.id} data-workspace-chart-panel={panel.id} data-selected={active||undefined}
+            const selectable=!arranging&&!tabs&&panels.length>1;
+            return <Box key={panel.id} data-workspace-chart-panel={panel.id} data-selected={active||undefined} inert={arranging}
               role="group" aria-label={`${group.symbol} ${panel.timeframe} chart${active&&selectable?" (selected)":""}`}
               onPointerDownCapture={event=>{if(selectable&&event.target instanceof Element&&event.currentTarget.contains(event.target)&&!event.target.closest("[data-workspace-chart-close]"))selectPanel(panel.id);}}
               onFocusCapture={event=>{if(selectable&&event.target instanceof Element&&event.currentTarget.contains(event.target)&&!event.target.closest("[data-workspace-chart-close]"))selectPanel(panel.id);}}
@@ -181,10 +224,13 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
 
               <Suspense fallback={fallback}>
                 <Chart symbol={group.symbol} timeframe={panel.timeframe} disabledTimeframes={group.panels.filter(other=>other.id!==panel.id).map(other=>other.timeframe)}
-                  onTimeframeChange={timeframe=>onLayoutChange(changeChartTimeframe(layout,panel.id,timeframe))}
+                  onTimeframeChange={timeframe=>{
+                    const {arrangement,...chartLayout}=layout;
+                    onLayoutChange({...changeChartTimeframe(chartLayout,panel.id,timeframe),arrangement});
+                  }}
                   compactIdentity={<TickerSearch key={group.symbol} symbol={group.symbol} timeframe={panel.timeframe}
                     onSubmit={symbol=>replaceTicker(panel.id,panel.timeframe,symbol)}/>}
-                  actions={!multiview&&<ChartMultiviewMenu layout={layout} defaultTimeframe={defaultTimeframe}
+                  actions={!multiview&&<ChartMultiviewMenu layout={layout} openingPanelId={layout.selectedPanel??undefined} defaultTimeframe={defaultTimeframe}
                     onChange={onLayoutChange} resolveEmptyLayout={draft=>singleWorkspaceChart(draft,symbol,defaultTimeframe)}
                     chartTabs iconOnly workspaceFullGrid/>}
                   closeAction={multiview&&<IconButton data-workspace-chart-close aria-label={`Close ${group.symbol} ${panel.timeframe} chart`}
@@ -206,6 +252,14 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
               </Suspense>
             </Box>;
           }) : fallback}
+          {arranging && arrangement && <WorkspaceChartArrangeControls
+            panels={panels.map(({group,panel})=>({id:panel.id,label:`${group.symbol} ${panel.timeframe}`}))}
+            columns={{sizes:columnSizes,space:columnSpace,minimum:columnMinimum}}
+            rows={{sizes:rowSizes,space:rowSpace,minimum:rowMinimum}}
+            gap={gap} tabs={tabs}
+            onSwap={(source,target)=>editArrangement({...arrangement,order:swapWorkspaceCharts(arrangement.order,source,target)})}
+            onResize={(axis,sizes)=>editArrangement({...arrangement,[axis==="row"?"rowSizes":"columnSizes"]:sizes})}
+          />}
         </Box>
       </Box>
     </DashboardPanel>

@@ -13,6 +13,31 @@ export function scannerVolumeLabel(column: keyof typeof SCANNER_VOLUME_LABELS): 
   return column === "dayVolume" ? "Vol" : SCANNER_VOLUME_LABELS[column];
 }
 
+export type ScannerPrimaryVolumeField = "dayVolume" | "postMarketVolume";
+
+export function scannerPrimaryVolumeField(afterHours: boolean): ScannerPrimaryVolumeField {
+  return afterHours ? "postMarketVolume" : "dayVolume";
+}
+
+const turnoverPercent = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+
+export function formatScannerFloatTurnover(
+  row: ScannerVolumeBreakdown & { float: number | null },
+  field: ScannerPrimaryVolumeField,
+): string {
+  const volume = row[field];
+  const float = row.float;
+  if (volume == null || !Number.isFinite(volume) || volume < 0 ||
+      float == null || !Number.isFinite(float) || float <= 0) return "—";
+  return `${turnoverPercent.format(100 * volume / float)}%`;
+}
+
+export function scannerFloatTurnoverTitle(field: ScannerPrimaryVolumeField): string {
+  return field === "postMarketVolume"
+    ? "After-hours volume divided by float"
+    : "Premarket and regular-session volume divided by float";
+}
+
 export function scannerVolumeBreakdown(snapshot: Pick<NormalizedSnapshot,
   "session" | "premarketVolume" | "regularVolume" | "postMarketVolume"
 >): Required<ScannerVolumeBreakdown> {

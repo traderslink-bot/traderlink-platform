@@ -3,6 +3,7 @@ import { act, createElement, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { LiveScannerRow, ScannerReadModel } from "./contracts";
+import { DEFAULT_DECLINE_CONTROLS } from "./declines";
 import { SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_TRANSIENT_FAILURE_GRACE_MS } from "./member-status";
 import { EMPTY_MULTIVIEW, parseChartMultiview } from "../alpaca/chart-multiview";
 
@@ -34,7 +35,7 @@ function model(session: "regular" | "after_hours"): ScannerReadModel {
     gainers: empty, dayGainers: empty, momentum: empty, issues: [] };
 }
 async function mount(initial: ScannerReadModel, options: {
-  admin?: boolean; now?: string; fail?: boolean; workspace?: boolean;
+  admin?: boolean; now?: string; fail?: boolean; workspace?: boolean; singleScanner?: "gainers";
 } = {}) {
   vi.useFakeTimers(); vi.setSystemTime(new Date(options.now ?? "2026-11-02T21:00:10Z")); let response = initial;
   vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
@@ -74,7 +75,7 @@ async function mount(initial: ScannerReadModel, options: {
   const container = document.createElement("div"); document.body.append(container); root = createRoot(container);
   await act(async () => {
     root!.render(options.workspace ? createElement(TradingWorkspaceClient, {scannersOnly:true})
-      : createElement(LiveScreenersClient, {admin:options.admin}));
+      : createElement(LiveScreenersClient, {admin:options.admin,singleScanner:options.singleScanner}));
   });
   return { container, fetch, stream, connections, savedLayout: () => layout, update: async (next: ScannerReadModel) => {
     response = next; await act(async () => { await vi.advanceTimersByTimeAsync(5000); connections.at(-1)!.emit(next); });
@@ -451,9 +452,54 @@ async function switchView(container: HTMLElement, label: string, view: string) {
 }
 
 describe("alternative stock card view", () => {
+  it("uses the displayed volume for turnover in the main Scanner's Top Gainers views", async () => {
+    const initial = momentumModel(undefined);
+    const result = (rows: readonly LiveScannerRow[]) => ({ rows, total: rows.length, focus: [] });
+    const row = initial.momentum.rows[0];
+    const premarket = result([{ ...row, dayVolume:row.premarketVolume, gainBasis:"previous_regular_close" }]);
+    const day = result([{ ...row, gainBasis: "previous_regular_close" }]);
+    const post = result([
+      { ...row, gainBasis: "today_regular_close", postMarketVolume: 25_000 },
+      { ...row, symbol: "ZERO", gainBasis: "today_regular_close", postMarketVolume: 0 },
+      { ...row, symbol: "MISSING", gainBasis: "today_regular_close", postMarketVolume: null },
+    ]);
+    const page = await mount({ ...initial, session:"premarket", gainers:premarket, dayGainers:premarket }, {singleScanner:"gainers"});
+    const table = (scope: Element, volume: string, expected: readonly string[]) => {
+      const headers = [...scope.querySelectorAll("thead th")];
+      expect(headers.some(cell => cell.textContent === volume)).toBe(true);
+      const turnover = headers.findIndex(cell => cell.textContent === "T/O");
+      expect(headers[turnover].getAttribute("title")).toContain("divided by float");
+      const values = [...scope.querySelectorAll<HTMLTableRowElement>("tbody tr")]
+        .filter(row => row.cells.length > turnover).map(row => row.cells[turnover].textContent);
+      expect(values).toEqual(expected);
+    };
+    const cards = () => page.container.querySelector('[aria-label="Top Gainers stock cards"]')!;
+    const turnoverStats = () => [...cards().querySelectorAll("dt")]
+      .filter(label => label.textContent === "T/O").map(label => label.nextElementSibling?.textContent);
+    const compactTable = () => page.container.querySelector('table[aria-label="Top Gainers compact stocks"]')!;
+    table(compactTable(), "Vol", ["30%"]);
+    await page.update({ ...initial, gainers:day, dayGainers:day });
+    table(compactTable(), "Vol", ["80%"]);
+    await switchView(page.container,"Top Gainers","Cards");
+    expect(turnoverStats()).toEqual(["80%"]);
+    await page.update({ ...initial, session:"after_hours", gainers:post, dayGainers:day });
+    expect(cards().textContent).toContain("After-hours Vol");
+    expect(turnoverStats()).toEqual(["5%", "0%", "—"]);
+    await switchView(page.container,"Top Gainers","Two rows");
+    table(page.container.querySelector('table[aria-label="Top Gainers two-row stocks"]')!, "After-hours Vol", ["5%", "0%", "—"]);
+    await switchView(page.container,"Top Gainers","Table");
+    const full = await openFullView(page.container,"Top Gainers");
+    table(full.querySelector("table")!, "After-hours Vol", ["5%", "0%", "—"]);
+  });
+
   it("switches each scanner independently and shows the new Basic Stats without extra requests", async () => {
     const initial=momentumModel(undefined);
-    const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum});
+    const row = initial.momentum.rows[0];
+    const page=await mount({...initial,gainers:initial.momentum,dayGainers:initial.momentum,
+      declines:{controls:DEFAULT_DECLINE_CONTROLS,rapid:[],rapidTotal:0,loserTotal:1,
+        losers:[{...row,symbol:"LOSE",changePercent:-10,comparisonPrice:3}]},
+      breakouts:[{...row,symbol:"BRKT",breakoutAtUtc:row.receivedAtUtc,breakoutLevel:2,breakoutState:"above"}],
+    });
     await switchView(page.container,"Top Gainers","Cards");
     const cards=page.container.querySelector('[aria-label="Top Gainers stock cards"]')!;
     expect(cards).not.toBeNull();
@@ -463,10 +509,16 @@ describe("alternative stock card view", () => {
     await switchView(page.container,"Momentum","Cards");
     const momentum=page.container.querySelector('[aria-label="Momentum stock cards"]')!;
     expect([...momentum.querySelectorAll('dt')].map(label=>label.textContent)).toEqual(['Vol','Float','T/O','RVOL']);
+    expect([...momentum.querySelectorAll('dt')].find(label=>label.textContent==="T/O")?.nextElementSibling?.textContent).toBe("80%");
     expect(momentum.querySelector('[aria-label="Open TEST chart only"]')).not.toBeNull();
     expect(momentum.querySelector('[aria-label="Expand TEST card details"]')).toBeNull();
     expect(momentum.querySelector('[aria-label="Indicators"]')).toBeNull();
     expect(momentum.querySelector('[aria-label="Catalyst"]')).toBeNull();
+    for (const label of ["Top Losers","Breakouts"]) {
+      await switchView(page.container,label,"Cards");
+      const list=page.container.querySelector(`[aria-label="${label} stock cards"]`)!;
+      expect([...list.querySelectorAll("dt")].find(item=>item.textContent==="T/O")?.nextElementSibling?.textContent).toBe("80%");
+    }
     await switchView(page.container,"Top Gainers","Table");
     expect(page.container.querySelector('table[aria-label="Top Gainers compact stocks"]')).not.toBeNull();
     expect(page.container.querySelector('[aria-label="Momentum stock cards"]')).not.toBeNull();

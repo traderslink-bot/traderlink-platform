@@ -77,12 +77,12 @@ function sampleReads(frame:Frame): CompanyIndicatorReading[] {
 
 type BrokerTechnicals = BrokerReadings & { session: ScannerSession | null; asOf: number };
 
-export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,children,averageVolumes,broker=false,brokerProfileFacts}:{
+export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,children,averageVolumes,broker=false,brokerProfileFacts,allowSupplementalReads=true}:{
   symbol:string;sample?:CompanyTechnicals;active:boolean;inDrawer:boolean;broker?:boolean;
   header:(latestPrice:string|null, change:number|null)=>ReactNode;
   children?:ReactNode;
   brokerProfileFacts?:{float:number|null;marketCap:number|null};
-  averageVolumes:readonly (number|null)[];
+  averageVolumes:readonly (number|null)[];allowSupplementalReads?:boolean;
 }){
   const indicatorId=useId();
   const theme=useTheme();
@@ -93,7 +93,7 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   const statsActive=active&&(!sectionTabs||section==="stats");
   const indicatorsActive=active&&(!sectionTabs||section==="indicators");
   const snapshotActive=!inDrawer||active&&(!sectionTabs||section!=="indicators");
-  const brokerHistoryActive=broker&&active;
+  const brokerHistoryActive=allowSupplementalReads&&broker&&active;
   const technicalsPath=broker?"/api/trading-workspace/broker/company-technicals":"/api/company/technicals";
   const sectionProps=(id:TechnicalSection)=>sectionTabs?{
     id:`${indicatorId}-${id}-panel`, role:"tabpanel",
@@ -103,7 +103,8 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   const [marketClock,setMarketClock]=useState<ReturnType<typeof easternClock>>();
   const [ranges,setRanges]=useState<Partial<Record<"raw"|"split",CompanyTechnicals["yearRange"]>>>({});
   const displayedRanges=sample?{raw:sample.yearRange,split:sample.splitAdjustedYearRange}:ranges;
-  const [snapshot,setSnapshot]=useState<CompanyTechnicals|null>(sample??null);
+  const [liveSnapshot,setSnapshot]=useState<CompanyTechnicals|null>(null);
+  const snapshot=sample??liveSnapshot;
   const snapshotDate=useRef<string>(undefined);
   const [livePrice,setLivePrice]=useState<{price:number;time:number}>();
   const [frame,setFrame]=useState<Frame>("5m");
@@ -188,7 +189,7 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   },[symbol,sample,snapshotActive,broker]);
 
   useEffect(()=>{
-    if(broker||sample)return;
+    if(broker||sample||!allowSupplementalReads)return;
     let stream:ChartStreamHandle|undefined;
     const open=()=>{
       stream?.close();stream=undefined;
@@ -206,10 +207,10 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
     const retry=setInterval(()=>{if(!document.hidden)stream?.reconnectIfClosed();},15_000);
     open();document.addEventListener("visibilitychange",open);
     return ()=>{stream?.close();clearInterval(retry);document.removeEventListener("visibilitychange",open);};
-  },[symbol,sample,broker]);
+  },[symbol,sample,broker,allowSupplementalReads]);
 
   useEffect(()=>{
-    if(sample||(!indicatorsActive&&!brokerHistoryActive))return;
+    if(sample||!allowSupplementalReads||(!indicatorsActive&&!brokerHistoryActive))return;
     const controller=new AbortController();
     let timer:ReturnType<typeof setTimeout>;
     const load=async()=>{
@@ -227,7 +228,7 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
     };
     void load();
     return ()=>{controller.abort();clearTimeout(timer);};
-  },[symbol,frame,sample,indicatorsActive,broker,brokerHistoryActive,technicalsPath]);
+  },[symbol,frame,sample,indicatorsActive,broker,brokerHistoryActive,technicalsPath,allowSupplementalReads]);
 
   const row=snapshot?.row;
   const days=(broker?reads?.days:snapshot?.days)??[];

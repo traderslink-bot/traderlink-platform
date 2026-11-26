@@ -1,5 +1,5 @@
 import type { ScannerVolumeBreakdown } from "@/src/modules/scanner/live/contracts";
-import { SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS, scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
+import { scannerPrimaryVolumeField, type ScannerPrimaryVolumeField, SCANNER_SESSION_VOLUME_COLUMNS, SCANNER_VOLUME_LABELS, scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
 import { isScannerCardSlot, type ScannerCardSlot } from "./workspace-scanner-title";
 
 export const optionalVolumeColumns = SCANNER_SESSION_VOLUME_COLUMNS;
@@ -15,8 +15,8 @@ const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFra
 export function workspaceVolumeColumns(
   afterHours: boolean,
   optional: readonly OptionalVolumeColumn[] = [],
-): readonly VolumeColumn[] {
-  const primary = afterHours ? "postMarketVolume" : "dayVolume";
+): readonly [ScannerPrimaryVolumeField, ...OptionalVolumeColumn[]] {
+  const primary = scannerPrimaryVolumeField(afterHours);
   return [primary, ...optionalVolumeColumns.filter(key => key !== primary && optional.includes(key))];
 }
 

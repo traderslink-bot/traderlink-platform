@@ -10,9 +10,10 @@ import UnfoldMore from '@mui/icons-material/UnfoldMore';
 import {useEffect,useRef,useState,type RefObject} from 'react';
 import {createPortal} from 'react-dom';
 import {widgets,widgetNames} from './scanner-desktop-layout';
-import {moveMobileCard,toggleMobileCard,type MobileLayout,type MobileOrientation} from './scanner-mobile-layout';
+import {MOBILE_STACKED_CARD_LIMIT,moveMobileCard,toggleMobileCard,type MobileLayout,type MobileOrientation} from './scanner-mobile-layout';
 import type {useMobileWorkspaceLayout} from './use-mobile-workspace-layout';
-import type {ScannerWorkspaceWidget as Widget} from '../scanner-workspace-layout';
+import type {WorkspaceCardWidget as Widget} from '../scanner-workspace-layout';
+import {AddWorkspaceCardButton,type AddWorkspaceCardOptions} from './scanner-layout-editor';
 function MobileHeightField({height,onChange}:{height:number;onChange:(value:number)=>void}){
  const [text,setText]=useState<string|null>(null),[invalid,setInvalid]=useState(false);
  const commit=(value:string)=>{const n=Number(value);if(value.trim()&&Number.isFinite(n)&&n>=35&&n<=300){onChange(n/100);setText(null);setInvalid(false);}else setInvalid(true);};
@@ -20,7 +21,7 @@ function MobileHeightField({height,onChange}:{height:number;onChange:(value:numb
   slotProps={{htmlInput:{min:35,max:300,step:"any",required:true}}} onChange={e=>{setText(e.target.value);setInvalid(false);}}
   onBlur={e=>{if(text!==null)commit(e.target.value);}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();commit((e.target as HTMLInputElement).value);}else if(e.key==='Escape'&&text!==null){e.stopPropagation();setText(null);setInvalid(false);}}}/>;
 }
-export function MobileWorkspaceLayoutEditor({editor,orientation}:{editor:ReturnType<typeof useMobileWorkspaceLayout>;orientation:MobileOrientation}){
+export function MobileWorkspaceLayoutEditor({addCard,editor,orientation}:{addCard:AddWorkspaceCardOptions;editor:ReturnType<typeof useMobileWorkspaceLayout>;orientation:MobileOrientation}){
  const [replaceName,setReplaceName]=useState<string|null>(null);
  const [open,setOpen]=useState(false),[target,setTarget]=useState<Widget|null>(null);const trigger=useRef<HTMLButtonElement>(null);
  const scrollArea=useRef<HTMLDivElement>(null),drag=useRef<{x:number;y:number}|null>(null),dragFrame=useRef(0);
@@ -56,10 +57,15 @@ export function MobileWorkspaceLayoutEditor({editor,orientation}:{editor:ReturnT
      <TextField label="Layout name" size="small" value={editor.name} onChange={e=>editor.setName(e.target.value)} slotProps={{htmlInput:{maxLength:40}}} sx={{width:170,maxWidth:'100%'}}/>
     </Stack>
     <Stack direction="row" spacing={1}>
-     <TextField select label="View" size="small" value={layout.mode} onChange={e=>change({...layout,mode:e.target.value as MobileLayout['mode']})} sx={{width:130}}><MenuItem value="tabs">Tabs</MenuItem><MenuItem value="stacked">Stacked</MenuItem></TextField>
+     <TextField select label="View" size="small" value={layout.mode} onChange={e=>change({...layout,mode:e.target.value as MobileLayout['mode']})} sx={{width:130}}><MenuItem value="tabs">Tabs</MenuItem><MenuItem value="stacked" disabled={layout.order.length>MOBILE_STACKED_CARD_LIMIT}>Stacked</MenuItem></TextField>
      {orientation==='landscape'&&<TextField select label="Columns" size="small" value={layout.columns} onChange={e=>change({...layout,columns:Number(e.target.value) as 1|2})} sx={{width:100}}><MenuItem value={1}>1</MenuItem><MenuItem value={2}>2</MenuItem></TextField>}
     </Stack>
     <Typography variant="caption">Tabs fills the screen. Card heights and columns apply to Stacked.</Typography>
+    {(layout.order.length>MOBILE_STACKED_CARD_LIMIT||
+      layout.order.length===MOBILE_STACKED_CARD_LIMIT&&layout.mode==='stacked')&&<Typography variant="caption" color="text.secondary">
+      {layout.order.length>MOBILE_STACKED_CARD_LIMIT?"Mobile layouts with more than seven cards use Tabs.":"Adding another card switches the mobile layout to Tabs."}
+    </Typography>}
+    <AddWorkspaceCardButton {...addCard}/>
     <Box role="list" aria-label="Mobile card order">
      {[...layout.order,...widgets.filter(w=>!layout.order.includes(w))].map(widget=>{const index=layout.order.indexOf(widget),visible=index>=0;
       return <Box role="listitem" key={widget} data-mobile-editor-card={widget} sx={{border:1,borderColor:target===widget?'primary.main':'divider',p:0.5,mb:0.5}}>

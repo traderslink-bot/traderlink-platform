@@ -1,4 +1,4 @@
-import type { ScannerWorkspaceWidget } from "../scanner-workspace-layout";
+import { extraWorkspaceCardSlots, type ScannerWorkspaceWidget, type ExtraWorkspaceCard, type WorkspaceCardWidget } from "../scanner-workspace-layout";
 
 export type CardPosition = { x:number; y:number; w:number; h:number };
 export type DesktopPositions = Record<ScannerWorkspaceWidget,CardPosition>;
@@ -11,8 +11,14 @@ export const defaultPositions:DesktopPositions = {
 export const widgetNames = {
   gainers:"Top Gainers",momentum:"Momentum","top-losers":"Top Losers","high-drops":"HOD Drops",
   "market-events":"Market Events",breakouts:"Breakouts","ticker-workspace":"Chart",
+  "scanner-8":"Scanner 8","scanner-9":"Scanner 9",
 };
 export const widgets = Object.keys(defaultPositions) as ScannerWorkspaceWidget[];
+export const extraWidgets = Object.keys(extraWorkspaceCardSlots) as ExtraWorkspaceCard[];
+export const layoutWidgets: readonly WorkspaceCardWidget[] = [...widgets, ...extraWidgets];
+export function nextExtraWorkspaceCard(visible: readonly WorkspaceCardWidget[]): ExtraWorkspaceCard | undefined {
+  return extraWidgets.find(widget => !visible.includes(widget));
+}
 export const desktopRows=(positions:DesktopPositions, visible=widgets)=>Math.max(2,...visible.map(key=>positions[key].y+positions[key].h));
 const intersects=(a:CardPosition,b:CardPosition)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 export function validPositions(value:unknown, visible=widgets):value is DesktopPositions {

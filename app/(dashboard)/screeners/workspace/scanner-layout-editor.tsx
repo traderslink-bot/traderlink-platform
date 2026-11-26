@@ -1,19 +1,21 @@
 "use client";
 
-import { Box, Button, Checkbox, ClickAwayListener, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, IconButton, Paper, Popper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Checkbox, ClickAwayListener, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, ListSubheader, Menu, MenuItem, IconButton, Paper, Popper, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import DashboardCustomizeOutlined from "@mui/icons-material/DashboardCustomizeOutlined";
+import AddRounded from "@mui/icons-material/AddRounded";
 import CloseRounded from "@mui/icons-material/CloseRounded";
 import DragIndicator from "@mui/icons-material/DragIndicator";
 import ViewQuiltOutlined from "@mui/icons-material/ViewQuiltOutlined";
 import { useRef, useState, type PointerEvent } from "react";
 import { widgetNames, widgets } from "./scanner-desktop-layout";
 import { minimum, presets, type Edge, type Rect, type Tile } from "./scanner-split-layout";
-import { cardAtPoint, cardEntries, cardFits, layoutSize, moveCard, type CardLayout } from "./scanner-free-layout";
-import type { ScannerWorkspaceWidget as Widget } from "../scanner-workspace-layout";
+import { cardAtPoint, dropCard, cardEntries, cardFits, layoutSize, moveCard, type CardLayout } from "./scanner-free-layout";
+import type { WorkspaceCardWidget as Widget } from "../scanner-workspace-layout";
 
 import type { ScannerView } from "./scanner-stock-cards";
 import type { CardSectionPreferences } from "./scanner-card-sections";
-import type { CardSavedScanIds, CardScanners, ScannerCardSlot } from "./workspace-scanner-title";
+import { scannerTitles, type CardSavedScanIds, type CardScanners, type ScannerCardKind, type ScannerCardSlot } from "./workspace-scanner-title";
+import type { SavedScanCatalogue } from "@/src/modules/scanner/custom/definition";
 
 import type { CardVolumePreferences } from "./workspace-volume";
 
@@ -77,15 +79,15 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
       const rect=resize(active.widget,active.start,dx,dy,active.edge,box);
       active.next=cardFits(rectangles,active.widget,rect)?{...rectangles,[active.widget]:rect}:null;
     }else{
-      const target=cardAtPoint(rectangles,(event.clientX-box.left)/box.width*layoutSize,(event.clientY-box.top)/box.height*layoutSize);
-      active.next=moveCard(rectangles,active.widget,active.start.x+dx,active.start.y+dy,{w:box.width,h:box.height},target);
+      const point={x:(event.clientX-box.left)/box.width*layoutSize,y:(event.clientY-box.top)/box.height*layoutSize};
+      active.next=dropCard(rectangles,active.widget,{x:active.start.x+dx,y:active.start.y+dy},point,{w:box.width,h:box.height});
     }
     setPreview(active.next);
     return true;
   };
   const pointer={onPointerMove:update,onPointerUp:(event:PointerEvent<HTMLButtonElement>)=>{
     if(!update(event))return;
-    if(!gesture.current?.next)onMessage("Choose an open space or a slot that fits both cards.");
+    if(!gesture.current?.next)onMessage("The card doesn’t fit there. Try another space or resize it.");
     stop(true,event.pointerId);
   },onPointerCancel:(event:PointerEvent<HTMLButtonElement>)=>stop(false,event.pointerId),
   onLostPointerCapture:(event:PointerEvent<HTMLButtonElement>)=>stop(false,event.pointerId)};
@@ -137,16 +139,60 @@ export function ScannerLayoutHandles({rectangles,onChange,onMessage}:{
   </Box>;
 }
 
-export function ScannerLayoutToolbar({editing,name,active,sourceName=active,setName,saved,visible,onToggle,message,onEdit,onSelect,onSave,onCancel,onReset,onPreset,onUndo,canUndo,mobile=false}:{
-  mobile?:boolean;editing:boolean;name:string;active:string;sourceName?:string;setName:(name:string)=>void;saved:NamedLayout[];
+export type NewWorkspaceCard = { scanner: ScannerCardKind } | { savedScanId: string };
+export type AddWorkspaceCardOptions = {
+  available: boolean;
+  scans?: SavedScanCatalogue["scans"];
+  onOpen: () => void;
+  onAdd: (card: NewWorkspaceCard) => void;
+};
+
+export function AddWorkspaceCardButton({available,scans,onOpen,onAdd}:AddWorkspaceCardOptions) {
+  const [anchor,setAnchor]=useState<HTMLButtonElement|null>(null);
+  const choose=(card:NewWorkspaceCard)=>{
+    setAnchor(null);
+    onAdd(card);
+  };
+  return <>
+    <Button size="small" variant="outlined" startIcon={<AddRounded/>} disabled={!available}
+      aria-haspopup="menu" aria-expanded={Boolean(anchor)}
+      onClick={event=>{setAnchor(event.currentTarget);onOpen();}} sx={{alignSelf:"flex-start"}}>
+      Add card
+    </Button>
+    {!available&&<Typography variant="caption" color="text.secondary">Both additional card slots are in use.</Typography>}
+    <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={()=>setAnchor(null)}
+      slotProps={{list:{"aria-label":"Add a scanner card"},paper:{sx:{maxHeight:"60dvh",maxWidth:"calc(100vw - 16px)"}}}}>
+      {Object.entries(scannerTitles).map(([scanner,label])=>
+        <MenuItem key={scanner} onClick={()=>choose({scanner:scanner as ScannerCardKind})}>{label}</MenuItem>)}
+      {Boolean(scans?.length)&&<ListSubheader>My scans</ListSubheader>}
+      {scans?.map(scan=>
+        <MenuItem key={scan.id} onClick={()=>choose({savedScanId:scan.id})} sx={{whiteSpace:"normal"}}>{scan.name}</MenuItem>)}
+    </Menu>
+  </>;
+}
+
+export function ScannerLayoutToolbar({addCard,editing,name,active,sourceName=active,setName,saved,visible,onToggle,message,onEdit,onSelect,onSave,onCancel,onReset,onPreset,onUndo,canUndo,mobile=false}:{
+  addCard:AddWorkspaceCardOptions;mobile?:boolean;editing:boolean;name:string;active:string;sourceName?:string;setName:(name:string)=>void;saved:NamedLayout[];
   visible:Widget[];onToggle:(widget:Widget)=>void;message:string;
   onPreset:(tile:Tile)=>void;onUndo:()=>void;canUndo:boolean;
   onEdit:()=>void;onSelect:(name:string)=>void;onSave:()=>boolean|void;onCancel:()=>void;onReset:()=>void;
 }) {
   const [anchor,setAnchor]=useState<HTMLButtonElement|null>(null);
+  const [naming,setNaming]=useState(false);
   const close=()=>setAnchor(null);
+  const cancelNaming=()=>{setNaming(false);setName("");};
   const [replaceName,setReplaceName]=useState<string|null>(null);
-  const save=()=>{if(name.trim()!==sourceName&&saved.some(item=>item.name===name.trim())){setReplaceName(name.trim());return;}if(onSave()!==false)close();};
+  const save=()=>{
+    const trimmed=name.trim();
+    if(!trimmed){
+      close();
+      setNaming(true);
+      return;
+    }
+    setNaming(false);
+    if(trimmed!==sourceName&&saved.some(item=>item.name===trimmed)){setReplaceName(trimmed);return;}
+    if(onSave()!==false)close();
+  };
   const actions=<Stack direction="row" spacing={0.5} sx={{alignItems:"center"}}>
       <Button data-layout-editor-action size="small" variant="outlined" color="inherit" onClick={()=>{onCancel();close();}}
         sx={theme=>({
@@ -154,7 +200,7 @@ export function ScannerLayoutToolbar({editing,name,active,sourceName=active,setN
           borderColor:theme.palette.mode==="dark"?theme.palette.traderLink.chart.controlText:theme.palette.text.secondary,
           "&:hover":{bgcolor:theme.palette.action.hover,borderColor:theme.palette.text.primary},
         })}>Cancel</Button>
-      <Button data-layout-editor-action size="small" variant="contained" onClick={save} disabled={!name.trim()}
+      <Button data-layout-editor-action size="small" variant="contained" onClick={save}
         sx={theme=>({
           border:"1px solid",
           borderColor:theme.palette.mode==="dark"?theme.palette.primary.light:theme.palette.primary.main,
@@ -174,6 +220,7 @@ export function ScannerLayoutToolbar({editing,name,active,sourceName=active,setN
       </IconButton>
     </Tooltip>
     {editing&&!mobile&&actions}
+    {editing&&message&&<Typography role="status" color="error.main" variant="caption" sx={{ml:1}}>{message}</Typography>}
     <Popper open={Boolean(anchor)} anchorEl={anchor} placement="bottom-start" sx={{zIndex:1299}}>
       <ClickAwayListener onClickAway={event=>{if(event.target instanceof Element&&event.target.closest('[data-layout-editor-action]'))return;close();}}>
         <Paper aria-label="Layout settings" role="region" onKeyDown={event=>{
@@ -193,13 +240,13 @@ export function ScannerLayoutToolbar({editing,name,active,sourceName=active,setN
               <option value="" disabled>Choose a starting layout</option>
               {presets.map(item=><option key={item.name} value={item.name}>{item.name}</option>)}
             </TextField>
-            <TextField label="Layout name" size="small" value={name} onChange={event=>setName(event.target.value)}
-              slotProps={{htmlInput:{maxLength:40}}}/>
+            {sourceName && <TextField label="Layout name" size="small" value={name} onChange={event=>setName(event.target.value)}
+              slotProps={{htmlInput:{maxLength:40}}}/>}
+            <AddWorkspaceCardButton {...addCard}/>
             <Stack role="group" aria-label="Visible cards">
               <Typography variant="caption" sx={{fontWeight:700}}>Visible cards</Typography>
-              {widgets.map(widget=><FormControlLabel key={widget} label={widgetNames[widget]} sx={{m:0}}
+              {[...widgets,...visible.filter(widget=>!widgets.some(base=>base===widget))].map(widget=><FormControlLabel key={widget} label={widgetNames[widget]} sx={{m:0}}
                 control={<Checkbox size="small" checked={visible.includes(widget)} onChange={()=>onToggle(widget)}/>}/>)}
-              {message&&<Typography role="status" variant="caption" color="error">{message}</Typography>}
             </Stack>
             <Button size="small" disabled={!canUndo} color="inherit" onClick={onUndo} sx={{alignSelf:"flex-start"}}>Undo</Button>
             <Button size="small" variant="outlined" color="inherit" onClick={onReset} sx={{alignSelf:"flex-start"}}>Reset to default</Button>
@@ -208,6 +255,19 @@ export function ScannerLayoutToolbar({editing,name,active,sourceName=active,setN
         </Paper>
       </ClickAwayListener>
     </Popper>
+    <Dialog open={naming} onClose={cancelNaming} aria-labelledby="name-desktop-layout-title">
+      <Box component="form" onSubmit={event=>{event.preventDefault();if(name.trim())save();}}>
+        <DialogTitle id="name-desktop-layout-title">Name this layout</DialogTitle>
+        <DialogContent>
+          <TextField label="Layout name" size="small" value={name} autoFocus fullWidth
+            onChange={event=>setName(event.target.value)} slotProps={{htmlInput:{maxLength:40}}} sx={{mt:1}}/>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" variant="outlined" color="inherit" onClick={cancelNaming}>Cancel</Button>
+          <Button type="submit" variant="contained" disabled={!name.trim()}>Save</Button>
+        </DialogActions>
+      </Box>
+    </Dialog>
     <Dialog open={replaceName!==null} onClose={()=>setReplaceName(null)} aria-labelledby="replace-desktop-layout-title">
       <DialogTitle id="replace-desktop-layout-title">Replace saved layout?</DialogTitle><DialogContent>Replace “{replaceName}” with this arrangement?</DialogContent>
       <DialogActions><Button data-layout-editor-action variant="outlined" color="inherit" onClick={()=>setReplaceName(null)}>Cancel</Button><Button data-layout-editor-action variant="outlined" color="error" onClick={()=>{setReplaceName(null);if(onSave()!==false)close();}}>Replace</Button></DialogActions>

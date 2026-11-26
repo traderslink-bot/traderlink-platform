@@ -1,6 +1,11 @@
 export type ScannerWorkspaceSlotId="slot-1"|"slot-2"|"slot-3"|"slot-4"|"slot-5"|"slot-6"|"slot-7";
 export type ScannerWorkspaceWidget="gainers"|"momentum"|"top-losers"|"high-drops"|"market-events"|"ticker-workspace"|"breakouts";
 
+export const extraWorkspaceCardSlots = {"scanner-8":"slot-8", "scanner-9":"slot-9"} as const;
+export type ExtraWorkspaceCard = keyof typeof extraWorkspaceCardSlots;
+export type WorkspaceCardWidget = ScannerWorkspaceWidget | ExtraWorkspaceCard;
+export type WorkspaceCardSlotId = ScannerWorkspaceSlotId | (typeof extraWorkspaceCardSlots)[ExtraWorkspaceCard];
+
 export type ScannerWorkspaceLayout=Readonly<{
   id:string;
   desktopAreas:string;

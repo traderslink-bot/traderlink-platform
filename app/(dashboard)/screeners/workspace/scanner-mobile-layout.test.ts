@@ -79,3 +79,27 @@ it("persists only supported optional volume columns, independently per card", ()
     ["Vol","—"],["Pre Vol","12"],["Regular Vol","30"],["After-hours Vol","0"],
   ]);
 });
+
+it("restores two additional scanner cards without changing the seven-card default or duplicating the chart", () => {
+  const initial = defaultMobileLayout("portrait");
+  expect(initial.order).toHaveLength(7);
+  const savedScanId = "abcde000-1234-5678-9abc-abcde0000000";
+  const saved = readMobileLayout({
+    ...initial,
+    order: [...initial.order, "scanner-8", "scanner-9"],
+    scanners: { "scanner-8": "momentum" },
+    savedScanIds: { "scanner-9": savedScanId },
+    selected: "scanner-9",
+    views: { "scanner-8": "cards", "scanner-9": "two-rows" },
+  }, "portrait");
+  expect(saved.order).toHaveLength(9);
+  expect(saved.scanners["scanner-8"]).toBe("live:momentum");
+  expect(saved.savedScanIds?.["scanner-9"]).toBe(savedScanId);
+  expect(saved.selected).toBe("scanner-9");
+  expect(saved.mode).toBe("tabs");
+  expect(toggleMobileCard(initial, "scanner-8").mode).toBe("tabs");
+  expect(toggleMobileCard(toggleMobileCard(initial, "gainers"), "scanner-8").mode).toBe("stacked");
+  expect(saved.views).toEqual({ "scanner-8": "cards", "scanner-9": "two-rows" });
+  expect(saved.order.filter(widget => widget === "ticker-workspace")).toHaveLength(1);
+  expect(() => readMobileLayout({...saved, order: [...initial.order, "ticker-workspace"]}, "portrait")).toThrow();
+});

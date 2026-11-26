@@ -3,18 +3,20 @@
 import { scannerPercent, scannerRelativeVolume } from "../scanner-number-format";
 import {WorkspaceChartReplacement} from './workspace-chart-replacement';
 import {useWorkspaceChartLayout} from './use-workspace-chart-layout';
+import type { WorkspaceChartLayout } from "./workspace-chart-arrangement";
 import {useWorkspaceMobileOrientation} from './use-workspace-mobile-orientation';
+import {MOBILE_STACKED_CARD_LIMIT,toggleMobileCard} from './scanner-mobile-layout';
 import {useMobileWorkspaceLayout} from './use-mobile-workspace-layout';
 import {MobileWorkspaceLayoutEditor,MobileCardResizeHandles} from './scanner-mobile-layout-editor';
 import {mobileWorkspaceStyles} from './scanner-mobile-layout-styles';
 import {useMobileWorkspaceViewport} from './use-mobile-workspace-viewport';
 import { workspaceGainerResults, workspacePrice, type WorkspaceScannerModel, type WorkspaceScreenResults, type WorkspaceStock } from "./broker-workspace-data";
 
-import { ScannerLayoutHandles, ScannerLayoutToolbar, type CardViews, type NamedLayout } from "./scanner-layout-editor";
-import { validPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
+import { ScannerLayoutHandles, ScannerLayoutToolbar, type NewWorkspaceCard, type CardViews, type NamedLayout } from "./scanner-layout-editor";
+import { nextExtraWorkspaceCard, validPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
 import { defaultTile, fromGrid, minimum, validTile } from "./scanner-split-layout";
 import { cardEntries, layoutSize, placeAddedCard, removePresetSpacing, tileToCards, validCardLayout, type CardLayout } from "./scanner-free-layout";
-import { isScannerCardSlot, readCardSavedScanIds, readCardScanners, scannerCardSlots, scannerTitles, WorkspaceScannerCardHeader, workspaceScannerTableHeaderSx, WorkspaceScannerTitle, WorkspaceScannerTitleContext, workspaceScannerKind, type CardSavedScanIds, type CardScanners, type ScannerCardSlot } from "./workspace-scanner-title";
+import { defaultScannerForSlot, readScannerChoice, isScannerCardSlot, readCardSavedScanIds, readCardScanners, scannerSlots, scannerTitles, WorkspaceScannerCardHeader, workspaceScannerTableHeaderSx, WorkspaceScannerTitle, WorkspaceScannerTitleContext, workspaceScannerKind, type CardSavedScanIds, type CardScanners, type BaseScannerCardSlot, type ScannerCardSlot } from "./workspace-scanner-title";
 import { useWorkspaceSavedScans } from "./use-workspace-saved-scans";
 import { WorkspaceSavedScanCard } from "./workspace-saved-scan-card";
 import { GainerSwitchControl } from "./gainer-switch-control";
@@ -23,6 +25,7 @@ import { ScannerPageTicker, ScannerPageTickerSelection } from "./scanner-page-ti
 import { ScannerRowTools, scannerToolColumnSx } from "./scanner-row-tools";
 
 import { scannerGainColor } from "../scanner-gain-color";
+import { formatScannerFloatTurnover, scannerFloatTurnoverTitle } from "@/src/modules/scanner/live/volume";
 
 import { ChartMultiviewCharts } from "../../charts/chart-multiview";
 import { ChartMultiviewMenu } from "../../charts/chart-multiview-menu";
@@ -31,7 +34,6 @@ import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import { useChartMultiview } from "../../charts/use-chart-multiview";
 import { chartCount, reconcileChartTickers, selectedChart, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 
-import dynamic from "next/dynamic";
 import CandlestickChartRounded from "@mui/icons-material/CandlestickChartRounded";
 import ButtonBase from "@mui/material/ButtonBase";
 import Portal from "@mui/material/Portal";
@@ -76,10 +78,11 @@ import { PressReleaseArticleDrawer } from "@/app/(dashboard)/press-releases/pres
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { ScreenerPressReleaseBoard, useMarketEventsData } from "./screener-press-release-board";
 import { keepSelectedWorkspaceChart, singleWorkspaceChart } from "./workspace-chart-panels";
+import { ScannerCompanyDrawer } from "./scanner-company-drawer";
 import { ScannerCompactChart, ScannerCompactChartCovered } from "./scanner-compact-chart";
 import { ScannerBreakoutsCard } from "./scanner-breakouts-card";
 import { ScannerWorkspaceCard } from "../scanner-workspace-card";
-import { DEFAULT_SCANNER_WORKSPACE_LAYOUT, type ScannerWorkspaceWidget } from "../scanner-workspace-layout";
+import { DEFAULT_SCANNER_WORKSPACE_LAYOUT, extraWorkspaceCardSlots, type WorkspaceCardWidget } from "../scanner-workspace-layout";
 import { DeclinesCard } from "./declines-card";
 import { ScannerCountryFlag } from "../scanner-country-flag";
 import { scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
@@ -107,9 +110,9 @@ import { MomentumSections } from "../momentum-sections";
 import { momentumSignalText } from "../momentum-signal-text";
 
 const defaultRectangles = tileToCards(defaultTile);
-const ScannerCompanyDrawer = dynamic(() => import("./scanner-company-drawer").then(module => module.ScannerCompanyDrawer));
 const scannerToolbar = () => document.getElementById("dashboard-scanner-toolbar");
 
+const workspaceSlots={...DEFAULT_SCANNER_WORKSPACE_LAYOUT.assignments,...extraWorkspaceCardSlots};
 const SCREEN_LABELS: Record<ScannerKind,string> = { gainers: "Top Gainers", momentum: "Momentum" };
 const MOBILE_SCANNER_LAYOUT_KEY = "traderslink.scanner.mobile-layout.v1";
 const MOBILE_SCANNER_TABS = [
@@ -120,6 +123,8 @@ const MOBILE_SCANNER_TABS = [
   {widget:"market-events", label:"Events", accessibleLabel:"Market Events"},
   {widget:"breakouts", label:"Breakouts", accessibleLabel:"Breakouts"},
   {widget:"ticker-workspace", label:"Chart", accessibleLabel:"Chart"},
+  {widget:"scanner-8", label:"Top Gainers", accessibleLabel:"Top Gainers"},
+  {widget:"scanner-9", label:"Momentum", accessibleLabel:"Momentum"},
 ] as const;
 type MobileScannerTab = typeof MOBILE_SCANNER_TABS[number]["widget"];
 
@@ -163,12 +168,7 @@ function NewsLinks({ row }: { row: WorkspaceStock }) {
   return <ScannerRowNews news={row.news}/>;
 }
 
-function floatTraded(row: WorkspaceStock): string | null {
-  if (row.volume === null || row.float === null || row.float <= 0) return null;
-  return `${wholePercent.format(100 * row.volume / row.float)}%`;
-}
-
-function ChartButton({ expanded=false,row,onOpenChart }: { expanded?:boolean; row: WorkspaceStock; onOpenChart: (row:WorkspaceStock)=>void }) {
+function ChartButton({expanded=false,row,onOpenChart}:{expanded?:boolean;row:WorkspaceStock;onOpenChart:(row:WorkspaceStock)=>void}) {
   return <ScannerChartLaunchControls row={row} onOpenChart={onOpenChart} expanded={expanded}/>;
 }
 
@@ -210,6 +210,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
     return {label:scannerVolumeLabel(key),align:primaryDayVolume?"left" as const:"right" as const,
       width:volumeColumnWidth(key)};
   });
+  const [mainVolume]=volumeColumns;
   const [expandedSymbol,setExpandedSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(rows);
   const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
@@ -223,13 +224,13 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
     <Table aria-label={twoRows?`${SCREEN_LABELS[screen]} two-row stocks`:compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,...scannerStickyTickerSx,tableLayout:"fixed",width:headers.reduce((total,header)=>total+header.width,0),minWidth:headers.reduce((total,header)=>total+header.width,0),'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.2,py:0.34 },'& .MuiTableCell-head':workspaceScannerTableHeaderSx }}>
       <colgroup>{headers.map((header,index)=><Box component="col" key={index} sx={!header.label?scannerToolColumnSx(allowAdd):{width:header.width}}/>)}</colgroup>
-      <TableHead><TableRow>{headers.map((header,index)=><TableCell data-scanner-sticky-ticker={header.label==="Ticker"?true:undefined} align={"align" in header ? header.align : "left"} aria-label={header.label||(index===0?"Chart, news and details":undefined)} key={`${header.label}-${index}`} sx={!header.label?scannerToolColumnSx(allowAdd):{width:header.width}}>{header.label}</TableCell>)}</TableRow></TableHead>
-      <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
+      <TableHead><TableRow>{headers.map((header,index)=><TableCell data-scanner-sticky-ticker={header.label==="Ticker"?true:undefined} align={"align" in header ? header.align : "left"} aria-label={header.label||(index===0?"Chart, news and details":undefined)} title={header.label==="T/O"?scannerFloatTurnoverTitle(mainVolume):undefined} key={`${header.label}-${index}`} sx={!header.label?scannerToolColumnSx(allowAdd):{width:header.width}}>{header.label}</TableCell>)}</TableRow></TableHead>
+      <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=formatScannerFloatTurnover(row,mainVolume);const expandedMetrics=(screen==="gainers"?[
         metric("HOD price",workspacePrice(row.dayHigh)),
         metric("HOD",value(row.offHighPercent,"%"),row.offHighPercent),
         metric("Session low",workspacePrice(row.dayLow)),
         row.relativeVolume==null?null:metric("RVOL",scannerRelativeVolume(row.relativeVolume)),
-        traded==null?null:metric("T/O",traded),
+        metric("T/O",traded),
       ]:[
         row.momentumHit || row.momentumSignals?.length ? metric("Detected",momentumSignalText(row as LiveScannerRow)) : null,
         row.activity.episodeShares==null?null:metric("Episode volume",compact.format(row.activity.episodeShares)),
@@ -245,7 +246,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         metric("HOD price",workspacePrice(row.dayHigh)),
         metric("Below HOD",value(row.offHighPercent,"%"),row.offHighPercent),
         metric("Session low",workspacePrice(row.dayLow)),
-        traded==null?null:metric("Turnover",traded),
+        metric("Turnover",traded),
         row.spreadPercent===null?null:metric("Spread",scannerPercent(row.spreadPercent)),
       ]).filter(Boolean);const secondRowTools=<ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/>;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:twoRows||screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
@@ -255,7 +256,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
           {screen==="gainers"?<>
             <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell>
             <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell>
-            <TableCell>{traded??"n/a"}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
+            <TableCell>{traded}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
             <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell>
           </>:<>
             <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell><TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{scannerPercent(row.activity.oneMinuteGain)}</TableCell>
@@ -288,6 +289,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: Workspa
   const allowAdd=useSideCardChartControls();
   const volumeColumns=useWorkspaceVolumeColumns();
   const volumeHeaders=volumeColumns.map(key=>scannerVolumeLabel(key));
+  const [mainVolume]=volumeColumns;
   const [expandedDesktopSymbol,setExpandedDesktopSymbol]=useState<string|null>(null);
   const movement=usePriceMovement(results.rows);
   const showPostGain=screen==="momentum"&&results.rows.some(row=>row.postMarketGain!==undefined);
@@ -303,13 +305,13 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: Workspa
     <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
       {screen==="gainers"?<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart and news" sx={{ px:"0 !important",...scannerToolColumnSx(allowAdd) }}/>
-        {['Ticker','Price','Gain%',...volumeHeaders,'Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} align={label!=="Vol"&&volumeHeaders.includes(label) ? "right" : "left"}>{label}</TableCell>)}
+        {['Ticker','Price','Gain%',...volumeHeaders,'Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} title={label==="T/O"?scannerFloatTurnoverTitle(mainVolume):undefined} align={label!=="Vol"&&volumeHeaders.includes(label) ? "right" : "left"}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
         <TableCell sx={{ px:"0 !important",...scannerToolColumnSx(allowAdd) }}><ScannerRowTools symbol={row.symbol} news={row.news} chart={<ChartButton row={row} onOpenChart={onOpenChart}/>}/></TableCell>
         <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
         <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{workspacePrice(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
         <WorkspaceVolumeCells row={row} columns={volumeColumns}/><TableCell>{floatValue(row.float)}</TableCell>
-        <TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
+        <TableCell>{formatScannerFloatTurnover(row,mainVolume)}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
         <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell><TableCell><ScannerCountryFlag country={row.country}/></TableCell>
       </TableRow>)}</TableBody></Table>:<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart and news" sx={{ px:"0.125rem !important",...scannerToolColumnSx(allowAdd) }}/>
@@ -341,7 +343,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: Workspa
               ["HOD price",workspacePrice(row.dayHigh)],
               ["Below HOD",value(row.offHighPercent,"%")],
               ["Session low",workspacePrice(row.dayLow)],
-              ["Turnover",floatTraded(row)??"n/a"],
+              ["Turnover",formatScannerFloatTurnover(row,mainVolume)],
             ].map(([label,content])=><Box key={label}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.86rem",fontWeight:750,mt:0.45,color:label==="Below HOD"?scannerGainColor(row.offHighPercent):undefined }}>{content}</Typography></Box>)}
           </Box>
         </TableCell></TableRow>:null}
@@ -605,7 +607,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
         if(!Array.isArray(value?.layouts)){setStored({key:desktopStorageKey,active:"",layouts:[]});return;}
         const layouts:NamedLayout[]=value.layouts.flatMap((item:NamedLayout&{positions?:DesktopPositions;tile?:unknown;visible?:typeof widgets})=>{
           if(!item||typeof item.name!=="string")return [];
-          if(validCardLayout(item.rectangles))return [{name:item.name,rectangles:removePresetSpacing(item.rectangles),scanners:readCardScanners(item.scanners),gainerAutoSwitch:readGainerSwitchPreferences(item.gainerAutoSwitch,Object.keys(scannerCardSlots)),sections:readCardSectionPreferences(item.sections),volumeColumns:readCardVolumePreferences(item.volumeColumns),
+          if(validCardLayout(item.rectangles))return [{name:item.name,rectangles:removePresetSpacing(item.rectangles),scanners:readCardScanners(item.scanners),gainerAutoSwitch:readGainerSwitchPreferences(item.gainerAutoSwitch,scannerSlots),sections:readCardSectionPreferences(item.sections),volumeColumns:readCardVolumePreferences(item.volumeColumns),
             ...(scoped!==null?{savedScanIds:readCardSavedScanIds(item.savedScanIds)}:{}),views:Object.fromEntries(
             Object.entries(item.views??{}).filter(([slot,view])=>isScannerCardSlot(slot)&&
               (view==="table"||view==="two-rows"||view==="cards")))}];
@@ -647,7 +649,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
     saveScannerChoice({...scannerChoices,[slot]:scanner},ids);
   };
   const rectangles=draft??activeLayout?.rectangles??defaultRectangles;
-  const visible=mobile&&desktopLayout?mobileLayout.order:Object.keys(rectangles) as ScannerWorkspaceWidget[];
+  const visible=mobile&&desktopLayout?mobileLayout.order:Object.keys(rectangles) as WorkspaceCardWidget[];
   const [desktopBounds,setDesktopBounds]=useState({x:0,y:0,w:0,h:0});
   // Mobile edits visibility in the same saved layout. Its stacked cards do not have desktop geometry.
   const layoutBounds=mobile?{w:1280,h:720}:desktopBounds;
@@ -655,7 +657,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
     if(draft&&next!==draft)rememberDesktop();
     setDraft(next);
   };
-  const toggleWidget=(widget:ScannerWorkspaceWidget)=>{
+  const toggleWidget=(widget:WorkspaceCardWidget)=>{
     if(!draft)return;
     setVisibilityMessage("");
     if(visible.includes(widget)){
@@ -678,6 +680,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
   const [activeScanner,setActiveScanner]=useState<MobileScannerTab>("gainers");
   const mobileTabs = mobile && (desktopLayout?mobileLayout.mode==="tabs":preferTabs);
   const mobileTabsId = useId();
+  const canStackMobile=mobileLayout.order.length<=MOBILE_STACKED_CARD_LIMIT;
   const hydratedSelection=useRef<string|null>(null);
   useEffect(()=>{
     if(!mobile||!desktopLayout||!mobileEditor.ready||!ownerKey)return;
@@ -692,6 +695,17 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
   const [pageChartsFull,setPageChartsFull]=useState(false);
   const [pageReplacement,setPageReplacement]=useState<{symbol:string;layout:ChartMultiview}|null>(null);
   const activePageReplacement=pageReplacement?.layout===pageCharts?pageReplacement:null;
+  const [arrangeChartsFor,setArrangeChartsFor]=useState<WorkspaceChartLayout|null>(null);
+  const workspaceMultiviewButton=useRef<HTMLButtonElement>(null);
+  const revealWorkspaceChart=()=>{
+    if(mobileTabs){setActiveScanner("ticker-workspace");return;}
+    requestAnimationFrame(()=>gridRef.current?.querySelector('[data-scanner-workspace-card="ticker-workspace"]')
+      ?.scrollIntoView?.({block:"nearest"}));
+  };
+  const endChartArrangement=()=>{
+    setArrangeChartsFor(null);
+    requestAnimationFrame(()=>workspaceMultiviewButton.current?.focus({preventScroll:true}));
+  };
   const pendingPageTicker=useRef<{symbol:string;owner:string|undefined}|null>(null);
   const pageTicker=pageCharts?selectedChart(pageCharts)?.group.symbol??null:null;
   const selectPageTicker=useCallback((symbol:string,replacePanel?:string)=>{
@@ -716,9 +730,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
     return()=>cancelAnimationFrame(frame);
   },[pageChartsReady,ownerKey,selectPageTicker]);
   const [companySymbol,setCompanySymbol]=useState<string|null>(null);
-  const [companyDrawerLoaded,setCompanyDrawerLoaded]=useState(false);
   const openCompanyDetails=useCallback((symbol:string)=>{
-    setCompanyDrawerLoaded(true);
     setCompanySymbol(symbol);
   },[]);
   const showWorkspaceChart=desktopLayout&&visible.includes("ticker-workspace");
@@ -728,7 +740,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
     openDetails:desktopLayout?openCompanyDetails:undefined,
   }),[pageTicker,showWorkspaceChart,selectPageTicker,desktopLayout,openCompanyDetails]);
 
-  const includeWidget = (widget: ScannerWorkspaceWidget) => desktopLayout?visible.includes(widget):!scannersOnly||(widget!=="market-events"&&widget!=="ticker-workspace");
+  const includeWidget = (widget: WorkspaceCardWidget) => desktopLayout?visible.includes(widget):widgets.some(base=>base===widget)&&(!scannersOnly||(widget!=="market-events"&&widget!=="ticker-workspace"));
   const scannerKindFor=(slot:ScannerCardSlot)=>workspaceScannerKind(slot,desktopLayout?scannerChoices?.[slot]:undefined);
   const mobileScannerTabs=MOBILE_SCANNER_TABS.filter(({widget})=>includeWidget(widget)).map(tab=>{
     const kind=isScannerCardSlot(tab.widget)&&scannerChoices?.[tab.widget]?scannerKindFor(tab.widget):undefined;
@@ -736,28 +748,66 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
   }).sort((a,b)=>mobile&&desktopLayout?mobileLayout.order.indexOf(a.widget)-mobileLayout.order.indexOf(b.widget):0);
   const selectedScanner=activeScanner;
   const displayedTab=includeWidget(selectedScanner)?selectedScanner:mobileScannerTabs[0]?.widget;
-  const showScanner = (widget: ScannerWorkspaceWidget) => includeWidget(widget) && (!mobileTabs || widget===displayedTab);
+  const showScanner = (widget: WorkspaceCardWidget) => includeWidget(widget) && (!mobileTabs || widget===displayedTab);
   const [workspaceSection,setWorkspaceSection]=useState<"details"|"screeners">("details");
   const [drawerOpen,setDrawerOpen]=useState(false);
   const [workspaceScreenersSelected,setWorkspaceScreenersSelected]=useState({gainers:true,momentum:false,declines:false,pullbacks:false,events:false});
-  const activeSavedIds=widgets.filter(isScannerCardSlot).filter(showScanner).flatMap(slot=>{
+  const activeSavedIds=scannerSlots.filter(showScanner).flatMap(slot=>{
     const id=savedScanIds?.[slot];
     return id?[id]:[];
   });
   const savedScans=useWorkspaceSavedScans(desktopLayout?ownerKey:undefined,activeSavedIds,broker);
   const scanName=(id:string)=>savedScans.catalogue?.scans.find(scan=>scan.id===id)?.name;
+  const extraSlot=nextExtraWorkspaceCard(visible);
+  const addWorkspaceCard=(card:NewWorkspaceCard)=>{
+    if(!extraSlot||("savedScanId" in card&&!scanName(card.savedScanId)))return;
+    const scanners={...scannerChoices,[extraSlot]:"scanner" in card?readScannerChoice(card.scanner):undefined};
+    const ids={...savedScanIds,[extraSlot]:"savedScanId" in card?card.savedScanId:undefined};
+    const views={...cardViews,[extraSlot]:undefined};
+    const sections={...cardSections,[extraSlot]:undefined};
+    const volumeColumns={...cardVolumeColumns,[extraSlot]:undefined};
+    const gainerAutoSwitch={...cardGainerSwitch,[extraSlot]:undefined};
+
+    if(mobile&&desktopLayout){
+      const heights={...mobileLayout.heights};
+      const placement={...mobileLayout.placement};
+      delete heights[extraSlot];
+      delete placement[extraSlot];
+      mobileEditor.update({...toggleMobileCard(mobileLayout,extraSlot),scanners,savedScanIds:ids,views,sections,volumeColumns,gainerAutoSwitch,
+        heights,placement,wide:mobileLayout.wide.filter(widget=>widget!==extraSlot)});
+      return;
+    }
+    if(!draft)return;
+    const size=minimum(extraSlot);
+    const next=layoutBounds.w>=size.w&&layoutBounds.h>=size.h?placeAddedCard(draft,extraSlot,{
+      w:Math.ceil(size.w/layoutBounds.w*layoutSize),h:Math.ceil(size.h/layoutBounds.h*layoutSize),
+    }):null;
+    if(!next){setVisibilityMessage("Make a larger opening to add this card.");return;}
+    changeLayout(next);
+    setDraftScanners(scanners);
+    setDraftSavedIds(ids);
+    setDraftViews(views);
+    setDraftSections(sections);
+    setDraftVolumeColumns(volumeColumns);
+    setDraftGainerSwitch(gainerAutoSwitch);
+    setVisibilityMessage("");
+  };
+  const addCard={available:Boolean(extraSlot),scans:savedScans.catalogue?.scans,onOpen:savedScans.refreshCatalogue,onAdd:addWorkspaceCard};
   const scanUnavailable=(id:string)=>savedScans.phase==="unavailable"||savedScans.results?.[id]?.state==="unavailable"||
     Boolean(savedScans.catalogue&&!scanName(id));
   const savedScanLabel=(id:string)=>scanUnavailable(id)?"Saved scan unavailable":scanName(id)??"Saved scan";
   const toggleMobileLayout = () => {
-    if(desktopLayout&&mobile){mobileEditor.update({...mobileLayout,mode:mobileTabs?"stacked":"tabs"});return;}
+    if(desktopLayout&&mobile){
+      if(canStackMobile)mobileEditor.update({...mobileLayout,mode:mobileTabs?"stacked":"tabs"});
+      return;
+    }
     const next = !preferTabs;
     setPreferTabs(next);
     try { window.localStorage.setItem(MOBILE_SCANNER_LAYOUT_KEY,next?"tabs":"stacked"); }
     catch { /* Keep this choice for the current page. */ }
   };
   const brokerCards = broker ? new Set(
-    widgets.filter(isScannerCardSlot).filter(showScanner).flatMap(slot => {
+    scannerSlots.filter(showScanner).flatMap(slot => {
       const kind = scannerKindFor(slot);
       if (savedScanIds?.[slot] || kind === "market-events") return [];
       return [kind === "gainers" && cardGainerSwitch?.[slot] === false ? "day-gainers" : kind];
@@ -871,7 +921,8 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
   const selectedGainers=workspaceGainerResults(model,gainerView);
   const compactChartSymbol=!model&&!loadError ? null : scannerOutsideActiveHours(model as ScannerReadModel | null,checkedAt) ? "IWM"
     : selectedGainers?.rows[0]?.symbol ?? momentumStocks[0]?.symbol ?? "SPY";
-  const marketEventsVisible=widgets.some(slot=>isScannerCardSlot(slot)&&showScanner(slot)&&
+  const arrangingCharts=arrangeChartsFor!==null&&pageCharts===arrangeChartsFor&&!draft&&!drawerOpen&&!companySymbol;
+  const marketEventsVisible=scannerSlots.some(slot=>showScanner(slot)&&
     !savedScanIds?.[slot]&&scannerKindFor(slot)==="market-events");
   const marketEventsData=useMarketEventsData(true,!scannersOnly&&(!desktopLayout||marketEventsVisible||(drawerOpen&&workspaceScreenersSelected.events)));
   const activeHalts=selectActiveScannerHalts(model?.activeHalts??[],new Date(checkedAt));
@@ -892,9 +943,9 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
     <IconButton aria-label="Explain Top Gainers" size="small" sx={{p:0.2}}><InfoOutlinedIcon sx={{fontSize:15}}/></IconButton>
   </Tooltip></Stack>;
   const [fullScannerSlot,setFullScannerSlot]=useState<ScannerCardSlot>();
-  const modeFor=(kind:ScannerCardSlot,slot?:ScannerCardSlot)=>
+  const modeFor=(kind:BaseScannerCardSlot,slot?:ScannerCardSlot)=>
     slot ? cardViews?.[slot]??"table" : kind==="breakouts"||kind==="market-events"?"table":displayModes[kind];
-  const changeMode=(kind:ScannerCardSlot,view:ScannerView,slot?:ScannerCardSlot)=>{
+  const changeMode=(kind:BaseScannerCardSlot,view:ScannerView,slot?:ScannerCardSlot)=>{
     if(!slot){
       if(kind!=="breakouts"&&kind!=="market-events")setDisplayModes(previous=>({...previous,[kind]:view}));
       return;
@@ -989,7 +1040,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
     {!admin&&<Portal container={scannerToolbar}>
       <Stack direction="row" sx={{justifyContent:desktopLayout?"flex-start":"flex-end",alignItems:"center",minWidth:0}}>
         <ScannerConnectionIndicator phase={phase} onRetry={retry}/>
-      {desktopLayout&&mobile&&<MobileWorkspaceLayoutEditor key={orientation} editor={mobileEditor} orientation={orientation}/>}{desktopLayout&&!mobile&&desktopStorageReady&&<ScannerLayoutToolbar mobile={mobile} editing={draft!==null} name={layoutName} active={stored.active} sourceName={draft?draftSourceName:stored.active}
+      {desktopLayout&&mobile&&<MobileWorkspaceLayoutEditor key={orientation} addCard={addCard} editor={mobileEditor} orientation={orientation}/>}{desktopLayout&&!mobile&&desktopStorageReady&&<ScannerLayoutToolbar addCard={addCard} mobile={mobile} editing={draft!==null} name={layoutName} active={stored.active} sourceName={draft?draftSourceName:stored.active}
         onEdit={()=>{setDraftKey(desktopStorageKey);setDraftSourceName(stored.active);setLayoutName(stored.active);setUndo([]);setVisibilityMessage("");setDraftScanners(scannerChoices??{});setDraftSavedIds(savedScanIds??{});setDraftViews(cardViews??{});setDraftSections(cardSections??{});setDraftVolumeColumns(cardVolumeColumns??{});setDraftGainerSwitch(cardGainerSwitch??{});setDraft(rectangles);}}
         setName={setLayoutName} saved={stored.layouts.filter(item=>item.name)} visible={visible} onToggle={toggleWidget} message={visibilityMessage}
         onSelect={name=>{
@@ -1020,8 +1071,9 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
           if(saved)setDraft(null);return saved;
         }}/>}
         {showWorkspaceChart&&pageCharts&&chartCount(pageCharts)>1&&
-          <ChartMultiviewMenu layout={pageCharts} defaultTimeframe={defaultTimeframe}
-            onChange={setPageCharts} resolveEmptyLayout={draft=>singleWorkspaceChart(draft,compactChartSymbol,defaultTimeframe)}
+          <ChartMultiviewMenu layout={pageCharts} openingPanelId={pageCharts.selectedPanel??undefined} defaultTimeframe={defaultTimeframe}
+            onChange={setPageCharts} launcherRef={workspaceMultiviewButton} disabled={arrangingCharts||draft!==null}
+            onArrange={()=>{setArrangeChartsFor(pageCharts);revealWorkspaceChart();}} resolveEmptyLayout={draft=>singleWorkspaceChart(draft,compactChartSymbol,defaultTimeframe)}
             onCloseView={()=>setPageCharts(current=>current?keepSelectedWorkspaceChart(current):null)}
             closeViewLabel="Return to one chart" chartTabs iconOnly workspaceFullGrid/>}
         {((desktopLayout&&mobile)||(!drawerOpen&&canReopenChart))&&
@@ -1034,10 +1086,13 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
               </ButtonBase>
             </Box>
           </Tooltip>}
-        {desktopLayout&&mobile&&<Tooltip title={mobileTabs?"Use stacked layout":"Use tabs"}>
-          <IconButton aria-label={mobileTabs?"Use stacked layout":"Use tabs"} onClick={toggleMobileLayout} sx={{"@media(max-width:359px)":{"&&":{minWidth:34,width:34,p:0}}}}>
-            {mobileTabs?<ViewStreamOutlined fontSize="small"/>:<ViewDayOutlined fontSize="small"/>}
-          </IconButton>
+        {desktopLayout&&mobile&&<Tooltip title={!canStackMobile?"Stacked view supports up to seven cards":mobileTabs?"Use stacked layout":"Use tabs"}>
+          <Box component="span" sx={{display:"inline-flex"}}>
+            <IconButton aria-label={mobileTabs?"Use stacked layout":"Use tabs"} disabled={!mobileEditor.ready||!canStackMobile}
+              onClick={toggleMobileLayout} sx={{"@media(max-width:359px)":{"&&":{minWidth:34,width:34,p:0}}}}>
+              {mobileTabs?<ViewStreamOutlined fontSize="small"/>:<ViewDayOutlined fontSize="small"/>}
+            </IconButton>
+          </Box>
         </Tooltip>}
       </Stack>
     </Portal>}
@@ -1045,7 +1100,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
     <ScannerCompactChartCovered value={drawerOpen||companySymbol!==null}>
     <ScannerPageSurface covered={drawerOpen||companySymbol!==null}>
     <ScannerNewsDrawerProvider onOpen={item=>void openNews(item)}><Box>
-      {mobile&&(mobileTabs||!desktopLayout)&&<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0,mb:0.6}}>
+      {mobile&&(mobileTabs||!desktopLayout||showWorkspaceChart)&&<Stack direction="row" sx={{alignItems:"center",gap:0.4,minWidth:0,mb:0.6}}>
         {mobileTabs?<Tabs value={displayedTab??false} onChange={(_,value:MobileScannerTab)=>{setActiveScanner(value);if(desktopLayout)mobileEditor.update({...mobileLayout,selected:value});}}
           aria-label="Scanner cards" variant="scrollable" scrollButtons={false}
           sx={{flex:1,minWidth:0,minHeight:36,"& .MuiTab-root":{minWidth:0,minHeight:36,px:0.85,py:0.3,
@@ -1088,7 +1143,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
       ...(mobile&&desktopLayout?mobileWorkspaceStyles(mobileLayout,mobileHeight,landscape,mobileTabs):{}),
       '& .MuiTypography-h2':{ color:"text.primary",fontSize:"0.9rem",fontWeight:850,lineHeight:1.2 },
     }}>
-      {widgets.filter(isScannerCardSlot).filter(showScanner).filter(slot=>!admin||slot!=="breakouts").map(slot=>{
+      {scannerSlots.filter(showScanner).filter(slot=>!admin||slot!=="breakouts").map(slot=>{
         const kind=scannerKindFor(slot);
         const viewSlot=desktopLayout?slot:undefined;
         const isGainer=isGainerCard(kind);
@@ -1096,8 +1151,8 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
         const savedId=desktopLayout?savedScanIds?.[slot]:undefined;
         const savedLabel=savedId?savedScanLabel(savedId):undefined;
         const panel=savedId&&savedLabel?<WorkspaceSavedScanCard label={savedLabel} entry={savedScans.results?.[savedId]}
-          unavailable={scanUnavailable(savedId)} retrying={savedScans.phase==="retrying"} view={modeFor(slot,slot)}
-          onViewChange={view=>changeMode(slot,view,slot)} now={checkedAt} onOpenChart={setChartRow}/>
+          unavailable={scanUnavailable(savedId)} retrying={savedScans.phase==="retrying"} view={modeFor(defaultScannerForSlot(slot),slot)}
+          onViewChange={view=>changeMode(defaultScannerForSlot(slot),view,slot)} now={checkedAt} onOpenChart={setChartRow}/>
         :kind==="market-events"?<ScreenerPressReleaseBoard data={marketEventsData} managedActiveHalts={activeHalts}
           haltWindow={haltWindow} haltSourceUnavailable={model?.activeHaltSourceUnavailable} onOpenChart={setChartRow}/>
         :isGainer||kind==="momentum"?(<DashboardPanel hideHeader>
@@ -1118,7 +1173,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
         notice={memberNotice??(model&&["disabled","closed","unavailable","universe_missing"].includes(model.status)?statusMessage(model):null)} haltByTicker={haltByTicker} onOpenChart={setChartRow}/>:
           <ScannerBreakoutsCard view={viewSlot?modeFor("breakouts",viewSlot):undefined} onViewChange={viewSlot?view=>changeMode("breakouts",view,viewSlot):undefined} rows={model?.breakouts??(model?[]:undefined)} now={checkedAt} notice={memberNotice}
           haltByTicker={haltByTicker} onOpenChart={row=>setChartRow({symbol:row.symbol,exchange:row.exchange,stock:row.breakoutLevel==null?undefined:row as LiveScannerRow})}/>;
-        return <ScannerWorkspaceCard key={slot} slot={workspaceLayout.assignments[slot]} widget={slot}>
+        return <ScannerWorkspaceCard key={slot} slot={workspaceSlots[slot]} widget={slot}>
           <WorkspaceScannerTitleContext.Provider value={desktopLayout?{
             slot,scanner:kind,onChange:scanner=>selectScanner(slot,scanner),
             savedScanId:savedId,savedLabel,savedScans:savedScans.catalogue?.scans,onOpen:savedScans.refreshCatalogue,
@@ -1128,13 +1183,13 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
           </WorkspaceScannerTitleContext.Provider>
         </ScannerWorkspaceCard>;
       })}
-      {!admin&&showScanner("ticker-workspace")&&<ChartPreferencesContext.Provider value={chartPreferenceState}><ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={pageChartsReady?compactChartSymbol:null} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} fillMobile={mobile&&desktopLayout} keepMounted={!mobile&&draft!==null}/></ChartPreferencesContext.Provider>}
+      {!admin&&showScanner("ticker-workspace")&&<ChartPreferencesContext.Provider value={chartPreferenceState}><ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={pageChartsReady?compactChartSymbol:null} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} fillMobile={mobile&&desktopLayout} keepMounted={!mobile&&draft!==null} arrange={arrangingCharts} onEndArrange={endChartArrangement}/></ChartPreferencesContext.Provider>}
       {mobile&&desktopLayout&&mobileEditor.editing&&!mobileTabs&&<MobileCardResizeHandles rootRef={gridRef} layout={mobileLayout} viewport={mobileHeight} onChange={mobileEditor.update}/>}{draft&&tiled&&<ScannerLayoutHandles rectangles={draft} onChange={changeLayout} onMessage={setVisibilityMessage}/>}
     </Box></Box></ScannerNewsDrawerProvider>
     </ScannerPageSurface>
     </ScannerCompactChartCovered>
 
-    {companyDrawerLoaded&&<ScannerCompanyDrawer broker={broker} symbol={companySymbol} onClose={()=>setCompanySymbol(null)}/>}
+    <ScannerCompanyDrawer broker={broker} symbol={companySymbol} onClose={()=>setCompanySymbol(null)}/>
     <PressReleaseArticleDrawer article={newsArticle} onClose={()=>setNewsArticle(null)}/>
     <Drawer anchor="right" open={fullScanner!==null} onClose={()=>setFullScanner(null)}
       slotProps={{paper:{role:"dialog","aria-modal":true,"aria-label":fullScanner?`${fullScanner==="gainers"?gainerTitleFor(fullScannerSlot):SCREEN_LABELS[fullScanner]} full view`:undefined,

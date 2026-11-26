@@ -16,10 +16,13 @@ type WorkspaceEditor = {
   launcher: Ref<{ open: (id: string) => void }>;
 };
 const newId = () => crypto.randomUUID();
-export function ChartMultiviewMenu({ layout, onChange, disabled = false, iconOnly = false, chartTabs = false, tickerOnly: singleTicker = false, earlierViews, onOpenEarlierView, onCloseView, closeViewLabel, workspaceEditor, workspaceFullGrid = false, resolveEmptyLayout, defaultTimeframe = "1m" }: { layout: ChartMultiview; onChange: (next: ChartMultiview) => void; disabled?: boolean; iconOnly?: boolean; chartTabs?: boolean; tickerOnly?: boolean; earlierViews?: {id:string;label:string}[]; onOpenEarlierView?: (id:string)=>void; onCloseView?:()=>void; closeViewLabel?:string; workspaceEditor?: WorkspaceEditor; workspaceFullGrid?: boolean; resolveEmptyLayout?: (draft: ChartMultiview) => ChartMultiview; defaultTimeframe?: ChartTimeframe }) {
+export function ChartMultiviewMenu({ layout, onChange, disabled = false, iconOnly = false, chartTabs = false, tickerOnly: singleTicker = false, earlierViews, onOpenEarlierView, onCloseView, closeViewLabel, workspaceEditor, workspaceFullGrid = false, onArrange, launcherRef, openingPanelId, resolveEmptyLayout, defaultTimeframe = "1m" }: { layout: ChartMultiview; onChange: (next: ChartMultiview) => void; disabled?: boolean; iconOnly?: boolean; chartTabs?: boolean; tickerOnly?: boolean; earlierViews?: {id:string;label:string}[]; onOpenEarlierView?: (id:string)=>void; onCloseView?:()=>void; closeViewLabel?:string; workspaceEditor?: WorkspaceEditor; workspaceFullGrid?: boolean; onArrange?: () => void; launcherRef?: Ref<HTMLButtonElement>; openingPanelId?: string; resolveEmptyLayout?: (draft: ChartMultiview) => ChartMultiview; defaultTimeframe?: ChartTimeframe }) {
   const titleId = useId();
   const landscape = useMediaQuery("(orientation: landscape) and (max-height: 600px) and (max-width: 1200px)");
   const [open, setOpen] = useState(false), [draft, setDraft] = useState(layout), [target, setTarget] = useState(1), [error, setError] = useState("");
+  const [openingLayout, setOpeningLayout] = useState(layout);
+  const [openingGroupId, setOpeningGroupId] = useState<string>();
+  const arrangeAvailable = Boolean(onArrange && chartCount(layout) > 1);
   const updateGroup = (id: string, next: ChartTickerGroup) => { setDraft(old => ({ ...old, groups: old.groups.map(group => group.id === id ? next : group) })); setError(""); };
   const workspaceMultiviewActive = workspaceFullGrid && chartCount(layout) > 1;
   const menuLabel = chartTabs ? "Multiview" : "Layout";
@@ -61,6 +64,8 @@ export function ChartMultiviewMenu({ layout, onChange, disabled = false, iconOnl
     setEditorId(initial?.id ?? "");
     setPending(new Map());
     setDraft(initial?.layout ?? layout);
+    setOpeningLayout(initial?.layout ?? layout);
+    setOpeningGroupId(layout.groups.find(group => group.panels.some(panel => panel.id === openingPanelId))?.id);
     setTarget(Math.max(1, chartCount(layout)));
     setError("");
     setOpen(true);
@@ -117,7 +122,7 @@ export function ChartMultiviewMenu({ layout, onChange, disabled = false, iconOnl
     }
   };
   return <>
-    {iconOnly ? <IconButton disabled={disabled} aria-label={menuLabel}
+    {iconOnly ? <IconButton ref={launcherRef} disabled={disabled} aria-label={menuLabel}
       title={workspaceMultiviewActive ? "Multiview active" : menuLabel} aria-haspopup="dialog"
       aria-pressed={workspaceFullGrid ? workspaceMultiviewActive : undefined}
       onClick={() => openEditor()} sx={workspaceMultiviewActive
@@ -165,7 +170,7 @@ export function ChartMultiviewMenu({ layout, onChange, disabled = false, iconOnl
         <Stack spacing={2}>
           {draft.groups.map((group, i) => <Box key={group.id} sx={{ borderBottom: 1, borderColor: "divider", pb: 1.5 }}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
-              <TextField label={`Ticker ${i + 1}`} size="small" value={group.symbol} autoFocus={!group.symbol.trim() && !tickerOnly}
+              <TextField label={`Ticker ${i + 1}${group.id === openingGroupId ? " (starting chart)" : ""}`} size="small" value={group.symbol} autoFocus={!group.symbol.trim() && !tickerOnly}
                 onChange={event => updateGroup(group.id, { ...group, symbol: event.target.value.toUpperCase() })}
                 slotProps={{ htmlInput: { maxLength: 15, readOnly: tickerOnly, autoCapitalize: "characters", spellCheck: false } }} sx={{ width: 145 }} />
               {!tickerOnly && <Button size="small" onClick={() => { if(target===chartCount(draft))setTarget(Math.max(1,target-group.panels.length));setDraft(old => ({ ...old, groups: old.groups.filter(item => item.id !== group.id) })); setError(""); }} sx={{ textTransform: "none", ml: "auto !important" }}>Remove ticker</Button>}
@@ -206,7 +211,9 @@ export function ChartMultiviewMenu({ layout, onChange, disabled = false, iconOnl
         </TextField> : null}
         {error ? <Alert severity="info" sx={{ mt: 1.5 }}>{error}</Alert> : null}
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ flexWrap: "wrap" }}>
+        {arrangeAvailable && <Button variant="outlined" sx={{ mr: "auto" }} disabled={draft !== openingLayout}
+          onClick={() => { setOpen(false); onArrange?.(); }}>Arrange charts</Button>}
         {(!view || view.id === workspaceEditor?.selected) && onCloseView && <Button color="error" sx={{ mr:"auto" }} onClick={() => { setOpen(false); onCloseView(); }}>{closeViewLabel}</Button>}
         {missingTicker && <Typography variant="caption" color="text.secondary" role="status" sx={{ flex: 1, ml: 1 }}>Enter a ticker to enable Apply.</Typography>}
         <Button onClick={() => setOpen(false)}>Cancel</Button>
