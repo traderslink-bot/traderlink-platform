@@ -78,7 +78,7 @@ import { PLATFORM_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contrac
 import type { LiveScannerRow, LiveScreenResults, ScannerActiveHalt, ScannerAdminConfiguration, ScannerKind, ScannerReadModel,
   ScannerNewsItem, ScannerSession, ScreenFilters } from "@/src/modules/scanner/live/contracts";
 import type { PressReleaseArticle } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
-import { scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
+import { formatScannerFloatTurnover, scannerFloatTurnoverTitle, scannerPrimaryVolumeField, scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
 import { gainerViewResults, type GainerView } from "@/src/modules/scanner/live/gainer-view";
 import { selectActiveScannerHalts } from "@/src/modules/scanner/live/active-halts";
 import { memberScannerStatus, SCANNER_ACTIVE_HOURS_MESSAGE, SCANNER_UNAVAILABLE_MESSAGE } from "@/src/modules/scanner/live/member-status";
@@ -145,11 +145,6 @@ function NewsLinks({ row }: { row: LiveScannerRow }) {
   return <ScannerRowNews news={row.news}/>;
 }
 
-function floatTraded(row: LiveScannerRow): string | null {
-  if (row.volume === null || row.float === null || row.float <= 0) return null;
-  return `${wholePercent.format(100 * row.volume / row.float)}%`;
-}
-
 function ChartButton({ expanded=false,row,onOpenChart }: { expanded?:boolean; row: LiveScannerRow; onOpenChart: (row:LiveScannerRow)=>void }) {
   return <ScannerChartLaunchControls row={row} onOpenChart={onOpenChart} expanded={expanded}/>;
 }
@@ -191,7 +186,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
   const toggle=(symbol:string)=>setExpandedSymbol(current=>current===symbol?null:symbol);
   const metric=(label:string,content:string,change?:number|null)=><Box sx={{ minWidth:0 }}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.9rem",fontWeight:750,lineHeight:1.3,mt:0.45,color:change===undefined?undefined:scannerGainColor(change) }}>{content}</Typography></Box>;
   const { selected } = useScannerVolumeColumns(screen);
-  const mainVolume = screen === "gainers" && rows[0]?.gainBasis === "today_regular_close" ? "postMarketVolume" : "dayVolume";
+  const mainVolume = scannerPrimaryVolumeField(screen === "gainers" && rows[0]?.gainBasis === "today_regular_close");
   const volumes = [mainVolume, ...selected.filter(metric => metric !== mainVolume)] as const;
   const volumeHeaders = volumes.map(metric => ({ label: scannerVolumeLabel(metric), align: metric === "dayVolume" ? "left" as const : "right" as const, width: metric === "dayVolume" ? 52 : metric === "postMarketVolume" ? 82 : 64 }));
   const volumeCells = (row:LiveScannerRow) => volumes.map(metric =>
@@ -205,13 +200,13 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
     sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",maxHeight:compactDesktop?420:undefined,overflow:"auto",width:"100%" })}>
     <Table aria-label={twoRows?`${SCREEN_LABELS[screen]} two-row stocks`:compactDesktop?`${SCREEN_LABELS[screen]} compact stocks`:"Screener stocks"} stickyHeader={compactDesktop} size="small" sx={{ ...movementTableSx,...scannerStickyTickerSx,tableLayout:"fixed",width:headers.reduce((total,header)=>total+header.width,0),minWidth:headers.reduce((total,header)=>total+header.width,0),'& .MuiTableCell-root':{ fontSize:"0.68rem",px:0.2,py:0.34 },'& .MuiTableCell-head':{ color:"text.secondary",fontSize:"0.6rem",fontWeight:750,lineHeight:1,pb:0.7,whiteSpace:"nowrap" } }}>
       <colgroup>{headers.map((header,index)=><col key={index} style={{width:header.width}}/>)}</colgroup>
-      <TableHead><TableRow>{headers.map((header,index)=><TableCell data-scanner-sticky-ticker={header.label==="Ticker"?true:undefined} align={"align" in header ? header.align : "left"} aria-label={header.label||(index===0?"Chart, news and details":undefined)} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
-      <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=floatTraded(row);const expandedMetrics=(screen==="gainers"?[
+      <TableHead><TableRow>{headers.map((header,index)=><TableCell data-scanner-sticky-ticker={header.label==="Ticker"?true:undefined} align={"align" in header ? header.align : "left"} aria-label={header.label||(index===0?"Chart, news and details":undefined)} title={header.label==="T/O"?scannerFloatTurnoverTitle(mainVolume):undefined} key={`${header.label}-${index}`} sx={{ width:header.width }}>{header.label}</TableCell>)}</TableRow></TableHead>
+      <TableBody>{rows.map(row=>{const expanded=expandedSymbol===row.symbol;const traded=formatScannerFloatTurnover(row,mainVolume);const expandedMetrics=(screen==="gainers"?[
         metric("HOD price",`$${priceValue(row.dayHigh)}`),
         metric("HOD",value(row.offHighPercent,"%"),row.offHighPercent),
         metric("Session low",`$${priceValue(row.dayLow)}`),
         row.relativeVolume==null?null:metric("RVOL",scannerRelativeVolume(row.relativeVolume)),
-        traded==null?null:metric("T/O",traded),
+        metric("T/O",traded),
       ]:[
         row.momentumHit || row.momentumSignals?.length ? metric("Detected",momentumSignalText(row)) : null,
         row.activity.episodeShares==null?null:metric("Episode volume",compact.format(row.activity.episodeShares)),
@@ -227,7 +222,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
         metric("HOD price",`$${priceValue(row.dayHigh)}`),
         metric("Below HOD",value(row.offHighPercent,"%"),row.offHighPercent),
         metric("Session low",`$${priceValue(row.dayLow)}`),
-        traded==null?null:metric("Turnover",traded),
+        metric("Turnover",traded),
         row.spreadPercent===null?null:metric("Spread",scannerPercent(row.spreadPercent)),
       ]).filter(Boolean);const secondRowTools=<Box data-compact-row-controls sx={{display:"grid",gridTemplateColumns:allowAdd?"44px 20px 12px":"20px 20px 12px",alignItems:"center",columnGap:"8px",width:allowAdd?92:68}}><ChartButton row={row} onOpenChart={onOpenChart}/><NewsLinks row={row}/><ButtonBase aria-label={`${expanded?"Collapse":"Expand"} ${row.symbol} two-row details`} aria-expanded={expanded} onClick={()=>toggle(row.symbol)} sx={{color:"text.secondary",fontSize:"0.9rem",height:20,minWidth:12}}>{expanded?"−":"+"}</ButtonBase></Box>;return <Fragment key={row.symbol}>
         <TableRow aria-expanded={expanded} hover onClick={()=>toggle(row.symbol)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle(row.symbol);}}} sx={{ ...movementRowSx(movement[row.symbol]),cursor:"pointer",'& > td':{borderBottom:twoRows||screen==="momentum"?"none":undefined},'&:focus-visible':{ outline:"2px solid",outlineColor:"primary.main",outlineOffset:-2 } }} tabIndex={0}>
@@ -237,7 +232,7 @@ function CompactStockTable({ rows,screen,onOpenChart,haltByTicker,compactDesktop
           {screen==="gainers"?<>
             <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell>
             {volumeCells(row)}<TableCell>{floatValue(row.float)}</TableCell>
-            <TableCell>{traded??"n/a"}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
+            <TableCell>{traded}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
             <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell>
           </>:<>
             <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>{value(row.sessionGain,"%")}</TableCell>{volumeCells(row)}<TableCell sx={{color:scannerGainColor(row.activity.oneMinuteGain)}}>{scannerPercent(row.activity.oneMinuteGain)}</TableCell>
@@ -272,7 +267,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
   const movement=usePriceMovement(results.rows);
   const showPostGain=screen==="momentum"&&results.rows.some(row=>row.postMarketGain!==undefined);
   const { selected } = useScannerVolumeColumns(screen);
-  const mainVolume = screen === "gainers" && results.rows[0]?.gainBasis === "today_regular_close" ? "postMarketVolume" : "dayVolume";
+  const mainVolume = scannerPrimaryVolumeField(screen === "gainers" && results.rows[0]?.gainBasis === "today_regular_close");
   const volumes = [mainVolume, ...selected.filter(metric => metric !== mainVolume)] as const;
   const volumeLabels = volumes.map(metric => scannerVolumeLabel(metric));
   const volumeCells = (row:LiveScannerRow) => volumes.map(metric =>
@@ -290,13 +285,13 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
     <TableContainer sx={theme=>({ ...scannerScrollStyles(theme),containerType:"inline-size",display:{ xs:"none",md:"block" },maxHeight:"calc(100dvh - 210px)" })}>
       {screen==="gainers"?<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Chart and news" sx={{ px:"0 !important",width:48 }}/>
-        {['Ticker','Price','Gain%',...volumeLabels,'Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} align={label!=="Vol"&&volumeLabels.includes(label) ? "right" : "left"}>{label}</TableCell>)}
+        {['Ticker','Price','Gain%',...volumeLabels,'Float','T/O','RVOL','HOD','Country'].map(label => <TableCell data-scanner-sticky-ticker={label==="Ticker"?true:undefined} key={label} title={label==="T/O"?scannerFloatTurnoverTitle(mainVolume):undefined} align={label!=="Vol"&&volumeLabels.includes(label) ? "right" : "left"}>{label}</TableCell>)}
       </TableRow></TableHead><TableBody>{results.rows.map(row=><TableRow hover key={row.symbol} sx={movementRowSx(movement[row.symbol])}>
         <TableCell sx={{ px:"0 !important",width:allowAdd?72:48 }}><Stack direction="row" sx={{alignItems:"center",gap:0.5}}><ChartButton onOpenChart={onOpenChart} row={row}/><NewsLinks row={row}/></Stack></TableCell>
         <TableCell data-scanner-sticky-ticker sx={{ fontWeight:800,pl:"0.5rem !important" }}><Stack direction="row" sx={{alignItems:"center",gap:0.25}}><ScannerPageTicker symbol={row.symbol}/><ScreenerHaltIndicator halt={haltByTicker.get(row.symbol)}/></Stack></TableCell>
         <TableCell sx={{color:scannerGainColor(row.sessionGain)}}>${priceValue(row.price)}</TableCell><TableCell sx={{ color:scannerGainColor(row.sessionGain),fontWeight:750 }}>{value(row.sessionGain,"%")}</TableCell>
         {volumeCells(row)}<TableCell>{floatValue(row.float)}</TableCell>
-        <TableCell>{floatTraded(row)??"n/a"}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
+        <TableCell>{formatScannerFloatTurnover(row,mainVolume)}</TableCell><TableCell>{scannerRelativeVolume(row.relativeVolume)}</TableCell>
         <TableCell sx={{color:scannerGainColor(row.offHighPercent)}}>{value(row.offHighPercent,"%")}</TableCell><TableCell><ScannerCountryFlag country={row.country}/></TableCell>
       </TableRow>)}</TableBody></Table>:<Table stickyHeader size="small" sx={desktopTableSx}><TableHead><TableRow>
         <TableCell aria-label="Details" sx={{ px:"0 !important",width:22 }}/>
@@ -331,7 +326,7 @@ function Results({ results,screen,onOpenChart,haltByTicker }: { results: LiveScr
               ["HOD price",`$${priceValue(row.dayHigh)}`],
               ["Below HOD",value(row.offHighPercent,"%")],
               ["Session low",`$${priceValue(row.dayLow)}`],
-              ["Turnover",floatTraded(row)??"n/a"],
+              ["Turnover",formatScannerFloatTurnover(row,mainVolume)],
             ].map(([label,content])=><Box key={label}><Typography sx={{ color:"warning.main",fontSize:"0.68rem",fontWeight:750,lineHeight:1,textTransform:"uppercase" }}>{label}</Typography><Typography sx={{ fontSize:"0.86rem",fontWeight:750,mt:0.45,color:label==="Below HOD"?scannerGainColor(row.offHighPercent):undefined }}>{content}</Typography></Box>)}
           </Box>
         </TableCell></TableRow>:null}

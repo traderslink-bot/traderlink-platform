@@ -7,6 +7,8 @@ import MenuItem from "@mui/material/MenuItem";
 import ListSubheader from "@mui/material/ListSubheader";
 import { livePresetChoices } from "@/src/modules/scanner/custom/built-in-scans";
 import { SAVED_SCAN_ID, type SavedScanCatalogue } from "@/src/modules/scanner/custom/definition";
+import { extraWidgets, widgetNames } from "./scanner-desktop-layout";
+import type { ExtraWorkspaceCard } from "../scanner-workspace-layout";
 import { GAINER_CARD_LABELS } from "@/src/modules/scanner/live/gainer-card-policy";
 
 type LivePreset = (typeof livePresetChoices)[number];
@@ -21,20 +23,24 @@ type WorkspaceScannerChoice = LivePresetId | GainerSessionView;
 const presetById = new Map<string, LivePreset>(livePresetChoices.map(preset => [preset.id, preset]));
 const presetByWidget = new Map<string, LivePreset>(livePresetChoices.map(preset => [preset.widget, preset]));
 
-function readScannerChoice(value: string): WorkspaceScannerChoice | undefined {
+export function readScannerChoice(value: string): WorkspaceScannerChoice | undefined {
   if (value === "day-gainers" || value === "post-market-gainers") return value;
   return (presetById.get(value) ?? presetByWidget.get(value))?.id;
 }
 
 export function workspaceScannerKind(slot: ScannerCardSlot, choice?: WorkspaceScannerChoice): ScannerCardKind {
   if (choice === "day-gainers" || choice === "post-market-gainers") return choice;
-  return (choice && presetById.get(choice)?.widget) || slot;
+  return (choice && presetById.get(choice)?.widget) || defaultScannerForSlot(slot);
 }
 export const scannerTitles = {
   ...scannerCardSlots,
   ...GAINER_CARD_LABELS,
 };
-export type ScannerCardSlot = keyof typeof scannerCardSlots;
+export type BaseScannerCardSlot = keyof typeof scannerCardSlots;
+export type ScannerCardSlot = BaseScannerCardSlot | ExtraWorkspaceCard;
+export const scannerSlots = [...Object.keys(scannerCardSlots) as BaseScannerCardSlot[], ...extraWidgets];
+export const defaultScannerForSlot = (slot: ScannerCardSlot): BaseScannerCardSlot =>
+  slot === "scanner-8" ? "gainers" : slot === "scanner-9" ? "momentum" : slot;
 export type ScannerCardKind = keyof typeof scannerTitles;
 export type CardScanners = Partial<Record<ScannerCardSlot, WorkspaceScannerChoice>>;
 export type CardSavedScanIds = Partial<Record<ScannerCardSlot, string>>;
@@ -43,7 +49,8 @@ export function readCardSavedScanIds(value: unknown): CardSavedScanIds {
   return Object.fromEntries(Object.entries(value).filter(([slot, id]) =>
     isScannerCardSlot(slot) && typeof id === "string" && SAVED_SCAN_ID.test(id)));
 }
-export const isScannerCardSlot = (value: string): value is ScannerCardSlot => Object.hasOwn(scannerCardSlots, value);
+export const isScannerCardSlot = (value: string): value is ScannerCardSlot => Object.hasOwn(scannerCardSlots, value) || extraWidgets.some(slot => slot === value);
+export const isScannerCard = (value: string): value is ScannerCardKind => Object.hasOwn(scannerTitles,value);
 export function readCardScanners(value: unknown): CardScanners {
   if (!value || typeof value !== "object") return {};
   const selections: CardScanners = {};
@@ -91,7 +98,7 @@ export function WorkspaceScannerTitle({ children, label }: { children?:ReactNode
   return <Select value={value} variant="standard" disableUnderline autoWidth
     onOpen={choice.onOpen}
     renderValue={() => choice.savedLabel ?? label ?? scannerTitles[choice.scanner]}
-    inputProps={{"aria-label":`Scanner for ${scannerTitles[choice.slot]} card`}}
+    inputProps={{"aria-label":`Scanner for ${widgetNames[choice.slot]} card`}}
     onChange={event=>{
       const selected = event.target.value;
       if (selected.startsWith("saved:")) choice.onSelectSavedScan(selected.slice(6));

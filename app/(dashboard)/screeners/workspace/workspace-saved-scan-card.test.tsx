@@ -91,6 +91,7 @@ it.each(["table","two-rows","cards"] as const)("shows supplied day volume and di
   expect(index).toBeGreaterThanOrEqual(0);
   expect(labels.slice(index,index+4)).toEqual(["Vol","Pre Vol","Regular Vol","After-hours Vol"]);
   expect(values.slice(index,index+4)).toEqual(["1.5M","—","1.2M","0"]);
+  if (view==="cards") expect(values[labels.indexOf("T/O")]).toBe("150%");
   const defaultLabels = [...render(view,true,issued).querySelectorAll(view==="cards"?"dt":"thead th")].map(cell=>cell.textContent);
   expect(defaultLabels).toContain("Vol");
   expect(defaultLabels).not.toContain("Regular Vol");
@@ -102,6 +103,9 @@ it("does not substitute legacy active-session volume when the issued Day Vol is 
   const values=[...dom.querySelectorAll("tbody td")].map(cell=>cell.textContent);
   expect(labels).toContain("Vol");
   expect(values[labels.indexOf("Vol")]).toBe("—");
+  const cards = render("cards");
+  const turnover = [...cards.querySelectorAll("dt")].find(cell=>cell.textContent==="T/O");
+  expect(turnover?.nextElementSibling?.textContent).toBe("—");
 });
 
 it("renders exact saved-only volume details, including zero and unavailable values", () => {

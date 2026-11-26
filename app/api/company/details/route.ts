@@ -15,17 +15,22 @@ async function readGET(request:Request){
   try{identity=requireTraderLinkPlatformRequestIdentity(request.headers);}
   catch{return reply({},401);}
   if(!hasSharedWorkspaceAccess(identity))return reply({},404);
-  const symbol=companySymbol(new URL(request.url).searchParams.get("symbol")??"");
+  const query=new URL(request.url).searchParams;
+  const symbol=companySymbol(query.get("symbol")??"");
+  const view=query.get("view");
   if(!symbol)return reply({},404);
   const local=identity.mode==="local_development"&&process.env.NODE_ENV!=="production";
   const entry=await companyUniverseEntry(symbol);
   if(!entry&&!local)return reply({},404);
-  const company=await readCompanySnapshot(symbol);
-  if(!entry&&!company.companyProfile)return reply({},404);
-  const news=hasPressReleaseDashboardAccess(identity)?withReadonlyPlatformDatabase({},db=>
+  const readNews=()=>hasPressReleaseDashboardAccess(identity)?withReadonlyPlatformDatabase({},db=>
     new PressReleaseDashboardRepository(db).list({scope:identity.scope,channel:"all",ticker:symbol,limit:50})
       .map(article=>({id:article.id,title:article.headline,date:article.publishedAt,href:article.publicPath}))):[];
-  return reply({company,news,technicalSample:local&&!process.env.TRADERLINK_ALPACA_GATEWAY_URL?companyTechnicalSample(symbol):undefined});
+  if(view==="news"&&entry)return reply({news:readNews()});
+  const company=await readCompanySnapshot(symbol,view==="overview"&&entry?"overview":"full");
+  if(!entry&&!company.companyProfile)return reply({},404);
+  if(view==="news")return reply({news:readNews()});
+  const technicalSample=local&&!process.env.TRADERLINK_ALPACA_GATEWAY_URL?companyTechnicalSample(symbol):undefined;
+  return reply(view==="company"||view==="overview"?{company,technicalSample}:{company,news:readNews(),technicalSample});
 }
 
 export const GET = browserDataRead("company_details_unavailable", (request: Request) => readGET(request));

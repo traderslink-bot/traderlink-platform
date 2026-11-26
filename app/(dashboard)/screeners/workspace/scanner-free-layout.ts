@@ -1,6 +1,6 @@
-import { widgets } from "./scanner-desktop-layout";
+import { layoutWidgets } from "./scanner-desktop-layout";
 import { defaultTile, GAP, geometry, minimum, presets, type Rect, type Tile } from "./scanner-split-layout";
-import type { ScannerWorkspaceWidget as Widget } from "../scanner-workspace-layout";
+import type { WorkspaceCardWidget as Widget } from "../scanner-workspace-layout";
 
 export const layoutSize = 1000;
 export type CardLayout = Partial<Record<Widget, Rect>>;
@@ -15,7 +15,7 @@ export function validCardLayout(value: unknown): value is CardLayout {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const entries = cardEntries(value as CardLayout);
   return entries.length > 0 && entries.every(([widget, rect], index) =>
-    widgets.includes(widget) && rect && [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) &&
+    layoutWidgets.includes(widget) && rect && [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) &&
     rect.x >= 0 && rect.y >= 0 && rect.w > 0 && rect.h > 0 &&
     rect.x + rect.w <= layoutSize && rect.y + rect.h <= layoutSize &&
     entries.slice(0, index).every(([, previous]) => !overlaps(rect, previous)));
@@ -59,10 +59,51 @@ export function moveCard(layout: CardLayout, widget: Widget, x: number, y: numbe
   return cardFits(layout, widget, rect) ? { ...layout, [widget]: rect } : null;
 }
 
+export function dropCard(layout:CardLayout,widget:Widget,position:Pick<Rect,"x"|"y">,
+  point:Pick<Rect,"x"|"y">,bounds:Pick<Rect,"w"|"h">):CardLayout|null {
+  const target=cardAtPoint(layout,point.x,point.y);
+  const direct=moveCard(layout,widget,position.x,position.y,bounds,target);
+  const current=layout[widget];
+  if(direct||target||!current||bounds.w<=0||bounds.h<=0||
+    point.x<0||point.y<0||point.x>=layoutSize||point.y>=layoutSize)return direct;
+
+  const obstacles=cardEntries(layout).map(([,rect])=>rect);
+  const leftEdges=new Set([0,...obstacles.map(rect=>rect.x+rect.w).filter(x=>x<=point.x)]);
+  const rightEdges=new Set([layoutSize,...obstacles.map(rect=>rect.x).filter(x=>x>point.x)]);
+  const size=minimum(widget);
+  const minW=Math.min(current.w,size.w/bounds.w*layoutSize);
+  const minH=Math.min(current.h,size.h/bounds.h*layoutSize);
+  let best:{rect:Rect;area:number;distance:number}|undefined;
+  // For each horizontal span through the drop point, find the unobstructed vertical span.
+  for(const left of leftEdges)for(const right of rightEdges){
+    const w=Math.min(current.w,right-left);
+    if(w<minW)continue;
+    let top=0,bottom=layoutSize;
+    for(const other of obstacles){
+      if(other.x>=right||other.x+other.w<=left)continue;
+      if(other.y+other.h<=point.y)top=Math.max(top,other.y+other.h);
+      else if(other.y>point.y)bottom=Math.min(bottom,other.y);
+      else {bottom=top;break;}
+    }
+    const h=Math.min(current.h,bottom-top);
+    if(h<minH)continue;
+    const rect={
+      x:Math.min(right-w,point.x,Math.max(left,point.x-w,position.x)),
+      y:Math.min(bottom-h,point.y,Math.max(top,point.y-h,position.y)),
+      w,h,
+    };
+    if(!cardFits(layout,widget,rect))continue;
+    const area=w*h;
+    const distance=(rect.x-position.x)**2+(rect.y-position.y)**2;
+    if(!best||area>best.area||area===best.area&&distance<best.distance)best={rect,area,distance};
+  }
+  return best?{...layout,[widget]:best.rect}:null;
+}
+
 export function placeAddedCard(layout: CardLayout, widget: Widget, size: Pick<Rect, "w" | "h">) {
   const entries = cardEntries(layout);
-  const xs = [0, ...entries.map(([, r]) => r.x + r.w + 8)].sort((a,b)=>a-b);
-  const ys = [0, ...entries.map(([, r]) => r.y + r.h + 8)].sort((a,b)=>a-b);
+  const xs = [...new Set([0, ...entries.map(([, r]) => r.x + r.w)])].sort((a,b)=>a-b);
+  const ys = [...new Set([0, ...entries.map(([, r]) => r.y + r.h)])].sort((a,b)=>a-b);
   for (const y of ys) for (const x of xs) {
     const rect = { x, y, ...size };
     if (cardFits(layout, widget, rect)) return { ...layout, [widget]: rect };

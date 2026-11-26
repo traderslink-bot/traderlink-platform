@@ -1,5 +1,5 @@
-import { defaultPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
-import type { ScannerWorkspaceWidget as Widget } from "../scanner-workspace-layout";
+import { defaultPositions, layoutWidgets, widgets, type DesktopPositions } from "./scanner-desktop-layout";
+import type { ScannerWorkspaceWidget, WorkspaceCardWidget as Widget } from "../scanner-workspace-layout";
 
 export type Tile = Widget | { axis:"x"|"y"; ratio:number; first:Tile; second:Tile };
 export type Rect = { x:number; y:number; w:number; h:number };
@@ -67,18 +67,18 @@ export function validTile(value:unknown):value is Tile {
   function visit(node:unknown,depth:number):boolean {
     if(typeof node==="string"){
       const widget=node as Widget;
-      if(!widgets.includes(widget)||seen.has(widget))return false;
+      if(!layoutWidgets.includes(widget)||seen.has(widget))return false;
       seen.add(widget);
       return true;
     }
-    if(!node||typeof node!=="object"||depth>=widgets.length)return false;
+    if(!node||typeof node!=="object"||depth>=layoutWidgets.length)return false;
     const {axis,ratio,first,second}=node as Exclude<Tile,Widget>;
     return (axis==="x"||axis==="y")&&Number.isFinite(ratio)&&ratio>0&&ratio<1&&visit(first,depth+1)&&visit(second,depth+1);
   }
   return visit(value,0);
 }
 
-export function fromGrid(positions:DesktopPositions,visible:Widget[]):Tile {
+export function fromGrid(positions:DesktopPositions,visible:ScannerWorkspaceWidget[]):Tile {
   if(visible.length===1)return visible[0];
   for(const axis of ["y","x"] as const){
     const dimension=axis==="x"?"w":"h";
@@ -92,14 +92,18 @@ export function fromGrid(positions:DesktopPositions,visible:Widget[]):Tile {
     }
   }
   const columns=[visible.slice(0,Math.ceil(visible.length/2)),visible.slice(Math.ceil(visible.length/2))];
-  const stack=(items:Widget[]):Tile=>items.length===1?items[0]:split("y",items[0],stack(items.slice(1)),1/items.length);
+  const stack=(items:ScannerWorkspaceWidget[]):Tile=>items.length===1?items[0]:split("y",items[0],stack(items.slice(1)),1/items.length);
   return split("x",stack(columns[0]),stack(columns[1]));
 }
 
 export const defaultTile=fromGrid(defaultPositions,widgets);
-const column=(a:Widget,b:Widget,c?:Widget)=>c?split("y",a,split("y",b,c),1/3):split("y",a,b);
+const column=(a:Tile,b:Tile,c?:Tile)=>c?split("y",a,split("y",b,c),1/3):split("y",a,b);
+const pair=(a:Widget,b:Widget)=>split("x",a,b);
 export const presets=[
   {name:"Chart + 3 cards",tile:split("x",split("x","gainers",column("momentum","top-losers")),"ticker-workspace")},
   {name:"Chart + 4 cards",tile:split("x",split("x",column("gainers","momentum"),column("top-losers","high-drops")),"ticker-workspace")},
   {name:"Chart + 6 cards",tile:split("x",split("x",column("gainers","momentum","market-events"),column("top-losers","high-drops","breakouts")),"ticker-workspace")},
+  {name:"Chart + 8 cards",tile:split("x",
+    column(pair("gainers","momentum"),pair("market-events","breakouts")),
+    column("ticker-workspace",column(pair("top-losers","high-drops"),pair("scanner-8","scanner-9"))))},
 ];

@@ -62,12 +62,12 @@ export function reportedFacts(facts:Record<string,Concepts>, preferredCurrency:u
   });
 }
 
-export async function readCompanySnapshot(symbol:string) {
+export async function readCompanySnapshot(symbol:string, view:"full"|"overview"="full") {
   const profileRequest=json<Record<string,unknown>>("profile",symbol);
   const metricsRequest=json<{metric?:Record<string,unknown>}>("metrics",symbol);
-  const directory=await json<Record<string,{ticker:string;cik_str:number;title:string}>>("directory");
+  const directory=view==="full"?await json<Record<string,{ticker:string;cik_str:number;title:string}>>("directory"):null;
   const company=Object.values(directory??{}).find(item=>item.ticker===symbol);
-  const cik=company?.cik_str??(process.env.NODE_ENV!=="production"?previewCompanyCik(symbol):undefined);
+  const cik=company?.cik_str??(view==="full"&&process.env.NODE_ENV!=="production"?previewCompanyCik(symbol):undefined);
   const id=cik?.toString().padStart(10,"0");
   const [profile,metrics,submissions,data]=await Promise.all([profileRequest,metricsRequest,
     id ? json<Submissions>("submissions",`CIK${id}.json`,3600) : null,

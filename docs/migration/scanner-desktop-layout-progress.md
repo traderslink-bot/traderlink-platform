@@ -43,3 +43,7 @@ remaining 11px below the scroll area is the existing card padding and border.
 The four existing focused tests, changed-file TypeScript and lint passed.
 Browser data was synthetic; no signed-in live verification or deployment was
 performed. The fix adds CSS sizing rules and two DOM attributes.
+
+## Additional scanner cards
+
+See the [additional-card implementation and mobile verification](workspace-additional-cards-progress.md).

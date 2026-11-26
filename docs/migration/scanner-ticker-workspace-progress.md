@@ -170,3 +170,17 @@ Owner approved using the existing Market Charts page as the full-size design wor
 - The orange ticker in the stock scanner cards opens the separate Company Details drawer. The green candlestick opens the chart drawer. The blue chart button updates the Trading Workspace chart. Recent Rapid Drops also shows the blue action on mobile when the Workspace chart is visible. The HOD table reserves space for the inline rapid bolt and the session tag.
 - Restored the Company Details drawer previously reviewed on the company drawer branch. Its technicals, profile, financials, SEC filings, news, and Levels use the existing provider and access routes. The drawer loads on demand. Deployment verification needs the Company Data gateway and the gateway's raw daily candle support for the as-traded 52-week range.
 - Fixture Chromium checks passed at 1440×900, 320×730, and 844×390 for ticker routing and focus restoration, the six detail tabs, HOD spacing, saved chart reopening, and Save/Cancel with refresh for layout visibility. Scoped TypeScript, changed-file ESLint, and four focused suites passed. This slice was based on current main and kept local. The separate custom Scanners candidate is still available for continued work.
+
+## Arrange charts inside Workspace Multiview — November 24, 2026 Eastern
+
+One launcher lives in the Workspace toolbar and highlights when multiple charts are open. Arrange charts supports dragging or selecting two slots to swap them, plus pointer and keyboard dividers when the chart card can show multiple panels together. Done persists the panel order and proportions to the account-scoped Workspace chart settings. Cancel and Escape restore the existing arrangement. Each displayed chart can be closed while multiple charts are open. The last chart fills the card.
+
+The isolated Chromium fixture exercised desktop swapping, pointer and keyboard resizing, Cancel, reload and closing to one chart. Touch-sized portrait and landscape fixtures exercised rearranging and closing tabbed charts. The isolated release-base composition passed 34 focused tests, including opening Arrange charts from the real Workspace toolbar and persisting the result. Scoped lint and TypeScript passed. This source is local.
+
+## Save a layout from Default — November 24, 2026 Eastern
+
+Desktop Save opens a focused Layout name prompt for unnamed drafts. Cancelling the prompt returns to the draft with all arrangement edits intact. The existing replace confirmation still applies to a name already in use. The isolated release-base composition passed 11 focused tests covering the prompt, layout movement, and Workspace persistence. The name prompt is a local change.
+
+## Displayed float turnover — November 24, 2026 Eastern
+
+The main Scanner’s original live scans and the Trading Workspace use the same float turnover calculation. T/O divides the full-precision value behind the primary volume column by the row’s float. The day view counts premarket shares and then adds regular-session volume. After-hours Gainers uses after-hours volume. A valid zero displays as 0%, and missing volume or float displays as unavailable. Existing session-based scan rule and provider calculations remain in place.

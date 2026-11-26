@@ -120,6 +120,51 @@ async function options(slot: string) {
 const switchInput = () => document.querySelector('[role="dialog"][aria-label$="view settings"] input[type="checkbox"]');
 
 describe("actual Trading Workspace gainer-card choices", () => {
+  it("opens chart arrangement from the Workspace toolbar and saves the new order", async () => {
+    seed();
+    const key = "traderslink.workspace.charts.v1:gainer-card-test";
+    const layout = reconcileChartTickers(singleChart("LVWR", "5m"), ["LVWR", "AKAN", "BENF", "APUS"], "5m");
+    localStorage.setItem(key, JSON.stringify(layout));
+    await mount();
+    const toolbar = document.getElementById("dashboard-scanner-toolbar")!;
+    const launcher = toolbar.querySelector('button[aria-label="Multiview"]');
+    expect(launcher?.getAttribute("title")).toBe("Multiview active");
+    expect(card("ticker-workspace").querySelector('[aria-label="Multiview"]')).toBeNull();
+    await click(launcher);
+    const dialog = document.querySelector('[role="dialog"]')!;
+    await click([...dialog.querySelectorAll("button")].find(button => button.textContent === "Arrange charts") ?? null);
+    const chart = card("ticker-workspace");
+    await click(chart.querySelector('[aria-label="Move LVWR 5m chart"]'));
+    await click(chart.querySelector('[aria-label="Move APUS 5m chart"]'));
+    await click([...chart.querySelectorAll("button")].find(button => button.textContent === "Done") ?? null);
+    const ids = layout.groups.map(group => group.panels[0].id);
+    expect(JSON.parse(localStorage.getItem(key)!).arrangement.order).toEqual([ids[3], ids[1], ids[2], ids[0]]);
+    expect(toolbar.querySelector('button[aria-label="Multiview"]')).toBe(launcher);
+  });
+
+  it("keeps turnover tied to day volume on pinned views and after-hours volume on switched views", async () => {
+    seed({gainers:"gainers",momentum:"post-market-gainers"});
+    const dayRow = {...day,dayVolume:400_000,premarketVolume:150_000,regularVolume:250_000,postMarketVolume:30_000};
+    const postRow = {...post,dayVolume:400_000,postMarketVolume:25_000};
+    await mount({...model,dayGainers:{...model.dayGainers!,rows:[dayRow]},gainers:{...model.gainers,rows:[postRow]}});
+    const tableTurnover = (slot: string, volume: string) => {
+      const table = card(slot).querySelector("table")!;
+      const headers = [...table.querySelectorAll("th")];
+      expect(headers.some(header=>header.textContent===volume)).toBe(true);
+      const column = headers.findIndex(header=>header.textContent==="T/O");
+      return table.querySelector<HTMLTableRowElement>("tbody tr")!.cells[column].textContent;
+    };
+    expect(tableTurnover("gainers","After-hours Vol")).toBe("3%");
+    expect(tableTurnover("momentum","After-hours Vol")).toBe("3%");
+    await options("gainers");
+    await click(switchInput());
+    expect(tableTurnover("gainers","Vol")).toBe("40%");
+    const viewMenu = document.querySelector('[role="dialog"][aria-label$="view settings"]')!;
+    await click([...viewMenu.querySelectorAll("button")].find(button=>button.textContent==="Cards")??null);
+    const turnover = [...card("gainers").querySelectorAll("dt")].find(label=>label.textContent==="T/O");
+    expect(turnover?.nextElementSibling?.textContent).toBe("40%");
+  });
+
   it.each([false, true])("shows both independent rankings and restores per-card formats, dark=%s", async dark => {
     seed(); await mount(model, dark);
     expect(card("gainers").textContent).toContain("DAY"); expect(card("gainers").textContent).not.toContain("POST");

@@ -1,10 +1,10 @@
 import Box from "@mui/material/Box";
 import type { ReactNode } from "react";
-import type { ScannerWorkspaceSlotId, ScannerWorkspaceWidget } from "./scanner-workspace-layout";
+import type { WorkspaceCardSlotId, WorkspaceCardWidget } from "./scanner-workspace-layout";
 
 /** Keeps every card in the Screeners workspace on one spacing contract. */
 export function ScannerWorkspaceCard({children,slot,widget,contentPaddingTop=1.25}:{
-  children:ReactNode;slot:ScannerWorkspaceSlotId;widget:ScannerWorkspaceWidget;contentPaddingTop?:number;
+  children:ReactNode;slot:WorkspaceCardSlotId;widget:WorkspaceCardWidget;contentPaddingTop?:number;
 }){
   return <Box data-scanner-workspace-card={widget} data-scanner-workspace-slot={slot} sx={{
     gridArea:{xs:"auto",md:slot},

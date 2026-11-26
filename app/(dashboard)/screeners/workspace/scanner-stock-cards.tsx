@@ -21,7 +21,7 @@ import { createContext, startTransition, useContext, useEffect, useId, useRef, u
 import { scannerScrollStyles } from "@/src/modules/scanner/live/scroll-styles";
 import type { LiveScannerRow, ScannerKind, ScannerNewsItem } from "@/src/modules/scanner/live/contracts";
 
-import { scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
+import { formatScannerFloatTurnover, scannerFloatTurnoverTitle, scannerVolumeLabel } from "@/src/modules/scanner/live/volume";
 import { momentumSignalText } from "../momentum-signal-text";
 import { useSideCardChartControls } from "../scanner-chart-launch-controls";
 import { ScannerCountryFlag } from "../scanner-country-flag";
@@ -40,9 +40,9 @@ export const WorkspaceCardSections = createContext<{
   volumeColumns?: readonly OptionalVolumeColumn[];
   updateVolumeColumns?: (columns: readonly OptionalVolumeColumn[]) => void;
 } | null>(null);
-export function useWorkspaceVolumeColumns() {
+export function useWorkspaceVolumeColumns(afterHours = false) {
   const workspace = useContext(WorkspaceCardSections);
-  return workspaceVolumeColumns(workspace?.afterHoursVolume === true, workspace?.volumeColumns);
+  return workspaceVolumeColumns(workspace?.afterHoursVolume ?? afterHours, workspace?.volumeColumns);
 }
 
 export function WorkspaceVolumeHeaders({ columns }: { columns: readonly VolumeColumn[] }) {
@@ -176,9 +176,9 @@ const date = new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", mon
 const shares = (n: number | null) => n === null ? "—" : compact.format(n);
 const percent = (n: number | null, signed = false) => n === null ? "—" : `${signed && n > 0 ? "+" : ""}${decimal.format(n)}%`;
 
-function Reading({ label, value }: { label: string; value: ReactNode }) {
+function Reading({ label, value, title }: { label: string; value: ReactNode; title?: string }) {
   return <Box sx={{minWidth:0,textAlign:"left"}}>
-    <Typography component="dt" sx={{color:scannerCardLabelColor,fontWeight:700,fontSize:"0.62rem",lineHeight:1.15}}>{label}</Typography>
+    <Typography component="dt" title={title} sx={{color:scannerCardLabelColor,fontWeight:700,fontSize:"0.62rem",lineHeight:1.15}}>{label}</Typography>
     <Typography component="dd" sx={{m:0,fontWeight:650,fontSize:"0.72rem",lineHeight:1.25,overflowWrap:"anywhere"}}>{value}</Typography>
   </Box>;
 }
@@ -229,7 +229,10 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
     observer.observe(node);
     return ()=>observer.disconnect();
   },[hasMore,limit,rows.length]);
-  const volumeColumns = useWorkspaceVolumeColumns();
+  const firstRow = rows[0];
+  const volumeColumns = useWorkspaceVolumeColumns(screen === "gainers" && firstRow !== undefined &&
+    isLiveRow(firstRow) && firstRow.gainBasis === "today_regular_close");
+  const [mainVolume] = volumeColumns;
   return <Box role="list" aria-label={`${stockCardLabels[screen]} stock cards`}
     sx={theme=>({...scannerScrollStyles(theme),minWidth:0,minHeight:0,maxHeight:420,overflowX:"hidden",flex:"1 1 auto"})}>
     {(inDrawer?rows.slice(0,limit):rows).map(row => {
@@ -238,19 +241,18 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
       const saved = "dayChange" in row;
       const change = saved ? row.dayChange : isLiveRow(row) ? row.sessionGain : row.changePercent;
       const movement = hod ? (hod.belowHighPercent==null?null:-hod.belowHighPercent) : change;
-      const sessionVolume = isHodRow(row) ? row.sessionVolume : row.volume;
-      const turnover = sessionVolume !== null && row.float !== null && row.float > 0 ? 100 * sessionVolume / row.float : null;
+      const turnover = formatScannerFloatTurnover(row,mainVolume);
       const volumes = volumeColumns.map(column => [scannerVolumeLabel(column), workspaceVolumeValue(row, column)]);
       const catalyst = (saved ? savedScanRowNews(row) : row.news).find(item => Number.isFinite(Date.parse(item.createdAt)));
       const post = screen === "gainers" && live?.gainBasis === "today_regular_close";
       const stats = saved ? [
         ...volumes,["Dollar vol",row.dollarVolume === null ? "—" : "$" + compact.format(row.dollarVolume)],
         ["Float",shares(row.float)],["Market cap",row.marketCap === null ? "—" : "$" + compact.format(row.marketCap)],
-        ["T/O",percent(turnover)],
+        ["T/O",turnover],
       ] : hod ? [
         ...volumes,["Float",shares(row.float)],["High",price(hod.referenceHigh)],["Spread",scannerPercent(row.spreadPercent, "—")],
       ] : [
-        ...volumes,["Float",shares(row.float)],["T/O",percent(turnover)],
+        ...volumes,["Float",shares(row.float)],["T/O",turnover],
         live ? ["RVOL",scannerRelativeVolume(live.relativeVolume, "—")] : ["Spread",scannerPercent(row.spreadPercent, "—")],
       ];
       return <Box role="listitem" key={row.symbol} data-scanner-stock-card={row.symbol}
@@ -276,7 +278,8 @@ export function ScannerStockCards<Row extends ScannerCardRow>({ rows, screen, no
         {renderSignal&&<Typography sx={{fontSize:"0.7rem",mt:0.4}}>{renderSignal(row)}</Typography>}
         {sections.map(section => section === "stats" ? <Box key={section} component="dl" aria-label="Stats"
           sx={{m:0,mt:0.65,display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:0.55,fontVariantNumeric:"tabular-nums"}}>
-          {stats.map(([label,value]) => <Reading key={label} label={label} value={value}/>)}
+          {stats.map(([label,value]) => <Reading key={label} label={label} value={value}
+            title={label==="T/O"?scannerFloatTurnoverTitle(mainVolume):undefined}/>)}
           {additionalStats?.(row).map(([label,value],index) =>
             <Reading key={`${index}:${label}`} label={label} value={value}/>)}
         </Box> : section === "indicators" || catalyst ? <Box component="section" key={section}

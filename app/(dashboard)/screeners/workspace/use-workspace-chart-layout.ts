@@ -4,10 +4,17 @@ import {chartSymbol,type ChartTimeframe} from '@/src/modules/scanner/alpaca/cand
 import {chartCount,parseChartMultiview,reconcileChartTickers,singleChart,type ChartMultiview} from '@/src/modules/scanner/alpaca/chart-multiview';
 import {replaceWorkspaceChart} from './workspace-chart-panels';
 import {chartViews} from '../../charts/chart-view-memory';
+import {workspaceChartArrangement,type WorkspaceChartLayout} from './workspace-chart-arrangement';
 
 export const workspaceChartKey=(owner:string)=>`traderslink.workspace.charts.v1:${owner}`;
-export function readWorkspaceChartLayout(raw:string|null):ChartMultiview|null{
- try{if(!raw||raw.length>8192)return null;const layout=parseChartMultiview(JSON.parse(raw));return layout.groups.length?layout:null;}catch{return null;}
+function parseWorkspaceChartLayout(value:WorkspaceChartLayout):WorkspaceChartLayout{
+ const {arrangement,...chartLayout}=value;
+ const layout=parseChartMultiview(chartLayout);
+ return arrangement && chartCount(layout)>1
+  ? {...layout,arrangement:workspaceChartArrangement(layout,arrangement)} : layout;
+}
+export function readWorkspaceChartLayout(raw:string|null):WorkspaceChartLayout|null{
+ try{if(!raw||raw.length>8192)return null;const layout=parseWorkspaceChartLayout(JSON.parse(raw));return layout.groups.length?layout:null;}catch{return null;}
 }
 export function workspaceChartMemoryLayout(layout:ChartMultiview):ChartMultiview{
  return {...layout,selectedPanel:layout.selectedPanel?`workspace-card-${layout.selectedPanel}`:null,
@@ -15,7 +22,7 @@ export function workspaceChartMemoryLayout(layout:ChartMultiview):ChartMultiview
 }
 /** Persist coordinates/configuration only; no chart instances, candles or subscriptions. */
 export function useWorkspaceChartLayout(owner:string|undefined){
- const [state,setState]=useState<{owner:string|null;layout:ChartMultiview|null}>({owner:null,layout:null});
+ const [state,setState]=useState<{owner:string|null;layout:WorkspaceChartLayout|null}>({owner:null,layout:null});
  const current=useRef(state);
  const committedOwner=useRef(owner);
  useLayoutEffect(()=>{
@@ -25,18 +32,18 @@ export function useWorkspaceChartLayout(owner:string|undefined){
  useEffect(()=>{
   if(!owner)return;
   const frame=requestAnimationFrame(()=>{
-   let layout:ChartMultiview|null=null;
+   let layout:WorkspaceChartLayout|null=null;
    try{layout=readWorkspaceChartLayout(localStorage.getItem(workspaceChartKey(owner)));}catch{/* Startup chart remains available without storage. */}
    if(layout)chartViews.retain(owner,'workspace',workspaceChartMemoryLayout(layout));
    current.current={owner,layout};setState(current.current);
   });
   return()=>cancelAnimationFrame(frame);
  },[owner]);
- const change=useCallback((update:SetStateAction<ChartMultiview|null>)=>{
+ const change=useCallback((update:SetStateAction<WorkspaceChartLayout|null>)=>{
   if(!owner||committedOwner.current!==owner||current.current.owner!==owner)return;
   const candidate=typeof update==='function'?update(current.current.layout):update;
   if(candidate===current.current.layout)return;
-  const layout=candidate?parseChartMultiview(candidate):null;
+  const layout=candidate?parseWorkspaceChartLayout({arrangement:current.current.layout?.arrangement,...candidate}):null;
   chartViews.retain(owner,'workspace',workspaceChartMemoryLayout(layout??{version:1,groups:[],selectedPanel:null}));
   try{if(layout)localStorage.setItem(workspaceChartKey(owner),JSON.stringify(layout));else localStorage.removeItem(workspaceChartKey(owner));}catch{/* Keep this session usable if browser storage is unavailable. */}
   current.current={owner,layout};setState(current.current);
