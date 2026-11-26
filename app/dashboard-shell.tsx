@@ -1085,7 +1085,8 @@ function DashboardShellContent({
               minHeight: 0,
               display: "flex",
               flexDirection: "column",
-              "& > [data-traderlink-platform-dashboard-page]": { flex: 1, minHeight: 0 },
+              // The signed-in dashboard wraps the page in a display: contents element.
+              "& [data-traderlink-platform-dashboard-page]": { flex: 1, minHeight: 0 },
             } : {}),
             ...(compactMarketPage ? {
               '& [data-traderlink-platform-dashboard-page] > :not(style) ~ :not(style)': { marginTop: 0 },
