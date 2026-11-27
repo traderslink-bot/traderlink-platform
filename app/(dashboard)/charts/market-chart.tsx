@@ -1841,7 +1841,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     ? readout.overlay : undefined;
   return <Box data-traderslink-chart={ticker} data-chart-price-adjustment={priceAdjustment} sx={[{ borderRadius: 0, height: "100%", position: "relative", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }, ...(Array.isArray(sx) ? sx : [sx])]}>
     {compact ? <Stack data-chart-compact-toolbar direction="row" sx={{
-      alignItems: "center", px: 0.375, height: compactToolbarHeight, flexShrink: 0, gap: 0.25,
+      alignItems: "center", px: 0.375, pt: "2px", height: compactToolbarHeight + 2, boxSizing: "border-box", flexShrink: 0, gap: 0.25,
       overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none",
       "& > *": { flexShrink: 0 },
       "& > .MuiIconButton-root": { minHeight: 0, maxHeight: compactToolbarHeight, minWidth: 0, maxWidth: compactToolbarHeight, p: 0.5 },
@@ -1854,7 +1854,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       {tickerField && chartIdentity && <Box sx={{ minWidth: 54, maxWidth: 130, flex: "1 0 54px", "& .MuiTabs-root, & .MuiTab-root": {
         minHeight: compactToolbarHeight, py: 0,
       } }}>{chartIdentity}</Box>}
-      {timeframeControl}
+      <Box sx={{ display: "flex", alignItems: "center", ml: "auto" }}>{timeframeControl}</Box>
       {preferencesButtons}
       {evidenceButtons}
       {!movementKind && !replayActive && drawingToolbar}
