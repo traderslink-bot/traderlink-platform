@@ -1,3 +1,8 @@
+import type {ScanPattern} from "./candle-patterns";
+import { CompanyStudyCache, type CompanyBatchReader } from "./company-study-cache";
+import { ArchiveStudies, type StudyArchiveReader } from "./archive-studies";
+import { studyHistorySize, isCompanyMetric, isCandleStudy, eventFilters, type CandleStudy, type StudyFrame } from "./audited-filters";
+import { candleStudyValue } from "./candle-study-values";
 import { setImmediate as yieldTurn, setTimeout as wait } from "node:timers/promises";
 import type { CustomIndicator, IndicatorMatch } from "./custom-indicator";
 import { readCustomAverage,readCustomVwap } from "./custom-indicator-facts";
@@ -17,9 +22,12 @@ type Entry = {
   volumeCoveredFrom?: number;
   custom?:Map<string,IndicatorMatch|null>; structure?:ReturnType<typeof closedStructureSignals> | null;
   sameTimeVolume?: { through: number; ratios: Map<ScannerSession, number | null> };
+  studies?: Map<string,number|null>; lowPivot?:{at:number;price:number}|null;
   depth:number; covered?:boolean; vwap?:IndicatorMatch;
 };
 type Loaders = {
+  archive?:StudyArchiveReader;
+  company?: CompanyBatchReader;
   releases?: (symbols:readonly string[],now:number)=>Promise<ReadonlyMap<string,ScanPressRelease>>|ReadonlyMap<string,ScanPressRelease>;
   bars?: (request:ScannerSignalBars)=>Promise<ScannerSignalBarsResult>;
 };
@@ -102,21 +110,30 @@ export class SharedScanEnrichment implements ScanEnrichment {
   private reports:ReadonlyMap<string,ScanPressRelease>=new Map();
   private releaseCovered:ReadonlySet<string>=new Set();
   private barReading=false;
-  private notifyHistory:()=>void=()=>{};
+  private notifyHistory:(companyChanged?:boolean)=>void=()=>{};
   private nextPruneAt=0;
   private date="";
   private sessionGeneration=0;
   readonly counts={barBatches:0,barFailures:0,releaseReads:0,releaseFailures:0};
 
-  constructor(private readonly loaders:Loaders){}
+  private companyReaders = 0;
+  private readonly company?: CompanyStudyCache;
+  companyReadings(symbol:string,at:number){return this.company?.value(symbol,at);}
+  private readonly archive?: ArchiveStudies;
+  constructor(private readonly loaders:Loaders){
+    if(loaders.company)this.company=new CompanyStudyCache(loaders.company,()=>this.notifyHistory(true));
+    if(loaders.archive)this.archive=new ArchiveStudies(loaders.archive,()=>this.notifyHistory());
+  }
 
-  onHistoryUpdate(notify:()=>void){this.notifyHistory=notify;}
+  onHistoryUpdate(notify:(companyChanged?:boolean)=>void){this.notifyHistory=notify;}
 
   attach(queries:readonly ScanQuery[]){
     const frameTargets = new Map<ScanSignalFrame, Set<string> | null>();
     const vwapFrames=new Set<ScanSignalFrame>();
     const capacities=new Map<ScanSignalFrame,number>();
     let release=false;
+    const wantsCompany = queries.some(({definition}) => [...scanRules(definition),definition.sort].some(c => isCompanyMetric(c.metric)));
+    if(wantsCompany)this.companyReaders++;
     for (const { definition } of queries) {
       // Only the first mandatory rule excludes other tickers before study readings affect coverage.
       const first = definition.rules[0];
@@ -127,6 +144,17 @@ export class SharedScanEnrichment implements ScanEnrichment {
         if (criterion.metric === "pressRelease") release = true;
         const frame=criterion.frame??"5m";
         if (isScanIndicatorMetric(criterion.metric) || isCustomIndicatorMetric(criterion.metric)) frames.add(frame);
+        if (criterion.metric==="timedRebound" || Object.hasOwn(eventFilters,criterion.metric)) frames.add("1m");
+        if (criterion.metric === "prThenVwap") vwapFrames.add("1m");
+        if (isCandleStudy(criterion.metric) && "studyFrame" in criterion) {
+          const frame=criterion.studyFrame;
+          if(frame==="1m"||frame==="5m"||frame==="15m") {
+            frames.add(frame);
+            const period=criterion.period??20;
+            const depth=studyHistorySize(criterion.metric,period,criterion.signalPeriod);
+            capacities.set(frame,Math.max(capacities.get(frame)??0,depth));
+          }
+        }
         if (criterion.metric === "customVwap") vwapFrames.add(frame);
         if ("indicator" in criterion && criterion.indicator && criterion.indicator.kind !== "vwap" && criterion.comparison) {
           const { indicator } = criterion;
@@ -156,6 +184,7 @@ export class SharedScanEnrichment implements ScanEnrichment {
       if(detached)return;
       detached=true;
       if(release)this.releaseReaders--;
+      if(wantsCompany)this.companyReaders--;
       for(const [frame,bars] of capacities){
         const usage=this.capacityRequests.get(frame);
         if(!usage)continue;
@@ -192,6 +221,11 @@ export class SharedScanEnrichment implements ScanEnrichment {
   }
 
   observe(symbols:Iterable<string>, now:number, activity?:Iterable<ScanMarketRow>){
+    if(this.companyReaders && this.company) {
+      const roster = Array.from(symbols);
+      void this.company.observe(roster, now);
+      symbols = roster;
+    }
     if(!this.releaseReaders&&!this.requests.size&&!this.frames.size)return;
     if(now>=this.nextPruneAt){
       this.nextPruneAt=now+60_000;
@@ -259,6 +293,7 @@ export class SharedScanEnrichment implements ScanEnrichment {
   }
 
   closeSession(){
+    this.company?.reset();
     this.date="";
     this.sessionGeneration++;
     this.frames.clear();
@@ -278,7 +313,7 @@ export class SharedScanEnrichment implements ScanEnrichment {
   private currentEntry(symbol:string,frame:ScanSignalFrame,now:number){
     const entry=this.frames.get(frame)?.get(symbol);
     const width=parseInt(frame,10)*60_000;
-    return entry?.basis===this.date&&now-entry.through<=3*width ? entry : undefined;
+    return entry?.basis===this.date&&entry.through<=now&&now-entry.through<=3*width ? entry : undefined;
   }
   indicator(symbol:string,frame:ScanSignalFrame,now:number){
     return this.currentEntry(symbol,frame,now)?.facts;
@@ -290,6 +325,34 @@ export class SharedScanEnrichment implements ScanEnrichment {
       entry.structure = closedStructureSignals(entry.bars, BAR_FIELDS, frame, symbol, entry.through) ?? null;
     }
     return entry.structure ? entry.structure[signal] ?? null : undefined;
+  }
+  lastMinute(symbol:string,at:number) {
+    const entry=this.currentEntry(symbol,"1m",at);
+    if(!entry || entry.bars.length<BAR_FIELDS)return;
+    const end = entry.bars.length, start=entry.bars[end-BAR_FIELDS]*1000;
+    if(start+60_000>at || at-start>=120_000)return;
+    const previous=end>=2*BAR_FIELDS ? entry.bars[end-2*BAR_FIELDS+4] : null;
+    if(entry.lowPivot===undefined){
+      entry.lowPivot=null;
+      for(let i=end-3*BAR_FIELDS;i>=2*BAR_FIELDS;i-=BAR_FIELDS){
+        const low=entry.bars[i+3];
+        if([-2,-1,1,2].every(offset=>entry.bars[i+offset*BAR_FIELDS+3]>low)){
+          entry.lowPivot={at:(entry.bars[i]*1000)+60_000,price:low}; break;
+        }
+      }
+    }
+    return {start,lowPivot:entry.lowPivot??undefined,close:entry.bars[end-BAR_FIELDS+4],previous,previousAt:end>=2*BAR_FIELDS?entry.bars[end-2*BAR_FIELDS]*1000:undefined,
+      relativeVolume:entry.facts?.indicatorVolumeRatio??null,
+      vwapCross:entry.vwap?.readyToCross ? entry.vwap.crossUp??null : undefined};
+  }
+  candleStudy(symbol:string,at:number,frame:StudyFrame,metric:CandleStudy,period:number,fast?:number,signal?:number,pattern?:ScanPattern) {
+    if(frame!=="1m"&&frame!=="5m"&&frame!=="15m")return this.archive?.value(symbol,frame,metric,period,at,fast,signal,pattern)??null;
+    const entry=this.currentEntry(symbol,frame,at);
+    if(!entry)return null;
+    const key=[metric,period,fast,signal,pattern].join("/");
+    const cache=entry.studies??=new Map();
+    if(!cache.has(key))cache.set(key,candleStudyValue(metric,unpackBars(entry.bars),period,undefined,fast,signal,pattern));
+    return cache.get(key)??null;
   }
   sameTimeVolumeRatio(symbol:string, now:number, session: ScannerSession = "regular") {
     const entry = this.currentEntry(symbol, "15m", now);
@@ -413,7 +476,7 @@ export class SharedScanEnrichment implements ScanEnrichment {
       const incoming=returned.filter(bar=>calendar(bar.time*1000));
       const coverage = result.coverage?.[symbol];
       // A capped response proves absence only from the first retained bar.
-      const confirmedFrom = frame === "15m" && coverage?.status === "complete" && coverage.completedThroughMs === through
+      const confirmedFrom = coverage?.status === "complete" && coverage.completedThroughMs === through
         ? returned.length < depth ? start : Math.max(start, returned[0].time * 1000)
         : undefined;
       const covered=vwap&&(former?.covered||start<=sessionStart);
@@ -421,7 +484,7 @@ export class SharedScanEnrichment implements ScanEnrichment {
       const { bars, trimmed } = mergeBars(prior, incoming, sessionStart, depth,
         confirmedFrom === undefined ? undefined : { from: confirmedFrom, through });
       const previousCoverage = former?.volumeCoveredFrom;
-      let volumeCoveredFrom = confirmedFrom;
+      let volumeCoveredFrom = frame === "15m" ? confirmedFrom : undefined;
       if (volumeCoveredFrom !== undefined) {
         if (former && previousCoverage !== undefined && volumeCoveredFrom <= former.through)
           volumeCoveredFrom = Math.min(previousCoverage, volumeCoveredFrom);

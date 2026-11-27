@@ -37,7 +37,6 @@ export function TraderLinkPlatformDashboardTemplate({
   offlineScopeRef,
   pressReleaseUnreadCounts = null,
   deferPressReleaseUnreadCounts = false,
-  scannerEarlyAccess = false,
   scannerDashboardAccess = false,
   screenersDashboardAccess = false,
   chartsDashboardAccess = false,
@@ -64,7 +63,6 @@ export function TraderLinkPlatformDashboardTemplate({
   offlineScopeRef: string;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   deferPressReleaseUnreadCounts?: boolean;
-  scannerEarlyAccess?: boolean;
   scannerDashboardAccess?: boolean;
   screenersDashboardAccess?: boolean;
   chartsDashboardAccess?: boolean;
@@ -86,7 +84,6 @@ export function TraderLinkPlatformDashboardTemplate({
       notifications={notifications}
       pressReleaseUnreadCounts={pressReleaseUnreadCounts}
       deferPressReleaseUnreadCounts={deferPressReleaseUnreadCounts}
-      scannerEarlyAccess={scannerEarlyAccess}
       scannerDashboardAccess={scannerDashboardAccess}
       screenersDashboardAccess={screenersDashboardAccess}
       chartsDashboardAccess={chartsDashboardAccess}

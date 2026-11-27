@@ -1,3 +1,5 @@
+import { closedScannerStudySession } from "./scanner-study-session";
+import type { CandleArchiveRead, CandleArchiveReply } from "./transport";
 import Database from "better-sqlite3";
 import { closeSync, constants, mkdirSync, openSync, statSync } from "node:fs";
 import { dirname } from "node:path";
@@ -59,6 +61,18 @@ class CandleHistoryQueries {
       return this.database.prepare(`SELECT time, open, high, low, close, volume FROM archive_bars
         WHERE ${keyWhere} AND time >= ? AND time < ? ORDER BY time`)
         .all(...seriesKey(window), window.start, window.end) as Candle[];
+    })();
+  }
+
+  readScannerStudy(window: CandleArchiveRead, date: string): CandleArchiveReply {
+    const closed = closedScannerStudySession(date);
+    if (closed && window.end > closed.close) return { state: "miss" };
+    return this.database.transaction((): CandleArchiveReply => {
+      const row = this.database.prepare("SELECT date, basis FROM archive_basis WHERE symbol = ? AND date BETWEEN ? AND ?")
+        .get(chartSymbol(window.symbol), closed?.basisFrom ?? date, date) as { date: string; basis: string } | undefined;
+      if (!row) return { state: "miss" };
+      const bars = this.read({ ...window, basis: row.basis });
+      return bars ? { state: "ready", start: window.start, end: window.end, basisDate: row.date, bars } : { state: "miss" };
     })();
   }
 

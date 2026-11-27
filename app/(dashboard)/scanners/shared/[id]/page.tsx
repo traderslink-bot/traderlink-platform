@@ -16,7 +16,7 @@ export default async function SharedScanPage({ params }: { params: Promise<{ id:
   if (!share) notFound();
 
   return <DashboardPage>
-    <DashboardSecondaryAction href="/scanners">Scanners</DashboardSecondaryAction>
+    <DashboardSecondaryAction href="/scanner">Scanner</DashboardSecondaryAction>
     <SharedScanResults key={id} share={sharedScanView(share)} />
   </DashboardPage>;
 }

@@ -17,6 +17,10 @@ export class ReadonlyCandleArchive {
     this.splitEventsPath = join(dirname(path), "split-events.sqlite");
   }
 
+  readScannerStudy(input: CandleArchiveRead): CandleArchiveReply {
+    return this.withStore(store => store.readScannerStudy(input, easternClock(this.now()).date)) ?? { state: "miss" };
+  }
+
   read(input: CandleArchiveRead): CandleArchiveReply {
     const date = easternClock(this.now()).date;
     const bars = this.withStore(store => store.readForDate(input, date));

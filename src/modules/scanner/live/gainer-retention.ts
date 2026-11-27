@@ -1,3 +1,4 @@
+import { priceChangePercent } from "../price-change";
 import type { LiveScannerRow } from "./contracts";
 
 export const GAINER_LIQUIDITY_GRACE_MS = 15 * 60_000;
@@ -29,7 +30,7 @@ export class GainerRetentionBook {
           volume: observed.volume ?? member.row.volume,
           dollarVolume: observed.dollarVolume ?? member.row.dollarVolume,
           comparisonPrice: comparison,
-          sessionGain: observed.sessionGain ?? (comparison && comparison > 0 ? (observed.price / comparison - 1) * 100 : member.row.sessionGain),
+          sessionGain: observed.sessionGain ?? (comparison && comparison > 0 ? priceChangePercent(observed.price, comparison) : member.row.sessionGain),
         };
       }
       const reasons = failures(row);

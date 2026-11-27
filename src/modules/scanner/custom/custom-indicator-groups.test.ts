@@ -103,6 +103,24 @@ describe("configurable scanner indicator rules",()=>{
     expect(loaded.bars.XYZ[0]).toMatchObject({time:start/1000,vwap:10.001});
   });
 
+  it("shares the full two-window input for a 200-period intraday study",async()=>{
+    const clock=vi.spyOn(Date,"now").mockReturnValue(now);
+    try{
+      const requests:ScannerSignalBars[]=[];
+      const shared=new SharedScanEnrichment({bars:async request=>{
+        requests.push(request);
+        return {feed:"sip",adjustment:"split",basisDate:"2026-11-16",end:request.end,frame:request.frame,
+          historyBars:request.historyBars,bars:{XYZ:Array.from({length:400},(_,i)=>bar(request.end-(400-i)*minute,1+i/1000))}};
+      }});
+      const definition=query([{metric:"bandCompression",studyFrame:"1m",period:200,minimum:0,maximum:null}]);
+      const detachOne=shared.attach([definition]), detachTwo=shared.attach([definition]);
+      shared.observe(["XYZ"],now);
+      await vi.waitFor(()=>expect(shared.candleStudy("XYZ",now,"1m","bandCompression",200)).toBeTypeOf("number"));
+      expect(requests.map(r=>r.historyBars)).toEqual([400]);
+      detachOne();detachTwo();
+    }finally{clock.mockRestore();}
+  });
+
   it("backfills VWAP from session open on a warm frame and shares the request",async()=>{
     const clock=vi.spyOn(Date,"now").mockReturnValue(now);
     const requests:{start:number;sessionVwap?:true}[]=[];
@@ -275,4 +293,96 @@ describe("All and Any scanner groups",()=>{
     expect(market.query(query([vwap,numeric("price",3,null)]))).toMatchObject({total:0,incomplete:0});
     expect(market.query(query([{...ema,maximum:11}]))).toMatchObject({total:0,incomplete:1});
   });
+});
+
+it("uses the active session's volume threshold and preserves unknown volume in that branch", () => {
+  const gate = (session: string, metric: string, minimum: number) => ({
+    match: "all", rules: [
+      {metric: "tradingSession", minimum: null, maximum: null, selection: [session]},
+      numeric(metric, minimum, null),
+    ],
+  });
+  const definition = parseScanDefinition({ ...EMPTY_SCAN, match: "any", groups: [
+    gate("PREMARKET", "premarketVolume", 500_000), gate("REGULAR", "regularVolume", 1_000_000),
+  ]});
+  const market = new CustomScanMarket();
+  for (const session of ["premarket", "regular", "after_hours"] as const) {
+    const lows = session === "premarket" ? 499_999 : 999_999;
+    const facts = (volume: number | null) => ({
+      premarketVolume: session === "premarket" ? volume : 900_000,
+      regularVolume: session === "premarket" ? null : volume,
+    });
+    market.set("open", now, session, [lows + 1, lows, null].map((volume, index) => ({
+      ...row(["AAA", "BBB", "CCC"][index], 3), session, facts: facts(volume),
+    })));
+    const result = market.query({key: "main", definition, page: 1});
+    expect(result.rows.map(hit => hit.symbol)).toEqual(session === "after_hours" ? [] : ["AAA"]);
+    expect(result.incomplete).toBe(session === "after_hours" ? 0 : 1);
+    expect(result.excluded).toBe(session === "after_hours" ? 3 : 1);
+  }
+});
+
+it.each(["1m", "5m"] as const)("drops a retracted %s candle only within confirmed coverage and respects an earlier read cutoff", async frame => {
+  const width = parseInt(frame, 10) * minute;
+  const end = Math.floor((now - 6_000) / width) * width;
+  let round = 0;
+  const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+  const enrichment = new SharedScanEnrichment({ bars: async request => {
+    const common = [bar(end - 4 * width, 4.95, 4.95, 270), bar(end - 3 * width, 5.11, 5.11, 155)];
+    const latest = ++round === 1
+      ? [...common, bar(end - 2 * width, 5, 5, 103), bar(end - width, 5.01, 5.01, 210)]
+      : [bar(end - width, 5.01, 5.01, 210), bar(end, 5.02, 5.02, 50)];
+    return { frame, end: request.end, feed: "sip", adjustment: "split", basisDate: "2026-11-16",
+      bars: { CLRO: latest, CONTROL: latest },
+      coverage: { CLRO: { status: "complete", completedThroughMs: request.end } } };
+  } });
+  const detach = enrichment.attach([query([{metric:"volumeWindowSum",studyFrame:frame,period:3,minimum:0,maximum:null}])]);
+  try {
+    enrichment.observe(["CLRO", "CONTROL"], now);
+    const sum = (ticker: string, at: number) => enrichment.candleStudy(ticker, at, frame, "volumeWindowSum", 3);
+    await vi.waitFor(() => expect(sum("CLRO", now)).toBe(468));
+    expect(sum("CLRO", end - 1)).toBeNull();
+    clock.mockReturnValue(now + width);
+    enrichment.observe(["CLRO", "CONTROL"], now + width);
+    await vi.waitFor(() => expect(sum("CLRO", now + width)).toBe(415));
+    expect(sum("CONTROL", now + width)).toBe(363);
+    expect(sum("CLRO", now)).toBeNull();
+  } finally {
+    detach();
+    clock.mockRestore();
+  }
+});
+
+it("includes exact percentage cutoffs on CLRO, VIVS and GMM and preserves the next tighter cutoff", () => {
+  const market = new CustomScanMarket();
+  const setup = (symbol: string, before: number, after: number) => {
+    market.set("open", now, symbol, [row(symbol, before)]);
+    market.set("open", now + minute, symbol, [{...row(symbol, after), observedAt: now + minute}]);
+  };
+  const scan = (threshold: number) => query([{metric:"rollingMove", minutes:1, minimum:threshold, maximum:threshold}]);
+  setup("CLRO", 5, 5.01);
+  expect(market.query(scan(0.20))).toMatchObject({total:1,rows:[{symbol:"CLRO", matches:[0.20]}]});
+  expect(market.query(scan(0.20000001)).total).toBe(0);
+  setup("VIVS", 0.152, 0.1539);
+  expect(market.query(scan(1.25)).total).toBe(1);
+  expect(market.query(scan(1.25000001)).total).toBe(0);
+  setup("GMM", 2.60, 3.38);
+  expect(market.query(scan(30)).total).toBe(1);
+});
+
+it("excludes a high-volume break below the confirmed low from an upper-bound-only rebound scan", () => {
+  // CLRO, November 16. The 08:06 Eastern candle closed below the verified 08:03 low.
+  const start = Date.parse("2026-11-16T13:06:00Z");
+  const at = start + minute + 6_100;
+  let close = 4.88;
+  const market = new CustomScanMarket({attach:()=>()=>{}, observe(){}, pressRelease:()=>undefined, indicator:()=>undefined,
+    lastMinute:()=>({start,close,previous:4.9,relativeVolume:2.18534,lowPivot:{at:start-2*minute,price:4.9},vwapCross:undefined})});
+  const scan = query([{metric:"timedRebound",minutes:5,minimum:null,maximum:1}]);
+  for (const [price, matches] of [[4.88, 0], [4.90, 0], [4.91, 1]]) {
+    close = price;
+    market.set("open", at, "regular", [{...row("CLRO",price), observedAt:at}]);
+    expect(market.query(scan)).toMatchObject({total:matches, incomplete:0});
+  }
+  expect(query([{metric:"reboundFromLow",studyFrame:"1m",period:20,minimum:null,maximum:-1}])
+    .definition.rules[0].maximum).toBe(-1);
 });

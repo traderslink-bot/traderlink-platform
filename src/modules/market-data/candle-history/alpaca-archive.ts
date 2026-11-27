@@ -122,6 +122,10 @@ export class AlpacaCandleArchive {
     this.retryAt.clear();
   }
 
+  readScannerStudy(input: CandleArchiveRead): CandleArchiveReply {
+    return this.stopped ? { state: "miss" } : this.store.readScannerStudy(input, easternClock(this.now()).date);
+  }
+
   read(input: CandleArchiveRead): CandleArchiveReply {
     if (this.stopped) return { state: "miss" };
     const date = easternClock(this.now()).date;

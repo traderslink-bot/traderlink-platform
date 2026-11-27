@@ -1,5 +1,6 @@
 "use client";
 
+import { eventFilters, isReaction } from "@/src/modules/scanner/custom/audited-filters";
 import { Fragment, useRef, useState, type ReactNode } from "react";
 import { Alert, Box, Button, Checkbox, FormControlLabel, IconButton, Popover, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import CandlestickChartOutlined from "@mui/icons-material/CandlestickChartOutlined";
@@ -41,7 +42,7 @@ function format(metric: ScanMetric, value: number | null, cross=false) {
   const { unit } = SCAN_METRICS[metric];
   if (unit === "percent") return (isSignedScanMetric(metric) || metric === "rollingMove" ? signedPercent : percent).format(value/100);
   if (unit === "multiple") return multiple.format(value) + "×";
-  if (unit === "money") return metric === "dollarVolume" || metric === "rollingDollarVolume" || metric === "marketCap"
+  if (unit === "money") return metric === "dollarVolume" || metric === "rollingDollarVolume" || metric === "marketCap" || metric==="floatMarketCap" || metric==="largestTradeDollars"
     ? "$" + compactNumber.format(value) : scannerPrice(value);
   return compactNumber.format(value);
 }
@@ -158,7 +159,9 @@ export function CustomScanResults({ definition, result, error, page, onPage, onC
       let value = reading === null
         ? rule.includeUnknown ? "Unknown value included" : "None in the selected window"
         : format(rule.metric, reading, field?.cross);
-      if (isScanSelectionMetric(rule.metric)) {
+      if (rule.metric==="prHeadline" || rule.metric==="recentFiling" || rule.metric==="haltCode" || rule.metric==="zoneState"){
+        value=rule.metric==="prHeadline" ? row.pressRelease?.title??"Headline matched" : (rule.selection??[]).join(", ");
+      } else if (isScanSelectionMetric(rule.metric)) {
         const session = row.session?.toUpperCase() as keyof typeof SCAN_SESSION_LABELS | undefined;
         const selection = rule.metric === "tickerList" ? row.symbol : rule.metric === "listingExchange" ? row.exchange
           : rule.metric === "listingIndustry" ? row.industry : rule.metric === "listingSector" ? row.sector : rule.metric === "tradingSession"
@@ -172,7 +175,8 @@ export function CustomScanResults({ definition, result, error, page, onPage, onC
           })
           .join(", ");
       } else if (isEventScanMetric(rule.metric) && rule.maximum !== null) {
-        value += " · past " + rule.maximum + (rule.metric === "indicatorSignal" || rule.metric === "tradeResumed" ? " minutes" : " hours");
+        value += isReaction(rule.metric) ? " · within "+rule.maximum+" minutes" : Object.hasOwn(eventFilters,rule.metric)
+          ? " · latest completed 1m candle" : " · past " + rule.maximum + (rule.metric === "indicatorSignal" || rule.metric === "tradeResumed" ? " minutes" : " hours");
       } else if (!rule.indicator && rule.metric !== "activeHalt") {
         const bounds = [
           rule.minimum === null ? null : "≥ " + format(rule.metric, rule.minimum),

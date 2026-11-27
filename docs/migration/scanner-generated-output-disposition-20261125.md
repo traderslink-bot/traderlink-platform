@@ -1,0 +1,21 @@
+# Scanner generated-output handback to Release
+
+Reviewed November 25, 2026 at 9:29 p.m. Toronto. Scanner has ended its use of the nine generated outputs below. They contain old Next.js output and caches. Scanner's subsequent feature work and evidence can be recovered from the retained Git sources, receipts and build logs. Release retains final custody and must confirm any use by other owners, especially Shared Charts' use of the first path. [Reviewed nine-path manifest](/home/traderlink/projects/traderslink-coordinator/operations/vps-railway-storage-maintenance-20261124T221602Z.json)
+
+| Exact path | Allocated bytes | Retained source or evidence |
+| --- | ---: | --- |
+| `/home/traderlink/.codex/worktrees/scanner-charts-paired-qa-20261122/traderlink-platform/.next` | 636,809,216 | QA worktree at `23fbe9782d7e66edd1bb81443e1228dd5786506c`. Earlier real-save admission is historical. |
+| `/home/traderlink/.codex/worktrees/scanner-unified-workspace-qa-20261122/traderlink-platform/.next` | 653,324,288 | Retained QA commits `a7eb7feaa622895ba0e5488fee2e15ce29568c69` and `5ad4c005264e69777bcb5f8707a4b7229a1d7ca8`, with existing Scanner and Workspace browser receipts. |
+| `/home/traderlink/projects/scanner-live-indicator-history-qa-20261123/.next/dev` | 272,035,840 | Review source `eb5089a0205cdcadb82eecdf5769d252266320e0` and the production review receipt. |
+| `/home/traderlink/projects/scanner-live-indicator-history-qa-20261123/.next/grouped-browser-qa-24e429a8` | 103,501,824 | Composed QA source `24e429a82f804ada7de6e486d2459b3c9c479967`, manifest and recorded checks. |
+| `/home/traderlink/projects/scanner-live-indicator-history-qa-20261123/.next/grouped-browser-fonts-231857cb` | 188,321,792 | Grouped browser source `231857cb141c3d53fcd009fa8191ed2d11028dec` and its documented verification limits and closeout. |
+| `/home/traderlink/projects/scanner-live-indicator-history-qa-20261123/.next/grouped-browser-warm-231857cb` | 199,979,008 | Same grouped source and closeout. |
+| `/home/traderlink/preview-runtime/scanner-fix-batch-private-build-20261124/run-23f3052065034ead839acbb8302aa72e/next-output` | 117,731,328 | Exact source `756a2e045dd40d9a9cff6034550123e25bd39510`, sibling build intake, result, log and cache closeout. Exit 1 after memory limit. |
+| `/home/traderlink/preview-runtime/scanner-fix-batch-private-build-20261124/run-7c0da0e267d74a8aa98e5977a2bb0aea/next-output` | 12,288 | Same source and separate sibling records. Exit 1. |
+| `/home/traderlink/preview-runtime/scanner-fix-batch-private-build-20261124/run-a1ef60ef726e47fa83058b4dd7803719/next-output` | 43,589,632 | Same source and separate sibling records. Exit 0 with neither a retained standalone entry nor build ID. |
+
+The nine owner, device, inode and modification-time tuples match the manifest. All nine are ordinary directories on `/dev/sda1`. The six checkout outputs contain no tracked files. The three build receipts record stopped services. The process inspection found no visible process references to the outputs or their checkouts. Some other users' descriptor tables were inaccessible, so Release should repeat the handle, mount and dependency check under the existing guard immediately before any removal. Preserve the worktrees, dependency links, sibling evidence, current preview, live issuer on port 3152 and the ticker archive.
+
+The nine directories account for **2,215,305,216 allocated bytes**. This was a read-only review, with zero reclaimed bytes. [Production review receipt](/home/traderlink/projects/traderslink-coordinator/operations/scanner-charts-workspace-production-review-20261123.json) · [Grouped QA source and closeout](/home/traderlink/projects/traderslink-coordinator/coordination-status.md:31151)
+
+The original save reconciliation, combined source receipt and both local browser results remain outside the output directories. [Original save reconciliation](/home/traderlink/projects/traderslink-coordinator/operations/scanner-original-save-readonly-reconciliation-20261122.json) · [Combined source receipt](/home/traderlink/projects/traderslink-coordinator/operations/scanner-unified-workspace-qa-source-candidate-20261122.json) · [Scanner browser receipt](/tmp/scanner-whole-candidate-bl5cqf5m/results.json) · [Workspace browser receipt](/tmp/scanner-whole-candidate-bl5cqf5m/workspace-results.json)

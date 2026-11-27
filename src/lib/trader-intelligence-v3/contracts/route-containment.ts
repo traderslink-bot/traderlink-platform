@@ -25,6 +25,7 @@ export interface TraderIntelligenceRouteContainmentEntry {
     | "platform_request_scope"
     | "public_oauth_entry"
     | "platform_cron_request"
+    | "platform_company_roster_request"
     | "platform_development_worker";
   authenticationRequirement: string;
   authorizationRequirement: string;
@@ -692,6 +693,24 @@ export const TRADER_INTELLIGENCE_ROUTE_VERIFICATION_MATRIX = [
   })),
   ...TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX,
   apiEntry("app/api/auth/discord/callback/route.ts", ["GET"], "public_safe_informational", "public_oauth_entry"),
+  {
+    ...apiEntry("app/api/internal/company/v1/roster/route.ts", ["GET"], "internal_diagnostics", "platform_company_roster_request"),
+    authenticationRequirement: "Dedicated company roster bearer set in server configuration",
+    authorizationRequirement: "Exact roster bearer before reading the accepted Scanner listing universe",
+    repositoryAccessPolicy: "Read accepted listing membership and the exchange calendar only",
+    currentLegacyHazard: "No legacy identity or request-supplied roster selectors",
+    ga0A1Action: "Require the dedicated bearer and a private no-store response",
+    currentResponsibility: "Read-only roster and calendar export for the Company data gateway",
+    currentConsumers: "Company data gateway refresh worker",
+    sourceOfTruthLayer: "Accepted Scanner listing universe and exchange calendar",
+    deploymentAndSecurityAssumptions: "Server-only credential shared with the Company data gateway",
+    privateAlphaReadiness: "Independent of Trader Intelligence user access",
+    inventoryClassification: "out_of_scope",
+    migrationOrAdapterRequirement: "No Trader Intelligence repository or adapter",
+    knownRisks: "Keep the dedicated roster bearer private and separate from other service credentials",
+    existingTestCoverage: "Company roster export and route containment tests",
+    replacementOrRetirementCondition: "Retain while the Company data gateway imports Scanner roster revisions",
+  },
   ...PLATFORM_CRON_ROUTES.map(modulePath =>
     apiEntry(modulePath, ["GET"], "internal_diagnostics", "platform_cron_request"),
   ),

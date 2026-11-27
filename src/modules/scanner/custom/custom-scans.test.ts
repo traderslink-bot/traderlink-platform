@@ -17,6 +17,38 @@ const row = (symbol:string,price:number,observedAt:number,volume:number,extra?:P
 });
 const query = (input:unknown=EMPTY_SCAN, key="main", page=1):ScanQuery=>({ key,definition:parseScanDefinition(input),page });
 
+it("uses the exact as-of price and volume on both sides of a fast custom-scan threshold", () => {
+  const market = new CustomScanMarket();
+  const apply = (offset: number, a: number, b: number, volume: number) => market.set("open", at + offset, "regular", [
+    row("A", a, at + offset, volume), row("B", b, at + offset, volume),
+  ]);
+  apply(-1000, 2, 1, 0);
+  apply(1000, 1, 2, 1000);
+  apply(2000, 2, 1, 2000);
+  const rules = [
+    { metric: "rollingMove", minutes: 1, direction: "up", minimum: 50, maximum: null },
+    { metric: "rollingVolume", minutes: 1, minimum: 10_000, maximum: null },
+  ];
+  const scan = query({ ...EMPTY_SCAN, rules });
+  apply(61_000, 1.5, 1.5, 11_000);
+  expect(market.query(scan).rows.map(r => [r.symbol, ...r.matches])).toEqual([["A", 50, 10_000]]);
+  apply(62_000, 1.5, 1.5, 12_000);
+  expect(market.query(scan).rows.map(r => [r.symbol, ...r.matches])).toEqual([["B", 50, 10_000]]);
+});
+
+it("preserves ten-second reference coverage through quiet updates and explicit gaps", () => {
+  const market = new CustomScanMarket();
+  const apply = (offset: number, price = 1) => market.set("open", at + offset, "regular", [row("A", price, at + offset, 100)]);
+  const scan = query({ ...EMPTY_SCAN, rules: [{ metric: "rollingPriceChange", minutes: 1, direction: "up", minimum: 1, maximum: 1 }] });
+  for (const offset of [0, 10_000, 20_000, 40_000]) apply(offset);
+  apply(90_000, 2);
+  expect(market.query(scan)).toMatchObject({ total: 1, incomplete: 0 });
+  apply(90_001, 2);
+  expect(market.query(scan)).toMatchObject({ total: 0, incomplete: 1 });
+  apply(100_000, 2);
+  expect(market.query(scan)).toMatchObject({ total: 1, incomplete: 0 });
+});
+
 it("keeps old session-volume scans compatible and carries all four totals into results-only sharing", async () => {
   const { sharedResultsWithoutFilters } = await import("./server/shared-scan-results");
   const snapshot: NormalizedSnapshot = {
@@ -598,8 +630,41 @@ describe("Scanner daily context, relative volume and setup geometry", () => {
       const through = starts[3] + 30 * 60_000;
       expect(sameTimeSessionVolumeRatio(candles, 7, through, starts[0], session)).toBe(3.75);
       expect(sameTimeSessionVolumeRatio(candles, 7, through, starts[0])).toBeNull();
+
+      const metric = session === "premarket" ? "sameTimePremarketVolume" : "sameTimeAfterHoursVolume";
+      const scan = query({ rules: [{ metric, minimum: 3, maximum: 4 }],
+        sort: { metric, direction: "desc", frame: "1m" } });
+      expect(scan.definition.rules[0].frame).toBe("15m");
+      expect(scan.definition.sort.frame).toBe("15m");
+      const market = new CustomScanMarket({
+        attach: () => () => {}, observe: () => {}, pressRelease: () => undefined, indicator: () => undefined,
+        sameTimeVolumeRatio: (symbol, cutoff, requested) => symbol === "MISSING" ? null
+          : sameTimeSessionVolumeRatio(candles, 7, cutoff, starts[0], requested),
+      });
+      market.set("open", through, session, [
+        row("RUN", 0.52, through, 375, { session }),
+        row("MISSING", 0.33, through, 0, { session }),
+        row("OTHER", 1.07, through, 800, { session: "regular" }),
+      ]);
+      expect(market.query(scan)).toMatchObject({ total: 1, incomplete: 2,
+        rows: [{symbol: "RUN", sortValue: 3.75, matches: [3.75]}] });
+
     },
   );
+
+  it("includes the exact PR cutoff for legacy saved minute windows and excludes the next millisecond", () => {
+    const market = new CustomScanMarket();
+    const now = Date.parse("2026-11-19T15:30:00Z");
+    market.set("open", now, "regular", ["EDGE", "OLDER"].map(symbol => row(symbol, 0.56, now, 5_000)));
+    const releases = new Map(["EDGE", "OLDER"].map(symbol => [symbol, {
+      id: symbol, title: symbol, at: now - 31 * 60_000 - (symbol === "OLDER" ? 1 : 0), url: "",
+    }]));
+    for (const absence of [false, true]) {
+      const scan = query({ ...EMPTY_SCAN, rules: [{ metric: "pressRelease",
+        minimum: null, maximum: 31 * (1 / 60), absence }] });
+      expect(market.query(scan, () => ({ releases })).rows.map(item => item.symbol)).toEqual([absence ? "OLDER" : "EDGE"]);
+    }
+  });
 
   it("keeps setup targets direction-specific and omits ratios for a zero-width zone", async () => {
     const { scannerRetestSetup } = await import("./setup-details");
@@ -733,6 +798,43 @@ it("shares the five-minute swing snapshot across reconnects while live results s
     expect(await next(true)).toBe(1);
   } finally {
     await Promise.all(readers.map(reader => reader.cancel()));
+    vi.useRealTimers();
+  }
+});
+
+it("finishes a cold swing reading in the same cycle and shares it with compact readers", () => {
+  vi.useFakeTimers();
+  try {
+    vi.setSystemTime(at);
+    let notifyHistory!: () => void;
+    let reading: number | null = null;
+    const market = new CustomScanMarket({
+      onHistoryUpdate: notify => { notifyHistory = notify; },
+      candleStudy: () => reading,
+      observe: () => {}, attach: () => () => {}, indicator: () => undefined, pressRelease: () => undefined,
+    });
+    const cold = query({ ...EMPTY_SCAN, cadence: "swing", rules: [
+      { metric: "smaDistance", studyFrame: "1D", period: 50, minimum: 1, maximum: null },
+    ] });
+    const warm = query({ ...EMPTY_SCAN, cadence: "swing", rules: [
+      { metric: "price", minimum: 1, maximum: null },
+    ] });
+    market.set("open", at, "regular", [row("VIVS", 2, at, 5000)]);
+    const run = (q: ScanQuery) => market.query(q, undefined, undefined, 1);
+    const onUpdate = vi.fn();
+    market.subscribe(onUpdate);
+    expect(run(cold)).toMatchObject({ total: 0, incomplete: 1 });
+    const original = run(warm);
+    reading = 1.2;
+    notifyHistory();
+    notifyHistory();
+    vi.advanceTimersByTime(750);
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(run(cold)).toMatchObject({ total: 1, incomplete: 0, rows: [{symbol: "VIVS", matches: [1.2]}] });
+    expect(run({ ...cold, compact: true }).total).toBe(1);
+    expect(run(warm)).toBe(original);
+    expect(market.evaluations).toBe(3);
+  } finally {
     vi.useRealTimers();
   }
 });

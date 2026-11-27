@@ -241,7 +241,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/press-releases/news-filtered", label: "PR Scanner", icon: "newspaper" as const }),
         Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
         Object.freeze({ href: "/watchlist", label: "Watchlist", icon: "watchlist" as const }),
-        Object.freeze({ href: "/scanners", label: "Scanners", icon: "scanner" as const }),
         Object.freeze({ href: "/screeners", label: "Screeners", icon: "screener" as const }),
         Object.freeze({ href: "/private-watchlist", label: "Private Watchlist", icon: "watchlist" as const }),
         Object.freeze({ href: "/reverse-splits", label: "Reverse Splits", icon: "compareArrows" as const }),
@@ -415,7 +414,7 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
   Object.freeze([
     Object.freeze({ route: "/partner-channels", href: "/help/paid-plan/partner-channels", label: "Partner Channels" }),
     Object.freeze({ route: "/admin/scanners", href: "/help/tools/live-screeners", label: "Scanner Admin" }),
-    Object.freeze({ route: "/scanners", href: "/help/tools/live-screeners", label: "Scanners" }),
+    Object.freeze({ route: "/scanner", href: "/help/tools/live-screeners", label: "Scanner" }),
     Object.freeze({ route: "/trade-analyzer", href: "/help/trade-analyzer/analyzed-trades#enter-trades", label: "Trade Analyzer" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle patterns" }),
     Object.freeze({ route: "/reverse-splits", href: "/reverse-splits/help", label: "Reverse Splits" }),

@@ -3,7 +3,7 @@ import { easternDayStart, type Candle } from "./candles";
 import { SCANNER_OPENING_RANGE_MINUTES, type ScannerOpeningRanges } from "../live/contracts";
 import { easternClock } from "../live/sessions";
 
-export type AlpacaSessionTotal = { volume: number; dollarVolume: number; high: number | null; low: number | null; price: number | null; providerAt: number | null; open?: number; firstTradeAt?: string };
+export type AlpacaSessionTotal = { volume: number; dollarVolume: number; high: number | null; low: number | null; price: number | null; providerAt: number | null; open?: number; largestTradeShares?: number; largestTradeDollars?: number; firstTradeAt?: string; lastTradeAt?: string };
 export type AlpacaSessionState = { date: string; regularClose: number; complete: boolean; openingRanges?: ScannerOpeningRanges; sessions: Record<"premarket" | "regular" | "after_hours", AlpacaSessionTotal> };
 type Trade = { T?: string; S?: string; t: string; p: number; s: number; i: number | string; x: string; c?: string[]; z?: string };
 type OpeningBars = (symbol: string, date: string, start: number, end: number) => readonly Pick<Candle, "time" | "high" | "low">[] | null;
@@ -11,7 +11,7 @@ type OpeningRead = { checkedAt: number; requestedMinutes: number; verifiedMinute
 type Entry = { state: AlpacaSessionState; pending: Trade[]; cutoff: number | null; coveredThrough: number | null; overflow: boolean; working: boolean; retryAt: number; openingRead?: OpeningRead };
 const openingReadIntervalMs = 30_000;
 function fractionNanoseconds(timestamp: string) {
-  return Number((/\.(\d+)Z$/.exec(timestamp)?.[1] ?? "").padEnd(9, "0"));
+  return Number((/\.(\d+)(?:Z|[+-]\d{2}:?\d{2})$/iu.exec(timestamp)?.[1] ?? "").slice(0, 9).padEnd(9, "0"));
 }
 function afterCutoff(timestamp: string, cutoff: number): boolean {
   const milliseconds = Date.parse(timestamp);
@@ -65,7 +65,13 @@ export function applyAlpacaTrade(state: AlpacaSessionState, trade: Trade): boole
   const session = clock.minute < 570 ? "premarket" : clock.minute < state.regularClose ? "regular" : "after_hours";
   const total = state.sessions[session];
   const { volume, prices } = rules;
-  if (volume) { total.volume += trade.s; total.dollarVolume += trade.p * trade.s; }
+  if (volume) {
+    total.volume += trade.s;
+    const dollars = trade.p * trade.s;
+    total.dollarVolume += dollars;
+    total.largestTradeShares = Math.max(total.largestTradeShares ?? 0, trade.s);
+    total.largestTradeDollars = Math.max(total.largestTradeDollars ?? 0, dollars);
+  }
   if (prices) {
     total.high = Math.max(total.high ?? trade.p, trade.p); total.low = Math.min(total.low ?? trade.p, trade.p);
     if (session === "regular") extendOpeningRanges(state, clock.minute, trade.p);
@@ -76,7 +82,12 @@ export function applyAlpacaTrade(state: AlpacaSessionState, trade: Trade): boole
       total.open = trade.p;
       total.firstTradeAt = trade.t;
     }
-    if (total.providerAt === null || time >= total.providerAt) { total.price = trade.p; total.providerAt = time; }
+    if (total.providerAt === null || time > total.providerAt || (time === total.providerAt &&
+      (!total.lastTradeAt || fractionNanoseconds(trade.t) >= fractionNanoseconds(total.lastTradeAt)))) {
+      total.price = trade.p;
+      total.providerAt = time;
+      total.lastTradeAt = trade.t;
+    }
   }
   return true;
 }
