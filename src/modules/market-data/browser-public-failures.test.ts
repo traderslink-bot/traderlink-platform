@@ -1,10 +1,11 @@
 // @vitest-environment node
 import { afterEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-const state=vi.hoisted(()=>({authenticated:true,allowed:true,plan:true,fail:true}));
+const state=vi.hoisted(()=>({authenticated:true,allowed:true,charts:false,plan:true,fail:true}));
 const failed=()=>{throw Error('Alpaca gateway https://private.finnhub.io?token=private-value moomoo');};
 vi.mock('@/src/modules/platform/server/authentication/require-platform-request-scope',()=>({requireTraderLinkPlatformRequestIdentity:()=>{if(!state.authenticated)throw Error('private-value');return{mode:'platform_session',scope:{userId:'fixture'}};}}));
 vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({hasMarketToolsDashboardReadAccess:()=>state.allowed,hasSharedWorkspaceAccess:()=>state.allowed}));
+vi.mock('@/src/modules/market-data/server/chart-dashboard-access',()=>({hasChartsDashboardAccess:()=>state.charts}));
 vi.mock('@/src/modules/news/server/press-release-dashboard-access',()=>({hasPressReleaseDashboardAccess:()=>false}));
 vi.mock('@/src/modules/company/server/company-market-data',()=>({companyUniverseEntry:async()=>{if(state.fail)failed();return{symbol:'SHFS'};},readCompanyTechnicals:async()=>({symbol:'SHFS',stats:{price:.029,change:4.69}}),readCompanyYearRange:async()=>({high:1,low:.01})}));
 vi.mock('@/src/modules/company/server/company-snapshot',()=>({companySymbol:(s:string)=>s==='SHFS'?s:null,readCompanySnapshot:async()=>({companyProfile:{name:'Company'}})}));
@@ -26,7 +27,7 @@ import { GET as history } from '@/app/api/live-watchlist/symbols/[symbol]/analys
 import { GET as stream } from '@/app/api/live-watchlist/stream/route';
 const request=()=>new NextRequest('https://app.example/api?symbol=SHFS');
 const context=()=>({params:Promise.resolve({symbol:'SHFS'})});
-afterEach(()=>{state.authenticated=true;state.allowed=true;state.plan=true;state.fail=true;});
+afterEach(()=>{state.authenticated=true;state.allowed=true;state.charts=false;state.plan=true;state.fail=true;});
 
 it('contains storage/upstream errors in actual member routes without returning messages, URLs, headers or stack traces',async()=>{
  const responses=await Promise.all([company(request()),technicals(request()),list(request()),detail(request(),context()),indicators(request(),context()),history(request(),context()),stream(request())]);
@@ -37,4 +38,16 @@ it('preserves login, member gates and successful technical values rather than tu
  state.authenticated=true;state.plan=false;expect((await indicators(request(),context())).status).toBe(403);
  state.allowed=false;expect((await technicals(request())).status).toBe(404);
  state.allowed=true;state.fail=false;const response=await technicals(request());expect(response.status).toBe(200);expect(await response.json()).toEqual({symbol:'SHFS',stats:{price:.029,change:4.69}});
+});
+
+it('opens company details and technicals for Charts admission through the shared company endpoints', async () => {
+ state.allowed=false;state.fail=false;
+ expect((await company(request())).status).toBe(404);
+ expect((await technicals(request())).status).toBe(404);
+ state.charts=true;
+ expect((await company(request())).status).toBe(200);
+ expect((await technicals(request())).status).toBe(200);
+ state.authenticated=false;
+ expect((await company(request())).status).toBe(401);
+ expect((await technicals(request())).status).toBe(401);
 });
