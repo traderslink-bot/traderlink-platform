@@ -8,7 +8,9 @@ import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { browserChartEvent } from "./browser-chart-events";
 import { browserChartCalendar, browserChartHistory } from "./browser-chart-history";
 import { browserVwapSeed } from "./browser-vwap-seed";
-import { MoomooChartHistory, moomooSplits } from "./moomoo-chart-history";
+import { adjustMoomooBars, MoomooChartHistory, moomooSplits } from "./moomoo-chart-history";
+import { MoomooMarketDataRateLimit } from "./moomoo-bridge";
+import { WorkspaceMoomooCandleCache } from "./workspace-moomoo-candle-cache";
 import type { readWorkspaceMoomooAccess, WorkspaceMoomooConnection } from "./workspace-moomoo-access";
 import { WorkspaceMoomooChartStream } from "./workspace-moomoo-chart-stream";
 
@@ -18,40 +20,75 @@ const headers = { "Cache-Control": "private, no-store" };
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers });
 const changed = () => reply({ error: "broker_connection_changed" }, 409);
 const resources = new Set(["provider", "bars", "stream", "vwap-seed", "calendar", "splits"]);
-const chartStreams = new Map<string, { feed: WorkspaceMoomooChartStream; readers: number }>();
+const streamHeaders = { ...headers, "Content-Type": "text/event-stream", "X-Accel-Buffering": "no" };
+type ActiveChart = {
+  generation: string;
+  symbol: string;
+  feed: WorkspaceMoomooChartStream;
+  readers: Set<() => void>;
+};
+type AccountCache = { generation: string; candles: WorkspaceMoomooCandleCache };
+const processState = globalThis as typeof globalThis & {
+  traderlinkWorkspaceMoomooChartStreams?: Map<string, ActiveChart>;
+  traderlinkWorkspaceMoomooCandleCaches?: Map<string, AccountCache>;
+};
+const chartStreams = processState.traderlinkWorkspaceMoomooChartStreams ??= new Map<string, ActiveChart>();
+const chartCaches = processState.traderlinkWorkspaceMoomooCandleCaches ??= new Map<string, AccountCache>();
 
-function openStream(request: Request, connection: WorkspaceMoomooConnection, input: ChartQuery) {
-  let entry = chartStreams.get(connection.generation);
+function candleCache(owner: string, generation: string) {
+  const saved = chartCaches.get(owner);
+  const current = saved?.generation === generation ? saved : { generation, candles: new WorkspaceMoomooCandleCache() };
+  chartCaches.delete(owner);
+  chartCaches.set(owner, current);
+  while (chartCaches.size > 24) chartCaches.delete(chartCaches.keys().next().value!);
+  return current.candles;
+}
+
+function openStream(request: Request, owner: string, connection: WorkspaceMoomooConnection, input: ChartQuery) {
+  let entry = chartStreams.get(owner);
+  if (entry && entry.generation !== connection.generation) {
+    for (const release of entry.readers) release();
+    entry = undefined;
+  }
+  // Same ticker readers can share the feed, including its second native frame
+  // for calculations. A competing ticker waits without evicting the first.
+  if (entry && entry.symbol !== input.symbol) {
+    return new Response('retry: 5000\nevent: status\ndata: {"state":"unavailable"}\n\n', { headers: streamHeaders });
+  }
   if (!entry) {
-    entry = { feed: new WorkspaceMoomooChartStream(), readers: 0 };
-    chartStreams.set(connection.generation, entry);
+    entry = { generation: connection.generation, symbol: input.symbol, feed: new WorkspaceMoomooChartStream(), readers: new Set() };
+    chartStreams.set(owner, entry);
   }
   const active = entry;
-  active.readers++;
-  let close = () => {};
+  let cancel = () => {};
   const body = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
       let closed = false;
       const lifetime: { release?: () => void; validation?: ReturnType<typeof setInterval> } = {};
-      close = () => {
+      const finish = (closeBody: boolean) => {
         if (closed) return;
         closed = true;
         clearInterval(lifetime.validation);
         request.signal.removeEventListener("abort", close);
         lifetime.release?.();
-        if (--active.readers === 0) chartStreams.delete(connection.generation);
-        if (controller.desiredSize !== null) controller.close();
+        active.readers.delete(close);
+        if (active.readers.size === 0 && chartStreams.get(owner) === active) chartStreams.delete(owner);
+        if (closeBody) controller.close();
       };
+      const close = () => finish(true);
+      cancel = () => finish(false);
+      active.readers.add(close);
       request.signal.addEventListener("abort", close, { once: true });
       if (request.signal.aborted || !connection.current()) { close(); return; }
-      lifetime.release = active.feed.subscribe({ ...input, connection, notify(event) {
+      const release = active.feed.subscribe({ ...input, connection, notify(event) {
         if (closed) return;
         if (!connection.current() || (controller.desiredSize ?? 0) < -16) { close(); return; }
         const safe = browserChartEvent(event.type, event.data);
         controller.enqueue(encoder.encode(`event: ${safe.type}\ndata: ${JSON.stringify(safe.data)}\n\n`));
       } });
-      if (closed) { lifetime.release(); return; }
+      lifetime.release = release;
+      if (closed) { release(); return; }
       let lastHeartbeat = Date.now();
       lifetime.validation = setInterval(() => {
         if (!connection.current() || (controller.desiredSize ?? 0) < -16) { close(); return; }
@@ -61,9 +98,9 @@ function openStream(request: Request, connection: WorkspaceMoomooConnection, inp
         }
       }, 1000);
     },
-    cancel() { close(); },
+    cancel() { cancel(); },
   });
-  return new Response(body, { headers: { ...headers, "Content-Type": "text/event-stream", "X-Accel-Buffering": "no" } });
+  return new Response(body, { headers: streamHeaders });
 }
 
 function parseChartQuery(query: URLSearchParams): ChartQuery {
@@ -87,7 +124,8 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
   }
   if (!connection) return reply({ error: "broker_connection_required" }, 403);
   const query = new URL(request.url).searchParams;
-  if (query.get("generation") !== connection.generation || !connection.current()) return changed();
+  if (query.get("generation") !== connection.generation || !connection.current(true)) return changed();
+  const owner = JSON.stringify([access.identity.scope.userId, access.identity.scope.workspaceId]);
   if (query.has("overnight")) return reply({ error: "overnight_unavailable" }, 404);
   if (["archive", "dailyStartup", "scannerIndicators", "feature"].some(key => query.has(key))) {
     return reply({ error: "invalid_chart_request" }, 400);
@@ -113,27 +151,38 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
   } catch {
     return reply({ error: "invalid_chart_request" }, 400);
   }
-  if (resource === "stream" && input) return openStream(request, connection, input);
+  if (resource === "stream" && input) return openStream(request, owner, connection, input);
 
-  // Every provider read inherits the authorized request and deadline. Request-
-  // local caches cannot return data from an earlier connection or browser login.
   const signal = AbortSignal.any([request.signal, AbortSignal.timeout(resource === "vwap-seed" ? 90_000 : 20_000)]);
   const history = new MoomooChartHistory(query => connection.request(query, signal));
   const basisDate = easternClock(Date.now()).date;
+  const readHistory = async (query: { symbol: string; timeframe: "1Day" | "1Min"; start: number; end: number; adjustment?: "raw" | "split" }) => {
+    const adjustment = query.adjustment ?? "split";
+    const cache = candleCache(owner, connection.generation);
+    const bars = await cache.read({ ...query, adjustment, basisDate }, signal, () => connection.current(true), async range => {
+      // The provider requires a nonempty inclusive range. One uncovered
+      // millisecond still represents at most one observed candle start.
+      const value = await history.history({ ...query, ...range, end: Math.max(range.end, range.start + 1), adjustment: "raw" });
+      if (!value.complete || value.basisDate !== basisDate || value.adjustment !== "raw") throw Error("chart_history_unavailable");
+      return value.bars.filter(bar => bar.time * 1000 >= range.start && bar.time * 1000 <= range.end);
+    });
+    const projected = adjustment === "raw" ? bars : adjustMoomooBars(bars, moomooSplits(await history.corporateActions(query.symbol)), basisDate);
+    return { symbol: query.symbol, bars: projected, adjustment, basisDate, feed: "moomoo", complete: true, nextPageToken: null };
+  };
   try {
     let result: unknown;
     if (year !== undefined) result = browserChartCalendar(await history.forYear(year));
     else if (seed) {
       const vwap = new AlpacaVwapHistory({ history: query => {
         if (query.timeframe !== "1Min" && query.timeframe !== "1Day") throw Error("invalid_history_timeframe");
-        return history.history({ ...query, timeframe: query.timeframe });
+        return readHistory({ ...query, timeframe: query.timeframe });
       } }, history, Date.now, { read: (symbol, anchor) => history.readEvents(symbol, anchor) }, "moomoo");
       const value = await vwap.read(seed);
       if (!validVwapSeed(value, seed, basisDate)) throw Error("invalid_vwap_seed");
       result = browserVwapSeed(value);
     } else if (input && window) {
       const { symbol, daily, adjustment } = input;
-      const value = await history.history({ symbol, timeframe: daily ? "1Day" : "1Min", ...window, adjustment });
+      const value = await readHistory({ symbol, timeframe: daily ? "1Day" : "1Min", ...window, adjustment });
       if (!value.complete || value.basisDate !== basisDate || value.adjustment !== adjustment) throw Error("chart_history_unavailable");
       const page = chartHistoryPage(value.bars, window, daily);
       const calendar = daily ? { calendars: await history.forHistory(page.bars) } : { calendar: await history.forBars(page.bars) };
@@ -150,12 +199,17 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
         }));
       result = { symbol, basisDate, splits };
     } else return reply({ error: "invalid_chart_request" }, 400);
-    if (!connection.current()) return changed();
+    if (!connection.current(true)) return changed();
     signal.throwIfAborted();
     if (easternClock(Date.now()).date !== basisDate) throw Error("chart_basis_changed");
     return reply(result);
-  } catch {
-    if (!connection.current()) return changed();
+  } catch (error) {
+    if (!connection.current(true)) return changed();
+    if (error instanceof MoomooMarketDataRateLimit) {
+      return Response.json({ error: "chart_requests_busy" }, { status: 429, headers: {
+        ...headers, ...(error.retryAfter ? { "Retry-After": error.retryAfter } : {}),
+      } });
+    }
     return reply({ error: failure[resource as keyof typeof failure] ?? "chart_unavailable" }, 503);
   }
 }
