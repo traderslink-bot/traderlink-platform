@@ -410,3 +410,9 @@ Scanner's separate live history browser receipt confirms the same 240 real split
 The isolated paired Chromium replay subsequently passed in the Scanner evidence panel and standalone Market Charts. Both showed the seeded accepted 4H candle and the same Daily and 4H map zones. The full live expanded-match flow remains open.
 
 The [private provenance amendment](shared-chart-levels-provenance-amendment.md) describes the accepted-series and Levels producer requirements. The Charts consumer now verifies saved v1 per-zone lineage against independent accepted records, including immutable source revision ID, digest, instrument, dataset, calendar, session and adjustment basis. It uses the actual post-computation clock and stored publication/expiry. Thirteen focused projection cases and scoped strict TypeScript passed. Real parity requires the genuine producer to publish the exact map before an eligible trigger starts. The map's saved revision and accepted candle input then drive one expanded Scanner result and the standalone handoff.
+
+## November 27 — align the shared chart toolbar
+
+The ticker field and Company Details stay together on the left. The timeframe and other chart controls align to the right. Compact charts reserve 2 px of padding above the controls and keep their existing control heights. The sticky Workspace close button remains reachable when the toolbar scrolls.
+
+Isolated Chromium checked Market Charts single and four-panel layouts, Workspace desktop and phone, and Market Charts phone portrait and landscape. The chart toolbars measured 29–30 px. Ticker changes, Company Details and the timeframe menu passed. Scoped TypeScript passed.
