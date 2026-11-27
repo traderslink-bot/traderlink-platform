@@ -25,7 +25,10 @@ it.each([DeclinesCard, WorkspaceDeclinesCard])("shows Top Losers only, keeps spr
   const fetch=vi.fn();vi.stubGlobal("fetch",fetch);const chart=vi.fn();
   const container=document.createElement("div");document.body.append(container);root=createRoot(container);
   const haltByTicker=new Map([["AAA",{id:"halt-1",ticker:"AAA",market:"NASDAQ",haltTimeEt:"17:01:00",reasonCode:"LUDP",reason:"Volatility trading pause",quoteTimeEt:null,tradeTimeEt:null}]]);
-  await act(async()=>root!.render(createElement(Card,{results:cardResults,notice:null,now,session:"after_hours",onOpenChart:chart,haltByTicker})));
+  const props={results:cardResults,notice:null,now,session:"after_hours" as const,onOpenChart:chart,haltByTicker};
+  await act(async()=>root!.render(Card === WorkspaceDeclinesCard
+    ? createElement(WorkspaceDeclinesCard, props)
+    : createElement(DeclinesCard, props)));
   const table=container.querySelector('table[aria-label="Top Losers stocks"]')!;
   expect(table.querySelector('[data-halt-indicator="AAA"]')).not.toBeNull();
   expect(table.textContent).toContain("-40%");expect(table.textContent).toContain("$0.3300");
@@ -72,7 +75,10 @@ it.each([PremarketPullbacksCard, WorkspacePullbacksCard])("keeps the flagged HOD
   const container=document.createElement("div");
   document.body.append(container);
   root=createRoot(container);
-  await act(async()=>root!.render(createElement(Card,{results,notice:null,now:Date.parse(at),onOpenChart:vi.fn()})));
+  const props={results,notice:null,now:Date.parse(at),onOpenChart:vi.fn()};
+  await act(async()=>root!.render(Card === WorkspacePullbacksCard
+    ? createElement(WorkspacePullbacksCard, props)
+    : createElement(PremarketPullbacksCard, props)));
   const table=container.querySelector('table[aria-label="HOD Drops stocks"]')!;
   const row=table.querySelector("tbody tr")!;
   const headers=[...table.querySelectorAll("thead th")].map(cell=>cell.textContent);

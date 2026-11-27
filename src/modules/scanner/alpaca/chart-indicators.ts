@@ -1,10 +1,15 @@
+import { advancedTrendValues, type AdvancedTrendType } from './chart-advanced-trends';
+import { advancedChartIndicators, isVolumeProfile } from './chart-indicator-catalog';
+import { additionalIndicatorValues } from './chart-additional-studies';
+import { indicatorSource, movingAverage } from './chart-indicator-math';
+export { indicatorSource, movingAverage } from './chart-indicator-math';
 import {isPriceOverlayIndicator,VWAP_BAND_COLORS} from './chart-preferences';
 import {addVwapMoment} from './vwap-moments';
 import {rollingDeviation} from './rolling-deviation';
 import type {VwapSeed} from './chart-vwap-seed';
 import type {ChartSessionCalendar} from './chart-calendar';
 import type {Candle,ChartTimeframe} from './candles';
-import type {ChartIndicator,ChartPreferences,IndicatorLineWidth,MaType,PriceSource} from './chart-preferences';
+import type {ChartIndicator,ChartPreferences,IndicatorLineWidth} from './chart-preferences';
 export type IndicatorPoint={time:number;value:number};
 const sessionClock=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit',hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit'});
 export function isVisibleSession(time:number,p:ChartPreferences,calendar?:ChartSessionCalendar){
@@ -13,36 +18,14 @@ export function isVisibleSession(time:number,p:ChartPreferences,calendar?:ChartS
  return minute<570?p.premarket:minute<960?p.regular:p.postmarket;
 }
 export function visibleSessionBars(bars:Candle[],p:ChartPreferences,calendar?:ChartSessionCalendar){return bars.filter(bar=>isVisibleSession(bar.time,p,calendar));}
-export function movingAverage(values:readonly number[],period:number,type:MaType,volumes:readonly number[]=[]):(number|null)[]{
- let sum=0,weighted=0,volumeTotal=0,previous:number|null=null;
- const triangular=period*(period+1)/2;
- return values.map((value,index)=>{
-  // EMA starts from the first observed source; Wilder's RMA uses an SMA seed.
-  if(type==='EMA'){previous=previous===null?value:previous+(value-previous)*2/(period+1);return previous;}
-  // Shift each old WMA coefficient down by one, then append the newest sample.
-  // Both weighted variants stay linear in history size, even at long periods.
-  if(type==='WMA')weighted+=index<period?(index+1)*value:period*value-sum;
-  if(type==='VWMA'){
-   weighted+=value*volumes[index];volumeTotal+=volumes[index];
-   if(index>=period){weighted-=values[index-period]*volumes[index-period];volumeTotal-=volumes[index-period];}
-  }
-  sum+=value;if(index>=period)sum-=values[index-period];if(index<period-1)return null;
-  if(type==='SMA')return sum/period;
-  if(type==='RMA'){previous=previous===null?sum/period:previous+(value-previous)/period;return previous;}
-  if(type==='WMA')return weighted/triangular;
-  return volumeTotal?weighted/volumeTotal:null;
- });
-}
-export function indicatorSource(bar:Candle,source:PriceSource):number{
- if(source==='hl2')return (bar.high+bar.low)/2;
- if(source==='hlc3')return (bar.high+bar.low+bar.close)/3;
- if(source==='ohlc4')return (bar.open+bar.high+bar.low+bar.close)/4;
- if(source==='hlcc4')return (bar.high+bar.low+2*bar.close)/4;
- return bar[source];
-}
-export type IndicatorPlot={key:string;label:string;points:IndicatorPoint[];pane:boolean;histogram?:boolean;unavailable?:boolean;unavailableReason?:'history'|'numeric'};
-type IndicatorContext={vwapSeed?:VwapSeed;calendar?:ChartSessionCalendar};
+export type IndicatorPlot={key:string;label:string;points:IndicatorPoint[];pane:boolean;histogram?:boolean;dots?:boolean;offset?:number;step?:boolean;unavailable?:boolean;unavailableReason?:'history'|'numeric'};
+type IndicatorContext={vwapSeed?:VwapSeed;calendar?:ChartSessionCalendar;visibleFrom?:number;pivotLevels?:readonly {time:number;high:number;low:number;close:number}[]};
 function baseIndicatorValues(bars:readonly Candle[],i:ChartIndicator,timeframe?:ChartTimeframe,context?:IndicatorContext):IndicatorPlot[]{
+ if(isVolumeProfile(i.type))return [];
+ if(Object.hasOwn(advancedChartIndicators,i.type))
+  return advancedTrendValues(bars,{...i,type:i.type as AdvancedTrendType},context);
+ if(i.type!=='EMA'&&i.type!=='SMA'&&i.type!=='VWAP'&&i.type!=='RSI'&&i.type!=='MACD'&&i.type!=='Bollinger')
+  return additionalIndicatorValues(bars,{...i,type:i.type as Parameters<typeof additionalIndicatorValues>[1]['type']},timeframe,context?.visibleFrom);
  const values=bars.map(bar=>indicatorSource(bar,i.source??(i.type==='VWAP'?'hlc3':'close'))),volumes=bars.map(bar=>bar.volume);
  const points=(values:readonly(number|null)[])=>values.flatMap((value,index)=>value===null?[]:[{time:bars[index].time,value}]);
  if(i.type==='EMA'||i.type==='SMA')return [{key:'main',label:`${i.type} ${i.period}`,points:points(movingAverage(values,i.period,i.type,volumes)),pane:false}];
@@ -111,9 +94,15 @@ export function indicatorPlotStyle(indicator:ChartIndicator,key:string,overlayWi
  const reference=indicator.type==='RSI'&&['upper','middle','lower'].includes(key),band=indicator.type==='VWAP'&&/^(upper|lower)-[123]$/.test(key),bandEnabled=!band||indicator.vwapBands?.levels[Number(key.at(-1))-1]?.enabled===true;
  return {visible:indicator.visible!==false&&indicator.plots?.[key]?.visible!==false&&bandEnabled,color:indicator.plots?.[key]?.color??(band?VWAP_BAND_COLORS[Number(key.at(-1))-1]:reference?'#888888':key==='signal'?'#42a5f5':indicator.color),width:isPriceOverlayIndicator(indicator.type)?indicatorOverlayWidth(indicator,key,overlayWidth):indicator.plots?.[key]?.width??(reference?1:indicator.width),style:indicator.plots?.[key]?.style??(reference?2:0)} as const;
 }
+export const histogramColorKeys = ['positive-rising', 'positive-falling', 'negative-rising', 'negative-falling'] as const;
+export function histogramStyleColor(indicator: ChartIndicator, key: typeof histogramColorKeys[number], up: string, down: string) {
+ const upColor = indicator.type === 'AO' ? key.endsWith('rising') : key.startsWith('positive');
+ return indicator.plots?.[key]?.color ?? (upColor ? up : down);
+}
 export function indicatorHistogramColor(indicator:ChartIndicator,value:number,previous:number,up:string,down:string){
- const key=value>=0?(value>=previous?'positive-rising':'positive-falling'):(value>=previous?'negative-rising':'negative-falling');
- return indicator.plots?.[key]?.color??(value>=0?up:down);
+ const awesome=indicator.type==='AO',rising=awesome?value>previous:value>=previous;
+ const key=value>=0?(rising?'positive-rising':'positive-falling'):(rising?'negative-rising':'negative-falling');
+ return histogramStyleColor(indicator,key,up,down);
 }
 
 export function indicatorValues(bars:readonly Candle[],indicator:ChartIndicator,timeframe?:ChartTimeframe,context?:IndicatorContext):IndicatorPlot[]{

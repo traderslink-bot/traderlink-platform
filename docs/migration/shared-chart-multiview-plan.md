@@ -1,5 +1,9 @@
 # Shared chart multiview — owner review proposal
 
+## Independent chart panels
+
+In Market Charts and the Trade Workspace chart card, each panel owns its crosshair and candle readout. In Indicators, **Apply to** sits above **Add indicator** and defaults to the chart named in the control. That choice applies additions, settings, and removal to that open panel. **All charts** applies those actions to the account defaults. Edits to one indicator type preserve other chart-specific indicator setups.
+
 Status: owner approved implementation and QA-before-review private preview on November 10, 2026. Implementation, focused QA and private preview qualification are complete; owner visual acceptance is pending. No production deployment authorized. Scanner release is live/technically accepted.
 
 ## Owner workflow

@@ -1,11 +1,12 @@
 "use client";
 import {chartLogarithmic,setChartLogarithmic} from '@/src/modules/scanner/alpaca/chart-preferences';
 
-import { ChartCrosshairContext } from "./chart-crosshair-group";
-import { linkedCandleTime } from "@/src/modules/scanner/alpaca/chart-linked-crosshair";
 import { createChartPriceStyle } from "./chart-price-style";
 import { useChartMarketData } from "./use-chart-market-data";
 import { ChartIndicatorLegend } from "./chart-indicator-legend";
+import { ChartVolumeProfiles, type VolumeProfileSnapshot } from "./chart-volume-profile";
+import { chartPageCoverageStart, completedSwingBars, pivotHistoryStart, profileWindowsWithinCoverage, sessionProfileWindows, standardPivotLevels, visibleProfileWindow } from "@/src/modules/scanner/alpaca/chart-advanced-context";
+import { observeIndicatorPaneLegends } from "./chart-indicator-pane-layout";
 import { ChartDrawings } from "./chart-drawings";
 import { ChartEvidenceZones } from "./chart-evidence-zones";
 import { projectChartOverlay, type ChartOverlay } from "@/src/modules/market-data/chart-evidence/overlay";
@@ -40,15 +41,17 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTheme, type SxProps, type Theme } from "@mui/material/styles";
-import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EXCHANGE_CHART_TIME_ZONE, resolveChartTimeZone } from "@/src/modules/scanner/alpaca/chart-time-zone";
 import { createChartTickFormatter, firstVisibleChartTime, isChartDateStart } from "@/src/modules/scanner/alpaca/chart-axis";
 import type { ISeriesApi, ISeriesMarkersPluginApi, Time } from "lightweight-charts";
 import { aggregateCandles, candleBucket, displayCandles, easternDayStart, isCalendarChartTimeframe, nextChartCalendarPeriod, usesDailyCandles, CHART_FRAME_SECONDS, CHART_TIMEFRAMES, type ChartCalculationTimeframe, type Candle, type DisplayCandle, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
 
+import { chartIndicatorCatalog, isVolumeProfile } from "@/src/modules/scanner/alpaca/chart-indicator-catalog";
+import { indicatorNumberFormat } from "@/src/modules/scanner/alpaca/chart-indicator-number-format";
 import { defaultChartView } from "@/src/modules/scanner/alpaca/chart-default-view";
-import { canRestoreChartPrice, chartViews, defaultIndicatorDisplay, restoreChartRange } from "./chart-view-memory";
+import { canRestoreChartPrice, chartIndicatorDefinitions, chartViews, defaultIndicatorDisplay, restoreChartRange, type ChartIndicatorOverrides } from "./chart-view-memory";
 import { DEFAULT_CHART_CROSSHAIR_MODE, INDICATOR_TYPES, changeIndicatorDisplayChoice, indicatorDisplayChoice, indicatorPriceScaleLabels, withoutOverlayWidthOverrides, type ChartIndicator, type ChartPreferences, type IndicatorDisplayAction, type IndicatorDisplayChoices, type IndicatorLineWidth, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
 import { chartSplitLabel, parseChartSplits, projectChartSplits, type ChartSplit } from "@/src/modules/scanner/alpaca/chart-splits";
 import { readChartCandleHistory, readCompletedChartHistory, readChartVwapSeed, sharedChartFetch, sharedChartStream, type ChartStreamHandle } from "./shared-chart-data";
@@ -68,6 +71,7 @@ type ChartCandleSnapshot = {
   bars: Candle[];
   overnightBars?: Candle[];
   nextBefore: number | null;
+  profileCoverageStart: number;
   calendar: ChartSessionCalendar;
   savedAt: number;
 };
@@ -93,7 +97,6 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
   viewId?: string; viewWorkspace?: "main" | "scanner" | "workspace"; compactIdentity?: import("react").ReactNode; compactMobile?: boolean; compactToolbar?: boolean; compactToolbarHeight?: number; disabledTimeframes?: readonly ChartTimeframe[]; actions?: import("react").ReactNode; closeAction?: import("react").ReactNode; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
 }) {
-  const crosshairLink = useContext(ChartCrosshairContext);
   const baseTicker = symbol.split(":").at(-1)!.toUpperCase();
   const marketData = useChartMarketData();
   const { broker, endpoints } = marketData;
@@ -115,14 +118,47 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const [frameAnchor, setFrameAnchor] = useState<HTMLElement | null>(null);
   // Toolbar visibility must not restart candles or subscriptions.
   const alwaysShowDrawingToolbar=accountPreferences.alwaysShowDrawingToolbar??false;
+  const displayKey=JSON.stringify([ownerKey,viewWorkspace,viewId,ticker]);
+  const [localDisplay,setLocalDisplay]=useState<{key:string;value:IndicatorDisplayChoices}>();
+  const [localDefinitions,setLocalDefinitions]=useState<{key:string;value:ChartIndicatorOverrides}>();
+  if(localDisplay&&localDisplay.key!==displayKey)setLocalDisplay(undefined);
+  if(localDefinitions&&localDefinitions.key!==displayKey)setLocalDefinitions(undefined);
+  const indicatorDisplay=localDisplay?.key===displayKey?localDisplay.value:
+    ownerKey&&viewId?chartViews.readIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker):defaultIndicatorDisplay;
+  const overrides=localDefinitions?.key===displayKey?localDefinitions.value:
+    ownerKey&&viewId?chartViews.readIndicatorOverrides(ownerKey,viewWorkspace,viewId,ticker):undefined;
+  const accountIndicatorDisplay=accountPreferences.indicatorDisplay;
+  const definitionRevisions=accountPreferences.indicatorDefinitionRevisions;
+  const accountIndicators=accountPreferences.indicators;
+  const chartIndicators=useMemo(()=>
+    overrides ? chartIndicatorDefinitions(accountIndicators,definitionRevisions,overrides) : accountIndicators,
+  [accountIndicators,definitionRevisions,overrides]);
+  const saveIndicatorDisplay=(next:IndicatorDisplayChoices)=>{
+    setLocalDisplay({key:displayKey,value:next});
+    if(ownerKey&&viewId)chartViews.writeIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker,next);
+  };
+  const changeIndicatorDisplay=(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>{
+    const revision=accountIndicatorDisplay?.[type]?.[action]?.revision??0;
+    saveIndicatorDisplay(changeIndicatorDisplayChoice(indicatorDisplay,type,action,value,revision));
+  };
+  const changeChartIndicators=(type:IndicatorType,indicators:ChartIndicator[])=>{
+    const rows=indicators.filter(indicator=>indicator.type===type);
+    const next={...overrides,[type]:{revision:definitionRevisions?.[type]??0,indicators:rows}};
+    setLocalDefinitions({key:displayKey,value:next});
+    if(ownerKey&&viewId)chartViews.writeIndicatorOverrides(ownerKey,viewWorkspace,viewId,ticker,next);
+    if(rows.length&&!chartIndicators.some(indicator=>indicator.type===type)){
+      const shown=changeIndicatorDisplayChoice(indicatorDisplay,type,"enabled",true,accountIndicatorDisplay?.[type]?.enabled?.revision??0);
+      saveIndicatorDisplay(changeIndicatorDisplayChoice(shown,type,"hidden",false,accountIndicatorDisplay?.[type]?.hidden?.revision??0));
+    }
+  };
   const chartOptionsKey=useMemo(()=>JSON.stringify({
-    ...accountPreferences,alwaysShowDrawingToolbar:undefined,autosaveDrawings:undefined,savedIndicatorPresets:undefined,
-    indicatorDisplay:undefined,indicatorOverlayLineWidth:undefined,indicators:accountPreferences.indicators.map(withoutOverlayWidthOverrides),
-  }),[accountPreferences]);
+    ...accountPreferences,alwaysShowDrawingToolbar:undefined,autosaveDrawings:undefined,savedIndicatorPresets:undefined,favoriteIndicators:undefined,
+    indicatorDisplay:undefined,indicatorDefinitionRevisions:undefined,indicatorOverlayLineWidth:undefined,indicators:chartIndicators.map(withoutOverlayWidthOverrides),
+  }),[accountPreferences,chartIndicators]);
   const overlayAppearance=useRef({width:1 as IndicatorLineWidth,indicators:new Map<string,ChartIndicator>()});
   const overlaySeries=useRef<{series:ISeriesApi<"Line">;id:string;key:string}[]>([]);
   useEffect(()=>{
-    const indicators=new Map(accountPreferences.indicators.map(indicator=>[indicator.id,indicator]));
+    const indicators=new Map(chartIndicators.map(indicator=>[indicator.id,indicator]));
     const width=accountPreferences.indicatorOverlayLineWidth??1;
     overlayAppearance.current={width,indicators};
     for(const {series,id,key} of overlaySeries.current){
@@ -131,7 +167,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const lineWidth=indicatorOverlayWidth(indicator,key,width);
       if(series.options().lineWidth!==lineWidth)series.applyOptions({lineWidth});
     }
-  },[accountPreferences.indicators,accountPreferences.indicatorOverlayLineWidth]);
+  },[chartIndicators,accountPreferences.indicatorOverlayLineWidth]);
   const regularEvidence = evidence?.basis.sessionMode === "regular" &&
     evidence.basis.symbol === ticker && evidence.chartGeneration === providerKey;
   const preferences=useMemo(()=>{
@@ -157,18 +193,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   };
   const [initialIndicator,setInitialIndicator]=useState<IndicatorType>();
   const [indicatorMenu,setIndicatorMenu]=useState<{anchor:HTMLElement;type:IndicatorType}|null>(null);
-  const displayKey=JSON.stringify([ownerKey,viewWorkspace,viewId,ticker]);
-  const [localDisplay,setLocalDisplay]=useState<{key:string;value:IndicatorDisplayChoices}>();
-  if(localDisplay&&localDisplay.key!==displayKey)setLocalDisplay(undefined);
-  const indicatorDisplay=localDisplay?.key===displayKey?localDisplay.value:
-    ownerKey&&viewId?chartViews.readIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker):defaultIndicatorDisplay;
-  const accountIndicatorDisplay=accountPreferences.indicatorDisplay;
-  const changeIndicatorDisplay=(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>{
-    const revision=accountIndicatorDisplay?.[type]?.[action]?.revision??0;
-    const next=changeIndicatorDisplayChoice(indicatorDisplay,type,action,value,revision);
-    setLocalDisplay({key:displayKey,value:next});
-    if(ownerKey&&viewId)chartViews.writeIndicatorDisplay(ownerKey,viewWorkspace,viewId,ticker,next);
-  };
+  const openIndicatorPane=indicatorMenu?.anchor.closest<HTMLElement>("[data-chart-indicator-legend]")?.dataset.chartIndicatorPane;
   const openIndicators=(type?:IndicatorType)=>{setInitialIndicator(type);openPreferences("indicators");};
 
   const marketCalendar=useRef(new ChartSessionCalendar());
@@ -192,6 +217,12 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     [type,indicatorDisplayChoice(accountIndicatorDisplay,indicatorDisplay,type,"enabled")])));
   const hiddenIndicatorValues=new Set(INDICATOR_TYPES.filter(type=>
     indicatorDisplayChoice(accountIndicatorDisplay,indicatorDisplay,type,"hidden")===true));
+  const hiddenProfileLabels = JSON.stringify([...hiddenIndicatorValues].filter(isVolumeProfile));
+  const profileLegend = useRef<{ hidden: ReadonlySet<IndicatorType>; refresh?: () => void }>({ hidden: new Set() });
+  useEffect(()=>{
+    profileLegend.current.hidden=new Set(JSON.parse(hiddenProfileLabels) as IndicatorType[]);
+    profileLegend.current.refresh?.();
+  },[hiddenProfileLabels]);
   const activeIndicators=useMemo(()=>{
     const enabledOverrides=JSON.parse(enabledOverridesKey) as Partial<Record<IndicatorType,boolean>>;
     const visibleTypes=new Set(preferences.indicators.filter(indicator=>indicator.visible!==false).map(indicator=>indicator.type));
@@ -202,11 +233,15 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       return enabled===true&&!visibleTypes.has(indicator.type)?[{...indicator,visible:true}]:[];
     });
   },[preferences.indicators,enabledOverridesKey,timeframe,calendarFrame]);
-  const crosshairLines=useMemo(()=>activeIndicators.flatMap(indicator=>indicatorValues([],indicator,timeframe)
+  const indicatorPlots=useMemo(()=>activeIndicators.map(indicator=>({
+    indicator, parts:indicatorValues([],indicator,timeframe),
+  })),[activeIndicators,timeframe]);
+  const crosshairLines=useMemo(()=>indicatorPlots.flatMap(({indicator,parts})=>parts
     .filter(plot=>!plot.pane&&!plot.histogram&&indicatorPlotStyle(indicator,plot.key).visible)
-    .map(plot=>({value:`indicator:${indicator.id}:${plot.key}` as const,label:plot.label}))),[activeIndicators,timeframe]);
+    .map(plot=>({value:`indicator:${indicator.id}:${plot.key}` as const,label:plot.label}))),[indicatorPlots]);
   const crosshairTarget=preferences.crosshairMode??DEFAULT_CHART_CROSSHAIR_MODE;
-  const readoutTypes=[...new Set(activeIndicators.map(indicator=>indicator.type))];
+  const priceReadoutTypes=[...new Set(indicatorPlots.filter(({parts})=>!parts[0]?.pane).map(({indicator})=>indicator.type))];
+  const lowerReadouts=indicatorPlots.filter(({parts})=>parts[0]?.pane).map(({indicator})=>indicator);
   const showOvernight = !broker && !daily && chartShowsOvernight(preferences);
   const regularOnly = preferences.regular && !preferences.premarket && !preferences.postmarket && !showOvernight;
   if(ready&&controlledTimeframe===undefined&&activeTimeframe===null)setActiveTimeframe(preferences.timeframe);
@@ -316,7 +351,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     void initialHistory.catch(() => {});
     async function start() {
       const library = await import("lightweight-charts");
-      const { createChart, createSeriesMarkers, HistogramSeries, LineSeries, ColorType, TickMarkType, PriceScaleMode, CrosshairMode } = library;
+      const { createChart, createSeriesMarkers, HistogramSeries, LineSeries, ColorType, TickMarkType, PriceScaleMode, CrosshairMode, LineType } = library;
       if (disposed) return;
       let displayPoints: DisplayCandle[] = [];
       const dateKey = new Intl.DateTimeFormat("en-CA", { timeZone: displayZone, year: "numeric", month: "numeric", day: "numeric" });
@@ -413,27 +448,172 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const volume = preferences.volume?chart.addSeries(HistogramSeries, { priceFormat: { type: "volume" }, priceLineVisible: false, lastValueVisible: false }, 1):undefined;
       chart.panes()[0].setStretchFactor(100-preferences.volumeHeight);if(volume)chart.panes()[1].setStretchFactor(preferences.volumeHeight);
       let nextPane=volume?2:1;
-      const studies=activeIndicators.flatMap(indicator=>{
-        const parts=indicatorValues([],indicator,timeframe),pane=parts[0]?.pane?nextPane++:0;
+      const paneReadouts: { id: string; pane: number }[] = [];
+      const candlePrecision=()=>{
+        const format=candles.options().priceFormat;
+        return "precision" in format?format.precision:2;
+      };
+      let appliedCandlePrecision=candlePrecision();
+      const studies=indicatorPlots.flatMap(({indicator,parts})=>{
+        const pane=parts[0]?.pane?nextPane++:0;
+        if(pane) paneReadouts.push({id:indicator.id,pane});
         return parts.map((part,index)=>{const style=indicatorPlotStyle(indicator,part.key);
           const lastValueVisible=indicatorPriceScaleLabels(preferences,indicator);
-          const labelOptions={title:lastValueVisible?part.label:"",lastValueVisible};
-          const study={indicator,index,key:part.key,label:part.label,histogram:part.histogram};
+          const numberFormat=indicatorNumberFormat(indicator,appliedCandlePrecision);
+          const labelOptions={title:lastValueVisible?part.label:"",lastValueVisible,priceFormat:numberFormat.axis};
+          const study={indicator,index,pane,key:part.key,label:part.label,histogram:part.histogram,step:part.step,numberFormat};
           if(part.histogram)return {...study,series:chart.addSeries(HistogramSeries,{visible:style.visible,...labelOptions,priceLineVisible:false},pane)};
           const {indicators,width}=overlayAppearance.current;
           const lineWidth=pane===0?indicatorOverlayWidth(indicators.get(indicator.id)??indicator,part.key,width):style.width;
-          const series=chart.addSeries(LineSeries,{visible:style.visible,color:style.color,lineWidth,lineStyle:style.style,...labelOptions,priceLineVisible:false,...(preferences.scalePriceOnly&&pane===0?{autoscaleInfoProvider:()=>null}:{}),...(indicator.type==="RSI"?{autoscaleInfoProvider:()=>({priceRange:{minValue:0,maxValue:100}})}:{})},pane);
+          const series=chart.addSeries(LineSeries,{visible:style.visible,color:style.color,lineWidth,lineStyle:style.style,...(part.step?{lineType:LineType.WithSteps}:{}),...(part.dots?{pointMarkersVisible:true,pointMarkersRadius:2,lineVisible:false}:{}),...labelOptions,priceLineVisible:false,...((preferences.scalePriceOnly&&pane===0||indicator.type==="StandardPivots"||indicator.type==="RegressionChannel")?{autoscaleInfoProvider:()=>null}:{}),...(indicator.type==="RSI"?{autoscaleInfoProvider:()=>({priceRange:{minValue:0,maxValue:100}})}:{})},pane);
           if(pane===0)overlaySeries.current.push({series,id:indicator.id,key:part.key});
           return {...study,series};
         });
       });
       const snapSeries=crosshairTarget.startsWith("indicator:")?studies.find(study=>
         `indicator:${study.indicator.id}:${study.key}`===crosshairTarget&&study.series.options().visible)?.series:undefined;
-      const indicatorAxis=studies.some(study=>study.indicator.type==='VWAP'&&(study.indicator.offset??0)>0)?chart.addSeries(LineSeries,{visible:false,priceLineVisible:false,lastValueVisible:false},0):undefined;
+      // Calculate each multi-line study once per candle snapshot.
+      const calculationStudies = new Map(studies.filter(({indicator})=>indicator.type!=="VWAP"&&indicator.type!=="RangeVWAP")
+        .map(({indicator})=>[indicator.id,indicator]));
+      const pivotEnabled=[...calculationStudies.values()].some(indicator=>indicator.type==="StandardPivots");
+      const profileStudies=indicatorPlots.flatMap(({indicator})=>{
+        if(!isVolumeProfile(indicator.type))return [];
+        const profile=new ChartVolumeProfiles(price=>candles.priceToCoordinate(price),indicator.type);
+        chart.panes()[0].attachPrimitive(profile);
+        return [{indicator,profile,type:indicator.type}];
+      });
+      type StudyHistory={before:number;basis:string;loading:boolean;data?:CalculationHistory;retryAt?:number};
+      const advancedHistory=new Map<"1m"|"1D",StudyHistory>();
+      function supplementalStudyHistory(frame:"1m"|"1D",before:number) {
+        if(!Number.isFinite(before)||before<=0||!historyBasisDate)return;
+        const cached=advancedHistory.get(frame);
+        const existing=cached?.basis===historyBasisDate?cached:undefined;
+        if(existing&&(existing.loading||existing.retryAt!==undefined&&existing.retryAt>Date.now()||
+          existing.retryAt===undefined&&existing.before<=before))return existing.data;
+        const state:StudyHistory={before,basis:historyBasisDate,loading:true,data:existing?.data};
+        advancedHistory.set(frame,state);
+        void calculationHistory.read(frame,before,contextThrough===null?undefined:Math.floor(contextThrough/1000),'covered')
+          .then(value=>{
+            if(disposed||advancedHistory.get(frame)!==state||value.basisDate!==state.basis)return;
+            state.data=value;
+            state.loading=false;
+            writeAll(false,false,true);
+          }).catch(()=>{
+            if(advancedHistory.get(frame)===state){state.loading=false;state.retryAt=Date.now()+30_000;}
+          });
+        return state.data;
+      }
+      const projectionYears=new Set<number>();
+      function requestProjectionYear(lastTime:number) {
+        const axisYear=Number(easternClock(lastTime*1000).date.slice(0,4));
+        const year=[axisYear,axisYear+1].find(value=>!projectionYears.has(value));
+        if(!year||year>9999)return;
+        projectionYears.add(year);
+        void sharedChartFetch('/api/charts/calendar?year='+year+'&'+providerQuery,{credentials:'same-origin',signal:abort.signal,cache:'no-store'})
+          .then(async response=>{
+            if(!response.ok)throw Error('calendar_year_unavailable');
+            const calendar=readChartCalendarYear(await response.json(),year);
+            if(!disposed){marketCalendar.current.merge(calendar);writeAll(false,false,true);}
+          }).catch(()=>{});
+      }
+      function studyParts(actual:readonly Candle[],axis:readonly DisplayCandle[]) {
+        let pivotLevels:ReturnType<typeof standardPivotLevels>|undefined;
+        if(pivotEnabled&&axis.length){
+          const calendar=marketCalendar.current;
+          const history=daily?undefined:supplementalStudyHistory("1D",pivotHistoryStart(axis[0].time,timeframe,calendar));
+          const input=daily?[...bars.values()].sort((a,b)=>a.time-b.time):history?.bars??[];
+          pivotLevels=standardPivotLevels(axis,input,timeframe,history?.calendar??calendar);
+        }
+        const output=new Map<string,IndicatorPlot[]>(Array.from(calculationStudies.values(),indicator=>{
+          const input=indicator.type==="ZigZag"?
+            completedSwingBars(actual,timeframe,preferences,marketCalendar.current,Date.now()/1000):actual;
+          return [indicator.id,indicatorValues(input,indicator,timeframe,{pivotLevels})];
+        }));
+        const shifted=[...output.values()].flat().filter(part=>part.offset&&part.points.length);
+        if(!shifted.length||!axis.length)return output;
+        const times=axis.map(bar=>bar.time);
+        const indexes=new Map(times.map((time,index)=>[time,index]));
+        const needed=Math.max(0,...shifted.map(part=>(indexes.get(part.points.at(-1)!.time)??0)+part.offset!-times.length+1));
+        const positions=futureCalculationAxis(times,needed,timeframe,preferences,marketCalendar.current,true);
+        for(const time of positions.slice(times.length))futureIndicatorTimes.add(time);
+        if(positions.length<times.length+needed)requestProjectionYear(times.at(-1)!);
+        for(const part of shifted)part.points=offsetVwap(part.points,positions,part.offset!);
+        return output;
+      }
+      const indicatorAxis=indicatorPlots.some(({indicator,parts})=>indicator.type==='VWAP'&&(indicator.offset??0)>0||parts.some(part=>(part.offset??0)>0))?chart.addSeries(LineSeries,{visible:false,priceLineVisible:false,lastValueVisible:false},0):undefined;
       let activeCrosshair: { time: Time; point: { x: number } } | undefined;
       const studyPoints=new Map<typeof studies[number],readonly {time:number;value:number}[]>();
-      const appliedPrecisions=new Map<typeof studies[number],number>();
-      const studyPrecision=(study:typeof studies[number])=>{const format=candles.options().priceFormat;return study.indicator.output?.precision??('precision' in format?format.precision:2);};
+      const rangeVwapStudies=studies.filter(study=>study.indicator.type==="RangeVWAP");
+      let rangeVwapBars:readonly Candle[]=[];
+      let rangeVwapStart:number|undefined;
+      let rangeVwapFrame=0;
+      let profileSource:readonly Candle[]=[];
+      // Page coverage is independent of the first reported trade and of the UI's capped pagination cursor.
+      let profileCoverageStart=cached?.profileCoverageStart??Infinity;
+      let profileWindowKey="";
+      let latestProfileCandle: number | undefined;
+      function refreshProfiles(force=false) {
+        if(!profileStudies.length)return;
+        const range=chart.timeScale().getVisibleLogicalRange();
+        const view=visibleProfileWindow(displayPoints,range,timeframe);
+        const key=view?view.start+":"+view.end:"";
+        if(!force&&key===profileWindowKey)return;
+        profileWindowKey=key;
+        latestProfileCandle=view?.lastTime;
+        const calendar=marketCalendar.current;
+        const sessions=view&&profileStudies.some(study=>study.type==="SessionVolumeProfile")?sessionProfileWindows(displayPoints,view,timeframe,preferences,calendar):[];
+        const wanted=view&&indicatorsReady?Math.min(view.start,sessions[0]?.start??Infinity):Infinity;
+        const sourceFrame=daily?"1D":"1m";
+        const supplemental=wanted<profileCoverageStart?supplementalStudyHistory(sourceFrame,wanted):undefined;
+        let input=profileSource;
+        if(supplemental){
+          const earlier=daily?supplemental.bars:visibleSessionBars(supplemental.bars,preferences,supplemental.calendar);
+          const combined=new Map(earlier.map(bar=>[bar.time,bar]));
+          for(const bar of profileSource)combined.set(bar.time,bar);
+          input=[...combined.values()].sort((a,b)=>a.time-b.time);
+        }
+        const coveredFrom=Math.min(profileCoverageStart,supplemental?.coveredFrom??Infinity);
+        for(const {indicator,profile,type} of profileStudies){
+          const windows=type==="VisibleVolumeProfile"&&view?[view]:type==="SessionVolumeProfile"?sessions:[];
+          const covered=profileWindowsWithinCoverage(windows,coveredFrom);
+          profile.update(covered,input,{rows:indicator.period,valueAreaPercent:indicator.deviation??70,
+            color:indicator.color,showLabels:!profileLegend.current.hidden.has(type)});
+        }
+        updateProfileLegend();
+      }
+      function refreshProfileSource() {
+        if(!profileStudies.length)return;
+        const input=[...bars.values()];
+        profileSource=(indicatorsReady?(daily?input:visibleSessionBars(input,preferences,calendarReady?marketCalendar.current:undefined)):[])
+          .sort((a,b)=>a.time-b.time);
+        refreshProfiles(true);
+      }
+      const refreshProfileLabels=()=>{
+        for(const {profile,type} of profileStudies)profile.setShowLabels(!profileLegend.current.hidden.has(type));
+        updateProfileLegend();
+      };
+      function refreshRangeVwap() {
+        if(!rangeVwapStudies.length)return;
+        const start=firstVisibleChartTime(displayPoints,chart.timeScale().getVisibleLogicalRange());
+        rangeVwapStart=start;
+        const first=start===undefined?rangeVwapBars.length:candleIndexAtOrAfter(rangeVwapBars,start);
+        const input=rangeVwapBars.slice(first);
+        for(const study of rangeVwapStudies){
+          const {points}=indicatorValues(input,study.indicator,timeframe)[study.index];
+          studyPoints.set(study,points);
+          study.series.setData(points.map(point=>({...point,time:point.time as Stamp})));
+        }
+        updateIndicatorLegend();
+      }
+      function scheduleRangeVwap() {
+        if((!rangeVwapStudies.length&&!profileStudies.length)||rangeVwapFrame)return;
+        rangeVwapFrame=requestAnimationFrame(()=>{
+          rangeVwapFrame=0;
+          if(disposed)return;
+          if(rangeVwapStart!==firstVisibleChartTime(displayPoints,chart.timeScale().getVisibleLogicalRange())) refreshRangeVwap();
+          refreshProfiles();
+        });
+      }
       const bandOrder:Readonly<Record<string,number>>={upper:0,main:1,lower:2};
       const legendStudies=[...studies].sort((a,b)=>a.indicator.id===b.indicator.id&&a.indicator.type==="Bollinger"
         ? (bandOrder[a.key]??3)-(bandOrder[b.key]??3) : 0);
@@ -443,33 +623,91 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         [study,JSON.stringify([ticker,timeframe,sessionKey,study.indicator,study.key])]));
       const flushVwap=()=>chartVwapCache.flush(cacheOwner);
       window.addEventListener("pagehide",flushVwap);
+      const legendSlots=Array.from(indicatorLegend.current?.querySelectorAll<HTMLElement>("[data-indicator-readout]")??[],slot=>{
+        const paneId=slot.closest<HTMLElement>("[data-chart-indicator-legend]")?.dataset.chartIndicatorPane;
+        const matching=legendStudies.filter(study=>(study.pane?study.indicator.id:undefined)===paneId&&
+          study.indicator.type===slot.dataset.indicatorReadout&&study.indicator.output?.statusLineValues!==false);
+        return {slot,matching};
+      });
+      type ProfileLegendReadout = {
+        slot: HTMLElement;
+        study: (typeof profileStudies)[number];
+        span?: HTMLSpanElement;
+        snapshot?: VolumeProfileSnapshot;
+        precision?: number;
+      };
+      const profileReadouts = legendSlots.flatMap<ProfileLegendReadout>(({slot})=>{
+        const study=profileStudies.find(profile=>profile.type===slot.dataset.indicatorReadout);
+        return study&&study.indicator.output?.statusLineValues!==false?[{slot,study}]:[];
+      });
+      function updateProfileLegend() {
+        if(!profileReadouts.length)return;
+        const hoverTime=activeCrosshair?.time;
+        const time=activeCrosshair
+          ? typeof hoverTime==="number"&&displayed.has(hoverTime)?hoverTime:undefined
+          : latestProfileCandle;
+        const precision=candlePrecision();
+        for(const readout of profileReadouts){
+          const {study}=readout;
+          const snapshot=profileLegend.current.hidden.has(study.type)?undefined:study.profile.profileAt(time);
+          if(!snapshot){
+            if(readout.span?.textContent)readout.span.textContent="";
+            readout.snapshot=undefined;
+            continue;
+          }
+          const former=readout.snapshot;
+          if(former&&readout.precision===precision&&former.poc===snapshot.poc&&former.vah===snapshot.vah&&former.val===snapshot.val)continue;
+          readout.snapshot=snapshot;
+          readout.precision=precision;
+          if(!readout.span){
+            const span=document.createElement("span");
+            span.dataset.indicatorValue=study.indicator.id+":main";
+            span.style.color=study.indicator.color;
+            readout.slot.append(span);
+            readout.span=span;
+          }
+          const {readout:format}=indicatorNumberFormat(study.indicator,precision);
+          const labels=[`POC ${format(snapshot.poc)}`, `VAH ${format(snapshot.vah)}`, `VAL ${format(snapshot.val)}`];
+          if(readout.span.textContent!==labels.join(" · ")){
+            const phrases=labels.map(label=>{
+              const phrase=document.createElement("span");
+              phrase.textContent=label;
+              return phrase;
+            });
+            readout.span.replaceChildren(phrases[0], " · ", phrases[1], " · ", phrases[2]);
+          }
+        }
+      }
+      if(profileStudies.length)profileLegend.current.refresh=refreshProfileLabels;
       const updateIndicatorLegend=()=>{
-        const legend=indicatorLegend.current;if(!legend)return;
+        updateProfileLegend();
         const readoutBasis=vwapReadoutKeys.size?easternClock(Date.now()).date:"";
-        for(const slot of legend.querySelectorAll<HTMLElement>("[data-indicator-readout]")){
-          for(const study of legendStudies){
-            if(study.indicator.type!==slot.dataset.indicatorReadout||study.indicator.output?.statusLineValues===false||!study.series.options().visible)continue;
+        for(const {slot,matching} of legendSlots){
+          for(const study of matching){
+            if(!study.series.options().visible)continue;
             const points=studyPoints.get(study)??[],time=activeCrosshair?.time;
             const isVwap=study.indicator.type==="VWAP";
             const carried=isVwap&&typeof time==="number"&&displayed.get(time)?.carried===true;
-            const index=indicatorReadoutIndex(points,time,carried);
+            // A prior positive pivot can still be in the series after the current
+            // period lost its level. The resting legend belongs to the current candle.
+            const readoutTime=time??(study.step?displayPoints.at(-1)?.time:undefined);
+            const index=indicatorReadoutIndex(points,readoutTime,carried);
             const newest=points.at(-1);
             const readoutId=vwapReadoutKeys.get(study);
             const readoutKey=readoutId?readoutBasis+readoutId:undefined;
-            if(readoutKey&&newest&&historyBasisDate===readoutBasis)chartVwapCache.writeReadout(cacheOwner,readoutKey,{...newest,precision:studyPrecision(study)});
+            if(readoutKey&&newest&&historyBasisDate===readoutBasis)chartVwapCache.writeReadout(cacheOwner,readoutKey,{...newest,precision:study.numberFormat.precision});
             const saved=readoutKey&&(!loaded||chartHalted||seedLoading||seedError)?chartVwapCache.readReadout(cacheOwner,readoutKey):undefined;
             const savedMatchesSlot=carried&&saved&&typeof time==="number"&&saved.time<=time
               &&easternClock(saved.time*1000).date===easternClock(time*1000).date;
             const fallback=saved&&(time===undefined||savedMatchesSlot)?saved.value:undefined;
             const pointValue=points[index]?.value;
             const value=pointValue??fallback;
-            const precision=pointValue===undefined&&fallback!==undefined&&saved?saved.precision:studyPrecision(study);
             const {type,period}=study.indicator;
             const label=study.key==="main"&&(type==="EMA"||type==="SMA")?String(period):
               type==="Bollinger"&&study.key==="main"?"Middle":
               type==="Bollinger"&&study.key==="upper"?"Upper":
               type==="Bollinger"&&study.key==="lower"?"Lower":
-              type==="VWAP"&&study.key==="main"?"":study.label;
+              study.key==="main"&&(type==="VWAP"||study.label===chartIndicatorCatalog[type].short)?"":study.label;
             let span=legendValues.get(study);
             if(!span){
               span=document.createElement("span");
@@ -477,7 +715,12 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
               legendValues.set(study,span);
               slot.append(span);
             }
-            const text=(label?label+": ":"")+(typeof value==="number"&&Number.isFinite(value)?value.toFixed(precision):"—");
+            let valueText="—";
+            if(typeof value==="number"&&Number.isFinite(value)){
+              valueText=pointValue===undefined&&saved
+                ?indicatorNumberFormat(study.indicator,saved.precision).readout(value):study.numberFormat.readout(value);
+            }
+            const text=(label?label+": ":"")+valueText;
             if(span.textContent!==text)span.textContent=text;
             span.style.color=study.histogram&&value!==undefined
               ?indicatorHistogramColor(study.indicator,value,points[Math.max(0,index-1)]?.value??value,preferences.upColor,preferences.downColor)
@@ -485,17 +728,80 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           }
         }
       };
-      const updateStudyFormats=()=>{for(const study of studies){if(study.indicator.output){const precision=studyPrecision(study);if(appliedPrecisions.get(study)!==precision){study.series.applyOptions({priceFormat:{type:'custom',formatter:(value:number)=>value.toFixed(precision),minMove:10**-precision}});appliedPrecisions.set(study,precision);}}}};
+      const updateStudyFormats=()=>{
+        const precision=candlePrecision();
+        if(precision===appliedCandlePrecision)return;
+        appliedCandlePrecision=precision;
+        for(const study of studies){
+          const format=indicatorNumberFormat(study.indicator,precision);
+          if(format.precision===study.numberFormat.precision)continue;
+          study.series.applyOptions({priceFormat:format.axis});
+          study.numberFormat=format;
+        }
+      };
       const futureIndicatorTimes=new Set<number>();
       const bandFills=studies.filter(study=>study.indicator.type==='VWAP'&&study.index===0&&study.indicator.vwapBands).flatMap(study=>study.indicator.vwapBands!.levels.map((level,index)=>{
         const primitive=new ChartBandFill(value=>study.series.priceToCoordinate(value));chart.panes()[0].attachPrimitive(primitive);
         return {indicator:study.indicator,level,index,primitive};
       }));
       const vwapFrameCache=new Map<string,IndicatorPlot[]>();
+      const clouds=indicatorPlots.flatMap(({indicator})=>{
+        if(indicator.type!=="Ichimoku")return [];
+        const spanA=studies.find(study=>study.indicator.id===indicator.id&&study.key==="span-a");
+        const spanB=studies.find(study=>study.indicator.id===indicator.id&&study.key==="span-b");
+        if(!spanA||!spanB)return [];
+        const fill=new ChartBandFill(value=>candles.priceToCoordinate(value));
+        chart.panes()[0].attachPrimitive(fill);
+        return [{spanA,spanB,fill}];
+      });
       const updateBandFills=()=>{for(const fill of bandFills){const parts=vwapFrameCache.get(fill.indicator.id);fill.primitive.update(parts?.find(part=>part.key===`upper-${fill.index+1}`)?.points??[],parts?.find(part=>part.key===`lower-${fill.index+1}`)?.points??[],fill.level.fillColor,fill.level.fillOpacity,fill.level.enabled&&fill.level.fillVisible);}};
+      const refreshClouds=()=>{
+        for(const {spanA,spanB,fill} of clouds){
+          fill.update(studyPoints.get(spanA)??[],studyPoints.get(spanB)??[],preferences.upColor,15,
+            spanA.series.options().visible&&spanB.series.options().visible,preferences.downColor);
+        }
+      };
+      const validStudyPoints=(study:typeof studies[number],points:IndicatorPlot["points"])=>{
+        if(study.step)return points.filter(point=>point.value>0);
+        if(logarithmic&&study.indicator.type==="RegressionChannel"&&points.some(point=>point.value<=0))return [];
+        return points;
+      };
+      const labeledPivots=studies.filter(study=>study.step&&indicatorPriceScaleLabels(preferences,study.indicator));
+      const refreshPivotLabels=()=>{
+        if(!labeledPivots.length)return;
+        const range=chart.timeScale().getVisibleRange();
+        const last=displayPoints.at(-1)?.time;
+        const time=last!==undefined&&typeof range?.from==="number"&&typeof range.to==="number"&&range.from<=last
+          ?Math.min(range.to,last):undefined;
+        for(const study of labeledPivots){
+          // Lightweight Charts uses the nearest earlier point for axis labels.
+          // A pivot level is valid only in the period on the right of the view.
+          const visible=time!==undefined&&indicatorReadoutIndex(studyPoints.get(study)??[],time,false)>=0;
+          if(study.series.options().lastValueVisible!==visible){
+            study.series.applyOptions({lastValueVisible:visible,title:visible?study.label:""});
+          }
+        }
+      };
+      const setStudyData=(study:typeof studies[number],points:readonly {time:number;value:number}[], axis:readonly DisplayCandle[])=>{
+        if(study.step){
+          const levels=new Map(points.map(point=>[point.time,point.value]));
+          study.series.setData(axis.map(({time})=>{
+            const value=levels.get(time);
+            return value!==undefined&&value>0?{time:time as Stamp,value}:{time:time as Stamp};
+          }));
+          return;
+        }
+        study.series.setData(points.map((point,index)=>({...point,time:point.time as Stamp,...(study.histogram?
+          {color:indicatorHistogramColor(study.indicator,point.value,points[Math.max(0,index-1)].value,preferences.upColor,preferences.downColor)}:{})})));
+      };
       const lowerPanes=chart.panes().slice(volume?2:1),lowerSpace=Math.min(50,lowerPanes.length*20);
       chart.panes()[0].setStretchFactor(100-(volume?preferences.volumeHeight:0)-lowerSpace);
       for(const pane of lowerPanes)pane.setStretchFactor(lowerSpace/lowerPanes.length);
+      if(indicatorLegend.current){
+        const stopLayout=observeIndicatorPaneLegends(indicatorLegend.current,chart.panes(),paneReadouts);
+        const remove=removeChart;
+        removeChart=()=>{stopLayout();remove?.();};
+      }
       let livePrice:ReturnType<typeof candles.createPriceLine>|undefined,livePriceAt=0;
       let chartHalted=false,haltStatusAt=0,lastGuidePrice:number|null=null;
       const bars = new Map<number, Candle>(cached?.bars.map(bar=>[bar.time,bar]));
@@ -530,7 +836,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       };
       const pendingSeeds=new Set<string>(),seedFailures=new Map<string,number>(),seedMomentAttempts=new Map<string,number>();
       let initialViewReady = false, viewSaveTimer: ReturnType<typeof setTimeout> | undefined;
-      let indicatorsReady = !useRecentHistory || !studies.length;
+      let indicatorsReady = !useRecentHistory || !indicatorPlots.length;
       let warmupTimer: ReturnType<typeof setTimeout> | undefined;
       let loaded = false, loading = false, reloadAfter = false, connected = false, loadingOlder = false;
       const overnightBars = new Map<number, Candle>();
@@ -579,28 +885,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         const timePrefix = bar && element!.clientWidth >= 520 ? `${formatChartTime(bar.time)} · ` : "";
         crosshairDetails.current.textContent = bar ? `${timePrefix}${bar.carried ? `Carried-forward price $${priceFormatter.format(bar.close)} · No candle returned` : `O ${priceFormatter.format(bar.open)} H ${priceFormatter.format(bar.high)} L ${priceFormatter.format(bar.low)} C ${priceFormatter.format(bar.close)} · Vol ${bar.volume.toLocaleString()}`}` : "";
       };
-      const crosshairOwner = Symbol(ticker);
-      let applyingLinkedCrosshair = false;
-      const detachCrosshair = crosshairLink?.attach(crosshairOwner, time => {
-        const bar = time === null ? undefined : displayed.get(linkedCandleTime(time, timeframe, regularOnly));
-        const x = bar && !bar.carried ? chart.timeScale().timeToCoordinate(bar.time as Stamp) : null;
-        applyingLinkedCrosshair = true;
-        try {
-          if (bar && x !== null && x >= 0 && x < chart.timeScale().width()) {
-            activeCrosshair = { point: { x }, time: bar.time as Stamp };
-            chart.setCrosshairPosition(bar.close, bar.time as Stamp, candles);
-          } else {
-            activeCrosshair = undefined;
-            chart.clearCrosshairPosition();
-          }
-          updateHover();
-        } finally { applyingLinkedCrosshair = false; }
-      });
-      const removeLinkedChart = removeChart;
-      removeChart = () => { detachCrosshair?.(); removeLinkedChart?.(); };
       chart.subscribeCrosshairMove(event => {
-        if (applyingLinkedCrosshair) return;
-        crosshairLink?.publish(crosshairOwner, event.point && typeof event.time === "number" ? event.time : null);
         if(event.point&&event.time!==undefined&&event.paneIndex===0&&crosshairTarget!=="normal"&&crosshairTarget!=="nearest"){
           const indicator=snapSeries?event.seriesData.get(snapSeries):undefined;
           const candle=event.seriesData.get(candles);
@@ -615,7 +900,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const updateDates = () => {
         const axis=dateAxis.current,range=chart.timeScale().getVisibleLogicalRange();
         const right=Math.max(0,element!.clientWidth-chart.timeScale().width());
-        if(axis)axis.style.right=`${right}px`;if(indicatorLegend.current)indicatorLegend.current.style.right=`${right}px`;
+        if(axis)axis.style.right=`${right}px`;indicatorLegend.current?.style.setProperty("--chart-indicator-right",`${right}px`);
         const firstTime = daily ? undefined : firstVisibleChartTime(displayPoints, range);
         if (!axis || firstTime === undefined) { axis?.replaceChildren(); return; }
         const label = document.createElement("span");
@@ -743,15 +1028,18 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         renderPriceGuide();
         if(initial&&!(restorePrice?savedView!.autoScale:preferences.autoScale)&&data.length){const recent=data.slice(-defaultView.visibleBars),low=Math.min(...recent.map(b=>b.low)),high=Math.max(...recent.map(b=>b.high)),margin=Math.max((high-low)*0.05,high*0.01,0.0001);chart.priceScale("right").setVisibleRange(restore?.priceRange??{from:Math.max(0.0001,low-margin),to:high+margin});}
         volume?.setData(data.map(volumePoint));
+        const calculated = indicatorsReady ? studyParts(actual,displayPoints) : undefined;
         for(const study of indicatorsReady ? studies : []){
-          const part=study.indicator.type==='VWAP'?{points:[]}:indicatorValues(actual,study.indicator,timeframe)[study.index];
-          const points=study.indicator.type==='VWAP'?vwapPoints(study.indicator,actual,data,study.index):part.points;
+          if(study.indicator.type==="RangeVWAP")continue;
+          const part=study.indicator.type==='VWAP'?{points:[]}:calculated!.get(study.indicator.id)![study.index];
+          const points=study.indicator.type==='VWAP'?vwapPoints(study.indicator,actual,data,study.index):
+            validStudyPoints(study,part.points);
           studyPoints.set(study,points);
-          study.series.setData(points.map((point,index)=>({...point,time:point.time as Stamp,...(study.histogram?{color:indicatorHistogramColor(study.indicator,point.value,part.points[Math.max(0,index-1)].value,preferences.upColor,preferences.downColor)}:{})})));
+          setStudyData(study,points,data);
         }
         indicatorAxis?.setData([...futureIndicatorTimes].sort((a,b)=>a-b).map(time=>({time:time as Stamp})));
-        updateStudyFormats();updateIndicatorLegend();
-        updateBandFills();
+        updateStudyFormats();refreshPivotLabels();updateIndicatorLegend();
+        updateBandFills();refreshClouds();
         const hasVwapSnapshot=[...vwapReadoutKeys.values()].some(key=>chartVwapCache.readReadout(cacheOwner,historyBasisDate+key));
         if(calendarReady)setSessionMessage(vwapProblem ||
           (!hasVwapSnapshot && (seedLoading || seedError) ? "Calculating VWAP…" : ""));
@@ -776,6 +1064,11 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             : newIndex >= 0 && newIndex < data.length ? newIndex - oldIndex : 0;
           chart.timeScale().setVisibleLogicalRange({from:range.from + added,to:range.to + added});
         }
+        if(rangeVwapStudies.length){
+          rangeVwapBars=indicatorsReady?actual:[];
+          refreshRangeVwap();
+        }
+        refreshProfileSource();
         updateDates();
         renderJournalOverlay();
         renderEvidence();
@@ -989,11 +1282,13 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             data = { ...await requestHistory() };
             if (disposed) return;
           }
+          let pageCoverageStart=data.complete===false?Infinity:chartPageCoverageStart(data.nextBefore);
           if(data.complete!==false&&!delta&&(!loaded||catchingUp)&&savedView&&data.bars.length&&savedView.anchor.time<candleBucket(data.bars[0].time,timeframe,regularOnly)){
             const history=await calculationHistory.read(timeframe,savedView.anchor.time);
             if(disposed)return;
             recent = false;
             data.bars=history.bars;data.basisDate=history.basisDate;marketCalendar.current=history.calendar;
+            pageCoverageStart=history.coveredFrom;
             data.nextBefore=history.bars.length?history.bars[0].time*1000-1:data.nextBefore;
           }
           const basisDate=easternClock(Date.now()).date;
@@ -1015,15 +1310,14 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           if (delta) {
             for (const time of bars.keys()) if (time * 1000 >= catchUpFrom!) bars.delete(time);
           } else {
-            if(initial || catchingUp || newBasis)bars.clear();
+            if(initial || catchingUp || newBasis){bars.clear();profileCoverageStart=pageCoverageStart;}
+            else profileCoverageStart=Math.min(profileCoverageStart,pageCoverageStart);
             if(warmup || initial || catchingUp || newBasis){nextBefore=data.nextBefore??null;}
           }
           catchingUp = false;
           for (const bar of data.bars as Candle[]) bars.set(bar.time, bar);
           for (const bar of queued.values()) bars.set(bar.time, bar);
           queued.clear(); loaded = true;
-          const latest = [...bars.values()].reduce<Candle|undefined>((last,bar)=>!last||bar.time>last.time?bar:last,undefined);
-          candles.applyOptions({ priceFormat: { type: "price", precision: latest && latest.close < 1 ? 4 : 2, minMove: latest && latest.close < 1 ? 0.0001 : 0.01 } });
           writeAll(initial, warmup); initialViewReady=true; setError(null);
           if (initial && !indicatorsReady) {
             // Yield to the browser before starting the full indicator history request.
@@ -1086,6 +1380,9 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             setHistoryMessage("");
             bars.clear();
             for (const [time, bar] of combined) bars.set(time, bar);
+            if((before+1)/1000>=profileCoverageStart){
+              profileCoverageStart=Math.min(profileCoverageStart,chartPageCoverageStart(page.nextBefore));
+            }
             nextBefore = page.nextBefore ?? null;
             writeAll(false, true);
             const range = chart.timeScale().getVisibleLogicalRange();
@@ -1146,6 +1443,8 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       let wasNearOlderHistory = false;
       chart.timeScale().subscribeVisibleLogicalRangeChange(range=>{
         priceStyle.scheduleReference();
+        scheduleRangeVwap();
+        refreshPivotLabels();
         const movedRight = Boolean(range && range.to > previousVisibleTo);
         if (range) previousVisibleTo = range.to;
         const nearOlderHistory = Boolean(range && range.from < olderHistoryMargin);
@@ -1270,15 +1569,31 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             renderEvidence(bucket);
             const actual = studies.length ? displayPoints.filter(value => !value.carried) : [];
             vwapFrameCache.clear();
+            const calculated = indicatorsReady ? studyParts(actual,displayPoints) : undefined;
             for (const study of indicatorsReady ? studies : []) {
-              if(study.indicator.type==="VWAP"&&!calendarReady)continue;
-              const part = study.indicator.type==='VWAP'?{points:vwapPoints(study.indicator,actual,displayPoints,study.index)}:indicatorValues(actual, study.indicator,timeframe)[study.index];
+              if(study.indicator.type==="RangeVWAP"||study.indicator.type==="VWAP"&&!calendarReady)continue;
+              const part = study.indicator.type==='VWAP'?{points:vwapPoints(study.indicator,actual,displayPoints,study.index)}:calculated!.get(study.indicator.id)![study.index];
+              if(study.step||study.indicator.type==="ZigZag"||study.indicator.type==="RegressionChannel"||
+                study.indicator.type==="Alligator"||study.indicator.type==="Ichimoku"){
+                const points=validStudyPoints(study,part.points);
+                studyPoints.set(study,points);
+                setStudyData(study,points,displayPoints);
+                continue;
+              }
               const latest = part.points.at(-1);
+              const previous = studyPoints.get(study)?.at(-1);
               studyPoints.set(study,part.points);
-              if (latest) study.series.update({ ...latest, time: latest.time as Stamp, ...(study.histogram ? {color:indicatorHistogramColor(study.indicator,latest.value,part.points.at(-2)?.value??latest.value,preferences.upColor,preferences.downColor)} : {}) });
+              if (previous && (latest === undefined || latest.time < previous.time)) {
+                study.series.pop(1);
+              } else if (latest) study.series.update({ ...latest, time: latest.time as Stamp, ...(study.histogram ? {color:indicatorHistogramColor(study.indicator,latest.value,part.points.at(-2)?.value??latest.value,preferences.upColor,preferences.downColor)} : {}) });
             }
-            updateStudyFormats();updateIndicatorLegend();
-        updateBandFills();
+            if(rangeVwapStudies.length){
+              rangeVwapBars=indicatorsReady?actual:[];
+              refreshRangeVwap();
+            }
+            refreshProfileSource();
+            updateStudyFormats();refreshPivotLabels();updateIndicatorLegend();
+            updateBandFills();refreshClouds();
           }
         } else {
           // New buckets and corrected old bars must also reconcile carried positions.
@@ -1338,7 +1653,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           for(const cached of calculationContexts.values())if(cached.daily===daily&&cached.through===undefined&&cached.basisDate===easternClock(Date.now()).date){const combined=new Map(cached.bars.map(bar=>[bar.time,bar]));combined.set(message.bar.time,message.bar);cached.bars=[...combined.values()].sort((a,b)=>a.time-b.time);}
           if(loaded)writeAll(false);
         });
-        auxiliarySource.addEventListener('status',event=>{if(!disposed&&JSON.parse((event as MessageEvent).data).state==='connected'){calculationHistory.invalidate();calculationContexts.clear();contextCoverage.clear();if(loaded)writeAll(false);}});
+        auxiliarySource.addEventListener('status',event=>{if(!disposed&&JSON.parse((event as MessageEvent).data).state==='connected'){calculationHistory.invalidate();advancedHistory.clear();calculationContexts.clear();contextCoverage.clear();if(loaded)writeAll(false);}});
       }
       source.onerror = () => {
         if(disposed)return;
@@ -1375,22 +1690,23 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       removeChart = () => {
         detachJournalEngine?.();
         journalMarkers?.detach();
+        if(profileLegend.current.refresh===refreshProfileLabels)profileLegend.current.refresh=undefined;
         evidenceMarkers?.detach();
         splitMarkers?.detach();
         if (evidenceZones) chart.panes()[0].detachPrimitive(evidenceZones);
         if (evidenceRender.current === renderEvidence) evidenceRender.current = undefined;
- document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);clearTimeout(vwapRetryTimer);if(cacheKey && !historyHasGaps && loaded && !catchingUp && indicatorsReady && !archivePages.length && bars.size && bars.size+overnightBars.size<=20_000){
+ document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);cancelAnimationFrame(rangeVwapFrame);clearTimeout(warmupTimer);clearTimeout(vwapRetryTimer);if(cacheKey && !historyHasGaps && loaded && !catchingUp && indicatorsReady && !archivePages.length && bars.size && bars.size+overnightBars.size<=20_000){
         recentChartCandles.delete(cacheKey);
         recentChartCandles.set(cacheKey,{basisDate:historyBasisDate,bars:[...bars.values()],
           ...(overnightBars.size && overnightBasis === historyBasisDate ? {overnightBars:[...overnightBars.values()]} : {}),
-          nextBefore,calendar:marketCalendar.current,savedAt:Date.now()});
+          nextBefore,profileCoverageStart,calendar:marketCalendar.current,savedAt:Date.now()});
         while(recentChartCandles.size>4)recentChartCandles.delete(recentChartCandles.keys().next().value!);
-      } element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();indicatorLegend.current?.querySelectorAll("[data-indicator-readout]").forEach(slot=>slot.replaceChildren());remove?.(); };
+      } element!.removeEventListener("wheel",markPan);element!.removeEventListener("pointerdown",markPan);dateAxis.current?.replaceChildren();for(const {slot} of legendSlots)slot.replaceChildren();remove?.(); };
       evidenceRender.current = renderEvidence;
       if (cached) {
         historyBasisDate = cached.basisDate;
         loaded = true;
-        indicatorsReady = !studies.length;
+        indicatorsReady = !indicatorPlots.length;
         writeAll(true);
         initialViewReady = true;
         setStatus("Catching up…");
@@ -1400,7 +1716,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     }
     void start().catch(() => { abort.abort(); if (!disposed) setError("Chart could not load. Try again."); });
     return () => { disposed = true; abort.abort(); source?.close(); auxiliarySource?.close(); removeChart?.(); };
-  }, [crosshairLink,replayActive,movementKind,logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, activeIndicators, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready, broker, endpoints, priceAdjustment, unadjusted, archiveDailyStartup]);
+  }, [replayActive,movementKind,logarithmic,ticker, timeframe, daily, calendarFrame, vwapDisplayFrame, regularOnly, attempt, dark, preferences, ready, ownerKey, viewId, viewWorkspace, showOvernight, indicatorPlots, crosshairTarget, journalEngineBridge, journalScope, focusScope, activeTradeContext, tradeMarksById, onTradeMarkClick, providerKey, providerQuery, marketData.ready, broker, endpoints, priceAdjustment, unadjusted, archiveDailyStartup]);
 
   useEffect(() => {
     if (!activeTradeContext || !ready) return;
@@ -1550,7 +1866,8 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         step={preferences.movementStep??0.01} dark={dark} style={preferences}/>
     </Suspense> : <Box sx={{display:"flex",flex:1,minHeight:0,minWidth:0}}>
     {drawingLeftToolbar}
-    <Box sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}><Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/>
+    <Box ref={indicatorLegend} sx={{flex:1,minHeight:0,minWidth:0,position:"relative",isolation:"isolate"}}>
+    <Box ref={container} sx={{position:"absolute",inset:0,zIndex:0}}/>
     <Box sx={{ position: "absolute", top: 2, left: 8, right: "var(--chart-indicator-right, 65px)", zIndex: 2,
       display: "flex", alignItems: "baseline", pointerEvents: "none" }}>
       {crosshairReadout}
@@ -1558,9 +1875,13 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         ? { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }
         : { fontSize: 10, color: "text.secondary", maxWidth: "50%", pr: 0.5 }}>{status}</Typography>}
     </Box>
-    <ChartIndicatorLegend legendRef={indicatorLegend} types={readoutTypes} hidden={hiddenIndicatorValues}
-      dark={dark} openType={indicatorMenu?.type}
+    <ChartIndicatorLegend types={priceReadoutTypes} hidden={hiddenIndicatorValues}
+      dark={dark} openType={openIndicatorPane===undefined?indicatorMenu?.type:undefined}
       onOpenOptions={(type,anchor)=>setIndicatorMenu({anchor,type})}/>
+    {lowerReadouts.map(indicator=><ChartIndicatorLegend key={indicator.id} paneId={indicator.id} types={[indicator.type]}
+      hidden={hiddenIndicatorValues} dark={dark}
+      openType={openIndicatorPane===indicator.id?indicatorMenu?.type:undefined}
+      onOpenOptions={(type,anchor)=>setIndicatorMenu({anchor,type})}/>)}
     <Box ref={dateAxis} data-chart-date-axis sx={{position:"absolute",zIndex:2,bottom:0,left:0,right:65,height:26,pointerEvents:"none",overflow:"hidden"}}/>{drawingOverlay}</Box>
     </Box>}
     {!movementKind&&!replayActive&&sessionMessage && <Typography role="status" data-chart-vwap-status
@@ -1578,6 +1899,6 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         onReview={journal.review} focusStatus={journal.status} register={journal.register}
         setOverlay={journal.setOverlay} panelId={journal.panelId} />
     </Suspense>}
-    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel onBarReplay={marketData.ready&&!movementKind&&!evidence&&!activeTradeContext&&!journal.current?.open&&!replayActive?()=>{setPanel(null);setReplaying(true);}:undefined} reviewChartStyles={reviewChartStyles} ticker={ticker} timeframe={timeframe} panel={panel} onClose={()=>setPanel(null)} preferences={{...accountPreferences,logarithmic}} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
+    {preferencesOpened ? <Suspense fallback={null}><ChartPreferencesPanel onBarReplay={marketData.ready&&!movementKind&&!evidence&&!activeTradeContext&&!journal.current?.open&&!replayActive?()=>{setPanel(null);setReplaying(true);}:undefined} reviewChartStyles={reviewChartStyles} ticker={ticker} timeframe={timeframe} panel={panel} onClose={()=>setPanel(null)} preferences={{...accountPreferences,logarithmic}} crosshairLines={crosshairLines} onChange={changePreferences} message={message} initialIndicator={initialIndicator} chartIndicators={chartIndicators} onChartIndicatorsChange={changeChartIndicators} indicatorDisplay={indicatorDisplay} onIndicatorDisplayChange={changeIndicatorDisplay}/></Suspense> : null}
   </Box>;
 }

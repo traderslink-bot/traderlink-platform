@@ -1,7 +1,7 @@
 type MomentEntry={value:number;mean:number;m2:number};
 /** Population deviation in O(n) time/O(period) space, without subtracting
  * nearly equal squared-price totals or scanning each full rolling window. */
-export function rollingDeviation(values:readonly number[],period:number):(number|null)[]{
+export function rollingDeviation(values:readonly (number|null)[],period:number):(number|null)[]{
  const incoming:MomentEntry[]=[],outgoing:MomentEntry[]=[];
  const push=(stack:MomentEntry[],value:number)=>{
   const previous=stack.at(-1),count=stack.length+1;
@@ -9,6 +9,7 @@ export function rollingDeviation(values:readonly number[],period:number):(number
   stack.push({value,mean,m2:previous?previous.m2+(value-previous.mean)*(value-mean):0});
  };
  return values.map(value=>{
+  if(value===null){incoming.length=0;outgoing.length=0;return null;}
   push(incoming,value);
   if(incoming.length+outgoing.length>period){
    if(!outgoing.length)while(incoming.length)push(outgoing,incoming.pop()!.value);

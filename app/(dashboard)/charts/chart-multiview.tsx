@@ -6,7 +6,6 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { phoneChartLayout, chartCount, changeChartTimeframe, removeChartPanel, selectedChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
-import { ChartCrosshairGroup } from "./chart-crosshair-group";
 import { MarketChart } from "./market-chart";
 import { ChartMultiviewMenu } from "./chart-multiview-menu";
 
@@ -38,7 +37,7 @@ export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenM
   const unevenFourChartGrid = !mobile && renderedCount === 4 &&
     (groups.length === 3 || groups.some(group => group.panels.length === 3));
   const select = (symbol: string, id: string) => { if (layout.selectedPanel !== id) onChange({ ...layout, selectedPanel: id }); onSelectTicker?.(symbol); };
-  return <ChartCrosshairGroup enabled={renderedCount > 1}><Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
+  return <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
     {(!compactMobile || !mobile) && byTicker && layout.groups.length > 1 ? <Tabs value={active} variant="scrollable" aria-label="Chart tickers" onChange={(_, symbol: string) => { const group = layout.groups.find(group => group.symbol === symbol)!; select(symbol, group.panels[0].id); }} sx={{ flexShrink: 0, minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0.5 } }}>{layout.groups.map(group => <Tab key={group.id} value={group.symbol} label={group.symbol} />)}</Tabs> : null}
     <Box ref={viewport} data-multiview-charts data-mobile-layout={mode} data-chart-count={renderedCount} sx={{ flex: 1, minHeight: 0, minWidth: 0, display: "grid", overflowY: mobile ? "auto" : "hidden", gap: 0.5,
       gridTemplateColumns: (grid || (!mobile && groups.length > 1)) ? "repeat(2,minmax(0,1fr))" : "minmax(0,1fr)",
@@ -71,5 +70,5 @@ export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenM
         </Box>)}
       </Box>)}
     </Box>
-  </Box></ChartCrosshairGroup>;
+  </Box>;
 }

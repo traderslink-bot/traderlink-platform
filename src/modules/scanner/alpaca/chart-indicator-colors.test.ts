@@ -1,4 +1,5 @@
 import { expect, it } from "vitest";
+import { standardChartIndicatorTypes } from "./chart-indicator-catalog";
 import { indicatorPresets, indicatorPresetRows, nextMovingAverageLine } from "./chart-indicator-presets";
 import { DEFAULT_CHART_PREFERENCES, INDICATOR_TYPES, indicatorPriceScaleLabels, parseChartPreferences, setAllIndicatorPriceScaleLabels, type ChartIndicator } from "./chart-preferences";
 
@@ -22,7 +23,7 @@ it("keeps every built-in indicator palette distinct across studies and within ea
 });
 
 it("assigns added moving averages colors that are unused across the chart", () => {
-  const indicators = INDICATOR_TYPES.flatMap(type => indicatorPresetRows(type, 0, () => "test"));
+  const indicators = standardChartIndicatorTypes.flatMap(type => indicatorPresetRows(type, 0, () => "test"));
   while (indicators.length < 20) {
     const type = indicators.length % 2 ? "EMA" : "SMA";
     const next = nextMovingAverageLine(type, indicators, String(indicators.length));
@@ -33,7 +34,7 @@ it("assigns added moving averages colors that are unused across the chart", () =
 
 it("defaults all preset labels off and lets global and individual controls override them", () => {
   let id = 0;
-  const presets = INDICATOR_TYPES.flatMap(type => indicatorPresetRows(type, 0, () => String(++id)));
+  const presets = standardChartIndicatorTypes.flatMap(type => indicatorPresetRows(type, 0, () => String(++id)));
   const defaults = { ...DEFAULT_CHART_PREFERENCES, indicators: presets };
   expect(presets.every(indicator => !indicatorPriceScaleLabels(defaults, indicator))).toBe(true);
   const individual = { ...presets[0], output: { priceScaleLabels: true, statusLineValues: true } };

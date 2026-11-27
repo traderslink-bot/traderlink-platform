@@ -12,9 +12,9 @@ it('keeps the account-wide overlay setting separate and confirms before saving',
  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);
  try {
   await act(async()=>root.render(createElement(ChartIndicatorEditor,{
-   ticker:'TEST',
-   indicators:[{id:'ema',type:'EMA',period:9,color:'#ff9900',width:3}],
-   onChange:vi.fn(),savedPresets:[],onPresetsChange:vi.fn(),
+   ticker:'TEST',chartColors:{upColor:'#008800',downColor:'#880000'},
+   chartIndicators:[{id:'ema',type:'EMA',period:9,color:'#ff9900',width:3}],accountIndicators:[],
+   onChartChange:vi.fn(),onAccountChange:vi.fn(),savedPresets:[],onPresetsChange:vi.fn(),onFavoritesChange:vi.fn(),
    overlayLineWidth:1,onOverlayLineWidthChange,
    defaultPriceScaleLabels:false,display:{},
    onDisplayChange:vi.fn(),onAccountDisplayChange:vi.fn(),

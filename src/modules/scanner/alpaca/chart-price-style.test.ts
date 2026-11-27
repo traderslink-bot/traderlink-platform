@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_CHART_PREFERENCES, parseChartPreferences } from "@/src/modules/scanner/alpaca/chart-preferences";
-import { chartPricePoint, heikinAshiCandle } from "@/app/(dashboard)/charts/chart-price-style";
+import { chartPricePoint, createChartPriceStyle, heikinAshiCandle } from "@/app/(dashboard)/charts/chart-price-style";
 
 const { upColor, downColor } = DEFAULT_CHART_PREFERENCES;
 const prior = { time: 1, open: 0.51, high: 0.52, low: 0.49, close: 0.50, volume: 50, carried: false };
@@ -9,6 +9,35 @@ const candle = (open: number, close: number) => ({
 });
 
 describe("chart price styles", () => {
+  it.each(["candles", "hollow", "line", "bars", "heikinAshi"] as const)(
+    "keeps the %s price tick precise across a dollar crossing in loaded and streaming bars", kind => {
+      const series = { setData: vi.fn(), update: vi.fn(), applyOptions: vi.fn() };
+      const addSeries = vi.fn(() => series);
+      const chart = { addSeries } as unknown as Parameters<typeof createChartPriceStyle>[0];
+      const library = { CandlestickSeries: {}, BarSeries: {}, LineSeries: {} } as Parameters<typeof createChartPriceStyle>[1];
+      const price = createChartPriceStyle(chart, library, { kind, upColor, downColor }, () => [], false);
+      const cents = { type: "price", precision: 2, minMove: 0.01 };
+      const fourPlaces = { type: "price", precision: 4, minMove: 0.0001 };
+      const atDollar = candle(1, 1.55);
+      const wick = { ...atDollar, time: 1, low: 0.7199 };
+
+      expect(addSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ priceFormat: cents }));
+      price.set([{ ...wick, carried: true }, atDollar]);
+      expect(series.applyOptions).not.toHaveBeenCalled();
+      price.set([wick, atDollar]);
+      expect(series.applyOptions).toHaveBeenLastCalledWith({ priceFormat: fourPlaces });
+      price.update(candle(1.55, 1.60), atDollar);
+      expect(series.applyOptions).toHaveBeenCalledTimes(1);
+
+      price.set([atDollar]);
+      expect(series.applyOptions).toHaveBeenLastCalledWith({ priceFormat: cents });
+      price.update({ ...atDollar, low: 0.8951 }, undefined);
+      price.update(candle(1.55, 1.60), atDollar);
+      expect(series.applyOptions).toHaveBeenLastCalledWith({ priceFormat: fourPlaces });
+      expect(series.applyOptions).toHaveBeenCalledTimes(3);
+    },
+  );
+
   it.each([
     [0.51, 0.52, "transparent", upColor],
     [0.53, 0.52, upColor, upColor],

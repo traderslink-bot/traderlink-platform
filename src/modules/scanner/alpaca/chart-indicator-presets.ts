@@ -1,4 +1,7 @@
+import { additionalChartIndicators, additionalChartIndicatorTypes, advancedChartIndicators, advancedChartIndicatorTypes, type AdditionalChartIndicator, type AdvancedChartIndicator } from './chart-indicator-catalog';
 import { defaultVwapBands, type ChartIndicator, type IndicatorType } from "./chart-preferences";
+
+type ExtendedIndicatorType = AdditionalChartIndicator | AdvancedChartIndicator;
 
 type IndicatorSettings = Omit<ChartIndicator, "id" | "type">;
 type IndicatorPreset = { title: string; description: string; settings: IndicatorSettings[] };
@@ -25,7 +28,7 @@ const vwap: IndicatorSettings = {
   waitForClose: true, hideOnDaily: true, output: { statusLineValues: true },
 };
 
-export const indicatorPresets: Record<IndicatorType, IndicatorPreset[]> = {
+const standardPresets: Record<Exclude<IndicatorType, ExtendedIndicatorType>, IndicatorPreset[]> = {
   EMA: [
     {
       title: "Intraday momentum",
@@ -80,6 +83,52 @@ export const indicatorPresets: Record<IndicatorType, IndicatorPreset[]> = {
     settings: [{ period: 20, source: "close", color: "#726895", width: 1, basisMa: "SMA", deviation: 2, plots: { upper: { color: "#bc4d65" }, lower: { color: "#0a839f" } } }],
   }],
 };
+
+const usedColors = new Set(Object.values(standardPresets).flatMap(presets => presets.flatMap(preset =>
+  preset.settings.flatMap(settings => [settings.color, ...Object.values(settings.plots ?? {}).flatMap(plot => plot.color ? [plot.color] : [])]))));
+let nextHue = 0;
+function nextStudyColor(): string {
+  // Pick mid-lightness colors that remain legible on both chart themes.
+  for (;;) {
+    const angle = (nextHue++ * 137.508) * Math.PI / 180;
+    const channels = [0, 2 * Math.PI / 3, 4 * Math.PI / 3].map(phase =>
+      Math.round(124 + 57 * Math.cos(angle + phase)));
+    const luminance = channels.map(channel => channel / 255)
+      .map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    const lightness = 0.2126 * luminance[0] + 0.7152 * luminance[1] + 0.0722 * luminance[2];
+    if (lightness < 0.13 || lightness > 0.30) continue;
+    const color = "#" + channels.map(channel => channel.toString(16).padStart(2, "0")).join("");
+    if (usedColors.has(color)) continue;
+    usedColors.add(color);
+    return color;
+  }
+}
+
+const secondaryPlots: Partial<Record<ExtendedIndicatorType, readonly string[]>> = {
+  Alligator: ["teeth", "lips"], Ichimoku: ["base", "span-a", "span-b", "lagging"],
+  RegressionChannel: ["upper", "lower"],
+  StandardPivots: ["r1", "r2", "r3", "r4", "r5", "s1", "s2", "s3", "s4", "s5"],
+  Ribbon: ["ma-2", "ma-3", "ma-4", "ma-5", "ma-6"],
+  DMI: ["plus", "minus"],
+  Keltner: ["upper", "lower"], Donchian: ["upper", "lower"], Envelope: ["upper", "lower"], PriceChannel: ["upper", "lower"],
+  MACross: ["signal"], Klinger: ["signal"], Chandelier: ["signal"], Aroon: ["signal"], Vortex: ["signal"],
+  Stoch: ["signal"], StochRSI: ["signal"], TSI: ["signal"], KST: ["signal"], RVI: ["signal"], Fisher: ["signal"],
+};
+const extendedDefinitions = { ...additionalChartIndicators, ...advancedChartIndicators };
+const additionalPresets = Object.fromEntries([...additionalChartIndicatorTypes, ...advancedChartIndicatorTypes].map(type => {
+  const study = extendedDefinitions[type];
+  const plotNames = secondaryPlots[type];
+  const settings: IndicatorSettings = {
+    period: study.period ?? 1, color: nextStudyColor(), width: 1,
+    ...Object.fromEntries(study.inputs?.map(([key, , value]) => [key, value]) ?? []),
+    ...(study.defaultSource ? { source: study.defaultSource } : {}),
+    ...(study.multiplier ? { deviation: study.multiplier[1] } : {}),
+    ...(plotNames ? { plots: Object.fromEntries(plotNames.map(key => [key, { color: nextStudyColor(), ...(type === "StandardPivots" && /[45]$/.test(key) ? { visible: false } : {}) }])) } : {}),
+  };
+  return [type, [{ title: study.name, description: "", settings: [settings] }]];
+})) as Record<ExtendedIndicatorType, IndicatorPreset[]>;
+
+export const indicatorPresets: Record<IndicatorType, IndicatorPreset[]> = { ...standardPresets, ...additionalPresets };
 
 export function indicatorPresetRows(type: IndicatorType, index: number, makeId: () => string): ChartIndicator[] {
   return indicatorPresets[type][index].settings.map(settings => ({ ...settings, id: makeId(), type }));

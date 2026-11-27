@@ -42,7 +42,9 @@ export function createChartPriceStyle(
   const { kind, upColor, downColor } = style;
   const heikinAshi = kind === "heikinAshi";
   const { AreaSeries, BaselineSeries, HistogramSeries, CandlestickSeries, LineSeries, LineType, BarSeries, customSeriesDefaultOptions } = library;
-  const priceFormat = { type: "price" as const, precision: 4, minMove: 0.0001 };
+  const centFormat = { type: "price" as const, precision: 2, minMove: 0.01 };
+  const subDollarFormat = { type: "price" as const, precision: 4, minMove: 0.0001 };
+  let priceFormat = centFormat;
   const baseline = kind === "baseline" ? chart.addSeries(BaselineSeries, {
     priceFormat, lineWidth: 2,
     topLineColor: upColor, topFillColor1: upColor + "48", topFillColor2: upColor + "10",
@@ -57,12 +59,20 @@ export function createChartPriceStyle(
   ) : undefined;
   const series = baseline ?? columns ?? area ?? hlc ?? (
     kind === "line" || kind === "stepLine"
-      ? chart.addSeries(LineSeries, { color: upColor, ...(kind === "stepLine" ? { lineType: LineType.WithSteps, priceFormat } : {}) })
-    : kind === "bars" ? chart.addSeries(BarSeries, { upColor, downColor })
+      ? chart.addSeries(LineSeries, { color: upColor, priceFormat, ...(kind === "stepLine" ? { lineType: LineType.WithSteps } : {}) })
+    : kind === "bars" ? chart.addSeries(BarSeries, { upColor, downColor, priceFormat })
     : chart.addSeries(CandlestickSeries, {
       upColor, downColor, wickUpColor: upColor, wickDownColor: downColor, borderVisible: kind === "hollow", priceFormat,
       ...(heikinAshi ? { lastValueVisible: false, priceLineVisible: false } : {}),
     }));
+
+  function setSubDollarPrecision(subDollar: boolean) {
+    const next = subDollar ? subDollarFormat : centFormat;
+    if (priceFormat !== next) {
+      series.applyOptions({ priceFormat: next });
+      priceFormat = next;
+    }
+  }
 
   let frame = 0;
   let reference: number | undefined;
@@ -96,6 +106,7 @@ export function createChartPriceStyle(
     series,
     scheduleReference,
     set(bars: readonly DisplayCandle[]) {
+      setSubDollarPrecision(bars.some(bar => !bar.carried && bar.low < 1));
       let previousSynthetic: DisplayCandle | undefined;
       heikinBeforeLast = undefined;
       series.setData(bars.map((bar, index) => {
@@ -109,6 +120,7 @@ export function createChartPriceStyle(
       scheduleReference();
     },
     update(bar: DisplayCandle, previous: DisplayCandle | undefined) {
+      if (!bar.carried && bar.low < 1) setSubDollarPrecision(true);
       const candle = heikinAshi ? heikinAshiCandle(bar, heikinBeforeLast) : bar;
       series.update(chartPricePoint(candle, previous, style));
       scheduleReference();

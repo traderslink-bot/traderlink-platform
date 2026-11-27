@@ -37,7 +37,7 @@ export default function BarReplayChart({ symbol, generation, initialTimeframe, p
   const maxDate = easternClock(easternDayStart(Date.now() / 1_000) * 1_000 - 1).date;
   const [date, setDate] = useState(maxDate);
   const [timeframe, setTimeframe] = useState<ChartTimeframe>(() =>
-    REPLAY_TIMEFRAMES.find(frame => frame === initialTimeframe) ?? "5m");
+    REPLAY_TIMEFRAMES.some(frame => frame === initialTimeframe) ? initialTimeframe : "5m");
   const [loaded, setLoaded] = useState<LoadedReplay | null>(null);
   const [position, setPosition] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -87,11 +87,11 @@ export default function BarReplayChart({ symbol, generation, initialTimeframe, p
         chart.panes()[0].setStretchFactor(100 - preferences.volumeHeight);
         chart.panes()[1].setStretchFactor(preferences.volumeHeight);
       }
-      const formatPrice = price.series.priceFormatter();
       chart.subscribeCrosshairMove(({ time, logical, point }) => {
         if (!readout.current) return;
         const bar = point && typeof logical === "number" ? latestVisible.current[logical] : undefined;
         if (!bar || bar.time !== time) { readout.current.textContent = ""; return; }
+        const formatPrice = price.series.priceFormatter();
         const { open, high, low, close, volume } = bar;
         readout.current.textContent = `O ${formatPrice.format(open)} H ${formatPrice.format(high)} L ${formatPrice.format(low)} C ${formatPrice.format(close)} · Vol ${volume.toLocaleString()}`;
       });

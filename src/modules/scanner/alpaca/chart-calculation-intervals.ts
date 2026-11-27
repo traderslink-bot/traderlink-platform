@@ -23,7 +23,7 @@ export function calculationInterval(time:number,timeframe:Exclude<ChartCalculati
 }
 
 /** Future axis slots are calendar positions only, never synthetic OHLCV data. */
-export function futureCalculationAxis(axis:readonly number[],count:number,timeframe:ChartTimeframe,sessions:Pick<ChartPreferences,'premarket'|'regular'|'postmarket'>,calendar:ChartSessionCalendar):number[]{
+export function futureCalculationAxis(axis:readonly number[],count:number,timeframe:ChartTimeframe,sessions:Pick<ChartPreferences,'premarket'|'regular'|'postmarket'>,calendar:ChartSessionCalendar,allowPartial=false):number[]{
  if(!Number.isInteger(count)||count<0||count>1000)throw Error('invalid_future_axis_count');
  const result=[...axis];if(!count||!axis.length)return result;
  const last=axis.at(-1)!,regularOnly=sessions.regular&&!sessions.premarket&&!sessions.postmarket;
@@ -35,6 +35,7 @@ export function futureCalculationAxis(axis:readonly number[],count:number,timefr
   const midnight=easternDayStart(Date.parse(row.date+'T12:00:00Z')/1000);
   if(timeframe==='1D'){
    if(midnight>last)result.push(midnight);
+   if(result.length>=axis.length+count)return result;
   }else{
    const close=Number(row.close.slice(0,2))*60+Number(row.close.slice(3));
    if(midnight+(close+240)*60<=last)continue;
@@ -51,5 +52,6 @@ export function futureCalculationAxis(axis:readonly number[],count:number,timefr
   }
   if(result.length>=axis.length+count)return result;
  }
+ if(allowPartial)return result;
  throw Error('future_session_coverage_unavailable');
 }

@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
-import { canRestoreChartPrice, ChartViewMemory, defaultIndicatorDisplay, restoreChartRange, type ChartViewSnapshot } from "@/app/(dashboard)/charts/chart-view-memory";
+import { canRestoreChartPrice, chartIndicatorDefinitions, ChartViewMemory, defaultIndicatorDisplay, restoreChartRange, type ChartViewSnapshot } from "@/app/(dashboard)/charts/chart-view-memory";
+import { DEFAULT_CHART_PREFERENCES, parseChartPreferences, type ChartIndicator } from "./chart-preferences";
 import { singleChart } from "./chart-multiview";
 const view: ChartViewSnapshot = {priceScalePolicy:1,symbol:"OMH",timeframe:"1m",sessions:"[true,true,true]",basisDate:"2026-11-10",range:{from:100,to:180},logicalRange:{from:1.25,to:4.75},axis:{first:80,last:200,count:7,sessions:"[true,true,true]"},anchor:{time:100,offset:0.25},priceRange:{from:1,to:4},autoScale:false,preferenceAutoScale:true,logarithmic:false};
 function fixture(){const values=new Map<string,string>();const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);},removeItem:(k:string)=>{values.delete(k);}};return {values,storage,memory:new ChartViewMemory(()=>storage)};}
@@ -80,3 +81,35 @@ it("restores hidden values after reload until explicitly shown or the chart is c
 });
 
 it("ignores legacy manual price scale but keeps its time range",()=>{const legacy={...view,priceScalePolicy:undefined};expect(canRestoreChartPrice(legacy,{autoScale:true,logarithmic:false},view.basisDate)).toBe(false);expect(restoreChartRange(legacy,[80,100,120,140,160,180,200])).toEqual(restoreChartRange(view,[80,100,120,140,160,180,200]));});
+
+it("keeps new indicator definitions on one panel across reload and honors account-wide changes for the same type", () => {
+  const { memory, storage } = fixture();
+  const layout = {
+    version: 1 as const, selectedPanel: "chart-1",
+    groups: ["APUS", "RAYA", "VWAV", "CHSN"].map((symbol, i) => ({
+      id: `group-${i}`, symbol, panels: [{ id: `chart-${i + 1}`, timeframe: "15m" as const }],
+    })),
+  };
+  const local: ChartIndicator = { id: "local-rsi", type: "RSI", period: 14, color: "#0000ff", width: 1 };
+  const globalEma: ChartIndicator = { id: "account-ema", type: "EMA", period: 9, color: "#ff0000", width: 1 };
+  const globalRsi = { ...local, id: "account-rsi", period: 21 };
+  memory.retain("owner", "main", layout);
+  memory.writeIndicatorOverrides("owner", "main", "chart-1", "APUS", { RSI: { revision: 0, indicators: [local] } });
+
+  const reopened = new ChartViewMemory(() => storage);
+  const overrides = reopened.readIndicatorOverrides("owner", "main", "chart-1", "APUS");
+  expect(chartIndicatorDefinitions([], undefined, overrides)).toEqual([local]);
+  for (const { symbol, panels: [panel] } of layout.groups.slice(1)) {
+    expect(chartIndicatorDefinitions([], undefined, reopened.readIndicatorOverrides("owner", "main", panel.id, symbol))).toEqual([]);
+  }
+  expect(chartIndicatorDefinitions([globalEma], { EMA: 1 }, overrides)).toEqual([globalEma, local]);
+  // Account revisions survive the same validation used for saving and loading preferences.
+  const account = parseChartPreferences({ ...DEFAULT_CHART_PREFERENCES, indicators: [globalEma, globalRsi],
+    indicatorDefinitionRevisions: { EMA: 1, RSI: 1 } });
+  expect(chartIndicatorDefinitions(account.indicators, account.indicatorDefinitionRevisions, overrides)).toEqual([globalEma, globalRsi]);
+  expect(chartIndicatorDefinitions([globalEma], { EMA: 1, RSI: 2 }, overrides)).toEqual([globalEma]);
+
+  reopened.retain("owner", "main", { ...layout, groups: layout.groups.slice(1) });
+  reopened.retain("owner", "main", layout);
+  expect(chartIndicatorDefinitions([], undefined, reopened.readIndicatorOverrides("owner", "main", "chart-1", "APUS"))).toEqual([]);
+});

@@ -1,5 +1,11 @@
 # Shared Lightweight Chart design workspace
 
+## November 27 — independent crosshairs and indicator additions
+
+The four-panel Market Charts and Trade Workspace flows now keep crosshair movement and candle readouts on the panel under the pointer. The indicator editor shows **Apply to** before the add menu, including on a chart with zero indicators. Local definitions follow the existing open-panel identity and survive reload. An explicit **All charts** change applies to the matching indicator type across the account. Indicators previously saved to account defaults still appear on all charts.
+
+Chromium with fixture candles reproduced both issues on the baseline and passed all four crosshairs, the APUS-only RSI after reload, and a single account save for EMA across all four panels on both surfaces. Forty focused tests, scoped TypeScript and targeted ESLint passed.
+
 Owner approved replacing the Market Charts embedded widget with the existing reusable Alpaca-backed Lightweight Charts component. The actual existing route is `/charts` (the owner referred to `/chart`); preserve that canonical route and sidebar destination.
 
 The standalone page provides a compact symbol form and a chart filling the available viewport. Initial symbol NWGL matches the scanner preview. The shared AlpacaLightweightChart remains the same component imported by the scanner side card, with independent instances. Existing candles, separate volume pane, 1m/5m/15m/1h/4h/1D choices, theme, Eastern labels, retry and stream cleanup remain intact. Symbol changes reuse the instance and retain the selected timeframe while its old request and stream are disposed. No new provider/socket infrastructure or duplicated chart renderer.

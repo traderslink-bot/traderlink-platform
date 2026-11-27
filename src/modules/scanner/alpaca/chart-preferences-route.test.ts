@@ -12,12 +12,32 @@ vi.mock('@/src/modules/platform/server/authentication/platform-mutation-request-
 vi.mock('@/src/modules/platform/server/database/platform-database-config',()=>({resolvePlatformDatabaseConfig:()=>({databasePath:join(setup.directory,'test.sqlite')})}));
 import {GET,POST} from '@/app/api/charts/preferences/route';
 import {chartPreferenceOwnerKey} from './chart-preference-store';
+import {indicatorPresetRows} from './chart-indicator-presets';
+import {INDICATOR_TYPES} from './chart-preferences';
 beforeEach(()=>{setup.user='user-a';setup.allowed=true;setup.privateChart=true;setup.sharedChart=true;setup.activeAccount='';setup.journalAllowed=true;setup.directory=mkdtempSync(join(tmpdir(),'chart-pref-route-'));});afterEach(()=>rmSync(setup.directory,{recursive:true,force:true}));
 const request=(body:unknown)=>new Request('http://localhost/api/charts/preferences',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 it('round-trips account preferences and keeps separate users isolated',async()=>{
  const original=await (await GET(new Request('http://localhost/api'))).json();const value={...original,preferences:{...original.preferences,grid:false,scalePriceOnly:true,indicators:[{id:'vwap',type:'VWAP',period:20,color:'#123456',width:2,calculationTimeframe:'4h',waitForClose:true,offset:2,timeframes:['1m','5m']}]}};
  expect((await POST(request(value))).status).toBe(200);expect((await (await GET(new Request('http://localhost/api'))).json()).preferences).toEqual(value.preferences);
  setup.user='user-b';const other=(await (await GET(new Request('http://localhost/api'))).json()).preferences;expect(other.grid).toBe(true);expect(other.indicators).toEqual([]);expect(other.scalePriceOnly).toBeUndefined();expect((await POST(request(value))).status).toBe(409);
+});
+it('restores each catalog study, its favorite and its hidden values from the saved account file', async () => {
+ const read = async () => (await GET(new Request('http://localhost/api/charts/preferences'))).json();
+ let state = await read();
+ for (const type of INDICATOR_TYPES) {
+  let line = 0;
+  const indicators = indicatorPresetRows(type, 0, () => `study-${++line}`);
+  const preferences = {
+   ...state.preferences, indicators, favoriteIndicators: [type],
+   indicatorDisplay: { [type]: { hidden: { value: true, revision: 1 } } },
+  };
+  const reply = await POST(request({ ...state, preferences }));
+  expect(reply.status, type).toBe(200);
+  const saved = await read();
+  expect(saved.revision, type).toBe(state.revision + 1);
+  expect(saved.preferences, type).toEqual(preferences);
+  state = saved;
+ }
 });
 it('resets old snap choices across accounts and saves new choices alongside other settings', async () => {
  const get=async()=>await (await GET(new Request('http://localhost/api'))).json();

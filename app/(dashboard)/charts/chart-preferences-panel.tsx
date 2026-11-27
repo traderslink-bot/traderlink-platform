@@ -1,4 +1,6 @@
 "use client";
+
+import {useState} from "react";
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 import Button from "@mui/material/Button";
 
@@ -17,33 +19,38 @@ import CloseRounded from '@mui/icons-material/CloseRounded';
 import {useTheme} from '@mui/material/styles';
 import {ChartIndicatorEditor} from './chart-indicator-editor';
 import {CHART_TIMEFRAMES,type ChartTimeframe} from '@/src/modules/scanner/alpaca/candles';
-import {CHART_PRICE_STYLES,isReviewChartStyle,DEFAULT_CHART_CROSSHAIR_MODE,changeIndicatorDisplayChoice,INDICATOR_TYPES,setAllIndicatorOverlayWidths,setAllIndicatorPriceScaleLabels,type ChartPreferences,type IndicatorDisplayAction,type IndicatorDisplayChoices,type IndicatorType} from '@/src/modules/scanner/alpaca/chart-preferences';
+import {CHART_PRICE_STYLES,isReviewChartStyle,DEFAULT_CHART_CROSSHAIR_MODE,changeIndicatorDisplayChoice,setAllIndicatorOverlayWidths,setAllIndicatorPriceScaleLabels,type ChartPreferences,type IndicatorDisplayAction,type IndicatorDisplayChoices,type IndicatorType} from '@/src/modules/scanner/alpaca/chart-preferences';
 import {chartTimeZoneLabel,chartTimeZoneOptions,chartTimeZoneSearchText} from '@/src/modules/scanner/alpaca/chart-time-zone';
 
 const timeZones = chartTimeZoneOptions();
 const filterTimeZones = createFilterOptions<string>({ stringify: chartTimeZoneSearchText, limit: 75 });
 
-export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange,onBarReplay,reviewChartStyles=false}:{ticker:string;timeframe:ChartTimeframe;panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:IndicatorDisplayChoices;reviewChartStyles?:boolean;onBarReplay?:()=>void;onIndicatorDisplayChange:(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>void}){
+export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preferences:p,crosshairLines,onChange,message,initialIndicator,indicatorDisplay,onIndicatorDisplayChange,chartIndicators,onChartIndicatorsChange,onBarReplay,reviewChartStyles=false}:{ticker:string;timeframe:ChartTimeframe;panel:'indicators'|'settings'|null;onClose:()=>void;preferences:ChartPreferences;crosshairLines:readonly {value:`indicator:${string}:${string}`;label:string}[];onChange:(p:ChartPreferences)=>void;message:string;initialIndicator?:IndicatorType;indicatorDisplay:IndicatorDisplayChoices;chartIndicators:ChartPreferences['indicators'];onChartIndicatorsChange:(type:IndicatorType,indicators:ChartPreferences['indicators'])=>void;reviewChartStyles?:boolean;onBarReplay?:()=>void;onIndicatorDisplayChange:(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>void}){
  const theme=useTheme(),mobile=useMediaQuery(theme.breakpoints.down('md'));
+ const [lastPanel,setLastPanel]=useState(panel??'settings');
+ if(panel&&panel!==lastPanel)setLastPanel(panel);
+ const shownPanel=panel??lastPanel;
  const set=<K extends keyof ChartPreferences>(key:K,value:ChartPreferences[K])=>onChange({...p,[key]:value});
  const changeAllCharts=(type:IndicatorType,action:IndicatorDisplayAction,value:boolean)=>{
   const revision=(p.indicatorDisplay?.[type]?.[action]?.revision??0)+1;
   set('indicatorDisplay',changeIndicatorDisplayChoice(p.indicatorDisplay,type,action,value,revision));
  };
- const changeIndicators=(indicators:ChartPreferences['indicators'])=>{
+ const changeAccountIndicators=(type:IndicatorType,indicators:ChartPreferences['indicators'])=>{
   let indicatorDisplay=p.indicatorDisplay;
-  for(const type of INDICATOR_TYPES){
-   if(!p.indicators.some(indicator=>indicator.type===type)||indicators.some(indicator=>indicator.type===type))continue;
+  if(!p.indicators.some(indicator=>indicator.type===type)&&indicators.some(indicator=>indicator.type===type)){
    indicatorDisplay=changeIndicatorDisplayChoice(indicatorDisplay,type,'enabled',true,(indicatorDisplay?.[type]?.enabled?.revision??0)+1);
    indicatorDisplay=changeIndicatorDisplayChoice(indicatorDisplay,type,'hidden',false,(indicatorDisplay[type]?.hidden?.revision??0)+1);
   }
-  onChange({...p,indicators,indicatorDisplay});
+  const indicatorDefinitionRevisions={...p.indicatorDefinitionRevisions,[type]:(p.indicatorDefinitionRevisions?.[type]??0)+1};
+  onChange({...p,indicators,indicatorDisplay,indicatorDefinitionRevisions});
  };
  const color=(label:string,value:string,change:(v:string)=>void)=><TextField label={label} type="color" defaultValue={value} key={value} onBlur={e=>{if(e.target.value!==value)change(e.target.value);}} size="small" slotProps={{inputLabel:{shrink:true}}} sx={{width:120}}/>;
- return <Drawer anchor={mobile?'bottom':'right'} open={panel!==null} onClose={onClose} slotProps={{paper:{role:'dialog','aria-modal':true,'aria-label':panel==='indicators'?'Chart indicators':'Chart settings',sx:{width:mobile?'100%':400,maxHeight:mobile?'78dvh':'100dvh',borderRadius:0,display:'flex',flexDirection:'column'}}}}>
-  <Stack direction="row" sx={{px:2,py:1,alignItems:'center',justifyContent:'space-between',borderBottom:1,borderColor:'divider',flexShrink:0}}><Typography component="h2" sx={{fontSize:18,fontWeight:700}}>{panel==='indicators'?'Indicators':'Chart settings'}</Typography><IconButton aria-label="Close chart preferences" onClick={onClose} sx={{minWidth:44,minHeight:44}}><CloseRounded/></IconButton></Stack>
+ return <Drawer anchor={mobile?'bottom':'right'} open={panel!==null} onClose={onClose}
+   slotProps={{transition:mobile&&shownPanel==='indicators'?{timeout:{enter:0,exit:theme.transitions.duration.leavingScreen}}:undefined,
+   paper:{role:'dialog','aria-modal':true,'aria-label':shownPanel==='indicators'?'Chart indicators':'Chart settings',sx:{width:mobile?'100%':400,maxHeight:mobile?'78dvh':'100dvh',borderRadius:0,display:'flex',flexDirection:'column'}}}}>
+  <Stack direction="row" sx={{px:2,py:1,alignItems:'center',justifyContent:'space-between',borderBottom:1,borderColor:'divider',flexShrink:0}}><Typography component="h2" sx={{fontSize:18,fontWeight:700}}>{shownPanel==='indicators'?'Indicators':'Chart settings'}</Typography><IconButton aria-label="Close chart preferences" onClick={onClose} sx={{minWidth:44,minHeight:44}}><CloseRounded/></IconButton></Stack>
   <Stack spacing={2} sx={{p:2,overflowY:'auto',minHeight:0}}>
-  {panel==='indicators'?<ChartIndicatorEditor ticker={ticker} key={`${ticker}:${initialIndicator??"list"}`} initialType={initialIndicator} overlayLineWidth={p.indicatorOverlayLineWidth??1} onOverlayLineWidthChange={width=>onChange(setAllIndicatorOverlayWidths(p,width))} defaultPriceScaleLabels={p.indicatorPriceScaleLabels??false} display={indicatorDisplay} accountDisplay={p.indicatorDisplay} onDisplayChange={onIndicatorDisplayChange} onAccountDisplayChange={changeAllCharts} indicators={p.indicators} savedPresets={p.savedIndicatorPresets ?? []} onChange={changeIndicators} onPresetsChange={presets=>set('savedIndicatorPresets',presets)}/>:<>
+  {shownPanel==='indicators'?<ChartIndicatorEditor ticker={ticker} chartColors={p} key={`${ticker}:${initialIndicator??"list"}`} initialType={initialIndicator} overlayLineWidth={p.indicatorOverlayLineWidth??1} onOverlayLineWidthChange={width=>onChange(setAllIndicatorOverlayWidths(p,width))} defaultPriceScaleLabels={p.indicatorPriceScaleLabels??false} display={indicatorDisplay} accountDisplay={p.indicatorDisplay} onDisplayChange={onIndicatorDisplayChange} onAccountDisplayChange={changeAllCharts} accountIndicators={p.indicators} chartIndicators={chartIndicators} favorites={p.favoriteIndicators} onFavoritesChange={favorites=>set('favoriteIndicators',favorites)} savedPresets={p.savedIndicatorPresets ?? []} onChartChange={onChartIndicatorsChange} onAccountChange={changeAccountIndicators} onPresetsChange={presets=>set('savedIndicatorPresets',presets)}/>:<>
    {onBarReplay && <Button size="small" variant="outlined" onClick={onBarReplay} sx={{alignSelf:"flex-start",textTransform:"none"}}>Bar Replay</Button>}
    <TextField select label="Chart type" value={p.kind}
      helperText={p.kind==="heikinAshi"?"Smoothed candles. The price marker and crosshair readout show market prices.":undefined}
@@ -105,7 +112,7 @@ export function ChartPreferencesPanel({ticker,timeframe,panel,onClose,preference
      control={<Checkbox checked={chartShowsOvernight(p)} onChange={(_,visible)=>set('overnight',visible)}/>}/>}
   </>}
   </Stack><Typography role="status" sx={{px:2,py:1,fontSize:12,borderTop:1,borderColor:'divider',flexShrink:0}}>
-   {message||(panel==='indicators'
+   {message||(shownPanel==='indicators'
     ? 'Visibility changes for this chart stay with the open chart on this device. Changes for all charts save to your account.'
     : 'Changes save automatically to your account.')}
   </Typography>

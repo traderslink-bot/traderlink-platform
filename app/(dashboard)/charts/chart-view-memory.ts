@@ -1,9 +1,31 @@
 import type { ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { CHART_TIMEFRAMES, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 
-import { INDICATOR_TYPES, type IndicatorDisplayChoices } from "@/src/modules/scanner/alpaca/chart-preferences";
+import { INDICATOR_TYPES, MAX_CHART_PREFERENCE_BYTES, parseIndicators, type ChartIndicator, type IndicatorDefinitionRevisions, type IndicatorDisplayChoices, type IndicatorType } from "@/src/modules/scanner/alpaca/chart-preferences";
 
 export const defaultIndicatorDisplay: IndicatorDisplayChoices = {};
+export type ChartIndicatorOverrides = Partial<Record<IndicatorType, { revision: number; indicators: ChartIndicator[] }>>;
+const emptyOverrides: ChartIndicatorOverrides = {};
+
+export function chartIndicatorDefinitions(defaults: ChartIndicator[], revisions: IndicatorDefinitionRevisions | undefined, overrides: ChartIndicatorOverrides) {
+  const applied = new Set<IndicatorType>();
+  function replacement(type: IndicatorType) {
+    const override = overrides[type];
+    return override?.revision === (revisions?.[type] ?? 0) ? override.indicators : undefined;
+  }
+  const indicators = defaults.flatMap(indicator => {
+    const rows = replacement(indicator.type);
+    if (!rows) return [indicator];
+    if (applied.has(indicator.type)) return [];
+    applied.add(indicator.type);
+    return rows;
+  });
+  const accountTypes = new Set(defaults.map(indicator => indicator.type));
+  for (const type of Object.keys(overrides) as IndicatorType[]) {
+    if (!accountTypes.has(type)) indicators.push(...(replacement(type) ?? []));
+  }
+  return indicators;
+}
 
 type Range = { from: number; to: number };
 export type ChartViewSnapshot = {
@@ -14,10 +36,11 @@ export type ChartViewSnapshot = {
 };
 type Storage = Pick<globalThis.Storage, "getItem" | "setItem" | "removeItem">;
 type StoredViews = { panels: Record<string, string>; views: Record<string, ChartViewSnapshot> };
-type State = StoredViews & { displays: Map<string, IndicatorDisplayChoices> };
+type State = StoredViews & { displays: Map<string, IndicatorDisplayChoices>; indicatorOverrides: Map<string, ChartIndicatorOverrides> };
 const prefix = "traderlink.chart-views.v1:";
 const displayKey = (scope: string, panel: string) => `traderlink.chart-indicators.v1:${scope}:${panel}`;
-const savedScope = (): State => ({ panels: {}, views: {}, displays: new Map() });
+const overridesKey = (scope: string, panel: string) => `traderlink.chart-indicator-overrides.v1:${scope}:${panel}`;
+const savedScope = (): State => ({ panels: {}, views: {}, displays: new Map(), indicatorOverrides: new Map() });
 const finite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const range = (value: unknown): value is Range => !!value && typeof value === "object" && finite((value as Range).from) && finite((value as Range).to) && (value as Range).to > (value as Range).from;
 function valid(value: unknown): value is ChartViewSnapshot {
@@ -46,7 +69,22 @@ function readDisplay(raw: string | null, symbol: string): IndicatorDisplayChoice
   return display;
 }
 
-/** Retain open-chart coordinates and indicator visibility, without candle or stream state. */
+function readOverrides(raw: string | null, symbol: string): ChartIndicatorOverrides {
+  if (!raw || raw.length > MAX_CHART_PREFERENCE_BYTES) return emptyOverrides;
+  const entry = JSON.parse(raw) as { symbol?: string; overrides?: ChartIndicatorOverrides } | null;
+  if (entry?.symbol !== symbol) return emptyOverrides;
+  const result: ChartIndicatorOverrides = {};
+  for (const type of INDICATOR_TYPES) {
+    const override = entry.overrides?.[type];
+    if (!override || !Number.isSafeInteger(override.revision) || override.revision < 0 ||
+        !Array.isArray(override.indicators) || override.indicators.length > 20) continue;
+    const indicators = parseIndicators(override.indicators);
+    if (indicators.every(indicator => indicator.type === type)) result[type] = { revision: override.revision, indicators };
+  }
+  return result;
+}
+
+/** Retain open-chart coordinates and indicator settings without candle or stream state. */
 export class ChartViewMemory {
   private states = new Map<string, State>();
   constructor(private storage: () => Storage | undefined) {}
@@ -68,15 +106,20 @@ export class ChartViewMemory {
     this.states.set(scope, state); return state;
   }
   private persist(scope: string, { panels, views }: State) { try { this.storage()?.setItem(prefix + scope, JSON.stringify({ panels, views })); } catch { /* Preserve the in-memory view when storage is full or blocked. */ } }
-  private removeDisplay(scope: string, state: State, panel: string) {
+  private removeIndicators(scope: string, state: State, panel: string) {
     state.displays.delete(panel);
-    try { this.storage()?.removeItem(displayKey(scope, panel)); } catch { /* Browser storage may be unavailable. */ }
+    state.indicatorOverrides.delete(panel);
+    try {
+      const storage = this.storage();
+      storage?.removeItem(displayKey(scope, panel));
+      storage?.removeItem(overridesKey(scope, panel));
+    } catch { /* Browser storage may be unavailable. */ }
   }
   retain(owner: string, workspace: string, layout: ChartMultiview) {
     const scope = this.scope(owner, workspace), state = this.state(scope);
     const panels = Object.fromEntries(layout.groups.flatMap(g => g.panels.map(p => [p.id, g.symbol])));
     for (const [panel, symbol] of Object.entries(state.panels)) {
-      if (panels[panel] !== symbol) this.removeDisplay(scope, state, panel);
+      if (panels[panel] !== symbol) this.removeIndicators(scope, state, panel);
     }
     state.panels = panels;
     for (const k of Object.keys(state.views)) { try { const [panel, symbol] = JSON.parse(k); if (state.panels[panel] !== symbol) delete state.views[k]; } catch { delete state.views[k]; } }
@@ -101,6 +144,24 @@ export class ChartViewMemory {
     try { this.storage()?.setItem(displayKey(scope, panel), JSON.stringify({ symbol, choices: display })); }
     catch { /* The open chart still keeps its choices in memory. */ }
   }
+  readIndicatorOverrides(owner: string, workspace: string, panel: string, symbol: string) {
+    const scope = this.scope(owner, workspace), state = this.state(scope);
+    if (state.panels[panel] !== symbol) return emptyOverrides;
+    const cached = state.indicatorOverrides.get(panel);
+    if (cached) return cached;
+    let saved = emptyOverrides;
+    try { saved = readOverrides(this.storage()?.getItem(overridesKey(scope, panel)) ?? null, symbol); }
+    catch { /* Missing or invalid browser state uses chart defaults. */ }
+    state.indicatorOverrides.set(panel, saved);
+    return saved;
+  }
+  writeIndicatorOverrides(owner: string, workspace: string, panel: string, symbol: string, overrides: ChartIndicatorOverrides) {
+    const scope = this.scope(owner, workspace), state = this.state(scope);
+    if (state.panels[panel] !== symbol) return;
+    state.indicatorOverrides.set(panel, overrides);
+    try { this.storage()?.setItem(overridesKey(scope, panel), JSON.stringify({ symbol, overrides })); }
+    catch { /* The open chart still keeps its choices in memory. */ }
+  }
   read(owner: string, workspace: string, panel: string, symbol: string, timeframe: ChartTimeframe, sessions: string) {
     const state = this.state(this.scope(owner, workspace));
     if (state.panels[panel] !== symbol) return null;
@@ -118,7 +179,7 @@ export class ChartViewMemory {
   }
   clear(owner: string, workspace: string) {
     const scope = this.scope(owner, workspace), state = this.state(scope);
-    for (const panel of Object.keys(state.panels)) this.removeDisplay(scope, state, panel);
+    for (const panel of Object.keys(state.panels)) this.removeIndicators(scope, state, panel);
     this.states.set(scope, savedScope());
     try { this.storage()?.removeItem(prefix + scope); } catch { /* No storage access. */ }
   }
