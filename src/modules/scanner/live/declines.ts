@@ -25,6 +25,12 @@ export class DeclineBook {
   private last=new Map<string,NormalizedSnapshot>();
   private consumedThrough=new Map<string,number>();
   private signature="";
+  forget(symbol: string) {
+    this.history.delete(symbol);
+    this.episodes.delete(symbol);
+    this.last.delete(symbol);
+    this.consumedThrough.delete(symbol);
+  }
   clear(){this.history.clear();this.episodes.clear();this.last.clear();this.consumedThrough.clear();this.context="";}
 
   evaluate(input:{universe:DailyUniverse;session:ScannerSession;now:number;snapshots:readonly NormalizedSnapshot[];

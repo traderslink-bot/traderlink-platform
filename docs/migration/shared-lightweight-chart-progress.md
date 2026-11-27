@@ -14,6 +14,19 @@ Isolated Chromium verified the single chart, four-chart Market Charts and Worksp
 
 Each shared chart uses one compact timeframe dropdown in desktop and mobile layouts, including the wide toolbar. Isolated Chromium verified all ten choices, per-chart switching in desktop Multiview, keyboard dismissal in the wide toolbar, and the 27–28 px height of the compact toolbar.
 
+
+## November 27 — POM cancelled-trade repair
+
+The combined candidate rebuilds affected closed SIP minutes from complete Alpaca trade pages after verifying the provider disposition. It publishes replacements or verified empty minutes to open charts, retains qualified repairs for fresh history and reconnects, and refreshes chart indicator inputs. Scanner excludes the same cancelled or superseded prints. The chart's premarket trade VWAP readout uses the same eligible trade prices and sizes as Scanner. The configurable candle-based VWAP line remains available.
+
+The private November 27 POM replay used 340,463 Alpaca trades and 330 premarket minutes. Both open and reopened 1m and 15m charts reconciled to a $7.41 high, 30,566,502 shares, and trade VWAP 3.744968360635447. Native Daily candles and the timing of live provider delivery were outside that browser replay.
+
+The private gateway trade-revisions read exposes affected minute starts, a stable revision for each ticker in the requested window, and whether an observed correction is awaiting provider confirmation. Consumers use the same corrected history or session totals to refresh their own caches. Windows use epoch milliseconds with an exclusive end. An empty manifest reports no known gateway revision in that window. Use the history's price basis to qualify rebuilt aggregates, and preserve brokerage data provenance.
+
+The focused gateway checks cover authorization, symbol and window isolation, the transition from pending to confirmed, native and neutral transport parity, and persisted removed minutes. Forty-two tests and scoped TypeScript passed. Running the saved POM candles through the Company Details session ranges and Stock Screener calculation showed $38.00 before the repair and $7.41 after it, with 30,566,502 corrected shares. These projections verify the calculations. Open-view refresh and publication require each consumer's integration check.
+
+Scanner quote and stream consumers receive a verified correction revision scoped to the symbol and Eastern session date. It advances only after a confirmed repair and is persisted with the repaired minutes in a writable archive. The gateway withholds affected session totals pending provider proof, rebuilds the book after proof, and tags complete totals with that revision. Focused tests cover the hold, lower replacement high, older stored revision, and both transports.
+
 Owner approved replacing the Market Charts embedded widget with the existing reusable Alpaca-backed Lightweight Charts component. The actual existing route is `/charts` (the owner referred to `/chart`); preserve that canonical route and sidebar destination.
 
 The standalone page provides a compact symbol form and a chart filling the available viewport. Initial symbol NWGL matches the scanner preview. The shared AlpacaLightweightChart remains the same component imported by the scanner side card, with independent instances. Existing candles, separate volume pane, 1m/5m/15m/1h/4h/1D choices, theme, Eastern labels, retry and stream cleanup remain intact. Symbol changes reuse the instance and retain the selected timeframe while its old request and stream are disposed. No new provider/socket infrastructure or duplicated chart renderer.

@@ -29,14 +29,14 @@ it('drops event coverage on a gap and does not reuse the old rolling window afte
  expect(gap.audit.every(decision=>decision.gainerDataIssues?.includes("snapshot_unavailable")&&decision.momentumRank===null)).toBe(true);
  const recovered=engine.evaluate(input(67));expect(recovered.gainers.rows[0].activity.oneMinuteVolume).toBeNull();
 });
-it("keeps a stale incumbent behind fresh gainers and rejects new stale trades", () => {
+it("keeps a retained regular-session leader ranked by gain and rejects new stale trades", () => {
   const engine = new LiveScannerEngine(true);
   expect(engine.evaluate(input(0)).gainers.rows.map(row => row.symbol)).toEqual(["BBB","AAA"]);
   const update = input(31);
   update.snapshots[1] = { ...update.snapshots[1], providerAt: start };
   const ranked = engine.evaluate(update);
-  expect(ranked.gainers.rows.map(row => row.symbol)).toEqual(["AAA","BBB"]);
-  expect(ranked.gainers.rows[1].receivedAtUtc).toBe(new Date(start).toISOString());
+  expect(ranked.gainers.rows.map(row => row.symbol)).toEqual(["BBB","AAA"]);
+  expect(ranked.gainers.rows.find(row => row.symbol === "BBB")?.receivedAtUtc).toBe(new Date(start).toISOString());
   expect(ranked.audit.find(row => row.symbol === "BBB")).toMatchObject({
     gainerRetained: true, gainerDataIssues: ["snapshot_stale"], momentumFailures: ["snapshot_stale"], momentumRank: null,
   });

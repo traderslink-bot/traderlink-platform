@@ -127,5 +127,9 @@ export class RollingActivityBook {
     const retained = new Set(symbols);
     for (const symbol of this.rows.keys()) if (!retained.has(symbol)) {this.rows.delete(symbol);this.previous.delete(symbol);}
   }
+  forget(symbol: string) {
+    this.rows.delete(symbol);
+    this.previous.delete(symbol);
+  }
   clear(): void { this.rows.clear();this.previous.clear(); }
 }
