@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { closeSync, constants, fstatSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
-import { parseSavedScanBook, type SavedScanBook, type SavedScanCatalogue } from "./definition";
+import { parseSavedScanBook, type SavedScan, type SavedScanBook, type SavedScanCatalogue } from "./definition";
 
 const FILE_MAX_BYTES = 128 * 1024;
 export const savedScanOwnerKey = (ownerId: string) => createHash("sha256").update(ownerId).digest("hex");
@@ -34,25 +34,53 @@ export function readSavedCustomScans(directory: string, ownerId: string): SavedS
 }
 
 export function readSavedScansByOwnerKey(directory: string, ownerKey: string): SavedScanBook {
+  return readVersionedBook(directory, ownerKey).book;
+}
+
+function legacyRuleVersion(scan: SavedScan): string {
+  return "legacy:" + createHash("sha256").update(JSON.stringify(scan.definition)).digest("hex");
+}
+
+function readVersionedBook(directory: string, ownerKey: string): { book: SavedScanBook; versions: Map<string, string> } {
   if (!/^[a-f0-9]{64}$/u.test(ownerKey)) throw Error("invalid_scan_owner");
   let fd: number;
   try { fd = openSync(join(directory, ownerKey + ".json"), constants.O_RDONLY | constants.O_NOFOLLOW); }
   catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { revision:0, scans:[] };
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { book: { revision:0, scans:[] }, versions: new Map() };
     throw error;
   }
   try {
     const stat = fstatSync(fd);
     if (!stat.isFile() || stat.size > FILE_MAX_BYTES) throw Error("invalid_scan_book");
-    return parseSavedScanBook(JSON.parse(readFileSync(fd, "utf8")));
+    const stored = JSON.parse(readFileSync(fd, "utf8")) as { ruleVersions?: Record<string, string> };
+    const book = parseSavedScanBook(stored);
+    const versions = new Map(book.scans.map(scan => {
+      const prior = stored.ruleVersions?.[scan.id];
+      return [scan.id, typeof prior === "string" && /^(?:legacy:[a-f0-9]{64}|[a-f0-9-]{36})$/u.test(prior)
+        ? prior : legacyRuleVersion(scan)];
+    }));
+    return { book, versions };
   } finally { closeSync(fd); }
+}
+
+export function readSavedScanSourceVersions(directory: string, ownerId: string) {
+  const { book, versions } = readVersionedBook(directory, savedScanOwnerKey(ownerId));
+  return book.scans.map(scan => ({ scan, revision: versions.get(scan.id)! }));
 }
 
 export function writeSavedCustomScans(directory: string, ownerId: string, requested: SavedScanBook): SavedScanBook {
   const input = parseSavedScanBook(requested);
-  if (readSavedCustomScans(directory, ownerId).revision !== input.revision) throw Error("scan_save_conflict");
+  const current = readVersionedBook(directory, savedScanOwnerKey(ownerId));
+  if (current.book.revision !== input.revision) throw Error("scan_save_conflict");
   const next = { ...input, revision:input.revision + 1 };
-  const bytes = JSON.stringify(next);
+  const previous = new Map(current.book.scans.map(scan => [scan.id, scan]));
+  const ruleVersions = Object.fromEntries(next.scans.map(scan => {
+    const prior = previous.get(scan.id);
+    const version = prior && JSON.stringify(prior.definition) === JSON.stringify(scan.definition)
+      ? current.versions.get(scan.id) : randomUUID();
+    return [scan.id, version];
+  }));
+  const bytes = JSON.stringify({ ...next, ruleVersions });
   if (Buffer.byteLength(bytes) > FILE_MAX_BYTES) throw Error("invalid_scan_book");
   mkdirSync(directory, { recursive:true, mode:0o700 });
   const target = ownerFile(directory, ownerId);

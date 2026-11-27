@@ -6,9 +6,16 @@ export type MarketDay = Readonly<{
 }>;
 const formatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
   hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-export function easternClock(now: number): Readonly<{ date: string; minute: number }> {
+type EasternMinute = Readonly<{ date: string; minute: number }>;
+let cachedMinute: { utcMinute: number; clock: EasternMinute } | undefined;
+
+export function easternClock(now: number): EasternMinute {
+  const utcMinute = Math.floor(now / 60_000);
+  if (cachedMinute?.utcMinute === utcMinute) return cachedMinute.clock;
   const parts = Object.fromEntries(formatter.formatToParts(new Date(now)).map(part => [part.type, part.value]));
-  return { date: `${parts.year}-${parts.month}-${parts.day}`, minute: Number(parts.hour)*60+Number(parts.minute) };
+  const clock = Object.freeze({ date: `${parts.year}-${parts.month}-${parts.day}`, minute: Number(parts.hour) * 60 + Number(parts.minute) });
+  cachedMinute = { utcMinute, clock };
+  return clock;
 }
 const minutes = (clock: string) => Number(clock.slice(0,2))*60+Number(clock.slice(3,5));
 /** The caller supplies a verified official calendar day; weekends/holidays never default open. */

@@ -36,8 +36,11 @@ export type LiveFeedDependencies = Readonly<{
   }>[]>;
   floats: (date: string, symbols: readonly string[]) => Promise<ReadonlyMap<string,FloatFact>>;
   countries?: (date:string) => Promise<ReadonlyMap<string,string>>;
+  ipoDates?: (date:string) => Promise<ReadonlyMap<string,string>>;
   industries?: (date:string) => Promise<ReadonlyMap<string,string>>;
   news: (symbols: readonly string[]) => Promise<ReadonlyMap<string,readonly ScannerNewsItem[]>>;
+  companyReadings?: import("../../custom/company-study-cache").CompanyBatchReader;
+  studyArchive?: import("../../custom/archive-studies").StudyArchiveReader;
   loadSignalBars?: (request: ScannerSignalBars) => Promise<ScannerSignalBarsResult>;
   qualification: (session: ScannerSession, context: SnapshotQualificationContext) => SnapshotQualification;
   normalizeBatch?: typeof normalizeSnapshotBatch;
@@ -63,6 +66,11 @@ function requestUniverse(universe: DailyUniverse, maximumMarketCap: number): Dai
 }
 
 export class LiveScannerFeed {
+  private alertConfigurationRevision: number | null = null;
+
+  readAlertModel() {
+    return { model: this.read(), configurationRevision: this.alertConfigurationRevision };
+  }
   private readonly engine: LiveScannerEngine;
   private readonly enrichment?: SharedScanEnrichment;
   private customReaders = 0;
@@ -82,8 +90,8 @@ export class LiveScannerFeed {
   constructor(private readonly dependencies: LiveFeedDependencies) {
     this.engine = new LiveScannerEngine(Boolean(dependencies.eventDriven));
     const bars = dependencies.loadSignalBars;
-    if (bars) {
-      this.enrichment = new SharedScanEnrichment({ bars });
+    if (bars || dependencies.companyReadings) {
+      this.enrichment = new SharedScanEnrichment({ bars,company:dependencies.companyReadings, archive:dependencies.studyArchive });
       if (dependencies.provider === "alpaca") this.enrichment.attach([{
         key: "live-volume", page: 1, definition: { ...EMPTY_SCAN, rules: [
           { metric: "sameTimeRegularVolume", frame: "15m", minimum: 0, maximum: null },
@@ -220,13 +228,14 @@ export class LiveScannerFeed {
           early: results.momentumSections.early.map(enrichRow) } } : {}) });
       if (this.customMarket) {
         // Use the same admitted universe and quote pass as the built-in scanners, before their ranked limits.
+        const ipoDates = await this.dependencies.ipoDates?.(date).catch(() => undefined);
         const industries = await this.dependencies.industries?.(date).catch(() => undefined);
         const stocks = new Map<string, UniverseStock>(universe.stocks.map(stock => [stock.symbol, stock]));
         const collectionCaps = new Map(filtered.stocks.map(stock => [stock.symbol, stock.marketCapAtCollection]));
         const rows = snapshots.flatMap(snapshot => {
           const stock = stocks.get(snapshot.symbol);
           return stock ? [scanRowFromSnapshot(snapshot, {
-            exchange: stock.exchange, country: countries.get(stock.symbol), industry: industries?.get(stock.symbol),
+            exchange: stock.exchange, country: countries.get(stock.symbol), industry: industries?.get(stock.symbol), ipoDate:ipoDates?.get(stock.symbol),
             sector: stock.sector, securityType: stock.securityType,
             collectedCap: collectionCaps.get(stock.symbol), float: floats.get(stock.symbol)?.shares,
           })] : [];
@@ -252,7 +261,7 @@ export class LiveScannerFeed {
       return this.set({ ...(this.dependencies.eventDriven?{refreshAfterMs:1000}:{}),status:this.dependencies.eventDriven&&snapshots.length===0&&issues.size?"unavailable":status, tradingDate: date, session, updatedAtUtc: new Date(now).toISOString(),
         universeSourceDate: universe.sourceTradingDate ?? universe.tradingDate, universeCount: symbols.length,
         receivedCount: snapshots.length, missingSymbols: Object.freeze([...new Set(missing)].sort()), missingFloatCount: evaluated.missingFloatCount,
-        gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), declines, premarketPullbacks, breakouts:evaluated.breakouts?.map(enrichRow), issues: Object.freeze([...issues].sort()) });
+        gainers: enrich(evaluated.gainers), dayGainers: enrich(evaluated.dayGainers), momentum: enrich(evaluated.momentum), declines, premarketPullbacks, breakouts:evaluated.breakouts?.map(enrichRow), issues: Object.freeze([...issues].sort()) }, configuration.revision);
     } catch {
       // Preserve established Gainers only after this pass independently verifies their context.
       if (verifiedContext && verifiedContext.key === this.lastGainerContext
@@ -281,7 +290,8 @@ export class LiveScannerFeed {
       this.lastSnapshotBySymbol.set(snapshot.symbol,Object.freeze({observedAt:snapshot.receivedAt,price:snapshot.price,volume:snapshot.volume}));
     }
   }
-  private set(model: ScannerReadModel): ScannerReadModel {
+  private set(model: ScannerReadModel, alertConfigurationRevision: number | null = null): ScannerReadModel {
+    this.alertConfigurationRevision = alertConfigurationRevision;
     if (this.customMarket && (model.status === "disabled" || model.status === "closed" ||
       model.status === "universe_missing" || model.status === "unavailable")) {
       this.customMarket.set(model.status === "closed" ? "closed" : "unavailable", (this.dependencies.now ?? Date.now)());

@@ -238,6 +238,10 @@ const PLATFORM_WORKER_GUARDS = {
     "@/src/modules/platform/server/authentication/platform-cron-request-authorization",
     "isAuthorizedPlatformCronRequest",
   ],
+  platform_company_roster_request: [
+    "@/src/modules/scanner/live/server/company-roster-request-authorization",
+    "isAuthorizedCompanyRosterRequest",
+  ],
   platform_development_worker: [
     "@/src/modules/platform/server/authentication/development-dashboard-network-boundary",
     "isAuthorizedDevelopmentDashboardWorker",
@@ -306,7 +310,8 @@ function importedPlatformGuards(
   sourceFile: ts.SourceFile,
   boundary: TraderIntelligenceRouteContainmentEntry["authorizationBoundary"],
 ): ReadonlySet<string> {
-  const worker = boundary === "platform_cron_request" || boundary === "platform_development_worker"
+  const worker = boundary === "platform_cron_request" || boundary === "platform_development_worker" ||
+    boundary === "platform_company_roster_request"
     ? PLATFORM_WORKER_GUARDS[boundary]
     : null;
   const guards = new Set<string>();
@@ -445,6 +450,7 @@ export function scanTraderIntelligenceRouteContainment(args: {
       if (
         matrixEntry.authorizationBoundary === "platform_request_scope" ||
         matrixEntry.authorizationBoundary === "platform_cron_request" ||
+        matrixEntry.authorizationBoundary === "platform_company_roster_request" ||
         matrixEntry.authorizationBoundary === "platform_development_worker"
       ) {
         if (!containsCall(initializer, platformRequestGuards, localFunctions, scannerSettingsHandler)) {

@@ -39,7 +39,15 @@ export const scanSignalKinds = (Object.keys(scanSignalLabels) as ScanSignalKind[
   .filter(key=>key!=="vwapReclaimed"&&key!=="vwapLost");
 export const RELEASE_LOOKBACK_HOURS = 168;
 export const SIGNAL_LOOKBACK_MINUTES = 960;
-const SCAN_ADDITIONAL_STUDIES = ["rsiChange","ema9SlopeAtr","ema20SlopeAtr","atrRatio","bollingerBandwidth","sameTimeRegularVolume"] as const;
+export const sameTimeVolumeSessions = {
+  sameTimePremarketVolume: "premarket",
+  sameTimeRegularVolume: "regular",
+  sameTimeAfterHoursVolume: "after_hours",
+} as const;
+export const isSameTimeVolumeMetric = (metric: string): metric is keyof typeof sameTimeVolumeSessions =>
+  Object.hasOwn(sameTimeVolumeSessions, metric);
+
+const SCAN_ADDITIONAL_STUDIES = ["rsiChange","ema9SlopeAtr","ema20SlopeAtr","atrRatio","bollingerBandwidth","sameTimeRegularVolume","sameTimePremarketVolume","sameTimeAfterHoursVolume"] as const;
 export const SCAN_INDICATOR_METRICS = [...SCAN_ADDITIONAL_STUDIES,"rsi14","emaSpread","atrPercent","indicatorVolumeRatio",
   "macdHistogramPercent","bollingerPercentB","stochasticK","indicatorSignal"] as const;
 export type ScanIndicatorMetric = typeof SCAN_INDICATOR_METRICS[number];
@@ -63,8 +71,8 @@ export type ScanMomentumReading = Readonly<{
   met?: boolean;
 }>;
 export type ScanPressRelease = { id:string; title:string; at:number; url:string };
-export type ScanPressReleaseSnapshot = Readonly<{ releases: ReadonlyMap<string, ScanPressRelease> }>;
-export type ReadScanPressReleases = (symbols: ReadonlyMap<string, unknown>, asOf: number) => ScanPressReleaseSnapshot | undefined;
+export type ScanPressReleaseSnapshot = Readonly<{ releases: ReadonlyMap<string, ScanPressRelease>; history?: ReadonlyMap<string, readonly ScanPressRelease[]> }>;
+export type ReadScanPressReleases = (symbols: ReadonlyMap<string, unknown>, asOf: number, historyHours?:number) => ScanPressReleaseSnapshot | undefined;
 
 export function indicatorReadyForSignal(fact:ScanIndicatorFacts, signal:ScanSignalKind) {
   if(signal.startsWith("macd"))return fact.macdHistogramPercent!==null;

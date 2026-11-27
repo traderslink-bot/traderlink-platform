@@ -1,3 +1,4 @@
+import { priceChangePercent } from "../price-change";
 import { scannerVolumeBreakdown } from "./volume";
 import { LEGACY_SCAN_MS } from "./event-timing";
 import type { DailyUniverse, FocusControls, FocusStock, LiveScannerRow, LiveScreenResults, MomentumSignal, NormalizedSnapshot,
@@ -162,17 +163,17 @@ export class LiveScannerEngine {
       if(event.activity.oneMinuteGain!==null&&event.activity.oneMinuteGain>=input.configuration.momentum.focus.minimumOneMinuteGain)rollingSignals.push("one_minute_momentum");
       if(qualifiesFiveMinuteMomentum(event.activity,input.configuration.momentum.focus))rollingSignals.push("five_minute_momentum");
       const row: LiveScannerRow = { symbol: stock.symbol, exchange: stock.exchange, company: snapshot.company, price: snapshot.price,
-        sessionGain: snapshot.baseline !== null && snapshot.baseline > 0 ? (snapshot.price/snapshot.baseline-1)*100 : null,
+        sessionGain: snapshot.baseline !== null && snapshot.baseline > 0 ? priceChangePercent(snapshot.price, snapshot.baseline) : null,
         comparisonPrice: snapshot.baseline, gainBasis: "previous_regular_close",
         ...(input.session === "after_hours" ? { postMarketGain:
           typeof snapshot.regularClosePrice === "number" && Number.isFinite(snapshot.regularClosePrice) && snapshot.regularClosePrice > 0
-            ? (snapshot.price/snapshot.regularClosePrice-1)*100 : null } : {}),
+            ? priceChangePercent(snapshot.price, snapshot.regularClosePrice) : null } : {}),
         volume: snapshot.volume, dollarVolume: snapshot.dollarVolume, marketCap: snapshot.marketCap,
         ...scannerVolumeBreakdown(snapshot),
         marketCapAtCollection: stock.marketCapAtCollection, float, floatRetrievedAtUtc,
         relativeVolume: input.session === "premarket" ? null : snapshot.providerVolumeRatio,
         dayHigh: snapshot.dayHigh, dayLow: snapshot.dayLow,
-        offHighPercent: (snapshot.price/snapshot.dayHigh-1)*100,
+        offHighPercent: priceChangePercent(snapshot.price, snapshot.dayHigh),
         spreadPercent, providerAtUtc: new Date(snapshot.providerAt).toISOString(), receivedAtUtc: new Date(snapshot.receivedAt).toISOString(),
         priceTimeBasis: snapshot.priceTimeBasis, provider: snapshot.provider,
         activity:event.activity,momentumSignals:Object.freeze([...event.signals,...rollingSignals]),reasons:[],news:input.news.get(stock.symbol)??[] };

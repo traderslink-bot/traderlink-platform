@@ -402,7 +402,6 @@ function DashboardShellContent({
   offline = false,
   pressReleaseUnreadCounts: initialPressReleaseUnreadCounts = null,
   deferPressReleaseUnreadCounts = false,
-  scannerEarlyAccess = false,
   scannerDashboardAccess = false,
   screenersDashboardAccess = false,
   chartsDashboardAccess = false,
@@ -424,7 +423,6 @@ function DashboardShellContent({
   offline?: boolean;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   deferPressReleaseUnreadCounts?: boolean;
-  scannerEarlyAccess?: boolean;
   scannerDashboardAccess?: boolean;
   screenersDashboardAccess?: boolean;
   chartsDashboardAccess?: boolean;
@@ -442,7 +440,7 @@ function DashboardShellContent({
   const theme = useTheme();
   const pathname = usePathname();
   const chartWorkspacePage = pathname === "/charts";
-  const compactMarketPage = chartWorkspacePage || ["/trading-workspace", "/trading-workspace/broker", "/scanners", "/screeners", "/admin/scanners"].includes(pathname);
+  const compactMarketPage = chartWorkspacePage || ["/trading-workspace", "/trading-workspace/broker", "/scanner", "/screeners", "/admin/scanners"].includes(pathname);
 
   const [loadedUnreadCounts, setLoadedUnreadCounts] = useState<{
     pathname: string; counts: PressReleaseUnreadCounts;
@@ -551,11 +549,10 @@ function DashboardShellContent({
           ...section.group,
           items: Object.freeze(section.group.items.filter((item) =>
             !isDashboardNavigationItem(item) || (
-              (item.href !== "/scanner" || scannerEarlyAccess) &&
               (item.href !== "/market-news/general" || generalMarketNewsAccess) &&
               (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
               (item.href !== "/private-watchlist" || watchlistAdminNavigationAccess) &&
-              (item.href !== "/scanners" || scannerDashboardAccess) &&
+              (item.href !== "/scanner" || scannerDashboardAccess) &&
               (item.href !== "/trading-workspace" || tradingWorkspaceDashboardAccess) &&
               (item.href !== "/trading-workspace/broker" || brokerWorkspaceAccess) &&
               (item.href !== "/admin/trading-workspace" || tradingWorkspaceAdminAccess) &&
@@ -956,7 +953,7 @@ function DashboardShellContent({
               variant="outlined"
             />
           ) : null}
-          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : ["/scanners", "/trading-workspace", "/trading-workspace/broker"].includes(pathname) ? "dashboard-scanner-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
+          <Box id={chartWorkspacePage ? "dashboard-chart-toolbar" : ["/scanner", "/trading-workspace", "/trading-workspace/broker"].includes(pathname) ? "dashboard-scanner-toolbar" : undefined} sx={{ flex: 1, minWidth: 0 }} />
           <NotificationCenter notifications={notifications} />
           <Tooltip title={helpLabel}>
             <IconButton

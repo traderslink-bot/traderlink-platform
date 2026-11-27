@@ -1,3 +1,4 @@
+import { priceChangePercent } from "../price-change";
 import Decimal from "decimal.js";
 import type { NormalizedSnapshot } from "../live/contracts";
 import { SNAPSHOT_MAX_AGE_MS } from "../live/snapshots";
@@ -25,44 +26,46 @@ function quoteSpread({ bid, ask, quoteObservedAt, receivedAt }: NormalizedSnapsh
 }
 
 export function scanRowFromSnapshot(snapshot: NormalizedSnapshot, {
-  exchange, country, industry, sector, securityType, collectedCap, float,
+  exchange, country, industry, sector, securityType, collectedCap, float, ipoDate,
 }: {
-  exchange:ScanMarketRow["exchange"]; country?:string; industry?:string; sector?:ScanMarketRow["sector"]; collectedCap?:number; float?:number;
+  exchange:ScanMarketRow["exchange"]; country?:string; industry?:string; sector?:ScanMarketRow["sector"]; collectedCap?:number; float?:number; ipoDate?:string;
   securityType?: ScanMarketRow["securityType"];
 }): ScanMarketRow {
   const { symbol, session, price, volume, dollarVolume, baseline, dayHigh, dayLow,
     regularClosePrice, receivedAt, providerAt } = snapshot;
   const sessionVwap = volume !== null && volume > 0 && dollarVolume !== null && dollarVolume > 0
     ? dollarVolume / volume : null;
-  const change = (from:number|null|undefined) => from && from > 0 ? (price - from) / from * 100 : null;
-  const pullback = (high: number | undefined) => high && high > 0 ? Math.max(0, (high - price) / high * 100) : null;
+  const change = (from:number|null|undefined) => from && from > 0 ? priceChangePercent(price, from) : null;
+  const pullback = (high: number | undefined) => high && high > 0 ? Math.max(0, -priceChangePercent(price, high)) : null;
   const range = (high: number | null | undefined, low: number | null | undefined) =>
     typeof high === "number" && typeof low === "number" && Number.isFinite(high) && Number.isFinite(low) &&
-    low > 0 && high >= low ? (high - low) / low * 100 : null;
+    low > 0 && high >= low ? priceChangePercent(high, low) : null;
 
   const spread = quoteSpread(snapshot);
   const fromVwap = change(sessionVwap);
   const openingBaseline = session === "after_hours" ? regularClosePrice : baseline;
   const sessionGap = snapshot.sessionOpen !== undefined && openingBaseline != null && openingBaseline > 0
-    ? (snapshot.sessionOpen - openingBaseline) / openingBaseline * 100 : null;
+    ? priceChangePercent(snapshot.sessionOpen, openingBaseline) : null;
   const hasPriceSourceClock = snapshot.provider === "alpaca" || snapshot.priceTimeBasis !== "session_observation";
   return { symbol, exchange, country, industry, sector, securityType, session, price, volume, dollarVolume,
     ...scannerVolumeBreakdown(snapshot),
     ...(hasPriceSourceClock && Number.isSafeInteger(providerAt) && providerAt > 0 && providerAt <= receivedAt
       ? { priceSourceAt: providerAt } : {}),
-    ...(snapshot.halted !== undefined ? {halted:snapshot.halted,tradeResumedAt:snapshot.tradeResumedAt} : {}),
+    ...(snapshot.halted !== undefined ? {halted:snapshot.halted,haltCode:snapshot.haltCode,tradeResumedAt:snapshot.tradeResumedAt} : {}),
     marketCap:snapshot.marketCap ?? collectedCap ?? null, float:float ?? null,
     ...(spread && snapshot.quoteObservedAt !== undefined ? { quoteObservedAt: snapshot.quoteObservedAt } : {}),
     ...(snapshot.openingRanges ? {openingRanges:snapshot.openingRanges} : {}),
-    dayChange:change(baseline), belowHigh:dayHigh > 0 ? (dayHigh - price) / dayHigh * 100 : null, observedAt:receivedAt,
+    dayChange:change(baseline), belowHigh:dayHigh > 0 ? Math.abs(priceChangePercent(price, dayHigh)) : null, observedAt:receivedAt,
     dailyClosedAt: snapshot.dailyClosedAt, weeklyClosedAt: snapshot.weeklyClosedAt,
     facts:{
+      largestTradeShares:snapshot.largestTradeShares, largestTradeDollars:snapshot.largestTradeDollars,
+      ipoAgeDays:ipoDate && ipoDate <= snapshot.tradingDate ? (Date.parse(snapshot.tradingDate)-Date.parse(ipoDate))/86400000 : null,
       dayHigh,dayLow, aboveLow:change(dayLow),
       dayChangeDollars:baseline != null && baseline > 0 ? new Decimal(price).minus(baseline).toNumber() : null,
-      dayRange:dayLow > 0 ? (dayHigh - dayLow) / dayLow * 100 : null,
+      dayRange:dayLow > 0 ? priceChangePercent(dayHigh, dayLow) : null,
       sessionVwap, fromVwap, distanceFromVwap: fromVwap === null ? null : Math.abs(fromVwap),
       bidAskSpread:spread?.dollars ?? null,bidAskSpreadPercent:spread?.percent ?? null,
-      averageDailyVolume20:snapshot.averageDailyVolume20,averageDailyRange20:snapshot.averageDailyRange20,
+      averageDailyDollars20:snapshot.averageDailyDollars20,averageDailyVolume20:snapshot.averageDailyVolume20,averageDailyRange20:snapshot.averageDailyRange20,
       volumeVsDailyAverage20:session === "regular" && snapshot.averageDailyVolume20 && volume != null
         ? volume / snapshot.averageDailyVolume20 : null,
       closedDailyReturn:snapshot.closedDailyReturn,closedWeeklyReturn:snapshot.closedWeeklyReturn,

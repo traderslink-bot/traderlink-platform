@@ -1,11 +1,13 @@
 "use client";
 
+import { scanPatterns, type ScanPattern } from "@/src/modules/scanner/custom/candle-patterns";
+import { crossReferences, type CrossReference, eventFilters, needsBarVwap, isBenchmarkStudy, isCandleStudy, isReaction, studyFrames, studyPeriods, zoneStates, type StudyFrame } from "@/src/modules/scanner/custom/audited-filters";
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Drawer, FormControlLabel, IconButton, ListSubheader, MenuItem, Stack, Switch, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import CandlestickChartOutlined from "@mui/icons-material/CandlestickChartOutlined";
+import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 import CloseRounded from "@mui/icons-material/CloseRounded";
-import FilterList from "@mui/icons-material/FilterList";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
 import {
   EMPTY_SCAN, isDirectionalPriceMove, isEventScanMetric, isOpeningRangeMetric, isRollingScanMetric, scanMetricUsesMinutes, isScanSelectionMetric, SCAN_EXCHANGE_CHOICES, SCAN_SESSION_LABELS, MAX_INTRADAY_MINUTES, MAX_LEVEL_BREAK_HOURS, parseScanDefinition, requiresScannerLevelRead, SAVED_SCAN_ID, SCAN_CATEGORIES, SCAN_METRICS,
@@ -14,7 +16,7 @@ import {
 import { customIndicatorTitle, indicatorComparisons, isCustomIndicatorMetric, isIndicatorCross, MAX_CUSTOM_PERIOD,
   type CustomIndicator } from "@/src/modules/scanner/custom/custom-indicator";
 import { CustomIndicatorFields, type IndicatorDraft } from "./custom-indicator-fields";
-import { isScanIndicatorMetric, scanSignalFrames, scanSignalGroups, scanSignalLabels,
+import { isSameTimeVolumeMetric, isScanIndicatorMetric, scanSignalFrames, scanSignalGroups, scanSignalLabels,
   RELEASE_LOOKBACK_HOURS, SIGNAL_LOOKBACK_MINUTES } from "@/src/modules/scanner/custom/signal-filters";
 import { builtInScanChoices, builtInScanForChoice, livePresetChoices, originalBuiltInScan } from "@/src/modules/scanner/custom/built-in-scans";
 import { scannerSetupStudies } from "@/src/modules/scanner/custom/setup-details";
@@ -30,6 +32,11 @@ import { CustomScanResults } from "./custom-scan-results";
 import { ShareSavedScan } from "./share-saved-scan";
 import { ScannerInlineMatch, ScannerStudyReadings } from "./scanner-match-chart";
 import { useCustomScanResults, useSavedCustomScans } from "./use-custom-scans";
+import { ScannerFilterPicker } from "./scanner-filter-picker";
+import {
+  ScannerQuickFilters, quickRelativeVolumeMetrics, quickVolumeMetrics,
+  type QuickNumericFilter, type QuickRange, type QuickRvolMetric, type QuickVolumeMetric,
+} from "./scanner-quick-filters";
 
 const OriginalScannerResults = dynamic(() =>
   import("../screeners/live-screeners-client").then(module => module.LiveScreenersClient),
@@ -40,31 +47,55 @@ const PressReleaseArticleDrawer = dynamic(() =>
 );
 
 type Draft = Omit<ScanRule, "minimum" | "maximum" | "minutes" | "indicator" | "comparison" | "selection"> & {
- id:string; minimum:string; maximum:string; minutes:string; selection?:string; releaseUnit?:ReleaseUnit; custom?:IndicatorDraft;
+ id:string; minimum:string; maximum:string; minutes:string; selection?:string; releaseUnit?:ReleaseUnit; releaseHours?:number; custom?:IndicatorDraft;
 };
 type ReleaseUnit = "Minutes" | "Hours" | "Days";
-const releaseMultipliers = {Minutes:1/60,Hours:1,Days:24} as const;
+const releaseUnits: readonly ReleaseUnit[] = ["Minutes", "Hours", "Days"];
+function inReleaseHours(amount: number, unit: ReleaseUnit) {
+  return unit === "Minutes" ? amount / 60 : unit === "Days" ? amount * 24 : amount;
+}
+function displayReleaseHours(hours: number, unit: ReleaseUnit) {
+  if (unit === "Days") return String(hours / 24);
+  if (unit === "Hours") return String(hours);
+  const minutes = Math.round(hours * 60);
+  return String(minutes / 60 === hours || minutes * (1 / 60) === hours ? minutes : hours * 60);
+}
+// Retain the stored hours when another unit displays a repeating fraction.
+function savedReleaseWindow(hours: number) {
+  const minutes = displayReleaseHours(hours, "Minutes");
+  const useMinutes = hours < 1 || (!Number.isInteger(hours) && Number.isInteger(Number(minutes)));
+  const releaseUnit: ReleaseUnit = useMinutes ? "Minutes" : "Hours";
+  return { releaseUnit, releaseHours: hours, maximum: useMinutes ? minutes : String(hours) };
+}
+
 const releaseAbbreviation = {Minutes:"m",Hours:"h",Days:"d"} as const;
 type DraftGroup = { id:string; match:ScanMatch; rules:Draft[] };
 type DraftState = { cadence?: ScanDefinition["cadence"]; rules:Draft[]; match:ScanMatch; groups:DraftGroup[]; sort:ScanDefinition["sort"] };
+type FilterLayout = "side" | "top";
 const defaultIndicator:IndicatorDraft={comparison:"crossUp",against:"average",fast:"9",slow:"20",period:"14",level:"50"};
 const metrics = Object.keys(SCAN_METRICS) as ScanMetric[];
-const volumeScopes = ["dayVolume", "premarketVolume", "regularVolume", "postMarketVolume"] as const;
+const metricOptions = SCAN_CATEGORIES.map(category => ({
+  category,
+  metrics: metrics.filter(metric => metric !== "volume" && SCAN_METRICS[metric].category === category),
+}));
+const volumeScopes = quickVolumeMetrics.filter(metric => metric !== "volume");
+const desktopQuickMetrics = new Set<ScanMetric>([
+  "price", "float", "dayChange", "tradingSession", ...quickRelativeVolumeMetrics, ...quickVolumeMetrics,
+]);
 const draftValue = (value: number | null) => value === null ? "" : String(value);
 function toDraft(definition:ScanDefinition): DraftState {
   const rulesToDraft=(rules:readonly ScanRule[])=>rules.map(rule=>{
     const {indicator,comparison,selection,...base}=rule;
     const maximum=rule.maximum;
-    const releaseUnit:ReleaseUnit=maximum!==null&&maximum<1?"Minutes":"Hours";
     const custom=indicator&&comparison?{
       ...defaultIndicator,comparison,
       ...((indicator.kind==="ema"||indicator.kind==="sma")?{fast:String(indicator.fast),slow:String(indicator.slow)}:{}),
       ...((indicator.kind==="priceEma"||indicator.kind==="priceSma")?{against:"close" as const,period:String(indicator.period)}:{}),
       ...(indicator.kind==="rsi"?{period:String(indicator.period),level:String(indicator.level)}:{}),
     }:undefined;
-    return { ...base,id:crypto.randomUUID(),custom, ...(selection ? {selection:selection.join(rule.metric === "listingIndustry" ? "; " : ", ")} : {}), minimum:draftValue(rule.minimum),minutes:String(rule.minutes??5),
+    return { ...base,id:crypto.randomUUID(),custom, ...(selection ? {selection:selection.join((rule.metric === "listingIndustry" || rule.metric === "prHeadline" || rule.metric === "recentFiling") ? "; " : ", ")} : {}), minimum:draftValue(rule.minimum),minutes:String(rule.minutes??5),
       ...(rule.metric==="pressRelease"&&maximum!==null
-        ? {releaseUnit,maximum:String(Math.round(maximum/releaseMultipliers[releaseUnit]*1000)/1000)}
+        ? savedReleaseWindow(maximum)
         : {maximum:draftValue(maximum)})};
   });
   return {cadence:definition.cadence,sort:definition.sort,match:definition.match??"all",rules:rulesToDraft(definition.rules),
@@ -77,7 +108,60 @@ function customConfig(metric:ScanMetric, custom:IndicatorDraft):CustomIndicator{
   if(metric==="customRsi")return {kind:"rsi",period:Number(custom.period),level:custom.level.trim()?Number(custom.level):NaN};
   return {kind:"vwap"};
 }
+function starterDefinition(choice: string) {
+  const starter = originalBuiltInScan(choice)?.templateChoice ?? choice;
+  return builtInScanForChoice(starter)?.definition;
+}
+function newFilterRule(metric: ScanMetric): Draft {
+  const custom = isCustomIndicatorMetric(metric);
+  return {
+    id: crypto.randomUUID(), metric, minimum: (metric === "activeHalt" || metric === "floatMissing" || metric==="candlePattern") ? "1" : "",
+    maximum: metric === "pressRelease" || metric === "confirmed4hBreak" ? "24" :
+      isReaction(metric) ? "5" : Object.hasOwn(eventFilters,metric) ? "1" : metric === "tradeResumed" ? "60" : metric === "indicatorSignal" || custom ? "15" : "",
+    minutes: "5",
+    ...((isScanIndicatorMetric(metric) || custom) && { frame: isSameTimeVolumeMetric(metric) ? "15m" : "5m" }),
+    ...(isCandleStudy(metric) && {studyFrame:isBenchmarkStudy(metric)?"1D" as const:"5m" as const,period:metric==="macdHistogram"?26:20}),
+    ...(metric==="candlePattern" && {pattern:"doubleBottom" as const}),
+    ...(metric==="crossReference" && {reference:"previousDayHigh" as const,direction:"up" as const}),
+    ...(metric==="macdHistogram" && {fastPeriod:12,signalPeriod:9}),
+    ...(metric==="zoneState" && {selection:"IN_RETEST_AREA"}),
+    ...(custom && { custom: defaultIndicator }),
+    ...(metric === "listingExchange" && { selection: "NASDAQ" }),
+    ...(metric === "indicatorSignal" && { signal: "emaBullishCross" }),
+    ...(metric === "confirmed4hBreak" && { direction: "either" }),
+    ...(metric === "pressRelease" && { releaseUnit: "Hours" }),
+    ...(isDirectionalPriceMove(metric) && { direction: "up" }),
+  };
+}
 const ruleActive=(rule:Draft)=>Boolean(rule.custom||isScanSelectionMetric(rule.metric)||isEventScanMetric(rule.metric)||rule.minimum.trim()||rule.maximum.trim());
+
+function summarizeRule(rule: Draft) {
+  if (rule.metric === "tradingSession") {
+    return (rule.selection ?? "").split(",")
+      .map(value => SCAN_SESSION_LABELS[value.trim() as keyof typeof SCAN_SESSION_LABELS])
+      .filter(Boolean).join(", ") || "Trading session · Select sessions";
+  }
+  if (isScanSelectionMetric(rule.metric)) {
+    return SCAN_METRICS[rule.metric].label + " · " + (rule.selection?.trim() || "Set value");
+  }
+  if(rule.metric==="crossReference" && rule.reference)return "1m close crosses "+(rule.direction==="down"?"below ":"above ")+crossReferences[rule.reference];
+  if(rule.metric==="candlePattern" && rule.pattern)return [rule.studyFrame,scanPatterns[rule.pattern],rule.period+" bars"].join(" · ");
+  if (isReaction(rule.metric)) return SCAN_METRICS[rule.metric].label+" within "+rule.maximum+"m";
+  if (Object.hasOwn(eventFilters,rule.metric) || rule.metric==="floatMissing") return SCAN_METRICS[rule.metric].label;
+  return rule.custom?[
+      rule.frame,customIndicatorTitle(customConfig(rule.metric,rule.custom)),indicatorComparisons[rule.custom.comparison],
+      isIndicatorCross(rule.custom.comparison)?rule.maximum+"m":"",
+    ].filter(Boolean).join(" "):rule.metric==="pressRelease"
+      ? `${rule.absence?"No visible press release":"Press release"} within ${rule.maximum}${releaseAbbreviation[rule.releaseUnit??"Hours"]}`
+      : rule.metric==="indicatorSignal"&&rule.signal
+        ? `${rule.frame??"5m"} ${scanSignalLabels[rule.signal]} · ${rule.maximum}m`
+        : rule.metric==="confirmed4hBreak"
+        ? `4H level break · ${rule.direction} · ${rule.maximum}h`
+        : rule.metric==="tradeResumed" ? "Trading resumed · past " + rule.maximum + "m"
+        : rule.metric==="activeHalt" ? "Trading halt"
+        : [rule.studyFrame ?? rule.frame, rule.period ? rule.period+" bars" : "", SCAN_METRICS[rule.metric].label, rule.minimum && (rule.maximum?rule.minimum + "–" + rule.maximum : "≥ " + rule.minimum),
+      !rule.minimum && rule.maximum && "≤ " + rule.maximum, scanMetricUsesMinutes(rule.metric) && rule.minutes + "m"].filter(Boolean).join(" ");
+}
 
 function number(value: string) {
   const input = value.trim().replace(/^[$]/,"").replace(/%$/,"").replace(/,/g,"");
@@ -88,9 +172,9 @@ function number(value: string) {
 }
 function parseDraft(draft:DraftState) {
   try {
-    const parseRules=(rules:Draft[])=>rules.flatMap<ScanRule>(({ minimum, maximum, minutes, releaseUnit, custom, selection, ...rule }) => {
+    const parseRules=(rules:Draft[])=>rules.flatMap<ScanRule>(({ minimum, maximum, minutes, releaseUnit, releaseHours, custom, selection, ...rule }) => {
       if (isScanSelectionMetric(rule.metric)) {
-        const separator = rule.metric === "listingIndustry" ? /[;\n]+/
+        const separator = (rule.metric === "listingIndustry" || rule.metric==="prHeadline" || rule.metric==="recentFiling") ? /[;\n]+/
           : rule.metric === "listingSector" ? /[,\n]+/ : /[ ,\n]+/;
         return [{ ...rule, minimum: null, maximum: null, selection: (selection ?? "").split(separator).filter(Boolean) }];
       }
@@ -101,7 +185,7 @@ function parseDraft(draft:DraftState) {
       if(isEventScanMetric(rule.metric)){
         const amount=number(maximum);
         return [{...rule,minimum:null,maximum:amount===null||rule.metric!=="pressRelease"
-          ? amount:amount*releaseMultipliers[releaseUnit??"Hours"],minutes:undefined}];
+          ? amount:releaseHours ?? inReleaseHours(amount, releaseUnit ?? "Hours"),minutes:undefined}];
       }
       const min = number(minimum), max = number(maximum);
       if (min === null && max === null) throw Error("Enter a minimum or maximum for " + SCAN_METRICS[rule.metric].label + ".");
@@ -181,10 +265,19 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
   const [applied,setApplied] = useState(EMPTY_SCAN);
   const [runRevision,setRunRevision] = useState(0);
   const [page,setPage] = useState(1);
-  const [filters,setFilters] = useState(false);
-  const [search,setSearch] = useState("");
-  const [filterTarget,setFilterTarget] = useState<string|null>(null);
+  const [openFilterPanel, setOpenFilterPanel] = useState<FilterLayout | undefined>("top");
+  const [filterLayout, setFilterLayout] = useState<FilterLayout>("top");
+  const [editingRules, setEditingRules] = useState<string[]>([]);
+  const [rvolDefault, setRvolDefault] = useState<QuickRvolMetric>("sameTimeRegularVolume");
+  const [volumeDefault, setVolumeDefault] = useState<QuickVolumeMetric>("dayVolume");
+  const theme = useTheme();
+  const compact = useMediaQuery(theme.breakpoints.down("md"));
+  const effectiveFilterLayout = compact ? "side" : filterLayout;
+  const filters = openFilterPanel === effectiveFilterLayout;
+  const topControl = useRef<HTMLButtonElement>(null);
   const filterContent = useRef<HTMLDivElement>(null);
+  const layoutControl = useRef<HTMLSelectElement>(null);
+  const restoreLayoutFocus = useRef(false);
   const pendingFilterFocus = useRef<string | null>(null);
   const [saveMode,setSaveMode] = useState<"new" | "update" | "rename">();
   const [confirmationRevision,setConfirmationRevision] = useState<number>();
@@ -198,6 +291,7 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
   const shown = results.queries[0];
   const shownDefinition = shown?.definition ?? applied;
   const returnKey = "traderlink:scanner-chart-return:" + returnScope;
+  const filterLayoutKey = "traderlink:scanner-filter-layout:v2:" + returnScope;
   useEffect(() => () => newsRequest.current?.abort(), []);
   useEffect(() => {
     const id = pendingFilterFocus.current;
@@ -208,6 +302,12 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
     rule.focus({ preventScroll: true });
     rule.scrollIntoView({ block: "start" });
   }, [draft]);
+  useEffect(() => {
+    if (!restoreLayoutFocus.current) return;
+    restoreLayoutFocus.current = false;
+    const control = effectiveFilterLayout === "top" ? topControl : layoutControl;
+    control.current?.focus({ preventScroll: true });
+  }, [effectiveFilterLayout]);
   async function openNews(articleId: string) {
     newsRequest.current?.abort();
     const request = new AbortController();
@@ -233,28 +333,51 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
         setChoice(state.choice);
         setPage(state.page);
         setMatchReference(state.reference);
+      } else {
+        const template = starterDefinition(initialChoice);
+        if (template) {
+          setDraft(toDraft(template));
+          if (!originalBuiltInScan(initialChoice)) setApplied(template);
+        }
       }
+      try {
+        if (localStorage.getItem(filterLayoutKey) === "side") {
+          setFilterLayout("side");
+          setOpenFilterPanel(undefined);
+        }
+      } catch { /* Browser storage can be unavailable. */ }
       setReady(true);
     });
     return () => cancelAnimationFrame(frame);
-  }, [returnKey]);
+  }, [returnKey, filterLayoutKey, initialChoice]);
   const { definition,error } = useMemo(()=>parseDraft(draft),[draft]);
   const actualSort = draft.sort;
-  const theme = useTheme();
-  const compact = useMediaQuery(theme.breakpoints.down("md"));
   const view = resultView ?? (compact ? "cards" : "table");
+  const openFilters = () => setOpenFilterPanel(effectiveFilterLayout);
+  const resetFilters = (keepOpen: boolean) => {
+    setDraft(toDraft(original ? starterDefinition(choice) ?? EMPTY_SCAN : applied));
+    setEditingRules([]);
+    setOpenFilterPanel(keepOpen ? effectiveFilterLayout : undefined);
+  };
   const closeFilters = () => {
-    setDraft(toDraft(applied));
-    setFilterTarget(null);
-    setFilters(false);
+    resetFilters(false);
+    if (effectiveFilterLayout === "top") topControl.current?.focus();
+  };
+  const changeFilterLayout = (layout: FilterLayout) => {
+    restoreLayoutFocus.current = filterLayout !== layout;
+    setFilterLayout(layout);
+    setOpenFilterPanel(layout);
+    try { localStorage.setItem(filterLayoutKey, layout); }
+    catch { /* The layout still changes for this visit. */ }
   };
   const applyFilters = () => {
-    if (!definition) return;
+    if (!ready || !definition) return;
+    if (original) setChoice(original.templateChoice);
     setApplied(definition);
     setRunRevision(current => current + 1);
     setPage(1);
-    setFilterTarget(null);
-    setFilters(false);
+    setEditingRules([]);
+    setOpenFilterPanel(effectiveFilterLayout === "top" ? "top" : undefined);
   };
 
   const rememberForCharts = (reference: string) => {
@@ -270,12 +393,12 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
   const select = (value:string) => {
     setChoice(value);
     setInlineSymbol(undefined);
-    const definition = builtInScanForChoice(value)?.definition ?? book?.scans.find(scan=>scan.id===value)?.definition ?? EMPTY_SCAN;
+    const definition = starterDefinition(value) ?? book?.scans.find(scan=>scan.id===value)?.definition ?? EMPTY_SCAN;
     setTicker(undefined);
     setMatchReference(undefined);
     setDraft(toDraft(definition));
-    setFilterTarget(null);
-    setApplied(definition);
+    setEditingRules([]);
+    setApplied(originalBuiltInScan(value) ? EMPTY_SCAN : definition);
     setPage(1);
   };
   const editRules=(update:(rules:Draft[])=>Draft[])=>setDraft(current=>({
@@ -283,31 +406,65 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
   }));
   const changeRule = (id:string, changes:Partial<Draft>) =>
     editRules(rules=>rules.map(rule=>rule.id===id?{...rule,...changes}:rule));
-  const addRule = (metric:ScanMetric) => {
-    const custom=isCustomIndicatorMetric(metric);
-    const rule:Draft={
-      id:crypto.randomUUID(),metric,minimum:metric==="activeHalt"?"1":"",maximum:metric==="pressRelease"||metric==="confirmed4hBreak"?"24":metric==="tradeResumed"?"60":metric==="indicatorSignal"||custom?"15":"",minutes:"5",
-      ...(isScanIndicatorMetric(metric)||custom?{frame:metric==="sameTimeRegularVolume"?"15m" as const:"5m" as const}:{}),
-      ...(custom?{custom:defaultIndicator}:{}),
-      ...(metric==="listingExchange"?{selection:"NASDAQ"}:{}),
-      ...(metric==="indicatorSignal"?{signal:"emaBullishCross" as const}:{}),
-      ...(metric==="confirmed4hBreak"?{direction:"either" as const}:{}),
-      ...(metric==="pressRelease"?{releaseUnit:"Hours" as const}:{}),...(isDirectionalPriceMove(metric)?{direction:"up" as const}:{}),
-    };
-    pendingFilterFocus.current = rule.id;
-    setDraft(current=>filterTarget?{...current,groups:current.groups.map(group=>group.id===filterTarget
-      ?{...group,rules:[...group.rules,rule]}:group)}:{...current,rules:[...current.rules,rule]});
+  const addRules = (metrics: readonly ScanMetric[], groupId?: string) => {
+    const selected = metrics.map(metric => {
+      const existing = !groupId && desktopQuickMetrics.has(metric)
+        ? draft.rules.find(rule => rule.metric === metric) : undefined;
+      return { rule: existing ?? newFilterRule(metric), added: !existing };
+    });
+    const rules = selected.filter(item => item.added).map(item => item.rule);
+    pendingFilterFocus.current = selected[0]?.rule.id ?? null;
+    setEditingRules(selected.map(item => item.rule.id));
+    setDraft(current=>groupId?{...current,groups:current.groups.map(group=>group.id===groupId
+      ?{...group,rules:[...group.rules,...rules]}:group)}:{...current,rules:[...current.rules,...rules]});
   };
-  const removeRule = (id:string) => editRules(rules=>rules.filter(rule=>rule.id!==id));
+  const removeRule = (id:string) => {
+    editRules(rules=>rules.filter(rule=>rule.id!==id));
+    setEditingRules(current => current.filter(item => item !== id));
+  };
   const addGroup=()=>{
     const id=crypto.randomUUID();
     setDraft(current=>({...current,groups:[...current.groups,{id,match:"any",rules:[]}]}));
-    setFilterTarget(id);
-    setSearch("");
   };
   const removeGroup=(id:string)=>{
     setDraft(current=>({...current,groups:current.groups.filter(group=>group.id!==id)}));
-    if(filterTarget===id)setFilterTarget(null);
+    const group = draft.groups.find(item => item.id === id);
+    setEditingRules(current => current.filter(ruleId => !group?.rules.some(rule => rule.id === ruleId)));
+  };
+  const quickRules = {
+    price: draft.rules.find(rule => rule.metric === "price"),
+    float: draft.rules.find(rule => rule.metric === "float"),
+    rvol: draft.rules.find(rule => quickRelativeVolumeMetrics.some(metric => metric === rule.metric)),
+    volume: draft.rules.find(rule => quickVolumeMetrics.some(metric => metric === rule.metric)),
+    dayChange: draft.rules.find(rule => rule.metric === "dayChange"),
+  };
+  const quickSession = draft.rules.find(rule => rule.metric === "tradingSession");
+  const rvolMetric = (quickRules.rvol?.metric as QuickRvolMetric | undefined) ?? rvolDefault;
+  const volumeMetric = (quickRules.volume?.metric as QuickVolumeMetric | undefined) ?? volumeDefault;
+  const changeQuickRule = (rule: Draft | undefined, metric: ScanMetric, changes: Partial<Draft>) => {
+    if (rule) {
+      if (ruleActive({ ...rule, ...changes }) && (metric !== "tradingSession" || changes.selection))
+        changeRule(rule.id, changes);
+      else removeRule(rule.id);
+      return;
+    }
+    if (!Object.values(changes).some(value => typeof value === "string" && value.trim())) return;
+    const added = { ...newFilterRule(metric), ...changes };
+    setDraft(current => ({ ...current, rules: [...current.rules, added] }));
+  };
+  const changeQuickRange = (filter: QuickNumericFilter, bound: keyof QuickRange, value: string) => {
+    const metric = filter === "rvol" ? rvolMetric : filter === "volume" ? volumeMetric : filter;
+    changeQuickRule(quickRules[filter], metric, { [bound]: value });
+  };
+  const changeQuickRvolMetric = (metric: QuickRvolMetric) => {
+    setRvolDefault(metric);
+    if (quickRules.rvol) changeRule(quickRules.rvol.id, {
+      metric, frame: isSameTimeVolumeMetric(metric) ? "15m" : undefined,
+    });
+  };
+  const changeQuickVolumeMetric = (metric: QuickVolumeMetric) => {
+    setVolumeDefault(metric);
+    if (quickRules.volume) changeRule(quickRules.volume.id, { metric });
   };
   const beginSave = (mode:"new"|"update"|"rename") => {
     if (!book) return;
@@ -360,7 +517,7 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
   };
 
   const sortOptions:Pick<ScanDefinition["sort"],"metric"|"minutes"|"frame">[] = [
-    ...metrics.filter(metric=>metric!=="activeHalt"&&!isScanSelectionMetric(metric)&&!requiresScannerLevelRead(metric)&&!scanMetricUsesMinutes(metric)&&!isScanIndicatorMetric(metric)&&!isEventScanMetric(metric)&&!isCustomIndicatorMetric(metric)).map(metric=>({metric})),
+    ...metrics.filter(metric=>metric!=="activeHalt"&&metric!=="floatMissing"&&!isCandleStudy(metric)&&!isScanSelectionMetric(metric)&&!requiresScannerLevelRead(metric)&&!scanMetricUsesMinutes(metric)&&!isScanIndicatorMetric(metric)&&!isEventScanMetric(metric)&&!isCustomIndicatorMetric(metric)).map(metric=>({metric})),
     ...[...draft.rules,...draft.groups.flatMap(group=>group.rules)].flatMap<Pick<ScanDefinition["sort"],"metric"|"minutes"|"frame">>(rule=>{
       if(isEventScanMetric(rule.metric)||rule.custom)return [];
       if(isScanIndicatorMetric(rule.metric))return [{metric:rule.metric,frame:rule.frame??"5m"}];
@@ -384,8 +541,8 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
       sx={{width:150}}>
       <MenuItem value="all">All</MenuItem><MenuItem value="any">Any</MenuItem>
     </TextField>;
-  const renderRule=(rule:Draft)=>
-    <Box key={rule.id} data-scan-rule={rule.id} role="group" aria-label={SCAN_METRICS[rule.metric].label + " filter"}
+  const renderRuleEditor=(rule:Draft)=>
+    <Box key={rule.id} data-scan-rule={rule.id} role="group" id={"scanner-rule-" + rule.id} aria-label={SCAN_METRICS[rule.metric].label + " filter"}
       tabIndex={-1} sx={{ p: 1, border: 1, borderColor: "divider", scrollMarginBlock: 8,
         "&:focus": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 } }}>
           <Stack direction="row" sx={{alignItems:"center",justifyContent:"space-between",gap:0.5}}>
@@ -399,9 +556,31 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
                 {rule.metric === "volume" && <MenuItem value="volume">Session volume</MenuItem>}
                 {volumeScopes.map(metric=><MenuItem key={metric} value={metric}>{SCAN_METRICS[metric].label}</MenuItem>)}
               </TextField>}
-            {!rule.custom&&rule.metric!=="activeHalt"&&!isScanSelectionMetric(rule.metric)&&!isEventScanMetric(rule.metric)&&(["minimum","maximum"] as const).map(key=><TextField key={key} size="small" label={key==="minimum"?"Min":"Max"}
+            {!rule.custom&&rule.metric!=="activeHalt"&&rule.metric!=="floatMissing"&&rule.metric!=="candlePattern"&&!isScanSelectionMetric(rule.metric)&&!isEventScanMetric(rule.metric)&&(["minimum","maximum"] as const).map(key=><TextField key={key} size="small" label={key==="minimum"?"Min":"Max"}
               value={rule[key]} onChange={event=>changeRule(rule.id,{[key]:event.target.value})} sx={{width:105}}
               slotProps={{htmlInput:{"aria-label":SCAN_METRICS[rule.metric].label + " " + key,maxLength:16,inputMode:"text"}}}/>)}
+            {isCandleStudy(rule.metric) && <>
+              <TextField select size="small" label="Study timeframe" value={rule.studyFrame??"5m"} onChange={e=>changeRule(rule.id,{studyFrame:e.target.value as StudyFrame})}>
+                {studyFrames.filter(frame=>(!needsBarVwap(rule.metric)||["1m","5m","15m"].includes(frame)) && (!isBenchmarkStudy(rule.metric) || frame==="1D" || frame==="1W")).map(frame=><MenuItem key={frame} value={frame}>{frame}</MenuItem>)}
+              </TextField>
+              {rule.metric==="candlePattern" && <TextField select size="small" label="Pattern" value={rule.pattern??"doubleBottom"}
+                onChange={e=>changeRule(rule.id,{pattern:e.target.value as ScanPattern})}>
+                {Object.entries(scanPatterns).map(([id,label])=><MenuItem key={id} value={id}>{label}</MenuItem>)}
+              </TextField>}
+              {rule.metric==="macdHistogram" && (["fastPeriod","signalPeriod"] as const).map(key=><TextField key={key} type="number" size="small"
+                label={key==="fastPeriod"?"Fast EMA":"Signal EMA"} value={rule[key]??""} onChange={e=>changeRule(rule.id,{[key]:Number(e.target.value)})} sx={{width:95}}/>)}
+              {rule.metric!=="smaAlignment" && <TextField select size="small" label="Lookback bars" value={rule.period??20} onChange={e=>changeRule(rule.id,{period:Number(e.target.value)})}>
+                {studyPeriods.filter(period=>rule.metric!=="candlePattern" || period>=9).map(period=><MenuItem key={period} value={period}>{period}</MenuItem>)}
+              </TextField>}
+            </>}
+            {rule.metric==="zoneState" && <TextField select size="small" label="Setup state" value={rule.selection??""}
+              onChange={e=>changeRule(rule.id,{selection:e.target.value})}>
+              {Object.entries(zoneStates).map(([id,label])=><MenuItem key={id} value={id}>{label}</MenuItem>)}
+            </TextField>}
+            {(rule.metric==="prHeadline" || rule.metric==="haltCode" || rule.metric==="recentFiling") && <TextField size="small"
+              label={rule.metric==="prHeadline"?"Headline words or phrases":rule.metric==="recentFiling"?"SEC form types":"Halt codes"} value={rule.selection??""}
+              helperText={rule.metric!=="haltCode"?"Separate alternatives with semicolons.":"Separate codes with commas."}
+              onChange={e=>changeRule(rule.id,{selection:e.target.value})}/>}
             {rule.metric==="listingExchange" && <TextField select size="small" label="Exchanges"
               value={(rule.selection??"").split(",").map(value=>value.trim()).filter(Boolean)}
               slotProps={{select:{multiple:true}}} sx={{width:182}}
@@ -452,40 +631,57 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
             </TextField>}
             {rule.custom&&isCustomIndicatorMetric(rule.metric)&&<CustomIndicatorFields metric={rule.metric} value={rule.custom}
               minutes={rule.maximum} onChange={custom=>changeRule(rule.id,{custom})} onMinutes={maximum=>changeRule(rule.id,{maximum})}/>}
-            {(isScanIndicatorMetric(rule.metric)||rule.custom) && rule.metric!=="sameTimeRegularVolume" && <TextField select size="small" label="Timeframe" value={rule.frame??"5m"} sx={{width:105}}
+            {(isScanIndicatorMetric(rule.metric)||rule.custom) && !isSameTimeVolumeMetric(rule.metric) && <TextField select size="small" label="Timeframe" value={rule.frame??"5m"} sx={{width:105}}
               onChange={event=>changeRule(rule.id,{frame:event.target.value as Draft["frame"]})}>
               {scanSignalFrames.map(frame=><MenuItem key={frame} value={frame}>{frame}</MenuItem>)}
             </TextField>}
             {rule.metric==="pressRelease" && <TextField select size="small" label="Time unit" value={rule.releaseUnit??"Hours"}
               sx={{width:105}} onChange={event=>{
                 const next=event.target.value as ReleaseUnit;
-                const duration=Number(rule.maximum)*releaseMultipliers[rule.releaseUnit??"Hours"]/releaseMultipliers[next];
-                changeRule(rule.id,{releaseUnit:next,maximum:rule.maximum&&Number.isFinite(duration)?String(Math.round(duration*1000)/1000):rule.maximum});
+                let hours = rule.releaseHours;
+                if (hours === undefined) {
+                  try {
+                    const amount = number(rule.maximum);
+                    if (amount !== null) hours = inReleaseHours(amount, rule.releaseUnit ?? "Hours");
+                  } catch {
+                    // Keep invalid input editable in its original unit.
+                    return;
+                  }
+                }
+                changeRule(rule.id, { releaseUnit: next, releaseHours: hours,
+                  maximum: hours === undefined ? rule.maximum : displayReleaseHours(hours, next) });
               }}>
-              {Object.keys(releaseMultipliers).map(unit=><MenuItem key={unit} value={unit}>{unit}</MenuItem>)}
+              {releaseUnits.map(unit=><MenuItem key={unit} value={unit}>{unit}</MenuItem>)}
             </TextField>}
-            {isEventScanMetric(rule.metric) && <TextField size="small" label={rule.metric==="pressRelease"?"Past":rule.metric==="confirmed4hBreak"?"Past hours":"Past minutes"}
-              value={rule.maximum} onChange={event=>changeRule(rule.id,{maximum:event.target.value})} sx={{width:108}}
-              slotProps={{htmlInput:{inputMode:rule.metric==="pressRelease"?"decimal":"numeric",maxLength:8}}}/>}
+            {isEventScanMetric(rule.metric) && (!Object.hasOwn(eventFilters,rule.metric) || isReaction(rule.metric)) && <TextField size="small" label={isReaction(rule.metric)?"Reaction within minutes":rule.metric==="pressRelease"?"Past":rule.metric==="confirmed4hBreak"?"Past hours":"Past minutes"}
+              value={rule.maximum} onChange={event=>changeRule(rule.id,{maximum:event.target.value, releaseHours:undefined})} sx={{width:108}}
+              slotProps={{htmlInput:{inputMode:rule.metric==="pressRelease"?"decimal":"numeric",maxLength:rule.metric==="pressRelease"?24:8}}}/>}
             {isOpeningRangeMetric(rule.metric) && <TextField select size="small" label="Opening range"
               value={rule.minutes} onChange={event=>changeRule(rule.id,{minutes:event.target.value})} sx={{width:140}}>
               {SCANNER_OPENING_RANGE_MINUTES.map(minutes=><MenuItem key={minutes} value={String(minutes)}>{minutes}m</MenuItem>)}
             </TextField>}
-            {isRollingScanMetric(rule.metric) && <TextField size="small" label="Minutes" value={rule.minutes}
+            {(isRollingScanMetric(rule.metric) || rule.metric==="timedRebound") && <TextField size="small" label="Minutes" value={rule.minutes}
               slotProps={{htmlInput:{"aria-label":SCAN_METRICS[rule.metric].label + " minutes",inputMode:"numeric",maxLength:4}}}
               onChange={event=>changeRule(rule.id,{minutes:event.target.value})} sx={{width:83}}/>}
-            {(isDirectionalPriceMove(rule.metric) || rule.metric==="confirmed4hBreak") && <TextField select size="small" label="Direction" value={rule.direction??"up"} sx={{width:128}}
+            {rule.metric==="crossReference" && <TextField select size="small" label="Reference level" value={rule.reference}
+              onChange={e=>changeRule(rule.id,{reference:e.target.value as CrossReference})}>
+              {Object.entries(crossReferences).map(([key,label])=><MenuItem key={key} value={key}>{label}</MenuItem>)}
+            </TextField>}
+            {(isDirectionalPriceMove(rule.metric) || rule.metric==="crossReference" || rule.metric==="confirmed4hBreak") && <TextField select size="small" label="Direction" value={rule.direction??"up"} sx={{width:128}}
               onChange={event=>changeRule(rule.id,{direction:event.target.value as Draft["direction"]})}>
-              <MenuItem value="up">Up</MenuItem><MenuItem value="down">Down</MenuItem><MenuItem value="either">Either</MenuItem>
+              <MenuItem value="up">Up</MenuItem><MenuItem value="down">Down</MenuItem>{rule.metric!=="crossReference" && <MenuItem value="either">Either</MenuItem>}
             </TextField>}
           </Stack>
           {(rule.metric==="distanceToVerifiedZone" || rule.metric==="roomToNextVerifiedZone") &&
             <Typography variant="caption" color="text.secondary">Uses a current price and an eligible saved setup.</Typography>}
+          {isReaction(rule.metric) && <Typography variant="caption">{rule.metric==="prThenVwap"
+            ? "The latest completed 1m candle crosses above day VWAP after a visible issuer release."
+            : "The latest completed 1m candle starts at or after trading resumes and reaches at least 2× its volume baseline."}</Typography>}
           {rule.metric==="confirmed4hBreak" && <Typography variant="caption" color="text.secondary">
             Uses verified closed candles and eligible saved Levels. Tickers without this evidence need more data.
           </Typography>}
-          {rule.metric==="sameTimeRegularVolume" && <Typography variant="caption" color="text.secondary" sx={{display:"block",mt:0.5}}>
-            Compares completed 15-minute regular-session volume through the same time on the previous three sessions.
+          {isSameTimeVolumeMetric(rule.metric) && <Typography variant="caption" color="text.secondary" sx={{display:"block",mt:0.5}}>
+            Compares cumulative volume through the last completed 15-minute interval with the same point in the previous three comparable sessions.
           </Typography>}
           {rule.metric==="volumePace" && <Typography variant="caption" color="text.secondary" sx={{display:"block",mt:0.5}}>
             Compares the latest window with the preceding window of the same length.
@@ -493,36 +689,54 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
           {rule.metric==="float" && <FormControlLabel label="Include unknown float" control={<Switch size="small" checked={Boolean(rule.includeUnknown)}
             onChange={(_,checked)=>changeRule(rule.id,{includeUnknown:checked})}/>}/>}
         </Box>;
-  const filterPicker=filters && <Stack spacing={0.75}>
-    <TextField label="Find a filter" size="small" value={search} onChange={event=>setSearch(event.target.value)} sx={{width:230}}/>
-        {SCAN_CATEGORIES.map(category=>{
-          const fields=metrics.filter(metric=>metric !== "volume" && SCAN_METRICS[metric].category===category&&SCAN_METRICS[metric].label.toLowerCase().includes(search.trim().toLowerCase()));
-          if (!fields.length) return null;
-          return <Stack key={category} spacing={0.5}>
-            <Typography variant="subtitle2">{category}</Typography>
-            <Stack direction="row" sx={{gap:0.5,flexWrap:"wrap"}}>
-              {fields.map(metric=><Button key={metric} color="inherit" variant="outlined" size="small"
-                aria-label={"Add " + SCAN_METRICS[metric].label + " filter"} onClick={()=>addRule(metric)}>{SCAN_METRICS[metric].label}</Button>)}
-            </Stack>
-          </Stack>;
-        })}
-  </Stack>;
+  const ruleControl = (rule: Draft) =>
+    <Button variant="outlined" color="inherit" size="small" endIcon={<ExpandMoreRounded />}
+      aria-expanded={editingRules.includes(rule.id)}
+      aria-controls={editingRules.includes(rule.id) ? "scanner-rule-" + rule.id : undefined}
+      onClick={() => setEditingRules(current => current.includes(rule.id)
+        ? current.filter(id => id !== rule.id) : [...current, rule.id])}
+      sx={{
+        justifyContent: "space-between", textAlign: "left", minHeight: { xs: 44, md: 34 }, maxWidth: "100%",
+        ...(editingRules.includes(rule.id) && { borderColor: "primary.main", bgcolor: "action.selected" }),
+      }}>
+      <Box component="span" sx={{ overflowWrap: "anywhere" }}>
+        {ruleActive(rule) ? summarizeRule(rule) : SCAN_METRICS[rule.metric].label + " · Set value"}
+      </Box>
+    </Button>;
+  const ruleControls = (rules: Draft[]) => {
+    if (!rules.length) return null;
+    if (effectiveFilterLayout === "side") return <Stack spacing={0.75}>
+      {rules.map(rule => <Stack key={rule.id} spacing={0.5}>{ruleControl(rule)}
+        {editingRules.includes(rule.id) && renderRuleEditor(rule)}
+      </Stack>)}
+    </Stack>;
+    return <Stack spacing={0.75}>
+      <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75 }}>
+        {rules.map(rule => <Box key={rule.id} sx={{ maxWidth: "100%" }}>{ruleControl(rule)}</Box>)}
+      </Stack>
+      {rules.filter(rule => editingRules.includes(rule.id)).map(renderRuleEditor)}
+    </Stack>;
+  };
   const toolbar = <Stack direction="row" sx={{gap:0.75,alignItems:"center",flexWrap:"wrap"}}>
     <TextField select size="small" label="Scan" value={selected?.id ?? (original || builtInScanForChoice(choice) ? choice : "blank")} onChange={event=>select(event.target.value)} sx={{width:175}}>
       <MenuItem value="blank">Blank scan</MenuItem>
-      <ListSubheader>Original live scans</ListSubheader>
-      {livePresetChoices.map(({id,label})=><MenuItem key={id} value={id}>Live {label}</MenuItem>)}
+      <ListSubheader>Presets</ListSubheader>
+      {livePresetChoices.map(({id,label})=><MenuItem key={id} value={id}>{label}</MenuItem>)}
       <ListSubheader>Starter templates</ListSubheader>
-      {builtInScanChoices.map(({value,label})=><MenuItem key={value} value={value}>{label}</MenuItem>)}
+      {builtInScanChoices.map(({value,label})=><MenuItem key={value} value={value}>{label} starter</MenuItem>)}
       {!book && !bookError && <MenuItem disabled>Loading saved scans…</MenuItem>}
       {!!book?.scans.length && <ListSubheader>Saved scans</ListSubheader>}
       {(book?.scans??[]).map(scan=><MenuItem key={scan.id} value={scan.id}>{scan.name}</MenuItem>)}
     </TextField>
-    {original ? <Button variant="outlined" color="inherit" size="small" startIcon={<FilterList/>}
-      onClick={() => { select(original.templateChoice); setFilters(true); }}>Use starter template</Button> : <>
-      <Button variant="outlined" color="inherit" size="small" startIcon={<FilterList/>} onClick={()=>setFilters(true)}>
-        Filters{filterCount ? " (" + filterCount + ")" : ""}
-      </Button>
+    {compact ? <Button variant="outlined" color="inherit" size="small" aria-expanded={filters}
+      sx={{ minHeight: 44 }} onClick={openFilters}>Filters{filterCount > 0 ? ` (${filterCount})` : ""}</Button>
+    : <Stack direction="row" role="group" aria-label="Filter layout" sx={{ gap: 0.5 }}>
+      <Button ref={topControl} variant={filters && filterLayout === "top" ? "contained" : "outlined"} color="inherit" size="small"
+        aria-expanded={filters && filterLayout === "top"} onClick={() => changeFilterLayout("top")}>Top controls</Button>
+      <Button variant={filters && filterLayout === "side" ? "contained" : "outlined"} color="inherit" size="small"
+        aria-expanded={filters && filterLayout === "side"} onClick={() => changeFilterLayout("side")}>Side card</Button>
+    </Stack>}
+    {!original && <>
     <TextField select size="small" label="View" value={view}
       onChange={event => setResultView(event.target.value as typeof view)} sx={{ width: 110 }}>
       <MenuItem value="table">Table</MenuItem>
@@ -544,36 +758,86 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
       </>}
     </>}
   </Stack>;
-  if (original) return <DashboardPanel action={toolbar} title="Scanners">
-    <OriginalScannerResults key={original.widget} singleScanner={original.widget} verifiedLevels={verifiedLevels}/>
-  </DashboardPanel>;
-  return <>
-    <DashboardPanel action={toolbar} title="Scanners">
-      <Stack spacing={1}>
+  const filterPanel = filters && <>
+      <Stack direction="row" sx={{ px: 1.5, py: 0.75, alignItems: "center", gap: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Typography component="h2" variant="subtitle1" sx={{ flex: 1 }}>Filters</Typography>
+        {filterLayout === "side" && !compact && <TextField select size="small" label="Filter layout" value={filterLayout} inputRef={layoutControl}
+          slotProps={{ select: { native: true } }} sx={{ width: 142 }}
+          onChange={event => changeFilterLayout(event.target.value as FilterLayout)}>
+          <option value="side">Side card</option>
+          <option value="top">Top controls</option>
+        </TextField>}
+        <IconButton aria-label="Close filters" onClick={closeFilters} sx={{ minHeight: 44, minWidth: 44 }}><CloseRounded /></IconButton>
+      </Stack>
+      <Stack ref={filterContent} spacing={1.25} sx={{ p: effectiveFilterLayout === "top" ? 1.25 : 2, overflowY: effectiveFilterLayout === "side" ? "auto" : undefined, minHeight: 0 }}>
+        {original && <Typography variant="body2" color="text.secondary">{original.label} starter template</Typography>}
+        {effectiveFilterLayout === "top" && <ScannerQuickFilters ranges={quickRules} rvolMetric={rvolMetric}
+          volumeMetric={volumeMetric} sessions={(quickSession?.selection ?? "").split(",").map(value => value.trim()).filter(Boolean)}
+          onRange={changeQuickRange} onRvolMetric={changeQuickRvolMetric} onVolumeMetric={changeQuickVolumeMetric}
+          onSessions={sessions => changeQuickRule(quickSession, "tradingSession", { selection: sessions.join(", ") })} />}
         {error && <Alert severity="warning">{error}</Alert>}
+        <Stack direction="row" sx={{alignItems:"center",gap:0.75,flexWrap:"wrap"}}>
+          <ScannerFilterPicker label="Add filter" categories={metricOptions} onAdd={addRules} />
+          {effectiveFilterLayout === "top" && metricOptions.map(group =>
+            <ScannerFilterPicker key={group.category} label={group.category} categories={[group]} onAdd={addRules} />)}
+        </Stack>
+        <Stack direction="row" sx={{alignItems:"center",gap:0.75,flexWrap:"wrap"}}>
+          {matchControl("Match filters",draft.match,match=>setDraft(current=>({...current,match})))}
+          <Button size="small" variant="outlined" color="inherit" onClick={addGroup}>Add group</Button>
+        </Stack>
+        {ruleControls(draft.rules)}
+        {draft.groups.map((group,index)=><Stack key={group.id} role="group" aria-label={`Filter group ${index+1}`}
+          spacing={1} sx={{p:1.25,borderLeft:2,borderColor:"divider",bgcolor:"action.hover"}}>
+          <Stack direction="row" sx={{alignItems:"center",gap:1,flexWrap:"wrap"}}>
+            {matchControl(`Group ${index+1} matches`,group.match,match=>setDraft(current=>({...current,
+              groups:current.groups.map(item=>item.id===group.id?{...item,match}:item)})))}
+            <IconButton size="small" sx={{ml:"auto"}} aria-label={`Remove group ${index+1}`} onClick={()=>removeGroup(group.id)}>
+              <CloseRounded fontSize="small"/>
+            </IconButton>
+          </Stack>
+          <Box sx={{ alignSelf: "flex-start" }}><ScannerFilterPicker label={`Add filter to group ${index + 1}`}
+            categories={metricOptions} onAdd={metrics => addRules(metrics, group.id)} /></Box>
+          {ruleControls(group.rules)}
+        </Stack>)}
+        <Stack direction="row" sx={{alignItems:"center",gap:0.75,flexWrap:"wrap"}}>
+          <TextField select size="small" label="Sort by" value={sortKey(actualSort)} sx={{width:sortWidth,maxWidth:"100%"}}
+            onChange={event=>{const next=availableSorts.find(sort=>sortKey(sort)===event.target.value);if(next)setDraft(current=>({...current,sort:{...next,direction:current.sort.direction}}));}}>
+            {availableSorts.map(sort=><MenuItem key={sortKey(sort)} value={sortKey(sort)}>{sortLabel(sort)}</MenuItem>)}
+          </TextField>
+          <TextField select size="small" label="Order" value={actualSort.direction} sx={{width:138}}
+            onChange={event=>setDraft(current=>({...current,sort:{...current.sort,direction:event.target.value==="asc"?"asc":"desc"}}))}>
+            <MenuItem value="desc">Highest first</MenuItem><MenuItem value="asc">Lowest first</MenuItem>
+          </TextField>
+          <TextField select size="small" label="Detection" value={draft.cadence ?? "live"} sx={{ width: 200 }}
+            onChange={event => setDraft(current => ({ ...current, cadence: event.target.value === "swing" ? "swing" : undefined }))}>
+            <MenuItem value="live">Live</MenuItem>
+            <MenuItem value="swing">Swing · every 5 min</MenuItem>
+          </TextField>
+        </Stack>
+      </Stack>
+      <Stack direction="row" spacing={1} sx={{ px: 1.5, py: 1, borderTop: 1, borderColor: "divider", justifyContent: "flex-end" }}>
+        <Button color="inherit" onClick={() => resetFilters(effectiveFilterLayout === "top")}>Cancel</Button>
+        <Button variant="contained" disabled={!ready || !definition} onClick={applyFilters}>Apply</Button>
+      </Stack>
+  </>;
+  return <>
+    <DashboardPanel action={toolbar} title="Scanner">
+      <Stack spacing={1}>
+        {filters && effectiveFilterLayout === "top" && <Box component="section" aria-label="Scan filters"
+          sx={{ display: { xs: "none", md: "block" }, border: 1, borderColor: "divider" }}>
+          {filterPanel}
+        </Box>}
+        {original ? <OriginalScannerResults key={original.widget} singleScanner={original.widget} verifiedLevels={verifiedLevels} /> : <>
+        {!filters && error && <Alert severity="warning">{error}</Alert>}
         {newsError && <Alert severity="warning" onClose={() => setNewsError(false)}>This press release is unavailable.</Alert>}
         {bookError && <Alert severity="warning" action={
           <Button color="inherit" size="small" onClick={() => void reload()}>Refresh list</Button>
         }>{bookError}</Alert>}
-        {filterCount>0 && <Stack direction="row" sx={{gap:0.5,overflowX:"auto",pb:0.25}}>
-          {filterSummary.match==="any"&&filterCount>1&&<Chip size="small" label="Match any" onClick={()=>setFilters(true)}/>}
-          {activeRules.map(rule=><Chip size="small" key={rule.id} onClick={()=>setFilters(true)}
-            label={rule.custom?[
-              rule.frame,customIndicatorTitle(customConfig(rule.metric,rule.custom)),indicatorComparisons[rule.custom.comparison],
-              isIndicatorCross(rule.custom.comparison)?rule.maximum+"m":"",
-            ].filter(Boolean).join(" "):rule.metric==="pressRelease"
-              ? `${rule.absence?"No visible press release":"Press release"} within ${rule.maximum}${releaseAbbreviation[rule.releaseUnit??"Hours"]}`
-              : rule.metric==="indicatorSignal"&&rule.signal
-                ? `${rule.frame??"5m"} ${scanSignalLabels[rule.signal]} · ${rule.maximum}m`
-                : rule.metric==="confirmed4hBreak"
-                ? `4H level break · ${rule.direction} · ${rule.maximum}h`
-                : rule.metric==="tradeResumed" ? "Trading resumed · past " + rule.maximum + "m"
-                : rule.metric==="tradingSession" ? (rule.selection??"").split(",").map(value=>SCAN_SESSION_LABELS[value.trim() as keyof typeof SCAN_SESSION_LABELS]).join(", ")
-                : isScanSelectionMetric(rule.metric) ? SCAN_METRICS[rule.metric].label + " · " + rule.selection
-                : rule.metric==="activeHalt" ? "Trading halt"
-                : [rule.frame, SCAN_METRICS[rule.metric].label, rule.minimum && (rule.maximum?rule.minimum + "–" + rule.maximum : "≥ " + rule.minimum),
-              !rule.minimum && rule.maximum && "≤ " + rule.maximum, scanMetricUsesMinutes(rule.metric) && rule.minutes + "m"].filter(Boolean).join(" ")}/>)}
-          {activeGroups.map(group=><Chip size="small" key={group.id} onClick={()=>setFilters(true)}
+        {filterCount>0 && !(filters && effectiveFilterLayout === "top") && <Stack direction="row" sx={{gap:0.5,overflowX:"auto",pb:0.25}}>
+          {filterSummary.match==="any"&&filterCount>1&&<Chip size="small" label="Match any" onClick={openFilters}/>}
+          {activeRules.map(rule=><Chip size="small" key={rule.id} onClick={openFilters}
+            label={summarizeRule(rule)}/>)}
+          {activeGroups.map(group=><Chip size="small" key={group.id} onClick={openFilters}
             label={`${group.match==="all"?"All":"Any"} of ${group.rules.length} ${group.rules.length===1?"filter":"filters"}`}/>)}
         </Stack>}
         {results.showPrevious && <Alert severity={results.error ? "warning" : "info"}>
@@ -594,7 +858,7 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
               setTicker(symbol);
             }}
             addToWatchlist={addToWatchlist}
-            onEditFilters={() => setFilters(true)}
+            onEditFilters={openFilters}
             inlineChart={{
               symbol: inlineSymbol,
               onToggle: symbol => {
@@ -628,6 +892,7 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
               },
             }} />
         </ScannerNewsDrawerProvider>
+        </>}
       </Stack>
     </DashboardPanel>
     {newsArticle && <PressReleaseArticleDrawer article={newsArticle} onClose={() => setNewsArticle(null)} />}
@@ -646,59 +911,12 @@ export function CustomScannersClient({ returnScope, addToWatchlist, verifiedLeve
         closeAction={<IconButton aria-label="Close chart drawer" onClick={() => setChartDrawerOpen(false)}
           sx={{ width: 44, height: 44 }}><CloseRounded fontSize="small" /></IconButton>} />
     </Drawer>}
-    <Drawer open={filters} onClose={closeFilters} anchor={compact?"bottom":"right"}
+    <Drawer open={filters && effectiveFilterLayout === "side"} onClose={closeFilters} anchor={compact?"bottom":"right"}
+      disableRestoreFocus={effectiveFilterLayout === "top"}
       transitionDuration={{enter:theme.transitions.duration.enteringScreen,exit:0}} slotProps={{paper:{
       role:"dialog","aria-label":"Scan filters",sx:{width:compact?"100%":420,maxHeight:compact?"82dvh":undefined,display:"flex",flexDirection:"column"},
     }}}>
-      {filters && <>
-      <Stack direction="row" sx={{px:2,py:0.5,alignItems:"center",justifyContent:"space-between",borderBottom:1,borderColor:"divider"}}>
-        <Typography component="h2" variant="h6">Filters</Typography>
-        <IconButton aria-label="Close filters" onClick={closeFilters}><CloseRounded/></IconButton>
-      </Stack>
-      <Stack ref={filterContent} spacing={1.25} sx={{p:2,overflowY:"auto",minHeight:0}}>
-        <Stack direction="row" sx={{alignItems:"center",gap:0.75,flexWrap:"wrap"}}>
-          <TextField select size="small" label="Sort by" value={sortKey(actualSort)} sx={{width:sortWidth,maxWidth:"100%"}}
-            onChange={event=>{const next=availableSorts.find(sort=>sortKey(sort)===event.target.value);if(next)setDraft(current=>({...current,sort:{...next,direction:current.sort.direction}}));}}>
-            {availableSorts.map(sort=><MenuItem key={sortKey(sort)} value={sortKey(sort)}>{sortLabel(sort)}</MenuItem>)}
-          </TextField>
-          <TextField select size="small" label="Order" value={actualSort.direction} sx={{width:138}}
-            onChange={event=>setDraft(current=>({...current,sort:{...current.sort,direction:event.target.value==="asc"?"asc":"desc"}}))}>
-            <MenuItem value="desc">Highest first</MenuItem><MenuItem value="asc">Lowest first</MenuItem>
-          </TextField>
-        </Stack>
-        <TextField select size="small" label="Detection" value={draft.cadence ?? "live"} sx={{ width: 200 }}
-          onChange={event => setDraft(current => ({ ...current, cadence: event.target.value === "swing" ? "swing" : undefined }))}>
-          <MenuItem value="live">Live</MenuItem>
-          <MenuItem value="swing">Swing · every 5 min</MenuItem>
-        </TextField>
-        {error && <Alert severity="warning">{error}</Alert>}
-        <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center",gap:0.75,flexWrap:"wrap"}}>
-          {matchControl("Match filters",draft.match,match=>setDraft(current=>({...current,match})))}
-          <Button size="small" variant="outlined" color="inherit" onClick={addGroup}>Add group</Button>
-        </Stack>
-        {draft.rules.map(renderRule)}
-        {draft.groups.map((group,index)=><Stack key={group.id} role="group" aria-label={`Filter group ${index+1}`}
-          spacing={1} sx={{p:1.25,borderLeft:2,borderColor:"divider",bgcolor:"action.hover"}}>
-          <Stack direction="row" sx={{alignItems:"center",gap:1,flexWrap:"wrap"}}>
-            {matchControl(`Group ${index+1} matches`,group.match,match=>setDraft(current=>({...current,
-              groups:current.groups.map(item=>item.id===group.id?{...item,match}:item)})))}
-            <IconButton size="small" sx={{ml:"auto"}} aria-label={`Remove group ${index+1}`} onClick={()=>removeGroup(group.id)}>
-              <CloseRounded fontSize="small"/>
-            </IconButton>
-          </Stack>
-          {group.rules.map(renderRule)}
-          {filterTarget===group.id?filterPicker:
-            <Button size="small" variant="outlined" color="inherit" sx={{alignSelf:"flex-start"}}
-              aria-label={`Add filter to group ${index+1}`} onClick={()=>{setFilterTarget(group.id);setSearch("");}}>Add filter</Button>}
-        </Stack>)}
-        {filterTarget===null?filterPicker:<Button size="small" variant="outlined" color="inherit" sx={{alignSelf:"flex-start"}}
-          onClick={()=>{setFilterTarget(null);setSearch("");}}>Add top-level filter</Button>}
-      </Stack>
-      <Stack direction="row" spacing={1} sx={{p:1.5, borderTop:1, borderColor:"divider", justifyContent:"flex-end"}}>
-        <Button color="inherit" onClick={closeFilters}>Cancel</Button>
-        <Button variant="contained" disabled={!definition} onClick={applyFilters}>Apply</Button>
-      </Stack>
-      </>}
+      {filters && effectiveFilterLayout === "side" && filterPanel}
     </Drawer>
     <Dialog open={deleteOpen} onClose={() => { if (!saving) setDeleteOpen(false); }} aria-labelledby="delete-scan-title">
       <DialogTitle id="delete-scan-title">Delete {selected?.name}?</DialogTitle>

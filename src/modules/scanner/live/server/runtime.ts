@@ -1,5 +1,6 @@
 import { readAlpacaScannerHaltSymbols } from "../../alpaca/scanner-halts";
 import "server-only";
+import { readScannerCompanyBatch } from "../../custom/server/company-filter-data";
 import {scannerConnection} from "./scanner-connection";
 export {scannerConnection} from "./scanner-connection";
 import {readScannerConnection,saveScannerConnection,type ScannerProvider} from "./provider-store";
@@ -161,9 +162,16 @@ function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime 
     },
     floats: (date,symbols) => floatFeed.read(date,symbols),
     countries: date => floatFeed.readCountries(date),
+    companyReadings:readScannerCompanyBatch,
+    ipoDates: date => floatFeed.readIpoDates(date),
     industries: date => floatFeed.readIndustries(date),
     news: async symbols => newsFor(symbols,environment),
-    ...(provider === "alpaca" ? { loadSignalBars: request => readAlpacaScannerSignalBars(request, environment) } : {}),
+    ...(provider === "alpaca" ? {
+      studyArchive: query => requestAlpacaGateway("candle-history",new URLSearchParams({
+        symbol:query.symbol,frame:query.frame,session:query.session,start:String(query.start),end:String(query.end),purpose:"scanner",
+      }),environment) as Promise<import("../../../market-data/candle-history/transport").CandleArchiveReply>,
+      loadSignalBars: request => readAlpacaScannerSignalBars(request, environment),
+    } : {}),
     qualification: (session,context) => sessionQualifier.observe(session,context),
     audit,
   };
@@ -172,6 +180,7 @@ function configuredRuntime(inputEnvironment: NodeJS.ProcessEnv): ScannerRuntime 
     universe:coalescedMetadata(dependencies.universe,5000,date=>date),
     floats:coalescedMetadata(dependencies.floats,5000,(date,symbols)=>date+":"+symbols.join(",")),
     countries:dependencies.countries?coalescedMetadata(dependencies.countries,300_000,date=>date):undefined,
+    ipoDates:dependencies.ipoDates?coalescedMetadata(dependencies.ipoDates,300_000,date=>date):undefined,
     industries:dependencies.industries?coalescedMetadata(dependencies.industries,300_000,date=>date):undefined,
     news:coalescedMetadata(dependencies.news,5000,symbols=>symbols.join(",")),
   }:dependencies);
@@ -194,6 +203,9 @@ export function openLiveCustomScans() {
 
 export function readLiveScannerRuntime(environment: NodeJS.ProcessEnv = process.env): ScannerReadModel {
   return configuredRuntime(environment).feed.read();
+}
+export function readLiveScannerAlertModel(environment: NodeJS.ProcessEnv = process.env) {
+  return configuredRuntime(environment).feed.readAlertModel();
 }
 export function subscribeLiveScannerRuntime(notify:()=>void,environment:NodeJS.ProcessEnv=process.env):()=>void {
   return configuredRuntime(environment).feed.subscribeModels(notify);

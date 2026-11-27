@@ -167,6 +167,7 @@ export class AlpacaPreviousCloseBook {
     const conflictingBars = new Map<string, Set<string>>();
     const latest = new Map<string, { price: number; high?: number; low?: number; barAt: number }>();
     const invalid = new Set<string>();
+    const dollarTotals = new Map<string,Map<string,number>>();
     const add = (symbol: string, bar: Candle) => {
       const barAt = bar.time * 1_000;
       const barDate = easternClock(barAt).date;
@@ -200,6 +201,11 @@ export class AlpacaPreviousCloseBook {
         if (!bar || bar.close <= 0) { invalid.add(symbol); return; }
         if (bar.time * 1_000 < from || bar.time * 1_000 >= to) return;
         add(symbol, bar);
+        const vwap=(raw as {vw?:unknown}).vw;
+        if(typeof vwap==="number" && Number.isFinite(vwap) && vwap>0){
+          const dates=dollarTotals.get(symbol)??new Map<string,number>();
+          dates.set(easternClock(bar.time*1000).date,vwap*bar.volume);dollarTotals.set(symbol,dates);
+        }
         fetched.get(symbol)!.set(bar.time, bar);
       }, symbol => invalid.add(symbol));
       if (this.archive && easternClock(Date.now()).date === date) {
@@ -221,7 +227,7 @@ export class AlpacaPreviousCloseBook {
       } : undefined;
       this.cache.set(`${date}:${symbol}`, { at: publishedAt, value: value ? {
         symbol, ...value, adjustment: "split", basisDate: date, fetchedAt: publishedAt,
-        ...(series.has(symbol) ? { statistics: scannerDailyStatistics(date, series.get(symbol)!, sessionCalendars, quiet) } : {}),
+        ...(series.has(symbol) ? { statistics: scannerDailyStatistics(date, series.get(symbol)!, sessionCalendars, quiet,dollarTotals.get(symbol)) } : {}),
       } : null });
     }
   }

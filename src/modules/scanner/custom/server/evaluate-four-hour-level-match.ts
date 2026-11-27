@@ -251,7 +251,7 @@ function registerProjectedMatches({
     const reference = registerScannerChartEvidence(identity, match, generations, readCurrentCandle, dailyContext,
       readQualifiedZones);
     if (!reference) return unavailable;
-    matches.push({ symbol: trigger.basis.symbol, eventId: match.event.id, reference, evidenceHref: `/scanners?evidence=${reference}` });
+    matches.push({ symbol: trigger.basis.symbol, eventId: match.event.id, reference, evidenceHref: `/scanner?evidence=${reference}` });
   }
   return { state: "ready", matches } as const;
 }

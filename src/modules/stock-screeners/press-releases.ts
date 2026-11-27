@@ -104,3 +104,20 @@ export function memberRecentArticles(identity: TraderLinkPlatformRequestIdentity
 export function canReadPressReleaseRun(identity: TraderLinkPlatformRequestIdentity, delayAtRun: number, now: number) {
   return withPressReleaseAccess(identity, now, (_, delay) => delay <= delayAtRun) === true;
 }
+
+// Read article rows once across the roster, with the same visibility boundary as the latest-PR card.
+export function memberScannerArticleHistory(identity: TraderLinkPlatformRequestIdentity, symbols: readonly string[],
+  asOf: number, lookbackHours: number, policyAt: number) {
+  return withPressReleaseAccess(identity, policyAt, (database, delay) => {
+    const until = Math.min(asOf, policyAt - delay * 1000);
+    const rows = database.prepare(`
+      SELECT a.id, a.ticker, a.published_at, a.headline, a.slug FROM json_each(@symbols) s
+      JOIN news_articles a ON a.ticker = s.value
+      WHERE a.published_at BETWEEN @from AND @until AND a.created_at <= @until
+        AND a.route_tag IN (${MEMBER_NEWS_ROUTES}) AND a.event_type GLOB 'press_release*'
+      ORDER BY a.ticker, a.published_at DESC, a.id
+    `).all({symbols:JSON.stringify(symbols),from:new Date(asOf-lookbackHours*HOUR_MS).toISOString(),
+      until:new Date(until).toISOString()}) as (ArticleRow & {id:string})[];
+    return rows.map(row => ({symbol:row.ticker, id:row.id, ...headline(row)}));
+  });
+}

@@ -37,7 +37,7 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { stockScreenersEnabled } from "@/src/modules/stock-screeners/service";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
-import { canOpenBrokerWorkspace, hasLegacyScannerDashboardAccess, hasStockScreenersDashboardAccess, readMarketToolsDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
+import { canOpenBrokerWorkspace, hasStockScreenersDashboardAccess, readMarketToolsDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { hasChartsDashboardAccess } from "@/src/modules/market-data/server/chart-dashboard-access";
 import { hasCandleHistoryOwnerAccess } from "@/src/modules/market-data/server/candle-history-owner";
 import { readWorkspaceMarketSettings } from "@/src/modules/market-data/server/workspace-market-settings-store";
@@ -197,7 +197,6 @@ async function TraderLinkPlatformDashboardFrameContent({
     ? withReadonlyPlatformDatabase({}, database => readMembershipDiscordConnection(database, scope.userId)) : null;
   timing.next(null);
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
-  const scannerEarlyAccess = hasLegacyScannerDashboardAccess(identity);
   const screenersDashboardAccess = stockScreenersEnabled(identity.mode) && hasStockScreenersDashboardAccess(identity);
   const chartsDashboardAccess = hasChartsDashboardAccess(identity);
   const ownerMarketDataAccess = hasOwnerMarketDataAccess(identity);
@@ -290,7 +289,6 @@ async function TraderLinkPlatformDashboardFrameContent({
           notifications={dashboardContext.notifications}
           offlineScopeRef={offlineScopeRef}
           deferPressReleaseUnreadCounts={canReadPressReleases}
-          scannerEarlyAccess={scannerEarlyAccess}
           watchlistMemberNavigationAccess
           ownerMarketDataAccess={ownerMarketDataAccess}
           generalMarketNewsAccess={generalMarketNewsAccess}

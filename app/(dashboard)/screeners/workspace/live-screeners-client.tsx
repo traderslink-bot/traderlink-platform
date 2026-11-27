@@ -412,8 +412,8 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
       <Stack direction="row" sx={{alignItems:"center",borderBottom:1,borderColor:"divider",justifyContent:"space-between",flexShrink:0,px:{xs:1.5,md:2},py:0}}>
         <Box sx={{minWidth:0}}>
           <Stack direction="row" data-chart-header-controls sx={{alignItems:"center",flexWrap:"wrap",gap:0.75}}>
-            {temporary?<><Button size="small" onClick={onBack}>Back to saved charts</Button>
-              <Button size="small" onClick={onSaveTemporary}>Add to saved charts</Button></>:<>
+            {temporary?(broker?null:<><Button size="small" onClick={onBack}>Back to saved charts</Button>
+              <Button size="small" onClick={onSaveTemporary}>Add to saved charts</Button></>):<>
             <Box component="form" onSubmit={event=>{event.preventDefault();addChart();}} sx={{display:"flex",alignItems:"center",gap:0.5}}>
               <TextField value={newChartSymbol} onChange={event=>setNewChartSymbol(event.target.value)} placeholder="Ticker" slotProps={{htmlInput:{"aria-label":"Add chart ticker",maxLength:15}}} size="small" sx={{width:82,'& input':{py:0.4,px:0.75,fontSize:12}}}/>
               <Button type="submit" size="small" disabled={!/^[A-Z][A-Z0-9.-]{0,14}$/.test(newChartSymbol.trim().toUpperCase())} sx={{minWidth:0,px:0.5,fontSize:11}}>Add chart</Button>
@@ -429,7 +429,7 @@ function ScannerChartDrawer({open,temporary,onBack,onSaveTemporary,charts,row,on
       </Stack>
       <Box data-chart-workspace-scroll sx={{flex:1,minHeight:0,display:{xs:"block",md:"grid"},gridTemplateColumns:row?.showDetails?{xs:"1fr",md:"minmax(0,2fr) minmax(380px,1fr)"}:"1fr",overflowY:{xs:"auto",md:"hidden"},overscrollBehaviorY:"auto"}}>
         <Box data-workspace-charts sx={{display:"flex",minWidth:0,minHeight:0,height:{xs:"65dvh",md:"auto"},p:{xs:0,md:0.5}}}>
-          <ChartMultiviewCharts key={temporary?"temporary":"saved"} plain={temporary} viewPrefix={temporary?"temporary-":""} workspace="scanner" defaultTimeframe={defaultTimeframe} layout={layout} onChange={onLayoutChange} activeSymbol={row?.symbol} allowEmpty ready={layoutReady}/>
+          {(!broker||open)&&<ChartMultiviewCharts key={temporary?"temporary":"saved"} plain={temporary} viewPrefix={temporary?"temporary-":""} workspace="scanner" defaultTimeframe={defaultTimeframe} layout={layout} onChange={onLayoutChange} activeSymbol={row?.symbol} allowEmpty ready={layoutReady}/>}
         </Box>
         {row?.showDetails?<Stack component="aside" aria-label="Chart workspace details" spacing={0.5} sx={{minWidth:0,minHeight:0,pl:2,pr:0.5,py:0.5,borderLeft:{md:1},borderColor:"divider",overflow:{xs:"visible",md:"hidden"}}}>
           <Stack direction="row" sx={{alignItems:"center",gap:0.75,minWidth:0,flexShrink:0,borderBottom:1,borderColor:"divider"}}>
@@ -691,7 +691,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
   },[mobile,desktopLayout,mobileEditor.ready,ownerKey,orientation,mobileEditor.selectedName,mobileLayout.selected]);
 
   const defaultTimeframe=chartPreferences.timeframe;
-  const {layout:pageCharts,change:setPageCharts,ready:pageChartsReady,openTicker:openPageTicker}=useWorkspaceChartLayout(ownerKey);
+  const {layout:pageCharts,change:setPageCharts,ready:pageChartsReady,openTicker:openPageTicker}=useWorkspaceChartLayout(ownerKey,broker);
   const [pageChartsFull,setPageChartsFull]=useState(false);
   const [pageReplacement,setPageReplacement]=useState<{symbol:string;layout:ChartMultiview}|null>(null);
   const activePageReplacement=pageReplacement?.layout===pageCharts?pageReplacement:null;
@@ -850,6 +850,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
   };
   const openChart=(request:ScannerChartTarget)=>{
     const chart={...request,showDetails:true,stock:request.stock??[...(legacyModel?.gainers.rows??[]),...(legacyModel?.dayGainers?.rows??[]),...(legacyModel?.momentum.rows??[])].find(stock=>stock.symbol===request.symbol)};
+    if(broker){setTemporary({chart,layout:singleChart(chart.symbol,defaultTimeframe)});setDrawerOpen(true);return;}
     if(chartLayout.groups.some(group=>group.symbol===chart.symbol)){
       dispatchChart({type:"configure",selectedSymbol:chart.symbol,
         charts:chartWorkspace.charts.map(item=>item.symbol===chart.symbol?chart:item)});
@@ -1070,13 +1071,13 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
           const saved=saveLayouts(name,[...stored.layouts.filter(item=>item.name!==name),{name,rectangles:draft,scanners:draftScanners,savedScanIds:draftSavedIds,views:draftViews,sections:draftSections,volumeColumns:draftVolumeColumns,gainerAutoSwitch:draftGainerSwitch}]);
           if(saved)setDraft(null);return saved;
         }}/>}
-        {showWorkspaceChart&&pageCharts&&chartCount(pageCharts)>1&&
+        {!broker&&showWorkspaceChart&&pageCharts&&chartCount(pageCharts)>1&&
           <ChartMultiviewMenu layout={pageCharts} openingPanelId={pageCharts.selectedPanel??undefined} defaultTimeframe={defaultTimeframe}
             onChange={setPageCharts} launcherRef={workspaceMultiviewButton} disabled={arrangingCharts||draft!==null}
             onArrange={()=>{setArrangeChartsFor(pageCharts);revealWorkspaceChart();}} resolveEmptyLayout={draft=>singleWorkspaceChart(draft,compactChartSymbol,defaultTimeframe)}
             onCloseView={()=>setPageCharts(current=>current?keepSelectedWorkspaceChart(current):null)}
             closeViewLabel="Return to one chart" chartTabs iconOnly workspaceFullGrid/>}
-        {((desktopLayout&&mobile)||(!drawerOpen&&canReopenChart))&&
+        {!broker&&((desktopLayout&&mobile)||(!drawerOpen&&canReopenChart))&&
           <Tooltip title={drawerOpen?"Chart drawer is open":canReopenChart?"Reopen chart drawer":"No chart to reopen"}>
             <Box component="span" sx={{display:"inline-flex",mx:0.25,flexShrink:0,"@media(max-width:359px)":{mx:0}}}>
               <ButtonBase aria-label="Reopen chart drawer" disabled={drawerOpen||!canReopenChart}
@@ -1183,7 +1184,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
           </WorkspaceScannerTitleContext.Provider>
         </ScannerWorkspaceCard>;
       })}
-      {!admin&&showScanner("ticker-workspace")&&<ChartPreferencesContext.Provider value={chartPreferenceState}><ScannerCompactChart slot={workspaceLayout.assignments["ticker-workspace"]} symbol={pageChartsReady?compactChartSymbol:null} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} fillMobile={mobile&&desktopLayout} keepMounted={!mobile&&draft!==null} arrange={arrangingCharts} onEndArrange={endChartArrangement}/></ChartPreferencesContext.Provider>}
+      {!admin&&showScanner("ticker-workspace")&&<ChartPreferencesContext.Provider value={chartPreferenceState}><ScannerCompactChart singlePanel={broker} slot={workspaceLayout.assignments["ticker-workspace"]} symbol={pageChartsReady?compactChartSymbol:null} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} fillMobile={mobile&&desktopLayout} keepMounted={!mobile&&draft!==null} arrange={arrangingCharts} onEndArrange={endChartArrangement}/></ChartPreferencesContext.Provider>}
       {mobile&&desktopLayout&&mobileEditor.editing&&!mobileTabs&&<MobileCardResizeHandles rootRef={gridRef} layout={mobileLayout} viewport={mobileHeight} onChange={mobileEditor.update}/>}{draft&&tiled&&<ScannerLayoutHandles rectangles={draft} onChange={changeLayout} onMessage={setVisibilityMessage}/>}
     </Box></Box></ScannerNewsDrawerProvider>
     </ScannerPageSurface>

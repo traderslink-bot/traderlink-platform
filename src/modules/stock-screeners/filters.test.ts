@@ -4,7 +4,7 @@ import type { TraderLinkPlatformRequestIdentity } from "../platform/server/authe
 import { collectMarketPack, type BarCache } from "./collect-market";
 import { DEFAULT_DEFINITION, parseDefinition, parseThreshold } from "./contracts";
 import { marketWindows, sessionBounds, type ProviderBar } from "./market-metrics";
-import { canReadPressReleaseRun, HOUR_MS, latestPressReleases, memberRecentArticles, memberScannerPressReleaseRecords } from "./press-releases";
+import { canReadPressReleaseRun, HOUR_MS, latestPressReleases, memberRecentArticles, memberScannerArticleHistory, memberScannerPressReleaseRecords } from "./press-releases";
 import { matchesRule } from "./query";
 import { relativeVolumeAtTime, relativeVolumeHistory, relativeVolumeSchedule } from "./relative-volume";
 
@@ -202,9 +202,13 @@ describe("recent press releases", () => {
         .toBe("delayed");
       expect(memberScannerPressReleaseRecords(identity, ["AAA"], recent - HOUR_MS, 168, recent + HOUR_MS)?.get("AAA")?.id)
         .toBe("older-visible");
+      const history = () => memberScannerArticleHistory(identity, ["AAA"], recent, 168, recent)?.map(article => article.id);
+      expect(history()).toEqual(["older-visible"]);
       newsAccess.delay = 0;
+      expect(history()).toEqual(["delayed", "older-visible"]);
       expect(memberScannerPressReleaseRecords(identity, ["AAA"], recent, 168)?.get("AAA")?.id).toBe("delayed");
       newsAccess.allowed = false;
+      expect(history()).toBeUndefined();
       expect(memberScannerPressReleaseRecords(identity, ["AAA"], recent, 168)).toBeUndefined();
     } finally {
       newsAccess.allowed = true;

@@ -10,7 +10,7 @@ import { browserDataSession } from "@/src/modules/market-data/server/browser-dat
 import { ChartSessionCalendar } from "@/src/modules/scanner/alpaca/chart-calendar";
 import { ALPACA_NATIVE_DAILY_DATASET, ALPACA_REGULAR_FOUR_HOUR_DATASET } from "@/src/modules/scanner/alpaca/rest-data";
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import ScannersPage from "@/app/(dashboard)/scanners/page";
+import ScannerPage from "@/app/(dashboard)/scanner/page";
 import MarketChartsPage from "@/app/(dashboard)/charts/page";
 import { GET } from "@/app/api/scanners/evidence/route";
 
@@ -41,8 +41,9 @@ vi.mock("@/app/dashboard-template", () => ({
     createElement("section", null, title, action, children),
   DashboardSecondaryAction: ({ children, href }: {children: ReactNode; href: string}) => createElement("a", { href }, children),
 }));
-vi.mock("@/app/(dashboard)/screeners/live-screeners-client", () => ({
-  LiveScreenersClient: () => createElement("div", null, "Live scanner"),
+vi.mock("@/app/(dashboard)/scanners/scanner-builder-page", () => ({
+  ScannerBuilderPage: ({ children }: { children: ReactNode }) =>
+    createElement("main", { "data-scanner-editor": true }, children),
 }));
 vi.mock("@/app/(dashboard)/charts/market-chart", () => ({
   MarketChart: ({ evidence, timeframe }: { evidence: { basis: { symbol: string } }; timeframe: string }) =>
@@ -355,7 +356,7 @@ it("hands Charts the exact qualifying candle and level only for the owner and cu
   const reference = evaluated.state === "ready" ? evaluated.matches[0]?.reference : undefined;
   if (!reference) throw Error("fixture match was not registered");
   const matchRow = evaluated.state === "ready" ? evaluated.matches[0] : undefined;
-  expect(matchRow?.evidenceHref).toBe("/scanners?evidence=" + reference);
+  expect(matchRow?.evidenceHref).toBe("/scanner?evidence=" + reference);
 
   try {
     const request = new Request("https://test.invalid/api/scanners/evidence?reference=" + reference);
@@ -383,16 +384,19 @@ it("hands Charts the exact qualifying candle and level only for the owner and cu
     expect(state.map).toHaveBeenCalledWith(identity("alice"), trigger.basis.symbol, { mapId: zone.mapId, revision: zone.mapRevision }, fixture.acceptedAt * 1_000);
 
     const params = { searchParams: Promise.resolve({ evidence: reference }) };
-    const scanner = renderToStaticMarkup(await ScannersPage(params));
+    const scanner = renderToStaticMarkup(await ScannerPage(params));
     const chart = renderToStaticMarkup(await MarketChartsPage(params));
     for (const html of [scanner, chart]) {
       expect(html).toContain('data-evidence-chart="QA"');
       expect(html).toContain('data-frame="4h"');
     }
     expect(scanner).toContain("/charts?evidence=" + reference);
+    expect(scanner).toContain('data-scanner-editor="true"');
     state.user = "bob";
     expect((await GET(request)).status).toBe(404);
-    expect(renderToStaticMarkup(await ScannersPage(params))).toContain("Matched chart evidence is unavailable.");
+    const unavailable = renderToStaticMarkup(await ScannerPage(params));
+    expect(unavailable).toContain("Matched chart evidence is unavailable.");
+    expect(unavailable).toContain('data-scanner-editor="true"');
     expect(renderToStaticMarkup(await MarketChartsPage(params))).not.toContain("data-evidence-chart");
     state.user = "alice";
     state.revision++;

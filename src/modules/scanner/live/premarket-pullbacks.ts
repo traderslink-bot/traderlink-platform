@@ -1,3 +1,4 @@
+import { priceChangePercent } from "../price-change";
 import { scannerVolumeBreakdown } from "./volume";
 import type { DailyUniverse, DeclineRow, NormalizedSnapshot, PremarketPullbackControls, PremarketPullbackResults, PremarketPullbackRow, RollingActivity, ScannerSession } from "./contracts";
 import type { FloatFact } from "./engine";
@@ -78,9 +79,9 @@ export class PremarketPullbackBook {
       ].filter((item):item is NonNullable<typeof item>=>item!==null);
       const reference=candidates.reduce<(typeof candidates)[number]|null>((best,item)=>!best||item.high>best.high?item:best,null);
       if(!reference){missingReferenceCount++;this.included.delete(symbol);continue;}
-      const below=(1-quote.price/reference.high)*100,rapidDrop=rapidBySymbol.get(symbol);
+      const below=-priceChangePercent(quote.price, reference.high),rapidDrop=rapidBySymbol.get(symbol);
       const boundary=this.included.has(symbol)?controls.removeWithinPercent:controls.minimumPullbackPercent;
-      if(below+1e-9<boundary||below<=0){this.included.delete(symbol);continue;}
+      if(below<boundary||below<=0){this.included.delete(symbol);continue;}
       this.included.add(symbol);
       const fact=input.floats.get(symbol),at=fact?Date.parse(fact.retrievedAtUtc):NaN;
       const activity=input.activity(symbol);
@@ -91,8 +92,8 @@ export class PremarketPullbackBook {
         ...scannerVolumeBreakdown(quote.provider === "alpaca" ? quote : { ...quote, premarketVolume: ref?.volume }),
         sessionVolume:quote.volume,
         float:fact&&Number.isSafeInteger(fact.shares)&&fact.shares>0&&at<=input.now&&input.now-at<=30*60*60000?fact.shares:null,
-        changePercent:validComparison===null?null:(quote.price/validComparison-1)*100,
-        belowHighPercent:below,backToHighPercent:(reference.high/quote.price-1)*100,
+        changePercent:validComparison===null?null:priceChangePercent(quote.price, validComparison),
+        belowHighPercent:below,backToHighPercent:priceChangePercent(reference.high, quote.price),
         oneMinuteVolume:activity.oneMinuteVolume,fiveMinuteVolume:activity.fiveMinuteVolume,
         spreadPercent:quote.bid!==null&&quote.ask!==null&&quote.bid>0&&quote.ask>=quote.bid?(quote.ask-quote.bid)/((quote.ask+quote.bid)/2)*100:null,
         receivedAtUtc:new Date(quote.receivedAt).toISOString(),news:[],...(rapidDrop?{rapidDrop}:{})});

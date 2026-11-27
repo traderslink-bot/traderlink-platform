@@ -100,13 +100,18 @@ export function revokeChangedScanShares(directory: string, ownerId: string, next
 
 /** The link grants access to one saved rule version and is retired on revoke or a rule edit. */
 export function readSharedScan(directory: string, id: string): { grant: ScanShare; scan: SavedScan } | null {
+  const source = readSharedScanSource(directory, id);
+  return source && { grant: source.grant, scan: source.scan };
+}
+
+export function readSharedScanSource(directory: string, id: string): { grant: ScanShare; scan: SavedScan; ownerKey: string } | null {
   if (!SHARED_SCAN_ID.test(id)) return null;
   const grant = withShares(directory, false, null as Grant | null,
     database => database.prepare("SELECT * FROM scanner_shares WHERE id = ?").get(id) as Grant | undefined ?? null);
   if (!grant) return null;
   const scan = readSavedScansByOwnerKey(directory, grant.ownerKey).scans.find(scan => scan.id === grant.scanId);
   if (!scan || definitionHash(scan) !== grant.definitionHash) return null;
-  return { grant: { id, mode: grant.mode }, scan };
+  return { grant: { id, mode: grant.mode }, scan, ownerKey: grant.ownerKey };
 }
 
 export function sharedScanView(share: NonNullable<ReturnType<typeof readSharedScan>>): SharedScanView {

@@ -7,7 +7,7 @@ export const PLATFORM_HOME_PAGES = {
   // "welcome" is the persisted preference key for Home.
   welcome: { label: "Home", href: "/home" },
   "trading-workspace": { label: "Trading Workspace", href: "/trading-workspace" },
-  scanners: { label: "Scanners", href: "/scanners" },
+  scanners: { label: "Scanner", href: "/scanner" },
   screeners: { label: "Screeners", href: "/screeners" },
   "journal-workspace": { label: "Journal Workspace", href: "/workspace" },
 } as const;

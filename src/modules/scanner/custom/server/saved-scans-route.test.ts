@@ -290,3 +290,61 @@ it("shares live results with private rules by default and revokes the open strea
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+it("applies, saves and reloads mixed All/Any rules with identical matches and unknown counts", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "scanner-group-round-trip-"));
+  state.directory = directory;
+  const origin = "https://scanner.test";
+  const url = origin + "/api/scanners/custom";
+  const request = (method: string, body?: unknown) => new Request(url, {
+    method, headers: { origin, host: "scanner.test", "sec-fetch-site": "same-origin", "x-actor": "alice",
+      [PLATFORM_MUTATION_REQUEST_HEADER]: "1" }, body: JSON.stringify(body),
+  });
+  const now = Date.now();
+  const market = new CustomScanMarket();
+  const rows = [
+    ["AAA", 5, 10_000_000, 0], ["BBB", 2, 11_000_000, 30], ["CCC", 6, 9_000_000, 30],
+    ["DDD", 4, null, 0], ["EEE", 6, null, 0], ["FFF", 6, null, 30], ["GGG", 5, 15_000_000, 0],
+  ] as const;
+  market.set("open", now, "regular", rows.map(([symbol, price, float, dayChange]) => ({
+    symbol, price, float, dayChange, observedAt: now, exchange: "NASDAQ", belowHigh: 0,
+    marketCap: null, volume: 100, dollarVolume: 100 * price,
+  })));
+  state.open.mockReturnValue({ market, close: vi.fn() });
+  const price = { metric: "price", minimum: null, maximum: 5 };
+  const float = { metric: "float", minimum: null, maximum: 10_000_000 };
+  const change = { metric: "dayChange", minimum: 30, maximum: null };
+  const cases = [
+    { outer: "all", inner: "any", symbols: ["AAA", "BBB"], incomplete: 1 },
+    { outer: "any", inner: "all", symbols: ["AAA", "BBB", "CCC", "DDD", "GGG"], incomplete: 1 },
+    { outer: "all", inner: "all", symbols: [], incomplete: 0 },
+    { outer: "any", inner: "any", symbols: ["AAA", "BBB", "CCC", "DDD", "FFF", "GGG"], incomplete: 1 },
+  ] as const;
+  const id = "22222222-2222-4222-8222-222222222222";
+  const assertRun = async (definition: unknown, expected: typeof cases[number]) => {
+    const response = await runCustomScan(request("POST", [{key: "main", page: 1, definition}]));
+    expect(response.status).toBe(200);
+    const reader = response.body!.getReader();
+    try {
+      const frame = JSON.parse(new TextDecoder().decode((await reader.read()).value)).main;
+      expect(frame.rows.map((row: {symbol: string}) => row.symbol).sort()).toEqual(expected.symbols);
+      expect(frame).toMatchObject({ eligible: rows.length, total: expected.symbols.length,
+        incomplete: expected.incomplete, excluded: rows.length - expected.symbols.length - expected.incomplete });
+    } finally { await reader.cancel(); }
+  };
+  try {
+    for (const [revision, example] of cases.entries()) {
+      const definition = { ...EMPTY_SCAN, ...(example.outer === "any" ? {match: "any"} : {}),
+        rules: [price], groups: [{match: example.inner, rules: [float, change]}] };
+      await assertRun(definition, example);
+      const entry = {id, name: "Nano momentum", definition};
+      expect((await PUT(request("PUT", {revision, scans: [entry]}))).status).toBe(200);
+      const reopened = await GET(request("GET")).json();
+      expect(reopened).toEqual({revision: revision + 1, scans: [entry]});
+      await assertRun(reopened.scans[0].definition, example);
+    }
+  } finally {
+    state.open.mockReset();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

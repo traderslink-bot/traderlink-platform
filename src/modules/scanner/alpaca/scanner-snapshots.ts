@@ -40,12 +40,14 @@ export function normalizeAlpacaScannerBatch(input: { payload: unknown; requested
     snapshots.push({ symbol, company: symbol, provider: "alpaca", session: input.session, tradingDate: input.tradingDate, providerAt: current.providerAt, receivedAt: input.receivedAt,
       price: current.price, baseline, priceTimeBasis: "session_observation", volume: current.volume, dollarVolume: current.dollarVolume,
       regularClosePrice: book.sessions.regular.price,
-      ...(statusCurrent ? { halted:status.halted,
+      largestTradeShares:current.largestTradeShares, largestTradeDollars:current.largestTradeDollars,
+      ...(statusCurrent ? { halted:status.halted, haltCode:status.reasonCode,
         ...(Number.isFinite(resumedAt) && resumedAt <= input.receivedAt && easternClock(resumedAt).date === input.tradingDate
           ? {tradeResumedAt:resumedAt} : {}) } : {}),
       ...(reference && positive(reference.high) && positive(reference.low) && reference.high >= reference.low
         ? {previousDayHigh:reference.high,previousDayLow:reference.low} : {}),
       ...(reference?.statistics ? {
+        averageDailyDollars20:reference.statistics.averageDollars20,
         averageDailyVolume20:reference.statistics.averageVolume20,
         averageDailyRange20:reference.statistics.averageDailyRange20,
         dailyClosedAt:reference.statistics.dailyClosedAt,weeklyClosedAt:reference.statistics.weeklyClosedAt,

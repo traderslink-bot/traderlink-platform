@@ -1,12 +1,19 @@
+import { scanPatterns, type ScanPattern } from "./candle-patterns";
+import { crossReferences, type CrossReference, companyFilterLabels, needsBarVwap, eventFilters, isBenchmarkStudy, isCandleStudy, otherAuditFilters, studyFrames, studyPeriods, zoneStates, type StudyFrame } from "./audited-filters";
 import { scannerSector, type ScannerSector } from "../live/sectors";
 import { scannerSecurityType, type ScannerSecurityType } from "../live/security-types";
 import { SCANNER_OPENING_RANGE_MINUTES, type ScannerOpeningRanges, type ScannerSession, type ScannerVolumeBreakdown } from "../live/contracts";
 import { isCustomIndicatorMetric, isIndicatorCross, indicatorComparisons, MAX_CUSTOM_PERIOD,
   type CustomIndicator, type CustomIndicatorMetric, type IndicatorComparison } from "./custom-indicator";
-import { isScanIndicatorMetric, RELEASE_LOOKBACK_HOURS, scanSignalFrames, scanSignalKinds, SIGNAL_LOOKBACK_MINUTES,
+import { isSameTimeVolumeMetric, isScanIndicatorMetric, RELEASE_LOOKBACK_HOURS, scanSignalFrames, scanSignalKinds, SIGNAL_LOOKBACK_MINUTES,
   type ScanIndicatorMetric, type ScanMomentumReading, type ScanPressRelease, type ScanSignalFrame, type ScanSignalKind } from "./signal-filters";
 
 export const SCAN_METRICS = {
+  ...otherAuditFilters,
+  ...Object.fromEntries(Object.entries(companyFilterLabels).map(([id,label])=>[id,{label,category:"Company",
+    unit:["revenueGrowth","incomeGrowth","annualNetMargin","annualGrossMargin","dividendYieldTtm"].includes(id)?"percent":
+      ["priceEarningsTtm","priceSalesTtm","priceBookQuarter"].includes(id)?"multiple":id==="recentFiling"?"number":"money"}])) as
+    Record<keyof typeof companyFilterLabels,{label:string;category:"Company";unit:"money"|"percent"|"multiple"|"number"}>,
   price: { label: "Price", unit: "money", category: "Price" },
   dayChange: { label: "Day change", unit: "percent", category: "Price" },
   belowHigh: { label: "Below day high", unit: "percent", category: "Price" },
@@ -32,6 +39,8 @@ export const SCAN_METRICS = {
   bidAskSpread: { label: "Bid/ask spread", unit: "money", category: "Volume" },
   bidAskSpreadPercent: { label: "Bid/ask spread % of midpoint", unit: "percent", category: "Volume" },
   averageDailyVolume20: { label: "20-session average daily volume", unit: "number", category: "Volume" },
+  sameTimePremarketVolume: { label: "Premarket same-time relative volume (3 sessions)", unit: "multiple", category: "Volume" },
+  sameTimeAfterHoursVolume: { label: "After-hours same-time relative volume (3 sessions)", unit: "multiple", category: "Volume" },
   sameTimeRegularVolume: { label: "Regular same-time relative volume (3 sessions)", unit: "multiple", category: "Volume" },
   volumeVsDailyAverage20: { label: "Regular volume vs 20-session daily average", unit: "multiple", category: "Volume" },
   averageDailyRange20: { label: "20-session average daily range %", unit: "percent", category: "Price" },
@@ -109,27 +118,27 @@ export type ScanMetric = keyof typeof SCAN_METRICS;
 export const isSwingPullbackMetric = (metric: ScanMetric) => metric === "pullbackFromFiveSessionHigh" ||
   metric === "pullbackFromSevenDayHigh" || metric === "pullbackFromPreviousWeekHigh";
 export const isDirectionalPriceMove = (metric: ScanMetric) => metric === "rollingMove" || metric === "rollingPriceChange";
-export type RollingScanMetric = "rollingMove" | "rollingPriceChange" | "rollingVolume" | "rollingDollarVolume" | "volumePace";
+export type RollingScanMetric = "rollingMove" | "rollingPriceChange" | "rollingVolume" | "rollingDollarVolume" | "volumePace" | "rollingFloatTurnover";
 export const isRollingScanMetric = (metric: ScanMetric): metric is RollingScanMetric =>
-  isDirectionalPriceMove(metric) || metric === "rollingVolume" || metric === "rollingDollarVolume" || metric === "volumePace";
+  isDirectionalPriceMove(metric) || metric === "rollingFloatTurnover" || metric === "rollingVolume" || metric === "rollingDollarVolume" || metric === "volumePace";
 
 export const isOpeningRangeMetric = (metric: ScanMetric) =>
   metric === "openingRangeHigh" || metric === "openingRangeLow" ||
   metric === "fromOpeningRangeHigh" || metric === "fromOpeningRangeLow";
-export const scanMetricUsesMinutes = (metric: ScanMetric) => isRollingScanMetric(metric) || isOpeningRangeMetric(metric);
+export const scanMetricUsesMinutes = (metric: ScanMetric) => metric==="timedRebound" || isRollingScanMetric(metric) || isOpeningRangeMetric(metric);
 export const isSignedScanMetric = (metric:ScanMetric) =>
-  metric === "dailyCloseVsSma20" || metric === "weeklyCloseVsSma4" || metric === "dayChangeDollars" || metric === "closedDailyReturn" || metric === "closedWeeklyReturn" || metric === "dailyRelativeToSpy" || metric === "weeklyRelativeToSpy" ||
+  ["reboundFromLow","sectorRelativeMove","macdHistogram","anchoredFromLow","annualIncome","annualEps","revenueGrowth","incomeGrowth","annualNetMargin","annualGrossMargin","priceEarningsTtm","priceBookQuarter","smaAlignment","betaSpy","returnVsSpy","windowReturn","smaDistance","smaSlope","emaDistance","stochasticJ"].includes(metric) || metric === "dailyCloseVsSma20" || metric === "weeklyCloseVsSma4" || metric === "dayChangeDollars" || metric === "closedDailyReturn" || metric === "closedWeeklyReturn" || metric === "dailyRelativeToSpy" || metric === "weeklyRelativeToSpy" ||
   metric === "rsiChange" || metric === "ema9SlopeAtr" || metric === "ema20SlopeAtr" ||
   metric === "fromPreviousDayHigh" || metric === "fromPreviousDayLow" ||
   metric === "fromOpeningRangeHigh" || metric === "fromOpeningRangeLow" || metric === "dayChange" || metric === "sessionGap" || metric === "fromVwap" || metric === "postMarketChange" || metric === "fromPremarketHigh" ||
   metric === "fromPremarketLow" || metric === "fromRegularHigh" || metric === "fromRegularLow" ||
   metric === "fromPostMarketHigh" || metric === "fromPostMarketLow" || metric === "emaSpread" || metric === "macdHistogramPercent" || metric === "bollingerPercentB";
-export const isEventScanMetric = (metric:ScanMetric) => metric==="pressRelease" || metric==="tradeResumed" || metric==="indicatorSignal" || metric==="confirmed4hBreak";
+export const isEventScanMetric = (metric:ScanMetric) => Object.hasOwn(eventFilters, metric) || metric==="pressRelease" || metric==="tradeResumed" || metric==="indicatorSignal" || metric==="confirmed4hBreak";
 export const requiresScannerLevelRead = (metric: ScanMetric) =>
-  metric === "confirmed4hBreak" || metric === "distanceToVerifiedZone" || metric === "roomToNextVerifiedZone";
+  metric === "zoneRewardRisk" || metric === "zoneState" || metric === "confirmed4hBreak" || metric === "distanceToVerifiedZone" || metric === "roomToNextVerifiedZone";
 export const MAX_LEVEL_BREAK_HOURS = 168;
 export const isScanSelectionMetric = (metric: ScanMetric) =>
-  metric === "tickerList" || metric === "listingExchange" || metric === "listingCountry" || metric === "listingSector" ||
+  metric === "recentFiling" || metric === "prHeadline" || metric === "zoneState" || metric === "haltCode" || metric === "tickerList" || metric === "listingExchange" || metric === "listingCountry" || metric === "listingSector" ||
   metric === "listingSecurityType" || metric === "listingIndustry" || metric === "tradingSession";
 export const SCAN_SESSION_LABELS = { PREMARKET: "Premarket", REGULAR: "Regular", AFTER_HOURS: "After hours" } as const;
 export const SCAN_EXCHANGE_CHOICES = ["NASDAQ", "NYSE", "AMEX"] as const;
@@ -138,13 +147,13 @@ const exchangeChoices = new Set<string>(SCAN_EXCHANGE_CHOICES);
 function parseSelection(metric: ScanMetric, selection: unknown) {
   if (!Array.isArray(selection) || selection.length < 1 || selection.length > 100) throw Error("invalid_scan_selection");
   const items = selection.map(item => {
-    if (typeof item !== "string" || item.length > (metric === "listingIndustry" ? 100 : 32)) throw Error("invalid_scan_selection");
+    if (typeof item !== "string" || item.length > (metric === "listingIndustry" || metric === "prHeadline" ? 100 : 32)) throw Error("invalid_scan_selection");
     const value = item.trim().replace(/\s+/gu," ").toUpperCase();
-    if (metric === "listingIndustry") {
+    if (metric === "listingIndustry" || metric === "prHeadline") {
       if (!value || /[\p{Cc}\p{Cf}]/u.test(value)) throw Error("invalid_scan_selection");
       return value;
     }
-    const valid = metric === "tickerList" ? /^[A-Z][A-Z0-9.-]{0,15}$/.test(value) :
+    const valid = metric==="recentFiling" ? /^[A-Z0-9][A-Z0-9 /-]{0,23}$/.test(value) : metric === "haltCode" ? /^[A-Z0-9]{1,8}$/.test(value) : metric === "zoneState" ? Object.hasOwn(zoneStates,value) : metric === "tickerList" ? /^[A-Z][A-Z0-9.-]{0,15}$/.test(value) :
       metric === "listingExchange" ? exchangeChoices.has(value) :
         metric === "tradingSession" ? Object.hasOwn(SCAN_SESSION_LABELS, value) :
           metric === "listingSector" ? !!scannerSector(value) :
@@ -160,6 +169,12 @@ export type ScanRule = {
   maximum: number | null;
   minutes?: number;
   frame?: ScanSignalFrame;
+  studyFrame?: StudyFrame;
+  pattern?:ScanPattern;
+  reference?:CrossReference;
+  period?: number;
+  fastPeriod?:number;
+  signalPeriod?:number;
   signal?: ScanSignalKind;
   indicator?: CustomIndicator;
   comparison?: IndicatorComparison;
@@ -248,13 +263,20 @@ function parseRule(item:unknown): ScanRule {
     if (isScanSelectionMetric(item.metric)) {
       return { metric: item.metric, minimum: null, maximum: null, selection: parseSelection(item.metric, item.selection) };
     }
+    if (item.metric === "floatMissing") return { metric: item.metric, minimum: 1, maximum: null };
     if (item.metric === "activeHalt") return { metric: item.metric, minimum: 1, maximum: null };
     if (isCustomIndicatorMetric(item.metric)) return parseCustomIndicator(item,item.metric);
     if (!boundary(item.minimum) || !boundary(item.maximum) ||
       (item.minimum !== null && item.maximum !== null && item.minimum > item.maximum) ||
       (item.minimum === null && item.maximum === null) ||
       (item.includeUnknown !== undefined && (item.metric !== "float" || typeof item.includeUnknown !== "boolean"))) throw Error("invalid_scan_rule");
-    if (item.metric === "tradeResumed") {
+    if(item.metric==="crossReference"){
+      if(typeof item.reference!=="string" || !Object.hasOwn(crossReferences,item.reference) || (item.direction!=="up" && item.direction!=="down"))
+        throw Error("invalid_cross_reference");
+      return {metric:item.metric,reference:item.reference as CrossReference,direction:item.direction,minimum:null,maximum:1};
+    }
+    if(item.metric==="breakPremarketHigh" || item.metric==="breakOpeningHigh")return {metric:item.metric,minimum:null,maximum:1};
+    if (item.metric === "tradeResumed" || Object.hasOwn(eventFilters,item.metric)) {
       if (item.minimum !== null || item.maximum === null) throw Error("invalid_trade_resumption_window");
       return {metric:item.metric,minimum:null,maximum:windowValue(item.maximum)};
     }
@@ -279,8 +301,19 @@ function parseRule(item:unknown): ScanRule {
     const direction = isDirectionalPriceMove(item.metric) ? item.direction ?? "up" : undefined;
     if (direction !== undefined && direction !== "up" && direction !== "down" && direction !== "either") throw Error("invalid_scan_direction");
     if (!isSignedScanMetric(item.metric) && (item.minimum !== null && item.minimum < 0 || item.maximum !== null && item.maximum < 0)) throw Error("invalid_scan_threshold");
+    const studyFrame = studyFrames.find(value => value === item.studyFrame);
+    const period = studyPeriods.find(value => value === item.period);
+    if (isCandleStudy(item.metric) && (!studyFrame || !period || (isBenchmarkStudy(item.metric) && studyFrame!=="1D" && studyFrame!=="1W"))) throw Error("invalid_candle_study");
+    if(needsBarVwap(item.metric) && !["1m","5m","15m"].includes(String(studyFrame)))throw Error("invalid_weighted_frame");
+    if(item.metric==="candlePattern" && (period!<9 || typeof item.pattern!=="string" || !Object.hasOwn(scanPatterns,item.pattern) || item.minimum!==1 || item.maximum!==null))throw Error("invalid_scan_pattern");
+    const fastPeriod=item.fastPeriod??12, signalPeriod=item.signalPeriod??9;
+    if(item.metric==="macdHistogram" && (typeof fastPeriod!=="number" || !Number.isInteger(fastPeriod) || fastPeriod<1 ||
+      fastPeriod>=period! || typeof signalPeriod!=="number" || !Number.isInteger(signalPeriod) || signalPeriod<1 || signalPeriod>100))throw Error("invalid_macd_period");
     return { metric:item.metric, minimum:item.minimum, maximum:item.maximum,
-      ...(isScanIndicatorMetric(item.metric)?{frame:item.metric === "sameTimeRegularVolume" ? "15m" as const : signalFrame(item.frame)}:{}),
+      ...(item.metric==="candlePattern" && {pattern:item.pattern as ScanPattern}),
+      ...(item.metric==="macdHistogram" && {fastPeriod:fastPeriod as number,signalPeriod:signalPeriod as number}),
+      ...(isCandleStudy(item.metric) && {studyFrame,period}),
+      ...(isScanIndicatorMetric(item.metric)?{frame:isSameTimeVolumeMetric(item.metric) ? "15m" as const : signalFrame(item.frame)}:{}),
       ...(scanMetricUsesMinutes(item.metric) ? { minutes: scanMinutes(item.metric,item.minutes) } : {}),
       ...(direction === undefined ? {} : { direction }),
       ...(item.includeUnknown === true ? { includeUnknown:true } : {}) };
@@ -301,11 +334,11 @@ export function parseScanDefinition(input: unknown): ScanDefinition {
     return {match:scanMatch(group.match),rules:group.rules.map(parseRule)};
   });
   const { metric, direction, minutes, frame } = input.sort;
-  if (!metricValue(metric) || metric === "activeHalt" || isScanSelectionMetric(metric) || requiresScannerLevelRead(metric) || isEventScanMetric(metric) || isCustomIndicatorMetric(metric) || direction !== "asc" && direction !== "desc")
+  if (!metricValue(metric) || metric === "activeHalt" || metric === "floatMissing" || isCandleStudy(metric) || isScanSelectionMetric(metric) || requiresScannerLevelRead(metric) || isEventScanMetric(metric) || isCustomIndicatorMetric(metric) || direction !== "asc" && direction !== "desc")
     throw Error("invalid_scan_sort");
   return { ...(input.cadence === "swing" ? { cadence: "swing" as const } : {}), rules:input.rules.map(parseRule), ...(match==="any"?{match}:{}), ...(groups.length?{groups}:{}),
     sort: { metric, direction, ...(scanMetricUsesMinutes(metric) ? { minutes:scanMinutes(metric,minutes) } : {}),
-      ...(isScanIndicatorMetric(metric)?{frame:metric === "sameTimeRegularVolume" ? "15m" as const : signalFrame(frame)}:{}) } };
+      ...(isScanIndicatorMetric(metric)?{frame:isSameTimeVolumeMetric(metric) ? "15m" as const : signalFrame(frame)}:{}) } };
 }
 export function parseSavedScanBook(input: unknown): SavedScanBook {
   if (!record(input) || typeof input.revision !== "number" || !Number.isSafeInteger(input.revision) ||
@@ -329,7 +362,7 @@ export type ScanMarketRow = ScannerVolumeBreakdown & {
   symbol: string; exchange: "NYSE" | "NASDAQ" | "AMEX"; session?: ScannerSession;
   price: number; volume: number | null; dollarVolume: number | null;
   marketCap: number | null; float: number | null; dayChange: number | null; belowHigh: number | null;
-  observedAt: number; priceSourceAt?: number; quoteObservedAt?: number; openingRanges?: ScannerOpeningRanges; facts?:ScanMarketFacts; halted?: boolean; country?:string | null; industry?:string; sector?:ScannerSector; tradeResumedAt?:number;
+  observedAt: number; priceSourceAt?: number; quoteObservedAt?: number; openingRanges?: ScannerOpeningRanges; facts?:ScanMarketFacts; haltCode?:string; halted?: boolean; country?:string | null; industry?:string; sector?:ScannerSector; tradeResumedAt?:number;
   dailyClosedAt?: number;
   weeklyClosedAt?: number;
   securityType?: ScannerSecurityType;
@@ -349,6 +382,7 @@ export type ScanResultRow = Omit<ScanMarketRow, "observedAt" | "facts" | "openin
   alternativeReadings?: Partial<Record<number, ScanAlternativeReading>>;
   trendContext?: { daily?: ScanTrendReading; weekly?: ScanTrendReading };
   priceObservedAt?: number;
+  matchedNewsIds?:string[];
   pressRelease?: ScanPressRelease;
   evidenceReference?: string;
 };

@@ -78,11 +78,11 @@ function seed(scanners = { gainers: "day-gainers", momentum: "post-market-gainer
   localStorage.setItem(desktopKey, JSON.stringify({ active: "Custom", layouts: [{ name: "Custom", rectangles: tileToCards(defaultTile), scanners,
     views: { gainers: "table", momentum: "two-rows" } }] }));
 }
-async function mount(initial = model, dark = false) {
+async function mount(initial = model, dark = false, broker = false) {
   container = document.createElement("div"); document.body.append(container);
   const toolbar = document.createElement("div"); toolbar.id = "dashboard-scanner-toolbar"; document.body.append(toolbar);
   root = createRoot(container);
-  await act(async () => { root!.render(<ThemeProvider theme={createTraderMaterialTheme(dark ? "dark" : "light")}><LiveScreenersClient sample={initial}/></ThemeProvider>); });
+  await act(async () => { root!.render(<ThemeProvider theme={createTraderMaterialTheme(dark ? "dark" : "light")}><LiveScreenersClient sample={initial} broker={broker}/></ThemeProvider>); });
   await act(async () => { await vi.advanceTimersByTimeAsync(100); });
 }
 const card = (slot: string) => container.querySelector(`[data-scanner-workspace-card="${slot}"]`)!;
@@ -391,4 +391,23 @@ it("returns to the Workspace startup ticker on Apply when every ticker is remove
   expect(currentWorkspaceCharts().groups.map((group: {symbol: string}) => group.symbol)).toEqual(["DAY"]);
   expect(workspaceMultiviewButton()).toBeNull();
   expect(document.querySelector('[role="dialog"]')).toBeNull();
+});
+
+it("limits the connected Workspace chart card to the selected panel and suppresses Multiview", async () => {
+  seedChartMultiview();
+  const regularKey = workspaceChartKey(ownerKey);
+  const connectedKey = workspaceChartKey(ownerKey, true);
+  const layout = reconcileChartTickers(singleChart("LVWR", "5m"), ["LVWR", "AKAN"], "5m");
+  const selected = layout.groups[1].panels[0].id;
+  localStorage.setItem(regularKey, JSON.stringify(layout));
+  localStorage.setItem(connectedKey, JSON.stringify({ ...layout, selectedPanel: selected }));
+
+  await mount(regularWorkspace, false, true);
+
+  const chart = card("ticker-workspace");
+  const panels = [...chart.querySelectorAll("[data-workspace-chart-panel]")];
+  expect(panels.map(panel => panel.getAttribute("data-workspace-chart-panel"))).toEqual([selected]);
+  expect(chart.querySelector('[aria-label="Multiview"]')).toBeNull();
+  expect(workspaceMultiviewButton()).toBeNull();
+  expect(JSON.parse(localStorage.getItem(regularKey)!)).toEqual(layout);
 });

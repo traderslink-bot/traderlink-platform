@@ -56,16 +56,43 @@ export function requestAuthorizedMoomooMarketData(input: MoomooDataRequest, toke
   return fetchMoomooMarketData(moomooRequest(input), token, environment, signal, "other");
 }
 
+export class MoomooMarketDataRateLimit extends Error {
+  constructor(readonly retryAfter: string | null) { super("moomoo_market_data_rate_limited"); }
+}
+
 async function fetchMoomooMarketData(request: ReturnType<typeof moomooRequest>, token: string, environment: NodeJS.ProcessEnv,
   signal: AbortSignal | undefined, priority: "scanner" | "other"): Promise<Record<string, unknown>> {
+  let value: Record<string, unknown> | undefined;
   const response = await sharedMoomooFetch(request.url, {
     method: request.body ? "POST" : "GET", cache: "no-store", redirect: "error",
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000),
     headers: { Authorization: "Bearer " + token, Accept: "application/json", ...(request.body ? { "Content-Type": "application/json" } : {}) },
     ...(request.body ? { body: request.body } : {}),
-  }, { priority, environment: { ...environment, TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED: "true" }, requireEnabled: true });
-  if (!response.ok || !response.body) { await response.body?.cancel(); throw Error("moomoo_market_data_unavailable"); }
-  const reader = response.body.getReader(), chunks: Uint8Array[] = [];
+  }, {
+    priority, environment: { ...environment, TRADERLINK_MOOMOO_SHARED_BUDGET_ENABLED: "true" }, requireEnabled: true,
+    async fetcher(url, init) {
+      const upstream = await fetch(url, init);
+      if (!upstream.ok || !upstream.body) return upstream;
+      value = await readMarketDataBody(upstream.body);
+      // Treat the provider's HTTP-200 quota envelope like a transport 429
+      // before the shared budget commits its decision for this request.
+      return value?.ret_code === -11 || value?.code === -11
+        ? new Response(null, { status: 429, headers: upstream.headers }) : upstream;
+    },
+  });
+  if (!response.ok) {
+    await response.body?.cancel();
+    if (response.status === 429) {
+      const hint = response.headers.get("Retry-After")?.trim() ?? "";
+      throw new MoomooMarketDataRateLimit(/^\d{1,9}$/.test(hint) || Number.isFinite(Date.parse(hint)) ? hint : null);
+    }
+  }
+  if (!response.ok || !value || value.ret_code !== 0) throw Error("moomoo_market_data_unavailable");
+  return value;
+}
+
+async function readMarketDataBody(body: ReadableStream<Uint8Array>): Promise<Record<string, unknown> | undefined> {
+  const reader = body.getReader(), chunks: Uint8Array[] = [];
   let bytes = 0;
   try {
     for (;;) {
@@ -77,6 +104,5 @@ async function fetchMoomooMarketData(request: ReturnType<typeof moomooRequest>, 
     }
   } finally { reader.releaseLock(); }
   const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
-  if (!value || typeof value !== "object" || Array.isArray(value) || value.ret_code !== 0) throw Error("moomoo_market_data_unavailable");
-  return value;
+  return value && typeof value === "object" && !Array.isArray(value) ? value : undefined;
 }
