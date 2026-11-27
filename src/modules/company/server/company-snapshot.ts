@@ -1,18 +1,14 @@
 import { companyProfileFacts, companyMetricFacts } from "../company-data-wire.mjs";
 import "server-only";
-import { readCompanyData as json } from "@/src/lib/news/company-data-gateway";
+import { extractReportedCompanyFacts, selectReportedStatements } from "../company-reported-facts.mjs";
+import { readCompanyData as json, readCompanyRecords } from "@/src/lib/news/company-data-gateway";
 import { readCompanyProfileSample, previewCompanyCik } from "./company-profile-samples";
 
-const DAY = 86_400;
-
-export type Filing = { date: string; form: string; accession: string; href: string };
-export type ReportedFact = {
-  label: string; value: number; unit: string; start?: string; end: string; filed: string; accession: string; href?: string;
-};
-type Fact = { val: number; start?: string; end: string; filed: string; accn: string; form: string };
+export type Filing = { date: string; form: string; accession: string; href: string; reportDate?: string; acceptedAt?: string; earningsAnnouncement?: boolean; earningsHref?: string };
+type Fact = { val: number; start?: string; end: string; filed: string; accn: string; form: string; fy?: number; fp?: string };
 type Concepts = Record<string, { units: Record<string, Fact[]> }>;
 type Submissions = { name?: string; sicDescription?: string; fiscalYearEnd?:string; addresses?:{business?:{city?:string;stateOrCountry?:string;stateOrCountryDescription?:string}}; filings: {
-  recent: { filingDate: string[]; form: string[]; accessionNumber: string[]; primaryDocument: string[] };
+  recent: { filingDate: string[]; reportDate?: string[]; acceptanceDateTime?: string[]; form: string[]; accessionNumber: string[]; primaryDocument: string[] };
   files?: { name: string; filingTo: string; filingFrom: string }[];
 } };
 
@@ -27,42 +23,77 @@ export function filingRows(cik:number, recent:Submissions["filings"]["recent"], 
     if(date<since||date>today||!/^\d{10}-\d{2}-\d{6}$/.test(accession)||!form)return [];
     const base=`https://www.sec.gov/Archives/edgar/data/${cik}/${accession.replaceAll("-","")}`;
     const href=/^[\w.-]+(?:\/[\w.-]+)*$/.test(document)&&!document.split("/").some(part=>part===".."||part===".") ? `${base}/${document}` : `${base}/${accession}-index.htm`;
-    return [{date,form,accession,href}];
+    return [{date,form,accession,href,reportDate:recent.reportDate?.[i]||undefined,acceptedAt:recent.acceptanceDateTime?.[i]||undefined}];
   });
 }
 
-const concepts = [
-  ["Revenue","RevenueFromContractWithCustomerExcludingAssessedTax","Revenues","Revenue","SalesRevenueNet"],
-  ["Net income / loss","NetIncomeLoss","ProfitLoss"],
-  ["Cash and equivalents","CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents"],
-  ["Total assets","Assets"], ["Total liabilities","Liabilities"],
-  ["Operating cash flow","NetCashProvidedByUsedInOperatingActivities","CashFlowsFromUsedInOperatingActivities"],
-  ["Shares outstanding","EntityCommonStockSharesOutstanding","CommonStockSharesOutstanding"],
-] as const;
+export function reportedFacts(facts:Record<string,Concepts>, preferredCurrency:unknown, filings:Filing[], today:string) {
+  const observations = extractReportedCompanyFacts(facts, filings, today);
+  const statements = selectReportedStatements(observations, filings, today, preferredCurrency);
+  return [...(statements.interim?.facts ?? []), ...(statements.annual?.facts ?? [])];
+}
 
-export function reportedFacts(facts:Record<string,Concepts>, preferredCurrency:unknown, filings:Filing[], today:string):ReportedFact[] {
-  const links=new Map(filings.map(f=>[f.accession,f.href]));
-  return concepts.flatMap(([label,...keys])=>{
-    const candidates:ReportedFact[]=[];
-    for(const namespace of ["us-gaap","ifrs-full","dei"])for(const key of keys){
-      for(const [unit, entries] of Object.entries(facts[namespace]?.[key]?.units??{})){
-        if(label==="Shares outstanding" ? unit!=="shares" : !/^[A-Z]{3}$/.test(unit))continue;
-        for(const item of entries){
-          if(!/^(10-K|10-Q|20-F|40-F|6-K)(\/A)?$/.test(item.form)||!Number.isFinite(item.val)||item.end>today||item.filed>today)continue;
-          candidates.push({label,value:item.val,unit,start:item.start,end:item.end,filed:item.filed,accession:item.accn,href:links.get(item.accn)});
-        }
-      }
-    }
-    candidates.sort((a,b)=>b.end.localeCompare(a.end)||Number(b.unit===preferredCurrency)-Number(a.unit===preferredCurrency)||b.filed.localeCompare(a.filed));
-    const latest=candidates[0];
-    if(!latest)return [];
-    const annual=candidates.find(item=>item.unit===latest.unit&&item.start&&
-      Date.parse(item.end)-Date.parse(item.start)>=350*DAY*1000);
-    return annual&&(annual.end!==latest.end||annual.start!==latest.start)?[latest,annual]:[latest];
-  });
+type SelectedStatements = ReturnType<typeof selectReportedStatements>;
+type PreliminaryFigure = {
+  tag: string;
+  value: number;
+  unit: string;
+  start: string;
+  end: string;
+  filed: string;
+  accession: string;
+  href: string;
+  dimensions: { member: string }[];
+  reconciledFiling?: string;
+  filedValue?: number;
+};
+type PersistedCompany = {
+  cik?: string | null;
+  profile?: { value?: Record<string, unknown> | null };
+  metrics?: { value?: { metrics?: Record<string, unknown> } | null };
+  sec?: {
+    value?: {
+      statements: SelectedStatements;
+      filings: Filing[];
+      earnings?: { figures: PreliminaryFigure[] }[];
+      filingCoverage?: { complete: boolean };
+      name?: string;
+      sic?: string;
+      fiscalYearEnd?: string;
+      headquarters?: string;
+    } | null;
+  };
+};
+
+function formatFiscalYearEnd(fiscalYearEnd?: string) {
+  const fiscalDate = fiscalYearEnd && /^\d{4}$/.test(fiscalYearEnd)
+    ? new Date(`2000-${fiscalYearEnd.slice(0,2)}-${fiscalYearEnd.slice(2)}T12:00:00Z`)
+    : null;
+  return fiscalDate && Number.isFinite(fiscalDate.getTime())
+    ? new Intl.DateTimeFormat("en-US", { month:"long", day:"numeric", timeZone:"UTC" }).format(fiscalDate)
+    : undefined;
+}
+
+async function readPersistedCompanySnapshot(symbol: string, view: "full" | "overview") {
+  const record = await readCompanyRecords<{ companies: PersistedCompany[] }>([symbol]);
+  const snapshot = record?.companies[0];
+  const sec = snapshot?.sec?.value;
+  const profile = snapshot?.profile?.value ?? null;
+  const metrics = snapshot?.metrics?.value?.metrics ?? null;
+  const cik = snapshot?.cik ? Number(snapshot.cik) : undefined;
+  const companyProfile = process.env.NODE_ENV !== "production" ? readCompanyProfileSample(cik ?? previewCompanyCik(symbol)) : undefined;
+  return {
+    symbol, cik, companyProfile, headquarters: sec?.headquarters ?? "",
+    fiscalYearEndLabel: formatFiscalYearEnd(sec?.fiscalYearEnd), name: sec?.name, sic: sec?.sic,
+    profile, metrics, filings: view === "full" ? sec?.filings ?? [] : [],
+    filingsAvailable: view === "full" && Boolean(sec?.filingCoverage?.complete),
+    preliminary: view === "full" ? sec?.earnings?.flatMap(release => release.figures) ?? [] : [],
+    financials: view === "full" ? [...(sec?.statements.interim?.facts ?? []), ...(sec?.statements.annual?.facts ?? [])] : [],
+  };
 }
 
 export async function readCompanySnapshot(symbol:string, view:"full"|"overview"="full") {
+  if (process.env.TRADERLINK_COMPANY_PERSISTED_READS === "1") return readPersistedCompanySnapshot(symbol, view);
   const profileRequest=json<Record<string,unknown>>("profile",symbol);
   const metricsRequest=json<{metric?:Record<string,unknown>}>("metrics",symbol);
   const directory=view==="full"?await json<Record<string,{ticker:string;cik_str:number;title:string}>>("directory"):null;
@@ -84,18 +115,16 @@ export async function readCompanySnapshot(symbol:string, view:"full"|"overview"=
     for(const shard of shards)if(shard)filings.push(...filingRows(cik,shard,since,today));
   }
   const unique=[...new Map(filings.map(f=>[f.accession,f])).values()].sort((a,b)=>b.date.localeCompare(a.date)||b.accession.localeCompare(a.accession));
+  const statementFilings = cik && submissions ? [...unique, ...filingRows(cik, submissions.filings.recent, "", today)] : [];
   const companyProfile=process.env.NODE_ENV!=="production"?readCompanyProfileSample(cik):undefined;
   const business=submissions?.addresses?.business;
   const headquarters=[business?.city,business?.stateOrCountryDescription||business?.stateOrCountry].filter(Boolean).join(", ");
-  const fiscalYearEnd=submissions?.fiscalYearEnd;
-  const fiscalDate=fiscalYearEnd&&/^\d{4}$/.test(fiscalYearEnd)?new Date(`2000-${fiscalYearEnd.slice(0,2)}-${fiscalYearEnd.slice(2)}T12:00:00Z`):null;
-  const fiscalYearEndLabel=fiscalDate&&Number.isFinite(fiscalDate.getTime())
-    ? new Intl.DateTimeFormat("en-US",{month:"long",day:"numeric",timeZone:"UTC"}).format(fiscalDate):undefined;
+  const fiscalYearEndLabel = formatFiscalYearEnd(submissions?.fiscalYearEnd);
   // The UI does not use upstream logo assets. Keep its profile facts neutral,
   // without exposing vendor-specific field names or unused asset URLs.
   const profileFacts=companyProfileFacts(profile);
   const publicProfile:Record<string,unknown>|null=profileFacts?{...profileFacts,industry:profileFacts.industry??profileFacts.finnhubIndustry}:null;
   if(publicProfile){delete publicProfile.finnhubIndustry;delete publicProfile.logo;}
   return {symbol,cik,companyProfile,headquarters,fiscalYearEndLabel,name:submissions?.name??company?.title,sic:submissions?.sicDescription,profile:publicProfile,metrics:metrics?.metric?companyMetricFacts(metrics.metric):null,
-    filings:unique, filingsAvailable:Boolean(submissions),financials:reportedFacts(data?.facts??{},profile?.currency,unique,today)};
+    filings:unique, filingsAvailable:Boolean(submissions), preliminary: [] as PreliminaryFigure[], financials:reportedFacts(data?.facts??{},profile?.currency,statementFilings,today)};
 }
