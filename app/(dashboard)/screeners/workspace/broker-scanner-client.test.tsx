@@ -1,6 +1,8 @@
 import { act, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
+import type { BrokerWorkspaceQuoteStatus } from "@/src/modules/market-data/workspace-broker-rows";
+import { useBrokerQuoteNotice } from "./broker-workspace-data";
 import { useLiveScannerModel } from "../use-live-scanner-model";
 
 it.each([
@@ -34,6 +36,53 @@ it.each([
     expect(read).toHaveBeenCalledWith(snapshotUrl, expect.objectContaining({ credentials: "same-origin" }));
   } finally {
     await act(async () => root.unmount());
+    vi.unstubAllGlobals();
+  }
+});
+
+it("shows a warning only after 30 seconds without recovery", async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  function Probe({ status }: { status: BrokerWorkspaceQuoteStatus | null }) {
+    return useBrokerQuoteNotice(status);
+  }
+  const publish = (status: BrokerWorkspaceQuoteStatus | null) => act(async () => root.render(<Probe status={status}/>));
+  const wait = (ms: number) => act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+  try {
+    await publish("connecting");
+    expect(container.textContent).toBe("connecting");
+    await publish("ready");
+
+    for (const duration of [1_000, 23_000]) {
+      await publish("unavailable");
+      await wait(duration);
+      expect(container.textContent).toBe("");
+      await publish("ready");
+      await wait(30_000 - duration);
+      expect(container.textContent).toBe("");
+    }
+
+    await publish("unavailable");
+    await wait(10_000);
+    await publish("connecting");
+    await wait(19_999);
+    expect(container.textContent).toBe("");
+    await wait(1);
+    expect(container.textContent).toBe("unavailable");
+    await publish("unavailable");
+    expect(container.textContent).toBe("unavailable");
+    await publish("ready");
+    expect(container.textContent).toBe("");
+
+    await publish("unavailable");
+    await publish(null);
+    await wait(30_000);
+    expect(container.textContent).toBe("");
+  } finally {
+    await act(async () => root.unmount());
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   }
 });

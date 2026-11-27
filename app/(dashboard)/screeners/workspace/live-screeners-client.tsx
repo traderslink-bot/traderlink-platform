@@ -10,7 +10,7 @@ import {useMobileWorkspaceLayout} from './use-mobile-workspace-layout';
 import {MobileWorkspaceLayoutEditor,MobileCardResizeHandles} from './scanner-mobile-layout-editor';
 import {mobileWorkspaceStyles} from './scanner-mobile-layout-styles';
 import {useMobileWorkspaceViewport} from './use-mobile-workspace-viewport';
-import { workspaceGainerResults, workspacePrice, type WorkspaceScannerModel, type WorkspaceScreenResults, type WorkspaceStock } from "./broker-workspace-data";
+import { useBrokerQuoteNotice, workspaceGainerResults, workspacePrice, type WorkspaceScannerModel, type WorkspaceScreenResults, type WorkspaceStock } from "./broker-workspace-data";
 
 import { ScannerLayoutHandles, ScannerLayoutToolbar, type NewWorkspaceCard, type CardViews, type NamedLayout } from "./scanner-layout-editor";
 import { nextExtraWorkspaceCard, validPositions, widgets, type DesktopPositions } from "./scanner-desktop-layout";
@@ -1018,14 +1018,15 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
   const quoteStatus = model && "brokerQuoteStatus" in model ? model.brokerQuoteStatus : null;
   const connectionRequired = quoteStatus === "connection_required" || (!brokerConnected && quoteStatus === null);
   const builtInQuotesExpected = Boolean(brokerCards?.size && model?.session);
+  const quoteNotice = useBrokerQuoteNotice(builtInQuotesExpected ? quoteStatus : null);
 
   return <Stack spacing={2.5} sx={{ mt:0, '& [data-traderlink-platform-dashboard-card="panel"]':{borderRadius:0} }}>
     {broker && connectionRequired && <Alert severity="info"
       action={<Button component="a" href="/account/trading" size="small">Connect Moomoo</Button>}>
       Connect Moomoo to see live prices in this Workspace.
     </Alert>}
-    {builtInQuotesExpected && quoteStatus === "unavailable" && <Alert severity="warning">Moomoo quotes are temporarily unavailable.</Alert>}
-    {builtInQuotesExpected && quoteStatus === "connecting" && <Alert severity="info">Connecting to Moomoo…</Alert>}
+    {quoteNotice === "unavailable" && <Alert severity="warning">Moomoo quotes are temporarily unavailable.</Alert>}
+    {quoteNotice === "connecting" && <Alert severity="info">Connecting to Moomoo…</Alert>}
 
     {admin&&settingsError?<Alert severity="error">Scanner settings could not be loaded.</Alert>:null}
     {admin?<ManualTickersAdmin/>:null}

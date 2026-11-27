@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { BrokerWorkspaceQuoteStatus, BrokerWorkspaceSavedResults, BrokerWorkspaceScannerModel } from "@/src/modules/market-data/workspace-broker-rows";
 import type { SavedScanResults, ScanResultRow } from "@/src/modules/scanner/custom/definition";
 import type { BreakoutRow, DeclineResults, DeclineRow, LiveScannerRow, LiveScreenResults, PremarketPullbackResults, PremarketPullbackRow, ScannerReadModel } from "@/src/modules/scanner/live/contracts";
@@ -22,6 +23,24 @@ export type WorkspaceSavedRow = ScanResultRow | Extract<WorkspaceSavedEntry, { s
 
 export function isBrokerQuoteStatus(value: unknown): value is BrokerWorkspaceQuoteStatus {
   return value === "connecting" || value === "ready" || value === "unavailable" || value === "connection_required";
+}
+
+export function useBrokerQuoteNotice(status: BrokerWorkspaceQuoteStatus | null) {
+  const [outage, setOutage] = useState<"waiting" | "confirmed" | null>(null);
+  // Starting another connection attempt does not mean the feed has recovered.
+  const recovering = status === "unavailable" || status === "connecting";
+  if (!recovering && outage !== null) setOutage(null);
+  else if (status === "unavailable" && outage === null) setOutage("waiting");
+
+  useEffect(() => {
+    if (outage !== "waiting") return;
+    const timer = setTimeout(() => setOutage("confirmed"), 30_000);
+    return () => clearTimeout(timer);
+  }, [outage]);
+
+  if (recovering && outage === "confirmed") return "unavailable";
+  if (status === "connecting" && outage === null) return "connecting";
+  return null;
 }
 
 export function workspacePrice(value: number | null | undefined) {

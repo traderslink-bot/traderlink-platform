@@ -130,3 +130,9 @@ The production SPY chart rejected a successful Moomoo history page because it co
 Both Connected Workspace transports send native WebSocket ping frames and count incoming ping and pong frames as socket activity after authentication. Quiet symbols can stay connected while the provider answers heartbeats. The timeout and exponential reconnect remain in place for a silent socket. The installed browser reconnected after 15.097 seconds. A loopback test of the production WebSocket showed that its bundled optional native masking function threw before the authentication frame left the app. Using the WebSocket library's JavaScript masking path allowed the same bundled client to authenticate in a repeat loopback test. The runtime image sets that option before modules load. A direct connection for This Guy delivered both Moomoo quotes and native candles.
 
 The POM probe found one malformed candle inside the requested window alongside 999 valid candles. Connected Workspace now renders the valid data and shows a partial-history notice. Neither the server range cache nor the browser snapshot cache treats the partial response as complete. Indicator history that requires complete input remains strict.
+
+### Connected Workspace quote warning
+
+This Guy's live scanner repeatedly published brief unavailable states alongside working quote updates. A synthetic test reproduced one source path where the ten-second timeout or rejection of one new quote batch marks the whole card feed unavailable even while other subscriptions keep working. This is a possible cause of flashing, independent of REST rate limits.
+
+The quote warning now appears only after 30 seconds without recovery following an unavailable status. A reconnect attempt does not restart the clock. Recovery clears the warning immediately. The WebSocket subscriptions, snapshot seeds, provider requests, quotes and prices keep their existing timing.
