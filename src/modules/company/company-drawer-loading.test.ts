@@ -19,6 +19,9 @@ vi.mock("@/src/modules/platform/server/authentication/require-platform-request-s
 vi.mock("@/src/modules/market-data/server/market-tools-dashboard-access", () => ({
   hasSharedWorkspaceAccess: () => fixture.marketAccess,
 }));
+vi.mock("@/src/modules/market-data/server/chart-dashboard-access", () => ({
+  hasChartsDashboardAccess: () => false,
+}));
 vi.mock("@/src/modules/company/server/company-market-data", () => ({
   companyUniverseEntry: async () => ({ symbol:"TEST" }),
 }));

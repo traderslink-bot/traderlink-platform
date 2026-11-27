@@ -3,6 +3,7 @@ import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
+import { hasChartsDashboardAccess } from "@/src/modules/market-data/server/chart-dashboard-access";
 import { hasSharedWorkspaceAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { companySymbol,readCompanySnapshot } from "@/src/modules/company/server/company-snapshot";
 import { companyUniverseEntry } from "@/src/modules/company/server/company-market-data";
@@ -14,7 +15,7 @@ async function readGET(request:Request){
   let identity;
   try{identity=requireTraderLinkPlatformRequestIdentity(request.headers);}
   catch{return reply({},401);}
-  if(!hasSharedWorkspaceAccess(identity))return reply({},404);
+  if(!hasChartsDashboardAccess(identity)&&!hasSharedWorkspaceAccess(identity))return reply({},404);
   const query=new URL(request.url).searchParams;
   const symbol=companySymbol(query.get("symbol")??"");
   const view=query.get("view");

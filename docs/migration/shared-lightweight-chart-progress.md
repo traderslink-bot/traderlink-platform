@@ -6,6 +6,14 @@ The four-panel Market Charts and Trade Workspace flows now keep crosshair moveme
 
 Chromium with fixture candles reproduced both issues on the baseline and passed all four crosshairs, the APUS-only RSI after reload, and a single account save for EMA across all four panels on both surfaces. Forty focused tests, scoped TypeScript and targeted ESLint passed.
 
+## November 27 — one toolbar for Market Charts and Trading Workspace
+
+Market Charts and Trading Workspace use the same compact per-panel ticker field, company button, timeframe dropdown, and chart controls. Typing a symbol in a chart and pressing Enter applies it to that chart at its current timeframe. Company Details opens the shared drawer for that panel's ticker. The application header keeps page-level navigation and layout actions. This supersedes local commit `3c349020b`, which placed Company Details beside the page-level search.
+
+Isolated Chromium verified the single chart, four-chart Market Charts and Workspace layouts, and Market Charts on mobile portrait and landscape. The control sits 6 px from the ticker field and keeps the 27–28 px chart bar. Three access tests and scoped TypeScript passed.
+
+Each shared chart uses one compact timeframe dropdown in desktop and mobile layouts, including the wide toolbar. Isolated Chromium verified all ten choices, per-chart switching in desktop Multiview, keyboard dismissal in the wide toolbar, and the 27–28 px height of the compact toolbar.
+
 Owner approved replacing the Market Charts embedded widget with the existing reusable Alpaca-backed Lightweight Charts component. The actual existing route is `/charts` (the owner referred to `/chart`); preserve that canonical route and sidebar destination.
 
 The standalone page provides a compact symbol form and a chart filling the available viewport. Initial symbol NWGL matches the scanner preview. The shared AlpacaLightweightChart remains the same component imported by the scanner side card, with independent instances. Existing candles, separate volume pane, 1m/5m/15m/1h/4h/1D choices, theme, Eastern labels, retry and stream cleanup remain intact. Symbol changes reuse the instance and retain the selected timeframe while its old request and stream are disposed. No new provider/socket infrastructure or duplicated chart renderer.

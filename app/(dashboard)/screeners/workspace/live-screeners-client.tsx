@@ -1184,7 +1184,7 @@ export function LiveScreenersClient({ admin=false, sample, scannersOnly=false, b
           </WorkspaceScannerTitleContext.Provider>
         </ScannerWorkspaceCard>;
       })}
-      {!admin&&showScanner("ticker-workspace")&&<ChartPreferencesContext.Provider value={chartPreferenceState}><ScannerCompactChart singlePanel={broker} slot={workspaceLayout.assignments["ticker-workspace"]} symbol={pageChartsReady?compactChartSymbol:null} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} fillMobile={mobile&&desktopLayout} keepMounted={!mobile&&draft!==null} arrange={arrangingCharts} onEndArrange={endChartArrangement}/></ChartPreferencesContext.Provider>}
+      {!admin&&showScanner("ticker-workspace")&&<ChartPreferencesContext.Provider value={chartPreferenceState}><ScannerCompactChart onOpenCompanyDetails={openCompanyDetails} singlePanel={broker} slot={workspaceLayout.assignments["ticker-workspace"]} symbol={pageChartsReady?compactChartSymbol:null} layout={pageCharts} onLayoutChange={setPageCharts} defaultTimeframe={defaultTimeframe} fillMobile={mobile&&desktopLayout} keepMounted={!mobile&&draft!==null} arrange={arrangingCharts} onEndArrange={endChartArrangement}/></ChartPreferencesContext.Provider>}
       {mobile&&desktopLayout&&mobileEditor.editing&&!mobileTabs&&<MobileCardResizeHandles rootRef={gridRef} layout={mobileLayout} viewport={mobileHeight} onChange={mobileEditor.update}/>}{draft&&tiled&&<ScannerLayoutHandles rectangles={draft} onChange={changeLayout} onMessage={setVisibilityMessage}/>}
     </Box></Box></ScannerNewsDrawerProvider>
     </ScannerPageSurface>
