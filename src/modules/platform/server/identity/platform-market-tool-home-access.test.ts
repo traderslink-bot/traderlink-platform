@@ -109,7 +109,8 @@ describe("Tool-only native Platform sessions", () => {
       const savedHome = key === "screeners.access" ? "screeners" : key === "scanners.access" ? "scanners" : "welcome";
       new PlatformUserPreferenceRepository(database).updateActiveUserHomePage({ homePage: savedHome, userId: member.session.userId, updatedAtUtc: at });
       const saved = await enterDashboard(new NextRequest(origin + "/dashboard-entry", { headers }));
-      expect(saved.headers.get("location")).toBe(origin + (savedHome === "welcome" ? "/home" : `/${savedHome}`));
+      const expectedHome = savedHome === "scanners" ? "/scanner" : savedHome === "welcome" ? "/home" : "/screeners";
+      expect(saved.headers.get("location")).toBe(origin + expectedHome);
       const denied = new Headers({ cookie: `${platformAuthCookieName(TRADERLINK_PLATFORM_SESSION_COOKIE)}=${other.token}` });
       expect(() => requireTraderLinkPlatformRequestIdentity(denied)).toThrow();
       if (prePaywallCase) {

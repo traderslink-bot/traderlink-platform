@@ -24,3 +24,33 @@ Owner requested the corresponding admin changeover. Scanner Admin now lives at `
 Product scope: support up to 4,000 symbols as capacity, not the default active scanning population. The current $100M universe setting remains unchanged. $150M or $200M are possible later owner tuning decisions, not approved settings changes. The app's current scanner niche remains micro/nano-cap, low-float moves. No threshold, ranking, universe refresh or provider-runtime changes in this slice.
 
 Help review: affected Scanner Admin references and live scanner enable/disabled labels aligned; existing Help slug retained. Four focused route tests pass, covering admin controls/audit destinations, metadata/navigation/Help, denied and unauthenticated access, and absence of old page files. Targeted new-route/navigation/test lint passes. Required dashboard-template check remains 3 pass/4 existing failures as recorded above. Private HTTPS browser confirms new admin HTTP200, Alpaca selected, Moomoo off, current-provider switch disabled, provider GET200, no admin JavaScript errors, audit link reaching its new route, old admin and audit URLs404 without redirect, and live Scanners HTTP200 with grid visible. Initial browser request during preview startup returned502; only the subsequent ready-server checks count as passing. No production release authorized.
+
+## Scanner filter layouts and canonical page · November 25, 2026 Toronto
+
+The upgraded Scanner now renders at `/scanner`. The existing Scanner access check applies to that page and to the `/scanners` redirect. The redirect preserves live view and evidence parameters. Saved Home page preferences retain their existing identifiers and now open the canonical page. The earlier broker scanner can still be opened at `/scanner?view=legacy` through its existing access check. Build and shared-scan URLs continue to work at their existing paths.
+
+The editor offers Side card and Top controls with the same filter definitions, values, and rule groups. Adding a filter opens its settings and moves focus to it. Switching layouts preserves the draft, and the browser remembers the selection for the account. Apply sends the draft to the existing results path. Cancel restores the last applied filters. Help covers the new controls.
+
+Focused tests cover the canonical and compatibility routes, existing access, saved Home page choices, evidence, and adding filters in both layouts. The actual Scanner client also passed local Chromium with synthetic results at desktop and phone widths in light and dark themes. The browser check exercised layout switching with unapplied edits, form validation, adding a rule to a group, Apply, Cancel, focus after closing, preference restoration and Escape. Live signed-in review and release are pending.
+
+The owner requested a private VPS preview. Release and Shared Charts confirmed cleanup of nine old generated outputs. The managed preview now serves `http://127.0.0.1:3010/scanner` from this checkout with an isolated database and workers disabled. The local-server runner now explicitly honors its Webpack flag so the development server can use the assigned dependency symlink. Chromium verified HTTP 200, adding a rule in the side card, switching to top controls with the draft intact, applying it, and reopening the side card at 390 px. Keep the preview available for owner review. [Cleanup receipt](/home/traderlink/projects/traderslink-coordinator/operations/scanner-ui-two-layouts-20261125/scanner-preview-cleanup-complete.json)
+
+The owner found the layout entry hidden on the default live scan. Scanner now opens with Top controls and Add filter visible above the default results, and Side card is available in the same toolbar. The draft shows the public starter until Apply runs an editable scan. Four focused tests and lint passed. After restarting the managed preview, actual Chromium verified both first-screen layout buttons, preserving an edit through both layouts, Apply, and the 390 px side card. The private preview remains available for review.
+
+The owner then reached the older live-card view via the Live scanner layout link. That link and alternate page were removed. The main Scanner now serves both the original URL and old live-view links. Evidence remains available on the same Scanner page. Verified the named controls on both URLs, the old plural redirect in the running preview, and nine focused route and evidence tests. No release was made.
+
+The responsive filter update puts Price, Float, RVOL, Volume, Day change and Session above results on desktop. Each category has a dropdown, and the searchable Add filter menu accepts multiple checked choices in one batch. Phones open the same draft in an expandable Filters card. The Scan menu labels the original TraderLink scans Presets and lists the editable starters separately. Exact preset values use the existing server-side path. Fourteen focused tests, scoped TypeScript and lint passed. The running private preview passed Chromium at 1440 px and 390 px, including the combined Price, Float and RVOL request leaving the browser on Apply. The updated preview remains available at `/scanner`.
+
+## Filter catalogue and saved combinations · November 26, 2026 Toronto
+
+The [full filter audit](scanner-filter-audit-20261126.md) records the 96 selectable filters, the legacy 52-entry catalogue, the plan gaps, sampled provider coverage and the cases that would benefit from conditional or ordered rules. All 57 focused tests passed. Chromium verified both mixed All/Any layouts through Apply, Save and reopening on the private Scanner. The 61-minute press-release window changed by 1.2 seconds on reapply and is recorded for correction. This checkpoint contains audit and test changes only.
+
+
+### November 26 — PR windows and session RVOL
+
+Custom filters now offer same-time RVOL for premarket and after-hours in the Volume category and the desktop RVOL selector. The PR editor preserves the exact duration through unit changes and reopening. The [updated filter audit](scanner-filter-audit-20261126.md#follow-up-verification-for-pr-windows-and-extended-hours-rvol) records the private browser cases, including exact cutoff matches and saved definitions.
+
+
+### November 26 — filter catalogue and ordered catalysts
+
+The private Scanner source adds 56 filter types to the previous 98. The editor supports ordering a PR before a VWAP reclaim and a trading resumption before volume expansion. Authorized article evidence follows the qualifying release through matching. Coverage, calculation boundaries and the combined Apply, Save, reload and reopen checks are recorded in the [filter audit](scanner-filter-audit-20261126.md#implemented-filter-batch).

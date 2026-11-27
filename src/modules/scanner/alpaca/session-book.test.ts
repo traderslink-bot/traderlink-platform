@@ -21,12 +21,14 @@ describe("Alpaca exact session trade counters", () => {
     expect(book.sessions.after_hours).toMatchObject({ volume: 301, dollarVolume: 2199, price: 4, high: 4, low: 4 });
     expect(applyAlpacaTrade(book, trade("2026-11-06T21:02:00Z", 10, 100, ["unknown"]))).toBe(false);
   });
-  it("keeps the first price-eligible print when trades arrive out of order", () => {
+  it("keeps the earliest open and latest close when trades arrive out of order within a millisecond", () => {
     const book = state();
     applyAlpacaTrade(book, trade("2026-11-06T14:30:00.000800Z", 3));
     applyAlpacaTrade(book, trade("2026-11-06T14:30:00.000100Z", 99, 100, ["I"]));
     applyAlpacaTrade(book, trade("2026-11-06T14:30:00.000200Z", 2));
-    expect(book.sessions.regular).toMatchObject({ open: 2, firstTradeAt: "2026-11-06T14:30:00.000200Z" });
+    expect(book.sessions.regular).toMatchObject({ open: 2, price: 3, high: 3, low: 2, volume: 300 });
+    applyAlpacaTrade(book, trade("2026-11-06T09:30:00.000800001-05:00", 4));
+    expect(book.sessions.regular).toMatchObject({ open: 2, price: 4, firstTradeAt: "2026-11-06T14:30:00.000200Z" });
     expect(book.sessions.premarket.open).toBeUndefined();
   });
   it("keeps independent regular opening ranges and separates premarket prints", () => {

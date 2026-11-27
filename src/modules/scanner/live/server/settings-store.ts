@@ -1,5 +1,6 @@
 import "server-only";
 import { constants } from "node:fs";
+import { closeSync, fstatSync, openSync, readFileSync } from "node:fs";
 import { lstat, mkdir, open, rename, unlink } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -76,6 +77,19 @@ export class ScannerSettingsStore {
     if (!await this.directoryExists()) return initialConfiguration();
     const value = await readJson(join(this.directory,"settings.json"));
     return value === null ? initialConfiguration() : validateConfiguration(value);
+  }
+  configurationForAlertRead(): ScannerConfiguration {
+    let file: number;
+    try { file = openSync(join(this.directory, "settings.json"), constants.O_RDONLY | constants.O_NOFOLLOW); }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return initialConfiguration();
+      throw error;
+    }
+    try {
+      const stat = fstatSync(file);
+      if (!stat.isFile() || stat.size > MAX_BYTES) throw Error("scanner_settings_storage_invalid");
+      return validateConfiguration(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(readFileSync(file))));
+    } finally { closeSync(file); }
   }
   async save(candidate: unknown, expectedRevision: number, now: number): Promise<ScannerConfiguration> {
     if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0 || !Number.isSafeInteger(now) || now <= 0) throw Error("scanner_settings_invalid");

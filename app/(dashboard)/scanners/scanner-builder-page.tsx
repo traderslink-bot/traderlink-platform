@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { DashboardPage, DashboardSecondaryAction } from "@/app/dashboard-template";
+import type { ReactNode } from "react";
+import { DashboardPage } from "@/app/dashboard-template";
 import { hasScannerDashboardAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -32,13 +33,14 @@ async function addScannerTickerToWatchlist(expectedScope: string, form: FormData
   return changePrivateWatchlist({ error: null, success: null }, form);
 }
 
-export function ScannerBuilderPage({ identity, initialChoice = "blank" }: {
+export function ScannerBuilderPage({ identity, initialChoice = "blank", children }: {
   identity: Awaited<ReturnType<typeof requireTraderLinkPlatformPageIdentity>>;
   initialChoice?: "blank" | "live:gainers";
+  children?: ReactNode;
 }) {
   const returnScope = scannerReturnScope(identity.scope);
   return <DashboardPage>
-    <DashboardSecondaryAction href="/scanners?view=live">Live scanner layout</DashboardSecondaryAction>
+    {children}
     <CustomScannersClient key={returnScope} returnScope={returnScope} initialChoice={initialChoice} verifiedLevels={process.env.TRADERLINK_SCANNER_VERIFIED_LEVELS === "1"}
       addToWatchlist={canAddToPrivateWatchlist(identity.scope.userId) ? addScannerTickerToWatchlist.bind(null, returnScope) : undefined} />
   </DashboardPage>;

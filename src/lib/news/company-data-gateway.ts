@@ -22,3 +22,32 @@ export async function readCompanyData<T>(kind: CompanyResource, key = "", revali
   try { return await cached() as T; }
   catch { return null; }
 }
+
+export type CompanyRecordReadOptions = {
+  asOf?: number;
+  revision?: number;
+  view?: "detail";
+};
+
+/** Reads the durable snapshot directly so source recovery is visible without a Next cache TTL. */
+export async function readCompanyRecords<T>(symbols: readonly string[], options: CompanyRecordReadOptions = {}) {
+  const base = process.env.TRADERLINK_COMPANY_DATA_GATEWAY_URL;
+  const token = process.env.TRADERLINK_COMPANY_DATA_GATEWAY_TOKEN;
+  if (!base || !token || !symbols.length) return null;
+  try {
+    const url = new URL(base);
+    const local = process.env.NODE_ENV !== "production" && url.protocol === "http:" && url.hostname === "127.0.0.1";
+    if (url.username || url.password || url.search || url.hash || (url.protocol !== "https:" && !local)) return null;
+    url.pathname = url.pathname.replace(/\/company-data\/?$/, "").replace(/\/$/, "") + "/traderslink/v1/company/snapshots";
+    for (const symbol of symbols) url.searchParams.append("symbol", symbol);
+    if (options.asOf !== undefined) url.searchParams.set("asOf", String(options.asOf));
+    if (options.revision !== undefined) url.searchParams.set("revision", String(options.revision));
+    if (options.view) url.searchParams.set("view", options.view);
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }, redirect: "error", cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) return null;
+    return await response.json() as T;
+  } catch { return null; }
+}

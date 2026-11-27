@@ -14,9 +14,9 @@ beforeEach(()=>{
  vi.stubGlobal('cancelAnimationFrame',(id:number)=>frames.delete(id));
 });
 afterEach(async()=>{for(const root of roots)await act(async()=>root.unmount());roots.clear();vi.restoreAllMocks();vi.unstubAllGlobals();});
-async function mount(owner:string|undefined,strict=false){
+async function mount(owner:string|undefined,strict=false,singlePanel=false){
  let api:API|undefined;const root=createRoot(document.createElement('div'));roots.add(root);
- function Probe({owner}:{owner:string|undefined}){const value=useWorkspaceChartLayout(owner);useLayoutEffect(()=>{api=value;},[value]);return null;}
+ function Probe({owner}:{owner:string|undefined}){const value=useWorkspaceChartLayout(owner,singlePanel);useLayoutEffect(()=>{api=value;},[value]);return null;}
  const render=async(owner:string|undefined)=>{await act(async()=>root.render(strict?createElement(StrictMode,null,createElement(Probe,{owner})):createElement(Probe,{owner})));};
  await render(owner);
  return {get api(){return api!;},render,unmount:async()=>{await act(async()=>root.unmount());roots.delete(root);}};
@@ -53,4 +53,27 @@ describe('workspace chart lifecycle',()=>{
  it('ignores a no-op initializer without writing storage again',async()=>{
   const first=singleChart('SMTK','15m');localStorage.setItem(workspaceChartKey('alpha'),JSON.stringify(first));const h=await mount('alpha');await hydrate();const write=vi.spyOn(Storage.prototype,'setItem');await act(async()=>h.api.change(current=>current??singleChart('RAIN','1m')));expect(write).not.toHaveBeenCalled();expect(h.api.layout).toEqual(first);
  });
+ it('keeps one broker panel across tabs and leaves the regular layout separate',async()=>{
+  const first=singleChart('SMTK','15m');
+  const second=singleChart('OPTT','5m');
+  const secondGroup={...second.groups[0],id:'ticker-2',panels:[{id:'chart-2',timeframe:'5m' as const}]};
+  const multi={...first,groups:[first.groups[0],secondGroup],selectedPanel:'chart-2'};
+  localStorage.setItem(workspaceChartKey('alpha'),JSON.stringify(multi));
+  const brokerKey=workspaceChartKey('alpha',true);
+  const session=await mount('alpha',false,true);
+  const otherAccount=await mount('beta',false,true);
+  await hydrate();
+  expect(session.api.layout).toBeNull();
+  await act(async()=>session.api.change(multi));
+  expect(session.api.layout?.groups).toEqual([secondGroup]);
+  expect(JSON.parse(localStorage.getItem(brokerKey)!)).toEqual(session.api.layout);
+  localStorage.setItem(brokerKey,JSON.stringify(first));
+  await act(async()=>window.dispatchEvent(new StorageEvent('storage',{
+   key:brokerKey,newValue:JSON.stringify(first),storageArea:localStorage,
+  })));
+  expect(session.api.layout).toEqual(first);
+  expect(otherAccount.api.layout).toBeNull();
+  expect(JSON.parse(localStorage.getItem(workspaceChartKey('alpha'))!)).toEqual(multi);
+ });
+
 });

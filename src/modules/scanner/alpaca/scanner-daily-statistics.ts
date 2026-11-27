@@ -1,3 +1,4 @@
+import { priceChangePercent } from "../price-change";
 import { easternDayStart, type Candle } from "./candles";
 import type { ChartCalendar } from "./chart-calendar";
 import type { ScannerDailyHighs } from "../live/contracts";
@@ -16,6 +17,7 @@ export type ScannerDailyStatistics = Readonly<{
   daily?: ScannerClosedReturn;
   weekly?: ScannerClosedReturn;
   averageVolume20?: number;
+  averageDollars20?:number;
   averageDailyRange20?: number;
   dailyCloseVsSma20?: number;
   weeklyCloseVsSma4?: number;
@@ -29,7 +31,7 @@ function closedReturn(days: readonly string[], bars: ReadonlyMap<string, Candle>
   const [from, through] = days;
   const previous = bars.get(from), current = bars.get(through);
   if (!previous || !current || previous.close <= 0 || current.close <= 0) return;
-  const percent = (current.close / previous.close - 1) * 100;
+  const percent = priceChangePercent(current.close, previous.close);
   return Number.isFinite(percent) ? { from, through, percent } : undefined;
 }
 
@@ -38,7 +40,7 @@ function closeVsAverage(days: readonly string[], bars: ReadonlyMap<string, Candl
   const closes = days.map(day => bars.get(day)?.close ?? 0);
   if (closes.some(close => !Number.isFinite(close) || close <= 0)) return;
   const average = closes.reduce((sum, close) => sum + close, 0) / length;
-  return (closes[length - 1] / average - 1) * 100;
+  return priceChangePercent(closes[length - 1], average);
 }
 
 function coveredHigh(days: readonly string[], bars: ReadonlyMap<string, Candle>, quiet: (day: string) => boolean) {
@@ -54,7 +56,7 @@ function coveredHigh(days: readonly string[], bars: ReadonlyMap<string, Candle>,
 
 export function scannerDailyStatistics(
   date: string, bars: ReadonlyMap<string, Candle>, calendars: readonly ChartCalendar[],
-  quiet: (day: string) => boolean = () => false,
+  quiet: (day: string) => boolean = () => false, dollars?: ReadonlyMap<string,number>,
 ): ScannerDailyStatistics | undefined {
   const available = calendars.filter(calendar => calendar.available);
   const historyStart = dateAt(stamp(date) - SCANNER_DAILY_HISTORY_DAYS * DAY_MS);
@@ -105,8 +107,11 @@ export function scannerDailyStatistics(
   const averageVolume20 = volumes.length === 20 && volumes.every((volume): volume is number =>
     volume !== undefined && Number.isFinite(volume) && volume >= 0)
     ? volumes.reduce((sum, volume) => sum + volume, 0) / 20 : undefined;
+  const tradedDollars=dailyWindow.map(day=>dollars?.get(day)??(bars.get(day)?.volume===0 || (!bars.has(day)&&quiet(day)) ? 0 : undefined));
+  const averageDollars20=tradedDollars.length===20 && tradedDollars.every((v):v is number=>v!==undefined && Number.isFinite(v) && v>=0)
+    ? tradedDollars.reduce((sum,v)=>sum+v,0)/20:undefined;
   const averageDailyRange20 = complete
-    ? averageBars.reduce((sum, bar) => sum + (bar.high / bar.low - 1) * 100, 0) / 20 : undefined;
+    ? averageBars.reduce((sum, bar) => sum + priceChangePercent(bar.high, bar.low), 0) / 20 : undefined;
   const closeAt = (day: string | undefined) => {
     if (!day) return;
     const session = available.flatMap(calendar => calendar.sessions).find(session => session.date === day);
@@ -116,7 +121,7 @@ export function scannerDailyStatistics(
   const dailyClosedAt = daily || dailyCloseVsSma20 !== undefined || averageVolume20 !== undefined || complete
     ? closeAt(sessions.at(-1)) : undefined;
   const weeklyClosedAt = weekly || weeklyCloseVsSma4 !== undefined ? closeAt(lastClose) : undefined;
-  return { daily, weekly, averageVolume20, averageDailyRange20,
+  return { daily, weekly, ...(averageDollars20!==undefined && {averageDollars20}), averageVolume20, averageDailyRange20,
     ...(dailyClosedAt === undefined ? {} : { dailyClosedAt }),
     ...(weeklyClosedAt === undefined ? {} : { weeklyClosedAt }),
     ...(dailyCloseVsSma20 === undefined ? {} : { dailyCloseVsSma20 }),

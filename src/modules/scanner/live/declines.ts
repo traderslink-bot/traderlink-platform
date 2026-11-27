@@ -1,3 +1,4 @@
+import { priceChangePercent } from "../price-change";
 import { scannerVolumeBreakdown } from "./volume";
 import type { DeclineControls, DeclineResults, DeclineRow, DailyUniverse, NormalizedSnapshot, ScannerSession } from "./contracts";
 import type { FloatFact } from "./engine";
@@ -10,7 +11,7 @@ export const DEFAULT_DECLINE_CONTROLS: DeclineControls = Object.freeze({
   enabled:true, displayLimit:20, minimumDropPercent:30, windowMinutes:5, retentionMinutes:RAPID_DROP_RETENTION_MINUTES,
 });
 type Episode = { start:NormalizedSnapshot; detected:NormalizedSnapshot; low:NormalizedSnapshot };
-const percent = (price:number,base:number)=>(price/base-1)*100;
+
 
 export function rapidDropRecoveryPercent(start: number, low: number, current: number): number {
   return start > low ? Math.max(0, Math.min(100, (current - low) / (start - low) * 100)) : 0;
@@ -56,7 +57,7 @@ export class DeclineBook {
         .reduce<NormalizedSnapshot|null>((best,row)=>!best||row.price>=best.price?row:best,null);
       let episode=this.episodes.get(quote.symbol);
       if(!episode&&peak&&peak.receivedAt>(this.consumedThrough.get(quote.symbol)??0)
-        &&percent(quote.price,peak.price)<=-controls.minimumDropPercent+1e-9){
+        &&priceChangePercent(quote.price,peak.price)<=-controls.minimumDropPercent){
         episode={start:peak,detected:quote,low:quote};
         this.episodes.set(quote.symbol,episode);
       }
@@ -78,7 +79,7 @@ export class DeclineBook {
       const validBase=typeof base==="number"&&Number.isFinite(base)&&base>0?base:null;
       const fact=input.floats.get(quote.symbol),at=fact?Date.parse(fact.retrievedAtUtc):NaN;
       return {symbol:quote.symbol,exchange:members.get(quote.symbol)!.exchange,company:quote.company,price:quote.price,
-        comparisonPrice:validBase,changePercent:validBase===null?null:percent(quote.price,validBase),volume:quote.volume,
+        comparisonPrice:validBase,changePercent:validBase===null?null:priceChangePercent(quote.price,validBase),volume:quote.volume,
         ...scannerVolumeBreakdown(quote),
         float:fact&&Number.isSafeInteger(fact.shares)&&fact.shares>0&&at<=input.now&&input.now-at<=30*60*60000?fact.shares:null,
         spreadPercent:quote.bid!==null&&quote.ask!==null&&quote.bid>0&&quote.ask>=quote.bid?(quote.ask-quote.bid)/((quote.ask+quote.bid)/2)*100:null,
@@ -97,8 +98,8 @@ export class DeclineBook {
       return {...makeRow(quote),drop:{detectedAtUtc:new Date(episode.detected.receivedAt).toISOString(),
         startAtUtc:new Date(episode.start.receivedAt).toISOString(),startPrice:episode.start.price,detectionPrice:episode.detected.price,
         lowPrice:episode.low.price,lowAtUtc:new Date(episode.low.receivedAt).toISOString(),
-        dropPercent:percent(quote.price,episode.start.price),maximumDropPercent:percent(episode.low.price,episode.start.price),
-        reboundPercent:percent(quote.price,episode.low.price),backToStartPercent:percent(episode.start.price,quote.price),
+        dropPercent:priceChangePercent(quote.price,episode.start.price),maximumDropPercent:priceChangePercent(episode.low.price,episode.start.price),
+        reboundPercent:priceChangePercent(quote.price,episode.low.price),backToStartPercent:priceChangePercent(episode.start.price,quote.price),
         durationSeconds:Math.round((episode.low.receivedAt-episode.start.receivedAt)/1000),sharesDuringDrop:volume}};
     }).sort((a,b)=>a.drop.dropPercent-b.drop.dropPercent||a.symbol.localeCompare(b.symbol));
     return {rapid:rapid.slice(0,controls.displayLimit),losers:losers.slice(0,controls.displayLimit),rapidTotal:rapid.length,loserTotal:losers.length,controls};

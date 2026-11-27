@@ -1,3 +1,4 @@
+import { priceChangePercent } from "../price-change";
 import type { NormalizedSnapshot, RollingActivity } from "./contracts";
 import { ACTIVITY_HISTORY_MS, LEGACY_SCAN_MS } from "./event-timing";
 import { SNAPSHOT_MAX_AGE_MS } from "./snapshots";
@@ -110,15 +111,15 @@ export class RollingActivityBook {
     const precedingFiveRate = five && ten ? rate(five.volume,ten.volume,five.receivedAt-ten.receivedAt) : null;
     return {
       ...(this.elapsedTime?{observationVolume:observedDelta(current.volume,observedPrevious,"volume"),observationDollarVolume:observedDelta(current.dollarVolume,observedPrevious,"dollarVolume")}:{}),
-      oneMinuteGain: one ? (current.price/one.price-1)*100 : null,
-      fiveMinuteGain: five ? (current.price/five.price-1)*100 : null,
+      oneMinuteGain: one ? priceChangePercent(current.price, one.price) : null,
+      fiveMinuteGain: five ? priceChangePercent(current.price, five.price) : null,
       oneMinuteVolume: minuteVolume, oneMinuteDollarVolume: minuteDollars,
       fiveMinuteVolume,
       fiveMinuteVolumeSpike: fiveMinuteVolume !== null && precedingFiveMinuteVolume !== null && precedingFiveMinuteVolume > 0
         && fiveRate !== null && precedingFiveRate !== null && precedingFiveRate > 0 ? fiveRate/precedingFiveRate : null,
       // A zero historical baseline is unavailable, not infinite relative activity.
       volumeAcceleration: currentRate !== null && precedingRate !== null && precedingRate > 0 ? currentRate/precedingRate : null,
-      ...(previous?{intervalSeconds,intervalGain:(current.price/previous.price-1)*100,intervalVolume,intervalDollarVolume,
+      ...(previous?{intervalSeconds,intervalGain:priceChangePercent(current.price, previous.price),intervalVolume,intervalDollarVolume,
         intervalVolumeRate,baselineVolumeRate,intervalVolumeRateMultiple:intervalVolumeRate!==null&&baselineVolumeRate!==null&&baselineVolumeRate>0?intervalVolumeRate/baselineVolumeRate:null}:{}),
     };
   }

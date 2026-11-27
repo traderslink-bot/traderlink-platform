@@ -31,10 +31,20 @@ const rawBar = simple({T:"recordKind",S:"ticker",t:"observed",o:"first",h:"peak"
 const trade = record({T:["recordKind",scalar],S:["ticker",scalar],t:["observed",scalar],p:["value",scalar],s:["shares",scalar],i:["sequence",scalar],x:["venue",scalar],c:["conditions",array(scalar)],z:["tape",scalar]});
 const quote = record({T:["recordKind",scalar],S:["ticker",scalar],t:["observed",scalar],bp:["buyValue",scalar],bs:["buyShares",scalar],bx:["buyVenue",scalar],ap:["sellValue",scalar],as:["sellShares",scalar],ax:["sellVenue",scalar],c:["conditions",array(scalar)],z:["tape",scalar]});
 const pause = simple({symbol:"ticker",halted:"paused",haltedAt:"pausedSince",observedAt:"observed",statusCode:"stateCode",reasonCode:"causeCode",reason:"explanation",tape:"listingTape",quoteResumedAt:"quotesAt",tradeResumedAt:"tradesAt",pauseObservedAt:"pauseSeenAt"});
-const previous = simple({symbol:"ticker",price:"value",barAt:"candleAt",adjustment:"basis",basisDate:"basisDay",fetchedAt:"received"});
+const referenceReturn=simple({from:"from",through:"through",percent:"change"});
+const referenceStats=record({
+  daily:["dayReturn",referenceReturn],weekly:["weekReturn",referenceReturn],
+  dailyClosedAt:["dayCloseAt",scalar],weeklyClosedAt:["weekCloseAt",scalar],
+  averageVolume20:["averageShares",scalar],averageDollars20:["averageTurnover",scalar],averageDailyRange20:["averageRange",scalar],
+  dailyCloseVsSma20:["dayVsAverage",scalar],weeklyCloseVsSma4:["weekVsAverage",scalar],
+  dailyRelativeToSpy:["dayRelative",scalar],weeklyRelativeToSpy:["weekRelative",scalar],
+  recentHighs:["relativeHighs",simple({lastFiveSessions:"fiveDays",lastSevenDays:"sevenDays",previousWeek:"lastWeek"})],
+});
+const previous = record({symbol:["ticker",scalar],price:["value",scalar],high:["peak",scalar],low:["trough",scalar],
+  barAt:["candleAt",scalar],adjustment:["basis",scalar],basisDate:["basisDay",scalar],fetchedAt:["received",scalar],statistics:["studies",referenceStats]});
 const snapshot = record({latestTrade:["lastPrint",trade],latestQuote:["bestPrices",quote],dailyBar:["dayCandle",rawBar],minuteBar:["minuteCandle",rawBar],prevDailyBar:["priorDayCandle",rawBar],adjustedPreviousClose:["priorClose",previous],tradingStatus:["tradingState",pause]});
-const sessionTotal = simple({volume:"shares",dollarVolume:"turnover",high:"peak",low:"trough",price:"value",providerAt:"observed"});
-const sessionState = record({date:["day",scalar],regularClose:["closeMinute",scalar],complete:["finished",scalar],sessions:["periods",record({premarket:["beforeOpen",sessionTotal],regular:["openMarket",sessionTotal],after_hours:["afterClose",sessionTotal]})]});
+const sessionTotal = simple({open:"first",largestTradeShares:"largestShares",largestTradeDollars:"largestTurnover",volume:"shares",dollarVolume:"turnover",high:"peak",low:"trough",price:"value",providerAt:"observed"});
+const sessionState = record({date:["day",scalar],regularClose:["closeMinute",scalar],complete:["finished",scalar],openingRanges:["openRanges",record(Object.fromEntries([5,15,30].map(n=>[String(n),[String(n),simple({high:"peak",low:"trough"})]])))],sessions:["periods",record({premarket:["beforeOpen",sessionTotal],regular:["openMarket",sessionTotal],after_hours:["afterClose",sessionTotal]})]});
 const session = simple({date:"day",open:"opens",close:"closes"});
 const calendar = record({available:["usable",scalar],start:["fromDay",scalar],end:["untilDay",scalar],sessions:["days",array(session)]});
 const request = simple({symbol:"ticker",timeframe:"interval",anchor:"reference",before:"until",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",adjustment:"basis"});
@@ -122,7 +132,7 @@ export function decodeGatewayWire(operation: GatewayOperation, value: unknown): 
   return transform(schemas[operation],body.data,true,{nodes:0});
 }
 
-const queryNames: Record<string,string> = {symbol:"ticker",symbols:"tickers",timeframe:"resolution",frame:"signalFrame",start:"from",end:"until",daily:"dayBars",dailyStartup:"initialDaily",overnight:"extended",sessions:"periodTotals",regularClose:"closeMinute",before:"cutoff",anchor:"reference",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",year:"yearNumber",adjustment:"basis",acceptedEvidence:"includeAcceptance",session:"marketSession",sessionMode:"sessionMode",sessionVwap:"includeWeightedSession",historyBars:"lookback",id:"acceptedId",dailyId:"acceptedDailyId",regularId:"acceptedRegularId",mapId:"mapId",mapRevision:"mapRevision"};
+const queryNames: Record<string,string> = {purpose:"use",symbol:"ticker",symbols:"tickers",timeframe:"resolution",frame:"signalFrame",start:"from",end:"until",daily:"dayBars",dailyStartup:"initialDaily",overnight:"extended",sessions:"periodTotals",regularClose:"closeMinute",before:"cutoff",anchor:"reference",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",year:"yearNumber",adjustment:"basis",acceptedEvidence:"includeAcceptance",session:"marketSession",sessionMode:"sessionMode",sessionVwap:"includeWeightedSession",historyBars:"lookback",id:"acceptedId",dailyId:"acceptedDailyId",regularId:"acceptedRegularId",mapId:"mapId",mapRevision:"mapRevision"};
 export function gatewayWireQuery(query: URLSearchParams, decode=false): URLSearchParams {
   const result=new URLSearchParams();
   for(const [from,to] of Object.entries(queryNames)){

@@ -13,6 +13,10 @@ function clockMilliseconds(value: string | null): number {
     + Number(fraction.slice(0, 3).padEnd(3, "0"));
 }
 
+export function marketEventHaltTimestamp(halt: ScannerActiveHalt, dayStart: number) {
+  return halt.haltedAtUtc ? Date.parse(halt.haltedAtUtc) : dayStart + clockMilliseconds(halt.haltTimeEt);
+}
+
 /** Limit the alert's display window independently of the symbol's actual halt status. */
 export function selectMarketEventsHalts(
   candidates: readonly ScannerActiveHalt[],
@@ -30,9 +34,7 @@ export function selectMarketEventsHalts(
   const rows: ScannerActiveHalt[] = [];
   let nextExpiryAt = sessionClose;
   for (const halt of candidates) {
-    const haltedAt = halt.haltedAtUtc
-      ? Date.parse(halt.haltedAtUtc)
-      : dayStart + clockMilliseconds(halt.haltTimeEt);
+    const haltedAt = marketEventHaltTimestamp(halt, dayStart);
     if (halt.halted === false || !Number.isFinite(haltedAt) || haltedAt < dayStart || haltedAt > now) continue;
 
     const tradeResume = dayStart + clockMilliseconds(halt.tradeTimeEt);

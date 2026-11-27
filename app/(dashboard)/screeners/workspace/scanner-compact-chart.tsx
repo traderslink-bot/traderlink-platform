@@ -65,14 +65,14 @@ function TickerSearch({ symbol, timeframe, onSubmit }: {
   </Box>;
 }
 
-export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTimeframe, slot, keepMounted = false, fillMobile = false, arrange = false, onEndArrange }: {
+export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTimeframe, slot, keepMounted = false, fillMobile = false, arrange = false, onEndArrange, singlePanel = false }: {
   symbol: string | null;
   layout: WorkspaceChartLayout | null;
   onLayoutChange: Dispatch<SetStateAction<WorkspaceChartLayout|null>>;
   defaultTimeframe: ChartTimeframe;
   slot: ScannerWorkspaceSlotId;
   keepMounted?: boolean;fillMobile?:boolean;
-  arrange?: boolean;
+  arrange?: boolean;singlePanel?:boolean;
   onEndArrange?: () => void;
 }) {
   const covered = useContext(Covered);
@@ -230,7 +230,7 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
                   }}
                   compactIdentity={<TickerSearch key={group.symbol} symbol={group.symbol} timeframe={panel.timeframe}
                     onSubmit={symbol=>replaceTicker(panel.id,panel.timeframe,symbol)}/>}
-                  actions={!multiview&&<ChartMultiviewMenu layout={layout} openingPanelId={layout.selectedPanel??undefined} defaultTimeframe={defaultTimeframe}
+                  actions={!singlePanel&&!multiview&&<ChartMultiviewMenu layout={layout} openingPanelId={layout.selectedPanel??undefined} defaultTimeframe={defaultTimeframe}
                     onChange={onLayoutChange} resolveEmptyLayout={draft=>singleWorkspaceChart(draft,symbol,defaultTimeframe)}
                     chartTabs iconOnly workspaceFullGrid/>}
                   closeAction={multiview&&<IconButton data-workspace-chart-close aria-label={`Close ${group.symbol} ${panel.timeframe} chart`}

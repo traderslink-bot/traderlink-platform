@@ -5,7 +5,7 @@ import type { FloatFact } from "../engine";
 const SYMBOL = /^[A-Z][A-Z0-9.-]{0,15}$/u;
 const EODHD_MAX_BATCH = 100;
 const DEFAULT_FINNHUB_SPACING_MS = 1_050;
-type FloatCacheRecord = Readonly<{ tradingDate: string; facts: Readonly<Record<string,FloatFact>>; countries?: Readonly<Record<string,string|null>>; industries?: Readonly<Record<string,string>> }>;
+type FloatCacheRecord = Readonly<{ tradingDate: string; facts: Readonly<Record<string,FloatFact>>; countries?: Readonly<Record<string,string|null>>; ipoDates?: Readonly<Record<string,string>>; industries?: Readonly<Record<string,string>> }>;
 export type FloatCachePersistence = Readonly<{
   read: (tradingDate: string) => Promise<unknown>;
   write: (record: FloatCacheRecord) => Promise<void>;
@@ -36,6 +36,15 @@ function profileIndustry(value:unknown):string | undefined {
   return normalized.length > 0 && normalized.length <= 100 && !/[\p{Cc}\p{Cf}]/u.test(normalized) ? normalized : undefined;
 }
 
+function parseIpoDates(value: unknown, date: string): Map<string,string> {
+  const record = value as Partial<FloatCacheRecord> | null;
+  return new Map(Object.entries(record?.tradingDate === date ? record.ipoDates ?? {} : {}).filter(([symbol, ipo]) =>
+    SYMBOL.test(symbol) && validIpoDate(ipo,date)));
+}
+function validIpoDate(value: unknown, date: string): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && value <= date &&
+    Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value;
+}
 function parseIndustries(value:unknown, tradingDate:string):Map<string,string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return new Map();
   const record = value as Partial<FloatCacheRecord>;
@@ -107,6 +116,7 @@ export class DailyFloatEnricher {
     const facts = parseCache(stored,tradingDate);
     const countries = parseCountries(stored,tradingDate);
     const industries = parseIndustries(stored,tradingDate);
+    const ipoDates = parseIpoDates(stored,tradingDate);
     let missing = [...new Set(symbols)].filter(symbol => !facts.has(symbol)||!countries.has(symbol));
     const request = this.input.request ?? fetch;
     const now = this.input.now ?? Date.now;
@@ -129,6 +139,7 @@ export class DailyFloatEnricher {
             if(typeof profile.ticker==="string"&&profile.ticker.trim().toUpperCase()===symbol){
               const country=typeof profile.country==="string"?profile.country.trim().toUpperCase():"";
               countries.set(symbol,/^[A-Z]{2}$/.test(country)?country:null);
+              if (validIpoDate(profile.ipo,tradingDate)) ipoDates.set(symbol,profile.ipo);
               const industry = profileIndustry(profile.finnhubIndustry ?? profile.industry);
               if (industry) industries.set(symbol, industry);
               else industries.delete(symbol);
@@ -156,6 +167,7 @@ export class DailyFloatEnricher {
       } catch { continue; }
     }
     await this.input.persistence.write({ tradingDate,facts:Object.freeze(Object.fromEntries(facts)),countries:Object.freeze(Object.fromEntries(countries)),
+      ...(ipoDates.size ? {ipoDates:Object.fromEntries(ipoDates)} : {}),
       ...(industries.size ? {industries:Object.freeze(Object.fromEntries(industries))} : {}) });
     return facts;
   }
@@ -175,6 +187,7 @@ export class ScannerFloatFeed {
   async readCountries(date:string):Promise<ReadonlyMap<string,string>> {
     return new Map([...parseCountries(await this.persistence.read(date),date)].filter((entry):entry is [string,string]=>entry[1]!==null));
   }
+  async readIpoDates(date:string) { return parseIpoDates(await this.persistence.read(date),date); }
   async readIndustries(date:string):Promise<ReadonlyMap<string,string>> {
     return parseIndustries(await this.persistence.read(date),date);
   }

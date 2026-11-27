@@ -13,7 +13,7 @@ export function alpacaMarketDataEnabled(environment: NodeJS.ProcessEnv = process
 }
 
 /** Server-to-server only. No broker key is ever loaded by Platform/Railway. */
-export async function requestAlpacaGateway(path: "accepted-input" | "accepted-input-candle" | "accepted-daily-context" | "accepted-regular-opportunities" | "accepted-map-monitor" | "scanner-listings" | "scanner-signal-bars" | "calendar" | "vwap-seed" | "chart-splits" | "history" | "quotes" | "overnight" | "halts", query: URLSearchParams, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal, admission?: SavedScannerMapAdmission): Promise<unknown> {
+export async function requestAlpacaGateway(path: "candle-history" | "accepted-input" | "accepted-input-candle" | "accepted-daily-context" | "accepted-regular-opportunities" | "accepted-map-monitor" | "scanner-listings" | "scanner-signal-bars" | "calendar" | "vwap-seed" | "chart-splits" | "history" | "quotes" | "overnight" | "halts", query: URLSearchParams, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal, admission?: SavedScannerMapAdmission): Promise<unknown> {
   const { base, token } = await gatewayLocation(environment);
   const wire=gatewayWireEnabled(environment);
   const url = wire?gatewayWireUrl(base,path,query):new URL(path, base.endsWith("/") ? base : base + "/"); if(!wire)url.search = query.toString();

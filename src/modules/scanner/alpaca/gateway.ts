@@ -398,8 +398,8 @@ export function createAlpacaGateway(options: GatewayOptions) {
         if (!reader) { response.writeHead(404).end(); return; }
         const range = parseArchiveRead(url.searchParams);
         response.setHeader("Content-Type", "application/json");
-        const result = reader.read(range);
-        if (result.state === "ready") archive?.touch(range.symbol);
+        const result = url.searchParams.get("purpose") === "scanner" ? reader.readScannerStudy(range) : reader.read(range);
+        if (result.state === "ready" && url.searchParams.get("purpose") !== "scanner") archive?.touch(range.symbol);
         reply(result);
         return;
       }

@@ -176,7 +176,7 @@ it("uses verified quiet days for weekly trends and volume without admitting a ga
   const { QUIET, UNCOVERED } = await book.read(["QUIET", "UNCOVERED"], date);
   const priorFriday = closes.find(bar => bar.time === Date.parse("2026-10-30T04:00:00Z") / 1_000)!;
   const thursday = closes.at(-2)!;
-  const weekly = (thursday.close / priorFriday.close - 1) * 100;
+  const weekly = ((thursday.close - priorFriday.close) * 100) / priorFriday.close;
   expect(QUIET?.price).toBe(thursday.close);
   expect(QUIET?.barAt).toBe(thursday.time * 1_000);
   expect(QUIET?.statistics?.weekly).toEqual({ from: "2026-10-30", through: "2026-11-06", percent: weekly });

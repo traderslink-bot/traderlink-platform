@@ -1,5 +1,12 @@
 # Top Gainers ticker workspace — design and progress
 
+## Connected Workspace beta chart controls
+
+Connected Workspace keeps a single chart panel in its own account-scoped browser preference. The chart card accepts ticker and timeframe changes and syncs its selection across tabs in the same browser. The Scanner chart drawer opens one temporary chart and suspends the page chart while the drawer is open. The standard Workspace retains Multiview.
+
+The Workspace lifecycle suite passed seven tests, including the single-panel and cross-tab account-isolation regression. Scoped TypeScript passed on 21 files. Cross-device enforcement, account-scoped server candle caching and live simultaneous two-account QA remain open.
+
+
 Owner requested a desktop chart drawer that spans the screen, retains the current chart size/height, and uses the additional width for stock details, recent PR/SEC, and Generate Levels. This is an exploratory owner-review slice, not approval for automatic generation or release. Top Gainers remains the base-card scope; other scanner chart drawers retain their old dimensions.
 
 ## Implemented composition

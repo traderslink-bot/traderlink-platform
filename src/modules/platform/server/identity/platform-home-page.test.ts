@@ -110,7 +110,7 @@ describe("Platform home page", () => {
       requestState.headers = new Headers({ cookie: cookie(trader.session.token) });
       for (const [homePage, href] of [
         ["trading-workspace", "/trading-workspace"],
-        ["scanners", "/scanners"],
+        ["scanners", "/scanner"],
         ["screeners", "/screeners"],
       ] as const) {
         expect(await saveHomePage(homePage)).toEqual({ ok: true, homePage });
@@ -145,10 +145,10 @@ describe("Platform home page", () => {
         digest: expect.stringContaining(";/workspace;"),
       });
       expect(await saveHomePage("welcome")).toMatchObject({ ok: false });
-      requestState.headers.set("x-traderlink-page-path", "/scanners");
-      requestState.headers.set("x-traderlink-page-return-to", "/scanners?view=all");
+      requestState.headers.set("x-traderlink-page-path", "/scanner");
+      requestState.headers.set("x-traderlink-page-return-to", "/scanner?view=all");
       await expect(DashboardAdmissionTemplate({ children: "scanners" })).rejects.toMatchObject({
-        digest: expect.stringContaining("/access-required?returnTo=%2Fscanners%3Fview%3Dall"),
+        digest: expect.stringContaining("/access-required?returnTo=%2Fscanner%3Fview%3Dall"),
       });
       expect(await saveHomePage("trading-workspace")).toMatchObject({ ok: false });
       expect((await entry(member.token)).headers.get("location")).toBe(origin + "/workspace");
@@ -176,7 +176,7 @@ describe("Platform home page", () => {
       vi.stubEnv("TRADERLINK_SCANNER_DASHBOARD_DISCORD_SUBJECT", discordSubjects[0]);
       vi.stubEnv("TRADERLINK_TRADING_WORKSPACE_DASHBOARD_DISCORD_SUBJECT", discordSubjects[1]);
       for (const [selectedTrader, allowed, denied, href] of [
-        [trader, "scanners", "trading-workspace", "/scanners"],
+        [trader, "scanners", "trading-workspace", "/scanner"],
         [otherTrader, "trading-workspace", "scanners", "/trading-workspace"],
       ] as const) {
         requestState.headers = new Headers({ cookie: cookie(selectedTrader.session.token) });
@@ -196,7 +196,7 @@ describe("Platform home page", () => {
         requestState.headers = new Headers({ cookie: cookie(selected.session.token) });
         for (const homePage of ["trading-workspace", "scanners", "screeners"] as const) {
           expect(await saveHomePage(homePage)).toEqual({ ok: true, homePage });
-          expect((await entry(selected.session.token)).headers.get("location")).toBe(origin + "/" + homePage);
+          expect((await entry(selected.session.token)).headers.get("location")).toBe(origin + "/" + (homePage === "scanners" ? "scanner" : homePage));
         }
       }
 
@@ -214,7 +214,7 @@ describe("Platform home page", () => {
       for (const homePage of ["trading-workspace", "scanners", "screeners"] as const) {
         expect(await saveHomePage(homePage)).toMatchObject({ ok: false });
         preferences.updateActiveUserHomePage({ userId: member.session.userId, homePage, updatedAtUtc: at });
-        expect((await entry(member.token)).headers.get("location")).not.toBe(origin + "/" + homePage);
+        expect((await entry(member.token)).headers.get("location")).not.toBe(origin + "/" + (homePage === "scanners" ? "scanner" : homePage));
       }
 
       requestState.headers = new Headers();

@@ -1,9 +1,14 @@
+import { priceChangePercent } from "../price-change";
+import { eventFilters, isCompanyMetric, isCandleStudy, usesNews } from "./audited-filters";
+import { companyMatchEvidence, pinMatchedCompanyFields, type CompanyMatchPin } from "./company-match-evidence";
+import { scannerRetestSetup } from "./setup-details";
+import { easternClock } from "../live/sessions";
 import Decimal from "decimal.js";
 import { scannerPriceIsCurrent, scannerQuoteIsCurrent } from "./market-facts";
 import type { ScannerOpeningRangeMinutes } from "../live/contracts";
 import { customHistorySize, customIndicatorKey, isCustomIndicatorMetric, isIndicatorCross } from "./custom-indicator";
 import type { ScanEnrichment } from "./scan-enrichment";
-import { indicatorReadyForSignal, isScanIndicatorMetric, isScanMomentumMetric, isScannerStructureSignal, type ReadScanPressReleases,
+import { isSameTimeVolumeMetric, sameTimeVolumeSessions, indicatorReadyForSignal, isScanIndicatorMetric, isScanMomentumMetric, isScannerStructureSignal, type ReadScanPressReleases,
   type ScanMomentumReading, type ScanPressRelease, type ScanPressReleaseSnapshot } from "./signal-filters";
 import {
   isDirectionalPriceMove, isEventScanMetric, isOpeningRangeMetric, isRollingScanMetric, isScanSelectionMetric, requiresScannerLevelRead, scanRules, SCAN_PAGE_SIZE, SIDE_CARD_SCAN_PAGE_SIZE,
@@ -13,7 +18,7 @@ import {
   type ScanStatus, type RollingScanMetric, type ScanMetric, type ReadScanLevelBreak,
 } from "./definition";
 
-const SAMPLE_MS = 5_000;
+const MAX_REFERENCE_AGE_MS = 10_000;
 const CHUNK_POINTS = 256;
 const LANES = 4;
 const MISSING = Number.NaN;
@@ -26,24 +31,43 @@ class History {
     return this.chunks[Math.floor(index / CHUNK_POINTS)][(index % CHUNK_POINTS) * LANES + lane];
   }
 
-  append({ observedAt, price, volume, dollarVolume }: ScanMarketRow) {
+  private lastObservedAt: number | undefined;
+
+  private write(at: number, price: number, volume: number, dollars: number) {
     const last = this.count - 1;
-    if (last >= 0 && observedAt < this.at(last, 0)) return;
-    const replace = last >= 0 && Math.floor(observedAt / SAMPLE_MS) === Math.floor(this.at(last, 0) / SAMPLE_MS);
-    const index = replace ? last : this.count++;
+    const index = last >= 0 && this.at(last, 0) === at ? last : this.count++;
     const chunk = Math.floor(index / CHUNK_POINTS);
     this.chunks[chunk] ??= new Float64Array(CHUNK_POINTS * LANES);
-    this.chunks[chunk].set([observedAt, price, volume ?? MISSING, dollarVolume ?? MISSING], (index % CHUNK_POINTS) * LANES);
+    const buffer = this.chunks[chunk], offset = (index % CHUNK_POINTS) * LANES;
+    buffer[offset] = at;
+    buffer[offset + 1] = price;
+    buffer[offset + 2] = volume;
+    buffer[offset + 3] = dollars;
+  }
+
+  append({ observedAt, price, volume, dollarVolume }: ScanMarketRow) {
+    const previous = this.lastObservedAt;
+    if (previous !== undefined && observedAt < previous) return;
+    this.lastObservedAt = observedAt;
+    // Identical publications extend coverage. Insert a missing point where an unobserved gap expires.
+    if (previous !== undefined && observedAt - previous > MAX_REFERENCE_AGE_MS) {
+      this.write(previous + MAX_REFERENCE_AGE_MS + 1, MISSING, MISSING, MISSING);
+    }
+    const shares = volume ?? MISSING, dollars = dollarVolume ?? MISSING, last = this.count - 1;
+    if (last >= 0 && this.at(last, 1) === price && Object.is(this.at(last, 2), shares) &&
+      Object.is(this.at(last, 3), dollars)) return;
+    this.write(observedAt, price, shares, dollars);
   }
 
   valueAtOrBefore(time: number, lane: number): number | null {
+    if (this.lastObservedAt === undefined || time - this.lastObservedAt > MAX_REFERENCE_AGE_MS) return null;
     let first = 0, end = this.count;
     while (first < end) {
       const middle = first + Math.floor((end - first) / 2);
       if (this.at(middle, 0) <= time) first = middle + 1;
       else end = middle;
     }
-    if (first === 0 || time - this.at(first - 1, 0) > SAMPLE_MS * 2) return null;
+    if (first === 0) return null;
     const value = this.at(first - 1, lane);
     return Number.isFinite(value) ? value : null;
   }
@@ -52,6 +76,8 @@ type WindowValue = (ticker: string) => number | null;
 const rollingValue = (window: WindowValue) => (row: ScanMarketRow) => window(row.symbol);
 function directValue(row: ScanMarketRow, metric: Exclude<ScanMetric,RollingScanMetric>) {
   switch(metric) {
+    case "floatMissing": return row.float == null ? 1 : 0;
+    case "floatMarketCap": return row.float != null && row.float > 0 && row.price > 0 && scannerPriceIsCurrent(row.priceSourceAt,row.observedAt) ? row.float*row.price : null;
     case "activeHalt": return row.halted === undefined ? null : row.halted ? 1 : 0;
     case "dayVolume": return row.dayVolume ?? null;
     case "price": case "volume": case "dollarVolume": case "marketCap": case "float": case "dayChange": case "belowHigh":
@@ -67,6 +93,7 @@ type RuleMatcher = (row:ScanMarketRow, values:(number|null|undefined)[])=>boolea
 type ReleaseLookup = (symbol: string) => ScanPressRelease | null | undefined;
 type ScanEvaluation = {
   weight: number;
+  waitingForHistory: boolean;
   readPage: (page: number, compact: boolean) => ScanResult;
 };
 
@@ -89,6 +116,14 @@ class EvaluationCache {
     }
     this.entries.set(key, evaluation);
     this.weight += evaluation.weight;
+  }
+
+  clearWaitingForHistory() {
+    for (const [key, evaluation] of this.entries) {
+      if (!evaluation.waitingForHistory) continue;
+      this.entries.delete(key);
+      this.weight -= evaluation.weight;
+    }
   }
 
   clear() {
@@ -147,18 +182,40 @@ export class CustomScanMarket {
   private pressRevisions = new WeakMap<ScanPressReleaseSnapshot, number>();
   private nextPressRevision = 0;
   private swing = { cycle: undefined as number | undefined, cache: new EvaluationCache() };
+  private breadth?:{roster:{total:number;advancing:number;sum:number};sectors:Map<string,{total:number;advancing:number;sum:number}>};
+  private participation(){
+    if(this.breadth)return this.breadth;
+    const roster={total:0,advancing:0,sum:0},sectors=new Map<string,typeof roster>();
+    for(const {sector,dayChange} of this.market.values()){
+      if(dayChange==null || !Number.isFinite(dayChange))continue;
+      roster.total++;roster.advancing+=Number(dayChange>0);roster.sum+=dayChange;
+      if(sector){
+        const group=sectors.get(sector)??{total:0,advancing:0,sum:0};
+        group.total++;group.sum+=dayChange;group.advancing+=Number(dayChange>0);sectors.set(sector,group);
+      }
+    }
+    return this.breadth={roster,sectors};
+  }
   private windowValues = new Map<string, WindowValue>();
   private listeners = new Set<() => void>();
   private context = "";
   private status: ScanStatus = "waiting";
   private updatedAt = 0;
   private publishedAt = 0;
+  private historyTimer?: ReturnType<typeof setTimeout>;
   private eligible?: ReadonlySet<string>;
   evaluations = 0;
   constructor(private readonly enrichment?:ScanEnrichment) {
-    enrichment?.onHistoryUpdate?.(()=>{
-      if(this.status!=="open"||Date.now()-this.publishedAt<750)return;
-      this.publish();
+    enrichment?.onHistoryUpdate?.((companyChanged)=>{
+      if (this.status !== "open") return;
+      if (companyChanged) {
+        this.swing.cache.clear();
+        this.publish();
+        return;
+      }
+      const delay = this.publishedAt + 750 - Date.now();
+      if (delay <= 0) this.publish(true);
+      else this.historyTimer ??= setTimeout(() => this.publish(true), delay);
     });
   }
   attachQueries(queries:readonly ScanQuery[]) {
@@ -195,6 +252,7 @@ export class CustomScanMarket {
       }
     }
     this.market = current;
+    this.breadth=undefined;
     this.eligible = eligible;
     this.status = status;
     this.updatedAt = updatedAt;
@@ -209,7 +267,10 @@ export class CustomScanMarket {
     this.publish();
   }
 
-  private publish(){
+  private publish(historyChanged = false) {
+    if (historyChanged || this.historyTimer !== undefined) this.swing.cache.clearWaitingForHistory();
+    clearTimeout(this.historyTimer);
+    this.historyTimer = undefined;
     this.publishedAt=Date.now();
     this.revision.clear();
     this.pressRevisions = new WeakMap();
@@ -232,12 +293,13 @@ export class CustomScanMarket {
       const current = row && (lane === 1 ? row.price : lane === 2 ? row.volume : row.dollarVolume);
       let value: number | null = null;
       if (old !== null && current != null) {
-        if (metric === "rollingMove") value = old > 0 ? (current - old) / old * 100 : null;
+        if (metric === "rollingMove") value = old > 0 ? priceChangePercent(current, old) : null;
         else if (metric === "rollingPriceChange") value = old > 0 ? new Decimal(current).minus(old).toNumber() : null;
         else if (metric === "volumePace" && row && history) {
           const prior = history.valueAtOrBefore(row.observedAt - minutes * 120_000, lane);
           if (prior !== null && old > prior && current >= old) value = (current - old) / (old - prior);
-        } else if (current >= old) value = current - old;
+        } else if (current >= old) value = metric === "rollingFloatTurnover"
+          ? row?.float && row.float > 0 ? (current-old)/row.float*100 : null : current-old;
       }
       values.set(symbol, value);
       return value;
@@ -246,35 +308,55 @@ export class CustomScanMarket {
     return valueFor;
   }
 
-  private compute(definition: ScanDefinition, release: ReleaseLookup, readLevelBreak?: ReadScanLevelBreak): ScanEvaluation {
+  private compute(definition: ScanDefinition, release: ReleaseLookup, readLevelBreak?: ReadScanLevelBreak, news?: ScanPressReleaseSnapshot["history"]): ScanEvaluation {
     this.evaluations++;
     const market = this.market;
     const rows: { row: ScanMarketRow; sortValue:number | null; matches:(number | null | undefined)[];
-      readings?: (RuleReading | null | undefined)[];
+      companyPin?: CompanyMatchPin; readings?: (RuleReading | null | undefined)[];
       momentumReadings?: ScanMomentumReading[]; matchedStudyTimes?: Record<number, number> }[] = [];
     let incomplete = this.eligible ? [...this.eligible].filter(symbol => !market.has(symbol)).length : 0;
     let excluded = 0;
     const valueFor = ({metric,minutes,frame}:Pick<ScanRule,"metric"|"minutes"|"frame">) => {
+      if(metric==="sectorRelativeMove" || metric==="advancingShare" || metric==="sectorAdvancingShare"){
+        const {roster,sectors}=this.participation();
+        return (row:ScanMarketRow)=>{
+          const group=metric==="advancingShare"?roster:row.sector?sectors.get(row.sector):undefined;
+          if(!group?.total)return null;
+          if(metric==="sectorRelativeMove")return row.dayChange==null || group.total<2 ? null : row.dayChange-(group.sum-row.dayChange)/(group.total-1);
+          return 100*group.advancing/group.total;
+        };
+      }
+      if(isCompanyMetric(metric) && metric!=="recentFiling")return (row:ScanMarketRow)=>this.enrichment?.companyReadings?.(row.symbol,this.updatedAt)?.values[metric]??null;
+      if(metric==="timedRebound")return (row:ScanMarketRow)=>{
+        const bar=this.enrichment?.lastMinute?.(row.symbol,this.updatedAt);
+        if(!bar?.lowPivot || bar.relativeVolume===null || bar.lowPivot.price<=0)return null;
+        if(bar.close<=bar.lowPivot.price || bar.relativeVolume<1.4 || bar.start+60_000-bar.lowPivot.at>minutes!*60_000 ||
+          easternClock(bar.lowPivot.at).date!==easternClock(bar.start).date)return null;
+        return priceChangePercent(bar.close, bar.lowPivot.price);
+      };
       if (isOpeningRangeMetric(metric)) return (row: ScanMarketRow) => {
         const range = row.openingRanges?.[minutes as ScannerOpeningRangeMinutes];
         if (!range) return null;
         switch (metric) {
           case "openingRangeHigh": return range.high;
           case "openingRangeLow": return range.low;
-          case "fromOpeningRangeHigh": return (row.price - range.high) / range.high * 100;
-          case "fromOpeningRangeLow": return (row.price - range.low) / range.low * 100;
+          case "fromOpeningRangeHigh": return priceChangePercent(row.price, range.high);
+          case "fromOpeningRangeLow": return priceChangePercent(row.price, range.low);
         }
         return null;
       };
       if(isRollingScanMetric(metric))return rollingValue(this.window(metric,minutes!));
-      if (metric === "sameTimeRegularVolume")
-        return (row:ScanMarketRow) => this.enrichment?.sameTimeVolumeRatio?.(row.symbol,this.updatedAt) ?? null;
+      if (isSameTimeVolumeMetric(metric)) {
+        const session = sameTimeVolumeSessions[metric];
+        return (row:ScanMarketRow) => (row.session ?? "regular") !== session ? null
+          : this.enrichment?.sameTimeVolumeRatio?.(row.symbol, this.updatedAt, session) ?? null;
+      }
       if(isScanIndicatorMetric(metric)&&metric!=="indicatorSignal")
         return (row:ScanMarketRow)=>this.enrichment?.indicator(row.symbol,frame??"5m",this.updatedAt)?.[metric] ?? null;
       if (metric === "bidAskSpread" || metric === "bidAskSpreadPercent") return (row: ScanMarketRow) =>
         !row.halted && scannerQuoteIsCurrent(row.quoteObservedAt, Math.max(this.updatedAt, row.observedAt))
           ? directValue(row, metric) : null;
-      if (isSwingPullbackMetric(metric)) return (row: ScanMarketRow) =>
+      if (metric === "floatMarketCap" || isSwingPullbackMetric(metric)) return (row: ScanMarketRow) =>
         !row.halted && scannerPriceIsCurrent(row.priceSourceAt, Math.max(this.updatedAt, row.observedAt))
           ? directValue(row, metric) : null;
       return (row:ScanMarketRow) => directValue(row, metric);
@@ -290,8 +372,68 @@ export class CustomScanMarket {
     const groupCoverage = definition.groups?.map(emptyCoverage);
     const captureAlternatives = definition.match === "any" || definition.groups?.some(group => group.match === "any");
     const readings = captureAlternatives ? new Array<RuleReading | null | undefined>(rules.length) : undefined;
+    const matchedArticles = new Map<string,Map<number,ScanPressRelease>>();
+    const rememberArticle = (symbol:string,index:number,article:ScanPressRelease) => {
+      const list=matchedArticles.get(symbol)??new Map<number,ScanPressRelease>();
+      list.set(index,article); matchedArticles.set(symbol,list);
+    };
     const readers = rules.map<(row: ScanMarketRow) => RuleReading | undefined>((rule,index)=>{
       const { metric } = rule;
+      if(metric==="timedRebound"){
+        const value=valueFor(rule);
+        return row=>{
+          const bar=this.enrichment?.lastMinute?.(row.symbol,this.updatedAt);
+          if(!bar?.lowPivot || bar.relativeVolume===null)return;
+          const v=value(row); return {matches:v!==null && matchesNumericRule(rule,v),value:v};
+        };
+      }
+      if (isCandleStudy(metric)) return (row) => {
+        const value=this.enrichment?.candleStudy?.(row.symbol,this.updatedAt,rule.studyFrame!,metric,rule.period!,rule.fastPeriod,rule.signalPeriod,rule.pattern);
+        return value==null || !Number.isFinite(value) ? undefined : {matches:matchesNumericRule(rule,value),value};
+      };
+      if (metric==="prHeadline" || Object.hasOwn(eventFilters,metric)) return row => {
+        const articles=news?.get(row.symbol)??[];
+        if(metric==="prHeadline"){
+          if(!news)return;
+          const article=articles.find(a=>a.at<=this.updatedAt && this.updatedAt-a.at<=86400000 &&
+            rule.selection!.some(term=>a.title.toUpperCase().includes(term)));
+          if(article)rememberArticle(row.symbol,index,article);
+          return {matches:!!article,value:article?.at??null};
+        }
+        const candle=this.enrichment?.lastMinute?.(row.symbol,this.updatedAt);
+        if(!candle)return;
+        const at=candle.start+60_000;
+        if(at>this.updatedAt || this.updatedAt-at>=60_000)return;
+        const delay=rule.maximum!*60_000;
+        let matches=false;
+        if(metric==="prThenVwap"){
+          if(!news || candle.vwapCross===undefined)return;
+          const article=candle.vwapCross===at && articles.find(a=>a.at<at && at-a.at<=delay);
+          if(article)rememberArticle(row.symbol,index,article);
+          matches=!!article;
+        }else if(metric==="resumeThenVolume"){
+          if(row.halted===undefined || candle.relativeVolume===null)return;
+          const resumed=row.tradeResumedAt;
+          matches=!row.halted && resumed!==undefined && resumed<=candle.start && at-resumed<=delay && candle.relativeVolume>=2;
+        }else{
+          const ref=metric==="crossReference"?rule.reference!:metric==="breakPremarketHigh"?"premarketHigh":"opening5High";
+          const opening=/^opening(5|15|30)(High|Low)$/.exec(ref);
+          let level:number|undefined|null;
+          const minute=easternClock(candle.start).minute;
+          if(opening){
+            const length=Number(opening[1]) as ScannerOpeningRangeMinutes;
+            if(row.session!=="regular" || minute<570+length)return {matches:false,value:null};
+            level=row.openingRanges?.[length]?.[opening[2]==="High"?"high":"low"];
+          }else{
+            if((ref==="premarketHigh"||ref==="premarketLow") && (row.session==="premarket" || minute<570))return {matches:false,value:null};
+            level=row.facts?.[ref as "previousDayClose"|"previousDayHigh"|"previousDayLow"|"sessionOpen"|"premarketHigh"|"premarketLow"];
+          }
+          if(level==null || candle.previous==null || !candle.previousAt ||
+            easternClock(candle.previousAt).date!==easternClock(candle.start).date)return;
+          matches=rule.direction==="down" ? candle.previous>=level && candle.close<level : candle.previous<=level && candle.close>level;
+        }
+        return {matches,value:matches?at:null,closedAt:at};
+      };
       if (isScanMomentumMetric(metric)) {
         const frame = rule.frame ?? "5m";
         return ({symbol}) => {
@@ -322,6 +464,16 @@ export class CustomScanMarket {
         if (halted || price <= 0 || !fact.setup ||
           !scannerPriceIsCurrent(priceSourceAt, Math.max(this.updatedAt, observedAt))) return;
         const {lower,upper,direction,targets} = fact.setup;
+        if(rule.metric==="zoneRewardRisk" || rule.metric==="zoneState"){
+          const setup=scannerRetestSetup(direction,{lower,upper},targets,price);
+          if(!setup)return;
+          const state=setup.readiness;
+          const ratio=setup.objectives[0]?.rewardToRisk;
+          if(rule.metric==="zoneRewardRisk" && ratio===undefined)return;
+          const matches=rule.metric==="zoneState" ? !!state && rule.selection!.includes(state.toUpperCase()) : matchesNumericRule(rule,ratio!);
+          if(matches)references.set(symbol,fact.reference);
+          return {matches,value:rule.metric==="zoneState"?1:ratio!};
+        }
         const distance = rule.metric === "distanceToVerifiedZone"
           ? Math.max(0, lower - price, price - upper)
           : targets.reduce((nearest,target) => {
@@ -349,6 +501,7 @@ export class CustomScanMarket {
       countCoverage(ruleCoverage[index], reading?.matches);
       return reading?.matches;
     });
+    const usesCompany = rules.some(rule => isCompanyMetric(rule.metric));
     const includesPress = rules.some(rule=>rule.metric==="pressRelease");
     let nextRule=definition.rules.length;
     const groups=(definition.groups??[]).map<RuleMatcher>((group, index)=>{
@@ -379,6 +532,7 @@ export class CustomScanMarket {
         continue;
       }
       rows.push({ row, sortValue:sortValue(row), matches:matches.slice(),
+        companyPin: usesCompany ? pinMatchedCompanyFields(this.enrichment?.companyReadings?.(row.symbol,updatedAt),rules,matches) : undefined,
         ...(readings && matches.includes(undefined) ? { readings: readings.slice() } : {}),
         ...(momentumReadings.length ? { momentumReadings: momentumReadings.slice() } : {}),
         ...(studyTimes.size ? { matchedStudyTimes: Object.fromEntries(
@@ -406,10 +560,13 @@ export class CustomScanMarket {
       const offset = (page - 1) * pageSize;
       const visible: ScanResultRow[] = rows.slice(offset, offset + pageSize).map(({
         row:{observedAt,facts,openingRanges,dailyClosedAt,weeklyClosedAt,...display},
-        sortValue,matches,momentumReadings,matchedStudyTimes,readings})=>{
+        sortValue,matches,momentumReadings,matchedStudyTimes,readings,companyPin})=>{
         void openingRanges;
         const candidate = includesPress ? release(display.symbol) : undefined;
-        const pressRelease = candidate&&rules.some((rule,index)=>rule.metric==="pressRelease"&&matches[index]===candidate.at) ? candidate : undefined;
+        const articles=[...(matchedArticles.get(display.symbol)??[])].filter(([index])=>matches[index]!==undefined).map(([,article])=>article);
+        if(candidate && rules.some((rule,index)=>rule.metric==="pressRelease"&&matches[index]===candidate.at))articles.push(candidate);
+        const pressRelease=articles[0];
+        const newsIds=[...new Set(articles.map(a=>a.id))];
         const matchedRuleIndexes = matches.flatMap((value, index) => value === undefined ? [] : [index]);
         let alternatives: Record<number, ScanAlternativeReading> | undefined;
         // Project alternate readings only for the displayed page.
@@ -428,7 +585,7 @@ export class CustomScanMarket {
           const reference = levelMatches.get(rules[index])?.get(display.symbol);
           return reference ? [[index, reference] as const] : [];
         });
-        return {...display, priceObservedAt: observedAt, sortValue, matches: matches.map(value => value ?? null),
+        return {...display, ...(companyPin ? { [companyMatchEvidence]: companyPin } : {}), priceObservedAt: observedAt, sortValue, matches: matches.map(value => value ?? null),
           ...(matchedRuleIndexes.length ? { matchedRuleIndexes } : {}),
           ...(momentumReadings ? { momentumReadings } : {}),
           ...(matchedStudyTimes ? { matchedStudyTimes } : {}),
@@ -438,7 +595,7 @@ export class CustomScanMarket {
             weekly: trendReading(facts?.weeklyCloseVsSma4, weeklyClosedAt),
           } } : {}),
           ...(evidence.length ? { matchedLevelEvidence: Object.fromEntries(evidence) } : {}),
-          ...(pressRelease ? {pressRelease} : {})};
+          ...(pressRelease ? {pressRelease} : {}), ...(newsIds.length>1?{matchedNewsIds:newsIds}:{})};
       });
       const result = { ...summary, rows: visible, ...(!compact && ruleCoverage.length ? { ruleCoverage } : {}),
         ...(!compact && groupCoverage?.length ? { groupCoverage } : {}) };
@@ -446,13 +603,29 @@ export class CustomScanMarket {
       pages.set(key, result);
       return result;
     };
-    return { weight, readPage };
+    const needsHistory = (metric: ScanMetric) => isCandleStudy(metric) || isScanIndicatorMetric(metric) ||
+      isCustomIndicatorMetric(metric) || metric === "timedRebound" || Object.hasOwn(eventFilters, metric);
+    const waitingForHistory = definition.cadence === "swing" && (
+      rules.some((rule, index) => ruleCoverage[index].unknown > 0 && needsHistory(rule.metric)) ||
+      (needsHistory(definition.sort.metric) && rows.some(row => row.sortValue == null))
+    );
+    return { weight, readPage, waitingForHistory };
   }
 
   private matcher(rule:ScanRule,value:(row:ScanMarketRow)=>number|null,release:ReleaseLookup): (row: ScanMarketRow) => RuleReading | undefined {
     if (isScanSelectionMetric(rule.metric)) {
       const selected = new Set(rule.selection);
       return (row: ScanMarketRow) => {
+        if(rule.metric==="recentFiling"){
+          const company=this.enrichment?.companyReadings?.(row.symbol,this.updatedAt);
+          if (!company?.forms) return;
+          if (company.forms.some(form=>selected.has(form))) return {matches:true,value:1};
+          return company.formsComplete === false ? undefined : {matches:false,value:1};
+        }
+        if(rule.metric==="haltCode"){
+          if(row.halted===undefined || (row.halted && (!row.haltCode || row.haltCode==="unknown")))return;
+          return {matches:row.halted && selected.has(row.haltCode!.toUpperCase()),value:1};
+        }
         const value = rule.metric === "tickerList" ? row.symbol :
           rule.metric === "listingExchange" ? row.exchange :
             rule.metric === "listingIndustry" ? row.industry?.toUpperCase() :
@@ -487,7 +660,7 @@ export class CustomScanMarket {
       const status=this.matchEvent(symbol,rule,release);
       return status===undefined?undefined:{matches:status.matches,value:status.at??null};
     };
-    if (isScanIndicatorMetric(rule.metric) && rule.metric !== "sameTimeRegularVolume") {
+    if (rule.metric !== "indicatorSignal" && isScanIndicatorMetric(rule.metric) && !isSameTimeVolumeMetric(rule.metric)) {
       const metric = rule.metric;
       return ({symbol}:ScanMarketRow) => {
         const facts = this.enrichment?.indicator(symbol, rule.frame ?? "5m", this.updatedAt);
@@ -508,7 +681,9 @@ export class CustomScanMarket {
     if(rule.metric==="pressRelease"){
       const release=readRelease(symbol);
       if(release===undefined)return undefined;
-      const within=Boolean(release&&release.at<=this.updatedAt&&this.updatedAt-release.at<=rule.maximum!*3_600_000);
+      // Release timestamps have millisecond precision, including the inclusive cutoff.
+      const windowMs = Math.round(rule.maximum! * 3_600_000);
+      const within = Boolean(release && release.at <= this.updatedAt && this.updatedAt - release.at <= windowMs);
       return {matches:rule.absence?!within:within,at:within?release!.at:null};
     }
     if (rule.signal && isScannerStructureSignal(rule.signal)) {
@@ -525,10 +700,12 @@ export class CustomScanMarket {
   query({ definition, page, compact = false }: ScanQuery, readPress?: ReadScanPressReleases,
     readLevelBreak?: ReadScanLevelBreak, swingCycle?: number): ScanResult {
     const rules = scanRules(definition);
-    const usesPress = rules.some(rule => rule.metric === "pressRelease");
+    const usesPress = rules.some(rule => usesNews(rule.metric));
+    const wantsHistory=rules.some(rule=>rule.metric==="prHeadline" || rule.metric==="prThenVwap");
     const usesLevels = rules.some(rule => requiresScannerLevelRead(rule.metric));
     const scoped = !!readPress && usesPress;
-    const snapshot = scoped && this.status === "open" && this.market.size ? readPress(this.market, this.updatedAt) : undefined;
+    const snapshot = scoped && this.status === "open" && this.market.size ? readPress(this.market, this.updatedAt, wantsHistory ? Math.max(...rules.map(rule=>
+      rule.metric==="prHeadline"?24:rule.metric==="pressRelease"?rule.maximum!:rule.metric==="prThenVwap"?(rule.maximum!+1)/60:0)):undefined) : undefined;
     let pressRevision = scoped ? 0 : -1;
     if (snapshot) {
       pressRevision = this.pressRevisions.get(snapshot) ?? ++this.nextPressRevision;
@@ -539,7 +716,7 @@ export class CustomScanMarket {
       : symbol => this.enrichment?.pressRelease(symbol, this.updatedAt);
     // A private Levels reader can retract evidence without a quote revision.
     if (readLevelBreak && usesLevels) {
-      return this.compute(definition, release, readLevelBreak).readPage(page, compact);
+      return this.compute(definition, release, readLevelBreak,snapshot?.history).readPage(page, compact);
     }
     const signature = JSON.stringify([definition, pressRevision]);
     const retainSwing = this.status === "open" && definition.cadence === "swing" &&
@@ -549,7 +726,7 @@ export class CustomScanMarket {
       this.swing.cycle = swingCycle;
     }
     const existing = (retainSwing ? this.swing.cache.get(signature) : undefined) ?? this.revision.get(signature);
-    const evaluation = existing ?? this.compute(definition, release);
+    const evaluation = existing ?? this.compute(definition, release,undefined,snapshot?.history);
     if (!existing) this.revision.set(signature, evaluation);
     if (retainSwing && !this.swing.cache.get(signature)) this.swing.cache.set(signature, evaluation);
     return evaluation.readPage(page, compact);

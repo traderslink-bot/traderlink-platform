@@ -1,3 +1,4 @@
+import { priceChangePercent } from "../price-change";
 import { LEGACY_SCAN_MS } from "./event-timing";
 import type { MomentumDetectionSessionControls,MomentumSignal,RollingActivity } from "./contracts";
 
@@ -42,7 +43,7 @@ export class MomentumEventBook{
     if(enough&&((multiple??0)>=controls.immediateVolumeRateMultiple||activity.baselineVolumeRate===0||activity.baselineVolumeRate===null))signals.push("volume_ignition");
     if(enough&&episode&&(this.elapsedTime?receivedAt-episode.confirmedAt>=(controls.buildingConfirmationScans-1)*LEGACY_SCAN_MS:episode.samples>=controls.buildingConfirmationScans)&&(multiple??0)>=controls.buildingVolumeRateMultiple)signals.push("building_volume");
     if(seconds!==null&&seconds<=controls.maximumPriceBurstSeconds&&(activity.intervalGain??-Infinity)>=controls.priceBurstPercent&&absoluteSeed)signals.push("price_burst");
-    const episodeGain=episode?(price/episode.startPrice-1)*100:null;
+    const episodeGain=episode?priceChangePercent(price, episode.startPrice):null;
     if(enough&&episodeGain!==null&&episodeGain>=.5&&((multiple??0)>=controls.buildingVolumeRateMultiple||strongAbsolute))signals.push("developing_activity");
     return {signals:Object.freeze(signals),activity:{...activity,episodeShares:episode?.shares??null,episodeDollarVolume:episode?.dollars??null,
       episodeSeconds:episode?(receivedAt-episode.startAt)/1000:null}};

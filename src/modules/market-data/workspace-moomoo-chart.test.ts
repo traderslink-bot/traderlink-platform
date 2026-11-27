@@ -4,12 +4,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { readWorkspaceMoomooAccess, WorkspaceMoomooConnection } from "./server/workspace-moomoo-access";
 import { workspaceMoomooChartResponse } from "./server/workspace-moomoo-chart-response";
 import { workspaceMoomooChartEvents, WorkspaceMoomooChartStream } from "./server/workspace-moomoo-chart-stream";
+import { MoomooMarketDataRateLimit } from "./server/moomoo-bridge";
 
 const now = Date.parse("2026-11-24T15:20:00Z");
 const generation = "b".repeat(64);
 const candle = (time: string) => ({ time_key: Date.parse(time), open: 2, high: 3, low: 1, close: 2.5, volume: 600 });
 type Access = NonNullable<ReturnType<typeof readWorkspaceMoomooAccess>>;
-const access = (connection: WorkspaceMoomooConnection | null) => ({ connection }) as Access;
+let accountSequence = 0;
+const users = new WeakMap<WorkspaceMoomooConnection, string>();
+const access = (connection: WorkspaceMoomooConnection | null, userId = connection ? users.get(connection) : undefined) =>
+  ({ connection, identity: { scope: { userId, workspaceId: "workspace" } } }) as Access;
 const req = (query = "", active = generation) =>
   new Request(`https://charts.test/api/trading-workspace/broker/charts?generation=${active}${query}`);
 
@@ -27,10 +31,11 @@ function fixture() {
       }
     }),
   };
+  users.set(connection, "account-" + ++accountSequence);
   return { connection, revoke: () => { allowed = false; } };
 }
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe("broker Workspace chart reads", () => {
   it("separates denied, disconnected and stale generations before any provider request", async () => {
@@ -75,6 +80,47 @@ describe("broker Workspace chart reads", () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ error: "broker_connection_changed" });
   });
+
+  it("reuses only covered windows in the same account and applies current corporate actions on each read", async () => {
+    vi.useFakeTimers({ now });
+    const first = fixture();
+    const second = fixture();
+    let splitRatio = 2;
+    const original = vi.mocked(first.connection.request).getMockImplementation()!;
+    vi.mocked(first.connection.request).mockImplementation(async (input, signal) => input.operation === "rehab"
+      ? { data: { rehabs: [{ action_types: ["SPLIT"], ex_div_date: "2026-11-24", split_ratio: splitRatio }] } }
+      : original(input, signal));
+    const query = req("&symbol=SAFX&history=1&before=" + Date.parse("2026-11-24T15:17:00Z"));
+    const read = (connection: WorkspaceMoomooConnection) => workspaceMoomooChartResponse(query, "bars", access(connection));
+    expect((await (await read(first.connection)).json()).bars[0].close).toBe(5);
+    splitRatio = 4;
+    expect((await (await read(first.connection)).json()).bars[0].close).toBe(10);
+    expect((await (await read(second.connection)).json()).bars[0].close).toBe(5);
+    for (const { connection } of [first, second]) {
+      expect(vi.mocked(connection.request).mock.calls.filter(([call]) => call.operation === "history")).toHaveLength(1);
+    }
+    const next = { ...first.connection, generation: "c".repeat(64) };
+    users.set(next, users.get(first.connection)!);
+    const reconnected = req("&symbol=SAFX&history=1&before=" + Date.parse("2026-11-24T15:17:00Z"), next.generation);
+    expect((await workspaceMoomooChartResponse(reconnected, "bars", access(next))).status).toBe(200);
+    expect(vi.mocked(next.request).mock.calls.filter(([call]) => call.operation === "history")).toHaveLength(2);
+  });
+
+  it("returns a retry hint when REST is rate limited without touching the chart socket", async () => {
+    const { connection } = fixture();
+    const release = vi.fn();
+    const subscribe = vi.spyOn(WorkspaceMoomooChartStream.prototype, "subscribe").mockReturnValue(release);
+    const live = await workspaceMoomooChartResponse(req("&symbol=SAFX"), "stream", access(connection));
+    vi.mocked(connection.request).mockRejectedValue(new MoomooMarketDataRateLimit("30"));
+    const response = await workspaceMoomooChartResponse(req("&symbol=SAFX&history=1"), "bars", access(connection));
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("30");
+    expect(await response.json()).toEqual({ error: "chart_requests_busy" });
+    expect(subscribe).toHaveBeenCalledOnce();
+    expect(release).not.toHaveBeenCalled();
+    await live.body!.cancel();
+    expect(release).toHaveBeenCalledOnce();
+  });
 });
 
 class SocketFixture extends EventEmitter {
@@ -85,6 +131,59 @@ class SocketFixture extends EventEmitter {
 }
 
 describe("broker Workspace candle socket", () => {
+  it("admits one ticker per account while both accounts can stream concurrently", async () => {
+    vi.useFakeTimers({ now });
+    const first = fixture();
+    const second = fixture();
+    const release = vi.fn();
+    const subscribe = vi.spyOn(WorkspaceMoomooChartStream.prototype, "subscribe").mockReturnValue(release);
+    const open = (connection: WorkspaceMoomooConnection, query: string, user?: string, signal?: AbortSignal) =>
+      workspaceMoomooChartResponse(new Request(req(query, connection.generation), { signal }), "stream", access(connection, user));
+    const abort = new AbortController();
+    const a = await open(first.connection, "&symbol=SAFX", undefined, abort.signal);
+    const duplicate = await open(first.connection, "&symbol=SAFX&daily=1&adjustment=raw");
+    const b = await open(second.connection, "&symbol=TEST");
+    const rejected = await open(first.connection, "&symbol=TEST");
+    expect(await rejected.text()).toContain('"state":"unavailable"');
+    expect(subscribe.mock.calls.map(([request]) => [request.symbol, request.connection])).toEqual([
+      ["SAFX", first.connection], ["SAFX", first.connection], ["TEST", second.connection],
+    ]);
+    expect(subscribe.mock.contexts[0]).toBe(subscribe.mock.contexts[1]);
+    expect(subscribe.mock.contexts[0]).not.toBe(subscribe.mock.contexts[2]);
+    abort.abort();
+    expect(await a.text()).toBe("");
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(await (await open(first.connection, "&symbol=TEST")).text()).toContain('"state":"unavailable"');
+    first.revoke();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(await duplicate.text()).toBe("");
+    expect(release).toHaveBeenCalledTimes(2);
+    const refreshed = { ...second.connection, generation: "c".repeat(64) };
+    const renewed = await open(refreshed, "&symbol=TEST", users.get(first.connection)!);
+    expect(subscribe).toHaveBeenCalledTimes(4);
+    await renewed.body!.cancel();
+    await b.body!.cancel();
+    expect(release).toHaveBeenCalledTimes(4);
+  });
+
+  it("releases an old generation immediately on reconnect without exposing the replacement feed", async () => {
+    const original = fixture();
+    const connected = fixture();
+    const release = vi.fn();
+    vi.spyOn(WorkspaceMoomooChartStream.prototype, "subscribe").mockReturnValue(release);
+    const user = users.get(original.connection)!;
+    const before = await workspaceMoomooChartResponse(req("&symbol=SAFX"), "stream", access(original.connection));
+    original.revoke();
+    const next = { ...connected.connection, generation: "d".repeat(64) };
+    const after = await workspaceMoomooChartResponse(req("&symbol=TEST", next.generation), "stream", access(next, user));
+    expect(await before.text()).toBe("");
+    expect(release).toHaveBeenCalledOnce();
+    const stale = await workspaceMoomooChartResponse(req("&symbol=SAFX"), "stream", access(original.connection));
+    expect(stale.status).toBe(409);
+    await after.body!.cancel();
+    expect(release).toHaveBeenCalledTimes(2);
+  });
+
   it("uses the same early-close and holiday sessions as the Scanner", () => {
     const client = { symbol: "SAFX", daily: false, adjustment: "split" } as const;
     const quoteAt = (iso: string) => workspaceMoomooChartEvents({

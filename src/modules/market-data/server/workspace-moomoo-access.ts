@@ -51,7 +51,7 @@ function scopedAccessToken(scope: WorkspaceAccessScope, generation: string, envi
 
 export type WorkspaceMoomooConnection = Readonly<{
   generation: string;
-  current(): boolean;
+  current(force?: boolean): boolean;
   accessToken(): Promise<string>;
   request(input: MoomooDataRequest, signal?: AbortSignal): Promise<Record<string, unknown>>;
 }>;
@@ -64,9 +64,9 @@ export function workspaceMoomooAccessForIdentity(identity: TraderLinkPlatformReq
   if (!generation) return { identity, settings, connection: null };
   let lastChecked = 0;
   let lastResult = false;
-  const current = () => {
+  const current = (force = false) => {
     const now = Date.now();
-    if (now >= lastChecked && now - lastChecked < 1000) return lastResult;
+    if (!force && now >= lastChecked && now - lastChecked < 1000) return lastResult;
     lastChecked = now;
     try {
       const latestSettings = readWorkspaceMarketSettings(environment);

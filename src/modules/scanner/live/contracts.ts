@@ -101,9 +101,13 @@ export type NormalizedSnapshot = Readonly<{
   quoteObservedAt?: number;
   halted?: boolean;
   tradeResumedAt?: number;
+  haltCode?: string;
+  largestTradeShares?: number;
+  largestTradeDollars?: number;
   sessionOpen?: number;
   previousDayHigh?: number;
   previousDayLow?: number;
+  averageDailyDollars20?:number;
   averageDailyVolume20?: number;
   averageDailyRange20?: number;
   dailyClosedAt?: number;

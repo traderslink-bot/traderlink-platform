@@ -28,19 +28,21 @@ vi.mock('@/src/modules/market-data/server/market-tools-dashboard-access',()=>({
 vi.mock('@/app/(dashboard)/scanner/scanner-client',()=>({
   ScannerClient: () => createElement('div', null, 'moomoo-scanner'),
 }));
-vi.mock('next/navigation',()=>({notFound:()=>{throw Error('not_found')}}));
+vi.mock('next/navigation',()=>({ notFound:()=>{throw Error('not_found')}, redirect:(href:string)=>{throw Error('redirect:' + href)} }));
 vi.mock('@/app/dashboard-template',()=>({DashboardPage:({children}:{children:ReactNode})=>createElement('main',null,children),DashboardSecondaryAction:({children,href}:{children:ReactNode;href:string})=>createElement('a',{href},children),DashboardPanel:({children,title}:{children:ReactNode;title:string})=>createElement('section',null,createElement('h1',null,title),children)}));
 vi.mock('@/app/(dashboard)/screeners/live-screeners-client',()=>({LiveScreenersClient:({admin}:{admin?:boolean})=> createElement('div',null,admin?'scanner-admin-controls':'continuous-workspace')}));
 vi.mock('@/app/(dashboard)/admin/screeners/audit/scanner-audit-client',()=>({ScannerAuditClient:()=>createElement('div',null,'audit-controls')}));
 vi.mock('@/app/(dashboard)/screeners/workspace/live-screeners-client',()=>({LiveScreenersClient:()=>createElement('div',null,'trading-workspace')}));
 vi.mock("@/app/(dashboard)/scanners/scanner-builder-page", () => ({
-  ScannerBuilderPage: ({initialChoice}:{initialChoice:string}) => createElement("div", null, "scanner-builder " + initialChoice),
+  ScannerBuilderPage: ({initialChoice, children}:{initialChoice:string; children?:ReactNode}) =>
+    createElement("div", null, "scanner-builder " + initialChoice, children),
 }));
 import TradingWorkspacePage from '@/app/(dashboard)/trading-workspace/page';
 import ScannerAdminPage,{metadata as adminMetadata} from '@/app/(dashboard)/admin/scanners/page';
 import ScannerAuditPage from '@/app/(dashboard)/admin/scanners/audit/page';
-import ScannersPage,{metadata as scannerMetadata} from '@/app/(dashboard)/scanners/page';
-import LegacyScannerPage from '@/app/(dashboard)/scanner/page';
+import ScannersAlias from '@/app/(dashboard)/scanners/page';
+import ScannerPage,{metadata as scannerMetadata} from '@/app/(dashboard)/scanner/page';
+const legacyScanner = () => ScannerPage({ searchParams: Promise.resolve({ view: 'legacy' }) });
 import ScreenersPage,{metadata as screenerMetadata} from '@/app/(dashboard)/screeners/page';
 import {DASHBOARD_NAVIGATION_HREFS,DASHBOARD_ROUTE_TITLES,dashboardHelpTarget} from '@/app/dashboard-navigation';
 const loadScreeners = () => ScreenersPage({ searchParams: Promise.resolve({}) });
@@ -59,48 +61,72 @@ beforeEach(() => {
 });
 
 it("serves continuous Scanners and the separate Stock Screeners workspace", async () => {
-  const scanner = renderToStaticMarkup(await ScannersPage({}));
+  const scanner = renderToStaticMarkup(await ScannerPage({}));
   const screener = renderToStaticMarkup(await loadScreeners());
   expect(scanner).toContain("scanner-builder live:gainers");
-  expect(renderToStaticMarkup(await ScannersPage({ searchParams: Promise.resolve({ view: "live" }) }))).toContain("continuous-workspace");
+  const oldLiveLink = renderToStaticMarkup(await ScannerPage({ searchParams: Promise.resolve({ view: "live" }) }));
+  expect(oldLiveLink).toContain("scanner-builder live:gainers");
+  expect(oldLiveLink).not.toContain("continuous-workspace");
+  expect(oldLiveLink).not.toContain("Build a scan");
+  const oldEvidenceLink = renderToStaticMarkup(await ScannerPage({ searchParams: Promise.resolve({ evidence: ["one", "two"] }) }));
+  expect(oldEvidenceLink).toContain("scanner-builder live:gainers");
+  expect(oldEvidenceLink).toContain("Matched chart evidence is unavailable.");
+  expect(oldEvidenceLink).not.toContain("continuous-workspace");
   expect(scanner).not.toContain("stock-screener-workspace");
   expect(screener).toContain("stock-screener-workspace");
   expect(screener).not.toContain("continuous-workspace");
   expect(stock.saved).toHaveBeenCalledOnce();
   expect(stock.saved).toHaveBeenCalledWith("/synthetic/screeners/saved", "fixture-owner");
-  expect(scannerMetadata.title).toBe("Scanners | TraderLink Platform");
+  expect(scannerMetadata.title).toBe("Scanner | TraderLink Platform");
   expect(screenerMetadata.title).toBe("Screeners | TraderLink Platform");
 });
 
 it("checks each member page independently while preserving the Stock Screeners availability gate", async () => {
   stock.enabled.mockReturnValue(false);
   await expect(loadScreeners()).rejects.toThrow("not_found");
-  expect(renderToStaticMarkup(await ScannersPage({}))).toContain("scanner-builder live:gainers");
+  expect(renderToStaticMarkup(await ScannerPage({}))).toContain("scanner-builder live:gainers");
 
   stock.enabled.mockReturnValue(true);
   auth.access.mockReturnValue(false);
   auth.identity.mockResolvedValue({ mode: "platform_session", discord: null, scope: { userId: "paid" } });
-  expect(renderToStaticMarkup(await ScannersPage({}))).toContain("scanner-builder live:gainers");
+  expect(renderToStaticMarkup(await ScannerPage({}))).toContain("scanner-builder live:gainers");
   expect(renderToStaticMarkup(await loadScreeners())).toContain("stock-screener-workspace");
-  expect(renderToStaticMarkup(await LegacyScannerPage())).toContain("moomoo-scanner");
+  expect(renderToStaticMarkup(await legacyScanner())).toContain("moomoo-scanner");
   auth.scannerAccess.mockReturnValue(false);
-  await expect(ScannersPage({})).rejects.toThrow("not_found");
+  await expect(ScannerPage({})).rejects.toThrow("not_found");
   expect(renderToStaticMarkup(await loadScreeners())).toContain("stock-screener-workspace");
   auth.screenersAccess.mockReturnValue(false);
   await expect(loadScreeners()).rejects.toThrow("not_found");
   auth.legacyScannerAccess.mockReturnValue(false);
-  await expect(LegacyScannerPage()).rejects.toThrow("not_found");
+  await expect(legacyScanner()).rejects.toThrow("not_found");
 
   auth.identity.mockRejectedValue(Error("authentication_required"));
-  await expect(ScannersPage({})).rejects.toThrow("authentication_required");
+  await expect(ScannerPage({})).rejects.toThrow("authentication_required");
   await expect(loadScreeners()).rejects.toThrow("authentication_required");
-  await expect(LegacyScannerPage()).rejects.toThrow("authentication_required");
+  await expect(legacyScanner()).rejects.toThrow("authentication_required");
   expect(stock.saved).toHaveBeenCalledTimes(2);
 });
 
-it('keeps distinct navigation destinations and binds live scanner help to Scanners',()=>{
- expect(DASHBOARD_NAVIGATION_HREFS).toContain('/scanners');expect(DASHBOARD_NAVIGATION_HREFS).toContain('/screeners');
- expect(DASHBOARD_ROUTE_TITLES['/scanners']).toBe('Scanners');expect(DASHBOARD_ROUTE_TITLES['/screeners']).toBe('Screeners');expect(dashboardHelpTarget('/scanners')?.href).toBe('/help/tools/live-screeners');expect(dashboardHelpTarget('/screeners')).toBeNull();
+it("links Scanner and Screeners independently and binds Scanner help to the canonical page", () => {
+  expect(DASHBOARD_NAVIGATION_HREFS).toContain("/scanner");
+  expect(DASHBOARD_NAVIGATION_HREFS).not.toContain("/scanners");
+  expect(DASHBOARD_NAVIGATION_HREFS).toContain("/screeners");
+  expect(DASHBOARD_ROUTE_TITLES["/scanner"]).toBe("Scanner");
+  expect(DASHBOARD_ROUTE_TITLES["/screeners"]).toBe("Screeners");
+  expect(dashboardHelpTarget("/scanner")?.href).toBe("/help/tools/live-screeners");
+  expect(dashboardHelpTarget("/screeners")).toBeNull();
+});
+
+it("redirects guarded legacy plural links to the main Scanner and carries evidence", async () => {
+  await expect(ScannersAlias({})).rejects.toThrow("redirect:/scanner");
+  await expect(ScannersAlias({ searchParams: Promise.resolve({ evidence: "ref+/=" }) }))
+    .rejects.toThrow("redirect:/scanner?evidence=ref%2B%2F%3D");
+  await expect(ScannersAlias({ searchParams: Promise.resolve({ view: "live", evidence: ["one", "two"] }) }))
+    .rejects.toThrow("redirect:/scanner?evidence=one&evidence=two");
+  auth.scannerAccess.mockReturnValue(false);
+  await expect(ScannersAlias({})).rejects.toThrow("not_found");
+  auth.identity.mockRejectedValue(Error("authentication_required"));
+  await expect(ScannersAlias({})).rejects.toThrow("authentication_required");
 });
 
 it('moves guarded admin and audit pages with navigation and keeps old page routes absent',async()=>{
