@@ -3,6 +3,7 @@ import {chartLogarithmic,setChartLogarithmic} from '@/src/modules/scanner/alpaca
 
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { ChartTickerField } from "./chart-ticker-field";
+import { applyChartCorrection, parseChartCorrection, type ChartCorrection, type PremarketTradeTotals } from "@/src/modules/scanner/alpaca/chart-correction";
 import { createChartPriceStyle } from "./chart-price-style";
 import { useChartMarketData } from "./use-chart-market-data";
 import { ChartIndicatorLegend } from "./chart-indicator-legend";
@@ -623,6 +624,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         ? (bandOrder[a.key]??3)-(bandOrder[b.key]??3) : 0);
       const legendValues=new Map<typeof studies[number],HTMLSpanElement>();
       const cacheOwner=`${ownerKey??""}:${priceBasisKey}`;
+      let premarketTradeTotals: PremarketTradeTotals | undefined;
       const vwapReadoutKeys=new Map(studies.filter(study=>study.indicator.type==="VWAP").map(study=>
         [study,JSON.stringify([ticker,timeframe,sessionKey,study.indicator,study.key])]));
       const flushVwap=()=>chartVwapCache.flush(cacheOwner);
@@ -687,6 +689,20 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         updateProfileLegend();
         const readoutBasis=vwapReadoutKeys.size?easternClock(Date.now()).date:"";
         for(const {slot,matching} of legendSlots){
+          if (slot.dataset.indicatorReadout === "VWAP" && !daily && preferences.premarket && premarketTradeTotals &&
+              matching.some(study => study.indicator.type === "VWAP" && (study.indicator.anchor ?? "Session") === "Session" &&
+                study.indicator.output?.statusLineValues !== false && study.series.options().visible)) {
+            const readout = slot.querySelector<HTMLElement>("[data-premarket-trade-vwap]") ?? document.createElement("span");
+            const value = premarketTradeTotals.dollarVolume / premarketTradeTotals.volume;
+            const through = String(premarketTradeTotals.through);
+            if (readout.dataset.premarketTradeVwap !== String(value) || readout.dataset.premarketThrough !== through) {
+              readout.dataset.premarketTradeVwap = String(value);
+              readout.dataset.premarketThrough = through;
+              readout.textContent = `Premarket trade VWAP ${value.toFixed(4)}`;
+              readout.title = `Eligible trades through ${new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }).format(premarketTradeTotals.through * 1000)} ET`;
+            }
+            if (!readout.isConnected) slot.append(readout);
+          }
           for(const study of matching){
             if(!study.series.options().visible)continue;
             const points=studyPoints.get(study)??[],time=activeCrosshair?.time;
@@ -698,7 +714,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             const index=indicatorReadoutIndex(points,readoutTime,carried);
             const newest=points.at(-1);
             const readoutId=vwapReadoutKeys.get(study);
-            const readoutKey=readoutId?readoutBasis+readoutId:undefined;
+            const readoutKey=readoutId?readoutBasis+tradeCorrectionRevision+readoutId:undefined;
             if(readoutKey&&newest&&historyBasisDate===readoutBasis)chartVwapCache.writeReadout(cacheOwner,readoutKey,{...newest,precision:study.numberFormat.precision});
             const saved=readoutKey&&(!loaded||chartHalted||seedLoading||seedError)?chartVwapCache.readReadout(cacheOwner,readoutKey):undefined;
             const savedMatchesSlot=carried&&saved&&typeof time==="number"&&saved.time<=time
@@ -811,6 +827,8 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const bars = new Map<number, Candle>(cached?.bars.map(bar=>[bar.time,bar]));
       const queued = new Map<number, Candle>();
       const archivePages: ChartArchivePage[] = [];
+      const tradeCorrections = new Map<number, ChartCorrection>();
+      let tradeCorrectionRevision = 0;
       const calculationHistory=new ChartCalculationHistory(ticker,abort.signal,()=>easternClock(Date.now()).date,
         (url,init)=>sharedChartFetch(`${url.replace('/api/screeners/charts/bars', endpoints.bars)}&${providerQuery}`,init),priceAdjustment);
       const calculationContexts=new Map<string,CalculationHistory&{daily:boolean;through?:number}>(),contextCoverage=new Map<string,number>(),contextPending=new Set<string>(),contextFailures=new Map<string,number>();
@@ -932,7 +950,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         const request=parseVwapSeedRequest(query);
         const localSeed=localVwapSeed(request,basisDate);
         if(localSeed)return localSeed;
-        const key=basisDate+query.toString();
+        const key=basisDate+tradeCorrectionRevision+query.toString();
         const cachedEntry=chartVwapCache.readSeed(cacheOwner,key),cached=cachedEntry?.value,validCached=cached&&validVwapSeed(cached,request,basisDate)?cached:undefined;
         const expired=validCached&&cachedEntry&&Date.now()-cachedEntry.at>=300_000;
         const needsMoments=indicator.vwapBands?.mode==='Standard deviation'&&indicator.vwapBands.levels.some(level=>level.enabled);
@@ -1321,6 +1339,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           catchingUp = false;
           for (const bar of data.bars as Candle[]) bars.set(bar.time, bar);
           for (const bar of queued.values()) bars.set(bar.time, bar);
+          if (!daily) for (const correction of tradeCorrections.values()) applyChartCorrection(bars, correction);
           queued.clear(); loaded = true;
           writeAll(initial, warmup); initialViewReady=true; setError(null);
           if (initial && !indicatorsReady) {
@@ -1532,6 +1551,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           overnightLiveRevisions.set(bar.time, ++overnightRevision);
           if (!loaded) return;
         } else {
+          if (!daily && tradeCorrections.has(bar.time)) return;
           lastBarReceivedAt = Date.now();
           if (!loaded || loading || catchingUp) queued.set(bar.time, bar);
           if (historyBasisDate && historyBasisDate !== easternClock(Date.now()).date) {
@@ -1637,6 +1657,31 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         haltStatusAt=at;chartHalted=message.status.halted;renderPriceGuide();updateIndicatorLegend();
       });
       source.addEventListener("bar", event => receiveBar(event, false));
+      source.addEventListener("chart-correction", event => {
+        let correction: ChartCorrection;
+        try { correction = parseChartCorrection(JSON.parse((event as MessageEvent).data)); }
+        catch { return; }
+        if (disposed || correction.symbol !== ticker ||
+            easternClock(correction.minute * 1000).date !== easternClock(Date.now()).date ||
+            JSON.stringify(tradeCorrections.get(correction.minute)) === JSON.stringify(correction)) return;
+        tradeCorrections.set(correction.minute, correction);
+        if (correction.premarket && (!premarketTradeTotals || correction.premarket.through >= premarketTradeTotals.through)) {
+          premarketTradeTotals = correction.premarket;
+        }
+        tradeCorrectionRevision++;
+        calculationHistory.invalidate();
+        calculationContexts.clear(); contextCoverage.clear(); contextFailures.clear();
+        if (!daily) {
+          applyChartCorrection(bars, correction);
+          queued.delete(correction.minute);
+          const affected = candleBucket(correction.minute, timeframe, regularOnly);
+          for (let index = archivePages.length - 1; index >= 0; index--) {
+            const page = archivePages[index];
+            if (page.start <= affected && affected < page.end) archivePages.splice(index, 1);
+          }
+        }
+        if (loaded) writeAll(false, false, true);
+      });
       if (showOvernight) {
         source.addEventListener("overnight-price", event => receivePrice(event, true));
         source.addEventListener("overnight-bar", event => receiveBar(event, true));

@@ -11,7 +11,7 @@ export function dailyTradeRules(trade: { c?:string[]; z?:string }) {
   return {known:minute.known,volume:minute.volume,highLow:!blocked,openClose:blocked?"none":conditions.some(condition=>["G","P","Z","4"].includes(condition))?"first":"all"};
 }
 
-type Trade = { T?: string; S?: string; t: string; p: number; s: number; i: number | string; x: string; c?: string[]; z?: string };
+type Trade = { T?: string; S?: string; t: string; p: number; s: number; i: number | string; x: string; c?: string[]; z?: string; u?: string };
 type Minute = { bar: Candle; first: string | null; last: string | null };
 /** Chart-only active-minute builder. Official closed bars remain authoritative. */
 export class ChartLiveBook {
@@ -44,6 +44,8 @@ export class ChartLiveBook {
     } else this.apply(trade);
   }
   private apply(trade: Trade) {
+    if (trade.u === "canceled" || trade.u === "incorrect") return;
+    if (trade.u !== undefined && trade.u !== "corrected") { this.invalidate(); return; }
     const at = Date.parse(trade.t), minute = this.daily ? this.start/1000 : Math.floor(at / 60_000) * 60;
     if (!Number.isFinite(at) || !Number.isFinite(trade.p) || trade.p <= 0
       || !Number.isSafeInteger(trade.s) || trade.s < 0 || !["number", "string"].includes(typeof trade.i) || typeof trade.x !== "string") { this.invalidate(); return; }

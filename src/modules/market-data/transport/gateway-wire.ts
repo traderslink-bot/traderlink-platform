@@ -8,7 +8,7 @@ export const GATEWAY_WIRE_ROUTES = {
   "analyzer-splits": "capital-adjustments", "chart-splits": "split-events",
   "chart-overnight-history": "extended-candles", "chart-unadjusted-history": "original-candles", history: "candle-window", quotes: "market-state",
   overnight: "extended-price", bars: "recent-candles", stream: "chart-updates",
-  "scanner-stream": "scanner-updates", prices: "price-updates", halts: "trading-pauses",
+  "scanner-stream": "scanner-updates", "trade-revisions": "trade-revisions", prices: "price-updates", halts: "trading-pauses",
 } as const;
 export type GatewayOperation = keyof typeof GATEWAY_WIRE_ROUTES;
 export function gatewayWirePath(operation: GatewayOperation): string {
@@ -44,7 +44,7 @@ const previous = record({symbol:["ticker",scalar],price:["value",scalar],high:["
   barAt:["candleAt",scalar],adjustment:["basis",scalar],basisDate:["basisDay",scalar],fetchedAt:["received",scalar],statistics:["studies",referenceStats]});
 const snapshot = record({latestTrade:["lastPrint",trade],latestQuote:["bestPrices",quote],dailyBar:["dayCandle",rawBar],minuteBar:["minuteCandle",rawBar],prevDailyBar:["priorDayCandle",rawBar],adjustedPreviousClose:["priorClose",previous],tradingStatus:["tradingState",pause]});
 const sessionTotal = simple({open:"first",largestTradeShares:"largestShares",largestTradeDollars:"largestTurnover",volume:"shares",dollarVolume:"turnover",high:"peak",low:"trough",price:"value",providerAt:"observed"});
-const sessionState = record({date:["day",scalar],regularClose:["closeMinute",scalar],complete:["finished",scalar],openingRanges:["openRanges",record(Object.fromEntries([5,15,30].map(n=>[String(n),[String(n),simple({high:"peak",low:"trough"})]])))],sessions:["periods",record({premarket:["beforeOpen",sessionTotal],regular:["openMarket",sessionTotal],after_hours:["afterClose",sessionTotal]})]});
+const sessionState = record({date:["day",scalar],regularClose:["closeMinute",scalar],complete:["finished",scalar],correctionRevision:["tradeRevision",scalar],openingRanges:["openRanges",record(Object.fromEntries([5,15,30].map(n=>[String(n),[String(n),simple({high:"peak",low:"trough"})]])))],sessions:["periods",record({premarket:["beforeOpen",sessionTotal],regular:["openMarket",sessionTotal],after_hours:["afterClose",sessionTotal]})]});
 const session = simple({date:"day",open:"opens",close:"closes"});
 const calendar = record({available:["usable",scalar],start:["fromDay",scalar],end:["untilDay",scalar],sessions:["days",array(session)]});
 const request = simple({symbol:"ticker",timeframe:"interval",anchor:"reference",before:"until",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",adjustment:"basis"});
@@ -86,8 +86,11 @@ const schemas: Record<GatewayOperation, Spec> = {
   "accepted-map-monitor":simple({admitted:"admitted"}),
   "vwap-seed":seed,"scanner-signal-bars":signalHistory,"analyzer-splits":events,"chart-splits":chartSplits,"chart-overnight-history":history,"chart-unadjusted-history":history,history,quotes:market,
   overnight:record({feed:["coverage",scalar],symbol:["ticker",scalar],trade:["lastPrint",trade]}),bars:history,
-  stream:record({state:["connection",scalar],adjustment:["basis",scalar],basisDate:["basisDay",scalar],price:["value",scalar],time:["observed",scalar],bar:["candle",candle],daily:["daily",scalar],provisional:["forming",scalar],symbol:["ticker",scalar],available:["usable",scalar],status:["tradingState",pause]}),
+  stream:record({state:["connection",scalar],adjustment:["basis",scalar],basisDate:["basisDay",scalar],price:["value",scalar],time:["observed",scalar],bar:["candle",candle],daily:["daily",scalar],provisional:["forming",scalar],minute:["minute",scalar],premarket:["premarketTradeTotals",simple({through:"through",volume:"shares",dollarVolume:"notional"})],symbol:["ticker",scalar],available:["usable",scalar],status:["tradingState",pause]}),
   "scanner-stream":market,prices:priceFrame,
+  "trade-revisions":record({feed:["coverage",scalar],symbols:["instruments",dictionary(record({
+    minutes:["at",array(scalar)],pending:["pending",scalar],revision:["revision",scalar],
+  }))]}),
   halts:record({feed:["coverage",scalar],connected:["online",scalar],statusesSubscribed:["trackingPauses",scalar],observedSince:["trackingSince",scalar],statuses:["tradingStates",array(pause)],events:["transitions",array(pause)]}),
 };
 

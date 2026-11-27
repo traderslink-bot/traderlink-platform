@@ -235,3 +235,5 @@ The [filter audit](scanner-filter-audit-20261126.md) covers Apply, Save and reop
 | 1Day.json.gz | `436968c5a056a204b3d56807626eb32e3d11d85f99acb1ebb60416d70558cc07` |
 | metadata-friday.json | `13c79361987b4ec52d060ac005a6f227e7d6c44130e4d3d71b483724559f6c80` |
 | clro-selected.json | `ad3026c90f31dd2bfff9af9628caad111d0b591353b045b4b8664489df3f5a46` |
+
+Confirmed Alpaca corrections now reset the affected symbol's live preset history and retained rows before evaluation. The Scanner remembers the confirmed revision across session changes for that trading date. The engine regression covers a $38 to $7.41 reference repair at unchanged trade time, a cancelled latest trade with an earlier surviving price timestamp, and rejection of older and unversioned totals. Four focused suites passed (47 tests). This is local Scanner-source verification with fixture revisions. Combined transport verification is pending.

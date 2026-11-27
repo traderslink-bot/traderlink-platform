@@ -1,4 +1,5 @@
 import "server-only";
+import { parseChartCorrection } from "@/src/modules/scanner/alpaca/chart-correction";
 import { calendarDate } from "@/src/modules/scanner/alpaca/chart-calendar";
 import { browserCandle } from "./browser-chart-history";
 
@@ -24,6 +25,9 @@ export function browserChartEvent(type: string, input: unknown): { type: string;
       ...(data.adjustment === "split" || data.adjustment === "raw" ? { adjustment: data.adjustment } : {}),
       ...(calendarDate(data.basisDate) ? { basisDate: data.basisDate } : {}), bar: browserCandle(data.bar),
     } }; } catch { return connectionFailure; }
+  }
+  if (type === "chart-correction") {
+    try { return { type, data: parseChartCorrection(data) }; } catch { return connectionFailure; }
   }
   if (type === "trading-status") {
     const status = record(data.status);

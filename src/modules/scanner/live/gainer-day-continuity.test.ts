@@ -64,3 +64,13 @@ describe("Day Gainers continuation across regular close", () => {
       snapshots: [{ ...next, tradingDate: "2026-11-20" }], floats: new Map(), news: new Map(), configuration }).dayGainers.rows).toEqual([]);
   });
 });
+
+it("keeps the regular-session leader visible when a refresh contains only a lower gainer", () => {
+  const engine = new LiveScannerEngine(true);
+  const stocks = [...universe.stocks, {...universe.stocks[0], symbol:"NEXT"}];
+  const settings = {...configuration, gainers:{...configuration.gainers, displayLimit:1}};
+  const lower = (at:number) => ({...snapshot("regular",at,1.8),symbol:"NEXT"});
+  const first = run(engine,"regular",regularAt,[snapshot("regular",regularAt),lower(regularAt)],settings,stocks);
+  const next = run(engine,"regular",regularAt+60_000,[lower(regularAt+60_000)],settings,stocks);
+  for(const result of [first,next]) expect(result.dayGainers.rows.map(row=>row.symbol)).toEqual(["TEST"]);
+});

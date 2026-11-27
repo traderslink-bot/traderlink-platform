@@ -96,10 +96,23 @@ class FocusSelection {
     return [...this.focused].map(([symbol,focusedAtUtc]) => ({ ...available.get(symbol)!.row, focusedAtUtc }))
       .sort((a,b) => available.get(b.symbol)!.score-available.get(a.symbol)!.score || a.symbol.localeCompare(b.symbol));
   }
+  forget(symbol: string) {
+    this.confirmations.delete(symbol);
+    this.focused.delete(symbol);
+  }
   clear(): void { this.context = null; this.confirmations.clear(); this.focused.clear(); }
 }
 
 export class LiveScannerEngine {
+  private revisionDate = "";
+  private confirmedRevisions = new Map<string, number>();
+  private forgetCorrectedSymbol(symbol: string) {
+    for (const book of [this.activity, this.breakouts, this.declines, this.premarketPullbacks,
+      this.gainerRetention, this.dayGainerRetention, this.momentumEvents, this.momentumRetention,
+      this.gainersFocus, this.momentumFocus]) book.forget(symbol);
+    this.gainerAudit.delete(symbol);
+    this.momentumAudit.delete(symbol);
+  }
   private momentumAudit = new Map<string, ScannerAuditDecision>();
   private gainerAuditContext: string | null = null;
   private gainerAudit = new Map<string, ScannerAuditDecision>();
@@ -131,21 +144,36 @@ export class LiveScannerEngine {
         && (receiptIsPriceTime || input.now - snapshot.providerAt <= SNAPSHOT_MAX_AGE_MS)
         && input.now - snapshot.receivedAt <= SNAPSHOT_MAX_AGE_MS;
     };
+    if (this.revisionDate !== input.tradingDate) {
+      this.confirmedRevisions.clear();
+      this.revisionDate = input.tradingDate;
+    }
+    const snapshots = input.snapshots.filter(snapshot => {
+      if (snapshot.provider !== "alpaca" || !eligibleContext(snapshot)) return true;
+      const prior = this.confirmedRevisions.get(snapshot.symbol) ?? 0;
+      const revision = snapshot.correctionRevision ?? 0;
+      if (revision < prior) return false;
+      if (revision > prior) {
+        this.forgetCorrectedSymbol(snapshot.symbol);
+        this.confirmedRevisions.set(snapshot.symbol, revision);
+      }
+      return true;
+    });
     const covered = this.elapsedTime
-      ? new Set(input.snapshots.filter(snapshot => eligibleContext(snapshot) && fresh(snapshot)).map(snapshot => snapshot.symbol))
+      ? new Set(snapshots.filter(snapshot => eligibleContext(snapshot) && fresh(snapshot)).map(snapshot => snapshot.symbol))
       : new Set(membership.keys());
     this.activity.retain([...covered]);
     this.momentumEvents.retain([...covered]);
     const coveredUniverse=this.elapsedTime?{...input.universe,stocks:input.universe.stocks.filter(stock=>covered.has(stock.symbol))}:input.universe;
     const seen = new Set<string>();
-    for (const snapshot of input.snapshots) {
+    for (const snapshot of snapshots) {
       if (seen.has(snapshot.symbol)) throw Error("scanner_evaluation_duplicate_symbol");
       seen.add(snapshot.symbol);
     }
     const rows: LiveScannerRow[] = [];
     const rejected=new Map<string,readonly string[]>();
     let missingFloatCount = 0;
-    for (const snapshot of input.snapshots) {
+    for (const snapshot of snapshots) {
       const stock = membership.get(snapshot.symbol);
       if (!stock || !eligibleContext(snapshot)) { rejected.set(snapshot.symbol, ["snapshot_not_eligible"]); continue; }
       if (!fresh(snapshot)) { rejected.set(snapshot.symbol, ["snapshot_stale"]); continue; }
@@ -186,13 +214,13 @@ export class LiveScannerEngine {
     const failuresFor = (row: LiveScannerRow) => scannerGainerFilterFailures(row,input.configuration.gainers.filters[input.session]);
     const freshGainerSymbols = new Set(rows.map(row => row.symbol));
     const rankGainers = (a: LiveScannerRow, b: LiveScannerRow) =>
-      Number(freshGainerSymbols.has(b.symbol)) - Number(freshGainerSymbols.has(a.symbol))
+      (input.session === "regular" ? 0 : Number(freshGainerSymbols.has(b.symbol)) - Number(freshGainerSymbols.has(a.symbol)))
       || (b.sessionGain ?? -Infinity) - (a.sessionGain ?? -Infinity) || a.symbol.localeCompare(b.symbol);
     const dayContext = `${input.tradingDate}:day:${configurationHash}`;
     const dayGainers = [...this.dayGainerRetention.select(dayContext, rows, failuresFor, input.now,
       new Set(membership.keys()), input.session === "after_hours")]
       .sort(rankGainers);
-    const snapshotsBySymbol = new Map(input.snapshots.map(snapshot => [snapshot.symbol,snapshot]));
+    const snapshotsBySymbol = new Map(snapshots.map(snapshot => [snapshot.symbol,snapshot]));
     const gainerRows = input.session === "after_hours" ? rows.map(row => {
       const close = snapshotsBySymbol.get(row.symbol)?.regularClosePrice;
       const comparisonPrice = typeof close === "number" && Number.isFinite(close) && close > 0 ? close : null;
@@ -227,9 +255,9 @@ export class LiveScannerEngine {
     const momentumBySymbol=new Map(momentum.map(row=>[row.symbol,row]));
     const rowBySymbol=new Map(rows.map(row=>[row.symbol,row]));
     const gainerBySymbol=new Map([...gainerRows,...gainers].map(row=>[row.symbol,row]));
-    const currentSymbols = new Set(input.snapshots.map(snapshot => snapshot.symbol));
+    const currentSymbols = new Set(snapshots.map(snapshot => snapshot.symbol));
     const priorAuditSymbols = new Map([...this.momentumAudit, ...this.gainerAudit]);
-    const auditSnapshots = [...input.snapshots, ...[...priorAuditSymbols].flatMap(([symbol, previous]) =>
+    const auditSnapshots = [...snapshots, ...[...priorAuditSymbols].flatMap(([symbol, previous]) =>
       !currentSymbols.has(symbol) && (gainerRank.has(symbol) || this.momentumAudit.has(symbol)) ? [previous.observation] : [])];
     const audit=auditSnapshots.map(snapshot=>{
       const row=rowBySymbol.get(snapshot.symbol),failure=rejected.get(snapshot.symbol)
@@ -282,7 +310,7 @@ export class LiveScannerEngine {
     });
     this.gainerAudit = new Map(audit.filter(decision => gainerRank.has(decision.symbol)).map(decision => [decision.symbol, decision]));
     this.momentumAudit = new Map(audit.filter(decision => momentumRank.has(decision.symbol)).map(decision => [decision.symbol, decision]));
-    const freshSnapshots = input.snapshots.filter(fresh);
+    const freshSnapshots = snapshots.filter(fresh);
     const declines=this.declines.evaluate({universe:coveredUniverse,session:input.session,now:input.now,
       snapshots:freshSnapshots,floats:input.floats,controls:input.configuration.declines});
     const premarketPullbacks=this.premarketPullbacks.evaluate({universe:coveredUniverse,session:input.session,now:input.now,
@@ -296,5 +324,5 @@ export class LiveScannerEngine {
         focus: this.momentumFocus.select(context,momentumCandidates,input.configuration.momentum.focus,input.now) }, missingFloatCount,audit,
     };
   }
-  clear(): void { this.momentumAudit.clear();this.gainerAudit.clear();this.gainerAuditContext=null;this.gainerRetention.clear();this.dayGainerRetention.clear();this.activity.clear();this.momentumEvents.clear();this.momentumRetention.clear();this.gainersFocus.clear();this.momentumFocus.clear();this.declines.clear();this.premarketPullbacks.clear();this.breakouts.clear(); }
+  clear(): void { this.confirmedRevisions.clear();this.momentumAudit.clear();this.gainerAudit.clear();this.gainerAuditContext=null;this.gainerRetention.clear();this.dayGainerRetention.clear();this.activity.clear();this.momentumEvents.clear();this.momentumRetention.clear();this.gainersFocus.clear();this.momentumFocus.clear();this.declines.clear();this.premarketPullbacks.clear();this.breakouts.clear(); }
 }

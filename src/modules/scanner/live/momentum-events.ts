@@ -49,5 +49,8 @@ export class MomentumEventBook{
       episodeSeconds:episode?(receivedAt-episode.startAt)/1000:null}};
   }
   retain(symbols:readonly string[]):void{const keep=new Set(symbols);for(const symbol of this.episodes.keys())if(!keep.has(symbol))this.episodes.delete(symbol);}
+  forget(symbol: string) {
+    this.episodes.delete(symbol);
+  }
   clear():void{this.context=null;this.episodes.clear();}
 }

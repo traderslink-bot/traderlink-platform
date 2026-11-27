@@ -54,5 +54,8 @@ export class GainerRetentionBook {
     return selected;
   }
 
+  forget(symbol: string) {
+    this.members.delete(symbol);
+  }
   clear(): void { this.context = null; this.members.clear(); }
 }

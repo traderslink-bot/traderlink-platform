@@ -11,7 +11,7 @@ type SharedStream = {
   idleClose?: ReturnType<typeof setTimeout>;
 };
 const streams = new Map<string, SharedStream>();
-const eventTypes = ["status", "price", "bar", "trading-status", "overnight-status", "overnight-price", "overnight-bar"];
+const eventTypes = ["status", "price", "bar", "trading-status", "chart-correction", "overnight-status", "overnight-price", "overnight-bar"];
 const DAILY_STREAM_HANDOFF_MS = 1_000;
 export class ChartStreamHandle extends EventTarget {
   onerror: ((event: Event) => void) | null = null;
@@ -42,7 +42,12 @@ function connectStream(url: string, current: SharedStream, source = new EventSou
   for (const type of eventTypes) source.addEventListener(type, event => {
     if (current.source !== source) return;
     const message = event as MessageEvent;
-    current.latest.set(type, message);
+    let key = type;
+    if (type === "chart-correction") {
+      try { key = type + ":" + JSON.parse(message.data).minute; } catch { return; }
+      while (current.latest.size > 1000) current.latest.delete(current.latest.keys().next().value!);
+    }
+    current.latest.set(key, message);
     for (const client of current.clients) client.dispatchEvent(new MessageEvent(type, { data: message.data }));
   });
   source.onerror = event => {
