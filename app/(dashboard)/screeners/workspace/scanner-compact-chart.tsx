@@ -204,12 +204,12 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
                   viewId={`workspace-card-${panel.id}`} viewWorkspace="workspace" compactMobile compactToolbar
                   compactToolbarHeight={28} sx={{"& [data-chart-compact-toolbar]":{
                     px:0,
-                    ...(multiview && {height:{xs:28,md:27},boxSizing:"border-box",pb:{md:"1px"}}),
+                    ...(multiview && {height:{xs:30,md:29},pb:{md:"1px"}}),
                     "& > .MuiIconButton-root":{
                       width:30,height:multiview ? {xs:28,md:26} : 28,
                     },
                     "& > [data-workspace-chart-close]":{
-                      position:"sticky",right:0,ml:"auto",flexShrink:0,zIndex:1,bgcolor:"background.paper",
+                      position:"sticky",right:0,flexShrink:0,zIndex:1,bgcolor:"background.paper",
                     },
                   }}}/>
               </Suspense>
