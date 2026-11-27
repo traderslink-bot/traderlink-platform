@@ -1,5 +1,6 @@
 import { browserDataRead } from "@/src/modules/market-data/server/browser-data-errors";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { hasChartsDashboardAccess } from "@/src/modules/market-data/server/chart-dashboard-access";
 import { hasMarketToolsDashboardReadAccess } from "@/src/modules/market-data/server/market-tools-dashboard-access";
 import { companySymbol } from "@/src/modules/company/server/company-snapshot";
 import { companyUniverseEntry,readCompanyTechnicals,readCompanyYearRange } from "@/src/modules/company/server/company-market-data";
@@ -10,7 +11,8 @@ export const dynamic="force-dynamic";
 async function readGET(request:Request){
   const headers={"Cache-Control":"private, no-store"};
   try{
-    if(!hasMarketToolsDashboardReadAccess(requireTraderLinkPlatformRequestIdentity(request.headers))){
+    const identity=requireTraderLinkPlatformRequestIdentity(request.headers);
+    if(!hasChartsDashboardAccess(identity)&&!hasMarketToolsDashboardReadAccess(identity)){
       return Response.json({}, {status:404,headers});
     }
   }

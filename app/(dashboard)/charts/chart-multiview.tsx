@@ -9,8 +9,10 @@ import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import { MarketChart } from "./market-chart";
 import { ChartMultiviewMenu } from "./chart-multiview-menu";
 
-export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenMultiview, onDefaultTimeframeChange, defaultTimeframe, activeSymbol, allowEmpty = false, ready = true, compactMobile = false, workspace = "main", viewPrefix = "", plain = false, workspaceRow = false }: {
+export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onChartSymbolChange, onOpenCompanyDetails, onOpenMultiview, onDefaultTimeframeChange, defaultTimeframe, activeSymbol, allowEmpty = false, ready = true, compactMobile = false, workspace = "main", viewPrefix = "", plain = false, workspaceRow = false }: {
   layout: ChartMultiview; onChange: (next: ChartMultiview) => void; onSelectTicker?: (symbol: string) => void; onOpenMultiview?: () => void; onDefaultTimeframeChange?: (timeframe: ChartTimeframe) => void;
+  onChartSymbolChange?: (panelId: string, symbol: string) => string | undefined;
+  onOpenCompanyDetails?: (symbol: string) => void;
   defaultTimeframe?: ChartTimeframe; activeSymbol?: string; allowEmpty?: boolean; ready?: boolean; compactMobile?: boolean; workspace?: "main" | "scanner"; viewPrefix?: string; plain?: boolean; workspaceRow?: boolean;
 }) {
   const theme = useTheme(), narrow = useMediaQuery(theme.breakpoints.down("md"));
@@ -51,7 +53,10 @@ export function ChartMultiviewCharts({ layout, onChange, onSelectTicker, onOpenM
           onPointerDown={() => select(group.symbol, panel.id)} onFocusCapture={() => select(group.symbol, panel.id)}
           sx={{ display: "flex", minWidth: 0, height: mobile && landscape ? "var(--mobile-chart-height,240px)" : undefined, minHeight: mobile ? landscape ? 180 : 330 : 0, border: showPanelBorders ? 1 : 0, borderColor: showPanelBorders && layout.selectedPanel === panel.id ? "warning.main" : "divider", borderRadius: 0, overflow: "hidden",
             gridColumn: !mobile && groups.length === 1 && group.panels.length === 3 && panelIndex === 2 ? "1 / -1" : "auto" }}>
-          <MarketChart viewId={viewPrefix+panel.id} viewWorkspace={workspace} compactMobile={compactMobile} compactIdentity={compactMobile && mobile && panelIndex === 0 && (main ? tabbed && layout.groups.length>1 : byTicker && layout.groups.length>1) ? <Tabs value={main?layout.selectedPanel:active} variant="scrollable" scrollButtons={false} aria-label={main?"Charts in this view":"Chart tickers"} onChange={(_, id:string)=>{
+          <MarketChart viewId={viewPrefix+panel.id} viewWorkspace={workspace} compactMobile={compactMobile}
+            compactToolbar={Boolean(onChartSymbolChange)} compactToolbarHeight={28}
+            onSymbolChange={onChartSymbolChange ? symbol => onChartSymbolChange(panel.id, symbol) : undefined}
+            onOpenCompanyDetails={onOpenCompanyDetails} compactIdentity={compactMobile && mobile && panelIndex === 0 && (main ? tabbed && layout.groups.length>1 : byTicker && layout.groups.length>1) ? <Tabs value={main?layout.selectedPanel:active} variant="scrollable" scrollButtons={false} aria-label={main?"Charts in this view":"Chart tickers"} onChange={(_, id:string)=>{
               if(main){const target=layout.groups.find(item=>item.panels.some(p=>p.id===id))!;select(target.symbol,id);}
               else {const target=layout.groups.find(item=>item.symbol===id)!;select(id,target.panels[0].id);}
             }} sx={{minHeight:44,width:"100%","& .MuiTab-root":{minHeight:44,minWidth:48,px:1,py:0.5,fontSize:12},"& .Mui-selected":{color:"warning.main",fontWeight:700},"& .MuiTabs-indicator":{bgcolor:"warning.main"}}}>

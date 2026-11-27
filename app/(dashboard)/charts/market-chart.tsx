@@ -1,6 +1,8 @@
 "use client";
 import {chartLogarithmic,setChartLogarithmic} from '@/src/modules/scanner/alpaca/chart-preferences';
 
+import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
+import { ChartTickerField } from "./chart-ticker-field";
 import { createChartPriceStyle } from "./chart-price-style";
 import { useChartMarketData } from "./use-chart-market-data";
 import { ChartIndicatorLegend } from "./chart-indicator-legend";
@@ -91,7 +93,9 @@ const subDollarEvidencePrice = new Intl.NumberFormat("en-US", { minimumFractionD
 const evidenceTime = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit", timeZoneName: "short" });
 const formatEvidencePrice = (value: number) => `$${(value < 1 ? subDollarEvidencePrice : evidencePrice).format(value)}`;
 
-export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, compactMobile = false, compactToolbar = false, compactToolbarHeight = 32, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick, evidence }: {
+export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTimeframeChange, disabledTimeframes = [], actions, closeAction, onOpenMultiview, onDefaultTimeframeChange, onSymbolChange, onOpenCompanyDetails, compactMobile = false, compactToolbar = false, compactToolbarHeight = 32, compactIdentity, viewId, viewWorkspace = "main", tradeContext, tradeFocusRevision, onTradeMarkClick, evidence }: {
+  onSymbolChange?: (symbol: string) => string | undefined;
+  onOpenCompanyDetails?: (symbol: string) => void;
   tradeContext?: MarketTradeContext; tradeFocusRevision?: number; onTradeMarkClick?: (marks: readonly MarketTradeMark[]) => void;
   evidence?: ResolvedChartEvidence;
   symbol: string; sx?: SxProps<Theme>; timeframe?: ChartTimeframe; onTimeframeChange?: (timeframe: ChartTimeframe) => void;
@@ -1760,6 +1764,27 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     <Button size="small" aria-pressed={levelsVisible} onClick={() => setLevelsVisible(value => !value)}
       sx={{ ...evidenceButtonSize, bgcolor: levelsVisible ? "action.selected" : undefined }}>Levels</Button>
   </Box>;
+  const tickerField = onSymbolChange && ticker === baseTicker
+    ? <ChartTickerField key={ticker} symbol={ticker} timeframe={timeframe} onSubmit={onSymbolChange} disabled={!ready}/>
+    : null;
+  const companyButton = onOpenCompanyDetails && <IconButton size="small" title="Company details"
+    aria-label={`Company details for ${ticker}`} aria-haspopup="dialog"
+    onClick={() => onOpenCompanyDetails(ticker)}
+    sx={{ ml: 0.5, width: compactToolbarHeight, height: compactToolbarHeight, flexShrink: 0 }}>
+    <BusinessOutlined sx={{ fontSize: 17 }} />
+  </IconButton>;
+  const timeframeControl = replayActive
+    ? <Typography variant="caption" color="text.secondary" noWrap>Bar Replay</Typography>
+    : movementKind
+    ? <Typography variant="caption" noWrap>{movementKind === "renko" ? "Renko" : "Range Bars"} · ${preferences.movementStep ?? 0.01}</Typography>
+    : <Button size="small" variant="outlined" color="inherit"
+      aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" aria-expanded={Boolean(frameAnchor)}
+      onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
+      sx={{ minWidth: 0, minHeight: 0, height: 24, px: 0.5, py: 0, flexShrink: 0, textTransform: "none",
+        color: "text.primary", borderColor: "divider", fontSize: 12, lineHeight: 1, gap: 0.25 }}>
+      {timeframe}
+      <KeyboardArrowDown sx={{ fontSize: 14 }} />
+    </Button>;
   const crosshairReadout = <Box ref={crosshairDetails} data-chart-crosshair-details sx={{
     flex: 1, minWidth: 0, minHeight: 16,
     zIndex: 2, pointerEvents: "none", px: 0.5, fontSize: 10, color: "text.secondary",
@@ -1776,19 +1801,15 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       "& > *": { flexShrink: 0 },
       "& > .MuiIconButton-root": { minHeight: 0, maxHeight: compactToolbarHeight, minWidth: 0, maxWidth: compactToolbarHeight, p: 0.5 },
     }}>
-      <Box data-chart-identity sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: "1 1 auto",
-        minWidth: chartIdentity ? 64 : 32, "& .MuiTabs-root, & .MuiTab-root": { minHeight: compactToolbarHeight, py: 0 } }}>
-        {chartIdentity ?? <Typography noWrap sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700, flexShrink: 0, maxWidth: "100%" }}>{ticker}</Typography>}
+      <Box data-chart-identity sx={{ display: "flex", alignItems: "center", gap: 0.5, flex: tickerField ? "0 0 auto" : "1 1 auto",
+        minWidth: chartIdentity && !tickerField ? 64 : 32, "& .MuiTabs-root, & .MuiTab-root": { minHeight: compactToolbarHeight, py: 0 } }}>
+        {tickerField ?? chartIdentity ?? <Typography noWrap sx={{ color: dark ? "warning.main" : "#354358", fontSize: 12, fontWeight: 700, flexShrink: 0, maxWidth: "100%" }}>{ticker}</Typography>}
       </Box>
-      {replayActive ? <Typography variant="caption" color="text.secondary" noWrap>Bar Replay</Typography> : movementKind ? <Typography variant="caption" noWrap>{movementKind==="renko"?"Renko":"Range Bars"} · ${preferences.movementStep??0.01}</Typography> :
-      <Button size="small" variant="outlined" color="inherit"
-        aria-label={`${ticker} timeframe ${timeframe}`} aria-haspopup="menu" aria-expanded={Boolean(frameAnchor)}
-        onClick={event => setFrameAnchor(event.currentTarget)} disabled={!ready}
-        sx={{ minWidth: 0, minHeight: 0, height: 24, px: 0.5, py: 0, flexShrink: 0, textTransform: "none",
-          color: "text.primary", borderColor: "divider", fontSize: 12, lineHeight: 1, gap: 0.25 }}>
-        {timeframe}
-        <KeyboardArrowDown sx={{ fontSize: 14 }} />
-      </Button>}
+      {companyButton}
+      {tickerField && chartIdentity && <Box sx={{ minWidth: 54, maxWidth: 130, flex: "1 0 54px", "& .MuiTabs-root, & .MuiTab-root": {
+        minHeight: compactToolbarHeight, py: 0,
+      } }}>{chartIdentity}</Box>}
+      {timeframeControl}
       {preferencesButtons}
       {evidenceButtons}
       {!movementKind && !replayActive && drawingToolbar}
@@ -1798,7 +1819,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       {closeAction}
     </Stack> : <>    <Stack direction="row" sx={{ alignItems: "center", gap: 0.25, px: 0.5, minHeight: 27, flexWrap: "wrap" }}>
       <Typography sx={{ color:dark?"warning.main":"#354358",fontSize: 11, fontWeight: 700, mr: 0.5 }}>{ticker}</Typography>
-      {replayActive ? <Typography variant="caption" color="text.secondary" noWrap>Bar Replay</Typography> : movementKind ? <Typography variant="caption" noWrap>{movementKind==="renko"?"Renko":"Range Bars"} · ${preferences.movementStep??0.01}</Typography> : CHART_TIMEFRAMES.map(value => <Button key={value} size="small" aria-label={`${ticker} ${value} candles`} aria-pressed={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => {if(onTimeframeChange)onTimeframeChange(value);else setActiveTimeframe(value);}} sx={{ minWidth: {xs:40,md:26}, minHeight:{xs:44,md:27}, p: {xs:"4px 6px",md:"2px 4px"}, fontSize: {xs:14,md:10}, bgcolor: timeframe === value ? "action.selected" : undefined }}>{value}</Button>)}
+      {timeframeControl}
       {preferencesButtons}
       {evidenceButtons}
       {!movementKind && !replayActive && drawingToolbar}
@@ -1810,10 +1831,10 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       {mainToolbar && closeAction && <Box sx={{ ml: "auto" }}>{closeAction}</Box>}
     </Stack>
 </>}
-    {compact ? <Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}
+    <Menu anchorEl={frameAnchor} open={Boolean(frameAnchor)} onClose={() => setFrameAnchor(null)}
       slotProps={{ list: { dense: true, sx: { py: 0.5, "& .MuiMenuItem-root": { minHeight: 32, px: 1.25 } } } }}>
       {CHART_TIMEFRAMES.map(value => <MenuItem key={value} selected={timeframe === value} disabled={!ready || disabledTimeframes.includes(value)} onClick={() => { if (onTimeframeChange) onTimeframeChange(value); else setActiveTimeframe(value); setFrameAnchor(null); }}>{value}</MenuItem>)}
-    </Menu> : null}
+    </Menu>
     {marketData.message && <Typography role="status" sx={{ px: 1, fontSize: 11 }}>{marketData.message}</Typography>}
     {!movementKind&&!replayActive&&drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
