@@ -1,7 +1,7 @@
 import { isMembershipAccessDenied } from "@/src/modules/platform/server/membership/platform-membership-access";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { deletePlatformAuthCookie } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
+import { deletePlatformAuthCookie, platformAuthCookieName } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -36,7 +36,7 @@ function finish(
   const origin = process.env.NODE_ENV === "production"
     ? resolvePlatformPublicOrigin(request)
     : "http://127.0.0.1:3010";
-  const onboardingReturn = request.cookies.get(MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE)?.value
+  const onboardingReturn = request.cookies.get(platformAuthCookieName(MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE))?.value
     === MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE;
   const destination = onboardingReturn && status === "connected"
     ? new URL("/trade-tracker?gettingStarted=daily-entry&moomoo=connected", origin)
@@ -63,8 +63,8 @@ function reportFailure(error: unknown, stage: "oauth_state" | "oauth_callback"):
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const state = request.nextUrl.searchParams.get("state");
   const code = request.nextUrl.searchParams.get("code");
-  const expectedState = request.cookies.get(MOOMOO_OAUTH_STATE_COOKIE)?.value;
-  const verifier = request.cookies.get(MOOMOO_OAUTH_VERIFIER_COOKIE)?.value;
+  const expectedState = request.cookies.get(platformAuthCookieName(MOOMOO_OAUTH_STATE_COOKIE))?.value;
+  const verifier = request.cookies.get(platformAuthCookieName(MOOMOO_OAUTH_VERIFIER_COOKIE))?.value;
   if (!state || !code || !expectedState || !verifier || state !== expectedState) {
     return finish(request, "invalid-state", reportFailure(
       new Error("moomoo_oauth_state_invalid"),

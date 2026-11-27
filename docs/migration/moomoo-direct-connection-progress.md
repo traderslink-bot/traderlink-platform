@@ -1,5 +1,9 @@
 # Moomoo Direct Connection Progress
 
+## November 27 production OAuth cookie compatibility
+
+The start route already issues host-prefixed cookies in production. The start and callback routes now read those same cookie names through the shared Platform helper, including the onboarding return cookie. The production callback had recorded a state-check failure before token exchange. Focused route tests reproduce the original mismatch and verify the patched redirect round trip with synthetic authorization, including rejection of mismatched state and legacy-only production cookies.
+
 **Plan:** [Moomoo Direct Connection Plan](moomoo-direct-connection-plan.md)
 
 **Market-data guidance:** [Moomoo Market-Data Connection Guidance Progress](moomoo-market-data-connection-guidance-progress.md)

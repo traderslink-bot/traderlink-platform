@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
   deletePlatformAuthCookie,
+  platformAuthCookieName,
   setPlatformAuthCookie,
   setPlatformSessionAuthCookie,
 } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
@@ -47,8 +48,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       database.transaction(() => new MoomooOAuthPendingAttemptService(database).prepare({
         scope: identity.scope,
         platformSessionId: identity.sessionId,
-        cookieState: request.cookies.get(MOOMOO_OAUTH_STATE_COOKIE)?.value ?? null,
-        cookieVerifier: request.cookies.get(MOOMOO_OAUTH_VERIFIER_COOKIE)?.value ?? null,
+        cookieState: request.cookies.get(platformAuthCookieName(MOOMOO_OAUTH_STATE_COOKIE))?.value ?? null,
+        cookieVerifier: request.cookies.get(platformAuthCookieName(MOOMOO_OAUTH_VERIFIER_COOKIE))?.value ?? null,
       })).immediate());
     const response = NextResponse.redirect(buildMoomooAuthorizeUrl({ config: getMoomooOAuthConfig(publicOrigin), state: pkce.state, challenge: pkce.challenge }));
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_STATE_COOKIE, pkce.state);
