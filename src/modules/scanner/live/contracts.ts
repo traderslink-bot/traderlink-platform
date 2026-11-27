@@ -81,6 +81,7 @@ export type ScannerAdminConfiguration = ScannerConfiguration &
 export type NormalizedSnapshot = Readonly<{
   provider?: "moomoo" | "alpaca";
   symbol: string; company: string; session: ScannerSession; tradingDate: string;
+  correctionRevision?: number;
   providerAt: number; receivedAt: number; price: number; baseline: number | null;
   /** During after-hours, last_price is the same day's regular close, not after_price. */
   regularClosePrice?: number | null;

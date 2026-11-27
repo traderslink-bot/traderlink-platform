@@ -60,6 +60,9 @@ export class MomentumRetentionBook {
     return Object.freeze(selected);
   }
 
+  forget(symbol: string) {
+    this.retained.delete(symbol);
+  }
   clear(): void {
     this.context = null;
     this.retained.clear();

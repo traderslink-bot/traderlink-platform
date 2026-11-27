@@ -21,6 +21,12 @@ export class PremarketPullbackBook {
   private quotes=new Map<string,NormalizedSnapshot>();
   private included=new Set<string>();
   private selectionKey="";
+  forget(symbol: string) {
+    this.references.delete(symbol);
+    this.sessionHighs.delete(symbol);
+    this.quotes.delete(symbol);
+    this.included.delete(symbol);
+  }
   clear(){this.date="";this.session=null;this.references.clear();this.sessionHighs.clear();this.quotes.clear();this.included.clear();this.selectionKey="";}
   evaluate(input:{universe:DailyUniverse;session:ScannerSession;now:number;snapshots:readonly NormalizedSnapshot[];
     floats:ReadonlyMap<string,FloatFact>;activity:(symbol:string)=>RollingActivity;rapidDrops?:readonly DeclineRow[];controls?:PremarketPullbackControls}):PremarketPullbackResults{

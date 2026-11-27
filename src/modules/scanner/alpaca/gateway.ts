@@ -20,6 +20,9 @@ import { ScannerStreamHub } from "./scanner-stream-hub";
 import { easternClock } from "../live/sessions";
 import { AlpacaPreviousCloseBook } from "./previous-close";
 import { ScannerSplitReference } from "./scanner-split-reference";
+import { AlpacaChartCorrections } from "./alpaca-chart-corrections";
+import { parseChartCorrection } from "./chart-correction";
+import { parseTradeRevisionRequest } from "./trade-revisions";
 import { ChartLiveBook } from "./chart-live-book";
 import { ChartOvernightFeed } from "./chart-overnight-feed";
 import { chartOvernightTradingDate } from "./chart-overnight-session";
@@ -86,10 +89,25 @@ export function createAlpacaGateway(options: GatewayOptions) {
   const statusStartedAt = new Date().toISOString();
   const chartBooks = new Map<string, ChartLiveBook>();
   const priceUpdates=new Map<string,{price:number;time:string}>();
-  const priceTimer=setInterval(()=>{for(const client of clients){const price=priceUpdates.get(client.symbol);if(price)send(client,"price",price);}priceUpdates.clear();for(const [key,book] of chartBooks){void book.warm();const [symbol,daily]=key.split("|");for(const bar of book.drain())for(const client of clients)if(client.symbol===symbol&&client.daily===(daily==="true"))send(client,"bar",{bar,daily:daily==="true",provisional:true});}},250);priceTimer.unref();
+  const priceTimer=setInterval(()=>{for(const client of clients){const price=priceUpdates.get(client.symbol);if(price)send(client,"price",price);}priceUpdates.clear();for(const [key,book] of chartBooks){void book.warm();const [symbol,daily]=key.split("|");for(const bar of book.drain())for(const client of clients)if(client.symbol===symbol&&client.daily===(daily==="true")&&(daily==="true"||!corrections.has(symbol,bar.time)))send(client,"bar",{bar,daily:daily==="true",provisional:true});}},250);priceTimer.unref();
   const cache = new Map<string, { at: number; bars: Candle[] }>();
   const pending = new Map<string, Promise<Candle[]>>();
   const rest = new AlpacaRestData(options);
+  const corrections = new AlpacaChartCorrections(rest, revisions => {
+    const { symbol } = revisions[0];
+    cache.delete(`${symbol}:false:${chartBasisDate}:split`);
+    vwapHistory.invalidateSymbol(symbol);
+    sessionBook.remove(symbol);
+    scannerHub.mark(symbol);
+    try { archive?.applyTradeCorrections(revisions); } catch { /* Provider-qualified live corrections still reach charts. */ }
+    for (const client of clients) if (client.symbol === symbol) {
+      for (const revision of revisions) send(client, "chart-correction", parseChartCorrection(revision));
+    }
+  }, Date.now, start => archive?.readTradeCorrections(start) ?? []);
+  const correctedHistory = async (request: AlpacaHistoryRequest, background = false): Promise<AlpacaHistoryResult> => {
+    const history = await rest.history(request, background);
+    return request.timeframe === "1Min" ? corrections.overlay(history, request.start, request.end) : history;
+  };
   let signalReads = 0;
   const signalHistory = coalescedMetadata(async (request: ScannerSignalBars) => {
     if (signalReads >= SCANNER_SIGNAL_CONCURRENCY) throw Error("busy");
@@ -111,13 +129,13 @@ export function createAlpacaGateway(options: GatewayOptions) {
   const corporateEvents = new AlpacaVwapCorporateEvents(options);
   const splitReference = new ScannerSplitReference(rest, symbol => corporateEvents.splitHistory(symbol),
     symbol => scannerHub.mark(symbol));
-  const archive = options.candleHistory && new AlpacaCandleArchive(options.candleHistory.path, rest, chartCalendar,
+  const archive: AlpacaCandleArchive | undefined = options.candleHistory && new AlpacaCandleArchive(options.candleHistory.path, { history: correctedHistory }, chartCalendar,
     async symbol => {
       const history = await corporateEvents.splitHistory(symbol);
       splitReference.remember(history);
       return history;
     });
-  const vwapHistory = new AlpacaVwapHistory(rest, chartCalendar, Date.now, corporateEvents);
+  const vwapHistory = new AlpacaVwapHistory({ history: correctedHistory }, chartCalendar, Date.now, corporateEvents);
   const listings = new AlpacaScannerListings(options);
   const previousCloses = new AlpacaPreviousCloseBook(rest, chartCalendar, archive ? {
     read: (symbol, start, end) => archive.readScannerDaily(symbol, start, end),
@@ -209,13 +227,21 @@ export function createAlpacaGateway(options: GatewayOptions) {
       }catch{/* Missing baselines remain unavailable; the maintenance sweep retries. */}
     }}finally{bootstrapping=false;}
   }
+  function scannerSessionTotals(symbol: string, date: string, regularClose: number) {
+    // Scanner should only rebuild from history once the provider has confirmed the update.
+    const start = Date.parse(date + "T00:00:00Z");
+    if (!subscribedTrades.has(symbol) || corrections.isPending(symbol, start, start + 86_400_000)) return null;
+    const totals = sessionBook.read(symbol, date, regularClose);
+    const correctionRevision = totals.complete ? corrections.sessionRevision(symbol, date) : undefined;
+    return correctionRevision ? { ...totals, correctionRevision } : totals;
+  }
   const scannerHub=new ScannerStreamHub((requested,regularClose)=>({feed:"sip",connected:authenticated,
     snapshots:Object.fromEntries(requested.map(symbol=>{
       const quote=quotes.get(symbol);if(!quote)return [symbol,null];
       const daily=quote.dailyBar as {t?:string;c?:number}|undefined,previous=quote.prevDailyBar as {t?:string;c?:number}|undefined,bidAsk=quote.latestQuote as {t?:string;bp?:number;ap?:number}|undefined;
       return [symbol,{dailyBar:daily?{t:daily.t,c:daily.c}:undefined,prevDailyBar:previous?{t:previous.t,c:previous.c}:undefined,latestQuote:bidAsk?{t:bidAsk.t,bp:bidAsk.bp,ap:bidAsk.ap}:undefined,tradingStatus:statusesSubscribed?tradingStatuses.read(symbol):null,adjustedPreviousClose:splitReference.read(previousCloses.peek(symbol,easternClock(Date.now()).date),tradingStatuses.read(symbol))}];
     })),
-    sessionTotals:Object.fromEntries(requested.map(symbol=>[symbol,subscribedTrades.has(symbol)?sessionBook.read(symbol,easternClock(Date.now()).date,regularClose):null]))
+    sessionTotals:Object.fromEntries(requested.map(symbol=>[symbol,scannerSessionTotals(symbol, easternClock(Date.now()).date, regularClose)]))
   }) as import("./scanner-snapshots").AlpacaQuoteReply,requested=>{for(const symbol of requested){leases.set(symbol,Date.now()+45_000);if(!quotes.has(symbol)||(!quotes.get(symbol)?.prevDailyBar&&!quotes.get(symbol)?.dailyBar))snapshotQueue.add(symbol);}void bootstrapSnapshots();void previousCloses.read(requested,easternClock(Date.now()).date).then(()=>scannerHub.refresh()).catch(()=>{});});
   try {
     for (const history of archive?.readEffectiveSplitHistories() ?? []) splitReference.remember(history);
@@ -257,6 +283,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
       for (const message of messages) {
         if (message.T === "t") priceHub.observe(message.S,message);
         if (["t", "q", "b", "u", "d", "c", "x"].includes(message.T) && typeof message.S === "string") scannerHub.mark(message.S);
+        if (message.T === "c" || message.T === "x") corrections.observe(message);
         if (["t", "c", "x"].includes(message.T)) { sessionBook.observe(message); for(const daily of [false,true])chartBooks.get(`${message.S}|${daily}`)?.observe(message); }
         if(message.T === "t" && alpacaMinuteTradeRules(message).known && alpacaMinuteTradeRules(message).prices && Number.isFinite(message.p) && message.p>0){
           if([...clients].some(client=>client.symbol===message.S)){const prior=priceUpdates.get(message.S);if(!prior||priceObservationOrder(message.t)>=priceObservationOrder(prior.time))priceUpdates.set(message.S,{price:message.p,time:message.t});}
@@ -288,13 +315,17 @@ export function createAlpacaGateway(options: GatewayOptions) {
           const previous = current[key] as { t?: string } | undefined;
           if (!previous?.t || Date.parse(message.t) >= Date.parse(previous.t)) quotes.set(message.S, { ...current, [key]: message });
         } else if (["b", "u", "d"].includes(message.T)) {
+          const bar = alpacaCandle(message);
+          if (bar && message.T !== "d" && typeof message.S === "string" && corrections.has(message.S, bar.time)) {
+            if (message.T === "u") corrections.refresh(message.S);
+            continue;
+          }
           if (leases.has(message.S)) {
             const previous = quotes.get(message.S) ?? {};
             const oldDaily = previous.dailyBar as { t?: string } | undefined;
             const rollover = message.T === "d" && oldDaily?.t && easternClock(Date.parse(oldDaily.t)).date < easternClock(Date.parse(message.t)).date;
             quotes.set(message.S, { ...previous, ...(rollover ? { prevDailyBar: oldDaily } : {}), [message.T === "d" ? "dailyBar" : "minuteBar"]: message });
           }
-          const bar = alpacaCandle(message);
           if (bar && message.T !== "d" && typeof message.S === "string") archive?.enqueueMinute(message.S, bar);
           if (bar && message.T !== "d") chartBooks.get(`${message.S}|false`)?.seal(bar.time);
           if (bar) for (const client of clients) if (client.symbol === message.S && client.daily === (message.T === "d") && !(message.T === "d" && chartBooks.get(`${message.S}|true`)?.covers(bar.time))) send(client, "bar", { bar, daily: message.T === "d" });
@@ -378,9 +409,11 @@ export function createAlpacaGateway(options: GatewayOptions) {
       if (easternClock(Date.now()).date !== basisDate) throw Error("adjustment_basis_changed");
       if (!payload.bars || !Array.isArray(payload.bars[symbol] ?? [])) throw Error("provider_unavailable");
       const bars = (payload.bars[symbol] ?? []).map(alpacaCandle).filter((bar: Candle | null): bar is Candle => bar !== null).sort((a: Candle, b: Candle) => a.time - b.time);
-      cache.delete(key); cache.set(key, { at: Date.now(), bars });
+      const corrected = daily ? bars : corrections.overlay({ symbol, bars, adjustment: "split", basisDate, feed: "sip",
+        complete: true, nextPageToken: null }, Date.now() - 14 * 86_400_000, Date.now()).bars;
+      cache.delete(key); cache.set(key, { at: Date.now(), bars: corrected });
       while (cache.size > 40) cache.delete(cache.keys().next().value!);
-      return bars;
+      return corrected;
     };
     const promise = load().finally(() => pending.delete(key));
     pending.set(key, promise); return promise;
@@ -489,6 +522,12 @@ export function createAlpacaGateway(options: GatewayOptions) {
       }
       if(request.method !== "GET"){response.writeHead(405);response.end();return;}
       if (url.pathname === "/health") { response.setHeader("Content-Type", "application/json"); reply({ ready: true, feed: "sip" }); return; }
+      if (url.pathname === "/trade-revisions") {
+        const manifest = corrections.manifest(parseTradeRevisionRequest(url.searchParams, Date.now()));
+        response.setHeader("Content-Type", "application/json");
+        reply(manifest);
+        return;
+      }
       if (url.pathname === "/scanner-listings") {
         const excluded = await listings.read();
         response.setHeader("Content-Type", "application/json");
@@ -530,7 +569,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
         if (overnight && window.timeframe !== "1Min") throw Error("invalid_history_request");
         const source = overnight ? overnightRest : rest;
         if (!source) { response.writeHead(404); response.end(); return; }
-        const result = await source.history({ ...window, adjustment: "raw" });
+        const result = await (source === rest ? correctedHistory({ ...window, adjustment: "raw" }) : source.history({ ...window, adjustment: "raw" }));
         const bars = overnight ? result.bars.filter(bar => bar.low > 0 && chartOvernightTradingDate(bar.time * 1000)) : result.bars;
         const sessionFacts = window.timeframe === "1Min" ? { calendar: await chartCalendar.forBars(bars) } : { calendars: await chartCalendar.forHistory(bars) };
         reply({ ...result, bars, ...sessionFacts });
@@ -597,7 +636,8 @@ export function createAlpacaGateway(options: GatewayOptions) {
         }
         const archived = archive ? await archive.readChartHistory(request, dailyStartup === "1")
           : archiveReader ? archiveReader.readChartHistory(request) : null;
-        const result: AlpacaHistoryResult = archived ?? await rest.history(request);
+        const base: AlpacaHistoryResult = archived ?? await correctedHistory(request);
+        const result = request.timeframe === "1Min" ? corrections.overlay(base, request.start, request.end) : base;
         if (archived) archive?.touch(request.symbol);
         else archive?.rememberChartHistory(request, result);
         if (result.adjustment === "raw") {
@@ -636,7 +676,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
         const adjustedCloses = url.searchParams.get("sessions") === "1" ? await previousCloses.read(requested, date) : {};
         const regularClose = Number(url.searchParams.get("regularClose") ?? 960);
         if (![780, 960].includes(regularClose)) throw Error("invalid_symbol");
-        const totals = url.searchParams.get("sessions") === "1" ? Object.fromEntries(requested.map(symbol => [symbol, subscribedTrades.has(symbol) ? sessionBook.read(symbol, date, regularClose) : null])) : undefined;
+        const totals = url.searchParams.get("sessions") === "1" ? Object.fromEntries(requested.map(symbol => [symbol, scannerSessionTotals(symbol, date, regularClose)])) : undefined;
         response.setHeader("Content-Type", "application/json");
         reply({ feed: "sip", connected: authenticated, snapshots: Object.fromEntries(requested.map(symbol => [symbol, quotes.has(symbol) ? { ...quotes.get(symbol), tradingStatus:statusesSubscribed?tradingStatuses.read(symbol):null, adjustedPreviousClose: splitReference.read(adjustedCloses[symbol] ?? null, tradingStatuses.read(symbol)) } : null])), sessionTotals: totals }); return;
       }
@@ -663,6 +703,7 @@ export function createAlpacaGateway(options: GatewayOptions) {
         }) : undefined;
         if(!chartBooks.has(bookKey))chartBooks.set(bookKey,new ChartLiveBook(symbol,rest,daily));
         for(const bar of chartBooks.get(bookKey)!.snapshot())send(client,"bar",{bar,daily,provisional:true});
+        for (const revision of corrections.values(symbol)) send(client, "chart-correction", parseChartCorrection(revision));
         send(client, "status", { state: authenticated ? "connected" : "connecting" });
         sendTradingStatus(client);
         subscribe(); connect();
@@ -677,13 +718,13 @@ export function createAlpacaGateway(options: GatewayOptions) {
     } catch (error) {
       if (response.headersSent) { response.destroy(); return; }
       const code = error instanceof Error ? error.message : "provider_unavailable";
-      const status = ["invalid_symbol", "invalid_history_request", "invalid_scanner_signal_bars", "invalid_archive_query"].includes(code) ? 400 : code === "busy" ? 429 : 502;
+      const status = ["invalid_symbol", "invalid_history_request", "invalid_scanner_signal_bars", "invalid_archive_query", "invalid_trade_revision_request"].includes(code) ? 400 : code === "busy" ? 429 : 502;
       response.writeHead(status, { "Content-Type": "application/json" });
       response.end(JSON.stringify({ error: status === 400 ? operation?"invalid_request":"invalid_symbol" : status === 429 ? "busy" : operation?"market_unavailable":"provider_unavailable" }));
     }
   });
   server.on("listening",()=>{if(needsSocket())connect();});
-  return { server, close() { stopped = true; archive?.close(); clearInterval(levelsMonitorTimer); levelsMonitor?.stop(); overnightFeed?.close(); clearTimeout(statusAttemptTimer);statusJournal?.close(); clearInterval(priceTimer); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
+  return { server, close() { stopped = true; corrections.close(); archive?.close(); clearInterval(levelsMonitorTimer); levelsMonitor?.stop(); overnightFeed?.close(); clearTimeout(statusAttemptTimer);statusJournal?.close(); clearInterval(priceTimer); scannerHub.close();priceHub.close(); clearInterval(leaseTimer); clearTimeout(retry); sessionBook.invalidate(); for (const symbol of leases.keys()) sessionBook.remove(symbol); socket?.close(); for (const client of clients) client.response.end(); server.close(); } };
 }
 
 export async function readPrivateJson(path: string): Promise<Record<string, string>> {

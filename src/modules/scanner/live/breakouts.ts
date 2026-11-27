@@ -50,6 +50,11 @@ export class BreakoutBook {
       .slice(0, 30);
   }
 
+  forget(symbol: string) {
+    this.references.delete(symbol);
+    this.rows.delete(symbol);
+    this.observedAt.delete(symbol);
+  }
   clear() {
     this.date = undefined;
     this.references.clear();

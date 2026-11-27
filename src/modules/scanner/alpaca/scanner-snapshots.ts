@@ -37,7 +37,11 @@ export function normalizeAlpacaScannerBatch(input: { payload: unknown; requested
     const premarket = book.sessions.premarket;
     const regular = input.session === "premarket" ? null : book.sessions.regular;
     const postMarket = input.session === "after_hours" ? book.sessions.after_hours : null;
-    snapshots.push({ symbol, company: symbol, provider: "alpaca", session: input.session, tradingDate: input.tradingDate, providerAt: current.providerAt, receivedAt: input.receivedAt,
+    const revision = "correctionRevision" in book ? book.correctionRevision : undefined;
+    if (revision !== undefined && (!Number.isSafeInteger(revision) || typeof revision !== "number" || revision <= 0)) {
+      issues.add("alpaca_invalid_correction_revision"); continue;
+    }
+    snapshots.push({ ...(typeof revision === "number" ? {correctionRevision:revision} : {}), symbol, company: symbol, provider: "alpaca", session: input.session, tradingDate: input.tradingDate, providerAt: current.providerAt, receivedAt: input.receivedAt,
       price: current.price, baseline, priceTimeBasis: "session_observation", volume: current.volume, dollarVolume: current.dollarVolume,
       regularClosePrice: book.sessions.regular.price,
       largestTradeShares:current.largestTradeShares, largestTradeDollars:current.largestTradeDollars,

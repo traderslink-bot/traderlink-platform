@@ -42,3 +42,14 @@ it("requires a PM level, rejects older quotes and clears on the next trading dat
   }]);
   expect(run("regular",2.5,86400,{tradingDate:"2026-11-13",premarketHigh:null})).toEqual([]);
 });
+
+it("rebases corrected Alpaca totals and rejects superseded levels even with a newer trade clock",()=>{
+  const run=setup();
+  expect(run("regular",8,1,{premarketHigh:38})).toEqual([]);
+  expect(run("regular",8,2,{premarketHigh:7.41,correctionRevision:1,providerAt:now+1000}))
+    .toMatchObject([{price:8,breakoutLevel:7.41}]);
+  expect(run("regular",7,3,{premarketHigh:7.41,correctionRevision:2,providerAt:now})).toEqual([]);
+  expect(run("regular",8,4,{premarketHigh:7.41,correctionRevision:1})).toEqual([]);
+  expect(run("regular",8,5,{premarketHigh:7.41})).toEqual([]);
+  expect(run("regular",8,6,{premarketHigh:7.41,correctionRevision:2})).toHaveLength(1);
+});

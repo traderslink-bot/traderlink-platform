@@ -3,6 +3,7 @@ import type { CandleArchiveRead, CandleArchiveReply } from "./transport";
 import Database from "better-sqlite3";
 import { closeSync, constants, mkdirSync, openSync, statSync } from "node:fs";
 import { dirname } from "node:path";
+import { parseStoredChartCorrection, type StoredChartCorrection } from "../../scanner/alpaca/chart-correction";
 import { chartSymbol, type Candle } from "../../scanner/alpaca/candles";
 import { initialCandleHistorySettings, parseCandleHistorySettings, type CandleHistorySettings, type HistoryFrame } from "./settings";
 
@@ -112,6 +113,10 @@ export class CandleHistoryStore extends CandleHistoryQueries {
           close REAL NOT NULL, volume REAL NOT NULL,
           PRIMARY KEY (symbol, frame, session, basis, time)
         ) WITHOUT ROWID;
+        CREATE TABLE IF NOT EXISTS archive_trade_corrections (
+          symbol TEXT NOT NULL, minute INTEGER NOT NULL, correction TEXT NOT NULL,
+          PRIMARY KEY (symbol, minute)
+        ) WITHOUT ROWID;
         CREATE TABLE IF NOT EXISTS archive_basis (symbol TEXT PRIMARY KEY, date TEXT NOT NULL, basis TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS archive_last_used (symbol TEXT PRIMARY KEY, at INTEGER NOT NULL);
         CREATE TABLE IF NOT EXISTS archive_roster (symbol TEXT PRIMARY KEY);
@@ -172,6 +177,22 @@ export class CandleHistoryStore extends CandleHistoryQueries {
     this.database.prepare(`INSERT INTO archive_reconciled VALUES (?, ?, ?)
       ON CONFLICT(symbol) DO UPDATE SET basis = excluded.basis, through = excluded.through`)
       .run(chartSymbol(symbol), basis, through);
+  }
+
+  readTradeCorrections(from: number): StoredChartCorrection[] {
+    return (this.database.prepare("SELECT correction FROM archive_trade_corrections WHERE minute >= ? ORDER BY minute")
+      .all(from) as { correction: string }[]).map(({ correction }) => parseStoredChartCorrection(JSON.parse(correction)));
+  }
+
+  saveTradeCorrections(revisions: readonly StoredChartCorrection[]) {
+    const upsert = this.database.prepare(`INSERT INTO archive_trade_corrections VALUES (?, ?, ?)
+      ON CONFLICT(symbol, minute) DO UPDATE SET correction = excluded.correction`);
+    this.database.transaction(() => {
+      for (const input of revisions) {
+        const correction = parseStoredChartCorrection(input);
+        upsert.run(correction.symbol, correction.minute, JSON.stringify(correction));
+      }
+    }).immediate();
   }
 
   /** One transaction publishes candle rows and their verified coverage together. */

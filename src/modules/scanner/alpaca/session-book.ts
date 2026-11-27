@@ -4,8 +4,8 @@ import { SCANNER_OPENING_RANGE_MINUTES, type ScannerOpeningRanges } from "../liv
 import { easternClock } from "../live/sessions";
 
 export type AlpacaSessionTotal = { volume: number; dollarVolume: number; high: number | null; low: number | null; price: number | null; providerAt: number | null; open?: number; largestTradeShares?: number; largestTradeDollars?: number; firstTradeAt?: string; lastTradeAt?: string };
-export type AlpacaSessionState = { date: string; regularClose: number; complete: boolean; openingRanges?: ScannerOpeningRanges; sessions: Record<"premarket" | "regular" | "after_hours", AlpacaSessionTotal> };
-type Trade = { T?: string; S?: string; t: string; p: number; s: number; i: number | string; x: string; c?: string[]; z?: string };
+export type AlpacaSessionState = { date: string; regularClose: number; complete: boolean; correctionRevision?: number; openingRanges?: ScannerOpeningRanges; sessions: Record<"premarket" | "regular" | "after_hours", AlpacaSessionTotal> };
+type Trade = { u?: string; T?: string; S?: string; t: string; p: number; s: number; i: number | string; x: string; c?: string[]; z?: string };
 type OpeningBars = (symbol: string, date: string, start: number, end: number) => readonly Pick<Candle, "time" | "high" | "low">[] | null;
 type OpeningRead = { checkedAt: number; requestedMinutes: number; verifiedMinutes: number; ranges: ScannerOpeningRanges };
 type Entry = { state: AlpacaSessionState; pending: Trade[]; cutoff: number | null; coveredThrough: number | null; overflow: boolean; working: boolean; retryAt: number; openingRead?: OpeningRead };
@@ -56,6 +56,9 @@ function lateOpeningTradeMinute(state: AlpacaSessionState, trade: Trade) {
 
 /** SIP trade-condition rules: Alpaca Market Data FAQ, stock minute-bar rules. */
 export function applyAlpacaTrade(state: AlpacaSessionState, trade: Trade): boolean {
+  // Historical SIP pages retain canceled prints and superseded originals.
+  if (trade.u === "canceled" || trade.u === "incorrect") return true;
+  if (trade.u !== undefined && trade.u !== "corrected") return false;
   const time = Date.parse(trade.t);
   if (!Number.isFinite(time) || !Number.isFinite(trade.p) || trade.p <= 0 || !Number.isSafeInteger(trade.s) || trade.s < 0) return false;
   const clock = easternClock(time);

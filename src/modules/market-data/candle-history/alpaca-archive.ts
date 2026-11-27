@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { aggregateCandles, candleBucket, chartSymbol, easternDayStart, type Candle } from "../../scanner/alpaca/candles";
+import type { ChartCorrection, StoredChartCorrection } from "../../scanner/alpaca/chart-correction";
 import { ChartSessionCalendar } from "../../scanner/alpaca/chart-calendar";
 import type { AlpacaChartCalendar } from "../../scanner/alpaca/chart-calendar-provider";
 import type { AlpacaSplitHistory } from "../../scanner/alpaca/chart-vwap-events";
@@ -405,43 +406,64 @@ export class AlpacaCandleArchive {
     return true;
   }
 
+  readTradeCorrections(from: number) {
+    return this.stopped ? [] : this.store.readTradeCorrections(from);
+  }
+
+  applyTradeCorrections(revisions: readonly StoredChartCorrection[]) {
+    if (this.stopped) return;
+    this.store.saveTradeCorrections(revisions);
+    for (const { symbol, minute } of revisions) this.pendingMinutes.delete(symbol + ":" + minute);
+    this.writeMinutes(revisions, true);
+  }
+
   private flushMinutes() {
+    const batch: ChartCorrection[] = [];
+    const date = easternClock(this.now()).date;
+    for (const [key, { symbol, bar }] of this.pendingMinutes) {
+      if (!this.selected.has(symbol) || easternClock(bar.time * 1000).date !== date) {
+        this.pendingMinutes.delete(key);
+      } else if (this.currentBasis(symbol, date) && this.calendar.sessionAt(bar.time)) {
+        batch.push({ symbol, minute: bar.time, bar });
+        this.pendingMinutes.delete(key);
+        if (batch.length >= 256) break;
+      }
+    }
+    this.writeMinutes(batch, false);
+  }
+
+  private writeMinutes(batch: readonly ChartCorrection[], corrected: boolean) {
     const date = easternClock(this.now()).date;
     const writes = [];
-    const changed: { symbol: string; basis: string; bar: Candle; regular: boolean; through: number }[] = [];
-    for (const [key, { symbol, bar }] of this.pendingMinutes) {
-      if (writes.length >= 512) break;
+    const changed: { symbol: string; basis: string; minute: number; regular: boolean; through: number }[] = [];
+    for (const { symbol, minute, bar } of batch) {
+      if (easternClock(minute * 1000).date !== date) continue;
       const basis = this.currentBasis(symbol, date);
-      const interval = this.calendar.sessionAt(bar.time);
-      if (!this.selected.has(symbol) || easternClock(bar.time * 1_000).date !== date) {
-        this.pendingMinutes.delete(key);
-        continue;
-      }
+      const interval = this.calendar.sessionAt(minute);
       if (!basis || !interval) continue;
-      this.pendingMinutes.delete(key);
-      const offset = bar.time - interval.start;
+      const offset = minute - interval.start;
       if (offset < 240 * 60 || offset >= 1_200 * 60) continue;
       const isRegular = offset >= 570 * 60 && offset < interval.closeMinute * 60;
       for (const regular of isRegular ? [false, true] : [false]) {
         writes.push({ symbol, basis, frame: "1m" as const, session: regular ? "regular" as const : "extended" as const,
-          start: bar.time, end: bar.time + 60, bars: [bar] });
-        changed.push({ symbol, basis, bar, regular, through: interval.start + (regular ? interval.closeMinute : 1_200) * 60 });
+          start: minute, end: minute + 60, bars: bar ? [bar] : [] });
+        changed.push({ symbol, basis, minute, regular, through: interval.start + (regular ? interval.closeMinute : 1_200) * 60 });
       }
     }
     if (!writes.length) return;
     this.store.saveVerified(writes);
     const buckets = new Map<string, Parameters<CandleHistoryStore["saveVerified"]>[0][number]>();
-    for (const { symbol, basis, bar, regular, through } of changed) for (const [frame, length] of liveFrames) {
-      const start = frame === "30m" ? Math.floor(bar.time / length) * length : candleBucket(bar.time, frame, regular);
+    for (const { symbol, basis, minute, regular, through } of changed) for (const [frame, length] of liveFrames) {
+      const start = frame === "30m" ? Math.floor(minute / length) * length : candleBucket(minute, frame, regular);
       const end = Math.min(start + length, through);
       if (end * 1_000 > this.now()) continue;
       const session = regular ? "regular" : "extended";
       const id = [symbol, frame, session, basis, start].join(":");
       if (buckets.has(id)) continue;
       const minutes = this.store.read({ symbol, basis, frame: "1m", session, start, end });
-      if (!minutes?.length) continue;
+      if (!minutes || !minutes.length && !corrected) continue;
       buckets.set(id, { symbol, basis, frame, session, start, end,
-        bars: frame === "30m" ? [{ time: start, open: minutes[0].open, close: minutes.at(-1)!.close,
+        bars: !minutes.length ? [] : frame === "30m" ? [{ time: start, open: minutes[0].open, close: minutes.at(-1)!.close,
           low: Math.min(...minutes.map(bar => bar.low)), high: Math.max(...minutes.map(bar => bar.high)),
           volume: minutes.reduce((total, bar) => total + bar.volume, 0) }]
           : aggregateCandles(minutes, frame, regular) });

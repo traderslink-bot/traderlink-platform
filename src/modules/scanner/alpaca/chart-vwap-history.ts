@@ -13,12 +13,17 @@ import {addVwapMoment,type VwapMoment} from './vwap-moments';
 export class AlpacaVwapHistory{
  private cache=new Map<string,{at:number;seed:VwapSeed}>();
  private pending=new Map<string,Promise<VwapSeed>>();
+ private revisions=new Map<string,number>();
+ invalidateSymbol(symbol:string){
+  this.revisions.set(symbol,(this.revisions.get(symbol)??0)+1);
+  for(const [key,entry] of this.cache)if(entry.seed.request.symbol===symbol)this.cache.delete(key);
+ }
  constructor(private readonly rest:{history(request:AlpacaHistoryRequest):Promise<Omit<AlpacaHistoryResult,'feed'>&{feed:string}>},private readonly calendar:Pick<AlpacaChartCalendar,'forBars'>,private readonly now:()=>number=Date.now,private readonly events?:Pick<AlpacaVwapCorporateEvents,'read'>,private readonly expectedFeed='sip'){}
  async read(request:VwapSeedRequest):Promise<VwapSeed>{
-  const basisDate=easternClock(this.now()).date,key=JSON.stringify([basisDate,request]),cached=this.cache.get(key);
+  const basisDate=easternClock(this.now()).date,revision=this.revisions.get(request.symbol)??0,key=JSON.stringify([basisDate,revision,request]),cached=this.cache.get(key);
   if(cached&&this.now()-cached.at<300_000)return cached.seed;
   const existing=this.pending.get(key);if(existing)return existing;if(this.pending.size>=2)throw Error('busy');
-  const operation=this.load(request,basisDate).then(seed=>{this.cache.set(key,{at:this.now(),seed});while(this.cache.size>512)this.cache.delete(this.cache.keys().next().value!);return seed;}).finally(()=>this.pending.delete(key));this.pending.set(key,operation);return operation;
+  const operation=this.load(request,basisDate).then(seed=>{if(revision!==(this.revisions.get(request.symbol)??0))throw Error("vwap_history_revised");this.cache.set(key,{at:this.now(),seed});while(this.cache.size>512)this.cache.delete(this.cache.keys().next().value!);return seed;}).finally(()=>this.pending.delete(key));this.pending.set(key,operation);return operation;
  }
  private async load(request:VwapSeedRequest,basisDate:string):Promise<VwapSeed>{
   const began=this.now(),eventAnchor=request.anchor==='Splits'||request.anchor==='Dividends';
