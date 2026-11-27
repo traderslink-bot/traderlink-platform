@@ -126,6 +126,7 @@ describe("broker Workspace chart reads", () => {
 class SocketFixture extends EventEmitter {
   readyState = 1;
   send = vi.fn();
+  ping = vi.fn();
   close = vi.fn();
   packet(value: unknown) { this.emit("message", Buffer.from(JSON.stringify(value))); }
 }
@@ -196,6 +197,29 @@ describe("broker Workspace candle socket", () => {
     expect(quoteAt("2026-11-26T15:00:00Z")).toEqual([]);
   });
 
+  it("uses WebSocket heartbeats and keeps a quiet chart open while pongs arrive", async () => {
+    vi.useFakeTimers({ now });
+    const socket = new SocketFixture();
+    const stream = new WorkspaceMoomooChartStream(() => socket as unknown as WebSocket);
+    const { connection } = fixture();
+    const notify = vi.fn();
+    const remove = stream.subscribe({ symbol: "SPY", daily: false, adjustment: "split", connection, notify });
+    try {
+      await Promise.resolve();
+      socket.emit("open");
+      socket.packet({ session_id: "fixture" });
+      for (let count = 0; count < 4; count++) {
+        await vi.advanceTimersByTimeAsync(25_000);
+        socket.emit("pong");
+      }
+      expect(socket.ping).toHaveBeenCalledTimes(4);
+      expect(socket.send).toHaveBeenCalledTimes(2);
+      expect(socket.close).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(100_000);
+      expect(socket.close).toHaveBeenCalledOnce();
+    } finally { remove(); }
+  });
+
   it("reconnects if the provider rejects the refreshed chart credential", async () => {
     vi.useFakeTimers({ now });
     const socket = new SocketFixture();
@@ -211,7 +235,7 @@ describe("broker Workspace candle socket", () => {
       socket.packet({ id: subscription.id, code: 0 });
       for (let tick = 0; tick < 12; tick++) {
         await vi.advanceTimersByTimeAsync(25_000);
-        socket.packet({ action: "pong" });
+        socket.emit("pong");
       }
       const refresh = socket.send.mock.calls.map(([value]) => JSON.parse(value)).find(value => value.action === "refresh");
       expect(refresh?.id).toMatch(/^refresh-/);
