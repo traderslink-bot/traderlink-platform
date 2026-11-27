@@ -179,3 +179,29 @@ it("lets the Scanner go first when a Connected Workspace request is waiting on t
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+it("does not report a quote timeout after a subscribed ticker delivered a live push without an echoed ID", async () => {
+  vi.useFakeTimers({ now: time });
+  const controller = new AbortController();
+  const socket = new FakeSocket();
+  const status = vi.fn();
+  const accept = vi.fn();
+  const run = runWorkspaceWebSocketCards({
+    connection: () => ({ generation: "member", current: () => true, accessToken: async () => "token", request: async () => ({}) }),
+    context, settings: DEFAULT_WORKSPACE_MARKET_SETTINGS, signal: controller.signal,
+    symbols: () => ["NANO"], accept, status,
+  }, () => socket as unknown as WebSocket);
+  try {
+    await vi.advanceTimersByTimeAsync(1);
+    socket.emit("open");
+    socket.frame({ session_id: "synthetic-session" });
+    socket.frame({ code: 0 });
+    socket.frame({ type: "QUOTE", symbol: "US.NANO", data: { data_time_ms: time, last_price: 1.42 } });
+    expect(accept).toHaveBeenCalledExactlyOnceWith("NANO", expect.objectContaining({ price: 1.42 }), null);
+    await vi.advanceTimersByTimeAsync(10_500);
+    expect(status.mock.calls.map(([value]) => value)).toEqual(["connecting", "ready"]);
+  } finally {
+    controller.abort();
+    await run;
+  }
+});

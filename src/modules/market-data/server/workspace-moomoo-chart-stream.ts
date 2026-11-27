@@ -47,6 +47,7 @@ export function workspaceMoomooChartEvents(message: Record<string, unknown>, cli
 export class WorkspaceMoomooChartStream {
   private readonly clients = new Set<Subscription>();
   private readonly ready = new Set<string>();
+  private readonly rejected = new Set<string>();
   private readonly pending = new Map<string, string[]>();
   private socket?: WebSocket;
   private attempting = false;
@@ -82,7 +83,14 @@ export class WorkspaceMoomooChartStream {
       }
       const remaining = [...this.clients];
       if (!remaining.some(peer => key(peer) === key(client))) {
-        this.ready.delete(key(client));
+        const dimension = key(client);
+        this.ready.delete(dimension);
+        this.rejected.delete(dimension);
+        for (const [id, keys] of this.pending) {
+          const remaining = keys.filter(value => value !== dimension);
+          if (remaining.length) this.pending.set(id, remaining);
+          else this.pending.delete(id);
+        }
         this.updateSubscriptions("unsubscribe", [client], remaining.some(peer => peer.symbol === client.symbol) ? [] : [client.symbol]);
       }
     };
@@ -94,6 +102,13 @@ export class WorkspaceMoomooChartStream {
 
   private status(client: Subscription, state: string) {
     this.publish(client, { type: "status", data: { state, adjustment: client.adjustment, basisDate: easternClock(Date.now()).date } });
+  }
+
+  private markReady(dimension: string) {
+    if (this.ready.has(dimension)) return;
+    this.ready.add(dimension);
+    this.failures = 0;
+    for (const client of this.clients) if (key(client) === dimension) this.status(client, "connected");
   }
 
   private send(value: unknown) {
@@ -167,23 +182,32 @@ export class WorkspaceMoomooChartStream {
       this.refresh = setInterval(() => void this.refreshToken(), 300_000);
       return;
     }
-    if (typeof message.id === "string" && this.pending.has(message.id)) {
-      const keys = this.pending.get(message.id)!;
-      this.pending.delete(message.id);
-      if (message.code === 0) {
-        this.failures = 0;
-        for (const value of keys) {
-          if ([...this.clients].some(client => key(client) === value)) this.ready.add(value);
+    if (typeof message.id === "string" && typeof message.code === "number") {
+      const keys = this.pending.get(message.id);
+      if (keys) {
+        this.pending.delete(message.id);
+        for (const dimension of keys) {
+          if (message.code === 0) this.markReady(dimension);
+          else {
+            this.ready.delete(dimension);
+            this.rejected.add(dimension);
+            for (const client of this.clients) if (key(client) === dimension) this.status(client, "unavailable");
+          }
         }
+        return;
       }
-      for (const client of this.clients) if (keys.includes(key(client))) this.status(client, message.code === 0 ? "connected" : "unavailable");
-      return;
     }
     if (message.code && !this.authenticated) { this.socket?.close(); return; }
     if (!this.authenticated) return;
     for (const client of this.clients) {
-      if (!this.ready.has(key(client))) continue;
-      for (const event of workspaceMoomooChartEvents(message, client, this.lastPacket)) this.publish(client, event);
+      const dimension = key(client);
+      if (!client.connection.current() || this.rejected.has(dimension)) continue;
+      const events = workspaceMoomooChartEvents(message, client, this.lastPacket);
+      if (!events.length) continue;
+      // Quotes confirm a usable live price for this symbol. Candle pushes must
+      // also match the requested period and pass the chart's existing checks.
+      this.markReady(dimension);
+      for (const event of events) this.publish(client, event);
     }
   }
 
@@ -210,6 +234,7 @@ export class WorkspaceMoomooChartStream {
     this.refreshId = undefined;
     this.authenticated = false;
     this.ready.clear();
+    this.rejected.clear();
     this.pending.clear();
     socket?.close();
   }

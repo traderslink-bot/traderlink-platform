@@ -9,6 +9,9 @@ import type { VwapCorporateEvents, VwapCorporateAnchor } from "@/src/modules/sca
 
 type HistoryInput = { symbol: string; timeframe: "1Min" | "15Min" | "1Day"; start: number; end: number; adjustment?: "raw" | "split" };
 type Loader = (request: MoomooDataRequest) => Promise<Record<string, unknown>>;
+// The service has returned up to 1,000 rows despite the 370-row request limit.
+const MAX_HISTORY_RESPONSE_ROWS = 1000;
+
 export type SplitEvent = { date: string; ratio: number };
 export function moomooSplits(payload: Record<string, unknown>): SplitEvent[] {
   const rows = (payload.data as { rehabs?: unknown } | undefined)?.rehabs;
@@ -106,7 +109,7 @@ export class MoomooChartHistory {
     for (let page = 0; page < 128; page++) {
       const payload = await this.loader({ operation: "history", ...request, ...(nextTime ? { nextTime } : {}), ...(pageToken ? { pageToken } : {}) });
       const data = payload.data as { kline_list?: unknown; next_time?: unknown };
-      if (!data || !Array.isArray(data.kline_list) || data.kline_list.length > 370) throw Error("invalid_moomoo_history");
+      if (!data || !Array.isArray(data.kline_list) || data.kline_list.length > MAX_HISTORY_RESPONSE_ROWS) throw Error("invalid_moomoo_history");
       for (const raw of data.kline_list) {
         const bar = moomooChartBar(raw, daily, input.timeframe === "15Min" ? 900 : 60);
         if (bar && bar.time * 1000 >= input.start && bar.time * 1000 <= input.end) bars.set(bar.time, bar);

@@ -68,7 +68,7 @@ function waitForWorkspaceCardSocket(input: CardTransportInput, token: string, so
     let refreshSentAt = 0;
     let sequence = 0;
     const subscriptions = new Set<string>();
-    const quoteRequests = new Map<string, number>();
+    const quoteRequests = new Map<string, { sentAt: number; symbols: Set<string> }>();
     const seedPending = new Set<string>();
     const seedController = new AbortController();
     const seedSignal = AbortSignal.any([input.signal, seedController.signal]);
@@ -115,8 +115,8 @@ function waitForWorkspaceCardSocket(input: CardTransportInput, token: string, so
       if (!connection || now - lastMessageAt > (authenticated ? 90_000 : 15_000)) { finish(); return; }
       if (!authenticated) return;
       if (refreshRequestId && now - refreshSentAt >= 15_000) { finish(); return; }
-      for (const [id, sentAt] of quoteRequests) {
-        if (now - sentAt >= 10_000) {
+      for (const [id, request] of quoteRequests) {
+        if (now - request.sentAt >= 10_000) {
           quoteRequests.delete(id);
           input.status("unavailable");
         }
@@ -147,12 +147,16 @@ function waitForWorkspaceCardSocket(input: CardTransportInput, token: string, so
           subscriptions.delete(symbol);
           seedPending.delete(symbol);
         }
+        for (const [id, request] of quoteRequests) {
+          for (const symbol of removed) request.symbols.delete(symbol);
+          if (!request.symbols.size) quoteRequests.delete(id);
+        }
       }
       if (added.length) {
         const codes = added.map(symbol => `US.${symbol}`);
         // A book entitlement or quota failure must not block otherwise valid quotes.
         const quoteId = String(++sequence);
-        quoteRequests.set(quoteId, now);
+        quoteRequests.set(quoteId, { sentAt: now, symbols: new Set(added) });
         send({ action: "subscribe", id: quoteId, quote: codes });
         send({ action: "subscribe", id: String(++sequence), order_book: codes });
         for (const symbol of added) {
@@ -189,7 +193,14 @@ function waitForWorkspaceCardSocket(input: CardTransportInput, token: string, so
         if (!subscriptions.has(symbol) || !input.connection()) return;
         if (message.type === "QUOTE") {
           const quote = readWorkspacePushQuote(symbol, message.data, input.context, lastMessageAt);
-          if (quote) { input.accept(symbol, quote, null); input.status("ready"); }
+          if (quote) {
+            // Moomoo can send valid data without echoing the subscription ID.
+            for (const [id, request] of quoteRequests) {
+              if (request.symbols.has(symbol)) quoteRequests.delete(id);
+            }
+            input.accept(symbol, quote, null);
+            input.status("ready");
+          }
         } else if (message.type === "ORDER_BOOK") {
           const book = readWorkspacePushBook(message.data, input.context, lastMessageAt);
           if (book) input.accept(symbol, null, book);

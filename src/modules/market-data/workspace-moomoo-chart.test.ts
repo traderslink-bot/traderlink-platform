@@ -220,6 +220,63 @@ describe("broker Workspace candle socket", () => {
     } finally { remove(); }
   });
 
+  it("starts scoped live delivery on valid pushes without an echoed subscription id", async () => {
+    vi.useFakeTimers({ now });
+    const socket = new SocketFixture(), otherSocket = new SocketFixture();
+    const stream = new WorkspaceMoomooChartStream(() => socket as unknown as WebSocket);
+    const otherStream = new WorkspaceMoomooChartStream(() => otherSocket as unknown as WebSocket);
+    const { connection } = fixture();
+    const quote = vi.fn(), daily = vi.fn(), otherAccount = vi.fn();
+    const releases = [
+      stream.subscribe({ symbol: "SPY", daily: false, adjustment: "raw", connection, notify: quote }),
+      stream.subscribe({ symbol: "POM", daily: true, adjustment: "split", connection, notify: daily }),
+      otherStream.subscribe({ symbol: "SPY", daily: false, adjustment: "raw",
+        connection: fixture().connection, notify: otherAccount }),
+    ];
+    try {
+      await Promise.resolve();
+      for (const active of [socket, otherSocket]) {
+        active.emit("open");
+        active.packet({ session_id: "fixture" });
+        active.packet({ code: 0 });
+      }
+      expect(quote).toHaveBeenCalledTimes(1);
+      expect(daily).toHaveBeenCalledTimes(1);
+      const price = { type: "QUOTE", symbol: "US.SPY", data: { data_time_ms: now, last_price: 2.5 } };
+      const bar = { type: "KLINE", symbol: "US.POM", data: { period: "1D", adjust: "none",
+        kl_list: [candle("2026-11-24T15:15:00Z")] } };
+      socket.packet({ ...price, symbol: "US.OTHER" });
+      socket.packet({ ...price, data: { ...price.data, last_price: 0 } });
+      socket.packet({ ...bar, data: { ...bar.data, period: "1m" } });
+      expect(quote).toHaveBeenCalledTimes(1);
+      expect(daily).toHaveBeenCalledTimes(1);
+
+      socket.packet(price);
+      expect(quote.mock.calls.slice(1).map(([event]) => event)).toEqual([
+        expect.objectContaining({ type: "status", data: expect.objectContaining({ state: "connected", adjustment: "raw" }) }),
+        expect.objectContaining({ type: "price", data: expect.objectContaining({ price: 2.5 }) }),
+      ]);
+      expect(daily).toHaveBeenCalledTimes(1);
+      expect(otherAccount).toHaveBeenCalledTimes(1);
+      socket.packet(bar);
+      expect(daily.mock.calls.slice(1).map(([event]) => event)).toEqual([
+        expect.objectContaining({ type: "status", data: expect.objectContaining({ state: "connected", adjustment: "split" }) }),
+        expect.objectContaining({ type: "bar", data: expect.objectContaining({ daily: true }) }),
+      ]);
+      socket.packet(price);
+      expect(quote.mock.calls.filter(([event]) => event.data.state === "connected")).toHaveLength(1);
+      expect(otherAccount).toHaveBeenCalledTimes(1);
+
+      const subscription = JSON.parse(socket.send.mock.calls[1][0]);
+      socket.packet({ id: subscription.id, code: 403 });
+      expect(quote).toHaveBeenLastCalledWith(expect.objectContaining({ type: "status", data: expect.objectContaining({ state: "unavailable" }) }));
+      expect(daily).toHaveBeenLastCalledWith(expect.objectContaining({ type: "status", data: expect.objectContaining({ state: "unavailable" }) }));
+      const count = quote.mock.calls.length;
+      socket.packet(price);
+      expect(quote).toHaveBeenCalledTimes(count);
+    } finally { for (const release of releases) release(); }
+  });
+
   it("shares one candle key per connection, scopes delivery and releases the final reader", async () => {
     vi.useFakeTimers({ now });
     const socket = new SocketFixture();

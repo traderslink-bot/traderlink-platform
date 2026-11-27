@@ -52,3 +52,21 @@ it("does not apply duplicate split rows twice or accept impossible/conflicting d
  expect(()=>moomooSplits({data:{rehabs:[{...event,ex_div_date:"2026-02-31"}]}})).toThrow("invalid_moomoo_split");
  expect(()=>moomooSplits({data:{rehabs:[event,{...event,split_ratio:2}]}})).toThrow("conflicting_moomoo_split");
 });
+
+it("accepts a 1,000-row provider page and filters it to the requested range", async () => {
+  const start = at("2026-11-17T14:30:00Z");
+  const page = Array.from({ length: 1000 }, (_, index) => ({
+    ...candle, time_key: start + (index - 3) * 60_000,
+  }));
+  const input = { symbol: "SPY", timeframe: "1Min" as const, start, end: start + 120_000, adjustment: "raw" as const };
+  const load = vi.fn(async () => ({ ret_code: 0, data: { kline_list: page }, pagination: { has_more: false } }));
+  const history = new MoomooChartHistory(load, () => at("2026-11-18T01:00:00Z"));
+
+  const result = await history.history(input);
+  expect(result.complete).toBe(true);
+  expect(result.bars.map(bar => bar.time)).toEqual([start / 1000, start / 1000 + 60, start / 1000 + 120]);
+  expect(load).toHaveBeenCalledOnce();
+
+  const oversize = new MoomooChartHistory(async () => ({ data: { kline_list: [...page, candle] } }));
+  await expect(oversize.history(input)).rejects.toThrow("invalid_moomoo_history");
+});
