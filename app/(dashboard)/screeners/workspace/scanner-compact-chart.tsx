@@ -6,13 +6,11 @@ import CloseRounded from "@mui/icons-material/CloseRounded";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import InputBase from "@mui/material/InputBase";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Skeleton from "@mui/material/Skeleton";
-import { createContext, lazy, Suspense, useContext, useEffect, useRef, useState, type FormEvent, type Dispatch, type SetStateAction } from "react";
-import { chartSymbol, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
+import { createContext, lazy, Suspense, useContext, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import { changeChartTimeframe, singleChart } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { ChartMultiviewMenu } from "../../charts/chart-multiview-menu";
 import { ChartPreferencesContext } from "../../charts/use-chart-preferences";
@@ -30,41 +28,7 @@ const Chart = lazy(() => import("../../charts/market-chart").then(module => ({de
 const Covered = createContext(false);
 export const ScannerCompactChartCovered = Covered.Provider;
 
-function TickerSearch({ symbol, timeframe, onSubmit }: {
-  symbol: string;
-  timeframe: ChartTimeframe;
-  onSubmit: (symbol: string) => string | undefined;
-}) {
-  const [value, setValue] = useState(symbol);
-
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const input = event.currentTarget.elements.namedItem("symbol") as HTMLInputElement;
-    let message: string | undefined;
-    try {
-      message = onSubmit(chartSymbol(value));
-    } catch {
-      message = "Enter a valid ticker symbol.";
-    }
-    input.setCustomValidity(message ?? "");
-    if (message) input.reportValidity();
-    else input.blur();
-  };
-
-  return <Box component="form" onSubmit={submit} sx={{ minWidth: 0 }}>
-    <InputBase name="symbol" value={value} title="Search ticker" placeholder="Ticker"
-      startAdornment={<SearchOutlined aria-hidden sx={{ fontSize: 14, ml: 0.5, color: "text.secondary" }}/>}
-      inputProps={{ "aria-label": `Ticker for ${symbol} ${timeframe} chart`, maxLength: 15, enterKeyHint: "search", autoCapitalize: "characters", spellCheck: false }}
-      onFocus={event=>event.target.select()}
-      onChange={event=>{event.target.setCustomValidity("");setValue(event.target.value.toUpperCase());}}
-      sx={{ width: 92, maxWidth: "100%", height: 24, fontSize: 12, fontWeight: 700, color:"text.primary",
-        border: 1, borderColor: "divider", borderRadius: 0.5,
-        "& input":{ px:0.5, py:0, minWidth:0 }, "&:hover":{borderColor:"text.secondary"},
-        "&:focus-within":{borderColor:"primary.main",outline:"1px solid",outlineColor:"primary.main"} }}/>
-  </Box>;
-}
-
-export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTimeframe, slot, keepMounted = false, fillMobile = false, arrange = false, onEndArrange, singlePanel = false }: {
+export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTimeframe, slot, keepMounted = false, fillMobile = false, arrange = false, onEndArrange, onOpenCompanyDetails, singlePanel = false }: {
   symbol: string | null;
   layout: WorkspaceChartLayout | null;
   onLayoutChange: Dispatch<SetStateAction<WorkspaceChartLayout|null>>;
@@ -73,6 +37,7 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
   keepMounted?: boolean;fillMobile?:boolean;
   arrange?: boolean;singlePanel?:boolean;
   onEndArrange?: () => void;
+  onOpenCompanyDetails?: (symbol: string) => void;
 }) {
   const covered = useContext(Covered);
   const accountPreferences = useContext(ChartPreferencesContext);
@@ -226,8 +191,8 @@ export function ScannerCompactChart({ symbol, layout, onLayoutChange, defaultTim
                     const {arrangement,...chartLayout}=layout;
                     onLayoutChange({...changeChartTimeframe(chartLayout,panel.id,timeframe),arrangement});
                   }}
-                  compactIdentity={<TickerSearch key={group.symbol} symbol={group.symbol} timeframe={panel.timeframe}
-                    onSubmit={symbol=>replaceTicker(panel.id,panel.timeframe,symbol)}/>}
+                  onSymbolChange={symbol=>replaceTicker(panel.id,panel.timeframe,symbol)}
+                  onOpenCompanyDetails={onOpenCompanyDetails}
                   actions={!singlePanel&&!multiview&&<ChartMultiviewMenu layout={layout} openingPanelId={layout.selectedPanel??undefined} defaultTimeframe={defaultTimeframe}
                     onChange={onLayoutChange} resolveEmptyLayout={draft=>singleWorkspaceChart(draft,symbol,defaultTimeframe)}
                     chartTabs iconOnly workspaceFullGrid/>}

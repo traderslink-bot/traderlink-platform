@@ -1,12 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, GlobalStyles, IconButton, Menu, MenuItem, Portal, Stack, TextField, useMediaQuery, useTheme } from "@mui/material";
-import SearchRounded from "@mui/icons-material/SearchRounded";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Alert, Box, GlobalStyles, IconButton, Menu, MenuItem, Portal, Stack, useMediaQuery, useTheme } from "@mui/material";
 import FullscreenRounded from "@mui/icons-material/FullscreenRounded";
 import FullscreenExitRounded from "@mui/icons-material/FullscreenExitRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
 import MenuRounded from "@mui/icons-material/MenuRounded";
-import { chartSymbol, type ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
+import type { ChartTimeframe } from "@/src/modules/scanner/alpaca/candles";
 import type { ResolvedChartEvidence } from "@/src/modules/market-data/chart-evidence/contracts";
 import { chartCount, selectedChart, singleChart, type ChartMultiview } from "@/src/modules/scanner/alpaca/chart-multiview";
 import { MarketChart } from "./market-chart";
@@ -16,6 +15,11 @@ import { ChartPreferencesContext, useChartPreferences } from "./use-chart-prefer
 import { useChartTabs } from "./use-chart-tabs";
 import { ChartWorkspaceTabs, ChartWorkspaceViewRow } from "./chart-workspace-tabs";
 import { chartTabPrefix, chartTabDisplayLabel, chartWorkspaceViews, closeSelectedChartTab, openMultiTicker, type ChartTabs } from "@/src/modules/scanner/alpaca/chart-tabs";
+
+import { replaceWorkspaceChart } from "../screeners/workspace/workspace-chart-panels";
+
+const CompanyDetailsDrawer = lazy(() => import("../screeners/workspace/scanner-company-drawer")
+  .then(module => ({ default: module.ScannerCompanyDrawer })));
 
 const desktopToolbar = () => document.getElementById("dashboard-chart-toolbar");
 const NEW_MULTI_TICKER = ":new-multi-ticker";
@@ -128,44 +132,29 @@ function SavedMarketChartWorkspace() {
   const compact = narrow || landscape;
   const viewRow = <ChartWorkspaceViewRow inline={!compact || landscape} onStartMultiTicker={()=>multiTickerLauncher.current?.open(NEW_MULTI_TICKER)} book={book} onChange={selectView} disabled={!chartOpeningReady} multiTickerClosed={multiTickerClosed} onCloseMultiTicker={closeMultiTicker}/>;
   const [pageMenu, setPageMenu] = useState<HTMLElement | null>(null);
-  const [focus, setFocus] = useState(false), [search, setSearch] = useState(false);
-  const [draft, setDraft] = useState(""), [error, setError] = useState("");
-  const active = selectedChart(layout);
+  const [focus, setFocus] = useState(false);
+  const [companySymbol, setCompanySymbol] = useState<string | null>();
   useEffect(() => { if (!focus) return; const escape = (event: KeyboardEvent) => { if (event.key === "Escape") setFocus(false); }; window.addEventListener("keydown", escape); return () => window.removeEventListener("keydown", escape); }, [focus]);
-  const openSymbol = (event: FormEvent) => {
-    event.preventDefault();
-    try {
-      const symbol = chartSymbol(draft), existing = layout.groups.find(group => group.symbol === symbol);
-      const tickerView=tickerOnly?tickers.find(item=>item.id!==tab.id&&item.layout.groups[0].symbol===symbol):undefined;
-      if(tickerView)changeBook({...book,selectedTab:tickerView.id});
-      else if (existing) change({ ...layout, selectedPanel: existing.panels[0].id });
-      else if (active) {
-        const matchingPanel = active.group.panels.find(panel => panel.timeframe === defaultTimeframe);
-        change({
-          ...layout,
-          selectedPanel: matchingPanel?.id ?? active.panel.id,
-          groups: layout.groups.map(group => group.id === active.group.id ? {
-            ...group,
-            symbol,
-            panels: matchingPanel ? group.panels : group.panels.map(panel =>
-              panel.id === active.panel.id ? { ...panel, timeframe: defaultTimeframe } : panel),
-          } : group),
-        });
-      }
-      setDraft(""); setError(""); setSearch(false);
-    } catch { setError("Enter a valid stock symbol."); }
+  const replaceChartTicker = (panelId: string, symbol: string) => {
+    if (!chartOpeningReady) return "Wait for chart preferences to load.";
+    const panel = layout.groups.flatMap(group => group.panels).find(item => item.id === panelId);
+    if (!panel) return;
+    const existingTab = tickerOnly ? tickers.find(item => item.id !== tab.id && item.layout.groups[0].symbol === symbol) : undefined;
+    if (existingTab && chartCount(layout) === 1) {
+      selectView({ ...book, selectedTab: existingTab.id });
+      return;
+    }
+    if (layout.groups.some(group => group.symbol === symbol && group.panels.some(item =>
+        item.id !== panelId && item.timeframe === panel.timeframe))) return `${symbol} ${panel.timeframe} is already open.`;
+    const next = replaceWorkspaceChart(layout, panelId, symbol);
+    if (next !== layout) change(next);
   };
-  const symbolForm = <Box component="form" onSubmit={openSymbol} sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
-    <TextField label="Stock symbol" size="small" placeholder={active?.group.symbol} value={draft} onChange={event => { setDraft(event.target.value); setError(""); }} error={Boolean(error)} helperText={compact ? error || undefined : undefined} slotProps={{ htmlInput: { maxLength: 15, autoCapitalize: "characters", autoCorrect: "off", spellCheck: false } }} sx={{ width: 145 }} />
-    <Button type="submit" disabled={!chartOpeningReady || !draft.trim()} sx={{ textTransform: "none" }}>Open chart</Button>
-  </Box>;
   const navigation = () => { setFocus(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('header button[aria-label="Open navigation"]')?.click()); };
   const headerAction = (selector: string) => { setPageMenu(null); requestAnimationFrame(() => document.querySelector<HTMLElement>(selector)?.click()); };
   return <>
     <GlobalStyles styles={compact ? { 'body:has([data-main-chart-workspace]) header:has(button[aria-label="Open navigation"])': { visibility: "hidden" } } : {}} />
     {!compact && <Portal container={desktopToolbar}>
       <Stack data-chart-desktop-toolbar direction="row" sx={{ alignItems: "center", minWidth: 0, gap: 0.5 }}>
-        {symbolForm}
         {tabs}
         {multiview}
         <Box sx={{ display: "flex", flex: 1, minWidth: 0 }}>{viewRow}</Box>
@@ -177,7 +166,6 @@ function SavedMarketChartWorkspace() {
       flex: 1, minHeight: 0, pt: compact ? "env(safe-area-inset-top, 0px)" : 0, pb: compact ? "env(safe-area-inset-bottom, 0px)" : 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {compact ? <Stack data-chart-workspace-toolbar direction="row" sx={{ display: focus ? "none" : "flex", alignItems: "center", height: 44, flexShrink: 0, px: 0.5, borderBottom: 1, borderColor: "divider", "@media (max-width: 359px)": { "& > .MuiIconButton-root": { width: 36, minWidth: 36, flexShrink: 0 } } }}>
         <IconButton aria-label="Open dashboard navigation" onClick={navigation} sx={{ width: 44, height: 44 }}><MenuRounded /></IconButton>
-        <IconButton aria-label="Search chart symbol" onClick={()=>setSearch(true)} sx={{width:44,height:44,color:"warning.main"}}><SearchRounded/></IconButton>
         {tabs}
         {multiview}
         {landscape ? <Box sx={{ flex: 1, minWidth: 0, display: "flex" }}>{viewRow}</Box> : <Box sx={{ flex: 1 }} />}
@@ -186,10 +174,11 @@ function SavedMarketChartWorkspace() {
       </Stack> : null}
       {compact && !landscape && !focus && viewRow}
       {message ? <Box role="status" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>{message}</Box> : null}
-      {!compact && error && <Alert severity="warning">{error}</Alert>}
       {message && !["View saved", "Saving view…"].includes(message) ? <Alert severity="warning">{message}</Alert> : null}
       <ChartPreferencesContext.Provider value={chartPreferences}>
-        {ready && <ChartMultiviewCharts key={tab.id} viewPrefix={chartTabPrefix(tab.id)} layout={layout} onChange={change} ready={ready} onDefaultTimeframeChange={setPendingDefaultTimeframe} onOpenMultiview={() => multiTickerLauncher.current?.open(tab.id)} compactMobile workspaceRow plain={book.plain} />}
+        {ready && <ChartMultiviewCharts key={tab.id} viewPrefix={chartTabPrefix(tab.id)} layout={layout} onChange={change} ready={ready}
+          onChartSymbolChange={replaceChartTicker} onOpenCompanyDetails={setCompanySymbol}
+          onDefaultTimeframeChange={setPendingDefaultTimeframe} onOpenMultiview={() => multiTickerLauncher.current?.open(tab.id)} compactMobile workspaceRow plain={book.plain} />}
       </ChartPreferencesContext.Provider>
       {compact && focus ? <Stack direction="row" sx={{ position: "absolute", bottom: "max(4px,env(safe-area-inset-bottom,0px))", right: 4, zIndex: 3, bgcolor: "background.paper", border: 1, borderColor: "divider" }}>
         <IconButton aria-label="Open dashboard navigation" onClick={navigation} sx={{ width: 44, height: 44 }}><MenuRounded /></IconButton>
@@ -201,6 +190,12 @@ function SavedMarketChartWorkspace() {
       <MenuItem onClick={() => headerAction('header button[aria-label="Open Account menu"]')}>Account</MenuItem>
       <MenuItem onClick={() => headerAction('header a[aria-label="Open Help Center"]')}>Help</MenuItem>
     </Menu>
-    <Dialog open={search} onClose={() => setSearch(false)} maxWidth="xs" fullWidth aria-labelledby="chart-search-title"><DialogTitle id="chart-search-title">Find a chart</DialogTitle><DialogContent sx={{ pt: "12px !important", pb: 2 }}>{symbolForm}<Button onClick={() => setSearch(false)} sx={{ mt: 1 }}>Cancel</Button></DialogContent></Dialog>
+    {companySymbol !== undefined && <Suspense fallback={
+      <Box role="status" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>
+        Loading company details…
+      </Box>
+    }>
+      <CompanyDetailsDrawer symbol={companySymbol} onClose={() => setCompanySymbol(null)} />
+    </Suspense>}
   </>;
 }
