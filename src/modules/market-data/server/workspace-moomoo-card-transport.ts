@@ -122,7 +122,7 @@ function waitForWorkspaceCardSocket(input: CardTransportInput, token: string, so
         }
       }
       if (now - lastHeartbeatAt >= 25_000) {
-        send({ action: "ping" });
+        if (socket.readyState === WebSocket.OPEN) socket.ping();
         lastHeartbeatAt = now;
       }
       if (!refreshing && now - lastCredentialCheckAt >= 30_000) {
@@ -167,6 +167,11 @@ function waitForWorkspaceCardSocket(input: CardTransportInput, token: string, so
       void seed();
     }
     socket.on("open", () => send({ action: "auth", data: { auth_type: "oauth2", authorization: `Bearer ${token}` } }));
+    const observeHeartbeat = () => {
+      if (!settled && authenticated) lastMessageAt = Date.now();
+    };
+    socket.on("ping", observeHeartbeat);
+    socket.on("pong", observeHeartbeat);
     socket.on("error", finish);
     socket.on("close", finish);
     socket.on("message", raw => {

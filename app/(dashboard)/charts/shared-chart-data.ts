@@ -95,6 +95,7 @@ type CandleHistory = {
   basisDate: string;
   nextBefore: number | null;
   catchUpFrom?: number;
+  complete?: boolean;
   calendar?: unknown;
   calendars?: unknown[];
 };
@@ -120,7 +121,7 @@ export async function readChartCandleHistory(
   const expected = new URLSearchParams(url.split("?")[1]).get("adjustment") ?? "split";
   if ((history.adjustment ?? "split") !== expected) throw Error("Candles unavailable for the selected historical price setting.");
   signal.throwIfAborted();
-  if (key && history.basisDate === dailyScope?.basisDate && Array.isArray(history.bars)) {
+  if (key && history.complete !== false && history.basisDate === dailyScope?.basisDate && Array.isArray(history.bars)) {
     dailyHistory.delete(key);
     dailyHistory.set(key, { history, savedAt: Date.now() });
     while (dailyHistory.size > MAX_DAILY_HISTORY_WINDOWS) dailyHistory.delete(dailyHistory.keys().next().value!);

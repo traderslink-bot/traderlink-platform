@@ -70,6 +70,27 @@ describe("broker Workspace chart reads", () => {
     expect(seed).toMatchObject({ complete: true, basisDate: "2026-11-24", volume: 600 });
   });
 
+  it("returns the valid POM candles from a partial page and retries the affected range", async () => {
+    vi.useFakeTimers({ now });
+    const { connection } = fixture();
+    const load = vi.mocked(connection.request);
+    const older = candle("2026-11-23T15:15:00Z");
+    const invalid = { ...candle("2026-11-24T15:15:00Z"), high: 1.5 };
+    load.mockImplementationOnce(async () => ({ data: { kline_list: [older, invalid] } }));
+    const read = () => workspaceMoomooChartResponse(
+      req("&symbol=POM&history=1&adjustment=raw&before=" + Date.parse("2026-11-24T15:17:00Z")), "bars", access(connection),
+    );
+    const partial = await read();
+    expect(partial.status).toBe(200);
+    expect(await partial.json()).toMatchObject({ complete: false, bars: [{ close: 2.5 }] });
+    const recovered = await read();
+    expect(recovered.status).toBe(200);
+    const data = await recovered.json();
+    expect(data.complete).toBe(true);
+    expect(data.bars).toHaveLength(2);
+    expect(load.mock.calls.filter(([input]) => input.operation === "history")).toHaveLength(2);
+  });
+
   it("refuses a response if access changes while provider history is pending", async () => {
     const { connection, revoke } = fixture();
     vi.mocked(connection.request).mockImplementationOnce(async () => {
@@ -126,6 +147,7 @@ describe("broker Workspace chart reads", () => {
 class SocketFixture extends EventEmitter {
   readyState = 1;
   send = vi.fn();
+  ping = vi.fn();
   close = vi.fn();
   packet(value: unknown) { this.emit("message", Buffer.from(JSON.stringify(value))); }
 }
@@ -196,6 +218,29 @@ describe("broker Workspace candle socket", () => {
     expect(quoteAt("2026-11-26T15:00:00Z")).toEqual([]);
   });
 
+  it("uses WebSocket heartbeats and keeps a quiet chart open while pongs arrive", async () => {
+    vi.useFakeTimers({ now });
+    const socket = new SocketFixture();
+    const stream = new WorkspaceMoomooChartStream(() => socket as unknown as WebSocket);
+    const { connection } = fixture();
+    const notify = vi.fn();
+    const remove = stream.subscribe({ symbol: "SPY", daily: false, adjustment: "split", connection, notify });
+    try {
+      await Promise.resolve();
+      socket.emit("open");
+      socket.packet({ session_id: "fixture" });
+      for (let count = 0; count < 4; count++) {
+        await vi.advanceTimersByTimeAsync(25_000);
+        socket.emit("pong");
+      }
+      expect(socket.ping).toHaveBeenCalledTimes(4);
+      expect(socket.send).toHaveBeenCalledTimes(2);
+      expect(socket.close).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(100_000);
+      expect(socket.close).toHaveBeenCalledOnce();
+    } finally { remove(); }
+  });
+
   it("reconnects if the provider rejects the refreshed chart credential", async () => {
     vi.useFakeTimers({ now });
     const socket = new SocketFixture();
@@ -211,7 +256,7 @@ describe("broker Workspace candle socket", () => {
       socket.packet({ id: subscription.id, code: 0 });
       for (let tick = 0; tick < 12; tick++) {
         await vi.advanceTimersByTimeAsync(25_000);
-        socket.packet({ action: "pong" });
+        socket.emit("pong");
       }
       const refresh = socket.send.mock.calls.map(([value]) => JSON.parse(value)).find(value => value.action === "refresh");
       expect(refresh?.id).toMatch(/^refresh-/);

@@ -31,6 +31,16 @@ export function moomooSplits(payload: Record<string, unknown>): SplitEvent[] {
   });
 }
 
+function candleStart(row: Record<string, unknown>, daily: boolean, intradaySeconds: number): number {
+  const timestamp = row.time_key ?? row.time_ms;
+  if (!Number.isSafeInteger(timestamp) || Number(timestamp) <= 0) throw Error("invalid_moomoo_candle");
+  // Moomoo's native minute history is end-labelled. The shared chart uses starts.
+  const tradingDate = typeof row.date === "number" && /^\d{8}$/.test(String(row.date)) ? String(row.date).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3") : null;
+  const time = daily ? easternDayStart(tradingDate ? Date.parse(tradingDate + "T12:00:00Z") / 1000 : Number(timestamp) / 1000) : Number(timestamp) / 1000 - intradaySeconds;
+  if (!Number.isSafeInteger(time)) throw Error("invalid_moomoo_candle");
+  return time;
+}
+
 export function moomooChartBar(raw: unknown, daily: boolean, intradaySeconds = 60): Candle | null {
   if (!raw || typeof raw !== "object") throw Error("invalid_moomoo_candle");
   const row = raw as Record<string, unknown>;
@@ -42,11 +52,7 @@ export function moomooChartBar(raw: unknown, daily: boolean, intradaySeconds = 6
   if (values.some(value => typeof value !== "number" || !Number.isFinite(value))) throw Error("invalid_moomoo_candle");
   const [open, high, low, close, volume] = values as number[];
   if (low <= 0 || high < Math.max(open, close) || low > Math.min(open, close) || volume < 0) throw Error("invalid_moomoo_candle");
-  // Moomoo's native minute history is end-labelled. The shared chart uses starts.
-  const tradingDate = typeof row.date === "number" && /^\d{8}$/.test(String(row.date)) ? String(row.date).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3") : null;
-  const time = daily ? easternDayStart(tradingDate ? Date.parse(tradingDate + "T12:00:00Z") / 1000 : Number(timestamp) / 1000) : Number(timestamp) / 1000 - intradaySeconds;
-  if (!Number.isSafeInteger(time)) throw Error("invalid_moomoo_candle");
-  return { time, open, high, low, close, volume };
+  return { time: candleStart(row, daily, intradaySeconds), open, high, low, close, volume };
 }
 
 export function adjustMoomooBars(bars: readonly Candle[], splits: readonly SplitEvent[], basisDate: string): Candle[] {
@@ -87,13 +93,13 @@ export class MoomooChartHistory {
     return { symbol, anchor, basisDate, dates: [...new Set(dates.filter(date => date <= basisDate))].sort() };
   }
 
-  async history(input: HistoryInput) {
-    const key = JSON.stringify([easternClock(this.now()).date, input]), saved = this.cache.get(key);
+  async history(input: HistoryInput, allowPartial = false) {
+    const key = JSON.stringify([easternClock(this.now()).date, input, allowPartial]), saved = this.cache.get(key);
     if (saved && this.now() - saved.at < 30_000) return saved.value;
     const pending = this.pending.get(key);
     if (pending) return pending;
-    const load = this.loadHistory(input).then(value => {
-      this.cache.set(key, { at: this.now(), value });
+    const load = this.loadHistory(input, allowPartial).then(value => {
+      if (value.complete) this.cache.set(key, { at: this.now(), value });
       while (this.cache.size > 64) this.cache.delete(this.cache.keys().next().value!);
       return value;
     }).finally(() => this.pending.delete(key));
@@ -101,18 +107,26 @@ export class MoomooChartHistory {
     return load;
   }
 
-  private async loadHistory(input: HistoryInput) {
+  private async loadHistory(input: HistoryInput, allowPartial: boolean) {
     const { adjustment = "split", ...request } = input;
     const basisDate = easternClock(this.now()).date, daily = input.timeframe === "1Day", bars = new Map<number, Candle>();
     const cursors = new Set<string>();
+    const invalid = new Set<number>();
+    const interval = input.timeframe === "15Min" ? 900 : 60;
     let nextTime: number | undefined, pageToken: string | undefined, complete = false;
     for (let page = 0; page < 128; page++) {
       const payload = await this.loader({ operation: "history", ...request, ...(nextTime ? { nextTime } : {}), ...(pageToken ? { pageToken } : {}) });
       const data = payload.data as { kline_list?: unknown; next_time?: unknown };
       if (!data || !Array.isArray(data.kline_list) || data.kline_list.length > MAX_HISTORY_RESPONSE_ROWS) throw Error("invalid_moomoo_history");
       for (const raw of data.kline_list) {
-        const bar = moomooChartBar(raw, daily, input.timeframe === "15Min" ? 900 : 60);
-        if (bar && bar.time * 1000 >= input.start && bar.time * 1000 <= input.end) bars.set(bar.time, bar);
+        try {
+          const bar = moomooChartBar(raw, daily, interval);
+          if (bar && bar.time * 1000 >= input.start && bar.time * 1000 <= input.end) bars.set(bar.time, bar);
+        } catch (error) {
+          if (!allowPartial || !raw || typeof raw !== "object" || !(error instanceof Error) || error.message !== "invalid_moomoo_candle") throw error;
+          const time = candleStart(raw, daily, interval);
+          if (time * 1000 >= input.start && time * 1000 <= input.end) invalid.add(time);
+        }
       }
       const pagination = payload.pagination as { has_more?: unknown; next_page_token?: unknown } | undefined;
       const cursor = data.next_time;
@@ -129,10 +143,11 @@ export class MoomooChartHistory {
       cursors.add(signature);
     }
     if (!complete) throw Error("moomoo_history_incomplete");
+    const hasMissingCandle = [...invalid].some(time => !bars.has(time));
     const candles = [...bars.values()].sort((a, b) => a.time - b.time);
     const splits = adjustment === "split" ? moomooSplits(await this.corporateActions(input.symbol)) : [];
     if (easternClock(this.now()).date !== basisDate) throw Error("adjustment_basis_changed");
-    return { symbol: input.symbol, feed: "moomoo" as const, adjustment, basisDate, complete: true,
+    return { symbol: input.symbol, feed: "moomoo" as const, adjustment, basisDate, complete: !hasMissingCandle,
       nextPageToken: null, bars: adjustment === "raw" ? candles : adjustMoomooBars(candles, splits, basisDate) };
   }
 

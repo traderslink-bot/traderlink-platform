@@ -159,15 +159,15 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
   const readHistory = async (query: { symbol: string; timeframe: "1Day" | "1Min"; start: number; end: number; adjustment?: "raw" | "split" }) => {
     const adjustment = query.adjustment ?? "split";
     const cache = candleCache(owner, connection.generation);
-    const bars = await cache.read({ ...query, adjustment, basisDate }, signal, () => connection.current(true), async range => {
+    const { bars, complete } = await cache.read({ ...query, adjustment, basisDate }, signal, () => connection.current(true), async range => {
       // The provider requires a nonempty inclusive range. One uncovered
       // millisecond still represents at most one observed candle start.
-      const value = await history.history({ ...query, ...range, end: Math.max(range.end, range.start + 1), adjustment: "raw" });
-      if (!value.complete || value.basisDate !== basisDate || value.adjustment !== "raw") throw Error("chart_history_unavailable");
-      return value.bars.filter(bar => bar.time * 1000 >= range.start && bar.time * 1000 <= range.end);
+      const value = await history.history({ ...query, ...range, end: Math.max(range.end, range.start + 1), adjustment: "raw" }, resource === "bars");
+      if (value.basisDate !== basisDate || value.adjustment !== "raw") throw Error("chart_history_unavailable");
+      return { bars: value.bars.filter(bar => bar.time * 1000 >= range.start && bar.time * 1000 <= range.end), complete: value.complete };
     });
     const projected = adjustment === "raw" ? bars : adjustMoomooBars(bars, moomooSplits(await history.corporateActions(query.symbol)), basisDate);
-    return { symbol: query.symbol, bars: projected, adjustment, basisDate, feed: "moomoo", complete: true, nextPageToken: null };
+    return { symbol: query.symbol, bars: projected, adjustment, basisDate, feed: "moomoo", complete, nextPageToken: null };
   };
   try {
     let result: unknown;
@@ -183,7 +183,7 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
     } else if (input && window) {
       const { symbol, daily, adjustment } = input;
       const value = await readHistory({ symbol, timeframe: daily ? "1Day" : "1Min", ...window, adjustment });
-      if (!value.complete || value.basisDate !== basisDate || value.adjustment !== adjustment) throw Error("chart_history_unavailable");
+      if (value.basisDate !== basisDate || value.adjustment !== adjustment || (!value.complete && !value.bars.length)) throw Error("chart_history_unavailable");
       const page = chartHistoryPage(value.bars, window, daily);
       const calendar = daily ? { calendars: await history.forHistory(page.bars) } : { calendar: await history.forBars(page.bars) };
       result = browserChartHistory({ ...value, ...page, ...calendar, adjustment, ...(from !== null ? { catchUpFrom: window.start } : {}) });

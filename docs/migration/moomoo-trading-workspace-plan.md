@@ -124,3 +124,9 @@ Scanner owns match delivery. Trading Workspace owns the shared page and cards. C
 ### Live provider contract correction
 
 The production SPY chart rejected a successful Moomoo history page because it contained 1,000 rows despite a request for 370. The parser accepts the observed 1,000-row ceiling and retains range, candle, pagination and response-size validation. Moomoo also delivered valid live quote packets without an ID-correlated subscribe acknowledgment. A validated push for a ticker in the pending request now settles that request, so the card feed does not report a timeout after receiving live quotes. The history and card regressions reproduce both behaviors with synthetic provider data.
+
+### Connected Workspace socket keep-alive
+
+Both Connected Workspace transports send native WebSocket ping frames and count incoming ping and pong frames as socket activity after authentication. Quiet symbols can stay connected while the provider answers heartbeats. The timeout and exponential reconnect remain in place for a silent socket. The installed browser reconnected after 15.097 seconds. A loopback test of the production WebSocket showed that its bundled optional native masking function threw before the authentication frame left the app. Using the WebSocket library's JavaScript masking path allowed the same bundled client to authenticate in a repeat loopback test. The runtime image sets that option before modules load. A direct connection for This Guy delivered both Moomoo quotes and native candles.
+
+The POM probe found one malformed candle inside the requested window alongside 999 valid candles. Connected Workspace now renders the valid data and shows a partial-history notice. Neither the server range cache nor the browser snapshot cache treats the partial response as complete. Indicator history that requires complete input remains strict.

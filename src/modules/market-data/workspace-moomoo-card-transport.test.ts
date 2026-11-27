@@ -19,6 +19,7 @@ vi.mock("server-only", () => ({}));
 class FakeSocket extends EventEmitter {
   readyState = 1;
   messages: Array<Record<string, unknown>> = [];
+  ping = vi.fn();
   send(message: string) { this.messages.push(JSON.parse(message)); }
   close() { this.readyState = 3; this.emit("close"); }
   frame(value: unknown) { this.emit("message", Buffer.from(JSON.stringify(value))); }
@@ -66,6 +67,35 @@ it("authenticates before subscribing and a book denial leaves authorized quotes 
     await run;
   }
   expect(socket.readyState).toBe(3);
+});
+
+it("uses WebSocket heartbeats without needing a steady stream of quotes", async () => {
+  vi.useFakeTimers({ now: time });
+  const controller = new AbortController();
+  const socket = new FakeSocket();
+  const run = runWorkspaceWebSocketCards({
+    connection: () => ({ generation: "member", current: () => true,
+      accessToken: async () => "token", request: async () => ({}) }),
+    context, settings: DEFAULT_WORKSPACE_MARKET_SETTINGS, signal: controller.signal,
+    symbols: () => ["NANO"], accept: vi.fn(), status: vi.fn(),
+  }, () => socket as unknown as WebSocket);
+  try {
+    await vi.advanceTimersByTimeAsync(0);
+    socket.emit("open");
+    socket.frame({ session_id: "fixture" });
+    const quote = socket.messages.find(frame => frame.action === "subscribe" && frame.quote);
+    socket.frame({ id: quote?.id, code: 0 });
+    for (let count = 0; count < 4; count++) {
+      await vi.advanceTimersByTimeAsync(25_000);
+      socket.emit("pong");
+    }
+    expect(socket.ping).toHaveBeenCalledTimes(4);
+    expect(socket.messages.map(frame => frame.action)).toEqual(["auth", "subscribe", "subscribe"]);
+    expect(socket.readyState).toBe(1);
+  } finally {
+    controller.abort();
+    await run.catch(error => { if (error?.name !== "AbortError") throw error; });
+  }
 });
 
 it("seeds a quiet ticker and backfills once per socket when it reconnects", async () => {

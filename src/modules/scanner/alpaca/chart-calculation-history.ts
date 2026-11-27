@@ -1,7 +1,7 @@
 import {usesDailyCandles,type Candle,type ChartTimeframe} from './candles';
 import {ChartSessionCalendar} from './chart-calendar';
 
-type HistoryPage={bars:Candle[];adjustment?:"raw"|"split";basisDate:string;nextBefore:number|null;calendar?:unknown;calendars?:unknown[]};
+type HistoryPage={bars:Candle[];complete?:boolean;adjustment?:"raw"|"split";basisDate:string;nextBefore:number|null;calendar?:unknown;calendars?:unknown[]};
 export type CalculationHistory={bars:Candle[];basisDate:string;calendar:ChartSessionCalendar};
 type State={bars:Map<number,Candle>;live:Map<number,Candle>;loaded:boolean;basisDate:string;through?:number;nextBefore:number|null;calendar:ChartSessionCalendar;abort:AbortController;pending?:Promise<void>};
 export const CALCULATION_HISTORY_LIMIT=150000;
@@ -67,7 +67,7 @@ export class ChartCalculationHistory{
    if(this.signal.aborted)throw Error('calculation_history_aborted');
    if(this.states.get(daily)!==state)throw Error('calculation_history_invalidated');
    if(state.basisDate!==this.basis()||page.basisDate!==state.basisDate||(page.adjustment??"split")!==this.adjustment)throw Error('calculation_history_basis_changed');
-   if(!Array.isArray(page.bars)||page.bars.length>CALCULATION_HISTORY_LIMIT||!page.bars.every(bar=>validBar(bar)&&(state.through===undefined||bar.time<=state.through))||page.nextBefore!==null&&(!Number.isFinite(page.nextBefore)||page.nextBefore<=0))throw Error('invalid_calculation_history');
+   if(page.complete===false||!Array.isArray(page.bars)||page.bars.length>CALCULATION_HISTORY_LIMIT||!page.bars.every(bar=>validBar(bar)&&(state.through===undefined||bar.time<=state.through))||page.nextBefore!==null&&(!Number.isFinite(page.nextBefore)||page.nextBefore<=0))throw Error('invalid_calculation_history');
    if(!initial&&page.nextBefore!==null&&page.nextBefore>=state.nextBefore!)throw Error('calculation_history_cursor_stalled');
    const combined=new Map(state.bars);
    for(const bar of page.bars)if(!state.live.has(bar.time))combined.set(bar.time,bar);

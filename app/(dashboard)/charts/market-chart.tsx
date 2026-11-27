@@ -180,6 +180,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const indicatorLegend = useRef<HTMLDivElement>(null);
   const [selectedSplits, setSelectedSplits] = useState<readonly ChartSplit[]>([]);
   const [historyMessage,setHistoryMessage] = useState("");
+  const [partialHistory, setPartialHistory] = useState(false);
   const crosshairDetails = useRef<HTMLDivElement>(null);
   const [activeTimeframe,setActiveTimeframe]=useState<ChartTimeframe|null>(null);
   const timeframe=controlledTimeframe??activeTimeframe??preferences.timeframe;
@@ -263,7 +264,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       : displayTime.format(time * 1000) + zoneSuffix;
     let disposed = false, auxiliarySource: ChartStreamHandle | undefined, source: ChartStreamHandle | undefined, removeChart: (() => void) | undefined;
     const abort = new AbortController();
-    setStatus("Loading candles…"); setError(null); setHistoryMessage(""); setSessionMessage(""); setSelectedSplits([]);
+    setStatus("Loading candles…"); setError(null); setHistoryMessage(""); setPartialHistory(false); setSessionMessage(""); setSelectedSplits([]);
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
     const useRecentHistory = !activeTradeContext && timeframe !== "4h" && !daily;
@@ -281,12 +282,19 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     let contextThrough = tradeThrough === null ? null : Math.min(latestHistoryBar, tradeThrough);
     const overnightHistoryRequests = new Set<string>();
     let readOvernightHistory = (query: string) => { overnightHistoryRequests.add(query); };
+    let historyHasGaps = false;
     const readHistory = (query: URLSearchParams, reuseDaily = true) => {
       if (unadjusted) query.set("adjustment", "raw");
       const history = readChartCandleHistory(
         `${endpoints.bars}?${query}&${providerQuery}`, abort.signal,
         daily && ownerKey ? { owner: `${ownerKey}:${providerKey}`, basisDate: easternClock(Date.now()).date, reuse: reuseDaily } : undefined,
-      );
+      ).then(page => {
+        if (!disposed && page.complete === false) {
+          historyHasGaps = true;
+          setPartialHistory(true);
+        }
+        return page;
+      });
       if (showOvernight) void history.then(() => {
         if (disposed) return;
         const from = Number(query.get("catchUpFrom"));
@@ -981,7 +989,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             data = { ...await requestHistory() };
             if (disposed) return;
           }
-          if(!delta&&(!loaded||catchingUp)&&savedView&&data.bars.length&&savedView.anchor.time<candleBucket(data.bars[0].time,timeframe,regularOnly)){
+          if(data.complete!==false&&!delta&&(!loaded||catchingUp)&&savedView&&data.bars.length&&savedView.anchor.time<candleBucket(data.bars[0].time,timeframe,regularOnly)){
             const history=await calculationHistory.read(timeframe,savedView.anchor.time);
             if(disposed)return;
             recent = false;
@@ -1371,7 +1379,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         splitMarkers?.detach();
         if (evidenceZones) chart.panes()[0].detachPrimitive(evidenceZones);
         if (evidenceRender.current === renderEvidence) evidenceRender.current = undefined;
- document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);clearTimeout(vwapRetryTimer);if(cacheKey && loaded && !catchingUp && indicatorsReady && !archivePages.length && bars.size && bars.size+overnightBars.size<=20_000){
+ document.removeEventListener("visibilitychange",recoverHistory);window.removeEventListener("online",recoverHistory);window.removeEventListener("pageshow",recoverHistory);saveView();flushVwap();window.removeEventListener("pagehide",flushVwap);clearTimeout(viewSaveTimer);window.removeEventListener("pagehide",saveView);element!.removeEventListener("pointerup",scheduleView);clearInterval(gapTimer);clearInterval(confirmationTimer);clearTimeout(calculationViewTimer);clearTimeout(warmupTimer);clearTimeout(vwapRetryTimer);if(cacheKey && !historyHasGaps && loaded && !catchingUp && indicatorsReady && !archivePages.length && bars.size && bars.size+overnightBars.size<=20_000){
         recentChartCandles.delete(cacheKey);
         recentChartCandles.set(cacheKey,{basisDate:historyBasisDate,bars:[...bars.values()],
           ...(overnightBars.size && overnightBasis === historyBasisDate ? {overnightBars:[...overnightBars.values()]} : {}),
@@ -1494,6 +1502,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     {!movementKind&&!replayActive&&drawingSaveError&&<Typography role="alert" sx={{px:1,fontSize:11}}>{drawingSaveError}</Typography>}
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
     {activeTradeContext && journal.status && !journal.current?.open && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>{journal.status}</Typography>}
+    {!movementKind && !replayActive && partialHistory && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>Some candles could not be loaded from the data provider.</Typography>}
     {!movementKind&&!replayActive&&historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
     {!movementKind && unadjusted && <Typography variant="caption" sx={{ px: 0.5 }}>Unadjusted prices</Typography>}
     {evidence && preferences.priceAdjustment === "raw" && <Typography variant="caption" sx={{ px: 0.5 }}>

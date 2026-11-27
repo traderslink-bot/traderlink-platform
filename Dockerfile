@@ -29,6 +29,8 @@ RUN node scripts/platform/build-combined-210-release-20261119.cjs
 FROM base AS runtime
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
+# Standalone webpack optional native masking has no callable bufferutil mask.
+ENV WS_NO_BUFFER_UTIL=1
 ENV PORT=3000
 
 RUN apt-get update && apt-get install --yes --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*

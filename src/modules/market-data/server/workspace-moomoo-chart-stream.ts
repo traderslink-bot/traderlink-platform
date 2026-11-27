@@ -152,6 +152,11 @@ export class WorkspaceMoomooChartStream {
           if (message) this.receive(message);
         } catch { socket.close(); }
       });
+      const observeHeartbeat = () => {
+        if (socket === this.socket && this.authenticated) this.lastPacket = Date.now();
+      };
+      socket.on("ping", observeHeartbeat);
+      socket.on("pong", observeHeartbeat);
       socket.on("error", () => socket.close());
       socket.on("close", () => { if (socket === this.socket) this.reconnect(); });
     } catch { if (epoch === this.epoch) this.reconnect(); }
@@ -177,7 +182,7 @@ export class WorkspaceMoomooChartStream {
       this.heartbeat = setInterval(() => {
         if (!this.currentConnection()) this.clearSocket();
         else if (Date.now() - this.lastPacket > 90_000) this.socket?.close();
-        else this.send({ action: "ping" });
+        else if (this.socket?.readyState === WebSocket.OPEN) this.socket.ping();
       }, 25_000);
       this.refresh = setInterval(() => void this.refreshToken(), 300_000);
       return;

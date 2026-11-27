@@ -3,7 +3,8 @@ import "server-only";
 import { easternDayStart, type Candle } from "@/src/modules/scanner/alpaca/candles";
 
 type Range = { start: number; end: number };
-type Coverage = Range & { bars: Candle[]; expires: number };
+type CandleRead = { bars: Candle[]; complete: boolean };
+type Coverage = Range & CandleRead & { expires: number };
 type Query = Range & {
   symbol: string;
   timeframe: "1Min" | "1Day";
@@ -48,7 +49,7 @@ export class WorkspaceMoomooCandleCache {
   private readonly entries = new Map<string, Entry>();
 
   async read(query: Query, signal: AbortSignal, current: () => boolean,
-    load: (range: Range) => Promise<Candle[]>, now: () => number = Date.now): Promise<Candle[]> {
+    load: (range: Range) => Promise<CandleRead>, now: () => number = Date.now): Promise<CandleRead> {
     const key = JSON.stringify([query.symbol, query.timeframe, query.adjustment, query.basisDate]);
     const entry: Entry = this.entries.get(key) ?? { pending: Promise.resolve(), coverage: [] };
     this.entries.delete(key);
@@ -81,10 +82,10 @@ export class WorkspaceMoomooCandleCache {
       const fetched: Coverage[] = [];
       for (const range of gaps) {
         signal.throwIfAborted();
-        const bars = await load(range);
+        const data = await load(range);
         signal.throwIfAborted();
         if (!current()) throw Error("broker_connection_changed");
-        fetched.push({ ...range, bars, expires: now() + WINDOW_TTL });
+        fetched.push({ ...range, ...data, expires: now() + WINDOW_TTL });
       }
 
       const merged = new Map<number, Candle>();
@@ -95,7 +96,7 @@ export class WorkspaceMoomooCandleCache {
         }
       }
       for (const window of fetched) {
-        if (window.start > settled) continue;
+        if (!window.complete || window.start > settled) continue;
         const end = Math.min(window.end, settled);
         const bars = window.bars.filter(bar => bar.time * 1000 <= end);
         if (bars.length <= MAX_BARS) entry.coverage.push({ ...window, end, bars });
@@ -111,7 +112,7 @@ export class WorkspaceMoomooCandleCache {
         retained -= item.coverage.reduce((count, window) => count + window.bars.length, 0);
         this.entries.delete(domain);
       }
-      return [...merged.values()].sort((a, b) => a.time - b.time);
+      return { bars: [...merged.values()].sort((a, b) => a.time - b.time), complete: fetched.every(window => window.complete) };
     } finally { finish(); }
   }
 }
