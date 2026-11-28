@@ -7,7 +7,9 @@ import { readInlineCompanyFacts, verifiedContinuingRevenue, filingEstablishesEar
 import { extractReportedCompanyFacts, selectReportedStatements } from "./company-reported-facts.mjs";
 
 const minute = 60_000;
-const day = 24 * 60 * minute;
+const hour = 60 * minute;
+const day = 24 * hour;
+const backgroundJobSpacing = 15_000;
 const listingDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", dateStyle: "short" });
 const localDate = at => listingDate.format(new Date(at));
 const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
@@ -56,6 +58,19 @@ export function scheduleCompanyRefreshes(store, calendar, now) {
   }
 }
 
+export function scheduleBackgroundCompanyRefreshes(store, calendar, now) {
+  const week = Math.floor((now - 4 * day) / (7 * day));
+  const weekStart = week * 7 * day + 4 * day;
+  const sources = calendar.has(localDate(now)) ? ["profile", "metrics"] : ["profile"];
+  for (const { symbol, identity } of store.listBackground()) {
+    const subject = `${symbol}/${identity}`;
+    for (const source of sources) {
+      const due = weekStart + jitter(`${source}/${subject}`, 7 * day);
+      if (due <= now) store.enqueue(subject, source, `week/${week}`, due, -2);
+    }
+  }
+}
+
 export async function readCompanyRoster(path) {
   const raw = await readFile(path, "utf8");
   if (Buffer.byteLength(raw) > 2_000_000) throw new Error("Company roster too large");
@@ -71,13 +86,15 @@ export async function readCompanyRoster(path) {
  * One worker consumes the persistent queue. Fetches share the gateway's
  * upstream transport and cooldown. An unconfigured gateway has no worker.
  */
-export function startCompanyRefreshWorker({ store, loadRoster, provider, secText, now = Date.now, onError = () => {} }) {
+export function startCompanyRefreshWorker({
+  store, loadRoster, provider, secText, loadBackgroundRoster, canRunBackground = () => true, now = Date.now, onError = () => {},
+}) {
   let stopped = false;
   let plannedAt = -Infinity;
   let feedCheckedAt = -Infinity;
 
-  async function issuerDirectory() {
-    const directory = await provider("directory", "");
+  async function issuerDirectory(background = false) {
+    const directory = await provider("directory", "", false, background);
     if (!isRecord(directory)) throw new Error("SEC directory unavailable");
     return new Map(Object.values(directory)
       .filter(row => typeof row?.ticker === "string" && Number.isSafeInteger(row.cik_str))
@@ -109,8 +126,10 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
 
   function recordFilings(events, clock) {
     const tracked = new Set(store.listTracked().map(row => row.cik));
+    const background = loadBackgroundRoster ? new Set(store.listBackground().map(row => row.cik)) : new Set();
     for (const { cik, accession } of events) {
       if (tracked.has(cik)) store.enqueue(cik, "sec", filingKey + accession, clock, 1);
+      else if (background.has(cik)) store.enqueue(cik, "sec", filingKey + accession, clock, -1);
     }
   }
 
@@ -152,8 +171,9 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
     }
   }
 
-  async function refreshSec(job) {
+  async function refreshSec(job, background) {
     const checked = () => now();
+    const filingText = url => secText(url, false, background);
     const cik = job.subject;
     const accession = job.workKey.startsWith(filingKey) ? job.workKey.slice(filingKey.length) : undefined;
     const prior = store.readSource(cik, "sec", true);
@@ -161,7 +181,7 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
     if (known && !announcementForm.test(known.form) &&
         (!periodicCompanyFiling.test(known.form) || (prior.detail?.observations.some(fact => fact.accession === accession) &&
           !prior.health?.pendingFilings?.some(filing => filing.accession === accession)))) return store.settle(job, checked());
-    const submissions = await provider("submissions", `CIK${cik}.json`, Boolean(accession));
+    const submissions = await provider("submissions", `CIK${cik}.json`, Boolean(accession), background);
     if (!Array.isArray(submissions?.filings?.recent?.filingDate)) throw new Error("Invalid SEC submissions");
     const today = new Date(checked()).toISOString().slice(0, 10);
     const visibleThrough = checked();
@@ -176,7 +196,7 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
     const documents = new Map((prior.detail?.documents ?? []).map(item => [item.accession, item]));
     const releases = new Map((prior.value?.earnings ?? []).map(item => [item.accession, item]));
     if (refreshFacts) {
-      const response = await provider("facts", `CIK${cik}.json`, Boolean(target));
+      const response = await provider("facts", `CIK${cik}.json`, Boolean(target), background);
       if (!isRecord(response?.facts)) throw new Error("Invalid SEC facts");
       const newlyReported = extractReportedCompanyFacts(response.facts, filings, today).map(fact => ({
         ...fact, href: fact.href ?? `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${fact.accession.replaceAll("-", "")}/${fact.accession}-index.htm`,
@@ -194,7 +214,7 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
       const provisional = selectReportedStatements(observations, filings, today, undefined);
       const focus = target ?? provisional.annual?.filing;
       if (focus?.hasStructuredFacts && !documents.has(focus.accession)) {
-        const inline = await secText(focus.href).then(html => readInlineCompanyFacts(html, focus, cik)).catch(() => null);
+        const inline = await filingText(focus.href).then(html => readInlineCompanyFacts(html, focus, cik)).catch(() => null);
         if (inline) {
           documents.set(focus.accession, { accession: focus.accession, facts: inline });
           observations.push(...verifiedContinuingRevenue(inline, observations));
@@ -208,9 +228,9 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
       !prior.value ? filings.filter(filing => filing.earningsAnnouncement && filing.date >= new Date(visibleThrough - 90 * day).toISOString().slice(0, 10)).slice(0, 3) : [];
     for (const filing of candidates) {
       if (releases.has(filing.accession)) continue;
-      const html = await secText(filing.href).catch(() => null);
+      const html = await filingText(filing.href).catch(() => null);
       const exhibit = html && earningsExhibit(html, filing);
-      const exhibitBody = exhibit ? await secText(exhibit).catch(() => null) : null;
+      const exhibitBody = exhibit ? await filingText(exhibit).catch(() => null) : null;
       if (!filing.earningsAnnouncement &&
           ![html, exhibitBody].some(body => body && filingEstablishesEarningsRelease(body, filing))) continue;
       const figures = readInlineCompanyFacts(exhibitBody ?? html ?? "", {
@@ -226,7 +246,7 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
     let completeArchive = true;
     for (const file of submissions.filings.files ?? []) {
       if (file.filingTo < since || file.filingFrom > today || !/^CIK\d{10}-submissions-\d+\.json$/.test(file.name)) continue;
-      const shard = await provider("submissions", file.name).catch(() => null);
+      const shard = await provider("submissions", file.name, false, background).catch(() => null);
       if (Array.isArray(shard?.filingDate)) displayFilings.push(...companyFilingRows(cik, shard, since, today));
       else completeArchive = false;
     }
@@ -239,7 +259,7 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
       for (const statement of [statements.annual, statements.interim]) {
         const filing = statement?.filing;
         if (filing?.hasStructuredFacts && !statement.facts.some(fact => fact.accession === filing.accession)) {
-          store.enqueue(cik, "sec", filingKey + filing.accession, checked(), 1);
+          store.enqueue(cik, "sec", filingKey + filing.accession, checked(), background ? -1 : 1);
         }
       }
     }
@@ -268,13 +288,13 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
     }, "available", { observations, documents: [...documents.values()] }, pendingStatement?.accession);
   }
 
-  async function refreshFinnhub(job) {
+  async function refreshFinnhub(job, background) {
     const clock = now();
     const previous = store.readSource(job.subject, job.source);
     if (job.source === "metrics" && previous.lastSuccessAt != null &&
         localDate(previous.lastSuccessAt) === localDate(clock)) return store.settle(job, clock);
     const symbol = job.subject.split("/")[0];
-    const payload = await provider(job.source, symbol, true);
+    const payload = await provider(job.source, symbol, true, background);
     if (!isRecord(payload) || Object.hasOwn(payload, "error")) throw new Error("Invalid Finnhub result");
     if (job.source === "profile") {
       if (Object.keys(payload).length === 0) return store.complete(job, now(), null, "unavailable");
@@ -311,25 +331,58 @@ export function startCompanyRefreshWorker({ store, loadRoster, provider, secText
     }
   }
 
-  async function run(provider) {
+  async function planBackground() {
+    let lastPlan = -Infinity;
+    let retryRosterAt = 0;
     while (!stopped) {
-      const job = store.claim(now(), 2 * minute, provider);
+      const clock = now();
+      if (clock - lastPlan >= hour) {
+        lastPlan = clock;
+        try {
+          const collection = store.readWorkerState("backgroundRosterCollectedAt");
+          if (clock >= retryRosterAt && (collection === null || clock - collection >= day)) {
+            retryRosterAt = clock + hour;
+            const symbols = await loadBackgroundRoster();
+            const issuers = await issuerDirectory(true);
+            store.reconcileBackgroundRoster(symbols.map(symbol => ({ symbol, cik: issuers.get(symbol) })), now());
+            store.writeWorkerState("backgroundRosterCollectedAt", now());
+          }
+        } catch { onError("background_roster"); }
+        try {
+          const tradingDates = store.readWorkerState("publishedRoster")?.tradingDates ?? [];
+          scheduleBackgroundCompanyRefreshes(store, new Set(tradingDates), now());
+        }
+        catch { onError("background_schedule"); }
+      }
+      await delay(250);
+    }
+  }
+
+  async function run(lane, background = false) {
+    let readyAt = 0;
+    while (!stopped) {
+      const clock = now();
+      const allowed = !background || (clock >= readyAt && canRunBackground(lane));
+      const job = allowed ? store.claim(clock, 2 * minute, lane, background) : undefined;
       if (!job) {
-        await delay(250);
+        await delay(background ? 2000 : 250);
         continue;
       }
       try {
-        if (job.source === "sec") await refreshSec(job);
-        else await refreshFinnhub(job);
+        if (job.source === "sec") await refreshSec(job, background);
+        else await refreshFinnhub(job, background);
       } catch (error) {
         const clock = now();
         const wait = Math.min(30 * minute, 20_000 * 2 ** Math.min(job.attempts - 1, 8));
         store.defer(job, clock, Math.max(clock + wait + jitter(job.token, 5000), error.retryAt ?? 0));
       }
+      if (background) readyAt = now() + backgroundJobSpacing;
     }
   }
 
-  const done = Promise.all([plan(), run("sec"), run("finnhub")]);
+  const tasks = [plan(), run("sec"), run("finnhub")];
+  if (loadBackgroundRoster) tasks.push(planBackground(), run("sec", true), run("finnhub", true));
+  const done = Promise.all(tasks);
   return async function stop() {
     stopped = true;
     await done;

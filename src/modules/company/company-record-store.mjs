@@ -29,6 +29,8 @@ export function openCompanyRecordStore(path) {
       symbol TEXT NOT NULL, revision INTEGER NOT NULL, identity INTEGER NOT NULL, cik TEXT,
       active INTEGER NOT NULL, PRIMARY KEY(symbol, revision)
     ) STRICT;
+    CREATE INDEX IF NOT EXISTS company_listings_issuer_active
+      ON company_listings(cik, active, symbol, revision);
     CREATE TABLE IF NOT EXISTS company_jobs (
       subject TEXT NOT NULL, source TEXT NOT NULL, work_key TEXT NOT NULL,
       due_at INTEGER NOT NULL, priority INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
@@ -37,6 +39,8 @@ export function openCompanyRecordStore(path) {
     ) STRICT;
     CREATE INDEX IF NOT EXISTS company_jobs_due
       ON company_jobs(due_at, priority) WHERE completed_at IS NULL;
+    CREATE INDEX IF NOT EXISTS company_jobs_lane_due
+      ON company_jobs((priority >= 0), due_at, priority) WHERE completed_at IS NULL;
     CREATE TABLE IF NOT EXISTS company_source_versions (
       subject TEXT NOT NULL, source TEXT NOT NULL, revision INTEGER NOT NULL,
       checked_at INTEGER NOT NULL, value_revision INTEGER, state TEXT NOT NULL,
@@ -68,33 +72,49 @@ export function openCompanyRecordStore(path) {
   const latestListing = db.prepare("SELECT * FROM company_listings WHERE symbol = ? AND revision <= ? ORDER BY revision DESC LIMIT 1");
   const addListing = db.prepare("INSERT INTO company_listings VALUES (?, ?, ?, ?, ?)");
   db.exec(`
-    CREATE VIEW IF NOT EXISTS company_active_listings AS
-      SELECT symbol, cik, identity FROM company_listings AS current
-      WHERE active = 1 AND revision = (SELECT max(revision) FROM company_listings WHERE symbol = current.symbol);
+    CREATE VIEW IF NOT EXISTS company_refresh_listings AS
+      SELECT symbol, cik, identity, active FROM company_listings AS current
+      WHERE active IN (1, 2) AND revision = (SELECT max(revision) FROM company_listings WHERE symbol = current.symbol);
   `);
-  const allActive = db.prepare("SELECT * FROM company_active_listings ORDER BY symbol");
+  const allActive = db.prepare("SELECT symbol, cik, identity FROM company_refresh_listings WHERE active = 1 ORDER BY symbol");
+  const allBackground = db.prepare("SELECT symbol, cik, identity FROM company_refresh_listings WHERE active = 2 ORDER BY symbol");
+  const allRefreshing = db.prepare("SELECT * FROM company_refresh_listings ORDER BY symbol");
   const enqueueJob = db.prepare(`
     INSERT INTO company_jobs (subject, source, work_key, due_at, priority)
-    VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING
+    VALUES (?, ?, ?, ?, ?) ON CONFLICT DO UPDATE SET priority = max(priority, excluded.priority)
+    WHERE completed_at IS NULL AND priority < excluded.priority
   `);
+  const promoteJobs = db.prepare("UPDATE company_jobs SET priority = 1 WHERE subject = ? AND completed_at IS NULL AND priority < 0");
+  const demoteJobs = db.prepare("UPDATE company_jobs SET priority = -1 WHERE subject = ? AND completed_at IS NULL AND priority >= 0");
+  const backgroundIssuer = db.prepare("SELECT 1 FROM company_refresh_listings WHERE active = 2 AND cik = ? LIMIT 1");
+  const scannerIssuer = db.prepare("SELECT 1 FROM company_refresh_listings WHERE active = 1 AND cik = ? LIMIT 1");
+  const nextJobQuery = `
+    SELECT queued.subject, queued.source, queued.work_key FROM company_jobs AS queued
+    WHERE queued.completed_at IS NULL AND queued.due_at <= $clock
+      AND ($provider IS NULL OR (queued.source = 'sec') = ($provider = 'sec'))
+      AND (queued.lease_until IS NULL OR queued.lease_until <= $clock)
+      AND (queued.priority >= 0) = ($tier = 1)
+      AND (
+        (queued.source = 'sec' AND EXISTS (
+          SELECT 1 FROM company_refresh_listings AS listing
+          WHERE listing.active = $tier AND listing.cik = queued.subject
+        )) OR (queued.source <> 'sec' AND EXISTS (
+          SELECT 1 FROM company_refresh_listings AS listing
+          WHERE listing.active = $tier AND listing.symbol = substr(queued.subject, 1, instr(queued.subject, '/') - 1)
+            AND queued.subject = listing.symbol || '/' || listing.identity
+        ))
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM company_jobs AS running
+        WHERE running.subject = queued.subject AND running.source = queued.source
+          AND running.completed_at IS NULL AND running.lease_until > $clock
+      )
+    ORDER BY queued.priority DESC, queued.due_at, queued.subject, queued.work_key LIMIT 1
+  `;
+  const nextJob = db.prepare(nextJobQuery);
   const claimJob = db.prepare(`
-    UPDATE company_jobs SET lease_token = ?, lease_until = ?, attempts = attempts + 1
-    WHERE (subject, source, work_key) = (
-      SELECT queued.subject, queued.source, queued.work_key FROM company_jobs AS queued
-      WHERE queued.completed_at IS NULL AND queued.due_at <= ?
-        AND (? IS NULL OR (queued.source = 'sec') = (? = 'sec'))
-        AND (queued.lease_until IS NULL OR queued.lease_until <= ?)
-        AND EXISTS (
-          SELECT 1 FROM company_active_listings AS listing
-          WHERE queued.subject = CASE WHEN queued.source = 'sec' THEN listing.cik ELSE listing.symbol || '/' || listing.identity END
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM company_jobs AS running
-          WHERE running.subject = queued.subject AND running.source = queued.source
-            AND running.completed_at IS NULL AND running.lease_until > ?
-        )
-      ORDER BY queued.priority DESC, queued.due_at, queued.subject, queued.work_key LIMIT 1
-    )
+    UPDATE company_jobs SET lease_token = $token, lease_until = $until, attempts = attempts + 1
+    WHERE (subject, source, work_key) = (${nextJobQuery})
     RETURNING subject, source, work_key AS workKey, lease_token AS token, attempts
   `);
   const ownedJob = db.prepare(`
@@ -202,14 +222,17 @@ export function openCompanyRecordStore(path) {
           if (!intended.has(symbol)) {
             const previous = latestListing.get(symbol, revision);
             addListing.run(symbol, revision, previous.identity, cik, 0);
+            if (cik && backgroundIssuer.get(cik) && !scannerIssuer.get(cik)) demoteJobs.run(cik);
           }
         }
         for (const { symbol, cik } of sorted) {
           const previous = latestListing.get(symbol, revision);
           const issuer = cik ?? previous?.cik ?? null;
-          if (previous?.active && previous.cik === issuer) continue;
+          if (previous?.active === 1 && previous.cik === issuer) continue;
           const identity = previous && (!previous.cik || previous.cik === issuer) ? previous.identity : revision;
           addListing.run(symbol, revision, identity, issuer, 1);
+          promoteJobs.run(`${symbol}/${identity}`);
+          if (issuer) promoteJobs.run(issuer);
           for (const source of ["profile", "metrics"]) {
             enqueueJob.run(`${symbol}/${identity}`, source, `admission/${revision}`, now, admissionPriority);
           }
@@ -220,22 +243,60 @@ export function openCompanyRecordStore(path) {
         return true;
       });
     },
+    reconcileBackgroundRoster(rows, now) {
+      if (!Array.isArray(rows) || rows.length === 0 || rows.some(row => typeof row?.symbol !== "string" ||
+          !symbolFormat.test(row.symbol) || (row.cik != null && !cikFormat.test(row.cik)))) {
+        throw new Error("Invalid background company roster");
+      }
+      const intended = new Map(rows.map(({ symbol, cik }) => [symbol, cik ?? null]));
+      if (intended.size !== rows.length) throw new Error("Duplicate background company symbol");
+      return transaction(() => {
+        const updates = [];
+        for (const { symbol, cik, identity } of allBackground.all()) {
+          if (!intended.has(symbol)) updates.push({ symbol, cik, identity, active: 0 });
+        }
+        for (const [symbol, cik] of intended) {
+          const previous = latestListing.get(symbol, Number.MAX_SAFE_INTEGER);
+          if (previous?.active === 1) continue;
+          const issuer = cik ?? previous?.cik ?? null;
+          if (previous?.active === 2 && previous.cik === issuer) continue;
+          const identity = previous && (!previous.cik || previous.cik === issuer) ? previous.identity : null;
+          updates.push({ symbol, cik: issuer, identity, active: 2 });
+        }
+        if (!updates.length) return;
+        const revision = Number(addRevision.run(now).lastInsertRowid);
+        for (const { symbol, cik, identity, active } of updates) {
+          addListing.run(symbol, revision, identity ?? revision, cik, active);
+          if (active !== 2) continue;
+          demoteJobs.run(`${symbol}/${identity ?? revision}`);
+          if (cik && !scannerIssuer.get(cik)) {
+            demoteJobs.run(cik);
+            enqueueJob.run(cik, "sec", `bootstrap/${cik}`, now, -2);
+          }
+        }
+      });
+    },
+    listBackground() {
+      return allBackground.all();
+    },
     listTracked() {
       return allActive.all();
     },
     reconcileIssuers(issuerBySymbol, now) {
       return transaction(() => {
-        const changes = allActive.all().flatMap(listing => {
+        const changes = allRefreshing.all().flatMap(listing => {
           const cik = issuerBySymbol.get(listing.symbol);
           return cik && cikFormat.test(cik) && cik !== listing.cik ? [{ ...listing, nextCik: cik }] : [];
         });
         if (!changes.length) return false;
         const revision = Number(addRevision.run(now).lastInsertRowid);
-        for (const { symbol, cik, nextCik, identity } of changes) {
+        for (const { symbol, cik, nextCik, identity, active } of changes) {
           const nextIdentity = cik ? revision : identity;
-          addListing.run(symbol, revision, nextIdentity, nextCik, 1);
-          enqueueJob.run(nextCik, "sec", `bootstrap/${nextCik}`, now, 3);
-          if (cik) for (const source of ["profile", "metrics"]) {
+          addListing.run(symbol, revision, nextIdentity, nextCik, active);
+          if (cik && backgroundIssuer.get(cik) && !scannerIssuer.get(cik)) demoteJobs.run(cik);
+          if (active === 1) promoteJobs.run(nextCik);
+          enqueueJob.run(nextCik, "sec", `bootstrap/${nextCik}`, now, active === 1 ? 3 : -2);
+          if (cik && active === 1) for (const source of ["profile", "metrics"]) {
             enqueueJob.run(`${symbol}/${nextIdentity}`, source, `admission/${revision}`, now, 3);
           }
         }
@@ -247,8 +308,11 @@ export function openCompanyRecordStore(path) {
           !Number.isSafeInteger(dueAt) || !Number.isSafeInteger(priority)) throw new Error("Invalid company job");
       return enqueueJob.run(subject, source, workKey, dueAt, priority).changes > 0;
     },
-    claim(now, leaseMs, provider = null) {
-      return claimJob.get(randomUUID(), now + leaseMs, now, provider, provider, now, now);
+    claim(now, leaseMs, provider = null, background = false) {
+      if (background && nextJob.get({ clock: now, provider, tier: 1 })) return;
+      return claimJob.get({
+        token: randomUUID(), until: now + leaseMs, clock: now, provider, tier: background ? 2 : 1,
+      });
     },
     notePendingFiling(job, now, filing) {
       return publish(job, now, "retrying", null, null, null, { pendingFiling: filing, keepLease: true });
@@ -289,7 +353,8 @@ export function openCompanyRecordStore(path) {
           if (!listing) return { symbol, state: "pending" };
           const subject = `${symbol}/${listing.identity}`;
           return {
-            symbol, tracked: Boolean(listing.active), cik: listing.cik,
+            symbol, tracked: listing.active === 1, cik: listing.cik,
+            ...(listing.active === 2 ? { background: true } : {}),
             profile: getSource(subject, "profile", pinned),
             metrics: getSource(subject, "metrics", pinned),
             sec: listing.cik ? getSource(listing.cik, "sec", pinned, includeDetail) : { state: "pending" },

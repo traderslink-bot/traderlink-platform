@@ -89,3 +89,17 @@ The Company-side release check found a gap when SEC submissions listed a new ann
 The Release Coordinator can integrate the Company candidate with the Scanner roster export and saved-scan adapter on the current release parent. The VPS gateway release needs the entrypoint and its imported modules under `src/modules/company`, including the existing `company-data-wire.mjs`. Use the existing service's authenticated proxy for `/traderslink/v1/company/snapshots`, a dedicated persistent SQLite path, and the read-only roster credential shared with Railway's `/api/internal/company/v1/roster`. The snapshot reader uses the existing gateway URL and full server token. The Company Details persisted-reader switch is `TRADERLINK_COMPANY_PERSISTED_READS=1`.
 
 For direct production rollout, make the roster export available and verify that the worker accepted its membership and calendar before switching consumers to persisted reads. If roster export and Scanner adoption share a release, preserve the existing Scanner behavior until the gateway has usable initial records. During activation, verify production health, an authenticated snapshot read, CLRO's FY2025 accession and $0 continuing revenue, and the first SEC and Finnhub publications. Track live roster fill separately from the initial smoke check. Browser review and staging are outside the owner-confirmed release path.
+
+## Company Details roster coverage
+
+The Scanner roster retains its current $500M market-cap limit. Company Details is available from the existing chart ticker action for any ticker supported by the company or market-data providers. Roster tickers continue to read the persisted company record. Other tickers use cached, paced on-demand company reads. SEC filings and financials are available for issuers matched to the SEC directory.
+
+Scanner Levels and Scanner-specific technical fields depend on membership in the latest accepted roster. Company Details applies no separate market-cap rule, so additions to a future expanded roster receive Scanner data automatically.
+
+## Background refresh for larger companies
+
+The Company gateway collects listed stocks with a reported market cap above $500M from Nasdaq, NYSE, and NYSE American listings. It keeps the last accepted coverage when a collection fails. Company coverage is separate from Scanner membership. Admissions to the Scanner roster promote queued work and preserve the saved company record for the same issuer.
+
+The existing shared SEC feed and nightly index also enqueue new filings for the larger-company coverage list. Profiles and ratios are staggered across the week. Background work yields to ready Scanner jobs and recent foreground gateway activity, shares provider pacing and cooldowns, and starts at most one job per provider lane every 15 seconds. Saved company records serve the drawer where available. The drawer can still fetch missing fields on demand.
+
+A synthetic SQLite check with 2,454 Scanner symbols and 4,500 background symbols seeded the background roster in 27 ms and measured 2.78 ms p95 for 100 Scanner SEC queue claims. This measures local queue work. Provider cooldowns, warm-up speed, and page latency require observation after the production release.

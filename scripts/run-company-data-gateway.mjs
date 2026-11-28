@@ -3,6 +3,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { isAbsolute } from "node:path";
+import { readBackgroundCompanyRoster } from "../src/modules/company/company-background-roster.mjs";
 import { readCompanyRosterExport } from "../src/modules/company/company-roster-export.mjs";
 import { openCompanyRecordStore } from "../src/modules/company/company-record-store.mjs";
 import { readCompanyRoster, startCompanyRefreshWorker } from "../src/modules/company/company-refresh-worker.mjs";
@@ -14,6 +15,7 @@ const authorization = digest(`Bearer ${config.token}`);
 const pcAuthorization = typeof config.pcProfileToken === "string" && config.pcProfileToken.length >= 32
   ? digest(`Bearer ${config.pcProfileToken}`) : null;
 const requests = new Map();
+const backgroundRequests = new Map();
 const storePath = config.companyRecordStore;
 const rosterPath = config.companyRosterFile;
 const rosterExport = config.companyRosterExport;
@@ -31,6 +33,11 @@ let nextFinnhubCall = store?.readWorkerState("statisticsNextCall") ?? 0;
 let finnhubPausedUntil = store?.readWorkerState("statisticsCooldown") ?? 0;
 let nextSecCall = 0;
 let secPausedUntil = store?.readWorkerState("secCooldown") ?? 0;
+const foregroundUntil = { finnhub: 0, sec: 0 };
+function canRunBackground(lane) {
+  const next = lane === "sec" ? Math.max(nextSecCall, secPausedUntil) : Math.max(nextFinnhubCall, finnhubPausedUntil);
+  return Date.now() >= Math.max(next, foregroundUntil[lane]);
+}
 
 function providerPause(result, defaultMs) {
   const retryAfter = result.headers.get("Retry-After");
@@ -85,15 +92,21 @@ function providerRequest(kind, key) {
   }
 }
 
-async function readProvider(kind, key, fresh = false) {
+async function readProvider(kind, key, fresh = false, background = false) {
   const provider = providerRequest(kind, key);
   if (!provider) return {status:400, data:"{}"};
   const isFinnhub = kind === "profile" || kind === "metrics";
   if (isFinnhub && !config.finnhubToken) return {status:503, data:"{}"};
   const [target, headers, ttl] = provider;
+  const lane = isFinnhub ? "finnhub" : "sec";
   const now = Date.now();
-  let cached = requests.get(target);
+  if (!background) foregroundUntil[lane] = now + 10_000;
+  const cache = background ? backgroundRequests : requests;
+  const maxEntries = background ? 32 : 128;
+  const maxCacheBytes = background ? 16 * 1024 * 1024 : 64 * 1024 * 1024;
+  let cached = cache.get(target);
   if (!cached || (!cached.pending && (cached.expires <= now || (fresh && now - cached.started >= 1000)))) {
+    if (background && isFinnhub && !canRunBackground(lane)) return { status: 503, data: "{}" };
     const options = { headers, redirect: "error" };
     const upstream = isFinnhub ? fetchFinnhub(target, options) :
       fetchSec(target, options);
@@ -107,23 +120,23 @@ async function readProvider(kind, key, fresh = false) {
     }).catch(() => ({ status: 502, data: "{}", bytes: 2 }));
     cached = { expires: now + ttl * 1000, operation, bytes: 0, pending: true, started: now };
     const entry = cached;
-    requests.delete(target);
-    requests.set(target, entry);
+    cache.delete(target);
+    cache.set(target, entry);
     void operation.then(result => {
       entry.bytes = result.bytes;
       entry.pending = false;
       if (result.status !== 200) entry.expires = Date.now() + 60_000;
-      while (requests.size > 128 || [...requests.values()].reduce((size, item) => size + item.bytes, 0) > 64 * 1024 * 1024) {
-        requests.delete(requests.keys().next().value);
+      while (cache.size > maxEntries || [...cache.values()].reduce((size, item) => size + item.bytes, 0) > maxCacheBytes) {
+        cache.delete(cache.keys().next().value);
       }
     });
-    while (requests.size > 128) requests.delete(requests.keys().next().value);
+    while (cache.size > maxEntries) cache.delete(cache.keys().next().value);
   }
   return cached.operation;
 }
 
-async function workerProvider(kind, key, fresh) {
-  const result = await readProvider(kind, key, fresh);
+async function workerProvider(kind, key, fresh, background) {
+  const result = await readProvider(kind, key, fresh, background);
   if (result.status !== 200) {
     const failure = new Error("Company source unavailable");
     failure.retryAt = kind === "profile" || kind === "metrics" ? finnhubPausedUntil : secPausedUntil;
@@ -132,7 +145,8 @@ async function workerProvider(kind, key, fresh) {
   return JSON.parse(result.data);
 }
 
-async function workerSecText(url, allowMissing = false) {
+async function workerSecText(url, allowMissing = false, background = false) {
+  if (!background) foregroundUntil.sec = Date.now() + 10_000;
   const response = await fetchSec(url, { headers: { ...secHeaders, Accept: "application/atom+xml,text/plain" }, redirect: "error" });
   if (allowMissing && response?.status === 404) return null;
   if (!response?.ok) throw Error("SEC discovery unavailable");
@@ -193,6 +207,8 @@ server.listen(3043, "127.0.0.1");
 if (rosterPath || rosterExport) startCompanyRefreshWorker({
   store,
   loadRoster: rosterExport ? (previous, now) => readCompanyRosterExport(rosterExport, previous, now) : () => readCompanyRoster(rosterPath),
+  loadBackgroundRoster: rosterExport ? readBackgroundCompanyRoster : undefined,
+  canRunBackground,
   provider: workerProvider,
   secText: workerSecText,
   onError: phase => process.stderr.write(`Company refresh ${phase} unavailable\n`),

@@ -7,7 +7,8 @@ import { test } from "node:test";
 import { setTimeout as wait } from "node:timers/promises";
 import { openCompanyRecordStore } from "./company-record-store.mjs";
 import { qualifyCompanyRosterExport, readCompanyRosterExport } from "./company-roster-export.mjs";
-import { scheduleCompanyRefreshes, startCompanyRefreshWorker } from "./company-refresh-worker.mjs";
+import { scheduleBackgroundCompanyRefreshes, scheduleCompanyRefreshes, startCompanyRefreshWorker } from "./company-refresh-worker.mjs";
+import { readBackgroundCompanyRoster } from "./company-background-roster.mjs";
 import { companyFilingRows, secFeedFilings, secIndexFilings } from "./company-filing-register.mjs";
 import { readInlineCompanyFacts, verifiedContinuingRevenue } from "./company-filing-document.mjs";
 
@@ -27,6 +28,90 @@ test("schedules one staggered weekly and trading-day check per symbol and skips 
   assert.equal(daily.length, 32);
   assert.ok(daily.every(job => job.key === "session/2026-11-27"));
   assert.equal(new Set(daily.map(job => job.due)).size, daily.length);
+});
+
+test("keeps background profiles and ratios weekly, staggered and below Scanner jobs", () => {
+  const jobs = [];
+  const store = {
+    listBackground: () => Array.from({length: 32}, (_, identity) => ({symbol: "BIG" + identity, identity})),
+    enqueue: (subject, source, key, due, priority) => jobs.push({subject, source, key, due, priority}),
+  };
+  const tradingDates = new Set(["2026-11-27"]);
+  scheduleBackgroundCompanyRefreshes(store, tradingDates, Date.parse("2026-11-27T21:00:00Z"));
+  assert.ok(jobs.some(job => job.source === "metrics"));
+  assert.ok(jobs.every(job => job.key.startsWith("week/") && job.priority < 0));
+  assert.equal(new Set(jobs.map(job => job.due)).size, jobs.length);
+  jobs.length = 0;
+  scheduleBackgroundCompanyRefreshes(store, tradingDates, Date.parse("2026-11-28T21:00:00Z"));
+  assert.ok(jobs.length > 0 && jobs.every(job => job.source === "profile"));
+});
+
+test("collects only the above-$500M census and requires all three exchange responses", async () => {
+  const exchanges = [];
+  const response = exchange => Response.json({data:{rows:[
+    {symbol:"BIG" + exchange.toUpperCase(),marketCap:"500000001"},
+    {symbol:"EXACT", marketCap:"500000000"},
+    ...Array.from({length: 40}, (_, i) => ({symbol:"T" + i,marketCap:245000})),
+  ]}});
+  const accepted = await readBackgroundCompanyRoster(async url => {
+    const exchange = url.searchParams.get("exchange");
+    exchanges.push(exchange);
+    return response(exchange);
+  });
+  assert.deepEqual(exchanges, ["nasdaq","nyse","amex"]);
+  assert.deepEqual(accepted, ["BIGAMEX","BIGNASDAQ","BIGNYSE"]);
+  await assert.rejects(readBackgroundCompanyRoster(async url => url.searchParams.get("exchange") === "amex"
+    ? new Response(null, {status:503}) : response(url.searchParams.get("exchange"))), /unavailable/);
+});
+
+test("uses one EDGAR poll while the background worker waits for spare provider capacity", async () => {
+  const store = openCompanyRecordStore(":memory:");
+  const clock = Date.parse("2026-11-27T16:00:00Z");
+  const accession = "0000123456-26-000001";
+  const cik = "0000123456";
+  let backgroundAllowed = false;
+  let feedChecks = 0;
+  let backgroundReads = 0;
+  store.reconcileBackgroundRoster([{symbol:"BIG",cik}], clock);
+  const stop = startCompanyRefreshWorker({
+    store,
+    now: () => clock,
+    loadRoster: async () => null,
+    loadBackgroundRoster: async () => ["BIG"],
+    canRunBackground: () => backgroundAllowed,
+    provider: async (kind, key, _fresh, background) => {
+      if (kind === "directory") return {0:{ticker:"BIG",cik_str:123456}};
+      assert.equal(background, true);
+      if (kind === "submissions") {
+        assert.equal(key, "CIK0000123456.json");
+        backgroundReads++;
+        return {filings:{recent:{filingDate:["2026-11-27"],form:["10-Q"],reportDate:["2026-09-30"],
+          accessionNumber:[accession],primaryDocument:["big.htm"]}}};
+      }
+      return {facts:{}};
+    },
+    secText: async url => {
+      if (!url.includes("getcurrent")) return null;
+      feedChecks++;
+      return `<feed><entry><link href="https://www.sec.gov/Archives/edgar/data/123456/x"/>
+        <category label="form type" term="10-Q"/><id>urn:tag:sec.gov,2008:accession-number=${accession}</id></entry></feed>`;
+    },
+  });
+  try {
+    await wait(75);
+    assert.equal(feedChecks, 1);
+    assert.equal(backgroundReads, 0);
+    backgroundAllowed = true;
+    for (let tries = 0; tries < 45 && backgroundReads === 0; tries++) await wait(75);
+    assert.equal(backgroundReads, 1);
+    assert.equal(feedChecks, 1);
+    const saved = store.read(["BIG"]).companies[0];
+    assert.equal(saved.tracked, false);
+    assert.equal(saved.sec.value.filings[0].accession, accession);
+  } finally {
+    await stop();
+    store.close();
+  }
 });
 
 test("recognizes SEC discovery sources and retains accession and report dates", () => {

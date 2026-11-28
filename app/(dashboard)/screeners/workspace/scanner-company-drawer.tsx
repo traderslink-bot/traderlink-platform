@@ -60,8 +60,9 @@ function DeferredCompanyPanel({label,failed,retry}:{label:string;failed:boolean;
 
 function CompanyDrawerContent({symbol,broker}:{symbol:string;broker:boolean}){
   type Details=ComponentProps<typeof CompanyDetails>;
-  const overview=useCompanyDrawerRead<Pick<Details,"company"|"technicalSample">>(symbol,"overview",true);
-  const company=useCompanyDrawerRead<Pick<Details,"company"|"technicalSample">>(symbol,"company");
+  type DetailsResponse=Pick<Details,"company"|"technicalSample">&{scannerMember:boolean};
+  const overview=useCompanyDrawerRead<DetailsResponse>(symbol,"overview",true);
+  const company=useCompanyDrawerRead<DetailsResponse>(symbol,"company");
   const news=useCompanyDrawerRead<Pick<Details,"news">>(symbol,"news");
   const [timeframe,setTimeframe]=useState<ChartTimeframe>();
   function openTab(tab:CompanyTab){
@@ -81,7 +82,7 @@ function CompanyDrawerContent({symbol,broker}:{symbol:string;broker:boolean}){
       onTabChange={openTab}
       deferredCompany={!company.data?<DeferredCompanyPanel label="Company details" failed={company.data===null} retry={company.load}/>:undefined}
       deferredNews={!news.data?<DeferredCompanyPanel label="News" failed={news.data===null} retry={news.load}/>:undefined}
-      levels={broker?undefined:details?<ScannerTickerDetails symbol={symbol} stock={undefined} levelsOnly/>:pendingOverview}
+      levels={!broker&&details?.scannerMember?<ScannerTickerDetails symbol={symbol} stock={undefined} levelsOnly/>:undefined}
       chart={details?<CompanyChart symbol={symbol} timeframe={timeframe} onTimeframeChange={setTimeframe}/>:pendingOverview}/>
   </Suspense>;
 }

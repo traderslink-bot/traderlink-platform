@@ -36,6 +36,9 @@ const value=(n:number,suffix="")=>numbers.format(n)+suffix;
 const signedPercent=(n:number)=>`${n>0?"+":""}${value(n,"%")}`;
 const changeColor=(n:number|null)=>n==null||n===0?undefined:n>0?"success.main":"error.main";
 const changeLabels=new Set(["Gap","Distance from high","After-hours change","1m change","5m change"]);
+const scannerMetricLabels=new Set([
+  "Float turnover", "Relative Vol", "1m change", "5m change", "1m Vol", "5m Vol", "1min dollar vol", "5min Vol spike",
+]);
 const frames=["1m","5m","15m"] as const;
 type Frame=typeof frames[number];
 const rangeBases = [["raw", "As traded"], ["split", "Split-adjusted"]] as const;
@@ -278,6 +281,7 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   const afterHours=broker?(brokerSession==="after_hours"&&brokerQuote?.regularClose?(brokerQuote.price/brokerQuote.regularClose-1)*100:null):(rangesRevised?null:row?.postMarketGain)??(post&&todayClose?(post.close/todayClose-1)*100:null);
   const bid=broker?brokerBook?.bid:snapshot?.bid;
   const ask=broker?brokerBook?.ask:snapshot?.ask;
+  const showScannerMetrics=Boolean(sample||snapshot?.scannerMember);
   const displayed=[
     ["Price",current,"$"],["Day change",dayChange,"%"],["Prev regular close",regularClose??basis,"$"],["Regular open",regularOpen,"$"],
     ["Gap",gap,"%"],
@@ -295,6 +299,8 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
     ["1m change",activity?.oneMinuteGain??candleActivity?.oneMinuteGain,"%"],["5m change",activity?.fiveMinuteGain??candleActivity?.fiveMinuteGain,"%"],["1m Vol",activity?.oneMinuteVolume??candleActivity?.oneMinuteVolume,""],
     ["5m Vol",activity?.fiveMinuteVolume??candleActivity?.fiveMinuteVolume,""],["1min dollar vol",activity?.oneMinuteDollarVolume,"$compact"],["5min Vol spike",activity?.fiveMinuteVolumeSpike??candleActivity?.fiveMinuteVolumeSpike,"×"],
   ] as const;
+  const visibleMetrics=displayed.filter(([label,n])=>showScannerMetrics||!scannerMetricLabels.has(label)||
+    (broker&&n!=null&&Number.isFinite(n)));
   const snapshotLabels=new Set([...Object.values(SCANNER_VOLUME_LABELS),"Float","Float turnover","Relative Vol","Market cap","Distance from high","Prev regular close","Regular open","Gap","Day high","Day low","10d avg vol","3mth avg vol"]);
   const metrics=(entries:readonly (readonly [string,number|null|undefined,string])[])=>(
     <Box component="dl" sx={{m:0,display:"grid",gridTemplateColumns:{xs:"repeat(2,minmax(0,1fr))",sm:"repeat(4,minmax(0,1fr))"},columnGap:1,rowGap:1.5}}>
@@ -322,7 +328,7 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
             {broker&&(brokerQuote
               ? <Typography variant="caption" color="text.secondary">Moomoo quote · {eventTime.format(brokerQuote.observedAt)}</Typography>
               : <Typography variant="caption" color="text.secondary">Moomoo quote unavailable.</Typography>)}
-            {metrics(displayed.filter(([label])=>snapshotLabels.has(label)))}
+            {metrics(visibleMetrics.filter(([label])=>snapshotLabels.has(label)))}
             <Box sx={{pt:1}}>
               <Typography variant="body2" sx={theme=>theme.applyStyles("dark",{color:"#a6b6cc",fontWeight:600})}>52-week range</Typography>
               <Box sx={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:1,mt:0.5}}>
@@ -348,9 +354,9 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
                 })}
               </Box>
             </Box>
-            {!!snapshot?.scannerSignals.length&&<Typography variant="body2">{[...new Set(snapshot.scannerSignals)].join(" · ")}</Typography>}
+            {showScannerMetrics&&!!snapshot?.scannerSignals.length&&<Typography variant="body2">{[...new Set(snapshot.scannerSignals)].join(" · ")}</Typography>}
             <Stack spacing={1.25} sx={{pt:1.25,borderTop:1,borderColor:"divider"}}>
-              {metrics(displayed.filter(([label])=>!snapshotLabels.has(label)&&label!=="Price"&&label!=="Day change"))}
+              {metrics(visibleMetrics.filter(([label])=>!snapshotLabels.has(label)&&label!=="Price"&&label!=="Day change"))}
               {children&&<Accordion disableGutters square elevation={0} sx={{"&::before":{display:"none"}}}>
                 <AccordionSummary id={`${indicatorId}-history`} aria-controls={`${indicatorId}-history-content`}
                   expandIcon={<ArrowDropDownIcon fontSize="small"/>}

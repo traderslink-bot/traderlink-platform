@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, expect, it, vi } from "vitest";
 import type { UniverseStock } from "@/src/modules/scanner/live/contracts";
-import { readCompanyTechnicals } from "./company-market-data";
+import { companyUniverseEntry, readCompanyTechnicals } from "./company-market-data";
 
 const providers = vi.hoisted(() => ({ history: vi.fn(), request: vi.fn(), revisions: vi.fn() }));
 vi.mock("@/src/modules/scanner/alpaca/client", () => ({
@@ -10,11 +10,27 @@ vi.mock("@/src/modules/scanner/alpaca/client", () => ({
   readAlpacaTradeRevisions: providers.revisions,
 }));
 vi.mock("@/src/modules/scanner/live/server/runtime", () => ({
+  scannerUniverseStore: () => ({
+    readLatestOnOrBefore: async () => ({
+      stocks: [
+        { symbol: "MID", marketCapAtCollection: 350_000_000 },
+        { symbol: "LIMIT", marketCapAtCollection: 500_000_000 },
+        { symbol: "EXPANDED", marketCapAtCollection: 1_000_000_000 },
+      ],
+    }),
+  }),
   readLiveScannerRuntime: () => ({ gainers: { rows: [] }, momentum: { rows: [] } }),
 }));
 vi.mock("@/src/lib/news/company-data-gateway", () => ({ readCompanyData: async () => null }));
 
 afterEach(() => vi.useRealTimers());
+
+it("looks up membership in the accepted Scanner roster, including future cap expansions", async () => {
+  await expect(companyUniverseEntry("MID")).resolves.toMatchObject({ marketCapAtCollection: 350_000_000 });
+  await expect(companyUniverseEntry("LIMIT")).resolves.toMatchObject({ marketCapAtCollection: 500_000_000 });
+  await expect(companyUniverseEntry("EXPANDED")).resolves.toMatchObject({ marketCapAtCollection: 1_000_000_000 });
+  await expect(companyUniverseEntry("OFFROSTER")).resolves.toBeUndefined();
+});
 
 it("refreshes an open or reopened POM technical read on the targeted repair inside the range cache TTL", async () => {
   const at = Date.parse("2026-11-27T13:15:00Z");
@@ -93,4 +109,9 @@ it("refreshes an open or reopened POM technical read on the targeted repair insi
   const mismatched = await read();
   expect(mismatched.revisedRangeDates).toEqual(["2026-11-27"]);
   expect(mismatched.days[0].ranges[0]).toBeNull();
+  expect(current.scannerMember).toBe(true);
+  const offRoster = await readCompanyTechnicals("POM");
+  expect(offRoster).toMatchObject({ scannerMember: false, row: null, scannerSignals: [], days: mismatched.days });
+  expect(offRoster).not.toHaveProperty("relativeVolume");
+  expect(offRoster).not.toHaveProperty("candleActivity");
 });
