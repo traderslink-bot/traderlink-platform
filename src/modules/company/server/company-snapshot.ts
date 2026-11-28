@@ -6,6 +6,7 @@ import { readCompanyProfileSample, previewCompanyCik } from "./company-profile-s
 
 export type Filing = { date: string; form: string; accession: string; href: string; reportDate?: string; acceptedAt?: string; earningsAnnouncement?: boolean; earningsHref?: string };
 type Fact = { val: number; start?: string; end: string; filed: string; accn: string; form: string; fy?: number; fp?: string };
+type CompanyDirectory = Record<string,{ticker:string;cik_str:number;title:string}>;
 type Concepts = Record<string, { units: Record<string, Fact[]> }>;
 type Submissions = { name?: string; sicDescription?: string; fiscalYearEnd?:string; addresses?:{business?:{city?:string;stateOrCountry?:string;stateOrCountryDescription?:string}}; filings: {
   recent: { filingDate: string[]; reportDate?: string[]; acceptanceDateTime?: string[]; form: string[]; accessionNumber: string[]; primaryDocument: string[] };
@@ -92,15 +93,18 @@ async function readPersistedCompanySnapshot(symbol: string, view: "full" | "over
   };
 }
 
-export async function readCompanySnapshot(symbol:string, view:"full"|"overview"="full") {
-  if (process.env.TRADERLINK_COMPANY_PERSISTED_READS === "1") return readPersistedCompanySnapshot(symbol, view);
+export async function readCompanySnapshot(symbol:string, view:"full"|"overview"="full", onDemand=false) {
+  if (!onDemand && process.env.TRADERLINK_COMPANY_PERSISTED_READS === "1") return readPersistedCompanySnapshot(symbol, view);
   const profileRequest=json<Record<string,unknown>>("profile",symbol);
-  const metricsRequest=json<{metric?:Record<string,unknown>}>("metrics",symbol);
-  const directory=view==="full"?await json<Record<string,{ticker:string;cik_str:number;title:string}>>("directory"):null;
+  const directoryRequest=view==="full"||onDemand?json<CompanyDirectory>("directory"):null;
+  const legacyMetrics=onDemand?null:json<{metric?:Record<string,unknown>}>("metrics",symbol);
+  const [rawProfile,directory]=await Promise.all([profileRequest,directoryRequest]);
+  const profile=!onDemand||rawProfile?.ticker===symbol?rawProfile:null;
   const company=Object.values(directory??{}).find(item=>item.ticker===symbol);
+  const metricsRequest=onDemand&&(company||profile)?json<{metric?:Record<string,unknown>}>("metrics",symbol):legacyMetrics;
   const cik=company?.cik_str??(view==="full"&&process.env.NODE_ENV!=="production"?previewCompanyCik(symbol):undefined);
-  const id=cik?.toString().padStart(10,"0");
-  const [profile,metrics,submissions,data]=await Promise.all([profileRequest,metricsRequest,
+  const id=view==="full"?cik?.toString().padStart(10,"0"):undefined;
+  const [metrics,submissions,data]=await Promise.all([metricsRequest,
     id ? json<Submissions>("submissions",`CIK${id}.json`,3600) : null,
     id ? json<{facts:Record<string,Concepts>}>("facts",`CIK${id}.json`) : null,
   ]);

@@ -61,6 +61,7 @@ it("replaces the canceled POM high on the next poll and when the drawer reopens"
     return Response.json({
       row: { dayHigh: 38, price: 7, dayLow: 3, dayVolume: 31_278_076, volume: 31_278_076,
         dollarVolume: 2_000_000_000, relativeVolume: 56, activity: { oneMinuteVolume: 900_000 }, float: 31_000_000 },
+      scannerMember: true,
       scannerSignals: [],
       ...(revised && high !== null ? { dayVolume: 30_566_502, sessionVolume: 30_566_502, dollarVolume: 180_000_000 } : {}),
       days: high === null ? [] : [{ date: pendingDate, ranges: [{ open: 3, high, low: 3, close: 7, volume: 123 }, null, null] }],
