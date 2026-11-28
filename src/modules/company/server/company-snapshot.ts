@@ -6,6 +6,7 @@ import { readCompanyProfileSample, previewCompanyCik } from "./company-profile-s
 
 export type Filing = { date: string; form: string; accession: string; href: string; reportDate?: string; acceptedAt?: string; earningsAnnouncement?: boolean; earningsHref?: string };
 type Fact = { val: number; start?: string; end: string; filed: string; accn: string; form: string; fy?: number; fp?: string };
+type CompanyDirectory = Record<string,{ticker:string;cik_str:number;title:string}>;
 type Concepts = Record<string, { units: Record<string, Fact[]> }>;
 type Submissions = { name?: string; sicDescription?: string; fiscalYearEnd?:string; addresses?:{business?:{city?:string;stateOrCountry?:string;stateOrCountryDescription?:string}}; filings: {
   recent: { filingDate: string[]; reportDate?: string[]; acceptanceDateTime?: string[]; form: string[]; accessionNumber: string[]; primaryDocument: string[] };
@@ -48,6 +49,7 @@ type PreliminaryFigure = {
   filedValue?: number;
 };
 type PersistedCompany = {
+  background?: boolean;
   cik?: string | null;
   profile?: { value?: Record<string, unknown> | null };
   metrics?: { value?: { metrics?: Record<string, unknown> } | null };
@@ -82,25 +84,32 @@ async function readPersistedCompanySnapshot(symbol: string, view: "full" | "over
   const metrics = snapshot?.metrics?.value?.metrics ?? null;
   const cik = snapshot?.cik ? Number(snapshot.cik) : undefined;
   const companyProfile = process.env.NODE_ENV !== "production" ? readCompanyProfileSample(cik ?? previewCompanyCik(symbol)) : undefined;
-  return {
+  return { company: {
     symbol, cik, companyProfile, headquarters: sec?.headquarters ?? "",
     fiscalYearEndLabel: formatFiscalYearEnd(sec?.fiscalYearEnd), name: sec?.name, sic: sec?.sic,
     profile, metrics, filings: view === "full" ? sec?.filings ?? [] : [],
     filingsAvailable: view === "full" && Boolean(sec?.filingCoverage?.complete),
     preliminary: view === "full" ? sec?.earnings?.flatMap(release => release.figures) ?? [] : [],
     financials: view === "full" ? [...(sec?.statements.interim?.facts ?? []), ...(sec?.statements.annual?.facts ?? [])] : [],
-  };
+  }, background: snapshot?.background === true };
 }
 
-export async function readCompanySnapshot(symbol:string, view:"full"|"overview"="full") {
-  if (process.env.TRADERLINK_COMPANY_PERSISTED_READS === "1") return readPersistedCompanySnapshot(symbol, view);
-  const profileRequest=json<Record<string,unknown>>("profile",symbol);
-  const metricsRequest=json<{metric?:Record<string,unknown>}>("metrics",symbol);
-  const directory=view==="full"?await json<Record<string,{ticker:string;cik_str:number;title:string}>>("directory"):null;
+export async function readCompanySnapshot(symbol:string, view:"full"|"overview"="full", onDemand=false) {
+  const persisted = process.env.TRADERLINK_COMPANY_PERSISTED_READS === "1" ? await readPersistedCompanySnapshot(symbol, view) : undefined;
+  if (persisted && !onDemand) return persisted.company;
+  const saved = persisted?.background ? persisted.company : undefined;
+  if (saved?.profile && saved.metrics && (view === "overview" || saved.filingsAvailable)) return saved;
+
+  const profileRequest=saved?.profile ?? json<Record<string,unknown>>("profile",symbol);
+  const directoryRequest=!saved?.cik&&(view==="full"||onDemand)?json<CompanyDirectory>("directory"):null;
+  const legacyMetrics=onDemand?null:json<{metric?:Record<string,unknown>}>("metrics",symbol);
+  const [rawProfile,directory]=await Promise.all([profileRequest,directoryRequest]);
+  const profile=!onDemand||rawProfile?.ticker===symbol?rawProfile:null;
   const company=Object.values(directory??{}).find(item=>item.ticker===symbol);
-  const cik=company?.cik_str??(view==="full"&&process.env.NODE_ENV!=="production"?previewCompanyCik(symbol):undefined);
-  const id=cik?.toString().padStart(10,"0");
-  const [profile,metrics,submissions,data]=await Promise.all([profileRequest,metricsRequest,
+  const metricsRequest=onDemand&&!saved?.metrics&&(company||profile||saved?.cik)?json<{metric?:Record<string,unknown>}>("metrics",symbol):legacyMetrics;
+  const cik=saved?.cik??company?.cik_str??(view==="full"&&process.env.NODE_ENV!=="production"?previewCompanyCik(symbol):undefined);
+  const id=view==="full"&&!saved?.filingsAvailable?cik?.toString().padStart(10,"0"):undefined;
+  const [metrics,submissions,data]=await Promise.all([metricsRequest,
     id ? json<Submissions>("submissions",`CIK${id}.json`,3600) : null,
     id ? json<{facts:Record<string,Concepts>}>("facts",`CIK${id}.json`) : null,
   ]);
@@ -123,8 +132,12 @@ export async function readCompanySnapshot(symbol:string, view:"full"|"overview"=
   // The UI does not use upstream logo assets. Keep its profile facts neutral,
   // without exposing vendor-specific field names or unused asset URLs.
   const profileFacts=companyProfileFacts(profile);
-  const publicProfile:Record<string,unknown>|null=profileFacts?{...profileFacts,industry:profileFacts.industry??profileFacts.finnhubIndustry}:null;
+  const publicProfile:Record<string,unknown>|null=saved?.profile??(profileFacts?{...profileFacts,industry:profileFacts.industry??profileFacts.finnhubIndustry}:null);
   if(publicProfile){delete publicProfile.finnhubIndustry;delete publicProfile.logo;}
-  return {symbol,cik,companyProfile,headquarters,fiscalYearEndLabel,name:submissions?.name??company?.title,sic:submissions?.sicDescription,profile:publicProfile,metrics:metrics?.metric?companyMetricFacts(metrics.metric):null,
-    filings:unique, filingsAvailable:Boolean(submissions), preliminary: [] as PreliminaryFigure[], financials:reportedFacts(data?.facts??{},profile?.currency,statementFilings,today)};
+  return {symbol,cik,companyProfile,headquarters:headquarters||saved?.headquarters||"",fiscalYearEndLabel:fiscalYearEndLabel??saved?.fiscalYearEndLabel,
+    name:submissions?.name??saved?.name??company?.title,sic:submissions?.sicDescription??saved?.sic,profile:publicProfile,
+    metrics:saved?.metrics??(metrics?.metric?companyMetricFacts(metrics.metric):null),
+    filings:saved?.filingsAvailable?saved.filings:unique,filingsAvailable:Boolean(saved?.filingsAvailable||submissions),
+    preliminary:saved?.preliminary??[] as PreliminaryFigure[],
+    financials:saved?.filingsAvailable?saved.financials:reportedFacts(data?.facts??{},profile?.currency,statementFilings,today)};
 }

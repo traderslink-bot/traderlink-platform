@@ -10,11 +10,17 @@ import { readAlpacaHistory,readAlpacaTradeRevisions,requestAlpacaGateway } from 
 import { readChartCalendarYear } from "@/src/modules/scanner/alpaca/chart-calendar-request";
 import type { TradeRevision } from "@/src/modules/scanner/alpaca/trade-revisions";
 import type { AlpacaQuoteReply } from "@/src/modules/scanner/alpaca/scanner-snapshots";
-import { COMPANY_MARKET_CAP_LIMIT, companySessionRanges, type CompanyTechnicals } from "../company-technicals";
+import { companySessionRanges, type CompanyTechnicals } from "../company-technicals";
 
 export async function companyUniverseEntry(symbol:string){
   const universe=await scannerUniverseStore().readLatestOnOrBefore(easternClock(Date.now()).date);
-  return universe?.stocks.find(stock=>stock.symbol===symbol&&stock.marketCapAtCollection>0&&stock.marketCapAtCollection<=COMPANY_MARKET_CAP_LIMIT);
+  return universe?.stocks.find(stock=>stock.symbol===symbol);
+}
+
+export async function hasCompanyMarketSymbol(symbol:string){
+  const quotes=await requestAlpacaGateway("quotes",new URLSearchParams({symbols:symbol}),process.env,AbortSignal.timeout(5000)) as AlpacaQuoteReply|null;
+  const snapshot=quotes?.snapshots?.[symbol];
+  return quotes?.feed==="sip"&&Boolean(snapshot?.dailyBar||snapshot?.prevDailyBar||snapshot?.latestQuote);
 }
 
 type MarketRanges=Pick<CompanyTechnicals,"days"|"bid"|"ask"|"dollarVolume"|"dayVolume"|"sessionVolume"|"sessionVwap"|"candleActivity"|"relativeVolume"|"revisedRangeDates">;
@@ -187,24 +193,31 @@ async function readYearRange(symbol:string,now:number,adjusted:boolean):Promise<
   return entry.read;
 }
 
-export async function readCompanyTechnicals(symbol:string, entry:UniverseStock):Promise<CompanyTechnicals>{
-  const model=readLiveScannerRuntime();
-  const day=model.dayGainers?.rows.find(row=>row.symbol===symbol);
-  const gain=model.gainers.rows.find(row=>row.symbol===symbol);
-  const momentum=model.momentum.rows.find(row=>row.symbol===symbol);
+export async function readCompanyTechnicals(symbol:string, entry?:UniverseStock):Promise<CompanyTechnicals>{
+  const model=entry?readLiveScannerRuntime():undefined;
+  const day=model?.dayGainers?.rows.find(row=>row.symbol===symbol);
+  const gain=model?.gainers.rows.find(row=>row.symbol===symbol);
+  const momentum=model?.momentum.rows.find(row=>row.symbol===symbol);
   const row=gain??momentum??day??null;
   const scannerSignals=[
     ...(gain||day?["Top Gainers"]:[]),...(momentum?["Momentum",...momentum.reasons]:[]),
-    ...(model.declines?.losers.some(row=>row.symbol===symbol)?["Top Losers"]:[]),
-    ...(model.premarketPullbacks?.rows.some(row=>row.symbol===symbol)?["HOD Drops"]:[]),
+    ...(model?.declines?.losers.some(row=>row.symbol===symbol)?["Top Losers"]:[]),
+    ...(model?.premarketPullbacks?.rows.some(row=>row.symbol===symbol)?["HOD Drops"]:[]),
   ];
   const [market, profile] = await Promise.all([
     readRanges(symbol),
-    row?.float == null ? readCompanyData<{ticker?:string;floatingShare?:number}>("profile",symbol) : null,
+    row?.float == null ? readCompanyData<{ticker?:string;floatingShare?:number;marketCapitalization?:number}>("profile",symbol) : null,
   ]);
-  const float = profile?.ticker === symbol ? profile.floatingShare : undefined;
-  return {row,scannerSignals,...market,listedMarketCap:entry.marketCapAtCollection,
-    listedFloat:typeof float==="number"&&Number.isFinite(float)&&float>0?float*1_000_000:undefined};
+  const listing = profile?.ticker === symbol ? profile : undefined;
+  const float = positiveMillions(listing?.floatingShare);
+  const marketCap = entry?.marketCapAtCollection ?? positiveMillions(listing?.marketCapitalization);
+  const { candleActivity, relativeVolume, ...marketStats } = market;
+  return {row,scannerSignals,scannerMember:Boolean(entry),...marketStats,listedMarketCap:marketCap,listedFloat:float,
+    ...(entry?{candleActivity,relativeVolume}:{})};
+}
+
+function positiveMillions(value:number|undefined){
+  return typeof value==="number"&&Number.isFinite(value)&&value>0?value*1_000_000:undefined;
 }
 
 export function readCompanyYearRange(symbol:string,adjusted:boolean){

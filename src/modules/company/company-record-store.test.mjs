@@ -72,3 +72,33 @@ test("preserves old issuer identity while deduplicating SEC work across ticker a
     store.close();
   }
 });
+
+
+test("prioritizes Scanner jobs and preserves saved data when a background ticker moves onto the roster", () => {
+  const store = openCompanyRecordStore(":memory:");
+  try {
+    const now = 1000;
+    store.reconcileBackgroundRoster([MEDS], now);
+    assert.deepEqual(store.listTracked(), []);
+    assert.equal(store.listBackground()[0].symbol, MEDS.symbol);
+    const secondary = store.read([MEDS.symbol]).companies[0];
+    assert.equal(secondary.tracked, false);
+    assert.equal(secondary.background, true);
+
+    store.reconcileRoster(1, [CLRO], now + 1);
+    assert.equal(store.claim(now + 2, 60_000, "sec", true), undefined);
+    const main = store.claim(now + 2, 60_000, "sec");
+    assert.equal(main.subject, CLRO.cik);
+    store.complete(main, now + 3, { current: "Scanner" });
+    const extra = store.claim(now + 4, 60_000, "sec", true);
+    assert.equal(extra.subject, MEDS.cik);
+    store.complete(extra, now + 5, { current: "Background" });
+
+    store.reconcileRoster(2, [CLRO, MEDS], now + 6);
+    const promoted = store.read([MEDS.symbol]).companies[0];
+    assert.equal(promoted.tracked, true);
+    assert.equal(promoted.background, undefined);
+    assert.equal(promoted.sec.value.current, "Background");
+    assert.deepEqual(store.listBackground(), []);
+  } finally { store.close(); }
+});

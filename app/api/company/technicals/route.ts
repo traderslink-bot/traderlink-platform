@@ -19,10 +19,9 @@ async function readGET(request:Request){
   catch{return Response.json({error:"Sign in required"},{status:401,headers});}
   const query=new URL(request.url).searchParams;
   const symbol=companySymbol(query.get("symbol")??"");
-  const entry=symbol?await companyUniverseEntry(symbol):undefined;
-  if(!symbol||!entry)return Response.json({error:"Ticker outside the Scanner universe"},{status:404,headers});
+  if(!symbol)return Response.json({}, {status:404,headers});
   if(query.get("range")==="52w")return Response.json({yearRange:await readCompanyYearRange(symbol,query.get("adjustment")==="split")},{headers});
-  return Response.json(await readCompanyTechnicals(symbol,entry),{headers});
+  return Response.json(await readCompanyTechnicals(symbol,await companyUniverseEntry(symbol)),{headers});
 }
 
 export const GET = browserDataRead("company_technicals_unavailable", (request: Request) => readGET(request));

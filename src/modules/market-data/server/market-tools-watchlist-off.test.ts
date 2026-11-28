@@ -354,7 +354,7 @@ it("serves the live feed, indicators and company data to either admitted tool wh
     });
     const company = await readCompany(request("/api/company/details?symbol=NWGL", actor));
     expect(company.status).toBe(200);
-    expect(await company.json()).toEqual({ company: { companyProfile: { name: "Fixture Company" } }, news: [] });
+    expect(await company.json()).toEqual({ company: { companyProfile: { name: "Fixture Company" } }, news: [], scannerMember: true });
     const technicals = await readTechnicals(request("/api/company/technicals?symbol=NWGL", actor));
     expect(technicals.status).toBe(200);
     expect(await technicals.json()).toEqual({ symbol: "NWGL", stats: { price: 0.029 } });

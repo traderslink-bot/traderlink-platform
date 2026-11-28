@@ -3,13 +3,12 @@ import type { ChartMarketSession } from "@/src/modules/scanner/alpaca/chart-cale
 import type { LiveScannerRow } from "@/src/modules/scanner/live/contracts";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 
-export const COMPANY_MARKET_CAP_LIMIT = 200_000_000;
 export const sessionNames = ["Premarket", "Regular", "Post-market"] as const;
 export type SessionRange = { open:number; high:number; low:number; close:number; volume:number };
 export type CompanySessionDay = { date:string; ranges:(SessionRange|null)[] };
 type YearRange = {high:number;low:number;highDate?:string;lowDate?:string};
 export type CompanyTechnicals = {
-  days:CompanySessionDay[]; row:LiveScannerRow|null; scannerSignals:string[];
+  days:CompanySessionDay[]; row:LiveScannerRow|null; scannerSignals:string[]; scannerMember?:boolean;
   revisedRangeDates?:string[];
   dayVolume?:number|null; sessionVolume?:number;
   dollarVolume?:number; relativeVolume?:number; sessionVwap?:number;
