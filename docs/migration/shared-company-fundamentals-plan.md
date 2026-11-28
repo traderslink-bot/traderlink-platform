@@ -89,3 +89,8 @@ The Company-side release check found a gap when SEC submissions listed a new ann
 The Release Coordinator can integrate the Company candidate with the Scanner roster export and saved-scan adapter on the current release parent. The VPS gateway release needs the entrypoint and its imported modules under `src/modules/company`, including the existing `company-data-wire.mjs`. Use the existing service's authenticated proxy for `/traderslink/v1/company/snapshots`, a dedicated persistent SQLite path, and the read-only roster credential shared with Railway's `/api/internal/company/v1/roster`. The snapshot reader uses the existing gateway URL and full server token. The Company Details persisted-reader switch is `TRADERLINK_COMPANY_PERSISTED_READS=1`.
 
 For direct production rollout, make the roster export available and verify that the worker accepted its membership and calendar before switching consumers to persisted reads. If roster export and Scanner adoption share a release, preserve the existing Scanner behavior until the gateway has usable initial records. During activation, verify production health, an authenticated snapshot read, CLRO's FY2025 accession and $0 continuing revenue, and the first SEC and Finnhub publications. Track live roster fill separately from the initial smoke check. Browser review and staging are outside the owner-confirmed release path.
+
+
+## Company Details roster coverage
+
+The Company Details drawer and Technicals use the Scanner roster’s inclusive $500M market-cap limit. Workspace filters still control which rows are shown. Profile and financial refreshes continue to use the accepted roster.

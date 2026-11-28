@@ -2,6 +2,7 @@ import "server-only";
 import { readCompanyData } from "@/src/lib/news/company-data-gateway";
 import type { UniverseStock } from "@/src/modules/scanner/live/contracts";
 import { scannerUniverseStore,readLiveScannerRuntime } from "@/src/modules/scanner/live/server/runtime";
+import { MAX_UNIVERSE_MARKET_CAP } from "@/src/modules/scanner/live/universe-validation";
 import { scannerVolumeBreakdown } from "@/src/modules/scanner/live/volume";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { scannerIndicatorResults } from "@/src/modules/scanner/live/scanner-indicator-calculation";
@@ -10,11 +11,11 @@ import { readAlpacaHistory,readAlpacaTradeRevisions,requestAlpacaGateway } from 
 import { readChartCalendarYear } from "@/src/modules/scanner/alpaca/chart-calendar-request";
 import type { TradeRevision } from "@/src/modules/scanner/alpaca/trade-revisions";
 import type { AlpacaQuoteReply } from "@/src/modules/scanner/alpaca/scanner-snapshots";
-import { COMPANY_MARKET_CAP_LIMIT, companySessionRanges, type CompanyTechnicals } from "../company-technicals";
+import { companySessionRanges, type CompanyTechnicals } from "../company-technicals";
 
 export async function companyUniverseEntry(symbol:string){
   const universe=await scannerUniverseStore().readLatestOnOrBefore(easternClock(Date.now()).date);
-  return universe?.stocks.find(stock=>stock.symbol===symbol&&stock.marketCapAtCollection>0&&stock.marketCapAtCollection<=COMPANY_MARKET_CAP_LIMIT);
+  return universe?.stocks.find(stock=>stock.symbol===symbol&&stock.marketCapAtCollection>0&&stock.marketCapAtCollection<=MAX_UNIVERSE_MARKET_CAP);
 }
 
 type MarketRanges=Pick<CompanyTechnicals,"days"|"bid"|"ask"|"dollarVolume"|"dayVolume"|"sessionVolume"|"sessionVwap"|"candleActivity"|"relativeVolume"|"revisedRangeDates">;
