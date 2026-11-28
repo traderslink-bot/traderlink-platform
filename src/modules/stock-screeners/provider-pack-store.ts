@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { marketDataSelection } from "../market-data/server/provider-settings";
 import { type MarketPack, type ScreenerProviderSelection } from "./contracts";
 import { readMarketPack, validateMarketPack } from "./snapshot-file";
+import { observeScreenerCorrectionRevision, screenerCorrectionRevision, screenerCorrectionGeneration } from "./run-corrections";
 
 export function screenerPackFilename(selection: ScreenerProviderSelection) {
   return `market-${selection.provider}-${selection.revision}.json`;
@@ -23,6 +24,11 @@ export async function publishScreenerPack(directory: string, value: unknown, sel
     const prior = await readMarketPack(target, Date.now(), selection).catch(() => null);
     if (initial && prior && prior.snapshots[pack.latest].date === pack.snapshots[pack.latest].date
       && prior.snapshots[pack.latest].rows.some(row => row.values.price !== undefined)) return;
+    if (((prior?.correctionGeneration === 0 ? undefined : prior?.correctionRevision) || screenerCorrectionRevision(target)) && !pack.correctionRevision)
+      throw Error("screener_pack_correction_missing");
+    const generation = Math.max(prior?.correctionGeneration ?? -1, screenerCorrectionGeneration(target) ?? -1);
+    if (generation > 0 && (pack.correctionGeneration === undefined || pack.correctionGeneration < generation))
+      throw Error("screener_correction_superseded");
     if (prior && prior.snapshots[prior.latest].capturedAt > pack.snapshots[pack.latest].capturedAt)
       throw Error("screener_pack_superseded");
     await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -37,6 +43,7 @@ export async function publishScreenerPack(directory: string, value: unknown, sel
     if (current.provider !== selection.provider || current.revision !== selection.revision) throw Error("screener_provider_changed");
     // Keep the final selection check and rename in the same event-loop turn.
     renameSync(temporary, target);
+    observeScreenerCorrectionRevision(target, pack.correctionRevision, pack.correctionGeneration);
     const folder = await open(directory, "r");
     try { await folder.sync(); } finally { await folder.close(); }
   } finally {

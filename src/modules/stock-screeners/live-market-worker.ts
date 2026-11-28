@@ -100,6 +100,7 @@ function socketSession(options: LiveSession) {
           if (typeof symbol !== "string" || !member.has(symbol)) continue;
           if (message.T === "c" || message.T === "x") {
             vwap?.invalidate(symbol);
+            prices.delete(symbol);
             pending.add(symbol);
             continue;
           }

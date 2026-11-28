@@ -1,6 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { easternClock } from "../scanner/live/sessions";
-import { readScreenerVwapSeeds, screenerSessionVwap, type LiveVwapTotals, type ScreenerVwapSeed } from "./candle-cache-reader";
+import { readCorrectedScreenerVwapSeeds, screenerSessionVwap, type LiveVwapTotals, type ScreenerVwapSeed } from "./candle-cache-reader";
 
 type TickerVwap = { quantity: number; notional: number; tradeAt: number; seed: ScreenerVwapSeed | null; invalid: boolean };
 const MAX_ATTEMPTS = 3;
@@ -18,7 +18,7 @@ export class LiveScreenerVwapWorker {
     private readonly liveFrom: number,
     private readonly sessionEnd: number,
     private readonly environment: NodeJS.ProcessEnv = process.env,
-    private readonly readSeeds = readScreenerVwapSeeds,
+    private readonly readSeeds = readCorrectedScreenerVwapSeeds,
   ) {
     if (sessionStart > liveFrom || liveFrom >= sessionEnd || [sessionStart, liveFrom, sessionEnd].some(value => !Number.isSafeInteger(value) || value % MINUTE !== 0)) {
       throw Error("screener_live_invalid_session");

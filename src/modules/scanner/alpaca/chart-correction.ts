@@ -25,14 +25,19 @@ export function parseChartCorrection(value: unknown): ChartCorrection {
   }, ...totals };
 }
 
-export type StoredChartCorrection = ChartCorrection & { correctionRevision?: number };
+export type StoredChartCorrection = ChartCorrection & {
+  correctionRevision?: number;
+  /** A witnessed prior OHLCV for exact same-basis comparisons across providers. */
+  before?: Candle;
+};
 
 export function parseStoredChartCorrection(input: unknown): StoredChartCorrection {
   const correction = parseChartCorrection(input);
-  const { correctionRevision } = input as StoredChartCorrection;
-  if (correctionRevision === undefined) return correction;
-  if (!Number.isSafeInteger(correctionRevision) || correctionRevision <= 0) throw Error("invalid_chart_correction");
-  return { ...correction, correctionRevision };
+  const { correctionRevision, before } = input as StoredChartCorrection;
+  if (correctionRevision !== undefined && (!Number.isSafeInteger(correctionRevision) || correctionRevision <= 0)) throw Error("invalid_chart_correction");
+  if (before === null) throw Error("invalid_chart_correction");
+  return { ...correction, ...(correctionRevision === undefined ? {} : { correctionRevision }),
+    ...(before === undefined ? {} : { before: parseChartCorrection({ ...correction, bar: before }).bar! }) };
 }
 
 export function applyChartCorrection(bars: Map<number, Candle>, { minute, bar }: ChartCorrection) {

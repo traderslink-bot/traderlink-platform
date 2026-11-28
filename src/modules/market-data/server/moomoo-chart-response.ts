@@ -1,5 +1,6 @@
 import "server-only";
 
+import { readAlpacaTradeCorrectionEvidence } from "@/src/modules/scanner/alpaca/client";
 import { dirname } from "node:path";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import { chartCatchUpWindow, chartHistoryPage, chartHistoryWindow } from "@/src/modules/scanner/alpaca/chart-history";
@@ -11,6 +12,7 @@ import { MoomooChartStream } from "./moomoo-chart-stream";
 import { requestMoomooMarketData } from "./moomoo-bridge";
 import { marketDataSelection, type MarketDataFeature } from "./provider-settings";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
+import { watchMoomooCorrections } from "./moomoo-correction-notices";
 import { browserChartEvent } from "./browser-chart-events";
 
 const shared = globalThis as typeof globalThis & {
@@ -21,7 +23,8 @@ function services(environment: NodeJS.ProcessEnv = process.env) {
   const registry: NonNullable<typeof shared.traderlinkMoomooCharts> = shared.traderlinkMoomooCharts ??= new Map();
   let current = registry.get(key);
   if (!current) {
-    const history = new MoomooChartHistory(request => requestMoomooMarketData(request, environment));
+    const history = new MoomooChartHistory(request => requestMoomooMarketData(request, environment),Date.now,
+      range=>readAlpacaTradeCorrectionEvidence(range,environment));
     const rest = { history: (request: AlpacaHistoryRequest) => {
       if (request.timeframe !== "1Min" && request.timeframe !== "1Day") throw Error("invalid_history_timeframe");
       return history.history({ ...request, timeframe: request.timeframe });
@@ -67,11 +70,11 @@ export async function moomooChartResponse(request: Request, stream: boolean, sym
   const body = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
-      let closed = false, release = () => {};
+      let closed = false, release = () => {}, stopCorrections = () => {};
       const timers: { check?: ReturnType<typeof setInterval> } = {};
       close = () => {
         if (closed) return;
-        closed = true; clearInterval(timers.check); release();
+        closed = true; clearInterval(timers.check); release(); stopCorrections();
         request.signal.removeEventListener("abort", close);
         if (controller.desiredSize !== null) controller.close();
       };
@@ -84,6 +87,15 @@ export async function moomooChartResponse(request: Request, stream: boolean, sym
         controller.enqueue(encoder.encode(`event: ${output.type}\ndata: ${JSON.stringify(output.data)}\n\n`));
       });
       if (closed) { release(); return; }
+      stopCorrections = watchMoomooCorrections(symbol, notice=>{
+        if (closed) return;
+        if (!current() || (controller.desiredSize ?? 0) < -16) { close();return; }
+        services().vwap.invalidateSymbol(symbol);
+        controller.enqueue(encoder.encode(`event: history-correction
+data: ${JSON.stringify(notice)}
+
+`));
+      });
       timers.check = setInterval(() => {
         if (closed) return;
         if (!current()) { close(); return; }

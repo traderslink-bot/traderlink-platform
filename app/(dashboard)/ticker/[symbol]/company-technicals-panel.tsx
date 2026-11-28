@@ -177,7 +177,8 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
             const next=await r.json() as CompanyTechnicals;
             if(!controller.signal.aborted){
               snapshotDate.current=clock.date;
-              setSnapshot(current=>({...next,days:next.days.length?next.days:current?.days??[]}));
+              setSnapshot(current=>({...next,days:next.days.length?next.days:
+                current?.days.filter(day=>!next.revisedRangeDates?.includes(day.date))??[]}));
             }
           }else if(!controller.signal.aborted)setSnapshot(current=>current??{days:[],row:null,scannerSignals:[]});
         }catch{if(!controller.signal.aborted)setSnapshot(current=>current??{days:[],row:null,scannerSignals:[]});}
@@ -247,10 +248,11 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
     }
     return [{...read,name}];
   });
-  const activity=broker?brokerTechnicals?.activity:row?.activity;
   const candleActivity=snapshot?.candleActivity;
   const brokerClock = brokerTechnicals?.asOf == null ? undefined : easternClock(brokerTechnicals.asOf);
   const currentDate=(broker?brokerClock:marketClock)?.date??"";
+  const rangesRevised=!broker&&snapshot?.revisedRangeDates?.includes(currentDate);
+  const activity=broker?brokerTechnicals?.activity:rangesRevised?undefined:row?.activity;
   const minute=marketClock?.minute??-1;
   const activeSession=broker?(brokerSession==="premarket"?0:brokerSession==="regular"?1:brokerSession==="after_hours"?2:-1):sample?1:minute>=240&&minute<1200 ? minute<570?0:minute<960?1:2 : -1;
   const todayRanges=sample?days[0]?.ranges:days.find(day=>day.date===currentDate)?.ranges;
@@ -261,17 +263,19 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
   const dayChange=headerBasis&&current!=null?(current/headerBasis-1)*100:null;
   const gap=regularClose&&regularOpen?(regularOpen/regularClose-1)*100:null;
   const sessionRanges=todayRanges?.filter(range=>range!==null)??[];
-  const dayVolume = broker?brokerVolumes?.dayVolume:row?.dayVolume ?? snapshot?.dayVolume;
-  const volume=broker?(brokerSession==="premarket"?brokerVolumes?.premarketVolume:brokerSession==="regular"?brokerVolumes?.regularVolume:brokerVolumes?.postMarketVolume):row?.volume??(sessionRanges.length?sessionRanges.reduce((sum,range)=>sum+range.volume,0):null);
+  const dayVolume=broker?brokerVolumes?.dayVolume:rangesRevised?snapshot?.dayVolume:row?.dayVolume??snapshot?.dayVolume;
+  const volume=broker?(brokerSession==="premarket"?brokerVolumes?.premarketVolume:brokerSession==="regular"?brokerVolumes?.regularVolume:brokerVolumes?.postMarketVolume):rangesRevised?snapshot?.sessionVolume:row?.volume??(sessionRanges.length?sessionRanges.reduce((sum,range)=>sum+range.volume,0):null);
   const float=broker?brokerProfileFacts?.float:row?.float??snapshot?.listedFloat;
   const brokerRelativeVolume = brokerTechnicals?.relativeVolume ?? null;
   const turnover=float&&volume!=null?volume/float*100:null;
-  const high=broker?brokerQuote?.dayHigh:row?.dayHigh??(sessionRanges.length?Math.max(...sessionRanges.map(range=>range.high)):null);
-  const low=broker?brokerQuote?.dayLow:row?.dayLow??(sessionRanges.length?Math.min(...sessionRanges.map(range=>range.low)):null);
-  const offHigh=high&&current!=null?(current/high-1)*100:row?.offHighPercent;
+  const rangeHigh=sessionRanges.length?Math.max(...sessionRanges.map(range=>range.high)):null;
+  const rangeLow=sessionRanges.length?Math.min(...sessionRanges.map(range=>range.low)):null;
+  const high=broker?brokerQuote?.dayHigh:(rangesRevised?null:row?.dayHigh)??rangeHigh;
+  const low=broker?brokerQuote?.dayLow:(rangesRevised?null:row?.dayLow)??rangeLow;
+  const offHigh=high&&current!=null?(current/high-1)*100:rangesRevised?null:row?.offHighPercent;
   const post=todayRanges?.[2];
   const todayClose=todayRanges?.[1]?.close;
-  const afterHours=broker?(brokerSession==="after_hours"&&brokerQuote?.regularClose?(brokerQuote.price/brokerQuote.regularClose-1)*100:null):row?.postMarketGain??(post&&todayClose?(post.close/todayClose-1)*100:null);
+  const afterHours=broker?(brokerSession==="after_hours"&&brokerQuote?.regularClose?(brokerQuote.price/brokerQuote.regularClose-1)*100:null):(rangesRevised?null:row?.postMarketGain)??(post&&todayClose?(post.close/todayClose-1)*100:null);
   const bid=broker?brokerBook?.bid:snapshot?.bid;
   const ask=broker?brokerBook?.ask:snapshot?.ask;
   const displayed=[
@@ -283,11 +287,11 @@ export function CompanyTechnicalsPanel({symbol,sample,active,inDrawer,header,chi
       [SCANNER_VOLUME_LABELS.regularVolume,brokerVolumes?.regularVolume,"shares"],
       [SCANNER_VOLUME_LABELS.postMarketVolume,brokerVolumes?.postMarketVolume,"shares"],
     ] as const):[]),
-    ["Dollar Vol",broker?brokerQuote?.sessionTurnover:row?.dollarVolume??snapshot?.dollarVolume,"$compact"],["Float",float,""],
-    ["Float turnover",turnover,"%"],["Relative Vol",broker?brokerRelativeVolume:row?.relativeVolume??snapshot?.relativeVolume,"×"],["Market cap",broker?brokerProfileFacts?.marketCap:row?.marketCap??snapshot?.listedMarketCap,"$compact"],
+    ["Dollar Vol",broker?brokerQuote?.sessionTurnover:rangesRevised?snapshot?.dollarVolume:row?.dollarVolume??snapshot?.dollarVolume,"$compact"],["Float",float,""],
+    ["Float turnover",turnover,"%"],["Relative Vol",broker?brokerRelativeVolume:rangesRevised?snapshot?.relativeVolume:row?.relativeVolume??snapshot?.relativeVolume,"×"],["Market cap",broker?brokerProfileFacts?.marketCap:row?.marketCap??snapshot?.listedMarketCap,"$compact"],
     ["Distance from high",offHigh,"%"],["After-hours change",afterHours,"%"],["Day high",high,"$"],["Day low",low,"$"],
     ["10d avg vol",broker?null:averageVolumes[0],""],["3mth avg vol",broker?null:averageVolumes[1],""],
-    ["Bid",bid,"$"],["Ask",ask,"$"],["Spread",bid&&ask?(ask-bid)/((ask+bid)/2)*100:row?.spreadPercent,"%"],["VWAP",(reads?.frame===frame?reads.vwap:null)??snapshot?.sessionVwap,"$"],
+    ["Bid",bid,"$"],["Ask",ask,"$"],["Spread",bid&&ask?(ask-bid)/((ask+bid)/2)*100:row?.spreadPercent,"%"],["VWAP",rangesRevised?snapshot?.sessionVwap:(reads?.frame===frame?reads.vwap:null)??snapshot?.sessionVwap,"$"],
     ["1m change",activity?.oneMinuteGain??candleActivity?.oneMinuteGain,"%"],["5m change",activity?.fiveMinuteGain??candleActivity?.fiveMinuteGain,"%"],["1m Vol",activity?.oneMinuteVolume??candleActivity?.oneMinuteVolume,""],
     ["5m Vol",activity?.fiveMinuteVolume??candleActivity?.fiveMinuteVolume,""],["1min dollar vol",activity?.oneMinuteDollarVolume,"$compact"],["5min Vol spike",activity?.fiveMinuteVolumeSpike??candleActivity?.fiveMinuteVolumeSpike,"×"],
   ] as const;

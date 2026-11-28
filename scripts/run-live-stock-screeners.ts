@@ -35,13 +35,17 @@ async function runSelection(settings: Record<string, string>, transport: Screene
     const secret = await privateConfiguration(settings.credentialsFile);
     if (!secret.keyId || !secret.secretKey) throw Error("invalid_worker_configuration");
     credentials = { keyId: secret.keyId, secretKey: secret.secretKey };
+  }
+  // The correction ledger is provider-neutral invalidation input. Loading its
+  // existing private token does not load Alpaca broker keys for a linked feed.
+  if (settings.gatewayTokenFile && settings.gatewayUrl) {
     const gateway = await privateConfiguration(settings.gatewayTokenFile);
     if (!gateway.token || gateway.token.length < 32 || !settings.gatewayUrl) throw Error("invalid_worker_configuration");
     environment = { NODE_ENV: "development", TRADERLINK_ALPACA_GATEWAY_URL: settings.gatewayUrl,
       TRADERLINK_ALPACA_GATEWAY_TOKEN: gateway.token,
       ...(process.env.TRADERLINK_GATEWAY_CONTRACT ? { TRADERLINK_GATEWAY_CONTRACT: process.env.TRADERLINK_GATEWAY_CONTRACT } : {}) };
-  }
-  const collector = new ScreenerSnapshotCollector(transport, selection, signal, credentials);
+  } else if (selection.provider === "alpaca") throw Error("invalid_worker_configuration");
+  const collector = new ScreenerSnapshotCollector(transport, selection, signal, credentials, environment);
   async function snapshots() {
     while (!signal.aborted) {
       const started = Date.now();
@@ -63,9 +67,7 @@ async function runSelection(settings: Record<string, string>, transport: Screene
       try {
         const reference = await collector.referenceData();
         const date = easternClock(Date.now()).date;
-        const startDate = new Date(Date.now() - 540 * 86_400_000).toISOString().slice(0, 10);
-        const endDate = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
-        const days = parseCalendarSessions(reference.calendar, startDate, endDate);
+        const days = parseCalendarSessions(reference.calendar, reference.calendarRange.start, reference.calendarRange.end);
         const day = days.find(row => row.date === date);
         const session = day && (["premarket", "regular", "after_hours"] as const).find(phase => {
           const bounds = sessionBounds(day, phase);

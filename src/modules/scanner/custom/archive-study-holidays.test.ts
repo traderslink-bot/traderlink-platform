@@ -75,6 +75,9 @@ it("reads the stock and benchmark through the Scanner gateway on Thanksgiving an
     studies.value("CLRO", "1D", "returnVsSpy", 2, at);
     await vi.waitFor(() => expect(changed).toHaveBeenCalled());
     expect(studies.value("CLRO", "1D", "returnVsSpy", 2, at)).toBe(0);
+    studies.invalidateCorrectedSymbol("SPY");
+    expect(studies.value("CLRO", "1D", "returnVsSpy", 2, at)).toBeNull();
+    await vi.waitFor(() => expect(studies.value("CLRO", "1D", "returnVsSpy", 2, at)).toBe(0));
     expect(await read(q)).toMatchObject({ state: "ready", basisDate: "2026-11-25", bars });
     expect(await read(q, false)).toEqual({ state: "miss" });
     expect(await read({ ...q, start: q.start - 1 })).toEqual({ state: "miss" });

@@ -4,14 +4,15 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { AlpacaRestData } from "../src/modules/scanner/alpaca/rest-data";
 import { easternClock } from "../src/modules/scanner/live/sessions";
-import { collectMarketPack, type BarCache } from "../src/modules/stock-screeners/collect-market";
+import { collectMarketPack, type BarCache, type ScreenerCalendarRange } from "../src/modules/stock-screeners/collect-market";
 import { collectListings } from "../src/modules/stock-screeners/listings";
 import { DEFAULT_DEFINITION, type Rule } from "../src/modules/stock-screeners/contracts";
 import { querySnapshot, sortRows } from "../src/modules/stock-screeners/query";
 import { readMarketPack } from "../src/modules/stock-screeners/snapshot-file";
+import { screenerCorrections } from "../src/modules/stock-screeners/trade-corrections";
 
 type ReferenceCache = {
-  calendar?: { date: string; value: unknown };
+  calendar?: { date: string; value: unknown; range: ScreenerCalendarRange };
   universe?: { date: string; value: Awaited<ReturnType<typeof collectListings>> };
 };
 
@@ -44,7 +45,7 @@ async function collect(
   if (reference.calendar?.date !== date) {
     const response = await fetch(calendarUrl, { headers, redirect: "error", signal: AbortSignal.timeout(12_000) });
     if (!response.ok) throw Error("calendar_unavailable");
-    reference.calendar = { date, value: await response.json() };
+    reference.calendar = { date, value: await response.json(), range: { start, end } };
   }
   if (reference.universe?.date !== date) {
     const value = await collectListings(headers);
@@ -71,8 +72,10 @@ async function collect(
     return response;
   });
   const { stocks, listingDate, partialCaps } = reference.universe.value;
-  const pack = await collectMarketPack({ calendar: reference.calendar.value, stocks, universeDate: listingDate, partialCaps,
+  const pack = await collectMarketPack({ calendar: reference.calendar.value, calendarRange: reference.calendar.range,
+    stocks, universeDate: listingDate, partialCaps,
     now, clock: Date.now, cache,
+    corrections: screenerCorrections(process.env),
     data: { async get(path, params) {
       if (quotaStopped) throw Error("provider_budget_reserved");
       const startAt = Math.max(Date.now(), nextRequest);

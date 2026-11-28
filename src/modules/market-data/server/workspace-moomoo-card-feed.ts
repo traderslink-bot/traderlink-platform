@@ -5,7 +5,7 @@ import type { WorkspaceMoomooBook, WorkspaceMoomooQuote, WorkspaceQuoteSession }
 import type { WorkspaceMoomooConnection } from "./workspace-moomoo-access";
 import { runWorkspaceRestCards, runWorkspaceWebSocketCards, type WorkspaceCardTransportStatus } from "./workspace-moomoo-card-transport";
 import { RollingActivityBook } from "@/src/modules/scanner/live/activity";
-import { readWorkspaceRelativeVolume, workspaceVolumeThrough } from "./workspace-broker-volume-history";
+import { readWorkspaceRelativeVolume, readWorkspaceVolumeRevisions, workspaceVolumeThrough } from "./workspace-broker-volume-history";
 
 type QuoteEntry = Readonly<{ quote?: WorkspaceMoomooQuote; book?: WorkspaceMoomooBook }>;
 type CardViewer = {
@@ -48,6 +48,8 @@ class WorkspaceMoomooCardFeed {
   private lastPublishAt = 0;
   private activity = new RollingActivityBook(true);
   private relativeVolumes = new Map<string, { value: number | null; through: number; retryAt: number }>();
+  private volumeRevisions = new Map<string, string>();
+  private volumeRevisionTimer?: ReturnType<typeof setInterval>;
   private volumeHistoryInProgress = false;
 
   constructor(private readonly onEmpty: () => void) {}
@@ -86,7 +88,10 @@ class WorkspaceMoomooCardFeed {
       : JSON.stringify(["rest", settings.restBatchSize, settings.restSpacingMs, settings.restPassWaitMs]);
     const changedTransport = this.sessionKey !== sessionKey || this.transportKey !== transportKey;
     const changedInterval = this.settings?.cardRefreshMs !== settings.cardRefreshMs;
-    if (this.sessionKey !== sessionKey) this.relativeVolumes.clear();
+    if (this.sessionKey !== sessionKey) {
+      this.relativeVolumes.clear();
+      this.volumeRevisions.clear();
+    }
     this.sessionKey = sessionKey;
     this.transportKey = transportKey;
     this.session = session;
@@ -98,6 +103,7 @@ class WorkspaceMoomooCardFeed {
       if (!active.has(symbol)) {
         this.latest.delete(symbol);
         this.published.delete(symbol);
+        this.volumeRevisions.delete(symbol);
       }
     }
     if (changedTransport || !session || !this.demanded.length) this.stopTransport();
@@ -148,14 +154,21 @@ class WorkspaceMoomooCardFeed {
         if (nextQuote) void this.primeRelativeVolume(input.connection, session, signal);
       },
     };
+    if (process.env.TRADERLINK_ALPACA_GATEWAY_URL) this.watchVolumeRevisions(input.connection, session, signal);
     const run = settings.cardTransport === "websocket" ? runWorkspaceWebSocketCards : runWorkspaceRestCards;
     void run(input).catch(() => input.status("unavailable")).finally(() => {
-      if (this.transport === controller) this.transport = undefined;
+      if (this.transport === controller) {
+        clearInterval(this.volumeRevisionTimer);
+        this.volumeRevisionTimer = undefined;
+        this.transport = undefined;
+      }
     });
   }
 
   private stopTransport() {
     this.transport?.abort();
+    clearInterval(this.volumeRevisionTimer);
+    this.volumeRevisionTimer = undefined;
     this.transport = undefined;
     clearTimeout(this.pending);
     this.pending = undefined;
@@ -179,6 +192,37 @@ class WorkspaceMoomooCardFeed {
     for (const viewer of this.viewers) viewer.notify();
   }
 
+  private watchVolumeRevisions(connection: () => WorkspaceMoomooConnection | undefined, session: WorkspaceQuoteSession, signal: AbortSignal) {
+    let pending = false;
+    const check = async () => {
+      if (pending || signal.aborted || !connection()) return;
+      const symbols = this.demanded.filter(symbol => this.latest.get(symbol)?.quote);
+      if (!symbols.length) return;
+      pending = true;
+      try {
+        const through = workspaceVolumeThrough(Date.now());
+        const timeout = AbortSignal.any([signal, AbortSignal.timeout(5_000)]);
+        const revisions = await readWorkspaceVolumeRevisions(symbols, session.date, through, timeout);
+        if (timeout.aborted || !connection() || through !== workspaceVolumeThrough(Date.now())) return;
+        let changed = false;
+        for (const [symbol, revision] of revisions) {
+          if (!this.latest.has(symbol) || this.volumeRevisions.get(symbol) === revision) continue;
+          this.volumeRevisions.set(symbol, revision);
+          this.relativeVolumes.delete(symbol);
+          changed = true;
+        }
+        if (changed) {
+          this.schedulePublish();
+          void this.primeRelativeVolume(connection, session, signal);
+        }
+      } catch {
+        // Leave current broker data intact if revision metadata is temporarily unavailable.
+      } finally { pending = false; }
+    };
+    this.volumeRevisionTimer = setInterval(() => void check(), 30_000);
+    this.volumeRevisionTimer.unref();
+  }
+
   private async primeRelativeVolume(connection: () => WorkspaceMoomooConnection | undefined, session: WorkspaceQuoteSession, signal: AbortSignal) {
     if (this.volumeHistoryInProgress) return;
     this.volumeHistoryInProgress = true;
@@ -193,8 +237,10 @@ class WorkspaceMoomooCardFeed {
             (existing?.through !== through || existing.retryAt <= now));
         });
         if (!active || !symbol) return;
+        const revision = this.volumeRevisions.get(symbol);
         const volume = await readWorkspaceRelativeVolume(symbol, session, through, active, signal).catch(() => null);
         if (signal.aborted) return;
+        if (this.volumeRevisions.get(symbol) !== revision) continue;
         this.relativeVolumes.set(symbol, { value: volume, through, retryAt: volume === null ? Date.now() + 300_000 : Infinity });
         if (this.relativeVolumes.size > 2000) this.relativeVolumes.delete(this.relativeVolumes.keys().next().value!);
         this.schedulePublish();

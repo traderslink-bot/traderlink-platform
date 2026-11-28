@@ -1279,15 +1279,18 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       const idleStatus=()=>!bars.size?"No candles for this symbol.":!displayPoints.length?"No candles in selected sessions.":"";
       let recentHistory = useRecentHistory && !cached;
       let catchingUp = Boolean(cached);
+      let historyCorrection: string | undefined, appliedHistoryCorrection: string | undefined;
+      const correctedHistoryMinutes = new Set<number>();
       const loadHistory = async (initialRequest?: ReturnType<typeof requestHistory>) => {
         if (loading) { reloadAfter = true; return; }
         loading = true;
         // Every refresh after the first paint must finish any outstanding warm-up.
         const warmup = loaded && !indicatorsReady;
+        const repair = historyCorrection !== appliedHistoryCorrection ? historyCorrection : undefined;
         try {
-          let recent = !warmup && recentHistory && (!loaded || historyBasisDate === easternClock(Date.now()).date);
-          const deltaRequested = Boolean(initialRequest && catchUpFrom !== null);
-          let data = { ...await (initialRequest ?? requestHistory(recent)).catch(error => {
+          let recent = !repair && !warmup && recentHistory && (!loaded || historyBasisDate === easternClock(Date.now()).date);
+          const deltaRequested = Boolean(!repair && initialRequest && catchUpFrom !== null);
+          let data = { ...await (repair ? requestHistory(false,null,false) : initialRequest ?? requestHistory(recent)).catch(error => {
             if (!deltaRequested || abort.signal.aborted) throw error;
             return requestHistory();
           }) };
@@ -1337,6 +1340,14 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             if(warmup || initial || catchingUp || newBasis){nextBefore=data.nextBefore??null;}
           }
           catchingUp = false;
+          if (repair && !delta) {
+            for (const minute of correctedHistoryMinutes) {
+              const time = daily ? easternDayStart(minute) : minute;
+              bars.delete(time);
+              queued.delete(time);
+            }
+            if (data.complete !== false) appliedHistoryCorrection = repair;
+          }
           for (const bar of data.bars as Candle[]) bars.set(bar.time, bar);
           for (const bar of queued.values()) bars.set(bar.time, bar);
           if (!daily) for (const correction of tradeCorrections.values()) applyChartCorrection(bars, correction);
@@ -1551,7 +1562,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           overnightLiveRevisions.set(bar.time, ++overnightRevision);
           if (!loaded) return;
         } else {
-          if (!daily && tradeCorrections.has(bar.time)) return;
+          if ((!daily && tradeCorrections.has(bar.time)) || correctedHistoryMinutes.has(bar.time)) return;
           lastBarReceivedAt = Date.now();
           if (!loaded || loading || catchingUp) queued.set(bar.time, bar);
           if (historyBasisDate && historyBasisDate !== easternClock(Date.now()).date) {
@@ -1657,6 +1668,21 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
         haltStatusAt=at;chartHalted=message.status.halted;renderPriceGuide();updateIndicatorLegend();
       });
       source.addEventListener("bar", event => receiveBar(event, false));
+      source.addEventListener("history-correction", event => {
+        if (disposed) return;
+        let notice: {symbol?:unknown;revision?:unknown;minutes?:unknown};
+        try { notice=JSON.parse((event as MessageEvent).data); } catch { return; }
+        if (!notice || notice.symbol!==ticker || typeof notice.revision!=="string" || !/^[a-f0-9]{64}$/.test(notice.revision) ||
+          notice.revision===historyCorrection || !Array.isArray(notice.minutes) || notice.minutes.length>4_096 ||
+          notice.minutes.some(time=>!Number.isSafeInteger(time)||time<=0||time%60)) return;
+        historyCorrection=notice.revision;
+        for (const minute of notice.minutes as number[]) correctedHistoryMinutes.add(minute);
+        tradeCorrectionRevision++;
+        calculationHistory.invalidate();
+        calculationContexts.clear(); contextCoverage.clear(); contextFailures.clear();
+        if (cacheKey) recentChartCandles.delete(cacheKey);
+        void loadHistory();
+      });
       source.addEventListener("chart-correction", event => {
         let correction: ChartCorrection;
         try { correction = parseChartCorrection(JSON.parse((event as MessageEvent).data)); }

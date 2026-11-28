@@ -796,6 +796,10 @@ it("shares the five-minute swing snapshot across reconnects while live results s
     expect(market.evaluations).toBe(2);
     vi.setSystemTime(start + SWING_DETECTION_INTERVAL_MS);
     expect(await next(true)).toBe(1);
+    // A confirmed correction must invalidate a saved swing result within its current interval.
+    market.invalidateCorrectedSymbol(stock.symbol);
+    market.set("open", Date.now(), "regular", [{ ...stock, price: 2, observedAt: Date.now() }]);
+    expect(await next(true)).toBe(0);
   } finally {
     await Promise.all(readers.map(reader => reader.cancel()));
     vi.useRealTimers();

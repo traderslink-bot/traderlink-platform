@@ -39,6 +39,7 @@ import {
 import { getWatchlistCountryFlag } from "@/src/lib/live-watchlist/watchlist-country-flag";
 import { buildWatchlistHighRiskWarning } from "@/src/lib/live-watchlist/watchlist-high-risk-warning";
 import {
+  applyDetailPotentialPath,
   reconcileLiveWatchlistSymbolState,
 } from "@/src/lib/live-watchlist/live-watchlist-reconciliation";
 import {
@@ -1847,14 +1848,14 @@ export function LiveWatchlistDetailClient({
           next.membershipLevelsAllowed = payload.symbol.membershipLevelsAllowed;
           next.premiumLevelsPreview = payload.symbol.premiumLevelsPreview ?? null;
           next.watchlistUpgradeLinks = payload.symbol.watchlistUpgradeLinks;
-          if(next.premiumLevelsAllowed !== false) { next.levelMap=payload.symbol.levelMap; next.nearestSupport=payload.symbol.nearestSupport; next.nearestResistance=payload.symbol.nearestResistance; next.nearestSupportLabel=payload.symbol.nearestSupportLabel; next.nearestResistanceLabel=payload.symbol.nearestResistanceLabel; for(const kind of ["levelMap","nearestSupportResistance","fullLadder"] as const) { if(payload.symbol.cards[kind]) next.cards[kind]=payload.symbol.cards[kind]; else delete next.cards[kind]; } }
+
           next.premiumAnalysisPricesAllowed = payload.symbol.premiumAnalysisPricesAllowed;
           next.premiumAnalysisPreview = payload.symbol.premiumAnalysisPreview ?? null;
           if (next.premiumAnalysisPricesAllowed === false) {
             delete next.cards.tradersLinkAiRead;
             delete next.cards.liveTraderRead;
           }
-          return watchlistDetailProjection(next, payload.symbol.membershipAnalysisAllowed !== false);
+          return watchlistDetailProjection(applyDetailPotentialPath(next, current, payload.symbol), payload.symbol.membershipAnalysisAllowed !== false);
         });
         setMarketDataStatus(payload.marketDataStatus);
       }
@@ -1869,7 +1870,15 @@ export function LiveWatchlistDetailClient({
       if (next.symbol === initialSymbol.symbol) {
         // The stream updates list/quote facts only. Polling refreshes detail
         // through the endpoint that rechecks current plan access.
-        setSymbol((current) => watchlistDetailProjection(reconcileLiveWatchlistSymbolState(current, { ...current, ...next, cards: current.cards }), current.membershipAnalysisAllowed !== false));
+        setSymbol((current) => {
+          // SSE carries no private map. Accept a withdrawal immediately. Only a
+          // permission-checked detail response may install replacement levels.
+          const withdraw = next.pathCorrection?.held && next.pathCorrection.stamp >= (current.pathCorrection?.stamp ?? 0);
+          const hint = { ...current, ...next, cards: current.cards,
+            pathCorrection: withdraw ? next.pathCorrection : current.pathCorrection };
+          const merged = reconcileLiveWatchlistSymbolState(current, hint);
+          return watchlistDetailProjection(applyDetailPotentialPath(merged, current, hint), current.membershipAnalysisAllowed !== false);
+        });
       }
     });
     stream.addEventListener("health", (event) => {

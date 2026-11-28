@@ -9,8 +9,28 @@ import { collectMoomooQuotePack } from "./moomoo-quote-pack";
 import { validateMarketPack } from "./snapshot-file";
 
 const from = Date.parse("2026-11-13T14:30:00Z"), until = from + 30 * 60_000;
-const raw = (time: number, price = 100) => ({ time_key: time, open: price, high: price, low: price,
+const raw = (time: number, price = 100, interval = 300_000) => ({ time_key: time + interval, open: price, high: price, low: price,
   close: price, volume: 1_000, turnover: price * 1_000 });
+
+it.each(["5Min", "15Min"] as const)("places native end-labelled %s candles in the opening bucket and ignores future empty slots", async timeframe => {
+  const interval = timeframe === "15Min" ? 900_000 : 300_000;
+  const data = new MoomooScreenerData(async operation => operation.operation === "rehab"
+    ? { ret_code: 0, data: { rehabs: [] } }
+    : { ret_code: 0, data: { kline_list: [raw(from, 4, interval), { time_key: Date.now() + 86_400_000 }] }, pagination: { has_more: false } }, "2026-11-17");
+  const result = await loadBars(data, ["ABC"], timeframe, from, from + interval - 1, "2026-11-17");
+  expect(result.rejected.size).toBe(0);
+  expect([...result.grouped.get("ABC")!.keys()]).toEqual([from / 1000]);
+});
+
+it("keeps the native daily trading date when its timestamp falls on the prior Eastern day", async () => {
+  const data = new MoomooScreenerData(async operation => operation.operation === "rehab"
+    ? { ret_code: 0, data: { rehabs: [] } }
+    : { ret_code: 0, data: { kline_list: [{ ...raw(Date.parse("2026-11-17T00:00:00Z"), 4, 0), date: 20261117 }] } }, "2026-11-17");
+  const begin = Date.parse("2026-11-17T05:00:00Z");
+  const result = await loadBars(data, ["ABC"], "1Day", begin, begin + 86_400_000 - 1, "2026-11-17");
+  expect(result.rejected.size).toBe(0);
+  expect([...result.grouped.get("ABC")!.keys()]).toEqual([begin / 1000]);
+});
 
 it("paginates raw history and applies only split/consolidation ratios to price and volume", async () => {
   const calls: MoomooScreenerOperation[] = [];
@@ -96,7 +116,7 @@ it("runs the full metric collector with Moomoo pages and resets another provider
   const priorOpen = sessionBounds(calendar.at(-2)!, "regular").from;
   const current = Array.from({ length: 26 }, (_, i) => raw(open + i * 300_000, i < 15 ? 10 : 12));
   const previous = Array.from({ length: 78 }, (_, i) => raw(priorOpen + i * 300_000, 10));
-  const baseline = calendar.slice(-11, -1).flatMap(date => Array.from({ length: 26 }, (_, i) => raw(sessionBounds(date, "regular").from + i * 900_000, 10)));
+  const baseline = calendar.slice(-11, -1).flatMap(date => Array.from({ length: 26 }, (_, i) => raw(sessionBounds(date, "regular").from + i * 900_000, 10, 900_000)));
   const cache: BarCache = { key: "", daily: new Map(), intraday: new Map() };
   const read = vi.fn(async (operation: MoomooScreenerOperation) => {
     if (operation.operation === "rehab") return { ret_code: 0, data: { rehabs: [] } };

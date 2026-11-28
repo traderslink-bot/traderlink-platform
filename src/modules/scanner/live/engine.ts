@@ -106,6 +106,10 @@ class FocusSelection {
 export class LiveScannerEngine {
   private revisionDate = "";
   private confirmedRevisions = new Map<string, number>();
+  acceptsCorrectionRevision(snapshot: NormalizedSnapshot) {
+    return snapshot.provider !== "alpaca" || snapshot.tradingDate !== this.revisionDate ||
+      (snapshot.correctionRevision ?? 0) >= (this.confirmedRevisions.get(snapshot.symbol) ?? 0);
+  }
   private forgetCorrectedSymbol(symbol: string) {
     for (const book of [this.activity, this.breakouts, this.declines, this.premarketPullbacks,
       this.gainerRetention, this.dayGainerRetention, this.momentumEvents, this.momentumRetention,
@@ -130,7 +134,7 @@ export class LiveScannerEngine {
   evaluate(input: Readonly<{
     universe: DailyUniverse; tradingDate: string; session: ScannerSession; snapshots: readonly NormalizedSnapshot[];
     floats: ReadonlyMap<string,FloatFact>; news: ReadonlyMap<string,readonly ScannerNewsItem[]>;
-    configuration: ScannerConfiguration; now: number;
+    configuration: ScannerConfiguration; now: number; onCorrection?: (symbol: string) => void;
   }>): Readonly<{ gainers: LiveScreenResults; dayGainers: LiveScreenResults; momentum: LiveScreenResults; breakouts?:readonly BreakoutRow[]; declines?:DeclineResults; premarketPullbacks?:PremarketPullbackResults; missingFloatCount: number; audit: readonly ScannerAuditDecision[] }> {
     if (input.universe.tradingDate !== input.tradingDate) throw Error("scanner_universe_not_current");
     if (!input.configuration.enabled) { this.clear(); return { gainers: EMPTY, dayGainers: EMPTY, momentum: EMPTY, missingFloatCount: 0, audit: [] }; }
@@ -152,9 +156,10 @@ export class LiveScannerEngine {
       if (snapshot.provider !== "alpaca" || !eligibleContext(snapshot)) return true;
       const prior = this.confirmedRevisions.get(snapshot.symbol) ?? 0;
       const revision = snapshot.correctionRevision ?? 0;
-      if (revision < prior) return false;
+      if (!this.acceptsCorrectionRevision(snapshot)) return false;
       if (revision > prior) {
         this.forgetCorrectedSymbol(snapshot.symbol);
+        input.onCorrection?.(snapshot.symbol);
         this.confirmedRevisions.set(snapshot.symbol, revision);
       }
       return true;

@@ -203,12 +203,22 @@ export class LiveScannerFeed {
         && this.model.receivedCount > 0 && (issues.has("snapshot_pass_unavailable") || issues.has("snapshot_batch_unavailable"))) {
         return this.read();
       }
-      this.recordMarketMovement(snapshots);
-      const detected = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)() });
+      const corrected = new Set<string>();
+      const detected = this.engine.evaluate({ universe, tradingDate: date, session, snapshots, floats, news: new Map(), configuration, now: (this.dependencies.now ?? Date.now)(),
+        onCorrection: symbol => {
+          corrected.add(symbol);
+          this.lastSnapshotBySymbol.delete(symbol);
+          this.lastMovementBySymbol.delete(symbol);
+          this.customMarket?.invalidateCorrectedSymbol(symbol);
+          this.enrichment?.invalidateCorrectedSymbol(symbol);
+        },
+      });
+      const currentSnapshots = snapshots.filter(snapshot => this.engine.acceptsCorrectionRevision(snapshot));
+      this.recordMarketMovement(currentSnapshots);
       this.haltedSymbols = (await haltRead) ?? this.haltedSymbols;
       const sameContext = this.lastGainerContext === verifiedContext.key && this.model.session === session;
       const evaluated = sameContext && this.haltedSymbols.size
-        ? { ...detected, ...retainHaltedScannerRows(detected, this.model, this.haltedSymbols, allowedSymbols, configuration) }
+        ? { ...detected, ...retainHaltedScannerRows(detected, this.model, new Set([...this.haltedSymbols].filter(symbol => !corrected.has(symbol))), allowedSymbols, configuration) }
         : detected;
       const visibleSymbols = [...new Set([evaluated.gainers.rows,evaluated.gainers.focus,evaluated.dayGainers.rows,evaluated.momentum.rows,evaluated.momentum.focus,evaluated.momentum.momentumSections?.confirmed??[],evaluated.momentum.momentumSections?.early??[]]
         .flatMap(rows => rows.map(row => row.symbol)).concat(evaluated.declines?[...evaluated.declines.rapid,...evaluated.declines.losers].map(row=>row.symbol):[],evaluated.premarketPullbacks?.rows.map(row=>row.symbol)??[],evaluated.breakouts?.map(row=>row.symbol)??[]))];
@@ -232,7 +242,7 @@ export class LiveScannerFeed {
         const industries = await this.dependencies.industries?.(date).catch(() => undefined);
         const stocks = new Map<string, UniverseStock>(universe.stocks.map(stock => [stock.symbol, stock]));
         const collectionCaps = new Map(filtered.stocks.map(stock => [stock.symbol, stock.marketCapAtCollection]));
-        const rows = snapshots.flatMap(snapshot => {
+        const rows = currentSnapshots.flatMap(snapshot => {
           const stock = stocks.get(snapshot.symbol);
           return stock ? [scanRowFromSnapshot(snapshot, {
             exchange: stock.exchange, country: countries.get(stock.symbol), industry: industries?.get(stock.symbol), ipoDate:ipoDates?.get(stock.symbol),

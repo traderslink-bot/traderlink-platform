@@ -1,0 +1,7 @@
+# Live Watchlist Potential Path ordering
+
+Current ticker state stores the Runtime's Potential Path stamp and withdrawal flag in its existing JSON. The ingest route checks their types and the store compares stamps inside the existing serialized SQLite or optimistic Neon mutation. A late card or quote can still update unrelated fields. It cannot replace newer derived levels. A withdrawal clears the support and resistance values and labels, full ladder, card metadata and masked level preview. Reading saved current state and restoring an archived activation respect the withdrawal. Historical analyses remain as recorded.
+
+The detail page accepts a withdrawal from its list stream. Replacement levels come from the existing permission-checked detail response. A delayed detail response cannot restore a superseded ladder. Existing rows without a stamp follow their current behavior until the writer supplies the first stamp. Deploy this reader before the new Runtime writer. An older writer cannot repopulate protected levels after withdrawal.
+
+The 51 store and 7 reconciliation tests passed. The new SQLite case closes and reopens a disposable database, replays a stale card, accepts a newer quote, and exercises archive restoration and qualified replacement. The browser state test checks a late poll, a newer replacement and restricted access. Focused TypeScript passed including the detail page and ingest route. No database migration is required.

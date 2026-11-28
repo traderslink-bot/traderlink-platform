@@ -3,6 +3,7 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import type { AlpacaHistoryFrame, AlpacaHistoryResult } from "./rest-data";
 import { chartSymbol } from "./candles";
+import { parseDurableTradeCorrections, type TradeCorrectionRange } from "./durable-trade-corrections";
 import { parseTradeRevisions, tradeRevisionQuery, type TradeRevisionRequest } from "./trade-revisions";
 import { validateScannerSignalBars, type ScannerSignalBars } from "./scanner-signal-bars";
 import type { CandleArchiveAdmin } from "../../market-data/candle-history/transport";
@@ -14,7 +15,7 @@ export function alpacaMarketDataEnabled(environment: NodeJS.ProcessEnv = process
 }
 
 /** Server-to-server only. No broker key is ever loaded by Platform/Railway. */
-export async function requestAlpacaGateway(path: "candle-history" | "accepted-input" | "accepted-input-candle" | "accepted-daily-context" | "accepted-regular-opportunities" | "accepted-map-monitor" | "scanner-listings" | "scanner-signal-bars" | "trade-revisions" | "calendar" | "vwap-seed" | "chart-splits" | "history" | "quotes" | "overnight" | "halts", query: URLSearchParams, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal, admission?: SavedScannerMapAdmission): Promise<unknown> {
+export async function requestAlpacaGateway(path: "candle-history" | "accepted-input" | "accepted-input-candle" | "accepted-daily-context" | "accepted-regular-opportunities" | "accepted-map-monitor" | "scanner-listings" | "scanner-signal-bars" | "trade-revisions" | "trade-correction-evidence" | "calendar" | "vwap-seed" | "chart-splits" | "history" | "quotes" | "overnight" | "halts", query: URLSearchParams, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal, admission?: SavedScannerMapAdmission): Promise<unknown> {
   const { base, token } = await gatewayLocation(environment);
   const wire=gatewayWireEnabled(environment);
   const url = wire?gatewayWireUrl(base,path,query):new URL(path, base.endsWith("/") ? base : base + "/"); if(!wire)url.search = query.toString();
@@ -79,4 +80,15 @@ export async function readAlpacaHistory(input: { symbol: string; timeframe: Alpa
 export async function readAlpacaTradeRevisions(request: TradeRevisionRequest, environment = process.env, signal?: AbortSignal) {
   const payload = await requestAlpacaGateway("trade-revisions", tradeRevisionQuery(request), environment, signal);
   return parseTradeRevisions(payload, request);
+}
+
+
+/** Private server seam for comparing provider-native US raw historical minutes. */
+export async function readAlpacaTradeCorrectionEvidence(input: TradeCorrectionRange, environment = process.env, signal?: AbortSignal) {
+  if (!environment.TRADERLINK_ALPACA_GATEWAY_URL) return;
+  const range = { ...input, symbol: chartSymbol(input.symbol) };
+  const query = new URLSearchParams({ symbol: range.symbol, start: String(range.start), end: String(range.end), ...(range.daily?{daily:"1"}:{}),
+    ...(range.replayDaily?{dailyReplay:"1"}:{}) });
+  const result = await requestAlpacaGateway("trade-correction-evidence",query,environment,signal);
+  return parseDurableTradeCorrections(result,range);
 }

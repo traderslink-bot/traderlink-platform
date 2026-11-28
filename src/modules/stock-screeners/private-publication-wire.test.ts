@@ -146,7 +146,7 @@ describe("private Screeners transport codec, not yet wired to a running publishe
   });
   it("preserves linked split adjustment, history units/precision, exact VWAP and pagination fields", async () => {
     const split = { ret_code: 0, data: { rehabs: [{ ex_div_date: "2026-11-19", action_types: ["JOIN"], split_ratio: 2 }] } };
-    const history = { ret_code: 0, data: { kline_list: [{ time_key: start - 86_400_000, open: 10, high: 12, low: 9, close: 11, volume: 1000, turnover: 1000 }], volume_precision: 1, next_time: start }, pagination: { has_more: false, next_page_token: "a".repeat(48) } };
+    const history = { ret_code: 0, data: { kline_list: [{ time_key: start - 86_400_000 + 300_000, date: 20261118, open: 10, high: 12, low: 9, close: 11, volume: 1000, turnover: 1000 }], volume_precision: 1, next_time: start }, pagination: { has_more: false, next_page_token: "a".repeat(48) } };
     const roundTrip = (kind: "rehab" | "history", data: unknown) => decodeScreenerPrivateLinkedReply(kind, encodeScreenerPrivateLinkedReply(kind, data, linked, token), linked, token);
     expect(roundTrip("history", history)).toEqual(history);
     expect(roundTrip("rehab", split)).toEqual(split);

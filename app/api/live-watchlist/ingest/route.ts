@@ -4,7 +4,7 @@ import {
   broadcastLiveWatchlistHealth,
   broadcastLiveWatchlistUpdate,
 } from "@/src/lib/live-watchlist/live-watchlist-events";
-import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import { LiveWatchlistStore, validPathCorrection } from "@/src/lib/live-watchlist/live-watchlist-store";
 import { recordWatchlistDailyRecapEvidence } from "@/src/modules/watchlist/server/daily-recaps/watchlist-daily-recap-evidence-recorder";
 import type {
   LiveWatchlistCardPatch,
@@ -199,6 +199,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const body = (await request.json()) as unknown;
+  if (body && typeof body === "object" && "pathCorrection" in body && !validPathCorrection(body.pathCorrection)) {
+    return NextResponse.json({ error: "Invalid Potential Path revision." }, { status: 400 });
+  }
   if (isHealthPatch(body)) {
     const health = await new LiveWatchlistStore().upsertHealth(body);
     broadcastLiveWatchlistHealth(health);

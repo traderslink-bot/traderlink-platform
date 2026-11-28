@@ -10,6 +10,10 @@ const sessions = ["premarket", "regular", "after_hours", "last_regular"] as cons
 export function validateMarketPack(value: unknown, now: number, selection?: ScreenerProviderSelection): MarketPack {
   if (!isObject(value) || typeof value.latest !== "string" || value.latest === "latest"
     || !Object.hasOwn(SESSIONS, value.latest) || !isObject(value.snapshots)) throw Error("market_pack_invalid");
+  if (value.correctionRevision !== undefined && (typeof value.correctionRevision !== "string" || !/^[a-f0-9]{64}$/.test(value.correctionRevision)))
+    throw Error("market_pack_invalid");
+  if (value.correctionGeneration !== undefined && (!Number.isSafeInteger(value.correctionGeneration)
+    || Number(value.correctionGeneration) < 0 || value.correctionRevision === undefined)) throw Error("market_pack_invalid");
   const declared = value.selection;
   if (declared !== undefined && (!isObject(declared) || !["alpaca", "moomoo"].includes(String(declared.provider))
     || !Number.isSafeInteger(declared.revision) || Number(declared.revision) < 0)) throw Error("market_pack_invalid");

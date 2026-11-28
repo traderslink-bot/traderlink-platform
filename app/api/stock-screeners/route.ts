@@ -103,6 +103,7 @@ async function readGET(request: Request) {
       return reply(getRun(identity, id, page, parseSort(sort)));
     } catch (error) {
       const expired = error instanceof Error && error.message === "run_expired";
+      if (error instanceof Error && error.message === "run_corrected") return reply({ error: "run_corrected" }, 409);
       return reply({ error: expired ? "run_expired" : "invalid_request" }, expired ? 404 : 400);
     }
   }

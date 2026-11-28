@@ -229,6 +229,12 @@ export class CustomScanMarket {
     return () => this.listeners.delete(listener);
   }
 
+  invalidateCorrectedSymbol(symbol: string) {
+    this.market.delete(symbol);
+    this.histories.delete(symbol);
+    this.swing.cache.clear();
+  }
+
   set(status: ScanStatus, updatedAt: number, context = "", rows: readonly ScanMarketRow[] = [], eligible?: ReadonlySet<string>, halted?: ReadonlySet<string>) {
     if (status === this.status && (status === "waiting" || status === "closed")) return;
     const sameContext = this.context === context;

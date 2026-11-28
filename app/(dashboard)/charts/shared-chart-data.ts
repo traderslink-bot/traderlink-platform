@@ -11,7 +11,7 @@ type SharedStream = {
   idleClose?: ReturnType<typeof setTimeout>;
 };
 const streams = new Map<string, SharedStream>();
-const eventTypes = ["status", "price", "bar", "trading-status", "chart-correction", "overnight-status", "overnight-price", "overnight-bar"];
+const eventTypes = ["status", "price", "bar", "trading-status", "chart-correction", "history-correction", "overnight-status", "overnight-price", "overnight-bar"];
 const DAILY_STREAM_HANDOFF_MS = 1_000;
 export class ChartStreamHandle extends EventTarget {
   onerror: ((event: Event) => void) | null = null;
@@ -68,7 +68,7 @@ export function sharedChartStream(url: string, keepDuringTransition = false): Ch
   shared.idleClose = undefined;
   const client = new ChartStreamHandle(url, shared); shared.clients.add(client);
   const current = shared;
-  queueMicrotask(() => { if (current.clients.has(client)) for (const [type, event] of current.latest) client.dispatchEvent(new MessageEvent(type, { data: event.data })); });
+  queueMicrotask(() => { if (current.clients.has(client)) for (const event of current.latest.values()) client.dispatchEvent(new MessageEvent(event.type, { data: event.data })); });
   return client;
 }
 const pending = new Map<string, { controller: AbortController; result: Promise<Response>; users: number }>();

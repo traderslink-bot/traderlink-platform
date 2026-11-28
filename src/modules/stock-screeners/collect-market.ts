@@ -4,8 +4,11 @@ import { easternClock } from "../scanner/live/sessions";
 import { isObject, MAX_LISTINGS, type Candidate, type Listing, type MarketPack, type MarketSession, type Snapshot } from "./contracts";
 import { decodeBar, marketWindows, sessionBounds, sessionMetrics, type ProviderBar } from "./market-metrics";
 import { relativeVolumeAtTime, relativeVolumeHistory, relativeVolumeSchedule } from "./relative-volume";
+import { parseScreenerRevisions, repairScreenerBars, screenerCorrectionDigest, type ScreenerCorrections, type ScreenerCorrectionState, type ScreenerRevisionManifest } from "./trade-corrections";
+import type { TradeRevision } from "../scanner/alpaca/trade-revisions";
 
 type Data = { get(path: string, params: URLSearchParams): Promise<unknown> };
+export type ScreenerCalendarRange = { start: string; end: string };
 const DAY = 86_400_000;
 const BATCH_SIZE = 100;
 type SymbolData<T> = { grouped: Map<string, T>; rejected: Set<string> };
@@ -15,7 +18,13 @@ export type BarCache = {
   provider?: string;
   key: string; daily: Map<string, Bars>; intraday: Map<string, IntradayBatch>;
   intradayBasisDate?: string;
-  relativeVolume?: { key: string; series: Map<string, SymbolData<Float64Array>> };
+  corrections?: ScreenerCorrectionState;
+  volumeCorrections?: ScreenerCorrectionState;
+  knownCorrections?: Map<string, TradeRevision>;
+  correctionGeneration?: number;
+  moomooCorrections?: Map<string, string>;
+  unavailableCorrections?: Set<string>;
+  relativeVolume?: { key: string; series: Map<string, SymbolData<Float64Array>>; bars?: Map<string, Bars> };
 };
 
 export async function loadBars(data: Data, symbols: string[], timeframe: "1Day" | "5Min" | "15Min", start: number, end: number, asOf: string): Promise<Bars> {
@@ -103,16 +112,20 @@ async function refreshIntraday(
 }
 
 export async function collectMarketPack(input: {
-  data: Data; calendar: unknown; stocks: readonly Listing[]; universeDate: string; now: number;
+  data: Data; calendar: unknown; calendarRange?: ScreenerCalendarRange;
+  stocks: readonly Listing[]; universeDate: string; now: number;
   clock?: () => number;
   cache?: BarCache;
   partialCaps?: boolean;
   onBatch?: (count: number) => void;
   source?: "Alpaca SIP" | "Moomoo";
+  corrections?: ScreenerCorrections;
 }): Promise<MarketPack> {
   const { data, now, universeDate } = input;
-  const calendarStart = new Date(now - 540 * DAY).toISOString().slice(0, 10);
-  const calendarEnd = new Date(now + 3 * DAY).toISOString().slice(0, 10);
+  // Cached calendars must be validated against their original request, even
+  // when UTC midnight passes before the Eastern trading date changes.
+  const calendarStart = input.calendarRange?.start ?? new Date(now - 540 * DAY).toISOString().slice(0, 10);
+  const calendarEnd = input.calendarRange?.end ?? new Date(now + 3 * DAY).toISOString().slice(0, 10);
   const days = parseCalendarSessions(input.calendar, calendarStart, calendarEnd);
   if (days.length < 300) throw Error("calendar_incomplete");
   const { latest, windows } = marketWindows(days, now);
@@ -135,6 +148,12 @@ export async function collectMarketPack(input: {
     cache.daily.clear();
     cache.intraday.clear();
     cache.relativeVolume = undefined;
+    cache.corrections = undefined;
+    cache.volumeCorrections = undefined;
+    cache.knownCorrections = undefined;
+    cache.correctionGeneration = undefined;
+    cache.moomooCorrections = undefined;
+    cache.unavailableCorrections = undefined;
   }
   if (cache && cache.key !== dailyKey) {
     cache.key = dailyKey;
@@ -143,6 +162,8 @@ export async function collectMarketPack(input: {
   if (cache && cache.intradayBasisDate !== asOfDate) {
     cache.intradayBasisDate = asOfDate;
     cache.intraday.clear();
+    cache.corrections = undefined;
+    cache.volumeCorrections = undefined;
   }
   const relativeKey = [asOfDate, relativeVolume.from, relativeVolume.until].join("/");
   if (cache && cache.relativeVolume?.key !== relativeKey) cache.relativeVolume = { key: relativeKey, series: new Map() };
@@ -155,26 +176,99 @@ export async function collectMarketPack(input: {
 
   // Use a single background collector with two workers. The app reads the finished file.
   let next = 0;
+  const corrections = cache ? (cache.corrections ??= new Map()) : new Map();
+  const volumeCorrections = cache ? (cache.volumeCorrections ??= new Map()) : new Map();
+  const known: Map<string, TradeRevision> = cache ? (cache.knownCorrections ??= new Map()) : new Map();
+  const moomooCorrections = cache ? (cache.moomooCorrections ??= new Map()) : new Map<string, string>();
+  const unavailable: Set<string> = cache ? (cache.unavailableCorrections ??= new Set()) : new Set();
+  let correctionGeneration = cache?.correctionGeneration;
+  for (const [symbol, entry] of known) {
+    const minutes = entry.minutes.filter(minute => minute * 1000 >= historyStart && minute * 1000 <= maximum);
+    if (minutes.length || entry.pending) known.set(symbol, { ...entry, minutes }); else known.delete(symbol);
+  }
   async function worker() {
     for (;;) {
       const batch = slices[next++];
       if (!batch) return;
       const symbols = batch.map(stock => stock.symbol);
       const batchKey = symbols.join(",");
-      const daily = await readHistory(symbols, cache?.daily.get(batchKey),
+      const revisionRequest = { symbols, start: historyStart, end: maximum + 1 };
+      let revisionUnavailable = false;
+      if (input.corrections) {
+        try {
+          const observed = parseScreenerRevisions(await input.corrections.revisions(revisionRequest), revisionRequest);
+          if (observed.generation === undefined || correctionGeneration === undefined || observed.generation >= correctionGeneration) {
+            for (const [symbol, entry] of Object.entries(observed.symbols)) if (entry) known.set(symbol, entry);
+            for (const symbol of symbols) {
+              if (observed.unavailableSymbols?.includes(symbol)) unavailable.add(symbol); else unavailable.delete(symbol);
+            }
+            if (observed.generation !== undefined) correctionGeneration = observed.generation;
+          }
+        } catch { revisionUnavailable = true; /* Existing known corrections still apply during a metadata outage. */ }
+      }
+      const manifest: ScreenerRevisionManifest = { feed: "sip", symbols: Object.fromEntries(symbols.flatMap(symbol => known.has(symbol) ? [[symbol, known.get(symbol)!]] : [])),
+        unavailableSymbols: symbols.filter(symbol => unavailable.has(symbol)),
+        ...(correctionGeneration === undefined ? {} : { generation: correctionGeneration }) };
+      if (source === "Moomoo") {
+        for (const symbol of symbols) {
+          const entry = manifest.symbols[symbol];
+          if (!entry) continue;
+          const revision = JSON.stringify([entry.revision, entry.pending]);
+          if (moomooCorrections.get(symbol) === revision) continue;
+          moomooCorrections.set(symbol, revision);
+          // Only refresh the linked provider's own observations. SIP source
+          // values are never passed into the Moomoo collector.
+          cache?.daily.get(batchKey)?.rejected.add(symbol);
+          if (entry.pending || entry.minutes.some(minute => minute * 1000 >= minimum && minute * 1000 <= maximum))
+            cache?.intraday.get(batchKey)?.bars.rejected.add(symbol);
+          if (entry.minutes.some(minute => minute * 1000 >= relativeVolume.from && minute * 1000 < relativeVolume.until))
+            cache?.relativeVolume?.bars?.get(batchKey)?.rejected.add(symbol);
+        }
+      }
+      let daily = await readHistory(symbols, cache?.daily.get(batchKey),
         requested => loadBars(data, requested, "1Day", historyStart, dayEnd, asOfDate), bars => bars.grouped);
+      let dailyPartial = Object.values(manifest.symbols).some(entry => entry?.minutes.some(minute => {
+        const date = easternClock(minute * 1000).date;
+        return date >= easternClock(historyStart).date && date <= windows.last_regular.date;
+      }));
+      if (daily && source === "Alpaca SIP") {
+        const grouped = new Map(daily.grouped);
+        for (const symbol of symbols) {
+          const entry = manifest.symbols[symbol];
+          if (!entry) continue;
+          const dates = new Set(entry.minutes.map(minute => easternClock(minute * 1000).date));
+          if (entry.pending) dates.add(asOfDate);
+          if ([...dates].some(date => date >= easternClock(historyStart).date && date <= windows.last_regular.date)) dailyPartial = true;
+          const bars = grouped.get(symbol);
+          if (!bars) continue;
+          const qualified = new Map(bars);
+          for (const [time] of bars) if (dates.has(easternClock(time * 1000).date)) { qualified.delete(time); dailyPartial = true; }
+          grouped.set(symbol, qualified);
+        }
+        daily = { grouped, rejected: daily.rejected };
+      }
       if (cache && daily && (cache.daily.has(batchKey) || cache.daily.size < 150)) cache.daily.set(batchKey, daily);
       const previous = cache?.intraday.get(batchKey);
       const compatible = previous && previous.start <= minimum && previous.end <= maximum ? previous : undefined;
-      const intraday = await refreshIntraday(symbols, compatible, minimum, maximum,
+      let intraday = await refreshIntraday(symbols, compatible, minimum, maximum,
         (requested, from) => loadBars(data, requested, "5Min", from, maximum, asOfDate));
+      if (intraday && input.corrections && source === "Alpaca SIP") {
+        intraday = await repairScreenerBars({ bars: intraday, symbols, start: minimum, end: maximum + 1,
+          basisDate: asOfDate, state: corrections, reader: input.corrections, manifest, revisionRequest });
+      }
       if (cache && intraday && (cache.intraday.has(batchKey) || cache.intraday.size < 150)) {
         cache.intraday.set(batchKey, { start: minimum, end: maximum, bars: intraday });
       }
       const series = cache?.relativeVolume?.series;
-      const volumeHistory = relativeVolume.plans.size ? await readHistory(symbols, series?.get(batchKey),
+      const rawVolumeCache = cache?.relativeVolume ? (cache.relativeVolume.bars ??= new Map()) : undefined;
+      let volumeBars = relativeVolume.plans.size ? await readHistory(symbols, rawVolumeCache?.get(batchKey),
         requested => loadBars(data, requested, "15Min", relativeVolume.from, relativeVolume.until - 1, asOfDate),
-        bars => relativeVolumeHistory(bars.grouped, bars.rejected, relativeVolume.slots)) : null;
+        bars => bars.grouped) : null;
+      if (volumeBars && input.corrections && source === "Alpaca SIP") volumeBars = await repairScreenerBars({
+        bars: volumeBars, symbols, start: relativeVolume.from, end: relativeVolume.until, basisDate: asOfDate,
+        state: volumeCorrections, reader: input.corrections, timeframe: "15Min", manifest, revisionRequest });
+      if (rawVolumeCache && volumeBars && (rawVolumeCache.has(batchKey) || rawVolumeCache.size < 150)) rawVolumeCache.set(batchKey, volumeBars);
+      const volumeHistory = volumeBars ? { grouped: relativeVolumeHistory(volumeBars.grouped, volumeBars.rejected, relativeVolume.slots), rejected: volumeBars.rejected } : null;
       const incompleteVolumeHistory = !volumeHistory || volumeHistory.rejected.size > 0;
       if (series && volumeHistory && (series.has(batchKey) || series.size < Math.ceil(MAX_LISTINGS / BATCH_SIZE))) {
         series.set(batchKey, volumeHistory);
@@ -185,7 +279,7 @@ export async function collectMarketPack(input: {
       for (const [session, window] of entries) {
         const results = snapshots[session];
         const volumePlan = relativeVolume.plans.get(session);
-        if (!daily || !intraday || (volumePlan && incompleteVolumeHistory)
+        if (revisionUnavailable || !daily || dailyPartial || !intraday || (volumePlan && incompleteVolumeHistory)
           || (session === latest && !window.closed && !isObject(quoteResponse))) results.partial = true;
         for (const stock of batch) {
           const dailyBars = daily?.grouped.get(stock.symbol);
@@ -212,6 +306,30 @@ export async function collectMarketPack(input: {
           results.rows.push(candidate);
         }
       }
+      if (input.corrections) {
+        try {
+          const verified = parseScreenerRevisions(await input.corrections.revisions(revisionRequest), revisionRequest);
+          if (correctionGeneration === undefined || verified.generation === undefined || verified.generation >= correctionGeneration) {
+            const changed = new Set(symbols.filter(symbol => {
+              const previous = manifest.symbols[symbol], current = verified.symbols[symbol];
+              return current && JSON.stringify([previous?.revision, previous?.pending]) !== JSON.stringify([current.revision, current.pending]);
+            }));
+            for (const [symbol, entry] of Object.entries(verified.symbols)) if (entry) known.set(symbol, entry);
+            for (const symbol of symbols) {
+              if (verified.unavailableSymbols?.includes(symbol)) { unavailable.add(symbol); changed.add(symbol); }
+              else unavailable.delete(symbol);
+            }
+            if (verified.generation !== undefined) correctionGeneration = verified.generation;
+            // A late correction is a new source revision. Do not publish a
+            // result computed on the superseded revision while other tickers
+            // remain usable. The next ordinary cycle repairs these cache rows.
+            for (const snapshot of Object.values(snapshots)) for (const row of snapshot.rows) if (changed.has(row.symbol)) {
+              row.values = row.values.cap === undefined ? {} : { cap: row.values.cap };
+              delete row.priceAt; delete row.quoteAt; snapshot.partial = true;
+            }
+          }
+        } catch { for (const snapshot of Object.values(snapshots)) snapshot.partial = true; }
+      }
       input.onBatch?.(batch.length);
     }
   }
@@ -221,5 +339,11 @@ export async function collectMarketPack(input: {
     snapshot.capturedAt = (input.clock ?? (() => now))();
     snapshot.rows.sort((a, b) => a.symbol.localeCompare(b.symbol));
   }
-  return { latest, snapshots };
+  if (cache) cache.correctionGeneration = correctionGeneration;
+  const manifest: ScreenerRevisionManifest = { feed: "sip", symbols: Object.fromEntries(known),
+    unavailableSymbols: [...unavailable],
+    ...(correctionGeneration === undefined ? {} : { generation: correctionGeneration }) };
+  const correctionRevision = screenerCorrectionDigest(stocks.map(stock => stock.symbol), manifest);
+  return { latest, snapshots, ...(correctionRevision ? { correctionRevision,
+    ...(correctionGeneration === undefined ? {} : { correctionGeneration }) } : {}) };
 }

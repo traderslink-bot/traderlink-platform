@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { readWorkspaceMoomooAccess, WorkspaceMoomooConnection } from "./server/workspace-moomoo-access";
 import { workspaceMoomooChartResponse } from "./server/workspace-moomoo-chart-response";
 import { workspaceMoomooChartEvents, WorkspaceMoomooChartStream } from "./server/workspace-moomoo-chart-stream";
+import * as correctionNotices from "./server/moomoo-correction-notices";
+import * as alpacaClient from "@/src/modules/scanner/alpaca/client";
 import { MoomooMarketDataRateLimit } from "./server/moomoo-bridge";
 
 const now = Date.parse("2026-11-24T15:20:00Z");
@@ -127,6 +129,50 @@ describe("broker Workspace chart reads", () => {
     expect(vi.mocked(next.request).mock.calls.filter(([call]) => call.operation === "history")).toHaveLength(2);
   });
 
+  it("applies the latest raw history corrections to a warm account cache before split adjustment", async () => {
+    vi.useFakeTimers({ now });
+    const { connection } = fixture();
+    const end = Date.parse("2026-11-24T15:17:00Z");
+    const query = req("&symbol=SAFX&history=1&before=" + end);
+    const oldMinute = Date.parse("2026-11-23T15:14:00Z") / 1000;
+    const newMinute = Date.parse("2026-11-24T15:14:00Z") / 1000;
+    const before = { time: oldMinute, open: 2, high: 3, low: 1, close: 2.5, volume: 600 };
+    const evidence = vi.spyOn(alpacaClient, "readAlpacaTradeCorrectionEvidence").mockResolvedValueOnce(undefined)
+      .mockResolvedValue({ symbol: "SAFX", feed: "sip", adjustment: "raw", generation: 2, rows: [
+        { symbol: "SAFX", minute: oldMinute, before, bar: { ...before, high: 2.75, volume: 400 }, correctionRevision: 1 },
+        { symbol: "SAFX", minute: newMinute, before: { ...before, time: newMinute }, bar: null, correctionRevision: 2 },
+      ] });
+    const read = () => workspaceMoomooChartResponse(query, "bars", access(connection));
+    expect((await (await read()).json()).bars).toHaveLength(2);
+    const corrected = await (await read()).json();
+    expect(corrected.bars).toHaveLength(1);
+    expect(corrected.bars[0]).toMatchObject({ high: 5.5, volume: 200 });
+    expect(evidence).toHaveBeenCalledTimes(2);
+    expect(evidence).toHaveBeenLastCalledWith(expect.objectContaining({ symbol: "SAFX", end: end + 1 }),
+      expect.any(Object), expect.any(AbortSignal));
+    expect(vi.mocked(connection.request).mock.calls.filter(([request]) => request.operation === "history")).toHaveLength(1);
+  });
+
+  it("updates a warm native daily candle only with matching completed-day evidence", async () => {
+    vi.useFakeTimers({ now });
+    const { connection } = fixture();
+    const end = Date.parse("2026-11-23T23:59:00Z");
+    const day = Date.parse("2026-11-23T05:00:00Z") / 1000;
+    const query = req("&symbol=SAFX&history=1&daily=1&before=" + end);
+    const before = { time: day, open: 2, high: 3, low: 1, close: 2.5, volume: 600 };
+    const evidence = vi.spyOn(alpacaClient, "readAlpacaTradeCorrectionEvidence")
+      .mockResolvedValueOnce({ symbol: "SAFX", feed: "sip", adjustment: "raw", generation: 1, rows: [],
+        nativeDays: [{ day, before: { ...before, volume: 601 }, bar: null }] })
+      .mockResolvedValue({ symbol: "SAFX", feed: "sip", adjustment: "raw", generation: 2, rows: [],
+        nativeDays: [{ day, before, bar: { ...before, high: 2.75, volume: 400 } }] });
+    const read = () => workspaceMoomooChartResponse(query, "bars", access(connection));
+    expect((await (await read()).json()).bars[0]).toMatchObject({ high: 6, volume: 300 });
+    expect((await (await read()).json()).bars[0]).toMatchObject({ high: 5.5, volume: 200 });
+    expect(evidence).toHaveBeenLastCalledWith({ symbol: "SAFX", start: day * 1000, end: end + 1, daily: true },
+      expect.any(Object), expect.any(AbortSignal));
+    expect(vi.mocked(connection.request).mock.calls.filter(([request]) => request.operation === "history")).toHaveLength(1);
+  });
+
   it("returns a retry hint when REST is rate limited without touching the chart socket", async () => {
     const { connection } = fixture();
     const release = vi.fn();
@@ -153,6 +199,26 @@ class SocketFixture extends EventEmitter {
 }
 
 describe("broker Workspace candle socket", () => {
+  it("publishes a revision hint without SIP prices and releases it on disconnect", async () => {
+    const { connection, revoke } = fixture();
+    const release = vi.fn();
+    const stop = vi.fn();
+    vi.spyOn(WorkspaceMoomooChartStream.prototype, "subscribe").mockReturnValue(release);
+    const watch = vi.spyOn(correctionNotices, "watchMoomooCorrections").mockReturnValue(stop);
+    const response = await workspaceMoomooChartResponse(req("&symbol=SAFX"), "stream", access(connection));
+    const reader = response.body!.getReader();
+    const notify = watch.mock.calls[0][1];
+    const notice = { symbol: "SAFX", revision: "a".repeat(64), minutes: [Math.floor(now / 60_000) * 60] };
+    notify(notice);
+    const read = await reader.read();
+    expect(new TextDecoder().decode(read.value)).toBe(`event: history-correction\ndata: ${JSON.stringify(notice)}\n\n`);
+    revoke();
+    notify(notice);
+    expect(await reader.read()).toMatchObject({ done: true });
+    expect(release).toHaveBeenCalledOnce();
+    expect(stop).toHaveBeenCalledOnce();
+  });
+
   it("admits one ticker per account while both accounts can stream concurrently", async () => {
     vi.useFakeTimers({ now });
     const first = fixture();

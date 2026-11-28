@@ -136,3 +136,11 @@ The POM probe found one malformed candle inside the requested window alongside 9
 This Guy's live scanner repeatedly published brief unavailable states alongside working quote updates. A synthetic test reproduced one source path where the ten-second timeout or rejection of one new quote batch marks the whole card feed unavailable even while other subscriptions keep working. This is a possible cause of flashing, independent of REST rate limits.
 
 The quote warning now appears only after 30 seconds without recovery following an unavailable status. A reconnect attempt does not restart the clock. Recovery clears the warning immediately. The WebSocket subscriptions, snapshot seeds, provider requests, quotes and prices keep their existing timing.
+
+### Durable corrections on Connected Workspace history reads
+
+Connected Workspace stores native raw candles in the account range cache. The one-minute response uses the private shared correction projector after reading that cache and before applying current Moomoo split factors. A confirmed new correction can therefore replace or remove a previously cached minute on the next read without an extra Moomoo request. The shared projector requires exact raw candle evidence. A different native candle stays Moomoo data.
+
+Open charts receive the shared history-revision notice and reload qualified Moomoo history. Native daily bars use completed-day evidence only when the raw broker candle matches it exactly. The notice carries no replacement prices. RVOL uses the shared 15-minute rebuild only when the native interval matches verified native minutes. A batched private Gateway revision check every 30 seconds invalidates affected RVOL entries for the same 15-minute interval. Unchanged revisions do not trigger another Moomoo history fetch.
+
+The binding requires the shared Gateway correction-evidence read, the notice contract and the shared Moomoo history adapter in the combined release. The open-chart notice covers the shared recent window. Unmatched native daily bars and broker quote aggregates such as premarket and day highs retain their provider source. A quote-only high lacks the native coverage needed to verify an aggregate correction.

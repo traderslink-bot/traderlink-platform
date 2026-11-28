@@ -6,12 +6,15 @@ import { subscribeWorkspaceMoomooCards } from "./server/workspace-moomoo-card-fe
 import type { WorkspaceMoomooConnection } from "./server/workspace-moomoo-access";
 import { runWorkspaceRestCards, runWorkspaceWebSocketCards } from "./server/workspace-moomoo-card-transport";
 
+import { readWorkspaceRelativeVolume, readWorkspaceVolumeRevisions } from "./server/workspace-broker-volume-history";
+
 vi.mock("server-only", () => ({}));
 vi.mock("./server/workspace-moomoo-card-transport", () => ({
   runWorkspaceRestCards: vi.fn(), runWorkspaceWebSocketCards: vi.fn(),
 }));
 vi.mock("./server/workspace-broker-volume-history", () => ({
-  readWorkspaceRelativeVolume: async () => null,
+  readWorkspaceRelativeVolume: vi.fn(async () => null),
+  readWorkspaceVolumeRevisions: vi.fn(async () => new Map()),
   workspaceVolumeThrough: (value: number) => Math.floor(value / 900_000) * 900_000,
 }));
 
@@ -105,4 +108,32 @@ it("retains seeded premarket totals when a newer regular-session push omits them
       price: 1.54, premarketVolume: 240_000, previousClose: 1.04, dayHigh: 1.6,
     });
   } finally { owner.close(); }
+});
+
+it("refreshes cached RVOL when a confirmed revision arrives within the same interval", async () => {
+  vi.useFakeTimers({ now });
+  vi.stubEnv("TRADERLINK_ALPACA_GATEWAY_URL", "http://fixture.invalid");
+  vi.mocked(runWorkspaceWebSocketCards).mockImplementation(transportRuns);
+  const history = vi.mocked(readWorkspaceRelativeVolume).mockResolvedValueOnce(2.25).mockResolvedValueOnce(1.5);
+  const revisions = vi.mocked(readWorkspaceVolumeRevisions).mockResolvedValue(new Map([["NANO", "confirmed-revision"]]));
+  const owner = subscribeWorkspaceMoomooCards("volume-correction", connection("owner"), vi.fn());
+  try {
+    owner.update(["NANO"], session, defaults);
+    const [[socket]] = vi.mocked(runWorkspaceWebSocketCards).mock.calls;
+    socket.accept("NANO", quote("NANO", 1.42), null);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(owner.relativeVolume("NANO")).toBe(2.25);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(owner.relativeVolume("NANO")).toBe(1.5);
+    expect(history).toHaveBeenCalledTimes(2);
+    expect(revisions).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(history).toHaveBeenCalledTimes(2);
+    owner.close();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(revisions).toHaveBeenCalledTimes(2);
+  } finally {
+    owner.close();
+    vi.unstubAllEnvs();
+  }
 });
