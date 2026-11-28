@@ -11,6 +11,7 @@ import { UniverseStore } from "@/src/modules/scanner/live/server/universe-store"
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { requestMoomooMarketData, type MoomooDataRequest } from "@/src/modules/market-data/server/moomoo-bridge";
 import { screenerPrivateWireEnabled, decodeScreenerPrivatePackAsync, decodeScreenerPrivateLive, encodeScreenerPrivateSelection, encodeScreenerPrivateUniverse, decodeScreenerPrivateOperation, encodeScreenerPrivateLinkedReply } from "./private-publication-wire";
+import { correctMoomooScreenerHistory } from "./moomoo-history-corrections";
 
 const reply = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "private, no-store" } });
 function authorized(request: Request, wire = false) {
@@ -55,16 +56,23 @@ export async function screenerControlPost(request: Request, wire = false) {
     if (wire) body = decodeScreenerPrivateOperation(body, marketDataSelection("screeners"), process.env.TRADERLINK_STOCK_SCREENERS_LIVE_PUSH_TOKEN!);
     if (!body || typeof body !== "object" || Array.isArray(body) || body.feature !== "screeners" || body.provider !== "moomoo"
       || !Number.isSafeInteger(body.revision)) return reply({ error: "invalid_request" }, 400);
+    if (body.correctionRevision !== undefined && (body.operation !== "history" || typeof body.correctionRevision !== "string"
+      || !/^[a-f0-9]{64}$/.test(body.correctionRevision))) return reply({ error: "invalid_request" }, 400);
   } catch (error) { return reply({ error: "invalid_request" }, wire && error instanceof Error && error.message === "screener_provider_changed" ? 409 : 400); }
   finally { reader.releaseLock(); }
   const matches = () => { const current = marketDataSelection("screeners"); return current.provider === body.provider && current.revision === body.revision; };
   try {
     if (!matches()) return reply({ error: "provider_changed" }, 409);
-    const payload = await requestMoomooMarketData(body as unknown as MoomooDataRequest, process.env, request.signal);
+    const operation = body as unknown as MoomooDataRequest & { correctionRevision?: unknown };
+    const native = await requestMoomooMarketData(operation, process.env, request.signal);
+    const payload = await correctMoomooScreenerHistory(operation, native, process.env, request.signal);
     if (!matches()) return reply({ error: "provider_changed" }, 409);
     return reply(wire ? encodeScreenerPrivateLinkedReply(body.operation as "snapshots" | "history" | "rehab" | "calendar", payload, {provider:"moomoo",revision:Number(body.revision)}, process.env.TRADERLINK_STOCK_SCREENERS_LIVE_PUSH_TOKEN!) : { provider: body.provider, revision: body.revision, payload });
   } catch (error) {
     const invalid = error instanceof Error && error.message === "invalid_market_data_request";
+    const unqualified = body.operation === "history" && body.correctionRevision !== undefined && error instanceof Error
+      && (error.message.startsWith("screener_native_") || error.message.startsWith("screener_correction_") || error.message === "alpaca_market_data_unavailable");
+    if (unqualified) return reply({ error: "history_correction_unqualified" }, 422);
     return reply({ error: invalid ? "invalid_request" : "market_data_unavailable" }, invalid ? 400 : 503);
   }
 }

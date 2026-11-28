@@ -66,6 +66,7 @@ function rows(value: unknown, map: (row: unknown) => unknown): unknown[] {
 }
 const rowFields = { symbol: "ticker", exchange: "venue", name: "issuer", priceAt: "tradeObservedAt", quoteAt: "quoteObservedAt" };
 const snapshotFields = { version: "format", date: "tradingDate", universeDate: "rosterDate", session: "phase", asOf: "through", capturedAt: "recordedAt", closed: "finished", partial: "incomplete" };
+const correctionFields = { correctionRevision: "historyRevision", correctionGeneration: "historyGeneration" };
 const metricAliases: Record<string, string> = { price: "last", open: "first", high: "peak", low: "trough", volume: "shares", cap: "equityValue", dollarVolume: "tradedValue" };
 const metricFields = Object.fromEntries(Object.keys(METRICS).map(key => [key, metricAliases[key] ?? key]));
 const domainMetrics = Object.fromEntries(Object.entries(metricFields).map(([key, wire]) => [wire, key]));
@@ -102,7 +103,7 @@ export function encodeScreenerPrivatePack(pack: unknown, chosen: ScreenerProvide
     })) }];
   }));
   return envelope("pack", { ...stamp(chosen, token), firstPass: initial,
-    snapshot: { activePhase: actual.latest, ...stamp(chosen, token), frames } });
+    snapshot: { activePhase: actual.latest, ...rename(actual, correctionFields), ...stamp(chosen, token), frames } });
 }
 
 export function decodeScreenerPrivatePack(value: unknown, chosen: ScreenerProviderSelection, token: string) {
@@ -120,7 +121,8 @@ export function decodeScreenerPrivatePack(value: unknown, chosen: ScreenerProvid
         return { ...rename(entry, rowFields, true), values: observations(entry.observations, true) };
       }) }];
   }));
-  return { ...chosen, initial: row.firstPass, pack: { latest: pack.activePhase, selection: { ...chosen }, snapshots } };
+  return { ...chosen, initial: row.firstPass, pack: { latest: pack.activePhase,
+    ...rename(pack, correctionFields, true), selection: { ...chosen }, snapshots } };
 }
 
 /** Yield conversion work so unrelated chart/scanner requests retain event-loop access. */
@@ -143,7 +145,8 @@ export async function decodeScreenerPrivatePackAsync(value: unknown, chosen: Scr
     }
     snapshots[session] = { ...rename(snapshot, snapshotFields, true), source: sourceFor(chosen), rows: restored };
   }
-  return { ...chosen, initial: row.firstPass, pack: { latest: pack.activePhase, selection: { ...chosen }, snapshots } };
+  return { ...chosen, initial: row.firstPass, pack: { latest: pack.activePhase,
+    ...rename(pack, correctionFields, true), selection: { ...chosen }, snapshots } };
 }
 
 export function encodeScreenerPrivateLive(frame: unknown, chosen: ScreenerProviderSelection, token: string) {
@@ -171,7 +174,7 @@ export function decodeScreenerPrivateUniverse(value: unknown, chosen: ScreenerPr
 }
 
 const actions = { snapshots: "quotes", history: "candles", rehab: "splits", calendar: "sessions" } as const;
-const operationFields = { symbols: "tickers", symbol: "ticker", timeframe: "interval", start: "from", end: "until", nextTime: "before", pageToken: "cursor" };
+const operationFields = { symbols: "tickers", symbol: "ticker", timeframe: "interval", start: "from", end: "until", nextTime: "before", pageToken: "cursor", correctionRevision: "historyRevision" };
 function linked(chosen: ScreenerProviderSelection) { if (selection(chosen).provider !== "moomoo") fail(); }
 function operationKind(value: unknown): MoomooScreenerOperation["operation"] {
   if (typeof value !== "string" || !Object.hasOwn(actions, value)) fail();
@@ -196,7 +199,7 @@ const quoteFields: Record<string, string> = {
   ...Object.fromEntries(["pre", "after"].flatMap(phase => Object.entries({ price: "Last", volume: "Shares", turnover: "TradedValue", high_price: "Peak", low_price: "Trough" })
     .map(([field, name]) => [`${phase}_${field}`, `${phase === "pre" ? "early" : "late"}${name}`]))),
 };
-const candleFields = { time_key: "at", open: "first", high: "peak", low: "trough", close: "last", volume: "shares", turnover: "tradedValue" };
+const candleFields = { time_key: "at", date: "day", open: "first", high: "peak", low: "trough", close: "last", volume: "shares", turnover: "tradedValue" };
 const eventFields = { ex_div_date: "date", action_types: "kinds", split_ratio: "ratio" };
 const sessionFields = { time: "date", trade_date_type: "kind", trade_second: "seconds" };
 

@@ -25,3 +25,5 @@ Platform parent `3736df7695f6feab82596b6643d116fb8f3809a2`. No Runtime change. C
 Focused disposable SQLite checks passed: migration DDL, off/on/audit, free/Premium/owner/read-failure behavior. Projection fixture proves restricted values absent, price and unrelated card retained, original input unmodified, SSR/API/archive call sites supplied, and default projection retains restriction. TypeScript syntax checks passed. No broad tests, build or local server.
 
 Hosted owner visual and free/Premium session verification remain pending release: save/reload, free placeholders, Premium values, toggle restoration, full ladder, mobile layout, overnight price note. No public posts required. Release build remains a coordinator gate; syntax verification is not a full production build.
+
+Current-map correction ordering is documented in [Live Watchlist Potential Path ordering](watchlist-current-potential-path-ordering.md).

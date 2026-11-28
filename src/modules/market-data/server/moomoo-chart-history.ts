@@ -1,5 +1,7 @@
 import "server-only";
 
+import { projectComparableRawDaily, projectComparableRawInterval, projectComparableRawMinutes, type DurableTradeCorrections, type TradeCorrectionRange } from "@/src/modules/scanner/alpaca/durable-trade-corrections";
+import { readAlpacaTradeCorrectionEvidence } from "@/src/modules/scanner/alpaca/client";
 import { moomooCalendarSessions } from "../moomoo-calendar";
 import { requestMoomooMarketData, moomooDate, type MoomooDataRequest } from "./moomoo-bridge";
 import { easternDayStart, type Candle } from "@/src/modules/scanner/alpaca/candles";
@@ -8,6 +10,7 @@ import type { ChartCalendar } from "@/src/modules/scanner/alpaca/chart-calendar"
 import type { VwapCorporateEvents, VwapCorporateAnchor } from "@/src/modules/scanner/alpaca/chart-vwap-events";
 
 type HistoryInput = { symbol: string; timeframe: "1Min" | "15Min" | "1Day"; start: number; end: number; adjustment?: "raw" | "split" };
+type ReadCorrectionEvidence = (range: TradeCorrectionRange) => Promise<DurableTradeCorrections | undefined>;
 type Loader = (request: MoomooDataRequest) => Promise<Record<string, unknown>>;
 // The service has returned up to 1,000 rows despite the 370-row request limit.
 const MAX_HISTORY_RESPONSE_ROWS = 1000;
@@ -68,9 +71,11 @@ export function adjustMoomooBars(bars: readonly Candle[], splits: readonly Split
 export class MoomooChartHistory {
   private cache = new Map<string, { at: number; value: Awaited<ReturnType<MoomooChartHistory["loadHistory"]>> }>();
   private pending = new Map<string, Promise<Awaited<ReturnType<MoomooChartHistory["loadHistory"]>>>>();
+  private projecting = new Map<string, Promise<Awaited<ReturnType<MoomooChartHistory["projectHistory"]>>>>();
   private calendarCache = new Map<string, Promise<ChartCalendar>>();
   private events = new Map<string, { at: number; payload: Record<string, unknown> }>();
-  constructor(private readonly loader: Loader = request => requestMoomooMarketData(request), private readonly now: () => number = Date.now) {}
+  constructor(private readonly loader: Loader = request => requestMoomooMarketData(request), private readonly now: () => number = Date.now,
+    private readonly readCorrectionEvidence: ReadCorrectionEvidence = readAlpacaTradeCorrectionEvidence) {}
 
   async corporateActions(symbol: string) {
     const saved = this.events.get(symbol);
@@ -93,7 +98,57 @@ export class MoomooChartHistory {
     return { symbol, anchor, basisDate, dates: [...new Set(dates.filter(date => date <= basisDate))].sort() };
   }
 
-  async history(input: HistoryInput, allowPartial = false) {
+  history(input: HistoryInput, allowPartial = false) {
+    const key = JSON.stringify([easternClock(this.now()).date,input,allowPartial]);
+    const pending = this.projecting.get(key);
+    if (pending) return pending;
+    const next = this.projectHistory(input,allowPartial).finally(()=>this.projecting.delete(key));
+    this.projecting.set(key,next);
+    return next;
+  }
+
+  private async projectHistory(input: HistoryInput, allowPartial: boolean) {
+    const { adjustment = "split", ...request } = input;
+    const raw = await this.rawHistory(request,allowPartial);
+    let bars = raw.bars, complete = raw.complete;
+    if (input.timeframe === "1Min") bars = await this.correctRawMinutes(request,bars);
+    if (input.timeframe === "1Day" && bars.length) {
+      const evidence=await this.readCorrectionEvidence({symbol:input.symbol,start:bars[0].time*1000,end:input.end+1,daily:true,replayDaily:true});
+      if (evidence) bars=projectComparableRawDaily(bars,evidence);
+    }
+    if (input.timeframe === "15Min" && bars.length) {
+      const evidence = await this.readCorrectionEvidence({
+        symbol:input.symbol,start:input.start,end:Math.min(this.now()+60_000,input.end+900_000),
+      });
+      if (evidence?.rows.length) {
+        const affected = new Set(evidence.rows.map(row=>Math.floor(row.minute/900)*900));
+        const next: Candle[] = [];
+        let remaining = 16;
+        for (const bar of bars) {
+          if (!affected.has(bar.time)) { next.push(bar);continue; }
+          if (remaining-- <= 0) { complete=false;continue; }
+          const corrected = await projectComparableRawInterval(bar,900,evidence,async (start,end)=>{
+            const minutes = await this.rawHistory({symbol:input.symbol,timeframe:"1Min",start,end:end-1},allowPartial);
+            return minutes.complete && minutes.basisDate === raw.basisDate ? minutes.bars : null;
+          },this.now());
+          if (corrected === undefined) complete = false;
+          else if (corrected) next.push(corrected);
+        }
+        bars = next;
+      }
+    }
+    const splits = adjustment === "split" ? moomooSplits(await this.corporateActions(input.symbol)) : [];
+    if (easternClock(this.now()).date !== raw.basisDate) throw Error("adjustment_basis_changed");
+    return { ...raw, complete, adjustment, bars: adjustment === "raw" ? bars : adjustMoomooBars(bars,splits,raw.basisDate) };
+  }
+
+  /** Re-project raw cache hits so a later committed correction takes effect on the next read. */
+  async correctRawMinutes(input: Pick<HistoryInput,"symbol"|"start"|"end">, bars: readonly Candle[]) {
+    const evidence = await this.readCorrectionEvidence({ symbol: input.symbol, start: input.start, end: input.end + 1 });
+    return evidence ? projectComparableRawMinutes(bars,evidence) : [...bars];
+  }
+
+  async rawHistory(input: Omit<HistoryInput,"adjustment">, allowPartial = false) {
     const key = JSON.stringify([easternClock(this.now()).date, input, allowPartial]), saved = this.cache.get(key);
     if (saved && this.now() - saved.at < 30_000) return saved.value;
     const pending = this.pending.get(key);
@@ -108,7 +163,7 @@ export class MoomooChartHistory {
   }
 
   private async loadHistory(input: HistoryInput, allowPartial: boolean) {
-    const { adjustment = "split", ...request } = input;
+    const request = input;
     const basisDate = easternClock(this.now()).date, daily = input.timeframe === "1Day", bars = new Map<number, Candle>();
     const cursors = new Set<string>();
     const invalid = new Set<number>();
@@ -145,10 +200,9 @@ export class MoomooChartHistory {
     if (!complete) throw Error("moomoo_history_incomplete");
     const hasMissingCandle = [...invalid].some(time => !bars.has(time));
     const candles = [...bars.values()].sort((a, b) => a.time - b.time);
-    const splits = adjustment === "split" ? moomooSplits(await this.corporateActions(input.symbol)) : [];
     if (easternClock(this.now()).date !== basisDate) throw Error("adjustment_basis_changed");
-    return { symbol: input.symbol, feed: "moomoo" as const, adjustment, basisDate, complete: !hasMissingCandle,
-      nextPageToken: null, bars: adjustment === "raw" ? candles : adjustMoomooBars(candles, splits, basisDate) };
+    return { symbol: input.symbol, feed: "moomoo" as const, basisDate, complete: !hasMissingCandle,
+      nextPageToken: null, bars: candles };
   }
 
   async calendar(start: string, end: string): Promise<ChartCalendar> {

@@ -49,3 +49,69 @@ it("shows combined Day Vol in Stats and the individual volumes only in Session l
     vi.unstubAllGlobals();
   }
 });
+
+it("replaces the canceled POM high on the next poll and when the drawer reopens", async () => {
+  vi.useFakeTimers({ now: new Date("2026-11-27T13:15:00Z") });
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const pendingDate = "2026-11-27";
+  let high: number | null = 38;
+  let revised = false;
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input).includes("range=52w")) return Response.json({});
+    return Response.json({
+      row: { dayHigh: 38, price: 7, dayLow: 3, dayVolume: 31_278_076, volume: 31_278_076,
+        dollarVolume: 2_000_000_000, relativeVolume: 56, activity: { oneMinuteVolume: 900_000 }, float: 31_000_000 },
+      scannerSignals: [],
+      ...(revised && high !== null ? { dayVolume: 30_566_502, sessionVolume: 30_566_502, dollarVolume: 180_000_000 } : {}),
+      days: high === null ? [] : [{ date: pendingDate, ranges: [{ open: 3, high, low: 3, close: 7, volume: 123 }, null, null] }],
+      ...(revised ? { revisedRangeDates: [pendingDate] } : {}),
+    });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  const container = document.createElement("div");
+  document.body.append(container);
+  let root = createRoot(container);
+  const render = () => root.render(createElement(CompanyTechnicalsPanel, {
+    symbol: "POM", active: true, inDrawer: true, allowSupplementalReads: false, header: () => null, averageVolumes: [],
+  }));
+  const stat = (name: string) => [...container.querySelectorAll("dt")].find(row => row.textContent === name)?.nextElementSibling?.textContent;
+  const statsHigh = () => stat("Day high");
+  const sessionTable = () => container.querySelector('table[aria-label="Trading session highs and lows"]')?.textContent;
+  try {
+    await act(async () => render());
+    expect(statsHigh()).toBe("$38.00");
+    expect(sessionTable()).toContain("$38.00");
+    expect(stat("Day Vol")).toBe("31,278,076");
+    expect(stat("1m Vol")).toBe("900K");
+
+    revised = true;
+    high = null;
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(statsHigh()).toBe("—");
+    expect(sessionTable() ?? "").not.toContain("$38.00");
+    expect(stat("Day Vol")).toBe("—");
+    expect(stat("Dollar Vol")).toBe("—");
+    expect(stat("Relative Vol")).toBe("—");
+    expect(stat("1m Vol")).toBe("—");
+
+    high = 7.41;
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(statsHigh()).toBe("$7.41");
+    expect(sessionTable()).toContain("$7.41");
+    expect(stat("Day Vol")).toBe("30,566,502");
+    expect(stat("Dollar Vol")).toBe("$180M");
+
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    await act(async () => render());
+    expect(statsHigh()).toBe("$7.41");
+    expect(sessionTable()).toContain("$7.41");
+    expect(stat("Day Vol")).toBe("30,566,502");
+    expect(stat("Dollar Vol")).toBe("$180M");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  }
+});

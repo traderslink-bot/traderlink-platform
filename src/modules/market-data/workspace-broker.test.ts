@@ -9,6 +9,7 @@ import { readWorkspacePushBook, readWorkspacePushQuote, readWorkspaceRestQuotes,
 import { brokerWorkspaceScannerModel, brokerWorkspaceSavedResults } from "./workspace-broker-rows";
 import { readWorkspaceRelativeVolume, workspaceVolumeThrough } from "./server/workspace-broker-volume-history";
 import type { WorkspaceMoomooConnection } from "./server/workspace-moomoo-access";
+import * as alpacaClient from "@/src/modules/scanner/alpaca/client";
 import type { LiveScannerRow, ScannerReadModel } from "@/src/modules/scanner/live/contracts";
 import type { SavedScanResults } from "@/src/modules/scanner/custom/definition";
 
@@ -59,6 +60,44 @@ describe("broker quote and Scanner projection", () => {
     try {
       expect(await readWorkspaceRelativeVolume("NANO", context, workspaceVolumeThrough(Date.now()), connection, new AbortController().signal)).toBe(2.25);
     } finally { vi.useRealTimers(); }
+  });
+
+  it("recalculates RVOL from qualified corrected 15-minute history and withholds unproven coverage", async () => {
+    vi.useFakeTimers({ now: at + 6000 });
+    const dates = ["2026-11-18", "2026-11-19", "2026-11-20", "2026-11-23", context.date];
+    const bar = { open: 1, high: 2, low: 1, close: 1.5 };
+    const start = (at - 15 * 60_000) / 1000;
+    const before = { ...bar, time: start, volume: 400 };
+    const readEvidence = vi.spyOn(alpacaClient, "readAlpacaTradeCorrectionEvidence").mockResolvedValue({
+      symbol: "NANO", feed: "sip", adjustment: "raw", generation: 1,
+      rows: [{ symbol: "NANO", minute: start, before, bar: { ...before, high: 1.8, volume: 100 }, correctionRevision: 1 }],
+    });
+    let matchingNativeWindow = true;
+    const request: WorkspaceMoomooConnection["request"] = vi.fn(async input => {
+      if (input.operation === "calendar") return { data: { trading_days: dates.map(time => ({ time, trade_date_type: "WHOLE" })) } };
+      if (input.operation === "rehab") return { data: { rehabs: [] } };
+      if (input.operation === "history" && input.timeframe === "15Min") return { data: { kline_list: [
+        ...dates.slice(0, 3).map(date => ({ ...bar, time_key: Date.parse(`${date}T14:45:00Z`), volume: 600 })),
+        { ...bar, time_key: at, volume: 900 },
+      ] } };
+      if (input.operation === "history" && input.timeframe === "1Min") return { data: { kline_list: [
+        { ...bar, time_key: (start + 60) * 1000, volume: 400 },
+        { ...bar, high: 1.7, time_key: (start + 120) * 1000, volume: matchingNativeWindow ? 500 : 750 },
+      ] } };
+      throw Error("unexpected fixture request");
+    });
+    const connection = { request, current: () => true, generation: "fixture", accessToken: async () => "test" };
+    const signal = new AbortController().signal;
+    const read = () => readWorkspaceRelativeVolume("NANO", context, workspaceVolumeThrough(Date.now()), connection, signal);
+    try {
+      expect(await read()).toBe(1.5);
+      expect(readEvidence).toHaveBeenCalledWith(expect.objectContaining({ symbol: "NANO" }), expect.any(Object), signal);
+      matchingNativeWindow = false;
+      expect(await read()).toBeNull();
+    } finally {
+      readEvidence.mockRestore();
+      vi.useRealTimers();
+    }
   });
 
   it("preserves session volume and does not roll a regular quote into after-hours", () => {

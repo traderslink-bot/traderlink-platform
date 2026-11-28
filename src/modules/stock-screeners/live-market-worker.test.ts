@@ -55,6 +55,7 @@ describe("live Screeners worker", () => {
     vi.setSystemTime(start + 1000);
     vi.stubGlobal("WebSocket", Upstream);
     const fetch = vi.fn(async (url: URL) => {
+      if (url.pathname === "/trade-revisions") return Response.json({ feed: "sip", symbols: {} });
       const cutoff = Number(url.searchParams.get("end"));
       expect(url.pathname).toBe("/screener-candle-bars");
       expect(url.searchParams.get("start")).toBe(String(start));
@@ -78,7 +79,7 @@ describe("live Screeners worker", () => {
       await vi.advanceTimersByTimeAsync(125);
       expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:20,priceAt:start+1123,vwap:null}]);
       await vi.advanceTimersByTimeAsync(minute+3_000);
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch.mock.calls.filter(([url]) => url.pathname === "/screener-candle-bars")).toHaveLength(1);
       expect(onState).toHaveBeenLastCalledWith("connected",1);
       expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:20,priceAt:start+1123,vwap:10,vwapAt:start+minute}]);
       sockets[0]!.close();
@@ -87,13 +88,16 @@ describe("live Screeners worker", () => {
       subscribe(sockets[1]!);
       expect(onState.mock.calls.map(([state])=>state)).toEqual(["warming","connected","disconnected","warming"]);
       await vi.advanceTimersByTimeAsync(minute+3_000);
-      expect(fetch.mock.calls.map(([url]) => Number(url.searchParams.get("end")))).toEqual([start+minute,start+2*minute]);
+      expect(fetch.mock.calls.filter(([url]) => url.pathname === "/screener-candle-bars").map(([url]) => Number(url.searchParams.get("end")))).toEqual([start+minute,start+2*minute]);
       sockets[1]!.frame(trade("2026-11-16T14:32:00.000Z",14,100));
       await vi.advanceTimersByTimeAsync(125);
       expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:14,priceAt:start+2*minute,vwap:12,vwapAt:start+2*minute}]);
       sockets[1]!.frame({ ...trade("2026-11-16T14:32:03.000Z", 18, 100), c:["I"] });
       await vi.advanceTimersByTimeAsync(125);
       expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:14,priceAt:start+2*minute,vwap:14,vwapAt:start+2*minute+3_000}]);
+      sockets[1]!.frame({ T: "x", S: "AAA" });
+      await vi.advanceTimersByTimeAsync(125);
+      expect(publish).toHaveBeenLastCalledWith([{symbol:"AAA",price:null,priceAt:null,vwap:null}]);
     } finally {
       abort.abort();
       await run;

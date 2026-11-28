@@ -161,6 +161,43 @@ describe("LiveWatchlistStore", () => {
     resetLiveWatchlistStoreForTests();
   });
 
+  it("keeps a withdrawal across reopening, delayed card and quote delivery and archived reactivation", async () => {
+    const root = mkdtempSync(join(tmpdir(), "watchlist-path-revision-"));
+    const databasePath = join(root, "fixture.sqlite");
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = databasePath;
+    try {
+      openPristinePlatformTestDatabase({ mode: "initializer", databasePath }).close();
+      let store = new LiveWatchlistStore(() => 10000);
+      const old = buildCorePatch("ABCD", 1000);
+      await store.upsertPatch(old);
+      await store.upsertPatch({ symbol: "ABCD", updatedAt: 2000, status: "deactivated", cards: {} });
+      await store.upsertPatch({ ...old, updatedAt: 3000, status: "live", preserveExistingOnReactivation: true });
+      const held = { symbol: "ABCD", updatedAt: 4000, pathCorrection: { stamp: 4000, held: true }, cards: {} };
+      await store.upsertPatch(held);
+      resetLiveWatchlistStoreForTests();
+      store = new LiveWatchlistStore(() => 10000);
+      const delayed = await store.upsertPatch({ ...old, updatedAt: 5000 });
+      expect(delayed.cards.fullLadder).toBeUndefined();
+      expect(delayed.cards.companyInfo).toBeDefined();
+      const quote = await store.upsertTickerData({ type: "tickerData", symbol: "ABCD", updatedAt: 6000,
+        latestPrice: 8, nearestSupport: 4, nearestResistance: 12, levelMap: exampleLevelMap });
+      expect(quote.latestPrice).toBe(8);
+      expect(quote.nearestSupport).toBeNull();
+      expect(quote.levelMap).toBeNull();
+      await store.upsertPatch({ symbol: "ABCD", updatedAt: 7000, status: "deactivated", cards: {} });
+      const restored = await store.upsertPatch({ ...old, updatedAt: 8000, preserveExistingOnReactivation: true });
+      expect(restored.cards.nearestSupportResistance).toBeUndefined();
+      expect(restored.levelMap).toBeNull();
+      const repaired = await store.upsertPatch({ ...old, updatedAt: 9000, pathCorrection: { stamp: 5000, held: false } });
+      expect(repaired.cards.fullLadder).toBeDefined();
+      expect((await store.upsertPatch(held)).levelMap).toEqual(repaired.levelMap);
+    } finally {
+      resetLiveWatchlistStoreForTests();
+      await removePlatformDatabaseTestFixture(root);
+    }
+  });
+
   it("yields the app thread while another connection holds the SQLite writer lock", async () => {
     const root = mkdtempSync(join(tmpdir(), "watchlist-writer-yield-"));
     const databasePath = join(root, "test.sqlite");

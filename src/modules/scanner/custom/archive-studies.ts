@@ -92,6 +92,18 @@ export class ArchiveStudies {
     string,
     { request: Promise<readonly Candle[] | undefined>; retryAt: number }
   >();
+  invalidateCorrectedSymbol(symbol: string) {
+    if (symbol === "SPY") this.benchmarks.clear();
+    for (const [key, entry] of this.entries) {
+      const affectedBenchmark = symbol === "SPY" &&
+        Array.from(entry.requested.values()).some(read => isBenchmarkStudy(read.metric));
+      if (entry.query.symbol === symbol || affectedBenchmark) {
+        this.pending.delete(entry);
+        this.entries.delete(key);
+      }
+    }
+  }
+
   private covers(
     entry: Entry,
     result: CandleArchiveReply,

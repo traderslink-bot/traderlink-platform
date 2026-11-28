@@ -1,14 +1,17 @@
 import "server-only";
 
 import { chartSymbol } from "@/src/modules/scanner/alpaca/candles";
+import { readAlpacaTradeCorrectionEvidence } from "@/src/modules/scanner/alpaca/client";
 import { chartCatchUpWindow, chartHistoryPage, chartHistoryWindow } from "@/src/modules/scanner/alpaca/chart-history";
 import { AlpacaVwapHistory } from "@/src/modules/scanner/alpaca/chart-vwap-history";
 import { parseVwapSeedRequest, validVwapSeed } from "@/src/modules/scanner/alpaca/chart-vwap-seed";
+import { projectComparableRawDaily } from "@/src/modules/scanner/alpaca/durable-trade-corrections";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { browserChartEvent } from "./browser-chart-events";
 import { browserChartCalendar, browserChartHistory } from "./browser-chart-history";
 import { browserVwapSeed } from "./browser-vwap-seed";
 import { adjustMoomooBars, MoomooChartHistory, moomooSplits } from "./moomoo-chart-history";
+import { watchMoomooCorrections } from "./moomoo-correction-notices";
 import { MoomooMarketDataRateLimit } from "./moomoo-bridge";
 import { WorkspaceMoomooCandleCache } from "./workspace-moomoo-candle-cache";
 import type { readWorkspaceMoomooAccess, WorkspaceMoomooConnection } from "./workspace-moomoo-access";
@@ -65,13 +68,14 @@ function openStream(request: Request, owner: string, connection: WorkspaceMoomoo
     start(controller) {
       const encoder = new TextEncoder();
       let closed = false;
-      const lifetime: { release?: () => void; validation?: ReturnType<typeof setInterval> } = {};
+      const lifetime: { release?: () => void; stopCorrections?: () => void; validation?: ReturnType<typeof setInterval> } = {};
       const finish = (closeBody: boolean) => {
         if (closed) return;
         closed = true;
         clearInterval(lifetime.validation);
         request.signal.removeEventListener("abort", close);
         lifetime.release?.();
+        lifetime.stopCorrections?.();
         active.readers.delete(close);
         if (active.readers.size === 0 && chartStreams.get(owner) === active) chartStreams.delete(owner);
         if (closeBody) controller.close();
@@ -89,6 +93,13 @@ function openStream(request: Request, owner: string, connection: WorkspaceMoomoo
       } });
       lifetime.release = release;
       if (closed) { release(); return; }
+      const stopCorrections = watchMoomooCorrections(input.symbol, notice => {
+        if (closed) return;
+        if (!connection.current() || (controller.desiredSize ?? 0) < -16) { close(); return; }
+        controller.enqueue(encoder.encode(`event: history-correction\ndata: ${JSON.stringify(notice)}\n\n`));
+      });
+      lifetime.stopCorrections = stopCorrections;
+      if (closed) { stopCorrections(); return; }
       let lastHeartbeat = Date.now();
       lifetime.validation = setInterval(() => {
         if (!connection.current() || (controller.desiredSize ?? 0) < -16) { close(); return; }
@@ -154,7 +165,9 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
   if (resource === "stream" && input) return openStream(request, owner, connection, input);
 
   const signal = AbortSignal.any([request.signal, AbortSignal.timeout(resource === "vwap-seed" ? 90_000 : 20_000)]);
-  const history = new MoomooChartHistory(query => connection.request(query, signal));
+  const corrections = (range: Parameters<typeof readAlpacaTradeCorrectionEvidence>[0]) =>
+    readAlpacaTradeCorrectionEvidence(range, process.env, signal);
+  const history = new MoomooChartHistory(query => connection.request(query, signal), Date.now, corrections);
   const basisDate = easternClock(Date.now()).date;
   const readHistory = async (query: { symbol: string; timeframe: "1Day" | "1Min"; start: number; end: number; adjustment?: "raw" | "split" }) => {
     const adjustment = query.adjustment ?? "split";
@@ -162,11 +175,18 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
     const { bars, complete } = await cache.read({ ...query, adjustment, basisDate }, signal, () => connection.current(true), async range => {
       // The provider requires a nonempty inclusive range. One uncovered
       // millisecond still represents at most one observed candle start.
-      const value = await history.history({ ...query, ...range, end: Math.max(range.end, range.start + 1), adjustment: "raw" }, resource === "bars");
-      if (value.basisDate !== basisDate || value.adjustment !== "raw") throw Error("chart_history_unavailable");
+      const value = await history.rawHistory({ symbol: query.symbol, timeframe: query.timeframe,
+        ...range, end: Math.max(range.end, range.start + 1) }, resource === "bars");
+      if (value.basisDate !== basisDate) throw Error("chart_history_unavailable");
       return { bars: value.bars.filter(bar => bar.time * 1000 >= range.start && bar.time * 1000 <= range.end), complete: value.complete };
     });
-    const projected = adjustment === "raw" ? bars : adjustMoomooBars(bars, moomooSplits(await history.corporateActions(query.symbol)), basisDate);
+    let raw = bars;
+    if (query.timeframe === "1Min") raw = await history.correctRawMinutes(query, bars);
+    else if (bars.length) {
+      const evidence = await corrections({ symbol: query.symbol, start: bars[0].time * 1000, end: query.end + 1, daily: true });
+      if (evidence) raw = projectComparableRawDaily(bars, evidence);
+    }
+    const projected = adjustment === "raw" ? raw : adjustMoomooBars(raw, moomooSplits(await history.corporateActions(query.symbol)), basisDate);
     return { symbol: query.symbol, bars: projected, adjustment, basisDate, feed: "moomoo", complete, nextPageToken: null };
   };
   try {

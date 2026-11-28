@@ -24,13 +24,18 @@ function splits(payload: unknown, basisDate: string): Split[] {
   return result;
 }
 
-function normalizeBar(value: unknown, adjustment: readonly Split[], daily: boolean, precision: number) {
+function normalizeBar(value: unknown, adjustment: readonly Split[], daily: boolean, precision: number, intervalMs = 0) {
   if (!isObject(value) || !Number.isSafeInteger(value.time_key) || Number(value.time_key) <= 0
     || Number(value.time_key) % 1_000 !== 0 || ![value.open, value.high, value.low, value.close].every(positive)
     || typeof value.volume !== "number" || !Number.isFinite(value.volume) || value.volume < 0
     || typeof value.turnover !== "number" || !Number.isFinite(value.turnover) || value.turnover < 0)
     throw Error("moomoo_bar_invalid");
-  const time = Number(value.time_key);
+  let time = Number(value.time_key) - (daily ? 0 : intervalMs);
+  if (daily && value.date !== undefined) {
+    const date = String(value.date).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3");
+    if (!calendarDate(date)) throw Error("moomoo_bar_invalid");
+    time = Date.parse(date + "T12:00:00Z");
+  }
   const date = easternClock(time).date;
   const factor = adjustment.filter(split => split.date > date).reduce((ratio, split) => ratio * split.ratio, 1);
   const volume = value.volume / 10 ** precision / factor;
@@ -74,7 +79,11 @@ export class MoomooScreenerData {
       if (!Number.isSafeInteger(precision) || Number(precision) < 0 || Number(precision) > 9) throw Error("moomoo_bar_invalid");
       let earliest = Infinity;
       for (const raw of payload.data.kline_list) {
-        const bar = normalizeBar(raw, adjustment, timeframe === "1Day", Number(precision));
+        if (isObject(raw) && typeof raw.time_key === "number" && raw.time_key > Date.now()
+          && [raw.open, raw.high, raw.low, raw.close, raw.volume, raw.turnover].every(value => value === undefined || value === null)) continue;
+        // Native history labels intraday candles by their end; Screeners' shared
+        // buckets and exclusive cutoffs use starts, as the chart adapter does.
+        const bar = normalizeBar(raw, adjustment, timeframe === "1Day", Number(precision), timeframe === "15Min" ? 900_000 : 300_000);
         const at = Date.parse(bar.t);
         earliest = Math.min(earliest, at);
         if (at < start || at > end) continue;

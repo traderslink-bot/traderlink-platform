@@ -13,13 +13,14 @@ import { applyLiveScreenerBook } from "./live-screener-book";
 import { PAGE_SIZE, querySnapshot, sortRows } from "./query";
 import { MARKET_PACK_MAX_AGE_MS, readMarketPack } from "./snapshot-file";
 import { canReadPressReleaseRun, HOUR_MS, memberPressReleases } from "./press-releases";
+import { observeScreenerCorrectionRevision, onScreenerCorrectionRevision, screenerCorrectionRevision } from "./run-corrections";
 
 const REQUEST_WINDOW = 60_000;
 const SNAPSHOT_RECHECK_MS = 5_000;
 const LIVE_SNAPSHOT_RECHECK_MS = 250;
 type Run = {
   owner: string; header: Omit<RunResult, "rows" | "page" | "pageSize">;
-  matches: Candidate[]; pressReleaseDelay?: number;
+  matches: Candidate[]; pressReleaseDelay?: number; source?: string; corrected?: boolean;
 };
 const processState = globalThis as typeof globalThis & {
   traderlinkStockScreens?: Map<string, Run>;
@@ -55,6 +56,7 @@ export function getRun(identity: TraderLinkPlatformRequestIdentity, id: string, 
   const run = runs.get(id);
   if (!run || run.owner !== identity.scope.userId
     || (run.pressReleaseDelay !== undefined && !canReadPressReleaseRun(identity, run.pressReleaseDelay, Date.now()))) throw Error("run_expired");
+  if (run.corrected) throw Error("run_corrected");
   return resultPage(run, page, sort);
 }
 
@@ -67,6 +69,12 @@ function resultPage(run: Run, page: number, sort: Definition["sort"]): RunResult
 
 let marketRead: { file: string; until: number; interval: number; result: ReturnType<typeof readSharedMarket> } | undefined;
 let lastMarket: { file: string; signature: string; pack: MarketPack } | undefined;
+onScreenerCorrectionRevision("stock-screeners-service", (source, invalidateResults) => {
+  if (invalidateResults) for (const run of runs.values()) if (run.source === source) { run.corrected = true; run.matches = []; }
+  const matches = (file: string) => file === source || file === join(dirname(source), "market.json");
+  if (marketRead && matches(marketRead.file)) marketRead = undefined;
+  if (lastMarket && matches(lastMarket.file)) lastMarket = undefined;
+});
 let demo: { bucket: number; pack: ReturnType<typeof previewPack> } | undefined;
 
 function previewMarket(now: number) {
@@ -89,6 +97,7 @@ async function readSharedMarket(file: string, now: number, selection: ScreenerPr
     const signature = [stats.dev, stats.ino, stats.mtimeMs, stats.size].join(":");
     if (previous?.signature === signature) return { pack: previous.pack, fallback: false };
     const pack = await readMarketPack(file, now, selection);
+    observeScreenerCorrectionRevision(join(dirname(file), screenerPackFilename(selection)), pack.correctionRevision, pack.correctionGeneration);
     lastMarket = { file, signature, pack };
     return { pack, fallback: false };
   } catch (error) {
@@ -118,6 +127,8 @@ async function marketForRun(now: number, preview: boolean, selection: ScreenerPr
   const pending = marketRead;
   try {
     const result = await pending.result;
+    const confirmed = screenerCorrectionRevision(join(directory, screenerPackFilename(selection)));
+    if (confirmed !== undefined && result.pack.correctionRevision !== confirmed) throw Error("market_pack_corrected");
     if (!withinSnapshotAgeLimit(result.pack, now)) throw Error("market_pack_invalid");
     return result;
   } catch (error) {
@@ -178,6 +189,7 @@ export async function createRun(identity: TraderLinkPlatformRequestIdentity, def
   while (runs.size >= 64) runs.delete(runs.keys().next().value!);
   const id = randomUUID();
   const run: Run = { owner, matches: rows, pressReleaseDelay: recentPressReleases?.delaySeconds,
+    source: join(stockScreenersDirectory(), screenerPackFilename(selection)),
     header: { ...info, partial: snapshot.partial, ...coverage, id, total: rows.length, pressReleases,
       snapshotFallback: fallback ? true : undefined } };
   runs.set(id, run);

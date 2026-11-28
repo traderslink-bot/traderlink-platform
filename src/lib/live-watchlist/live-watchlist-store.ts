@@ -471,7 +471,17 @@ function latestPublishedPrice(
     : null;
 }
 
+function clearPath(state: LiveWatchlistSymbolState): LiveWatchlistSymbolState {
+  const cards = { ...state.cards };
+  delete cards.levelMap;
+  delete cards.fullLadder;
+  delete cards.nearestSupportResistance;
+  return { ...state, cards, levelMap: null, nearestSupport: null, nearestResistance: null,
+    nearestSupportLabel: null, nearestResistanceLabel: null, premiumLevelsPreview: null };
+}
+
 function deriveStateFields(state: LiveWatchlistSymbolState): LiveWatchlistSymbolState {
+  if (state.pathCorrection?.held) state = clearPath(state);
   const companyInfo = state.cards.companyInfo;
   const nearest = state.cards.nearestSupportResistance;
   const liveTraderRead = state.cards.liveTraderRead;
@@ -566,6 +576,14 @@ function mergeArchivedReactivationContext(
   if (!existing) {
     return archived;
   }
+  if (existing.pathCorrection || archived.pathCorrection) {
+    // A null current map is an intentional withdrawal. An old archive must
+    // never supply its cards to a different verified revision.
+    const newest = (existing.pathCorrection?.stamp ?? 0) >= (archived.pathCorrection?.stamp ?? 0)
+      ? existing : archived;
+    existing = withPathFrom(existing, newest);
+    archived = withPathFrom(archived, newest);
+  }
   return deriveStateFields({
     ...archived,
     ...existing,
@@ -600,7 +618,45 @@ export function validIndicatorPublicationIdentity(_symbol: string, value: unknow
   return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
 }
 
-export function applyPatch(
+export function validPathCorrection(value: unknown): value is NonNullable<LiveWatchlistSymbolState["pathCorrection"]> {
+  if (!value || typeof value !== "object" || !("stamp" in value) || !("held" in value)) return false;
+  return typeof value.stamp === "number" && Number.isSafeInteger(value.stamp) && value.stamp > 0 && typeof value.held === "boolean";
+}
+
+function withPathFrom(target: LiveWatchlistSymbolState, source: LiveWatchlistSymbolState): LiveWatchlistSymbolState {
+  const state = clearPath(target);
+  for (const key of ["levelMap", "nearestSupportResistance", "fullLadder"] as const) {
+    if (source.cards[key]) state.cards[key] = source.cards[key];
+  }
+  return { ...state, pathCorrection: source.pathCorrection, levelMap: source.levelMap,
+    nearestSupport: source.nearestSupport, nearestResistance: source.nearestResistance,
+    nearestSupportLabel: source.nearestSupportLabel, nearestResistanceLabel: source.nearestResistanceLabel };
+}
+
+function olderPath(existing: LiveWatchlistSymbolState | null, incoming: LiveWatchlistCardPatch["pathCorrection"]) {
+  const previous = existing?.pathCorrection;
+  return previous && (!incoming || incoming.stamp < previous.stamp ||
+    incoming.stamp === previous.stamp && previous.held && !incoming.held);
+}
+
+export function applyPatch(existing: LiveWatchlistSymbolState | null, patch: LiveWatchlistCardPatch, restoredActivation = false) {
+  const previous = existing?.pathCorrection;
+  const incoming = patch.pathCorrection;
+  if (existing && olderPath(existing, incoming)) {
+    const cards = { ...patch.cards };
+    delete cards.levelMap;
+    delete cards.fullLadder;
+    delete cards.nearestSupportResistance;
+    const clean = { ...patch, cards };
+    delete clean.levelMap;
+    return withPathFrom(applyOtherCardFields(existing, clean, restoredActivation), existing);
+  }
+  const next = applyOtherCardFields(existing, patch, restoredActivation);
+  next.pathCorrection = incoming ?? previous;
+  return next.pathCorrection?.held ? clearPath(next) : next;
+}
+
+function applyOtherCardFields(
   existing: LiveWatchlistSymbolState | null,
   patch: LiveWatchlistCardPatch,
   restoredActivation = false,
@@ -757,7 +813,20 @@ export function applyPatch(
   }));
 }
 
-function applyTickerDataPatch(
+export function applyTickerDataPatch(existing: LiveWatchlistSymbolState | null, patch: LiveWatchlistTickerDataPatch) {
+  const incoming = patch.pathCorrection;
+  if (existing && olderPath(existing, incoming)) {
+    return withPathFrom(applyQuoteFields(existing, { ...patch, levelMap: existing.levelMap,
+      nearestSupport: existing.nearestSupport, nearestResistance: existing.nearestResistance,
+      nearestSupportLabel: existing.nearestSupportLabel, nearestResistanceLabel: existing.nearestResistanceLabel }), existing);
+  }
+  const advanced = incoming && incoming.stamp > (existing?.pathCorrection?.stamp ?? 0);
+  const base = existing && advanced ? clearPath(existing) : existing;
+  const next = { ...applyQuoteFields(base, patch), pathCorrection: incoming ?? existing?.pathCorrection };
+  return next.pathCorrection?.held ? clearPath(next) : next;
+}
+
+function applyQuoteFields(
   existing: LiveWatchlistSymbolState | null,
   patch: LiveWatchlistTickerDataPatch,
 ): LiveWatchlistSymbolState {

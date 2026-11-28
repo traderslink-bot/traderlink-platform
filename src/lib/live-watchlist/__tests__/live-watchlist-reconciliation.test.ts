@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyDetailPotentialPath,
   isNewerLiveWatchlistSymbolState,
   reconcileLiveWatchlistSnapshot,
   reconcileLiveWatchlistSymbolState,
@@ -27,6 +28,20 @@ function symbol(overrides: Partial<LiveWatchlistSymbolState> = {}): LiveWatchlis
 }
 
 describe("live watchlist reconciliation", () => {
+  it("keeps a stream withdrawal when an older detail response contains the ladder", () => {
+    const old = symbol({ nearestSupport: 4, pathCorrection: { stamp: 10, held: false }, cards: {
+      fullLadder: { title: "Ladder", source: "test", body: "4", updatedAt: 12, priceWhenPosted: 5 },
+    } });
+    const held = symbol({ pathCorrection: { stamp: 11, held: true } });
+    const merged = applyDetailPotentialPath(old, held, old);
+    expect(merged.pathCorrection).toEqual(held.pathCorrection);
+    expect(merged.cards.fullLadder).toBeUndefined();
+    expect(merged.nearestSupport).toBeNull();
+    const replacement = { ...old, pathCorrection: { stamp: 12, held: false } };
+    expect(applyDetailPotentialPath(held, held, replacement).cards.fullLadder).toEqual(old.cards.fullLadder);
+    expect(applyDetailPotentialPath(held, { ...replacement, premiumLevelsAllowed: false }, old).cards.fullLadder).toBeUndefined();
+  });
+
   it("rejects a late stream event with an older market-data revision", () => {
     expect(isNewerLiveWatchlistSymbolState(
       symbol({ marketDataRevision: 11, latestPriceObservedAt: 2_000, updatedAt: 2_000 }),

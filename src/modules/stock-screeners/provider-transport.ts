@@ -29,6 +29,7 @@ export function parseScreenerMoomooUniverse(value: unknown, selection: ScreenerP
 export type MoomooScreenerOperation = {
   operation: "history"; symbol: string; timeframe: "1Min" | "5Min" | "15Min" | "1Day";
   start: number; end: number; nextTime?: number; pageToken?: string;
+  correctionRevision?: string;
 } | { operation: "snapshots"; symbols: string[] }
   | { operation: "rehab"; symbol: string }
   | { operation: "calendar"; start: string; end: string };
@@ -56,6 +57,7 @@ export class ScreenerProviderTransport {
     });
     if (!response.ok) {
       await response.body?.cancel();
+      if (response.status === 422) throw Error("screener_history_correction_unqualified");
       throw Error(response.status === 409 ? "screener_provider_changed" : "screener_provider_transport_unavailable");
     }
     return response;

@@ -57,6 +57,7 @@ function resultError(error: unknown, fallback: string) {
     case "not_found": return "Screeners access is unavailable in this session. Reload the page and sign in if prompted.";
     case "busy": return "Too many requests. Wait a minute and try again.";
     case "run_expired": return "These results are no longer available. Run the screen again to refresh them.";
+    case "run_corrected": return "Trades in these results were corrected. Refresh results to run this screen with the updated data.";
     default: return fallback;
   }
 }
@@ -212,6 +213,7 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
       }
       setRun(result);
     } catch (error) {
+      if (error instanceof Error && error.message === "run_corrected") { setRun(null); setInspected(null); }
       setProblem(resultError(error, "Could not load these results. Try again."));
     } finally { setBusy(false); }
   }
@@ -388,7 +390,7 @@ export function StockScreenerWorkspace({ initialSaved, preview, sharedScreen, sh
             setEdit(true);
           }}>OR group</Button>
         <DashboardPrimaryAction type="button" disabled={busy} onClick={() => void runScreen()}>
-          {busy ? "Working…" : run && !dirty ? "Refresh results" : "Run screen"}
+          {busy ? "Working…" : applied && !dirty ? "Refresh results" : "Run screen"}
         </DashboardPrimaryAction>
         {atRuleLimit && <Typography variant="caption">This screen uses all {MAX_RULES} filters.</Typography>}
         {rules.filter(rule => rule.metric !== "cap" || rule.exclude || !singleCapRule)

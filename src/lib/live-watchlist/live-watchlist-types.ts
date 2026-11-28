@@ -51,6 +51,7 @@ export type LiveWatchlistCardContent = {
 };
 
 export type LiveWatchlistCardPatch = {
+  pathCorrection?: { stamp: number; held: boolean };
   symbol: string;
   status?: LiveWatchlistStatus;
   updatedAt: number;
@@ -86,6 +87,7 @@ export type LiveWatchlistHealthPatch = {
 };
 
 export type LiveWatchlistTickerDataPatch = {
+  pathCorrection?: { stamp: number; held: boolean };
   type: "tickerData";
   symbol: string;
   status?: LiveWatchlistStatus;
@@ -484,6 +486,7 @@ export type LiveWatchlistLevelMap = {
 };
 
 export type LiveWatchlistSymbolState = {
+  pathCorrection?: { stamp: number; held: boolean };
   /** Server-owned first-creation marker; absent on preserved legacy tickers. */
   premiumDefaultsVersion?: 1;
   watchlistUpgradeLinks?: Partial<Record<"ticker" | "analysis" | "levels", string | null>>;

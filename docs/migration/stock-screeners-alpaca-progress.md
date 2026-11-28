@@ -365,3 +365,7 @@ restart or timeout, same-session overlays, preserved completed metrics,
 and snapshot fallback. The standalone VPS runner loaded successfully in
 its missing-configuration smoke check. Real signed-in QA on the shared
 Railway deployment is still pending.
+
+## Permanent correction consumer audit — November 27, 2026 Eastern
+
+The owner-directed follow-up is recorded in [the durable-correction audit](stock-screeners-durable-correction-audit-20261127.md). The incremental consumer preserves the frozen POM packet and binds the wide durable manifest to native historical repairs, materialized relative-volume cache repair, provider-native Moomoo comparison, and owner-scoped corrected-result refresh. Final isolated qualification: 93 tests/14 files, lint 0/0, reachable types 0, offline worker compilation passed. Native Daily and weighted VWAP remain conditional on explicit source/basis witnesses; this source checkpoint is not production, market-hours performance or signed-in browser acceptance. Release coordination owns integration and deployment.

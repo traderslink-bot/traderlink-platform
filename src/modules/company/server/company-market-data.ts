@@ -6,8 +6,9 @@ import { scannerVolumeBreakdown } from "@/src/modules/scanner/live/volume";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { scannerIndicatorResults } from "@/src/modules/scanner/live/scanner-indicator-calculation";
 import { easternDayStart } from "@/src/modules/scanner/alpaca/candles";
-import { readAlpacaHistory,requestAlpacaGateway } from "@/src/modules/scanner/alpaca/client";
+import { readAlpacaHistory,readAlpacaTradeRevisions,requestAlpacaGateway } from "@/src/modules/scanner/alpaca/client";
 import { readChartCalendarYear } from "@/src/modules/scanner/alpaca/chart-calendar-request";
+import type { TradeRevision } from "@/src/modules/scanner/alpaca/trade-revisions";
 import type { AlpacaQuoteReply } from "@/src/modules/scanner/alpaca/scanner-snapshots";
 import { COMPANY_MARKET_CAP_LIMIT, companySessionRanges, type CompanyTechnicals } from "../company-technicals";
 
@@ -16,8 +17,12 @@ export async function companyUniverseEntry(symbol:string){
   return universe?.stocks.find(stock=>stock.symbol===symbol&&stock.marketCapAtCollection>0&&stock.marketCapAtCollection<=COMPANY_MARKET_CAP_LIMIT);
 }
 
-type MarketRanges=Pick<CompanyTechnicals,"days"|"bid"|"ask"|"dollarVolume"|"dayVolume"|"sessionVwap"|"candleActivity"|"relativeVolume">;
-const ranges=new Map<string,{expires:number;read:Promise<MarketRanges>}>();
+type MarketRanges=Pick<CompanyTechnicals,"days"|"bid"|"ask"|"dollarVolume"|"dayVolume"|"sessionVolume"|"sessionVwap"|"candleActivity"|"relativeVolume"|"revisedRangeDates">;
+type RangeCacheEntry={expires:number;revision?:TradeRevision;read:Promise<MarketRanges>};
+const ranges=new Map<string,RangeCacheEntry>();
+const revisionReads=new Map<string,{expires:number;read:Promise<TradeRevision|undefined>}>();
+const maximumRevisionWindow=7*86_400_000;
+const noTradeRevision:TradeRevision={revision:null,pending:false,minutes:[]};
 const calendars=new Map<number,ReturnType<typeof fetchCalendar>>();
 function fetchCalendar(year:number){
   return requestAlpacaGateway("calendar",new URLSearchParams({year:String(year)}),process.env,AbortSignal.timeout(8000))
@@ -31,18 +36,34 @@ function calendar(year:number){
   void read.catch(()=>{if(calendars.get(year)===read)calendars.delete(year);});
   return read;
 }
-async function fetchRanges(symbol:string, now:number):Promise<MarketRanges>{
-  const today=easternClock(now).date;
+async function rangeSessions(today:string){
   const year=Number(today.slice(0,4));
   const current=await calendar(year);
-  if(!current.available)return {days:[]};
+  if(!current.available)return [];
   let sessions=current.sessions.filter(session=>session.date<=today).slice(-2);
   if(sessions.length<2){
     const previous=await calendar(year-1);
     if(previous.available)sessions=[...previous.sessions.slice(-2),...sessions].slice(-2);
   }
-  if(!sessions.length)return {days:[]};
-  const start=easternDayStart(Date.parse(sessions[0].date+"T12:00:00Z")/1000)*1000;
+  return sessions;
+}
+
+function recentRevision(symbol:string,start:number,now:number){
+  start=Math.max(start,now-maximumRevisionWindow);
+  const key=symbol+":"+easternClock(now).date;
+  const cached=revisionReads.get(key);
+  if(cached&&cached.expires>now)return cached.read;
+  const read=readAlpacaTradeRevisions({symbols:[symbol],start,end:now},process.env,AbortSignal.timeout(2500))
+    .then(result=>result.symbols[symbol]??noTradeRevision)
+    .catch(()=>undefined);
+  revisionReads.set(key,{expires:now+5_000,read});
+  if(revisionReads.size>256)revisionReads.delete(revisionReads.keys().next().value!);
+  return read;
+}
+
+async function fetchRanges(symbol:string, now:number, sessions:Awaited<ReturnType<typeof rangeSessions>>,
+  start:number,revisedRangeDates:string[],pending:boolean):Promise<MarketRanges>{
+  const today=easternClock(now).date;
   const close=sessions.at(-1)?.close==="13:00"?780:960;
   const todayStart=easternDayStart(Date.parse(today+"T12:00:00Z")/1000)*1000;
   const [history,quotes,daily]=await Promise.all([
@@ -54,24 +75,34 @@ async function fetchRanges(symbol:string, now:number):Promise<MarketRanges>{
   const quote=quotes?.feed==="sip"?quotes.snapshots[symbol]?.latestQuote:undefined;
   const quoteTime=Date.parse(quote?.t??"");
   const usable=quote&&quote.bp>0&&quote.ap>=quote.bp&&quoteTime<=now&&now-quoteTime<=60_000;
-  const days=companySessionRanges(history.bars,sessions).reverse();
+  // The split-adjusted history overlays repairs only on its matching basis
+  // date. A pending disposition can affect any of the current day's minutes.
+  const unverifiedDates=new Set(revisedRangeDates.filter(date=>date!==history.basisDate || (pending&&date===today)));
+  const rangeBars=unverifiedDates.size?history.bars.filter(bar=>!unverifiedDates.has(easternClock(bar.time*1000).date)):history.bars;
+  const days=companySessionRanges(rangeBars,sessions).reverse();
   const regularVolume=days.find(day=>day.date===today)?.ranges[1]?.volume;
   const baseline=daily?.bars.slice(-20)??[];
   const baselineVolume=baseline.reduce((sum,bar)=>sum+bar.volume,0)/20;
   const relativeVolume=regularVolume!=null&&baseline.length===20&&baselineVolume>0?regularVolume/baselineVolume:undefined;
   const totals=quotes?.feed==="sip"?quotes.sessionTotals?.[symbol]:null;
-  const dollarVolume=totals?.complete&&totals.date===today
-    ? Object.values(totals.sessions).reduce((sum,session)=>sum+session.dollarVolume,0):undefined;
-  const through=Math.floor(now/60_000)*60_000;
-  const completed=history.bars.filter(bar=>(bar.time+60)*1000<=through);
-  const {vwap}=scannerIndicatorResults(completed,"5m",through);
+  const todayRevised=revisedRangeDates.includes(today);
+  const stamp=totals&&"correctionRevision" in totals?totals.correctionRevision:undefined;
+  const usableTotals=totals?.complete&&totals.date===today&&sessions.at(-1)?.date===today&&
+    (!todayRevised||(!pending&&typeof stamp==="number"&&Number.isSafeInteger(stamp)&&stamp>0))?totals:undefined;
   const clock=easternClock(now);
-  const dayVolume = totals?.complete && totals.date === today && sessions.at(-1)?.date === today
-    ? scannerVolumeBreakdown({
-      session: clock.minute < 570 ? "premarket" : clock.minute < close ? "regular" : "after_hours",
-      premarketVolume: totals.sessions.premarket.volume,
-      regularVolume: totals.sessions.regular.volume,
-    }).dayVolume : undefined;
+  const session=clock.minute<570?"premarket":clock.minute<close?"regular":"after_hours";
+  const sessionTotal=usableTotals?.sessions[session];
+  const dollarVolume=usableTotals
+    ? todayRevised?sessionTotal?.dollarVolume:Object.values(usableTotals.sessions).reduce((sum,total)=>sum+total.dollarVolume,0)
+    : undefined;
+  const dayVolume=usableTotals?scannerVolumeBreakdown({
+    session,
+    premarketVolume:usableTotals.sessions.premarket.volume,
+    regularVolume:usableTotals.sessions.regular.volume,
+  }).dayVolume:undefined;
+  const through=Math.floor(now/60_000)*60_000;
+  const completed=rangeBars.filter(bar=>(bar.time+60)*1000<=through);
+  const {vwap}=scannerIndicatorResults(completed,"5m",through);
   const recent=completed.filter(bar=>{
     const time=easternClock(bar.time*1000);
     return time.date===today&&time.minute>=240&&time.minute<(close===780?1020:1200)
@@ -91,18 +122,37 @@ async function fetchRanges(symbol:string, now:number):Promise<MarketRanges>{
     fiveMinuteVolumeSpike:five&&previousFive>0?windowVolume(5,0)/previousFive:undefined,
     volumeAcceleration:preceding>0?last.volume/(preceding/5):undefined, intervalVolumeRate:last.volume/60,
   }:undefined;
-  return {days,relativeVolume,dollarVolume,dayVolume,sessionVwap:vwap?.value??undefined,candleActivity,
+  return {days,relativeVolume,dollarVolume,dayVolume,sessionVolume:sessionTotal?.volume,sessionVwap:vwap?.value??undefined,candleActivity,
     ...(usable?{bid:quote.bp,ask:quote.ap}:{})};
 }
-function readRanges(symbol:string){
+async function readRanges(symbol:string){
   const now=Date.now();
-  const key=symbol+":"+easternClock(now).date;
+  const today=easternClock(now).date;
+  const key=symbol+":"+today;
+  const sessions=await rangeSessions(today).catch(()=>[]);
+  if(!sessions.length)return {days:[]};
+  const start=easternDayStart(Date.parse(sessions[0].date+"T12:00:00Z")/1000)*1000;
+  const observed=await recentRevision(symbol,start,now);
   const cached=ranges.get(key);
-  if(cached&&cached.expires>now)return cached.read;
-  const read=fetchRanges(symbol,now).catch(()=>({days:[]}));
-  ranges.set(key,{expires:now+60_000,read});
+  const revision=observed??cached?.revision;
+  if(cached&&cached.expires>now&&cached.revision?.revision===revision?.revision&&cached.revision?.pending===revision?.pending)return cached.read;
+
+  const revisedRangeDates=[...new Set([
+    ...(revision?.minutes.map(minute=>easternClock(minute*1000).date)??[]),
+    ...(revision?.pending?[today]:[]),
+  ])];
+  const entry:RangeCacheEntry={expires:now+60_000,revision,read:fetchRanges(symbol,now,sessions,start,revisedRangeDates,Boolean(revision?.pending))
+    .then(result=>revisedRangeDates.length?{...result,revisedRangeDates}:result)
+    .catch(()=>{
+      if(revisedRangeDates.length){
+        entry.expires=Date.now()+5_000;
+        return {days:[],revisedRangeDates};
+      }
+      return {days:[]};
+    })};
+  ranges.set(key,entry);
   if(ranges.size>256)ranges.delete(ranges.keys().next().value!);
-  return read;
+  return entry.read;
 }
 const yearRanges=new Map<string,{retryAt:number;read:Promise<CompanyTechnicals["yearRange"]>}>();
 

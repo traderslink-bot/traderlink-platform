@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readScreenerVwapSeeds } from "../../stock-screeners/candle-cache-reader";
 import { LiveScreenerVwapWorker } from "../../stock-screeners/live-vwap-worker";
-import { decodeCandleCacheReply, encodeCandleCacheReply } from "./candle-cache-wire";
+import { CANDLE_CACHE_WIRE_PATH, decodeCandleCacheReply, encodeCandleCacheReply } from "./candle-cache-wire";
+import { encodeGatewayWire, gatewayWirePath } from "./gateway-wire";
 
 const start = Date.parse("2026-11-19T09:00:00Z");
 const end = start + 120_000;
@@ -131,7 +132,12 @@ describe("authoritative Screeners consumer compatibility", () => {
   it("joins epoch-second bars to millisecond live boundaries and seeds a reconnect at its new boundary", async () => {
     const requests: URL[] = [];
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
-      const url = new URL(String(input)); requests.push(url);
+      const url = new URL(String(input));
+      requests.push(url);
+      if (url.pathname === "/" + gatewayWirePath("trade-revisions")) {
+        return Response.json(encodeGatewayWire("trade-revisions", { feed: "sip", symbols: {} }));
+      }
+      expect(url.pathname).toBe(CANDLE_CACHE_WIRE_PATH);
       const until = Number(url.searchParams.get("until"));
       return Response.json(encodeCandleCacheReply({ ...packet({ GOOD: [bar] }), end: until,
         coverage: { GOOD: { status: "complete", completedThroughMs: until } } }));
@@ -147,6 +153,11 @@ describe("authoritative Screeners consumer compatibility", () => {
     reconnect.observe("GOOD", reconnectAt, 14, 100);
     await reconnect.warm(() => {}, new AbortController().signal);
     expect(reconnect.reading("GOOD")).toEqual({ vwap: 12, vwapAt: reconnectAt });
-    expect(requests.map(url => Number(url.searchParams.get("until")))).toEqual([end, reconnectAt]);
+    const revisionPath = "/" + gatewayWirePath("trade-revisions");
+    const reads = (until: number) => [
+      [revisionPath, until], [CANDLE_CACHE_WIRE_PATH, until], [revisionPath, until],
+    ];
+    expect(requests.map(url => [url.pathname, Number(url.searchParams.get("until"))]))
+      .toEqual([...reads(end), ...reads(reconnectAt)]);
   });
 });

@@ -292,6 +292,16 @@ export class SharedScanEnrichment implements ScanEnrichment {
     void bootstrap().catch(()=>{this.counts.barFailures++;}).finally(()=>{this.barReading=false;});
   }
 
+  invalidateCorrectedSymbol(symbol: string) {
+    for (const [frame, entries] of this.frames) {
+      entries.delete(symbol);
+      const demand = this.requests.get(frame);
+      if (demand) demand.version = ++this.demandVersion;
+      this.nextFrameAttempt.delete(frame);
+    }
+    this.archive?.invalidateCorrectedSymbol(symbol);
+  }
+
   closeSession(){
     this.company?.reset();
     this.date="";
@@ -471,6 +481,7 @@ export class SharedScanEnrichment implements ScanEnrichment {
     if(this.date!==date||this.frames.get(frame)!==entries)return;
     let yielded=performance.now();
     for(const symbol of symbols){
+      if (this.requests.get(frame)?.version !== plan.demandVersion) return;
       const former=entries.get(symbol);
       const returned = result.bars[symbol];
       const incoming=returned.filter(bar=>calendar(bar.time*1000));

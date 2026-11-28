@@ -8,7 +8,7 @@ export const GATEWAY_WIRE_ROUTES = {
   "analyzer-splits": "capital-adjustments", "chart-splits": "split-events",
   "chart-overnight-history": "extended-candles", "chart-unadjusted-history": "original-candles", history: "candle-window", quotes: "market-state",
   overnight: "extended-price", bars: "recent-candles", stream: "chart-updates",
-  "scanner-stream": "scanner-updates", "trade-revisions": "trade-revisions", prices: "price-updates", halts: "trading-pauses",
+  "scanner-stream": "scanner-updates", "trade-revisions": "trade-revisions", "trade-correction-evidence": "trade-correction-evidence", prices: "price-updates", halts: "trading-pauses",
 } as const;
 export type GatewayOperation = keyof typeof GATEWAY_WIRE_ROUTES;
 export function gatewayWirePath(operation: GatewayOperation): string {
@@ -88,9 +88,14 @@ const schemas: Record<GatewayOperation, Spec> = {
   overnight:record({feed:["coverage",scalar],symbol:["ticker",scalar],trade:["lastPrint",trade]}),bars:history,
   stream:record({state:["connection",scalar],adjustment:["basis",scalar],basisDate:["basisDay",scalar],price:["value",scalar],time:["observed",scalar],bar:["candle",candle],daily:["daily",scalar],provisional:["forming",scalar],minute:["minute",scalar],premarket:["premarketTradeTotals",simple({through:"through",volume:"shares",dollarVolume:"notional"})],symbol:["ticker",scalar],available:["usable",scalar],status:["tradingState",pause]}),
   "scanner-stream":market,prices:priceFrame,
-  "trade-revisions":record({feed:["coverage",scalar],symbols:["instruments",dictionary(record({
+  "trade-revisions":record({feed:["coverage",scalar],generation:["generation",scalar],symbols:["instruments",dictionary(record({
     minutes:["at",array(scalar)],pending:["pending",scalar],revision:["revision",scalar],
   }))]}),
+  "trade-correction-evidence":record({symbol:["ticker",scalar],feed:["coverage",scalar],adjustment:["basis",scalar],generation:["generation",scalar],
+    nativeDays:["nativeDays",array(record({day:["dateStart",scalar],before:["prior",candle],bar:["candle",candle]}))],
+    rows:["revisions",array(record({symbol:["ticker",scalar],minute:["minute",scalar],bar:["candle",candle],before:["prior",candle],
+      correctionRevision:["revision",scalar],premarket:["premarketTradeTotals",simple({through:"through",volume:"shares",dollarVolume:"notional"})],
+    }))]}),
   halts:record({feed:["coverage",scalar],connected:["online",scalar],statusesSubscribed:["trackingPauses",scalar],observedSince:["trackingSince",scalar],statuses:["tradingStates",array(pause)],events:["transitions",array(pause)]}),
 };
 
@@ -135,7 +140,7 @@ export function decodeGatewayWire(operation: GatewayOperation, value: unknown): 
   return transform(schemas[operation],body.data,true,{nodes:0});
 }
 
-const queryNames: Record<string,string> = {purpose:"use",symbol:"ticker",symbols:"tickers",timeframe:"resolution",frame:"signalFrame",start:"from",end:"until",daily:"dayBars",dailyStartup:"initialDaily",overnight:"extended",sessions:"periodTotals",regularClose:"closeMinute",before:"cutoff",anchor:"reference",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",year:"yearNumber",adjustment:"basis",acceptedEvidence:"includeAcceptance",session:"marketSession",sessionMode:"sessionMode",sessionVwap:"includeWeightedSession",historyBars:"lookback",id:"acceptedId",dailyId:"acceptedDailyId",regularId:"acceptedRegularId",mapId:"mapId",mapRevision:"mapRevision"};
+const queryNames: Record<string,string> = {purpose:"use",symbol:"ticker",symbols:"tickers",timeframe:"resolution",frame:"signalFrame",start:"from",end:"until",daily:"dayBars",dailyReplay:"dayReplay",dailyStartup:"initialDaily",overnight:"extended",sessions:"periodTotals",regularClose:"closeMinute",before:"cutoff",anchor:"reference",premarket:"beforeOpen",regular:"openMarket",postmarket:"afterClose",year:"yearNumber",adjustment:"basis",acceptedEvidence:"includeAcceptance",session:"marketSession",sessionMode:"sessionMode",sessionVwap:"includeWeightedSession",historyBars:"lookback",id:"acceptedId",dailyId:"acceptedDailyId",regularId:"acceptedRegularId",mapId:"mapId",mapRevision:"mapRevision"};
 export function gatewayWireQuery(query: URLSearchParams, decode=false): URLSearchParams {
   const result=new URLSearchParams();
   for(const [from,to] of Object.entries(queryNames)){

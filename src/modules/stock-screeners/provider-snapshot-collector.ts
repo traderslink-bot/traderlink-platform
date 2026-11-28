@@ -2,14 +2,16 @@ import { setTimeout as delay } from "node:timers/promises";
 import { AlpacaRestData } from "../scanner/alpaca/rest-data";
 import { parseCalendarSessions } from "../scanner/alpaca/chart-calendar";
 import { easternClock } from "../scanner/live/sessions";
-import { collectMarketPack, type BarCache } from "./collect-market";
+import { collectMarketPack, type BarCache, type ScreenerCalendarRange } from "./collect-market";
 import { collectListings } from "./listings";
 import { MoomooScreenerData } from "./moomoo-market-data";
 import { collectMoomooQuotePack } from "./moomoo-quote-pack";
 import { isObject, type ScreenerProviderSelection } from "./contracts";
 import type { ScreenerProviderTransport } from "./provider-transport";
+import { screenerCorrections } from "./trade-corrections";
 
-type Reference = { date: string; listings: Awaited<ReturnType<typeof collectListings>>; calendar: unknown; spacingMs?: number };
+type Reference = { date: string; listings: Awaited<ReturnType<typeof collectListings>>;
+  calendar: unknown; calendarRange: ScreenerCalendarRange; spacingMs?: number };
 const DAY = 86_400_000;
 type Credentials = { keyId: string; secretKey: string };
 
@@ -25,7 +27,8 @@ export class ScreenerSnapshotCollector {
   private nextRequest = 0;
 
   constructor(private readonly transport: ScreenerProviderTransport, private readonly selection: ScreenerProviderSelection,
-    private readonly signal: AbortSignal, private readonly credentials?: Credentials) {}
+    private readonly signal: AbortSignal, private readonly credentials?: Credentials,
+    private readonly environment: NodeJS.ProcessEnv = process.env) {}
 
   async referenceData(): Promise<Reference> {
     const now = Date.now(), date = easternClock(now).date;
@@ -45,14 +48,16 @@ export class ScreenerSnapshotCollector {
       if (this.selection.provider === "moomoo") {
         const listings = await this.transport.universe(this.selection, date, this.signal);
         let calendar = this.reference?.date === date ? this.reference.calendar : undefined;
+        let calendarRange = this.reference?.date === date ? this.reference.calendarRange : { start, end };
         if (!calendar) {
           const payload = await this.transport.moomoo(this.selection, { operation: "calendar", start, end }, this.signal);
           const { moomooCalendarSessions } = await import("../market-data/moomoo-calendar");
           calendar = moomooCalendarSessions(payload, start, end);
+          calendarRange = { start, end };
         }
         const eligible = new Set(listings.stocks.map(stock => stock.symbol));
         for (const symbol of this.moomooSnapshots.keys()) if (!eligible.has(symbol)) this.moomooSnapshots.delete(symbol);
-        this.reference = { date, listings, calendar, spacingMs: listings.spacingMs };
+        this.reference = { date, listings, calendar, calendarRange, spacingMs: listings.spacingMs };
       } else {
         const credentials = this.requireCredentials();
         const headers = { "APCA-API-KEY-ID": credentials.keyId, "APCA-API-SECRET-KEY": credentials.secretKey };
@@ -60,7 +65,7 @@ export class ScreenerSnapshotCollector {
         url.search = new URLSearchParams({ start, end }).toString();
         const response = await fetch(url, { headers, redirect: "error", signal: AbortSignal.any([this.signal, AbortSignal.timeout(12_000)]) });
         if (!response.ok) throw Error("calendar_unavailable");
-        this.reference = { date, listings: await collectListings(headers), calendar: await response.json() };
+        this.reference = { date, listings: await collectListings(headers), calendar: await response.json(), calendarRange: { start, end } };
       }
     }
     this.referenceReadAt = Date.now();
@@ -80,13 +85,34 @@ export class ScreenerSnapshotCollector {
     const pack = await collectMarketPack({
       now, clock: Date.now, source: this.selection.provider === "alpaca" ? "Alpaca SIP" : "Moomoo",
       stocks: reference.listings.stocks, universeDate: reference.listings.listingDate, partialCaps: reference.listings.partialCaps,
-      calendar: reference.calendar, cache: this.cache,
+      calendar: reference.calendar, calendarRange: reference.calendarRange, cache: this.cache,
+      corrections: screenerCorrections(this.environment, this.signal),
       data: { get: (path, params) => { this.signal.throwIfAborted(); return data.get(path, params); } },
       onBatch: () => this.signal.throwIfAborted(),
     });
     this.signal.throwIfAborted();
     if (this.quotaStopped) throw Error("provider_budget_reserved");
     if (this.transportUnavailable) throw Error("screener_provider_transport_unavailable");
+    if (this.selection.provider === "moomoo") {
+      for (const snapshot of Object.values(pack.snapshots)) {
+        const prefix = snapshot.session === "premarket" ? "pre_" : snapshot.session === "after_hours" ? "after_" : "";
+        for (const row of snapshot.rows) {
+          const quote = this.moomooSnapshots.get(row.symbol);
+          const high = quote?.[prefix + "high_price"], volume = quote?.[prefix + "volume"];
+          if (!quote || quote.data_date !== snapshot.date || typeof quote.update_time !== "number" || quote.update_time < snapshot.asOf) continue;
+          if ((typeof high === "number" && high > 0 && row.values.high !== undefined && row.values.high > high)
+            || (typeof volume === "number" && volume >= 0 && row.values.volume !== undefined && row.values.volume > volume)) {
+            // The broker's history has not caught up with its own newer correction.
+            // Keep independent peers and retry this symbol's history next pass.
+            row.values = row.values.cap === undefined ? {} : { cap: row.values.cap };
+            delete row.priceAt;
+            delete row.quoteAt;
+            snapshot.partial = true;
+            for (const [key, batch] of this.cache.intraday) if (key.split(",").includes(row.symbol)) batch.bars.rejected.add(row.symbol);
+          }
+        }
+      }
+    }
     return { ...pack, selection: this.selection };
   }
 
@@ -94,8 +120,7 @@ export class ScreenerSnapshotCollector {
     if (this.selection.provider !== "moomoo") throw Error("screener_provider_invalid_selection");
     const reference = await this.referenceData();
     const now = Date.now();
-    const start = new Date(now - 540 * DAY).toISOString().slice(0, 10);
-    const end = new Date(now + 3 * DAY).toISOString().slice(0, 10);
+    const { start, end } = reference.calendarRange;
     return collectMoomooQuotePack({ now, clock: Date.now, signal: this.signal,
       stocks: reference.listings.stocks, universeDate: reference.listings.listingDate,
       calendar: parseCalendarSessions(reference.calendar, start, end),
@@ -110,7 +135,22 @@ export class ScreenerSnapshotCollector {
     for (const value of payload.data.snapshot_list) {
       if (!isObject(value) || typeof value.code !== "string" || !value.code.startsWith("US.")) continue;
       const symbol = value.code.slice(3);
-      if (allowed.has(symbol)) this.moomooSnapshots.set(symbol, value);
+      if (!allowed.has(symbol)) continue;
+      const previous = this.moomooSnapshots.get(symbol);
+      if (previous && typeof previous.update_time === "number" &&
+        (typeof value.update_time !== "number" || value.update_time < previous.update_time)) continue;
+      // A broker-reported shrinking range/volume can revise an old bucket outside
+      // the rolling tail. Re-read that ticker's own broker history, never SIP prices.
+      if (previous && ["", "pre_", "after_"].some(prefix => ["high_price", "volume"].some(field => {
+        const old = previous[prefix + field], next = value[prefix + field];
+        return typeof old === "number" && typeof next === "number" && next >= 0 && next < old;
+      }))) {
+        for (const [key, batch] of this.cache.intraday) if (key.split(",").includes(symbol)) batch.bars.rejected.add(symbol);
+        for (const [key, batch] of this.cache.daily) if (key.split(",").includes(symbol)) batch.rejected.add(symbol);
+        for (const [key, batch] of this.cache.relativeVolume?.series ?? []) if (key.split(",").includes(symbol)) batch.rejected.add(symbol);
+        for (const [key, batch] of this.cache.relativeVolume?.bars ?? []) if (key.split(",").includes(symbol)) batch.rejected.add(symbol);
+      }
+      this.moomooSnapshots.set(symbol, value);
     }
   }
 
@@ -132,7 +172,14 @@ export class ScreenerSnapshotCollector {
         this.signal.throwIfAborted();
         if (operation.operation === "snapshots") return this.cachedMoomooSnapshots(operation.symbols);
         if (this.transportUnavailable) throw Error("screener_provider_transport_unavailable");
-        try { return await this.transport.moomoo(this.selection, operation, this.signal); }
+        const entry = operation.operation === "history" ? this.cache.knownCorrections?.get(operation.symbol) : undefined;
+        if (operation.operation === "history" && entry?.pending && operation.timeframe !== "1Day"
+          && easternClock(operation.start).date <= date && easternClock(operation.end).date >= date)
+          throw Error("screener_correction_pending");
+        const revision = operation.operation === "history" && entry?.minutes.some(minute => minute * 1000 >= operation.start
+          && minute * 1000 <= operation.end + (operation.timeframe === "1Day" ? DAY : 0)) ? entry.revision : undefined;
+        try { return await this.transport.moomoo(this.selection,
+          operation.operation === "history" && revision ? { ...operation, correctionRevision: revision } : operation, this.signal); }
         catch (error) {
           if (error instanceof Error && error.message === "screener_provider_transport_unavailable") this.transportUnavailable = true;
           throw error;

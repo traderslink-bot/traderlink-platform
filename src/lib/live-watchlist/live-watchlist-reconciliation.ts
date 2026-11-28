@@ -40,6 +40,27 @@ export function isNewerLiveWatchlistSymbolState(
  * received a newer ticker revision. In that case, preserve the newer quote
  * fields while still accepting newer card content.
  */
+export function applyDetailPotentialPath<T extends MemberWatchlistSymbolState>(next: T, current: T, incoming: T): T {
+  const stale = (current.pathCorrection?.stamp ?? 0) > (incoming.pathCorrection?.stamp ?? 0);
+  const source = stale ? current : incoming;
+  const restricted = incoming.premiumLevelsAllowed === false || stale && current.premiumLevelsAllowed === false;
+  const held = source.pathCorrection?.held === true;
+  const cards = { ...next.cards };
+  for (const kind of ["levelMap", "nearestSupportResistance", "fullLadder"] as const) {
+    delete cards[kind];
+    if (!held && !restricted && source.cards[kind]) cards[kind] = source.cards[kind];
+  }
+  const lockedMap = incoming.premiumLevelsAllowed === false ? incoming.levelMap : current.levelMap;
+  return { ...next, cards, pathCorrection: source.pathCorrection,
+    premiumLevelsAllowed: restricted ? false : incoming.premiumLevelsAllowed,
+    premiumLevelsPreview: held ? null : restricted && stale ? null : source.premiumLevelsPreview,
+    levelMap: held ? null : restricted ? lockedMap : source.levelMap,
+    nearestSupport: held || restricted ? null : source.nearestSupport,
+    nearestResistance: held || restricted ? null : source.nearestResistance,
+    nearestSupportLabel: held || restricted ? null : source.nearestSupportLabel,
+    nearestResistanceLabel: held || restricted ? null : source.nearestResistanceLabel };
+}
+
 export function reconcileLiveWatchlistSymbolState<T extends MemberWatchlistSymbolState>(
   current: T,
   incoming: T,

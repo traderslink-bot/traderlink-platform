@@ -2,6 +2,7 @@ import { gatewayWireEnabled } from "../market-data/transport/gateway-wire";
 import { candleCacheWireUrl, decodeCandleCacheReply } from "../market-data/transport/candle-cache-wire";
 import { easternClock } from "../scanner/live/sessions";
 import { isObject, MAX_LISTINGS, tickerPattern } from "./contracts";
+import { correctedMinutes, parseScreenerRevisions, screenerCorrections, type ScreenerCorrections, type ScreenerRevisionManifest } from "./trade-corrections";
 
 const MINUTE_MS = 60_000;
 const BATCH_SIZE = 50;
@@ -100,5 +101,52 @@ export async function* readScreenerVwapSeeds(
       throw Error("screener_seed_gateway_invalid_reply");
     const { bars, coverage } = data;
     yield new Map(batch.map(symbol => [symbol, readVwapSeed(bars[symbol], coverage[symbol], window, basisDate)]));
+  }
+}
+
+/** Reconnect must not resurrect a seed which predates a known cancelled trade. */
+export async function* readCorrectedScreenerVwapSeeds(
+  symbols: readonly string[], window: ScreenerSeedWindow, environment: NodeJS.ProcessEnv = process.env, signal?: AbortSignal,
+  corrections: ScreenerCorrections | undefined = screenerCorrections(environment, signal),
+): AsyncGenerator<Map<string, SeedCoverage>, void> {
+  if (!corrections) { yield* readScreenerVwapSeeds(symbols, window, environment, signal); return; }
+  const { startMs, endMs } = window;
+  if (!symbols.length || symbols.length > MAX_LISTINGS || new Set(symbols).size !== symbols.length
+    || !symbols.every(symbol => tickerPattern.test(symbol)) || !minuteBoundary(startMs) || !minuteBoundary(endMs)
+    || startMs >= endMs || endMs > Date.now() || easternClock(startMs).date !== easternClock(endMs - 1).date)
+    throw Error("screener_seed_invalid_request");
+  const basisDate = easternClock(startMs).date;
+  const partial = (): SeedCoverage => ({ status: "partial", completedThroughMs: null, seed: null });
+  for (let offset = 0; offset < symbols.length; offset += BATCH_SIZE) {
+    signal?.throwIfAborted();
+    const batch = symbols.slice(offset, offset + BATCH_SIZE);
+    const request = { symbols: batch, start: startMs, end: endMs };
+    const result = new Map(batch.map(symbol => [symbol, partial()]));
+    let before: ScreenerRevisionManifest;
+    try { before = parseScreenerRevisions(await corrections.revisions(request), request); }
+    catch { yield result; continue; }
+    const unaffected = batch.filter(symbol => !before.symbols[symbol] && !before.unavailableSymbols?.includes(symbol));
+    if (unaffected.length) {
+      for await (const seeds of readScreenerVwapSeeds(unaffected, window, environment, signal)) {
+        for (const [symbol, seed] of seeds) result.set(symbol, seed);
+      }
+    }
+    for (const symbol of batch) {
+      const revision = before.symbols[symbol];
+      if (!revision || revision.pending) continue;
+      const historyWindow = { symbol, start: startMs, end: endMs - 1 };
+      try {
+        const bars = correctedMinutes(await corrections.history(historyWindow), historyWindow, basisDate);
+        result.set(symbol, readVwapSeed(bars, { status: "complete", completedThroughMs: endMs }, window, basisDate));
+      } catch { /* Keep only this ticker partial. */ }
+    }
+    try {
+      const after = parseScreenerRevisions(await corrections.revisions(request), request);
+      for (const symbol of batch) {
+        const previous = before.symbols[symbol], current = after.symbols[symbol];
+        if (after.unavailableSymbols?.includes(symbol) || current?.pending || previous?.revision !== current?.revision) result.set(symbol, partial());
+      }
+    } catch { for (const symbol of batch) result.set(symbol, partial()); }
+    yield result;
   }
 }

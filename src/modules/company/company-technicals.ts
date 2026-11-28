@@ -10,7 +10,8 @@ export type CompanySessionDay = { date:string; ranges:(SessionRange|null)[] };
 type YearRange = {high:number;low:number;highDate?:string;lowDate?:string};
 export type CompanyTechnicals = {
   days:CompanySessionDay[]; row:LiveScannerRow|null; scannerSignals:string[];
-  dayVolume?:number|null;
+  revisedRangeDates?:string[];
+  dayVolume?:number|null; sessionVolume?:number;
   dollarVolume?:number; relativeVolume?:number; sessionVwap?:number;
   candleActivity?:{oneMinuteGain?:number; fiveMinuteGain?:number; oneMinuteVolume:number; fiveMinuteVolume?:number; fiveMinuteVolumeSpike?:number; volumeAcceleration?:number; intervalVolumeRate:number};
   listedFloat?:number; listedMarketCap?:number;
