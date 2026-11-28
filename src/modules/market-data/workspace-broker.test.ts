@@ -72,7 +72,7 @@ describe("broker quote and Scanner projection", () => {
       symbol: "NANO", feed: "sip", adjustment: "raw", generation: 1,
       rows: [{ symbol: "NANO", minute: start, before, bar: { ...before, high: 1.8, volume: 100 }, correctionRevision: 1 }],
     });
-    let matchingNativeWindow = true;
+    let completeNativeWindow = true;
     const request: WorkspaceMoomooConnection["request"] = vi.fn(async input => {
       if (input.operation === "calendar") return { data: { trading_days: dates.map(time => ({ time, trade_date_type: "WHOLE" })) } };
       if (input.operation === "rehab") return { data: { rehabs: [] } };
@@ -80,19 +80,22 @@ describe("broker quote and Scanner projection", () => {
         ...dates.slice(0, 3).map(date => ({ ...bar, time_key: Date.parse(`${date}T14:45:00Z`), volume: 600 })),
         { ...bar, time_key: at, volume: 900 },
       ] } };
-      if (input.operation === "history" && input.timeframe === "1Min") return { data: { kline_list: [
-        { ...bar, time_key: (start + 60) * 1000, volume: 400 },
-        { ...bar, high: 1.7, time_key: (start + 120) * 1000, volume: matchingNativeWindow ? 500 : 750 },
-      ] } };
+      if (input.operation === "history" && input.timeframe === "1Min") {
+        if (!completeNativeWindow) throw Error("native_constituents_unavailable");
+        return { data: { kline_list: [
+          { ...bar, time_key: (start + 60) * 1000, volume: 400 },
+          { ...bar, high: 1.7, time_key: (start + 120) * 1000, volume: 750 },
+        ] } };
+      }
       throw Error("unexpected fixture request");
     });
     const connection = { request, current: () => true, generation: "fixture", accessToken: async () => "test" };
     const signal = new AbortController().signal;
     const read = () => readWorkspaceRelativeVolume("NANO", context, workspaceVolumeThrough(Date.now()), connection, signal);
     try {
-      expect(await read()).toBe(1.5);
+      expect(await read()).toBe(2.125);
       expect(readEvidence).toHaveBeenCalledWith(expect.objectContaining({ symbol: "NANO" }), expect.any(Object), signal);
-      matchingNativeWindow = false;
+      completeNativeWindow = false;
       expect(await read()).toBeNull();
     } finally {
       readEvidence.mockRestore();

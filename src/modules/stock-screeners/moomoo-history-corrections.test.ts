@@ -27,7 +27,7 @@ const interval: Candle = { time: start / 1000, open: before.open, high: before.h
 const raw = (bar: Candle, seconds: number, precision = 1) => ({ time_key: (bar.time + seconds) * 1000,
   open: bar.open, high: bar.high, low: bar.low, close: bar.close, volume: bar.volume * 10 ** precision, turnover: 12345 });
 const payload = (rows: unknown[], precision = 1) => ({ ret_code: 0, data: { kline_list: rows, volume_precision: precision }, pagination: { has_more: false } });
-const operation = (symbol: string, timeframe: "5Min" | "15Min" | "1Day" = "5Min") => ({ operation: "history" as const, symbol, timeframe,
+const operation = (symbol: string, timeframe: "1Min" | "5Min" | "15Min" | "1Day" = "5Min") => ({ operation: "history" as const, symbol, timeframe,
   start, end: start + (timeframe === "15Min" ? 900_000 : 300_000) - 1, correctionRevision: "f".repeat(64) });
 function dependencies(symbol: string, bars = [before, peer]) {
   const evidence: DurableTradeCorrections = { symbol, feed: "sip", adjustment: "raw", generation: 5,
@@ -44,7 +44,7 @@ it("makes no evidence or minute request for ordinary native history without a co
   expect(read.readEvidence).not.toHaveBeenCalled(); expect(read.readNative).not.toHaveBeenCalled();
 });
 
-it.each(["5Min", "15Min"] as const)("repairs a sparse comparable raw %s bucket before applying the broker's own split factor", async timeframe => {
+it.each(["5Min", "15Min"] as const)("canonicalizes a sparse raw %s bucket before applying the broker's own split factor", async timeframe => {
   const symbol = timeframe === "5Min" ? "COMPARABLE" : "CMPFIFTEEN", read = dependencies(symbol);
   const seconds = timeframe === "5Min" ? 300 : 900;
   const corrected = await correctMoomooScreenerHistory(operation(symbol, timeframe), payload([raw(interval, seconds)]), {}, stop, read, now);
@@ -59,23 +59,49 @@ it.each(["5Min", "15Min"] as const)("repairs a sparse comparable raw %s bucket b
   expect(read.readEvidence.mock.calls).toHaveLength(2);
 });
 
-it("keeps incompatible native observations instead of relabelling a foreign provider's correction", async () => {
+it("uses the confirmed correction when native OHLCV differs and preserves an unrelated native interval", async () => {
   const native = { ...before, high: 31 }, read = dependencies("INCOMPATIBLE", [native, peer]);
-  const body = payload([raw({ ...interval, high: 31 }, 300)]);
-  const result = await correctMoomooScreenerHistory(operation("INCOMPATIBLE"), body, {}, stop, read, now);
-  expect(result).toEqual(body);
+  const untouched = raw({ ...interval, time: start / 1000 + 300, high: 42 }, 300);
+  const body = payload([raw({ ...interval, high: 31 }, 300), untouched]);
+  const result = await correctMoomooScreenerHistory({ ...operation("INCOMPATIBLE"), end: start + 600_000 - 1 }, body, {}, stop, read, now);
+  expect(result).toMatchObject({ data: { kline_list: [{ high: 7.41, turnover: null }, untouched],
+    corrections: { source: "alpaca-sip", times: [start / 1000], pending: [] } } });
 });
 
-it("rejects a native aggregate which cannot be reproduced by its own complete minutes", async () => {
+it("rebuilds a differing native aggregate from complete native minutes plus canonical corrections", async () => {
   const read = dependencies("UNQUALIFIED");
-  await expect(correctMoomooScreenerHistory(operation("UNQUALIFIED"), payload([raw({ ...interval, high: 39 }, 300)]), {}, stop, read, now))
-    .rejects.toThrow("screener_native_correction_unqualified");
+  expect(await correctMoomooScreenerHistory(operation("UNQUALIFIED"), payload([raw({ ...interval, high: 39 }, 300)]), {}, stop, read, now))
+    .toMatchObject({ data: { kline_list: [{ high: 7.41, volume: 3916780, turnover: null }] } });
+});
+
+it.each(["1Min", "5Min", "15Min"] as const)("inserts a confirmed positive correction missing from native %s history", async timeframe => {
+  const symbol = timeframe === "1Min" ? "MISSINGONE" : timeframe === "5Min" ? "MISSINGFIVE" : "MISSINGFIFTEEN";
+  const read = dependencies(symbol, []);
+  const result = await correctMoomooScreenerHistory(operation(symbol, timeframe), payload([]), {}, stop, read, now);
+  const seconds = timeframe === "1Min" ? 60 : timeframe === "5Min" ? 300 : 900;
+  const time = timeframe === "1Min" ? before.time : start / 1000;
+  expect(result).toMatchObject({ data: { kline_list: [{ time_key: (time + seconds) * 1000, high: after.high, volume: after.volume * 10, turnover: null }],
+    corrections: { source: "alpaca-sip", times: [time], pending: [] } } });
+});
+
+it("applies the latest canonical minute while retaining unrelated raw turnover", async () => {
+  const read = dependencies("LATEST");
+  read.evidence.generation = 6;
+  read.evidence.rows.push({ ...read.evidence.rows[0], correctionRevision: 6, bar: { ...after, high: 3.5, close: 3.4, volume: 1000 } });
+  const untouched = raw(peer, 60);
+  const result = await correctMoomooScreenerHistory(operation("LATEST", "1Min"), payload([raw({ ...before, high: 31 }, 60), untouched]), {}, stop, read, now);
+  expect(result).toMatchObject({ data: { kline_list: [{ high: 3.5, close: 3.4, volume: 10000, turnover: null }, untouched] } });
+  expect(read.readNative).not.toHaveBeenCalled();
 });
 
 it("rejects an incomplete minute page and a correction generation race", async () => {
   const incomplete = dependencies("INCOMPLETE");
   incomplete.readNative.mockResolvedValue({ ...payload([]), pagination: { has_more: true } });
-  await expect(correctMoomooScreenerHistory(operation("INCOMPLETE"), payload([raw(interval, 300)]), {}, stop, incomplete, now)).rejects.toThrow();
+  const partial = await correctMoomooScreenerHistory(operation("INCOMPLETE"), payload([raw(interval, 300)]), {}, stop, incomplete, now);
+  expect(partial).toMatchObject({ data: { kline_list: [], corrections: { times: [], pending: [start / 1000] } } });
+  const adapter = new MoomooScreenerData(async request => request.operation === "rehab" ? { ret_code: 0, data: { rehabs: [] } }
+    : request.operation === "history" && request.symbol === "BAD" ? partial : payload([raw(interval, 300)]), "2026-12-03");
+  expect((await loadBars(adapter, ["BAD", "PEER"], "5Min", start, start + 300_000 - 1, "2026-12-03")).rejected).toEqual(new Set(["BAD"]));
   const raced = dependencies("RACED");
   raced.readEvidence.mockResolvedValueOnce(raced.evidence).mockResolvedValue({ ...raced.evidence, generation: 6 });
   await expect(correctMoomooScreenerHistory(operation("RACED"), payload([raw(interval, 300)]), {}, stop, raced, now)).rejects.toThrow("screener_correction_changed");
@@ -88,15 +114,28 @@ it("removes a confirmed cancelled-only native interval instead of constructing a
   expect(result).toMatchObject({ data: { kline_list: [] } });
 });
 
+it("retains exact remaining native turnover after a confirmed removal instead of estimating it", async () => {
+  const read = dependencies("WEIGHTEDREMOVE"); read.evidence.rows[0].bar = null;
+  read.readNative.mockResolvedValue(payload([raw(before, 60), { ...raw(peer, 60), turnover: 7300 }]));
+  const result = await correctMoomooScreenerHistory(operation("WEIGHTEDREMOVE"), payload([raw(interval, 300)]), {}, stop, read, now);
+  expect(result).toMatchObject({ data: { kline_list: [{ high: 7.41, volume: 10000, turnover: 7300 }] } });
+  const adapter = new MoomooScreenerData(async request => request.operation === "rehab" ? { ret_code: 0, data: { rehabs: [] } } : result, "2026-12-03");
+  const bars = await loadBars(adapter, ["WEIGHTEDREMOVE"], "5Min", start, start + 300_000 - 1, "2026-12-03");
+  expect(bars.grouped.get("WEIGHTEDREMOVE")!.get(start / 1000)?.vwap).toBe(7.3);
+  expect(adapter.correctedSymbols()).toEqual(["WEIGHTEDREMOVE"]);
+});
+
 it("uses cache-only native daily witnesses and keeps unrelated days while unknown affected days are absent", async () => {
   const day = Date.parse("2026-11-27T05:00:00Z") / 1000, oldDay = { ...interval, time: day }, newDay = { ...oldDay, high: 7.41, volume: 391678 };
   const read = dependencies("DAILY");
-  const body = payload([{ ...raw(oldDay, 0), time_key: Date.parse("2026-11-27T00:00:00Z"), date: 20261127 }]);
+  const body = payload([{ ...raw({ ...oldDay, high: 41 }, 0), time_key: Date.parse("2026-11-27T00:00:00Z"), date: 20261127 }]);
   const request = { ...operation("DAILY", "1Day"), start: day * 1000, end: day * 1000 + 86_400_000 - 1 };
   expect(await correctMoomooScreenerHistory(request, body, {}, stop, read, now)).toMatchObject({ data: { kline_list: [] } });
   read.evidence.nativeDays = [{ day, before: oldDay, bar: newDay }];
   const fixed = await correctMoomooScreenerHistory(request, body, {}, stop, read, now);
   expect(fixed).toMatchObject({ data: { kline_list: [{ high: 7.41, volume: 3916780 }] } });
+  expect(await correctMoomooScreenerHistory(request, payload([]), {}, stop, read, now)).toMatchObject({
+    data: { kline_list: [{ date: 20261127, high: 7.41, volume: 3916780, turnover: null }], corrections: { times: [day], pending: [] } } });
   for (const [request] of read.readEvidence.mock.calls as unknown as [Record<string, unknown>][]) {
     expect(request.daily).toBe(true); expect(request.replayDaily).toBeUndefined();
   }
@@ -114,7 +153,8 @@ it("keeps bounded native proof work across retries instead of restarting the sam
     return payload([raw({ ...before, time: bar.time + 120 }, 60), raw({ ...peer, time: bar.time + 180 }, 60)]);
   });
   const request = { ...operation(symbol), end: start + 25 * 300_000 - 1 }, body = payload(native.map(bar => raw(bar, 300)));
-  await expect(correctMoomooScreenerHistory(request, body, {}, stop, read, now)).rejects.toThrow("screener_native_correction_unqualified");
+  expect(await correctMoomooScreenerHistory(request, body, {}, stop, read, now)).toMatchObject({
+    data: { corrections: { pending: [start / 1000 + 24 * 300] } } });
   expect(read.readNative).toHaveBeenCalledTimes(24);
   const fixed = await correctMoomooScreenerHistory(request, body, {}, stop, read, now);
   expect(read.readNative).toHaveBeenCalledTimes(25);
@@ -144,7 +184,8 @@ it.each([false, true])("binds the real private history hook to provider revision
     expect(result.status).toBe(200);
     const value = await result.json();
     const native = neutral ? decodeScreenerPrivateLinkedReply("history", value, chosen, token) : value.payload;
-    expect(native).toMatchObject({ data: { kline_list: [{ high: 7.41, volume: 3916780, turnover: 0 }] } });
+    expect(native).toMatchObject({ data: { kline_list: [{ high: 7.41, volume: 3916780, turnover: null }],
+      corrections: { source: "alpaca-sip", times: [start / 1000], pending: [] } } });
     upstream.native.mockClear(); upstream.evidence.mockClear();
     const stale = { provider: "moomoo", revision: 0 } as const;
     const staleBody = neutral ? encodeScreenerPrivateOperation(request, stale, token) : { feature: "screeners", ...stale, ...request };
@@ -154,8 +195,7 @@ it.each([false, true])("binds the real private history hook to provider revision
     const badBody = neutral ? encodeScreenerPrivateOperation(malformed, chosen, token) : { feature: "screeners", ...chosen, ...malformed };
     expect((await screenerControlPost(http(badBody), neutral)).status).toBe(400);
     expect(upstream.native).not.toHaveBeenCalled();
-    upstream.native.mockImplementation(async (input: MoomooDataRequest) => payload(input.operation === "history" && input.timeframe === "1Min"
-      ? [raw(before, 60), raw(peer, 60)] : [raw({ ...interval, high: 39 }, 300)]));
+    upstream.evidence.mockResolvedValueOnce(read.evidence).mockResolvedValue({ ...read.evidence, generation: 6 });
     expect((await screenerControlPost(http(body), neutral)).status).toBe(422);
     const transport = new ScreenerProviderTransport("https://fixture.invalid", token, async () => new Response(null, { status: 422 }));
     await expect(transport.moomoo(chosen, request, stop)).rejects.toThrow("screener_history_correction_unqualified");

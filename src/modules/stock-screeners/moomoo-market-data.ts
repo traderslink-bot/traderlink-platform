@@ -27,8 +27,7 @@ function splits(payload: unknown, basisDate: string): Split[] {
 function normalizeBar(value: unknown, adjustment: readonly Split[], daily: boolean, precision: number, intervalMs = 0) {
   if (!isObject(value) || !Number.isSafeInteger(value.time_key) || Number(value.time_key) <= 0
     || Number(value.time_key) % 1_000 !== 0 || ![value.open, value.high, value.low, value.close].every(positive)
-    || typeof value.volume !== "number" || !Number.isFinite(value.volume) || value.volume < 0
-    || typeof value.turnover !== "number" || !Number.isFinite(value.turnover) || value.turnover < 0)
+    || typeof value.volume !== "number" || !Number.isFinite(value.volume) || value.volume < 0)
     throw Error("moomoo_bar_invalid");
   let time = Number(value.time_key) - (daily ? 0 : intervalMs);
   if (daily && value.date !== undefined) {
@@ -46,14 +45,17 @@ function normalizeBar(value: unknown, adjustment: readonly Split[], daily: boole
   return {
     t: new Date(daily ? easternDayStart(time / 1_000) * 1_000 : time).toISOString(),
     o: open, h: high, l: low, c: close, v: volume,
-    ...(volume > 0 && value.turnover > 0 ? { vw: value.turnover / volume } : {}),
+    ...(volume > 0 && positive(value.turnover) ? { vw: value.turnover / volume } : {}),
   };
 }
 
 /** Normalize provider pages into the collector's bar/quote input contract. */
 export class MoomooScreenerData {
   private readonly adjustments = new Map<string, Promise<Split[]>>();
+  private readonly corrected = new Set<string>();
   constructor(private readonly read: Read, private readonly basisDate: string) {}
+
+  correctedSymbols() { return [...this.corrected].sort(); }
 
   private adjustment(symbol: string) {
     let pending = this.adjustments.get(symbol);
@@ -71,10 +73,19 @@ export class MoomooScreenerData {
     const cursors = new Set<string>();
     let nextTime: number | undefined;
     let pageToken: string | undefined;
+    let incomplete = false;
     for (let page = 0; page < 160; page++) {
       const payload = await this.read({ operation: "history", symbol, timeframe, start, end, nextTime, pageToken });
       if (!isObject(payload) || payload.ret_code !== 0 || !isObject(payload.data) || !Array.isArray(payload.data.kline_list))
         throw Error("moomoo_history_unavailable");
+      const corrections = payload.data.corrections;
+      if (corrections !== undefined) {
+        if (!isObject(corrections) || corrections.source !== "alpaca-sip" || !Array.isArray(corrections.times) || !Array.isArray(corrections.pending)
+          || ![...corrections.times, ...corrections.pending].every(time => Number.isSafeInteger(time) && Number(time) > 0 && Number(time) % 60 === 0))
+          throw Error("moomoo_correction_provenance_invalid");
+        if (corrections.times.length || corrections.pending.length) this.corrected.add(symbol);
+        incomplete ||= corrections.pending.length > 0;
+      }
       const precision = payload.data.volume_precision ?? 0;
       if (!Number.isSafeInteger(precision) || Number(precision) < 0 || Number(precision) > 9) throw Error("moomoo_bar_invalid");
       let earliest = Infinity;
@@ -92,7 +103,7 @@ export class MoomooScreenerData {
         bars.set(bar.t, bar);
       }
       const pagination = isObject(payload.pagination) ? payload.pagination : {};
-      if (pagination.has_more !== true || earliest <= start) return [...bars.values()];
+      if (pagination.has_more !== true || earliest <= start) return { bars: [...bars.values()], incomplete };
       if (!payload.data.kline_list.length) throw Error("moomoo_history_incomplete");
       const cursor = payload.data.next_time;
       const token = pagination.next_page_token;
@@ -130,15 +141,20 @@ export class MoomooScreenerData {
     if (path !== "/v2/stocks/bars" || !["1Day", "5Min", "15Min"].includes(timeframe ?? "")
       || !Number.isFinite(start) || !Number.isFinite(end) || start > end) throw Error("moomoo_request_invalid");
     const bars: Record<string, unknown[]> = {};
+    const partial: string[] = [];
     for (const symbol of symbols) {
       try {
-        bars[symbol] = await this.history(symbol, timeframe as "1Day" | "5Min" | "15Min", start, end);
+        const result = await this.history(symbol, timeframe as "1Day" | "5Min" | "15Min", start, end);
+        bars[symbol] = result.bars;
+        // Daily pending rows were explicitly omitted; keep independent days
+        // available for calculations which do not cross the withheld day.
+        if (result.incomplete && timeframe !== "1Day") partial.push(symbol);
       } catch (error) {
         if (error instanceof Error && error.message === "screener_provider_changed") throw error;
         // An invalid symbol remains visible as missing metrics while valid peers are retained.
         bars[symbol] = [{}];
       }
     }
-    return { bars, next_page_token: null };
+    return { bars, next_page_token: null, ...(partial.length ? { partial_symbols: partial } : {}) };
   }
 }

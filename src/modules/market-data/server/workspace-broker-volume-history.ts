@@ -1,6 +1,7 @@
 import "server-only";
 
 import { readAlpacaTradeCorrectionEvidence, readAlpacaTradeRevisions } from "@/src/modules/scanner/alpaca/client";
+import type { TradeRevision } from "@/src/modules/scanner/alpaca/trade-revisions";
 import { easternDayStart } from "@/src/modules/scanner/alpaca/candles";
 import { sameTimeSessionVolumeRatio } from "@/src/modules/scanner/custom/same-time-relative-volume";
 import { historyCalendar } from "@/src/modules/scanner/live/scanner-indicator-calculation";
@@ -16,12 +17,12 @@ export const workspaceVolumeThrough = (now: number) => Math.floor((now - 6000) /
 const volumeLookback = (date: string) => easternDayStart((Date.parse(`${date}T12:00:00Z`) - 7 * DAY) / 1000) * 1000;
 
 export async function readWorkspaceVolumeRevisions(symbols: readonly string[], date: string, through: number, signal: AbortSignal) {
-  const revisions = new Map<string, string>();
+  const revisions = new Map<string, TradeRevision>();
   const start = volumeLookback(date);
   for (const batch of snapshotBatches(symbols)) {
     const result = await readAlpacaTradeRevisions({ symbols: batch, start, end: through }, process.env, signal);
     for (const [symbol, entry] of Object.entries(result.symbols)) {
-      if (entry?.revision) revisions.set(symbol, entry.revision);
+      if (entry?.revision) revisions.set(symbol, entry);
     }
   }
   return revisions;
@@ -34,10 +35,12 @@ export async function readWorkspaceRelativeVolume(symbol: string, context: Works
   const start = volumeLookback(context.date);
   const history = new MoomooChartHistory(request => connection.request(request, signal), Date.now,
     range => readAlpacaTradeCorrectionEvidence(range, process.env, signal));
-  const [result, calendar] = await Promise.all([
+  const qualified = await Promise.all([
     history.history({ symbol, timeframe: "15Min", start, end: through, adjustment: "split" }),
     history.calendar(firstDate, context.date),
-  ]);
+  ]).catch(() => null);
+  if (!qualified) return null;
+  const [result, calendar] = qualified;
   if (!calendar.available || !result.complete || result.basisDate !== context.date || !result.bars.length
     || result.bars.some(bar => bar.time % 900 !== 0)) return null;
   const stride = 6;

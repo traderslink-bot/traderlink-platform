@@ -6,6 +6,7 @@ import type { WorkspaceMoomooConnection } from "./workspace-moomoo-access";
 import { runWorkspaceRestCards, runWorkspaceWebSocketCards, type WorkspaceCardTransportStatus } from "./workspace-moomoo-card-transport";
 import { RollingActivityBook } from "@/src/modules/scanner/live/activity";
 import { readWorkspaceRelativeVolume, readWorkspaceVolumeRevisions, workspaceVolumeThrough } from "./workspace-broker-volume-history";
+import { projectWorkspaceCorrectedQuote, readWorkspaceCorrectedTotals, workspaceCorrectedSessions, type WorkspaceQuoteCorrection } from "./workspace-broker-quote-corrections";
 
 type QuoteEntry = Readonly<{ quote?: WorkspaceMoomooQuote; book?: WorkspaceMoomooBook }>;
 type CardViewer = {
@@ -49,6 +50,7 @@ class WorkspaceMoomooCardFeed {
   private activity = new RollingActivityBook(true);
   private relativeVolumes = new Map<string, { value: number | null; through: number; retryAt: number }>();
   private volumeRevisions = new Map<string, string>();
+  private quoteCorrections = new Map<string, WorkspaceQuoteCorrection>();
   private volumeRevisionTimer?: ReturnType<typeof setInterval>;
   private volumeHistoryInProgress = false;
 
@@ -91,6 +93,7 @@ class WorkspaceMoomooCardFeed {
     if (this.sessionKey !== sessionKey) {
       this.relativeVolumes.clear();
       this.volumeRevisions.clear();
+      this.quoteCorrections.clear();
     }
     this.sessionKey = sessionKey;
     this.transportKey = transportKey;
@@ -104,6 +107,7 @@ class WorkspaceMoomooCardFeed {
         this.latest.delete(symbol);
         this.published.delete(symbol);
         this.volumeRevisions.delete(symbol);
+        this.quoteCorrections.delete(symbol);
       }
     }
     if (changedTransport || !session || !this.demanded.length) this.stopTransport();
@@ -123,8 +127,11 @@ class WorkspaceMoomooCardFeed {
     const controller = new AbortController();
     this.transport = controller;
     const { signal } = controller;
+    const connection = () => [...this.viewers].find(viewer => viewer.connection.current())?.connection;
+    const checkCorrections = process.env.TRADERLINK_ALPACA_GATEWAY_URL
+      ? this.watchVolumeRevisions(connection, session, signal) : undefined;
     const input = {
-      connection: () => [...this.viewers].find(viewer => viewer.connection.current())?.connection,
+      connection,
       symbols: () => this.demanded,
       context: session, settings, signal,
       status: (value: WorkspaceCardTransportStatus) => {
@@ -140,21 +147,26 @@ class WorkspaceMoomooCardFeed {
         const nextBook = book && (!previous.book || book.observedAt >= previous.book.observedAt) ? book : previous.book;
         if (previous.quote === nextQuote && previous.book === nextBook) return;
         if (nextQuote && (!previous.quote || quote && quote.observedAt >= previous.quote.observedAt)) {
+          const correction = this.quoteCorrections.get(symbol);
+          const corrected = correction ? projectWorkspaceCorrectedQuote(nextQuote, session.session, correction) : nextQuote;
+          const preciseActivity = nextQuote.observedAt >= (correction?.activeCorrectionEnd ?? 0);
           this.activity.observe({
             provider: "moomoo", symbol, company: symbol, session: session.session, tradingDate: session.date,
             providerAt: nextQuote.observedAt, receivedAt: Date.now(), price: nextQuote.price, baseline: nextQuote.previousClose,
-            volume: session.session === "premarket" ? nextQuote.premarketVolume
+            // Once both rolling endpoints are past the corrected interval,
+            // differences between live counters exclude the affected print.
+            volume: !preciseActivity ? null : session.session === "premarket" ? nextQuote.premarketVolume
               : session.session === "regular" ? nextQuote.regularVolume : nextQuote.postMarketVolume,
-            dollarVolume: nextQuote.sessionTurnover, bid: null, ask: null, marketCap: null,
-            dayHigh: nextQuote.dayHigh ?? nextQuote.price, dayLow: nextQuote.dayLow ?? nextQuote.price, providerVolumeRatio: null,
+            dollarVolume: preciseActivity ? nextQuote.sessionTurnover : null, bid: null, ask: null, marketCap: null,
+            dayHigh: corrected.dayHigh ?? nextQuote.price, dayLow: corrected.dayLow ?? nextQuote.price, providerVolumeRatio: null,
           });
         }
         this.latest.set(symbol, { quote: nextQuote, book: nextBook });
+        if (nextQuote) checkCorrections?.();
         this.schedulePublish();
         if (nextQuote) void this.primeRelativeVolume(input.connection, session, signal);
       },
     };
-    if (process.env.TRADERLINK_ALPACA_GATEWAY_URL) this.watchVolumeRevisions(input.connection, session, signal);
     const run = settings.cardTransport === "websocket" ? runWorkspaceWebSocketCards : runWorkspaceRestCards;
     void run(input).catch(() => input.status("unavailable")).finally(() => {
       if (this.transport === controller) {
@@ -184,7 +196,12 @@ class WorkspaceMoomooCardFeed {
   private publish() {
     this.pending = undefined;
     this.lastPublishAt = Date.now();
-    this.published = new Map(this.latest);
+    const session = this.session?.session;
+    this.published = new Map([...this.latest].map(([symbol, entry]) => {
+      const correction = this.quoteCorrections.get(symbol);
+      return [symbol, entry.quote && session && correction
+        ? { ...entry, quote: projectWorkspaceCorrectedQuote(entry.quote, session, correction) } : entry];
+    }));
     this.notify();
   }
 
@@ -194,33 +211,53 @@ class WorkspaceMoomooCardFeed {
 
   private watchVolumeRevisions(connection: () => WorkspaceMoomooConnection | undefined, session: WorkspaceQuoteSession, signal: AbortSignal) {
     let pending = false;
+    let started = false;
     const check = async () => {
       if (pending || signal.aborted || !connection()) return;
       const symbols = this.demanded.filter(symbol => this.latest.get(symbol)?.quote);
       if (!symbols.length) return;
       pending = true;
+      started = true;
       try {
-        const through = workspaceVolumeThrough(Date.now());
         const timeout = AbortSignal.any([signal, AbortSignal.timeout(5_000)]);
-        const revisions = await readWorkspaceVolumeRevisions(symbols, session.date, through, timeout);
-        if (timeout.aborted || !connection() || through !== workspaceVolumeThrough(Date.now())) return;
+        const revisions = await readWorkspaceVolumeRevisions(symbols, session.date, Date.now() + 1, timeout);
+        if (timeout.aborted || !connection()) return;
         let changed = false;
-        for (const [symbol, revision] of revisions) {
-          if (!this.latest.has(symbol) || this.volumeRevisions.get(symbol) === revision) continue;
+        const activityReset = new Set<string>();
+        for (const [symbol, { revision, minutes }] of revisions) {
+          if (!revision || !this.latest.has(symbol) || this.volumeRevisions.get(symbol) === revision) continue;
           this.volumeRevisions.set(symbol, revision);
           this.relativeVolumes.delete(symbol);
+          const correction = workspaceCorrectedSessions(minutes, session);
+          if (correction.affected.size) {
+            this.quoteCorrections.set(symbol, correction);
+            activityReset.add(symbol);
+          }
           changed = true;
         }
+        if (activityReset.size) this.activity.retain(this.demanded.filter(symbol => !activityReset.has(symbol)));
         if (changed) {
           this.schedulePublish();
           void this.primeRelativeVolume(connection, session, signal);
         }
+        const affected = symbols.filter(symbol => this.quoteCorrections.has(symbol) && !revisions.get(symbol)?.pending);
+        if (!affected.length) return;
+        const totals = await readWorkspaceCorrectedTotals(affected, session, timeout);
+        if (timeout.aborted || !connection()) return;
+        for (const symbol of affected) {
+          const correction = this.quoteCorrections.get(symbol);
+          if (correction) this.quoteCorrections.set(symbol, { ...correction, totals: totals.get(symbol) });
+        }
+        this.schedulePublish();
       } catch {
         // Leave current broker data intact if revision metadata is temporarily unavailable.
       } finally { pending = false; }
     };
     this.volumeRevisionTimer = setInterval(() => void check(), 30_000);
     this.volumeRevisionTimer.unref();
+    return () => {
+      if (!started) void check();
+    };
   }
 
   private async primeRelativeVolume(connection: () => WorkspaceMoomooConnection | undefined, session: WorkspaceQuoteSession, signal: AbortSignal) {

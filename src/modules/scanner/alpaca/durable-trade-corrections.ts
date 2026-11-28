@@ -97,3 +97,84 @@ export function projectComparableRawDaily(bars: readonly Candle[], evidence: Dur
     return proof.bar?[proof.bar]:[];
   });
 }
+
+export type AppliedTradeCorrections = {
+  source: "alpaca-sip";
+  /** Affected bucket starts in UTC seconds, including confirmed removals. */
+  times: number[];
+  /** Affected bucket starts withheld until complete coverage is available. */
+  pending: number[];
+};
+
+export type CorrectedRawHistory = { bars: Candle[]; corrections?: AppliedTradeCorrections };
+
+export function correctionCoverage(times: number[], pending: number[]): AppliedTradeCorrections | undefined {
+  return times.length || pending.length ? { source: "alpaca-sip", times, pending } : undefined;
+}
+
+type Window = Pick<TradeCorrectionRange, "symbol" | "start" | "end">;
+
+function timeInWindow(time: number, window: Window) {
+  return time * 1_000 >= window.start && time * 1_000 < window.end;
+}
+
+function requireSameRawSecurity(window: Window, evidence: DurableTradeCorrections) {
+  if (window.symbol !== evidence.symbol || evidence.feed !== "sip" || evidence.adjustment !== "raw")
+    throw Error("correction_basis_mismatch");
+}
+
+/** On the same US ticker and minute, the latest confirmed SIP disposition is authoritative. */
+export function projectConfirmedRawMinutes(bars: readonly Candle[], evidence: DurableTradeCorrections,
+  window: Window): CorrectedRawHistory {
+  requireSameRawSecurity(window, evidence);
+  const projected = new Map(bars.map(bar => [bar.time, bar]));
+  const affected = new Set<number>();
+  for (const row of evidence.rows) {
+    if (row.symbol !== window.symbol || !timeInWindow(row.minute, window)) continue;
+    affected.add(row.minute);
+    if (row.bar) projected.set(row.minute, row.bar);
+    else projected.delete(row.minute);
+  }
+  return {
+    bars: [...projected.values()].sort((a, b) => a.time - b.time),
+    corrections: correctionCoverage([...affected].sort((a, b) => a - b), []),
+  };
+}
+
+export async function projectConfirmedRawInterval(time: number, interval: number, evidence: DurableTradeCorrections,
+  readMinutes: (start: number, end: number) => Promise<readonly Candle[] | null>, now = Date.now()): Promise<Candle | null | undefined> {
+  const start = time * 1_000, end = start + interval * 1_000;
+  if (end > now) return undefined;
+  const minutes = await readMinutes(start, end);
+  if (!minutes || minutes.some(bar => bar.time * 1_000 < start || bar.time * 1_000 >= end)) return undefined;
+  const { bars } = projectConfirmedRawMinutes(minutes, evidence, { symbol: evidence.symbol, start, end });
+  const [first, ...rest] = bars;
+  if (!first) return null;
+  return rest.reduce((bar, next) => ({
+    ...bar, high: Math.max(bar.high, next.high), low: Math.min(bar.low, next.low),
+    close: next.close, volume: bar.volume + next.volume,
+  }), { ...first, time });
+}
+
+/** A Daily candle uses an independent completed-day SIP witness. */
+export function projectConfirmedRawDaily(bars: readonly Candle[], evidence: DurableTradeCorrections,
+  window: Window): CorrectedRawHistory {
+  requireSameRawSecurity(window, evidence);
+  const projected = new Map(bars.map(bar => [bar.time, bar]));
+  const affected = [...new Set(evidence.rows.map(row => easternDayStart(row.minute)))]
+    .filter(day => timeInWindow(day, window)).sort((a, b) => a - b);
+  const witnesses = new Map(evidence.nativeDays?.map(proof => [proof.day, proof]));
+  const times: number[] = [], pending: number[] = [];
+  for (const day of affected) {
+    const proof = witnesses.get(day);
+    if (!proof) {
+      pending.push(day);
+      projected.delete(day);
+      continue;
+    }
+    times.push(day);
+    if (proof.bar) projected.set(day, proof.bar);
+    else projected.delete(day);
+  }
+  return { bars: [...projected.values()].sort((a, b) => a.time - b.time), corrections: correctionCoverage(times, pending) };
+}

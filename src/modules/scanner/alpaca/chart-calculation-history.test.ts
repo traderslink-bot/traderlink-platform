@@ -67,7 +67,7 @@ it('does not admit an old in-flight response after reconnect invalidation',async
  expect((await loader.read('1D',100)).bars[0].close).toBe(25);
 });
 it('starts an old viewport at its own history endpoint and excludes later live bars',async()=>{
- const fetcher=vi.fn(async(_url:string)=>reply([bar(100)]));
+ const fetcher=vi.fn<(url:string)=>Promise<Response>>().mockImplementation(async()=>reply([bar(100)]));
  const loader=new ChartCalculationHistory('NWGL',new AbortController().signal,()=> '2026-11-09',fetcher);
  expect((await loader.read('1m',100,150)).bars.map(row=>row.time)).toEqual([100]);
  expect(fetcher.mock.calls[0][0]).toContain('before=150000');
@@ -90,4 +90,16 @@ it('cancels obsolete network work when the user pans to a different historical w
  const obsolete=expect(loader.read('1m',100,150)).rejects.toThrow('invalidated');
  const current=await loader.read('1m',100,250);
  await obsolete;expect(oldSignal!.aborted).toBe(true);expect(current.bars).toHaveLength(1);
+});
+
+it('keeps corrected candles and removals above queued provider updates',async()=>{
+ const corrections={source:'alpaca-sip',times:[120,180],pending:[]};
+ const fetcher=vi.fn(async()=>Response.json({bars:[bar(120,4),bar(240,5)],basisDate:'2026-11-09',nextBefore:null,corrections}));
+ const loader=new ChartCalculationHistory('NWGL',new AbortController().signal,()=> '2026-11-09',fetcher);
+ loader.acceptLive(bar(120,38),false);
+ loader.acceptLive(bar(180,31),false);
+ expect(await loader.read('1m',120)).toMatchObject({bars:[bar(120,4),bar(240,5)],corrections});
+ loader.acceptLive(bar(180,55),false);
+ loader.acceptLive(bar(240,6),false);
+ expect((await loader.read('1m',120)).bars).toEqual([bar(120,4),bar(240,6)]);
 });

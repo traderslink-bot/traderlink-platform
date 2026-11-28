@@ -67,6 +67,28 @@ function rows(value: unknown, map: (row: unknown) => unknown): unknown[] {
 const rowFields = { symbol: "ticker", exchange: "venue", name: "issuer", priceAt: "tradeObservedAt", quoteAt: "quoteObservedAt" };
 const snapshotFields = { version: "format", date: "tradingDate", universeDate: "rosterDate", session: "phase", asOf: "through", capturedAt: "recordedAt", closed: "finished", partial: "incomplete" };
 const correctionFields = { correctionRevision: "historyRevision", correctionGeneration: "historyGeneration" };
+function packCorrectionProvenance(value: unknown, decode = false): Data {
+  const data = object(value), provenance = data[decode ? "correctedInputs" : "correctionProvenance"];
+  if (provenance === undefined) return {};
+  const row = object(provenance);
+  if (row[decode ? "coverage" : "source"] !== (decode ? "consolidated" : "alpaca-sip")) fail();
+  const symbols = row[decode ? "tickers" : "symbols"];
+  return decode ? { correctionProvenance: { source: "alpaca-sip", symbols } }
+    : { correctedInputs: { coverage: "consolidated", tickers: symbols } };
+}
+
+function historyCorrectionProvenance(value: unknown, decode = false): Data {
+  const row = object(value);
+  if (row[decode ? "coverage" : "source"] !== (decode ? "consolidated" : "alpaca-sip")) fail();
+  const times = row[decode ? "at" : "times"], pending = row[decode ? "withheld" : "pending"];
+  for (const values of [times, pending]) {
+    if (!Array.isArray(values) || values.length > 4096 || !values.every((value, index) => Number.isSafeInteger(value)
+      && value > 0 && value % 60 === 0 && (!index || value > values[index - 1]))) fail();
+  }
+  const applied = new Set(times as number[]);
+  if ((pending as number[]).some(time => applied.has(time))) fail();
+  return decode ? { source: "alpaca-sip", times, pending } : { coverage: "consolidated", at: times, withheld: pending };
+}
 const metricAliases: Record<string, string> = { price: "last", open: "first", high: "peak", low: "trough", volume: "shares", cap: "equityValue", dollarVolume: "tradedValue" };
 const metricFields = Object.fromEntries(Object.keys(METRICS).map(key => [key, metricAliases[key] ?? key]));
 const domainMetrics = Object.fromEntries(Object.entries(metricFields).map(([key, wire]) => [wire, key]));
@@ -103,7 +125,7 @@ export function encodeScreenerPrivatePack(pack: unknown, chosen: ScreenerProvide
     })) }];
   }));
   return envelope("pack", { ...stamp(chosen, token), firstPass: initial,
-    snapshot: { activePhase: actual.latest, ...rename(actual, correctionFields), ...stamp(chosen, token), frames } });
+    snapshot: { activePhase: actual.latest, ...rename(actual, correctionFields), ...packCorrectionProvenance(actual), ...stamp(chosen, token), frames } });
 }
 
 export function decodeScreenerPrivatePack(value: unknown, chosen: ScreenerProviderSelection, token: string) {
@@ -122,7 +144,7 @@ export function decodeScreenerPrivatePack(value: unknown, chosen: ScreenerProvid
       }) }];
   }));
   return { ...chosen, initial: row.firstPass, pack: { latest: pack.activePhase,
-    ...rename(pack, correctionFields, true), selection: { ...chosen }, snapshots } };
+    ...rename(pack, correctionFields, true), ...packCorrectionProvenance(pack, true), selection: { ...chosen }, snapshots } };
 }
 
 /** Yield conversion work so unrelated chart/scanner requests retain event-loop access. */
@@ -146,7 +168,7 @@ export async function decodeScreenerPrivatePackAsync(value: unknown, chosen: Scr
     snapshots[session] = { ...rename(snapshot, snapshotFields, true), source: sourceFor(chosen), rows: restored };
   }
   return { ...chosen, initial: row.firstPass, pack: { latest: pack.activePhase,
-    ...rename(pack, correctionFields, true), selection: { ...chosen }, snapshots } };
+    ...rename(pack, correctionFields, true), ...packCorrectionProvenance(pack, true), selection: { ...chosen }, snapshots } };
 }
 
 export function encodeScreenerPrivateLive(frame: unknown, chosen: ScreenerProviderSelection, token: string) {
@@ -245,6 +267,7 @@ export function encodeScreenerPrivateLinkedReply(kind: MoomooScreenerOperation["
   else result = {
     entries: linkedRows(data.kline_list, candleFields, false),
     ...rename(data, { volume_precision: "shareDecimals", next_time: "before" }),
+    ...(data.corrections === undefined ? {} : { overrides: historyCorrectionProvenance(data.corrections) }),
     ...(isObject(input.pagination) ? { paging: rename(input.pagination, { has_more: "more", next_page_token: "cursor" }) } : {}),
   };
   return envelope("operation", { ...stamp(chosen, token), action: actions[kind], result });
@@ -258,7 +281,8 @@ export function decodeScreenerPrivateLinkedReply(kind: MoomooScreenerOperation["
   if (kind === "snapshots") data = { snapshot_list: linkedRows(result.entries, quoteFields, true) };
   else if (kind === "rehab") data = { rehabs: linkedRows(result.entries, eventFields, true) };
   else if (kind === "calendar") data = { trading_days: linkedRows(result.entries, sessionFields, true) };
-  else data = { kline_list: linkedRows(result.entries, candleFields, true), ...rename(result, { volume_precision: "shareDecimals", next_time: "before" }, true) };
+  else data = { kline_list: linkedRows(result.entries, candleFields, true), ...rename(result, { volume_precision: "shareDecimals", next_time: "before" }, true),
+    ...(result.overrides === undefined ? {} : { corrections: historyCorrectionProvenance(result.overrides, true) }) };
   return { ret_code: 0, data, ...(kind === "history" && isObject(result.paging)
     ? { pagination: rename(result.paging, { has_more: "more", next_page_token: "cursor" }, true) } : {}) };
 }

@@ -1,11 +1,12 @@
 import {usesDailyCandles,type Candle,type ChartTimeframe} from './candles';
 import {ChartSessionCalendar} from './chart-calendar';
 import {chartPageCoverageStart} from './chart-advanced-context';
+import {correctionCoverage,type AppliedTradeCorrections} from './durable-trade-corrections';
 
-type HistoryPage={bars:Candle[];complete?:boolean;adjustment?:"raw"|"split";basisDate:string;nextBefore:number|null;calendar?:unknown;calendars?:unknown[]};
-export type CalculationHistory={bars:Candle[];basisDate:string;calendar:ChartSessionCalendar;coveredFrom:number};
+type HistoryPage={bars:Candle[];complete?:boolean;corrections?:AppliedTradeCorrections;adjustment?:"raw"|"split";basisDate:string;nextBefore:number|null;calendar?:unknown;calendars?:unknown[]};
+export type CalculationHistory={bars:Candle[];basisDate:string;calendar:ChartSessionCalendar;coveredFrom:number;corrections?:AppliedTradeCorrections};
 type HistoryBoundary = 'reported' | 'covered';
-type State={bars:Map<number,Candle>;live:Map<number,Candle>;loaded:boolean;basisDate:string;through?:number;nextBefore:number|null;calendar:ChartSessionCalendar;abort:AbortController;pending?:Promise<void>};
+type State={bars:Map<number,Candle>;live:Map<number,Candle>;corrected:Set<number>;loaded:boolean;basisDate:string;through?:number;nextBefore:number|null;calendar:ChartSessionCalendar;abort:AbortController;pending?:Promise<void>};
 export const CALCULATION_HISTORY_LIMIT=150000;
 const firstTime=(bars:Map<number,Candle>)=>{let first=Infinity;for(const time of bars.keys())first=Math.min(first,time);return first;};
 const historyStart=(state:State,boundary:HistoryBoundary)=>boundary==='covered'?chartPageCoverageStart(state.nextBefore):firstTime(state.bars);
@@ -26,7 +27,7 @@ export class ChartCalculationHistory{
   const state=this.states.get(daily)??this.state(daily);
   if(state.basisDate!==this.basis())return;
   if(state.through!==undefined&&bar.time>state.through)return;
-  if(!state.bars.has(bar.time)&&state.bars.size>=CALCULATION_HISTORY_LIMIT)return;
+  if(state.corrected.has(bar.time)||!state.bars.has(bar.time)&&state.bars.size>=CALCULATION_HISTORY_LIMIT)return;
   state.bars.set(bar.time,bar);state.live.set(bar.time,bar);
  }
 
@@ -34,7 +35,7 @@ export class ChartCalculationHistory{
   let state=this.states.get(daily);
   if(!state||state.basisDate!==this.basis()||state.through!==through){
    state?.abort.abort();
-   state={bars:new Map(),live:new Map(),loaded:false,basisDate:this.basis(),through,nextBefore:null,calendar:new ChartSessionCalendar(),abort:new AbortController()};
+   state={bars:new Map(),live:new Map(),corrected:new Set(),loaded:false,basisDate:this.basis(),through,nextBefore:null,calendar:new ChartSessionCalendar(),abort:new AbortController()};
    this.states.set(daily,state);
   }
   return state;
@@ -52,7 +53,8 @@ export class ChartCalculationHistory{
   if(this.signal.aborted)throw Error('calculation_history_aborted');
   if(this.states.get(daily)!==state)throw Error('calculation_history_invalidated');
   if(state.basisDate!==this.basis())throw Error('calculation_history_basis_changed');
-  return {bars:[...state.bars.values()].sort((a,b)=>a.time-b.time),basisDate:state.basisDate,calendar:state.calendar,coveredFrom:chartPageCoverageStart(state.nextBefore)};
+  return {bars:[...state.bars.values()].sort((a,b)=>a.time-b.time),basisDate:state.basisDate,calendar:state.calendar,coveredFrom:chartPageCoverageStart(state.nextBefore),
+   corrections:correctionCoverage([...state.corrected].sort((a,b)=>a-b),[])};
  }
 
  private async load(state:State,daily:boolean,before:number,boundary:HistoryBoundary):Promise<void>{
@@ -74,6 +76,9 @@ export class ChartCalculationHistory{
    if(page.complete===false||!Array.isArray(page.bars)||page.bars.length>CALCULATION_HISTORY_LIMIT||!page.bars.every(bar=>validBar(bar)&&(state.through===undefined||bar.time<=state.through))||page.nextBefore!==null&&(!Number.isFinite(page.nextBefore)||page.nextBefore<=0))throw Error('invalid_calculation_history');
    if(!initial&&page.nextBefore!==null&&page.nextBefore>=state.nextBefore!)throw Error('calculation_history_cursor_stalled');
    const combined=new Map(state.bars);
+   for(const time of page.corrections?.times??[]){
+    state.corrected.add(time);state.live.delete(time);combined.delete(time);
+   }
    for(const bar of page.bars)if(!state.live.has(bar.time))combined.set(bar.time,bar);
    if(combined.size>CALCULATION_HISTORY_LIMIT)throw Error('calculation_history_limit');
    state.bars=combined;state.nextBefore=page.nextBefore;state.calendar.merge(page.calendar);

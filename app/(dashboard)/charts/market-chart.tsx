@@ -3,6 +3,7 @@ import {chartLogarithmic,setChartLogarithmic} from '@/src/modules/scanner/alpaca
 
 import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
 import { ChartTickerField } from "./chart-ticker-field";
+import type { AppliedTradeCorrections } from "@/src/modules/scanner/alpaca/durable-trade-corrections";
 import { applyChartCorrection, parseChartCorrection, type ChartCorrection, type PremarketTradeTotals } from "@/src/modules/scanner/alpaca/chart-correction";
 import { createChartPriceStyle } from "./chart-price-style";
 import { useChartMarketData } from "./use-chart-market-data";
@@ -211,6 +212,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
   const [selectedSplits, setSelectedSplits] = useState<readonly ChartSplit[]>([]);
   const [historyMessage,setHistoryMessage] = useState("");
   const [partialHistory, setPartialHistory] = useState(false);
+  const [correctionStatus, setCorrectionStatus] = useState<"confirmed" | "pending">();
   const crosshairDetails = useRef<HTMLDivElement>(null);
   const [activeTimeframe,setActiveTimeframe]=useState<ChartTimeframe|null>(null);
   const timeframe=controlledTimeframe??activeTimeframe??preferences.timeframe;
@@ -304,7 +306,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       : displayTime.format(time * 1000) + zoneSuffix;
     let disposed = false, auxiliarySource: ChartStreamHandle | undefined, source: ChartStreamHandle | undefined, removeChart: (() => void) | undefined;
     const abort = new AbortController();
-    setStatus("Loading candles…"); setError(null); setHistoryMessage(""); setPartialHistory(false); setSessionMessage(""); setSelectedSplits([]);
+    setStatus("Loading candles…"); setError(null); setHistoryMessage(""); setPartialHistory(false); setCorrectionStatus(undefined); setSessionMessage(""); setSelectedSplits([]);
     if (crosshairDetails.current) crosshairDetails.current.textContent = "";
     dateAxis.current?.replaceChildren();
     const useRecentHistory = !activeTradeContext && timeframe !== "4h" && !daily;
@@ -331,7 +333,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       ).then(page => {
         if (!disposed && page.complete === false) {
           historyHasGaps = true;
-          setPartialHistory(true);
+          if (!page.corrections?.pending.length) setPartialHistory(true);
         }
         return page;
       });
@@ -1280,7 +1282,26 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
       let recentHistory = useRecentHistory && !cached;
       let catchingUp = Boolean(cached);
       let historyCorrection: string | undefined, appliedHistoryCorrection: string | undefined;
-      const correctedHistoryMinutes = new Set<number>();
+      const correctedHistoryTimes = new Set<number>();
+      const noticedCorrectionTimes = new Set<number>();
+      const verifiedCorrectionTimes = new Set<number>(), pendingCorrectionTimes = new Set<number>();
+      const acceptCorrectionCoverage = (target: Map<number, Candle>, coverage?: AppliedTradeCorrections) => {
+        if (!coverage) return;
+        for (const time of coverage.times) {
+          verifiedCorrectionTimes.add(time);
+          pendingCorrectionTimes.delete(time);
+        }
+        for (const time of coverage.pending) {
+          verifiedCorrectionTimes.delete(time);
+          pendingCorrectionTimes.add(time);
+        }
+        for (const time of [...coverage.times, ...coverage.pending]) {
+          correctedHistoryTimes.add(time);
+          target.delete(time);
+          queued.delete(time);
+        }
+        setCorrectionStatus(pendingCorrectionTimes.size ? "pending" : verifiedCorrectionTimes.size ? "confirmed" : undefined);
+      };
       const loadHistory = async (initialRequest?: ReturnType<typeof requestHistory>) => {
         if (loading) { reloadAfter = true; return; }
         loading = true;
@@ -1312,7 +1333,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
             const history=await calculationHistory.read(timeframe,savedView.anchor.time);
             if(disposed)return;
             recent = false;
-            data.bars=history.bars;data.basisDate=history.basisDate;marketCalendar.current=history.calendar;
+            data.bars=history.bars;data.basisDate=history.basisDate;data.corrections=history.corrections;marketCalendar.current=history.calendar;
             pageCoverageStart=history.coveredFrom;
             data.nextBefore=history.bars.length?history.bars[0].time*1000-1:data.nextBefore;
           }
@@ -1341,13 +1362,13 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           }
           catchingUp = false;
           if (repair && !delta) {
-            for (const minute of correctedHistoryMinutes) {
-              const time = daily ? easternDayStart(minute) : minute;
+            for (const time of noticedCorrectionTimes) {
               bars.delete(time);
               queued.delete(time);
             }
             if (data.complete !== false) appliedHistoryCorrection = repair;
           }
+          acceptCorrectionCoverage(bars, data.corrections);
           for (const bar of data.bars as Candle[]) bars.set(bar.time, bar);
           for (const bar of queued.values()) bars.set(bar.time, bar);
           if (!daily) for (const correction of tradeCorrections.values()) applyChartCorrection(bars, correction);
@@ -1405,7 +1426,9 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           }
           const query = new URLSearchParams({ history: "1", symbol: ticker, daily: daily ? "1" : "0", before: String(before) });
           const page=await readHistory(query).catch(() => { throw Error("Older candles could not load. Pan left again to retry."); });if(disposed)return;if(page.basisDate!==historyBasisDate||historyBasisDate!==easternClock(Date.now()).date)throw Error("Price adjustments changed. Reload the chart.");marketCalendar.current.merge(page.calendar);if(Array.isArray(page.calendars))for(const value of page.calendars)marketCalendar.current.merge(value);
-          const combined=new Map(bars);for(const bar of page.bars as Candle[])if(!combined.has(bar.time))combined.set(bar.time,bar);
+          const combined=new Map(bars);
+          acceptCorrectionCoverage(combined, page.corrections);
+          for(const bar of page.bars as Candle[])if(!combined.has(bar.time))combined.set(bar.time,bar);
           const projected=displayCandles(mergeChartArchivePages(
             aggregateCandles(combined.values(), timeframe, regularOnly), archivePages,
           ), timeframe);
@@ -1443,6 +1466,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           if (disposed) return;
           if (page.basisDate !== historyBasisDate || historyBasisDate !== easternClock(Date.now()).date) throw Error("Price adjustments changed. Reload the chart.");
           const combined = new Map(bars);
+          acceptCorrectionCoverage(combined, page.corrections);
           const newBars = (page.bars as Candle[]).filter(bar => bar.time * 1000 > through);
           for (const bar of newBars) combined.set(bar.time, bar);
           if (displayCandles(aggregateCandles(combined.values(), timeframe, regularOnly), timeframe).length > 80_000) {
@@ -1562,7 +1586,7 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           overnightLiveRevisions.set(bar.time, ++overnightRevision);
           if (!loaded) return;
         } else {
-          if ((!daily && tradeCorrections.has(bar.time)) || correctedHistoryMinutes.has(bar.time)) return;
+          if ((!daily && tradeCorrections.has(bar.time)) || correctedHistoryTimes.has(bar.time)) return;
           lastBarReceivedAt = Date.now();
           if (!loaded || loading || catchingUp) queued.set(bar.time, bar);
           if (historyBasisDate && historyBasisDate !== easternClock(Date.now()).date) {
@@ -1676,7 +1700,12 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
           notice.revision===historyCorrection || !Array.isArray(notice.minutes) || notice.minutes.length>4_096 ||
           notice.minutes.some(time=>!Number.isSafeInteger(time)||time<=0||time%60)) return;
         historyCorrection=notice.revision;
-        for (const minute of notice.minutes as number[]) correctedHistoryMinutes.add(minute);
+        for (const minute of notice.minutes as number[]) {
+          const time = daily ? easternDayStart(minute) : minute;
+          correctedHistoryTimes.add(time);
+          noticedCorrectionTimes.add(time);
+          queued.delete(time);
+        }
         tradeCorrectionRevision++;
         calculationHistory.invalidate();
         calculationContexts.clear(); contextCoverage.clear(); contextFailures.clear();
@@ -1911,6 +1940,9 @@ export function MarketChart({ symbol, sx, timeframe: controlledTimeframe, onTime
     {!ready&&message?<Typography role="alert" sx={{px:1,fontSize:12}}>{message}</Typography>:null}
     {activeTradeContext && journal.status && !journal.current?.open && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>{journal.status}</Typography>}
     {!movementKind && !replayActive && partialHistory && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>Some candles could not be loaded from the data provider.</Typography>}
+    {!movementKind && !replayActive && correctionStatus && <Typography role="status" sx={{ fontSize: 11, px: 0.5 }}>
+      {correctionStatus === "pending" ? "Waiting to verify corrected candles" : "Includes trade corrections from Alpaca SIP"}
+    </Typography>}
     {!movementKind&&!replayActive&&historyMessage?<Typography role="status" sx={{fontSize:11,px:0.5}}>{historyMessage}</Typography>:null}
     {!movementKind && unadjusted && <Typography variant="caption" sx={{ px: 0.5 }}>Unadjusted prices</Typography>}
     {evidence && preferences.priceAdjustment === "raw" && <Typography variant="caption" sx={{ px: 0.5 }}>

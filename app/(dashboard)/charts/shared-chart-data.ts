@@ -1,5 +1,6 @@
 "use client";
 
+import type { AppliedTradeCorrections } from "@/src/modules/scanner/alpaca/durable-trade-corrections";
 import type { Candle } from "@/src/modules/scanner/alpaca/candles";
 import { readChartArchivePage, type ChartArchiveWindow } from "@/src/modules/scanner/alpaca/chart-archive-history";
 // Page-local only: neither a cross-user cache nor an additional provider connection.
@@ -101,6 +102,7 @@ type CandleHistory = {
   nextBefore: number | null;
   catchUpFrom?: number;
   complete?: boolean;
+  corrections?: AppliedTradeCorrections;
   calendar?: unknown;
   calendars?: unknown[];
 };

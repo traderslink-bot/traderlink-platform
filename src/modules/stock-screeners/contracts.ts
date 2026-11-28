@@ -138,7 +138,9 @@ export type Snapshot = {
 export type ScreenerProviderSelection = { provider: "alpaca" | "moomoo"; revision: number };
 export type MarketPack = { latest: MarketSession; snapshots: Record<MarketSession, Snapshot>; selection?: ScreenerProviderSelection;
   /** Opaque confirmed-correction identity; ordinary market updates do not change it. */
-  correctionRevision?: string; correctionGeneration?: number };
+  correctionRevision?: string; correctionGeneration?: number;
+  /** Internal provenance for canonical overrides of the selected native feed. */
+  correctionProvenance?: { source: "alpaca-sip"; symbols: string[] } };
 export type LiveScreenerFreshness = { priceAt?: number; vwapAt?: number };
 export type RunResult = Omit<Snapshot, "rows" | "source"> & {
   source: Snapshot["source"] | "TradersLink";

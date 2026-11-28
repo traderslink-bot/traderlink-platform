@@ -40,6 +40,11 @@ export async function loadBars(data: Data, symbols: string[], timeframe: "1Day" 
   for (let page = 0; page < 25; page++) {
     const payload = await data.get("/v2/stocks/bars", params);
     if (!isObject(payload) || !isObject(payload.bars)) throw Error("bars_unavailable");
+    if (payload.partial_symbols !== undefined) {
+      if (!Array.isArray(payload.partial_symbols) || !payload.partial_symbols.every(symbol => typeof symbol === "string" && requested.has(symbol)))
+        throw Error("bars_invalid");
+      for (const symbol of payload.partial_symbols) rejected.add(symbol);
+    }
     for (const [symbol, rows] of Object.entries(payload.bars)) {
       if (!requested.has(symbol) || !Array.isArray(rows)) throw Error("bars_invalid");
       const bars = grouped.get(symbol) ?? new Map<number, ProviderBar>();

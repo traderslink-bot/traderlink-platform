@@ -108,7 +108,7 @@ async function runSelection(settings: Record<string, string>, transport: Screene
                     initial = false;
                   } catch { if (!signal.aborted) console.warn("screeners_initial_quotes_unavailable"); }
                 },
-                publish: rows => { publisher.offer(rows); },
+                publish: rows => { publisher.offer(collector.guardMoomooLiveRows(rows, window)); },
                 connected: () => publisher.start(), disconnected: () => publisher.clear() });
             }
           } finally { publisher.clear(); }

@@ -136,7 +136,7 @@ describe("broker Workspace chart reads", () => {
     const query = req("&symbol=SAFX&history=1&before=" + end);
     const oldMinute = Date.parse("2026-11-23T15:14:00Z") / 1000;
     const newMinute = Date.parse("2026-11-24T15:14:00Z") / 1000;
-    const before = { time: oldMinute, open: 2, high: 3, low: 1, close: 2.5, volume: 600 };
+    const before = { time: oldMinute, open: 2, high: 38, low: 1, close: 2.5, volume: 601 };
     const evidence = vi.spyOn(alpacaClient, "readAlpacaTradeCorrectionEvidence").mockResolvedValueOnce(undefined)
       .mockResolvedValue({ symbol: "SAFX", feed: "sip", adjustment: "raw", generation: 2, rows: [
         { symbol: "SAFX", minute: oldMinute, before, bar: { ...before, high: 2.75, volume: 400 }, correctionRevision: 1 },
@@ -147,28 +147,38 @@ describe("broker Workspace chart reads", () => {
     const corrected = await (await read()).json();
     expect(corrected.bars).toHaveLength(1);
     expect(corrected.bars[0]).toMatchObject({ high: 5.5, volume: 200 });
+    expect(corrected.corrections).toEqual({ source: "alpaca-sip", times: [oldMinute, newMinute], pending: [] });
     expect(evidence).toHaveBeenCalledTimes(2);
     expect(evidence).toHaveBeenLastCalledWith(expect.objectContaining({ symbol: "SAFX", end: end + 1 }),
       expect.any(Object), expect.any(AbortSignal));
     expect(vi.mocked(connection.request).mock.calls.filter(([request]) => request.operation === "history")).toHaveLength(1);
   });
 
-  it("updates a warm native daily candle only with matching completed-day evidence", async () => {
+  it("replaces mismatched native daily history after the shared completed-day witness arrives", async () => {
     vi.useFakeTimers({ now });
     const { connection } = fixture();
     const end = Date.parse("2026-11-23T23:59:00Z");
     const day = Date.parse("2026-11-23T05:00:00Z") / 1000;
+    const minute = Date.parse("2026-11-23T15:14:00Z") / 1000;
     const query = req("&symbol=SAFX&history=1&daily=1&before=" + end);
-    const before = { time: day, open: 2, high: 3, low: 1, close: 2.5, volume: 600 };
-    const evidence = vi.spyOn(alpacaClient, "readAlpacaTradeCorrectionEvidence")
-      .mockResolvedValueOnce({ symbol: "SAFX", feed: "sip", adjustment: "raw", generation: 1, rows: [],
-        nativeDays: [{ day, before: { ...before, volume: 601 }, bar: null }] })
-      .mockResolvedValue({ symbol: "SAFX", feed: "sip", adjustment: "raw", generation: 2, rows: [],
-        nativeDays: [{ day, before, bar: { ...before, high: 2.75, volume: 400 } }] });
+    const before = { time: day, open: 2, high: 38, low: 1, close: 2.5, volume: 601 };
+    const wire: NonNullable<Awaited<ReturnType<typeof alpacaClient.readAlpacaTradeCorrectionEvidence>>> = { symbol: "SAFX", feed: "sip", adjustment: "raw", generation: 1, rows: [{
+      symbol: "SAFX", minute, before: { ...before, time: minute }, bar: null, correctionRevision: 1,
+    }] };
+    const evidence = vi.spyOn(alpacaClient, "readAlpacaTradeCorrectionEvidence").mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(wire)
+      .mockResolvedValue({ ...wire, nativeDays: [{ day, before, bar: { ...before, high: 2.75, volume: 400 } }] });
     const read = () => workspaceMoomooChartResponse(query, "bars", access(connection));
     expect((await (await read()).json()).bars[0]).toMatchObject({ high: 6, volume: 300 });
-    expect((await (await read()).json()).bars[0]).toMatchObject({ high: 5.5, volume: 200 });
-    expect(evidence).toHaveBeenLastCalledWith({ symbol: "SAFX", start: day * 1000, end: end + 1, daily: true },
+    const pending = await read();
+    expect(pending.status).toBe(200);
+    expect(await pending.json()).toMatchObject({
+      bars: [], complete: false, corrections: { source: "alpaca-sip", times: [], pending: [day] },
+    });
+    const corrected = await (await read()).json();
+    expect(corrected.bars[0]).toMatchObject({ high: 5.5, volume: 200 });
+    expect(corrected.corrections).toEqual({ source: "alpaca-sip", times: [day], pending: [] });
+    expect(evidence).toHaveBeenLastCalledWith(expect.objectContaining({ symbol: "SAFX", end: end + 1, daily: true, replayDaily: true }),
       expect.any(Object), expect.any(AbortSignal));
     expect(vi.mocked(connection.request).mock.calls.filter(([request]) => request.operation === "history")).toHaveLength(1);
   });

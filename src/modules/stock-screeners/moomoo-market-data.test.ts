@@ -12,6 +12,15 @@ const from = Date.parse("2026-11-13T14:30:00Z"), until = from + 30 * 60_000;
 const raw = (time: number, price = 100, interval = 300_000) => ({ time_key: time + interval, open: price, high: price, low: price,
   close: price, volume: 1_000, turnover: price * 1_000 });
 
+it.each([undefined, null, "invalid", Number.NaN])("keeps corrected OHLCV usable when turnover is unavailable (%s)", async turnover => {
+  const data = new MoomooScreenerData(async operation => operation.operation === "rehab" ? { ret_code: 0, data: { rehabs: [] } }
+    : { ret_code: 0, data: { kline_list: [{ ...raw(from, 4), turnover }] } }, "2026-11-17");
+  const bars = await loadBars(data, ["ABC"], "5Min", from, until, "2026-11-17");
+  expect(bars.rejected.size).toBe(0);
+  expect(bars.grouped.get("ABC")!.get(from / 1000)).toMatchObject({ high: 4, volume: 1000 });
+  expect(bars.grouped.get("ABC")!.get(from / 1000)?.vwap).toBeUndefined();
+});
+
 it.each(["5Min", "15Min"] as const)("places native end-labelled %s candles in the opening bucket and ignores future empty slots", async timeframe => {
   const interval = timeframe === "15Min" ? 900_000 : 300_000;
   const data = new MoomooScreenerData(async operation => operation.operation === "rehab"

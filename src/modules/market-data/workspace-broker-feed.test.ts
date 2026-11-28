@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterEach, expect, it, vi } from "vitest";
+import { requestAlpacaGateway } from "@/src/modules/scanner/alpaca/client";
 import { DEFAULT_WORKSPACE_MARKET_SETTINGS } from "./workspace-market-settings";
 import { readWorkspacePushQuote, type WorkspaceQuoteSession } from "./workspace-moomoo-quotes";
 import { subscribeWorkspaceMoomooCards } from "./server/workspace-moomoo-card-feed";
@@ -9,6 +10,7 @@ import { runWorkspaceRestCards, runWorkspaceWebSocketCards } from "./server/work
 import { readWorkspaceRelativeVolume, readWorkspaceVolumeRevisions } from "./server/workspace-broker-volume-history";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/src/modules/scanner/alpaca/client", () => ({ requestAlpacaGateway: vi.fn() }));
 vi.mock("./server/workspace-moomoo-card-transport", () => ({
   runWorkspaceRestCards: vi.fn(), runWorkspaceWebSocketCards: vi.fn(),
 }));
@@ -115,7 +117,9 @@ it("refreshes cached RVOL when a confirmed revision arrives within the same inte
   vi.stubEnv("TRADERLINK_ALPACA_GATEWAY_URL", "http://fixture.invalid");
   vi.mocked(runWorkspaceWebSocketCards).mockImplementation(transportRuns);
   const history = vi.mocked(readWorkspaceRelativeVolume).mockResolvedValueOnce(2.25).mockResolvedValueOnce(1.5);
-  const revisions = vi.mocked(readWorkspaceVolumeRevisions).mockResolvedValue(new Map([["NANO", "confirmed-revision"]]));
+  const revisions = vi.mocked(readWorkspaceVolumeRevisions).mockResolvedValueOnce(new Map()).mockResolvedValue(
+    new Map([["NANO", { revision: "confirmed-revision", pending: false, minutes: [now / 1000 - 86_400] }]]),
+  );
   const owner = subscribeWorkspaceMoomooCards("volume-correction", connection("owner"), vi.fn());
   try {
     owner.update(["NANO"], session, defaults);
@@ -126,14 +130,73 @@ it("refreshes cached RVOL when a confirmed revision arrives within the same inte
     await vi.advanceTimersByTimeAsync(30_000);
     expect(owner.relativeVolume("NANO")).toBe(1.5);
     expect(history).toHaveBeenCalledTimes(2);
-    expect(revisions).toHaveBeenCalledOnce();
+    expect(revisions).toHaveBeenCalledTimes(2);
     await vi.advanceTimersByTimeAsync(30_000);
     expect(history).toHaveBeenCalledTimes(2);
     owner.close();
     await vi.advanceTimersByTimeAsync(30_000);
-    expect(revisions).toHaveBeenCalledTimes(2);
+    expect(revisions).toHaveBeenCalledTimes(3);
   } finally {
     owner.close();
     vi.unstubAllEnvs();
+  }
+});
+
+it("publishes confirmed session corrections to open and newly attached cards without replacing live prices", async () => {
+  vi.useFakeTimers({ now });
+  vi.stubEnv("TRADERLINK_ALPACA_GATEWAY_URL", "http://fixture.invalid");
+  vi.mocked(runWorkspaceWebSocketCards).mockImplementation(transportRuns);
+  vi.mocked(readWorkspaceVolumeRevisions).mockResolvedValueOnce(new Map()).mockResolvedValue(new Map([
+    ["POM", { revision: "confirmed-pom", pending: false, minutes: [now / 1000] }],
+    ["NANO", { revision: "confirmed-nano-yesterday", pending: false, minutes: [now / 1000 - 86_400] }],
+  ]));
+  const sessionTotals = {
+    POM: {
+      complete: true, date, regularClose: 960, correctionRevision: now,
+      sessions: {
+        premarket: { high: 6.90, low: 5.90, volume: 20_000 },
+        regular: { high: 7.41, low: 6.40, volume: 150_000, dollarVolume: 1_001_000 },
+      },
+    },
+  };
+  const gateway = vi.mocked(requestAlpacaGateway).mockResolvedValueOnce({ feed: "sip", sessionTotals: {} })
+    .mockResolvedValueOnce({ feed: "sip", sessionTotals })
+    .mockRejectedValueOnce(Error("temporary_transport_failure"));
+  const owner = subscribeWorkspaceMoomooCards("quote-correction", connection("owner"), vi.fn());
+  const secondTab = subscribeWorkspaceMoomooCards("quote-correction", connection("owner"), vi.fn());
+  const staleQuote = (price: number) => readWorkspacePushQuote("POM", {
+    data_time_ms: Date.now(), last_price: price, high_price: 38, low_price: 6.4, volume: 550_000, turnover: 20_000_000,
+    pre_market: { high_price: 7.10, volume: 21_000 },
+  }, session, Date.now());
+  try {
+    owner.update(["POM", "NANO"], session, defaults);
+    const [[socket]] = vi.mocked(runWorkspaceWebSocketCards).mock.calls;
+    socket.accept("POM", staleQuote(7.2), null);
+    socket.accept("NANO", quote("NANO", 1.42), null);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(owner.quote("POM")?.quote?.regularHigh).toBe(38);
+
+    await vi.advanceTimersByTimeAsync(31_000);
+    expect(owner.quote("POM")?.quote).toMatchObject({ regularHigh: null, regularVolume: null, dayHigh: null });
+    expect(owner.quote("NANO")?.quote?.price).toBe(1.42);
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    secondTab.update(["POM"], session, defaults);
+    expect(owner.quote("POM")?.quote).toMatchObject({
+      price: 7.2, regularHigh: 7.41, dayHigh: 7.41, dayLow: 5.9, regularVolume: 150_000,
+      premarketVolume: 21_000, sessionTurnover: 1_001_000,
+    });
+    expect(secondTab.quote("POM")).toEqual(owner.quote("POM"));
+    expect(gateway.mock.calls[0][1].get("symbols")).toBe("POM");
+
+    socket.accept("POM", staleQuote(7.23), null);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(owner.quote("POM")?.quote).toMatchObject({ price: 7.23, regularHigh: 7.41, regularVolume: 150_000 });
+    expect(runWorkspaceWebSocketCards).toHaveBeenCalledOnce();
+  } finally {
+    secondTab.close();
+    owner.close();
+    vi.unstubAllEnvs();
+    gateway.mockReset();
   }
 });

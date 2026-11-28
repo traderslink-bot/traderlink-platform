@@ -9,6 +9,8 @@ import { collectMoomooQuotePack } from "./moomoo-quote-pack";
 import { isObject, type ScreenerProviderSelection } from "./contracts";
 import type { ScreenerProviderTransport } from "./provider-transport";
 import { screenerCorrections } from "./trade-corrections";
+import type { ScreenerLiveUpdate } from "./live-market-worker";
+import { sessionBounds } from "./market-metrics";
 
 type Reference = { date: string; listings: Awaited<ReturnType<typeof collectListings>>;
   calendar: unknown; calendarRange: ScreenerCalendarRange; spacingMs?: number };
@@ -94,9 +96,16 @@ export class ScreenerSnapshotCollector {
     if (this.quotaStopped) throw Error("provider_budget_reserved");
     if (this.transportUnavailable) throw Error("screener_provider_transport_unavailable");
     if (this.selection.provider === "moomoo") {
+      const corrected = new Set(this.moomoo?.data.correctedSymbols());
+      const days = parseCalendarSessions(reference.calendar, reference.calendarRange.start, reference.calendarRange.end);
       for (const snapshot of Object.values(pack.snapshots)) {
         const prefix = snapshot.session === "premarket" ? "pre_" : snapshot.session === "after_hours" ? "after_" : "";
+        const day = days.find(day => day.date === snapshot.date);
+        const bounds = day && sessionBounds(day, snapshot.session);
         for (const row of snapshot.rows) {
+          // The confirmed canonical source takes precedence over a differing
+          // native quote aggregate in the affected session.
+          if (corrected.has(row.symbol) && bounds && this.moomooCorrectionAffects(row.symbol, { start: bounds.from, end: bounds.until })) continue;
           const quote = this.moomooSnapshots.get(row.symbol);
           const high = quote?.[prefix + "high_price"], volume = quote?.[prefix + "volume"];
           if (!quote || quote.data_date !== snapshot.date || typeof quote.update_time !== "number" || quote.update_time < snapshot.asOf) continue;
@@ -113,7 +122,10 @@ export class ScreenerSnapshotCollector {
         }
       }
     }
-    return { ...pack, selection: this.selection };
+    const eligible = new Set(reference.listings.stocks.map(stock => stock.symbol));
+    const corrected = this.moomoo?.data.correctedSymbols().filter(symbol => eligible.has(symbol));
+    return { ...pack, selection: this.selection,
+      ...(corrected?.length ? { correctionProvenance: { source: "alpaca-sip" as const, symbols: corrected } } : {}) };
   }
 
   async initialMoomooPack() {
@@ -121,10 +133,35 @@ export class ScreenerSnapshotCollector {
     const reference = await this.referenceData();
     const now = Date.now();
     const { start, end } = reference.calendarRange;
-    return collectMoomooQuotePack({ now, clock: Date.now, signal: this.signal,
+    const days = parseCalendarSessions(reference.calendar, start, end);
+    const pack = await collectMoomooQuotePack({ now, clock: Date.now, signal: this.signal,
       stocks: reference.listings.stocks, universeDate: reference.listings.listingDate,
-      calendar: parseCalendarSessions(reference.calendar, start, end),
+      calendar: days,
       read: async symbols => this.cachedMoomooSnapshots(symbols) });
+    for (const snapshot of Object.values(pack.snapshots)) {
+      const day = days.find(day => day.date === snapshot.date);
+      if (!day) continue;
+      const bounds = sessionBounds(day, snapshot.session);
+      for (const row of snapshot.rows) if (this.moomooCorrectionAffects(row.symbol, { start: bounds.from, end: bounds.until })) {
+        for (const field of ["high", "low", "range", "fromHigh", "fromLow", "volume", "dollarVolume", "sessionVwap", "vwapPosition", "vwapDistance"] as const)
+          delete row.values[field];
+        snapshot.partial = true;
+      }
+    }
+    return { ...pack, selection: this.selection };
+  }
+
+  private moomooCorrectionAffects(symbol: string, window: { start: number; end: number }) {
+    const entry = this.cache.knownCorrections?.get(symbol);
+    return entry?.minutes.some(minute => minute * 1000 >= window.start && minute * 1000 < window.end)
+      || (entry?.pending && easternClock(window.start).date === easternClock(Date.now()).date);
+  }
+
+  guardMoomooLiveRows(rows: readonly ScreenerLiveUpdate[], window: { start: number; end: number }): ScreenerLiveUpdate[] {
+    return rows.map(row => {
+      if (!this.moomooCorrectionAffects(row.symbol, window)) return row;
+      return { symbol: row.symbol, price: row.price, priceAt: row.priceAt, vwap: null };
+    });
   }
 
   observeMoomooSnapshots(payload: unknown, requested: readonly string[]) {

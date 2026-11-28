@@ -37,6 +37,17 @@ export function browserChartHistory(payload: RecordValue): RecordValue {
     if (!valid(payload[field])) throw Error("invalid_chart_history");
     result[field] = payload[field];
   }
+  if (payload.corrections !== undefined) {
+    const corrected = object(payload.corrections);
+    const timestamps = (values: unknown): number[] => {
+      if (!Array.isArray(values) || values.length > 4_096 || values.some((time, index) =>
+        !Number.isSafeInteger(time) || time <= 0 || time % 60 || index > 0 && values[index - 1] >= time))
+        throw Error("invalid_chart_history");
+      return [...values];
+    };
+    if (corrected.source !== "alpaca-sip") throw Error("invalid_chart_history");
+    result.corrections = { source: "alpaca-sip", times: timestamps(corrected.times), pending: timestamps(corrected.pending) };
+  }
   if ("calendar" in payload) result.calendar = browserChartCalendar(payload.calendar);
   if ("calendars" in payload) result.calendars = Array.isArray(payload.calendars) ? payload.calendars.map(browserChartCalendar) : [];
   return result;

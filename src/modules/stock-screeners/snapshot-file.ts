@@ -14,6 +14,10 @@ export function validateMarketPack(value: unknown, now: number, selection?: Scre
     throw Error("market_pack_invalid");
   if (value.correctionGeneration !== undefined && (!Number.isSafeInteger(value.correctionGeneration)
     || Number(value.correctionGeneration) < 0 || value.correctionRevision === undefined)) throw Error("market_pack_invalid");
+  const provenance = value.correctionProvenance;
+  if (provenance !== undefined && (!isObject(provenance) || provenance.source !== "alpaca-sip" || !Array.isArray(provenance.symbols)
+    || provenance.symbols.length > MAX_LISTINGS || new Set(provenance.symbols).size !== provenance.symbols.length
+    || !provenance.symbols.every(symbol => typeof symbol === "string" && tickerPattern.test(symbol)))) throw Error("market_pack_invalid");
   const declared = value.selection;
   if (declared !== undefined && (!isObject(declared) || !["alpaca", "moomoo"].includes(String(declared.provider))
     || !Number.isSafeInteger(declared.revision) || Number(declared.revision) < 0)) throw Error("market_pack_invalid");
@@ -56,6 +60,10 @@ export function validateMarketPack(value: unknown, now: number, selection?: Scre
     const ordered = [...symbols].sort().join(",");
     if (population !== undefined && population !== ordered) throw Error("market_pack_invalid");
     population = ordered;
+  }
+  if (isObject(provenance)) {
+    const tickers = new Set(population!.split(","));
+    if ((provenance.symbols as string[]).some(symbol => !tickers.has(symbol))) throw Error("market_pack_invalid");
   }
   return value as MarketPack;
 }

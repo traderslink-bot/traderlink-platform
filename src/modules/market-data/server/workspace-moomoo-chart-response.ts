@@ -5,7 +5,6 @@ import { readAlpacaTradeCorrectionEvidence } from "@/src/modules/scanner/alpaca/
 import { chartCatchUpWindow, chartHistoryPage, chartHistoryWindow } from "@/src/modules/scanner/alpaca/chart-history";
 import { AlpacaVwapHistory } from "@/src/modules/scanner/alpaca/chart-vwap-history";
 import { parseVwapSeedRequest, validVwapSeed } from "@/src/modules/scanner/alpaca/chart-vwap-seed";
-import { projectComparableRawDaily } from "@/src/modules/scanner/alpaca/durable-trade-corrections";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
 import { browserChartEvent } from "./browser-chart-events";
 import { browserChartCalendar, browserChartHistory } from "./browser-chart-history";
@@ -180,14 +179,11 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
       if (value.basisDate !== basisDate) throw Error("chart_history_unavailable");
       return { bars: value.bars.filter(bar => bar.time * 1000 >= range.start && bar.time * 1000 <= range.end), complete: value.complete };
     });
-    let raw = bars;
-    if (query.timeframe === "1Min") raw = await history.correctRawMinutes(query, bars);
-    else if (bars.length) {
-      const evidence = await corrections({ symbol: query.symbol, start: bars[0].time * 1000, end: query.end + 1, daily: true });
-      if (evidence) raw = projectComparableRawDaily(bars, evidence);
-    }
-    const projected = adjustment === "raw" ? raw : adjustMoomooBars(raw, moomooSplits(await history.corporateActions(query.symbol)), basisDate);
-    return { symbol: query.symbol, bars: projected, adjustment, basisDate, feed: "moomoo", complete, nextPageToken: null };
+    const corrected = await history.correctRawHistory(query, bars);
+    const projected = adjustment === "raw" ? corrected.bars
+      : adjustMoomooBars(corrected.bars, moomooSplits(await history.corporateActions(query.symbol)), basisDate);
+    return { symbol: query.symbol, bars: projected, adjustment, basisDate, feed: "moomoo",
+      complete: complete && !corrected.corrections?.pending.length, corrections: corrected.corrections, nextPageToken: null };
   };
   try {
     let result: unknown;
@@ -203,7 +199,7 @@ export async function workspaceMoomooChartResponse(request: Request, resource: s
     } else if (input && window) {
       const { symbol, daily, adjustment } = input;
       const value = await readHistory({ symbol, timeframe: daily ? "1Day" : "1Min", ...window, adjustment });
-      if (value.basisDate !== basisDate || value.adjustment !== adjustment || (!value.complete && !value.bars.length)) throw Error("chart_history_unavailable");
+      if (value.basisDate !== basisDate || value.adjustment !== adjustment || (!value.complete && !value.bars.length && !value.corrections?.pending.length)) throw Error("chart_history_unavailable");
       const page = chartHistoryPage(value.bars, window, daily);
       const calendar = daily ? { calendars: await history.forHistory(page.bars) } : { calendar: await history.forBars(page.bars) };
       result = browserChartHistory({ ...value, ...page, ...calendar, adjustment, ...(from !== null ? { catchUpFrom: window.start } : {}) });

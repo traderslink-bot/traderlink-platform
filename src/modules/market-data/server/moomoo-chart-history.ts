@@ -1,6 +1,9 @@
 import "server-only";
 
-import { projectComparableRawDaily, projectComparableRawInterval, projectComparableRawMinutes, type DurableTradeCorrections, type TradeCorrectionRange } from "@/src/modules/scanner/alpaca/durable-trade-corrections";
+import {
+  correctionCoverage, projectConfirmedRawDaily, projectConfirmedRawInterval, projectConfirmedRawMinutes,
+  type CorrectedRawHistory, type DurableTradeCorrections, type TradeCorrectionRange,
+} from "@/src/modules/scanner/alpaca/durable-trade-corrections";
 import { readAlpacaTradeCorrectionEvidence } from "@/src/modules/scanner/alpaca/client";
 import { moomooCalendarSessions } from "../moomoo-calendar";
 import { requestMoomooMarketData, moomooDate, type MoomooDataRequest } from "./moomoo-bridge";
@@ -110,42 +113,55 @@ export class MoomooChartHistory {
   private async projectHistory(input: HistoryInput, allowPartial: boolean) {
     const { adjustment = "split", ...request } = input;
     const raw = await this.rawHistory(request,allowPartial);
-    let bars = raw.bars, complete = raw.complete;
-    if (input.timeframe === "1Min") bars = await this.correctRawMinutes(request,bars);
-    if (input.timeframe === "1Day" && bars.length) {
-      const evidence=await this.readCorrectionEvidence({symbol:input.symbol,start:bars[0].time*1000,end:input.end+1,daily:true,replayDaily:true});
-      if (evidence) bars=projectComparableRawDaily(bars,evidence);
-    }
-    if (input.timeframe === "15Min" && bars.length) {
-      const evidence = await this.readCorrectionEvidence({
-        symbol:input.symbol,start:input.start,end:Math.min(this.now()+60_000,input.end+900_000),
-      });
-      if (evidence?.rows.length) {
-        const affected = new Set(evidence.rows.map(row=>Math.floor(row.minute/900)*900));
-        const next: Candle[] = [];
-        let remaining = 16;
-        for (const bar of bars) {
-          if (!affected.has(bar.time)) { next.push(bar);continue; }
-          if (remaining-- <= 0) { complete=false;continue; }
-          const corrected = await projectComparableRawInterval(bar,900,evidence,async (start,end)=>{
-            const minutes = await this.rawHistory({symbol:input.symbol,timeframe:"1Min",start,end:end-1},allowPartial);
-            return minutes.complete && minutes.basisDate === raw.basisDate ? minutes.bars : null;
-          },this.now());
-          if (corrected === undefined) complete = false;
-          else if (corrected) next.push(corrected);
-        }
-        bars = next;
-      }
-    }
+    const projected = request.timeframe === "15Min"
+      ? await this.correctRawIntervals(request, raw.bars, raw.basisDate, allowPartial)
+      : await this.correctRawHistory({ ...request, timeframe: request.timeframe }, raw.bars);
     const splits = adjustment === "split" ? moomooSplits(await this.corporateActions(input.symbol)) : [];
     if (easternClock(this.now()).date !== raw.basisDate) throw Error("adjustment_basis_changed");
-    return { ...raw, complete, adjustment, bars: adjustment === "raw" ? bars : adjustMoomooBars(bars,splits,raw.basisDate) };
+    return { ...raw, ...projected, complete: raw.complete && !projected.corrections?.pending.length, adjustment,
+      bars: adjustment === "raw" ? projected.bars : adjustMoomooBars(projected.bars, splits, raw.basisDate) };
   }
 
-  /** Re-project raw cache hits so a later committed correction takes effect on the next read. */
-  async correctRawMinutes(input: Pick<HistoryInput,"symbol"|"start"|"end">, bars: readonly Candle[]) {
-    const evidence = await this.readCorrectionEvidence({ symbol: input.symbol, start: input.start, end: input.end + 1 });
-    return evidence ? projectComparableRawMinutes(bars,evidence) : [...bars];
+  /** Re-project cache hits so a confirmed correction can supersede a stale native row. */
+  async correctRawHistory(input: Pick<HistoryInput, "symbol" | "start" | "end"> & { timeframe: "1Min" | "1Day" },
+    bars: readonly Candle[]): Promise<CorrectedRawHistory> {
+    const { symbol, start, end } = input;
+    const window = { symbol, start, end: end + 1 };
+    const daily = input.timeframe === "1Day";
+    const evidence = await this.readCorrectionEvidence(daily ? { ...window, daily: true, replayDaily: true } : window);
+    if (!evidence) return { bars: [...bars] };
+    return daily ? projectConfirmedRawDaily(bars, evidence, window) : projectConfirmedRawMinutes(bars, evidence, window);
+  }
+
+  async correctRawMinutes(input: Pick<HistoryInput, "symbol" | "start" | "end">, bars: readonly Candle[]) {
+    return (await this.correctRawHistory({ ...input, timeframe: "1Min" }, bars)).bars;
+  }
+
+  private async correctRawIntervals(input: HistoryInput, bars: readonly Candle[], basisDate: string,
+    allowPartial: boolean): Promise<CorrectedRawHistory> {
+    const interval = 900;
+    const evidence = await this.readCorrectionEvidence({
+      symbol: input.symbol, start: input.start, end: Math.min(this.now() + 60_000, input.end + interval * 1_000),
+    });
+    if (!evidence?.rows.length) return { bars: [...bars] };
+    const projected = new Map(bars.map(bar => [bar.time, bar]));
+    const buckets = [...new Set(evidence.rows.map(row => Math.floor(row.minute / interval) * interval))].sort((a, b) => a - b);
+    const times: number[] = [], pending: number[] = [];
+    let budget = 16;
+    for (const time of buckets) {
+      if (time * 1_000 < input.start || time * 1_000 > input.end) continue;
+      projected.delete(time);
+      const bar = budget-- > 0 ? await projectConfirmedRawInterval(time, interval, evidence, async (start, end) => {
+        const minutes = await this.rawHistory({ symbol: input.symbol, timeframe: "1Min", start, end: end - 1 }, allowPartial);
+        return minutes.complete && minutes.basisDate === basisDate ? minutes.bars : null;
+      }, this.now()) : undefined;
+      if (bar === undefined) pending.push(time);
+      else {
+        times.push(time);
+        if (bar) projected.set(time, bar);
+      }
+    }
+    return { bars: [...projected.values()].sort((a, b) => a.time - b.time), corrections: correctionCoverage(times, pending) };
   }
 
   async rawHistory(input: Omit<HistoryInput,"adjustment">, allowPartial = false) {

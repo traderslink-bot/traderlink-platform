@@ -4,6 +4,7 @@ import { indicatorDisplayRows } from "@/src/modules/market-data/indicators/indic
 import { MoomooChartHistory } from "@/src/modules/market-data/server/moomoo-chart-history";
 import type { WorkspaceMoomooConnection } from "@/src/modules/market-data/server/workspace-moomoo-access";
 import { easternDayStart } from "@/src/modules/scanner/alpaca/candles";
+import { readAlpacaTradeCorrectionEvidence } from "@/src/modules/scanner/alpaca/client";
 import { historyCalendar, scannerIndicatorResults } from "@/src/modules/scanner/live/scanner-indicator-calculation";
 import { prepareScannerIndicatorRows, SCANNER_INDICATOR_FRAMES } from "@/src/modules/scanner/live/scanner-indicator-read";
 import { easternClock } from "@/src/modules/scanner/live/sessions";
@@ -27,7 +28,8 @@ export async function readBrokerCompanyHistory(
   const now = Date.now();
   const { date, minute } = easternClock(now);
   const signal = AbortSignal.any([request.signal, AbortSignal.timeout(20_000)]);
-  const history = new MoomooChartHistory(input => connection.request(input, signal), () => now);
+  const history = new MoomooChartHistory(input => connection.request(input, signal), () => now,
+    range => readAlpacaTradeCorrectionEvidence(range, process.env, signal));
   const replyCurrent = (payload: unknown) => connection.current() && !signal.aborted && easternClock(Date.now()).date === date
     ? reply(payload) : reply({}, 409);
   try {
